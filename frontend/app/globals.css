@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-background text-textPrimary antialiased;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+.glass-card {
+  @apply bg-card shadow-glass border border-white/10 backdrop-blur-glass rounded-2xl;
+}
+
+.gradient-button {
+  @apply text-white font-semibold px-6 py-3 rounded-full shadow-glow;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.skeleton {
+  @apply animate-pulse bg-white/10 rounded-lg;
+}
