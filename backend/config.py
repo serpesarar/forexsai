@@ -1,4 +1,5 @@
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -35,9 +36,7 @@ class Settings(BaseSettings):
     rtyhiim_min_period_s: float = Field(default=8.0, env="RTYHIIM_MIN_PERIOD_S")
     rtyhiim_max_period_s: float = Field(default=240.0, env="RTYHIIM_MAX_PERIOD_S")
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
 
 settings = Settings()
