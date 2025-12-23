@@ -7,6 +7,11 @@ import XauusdPanel from "../components/XauusdPanel";
 import PatternEnginePanel from "../components/PatternEnginePanel";
 import ClaudePatternPanel from "../components/ClaudePatternPanel";
 import SentimentPanel from "../components/SentimentPanel";
+ codex/generate-full-stack-trading-dashboard-code-cvecet
+import OrderBlockPanel from "../components/OrderBlockPanel";
+import RTYHIIMDetectorPanel from "../components/RTYHIIMDetectorPanel";
+=======
+ main
 import { useRunAll } from "../lib/api";
 import { useDashboardStore } from "../lib/store";
 
@@ -103,6 +108,11 @@ export default function HomePage() {
           </div>
           <div className="space-y-6">
             <SentimentPanel />
+codex/generate-full-stack-trading-dashboard-code-cvecet
+            <OrderBlockPanel />
+            <RTYHIIMDetectorPanel />
+=======
+ main
             <div className="glass-card p-6 space-y-2 text-sm text-textSecondary">
               <p>Powered by Claude AI + Custom ML Models</p>
               <div className="flex items-center gap-2">
