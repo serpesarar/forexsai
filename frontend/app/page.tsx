@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { Bell, PlayCircle, RefreshCw } from "lucide-react";
+import {
+  Activity,
+  ArrowDownRight,
+  ArrowUpRight,
+  Bell,
+  DollarSign,
+  PlayCircle,
+  RefreshCw
+} from "lucide-react";
 import NasdaqPanel from "../components/NasdaqPanel";
 import XauusdPanel from "../components/XauusdPanel";
 import PatternEnginePanel from "../components/PatternEnginePanel";
@@ -11,12 +19,42 @@ import OrderBlockPanel from "../components/OrderBlockPanel";
 import RTYHIIMDetectorPanel from "../components/RTYHIIMDetectorPanel";
 import AdvancedChart from "../components/AdvancedChart";
 import NewsFeed from "../components/NewsFeed";
+import CircularChart from "../components/CircularChart";
+import CumulativeChart from "../components/CumulativeChart";
+import MetricCard from "../components/MetricCard";
 import { useRunAll } from "../lib/api";
 import { useDashboardStore } from "../lib/store";
 
 const tickerItems = [
   { label: "NASDAQ 100", value: "21,547.35" },
   { label: "XAU/USD", value: "2,163.20" }
+];
+
+const mockData = {
+  totalPnL: 7674.45,
+  profitFactor: 1.64,
+  avgWin: 1036.45,
+  avgLoss: -1092.56,
+  totalTrades: 30,
+  winningTrades: 19,
+  losingTrades: 11,
+  winningDays: 14,
+  losingDays: 5
+};
+
+const chartData = [
+  { date: "Jun 01", value: 0 },
+  { date: "Jun 07", value: 420 },
+  { date: "Jun 14", value: 1400 },
+  { date: "Jun 21", value: 1850 },
+  { date: "Jun 28", value: 2300 },
+  { date: "Jul 05", value: -200 },
+  { date: "Jul 12", value: 1200 },
+  { date: "Jul 19", value: 2800 },
+  { date: "Jul 26", value: 4300 },
+  { date: "Aug 02", value: 5100 },
+  { date: "Aug 09", value: 6200 },
+  { date: "Aug 16", value: 7674 }
 ];
 
 export default function HomePage() {
@@ -39,10 +77,23 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [refreshInterval, runAll, setLastUpdated]);
 
+  const totalPnL = mockData.totalPnL.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+  const avgWin = mockData.avgWin.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+  const avgLoss = mockData.avgLoss.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+
   return (
     <div className="min-h-screen bg-background">
-      <header className="px-6 py-8 border-b border-white/10">
-        <div className="max-w-7xl mx-auto flex flex-col gap-6">
+      <header className="border-b border-white/10 bg-[#161925]/70 px-6 py-8 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-semibold">AI Trading Dashboard</h1>
@@ -96,6 +147,47 @@ export default function HomePage() {
       </header>
 
       <main className="px-6 py-10 space-y-8">
+        <section className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          <MetricCard
+            label="Total Net P&L"
+            value={totalPnL}
+            meta={`Trades in total: ${mockData.totalTrades}`}
+            trend={mockData.totalPnL >= 0 ? "positive" : "negative"}
+            icon={<DollarSign className="h-4 w-4" />}
+          />
+          <MetricCard
+            label="Profit Factor"
+            value={mockData.profitFactor.toFixed(2)}
+            meta="Risk-adjusted return"
+            trend="positive"
+            icon={<Activity className="h-4 w-4" />}
+          />
+          <MetricCard
+            label="Average Winning Trade"
+            value={avgWin}
+            meta="Best performing setups"
+            trend="positive"
+            icon={<ArrowUpRight className="h-4 w-4" />}
+          />
+          <MetricCard
+            label="Average Losing Trade"
+            value={avgLoss}
+            meta="Loss containment"
+            trend="negative"
+            icon={<ArrowDownRight className="h-4 w-4" />}
+          />
+        </section>
+
+        <section className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="space-y-6">
+            <CircularChart title="NASDAQ 100 Winrate" winners={mockData.winningTrades} losers={mockData.losingTrades} />
+            <CircularChart title="XAU/USD Winrate" winners={mockData.winningDays} losers={mockData.losingDays} />
+          </div>
+          <div className="lg:col-span-2">
+            <CumulativeChart data={chartData} />
+          </div>
+        </section>
+
         <section className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <AdvancedChart symbol="NDX.INDX" />
