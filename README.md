@@ -1,71 +1,37 @@
-# Trading Dashboard
+# AI Trading Dashboard
 
-Modern, full-stack AI Trading Dashboard for NASDAQ and XAU/USD analysis. Includes ML signals, pattern engine, and Claude AI intelligence.
+An end-to-end trading dashboard combining ML signals, Claude pattern intelligence, sentiment analysis, and SMC-style order blocks.
 
 ## Quick Start
 
 ```bash
-# Terminal 1: Backend
-cd backend
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-python main.py
+pip install -r backend/requirements.txt
+uvicorn backend.main:app --reload
 ```
 
 ```bash
-# Terminal 2: Frontend
 cd frontend
 npm install
 npm run dev
 ```
 
-Open: http://localhost:3000
+The frontend runs on `http://localhost:3000` and the backend on `http://localhost:8000`.
 
-Backend health check: http://localhost:8000/api/health
-
-## Environment Variables
-
-Backend settings can be overridden via `.env`:
-
-```
-NASDAQ_MODEL_PATH=~/Desktop/nasdaq/models/
-XAUUSD_MODEL_PATH=~/Desktop/xauusddata/models/
-PATTERN_ENGINE_PATH=~/Desktop/video/pattern_engine_runtime.py
-CLAUDE_PATTERNS_PATH=~/Desktop/trading-pattern-system/
-ANTHROPIC_API_KEY=sk-ant-...
-EODHD_API_KEY=...
-MARKETAUX_API_KEY=...
-MARKETAUX_BASE_URL=https://api.marketaux.com/v1/news/all
-```
-
-## API Documentation
-
-Base URL: `http://localhost:8000`
-
-### POST /api/run/all
-Runs all analysis modules in parallel.
+## API Endpoints
 
 ### POST /api/run/nasdaq
-Returns NASDAQ ML signal.
+Runs the NASDAQ ML signal pipeline.
+
+### POST /api/run/xauusd
+Runs the XAU/USD ML signal pipeline.
 
 ### POST /api/run/pattern-engine
-```json
-{
-  "last_n": 500,
-  "select_top": 0.3,
-  "output_selected_only": true
-}
-```
+Runs the pattern engine.
 
 ### POST /api/claude/analyze-patterns
-```json
-{
-  "symbol": "NDX.INDX",
-  "timeframes": ["5m", "15m", "30m", "1h", "4h", "1d"]
-}
-```
+Claude pattern detection.
 
 ### POST /api/claude/analyze-sentiment
 No body required.
@@ -80,6 +46,10 @@ Returns `{ "ok": true }`.
 - **Marketaux**: `https://api.marketaux.com/v1/news/all`
   - Used for fundamental/news sentiment context.
 
+## Dashboard Extensions
+
+- Advanced charting + news feed guide: `docs/dashboard_extensions.md`
+
 ## Docker (Optional)
 
 ```bash
@@ -92,7 +62,6 @@ docker-compose up --build
 bash scripts/test_api.sh
 ```
 
-codex/generate-full-stack-trading-dashboard-code-cvecet
 ## Order Block Detector (SMC)
 
 See the integration guide: `docs/order_blocks.md`
@@ -101,8 +70,6 @@ See the integration guide: `docs/order_blocks.md`
 
 See the integration guide: `docs/rtyhiim.md`
 
-=======
-main
 ## E2E Checklist
 
 1. `POST /api/run/pattern-engine` returns CSV output reference.
@@ -118,8 +85,5 @@ main
 - **Model not found**: Verify `.env` paths to model files.
 - **Claude errors**: Confirm `ANTHROPIC_API_KEY` is set.
 - **Pattern engine runtime missing**: Update `PATTERN_ENGINE_PATH`.
-codex/generate-full-stack-trading-dashboard-code-cvecet
-=======
 - **EODHD WebSocket**: Set `EODHD_API_KEY` and verify your symbol subscription (e.g. `XAUUSD`).
 - **Marketaux errors**: Set `MARKETAUX_API_KEY` for sentiment news ingestion.
- main

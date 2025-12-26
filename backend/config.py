@@ -1,9 +1,5 @@
- codex/generate-full-stack-trading-dashboard-code-cvecet
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-=======
-from pydantic import BaseSettings, Field
-main
 
 
 class Settings(BaseSettings):
@@ -30,7 +26,6 @@ class Settings(BaseSettings):
         default="https://api.marketaux.com/v1/news/all",
         env="MARKETAUX_BASE_URL",
     )
-codex/generate-full-stack-trading-dashboard-code-cvecet
     ob_fractal_period: int = Field(default=2, env="OB_FRACTAL_PERIOD")
     ob_min_displacement_atr: float = Field(default=1.0, env="OB_MIN_DISPLACEMENT_ATR")
     ob_min_score: float = Field(default=50.0, env="OB_MIN_SCORE")
@@ -42,11 +37,6 @@ codex/generate-full-stack-trading-dashboard-code-cvecet
     rtyhiim_max_period_s: float = Field(default=240.0, env="RTYHIIM_MAX_PERIOD_S")
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
-=======
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = Falsemain
 
 
 settings = Settings()
