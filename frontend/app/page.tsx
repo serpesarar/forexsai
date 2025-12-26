@@ -7,11 +7,10 @@ import XauusdPanel from "../components/XauusdPanel";
 import PatternEnginePanel from "../components/PatternEnginePanel";
 import ClaudePatternPanel from "../components/ClaudePatternPanel";
 import SentimentPanel from "../components/SentimentPanel";
- codex/generate-full-stack-trading-dashboard-code-cvecet
 import OrderBlockPanel from "../components/OrderBlockPanel";
 import RTYHIIMDetectorPanel from "../components/RTYHIIMDetectorPanel";
-=======
- main
+import AdvancedChart from "../components/AdvancedChart";
+import NewsFeed from "../components/NewsFeed";
 import { useRunAll } from "../lib/api";
 import { useDashboardStore } from "../lib/store";
 
@@ -61,7 +60,7 @@ export default function HomePage() {
                 <PlayCircle className="w-4 h-4" />
                 {runAll.isPending ? "Analyzing... 45s" : "Run All Analysis"}
               </button>
-              <button className="p-3 rounded-full bg-white/10">
+              <button className="p-3 rounded-full bg-white/10" aria-label="Notifications">
                 <Bell className="w-4 h-4" />
               </button>
             </div>
@@ -96,8 +95,17 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="px-6 py-10">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <main className="px-6 py-10 space-y-8">
+        <section className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <AdvancedChart symbol="NDX.INDX" />
+          </div>
+          <div>
+            <NewsFeed />
+          </div>
+        </section>
+
+        <section className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="space-y-6">
             <NasdaqPanel />
             <XauusdPanel />
@@ -108,11 +116,8 @@ export default function HomePage() {
           </div>
           <div className="space-y-6">
             <SentimentPanel />
-codex/generate-full-stack-trading-dashboard-code-cvecet
             <OrderBlockPanel />
             <RTYHIIMDetectorPanel />
-=======
- main
             <div className="glass-card p-6 space-y-2 text-sm text-textSecondary">
               <p>Powered by Claude AI + Custom ML Models</p>
               <div className="flex items-center gap-2">
@@ -122,7 +127,7 @@ codex/generate-full-stack-trading-dashboard-code-cvecet
               <div className="text-xs">Settings coming soon</div>
             </div>
           </div>
-        </div>
+        </section>
       </main>
     </div>
   );
