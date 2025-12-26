@@ -1,10 +1,37 @@
 "use client";
 
+ codex/redesign-trading-dashboard-ui-with-dark-theme-i27dom
+import { useEffect, useMemo } from "react";
+import {
+  Activity,
+  ArrowDownRight,
+  ArrowUpRight,
+  Bell,
+  DollarSign,
+  PlayCircle,
+  RefreshCw
+} from "lucide-react";
+import NasdaqPanel from "../components/NasdaqPanel";
+import XauusdPanel from "../components/XauusdPanel";
+import PatternEnginePanel from "../components/PatternEnginePanel";
+import ClaudePatternPanel from "../components/ClaudePatternPanel";
+import SentimentPanel from "../components/SentimentPanel";
+import OrderBlockPanel from "../components/OrderBlockPanel";
+import RTYHIIMDetectorPanel from "../components/RTYHIIMDetectorPanel";
+import AdvancedChart from "../components/AdvancedChart";
+import NewsFeed from "../components/NewsFeed";
+import CircularChart from "../components/CircularChart";
+import CumulativeChart from "../components/CumulativeChart";
+import MetricCard from "../components/MetricCard";
+import { useRunAll } from "../lib/api";
+import { useDashboardStore } from "../lib/store";
+=======
 import { Activity, ArrowDownRight, ArrowUpRight, DollarSign } from "lucide-react";
 import CircularChart from "../components/CircularChart";
 import CumulativeChart from "../components/CumulativeChart";
 import MetricCard from "../components/MetricCard";
 import TradingCalendar from "../components/TradingCalendar";
+main
 
 const mockData = {
   totalPnL: 7674.45,
@@ -18,6 +45,21 @@ const mockData = {
   losingDays: 5
 };
 
+codex/redesign-trading-dashboard-ui-with-dark-theme-i27dom
+const mockData = {
+  totalPnL: 7674.45,
+  profitFactor: 1.64,
+  avgWin: 1036.45,
+  avgLoss: -1092.56,
+  totalTrades: 30,
+  winningTrades: 19,
+  losingTrades: 11,
+  winningDays: 14,
+  losingDays: 5
+};
+
+=======
+main
 const chartData = [
   { date: "Jun 01", value: 0 },
   { date: "Jun 07", value: 420 },
@@ -32,6 +74,13 @@ const chartData = [
   { date: "Aug 09", value: 6200 },
   { date: "Aug 16", value: 7674 }
 ];
+codex/redesign-trading-dashboard-ui-with-dark-theme-i27dom
+
+export default function HomePage() {
+  const runAll = useRunAll();
+  const { autoRefresh, setAutoRefresh, lastUpdated, setLastUpdated } = useDashboardStore();
+=======
+main
 
 const calendarDays = [
   { date: 28, pnl: -120, isCurrentMonth: false },
@@ -88,10 +137,29 @@ export default function HomePage() {
     currency: "USD"
   });
 
+  const totalPnL = mockData.totalPnL.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+  const avgWin = mockData.avgWin.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+  const avgLoss = mockData.avgLoss.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+
   return (
+codex/redesign-trading-dashboard-ui-with-dark-theme-i27dom
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-white/10 bg-[#161925]/70 px-6 py-8 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6">
+=======
     <div className="min-h-screen bg-background text-textPrimary">
       <header className="border-b border-white/5 bg-[#161925]/70 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8">
+ main
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.4em] text-textSecondary">Trade Dashboard</p>
@@ -113,8 +181,13 @@ export default function HomePage() {
         </div>
       </header>
 
+ codex/redesign-trading-dashboard-ui-with-dark-theme-i27dom
+      <main className="px-6 py-10 space-y-8">
+        <section className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+=======
       <main className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-10">
         <section className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+main
           <MetricCard
             label="Total Net P&L"
             value={totalPnL}
@@ -143,6 +216,28 @@ export default function HomePage() {
             trend="negative"
             icon={<ArrowDownRight className="h-4 w-4" />}
           />
+ codex/redesign-trading-dashboard-ui-with-dark-theme-i27dom
+        </section>
+
+        <section className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="space-y-6">
+            <CircularChart title="NASDAQ 100 Winrate" winners={mockData.winningTrades} losers={mockData.losingTrades} />
+            <CircularChart title="XAU/USD Winrate" winners={mockData.winningDays} losers={mockData.losingDays} />
+          </div>
+          <div className="lg:col-span-2">
+            <CumulativeChart data={chartData} />
+          </div>
+        </section>
+
+        <section className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <AdvancedChart symbol="NDX.INDX" />
+          </div>
+          <div>
+            <NewsFeed />
+          </div>
+=======
+ main
         </section>
 
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
