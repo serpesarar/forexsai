@@ -4,20 +4,72 @@
 
 :root {
   color-scheme: dark;
+  --bg-primary: #1a1a1a;
+  --bg-card: rgba(30, 30, 30, 0.6);
+  --accent: #00d4ff;
+  --success: #10b981;
+  --danger: #ef4444;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="dawn"] {
+  color-scheme: light;
+  --bg-primary: #f4f6f8;
+  --bg-card: rgba(255, 255, 255, 0.7);
+  --accent: #0087a8;
+  --success: #059669;
+  --danger: #dc2626;
+  --text-primary: #0f172a;
+  --text-secondary: rgba(15, 23, 42, 0.6);
 }
 
 body {
-  @apply bg-background text-textPrimary antialiased;
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  @apply bg-background text-textPrimary antialiased font-sans;
 }
 
 .glass-card {
   @apply bg-card shadow-glass border border-white/10 backdrop-blur-glass rounded-2xl;
 }
 
+.card-hover {
+  @apply transition-transform duration-150 ease-out hover:-translate-y-0.5;
+}
+
 .gradient-button {
-  @apply text-white font-semibold px-6 py-3 rounded-full shadow-glow;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  @apply text-white font-semibold px-5 py-2 rounded-full;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.9) 0%, rgba(0, 212, 255, 0.4) 100%);
+}
+
+.circular-progress {
+  cursor: pointer;
+  transition: transform 150ms ease, filter 150ms ease;
+  --hover-scale: 1.05;
+}
+
+.circular-progress:hover {
+  transform: scale(var(--hover-scale));
+  filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.4));
+}
+
+.detail-panel-overlay {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(12px);
+}
+
+.detail-panel-content {
+  animation: slideInFromBottom 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .skeleton {

@@ -1,32 +1,31 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./lib/**/*.{ts,tsx}"] ,
+  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./lib/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        background: "#1a1d29",
-        card: "#252837",
-        accent: {
-          from: "#4ade80",
-          to: "#22c55e"
-        },
-        success: "#4ade80",
-        danger: "#f87171",
-        warning: "#fbbf24",
-        textPrimary: "#f8fafc",
-        textSecondary: "rgba(248, 250, 252, 0.7)"
+        background: "var(--bg-primary)",
+        card: "var(--bg-card)",
+        accent: "var(--accent)",
+        success: "var(--success)",
+        danger: "var(--danger)",
+        textPrimary: "var(--text-primary)",
+        textSecondary: "var(--text-secondary)",
       },
       boxShadow: {
-        glass: "0 20px 40px rgba(0, 0, 0, 0.35)",
-        glow: "0 0 25px rgba(74, 222, 128, 0.35)"
+        glass: "0 18px 35px rgba(0, 0, 0, 0.35)",
       },
       backdropBlur: {
-        glass: "12px"
-      }
-    }
+        glass: "10px",
+      },
+      fontFamily: {
+        sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
+        mono: ["var(--font-jetbrains-mono)", "JetBrains Mono", "ui-monospace", "SFMono-Regular"],
+      },
+    },
   },
-  plugins: []
+  plugins: [],
 };
 
 export default config;
