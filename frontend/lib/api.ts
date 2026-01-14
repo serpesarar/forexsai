@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 export async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${endpoint}`, {
@@ -24,7 +24,8 @@ export function useNasdaq() {
   return useQuery({
     queryKey: ["nasdaq"],
     queryFn: () => fetcher("/api/run/nasdaq", { method: "POST", body: "{}" }),
-    staleTime: 300000
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    staleTime: 15000
   });
 }
 
@@ -32,7 +33,8 @@ export function useXauusd() {
   return useQuery({
     queryKey: ["xauusd"],
     queryFn: () => fetcher("/api/run/xauusd", { method: "POST", body: "{}" }),
-    staleTime: 300000
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    staleTime: 15000
   });
 }
 
@@ -44,7 +46,8 @@ export function usePatternEngine(payload: { last_n: number; select_top: number; 
         method: "POST",
         body: JSON.stringify(payload)
       }),
-    staleTime: 300000
+    refetchInterval: 60000, // Auto-refresh every 60 seconds
+    staleTime: 30000
   });
 }
 
@@ -56,7 +59,8 @@ export function useClaudePatterns(payload: { symbol: string; timeframes: string[
         method: "POST",
         body: JSON.stringify(payload)
       }),
-    staleTime: 300000
+    refetchInterval: 60000, // Auto-refresh every 60 seconds
+    staleTime: 30000
   });
 }
 
@@ -64,6 +68,7 @@ export function useClaudeSentiment() {
   return useQuery({
     queryKey: ["claude-sentiment"],
     queryFn: () => fetcher("/api/claude/analyze-sentiment", { method: "POST", body: "{}" }),
-    staleTime: 300000
+    refetchInterval: 60000, // Auto-refresh every 60 seconds  
+    staleTime: 30000
   });
 }
