@@ -3,12 +3,12 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict
 
-from backend.config import settings
+from config import settings
 import json
 import httpx
 
-from backend.services.data_fetcher import fetch_latest_price
-from backend.services.data_fetcher import fetch_eod_candles
+from services.data_fetcher import fetch_latest_price
+from services.data_fetcher import fetch_eod_candles
 
 
 async def _run_single_timeframe(symbol: str, timeframe: str, lang: str, current_price_value: float, series_json: str) -> dict:

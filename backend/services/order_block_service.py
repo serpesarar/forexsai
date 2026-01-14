@@ -7,12 +7,12 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from backend.order_block_detector import Candle, OrderBlockConfig, OrderBlockDetector
-from backend.services.ml_service import run_nasdaq_signal, run_xauusd_signal
-from backend.services.pattern_analyzer import run_claude_pattern_analysis
-from backend.services.sentiment_analyzer import run_claude_sentiment
-from backend.services.rtyhiim_service import run_rtyhiim_detector
-from backend.services.data_fetcher import fetch_eod_candles
+from order_block_detector import Candle, OrderBlockConfig, OrderBlockDetector
+from services.ml_service import run_nasdaq_signal, run_xauusd_signal
+from services.pattern_analyzer import run_claude_pattern_analysis
+from services.sentiment_analyzer import run_claude_sentiment
+from services.rtyhiim_service import run_rtyhiim_detector
+from services.data_fetcher import fetch_eod_candles
 
 
 @dataclass

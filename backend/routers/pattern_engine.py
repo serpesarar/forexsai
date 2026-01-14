@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from backend.models.responses import PatternEngineResponse
-from backend.services.pattern_engine_runner import run_pattern_engine
+from models.responses import PatternEngineResponse
+from services.pattern_engine_runner import run_pattern_engine
 
 router = APIRouter(prefix="/api/run", tags=["pattern_engine"])
 

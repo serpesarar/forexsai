@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
-from backend.models.responses import SignalResponse
-from backend.services.data_fetcher import fetch_latest_price
-from backend.services.ml_service import run_xauusd_signal
+from models.responses import SignalResponse
+from services.data_fetcher import fetch_latest_price
+from services.ml_service import run_xauusd_signal
 
 router = APIRouter(prefix="/api/run", tags=["xauusd"])
 

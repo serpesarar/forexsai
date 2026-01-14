@@ -11,8 +11,8 @@ load_dotenv(env_path)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.models.responses import HealthResponse, RunAllResponse
-from backend.routers import (
+from models.responses import HealthResponse, RunAllResponse
+from routers import (
     nasdaq,
     xauusd,
     pattern_engine,
@@ -28,14 +28,14 @@ from backend.routers import (
     learning,
     fvg,
 )
-from backend.services.data_fetcher import fetch_latest_price
-from backend.services.ml_service import run_nasdaq_signal, run_xauusd_signal
-from backend.services.pattern_engine_runner import run_pattern_engine
-from backend.services.pattern_analyzer import run_claude_pattern_analysis
-from backend.services.sentiment_analyzer import run_claude_sentiment
-from backend.services.rtyhiim_service import run_rtyhiim_detector
-from backend.services.order_block_service import service as order_block_service
-from backend.order_block_detector import OrderBlockConfig
+from services.data_fetcher import fetch_latest_price
+from services.ml_service import run_nasdaq_signal, run_xauusd_signal
+from services.pattern_engine_runner import run_pattern_engine
+from services.pattern_analyzer import run_claude_pattern_analysis
+from services.sentiment_analyzer import run_claude_sentiment
+from services.rtyhiim_service import run_rtyhiim_detector
+from services.order_block_service import service as order_block_service
+from order_block_detector import OrderBlockConfig
 
 app = FastAPI(title="AI Trading Dashboard API", version="0.1.0")
 
@@ -122,4 +122,4 @@ async def run_all() -> RunAllResponse:
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

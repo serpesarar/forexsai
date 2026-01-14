@@ -9,8 +9,8 @@ from pydantic import BaseModel
 from typing import List, Optional
 import logging
 
-from backend.fvg_detector import FVGDetector, FVGConfig, Candle, FairValueGap
-from backend.services.data_fetcher import fetch_eod_candles, fetch_intraday_candles
+from fvg_detector import FVGDetector, FVGConfig, Candle, FairValueGap
+from services.data_fetcher import fetch_eod_candles, fetch_intraday_candles
 
 logger = logging.getLogger(__name__)
 

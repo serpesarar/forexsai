@@ -9,10 +9,10 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from backend.services.data_fetcher import fetch_eod_candles, fetch_latest_price
-from backend.services.marketaux_service import fetch_marketaux_headlines
-from backend.services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
-from backend.services.ta_service import compute_ta_snapshot
+from services.data_fetcher import fetch_eod_candles, fetch_latest_price
+from services.marketaux_service import fetch_marketaux_headlines
+from services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
+from services.ta_service import compute_ta_snapshot
 
 logger = logging.getLogger(__name__)
 
@@ -375,7 +375,7 @@ async def get_detailed_analysis(symbol: str, log_to_db: bool = True) -> Dict[str
     
     if log_to_db:
         try:
-            from backend.services.prediction_logger import log_prediction
+            from services.prediction_logger import log_prediction
             await log_prediction(
                 symbol=context.get("symbol", symbol),
                 context=context,

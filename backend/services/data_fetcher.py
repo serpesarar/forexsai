@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 import httpx
 
-from backend.config import settings
+from config import settings
 
 
 _price_cache: dict[str, tuple[float, float]] = {}  # symbol -> (ts_epoch, price)

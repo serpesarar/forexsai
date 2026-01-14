@@ -87,7 +87,7 @@ async def get_ai_analysis(symbol: str):
     2. Claude AI review (independent assessment of signals + TA data)
     3. Technical analysis snapshot
     """
-    from backend.services.claude_signal_analyzer import get_full_analysis
+    from services.claude_signal_analyzer import get_full_analysis
     
     result = await get_full_analysis(symbol)
     
@@ -101,7 +101,7 @@ async def get_ai_analysis(symbol: str):
 @router.get("/", response_model=List[FullAnalysisResponse])
 async def get_all_ai_analysis():
     """Get AI analysis for both NASDAQ and XAUUSD."""
-    from backend.services.claude_signal_analyzer import get_full_analysis
+    from services.claude_signal_analyzer import get_full_analysis
     
     nasdaq = await get_full_analysis("NDX.INDX")
     xauusd = await get_full_analysis("XAUUSD")
@@ -122,7 +122,7 @@ async def get_all_ai_analysis():
 
 @router.get("/detailed/{symbol}", response_model=DetailedAnalysisResponse)
 async def get_detailed_ai_analysis(symbol: str):
-    from backend.services.detailed_ai_analysis_service import get_detailed_analysis
+    from services.detailed_ai_analysis_service import get_detailed_analysis
 
     result = await get_detailed_analysis(symbol)
     return DetailedAnalysisResponse(

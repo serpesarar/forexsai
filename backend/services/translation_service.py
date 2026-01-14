@@ -6,7 +6,7 @@ from typing import List
 
 import httpx
 
-from backend.config import settings
+from config import settings
 
 
 _cache: dict[tuple[str, str], str] = {}

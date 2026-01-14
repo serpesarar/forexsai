@@ -43,7 +43,7 @@ async def get_prediction(symbol: str):
     
     Returns direction (BUY/SELL/HOLD), confidence, pip targets, and analysis.
     """
-    from backend.services.ml_prediction_service import get_ml_prediction
+    from services.ml_prediction_service import get_ml_prediction
     
     result = await get_ml_prediction(symbol)
     
@@ -73,7 +73,7 @@ async def get_prediction(symbol: str):
 @router.get("/", response_model=List[PredictionResponse])
 async def get_all_predictions():
     """Get predictions for both NASDAQ and XAUUSD."""
-    from backend.services.ml_prediction_service import get_ml_prediction
+    from services.ml_prediction_service import get_ml_prediction
     
     nasdaq = await get_ml_prediction("NDX.INDX")
     xauusd = await get_ml_prediction("XAUUSD")

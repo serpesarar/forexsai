@@ -8,10 +8,10 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-from backend.database.supabase_client import get_supabase_client, is_db_available
-from backend.services.data_fetcher import fetch_latest_price
-from backend.services.prediction_logger import mark_prediction_checked
-from backend.services.target_config import (
+from database.supabase_client import get_supabase_client, is_db_available
+from services.data_fetcher import fetch_latest_price
+from services.prediction_logger import mark_prediction_checked
+from services.target_config import (
     get_symbol_config,
     calculate_target_prices,
     calculate_stoploss_price,

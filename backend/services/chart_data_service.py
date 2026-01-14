@@ -8,8 +8,8 @@ from typing import List
 import httpx
 import numpy as np
 
-from backend.config import settings
-from backend.models.chart import ChartCandle, SupportResistanceLevel
+from config import settings
+from models.chart import ChartCandle, SupportResistanceLevel
 
 _TIMEFRAME_MINUTES = {
     "5m": 5,

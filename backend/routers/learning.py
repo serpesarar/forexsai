@@ -8,16 +8,16 @@ from fastapi import APIRouter, Query
 from typing import Optional, List
 from pydantic import BaseModel
 
-from backend.database.supabase_client import is_db_available
-from backend.services.prediction_logger import get_recent_predictions
-from backend.services.outcome_tracker import (
+from database.supabase_client import is_db_available
+from services.prediction_logger import get_recent_predictions
+from services.outcome_tracker import (
     check_pending_outcomes,
     get_accuracy_summary,
     get_multi_target_accuracy,
     check_multi_target_outcome,
 )
-from backend.services.target_config import get_symbol_config, SYMBOL_CONFIGS
-from backend.services.learning_analyzer import (
+from services.target_config import get_symbol_config, SYMBOL_CONFIGS
+from services.learning_analyzer import (
     analyze_factor_correlations,
     generate_learning_insights,
     save_insights_to_db,
