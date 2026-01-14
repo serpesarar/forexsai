@@ -31,6 +31,10 @@ export default function CircularProgress({
   const circumference = 2 * Math.PI * radius;
   const clampedValue = Math.min(100, Math.max(0, value));
   const offset = circumference - (clampedValue / 100) * circumference;
+  const displayText = sublabel ?? `${Math.round(clampedValue)}%`;
+  const displayLen = String(displayText).length;
+  const baseFontPx = Math.min(22, Math.max(11, Math.round(size * 0.18)));
+  const fontPx = Math.max(10, baseFontPx - (displayLen >= 7 ? 2 : displayLen >= 9 ? 3 : 0));
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -70,8 +74,8 @@ export default function CircularProgress({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="text-lg font-semibold text-textPrimary font-mono">
-            {sublabel ?? `${Math.round(clampedValue)}%`}
+          <span className="font-semibold text-textPrimary font-mono" style={{ fontSize: fontPx, lineHeight: 1.1 }}>
+            {displayText}
           </span>
         </div>
       </button>

@@ -144,7 +144,8 @@ export function useChartData(symbol: string, timeframe: ChartTimeframe) {
       fetcher<ChartDataResponse>(
         `/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=${timeframe}&limit=500`
       ),
-    refetchInterval: 5000,
+    // IMPORTANT: avoid burning through EODHD quotas; charts don't need 5s polling.
+    refetchInterval: 60000,
     refetchIntervalInBackground: true
   });
 

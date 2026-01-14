@@ -12,6 +12,7 @@ from backend.services.ml_service import run_nasdaq_signal, run_xauusd_signal
 from backend.services.pattern_analyzer import run_claude_pattern_analysis
 from backend.services.sentiment_analyzer import run_claude_sentiment
 from backend.services.rtyhiim_service import run_rtyhiim_detector
+from backend.services.data_fetcher import fetch_eod_candles
 
 
 @dataclass
@@ -29,13 +30,14 @@ class OrderBlockService:
         self._lock = Lock()
 
     async def detect(self, symbol: str, timeframe: str, limit: int, config: OrderBlockConfig) -> dict:
-        cache_key = f"{symbol}:{timeframe}:{limit}:{config}"  # noqa: S608 - cache key
+        # bump cache version whenever detection inputs/logic changes
+        cache_key = f"v2:{symbol}:{timeframe}:{limit}:{config}"  # noqa: S608 - cache key
         with self._lock:
             cached = self._cache.get(cache_key)
             if cached and datetime.utcnow() - cached.timestamp < self.ttl:
                 return cached.payload
 
-        candles = self._generate_candles(limit)
+        candles = await self._load_candles(symbol=symbol, limit=limit)
         detector = OrderBlockDetector(config)
         order_blocks = detector.detect(candles)
 
@@ -69,6 +71,7 @@ class OrderBlockService:
 
     def check_entry(self, symbol: str, timeframe: str, order_block_index: int) -> dict:
         config = OrderBlockConfig()
+        # Best-effort: use cached/synthetic candles for check-entry if live candles unavailable.
         candles = self._generate_candles(300)
         detector = OrderBlockDetector(config)
         order_blocks = detector.detect(candles)
@@ -109,7 +112,7 @@ class OrderBlockService:
             ml = run_xauusd_signal()
         else:
             ml = run_nasdaq_signal()
-        claude = run_claude_pattern_analysis("NDX.INDX", ["5m"])
+        claude = await run_claude_pattern_analysis("NDX.INDX", ["1d"])
         sentiment = await run_claude_sentiment()
         rtyhiim = run_rtyhiim_detector(symbol, "1m")
 
@@ -126,6 +129,28 @@ class OrderBlockService:
                 f"RTYHIIM rhythm: {rtyhiim['state']['pattern_type']}",
             ],
         }
+
+    async def _load_candles(self, symbol: str, limit: int) -> List[Candle]:
+        """
+        Load real candles (EOD) when possible; fall back to synthetic only if unavailable.
+        """
+        eod = await fetch_eod_candles(symbol, limit=limit)
+        if eod:
+            candles: List[Candle] = []
+            for idx, row in enumerate(eod):
+                # Use idx as timestamp for detector (it only needs ordering)
+                candles.append(
+                    Candle(
+                        timestamp=float(idx),
+                        open=float(row["open"]),
+                        high=float(row["high"]),
+                        low=float(row["low"]),
+                        close=float(row["close"]),
+                        volume=float(row.get("volume") or 0.0),
+                    )
+                )
+            return candles
+        return self._generate_candles(limit)
 
     def _generate_candles(self, limit: int) -> List[Candle]:
         prices = np.cumsum(np.random.normal(scale=0.8, size=limit)) + 21500

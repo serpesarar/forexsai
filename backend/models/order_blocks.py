@@ -15,20 +15,20 @@ class OrderBlockConfigRequest(BaseModel):
 
 class OrderBlockDetectRequest(BaseModel):
     symbol: str = "NDX.INDX"
-    timeframe: Literal["5m", "15m", "1h", "4h"] = "5m"
+    timeframe: Literal["5m", "15m", "30m", "1h", "4h", "1d"] = "5m"
     limit: int = Field(default=500, ge=50, le=500)
     config: OrderBlockConfigRequest | None = None
 
 
 class OrderBlockEntryRequest(BaseModel):
     symbol: str
-    timeframe: Literal["5m", "15m", "1h", "4h"]
+    timeframe: Literal["5m", "15m", "30m", "1h", "4h", "1d"]
     order_block_index: int
 
 
 class OrderBlockBacktestRequest(BaseModel):
     symbol: str
-    timeframe: Literal["5m", "15m", "1h", "4h"]
+    timeframe: Literal["5m", "15m", "30m", "1h", "4h", "1d"]
     start_date: str
     end_date: str
     config: OrderBlockConfigRequest | None = None

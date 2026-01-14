@@ -12,7 +12,7 @@ export default function ClaudePatternPanel() {
     timeframes: [...timeframes]
   });
 
-  const activeData = data?.analyses?.[active];
+  const activeData = (data as any)?.analyses?.[active];
 
   return (
     <div className="glass-card p-6 space-y-4">

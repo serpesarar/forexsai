@@ -39,9 +39,13 @@ export default function ChartOverlays({ chart, candleSeries, candles, orderBlock
       if (!start) return;
       const series = chart.addBaselineSeries({
         baseValue: { type: "price", price: block.zone_low },
-        topFillColor: block.type === "bullish" ? "rgba(38,166,154,0.2)" : "rgba(239,83,80,0.2)",
-        bottomFillColor: block.type === "bullish" ? "rgba(38,166,154,0.2)" : "rgba(239,83,80,0.2)",
-        lineWidth: 0,
+        topFillColor1: block.type === "bullish" ? "rgba(38,166,154,0.2)" : "rgba(239,83,80,0.2)",
+        topFillColor2: block.type === "bullish" ? "rgba(38,166,154,0.2)" : "rgba(239,83,80,0.2)",
+        bottomFillColor1: block.type === "bullish" ? "rgba(38,166,154,0.2)" : "rgba(239,83,80,0.2)",
+        bottomFillColor2: block.type === "bullish" ? "rgba(38,166,154,0.2)" : "rgba(239,83,80,0.2)",
+        lineWidth: 1,
+        topLineColor: "transparent",
+        bottomLineColor: "transparent",
         priceLineVisible: false,
         lastValueVisible: false,
       });
@@ -67,10 +71,13 @@ export default function ChartOverlays({ chart, candleSeries, candles, orderBlock
       if (!start) return;
       const series = chart.addBaselineSeries({
         baseValue: { type: "price", price: pattern.stop_loss },
-        topFillColor: "rgba(255,167,38,0.15)",
-        bottomFillColor: "rgba(255,167,38,0.15)",
+        topFillColor1: "rgba(255,167,38,0.15)",
+        topFillColor2: "rgba(255,167,38,0.15)",
+        bottomFillColor1: "rgba(255,167,38,0.15)",
+        bottomFillColor2: "rgba(255,167,38,0.15)",
         lineWidth: 1,
-        lineColor: "#ffa726",
+        topLineColor: "#ffa726",
+        bottomLineColor: "#ffa726",
         priceLineVisible: false,
         lastValueVisible: false,
       });

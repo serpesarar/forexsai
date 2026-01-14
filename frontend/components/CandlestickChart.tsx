@@ -36,6 +36,7 @@ interface CandlestickChartProps {
   }>;
   emaData: Record<number, (number | null)[]>;
   onLegendChange?: (value: LegendPoint | null) => void;
+  height?: number;
 }
 
 const EMA_COLORS: Record<number, string> = {
@@ -51,6 +52,7 @@ export default function CandlestickChart({
   patterns,
   emaData,
   onLegendChange,
+  height = 520,
 }: CandlestickChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [chart, setChart] = useState<IChartApi | null>(null);
@@ -75,7 +77,7 @@ export default function CandlestickChart({
     if (!containerRef.current || chart) return;
 
     const chartInstance = createChart(containerRef.current, {
-      height: 520,
+      height,
       layout: {
         background: { type: ColorType.Solid, color: "#0a0e27" },
         textColor: "#d1d4dc",
@@ -102,7 +104,9 @@ export default function CandlestickChart({
     const volumeSeries = chartInstance.addHistogramSeries({
       color: "rgba(255,255,255,0.2)",
       priceFormat: { type: "volume" },
-      priceScaleId: "",
+      priceScaleId: "volume",
+    });
+    chartInstance.priceScale("volume").applyOptions({
       scaleMargins: { top: 0.8, bottom: 0 },
     });
     volumeSeriesRef.current = volumeSeries;

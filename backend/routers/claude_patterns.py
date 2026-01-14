@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
 from backend.models.responses import ClaudePatternsResponse
@@ -13,8 +13,8 @@ class ClaudePatternRequest(BaseModel):
 
 
 @router.post("/analyze-patterns", response_model=ClaudePatternsResponse)
-async def analyze_patterns(payload: ClaudePatternRequest) -> ClaudePatternsResponse:
-    result = run_claude_pattern_analysis(payload.symbol, payload.timeframes)
+async def analyze_patterns(payload: ClaudePatternRequest, lang: str = Query(default="en")) -> ClaudePatternsResponse:
+    result = await run_claude_pattern_analysis(payload.symbol, payload.timeframes, lang=lang)
     return ClaudePatternsResponse(
         analyses=result["analyses"],
         current_price=result["current_price"],

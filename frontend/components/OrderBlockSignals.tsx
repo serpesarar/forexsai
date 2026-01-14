@@ -20,27 +20,50 @@ export default function OrderBlockSignals({ signals }: Props) {
   }
 
   return (
-    <div className="space-y-3">
-      {signals.map((signal) => (
+    <div className="space-y-3 max-h-72 overflow-auto pr-1">
+      {signals.slice(0, 4).map((signal) => (
         <div key={signal.order_block_index} className="border border-white/10 rounded-xl p-4 bg-white/5">
-          <div className="flex items-center justify-between">
-            <p className="font-semibold">🚀 OB ENTRY SIGNAL</p>
-            <span className="text-xs text-textSecondary">#{signal.order_block_index}</span>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold">🚀 OB Entry #{signal.order_block_index}</p>
+            <span className="text-xs px-3 py-1 bg-accent/20 text-accent rounded-full font-medium">
+              {signal.entry_type}
+            </span>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-xs mt-2">
-            <div>Type: {signal.entry_type}</div>
-            <div>Entry: {signal.entry_price.toFixed(2)}</div>
-            <div>Stop: {signal.stop_loss.toFixed(2)}</div>
-            <div>Target: {signal.take_profit.toFixed(2)}</div>
-            <div>RR: 1:{signal.risk_reward.toFixed(2)}</div>
-            <div>Conf: {Math.round(signal.confidence * 100)}%</div>
+          <div className="mt-4 space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-textSecondary">Entry Price</span>
+              <span className="font-mono font-medium">{signal.entry_price.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-textSecondary">Stop Loss</span>
+              <span className="font-mono font-medium text-danger">{signal.stop_loss.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-textSecondary">Take Profit</span>
+              <span className="font-mono font-medium text-success">{signal.take_profit.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-textSecondary">Risk/Reward</span>
+              <span className="font-mono font-medium">1:{signal.risk_reward.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-textSecondary">Confidence</span>
+              <span className="font-mono font-medium">{Math.round(signal.confidence * 100)}%</span>
+            </div>
           </div>
-          <div className="flex gap-2 mt-3">
-            <button className="px-3 py-1 rounded-full bg-success/20 text-success text-xs">Open Trade</button>
-            <button className="px-3 py-1 rounded-full bg-white/10 text-xs">Dismiss</button>
+          <div className="flex gap-3 mt-4">
+            <button className="flex-1 px-4 py-2 rounded-full bg-success/20 text-success text-sm font-medium hover:bg-success/30 transition">
+              Open Trade
+            </button>
+            <button className="px-4 py-2 rounded-full bg-white/10 text-sm hover:bg-white/20 transition">
+              Dismiss
+            </button>
           </div>
         </div>
       ))}
+      {signals.length > 4 && (
+        <p className="text-sm text-textSecondary text-center py-2">+{signals.length - 4} more signals</p>
+      )}
     </div>
   );
 }

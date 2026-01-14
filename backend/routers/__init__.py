@@ -1,14 +1,4 @@
-from backend.routers import (
-    claude_patterns,
-    claude_sentiment,
-    chart_data,
-    nasdaq,
-    news,
-    order_blocks,
-    pattern_engine,
-    rtyhiim,
-    xauusd,
-)
+from backend.routers import nasdaq, xauusd, pattern_engine, claude_patterns, claude_sentiment, order_blocks, rtyhiim, news, ta, data, prediction, ai_analysis, learning, fvg
 
 __all__ = [
     "nasdaq",
@@ -18,6 +8,11 @@ __all__ = [
     "claude_sentiment",
     "order_blocks",
     "rtyhiim",
-    "chart_data",
     "news",
+    "ta",
+    "data",
+    "prediction",
+    "ai_analysis",
+    "learning",
+    "fvg",
 ]
