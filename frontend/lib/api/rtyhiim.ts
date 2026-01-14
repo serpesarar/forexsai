@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${endpoint}`, {
@@ -18,7 +18,8 @@ export function useRtyhiimDetect(symbol: string = "NDX.INDX") {
   return useQuery({
     queryKey: ["rtyhiim", symbol],
     queryFn: () => fetcher(`/api/rtyhiim/detect?symbol=${encodeURIComponent(symbol)}`, { method: "POST", body: "{}" }),
-    staleTime: 300000
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    staleTime: 15000
   });
 }
 
