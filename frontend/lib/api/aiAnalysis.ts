@@ -80,20 +80,24 @@ async function fetchAllAIAnalysis(): Promise<FullAnalysisData[]> {
   return res.json();
 }
 
-export function useAIAnalysis(symbol: string) {
+export function useAIAnalysis(symbol: string, enabled: boolean = false) {
   return useQuery({
     queryKey: ["ai-analysis", symbol],
     queryFn: () => fetchAIAnalysis(symbol),
-    refetchInterval: 120000, // Refresh every 2 minutes (Claude API is slower)
-    staleTime: 60000,
+    enabled, // Only fetch when explicitly enabled (button click)
+    refetchInterval: false, // No auto-refresh - save API calls
+    staleTime: 300000, // 5 minutes - data stays fresh longer
+    gcTime: 600000, // 10 minutes cache
   });
 }
 
-export function useAllAIAnalysis() {
+export function useAllAIAnalysis(enabled: boolean = false) {
   return useQuery({
     queryKey: ["ai-analysis", "all"],
     queryFn: fetchAllAIAnalysis,
-    refetchInterval: 120000,
-    staleTime: 60000,
+    enabled,
+    refetchInterval: false,
+    staleTime: 300000,
+    gcTime: 600000,
   });
 }

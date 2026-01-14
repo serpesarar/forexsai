@@ -55,8 +55,14 @@ function AgreementBadge({ agreement }: { agreement: boolean }) {
 }
 
 export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
-  const { data, isLoading, error, refetch } = useAIAnalysis(symbol);
+  const [shouldFetch, setShouldFetch] = useState(false);
+  const { data, isLoading, error, refetch } = useAIAnalysis(symbol, shouldFetch);
   const [expanded, setExpanded] = useState(false);
+  
+  const handleAnalyze = () => {
+    setShouldFetch(true);
+    refetch();
+  };
 
   return (
     <div className="glass-card p-8 space-y-6 rounded-2xl">
@@ -72,15 +78,24 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
           </div>
         </div>
         <button
-          onClick={() => refetch()}
-          className="p-3 rounded-xl hover:bg-white/10 transition"
+          onClick={handleAnalyze}
+          className="px-4 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 transition flex items-center gap-2"
           disabled={isLoading}
         >
-          <RefreshCw className={`w-5 h-5 ${isLoading ? "animate-spin text-purple-400" : "text-textSecondary"}`} />
+          <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""} text-purple-400`} />
+          <span className="text-sm text-purple-400 font-medium">
+            {isLoading ? "Analiz..." : shouldFetch && data ? "Yenile" : "Analiz Et"}
+          </span>
         </button>
       </div>
 
-      {isLoading ? (
+      {!shouldFetch && !data ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <Brain className="w-12 h-12 text-purple-400/50 mb-4" />
+          <p className="text-textSecondary text-sm mb-2">Claude AI analizi hazır</p>
+          <p className="text-textSecondary/70 text-xs">API tasarrufu için analiz butona basınca çalışır</p>
+        </div>
+      ) : isLoading ? (
         <div className="space-y-3">
           <div className="skeleton h-12 w-full rounded-xl" />
           <div className="skeleton h-24 w-full rounded-xl" />
