@@ -9,7 +9,8 @@ router = APIRouter(prefix="/api/run", tags=["nasdaq"])
 
 @router.post("/nasdaq", response_model=SignalResponse)
 async def run_nasdaq() -> SignalResponse:
-    current_price = await fetch_latest_price("NAS100.INDX")
+    # EODHD real-time supports NDX.INDX reliably; NAS100.INDX often returns "NA".
+    current_price = await fetch_latest_price("NDX.INDX")
     result = run_nasdaq_signal(current_price=current_price)
     return SignalResponse(
         signal=result.signal,

@@ -11,17 +11,28 @@ import {
   PlayCircle,
   RefreshCw,
   Sun,
+  Sparkles,
+  BarChart3,
 } from "lucide-react";
+import Link from "next/link";
 import CircularProgress from "../components/CircularProgress";
 import DetailPanel from "../components/DetailPanel";
 import { useDashboardStore, useDetailPanelStore } from "../lib/store";
+import { fetcher } from "../lib/api";
+import LanguageSwitcher from "../components/LanguageSwitcher";
+import { useI18nStore } from "../lib/i18n/store";
+import TradingChartWrapper from "../components/TradingChartWrapper";
+import OrderBlockPanel from "../components/OrderBlockPanel";
+import RTYHIIMDetectorPanel from "../components/RTYHIIMDetectorPanel";
+import MLPredictionPanel from "../components/MLPredictionPanel";
+import ClaudeAnalysisPanel from "../components/ClaudeAnalysisPanel";
 
-const marketTickers = [
+const initialMarketTickers = [
   { label: "NASDAQ", price: "21,547.35", change: "+1.2%", trend: "up" },
   { label: "XAU/USD", price: "2,048.50", change: "-0.3%", trend: "down" },
 ];
 
-const signalCards = [
+const initialSignalCards = [
   {
     symbol: "NASDAQ",
     currentPrice: 21547.35,
@@ -226,7 +237,7 @@ const timeframePatterns: Record<
   ],
 };
 
-const newsItems = [
+const initialNewsItems = [
   {
     title: "NASDAQ futures climb after soft CPI print",
     source: "MarketAux",
@@ -293,6 +304,12 @@ function MiniSparkline({ values, accent }: { values: number[]; accent: string })
 export default function HomePage() {
   const [activeTf, setActiveTf] = useState<(typeof timeframes)[number]>("15m");
   const [theme, setTheme] = useState<"evening" | "morning">("evening");
+  const [marketTickers, setMarketTickers] = useState(initialMarketTickers);
+  const [signalCards, setSignalCards] = useState(initialSignalCards);
+  const [newsItems, setNewsItems] = useState(initialNewsItems);
+  const [claudeSentiments, setClaudeSentiments] = useState<{ nasdaq?: any; xauusd?: any }>({});
+  const [claudePatterns, setClaudePatterns] = useState<{ nasdaq?: any; xauusd?: any }>({});
+  const [claudePatternsLoading, setClaudePatternsLoading] = useState(false);
   const {
     autoRefresh,
     toggleAutoRefresh,
@@ -303,14 +320,219 @@ export default function HomePage() {
     runCustomAnalysis,
   } = useDashboardStore();
   const { isOpen, type, symbol, data, title, open, close } = useDetailPanelStore();
+  const { t, locale } = useI18nStore();
+
+  const refreshLive = async () => {
+    try {
+      const lang = locale;
+      const [nasdaq, xauusd, news, taNasdaq, taXau] = await Promise.all([
+        fetcher<any>("/api/run/nasdaq", { method: "POST", body: "{}" }),
+        fetcher<any>("/api/run/xauusd", { method: "POST", body: "{}" }),
+        fetcher<any>(`/api/news/feed?lang=${lang}`),
+        fetcher<any>("/api/ta/snapshot?symbol=NDX.INDX"),
+        fetcher<any>("/api/ta/snapshot?symbol=XAUUSD"),
+      ]);
+      // Claude sentiment + patterns per asset (live, not mock)
+      const settled = await Promise.allSettled([
+        fetcher<any>(`/api/claude/analyze-sentiment?symbol=NDX.INDX&lang=${lang}`, { method: "POST", body: "{}" }),
+        fetcher<any>(`/api/claude/analyze-sentiment?symbol=XAUUSD&lang=${lang}`, { method: "POST", body: "{}" }),
+        fetcher<any>(`/api/claude/analyze-patterns?lang=${lang}`, {
+          method: "POST",
+          body: JSON.stringify({ symbol: "NDX.INDX", timeframes }),
+        }),
+        fetcher<any>(`/api/claude/analyze-patterns?lang=${lang}`, {
+          method: "POST",
+          body: JSON.stringify({ symbol: "XAUUSD", timeframes }),
+        }),
+      ]);
+      const [s1, s2, p1, p2] = settled;
+      if (s1.status === "fulfilled" && s2.status === "fulfilled") {
+        setClaudeSentiments({ nasdaq: s1.value, xauusd: s2.value });
+      }
+      if (p1.status === "fulfilled" && p2.status === "fulfilled") {
+        setClaudePatterns({ nasdaq: p1.value, xauusd: p2.value });
+      }
+
+      const formatPrice = (value?: number | null) =>
+        value === null || value === undefined ? "--" : value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+      setMarketTickers((prev) =>
+        prev.map((t) => {
+          if (t.label === "NASDAQ") return { ...t, price: formatPrice(nasdaq?.metrics?.current_price) };
+          if (t.label === "XAU/USD") return { ...t, price: formatPrice(xauusd?.metrics?.current_price) };
+          return t;
+        })
+      );
+
+      const toLevel = (lvl: any) => {
+        const price = Number(lvl?.price ?? 0);
+        const strength = Number(lvl?.strength ?? 0);
+        const hits = Number(lvl?.hits ?? 0);
+        return {
+          price,
+          type: lvl?.kind === "resistance" ? ("resistance" as const) : ("support" as const),
+          strength,
+          reliability: Math.min(0.98, 0.6 + strength * 0.35),
+          hits,
+          lastTouched: new Date().toISOString(),
+          distance: 0,
+          distancePct: 0,
+        };
+      };
+
+      const enrichFromTA = (card: any, ta: any) => {
+        const price = Number(ta?.current_price ?? card.currentPrice);
+        const supports = (ta?.supports ?? []).map(toLevel);
+        const resistances = (ta?.resistances ?? []).map(toLevel);
+        const sr = [...supports, ...resistances]
+          .map((lvl: any) => {
+            const distance = Number((price - lvl.price).toFixed(2));
+            const distancePct = Number(((distance / (price || 1)) * 100).toFixed(2));
+            return { ...lvl, distance, distancePct };
+          })
+          .slice(0, 4);
+
+        const nearestSupport =
+          sr
+            .filter((l: any) => l.type === "support")
+            .sort((a: any, b: any) => a.distance - b.distance)[0] ?? card.liveMetrics.nearestSupport;
+        const nearestResistance =
+          sr
+            .filter((l: any) => l.type === "resistance")
+            .sort((a: any, b: any) => b.distance - a.distance)[0] ?? card.liveMetrics.nearestResistance;
+
+        const ema20 = Number(ta?.ema?.ema20 ?? card.liveMetrics.emaDistances.ema20.emaValue);
+        const ema50 = Number(ta?.ema?.ema50 ?? card.liveMetrics.emaDistances.ema50.emaValue);
+        const ema200 = Number(ta?.ema?.ema200 ?? card.liveMetrics.emaDistances.ema200.emaValue);
+
+        return {
+          ...card,
+          currentPrice: price,
+          liveMetrics: {
+            ...card.liveMetrics,
+            supportResistance: sr.length ? sr : card.liveMetrics.supportResistance,
+            nearestSupport: { price: nearestSupport.price, distance: nearestSupport.distance, distancePct: nearestSupport.distancePct },
+            nearestResistance: {
+              price: nearestResistance.price,
+              distance: nearestResistance.distance,
+              distancePct: nearestResistance.distancePct,
+            },
+            emaDistances: {
+              ema20: { ...card.liveMetrics.emaDistances.ema20, emaValue: ema20, distance: Number((price - ema20).toFixed(2)), distancePct: Number((((price - ema20) / (price || 1)) * 100).toFixed(2)) },
+              ema50: { ...card.liveMetrics.emaDistances.ema50, emaValue: ema50, distance: Number((price - ema50).toFixed(2)), distancePct: Number((((price - ema50) / (price || 1)) * 100).toFixed(2)) },
+              ema200: { ...card.liveMetrics.emaDistances.ema200, emaValue: ema200, distance: Number((price - ema200).toFixed(2)), distancePct: Number((((price - ema200) / (price || 1)) * 100).toFixed(2)) },
+            },
+            trendChannel: {
+              ...card.liveMetrics.trendChannel,
+              trendStrength:
+                ta?.trend === "BULLISH" ? 0.75 : ta?.trend === "BEARISH" ? 0.25 : 0.5,
+            },
+          },
+        };
+      };
+
+      const applyPrice = (card: any, currentPrice?: number | null, apiSignal?: any) => {
+        const price = currentPrice ?? card.currentPrice;
+        const sr = (card.liveMetrics?.supportResistance ?? []).map((lvl: any) => {
+          const distance = Number((price - lvl.price).toFixed(2));
+          const distancePct = Number(((distance / (price || 1)) * 100).toFixed(2));
+          return { ...lvl, distance, distancePct };
+        });
+        const nearestSupport = sr.find((l: any) => l.type === "support") ?? card.liveMetrics.nearestSupport;
+        const nearestResistance = sr.find((l: any) => l.type === "resistance") ?? card.liveMetrics.nearestResistance;
+        return {
+          ...card,
+          currentPrice: price,
+          signal: apiSignal?.signal ?? card.signal,
+          confidence: apiSignal ? Math.round((apiSignal.confidence ?? 0) * 100) : card.confidence,
+          liveMetrics: {
+            ...card.liveMetrics,
+            supportResistance: sr,
+            nearestSupport: {
+              ...card.liveMetrics.nearestSupport,
+              price: nearestSupport.price,
+              distance: nearestSupport.distance,
+              distancePct: nearestSupport.distancePct,
+            },
+            nearestResistance: {
+              ...card.liveMetrics.nearestResistance,
+              price: nearestResistance.price,
+              distance: nearestResistance.distance,
+              distancePct: nearestResistance.distancePct,
+            },
+          },
+        };
+      };
+
+      setSignalCards((prev) =>
+        prev.map((card) => {
+          if (card.symbol === "NASDAQ") return enrichFromTA(applyPrice(card, nasdaq?.metrics?.current_price, nasdaq), taNasdaq);
+          if (card.symbol === "XAUUSD") return enrichFromTA(applyPrice(card, xauusd?.metrics?.current_price, xauusd), taXau);
+          return card;
+        })
+      );
+
+      const apiNews = (news?.news ?? []).slice(0, 10).map((n: any) => ({
+        title: n.title,
+        source: "MarketAux",
+        sentiment: "neutral",
+        time: locale === "tr" ? t("news.emptyTime") : "now",
+      }));
+      if (apiNews.length) {
+        setNewsItems(apiNews);
+      } else {
+        // Ensure Turkish UI doesn't show English fallback headlines
+        setNewsItems([
+          {
+            title: t("news.emptyTitle"),
+            source: t("news.emptySource"),
+            sentiment: "neutral",
+            time: t("news.emptyTime"),
+          },
+        ]);
+      }
+    } catch {
+      // keep existing UI values on error
+    }
+  };
+
+  const runClaudePatterns = async () => {
+    setClaudePatternsLoading(true);
+    try {
+      const lang = locale;
+      const [patNasdaq, patXauusd] = await Promise.all([
+        fetcher<any>(`/api/claude/analyze-patterns?lang=${lang}`, {
+          method: "POST",
+          body: JSON.stringify({ symbol: "NDX.INDX", timeframes }),
+        }),
+        fetcher<any>(`/api/claude/analyze-patterns?lang=${lang}`, {
+          method: "POST",
+          body: JSON.stringify({ symbol: "XAUUSD", timeframes }),
+        }),
+      ]);
+      setClaudePatterns({ nasdaq: patNasdaq, xauusd: patXauusd });
+    } finally {
+      setClaudePatternsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!autoRefresh) return undefined;
     const interval = setInterval(() => {
       fetchAll();
+      refreshLive();
     }, 30000);
     return () => clearInterval(interval);
   }, [autoRefresh, fetchAll]);
+
+  useEffect(() => {
+    refreshLive();
+  }, []);
+
+  // When language changes, refetch dynamic content in that language.
+  useEffect(() => {
+    refreshLive();
+  }, [locale]);
 
   useEffect(() => {
     if (theme === "morning") {
@@ -319,6 +541,131 @@ export default function HomePage() {
       document.documentElement.removeAttribute("data-theme");
     }
   }, [theme]);
+
+  const formatPctShort = (value: number) => {
+    const v = Number(value);
+    const abs = Math.abs(v);
+    if (!Number.isFinite(v)) return "--";
+    if (abs >= 1000) return ">999%";
+    return `${v.toFixed(2)}%`;
+  };
+
+  const formatSentimentLabel = (s?: string) => {
+    if (s === "BULLISH") return t("common.bullish");
+    if (s === "BEARISH") return t("common.bearish");
+    if (s === "NEUTRAL") return t("common.neutral");
+    return s ?? "--";
+  };
+
+  const renderSentimentBlock = (assetLabel: string, assetKey: "nasdaq" | "xauusd") => {
+    const d = claudeSentiments[assetKey];
+    const confidencePct = d?.confidence ? Math.round(d.confidence * 100) : 0;
+    return (
+      <div className="rounded-xl border border-white/5 bg-white/5 p-4">
+        <div className="flex items-center justify-between">
+          <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{assetLabel}</p>
+          <span className="text-xs text-textSecondary">
+            {t("common.confidence")} {confidencePct}%
+          </span>
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-4">
+          <CircularProgress
+            value={confidencePct}
+            label={formatSentimentLabel(d?.sentiment)}
+            sublabel={d?.sentiment === "BULLISH" ? "🐂" : d?.sentiment === "BEARISH" ? "🐻" : "—"}
+            isInteractive
+            onClick={() =>
+              open(
+                "trend_channel",
+                { ...signalCards[assetKey === "nasdaq" ? 0 : 1].liveMetrics.trendChannel },
+                assetKey === "nasdaq" ? "NASDAQ" : "XAUUSD",
+                `${t("sentiment.subtitle")} (${assetLabel})`
+              )
+            }
+          />
+          <div className="flex-1 space-y-3">
+            {[
+              { label: t("sentiment.up"), value: d?.probability_up ?? 0, color: "bg-success" },
+              { label: t("sentiment.down"), value: d?.probability_down ?? 0, color: "bg-danger" },
+              { label: t("common.sideways"), value: d?.probability_sideways ?? 0, color: "bg-white/40" },
+            ].map((item) => (
+              <div key={`${assetLabel}-${item.label}`}>
+                <div className="flex justify-between text-xs text-textSecondary">
+                  <span>{item.label}</span>
+                  <span className="font-mono">{item.value}%</span>
+                </div>
+                <div className="mt-1 h-2 w-full rounded-full bg-white/10">
+                  <div className={`h-2 rounded-full ${item.color}`} style={{ width: `${item.value}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        {Array.isArray(d?.key_factors) && d.key_factors.length > 0 && (
+          <div className="mt-3 space-y-1 text-xs text-textSecondary">
+            {d.key_factors.slice(0, 3).map((kf: any) => (
+              <p key={`${assetLabel}-${kf.factor}`}>• {kf.factor}: {kf.reasoning}</p>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderClaudePatternsBlock = (assetLabel: string, assetKey: "nasdaq" | "xauusd") => {
+    const d = claudePatterns[assetKey];
+    const tf = activeTf;
+    const block = d?.analyses?.[tf];
+    const patterns = block?.detected_patterns ?? [];
+    return (
+      <div className="rounded-xl border border-white/5 bg-white/5 p-4">
+        <div className="flex items-center justify-between">
+          <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{assetLabel}</p>
+          <span className="text-xs text-textSecondary">{tf}</span>
+        </div>
+        <div className="mt-3 grid gap-3">
+          {Array.isArray(patterns) && patterns.slice(0, 6).map((p: any) => (
+            <div key={`${assetLabel}-${p.pattern_name}`} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 p-3">
+              <div>
+                <p className="text-sm font-semibold">{p.pattern_name}</p>
+                <p className="text-xs text-textSecondary uppercase tracking-[0.2em]">{p.signal}</p>
+              </div>
+              <CircularProgress
+                value={Number(p.completion_percentage ?? 0)}
+                size={48}
+                strokeWidth={6}
+                colorClassName={
+                  p.signal === "bullish"
+                    ? "text-success"
+                    : p.signal === "bearish"
+                      ? "text-danger"
+                      : "text-accent"
+                }
+                isInteractive
+                onClick={() =>
+                  open(
+                    "trend_channel",
+                    { ...signalCards[assetKey === "nasdaq" ? 0 : 1].liveMetrics.trendChannel },
+                    assetKey === "nasdaq" ? "NASDAQ" : "XAUUSD",
+                    `Pattern: ${p.pattern_name} (${assetLabel})`
+                  )
+                }
+              />
+            </div>
+          ))}
+          {!block && (
+            <div className="text-xs text-textSecondary">{t("claudePatterns.analyzing")}</div>
+          )}
+        </div>
+        {block?.summary && (
+          <div className="mt-3 text-xs text-textSecondary">
+            <p className="font-semibold">{block.recommendation}</p>
+            <p className="mt-1">{block.summary}</p>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background text-textPrimary">
@@ -329,8 +676,8 @@ export default function HomePage() {
               <Activity className="h-4 w-4 text-accent" />
             </div>
             <div>
-              <p className="text-sm font-semibold">AI Trading Dashboard</p>
-              <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">NASDAQ + XAUUSD</p>
+              <p className="text-sm font-semibold">{t("header.title")}</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("header.subtitle")}</p>
             </div>
           </div>
 
@@ -349,12 +696,19 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <Link
+              href="/trading"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-accent/20 to-purple-500/20 border border-accent/30 px-4 py-2 text-sm font-semibold text-accent hover:from-accent/30 hover:to-purple-500/30 transition-all duration-200 hover:scale-[1.02]"
+            >
+              <BarChart3 className="h-4 w-4" />
+              AI Trading Panel
+            </Link>
             <button
               onClick={fetchAll}
               className="gradient-button flex items-center gap-2 text-xs uppercase tracking-[0.2em]"
             >
               <PlayCircle className="h-4 w-4" />
-              {isLoading ? "Running" : "Run Analysis"}
+              {isLoading ? t("common.running") : t("common.runAnalysis")}
             </button>
             <button
               onClick={fetchAll}
@@ -367,8 +721,9 @@ export default function HomePage() {
               className="flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-textSecondary transition hover:border-white/30"
             >
               {theme === "evening" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-              {theme === "evening" ? "Morning" : "Evening"}
+              {theme === "evening" ? t("common.morning") : t("common.evening")}
             </button>
+            <LanguageSwitcher />
             <div className="hidden items-center gap-3 text-xs text-textSecondary md:flex">
               <label className="flex items-center gap-2">
                 <input
@@ -377,11 +732,11 @@ export default function HomePage() {
                   onChange={(event) => toggleAutoRefresh(event.target.checked)}
                   className="h-4 w-4 accent-accent"
                 />
-                Auto 30s
+                {t("common.auto30s")}
               </label>
               <span className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                Live
+                {t("common.live")}
               </span>
             </div>
           </div>
@@ -394,7 +749,7 @@ export default function HomePage() {
             <div key={signal.symbol} className="glass-card card-hover p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">Signal</p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("common.signal")}</p>
                   <h3 className="mt-2 text-lg font-semibold">{signal.symbol}</h3>
                 </div>
                 <span
@@ -525,9 +880,9 @@ export default function HomePage() {
                     <div key={`${signal.symbol}-${metric.label}-${index}`} className="rounded-lg border border-white/5 bg-white/5 p-3">
                       <CircularProgress
                         value={Math.min(Math.abs(metric.detail.distancePct) * 40, 100)}
-                        size={48}
-                        strokeWidth={6}
-                        sublabel={`${metric.detail.distancePct}%`}
+                        size={64}
+                        strokeWidth={8}
+                        sublabel={formatPctShort(metric.detail.distancePct)}
                         isInteractive
                         onClick={() =>
                           open(detailType, detailData, signal.symbol as "NASDAQ" | "XAUUSD", detailTitle)
@@ -583,15 +938,15 @@ export default function HomePage() {
           <div className="glass-card card-hover p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">Pattern Engine</p>
-                <h3 className="mt-2 text-lg font-semibold">NASDAQ + XAUUSD Top 30</h3>
+                <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("patternEngine.title")}</p>
+                <h3 className="mt-2 text-lg font-semibold">{t("patternEngine.subtitle")}</h3>
               </div>
-              <span className="text-xs text-textSecondary">Updated 4m ago</span>
+              <span className="text-xs text-textSecondary">{t("common.updated")} 4m {t("common.ago")}</span>
             </div>
             <div className="mt-4 space-y-6">
               {[
-                { title: "NASDAQ Patterns", subtitle: "Top 30 candidates", rows: nasdaqPatterns },
-                { title: "XAUUSD Patterns", subtitle: "Top 30 candidates", rows: xauusdPatterns },
+                { title: t("patternEngine.nasdaqPatterns"), subtitle: t("patternEngine.top30Candidates"), rows: nasdaqPatterns },
+                { title: t("patternEngine.xauusdPatterns"), subtitle: t("patternEngine.top30Candidates"), rows: xauusdPatterns },
               ].map((section) => (
                 <div key={section.title}>
                   <div className="flex items-center justify-between">
@@ -604,10 +959,10 @@ export default function HomePage() {
                     <table className="w-full text-left text-xs">
                       <thead className="sticky top-0 bg-background/80 text-textSecondary">
                         <tr>
-                          <th className="py-2">Pattern</th>
-                          <th className="py-2">p_success</th>
-                          <th className="py-2">Trade</th>
-                          <th className="py-2">Stage</th>
+                          <th className="py-2">{t("common.pattern")}</th>
+                          <th className="py-2">{t("patternEngine.pSuccess")}</th>
+                          <th className="py-2">{t("common.trade")}</th>
+                          <th className="py-2">{t("common.stage")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -645,15 +1000,15 @@ export default function HomePage() {
           <div className="glass-card card-hover p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">Claude Patterns</p>
-                <h3 className="mt-2 text-lg font-semibold">Multi-timeframe Insights</h3>
+                <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("claudePatterns.title")}</p>
+                <h3 className="mt-2 text-lg font-semibold">{t("claudePatterns.subtitle")}</h3>
               </div>
               <button
-                onClick={runCustomAnalysis}
+                onClick={runClaudePatterns}
                 className="flex items-center gap-2 rounded-full border border-accent/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-accent"
               >
                 <Brain className="h-4 w-4" />
-                {customAnalysisLoading ? "Analyzing" : "Analyze Custom"}
+                {claudePatternsLoading ? t("claudePatterns.analyzing") : t("claudePatterns.analyzeCustom")}
               </button>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -671,45 +1026,13 @@ export default function HomePage() {
                 </button>
               ))}
             </div>
-            <div className="mt-4 grid gap-3">
-              {timeframePatterns[activeTf].map((pattern) => (
-                <div
-                  key={pattern.name}
-                  className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 p-3"
-                >
-                  <div>
-                    <p className="text-sm font-semibold">{pattern.name}</p>
-                    <p className="text-xs text-textSecondary uppercase tracking-[0.2em]">{pattern.signal}</p>
-                  </div>
-                  <CircularProgress
-                    value={pattern.completion}
-                    size={48}
-                    strokeWidth={6}
-                    colorClassName={
-                      pattern.signal === "bullish"
-                        ? "text-success"
-                        : pattern.signal === "bearish"
-                          ? "text-danger"
-                          : "text-accent"
-                    }
-                    isInteractive
-                    onClick={() =>
-                      open(
-                        "trend_channel",
-                        {
-                          ...signalCards[0].liveMetrics.trendChannel,
-                        },
-                        "NASDAQ",
-                        `Pattern Confidence: ${pattern.name}`
-                      )
-                    }
-                  />
-                </div>
-              ))}
+            <div className="mt-4 space-y-4">
+              {renderClaudePatternsBlock("NASDAQ", "nasdaq")}
+              {renderClaudePatternsBlock("XAUUSD", "xauusd")}
             </div>
             {customAnalysis && (
               <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4 text-xs">
-                <p className="text-sm font-semibold text-accent">Custom Analysis (Last 100 candles)</p>
+                <p className="text-sm font-semibold text-accent">{t("customAnalysis.title")}</p>
                 <p className="mt-2 text-textSecondary">{customAnalysis.summary}</p>
                 <ul className="mt-3 space-y-1 text-textSecondary">
                   {customAnalysis.insights.map((insight) => (
@@ -725,58 +1048,24 @@ export default function HomePage() {
           <div className="glass-card card-hover p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">Sentiment</p>
-                <h3 className="mt-2 text-lg font-semibold">Claude Interpretation</h3>
+                <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("sentiment.title")}</p>
+                <h3 className="mt-2 text-lg font-semibold">{t("sentiment.subtitle")}</h3>
               </div>
-              <span className="text-xs text-textSecondary">Confidence 85%</span>
+              <span className="text-xs text-textSecondary">{t("common.live")}</span>
             </div>
-            <div className="mt-4 flex items-center justify-between gap-4">
-              <CircularProgress
-                value={85}
-                label="Bullish"
-                sublabel="🐂"
-                isInteractive
-                onClick={() =>
-                  open(
-                    "trend_channel",
-                    { ...signalCards[0].liveMetrics.trendChannel },
-                    "NASDAQ",
-                    "Sentiment Trend Strength"
-                  )
-                }
-              />
-              <div className="flex-1 space-y-3">
-                {[
-                  { label: "Up", value: 60, color: "bg-success" },
-                  { label: "Down", value: 30, color: "bg-danger" },
-                  { label: "Sideways", value: 10, color: "bg-white/40" },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <div className="flex justify-between text-xs text-textSecondary">
-                      <span>{item.label}</span>
-                      <span className="font-mono">{item.value}%</span>
-                    </div>
-                    <div className="mt-1 h-2 w-full rounded-full bg-white/10">
-                      <div className={`h-2 rounded-full ${item.color}`} style={{ width: `${item.value}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="mt-4 space-y-1 text-xs text-textSecondary">
-              <p>• News flow: tech earnings positive</p>
-              <p>• Volatility: declining across indices</p>
-              <p>• Macro: inflation easing narrative</p>
+            <div className="mt-4 space-y-4">
+              {renderSentimentBlock("NASDAQ", "nasdaq")}
+              {renderSentimentBlock("XAUUSD", "xauusd")}
             </div>
           </div>
 
           <div className="glass-card card-hover p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">MarketAux</p>
-                <h3 className="mt-2 text-lg font-semibold">Live News Feed</h3>
+                <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("news.title")}</p>
+                <h3 className="mt-2 text-lg font-semibold">{t("news.subtitle")}</h3>
               </div>
-              <span className="text-xs text-textSecondary">30 headlines</span>
+              <span className="text-xs text-textSecondary">30 {t("news.headlines")}</span>
             </div>
             <div className="mt-4 max-h-[300px] space-y-3 overflow-y-auto">
               {newsItems.map((item) => (
@@ -802,25 +1091,80 @@ export default function HomePage() {
             </div>
           </div>
 
-          {["NASDAQ", "XAUUSD"].map((symbol, index) => (
-            <div key={symbol} className="glass-card card-hover p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">Chart</p>
-                  <h3 className="mt-2 text-lg font-semibold">{symbol} Candlestick</h3>
+          {/* ML Prediction & Claude AI Section - Full Width Cards */}
+          <div className="md:col-span-2 lg:col-span-3">
+            <div className="flex items-center gap-3 mb-4">
+              <Brain className="h-5 w-5 text-accent" />
+              <h2 className="text-lg font-bold">AI Tahmin Panelleri</h2>
+              <Link
+                href="/trading"
+                className="ml-auto flex items-center gap-2 text-sm text-accent hover:underline"
+              >
+                <Sparkles className="h-4 w-4" />
+                Tam Ekran Görünüm →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+              {/* NASDAQ Panels */}
+              <div className="space-y-6">
+                <div className="relative">
+                  <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 blur-sm" />
+                  <div className="relative">
+                    <MLPredictionPanel symbol="NDX.INDX" symbolLabel="NASDAQ" />
+                  </div>
                 </div>
-                <span className="text-xs text-textSecondary">Highcharts Dark</span>
-              </div>
-              <div className="mt-4 h-[300px] rounded-xl border border-white/5 bg-gradient-to-br from-white/5 to-transparent">
-                <div className="flex h-full items-center justify-center text-xs uppercase tracking-[0.3em] text-textSecondary">
-                  Candlestick chart placeholder
+                <div className="relative">
+                  <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-sm" />
+                  <div className="relative">
+                    <ClaudeAnalysisPanel symbol="NDX.INDX" symbolLabel="NASDAQ" />
+                  </div>
                 </div>
               </div>
-              <div className="mt-4">
-                <MiniSparkline values={miniSeries[index]} accent={index === 0 ? "#10b981" : "#ef4444"} />
+              {/* XAUUSD Panels */}
+              <div className="space-y-6">
+                <div className="relative">
+                  <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 blur-sm" />
+                  <div className="relative">
+                    <MLPredictionPanel symbol="XAUUSD" symbolLabel="XAUUSD" />
+                  </div>
+                </div>
+                <div className="relative">
+                  <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-sm" />
+                  <div className="relative">
+                    <ClaudeAnalysisPanel symbol="XAUUSD" symbolLabel="XAUUSD" />
+                  </div>
+                </div>
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Order Block & Rhythm Detector Section - Full Width Stacked */}
+          <div className="md:col-span-2 lg:col-span-3">
+            <OrderBlockPanel symbol="NDX.INDX" symbolLabel="NASDAQ" />
+          </div>
+          <div className="md:col-span-2 lg:col-span-3">
+            <OrderBlockPanel symbol="XAUUSD" symbolLabel="XAUUSD" />
+          </div>
+          <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <RTYHIIMDetectorPanel symbol="NDX.INDX" symbolLabel="NASDAQ" />
+            <RTYHIIMDetectorPanel symbol="XAUUSD" symbolLabel="XAUUSD" />
+          </div>
+
+          {/* Charts Section */}
+          <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <TradingChartWrapper 
+              symbol="NDX.INDX" 
+              symbolLabel="NASDAQ" 
+              timeframe="1d" 
+              height={350} 
+            />
+            <TradingChartWrapper 
+              symbol="XAUUSD" 
+              symbolLabel="XAUUSD" 
+              timeframe="1d" 
+              height={350} 
+            />
+          </div>
         </div>
       </main>
 

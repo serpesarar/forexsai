@@ -38,7 +38,7 @@ export default function NasdaqPanel() {
       ) : (
         <>
           <div className="flex items-center gap-3">
-            <Badge label={data.signal} />
+            <Badge label={(data as any).signal} />
             <span className="text-sm text-textSecondary">Confidence</span>
             <div className="flex-1 h-2 bg-white/10 rounded-full">
               <div className="h-2 rounded-full bg-success" style={{ width: `${data.confidence * 100}%` }} />
