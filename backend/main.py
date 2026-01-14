@@ -1,12 +1,19 @@
 from datetime import datetime
 import time
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
 
-# Load .env file from project root
-env_path = Path(__file__).parent.parent / ".env"
-load_dotenv(env_path)
+# Load .env file - try multiple locations
+env_paths = [
+    Path(__file__).parent / ".env",  # backend/.env
+    Path(__file__).parent.parent / ".env",  # project root/.env
+]
+for env_path in env_paths:
+    if env_path.exists():
+        load_dotenv(env_path)
+        break
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,9 +46,11 @@ from order_block_detector import OrderBlockConfig
 
 app = FastAPI(title="AI Trading Dashboard API", version="0.1.0")
 
+# CORS - allow all origins for production
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],  # Allow all origins for now
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
