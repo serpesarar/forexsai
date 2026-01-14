@@ -4,6 +4,12 @@ builder = "NIXPACKS"
 [build.nixpacks]
 providers = ["node"]
 
+[build.nixpacks.phases.setup]
+nixPkgs = ["nodejs_20", "npm"]
+
+[build.nixpacks.phases.build]
+cmds = ["npm ci", "npm run build"]
+
 [deploy]
 startCommand = "npm start"
 restartPolicyType = "ON_FAILURE"
