@@ -102,6 +102,9 @@ async def debug_info():
         "env_vars": {
             "EODHD_API_KEY": "set" if os.getenv("EODHD_API_KEY") else "not set",
             "ANTHROPIC_API_KEY": "set" if os.getenv("ANTHROPIC_API_KEY") else "not set",
+            "SUPABASE_URL": "set" if os.getenv("SUPABASE_URL") else "not set",
+            "SUPABASE_KEY": "set" if os.getenv("SUPABASE_KEY") else "not set",
+            "SUPABASE_ANON_KEY": "set" if os.getenv("SUPABASE_ANON_KEY") else "not set",
         }
     }
 
