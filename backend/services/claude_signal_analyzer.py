@@ -398,8 +398,8 @@ async def get_full_analysis(symbol: str) -> dict:
     """
     Get ML prediction and Claude analysis together.
     """
-    from backend.services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
-    from backend.services.data_fetcher import fetch_eod_candles, fetch_latest_price
+    from services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
+    from services.data_fetcher import fetch_eod_candles, fetch_latest_price
     import numpy as np
     
     # Get ML prediction

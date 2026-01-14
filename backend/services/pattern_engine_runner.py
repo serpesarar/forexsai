@@ -6,7 +6,7 @@ from typing import List
 
 import httpx
 
-from backend.config import settings
+from config import settings
 
 
 def _path_exists(path: str) -> bool:

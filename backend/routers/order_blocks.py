@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from backend.models.order_blocks import (
+from models.order_blocks import (
     OrderBlockBacktestRequest,
     OrderBlockBacktestResponse,
     OrderBlockDetectRequest,
@@ -8,8 +8,8 @@ from backend.models.order_blocks import (
     OrderBlockEntryRequest,
     OrderBlockEntryResponse,
 )
-from backend.order_block_detector import OrderBlockConfig
-from backend.services.order_block_service import service
+from order_block_detector import OrderBlockConfig
+from services.order_block_service import service
 
 router = APIRouter(prefix="/api/order-blocks", tags=["order_blocks"])
 

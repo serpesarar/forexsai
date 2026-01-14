@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Query
 
-from backend.services.ta_service import compute_ta_snapshot
+from services.ta_service import compute_ta_snapshot
 
 
 router = APIRouter(prefix="/api/ta", tags=["ta"])

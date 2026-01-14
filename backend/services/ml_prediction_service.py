@@ -501,7 +501,7 @@ def _build_feature_vector(symbol: str, ta: dict, candles: list) -> Optional[np.n
 
 async def get_ml_prediction(symbol: str) -> PredictionResult:
     """Get ML prediction for symbol with direction and pip targets."""
-    from backend.services.data_fetcher import fetch_eod_candles, fetch_latest_price
+    from services.data_fetcher import fetch_eod_candles, fetch_latest_price
     
     # Normalize symbol
     normalized_symbol = "NDX.INDX" if symbol.upper() in ["NASDAQ", "NDX.INDX", "NDX"] else symbol.upper()

@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List
 
-from backend.config import settings
+from config import settings
 
 
 @dataclass

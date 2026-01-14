@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 
-from backend.models.chart import ChartDataResponse
-from backend.services.chart_data_service import build_support_resistance, fetch_ohlcv_data
+from models.chart import ChartDataResponse
+from services.chart_data_service import build_support_resistance, fetch_ohlcv_data
 
 router = APIRouter(prefix="/api/data", tags=["chart_data"])
 

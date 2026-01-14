@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-from backend.database.supabase_client import get_supabase_client, is_db_available
+from database.supabase_client import get_supabase_client, is_db_available
 
 logger = logging.getLogger(__name__)
 

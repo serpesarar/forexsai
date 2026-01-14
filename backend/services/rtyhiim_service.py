@@ -9,8 +9,8 @@ import sys
 import numpy as np
 import httpx
 
-from backend.models.rtyhiim import RtyhiimPrediction, RtyhiimResponse, RtyhiimState
-from backend.config import settings
+from models.rtyhiim import RtyhiimPrediction, RtyhiimResponse, RtyhiimState
+from config import settings
 
 
 @dataclass

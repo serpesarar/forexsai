@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Query
 from typing import Optional
 
-from backend.models.rtyhiim import RtyhiimResponse
-from backend.services.rtyhiim_service import run_rtyhiim_detector_async, detect_consolidation
+from models.rtyhiim import RtyhiimResponse
+from services.rtyhiim_service import run_rtyhiim_detector_async, detect_consolidation
 
 router = APIRouter(prefix="/api/rtyhiim", tags=["rtyhiim"])
 

@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
-from backend.config import settings
+from config import settings
 
 
 def _normalize_symbols(symbols: List[str]) -> Optional[str]:

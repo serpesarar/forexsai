@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Literal
 
 from fastapi import APIRouter, Query
 
-from backend.services.data_fetcher import fetch_eod_candles, fetch_latest_price
-from backend.services.ta_service import compute_ta_snapshot
+from services.data_fetcher import fetch_eod_candles, fetch_latest_price
+from services.ta_service import compute_ta_snapshot
 
 
 router = APIRouter(prefix="/api/data", tags=["data"])

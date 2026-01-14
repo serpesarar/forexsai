@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
-from backend.models.responses import ClaudePatternsResponse
-from backend.services.pattern_analyzer import run_claude_pattern_analysis
+from models.responses import ClaudePatternsResponse
+from services.pattern_analyzer import run_claude_pattern_analysis
 
 router = APIRouter(prefix="/api/claude", tags=["claude_patterns"])
 

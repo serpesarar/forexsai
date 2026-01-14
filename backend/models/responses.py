@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional, Dict, Any
-from backend.models.order_blocks import OrderBlockDetectResponse
-from backend.models.rtyhiim import RtyhiimResponse
+from models.order_blocks import OrderBlockDetectResponse
+from models.rtyhiim import RtyhiimResponse
 
 class HealthResponse(BaseModel):
     ok: bool = True

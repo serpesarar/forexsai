@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from backend.config import settings
-from backend.services.marketaux_service import fetch_marketaux_headlines
-from backend.services.data_fetcher import fetch_latest_price
+from config import settings
+from services.marketaux_service import fetch_marketaux_headlines
+from services.data_fetcher import fetch_latest_price
 import httpx
 import json
 

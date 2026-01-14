@@ -5,7 +5,7 @@ from typing import List, Literal, Tuple
 
 import numpy as np
 
-from backend.services.data_fetcher import fetch_eod_candles, fetch_latest_price
+from services.data_fetcher import fetch_eod_candles, fetch_latest_price
 
 
 Trend = Literal["BULLISH", "BEARISH", "NEUTRAL"]

@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 
 import httpx
 
-from backend.config import settings
+from config import settings
 
 ECONOMIC_EVENTS_URL = "https://eodhistoricaldata.com/api/economic-events"
 FINANCIAL_NEWS_URL = "https://eodhistoricaldata.com/api/news"

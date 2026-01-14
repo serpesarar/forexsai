@@ -6,8 +6,8 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Query
 
-from backend.services.marketaux_service import fetch_marketaux_headlines
-from backend.services.translation_service import translate_texts
+from services.marketaux_service import fetch_marketaux_headlines
+from services.translation_service import translate_texts
 
 
 router = APIRouter(prefix="/api/news", tags=["news"])
