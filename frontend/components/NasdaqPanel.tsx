@@ -41,40 +41,40 @@ export default function NasdaqPanel() {
             <Badge label={(data as any).signal} />
             <span className="text-sm text-textSecondary">Confidence</span>
             <div className="flex-1 h-2 bg-white/10 rounded-full">
-              <div className="h-2 rounded-full bg-success" style={{ width: `${data.confidence * 100}%` }} />
+              <div className="h-2 rounded-full bg-success" style={{ width: `${(data as any).confidence * 100}%` }} />
             </div>
-            <span className="text-sm font-semibold">{Math.round(data.confidence * 100)}%</span>
+            <span className="text-sm font-semibold">{Math.round((data as any).confidence * 100)}%</span>
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="bg-white/5 rounded-lg p-3">
               <p className="text-textSecondary">Distance to EMA(20)</p>
-              <p className="font-semibold">+{data.metrics.distance_to_ema} pts</p>
+              <p className="font-semibold">+{(data as any).metrics.distance_to_ema} pts</p>
             </div>
             <div className="bg-white/5 rounded-lg p-3">
               <p className="text-textSecondary">Distance to Support</p>
-              <p className="font-semibold">{data.metrics.distance_to_support} pts</p>
+              <p className="font-semibold">{(data as any).metrics.distance_to_support} pts</p>
             </div>
             <div className="bg-white/5 rounded-lg p-3">
               <p className="text-textSecondary">Support Strength</p>
-              <p className="font-semibold">{Math.round(data.metrics.support_strength * 10)}/10 ⭐</p>
+              <p className="font-semibold">{Math.round((data as any).metrics.support_strength * 10)}/10 ⭐</p>
             </div>
             <div className="bg-white/5 rounded-lg p-3">
               <p className="text-textSecondary">RSI</p>
-              <p className="font-semibold">{data.metrics.rsi} (neutral)</p>
+              <p className="font-semibold">{(data as any).metrics.rsi} (neutral)</p>
             </div>
           </div>
           <div>
             <p className="text-sm text-textSecondary mb-2">Reasoning</p>
             <ul className="list-disc list-inside text-sm space-y-1">
-              {data.reasoning.map((item: string) => (
+              {(data as any).reasoning.map((item: string) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
           </div>
-          {data.model_status && (
-            <p className="text-xs text-warning">{data.model_status}</p>
+          {(data as any).model_status && (
+            <p className="text-xs text-warning">{(data as any).model_status}</p>
           )}
-          <p className="text-xs text-textSecondary">Timestamp: {data.timestamp}</p>
+          <p className="text-xs text-textSecondary">Timestamp: {(data as any).timestamp}</p>
         </>
       )}
     </div>
