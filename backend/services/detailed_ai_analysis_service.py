@@ -366,7 +366,10 @@ async def analyze_detailed_with_claude(context: Dict[str, Any]) -> Dict[str, Any
         }
     except Exception as e:
         logger.error(f"Claude detailed analysis error: {e}")
-        return _fallback_detailed_analysis(context)
+        # Return fallback with actual error message for debugging
+        fallback = _fallback_detailed_analysis(context)
+        fallback["red_flags"] = [f"Claude API error: {str(e)}"]
+        return fallback
 
 
 async def get_detailed_analysis(symbol: str, log_to_db: bool = True) -> Dict[str, Any]:
