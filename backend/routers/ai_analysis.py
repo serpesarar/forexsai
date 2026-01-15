@@ -120,13 +120,20 @@ async def get_all_ai_analysis():
     ]
 
 
-@router.get("/detailed/{symbol}", response_model=DetailedAnalysisResponse)
+@router.get("/detailed/{symbol}")
 async def get_detailed_ai_analysis(symbol: str):
-    from services.detailed_ai_analysis_service import get_detailed_analysis
-
-    result = await get_detailed_analysis(symbol)
-    return DetailedAnalysisResponse(
-        symbol=result.get("symbol", symbol),
-        context=result.get("context", {}),
-        analysis=result.get("analysis", {}),
-    )
+    try:
+        from services.detailed_ai_analysis_service import get_detailed_analysis
+        result = await get_detailed_analysis(symbol)
+        return {
+            "symbol": result.get("symbol", symbol),
+            "context": result.get("context", {}),
+            "analysis": result.get("analysis", {}),
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc(),
+            "symbol": symbol,
+        }
