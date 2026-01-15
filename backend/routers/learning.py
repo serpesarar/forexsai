@@ -8,7 +8,7 @@ from fastapi import APIRouter, Query
 from typing import Optional, List
 from pydantic import BaseModel
 
-from database.supabase_client import is_db_available
+from database.supabase_client import is_db_available, get_init_error
 from services.prediction_logger import get_recent_predictions
 from services.outcome_tracker import (
     check_pending_outcomes,
@@ -45,14 +45,16 @@ class AccuracySummary(BaseModel):
     either_correct_rate: Optional[float]
 
 
-@router.get("/health", response_model=HealthResponse)
+@router.get("/health")
 async def learning_health():
     """Check if learning system database is available."""
     available = is_db_available()
-    return HealthResponse(
-        db_available=available,
-        message="Database connected" if available else "Database not configured. Set SUPABASE_URL and SUPABASE_KEY."
-    )
+    init_error = get_init_error()
+    return {
+        "db_available": available,
+        "message": "Database connected" if available else "Database not configured.",
+        "init_error": init_error
+    }
 
 
 @router.get("/predictions")
