@@ -183,6 +183,53 @@ HAVING COUNT(*) >= 5;
 
 
 -- ============================================================
+-- 6) LIVE DATA CACHE
+-- Arka planda sürekli güncellenen canlı veriler
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS live_data_cache (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    symbol VARCHAR(32) NOT NULL UNIQUE,
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    -- ML Prediction cache
+    ml_prediction JSONB,
+    
+    -- Technical Analysis cache
+    ta_data JSONB,
+    ta_snapshot JSONB,
+    
+    -- Levels cache
+    levels JSONB,
+    
+    -- Volume data
+    volume JSONB,
+    
+    -- Volatility data
+    volatility JSONB,
+    
+    -- Macro data (DXY, VIX, USDTRY)
+    macro JSONB,
+    
+    -- News cache (ayrı güncellenir)
+    news JSONB,
+    news_updated_at TIMESTAMPTZ,
+    
+    -- Session info
+    session JSONB,
+    
+    -- Full context pack for Claude
+    context_pack JSONB,
+    
+    -- Trend channel
+    trend_channel JSONB
+);
+
+CREATE INDEX idx_live_data_cache_symbol ON live_data_cache(symbol);
+CREATE INDEX idx_live_data_cache_updated_at ON live_data_cache(updated_at DESC);
+
+
+-- ============================================================
 -- ROW LEVEL SECURITY (Opsiyonel - Supabase için)
 -- ============================================================
 -- Eğer public erişim istemiyorsan bunları aktif et:
@@ -190,3 +237,4 @@ HAVING COUNT(*) >= 5;
 -- ALTER TABLE outcome_results ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE learning_insights ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE factor_importance ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE live_data_cache ENABLE ROW LEVEL SECURITY;

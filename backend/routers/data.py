@@ -67,4 +67,53 @@ async def ohlcv(
     }
 
 
+@router.get("/cached/{symbol}")
+async def get_cached_data_endpoint(symbol: str) -> Dict[str, Any]:
+    """
+    Get cached live data from Supabase.
+    This data is updated by the background scheduler every 5 seconds.
+    """
+    try:
+        from services.background_scheduler import get_cached_data
+        cached = await get_cached_data(symbol)
+        
+        if cached:
+            return {
+                "success": True,
+                "cached": True,
+                "data": cached,
+            }
+        else:
+            # No cache - fetch fresh data
+            ta = await compute_ta_snapshot(symbol)
+            live = await fetch_latest_price(symbol)
+            return {
+                "success": True,
+                "cached": False,
+                "data": {
+                    "symbol": symbol,
+                    "ta_snapshot": ta,
+                    "current_price": float(live) if live else None,
+                }
+            }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+        }
 
+
+@router.get("/scheduler/status")
+async def scheduler_status() -> Dict[str, Any]:
+    """Check if background scheduler is running."""
+    try:
+        from services.background_scheduler import _scheduler_running, TRACKED_SYMBOLS
+        return {
+            "running": _scheduler_running,
+            "tracked_symbols": TRACKED_SYMBOLS,
+        }
+    except Exception as e:
+        return {
+            "running": False,
+            "error": str(e),
+        }
