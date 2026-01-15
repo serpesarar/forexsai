@@ -198,7 +198,7 @@ async def analyze_signal_with_claude(prediction: dict, ta_data: dict) -> ClaudeA
     
     try:
         message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-3-5-sonnet-20241022",
             max_tokens=1500,
             system=TRADING_SYSTEM_PROMPT,
             messages=[
@@ -337,7 +337,7 @@ def _parse_claude_response(prediction: dict, response: str) -> ClaudeAnalysisRes
         key_observations=observations[:5] if observations else ["Claude analizi tamamlandı"],
         risk_factors=weaknesses[:3],
         timestamp=datetime.utcnow().isoformat() + "Z",
-        model_used="claude-sonnet-4-20250514"
+        model_used="claude-3-5-sonnet-20241022"
     )
 
 
