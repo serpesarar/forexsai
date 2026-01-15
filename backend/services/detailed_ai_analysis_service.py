@@ -337,7 +337,7 @@ async def analyze_detailed_with_claude(context: Dict[str, Any]) -> Dict[str, Any
 
     try:
         message = client.messages.create(
-            model="claude-3-sonnet-20240229",
+            model="claude-sonnet-4-20250514",
             max_tokens=1800,
             system=DETAILED_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_prompt}],
@@ -347,7 +347,7 @@ async def analyze_detailed_with_claude(context: Dict[str, Any]) -> Dict[str, Any
         parsed = _parse_claude_json(response_text)
         if parsed is not None:
             parsed["timestamp"] = parsed.get("timestamp") or (datetime.utcnow().isoformat() + "Z")
-            parsed["model_used"] = parsed.get("model_used") or "claude-3-sonnet-20240229"
+            parsed["model_used"] = parsed.get("model_used") or "claude-sonnet-4-20250514"
             return parsed
 
         return {
@@ -362,7 +362,7 @@ async def analyze_detailed_with_claude(context: Dict[str, Any]) -> Dict[str, Any
             "risk_management": {},
             "red_flags": ["Claude JSON parse failed"],
             "timestamp": datetime.utcnow().isoformat() + "Z",
-            "model_used": "claude-3-sonnet-20240229",
+            "model_used": "claude-sonnet-4-20250514",
         }
     except Exception as e:
         logger.error(f"Claude detailed analysis error: {e}")
