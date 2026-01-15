@@ -109,6 +109,27 @@ async def debug_info():
     }
 
 
+# Startup event - start background scheduler
+@app.on_event("startup")
+async def startup_event():
+    try:
+        from services.background_scheduler import start_scheduler
+        start_scheduler()
+        print("Background scheduler started")
+    except Exception as e:
+        print(f"Failed to start scheduler: {e}")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    try:
+        from services.background_scheduler import stop_scheduler
+        stop_scheduler()
+        print("Background scheduler stopped")
+    except Exception as e:
+        print(f"Error stopping scheduler: {e}")
+
+
 if __name__ == "__main__":
     import uvicorn
     
