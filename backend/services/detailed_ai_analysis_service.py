@@ -144,7 +144,7 @@ Calculate long_score and short_score (0-100 each) based on:
   "gating_applied": ["which risk gates were triggered if any"],
   "next_data_needed": ["what additional data would improve analysis"],
   "timestamp": "ISO-8601",
-  "model_used": "claude-sonnet-4-20250514",
+  "model_used": "claude-sonnet-4-5-20250514",
   "engine_version": "2.0.0"
 }
 """
@@ -524,7 +524,7 @@ Remember:
 
     try:
         message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-5-20250514",
             max_tokens=2500,
             system=DETAILED_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_prompt}],
@@ -534,7 +534,7 @@ Remember:
         parsed = _parse_claude_json(response_text)
         if parsed is not None:
             parsed["timestamp"] = parsed.get("timestamp") or (datetime.utcnow().isoformat() + "Z")
-            parsed["model_used"] = parsed.get("model_used") or "claude-sonnet-4-20250514"
+            parsed["model_used"] = parsed.get("model_used") or "claude-sonnet-4-5-20250514"
             parsed["engine_version"] = ANALYSIS_ENGINE_VERSION
             return parsed
 
@@ -553,7 +553,7 @@ Remember:
             "gating_applied": ["json_parse_failure"],
             "next_data_needed": ["Valid JSON response from Claude"],
             "timestamp": datetime.utcnow().isoformat() + "Z",
-            "model_used": "claude-sonnet-4-20250514",
+            "model_used": "claude-sonnet-4-5-20250514",
             "engine_version": ANALYSIS_ENGINE_VERSION,
             "raw_response_preview": response_text[:500]
         }
