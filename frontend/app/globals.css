@@ -164,3 +164,64 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* Dashboard Edit Mode - Wobble Animation */
+@keyframes wobble {
+  0%, 100% {
+    transform: rotate(-0.5deg);
+  }
+  50% {
+    transform: rotate(0.5deg);
+  }
+}
+
+@keyframes wobble-subtle {
+  0%, 100% {
+    transform: rotate(-0.3deg) scale(1);
+  }
+  25% {
+    transform: rotate(0.3deg) scale(1.002);
+  }
+  50% {
+    transform: rotate(-0.3deg) scale(1);
+  }
+  75% {
+    transform: rotate(0.3deg) scale(0.998);
+  }
+}
+
+.wobble-animation {
+  animation: wobble-subtle 0.3s ease-in-out infinite;
+}
+
+.wobble-animation:hover {
+  animation: wobble 0.15s ease-in-out infinite;
+}
+
+/* Slow spin for settings icon */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+/* Edit mode drag handle pulse */
+@keyframes handle-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(0, 212, 255, 0);
+  }
+}
+
+.drag-handle-pulse {
+  animation: handle-pulse 2s ease-in-out infinite;
+}

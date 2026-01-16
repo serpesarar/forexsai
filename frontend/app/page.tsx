@@ -13,6 +13,7 @@ import {
   Sun,
   Sparkles,
   BarChart3,
+  GripVertical,
 } from "lucide-react";
 import Link from "next/link";
 import CircularProgress from "../components/CircularProgress";
@@ -27,6 +28,8 @@ import RTYHIIMDetectorPanel from "../components/RTYHIIMDetectorPanel";
 import MLPredictionPanel from "../components/MLPredictionPanel";
 import ClaudeAnalysisPanel from "../components/ClaudeAnalysisPanel";
 import PatternEngineV2 from "../components/PatternEngineV2";
+import { useDashboardEdit } from "../contexts/DashboardEditContext";
+import { DraggableDashboard, EditModeButton } from "../components/DraggableDashboard";
 
 const initialMarketTickers = [
   { label: "NASDAQ", price: "21,547.35", change: "+1.2%", trend: "up" },
@@ -687,6 +690,8 @@ export default function HomePage() {
     );
   };
 
+  const { isEditMode } = useDashboardEdit();
+
   return (
     <div className="min-h-screen bg-background text-textPrimary">
       {/* Premium Header */}
@@ -752,6 +757,7 @@ export default function HomePage() {
               {theme === "evening" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
             <LanguageSwitcher />
+            <EditModeButton />
             <div className="hidden md:flex items-center gap-4 pl-4 border-l border-white/10">
               <label className="flex items-center gap-2 text-xs text-textSecondary cursor-pointer">
                 <input
@@ -780,7 +786,13 @@ export default function HomePage() {
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-8 md:grid-cols-2 lg:grid-cols-3">
         <div className="flex flex-col gap-6">
           {signalCards.map((signal) => (
-            <div key={signal.symbol} className="glass-card card-hover p-5">
+            <div key={signal.symbol} className={`glass-card card-hover p-5 relative ${isEditMode ? "wobble-animation cursor-move" : ""}`}>
+              {isEditMode && (
+                <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-lg bg-primary/80 text-white cursor-grab shadow-lg">
+                  <GripVertical className="w-4 h-4" />
+                </div>
+              )}
+              {isEditMode && <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-xl pointer-events-none" />}
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("trendAnalysis.title")}</p>
@@ -970,9 +982,23 @@ export default function HomePage() {
 
         <div className="flex flex-col gap-6">
           {/* New Pattern Engine V2 */}
-          <PatternEngineV2 />
+          <div className={`relative ${isEditMode ? "wobble-animation" : ""}`}>
+            {isEditMode && (
+              <div className="absolute -left-2 top-6 z-10 p-2 rounded-lg bg-primary/80 text-white cursor-grab shadow-lg">
+                <GripVertical className="w-4 h-4" />
+              </div>
+            )}
+            {isEditMode && <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-xl pointer-events-none z-0" />}
+            <PatternEngineV2 />
+          </div>
 
-          <div className="glass-card card-hover p-5">
+          <div className={`glass-card card-hover p-5 relative ${isEditMode ? "wobble-animation" : ""}`}>
+            {isEditMode && (
+              <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-lg bg-primary/80 text-white cursor-grab shadow-lg">
+                <GripVertical className="w-4 h-4" />
+              </div>
+            )}
+            {isEditMode && <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-xl pointer-events-none" />}
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("claudePatterns.title")}</p>
@@ -1020,7 +1046,13 @@ export default function HomePage() {
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="glass-card card-hover p-5">
+          <div className={`glass-card card-hover p-5 relative ${isEditMode ? "wobble-animation" : ""}`}>
+            {isEditMode && (
+              <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-lg bg-primary/80 text-white cursor-grab shadow-lg">
+                <GripVertical className="w-4 h-4" />
+              </div>
+            )}
+            {isEditMode && <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-xl pointer-events-none" />}
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("sentiment.title")}</p>
@@ -1034,7 +1066,13 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="glass-card card-hover p-5">
+          <div className={`glass-card card-hover p-5 relative ${isEditMode ? "wobble-animation" : ""}`}>
+            {isEditMode && (
+              <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-lg bg-primary/80 text-white cursor-grab shadow-lg">
+                <GripVertical className="w-4 h-4" />
+              </div>
+            )}
+            {isEditMode && <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-xl pointer-events-none" />}
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("news.title")}</p>
@@ -1151,6 +1189,51 @@ export default function HomePage() {
         type={type}
         data={data}
       />
+
+      {/* Edit Mode Floating Controls */}
+      {isEditMode && (
+        <EditModeFloatingControls />
+      )}
+    </div>
+  );
+}
+
+function EditModeFloatingControls() {
+  const { saveLayout, resetLayout, setEditMode } = useDashboardEdit();
+  
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-3 rounded-2xl bg-background/95 backdrop-blur-xl border border-white/10 shadow-2xl animate-slide-in-right">
+      <div className="flex items-center gap-2 mr-3 pr-3 border-r border-white/10">
+        <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+        <span className="text-sm text-textSecondary">Düzenleme Modu</span>
+      </div>
+      <button
+        onClick={saveLayout}
+        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-success/20 text-success hover:bg-success/30 transition-colors"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+        <span className="text-sm font-medium">Kaydet</span>
+      </button>
+      <button
+        onClick={resetLayout}
+        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 text-textSecondary hover:bg-white/20 transition-colors"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span className="text-sm font-medium">Sıfırla</span>
+      </button>
+      <button
+        onClick={() => setEditMode(false)}
+        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-danger/20 text-danger hover:bg-danger/30 transition-colors"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <span className="text-sm font-medium">İptal</span>
+      </button>
     </div>
   );
 }
