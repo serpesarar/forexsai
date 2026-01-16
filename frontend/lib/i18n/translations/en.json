@@ -286,6 +286,17 @@
     "trend": "Trend",
     "support": "Support",
     "volatility": "Volatility"
+  },
+  "trendAnalysis": {
+    "title": "TREND ANALYSIS",
+    "trendStrength": "Trend Strength",
+    "confidence": "Confidence",
+    "bullish": "BULLISH",
+    "bearish": "BEARISH",
+    "neutral": "NEUTRAL",
+    "volatility": "Volatility",
+    "volumeConfirmed": "Volume Confirmed",
+    "volumeNotConfirmed": "Volume Not Confirmed"
   }
 }
 

@@ -1,16 +1,18 @@
 from fastapi import APIRouter
 
 from models.responses import SignalResponse
-from services.data_fetcher import fetch_latest_price
-from services.ml_service import run_xauusd_signal
+from services.ml_service import run_xauusd_signal_async
 
 router = APIRouter(prefix="/api/run", tags=["xauusd"])
 
 
 @router.post("/xauusd", response_model=SignalResponse)
 async def run_xauusd() -> SignalResponse:
-    current_price = await fetch_latest_price("XAUUSD")
-    result = run_xauusd_signal(current_price=current_price)
+    """
+    Run XAUUSD trend analysis using real-time data and trend_analyzer.
+    Returns signal, confidence, reasoning, and metrics.
+    """
+    result = await run_xauusd_signal_async()
     return SignalResponse(
         signal=result.signal,
         confidence=result.confidence,

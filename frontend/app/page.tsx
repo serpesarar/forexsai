@@ -39,6 +39,10 @@ const initialSignalCards = [
     currentPrice: 21547.35,
     signal: "BUY",
     confidence: 75,
+    trend: "NEUTRAL" as string,
+    trendStrength: 50,
+    volatility: "MEDIUM" as string,
+    volumeConfirmed: true,
     metrics: [
       { label: "RSI", value: "45 (Neutral)" },
       { label: "Trend", value: "Bullish" },
@@ -112,6 +116,10 @@ const initialSignalCards = [
     currentPrice: 2048.5,
     signal: "HOLD",
     confidence: 62,
+    trend: "NEUTRAL" as string,
+    trendStrength: 50,
+    volatility: "MEDIUM" as string,
+    volumeConfirmed: true,
     metrics: [
       { label: "RSI", value: "51 (Neutral)" },
       { label: "Trend", value: "Sideways" },
@@ -441,10 +449,21 @@ export default function HomePage() {
         });
         const nearestSupport = sr.find((l: any) => l.type === "support") ?? card.liveMetrics.nearestSupport;
         const nearestResistance = sr.find((l: any) => l.type === "resistance") ?? card.liveMetrics.nearestResistance;
+        
+        // Extract trend from API metrics
+        const apiTrend = apiSignal?.metrics?.trend || "NEUTRAL";
+        const apiTrendStrength = apiSignal?.metrics?.trend_strength || 50;
+        const apiVolatility = apiSignal?.metrics?.volatility || "MEDIUM";
+        const apiVolumeConfirmed = apiSignal?.metrics?.volume_confirmed ?? true;
+        
         return {
           ...card,
           currentPrice: price,
           signal: apiSignal?.signal ?? card.signal,
+          trend: apiTrend,
+          trendStrength: apiTrendStrength,
+          volatility: apiVolatility,
+          volumeConfirmed: apiVolumeConfirmed,
           confidence: apiSignal ? Math.round((apiSignal.confidence ?? 0) * 100) : card.confidence,
           liveMetrics: {
             ...card.liveMetrics,
@@ -764,25 +783,25 @@ export default function HomePage() {
             <div key={signal.symbol} className="glass-card card-hover p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("common.signal")}</p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("trendAnalysis.title")}</p>
                   <h3 className="mt-2 text-lg font-semibold">{signal.symbol}</h3>
                 </div>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    signal.signal === "BUY"
+                    signal.trend === "BULLISH"
                       ? "bg-success/20 text-success"
-                      : signal.signal === "SELL"
+                      : signal.trend === "BEARISH"
                         ? "bg-danger/20 text-danger"
                         : "bg-white/10 text-textSecondary"
                   }`}
                 >
-                  {signal.signal}
+                  {signal.trend || "NEUTRAL"}
                 </span>
               </div>
               <div className="mt-4 flex items-center justify-between gap-6">
                 <CircularProgress
                   value={signal.confidence}
-                  label="Confidence"
+                  label={t("trendAnalysis.trendStrength")}
                   sublabel={`${signal.confidence}%`}
                   isInteractive
                   onClick={() =>
