@@ -23,6 +23,11 @@ from services.target_config import (
 
 logger = logging.getLogger(__name__)
 
+# Cost-optimized model selection
+# Haiku is 4-5x cheaper than Sonnet for error analysis
+ERROR_ANALYSIS_MODEL = "claude-3-5-haiku-20241022"
+ERROR_ANALYSIS_MAX_TOKENS = 800  # Keep responses concise
+
 # Analysis check intervals
 QUICK_CHECK_HOURS = 1
 DEEP_ANALYSIS_HOURS = 4
@@ -264,8 +269,8 @@ JSON formatında yanıt ver:
 Bu tahminin neden yanlış gittiğini analiz et ve öğrenme noktalarını belirle."""
 
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=2000,
+            model=ERROR_ANALYSIS_MODEL,
+            max_tokens=ERROR_ANALYSIS_MAX_TOKENS,
             system=system_prompt,
             messages=[{"role": "user", "content": user_prompt}]
         )

@@ -14,6 +14,10 @@ import os
 
 logger = logging.getLogger(__name__)
 
+# Cost-optimized model - Haiku is 4-5x cheaper
+CLAUDE_MODEL = "claude-3-5-haiku-20241022"
+CLAUDE_MAX_TOKENS = 1000
+
 # System prompt for Claude - Expert Forex/Index Trader persona
 TRADING_SYSTEM_PROMPT = """Sen deneyimli bir forex ve endeks trader'ısın. 15+ yıllık profesyonel trading tecrüben var.
 
@@ -198,8 +202,8 @@ async def analyze_signal_with_claude(prediction: dict, ta_data: dict) -> ClaudeA
     
     try:
         message = client.messages.create(
-            model="claude-sonnet-4-5-20250514",
-            max_tokens=1500,
+            model=CLAUDE_MODEL,
+            max_tokens=CLAUDE_MAX_TOKENS,
             system=TRADING_SYSTEM_PROMPT,
             messages=[
                 {"role": "user", "content": prompt}
