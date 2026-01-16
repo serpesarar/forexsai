@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from database.supabase_client import get_supabase_client, is_db_available
-from services.data_fetcher import fetch_latest_price
+from services.data_fetcher import fetch_latest_price, fetch_intraday_candles
 from services.prediction_logger import mark_prediction_checked
 from services.target_config import (
     get_symbol_config,
@@ -21,6 +21,56 @@ from services.target_config import (
 logger = logging.getLogger(__name__)
 
 FLAT_THRESHOLD_PCT = 0.1
+
+
+async def get_high_low_since_prediction(
+    symbol: str, 
+    prediction_time: datetime,
+    check_interval: str
+) -> Dict[str, Optional[float]]:
+    """
+    Get the highest and lowest prices since prediction was made.
+    This is crucial for accurate target hit detection.
+    
+    Returns:
+        Dict with 'high', 'low', and 'current' prices
+    """
+    try:
+        # Get intraday candles
+        candles = await fetch_intraday_candles(symbol, interval="5m", limit=300)
+        
+        if not candles:
+            # Fallback to current price only
+            current = await fetch_latest_price(symbol)
+            return {"high": current, "low": current, "current": current}
+        
+        # Filter candles since prediction time
+        pred_ts = prediction_time.timestamp() * 1000  # Convert to ms
+        relevant_candles = [c for c in candles if c.get("timestamp", 0) >= pred_ts]
+        
+        if not relevant_candles:
+            # Use last N candles based on interval
+            interval_candles = {"1h": 12, "4h": 48, "24h": 288}  # 5m candles
+            n = interval_candles.get(check_interval, 12)
+            relevant_candles = candles[-n:] if candles else []
+        
+        if not relevant_candles:
+            current = await fetch_latest_price(symbol)
+            return {"high": current, "low": current, "current": current}
+        
+        highs = [c.get("high", 0) for c in relevant_candles if c.get("high")]
+        lows = [c.get("low", float("inf")) for c in relevant_candles if c.get("low")]
+        
+        highest = max(highs) if highs else None
+        lowest = min(lows) if lows and lows[0] != float("inf") else None
+        current = relevant_candles[-1].get("close") if relevant_candles else None
+        
+        return {"high": highest, "low": lowest, "current": current}
+        
+    except Exception as e:
+        logger.error(f"Error getting high/low for {symbol}: {e}")
+        current = await fetch_latest_price(symbol)
+        return {"high": current, "low": current, "current": current}
 
 # Check intervals including 1h
 CHECK_INTERVALS = ["1h", "4h", "24h", "48h", "7d"]
@@ -51,7 +101,11 @@ async def check_prediction_outcome(
     check_interval: str = "24h"
 ) -> Optional[Dict[str, Any]]:
     """
-    Check the outcome of a single prediction.
+    Check the outcome of a single prediction using HIGH/LOW prices.
+    
+    IMPORTANT: For accurate target detection:
+    - BUY: Check if HIGH price reached target (not just current price)
+    - SELL: Check if LOW price reached target (not just current price)
     
     Args:
         prediction: Prediction record from database
@@ -71,38 +125,96 @@ async def check_prediction_outcome(
     entry_price = prediction.get("ml_entry_price")
     target_price = prediction.get("ml_target_price")
     stop_price = prediction.get("ml_stop_price")
+    ml_direction = prediction.get("ml_direction", "HOLD")
     
     if not symbol or entry_price is None:
         logger.warning(f"Invalid prediction data: {prediction.get('id')}")
         return None
     
     try:
-        current_price = await fetch_latest_price(symbol)
+        # Get prediction time for high/low calculation
+        created_at = prediction.get("created_at")
+        if isinstance(created_at, str):
+            pred_time = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+        else:
+            pred_time = datetime.utcnow() - timedelta(hours=1)
+        
+        # Get HIGH/LOW prices since prediction (crucial for accurate target detection)
+        price_data = await get_high_low_since_prediction(symbol, pred_time, check_interval)
+        
+        high_price = price_data.get("high")
+        low_price = price_data.get("low")
+        current_price = price_data.get("current")
+        
         if current_price is None:
-            logger.warning(f"Could not fetch current price for {symbol}")
+            current_price = await fetch_latest_price(symbol)
+        if current_price is None:
+            logger.warning(f"Could not fetch price for {symbol}")
             return None
         
+        # Use high/low for proper target detection
         price_change_pct = ((current_price - entry_price) / entry_price) * 100
         actual_direction = _determine_actual_direction(price_change_pct)
         
+        # Calculate pip targets
+        config = get_symbol_config(symbol)
+        targets = calculate_target_prices(entry_price, ml_direction, symbol)
+        stoploss = calculate_stoploss_price(entry_price, ml_direction, symbol)
+        
+        # Check targets using HIGH for BUY, LOW for SELL
         hit_target = False
+        targets_hit = {}
+        
+        for target_name, target_val in targets.items():
+            if ml_direction == "BUY":
+                # For BUY: check if HIGH reached target
+                check_price = high_price if high_price else current_price
+                targets_hit[target_name] = check_price >= target_val
+            elif ml_direction == "SELL":
+                # For SELL: check if LOW reached target
+                check_price = low_price if low_price else current_price
+                targets_hit[target_name] = check_price <= target_val
+            else:
+                targets_hit[target_name] = False
+        
+        hit_target = any(targets_hit.values())
+        
+        # Check stoploss using LOW for BUY, HIGH for SELL
         hit_stop = False
-        if target_price and current_price >= target_price:
-            hit_target = True
-        if stop_price and current_price <= stop_price:
-            hit_stop = True
+        if ml_direction == "BUY" and low_price:
+            hit_stop = low_price <= stoploss
+        elif ml_direction == "SELL" and high_price:
+            hit_stop = high_price >= stoploss
         
-        ml_direction = prediction.get("ml_direction", "HOLD")
+        # Also check ML's own target/stop
+        hit_ml_target = False
+        hit_ml_stop = False
+        if target_price:
+            if ml_direction == "BUY" and high_price:
+                hit_ml_target = high_price >= target_price
+            elif ml_direction == "SELL" and low_price:
+                hit_ml_target = low_price <= target_price
+        if stop_price:
+            if ml_direction == "BUY" and low_price:
+                hit_ml_stop = low_price <= stop_price
+            elif ml_direction == "SELL" and high_price:
+                hit_ml_stop = high_price >= stop_price
+        
         claude_direction = prediction.get("claude_direction")
-        
         ml_correct = _is_prediction_correct(ml_direction, actual_direction)
         claude_correct = _is_prediction_correct(claude_direction, actual_direction) if claude_direction else None
+        
+        # For ml_correct, also consider if any target was hit
+        if hit_target and not hit_stop:
+            ml_correct = True  # Target hit without stoploss = correct
         
         outcome = {
             "prediction_id": prediction.get("id"),
             "check_interval": check_interval,
             "entry_price": float(entry_price),
             "exit_price": float(current_price),
+            "high_price": float(high_price) if high_price else None,
+            "low_price": float(low_price) if low_price else None,
             "price_change_pct": round(price_change_pct, 4),
             "actual_direction": actual_direction,
             "hit_target": hit_target,
@@ -114,7 +226,7 @@ async def check_prediction_outcome(
         result = client.table("outcome_results").insert(outcome).execute()
         
         if result.get("data"):
-            logger.info(f"Recorded outcome for prediction {prediction.get('id')}: ML {'✓' if ml_correct else '✗'}")
+            logger.info(f"Recorded outcome for prediction {prediction.get('id')}: ML {'✓' if ml_correct else '✗'}, Targets: {targets_hit}")
             return outcome
         
         return None
@@ -448,6 +560,9 @@ async def get_multi_target_accuracy(
                 continue
             
             exit_price = relevant_outcome.get("exit_price")
+            high_price = relevant_outcome.get("high_price") or exit_price
+            low_price = relevant_outcome.get("low_price") or exit_price
+            
             if not exit_price:
                 continue
             
@@ -455,7 +570,7 @@ async def get_multi_target_accuracy(
             targets = calculate_target_prices(entry_price, ml_direction, pred_symbol)
             stoploss = calculate_stoploss_price(entry_price, ml_direction, pred_symbol)
             
-            # Check each target
+            # Check each target using HIGH for BUY, LOW for SELL
             for target_name, target_price in targets.items():
                 if target_name not in target_stats:
                     target_stats[target_name] = {"hit": 0, "total": 0}
@@ -463,17 +578,19 @@ async def get_multi_target_accuracy(
                 target_stats[target_name]["total"] += 1
                 
                 if ml_direction == "BUY":
-                    if exit_price >= target_price:
+                    # For BUY: check if HIGH reached target
+                    if high_price and high_price >= target_price:
                         target_stats[target_name]["hit"] += 1
                 elif ml_direction == "SELL":
-                    if exit_price <= target_price:
+                    # For SELL: check if LOW reached target
+                    if low_price and low_price <= target_price:
                         target_stats[target_name]["hit"] += 1
             
-            # Check stoploss
+            # Check stoploss using LOW for BUY, HIGH for SELL
             stoploss_stats["total"] += 1
-            if ml_direction == "BUY" and exit_price <= stoploss:
+            if ml_direction == "BUY" and low_price and low_price <= stoploss:
                 stoploss_stats["hit"] += 1
-            elif ml_direction == "SELL" and exit_price >= stoploss:
+            elif ml_direction == "SELL" and high_price and high_price >= stoploss:
                 stoploss_stats["hit"] += 1
             
             # Direction correctness
