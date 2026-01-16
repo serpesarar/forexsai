@@ -58,6 +58,18 @@ class TableQuery:
         self.filters.append(f"{column}=lte.{value}")
         return self
     
+    def lt(self, column: str, value: Any) -> "TableQuery":
+        self.filters.append(f"{column}=lt.{value}")
+        return self
+    
+    def gt(self, column: str, value: Any) -> "TableQuery":
+        self.filters.append(f"{column}=gt.{value}")
+        return self
+    
+    def neq(self, column: str, value: Any) -> "TableQuery":
+        self.filters.append(f"{column}=neq.{value}")
+        return self
+    
     def is_(self, column: str, value: Any) -> "TableQuery":
         self.filters.append(f"{column}=is.{value}")
         return self

@@ -49,7 +49,7 @@ async def analyze_factor_correlations(
             query = query.eq("prediction_logs.symbol", symbol)
         
         result = query.execute()
-        outcomes = result.data or []
+        outcomes = result.get("data") or []
         
         if len(outcomes) < min_samples:
             return {
@@ -278,7 +278,7 @@ async def save_insights_to_db(insights: List[Dict[str, Any]]) -> int:
             }
             
             result = client.table("learning_insights").insert(record).execute()
-            if result.data:
+            if result.get("data"):
                 saved += 1
         
         return saved
@@ -314,7 +314,7 @@ async def get_active_insights(symbol: Optional[str] = None) -> List[Dict[str, An
         query = query.order("created_at", desc=True).limit(50)
         
         result = query.execute()
-        return result.data or []
+        return result.get("data") or []
         
     except Exception as e:
         logger.error(f"Failed to get active insights: {e}")

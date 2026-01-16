@@ -113,7 +113,7 @@ async def check_prediction_outcome(
         
         result = client.table("outcome_results").insert(outcome).execute()
         
-        if result.data:
+        if result.get("data"):
             logger.info(f"Recorded outcome for prediction {prediction.get('id')}: ML {'✓' if ml_correct else '✗'}")
             return outcome
         
@@ -158,7 +158,7 @@ async def check_pending_outcomes(check_interval: str = "24h") -> List[Dict[str, 
             "outcome_checked", False
         ).lt("created_at", cutoff_iso).limit(100).execute()
         
-        predictions = result.data or []
+        predictions = result.get("data") or []
         
         if not predictions:
             logger.info(f"No pending predictions older than {check_interval}")
@@ -172,7 +172,7 @@ async def check_pending_outcomes(check_interval: str = "24h") -> List[Dict[str, 
                 "prediction_id", pred["id"]
             ).eq("check_interval", check_interval).execute()
             
-            if existing.data:
+            if existing.get("data"):
                 continue
             
             outcome = await check_prediction_outcome(pred, check_interval)
@@ -224,7 +224,7 @@ async def get_accuracy_summary(
             query = query.eq("prediction_logs.symbol", symbol)
         
         result = query.execute()
-        outcomes = result.data or []
+        outcomes = result.get("data") or []
         
         if not outcomes:
             return {
@@ -408,7 +408,7 @@ async def get_multi_target_accuracy(
             query = query.eq("symbol", symbol)
         
         result = query.execute()
-        predictions = result.data or []
+        predictions = result.get("data") or []
         
         if not predictions:
             return {

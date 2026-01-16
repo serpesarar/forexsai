@@ -119,8 +119,8 @@ async def log_prediction(
         
         result = client.table("prediction_logs").insert(record).execute()
         
-        if result.data and len(result.data) > 0:
-            prediction_id = result.data[0].get("id")
+        if result.get("data") and len(result["data"]) > 0:
+            prediction_id = result["data"][0].get("id")
             logger.info(f"Logged prediction {prediction_id} for {symbol}")
             return prediction_id
         
@@ -166,7 +166,7 @@ async def get_recent_predictions(
         query = query.order("created_at", desc=True).limit(limit)
         
         result = query.execute()
-        return result.data or []
+        return result.get("data") or []
         
     except Exception as e:
         logger.error(f"Failed to get predictions: {e}")
