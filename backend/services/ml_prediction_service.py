@@ -603,6 +603,32 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
     else:
         volatility_regime = "High"
     
+    # Apply learning feedback from past errors (self-learning system)
+    try:
+        from services.error_analysis_service import apply_learning_feedback
+        factors = {
+            "rsi_14": ta.get("rsi_14"),
+            "macd_histogram": ta.get("macd_histogram"),
+            "volume_ratio": ta.get("volume_ratio", 1.0),
+            "volatility": vol,
+            "trend_score": trend_score,
+        }
+        feedback_result = await apply_learning_feedback(
+            symbol=normalized_symbol,
+            direction=direction,
+            confidence=confidence,
+            factors=factors
+        )
+        # Apply adjusted confidence
+        adjusted_confidence = feedback_result.get("adjusted_confidence", confidence)
+        feedback_warnings = feedback_result.get("warnings", [])
+        if feedback_warnings:
+            reasoning.extend([f"⚠️ {w}" for w in feedback_warnings])
+            logger.info(f"Learning feedback applied: {confidence:.1f}% -> {adjusted_confidence:.1f}%")
+        confidence = adjusted_confidence
+    except Exception as fb_err:
+        logger.debug(f"Could not apply learning feedback: {fb_err}")
+    
     return PredictionResult(
         symbol=normalized_symbol,
         direction=direction,
