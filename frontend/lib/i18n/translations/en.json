@@ -121,11 +121,129 @@
   },
   "patternEngine": {
     "title": "Pattern Engine",
-    "subtitle": "NASDAQ + XAUUSD Top 30",
+    "subtitle": "Active Formations",
     "nasdaqPatterns": "NASDAQ Patterns",
-    "xauusdPatterns": "XAUUSD Patterns",
-    "top30Candidates": "Top 30 candidates",
-    "pSuccess": "p_success"
+    "xauusdPatterns": "XAU/USD Patterns",
+    "activePatterns": "Active Patterns",
+    "noPatterns": "No active patterns detected",
+    "completion": "Completion",
+    "detected": "Detected",
+    "timeframe": "Timeframe",
+    "expectedMove": "Expected Move",
+    "afterCompletion": "After Completion",
+    "currentStage": "Current Stage",
+    "detectionDate": "Detection Date",
+    "candleInfo": "Candle Info",
+    "successRate": "Success Rate",
+    "riskReward": "Risk/Reward",
+    "entryZone": "Entry Zone",
+    "targetZone": "Target Zone",
+    "stopLoss": "Stop Loss",
+    "viewDetails": "View Details",
+    "patternInfo": "Pattern Information",
+    "tradingStrategy": "Trading Strategy",
+    "historicalPerformance": "Historical Performance",
+    "stages": {
+      "detected": "Detected",
+      "forming": "Forming",
+      "confirming": "Confirming",
+      "confirmed": "Confirmed",
+      "active": "Active",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "patterns": {
+      "doubleBottom": {
+        "name": "Double Bottom",
+        "description": "A bullish reversal pattern that forms after a downtrend. Price touches a support level twice, creating a 'W' shape.",
+        "afterCompletion": "After the neckline breaks, expect an upward move equal to the pattern height. Target = Neckline + (Neckline - Bottom).",
+        "tradingTip": "Wait for neckline break with volume confirmation. Place stop below the second bottom."
+      },
+      "doubleTop": {
+        "name": "Double Top",
+        "description": "A bearish reversal pattern that forms after an uptrend. Price touches a resistance level twice, creating an 'M' shape.",
+        "afterCompletion": "After the neckline breaks down, expect a downward move equal to the pattern height. Target = Neckline - (Top - Neckline).",
+        "tradingTip": "Wait for neckline break with volume confirmation. Place stop above the second top."
+      },
+      "headAndShoulders": {
+        "name": "Head & Shoulders",
+        "description": "A bearish reversal pattern with three peaks - the middle peak (head) being the highest.",
+        "afterCompletion": "After neckline break, expect price to fall by the distance from head to neckline.",
+        "tradingTip": "Enter on neckline break. Stop above right shoulder. Target = Neckline - Pattern Height."
+      },
+      "inverseHeadAndShoulders": {
+        "name": "Inverse Head & Shoulders",
+        "description": "A bullish reversal pattern with three troughs - the middle trough (head) being the lowest.",
+        "afterCompletion": "After neckline break, expect price to rise by the distance from head to neckline.",
+        "tradingTip": "Enter on neckline break. Stop below right shoulder. Target = Neckline + Pattern Height."
+      },
+      "ascendingTriangle": {
+        "name": "Ascending Triangle",
+        "description": "A bullish continuation pattern with flat resistance and rising support, showing buyers gaining strength.",
+        "afterCompletion": "Breakout above resistance typically leads to a move equal to the triangle's height.",
+        "tradingTip": "Enter on breakout above resistance with volume. Stop below the last higher low."
+      },
+      "descendingTriangle": {
+        "name": "Descending Triangle",
+        "description": "A bearish continuation pattern with flat support and falling resistance, showing sellers gaining strength.",
+        "afterCompletion": "Breakdown below support typically leads to a move equal to the triangle's height.",
+        "tradingTip": "Enter on breakdown below support with volume. Stop above the last lower high."
+      },
+      "symmetricalTriangle": {
+        "name": "Symmetrical Triangle",
+        "description": "A neutral pattern that can break either way. Converging trendlines show indecision.",
+        "afterCompletion": "Breakout direction determines the move. Target = Breakout point ± Triangle height.",
+        "tradingTip": "Wait for clear breakout with volume. Don't anticipate direction."
+      },
+      "bullFlag": {
+        "name": "Bull Flag",
+        "description": "A bullish continuation pattern. After a strong move up (flagpole), price consolidates in a downward channel (flag).",
+        "afterCompletion": "Expect a continuation move equal to the flagpole length.",
+        "tradingTip": "Enter on break above flag resistance. Stop below flag low. Target = Breakout + Flagpole."
+      },
+      "bearFlag": {
+        "name": "Bear Flag",
+        "description": "A bearish continuation pattern. After a strong move down (flagpole), price consolidates in an upward channel (flag).",
+        "afterCompletion": "Expect a continuation move equal to the flagpole length.",
+        "tradingTip": "Enter on break below flag support. Stop above flag high. Target = Breakdown - Flagpole."
+      },
+      "wedge": {
+        "name": "Wedge",
+        "description": "Converging trendlines both sloping in the same direction. Rising wedge is bearish, falling wedge is bullish.",
+        "afterCompletion": "Breakout opposite to wedge direction. Move typically equals wedge's widest point.",
+        "tradingTip": "Trade the breakout in opposite direction of wedge slope."
+      },
+      "cupAndHandle": {
+        "name": "Cup and Handle",
+        "description": "A bullish continuation pattern resembling a tea cup. The cup forms a rounded bottom, followed by a small pullback (handle).",
+        "afterCompletion": "Breakout above handle resistance targets cup depth added to breakout level.",
+        "tradingTip": "Enter on handle breakout. Stop below handle low. Long-term bullish signal."
+      },
+      "rsiDivergence": {
+        "name": "RSI Divergence",
+        "description": "Price makes new highs/lows but RSI doesn't confirm, signaling potential reversal.",
+        "afterCompletion": "Bullish divergence suggests upward reversal. Bearish divergence suggests downward reversal.",
+        "tradingTip": "Use as confirmation with price action. Don't trade divergence alone."
+      },
+      "macdDivergence": {
+        "name": "MACD Divergence",
+        "description": "Price makes new highs/lows but MACD histogram doesn't confirm, signaling momentum weakness.",
+        "afterCompletion": "Expect trend reversal in direction opposite to the current trend.",
+        "tradingTip": "Combine with support/resistance levels for better entries."
+      },
+      "breakout": {
+        "name": "Breakout",
+        "description": "Price breaks through a significant support or resistance level with increased volume.",
+        "afterCompletion": "Expect continuation in breakout direction. Failed breakouts reverse sharply.",
+        "tradingTip": "Confirm with volume. Wait for retest of broken level for safer entry."
+      },
+      "channelBreak": {
+        "name": "Channel Break",
+        "description": "Price breaks out of an established trading channel, signaling trend acceleration or reversal.",
+        "afterCompletion": "Move typically equals channel width in breakout direction.",
+        "tradingTip": "Trade in breakout direction. Stop inside the channel."
+      }
+    }
   },
   "claudePatterns": {
     "title": "Claude Patterns",

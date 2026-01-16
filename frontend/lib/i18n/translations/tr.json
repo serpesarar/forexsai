@@ -120,12 +120,130 @@
     "srBias": "D/D Önyargı"
   },
   "patternEngine": {
-    "title": "Desen Motoru",
-    "subtitle": "NASDAQ + XAUUSD İlk 30",
-    "nasdaqPatterns": "NASDAQ Desenleri",
-    "xauusdPatterns": "XAUUSD Desenleri",
-    "top30Candidates": "İlk 30 aday",
-    "pSuccess": "başarı_olasılığı"
+    "title": "Formasyon Motoru",
+    "subtitle": "Aktif Formasyonlar",
+    "nasdaqPatterns": "NASDAQ Formasyonları",
+    "xauusdPatterns": "XAU/USD Formasyonları",
+    "activePatterns": "Aktif Formasyonlar",
+    "noPatterns": "Aktif formasyon tespit edilmedi",
+    "completion": "Tamamlanma",
+    "detected": "Tespit Edildi",
+    "timeframe": "Zaman Dilimi",
+    "expectedMove": "Beklenen Hareket",
+    "afterCompletion": "Tamamlandıktan Sonra",
+    "currentStage": "Mevcut Aşama",
+    "detectionDate": "Tespit Tarihi",
+    "candleInfo": "Mum Bilgisi",
+    "successRate": "Başarı Oranı",
+    "riskReward": "Risk/Ödül",
+    "entryZone": "Giriş Bölgesi",
+    "targetZone": "Hedef Bölge",
+    "stopLoss": "Zarar Durdur",
+    "viewDetails": "Detayları Gör",
+    "patternInfo": "Formasyon Bilgisi",
+    "tradingStrategy": "İşlem Stratejisi",
+    "historicalPerformance": "Geçmiş Performans",
+    "stages": {
+      "detected": "Tespit Edildi",
+      "forming": "Oluşuyor",
+      "confirming": "Onaylanıyor",
+      "confirmed": "Onaylandı",
+      "active": "Aktif",
+      "completed": "Tamamlandı",
+      "failed": "Başarısız"
+    },
+    "patterns": {
+      "doubleBottom": {
+        "name": "Çift Dip",
+        "description": "Düşüş trendinden sonra oluşan yükseliş dönüş formasyonu. Fiyat destek seviyesine iki kez dokunarak 'W' şekli oluşturur.",
+        "afterCompletion": "Boyun çizgisi kırıldıktan sonra, formasyon yüksekliğine eşit bir yükseliş bekleyin. Hedef = Boyun Çizgisi + (Boyun Çizgisi - Dip).",
+        "tradingTip": "Hacim onayıyla boyun çizgisi kırılmasını bekleyin. Stop'u ikinci dibin altına koyun."
+      },
+      "doubleTop": {
+        "name": "Çift Tepe",
+        "description": "Yükseliş trendinden sonra oluşan düşüş dönüş formasyonu. Fiyat direnç seviyesine iki kez dokunarak 'M' şekli oluşturur.",
+        "afterCompletion": "Boyun çizgisi aşağı kırıldıktan sonra, formasyon yüksekliğine eşit bir düşüş bekleyin. Hedef = Boyun Çizgisi - (Tepe - Boyun Çizgisi).",
+        "tradingTip": "Hacim onayıyla boyun çizgisi kırılmasını bekleyin. Stop'u ikinci tepenin üzerine koyun."
+      },
+      "headAndShoulders": {
+        "name": "Omuz Baş Omuz",
+        "description": "Üç tepeli düşüş dönüş formasyonu - ortadaki tepe (baş) en yüksektir.",
+        "afterCompletion": "Boyun çizgisi kırıldıktan sonra, fiyatın baştan boyun çizgisine olan mesafe kadar düşmesi beklenir.",
+        "tradingTip": "Boyun çizgisi kırılmasında girin. Stop sağ omuzun üzerinde. Hedef = Boyun Çizgisi - Formasyon Yüksekliği."
+      },
+      "inverseHeadAndShoulders": {
+        "name": "Ters Omuz Baş Omuz",
+        "description": "Üç çukurlu yükseliş dönüş formasyonu - ortadaki çukur (baş) en düşüktür.",
+        "afterCompletion": "Boyun çizgisi kırıldıktan sonra, fiyatın baştan boyun çizgisine olan mesafe kadar yükselmesi beklenir.",
+        "tradingTip": "Boyun çizgisi kırılmasında girin. Stop sağ omuzun altında. Hedef = Boyun Çizgisi + Formasyon Yüksekliği."
+      },
+      "ascendingTriangle": {
+        "name": "Yükselen Üçgen",
+        "description": "Düz direnç ve yükselen destekle yükseliş devam formasyonu, alıcıların güçlendiğini gösterir.",
+        "afterCompletion": "Direncin üzerinde kırılma genellikle üçgenin yüksekliğine eşit bir harekete yol açar.",
+        "tradingTip": "Hacimle birlikte direncin üzerinde kırılmada girin. Stop son yükselen dibin altında."
+      },
+      "descendingTriangle": {
+        "name": "Alçalan Üçgen",
+        "description": "Düz destek ve düşen dirençle düşüş devam formasyonu, satıcıların güçlendiğini gösterir.",
+        "afterCompletion": "Desteğin altında kırılma genellikle üçgenin yüksekliğine eşit bir harekete yol açar.",
+        "tradingTip": "Hacimle birlikte desteğin altında kırılmada girin. Stop son alçalan tepenin üzerinde."
+      },
+      "symmetricalTriangle": {
+        "name": "Simetrik Üçgen",
+        "description": "Her iki yöne de kırılabilecek nötr formasyon. Yaklaşan trend çizgileri kararsızlığı gösterir.",
+        "afterCompletion": "Kırılma yönü hareketi belirler. Hedef = Kırılma noktası ± Üçgen yüksekliği.",
+        "tradingTip": "Hacimle net kırılmayı bekleyin. Yönü önceden tahmin etmeyin."
+      },
+      "bullFlag": {
+        "name": "Boğa Bayrağı",
+        "description": "Yükseliş devam formasyonu. Güçlü bir yükseliş hareketinden (bayrak direği) sonra, fiyat aşağı yönlü bir kanalda (bayrak) konsolide olur.",
+        "afterCompletion": "Bayrak direği uzunluğuna eşit bir devam hareketi bekleyin.",
+        "tradingTip": "Bayrak direncinin üzerinde kırılmada girin. Stop bayrak dibinin altında. Hedef = Kırılma + Bayrak Direği."
+      },
+      "bearFlag": {
+        "name": "Ayı Bayrağı",
+        "description": "Düşüş devam formasyonu. Güçlü bir düşüş hareketinden (bayrak direği) sonra, fiyat yukarı yönlü bir kanalda (bayrak) konsolide olur.",
+        "afterCompletion": "Bayrak direği uzunluğuna eşit bir devam hareketi bekleyin.",
+        "tradingTip": "Bayrak desteğinin altında kırılmada girin. Stop bayrak tepesinin üzerinde. Hedef = Kırılma - Bayrak Direği."
+      },
+      "wedge": {
+        "name": "Kama",
+        "description": "Her iki trend çizgisi de aynı yönde eğimli yaklaşan çizgiler. Yükselen kama düşüş, alçalan kama yükseliş sinyali verir.",
+        "afterCompletion": "Kama yönünün tersine kırılma. Hareket genellikle kamanın en geniş noktasına eşittir.",
+        "tradingTip": "Kama eğiminin tersi yönünde kırılmayı işlem yapın."
+      },
+      "cupAndHandle": {
+        "name": "Fincan ve Kulp",
+        "description": "Çay fincanına benzeyen yükseliş devam formasyonu. Fincan yuvarlak bir dip oluşturur, ardından küçük bir geri çekilme (kulp) gelir.",
+        "afterCompletion": "Kulp direncinin üzerinde kırılma, fincan derinliğinin kırılma seviyesine eklenmesini hedefler.",
+        "tradingTip": "Kulp kırılmasında girin. Stop kulp dibinin altında. Uzun vadeli yükseliş sinyali."
+      },
+      "rsiDivergence": {
+        "name": "RSI Uyumsuzluğu",
+        "description": "Fiyat yeni zirveler/dipler yapar ama RSI onaylamaz, potansiyel dönüşü işaret eder.",
+        "afterCompletion": "Yükseliş uyumsuzluğu yukarı dönüş önerir. Düşüş uyumsuzluğu aşağı dönüş önerir.",
+        "tradingTip": "Fiyat hareketiyle onay olarak kullanın. Uyumsuzluğu tek başına işlem yapmayın."
+      },
+      "macdDivergence": {
+        "name": "MACD Uyumsuzluğu",
+        "description": "Fiyat yeni zirveler/dipler yapar ama MACD histogram onaylamaz, momentum zayıflığını işaret eder.",
+        "afterCompletion": "Mevcut trendin tersine trend dönüşü bekleyin.",
+        "tradingTip": "Daha iyi girişler için destek/direnç seviyeleriyle birleştirin."
+      },
+      "breakout": {
+        "name": "Kırılma",
+        "description": "Fiyat artan hacimle önemli bir destek veya direnç seviyesini kırar.",
+        "afterCompletion": "Kırılma yönünde devam bekleyin. Başarısız kırılmalar keskin şekilde döner.",
+        "tradingTip": "Hacimle onaylayın. Daha güvenli giriş için kırılan seviyenin yeniden testini bekleyin."
+      },
+      "channelBreak": {
+        "name": "Kanal Kırılması",
+        "description": "Fiyat kurulu bir işlem kanalından çıkar, trend hızlanması veya dönüşü sinyali verir.",
+        "afterCompletion": "Hareket genellikle kırılma yönünde kanal genişliğine eşittir.",
+        "tradingTip": "Kırılma yönünde işlem yapın. Stop kanalın içinde."
+      }
+    }
   },
   "claudePatterns": {
     "title": "Claude Desenleri",
