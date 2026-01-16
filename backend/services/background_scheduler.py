@@ -15,6 +15,7 @@ from services.ml_prediction_service import get_ml_prediction
 from services.ta_service import compute_ta_snapshot
 from services.data_fetcher import fetch_eod_candles, fetch_latest_price
 from services.marketaux_service import fetch_marketaux_headlines
+from services.outcome_tracker import check_pending_outcomes, check_multi_target_outcome
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +25,12 @@ TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD"]
 # Update intervals (seconds)
 DATA_UPDATE_INTERVAL = 5  # Update price/TA data every 5 seconds
 NEWS_UPDATE_INTERVAL = 300  # Update news every 5 minutes
+OUTCOME_CHECK_INTERVAL = 300  # Check outcomes every 5 minutes
 
-# Last news update timestamps
+# Last update timestamps
 _last_news_update: Dict[str, datetime] = {}
 _last_news_hash: Dict[str, str] = {}
+_last_outcome_check: Optional[datetime] = None
 
 # Scheduler running flag
 _scheduler_running = False
@@ -186,6 +189,33 @@ async def save_to_cache(symbol: str, data: Dict[str, Any], news: Optional[Dict[s
         logger.error(f"Error saving cache for {symbol}: {e}")
 
 
+async def check_outcomes_if_needed():
+    """Check prediction outcomes periodically."""
+    global _last_outcome_check
+    
+    now = datetime.utcnow()
+    
+    # Check if we need to run outcome check
+    if _last_outcome_check and (now - _last_outcome_check).total_seconds() < OUTCOME_CHECK_INTERVAL:
+        return
+    
+    _last_outcome_check = now
+    
+    try:
+        # Check 1-hour outcomes
+        outcomes_1h = await check_pending_outcomes("1h")
+        if outcomes_1h:
+            logger.info(f"Checked {len(outcomes_1h)} 1h outcomes")
+        
+        # Check 24-hour outcomes (less frequently, every hour is enough)
+        outcomes_24h = await check_pending_outcomes("24h")
+        if outcomes_24h:
+            logger.info(f"Checked {len(outcomes_24h)} 24h outcomes")
+            
+    except Exception as e:
+        logger.error(f"Error checking outcomes: {e}")
+
+
 async def run_update_cycle():
     """Run one update cycle for all symbols."""
     for symbol in TRACKED_SYMBOLS:
@@ -220,6 +250,8 @@ async def background_scheduler_loop():
     while _scheduler_running:
         try:
             await run_update_cycle()
+            # Check outcomes periodically
+            await check_outcomes_if_needed()
         except Exception as e:
             logger.error(f"Scheduler error: {e}")
         
