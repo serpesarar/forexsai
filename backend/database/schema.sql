@@ -67,6 +67,8 @@ CREATE TABLE IF NOT EXISTS outcome_results (
     -- Fiyat değişimi
     entry_price REAL NOT NULL,
     exit_price REAL NOT NULL,
+    high_price REAL,  -- Highest price since prediction (for BUY target check)
+    low_price REAL,   -- Lowest price since prediction (for SELL target check)
     price_change_pct REAL NOT NULL,  -- (exit - entry) / entry * 100
     
     -- Gerçek yön
