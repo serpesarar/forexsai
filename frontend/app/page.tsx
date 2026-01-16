@@ -690,7 +690,13 @@ export default function HomePage() {
     );
   };
 
-  const { isEditMode } = useDashboardEdit();
+  const { isEditMode, layout } = useDashboardEdit();
+  
+  // Helper to check card visibility
+  const isCardVisible = (cardId: string) => {
+    const card = layout.cards.find(c => c.id === cardId);
+    return card?.visible ?? true;
+  };
 
   return (
     <div className="min-h-screen bg-background text-textPrimary">
@@ -785,7 +791,10 @@ export default function HomePage() {
 
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-8 md:grid-cols-2 lg:grid-cols-3">
         <div className="flex flex-col gap-6">
-          {signalCards.map((signal) => (
+          {signalCards.map((signal) => {
+            const cardId = signal.symbol === "NASDAQ" ? "signal-nasdaq" : "signal-xauusd";
+            if (!isCardVisible(cardId)) return null;
+            return (
             <div key={signal.symbol} className={`glass-card card-hover p-5 relative ${isEditMode ? "wobble-animation cursor-move" : ""}`}>
               {isEditMode && (
                 <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-lg bg-primary/80 text-white cursor-grab shadow-lg">
@@ -977,11 +986,13 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="flex flex-col gap-6">
           {/* New Pattern Engine V2 */}
+          {isCardVisible("pattern-engine") && (
           <div className={`relative ${isEditMode ? "wobble-animation" : ""}`}>
             {isEditMode && (
               <div className="absolute -left-2 top-6 z-10 p-2 rounded-lg bg-primary/80 text-white cursor-grab shadow-lg">
@@ -991,7 +1002,9 @@ export default function HomePage() {
             {isEditMode && <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-xl pointer-events-none z-0" />}
             <PatternEngineV2 />
           </div>
+          )}
 
+          {isCardVisible("claude-patterns") && (
           <div className={`glass-card card-hover p-5 relative ${isEditMode ? "wobble-animation" : ""}`}>
             {isEditMode && (
               <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-lg bg-primary/80 text-white cursor-grab shadow-lg">
@@ -1043,9 +1056,11 @@ export default function HomePage() {
               </div>
             )}
           </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-6">
+          {isCardVisible("sentiment") && (
           <div className={`glass-card card-hover p-5 relative ${isEditMode ? "wobble-animation" : ""}`}>
             {isEditMode && (
               <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-lg bg-primary/80 text-white cursor-grab shadow-lg">
@@ -1065,7 +1080,9 @@ export default function HomePage() {
               {renderSentimentBlock("XAUUSD", "xauusd")}
             </div>
           </div>
+          )}
 
+          {isCardVisible("news") && (
           <div className={`glass-card card-hover p-5 relative ${isEditMode ? "wobble-animation" : ""}`}>
             {isEditMode && (
               <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-lg bg-primary/80 text-white cursor-grab shadow-lg">
@@ -1103,6 +1120,7 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+          )}
 
           {/* ML Prediction & Claude AI Section - Full Width Cards */}
           <div className="md:col-span-2 lg:col-span-3">
