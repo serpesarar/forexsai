@@ -26,6 +26,7 @@ import OrderBlockPanel from "../components/OrderBlockPanel";
 import RTYHIIMDetectorPanel from "../components/RTYHIIMDetectorPanel";
 import MLPredictionPanel from "../components/MLPredictionPanel";
 import ClaudeAnalysisPanel from "../components/ClaudeAnalysisPanel";
+import PatternEngineV2 from "../components/PatternEngineV2";
 
 const initialMarketTickers = [
   { label: "NASDAQ", price: "21,547.35", change: "+1.2%", trend: "up" },
@@ -949,67 +950,8 @@ export default function HomePage() {
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="glass-card card-hover p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("patternEngine.title")}</p>
-                <h3 className="mt-2 text-lg font-semibold">{t("patternEngine.subtitle")}</h3>
-              </div>
-              <span className="text-xs text-textSecondary">{t("common.updated")} 4m {t("common.ago")}</span>
-            </div>
-            <div className="mt-4 space-y-6">
-              {[
-                { title: t("patternEngine.nasdaqPatterns"), subtitle: t("patternEngine.top30Candidates"), rows: nasdaqPatterns },
-                { title: t("patternEngine.xauusdPatterns"), subtitle: t("patternEngine.top30Candidates"), rows: xauusdPatterns },
-              ].map((section) => (
-                <div key={section.title}>
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">
-                      {section.title}
-                    </p>
-                    <span className="text-xs text-textSecondary">{section.subtitle}</span>
-                  </div>
-                  <div className="mt-3 max-h-[200px] overflow-y-auto">
-                    <table className="w-full text-left text-xs">
-                      <thead className="sticky top-0 bg-background/80 text-textSecondary">
-                        <tr>
-                          <th className="py-2">{t("common.pattern")}</th>
-                          <th className="py-2">{t("patternEngine.pSuccess")}</th>
-                          <th className="py-2">{t("common.trade")}</th>
-                          <th className="py-2">{t("common.stage")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {section.rows.map((row, index) => (
-                          <tr
-                            key={`${section.title}-${index}`}
-                            className="border-t border-white/5 hover:bg-accent/10 transition"
-                          >
-                            <td className="py-2">{row.pattern}</td>
-                            <td className="py-2 font-mono">{row.success}</td>
-                            <td className="py-2">
-                              <span
-                                className={`rounded-full px-2 py-1 text-[10px] uppercase ${
-                                  row.trade === "BUY"
-                                    ? "bg-success/20 text-success"
-                                    : row.trade === "SELL"
-                                      ? "bg-danger/20 text-danger"
-                                      : "bg-white/10 text-textSecondary"
-                                }`}
-                              >
-                                {row.trade}
-                              </span>
-                            </td>
-                            <td className="py-2 text-textSecondary">{row.stage}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* New Pattern Engine V2 */}
+          <PatternEngineV2 />
 
           <div className="glass-card card-hover p-5">
             <div className="flex items-center justify-between">
