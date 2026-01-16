@@ -29,7 +29,7 @@ import MLPredictionPanel from "../components/MLPredictionPanel";
 import ClaudeAnalysisPanel from "../components/ClaudeAnalysisPanel";
 import PatternEngineV2 from "../components/PatternEngineV2";
 import { useDashboardEdit } from "../contexts/DashboardEditContext";
-import { DraggableDashboard, EditModeButton } from "../components/DraggableDashboard";
+import { EditModeButton, EditModeControls } from "../components/DraggableDashboard";
 
 const initialMarketTickers = [
   { label: "NASDAQ", price: "21,547.35", change: "+1.2%", trend: "up" },
@@ -1190,50 +1190,8 @@ export default function HomePage() {
         data={data}
       />
 
-      {/* Edit Mode Floating Controls */}
-      {isEditMode && (
-        <EditModeFloatingControls />
-      )}
-    </div>
-  );
-}
-
-function EditModeFloatingControls() {
-  const { saveLayout, resetLayout, setEditMode } = useDashboardEdit();
-  
-  return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-3 rounded-2xl bg-background/95 backdrop-blur-xl border border-white/10 shadow-2xl animate-slide-in-right">
-      <div className="flex items-center gap-2 mr-3 pr-3 border-r border-white/10">
-        <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-        <span className="text-sm text-textSecondary">Düzenleme Modu</span>
-      </div>
-      <button
-        onClick={saveLayout}
-        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-success/20 text-success hover:bg-success/30 transition-colors"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-        <span className="text-sm font-medium">Kaydet</span>
-      </button>
-      <button
-        onClick={resetLayout}
-        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 text-textSecondary hover:bg-white/20 transition-colors"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-        <span className="text-sm font-medium">Sıfırla</span>
-      </button>
-      <button
-        onClick={() => setEditMode(false)}
-        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-danger/20 text-danger hover:bg-danger/30 transition-colors"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-        <span className="text-sm font-medium">İptal</span>
-      </button>
+      {/* Edit Mode Floating Controls - Enhanced */}
+      <EditModeControls />
     </div>
   );
 }

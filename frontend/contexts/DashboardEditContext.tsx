@@ -1,14 +1,25 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 
-interface DashboardItem {
+export interface DashboardCard {
   id: string;
+  title: string;
+  column: "left" | "center" | "right";
   order: number;
+  visible: boolean;
+  size: "normal" | "large" | "compact";
+  collapsed: boolean;
 }
 
-interface DashboardLayout {
-  [columnId: string]: DashboardItem[];
+export interface DashboardLayout {
+  cards: DashboardCard[];
+  version: number;
+}
+
+interface HistoryState {
+  past: DashboardLayout[];
+  future: DashboardLayout[];
 }
 
 interface DashboardEditContextType {
@@ -16,33 +27,48 @@ interface DashboardEditContextType {
   toggleEditMode: () => void;
   setEditMode: (value: boolean) => void;
   layout: DashboardLayout;
-  updateLayout: (columnId: string, items: DashboardItem[]) => void;
+  setLayout: React.Dispatch<React.SetStateAction<DashboardLayout>>;
+  moveCard: (cardId: string, toColumn: "left" | "center" | "right", toIndex: number) => void;
+  toggleCardVisibility: (cardId: string) => void;
+  toggleCardCollapsed: (cardId: string) => void;
+  setCardSize: (cardId: string, size: "normal" | "large" | "compact") => void;
   saveLayout: () => void;
   resetLayout: () => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  activeCardId: string | null;
+  setActiveCardId: (id: string | null) => void;
+  dragOverColumn: string | null;
+  setDragOverColumn: (column: string | null) => void;
 }
 
 const DEFAULT_LAYOUT: DashboardLayout = {
-  left: [
-    { id: "signal-nasdaq", order: 0 },
-    { id: "signal-xauusd", order: 1 },
+  cards: [
+    { id: "signal-nasdaq", title: "NASDAQ Trend", column: "left", order: 0, visible: true, size: "normal", collapsed: false },
+    { id: "signal-xauusd", title: "XAUUSD Trend", column: "left", order: 1, visible: true, size: "normal", collapsed: false },
+    { id: "pattern-engine", title: "Pattern Engine V2", column: "center", order: 0, visible: true, size: "large", collapsed: false },
+    { id: "claude-patterns", title: "Claude Patterns", column: "center", order: 1, visible: true, size: "normal", collapsed: false },
+    { id: "sentiment", title: "AI Sentiment", column: "right", order: 0, visible: true, size: "normal", collapsed: false },
+    { id: "news", title: "Market News", column: "right", order: 1, visible: true, size: "normal", collapsed: false },
+    { id: "ai-panels", title: "AI Prediction Panels", column: "center", order: 2, visible: true, size: "large", collapsed: false },
   ],
-  center: [
-    { id: "pattern-engine", order: 0 },
-    { id: "claude-patterns", order: 1 },
-  ],
-  right: [
-    { id: "market-news", order: 0 },
-    { id: "claude-sentiment", order: 1 },
-  ],
+  version: 2,
 };
 
-const LAYOUT_STORAGE_KEY = "dashboard-layout-v1";
+const LAYOUT_STORAGE_KEY = "dashboard-layout-v2";
+const MAX_HISTORY = 50;
 
 const DashboardEditContext = createContext<DashboardEditContextType | undefined>(undefined);
 
 export function DashboardEditProvider({ children }: { children: React.ReactNode }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [layout, setLayout] = useState<DashboardLayout>(DEFAULT_LAYOUT);
+  const [history, setHistory] = useState<HistoryState>({ past: [], future: [] });
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+  const isUndoRedo = useRef(false);
 
   // Load layout from localStorage on mount
   useEffect(() => {
@@ -50,21 +76,101 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
       const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        setLayout(parsed);
+        if (parsed.version === 2) {
+          setLayout(parsed);
+        }
       }
     } catch (e) {
       console.warn("Failed to load dashboard layout:", e);
     }
   }, []);
 
+  // Track history for undo/redo
+  useEffect(() => {
+    if (isUndoRedo.current) {
+      isUndoRedo.current = false;
+      return;
+    }
+    // Only track when in edit mode
+    if (!isEditMode) return;
+    
+    setHistory((prev) => ({
+      past: [...prev.past.slice(-MAX_HISTORY), layout],
+      future: [],
+    }));
+  }, [layout, isEditMode]);
+
   const toggleEditMode = useCallback(() => {
     setIsEditMode((prev) => !prev);
+    if (!isEditMode) {
+      setHistory({ past: [], future: [] });
+    }
+  }, [isEditMode]);
+
+  const moveCard = useCallback((cardId: string, toColumn: "left" | "center" | "right", toIndex: number) => {
+    setLayout((prev) => {
+      const cards = [...prev.cards];
+      const cardIndex = cards.findIndex((c) => c.id === cardId);
+      if (cardIndex === -1) return prev;
+
+      const card = { ...cards[cardIndex] };
+      const oldColumn = card.column;
+      card.column = toColumn;
+
+      // Remove from old position
+      cards.splice(cardIndex, 1);
+
+      // Get cards in target column and recalculate orders
+      const columnCards = cards.filter((c) => c.column === toColumn);
+      const otherCards = cards.filter((c) => c.column !== toColumn);
+
+      // Insert at new position
+      columnCards.splice(toIndex, 0, card);
+
+      // Recalculate orders
+      columnCards.forEach((c, i) => {
+        c.order = i;
+      });
+
+      // Also recalculate old column if different
+      if (oldColumn !== toColumn) {
+        const oldColumnCards = otherCards.filter((c) => c.column === oldColumn);
+        oldColumnCards.forEach((c, i) => {
+          c.order = i;
+        });
+      }
+
+      return {
+        ...prev,
+        cards: [...otherCards.filter((c) => c.column !== oldColumn), ...cards.filter((c) => c.column === oldColumn && c.id !== cardId), ...columnCards],
+      };
+    });
   }, []);
 
-  const updateLayout = useCallback((columnId: string, items: DashboardItem[]) => {
+  const toggleCardVisibility = useCallback((cardId: string) => {
     setLayout((prev) => ({
       ...prev,
-      [columnId]: items,
+      cards: prev.cards.map((c) =>
+        c.id === cardId ? { ...c, visible: !c.visible } : c
+      ),
+    }));
+  }, []);
+
+  const toggleCardCollapsed = useCallback((cardId: string) => {
+    setLayout((prev) => ({
+      ...prev,
+      cards: prev.cards.map((c) =>
+        c.id === cardId ? { ...c, collapsed: !c.collapsed } : c
+      ),
+    }));
+  }, []);
+
+  const setCardSize = useCallback((cardId: string, size: "normal" | "large" | "compact") => {
+    setLayout((prev) => ({
+      ...prev,
+      cards: prev.cards.map((c) =>
+        c.id === cardId ? { ...c, size } : c
+      ),
     }));
   }, []);
 
@@ -82,6 +188,38 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
     localStorage.removeItem(LAYOUT_STORAGE_KEY);
   }, []);
 
+  const undo = useCallback(() => {
+    setHistory((prev) => {
+      if (prev.past.length <= 1) return prev;
+      const newPast = [...prev.past];
+      const current = newPast.pop()!;
+      const previous = newPast[newPast.length - 1];
+      
+      isUndoRedo.current = true;
+      setLayout(previous);
+      
+      return {
+        past: newPast,
+        future: [current, ...prev.future],
+      };
+    });
+  }, []);
+
+  const redo = useCallback(() => {
+    setHistory((prev) => {
+      if (prev.future.length === 0) return prev;
+      const [next, ...newFuture] = prev.future;
+      
+      isUndoRedo.current = true;
+      setLayout(next);
+      
+      return {
+        past: [...prev.past, next],
+        future: newFuture,
+      };
+    });
+  }, []);
+
   return (
     <DashboardEditContext.Provider
       value={{
@@ -89,9 +227,21 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
         toggleEditMode,
         setEditMode: setIsEditMode,
         layout,
-        updateLayout,
+        setLayout,
+        moveCard,
+        toggleCardVisibility,
+        toggleCardCollapsed,
+        setCardSize,
         saveLayout,
         resetLayout,
+        undo,
+        redo,
+        canUndo: history.past.length > 1,
+        canRedo: history.future.length > 0,
+        activeCardId,
+        setActiveCardId,
+        dragOverColumn,
+        setDragOverColumn,
       }}
     >
       {children}
@@ -105,4 +255,12 @@ export function useDashboardEdit() {
     throw new Error("useDashboardEdit must be used within a DashboardEditProvider");
   }
   return context;
+}
+
+// Helper to get cards by column, sorted by order
+export function useColumnCards(column: "left" | "center" | "right") {
+  const { layout } = useDashboardEdit();
+  return layout.cards
+    .filter((c) => c.column === column && c.visible)
+    .sort((a, b) => a.order - b.order);
 }
