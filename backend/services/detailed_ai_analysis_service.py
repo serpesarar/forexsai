@@ -20,6 +20,12 @@ logger = logging.getLogger(__name__)
 ANALYSIS_ENGINE_VERSION = "2.0.0"
 CONTEXT_PACK_VERSION = "2.0.0"
 
+# Model selection - Haiku is 4-5x cheaper than Sonnet
+# Sonnet: $3/1M input, $15/1M output
+# Haiku:  $0.80/1M input, $4/1M output
+CLAUDE_MODEL = "claude-3-5-haiku-20241022"  # Cost-optimized
+CLAUDE_MAX_TOKENS = 1500  # Reduced from 2500
+
 DETAILED_SYSTEM_PROMPT = """You are an institutional-grade market analysis engine. Your job is to produce a single actionable decision (BUY/SELL/HOLD/NO_TRADE) using ONLY the provided context pack. Do NOT invent or assume missing values.
 
 ## Core Rules
@@ -524,8 +530,8 @@ Remember:
 
     try:
         message = client.messages.create(
-            model="claude-sonnet-4-5-20250514",
-            max_tokens=2500,
+            model=CLAUDE_MODEL,
+            max_tokens=CLAUDE_MAX_TOKENS,
             system=DETAILED_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_prompt}],
         )
@@ -534,7 +540,7 @@ Remember:
         parsed = _parse_claude_json(response_text)
         if parsed is not None:
             parsed["timestamp"] = parsed.get("timestamp") or (datetime.utcnow().isoformat() + "Z")
-            parsed["model_used"] = parsed.get("model_used") or "claude-sonnet-4-5-20250514"
+            parsed["model_used"] = parsed.get("model_used") or CLAUDE_MODEL
             parsed["engine_version"] = ANALYSIS_ENGINE_VERSION
             return parsed
 
@@ -553,7 +559,7 @@ Remember:
             "gating_applied": ["json_parse_failure"],
             "next_data_needed": ["Valid JSON response from Claude"],
             "timestamp": datetime.utcnow().isoformat() + "Z",
-            "model_used": "claude-sonnet-4-5-20250514",
+            "model_used": CLAUDE_MODEL,
             "engine_version": ANALYSIS_ENGINE_VERSION,
             "raw_response_preview": response_text[:500]
         }
