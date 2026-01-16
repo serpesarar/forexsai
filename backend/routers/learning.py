@@ -291,3 +291,159 @@ async def get_multi_target_dashboard(
         "accuracy_24h": accuracy_24h if "error" not in accuracy_24h else None,
         "basic_accuracy": basic_accuracy if "error" not in basic_accuracy else None,
     }
+
+
+# ============================================================
+# ERROR ANALYSIS ENDPOINTS (Self-Learning System)
+# ============================================================
+
+@router.get("/error-analyses")
+async def get_error_analyses(
+    symbol: Optional[str] = Query(None, description="Filter by symbol"),
+    limit: int = Query(20, ge=1, le=100),
+    error_type: Optional[str] = Query(None, description="Filter by error type")
+):
+    """Get error analysis records for failed predictions."""
+    from database.supabase_client import get_supabase_client, is_db_available
+    
+    if not is_db_available():
+        return {"error": "Database not available", "data": []}
+    
+    client = get_supabase_client()
+    if client is None:
+        return {"error": "Database client not available", "data": []}
+    
+    try:
+        query = client.table("error_analysis").select(
+            "*, prediction_logs(symbol, ml_direction, ml_confidence, created_at)"
+        ).order("created_at", desc=True).limit(limit)
+        
+        if error_type:
+            query = query.eq("error_type", error_type)
+        
+        result = query.execute()
+        analyses = result.get("data") or []
+        
+        # Filter by symbol if needed
+        if symbol:
+            analyses = [a for a in analyses if a.get("prediction_logs", {}).get("symbol") == symbol]
+        
+        return {
+            "count": len(analyses),
+            "data": analyses
+        }
+        
+    except Exception as e:
+        return {"error": str(e), "data": []}
+
+
+@router.get("/learning-feedback")
+async def get_learning_feedback(
+    symbol: Optional[str] = Query(None, description="Filter by symbol"),
+    active_only: bool = Query(True, description="Only active feedback")
+):
+    """Get learning feedback rules that affect predictions."""
+    from database.supabase_client import get_supabase_client, is_db_available
+    
+    if not is_db_available():
+        return {"error": "Database not available", "data": []}
+    
+    client = get_supabase_client()
+    if client is None:
+        return {"error": "Database client not available", "data": []}
+    
+    try:
+        query = client.table("learning_feedback").select("*").order("created_at", desc=True)
+        
+        if active_only:
+            query = query.eq("is_active", True)
+        
+        result = query.execute()
+        feedbacks = result.get("data") or []
+        
+        if symbol:
+            feedbacks = [f for f in feedbacks if f.get("symbol") is None or f.get("symbol") == symbol]
+        
+        return {
+            "count": len(feedbacks),
+            "data": feedbacks
+        }
+        
+    except Exception as e:
+        return {"error": str(e), "data": []}
+
+
+@router.post("/trigger-error-analysis")
+async def trigger_error_analysis(
+    hours_ago: int = Query(4, ge=1, le=48, description="Analyze predictions older than X hours"),
+    limit: int = Query(5, ge=1, le=20)
+):
+    """Manually trigger error analysis for failed predictions."""
+    from services.error_analysis_service import check_and_analyze_failed_predictions
+    
+    try:
+        analyses = await check_and_analyze_failed_predictions(hours_ago=hours_ago, limit=limit)
+        return {
+            "success": True,
+            "analyzed_count": len(analyses),
+            "analyses": analyses
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.get("/self-learning-status")
+async def get_self_learning_status(symbol: Optional[str] = Query(None)):
+    """Get overall status of the self-learning system."""
+    from database.supabase_client import get_supabase_client, is_db_available
+    
+    if not is_db_available():
+        return {"error": "Database not available"}
+    
+    client = get_supabase_client()
+    if client is None:
+        return {"error": "Database client not available"}
+    
+    try:
+        # Count predictions
+        pred_result = client.table("prediction_logs").select("id", count="exact").execute()
+        total_predictions = len(pred_result.get("data") or [])
+        
+        # Count outcomes
+        out_result = client.table("outcome_results").select("id", count="exact").execute()
+        total_outcomes = len(out_result.get("data") or [])
+        
+        # Count error analyses
+        err_result = client.table("error_analysis").select("id", count="exact").execute()
+        total_error_analyses = len(err_result.get("data") or [])
+        
+        # Count active feedback rules
+        fb_result = client.table("learning_feedback").select("id").eq("is_active", True).execute()
+        active_feedback_rules = len(fb_result.get("data") or [])
+        
+        # Get recent error types distribution
+        recent_errors = client.table("error_analysis").select(
+            "error_type, is_fake_move"
+        ).order("created_at", desc=True).limit(50).execute()
+        
+        error_distribution = {}
+        fake_move_count = 0
+        for e in (recent_errors.get("data") or []):
+            et = e.get("error_type", "unknown")
+            error_distribution[et] = error_distribution.get(et, 0) + 1
+            if e.get("is_fake_move"):
+                fake_move_count += 1
+        
+        return {
+            "system_active": True,
+            "total_predictions": total_predictions,
+            "total_outcomes": total_outcomes,
+            "total_error_analyses": total_error_analyses,
+            "active_feedback_rules": active_feedback_rules,
+            "recent_error_distribution": error_distribution,
+            "fake_move_rate": round(fake_move_count / max(1, len(recent_errors.get("data") or [])), 2),
+            "learning_coverage": round(total_error_analyses / max(1, total_outcomes) * 100, 1)
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}

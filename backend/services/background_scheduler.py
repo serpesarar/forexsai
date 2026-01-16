@@ -16,6 +16,7 @@ from services.ta_service import compute_ta_snapshot
 from services.data_fetcher import fetch_eod_candles, fetch_latest_price
 from services.marketaux_service import fetch_marketaux_headlines
 from services.outcome_tracker import check_pending_outcomes, check_multi_target_outcome
+from services.error_analysis_service import check_and_analyze_failed_predictions
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +27,13 @@ TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD"]
 DATA_UPDATE_INTERVAL = 5  # Update price/TA data every 5 seconds
 NEWS_UPDATE_INTERVAL = 300  # Update news every 5 minutes
 OUTCOME_CHECK_INTERVAL = 300  # Check outcomes every 5 minutes
+ERROR_ANALYSIS_INTERVAL = 3600  # Analyze errors every hour
 
 # Last update timestamps
 _last_news_update: Dict[str, datetime] = {}
 _last_news_hash: Dict[str, str] = {}
 _last_outcome_check: Optional[datetime] = None
+_last_error_analysis: Optional[datetime] = None
 
 # Scheduler running flag
 _scheduler_running = False
@@ -236,6 +239,27 @@ async def run_update_cycle():
         await asyncio.sleep(0.5)
 
 
+async def analyze_errors_if_needed():
+    """Analyze failed predictions periodically (every hour)."""
+    global _last_error_analysis
+    
+    now = datetime.utcnow()
+    
+    # Check if we need to run error analysis
+    if _last_error_analysis and (now - _last_error_analysis).total_seconds() < ERROR_ANALYSIS_INTERVAL:
+        return
+    
+    _last_error_analysis = now
+    
+    try:
+        # Analyze predictions that are at least 4 hours old
+        analyses = await check_and_analyze_failed_predictions(hours_ago=4, limit=5)
+        if analyses:
+            logger.info(f"Completed {len(analyses)} error analyses")
+    except Exception as e:
+        logger.error(f"Error in error analysis: {e}")
+
+
 async def background_scheduler_loop():
     """Main background scheduler loop."""
     global _scheduler_running
@@ -252,6 +276,8 @@ async def background_scheduler_loop():
             await run_update_cycle()
             # Check outcomes periodically
             await check_outcomes_if_needed()
+            # Analyze errors periodically (self-learning)
+            await analyze_errors_if_needed()
         except Exception as e:
             logger.error(f"Scheduler error: {e}")
         

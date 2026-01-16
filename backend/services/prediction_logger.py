@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 from uuid import UUID
 
 from database.supabase_client import get_supabase_client, is_db_available
+from services.error_analysis_service import save_candle_snapshot
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +123,30 @@ async def log_prediction(
         if result.get("data") and len(result["data"]) > 0:
             prediction_id = result["data"][0].get("id")
             logger.info(f"Logged prediction {prediction_id} for {symbol}")
+            
+            # Save candle snapshot for later error analysis (self-learning)
+            try:
+                indicators = {
+                    "rsi_14": factors.get("rsi_14"),
+                    "macd_histogram": factors.get("macd_histogram"),
+                    "boll_zscore": factors.get("boll_zscore"),
+                    "atr_pct": factors.get("atr_pct"),
+                    "adx": factors.get("adx"),
+                }
+                levels = {
+                    "support": context.get("levels", {}).get("support", []),
+                    "resistance": context.get("levels", {}).get("resistance", []),
+                }
+                await save_candle_snapshot(
+                    prediction_id=prediction_id,
+                    symbol=symbol,
+                    snapshot_type="at_prediction",
+                    indicators=indicators,
+                    levels=levels
+                )
+            except Exception as snap_err:
+                logger.warning(f"Could not save candle snapshot: {snap_err}")
+            
             return prediction_id
         
         return None
