@@ -286,6 +286,17 @@
     "trend": "Trend",
     "support": "Destek",
     "volatility": "Volatilite"
+  },
+  "trendAnalysis": {
+    "title": "TREND ANALİZİ",
+    "trendStrength": "Trend Gücü",
+    "confidence": "Güven",
+    "bullish": "YÜKSELIŞ",
+    "bearish": "DÜŞÜŞ",
+    "neutral": "NÖTR",
+    "volatility": "Volatilite",
+    "volumeConfirmed": "Hacim Onaylı",
+    "volumeNotConfirmed": "Hacim Onaysız"
   }
 }
 
