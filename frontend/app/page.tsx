@@ -26,6 +26,7 @@ import OrderBlockPanel from "../components/OrderBlockPanel";
 import RTYHIIMDetectorPanel from "../components/RTYHIIMDetectorPanel";
 import MLPredictionPanel from "../components/MLPredictionPanel";
 import ClaudeAnalysisPanel from "../components/ClaudeAnalysisPanel";
+import PremiumHeader from "../components/PremiumHeader";
 
 const initialMarketTickers = [
   { label: "NASDAQ", price: "21,547.35", change: "+1.2%", trend: "up" },
@@ -669,79 +670,16 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background text-textPrimary">
-      <header className="border-b border-white/10">
-        <div className="mx-auto flex h-[60px] max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5">
-              <Activity className="h-4 w-4 text-accent" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold">{t("header.title")}</p>
-              <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("header.subtitle")}</p>
-            </div>
-          </div>
-
-          <div className="hidden items-center gap-6 lg:flex">
-            {marketTickers.map((ticker) => (
-              <div key={ticker.label} className="flex items-center gap-2 text-sm">
-                <span className="text-textSecondary">{ticker.label}:</span>
-                <span className="font-mono">${ticker.price}</span>
-                <span
-                  className={`font-mono ${ticker.trend === "up" ? "text-success" : "text-danger"}`}
-                >
-                  {ticker.change}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/trading"
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-accent/20 to-purple-500/20 border border-accent/30 px-4 py-2 text-sm font-semibold text-accent hover:from-accent/30 hover:to-purple-500/30 transition-all duration-200 hover:scale-[1.02]"
-            >
-              <BarChart3 className="h-4 w-4" />
-              AI Trading Panel
-            </Link>
-            <button
-              onClick={fetchAll}
-              className="gradient-button flex items-center gap-2 text-xs uppercase tracking-[0.2em]"
-            >
-              <PlayCircle className="h-4 w-4" />
-              {isLoading ? t("common.running") : t("common.runAnalysis")}
-            </button>
-            <button
-              onClick={fetchAll}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-textSecondary transition hover:border-white/30"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
-              className="flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-textSecondary transition hover:border-white/30"
-            >
-              {theme === "evening" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-              {theme === "evening" ? t("common.morning") : t("common.evening")}
-            </button>
-            <LanguageSwitcher />
-            <div className="hidden items-center gap-3 text-xs text-textSecondary md:flex">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={autoRefresh}
-                  onChange={(event) => toggleAutoRefresh(event.target.checked)}
-                  className="h-4 w-4 accent-accent"
-                />
-                {t("common.auto30s")}
-              </label>
-              <span className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                {t("common.live")}
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <PremiumHeader
+        marketTickers={marketTickers as any}
+        theme={theme}
+        setTheme={setTheme}
+        autoRefresh={autoRefresh}
+        toggleAutoRefresh={toggleAutoRefresh}
+        isLoading={isLoading}
+        fetchAll={fetchAll}
+        t={t}
+      />
 
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-8 md:grid-cols-2 lg:grid-cols-3">
         <div className="flex flex-col gap-6">
