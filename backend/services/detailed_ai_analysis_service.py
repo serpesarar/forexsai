@@ -17,14 +17,13 @@ from services.ta_service import compute_ta_snapshot
 logger = logging.getLogger(__name__)
 
 
-ANALYSIS_ENGINE_VERSION = "2.0.0"
-CONTEXT_PACK_VERSION = "2.0.0"
+ANALYSIS_ENGINE_VERSION = "3.0.0"
+CONTEXT_PACK_VERSION = "3.0.0"  # Added: divergences, market_structure, liquidity_zones, economic_calendar
 
-# Model selection - Haiku is 4-5x cheaper than Sonnet
-# Sonnet: $3/1M input, $15/1M output
-# Haiku:  $0.80/1M input, $4/1M output
-CLAUDE_MODEL = "claude-3-5-haiku-20241022"  # Cost-optimized
-CLAUDE_MAX_TOKENS = 1500  # Reduced from 2500
+# Model selection - Haiku 4.5 is cost-effective with good quality
+# Haiku 4.5: $1/1M input, $5/1M output (better than 3.5, cheaper than Sonnet)
+CLAUDE_MODEL = "claude-haiku-4-5-20250514"  # Upgraded to Haiku 4.5
+CLAUDE_MAX_TOKENS = 1800  # Slightly increased for better analysis
 
 DETAILED_SYSTEM_PROMPT = """You are an institutional-grade market analysis engine. Your job is to produce a single actionable decision (BUY/SELL/HOLD/NO_TRADE) using ONLY the provided context pack. Do NOT invent or assume missing values.
 
@@ -214,6 +213,206 @@ def _nearest_level(current: float, levels: List[dict], kind: str) -> dict:
     return {"price": price, "distance_pct": _pct_distance(current, price), "kind": kind}
 
 
+def _detect_divergences(closes: np.ndarray, rsi_values: np.ndarray, macd_values: np.ndarray) -> dict:
+    """Detect RSI and MACD divergences vs price."""
+    result = {
+        "rsi_bullish_divergence": False,
+        "rsi_bearish_divergence": False,
+        "macd_bullish_divergence": False,
+        "macd_bearish_divergence": False,
+        "divergence_strength": "none"
+    }
+    
+    if closes is None or len(closes) < 20:
+        return result
+    
+    try:
+        # Look at last 20 candles for divergence
+        price_recent = closes[-20:]
+        
+        # Find price highs and lows
+        price_making_higher_high = price_recent[-1] > price_recent[-10:-1].max()
+        price_making_lower_low = price_recent[-1] < price_recent[-10:-1].min()
+        price_making_lower_high = price_recent[-1] < price_recent[-10:-1].max() and price_recent[-5:].max() < price_recent[-15:-5].max()
+        price_making_higher_low = price_recent[-1] > price_recent[-10:-1].min() and price_recent[-5:].min() > price_recent[-15:-5].min()
+        
+        # RSI divergence
+        if rsi_values is not None and len(rsi_values) >= 20:
+            rsi_recent = rsi_values[-20:]
+            rsi_making_lower = rsi_recent[-1] < rsi_recent[-10:-1].max()
+            rsi_making_higher = rsi_recent[-1] > rsi_recent[-10:-1].min()
+            
+            # Bearish: Price higher high, RSI lower high
+            if price_making_higher_high and rsi_making_lower:
+                result["rsi_bearish_divergence"] = True
+            # Bullish: Price lower low, RSI higher low
+            if price_making_lower_low and rsi_making_higher:
+                result["rsi_bullish_divergence"] = True
+        
+        # MACD divergence
+        if macd_values is not None and len(macd_values) >= 20:
+            macd_recent = macd_values[-20:]
+            macd_making_lower = macd_recent[-1] < macd_recent[-10:-1].max()
+            macd_making_higher = macd_recent[-1] > macd_recent[-10:-1].min()
+            
+            if price_making_higher_high and macd_making_lower:
+                result["macd_bearish_divergence"] = True
+            if price_making_lower_low and macd_making_higher:
+                result["macd_bullish_divergence"] = True
+        
+        # Calculate strength
+        divergence_count = sum([
+            result["rsi_bullish_divergence"],
+            result["rsi_bearish_divergence"],
+            result["macd_bullish_divergence"],
+            result["macd_bearish_divergence"]
+        ])
+        if divergence_count >= 2:
+            result["divergence_strength"] = "strong"
+        elif divergence_count == 1:
+            result["divergence_strength"] = "moderate"
+            
+    except Exception:
+        pass
+    
+    return result
+
+
+def _get_market_structure(closes: np.ndarray, highs: np.ndarray, lows: np.ndarray) -> dict:
+    """Analyze market structure - HH/HL for uptrend, LH/LL for downtrend."""
+    result = {
+        "structure": "UNKNOWN",
+        "last_swing_high": None,
+        "last_swing_low": None,
+        "break_of_structure": False,
+        "change_of_character": False
+    }
+    
+    if closes is None or len(closes) < 50:
+        return result
+    
+    try:
+        # Find swing highs and lows (simplified)
+        recent_high = float(highs[-20:].max())
+        recent_low = float(lows[-20:].min())
+        prev_high = float(highs[-40:-20].max())
+        prev_low = float(lows[-40:-20].min())
+        
+        result["last_swing_high"] = recent_high
+        result["last_swing_low"] = recent_low
+        
+        # Determine structure
+        if recent_high > prev_high and recent_low > prev_low:
+            result["structure"] = "BULLISH"  # Higher highs, higher lows
+        elif recent_high < prev_high and recent_low < prev_low:
+            result["structure"] = "BEARISH"  # Lower highs, lower lows
+        else:
+            result["structure"] = "RANGING"
+        
+        # Break of structure detection
+        current = float(closes[-1])
+        if current < recent_low and result["structure"] == "BULLISH":
+            result["break_of_structure"] = True
+            result["change_of_character"] = True
+        elif current > recent_high and result["structure"] == "BEARISH":
+            result["break_of_structure"] = True
+            result["change_of_character"] = True
+            
+    except Exception:
+        pass
+    
+    return result
+
+
+def _get_liquidity_zones(highs: np.ndarray, lows: np.ndarray, current: float) -> dict:
+    """Identify liquidity zones - equal highs/lows where stops likely cluster."""
+    result = {
+        "buy_side_liquidity": [],
+        "sell_side_liquidity": [],
+        "nearest_liquidity_above": None,
+        "nearest_liquidity_below": None
+    }
+    
+    if highs is None or len(highs) < 50:
+        return result
+    
+    try:
+        # Find clusters of similar highs (buy-side liquidity)
+        recent_highs = highs[-50:]
+        recent_lows = lows[-50:]
+        
+        # Equal highs detection (within 0.1% tolerance)
+        for i in range(len(recent_highs) - 5):
+            high_cluster = recent_highs[i:i+5]
+            if np.std(high_cluster) / np.mean(high_cluster) < 0.001:  # Very tight cluster
+                level = float(np.mean(high_cluster))
+                if level > current:
+                    result["buy_side_liquidity"].append(round(level, 2))
+        
+        # Equal lows detection
+        for i in range(len(recent_lows) - 5):
+            low_cluster = recent_lows[i:i+5]
+            if np.std(low_cluster) / np.mean(low_cluster) < 0.001:
+                level = float(np.mean(low_cluster))
+                if level < current:
+                    result["sell_side_liquidity"].append(round(level, 2))
+        
+        # Nearest liquidity
+        if result["buy_side_liquidity"]:
+            result["nearest_liquidity_above"] = min(result["buy_side_liquidity"])
+        if result["sell_side_liquidity"]:
+            result["nearest_liquidity_below"] = max(result["sell_side_liquidity"])
+            
+    except Exception:
+        pass
+    
+    return result
+
+
+def _get_economic_calendar_flags() -> dict:
+    """Get high-impact economic event flags."""
+    from datetime import datetime, timedelta
+    
+    # High-impact events schedule (simplified - in production use API)
+    # These are typical recurring events
+    now = datetime.utcnow()
+    weekday = now.weekday()
+    hour = now.hour
+    
+    result = {
+        "high_impact_window": False,
+        "upcoming_events": [],
+        "market_moving_risk": "LOW",
+        "avoid_trading_window": False
+    }
+    
+    # FOMC typically 2pm ET (19:00 UTC) on Wednesdays
+    if weekday == 2 and 18 <= hour <= 21:
+        result["high_impact_window"] = True
+        result["upcoming_events"].append("FOMC_RATE_DECISION")
+        result["market_moving_risk"] = "EXTREME"
+        result["avoid_trading_window"] = True
+    
+    # NFP first Friday of month at 8:30am ET (13:30 UTC)
+    if weekday == 4 and now.day <= 7 and 12 <= hour <= 15:
+        result["high_impact_window"] = True
+        result["upcoming_events"].append("NFP_EMPLOYMENT")
+        result["market_moving_risk"] = "HIGH"
+    
+    # CPI typically mid-month
+    if 10 <= now.day <= 15 and 12 <= hour <= 15:
+        result["upcoming_events"].append("POSSIBLE_CPI_RELEASE")
+        result["market_moving_risk"] = "MEDIUM"
+    
+    # US market open volatility (9:30-10:30 ET = 14:30-15:30 UTC)
+    if 14 <= hour <= 15:
+        result["upcoming_events"].append("US_MARKET_OPEN_VOLATILITY")
+        if result["market_moving_risk"] == "LOW":
+            result["market_moving_risk"] = "MEDIUM"
+    
+    return result
+
+
 def _trend_channel_features(closes: np.ndarray, current: float) -> dict:
     if closes is None or len(closes) < 40 or current == 0:
         return {"slope": None, "position": None, "width_pct": None}
@@ -279,6 +478,34 @@ async def build_context_pack(symbol: str) -> Dict[str, Any]:
     vol_ratio = float(vol_last / vol_avg20) if vol_avg20 > 0 else None
 
     channel = _trend_channel_features(closes, current_price)
+    
+    # PROFESSIONAL FEATURES - Divergence, Market Structure, Liquidity, Economic Calendar
+    # Calculate RSI and MACD arrays for divergence detection
+    rsi_array = None
+    macd_array = None
+    if len(closes) >= 20:
+        try:
+            # Simple RSI calculation for array
+            deltas = np.diff(closes)
+            gains = np.where(deltas > 0, deltas, 0)
+            losses = np.where(deltas < 0, -deltas, 0)
+            avg_gain = np.convolve(gains, np.ones(14)/14, mode='valid')
+            avg_loss = np.convolve(losses, np.ones(14)/14, mode='valid')
+            rs = np.where(avg_loss != 0, avg_gain / avg_loss, 100)
+            rsi_array = 100 - (100 / (1 + rs))
+            
+            # MACD histogram array
+            ema12 = np.convolve(closes, np.ones(12)/12, mode='valid')
+            ema26 = np.convolve(closes, np.ones(26)/26, mode='valid')
+            min_len = min(len(ema12), len(ema26))
+            macd_array = ema12[-min_len:] - ema26[-min_len:]
+        except Exception:
+            pass
+    
+    divergences = _detect_divergences(closes, rsi_array, macd_array)
+    market_structure = _get_market_structure(closes, highs, lows)
+    liquidity_zones = _get_liquidity_zones(highs, lows, current_price)
+    economic_calendar = _get_economic_calendar_flags()
 
     macro_symbols = {
         "dxy": "DXY.INDX",
@@ -392,6 +619,11 @@ async def build_context_pack(symbol: str) -> Dict[str, Any]:
         },
         "macro": macro,
         "news": {"headlines": headlines, "count": len(headlines)},
+        # PROFESSIONAL FEATURES
+        "divergences": divergences,
+        "market_structure": market_structure,
+        "liquidity_zones": liquidity_zones,
+        "economic_calendar": economic_calendar,
     }
 
 

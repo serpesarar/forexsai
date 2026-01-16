@@ -23,10 +23,9 @@ from services.target_config import (
 
 logger = logging.getLogger(__name__)
 
-# Cost-optimized model selection
-# Haiku is 4-5x cheaper than Sonnet for error analysis
-ERROR_ANALYSIS_MODEL = "claude-3-5-haiku-20241022"
-ERROR_ANALYSIS_MAX_TOKENS = 800  # Keep responses concise
+# Haiku 4.5 for error analysis - better quality
+ERROR_ANALYSIS_MODEL = "claude-haiku-4-5-20250514"
+ERROR_ANALYSIS_MAX_TOKENS = 1000
 
 # Analysis check intervals
 QUICK_CHECK_HOURS = 1

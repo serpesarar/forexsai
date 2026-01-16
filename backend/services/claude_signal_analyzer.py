@@ -14,9 +14,9 @@ import os
 
 logger = logging.getLogger(__name__)
 
-# Cost-optimized model - Haiku is 4-5x cheaper
-CLAUDE_MODEL = "claude-3-5-haiku-20241022"
-CLAUDE_MAX_TOKENS = 1000
+# Haiku 4.5 - better quality, still cost-effective
+CLAUDE_MODEL = "claude-haiku-4-5-20250514"
+CLAUDE_MAX_TOKENS = 1200
 
 # System prompt for Claude - Expert Forex/Index Trader persona
 TRADING_SYSTEM_PROMPT = """Sen deneyimli bir forex ve endeks trader'ısın. 15+ yıllık profesyonel trading tecrüben var.
