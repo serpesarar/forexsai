@@ -83,20 +83,9 @@ export default function PremiumHeader({
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
-      className="relative overflow-hidden border-b border-white/10"
+      className="relative overflow-hidden border-b border-white/10 bg-slate-950"
       style={{
-        background: `
-          radial-gradient(
-            600px circle at ${mousePosition.x}px ${mousePosition.y}px,
-            rgba(192, 192, 192, ${isHovering ? 0.08 : 0}),
-            transparent 40%
-          ),
-          linear-gradient(
-            180deg,
-            rgba(15, 15, 25, 0.95) 0%,
-            rgba(10, 10, 18, 0.98) 100%
-          )
-        `,
+        background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(192, 192, 192, ${isHovering ? 0.08 : 0}), transparent 40%), linear-gradient(180deg, rgba(15, 15, 25, 0.95) 0%, rgba(10, 10, 18, 0.98) 100%)`,
       }}
     >
       {/* Animated gradient border top */}
@@ -104,13 +93,7 @@ export default function PremiumHeader({
         <div
           className="absolute inset-0 animate-gradient-x"
           style={{
-            background: `linear-gradient(90deg, 
-              transparent 0%, 
-              rgba(192, 192, 192, ${pulseGlow}) 25%, 
-              rgba(147, 112, 219, ${pulseGlow}) 50%, 
-              rgba(192, 192, 192, ${pulseGlow}) 75%, 
-              transparent 100%
-            )`,
+            background: `linear-gradient(90deg, transparent 0%, rgba(192, 192, 192, ${pulseGlow}) 25%, rgba(147, 112, 219, ${pulseGlow}) 50%, rgba(192, 192, 192, ${pulseGlow}) 75%, transparent 100%)`,
             backgroundSize: "200% 100%",
           }}
         />

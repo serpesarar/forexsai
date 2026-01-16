@@ -26,7 +26,6 @@ import OrderBlockPanel from "../components/OrderBlockPanel";
 import RTYHIIMDetectorPanel from "../components/RTYHIIMDetectorPanel";
 import MLPredictionPanel from "../components/MLPredictionPanel";
 import ClaudeAnalysisPanel from "../components/ClaudeAnalysisPanel";
-import PremiumHeader from "../components/PremiumHeader";
 
 const initialMarketTickers = [
   { label: "NASDAQ", price: "21,547.35", change: "+1.2%", trend: "up" },
@@ -670,16 +669,93 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background text-textPrimary">
-      <PremiumHeader
-        marketTickers={marketTickers as any}
-        theme={theme}
-        setTheme={setTheme}
-        autoRefresh={autoRefresh}
-        toggleAutoRefresh={toggleAutoRefresh}
-        isLoading={isLoading}
-        fetchAll={fetchAll}
-        t={t}
-      />
+      {/* Premium Header */}
+      <header className="relative overflow-hidden border-b border-white/10 bg-gradient-to-b from-slate-900 to-background">
+        {/* Animated top border */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-accent to-transparent animate-pulse" />
+        
+        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-6">
+          {/* Logo & Title */}
+          <div className="flex items-center gap-3 group">
+            <div className="relative">
+              <div className="absolute -inset-1 rounded-full bg-accent/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 shadow-lg">
+                <Activity className="h-5 w-5 text-accent" />
+              </div>
+            </div>
+            <div>
+              <p className="text-base font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">{t("header.title")}</p>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-textSecondary">{t("header.subtitle")}</p>
+            </div>
+          </div>
+
+          {/* Market Tickers */}
+          <div className="hidden lg:flex items-center gap-6">
+            {marketTickers.map((ticker) => (
+              <div key={ticker.label} className="group flex items-center gap-3 px-4 py-2 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10 transition-all duration-300">
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${ticker.trend === "up" ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
+                  {ticker.trend === "up" ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-textSecondary">{ticker.label}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm font-semibold">${ticker.price}</span>
+                    <span className={`font-mono text-xs px-1.5 py-0.5 rounded ${ticker.trend === "up" ? "bg-success/20 text-success" : "bg-danger/20 text-danger"}`}>
+                      {ticker.change}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-3">
+            <Link
+              href="/trading"
+              className="group relative overflow-hidden flex items-center gap-2 rounded-xl bg-gradient-to-r from-accent/20 to-purple-500/20 border border-accent/30 px-4 py-2.5 text-sm font-semibold text-accent hover:from-accent/30 hover:to-purple-500/30 transition-all duration-300"
+            >
+              <BarChart3 className="h-4 w-4" />
+              AI Trading Panel
+            </Link>
+            <button
+              onClick={fetchAll}
+              className="relative overflow-hidden flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:from-emerald-500 hover:to-teal-400 transition-all duration-300"
+            >
+              <PlayCircle className="h-4 w-4" />
+              {isLoading ? t("common.running") : t("common.runAnalysis")}
+            </button>
+            <button
+              onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-textSecondary hover:border-white/20 hover:bg-white/10 transition-all duration-300"
+            >
+              {theme === "evening" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+            <LanguageSwitcher />
+            <div className="hidden md:flex items-center gap-4 pl-4 border-l border-white/10">
+              <label className="flex items-center gap-2 text-xs text-textSecondary cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={autoRefresh}
+                  onChange={(e) => toggleAutoRefresh(e.target.checked)}
+                  className="h-4 w-4 accent-accent rounded"
+                />
+                {t("common.auto30s")}
+              </label>
+              <div className="flex items-center gap-2 text-xs">
+                <div className="relative">
+                  <div className="h-2 w-2 rounded-full bg-success" />
+                  <div className="absolute inset-0 h-2 w-2 rounded-full bg-success animate-ping" />
+                </div>
+                <span className="text-success font-medium">{t("common.live")}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Bottom gradient line */}
+        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+      </header>
 
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-8 md:grid-cols-2 lg:grid-cols-3">
         <div className="flex flex-col gap-6">
