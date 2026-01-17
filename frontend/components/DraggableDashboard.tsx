@@ -39,7 +39,7 @@ import {
   Layers,
   Move,
 } from "lucide-react";
-import { useDashboardEdit, useColumnCards, DashboardCard } from "../contexts/DashboardEditContext";
+import { useDashboardEdit, useColumnCards, DashboardCard, CardSize } from "../contexts/DashboardEditContext";
 
 // ============================================
 // SORTABLE CARD WRAPPER
@@ -50,7 +50,7 @@ interface SortableCardProps {
 }
 
 export function SortableCard({ card, children }: SortableCardProps) {
-  const { isEditMode, activeCardId, setActiveCardId, toggleCardCollapsed, setCardSize } = useDashboardEdit();
+  const { isEditMode, activeCardId, setActiveCardId, toggleCardCollapsed, setCardSize, dragOverCardId } = useDashboardEdit();
   const {
     attributes,
     listeners,
@@ -58,12 +58,13 @@ export function SortableCard({ card, children }: SortableCardProps) {
     transform,
     transition,
     isDragging,
-    over,
   } = useSortable({ 
     id: card.id, 
     disabled: !isEditMode,
     data: { card },
   });
+  
+  const isDropTarget = dragOverCardId === card.id && !isDragging;
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -119,7 +120,8 @@ export function SortableCard({ card, children }: SortableCardProps) {
             <button
               onClick={(e) => { 
                 e.stopPropagation(); 
-                setCardSize(card.id, card.size === "large" ? "compact" : card.size === "compact" ? "normal" : "large"); 
+                const nextSize: CardSize = card.size === "large" ? "medium" : card.size === "medium" ? "small" : "large";
+                setCardSize(card.id, nextSize); 
               }}
               className="p-1.5 rounded-lg bg-background/90 border border-white/10 text-textSecondary hover:text-white hover:bg-white/20 transition-all"
               title="Boyut değiştir"
@@ -157,11 +159,11 @@ interface DroppableColumnProps {
 }
 
 export function DroppableColumn({ columnId, children }: DroppableColumnProps) {
-  const { isEditMode, dragOverColumn } = useDashboardEdit();
+  const { isEditMode, getCardsByColumn } = useDashboardEdit();
   const { setNodeRef, isOver } = useDroppable({ id: columnId });
-  const cards = useColumnCards(columnId);
+  const cards = getCardsByColumn(columnId);
 
-  const isHighlighted = isOver || dragOverColumn === columnId;
+  const isHighlighted = isOver;
 
   return (
     <div
@@ -201,8 +203,9 @@ export function DraggableDashboard({ children }: DraggableDashboardProps) {
     resetLayout, 
     setEditMode,
     moveCard,
+    swapCards,
     setActiveCardId,
-    setDragOverColumn,
+    setDragOverCardId,
     layout,
   } = useDashboardEdit();
   
@@ -230,14 +233,13 @@ export function DraggableDashboard({ children }: DraggableDashboardProps) {
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
     const overId = event.over?.id as string | undefined;
-    if (overId && ["left", "center", "right"].includes(overId)) {
-      setDragOverColumn(overId);
-    } else if (event.over?.data?.current?.card) {
-      setDragOverColumn(event.over.data.current.card.column);
+    if (overId && !["left", "center", "right"].includes(overId)) {
+      // Hovering over another card
+      setDragOverCardId(overId);
     } else {
-      setDragOverColumn(null);
+      setDragOverCardId(null);
     }
-  }, [setDragOverColumn]);
+  }, [setDragOverCardId]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -245,37 +247,26 @@ export function DraggableDashboard({ children }: DraggableDashboardProps) {
     setActiveId(null);
     setActiveCard(null);
     setActiveCardId(null);
-    setDragOverColumn(null);
+    setDragOverCardId(null);
 
     if (!over) return;
 
     const activeCardId = active.id as string;
     const overId = over.id as string;
 
-    // Determine target column and index
-    let targetColumn: "left" | "center" | "right";
-    let targetIndex: number;
+    // Skip if dropped on itself
+    if (activeCardId === overId) return;
 
+    // Dropped on a column
     if (["left", "center", "right"].includes(overId)) {
-      // Dropped on column itself
-      targetColumn = overId as "left" | "center" | "right";
+      const targetColumn = overId as "left" | "center" | "right";
       const columnCards = layout.cards.filter(c => c.column === targetColumn && c.visible);
-      targetIndex = columnCards.length;
+      moveCard(activeCardId, targetColumn, columnCards.length);
     } else {
-      // Dropped on another card
-      const overCard = layout.cards.find(c => c.id === overId);
-      if (!overCard) return;
-      
-      targetColumn = overCard.column;
-      const columnCards = layout.cards
-        .filter(c => c.column === targetColumn && c.visible)
-        .sort((a, b) => a.order - b.order);
-      targetIndex = columnCards.findIndex(c => c.id === overId);
-      if (targetIndex === -1) targetIndex = columnCards.length;
+      // Dropped on another card - SWAP them
+      swapCards(activeCardId, overId);
     }
-
-    moveCard(activeCardId, targetColumn, targetIndex);
-  }, [layout.cards, moveCard, setActiveCardId, setDragOverColumn]);
+  }, [layout.cards, moveCard, swapCards, setActiveCardId, setDragOverCardId]);
 
   return (
     <DndContext

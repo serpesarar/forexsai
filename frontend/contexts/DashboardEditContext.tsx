@@ -2,13 +2,15 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 
+export type CardSize = "small" | "medium" | "large" | "full";
+
 export interface DashboardCard {
   id: string;
   title: string;
   column: "left" | "center" | "right";
   order: number;
   visible: boolean;
-  size: "normal" | "large" | "compact";
+  size: CardSize;
   collapsed: boolean;
 }
 
@@ -29,9 +31,10 @@ interface DashboardEditContextType {
   layout: DashboardLayout;
   setLayout: React.Dispatch<React.SetStateAction<DashboardLayout>>;
   moveCard: (cardId: string, toColumn: "left" | "center" | "right", toIndex: number) => void;
+  swapCards: (cardId1: string, cardId2: string) => void;
   toggleCardVisibility: (cardId: string) => void;
   toggleCardCollapsed: (cardId: string) => void;
-  setCardSize: (cardId: string, size: "normal" | "large" | "compact") => void;
+  setCardSize: (cardId: string, size: CardSize) => void;
   saveLayout: () => void;
   resetLayout: () => void;
   undo: () => void;
@@ -40,21 +43,26 @@ interface DashboardEditContextType {
   canRedo: boolean;
   activeCardId: string | null;
   setActiveCardId: (id: string | null) => void;
-  dragOverColumn: string | null;
-  setDragOverColumn: (column: string | null) => void;
+  dragOverCardId: string | null;
+  setDragOverCardId: (id: string | null) => void;
+  getCardsByColumn: (column: "left" | "center" | "right") => DashboardCard[];
 }
 
 const DEFAULT_LAYOUT: DashboardLayout = {
   cards: [
-    { id: "signal-nasdaq", title: "NASDAQ Trend", column: "left", order: 0, visible: true, size: "normal", collapsed: false },
-    { id: "signal-xauusd", title: "XAUUSD Trend", column: "left", order: 1, visible: true, size: "normal", collapsed: false },
+    { id: "signal-nasdaq", title: "NASDAQ Trend", column: "left", order: 0, visible: true, size: "medium", collapsed: false },
+    { id: "signal-xauusd", title: "XAUUSD Trend", column: "left", order: 1, visible: true, size: "medium", collapsed: false },
     { id: "pattern-engine", title: "Pattern Engine V2", column: "center", order: 0, visible: true, size: "large", collapsed: false },
-    { id: "claude-patterns", title: "Claude Patterns", column: "center", order: 1, visible: true, size: "normal", collapsed: false },
-    { id: "sentiment", title: "AI Sentiment", column: "right", order: 0, visible: true, size: "normal", collapsed: false },
-    { id: "news", title: "Market News", column: "right", order: 1, visible: true, size: "normal", collapsed: false },
-    { id: "ai-panels", title: "AI Prediction Panels", column: "center", order: 2, visible: true, size: "large", collapsed: false },
+    { id: "claude-patterns", title: "Claude Patterns", column: "center", order: 1, visible: true, size: "medium", collapsed: false },
+    { id: "sentiment", title: "AI Sentiment", column: "right", order: 0, visible: true, size: "medium", collapsed: false },
+    { id: "news", title: "Market News", column: "right", order: 1, visible: true, size: "medium", collapsed: false },
+    { id: "ai-panels", title: "AI Tahmin Panelleri", column: "center", order: 2, visible: true, size: "full", collapsed: false },
+    { id: "order-blocks-nasdaq", title: "Order Blocks NASDAQ", column: "center", order: 3, visible: true, size: "full", collapsed: false },
+    { id: "order-blocks-xauusd", title: "Order Blocks XAUUSD", column: "center", order: 4, visible: true, size: "full", collapsed: false },
+    { id: "rhythm-detectors", title: "Rhythm Detectors", column: "center", order: 5, visible: true, size: "full", collapsed: false },
+    { id: "charts", title: "Trading Charts", column: "center", order: 6, visible: true, size: "full", collapsed: false },
   ],
-  version: 2,
+  version: 3,
 };
 
 const LAYOUT_STORAGE_KEY = "dashboard-layout-v2";
@@ -67,7 +75,7 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
   const [layout, setLayout] = useState<DashboardLayout>(DEFAULT_LAYOUT);
   const [history, setHistory] = useState<HistoryState>({ past: [], future: [] });
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
-  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+  const [dragOverCardId, setDragOverCardId] = useState<string | null>(null);
   const isUndoRedo = useRef(false);
 
   // Load layout from localStorage on mount
@@ -76,7 +84,7 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
       const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.version === 2) {
+        if (parsed.version >= 2) {
           setLayout(parsed);
         }
       }
@@ -165,7 +173,7 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
     }));
   }, []);
 
-  const setCardSize = useCallback((cardId: string, size: "normal" | "large" | "compact") => {
+  const setCardSize = useCallback((cardId: string, size: CardSize) => {
     setLayout((prev) => ({
       ...prev,
       cards: prev.cards.map((c) =>
@@ -173,6 +181,38 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
       ),
     }));
   }, []);
+
+  const swapCards = useCallback((cardId1: string, cardId2: string) => {
+    setLayout((prev) => {
+      const cards = [...prev.cards];
+      const idx1 = cards.findIndex(c => c.id === cardId1);
+      const idx2 = cards.findIndex(c => c.id === cardId2);
+      if (idx1 === -1 || idx2 === -1) return prev;
+
+      // Swap column and order
+      const card1 = { ...cards[idx1] };
+      const card2 = { ...cards[idx2] };
+      
+      const tempColumn = card1.column;
+      const tempOrder = card1.order;
+      
+      card1.column = card2.column;
+      card1.order = card2.order;
+      card2.column = tempColumn;
+      card2.order = tempOrder;
+      
+      cards[idx1] = card1;
+      cards[idx2] = card2;
+
+      return { ...prev, cards };
+    });
+  }, []);
+
+  const getCardsByColumn = useCallback((column: "left" | "center" | "right") => {
+    return layout.cards
+      .filter(c => c.column === column && c.visible)
+      .sort((a, b) => a.order - b.order);
+  }, [layout.cards]);
 
   const saveLayout = useCallback(() => {
     try {
@@ -236,12 +276,14 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
         resetLayout,
         undo,
         redo,
+        swapCards,
         canUndo: history.past.length > 1,
         canRedo: history.future.length > 0,
         activeCardId,
         setActiveCardId,
-        dragOverColumn,
-        setDragOverColumn,
+        dragOverCardId,
+        setDragOverCardId,
+        getCardsByColumn,
       }}
     >
       {children}
