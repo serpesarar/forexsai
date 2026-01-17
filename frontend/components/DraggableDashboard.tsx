@@ -268,6 +268,9 @@ export function DraggableDashboard({ children }: DraggableDashboardProps) {
     }
   }, [layout.cards, moveCard, swapCards, setActiveCardId, setDragOverCardId]);
 
+  // Get all card IDs for SortableContext
+  const cardIds = layout.cards.filter(c => c.visible).map(c => c.id);
+
   return (
     <DndContext
       sensors={sensors}
@@ -276,7 +279,9 @@ export function DraggableDashboard({ children }: DraggableDashboardProps) {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      {children}
+      <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
+        {children}
+      </SortableContext>
 
       {/* Drag Overlay - Ghost of dragged item */}
       <DragOverlay dropAnimation={{
