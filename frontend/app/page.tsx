@@ -792,20 +792,17 @@ export default function HomePage() {
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </header>
 
+      <DraggableDashboard>
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-8 md:grid-cols-2 lg:grid-cols-3">
         <div className="flex flex-col gap-6">
           {signalCards.map((signal) => {
             const cardId = signal.symbol === "NASDAQ" ? "signal-nasdaq" : "signal-xauusd";
-            if (!isCardVisible(cardId)) return null;
+            const cardConfig = getCard(cardId);
+            if (!cardConfig || !isCardVisible(cardId)) return null;
             return (
-            <div key={signal.symbol} className={`glass-card card-hover p-5 relative ${isEditMode ? "wobble-animation cursor-move" : ""}`}>
-              {isEditMode && (
-                <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-lg bg-primary/80 text-white cursor-grab shadow-lg">
-                  <GripVertical className="w-4 h-4" />
-                </div>
-              )}
-              {isEditMode && <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-xl pointer-events-none" />}
-              <div className="flex items-center justify-between">
+            <SortableCard key={cardId} card={cardConfig}>
+              <div className="glass-card card-hover p-5">
+                <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("trendAnalysis.title")}</p>
                   <h3 className="mt-2 text-lg font-semibold">{signal.symbol}</h3>
@@ -988,142 +985,141 @@ export default function HomePage() {
                   <p key={reason}>• {reason}</p>
                 ))}
               </div>
-            </div>
+              </div>
+            </SortableCard>
             );
           })}
         </div>
 
         <div className="flex flex-col gap-6">
           {/* New Pattern Engine V2 */}
-          {isCardVisible("pattern-engine") && (
-          <div className={`relative ${isEditMode ? "wobble-animation" : ""}`}>
-            {isEditMode && (
-              <div className="absolute -left-2 top-6 z-10 p-2 rounded-lg bg-primary/80 text-white cursor-grab shadow-lg">
-                <GripVertical className="w-4 h-4" />
-              </div>
-            )}
-            {isEditMode && <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-xl pointer-events-none z-0" />}
-            <PatternEngineV2 />
-          </div>
-          )}
+          {(() => {
+            const cardConfig = getCard("pattern-engine");
+            if (!cardConfig || !isCardVisible("pattern-engine")) return null;
+            return (
+              <SortableCard card={cardConfig}>
+                <PatternEngineV2 />
+              </SortableCard>
+            );
+          })()}
 
-          {isCardVisible("claude-patterns") && (
-          <div className={`glass-card card-hover p-5 relative ${isEditMode ? "wobble-animation" : ""}`}>
-            {isEditMode && (
-              <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-lg bg-primary/80 text-white cursor-grab shadow-lg">
-                <GripVertical className="w-4 h-4" />
-              </div>
-            )}
-            {isEditMode && <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-xl pointer-events-none" />}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("claudePatterns.title")}</p>
-                <h3 className="mt-2 text-lg font-semibold">{t("claudePatterns.subtitle")}</h3>
-              </div>
-              <button
-                onClick={runClaudePatterns}
-                className="flex items-center gap-2 rounded-full border border-accent/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-accent"
-              >
-                <Brain className="h-4 w-4" />
-                {claudePatternsLoading ? t("claudePatterns.analyzing") : t("claudePatterns.analyzeCustom")}
-              </button>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {timeframes.map((tf) => (
-                <button
-                  key={tf}
-                  onClick={() => setActiveTf(tf)}
-                  className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] transition ${
-                    activeTf === tf
-                      ? "border-accent text-accent"
-                      : "border-white/10 text-textSecondary hover:border-white/30"
-                  }`}
-                >
-                  {tf}
-                </button>
-              ))}
-            </div>
-            <div className="mt-4 space-y-4">
-              {renderClaudePatternsBlock("NASDAQ", "nasdaq")}
-              {renderClaudePatternsBlock("XAUUSD", "xauusd")}
-            </div>
-            {customAnalysis && (
-              <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4 text-xs">
-                <p className="text-sm font-semibold text-accent">{t("customAnalysis.title")}</p>
-                <p className="mt-2 text-textSecondary">{customAnalysis.summary}</p>
-                <ul className="mt-3 space-y-1 text-textSecondary">
-                  {customAnalysis.insights.map((insight) => (
-                    <li key={insight}>• {insight}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-          )}
+          {(() => {
+            const cardConfig = getCard("claude-patterns");
+            if (!cardConfig || !isCardVisible("claude-patterns")) return null;
+            return (
+              <SortableCard card={cardConfig}>
+                <div className="glass-card card-hover p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("claudePatterns.title")}</p>
+                      <h3 className="mt-2 text-lg font-semibold">{t("claudePatterns.subtitle")}</h3>
+                    </div>
+                    <button
+                      onClick={runClaudePatterns}
+                      className="flex items-center gap-2 rounded-full border border-accent/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-accent"
+                    >
+                      <Brain className="h-4 w-4" />
+                      {claudePatternsLoading ? t("claudePatterns.analyzing") : t("claudePatterns.analyzeCustom")}
+                    </button>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {timeframes.map((tf) => (
+                      <button
+                        key={tf}
+                        onClick={() => setActiveTf(tf)}
+                        className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] transition ${
+                          activeTf === tf
+                            ? "border-accent text-accent"
+                            : "border-white/10 text-textSecondary hover:border-white/30"
+                        }`}
+                      >
+                        {tf}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-4 space-y-4">
+                    {renderClaudePatternsBlock("NASDAQ", "nasdaq")}
+                    {renderClaudePatternsBlock("XAUUSD", "xauusd")}
+                  </div>
+                  {customAnalysis && (
+                    <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4 text-xs">
+                      <p className="text-sm font-semibold text-accent">{t("customAnalysis.title")}</p>
+                      <p className="mt-2 text-textSecondary">{customAnalysis.summary}</p>
+                      <ul className="mt-3 space-y-1 text-textSecondary">
+                        {customAnalysis.insights.map((insight) => (
+                          <li key={insight}>• {insight}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </SortableCard>
+            );
+          })()}
         </div>
 
         <div className="flex flex-col gap-6">
-          {isCardVisible("sentiment") && (
-          <div className={`glass-card card-hover p-5 relative ${isEditMode ? "wobble-animation" : ""}`}>
-            {isEditMode && (
-              <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-lg bg-primary/80 text-white cursor-grab shadow-lg">
-                <GripVertical className="w-4 h-4" />
-              </div>
-            )}
-            {isEditMode && <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-xl pointer-events-none" />}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("sentiment.title")}</p>
-                <h3 className="mt-2 text-lg font-semibold">{t("sentiment.subtitle")}</h3>
-              </div>
-              <span className="text-xs text-textSecondary">{t("common.live")}</span>
-            </div>
-            <div className="mt-4 space-y-4">
-              {renderSentimentBlock("NASDAQ", "nasdaq")}
-              {renderSentimentBlock("XAUUSD", "xauusd")}
-            </div>
-          </div>
-          )}
-
-          {isCardVisible("news") && (
-          <div className={`glass-card card-hover p-5 relative ${isEditMode ? "wobble-animation" : ""}`}>
-            {isEditMode && (
-              <div className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-lg bg-primary/80 text-white cursor-grab shadow-lg">
-                <GripVertical className="w-4 h-4" />
-              </div>
-            )}
-            {isEditMode && <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-xl pointer-events-none" />}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("news.title")}</p>
-                <h3 className="mt-2 text-lg font-semibold">{t("news.subtitle")}</h3>
-              </div>
-              <span className="text-xs text-textSecondary">30 {t("news.headlines")}</span>
-            </div>
-            <div className="mt-4 max-h-[300px] space-y-3 overflow-y-auto">
-              {newsItems.map((item) => (
-                <div key={item.title} className="rounded-xl border border-white/5 bg-white/5 p-3">
-                  <div className="flex items-start justify-between gap-3">
+          {(() => {
+            const cardConfig = getCard("sentiment");
+            if (!cardConfig || !isCardVisible("sentiment")) return null;
+            return (
+              <SortableCard card={cardConfig}>
+                <div className="glass-card card-hover p-5">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold">{item.title}</p>
-                      <p className="text-xs text-textSecondary">{item.source}</p>
+                      <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("sentiment.title")}</p>
+                      <h3 className="mt-2 text-lg font-semibold">{t("sentiment.subtitle")}</h3>
                     </div>
-                    <span
-                      className={`mt-1 h-2 w-2 rounded-full ${
-                        item.sentiment === "bullish"
-                          ? "bg-success"
-                          : item.sentiment === "bearish"
-                            ? "bg-danger"
-                            : "bg-white/40"
-                      }`}
-                    />
+                    <span className="text-xs text-textSecondary">{t("common.live")}</span>
                   </div>
-                  <p className="mt-2 text-xs text-textSecondary">{item.time}</p>
+                  <div className="mt-4 space-y-4">
+                    {renderSentimentBlock("NASDAQ", "nasdaq")}
+                    {renderSentimentBlock("XAUUSD", "xauusd")}
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-          )}
+              </SortableCard>
+            );
+          })()}
+
+          {(() => {
+            const cardConfig = getCard("news");
+            if (!cardConfig || !isCardVisible("news")) return null;
+            return (
+              <SortableCard card={cardConfig}>
+                <div className="glass-card card-hover p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("news.title")}</p>
+                      <h3 className="mt-2 text-lg font-semibold">{t("news.subtitle")}</h3>
+                    </div>
+                    <span className="text-xs text-textSecondary">30 {t("news.headlines")}</span>
+                  </div>
+                  <div className="mt-4 max-h-[300px] space-y-3 overflow-y-auto">
+                    {newsItems.map((item) => (
+                      <div key={item.title} className="rounded-xl border border-white/5 bg-white/5 p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold">{item.title}</p>
+                            <p className="text-xs text-textSecondary">{item.source}</p>
+                          </div>
+                          <span
+                            className={`mt-1 h-2 w-2 rounded-full ${
+                              item.sentiment === "bullish"
+                                ? "bg-success"
+                                : item.sentiment === "bearish"
+                                  ? "bg-danger"
+                                  : "bg-white/40"
+                            }`}
+                          />
+                        </div>
+                        <p className="mt-2 text-xs text-textSecondary">{item.time}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </SortableCard>
+            );
+          })()}
 
           {/* ML Prediction & Claude AI Section - Full Width Cards */}
           <div className="md:col-span-2 lg:col-span-3">
@@ -1201,6 +1197,7 @@ export default function HomePage() {
           </div>
         </div>
       </main>
+      </DraggableDashboard>
 
       <DetailPanel
         isOpen={isOpen}
