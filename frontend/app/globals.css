@@ -225,3 +225,128 @@ body {
 .drag-handle-pulse {
   animation: handle-pulse 2s ease-in-out infinite;
 }
+
+/* ============================================
+   MOBILE OPTIMIZATIONS
+   ============================================ */
+
+/* Mobile-first touch-friendly adjustments */
+@media (max-width: 768px) {
+  /* Larger touch targets */
+  button, a, .circular-progress {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Reduce padding for mobile screens */
+  .glass-card {
+    @apply p-4 rounded-xl;
+  }
+
+  /* Mobile header adjustments */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  /* Mobile grid - single column */
+  main {
+    @apply px-4 py-4 gap-4;
+  }
+
+  /* Smaller fonts for mobile */
+  h1, h2, h3 {
+    @apply text-base;
+  }
+
+  /* Hide edit mode on mobile - too complex for touch */
+  .wobble-animation {
+    animation: none;
+  }
+
+  /* Mobile-friendly scrolling */
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Compact circular progress on mobile */
+  .circular-progress {
+    --hover-scale: 1;
+  }
+
+  /* Mobile card hover - disable on touch */
+  .card-hover {
+    @apply hover:translate-y-0;
+  }
+
+  /* Bottom safe area for iPhone notch */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+}
+
+/* Small mobile (iPhone SE, etc) */
+@media (max-width: 375px) {
+  .glass-card {
+    @apply p-3 rounded-lg;
+  }
+
+  main {
+    @apply px-3 py-3 gap-3;
+  }
+
+  /* Even smaller fonts */
+  .text-xs {
+    font-size: 0.65rem;
+  }
+
+  .text-sm {
+    font-size: 0.75rem;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+  main {
+    @apply px-5 gap-5;
+  }
+}
+
+/* Hide scrollbar on mobile but keep functionality */
+@media (max-width: 768px) {
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Mobile bottom navigation bar styles */
+.mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.mobile-nav-item {
+  @apply flex flex-col items-center justify-center py-2 px-4 text-textSecondary transition-colors;
+}
+
+.mobile-nav-item.active {
+  @apply text-accent;
+}
+
+/* Swipe indicator for mobile cards */
+.swipe-indicator {
+  @apply absolute bottom-2 left-1/2 -translate-x-1/2 w-12 h-1 bg-white/20 rounded-full;
+}
