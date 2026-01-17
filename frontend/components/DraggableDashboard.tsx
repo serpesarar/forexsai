@@ -244,27 +244,39 @@ export function DraggableDashboard({ children }: DraggableDashboardProps) {
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     
+    console.log("[DragEnd] Active:", active.id, "Over:", over?.id);
+    
     setActiveId(null);
     setActiveCard(null);
     setActiveCardId(null);
     setDragOverCardId(null);
 
-    if (!over) return;
+    if (!over) {
+      console.log("[DragEnd] No drop target");
+      return;
+    }
 
-    const activeCardId = active.id as string;
-    const overId = over.id as string;
+    const draggedCardId = active.id as string;
+    const targetId = over.id as string;
 
     // Skip if dropped on itself
-    if (activeCardId === overId) return;
+    if (draggedCardId === targetId) {
+      console.log("[DragEnd] Dropped on itself, skipping");
+      return;
+    }
 
+    console.log("[DragEnd] Swapping cards:", draggedCardId, "with", targetId);
+    
     // Dropped on a column
-    if (["left", "center", "right"].includes(overId)) {
-      const targetColumn = overId as "left" | "center" | "right";
+    if (["left", "center", "right"].includes(targetId)) {
+      const targetColumn = targetId as "left" | "center" | "right";
       const columnCards = layout.cards.filter(c => c.column === targetColumn && c.visible);
-      moveCard(activeCardId, targetColumn, columnCards.length);
+      moveCard(draggedCardId, targetColumn, columnCards.length);
     } else {
       // Dropped on another card - SWAP them
-      swapCards(activeCardId, overId);
+      console.log("[DragEnd] Calling swapCards...");
+      swapCards(draggedCardId, targetId);
+      console.log("[DragEnd] swapCards called");
     }
   }, [layout.cards, moveCard, swapCards, setActiveCardId, setDragOverCardId]);
 
