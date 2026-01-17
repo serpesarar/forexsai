@@ -71,6 +71,7 @@ export function SortableCard({ card, children }: SortableCardProps) {
     transition: transition || "transform 200ms cubic-bezier(0.25, 1, 0.5, 1)",
     opacity: isDragging ? 0.4 : 1,
     zIndex: isDragging ? 100 : activeCardId === card.id ? 50 : 1,
+    order: card.order, // CSS order for layout-based sorting
   };
 
   const isActive = activeCardId === card.id;
