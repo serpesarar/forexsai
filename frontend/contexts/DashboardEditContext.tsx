@@ -183,15 +183,22 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
   }, []);
 
   const swapCards = useCallback((cardId1: string, cardId2: string) => {
+    console.log("[swapCards] Called with:", cardId1, cardId2);
     setLayout((prev) => {
       const cards = [...prev.cards];
       const idx1 = cards.findIndex(c => c.id === cardId1);
       const idx2 = cards.findIndex(c => c.id === cardId2);
-      if (idx1 === -1 || idx2 === -1) return prev;
+      console.log("[swapCards] Found indices:", idx1, idx2);
+      if (idx1 === -1 || idx2 === -1) {
+        console.log("[swapCards] Card not found, returning prev");
+        return prev;
+      }
 
       // Swap column and order
       const card1 = { ...cards[idx1] };
       const card2 = { ...cards[idx2] };
+      
+      console.log("[swapCards] Before swap - Card1:", card1.column, card1.order, "Card2:", card2.column, card2.order);
       
       const tempColumn = card1.column;
       const tempOrder = card1.order;
@@ -203,6 +210,8 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
       
       cards[idx1] = card1;
       cards[idx2] = card2;
+
+      console.log("[swapCards] After swap - Card1:", card1.column, card1.order, "Card2:", card2.column, card2.order);
 
       return { ...prev, cards };
     });
