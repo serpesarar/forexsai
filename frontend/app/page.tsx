@@ -909,18 +909,18 @@ export default function HomePage() {
         {/* Animated top border */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-accent to-transparent animate-pulse" />
         
-        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-6">
+        <div className="mx-auto flex h-[56px] md:h-[72px] max-w-7xl items-center justify-between px-4 md:px-6">
           {/* Logo & Title */}
-          <div className="flex items-center gap-3 group">
+          <div className="flex items-center gap-2 md:gap-3 group">
             <div className="relative">
               <div className="absolute -inset-1 rounded-full bg-accent/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 shadow-lg">
-                <Activity className="h-5 w-5 text-accent" />
+              <div className="relative flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 shadow-lg">
+                <Activity className="h-4 w-4 md:h-5 md:w-5 text-accent" />
               </div>
             </div>
             <div>
-              <p className="text-base font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">{t("header.title")}</p>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-textSecondary">{t("header.subtitle")}</p>
+              <p className="text-sm md:text-base font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">{t("header.title")}</p>
+              <p className="hidden sm:block text-[10px] uppercase tracking-[0.3em] text-textSecondary">{t("header.subtitle")}</p>
             </div>
           </div>
 
@@ -944,8 +944,8 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3">
+          {/* Actions - Desktop */}
+          <div className="hidden md:flex items-center gap-3">
             <Link
               href="/trading"
               className="group relative overflow-hidden flex items-center gap-2 rounded-xl bg-gradient-to-r from-accent/20 to-purple-500/20 border border-accent/30 px-4 py-2.5 text-sm font-semibold text-accent hover:from-accent/30 hover:to-purple-500/30 transition-all duration-300"
@@ -968,7 +968,7 @@ export default function HomePage() {
             </button>
             <LanguageSwitcher />
             <EditModeButton />
-            <div className="hidden md:flex items-center gap-4 pl-4 border-l border-white/10">
+            <div className="hidden lg:flex items-center gap-4 pl-4 border-l border-white/10">
               <label className="flex items-center gap-2 text-xs text-textSecondary cursor-pointer">
                 <input
                   type="checkbox"
@@ -987,6 +987,22 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+
+          {/* Actions - Mobile */}
+          <div className="flex md:hidden items-center gap-2">
+            <button
+              onClick={fetchAll}
+              className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-r from-emerald-600 to-teal-500 text-white"
+            >
+              <PlayCircle className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-textSecondary"
+            >
+              {theme === "evening" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
         
         {/* Bottom gradient line */}
@@ -994,7 +1010,7 @@ export default function HomePage() {
       </header>
 
       <DraggableDashboard>
-      <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-8 md:grid-cols-2 lg:grid-cols-3">
+      <main className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-4 md:gap-6 md:px-6 md:py-8 md:grid-cols-2 lg:grid-cols-3 pb-20 md:pb-8">
         {/* Dynamic columns based on layout.cards order */}
         {renderColumn("left")}
         {renderColumn("center")}
@@ -1088,6 +1104,26 @@ export default function HomePage() {
 
       {/* Edit Mode Floating Controls - Enhanced */}
       <EditModeControls />
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="mobile-nav md:hidden flex items-center justify-around">
+        <button 
+          onClick={fetchAll}
+          className={`mobile-nav-item ${isLoading ? 'text-accent' : ''}`}
+        >
+          <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
+          <span className="text-[10px] mt-1">{isLoading ? t("common.running") : t("common.runAnalysis")}</span>
+        </button>
+        <Link href="/trading" className="mobile-nav-item">
+          <BarChart3 className="h-5 w-5" />
+          <span className="text-[10px] mt-1">Trading</span>
+        </Link>
+        <button className="mobile-nav-item active">
+          <Activity className="h-5 w-5" />
+          <span className="text-[10px] mt-1">Dashboard</span>
+        </button>
+        <LanguageSwitcher />
+      </nav>
     </div>
   );
 }
