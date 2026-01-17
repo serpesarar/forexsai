@@ -708,6 +708,200 @@ export default function HomePage() {
       .sort((a, b) => a.order - b.order);
   };
 
+  // Dynamic card content renderer
+  const renderCardContent = (cardId: string): React.ReactNode => {
+    switch (cardId) {
+      case "signal-nasdaq":
+        const nasdaqSignal = signalCards.find(s => s.symbol === "NASDAQ");
+        if (!nasdaqSignal) return null;
+        return renderSignalCard(nasdaqSignal);
+      case "signal-xauusd":
+        const xauusdSignal = signalCards.find(s => s.symbol === "XAUUSD");
+        if (!xauusdSignal) return null;
+        return renderSignalCard(xauusdSignal);
+      case "pattern-engine":
+        return <PatternEngineV2 />;
+      case "claude-patterns":
+        return renderClaudePatternCard();
+      case "sentiment":
+        return renderSentimentCard();
+      case "news":
+        return renderNewsCard();
+      default:
+        return null;
+    }
+  };
+
+  // Signal card renderer
+  const renderSignalCard = (signal: typeof signalCards[0]) => (
+    <div className="glass-card card-hover p-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("trendAnalysis.title")}</p>
+          <h3 className="mt-2 text-lg font-semibold">{signal.symbol}</h3>
+        </div>
+        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+          signal.trend === "BULLISH" ? "bg-success/20 text-success" :
+          signal.trend === "BEARISH" ? "bg-danger/20 text-danger" : "bg-white/10 text-textSecondary"
+        }`}>
+          {signal.trend || "NEUTRAL"}
+        </span>
+      </div>
+      <div className="mt-4 flex items-center justify-between gap-6">
+        <CircularProgress
+          value={signal.confidence}
+          label={t("trendAnalysis.trendStrength")}
+          sublabel={`${signal.confidence}%`}
+          isInteractive
+          onClick={() => open("trend_channel", { ...signal.liveMetrics.trendChannel }, signal.symbol as "NASDAQ" | "XAUUSD", `Trend Channel Overview (${signal.symbol})`)}
+        />
+        <div className="flex-1 space-y-2 text-xs text-textSecondary">
+          <div className="flex items-center justify-between">
+            <span>Nearest Support</span>
+            <span className="font-mono">{signal.liveMetrics.nearestSupport.price} ({signal.liveMetrics.nearestSupport.distance})</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Nearest Resistance</span>
+            <span className="font-mono">{signal.liveMetrics.nearestResistance.price} ({signal.liveMetrics.nearestResistance.distance})</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Trend Strength</span>
+            <span className="font-mono">{Math.round(signal.liveMetrics.trendChannel.trendStrength * 100)}%</span>
+          </div>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
+        {[
+          { label: "EMA 20", detail: signal.liveMetrics.emaDistances.ema20 },
+          { label: "EMA 50", detail: signal.liveMetrics.emaDistances.ema50 },
+          { label: "EMA 200", detail: signal.liveMetrics.emaDistances.ema200 },
+          { label: "Channel U", detail: { distancePct: signal.liveMetrics.trendChannel.distanceToUpper, distance: signal.liveMetrics.trendChannel.distanceToUpper, emaValue: signal.liveMetrics.trendChannel.channelWidth, currentPrice: signal.currentPrice, period: 0 } },
+          { label: "Channel L", detail: { distancePct: signal.liveMetrics.trendChannel.distanceToLower, distance: signal.liveMetrics.trendChannel.distanceToLower, emaValue: signal.liveMetrics.trendChannel.channelWidth, currentPrice: signal.currentPrice, period: 0 } },
+          { label: "S/R Bias", detail: { distancePct: signal.liveMetrics.nearestSupport.distance + signal.liveMetrics.nearestResistance.distance, distance: signal.liveMetrics.nearestSupport.distance + signal.liveMetrics.nearestResistance.distance, emaValue: signal.liveMetrics.nearestSupport.price, currentPrice: signal.currentPrice, period: 0 } },
+        ].map((metric, index) => (
+          <div key={`${signal.symbol}-${metric.label}-${index}`} className="rounded-lg border border-white/5 bg-white/5 p-3">
+            <CircularProgress value={Math.min(Math.abs(metric.detail.distancePct) * 40, 100)} size={64} strokeWidth={8} sublabel={formatPctShort(metric.detail.distancePct)} isInteractive onClick={() => {}} />
+            <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-textSecondary">{metric.label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+        {signal.liveMetrics.supportResistance.map((level) => (
+          <div key={`${signal.symbol}-${level.price}`} className="flex items-center justify-between rounded-full border border-white/5 bg-white/5 px-3 py-2">
+            <span className="font-mono">{level.price}</span>
+            <span className={`text-[10px] uppercase ${level.type === "support" ? "text-success" : "text-danger"}`}>{level.type}</span>
+            <span className="text-[10px] text-textSecondary">{Math.round(level.strength * 100)}%</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+        {signal.metrics.map((metric) => (
+          <div key={metric.label} className="rounded-lg border border-white/5 bg-white/5 p-3">
+            <p className="text-textSecondary uppercase tracking-[0.2em] text-[10px]">{metric.label}</p>
+            <p className="mt-1 font-mono text-sm">{metric.value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 space-y-1 text-xs text-textSecondary">
+        {signal.reasons.map((reason) => (<p key={reason}>• {reason}</p>))}
+      </div>
+    </div>
+  );
+
+  // Claude patterns card renderer
+  const renderClaudePatternCard = () => (
+    <div className="glass-card card-hover p-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("claudePatterns.title")}</p>
+          <h3 className="mt-2 text-lg font-semibold">{t("claudePatterns.subtitle")}</h3>
+        </div>
+        <button onClick={runClaudePatterns} className="flex items-center gap-2 rounded-full border border-accent/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-accent">
+          <Brain className="h-4 w-4" />
+          {claudePatternsLoading ? t("claudePatterns.analyzing") : t("claudePatterns.analyzeCustom")}
+        </button>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {timeframes.map((tf) => (
+          <button key={tf} onClick={() => setActiveTf(tf)} className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] transition ${activeTf === tf ? "border-accent text-accent" : "border-white/10 text-textSecondary hover:border-white/30"}`}>
+            {tf}
+          </button>
+        ))}
+      </div>
+      <div className="mt-4 space-y-4">
+        {renderClaudePatternsBlock("NASDAQ", "nasdaq")}
+        {renderClaudePatternsBlock("XAUUSD", "xauusd")}
+      </div>
+      {customAnalysis && (
+        <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4 text-xs">
+          <p className="text-sm font-semibold text-accent">{t("customAnalysis.title")}</p>
+          <p className="mt-2 text-textSecondary">{customAnalysis.summary}</p>
+          <ul className="mt-3 space-y-1 text-textSecondary">
+            {customAnalysis.insights.map((insight) => (<li key={insight}>• {insight}</li>))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+
+  // Sentiment card renderer
+  const renderSentimentCard = () => (
+    <div className="glass-card card-hover p-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("sentiment.title")}</p>
+          <h3 className="mt-2 text-lg font-semibold">{t("sentiment.subtitle")}</h3>
+        </div>
+        <span className="text-xs text-textSecondary">{t("common.live")}</span>
+      </div>
+      <div className="mt-4 space-y-4">
+        {renderSentimentBlock("NASDAQ", "nasdaq")}
+        {renderSentimentBlock("XAUUSD", "xauusd")}
+      </div>
+    </div>
+  );
+
+  // News card renderer
+  const renderNewsCard = () => (
+    <div className="glass-card card-hover p-5">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("news.title")}</p>
+          <h3 className="mt-2 text-lg font-semibold">{t("news.subtitle")}</h3>
+        </div>
+        <span className="text-xs text-textSecondary">30 {t("news.headlines")}</span>
+      </div>
+      <div className="mt-4 max-h-[300px] space-y-3 overflow-y-auto">
+        {newsItems.map((item) => (
+          <div key={item.title} className="rounded-xl border border-white/5 bg-white/5 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold">{item.title}</p>
+                <p className="text-xs text-textSecondary">{item.source}</p>
+              </div>
+              <span className={`mt-1 h-2 w-2 rounded-full ${item.sentiment === "bullish" ? "bg-success" : item.sentiment === "bearish" ? "bg-danger" : "bg-white/40"}`} />
+            </div>
+            <p className="mt-2 text-xs text-textSecondary">{item.time}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Render a column with sorted cards
+  const renderColumn = (column: "left" | "center" | "right") => {
+    const cards = getColumnCards(column);
+    return (
+      <div className="flex flex-col gap-6">
+        {cards.map((card) => (
+          <SortableCard key={card.id} card={card}>
+            {renderCardContent(card.id)}
+          </SortableCard>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background text-textPrimary">
       {/* Premium Header */}
@@ -801,332 +995,10 @@ export default function HomePage() {
 
       <DraggableDashboard>
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-8 md:grid-cols-2 lg:grid-cols-3">
-        <div className="flex flex-col gap-6">
-          {signalCards.map((signal) => {
-            const cardId = signal.symbol === "NASDAQ" ? "signal-nasdaq" : "signal-xauusd";
-            const cardConfig = getCard(cardId);
-            if (!cardConfig || !isCardVisible(cardId)) return null;
-            return (
-            <SortableCard key={cardId} card={cardConfig}>
-              <div className="glass-card card-hover p-5">
-                <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("trendAnalysis.title")}</p>
-                  <h3 className="mt-2 text-lg font-semibold">{signal.symbol}</h3>
-                </div>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    signal.trend === "BULLISH"
-                      ? "bg-success/20 text-success"
-                      : signal.trend === "BEARISH"
-                        ? "bg-danger/20 text-danger"
-                        : "bg-white/10 text-textSecondary"
-                  }`}
-                >
-                  {signal.trend || "NEUTRAL"}
-                </span>
-              </div>
-              <div className="mt-4 flex items-center justify-between gap-6">
-                <CircularProgress
-                  value={signal.confidence}
-                  label={t("trendAnalysis.trendStrength")}
-                  sublabel={`${signal.confidence}%`}
-                  isInteractive
-                  onClick={() =>
-                    open(
-                      "trend_channel",
-                      {
-                        ...signal.liveMetrics.trendChannel,
-                        trendStrength: signal.liveMetrics.trendChannel.trendStrength,
-                      },
-                      signal.symbol as "NASDAQ" | "XAUUSD",
-                      `Trend Channel Overview (${signal.symbol})`
-                    )
-                  }
-                />
-                <div className="flex-1 space-y-2 text-xs text-textSecondary">
-                  <div className="flex items-center justify-between">
-                    <span>Nearest Support</span>
-                    <span className="font-mono">
-                      {signal.liveMetrics.nearestSupport.price} ({signal.liveMetrics.nearestSupport.distance})
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Nearest Resistance</span>
-                    <span className="font-mono">
-                      {signal.liveMetrics.nearestResistance.price} ({signal.liveMetrics.nearestResistance.distance})
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Trend Strength</span>
-                    <span className="font-mono">
-                      {Math.round(signal.liveMetrics.trendChannel.trendStrength * 100)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
-                {[
-                  {
-                    label: "EMA 20",
-                    detail: signal.liveMetrics.emaDistances.ema20,
-                  },
-                  {
-                    label: "EMA 50",
-                    detail: signal.liveMetrics.emaDistances.ema50,
-                  },
-                  {
-                    label: "EMA 200",
-                    detail: signal.liveMetrics.emaDistances.ema200,
-                  },
-                  {
-                    label: "Channel U",
-                    detail: {
-                      distancePct: signal.liveMetrics.trendChannel.distanceToUpper,
-                      distance: signal.liveMetrics.trendChannel.distanceToUpper,
-                      emaValue: signal.liveMetrics.trendChannel.channelWidth,
-                      currentPrice: signal.currentPrice,
-                      period: 0,
-                    },
-                    type: "trend_channel" as const,
-                    title: "Channel Upper Distance",
-                    data: {
-                      ...signal.liveMetrics.trendChannel,
-                    },
-                  },
-                  {
-                    label: "Channel L",
-                    detail: {
-                      distancePct: signal.liveMetrics.trendChannel.distanceToLower,
-                      distance: signal.liveMetrics.trendChannel.distanceToLower,
-                      emaValue: signal.liveMetrics.trendChannel.channelWidth,
-                      currentPrice: signal.currentPrice,
-                      period: 0,
-                    },
-                    type: "trend_channel" as const,
-                    title: "Channel Lower Distance",
-                    data: {
-                      ...signal.liveMetrics.trendChannel,
-                    },
-                  },
-                  {
-                    label: "S/R Bias",
-                    detail: {
-                      distancePct:
-                        signal.liveMetrics.nearestSupport.distance +
-                        signal.liveMetrics.nearestResistance.distance,
-                      distance:
-                        signal.liveMetrics.nearestSupport.distance +
-                        signal.liveMetrics.nearestResistance.distance,
-                      emaValue: signal.liveMetrics.nearestSupport.price,
-                      currentPrice: signal.currentPrice,
-                      period: 0,
-                    },
-                    type: "support_resistance" as const,
-                    title: `Support Level: ${signal.liveMetrics.nearestSupport.price} (${signal.symbol})`,
-                    data: {
-                      ...signal.liveMetrics.supportResistance[0],
-                    },
-                  },
-                ].map((metric, index) => {
-                  const detailType = metric.type ?? "ema_distance";
-                  const detailData =
-                    metric.data ??
-                    {
-                      ...metric.detail,
-                      currentPrice: signal.currentPrice,
-                      period: metric.detail.period,
-                    };
-                  const detailTitle = metric.title ?? `${metric.label} (${signal.symbol})`;
-                  return (
-                    <div key={`${signal.symbol}-${metric.label}-${index}`} className="rounded-lg border border-white/5 bg-white/5 p-3">
-                      <CircularProgress
-                        value={Math.min(Math.abs(metric.detail.distancePct) * 40, 100)}
-                        size={64}
-                        strokeWidth={8}
-                        sublabel={formatPctShort(metric.detail.distancePct)}
-                        isInteractive
-                        onClick={() =>
-                          open(detailType, detailData, signal.symbol as "NASDAQ" | "XAUUSD", detailTitle)
-                        }
-                      />
-                      <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-textSecondary">
-                        {metric.label}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                {signal.liveMetrics.supportResistance.map((level) => (
-                  <div
-                    key={`${signal.symbol}-${level.price}`}
-                    className="flex items-center justify-between rounded-full border border-white/5 bg-white/5 px-3 py-2"
-                  >
-                    <span className="font-mono">{level.price}</span>
-                    <span
-                      className={`text-[10px] uppercase ${
-                        level.type === "support" ? "text-success" : "text-danger"
-                      }`}
-                    >
-                      {level.type}
-                    </span>
-                    <span className="text-[10px] text-textSecondary">
-                      {Math.round(level.strength * 100)}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
-                {signal.metrics.map((metric) => (
-                  <div key={metric.label} className="rounded-lg border border-white/5 bg-white/5 p-3">
-                    <p className="text-textSecondary uppercase tracking-[0.2em] text-[10px]">
-                      {metric.label}
-                    </p>
-                    <p className="mt-1 font-mono text-sm">{metric.value}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 space-y-1 text-xs text-textSecondary">
-                {signal.reasons.map((reason) => (
-                  <p key={reason}>• {reason}</p>
-                ))}
-              </div>
-              </div>
-            </SortableCard>
-            );
-          })}
-        </div>
-
-        <div className="flex flex-col gap-6">
-          {/* New Pattern Engine V2 */}
-          {(() => {
-            const cardConfig = getCard("pattern-engine");
-            if (!cardConfig || !isCardVisible("pattern-engine")) return null;
-            return (
-              <SortableCard card={cardConfig}>
-                <PatternEngineV2 />
-              </SortableCard>
-            );
-          })()}
-
-          {(() => {
-            const cardConfig = getCard("claude-patterns");
-            if (!cardConfig || !isCardVisible("claude-patterns")) return null;
-            return (
-              <SortableCard card={cardConfig}>
-                <div className="glass-card card-hover p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("claudePatterns.title")}</p>
-                      <h3 className="mt-2 text-lg font-semibold">{t("claudePatterns.subtitle")}</h3>
-                    </div>
-                    <button
-                      onClick={runClaudePatterns}
-                      className="flex items-center gap-2 rounded-full border border-accent/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-accent"
-                    >
-                      <Brain className="h-4 w-4" />
-                      {claudePatternsLoading ? t("claudePatterns.analyzing") : t("claudePatterns.analyzeCustom")}
-                    </button>
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {timeframes.map((tf) => (
-                      <button
-                        key={tf}
-                        onClick={() => setActiveTf(tf)}
-                        className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] transition ${
-                          activeTf === tf
-                            ? "border-accent text-accent"
-                            : "border-white/10 text-textSecondary hover:border-white/30"
-                        }`}
-                      >
-                        {tf}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-4 space-y-4">
-                    {renderClaudePatternsBlock("NASDAQ", "nasdaq")}
-                    {renderClaudePatternsBlock("XAUUSD", "xauusd")}
-                  </div>
-                  {customAnalysis && (
-                    <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4 text-xs">
-                      <p className="text-sm font-semibold text-accent">{t("customAnalysis.title")}</p>
-                      <p className="mt-2 text-textSecondary">{customAnalysis.summary}</p>
-                      <ul className="mt-3 space-y-1 text-textSecondary">
-                        {customAnalysis.insights.map((insight) => (
-                          <li key={insight}>• {insight}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              </SortableCard>
-            );
-          })()}
-        </div>
-
-        <div className="flex flex-col gap-6">
-          {(() => {
-            const cardConfig = getCard("sentiment");
-            if (!cardConfig || !isCardVisible("sentiment")) return null;
-            return (
-              <SortableCard card={cardConfig}>
-                <div className="glass-card card-hover p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("sentiment.title")}</p>
-                      <h3 className="mt-2 text-lg font-semibold">{t("sentiment.subtitle")}</h3>
-                    </div>
-                    <span className="text-xs text-textSecondary">{t("common.live")}</span>
-                  </div>
-                  <div className="mt-4 space-y-4">
-                    {renderSentimentBlock("NASDAQ", "nasdaq")}
-                    {renderSentimentBlock("XAUUSD", "xauusd")}
-                  </div>
-                </div>
-              </SortableCard>
-            );
-          })()}
-
-          {(() => {
-            const cardConfig = getCard("news");
-            if (!cardConfig || !isCardVisible("news")) return null;
-            return (
-              <SortableCard card={cardConfig}>
-                <div className="glass-card card-hover p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("news.title")}</p>
-                      <h3 className="mt-2 text-lg font-semibold">{t("news.subtitle")}</h3>
-                    </div>
-                    <span className="text-xs text-textSecondary">30 {t("news.headlines")}</span>
-                  </div>
-                  <div className="mt-4 max-h-[300px] space-y-3 overflow-y-auto">
-                    {newsItems.map((item) => (
-                      <div key={item.title} className="rounded-xl border border-white/5 bg-white/5 p-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold">{item.title}</p>
-                            <p className="text-xs text-textSecondary">{item.source}</p>
-                          </div>
-                          <span
-                            className={`mt-1 h-2 w-2 rounded-full ${
-                              item.sentiment === "bullish"
-                                ? "bg-success"
-                                : item.sentiment === "bearish"
-                                  ? "bg-danger"
-                                  : "bg-white/40"
-                            }`}
-                          />
-                        </div>
-                        <p className="mt-2 text-xs text-textSecondary">{item.time}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </SortableCard>
-            );
-          })()}
+        {/* Dynamic columns based on layout.cards order */}
+        {renderColumn("left")}
+        {renderColumn("center")}
+        {renderColumn("right")}
 
           {/* ML Prediction & Claude AI Section - Full Width Cards */}
           <div className="md:col-span-2 lg:col-span-3">
@@ -1202,7 +1074,6 @@ export default function HomePage() {
               height={350} 
             />
           </div>
-        </div>
       </main>
       </DraggableDashboard>
 
