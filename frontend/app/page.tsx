@@ -28,8 +28,8 @@ import RTYHIIMDetectorPanel from "../components/RTYHIIMDetectorPanel";
 import MLPredictionPanel from "../components/MLPredictionPanel";
 import ClaudeAnalysisPanel from "../components/ClaudeAnalysisPanel";
 import PatternEngineV2 from "../components/PatternEngineV2";
-import { useDashboardEdit } from "../contexts/DashboardEditContext";
-import { EditModeButton, EditModeControls } from "../components/DraggableDashboard";
+import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
+import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
 
 const initialMarketTickers = [
   { label: "NASDAQ", price: "21,547.35", change: "+1.2%", trend: "up" },
@@ -697,6 +697,9 @@ export default function HomePage() {
     const card = layout.cards.find(c => c.id === cardId);
     return card?.visible ?? true;
   };
+
+  // Helper to get card config for SortableCard
+  const getCard = (cardId: string): DashboardCard | undefined => layout.cards.find(c => c.id === cardId);
 
   return (
     <div className="min-h-screen bg-background text-textPrimary">
