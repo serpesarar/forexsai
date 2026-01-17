@@ -701,6 +701,13 @@ export default function HomePage() {
   // Helper to get card config for SortableCard
   const getCard = (cardId: string): DashboardCard | undefined => layout.cards.find(c => c.id === cardId);
 
+  // Get sorted cards for a column based on layout order
+  const getColumnCards = (column: "left" | "center" | "right") => {
+    return layout.cards
+      .filter(c => c.column === column && c.visible)
+      .sort((a, b) => a.order - b.order);
+  };
+
   return (
     <div className="min-h-screen bg-background text-textPrimary">
       {/* Premium Header */}
