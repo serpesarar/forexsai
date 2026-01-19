@@ -61,6 +61,7 @@ try:
         ai_analysis,
         learning,
         fvg,
+        claude_news,
     )
     from services.data_fetcher import fetch_latest_price
     from services.ml_service import run_nasdaq_signal, run_xauusd_signal
@@ -85,6 +86,7 @@ try:
     app.include_router(ai_analysis.router)
     app.include_router(learning.router)
     app.include_router(fvg.router)
+    app.include_router(claude_news.router)
     
     ROUTERS_LOADED = True
 except Exception as e:
