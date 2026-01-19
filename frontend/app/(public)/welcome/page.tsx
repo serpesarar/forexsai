@@ -210,127 +210,116 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing Section */}
+      {/* Beta Campaign Section */}
       <section id="pricing" className="py-24 relative bg-slate-900/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Basit Fiyatlandırma</h2>
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-              Ücretsiz başlayın, ihtiyaçlarınız büyüdükçe yükseltin
+          {/* Beta Announcement */}
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 text-green-300 text-sm mb-6">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+              </span>
+              Sınırlı Süre - Erken Erişim Kampanyası
+            </div>
+            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
+              Şu An <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">Tamamen Ücretsiz!</span>
+            </h2>
+            <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+              Beta döneminde tüm özelliklere ücretsiz erişin. Fiyatlandırma yakında belirlenecek - 
+              <span className="text-white font-medium"> şimdi kayıt olan herkes özel avantajlardan yararlanacak!</span>
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {/* Free Tier */}
-            <div className="p-8 rounded-2xl bg-slate-900/50 border border-slate-800">
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold mb-2">Free</h3>
-                <p className="text-slate-400">Başlangıç için ideal</p>
+          {/* Single Beta Card */}
+          <div className="max-w-2xl mx-auto">
+            <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-b from-purple-900/50 via-slate-900/50 to-slate-900/50 border-2 border-purple-500/50 relative overflow-hidden">
+              {/* Glow Effect */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl -z-10" />
+              
+              {/* Badge */}
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-sm font-bold shadow-lg shadow-green-500/30">
+                🎉 BETA - TÜM ÖZELLİKLER ÜCRETSİZ
               </div>
-              <div className="mb-6">
-                <span className="text-4xl font-bold">$0</span>
-                <span className="text-slate-500">/ay</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                {[
-                  "Gerçek zamanlı XAUUSD verileri",
-                  "Temel teknik göstergeler",
-                  "ML sinyal paneli (izleme)",
-                  "Pattern görüntüleme",
-                  "Topluluk desteği",
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3 text-slate-300">
-                    <Check className="w-5 h-5 text-green-500 shrink-0" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/signup"
-                className="block w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-center font-semibold transition-all"
-              >
-                Ücretsiz Başla
-              </Link>
-            </div>
 
-            {/* Pro Tier */}
-            <div className="p-8 rounded-2xl bg-gradient-to-b from-purple-900/50 to-slate-900/50 border-2 border-purple-500 relative">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-sm font-semibold">
-                En Popüler
+              <div className="text-center mt-4 mb-8">
+                <h3 className="text-3xl font-bold mb-2">Erken Erişim Paketi</h3>
+                <p className="text-slate-400">Tüm Pro ve Enterprise özellikleri dahil</p>
               </div>
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold mb-2">Pro</h3>
-                <p className="text-slate-400">Ciddi traderlar için</p>
+
+              {/* Price */}
+              <div className="text-center mb-8">
+                <div className="flex items-center justify-center gap-4">
+                  <span className="text-2xl text-slate-500 line-through">$29-99/ay</span>
+                  <span className="text-5xl font-bold text-green-400">$0</span>
+                </div>
+                <p className="text-slate-500 mt-2">Fiyatlar yakında belirlenecek</p>
               </div>
-              <div className="mb-6">
-                <span className="text-4xl font-bold">$29</span>
-                <span className="text-slate-500">/ay</span>
-              </div>
-              <ul className="space-y-3 mb-8">
+
+              {/* Features Grid */}
+              <div className="grid sm:grid-cols-2 gap-4 mb-8">
                 {[
-                  "Tüm Free özellikleri",
+                  "✅ Gerçek zamanlı XAUUSD & NASDAQ",
+                  "✅ 50+ Teknik gösterge",
+                  "✅ ML tabanlı sinyal üretimi",
+                  "✅ Pattern tanıma (OB, FVG, RTYHIIM)",
                   "🧠 Claude AI haber analizi",
-                  "Gelişmiş pattern tanıma",
-                  "Günlük 50 AI analiz hakkı",
-                  "Öncelikli destek",
-                  "Detaylı performans raporları",
+                  "📊 Adaptif TP/SL hesaplama",
+                  "📈 Performans takibi",
+                  "🎁 Referral ödül sistemi",
                 ].map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3 text-slate-300">
-                    <Check className="w-5 h-5 text-purple-400 shrink-0" />
-                    {feature}
-                  </li>
+                  <div key={i} className="flex items-center gap-2 text-slate-300">
+                    <span>{feature}</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
+
+              {/* CTA */}
               <Link
                 href="/signup"
-                className="block w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-center font-semibold transition-all"
+                className="block w-full py-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-center font-bold text-lg transition-all shadow-lg shadow-green-500/30"
               >
-                Pro'ya Geç
+                Hemen Ücretsiz Kayıt Ol
               </Link>
-            </div>
 
-            {/* Enterprise */}
-            <div className="p-8 rounded-2xl bg-slate-900/50 border border-slate-800">
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
-                <p className="text-slate-400">Kurumsal çözümler</p>
+              {/* Trust badges */}
+              <div className="flex items-center justify-center gap-6 mt-6 text-sm text-slate-500">
+                <div className="flex items-center gap-1">
+                  <Shield className="w-4 h-4" />
+                  <span>Güvenli</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Zap className="w-4 h-4" />
+                  <span>Anında erişim</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Users className="w-4 h-4" />
+                  <span>5000+ kullanıcı</span>
+                </div>
               </div>
-              <div className="mb-6">
-                <span className="text-4xl font-bold">$99</span>
-                <span className="text-slate-500">/ay</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                {[
-                  "Tüm Pro özellikleri",
-                  "Sınırsız AI analiz",
-                  "API erişimi",
-                  "Özel alert sistemi",
-                  "Dedicated destek",
-                  "Özel entegrasyonlar",
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3 text-slate-300">
-                    <Check className="w-5 h-5 text-green-500 shrink-0" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/contact"
-                className="block w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-center font-semibold transition-all"
-              >
-                İletişime Geç
-              </Link>
             </div>
           </div>
 
+          {/* Future Pricing Notice */}
+          <div className="mt-12 p-6 rounded-2xl bg-slate-800/50 border border-slate-700 text-center max-w-3xl mx-auto">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <Clock className="w-5 h-5 text-amber-400" />
+              <h3 className="text-lg font-semibold text-amber-300">Yakında Fiyatlandırma</h3>
+            </div>
+            <p className="text-slate-400 text-sm">
+              Beta dönemi sonunda ücretli paketler açıklanacak. <strong className="text-white">Şimdi kayıt olanlar</strong> özel indirimler 
+              ve erken erişim avantajlarından faydalanacak. Kaçırmayın!
+            </p>
+          </div>
+
           {/* Referral Banner */}
-          <div className="mt-12 p-6 rounded-2xl bg-gradient-to-r from-purple-900/50 to-pink-900/50 border border-purple-500/30 text-center">
+          <div className="mt-8 p-6 rounded-2xl bg-gradient-to-r from-purple-900/50 to-pink-900/50 border border-purple-500/30 text-center">
             <div className="flex items-center justify-center gap-3 mb-3">
               <Users className="w-6 h-6 text-purple-400" />
-              <h3 className="text-xl font-bold">Arkadaşlarını Davet Et, Pro Kazan!</h3>
+              <h3 className="text-xl font-bold">Arkadaşlarını Davet Et, Bonus Kazan!</h3>
             </div>
             <p className="text-slate-400">
-              5 arkadaşını davet et, <span className="text-purple-300 font-semibold">1 hafta Pro üyelik</span> ücretsiz kazan!
+              5 arkadaşını davet et, fiyatlandırma başladığında <span className="text-purple-300 font-semibold">ekstra 1 ay ücretsiz</span> kazan!
             </p>
           </div>
         </div>
