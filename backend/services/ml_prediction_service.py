@@ -514,12 +514,25 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
     
     if is_gold:
         try:
-            from services.gold_news_analyzer import analyze_gold_news_impact
-            news_impact = await analyze_gold_news_impact()
+            from services.gold_news_analyzer_v2 import analyze_gold_news_impact_v2
+            news_impact = await analyze_gold_news_impact_v2()
             news_sentiment = news_impact.sentiment_score
             news_confidence = news_impact.confidence
             news_factors = news_impact.key_factors
-            logger.info(f"Gold news sentiment: {news_sentiment:.2f}, confidence: {news_confidence:.0f}%, bias: {news_impact.direction_bias}")
+            news_conflicts = news_impact.conflicts
+            
+            # Log detailed analysis
+            logger.info(
+                f"Gold news V2: sentiment={news_sentiment:.3f}, "
+                f"confidence={news_confidence:.0f}%, bias={news_impact.direction_bias}, "
+                f"impact={news_impact.impact_level}, conflicts={len(news_conflicts)}"
+            )
+            
+            # If major conflicts, reduce news impact
+            if news_conflicts:
+                news_confidence *= 0.7
+                logger.info(f"Conflicts detected, reduced confidence to {news_confidence:.0f}%")
+                
         except Exception as e:
             logger.warning(f"Could not analyze gold news: {e}")
     
