@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -365,5 +365,123 @@ export function useFailurePatterns(symbol?: string, direction?: string, limit: n
     queryKey: ["learning", "failure-patterns", symbol, direction, limit],
     queryFn: () => fetchFailurePatterns(symbol, direction, limit),
     staleTime: 60000,
+  });
+}
+
+// =============================================================================
+// CLAUDE NEWS ANALYSIS API
+// =============================================================================
+
+export interface ClaudeNewsAnalysis {
+  headline: string;
+  sentiment: number;
+  confidence: number;
+  category: string;
+  time_sensitivity: string;
+  key_entities: string[];
+  rationale: string;
+  override_signal: string | null;
+}
+
+export interface ClaudeAnalysisResponse {
+  symbol: string;
+  timestamp: string;
+  news_count: number;
+  analyzed_count: number;
+  overall_sentiment: number;
+  overall_confidence: number;
+  direction_bias: string;
+  analyses: ClaudeNewsAnalysis[];
+  bullish_count: number;
+  bearish_count: number;
+  neutral_count: number;
+  has_override: boolean;
+  override_signal: string | null;
+  override_reason: string | null;
+  categories: Record<string, number>;
+  tokens_used: number;
+  estimated_cost_usd: number;
+  market_commentary: string;
+  key_risks: string[];
+  key_opportunities: string[];
+}
+
+export interface CachedNewsItem {
+  headline: string;
+  source: string;
+  published_at: string | null;
+  fetched_at: string;
+  keyword_sentiment: number;
+  keyword_confidence: number;
+  claude_analyzed: boolean;
+  claude_sentiment: number | null;
+}
+
+export interface CachedNewsResponse {
+  symbol: string;
+  news_count: number;
+  news: CachedNewsItem[];
+}
+
+export interface RefreshResponse {
+  symbol: string;
+  fetched_count: number;
+  saved_count: number;
+  message: string;
+}
+
+async function analyzeNewsWithClaude(symbol: string, limit = 15, hoursBack = 24): Promise<ClaudeAnalysisResponse> {
+  const res = await fetch(`${API_BASE}/api/claude-news/analyze/${symbol}?limit=${limit}&hours_back=${hoursBack}`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Failed to analyze news with Claude");
+  return res.json();
+}
+
+async function getCachedNews(symbol: string, limit = 20, hoursBack = 24): Promise<CachedNewsResponse> {
+  const res = await fetch(`${API_BASE}/api/claude-news/cached/${symbol}?limit=${limit}&hours_back=${hoursBack}`);
+  if (!res.ok) throw new Error("Failed to get cached news");
+  return res.json();
+}
+
+async function refreshNewsCache(symbol: string, limit = 30): Promise<RefreshResponse> {
+  const res = await fetch(`${API_BASE}/api/claude-news/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ symbol, limit }),
+  });
+  if (!res.ok) throw new Error("Failed to refresh news cache");
+  return res.json();
+}
+
+export function useClaudeNewsAnalysis(symbol: string, enabled = false) {
+  return useQuery({
+    queryKey: ["claude-news", "analyze", symbol],
+    queryFn: () => analyzeNewsWithClaude(symbol),
+    enabled,
+    staleTime: 300000, // 5 minutes - expensive API call
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useCachedNews(symbol: string) {
+  return useQuery({
+    queryKey: ["claude-news", "cached", symbol],
+    queryFn: () => getCachedNews(symbol),
+    staleTime: 60000, // 1 minute
+  });
+}
+
+export function useRefreshNewsCache() {
+  return useMutation({
+    mutationFn: ({ symbol, limit }: { symbol: string; limit?: number }) => 
+      refreshNewsCache(symbol, limit),
+  });
+}
+
+export function useAnalyzeWithClaude() {
+  return useMutation({
+    mutationFn: ({ symbol, limit, hoursBack }: { symbol: string; limit?: number; hoursBack?: number }) =>
+      analyzeNewsWithClaude(symbol, limit, hoursBack),
   });
 }
