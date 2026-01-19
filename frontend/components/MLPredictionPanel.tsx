@@ -3,6 +3,7 @@
 import { usePrediction } from "../lib/api/prediction";
 import { TrendingUp, TrendingDown, Minus, Target, AlertTriangle, Activity, RefreshCw, HelpCircle, X, Zap } from "lucide-react";
 import { useState } from "react";
+import { useI18nStore } from "../lib/i18n/store";
 
 // Golden Ratio
 const PHI = 1.618;
@@ -13,12 +14,12 @@ type Props = {
   compact?: boolean;
 };
 
-function DirectionBadge({ direction, confidence }: { direction: string; confidence: number }) {
+function DirectionBadge({ direction, confidence, t }: { direction: string; confidence: number; t: (key: string) => string }) {
   const config = {
-    BUY: { bg: "bg-success/20", text: "text-success", icon: TrendingUp, label: "ALIŞ", border: "border-success/30" },
-    SELL: { bg: "bg-danger/20", text: "text-danger", icon: TrendingDown, label: "SATIŞ", border: "border-danger/30" },
-    HOLD: { bg: "bg-white/10", text: "text-textSecondary", icon: Minus, label: "BEKLE", border: "border-white/10" },
-  }[direction] || { bg: "bg-white/10", text: "text-textSecondary", icon: Minus, label: direction, border: "border-white/10" };
+    BUY: { bg: "bg-success/20", text: "text-success", icon: TrendingUp, labelKey: "directions.buy", border: "border-success/30" },
+    SELL: { bg: "bg-danger/20", text: "text-danger", icon: TrendingDown, labelKey: "directions.sell", border: "border-danger/30" },
+    HOLD: { bg: "bg-white/10", text: "text-textSecondary", icon: Minus, labelKey: "directions.hold", border: "border-white/10" },
+  }[direction] || { bg: "bg-white/10", text: "text-textSecondary", icon: Minus, labelKey: direction, border: "border-white/10" };
 
   const Icon = config.icon;
 
@@ -28,8 +29,8 @@ function DirectionBadge({ direction, confidence }: { direction: string; confiden
         <Icon className={`w-8 h-8 ${config.text}`} />
       </div>
       <div>
-        <p className={`text-2xl font-bold ${config.text}`}>{config.label}</p>
-        <p className="text-sm text-textSecondary mt-1">Güven: {confidence.toFixed(0)}%</p>
+        <p className={`text-2xl font-bold ${config.text}`}>{t(config.labelKey)}</p>
+        <p className="text-sm text-textSecondary mt-1">{t("mlPrediction.confidence")}: {confidence.toFixed(0)}%</p>
       </div>
       <div className="ml-auto">
         <Zap className={`w-6 h-6 ${config.text} opacity-50`} />
@@ -84,6 +85,7 @@ function PriceTarget({ label, price, pips, type }: { label: string; price: numbe
 export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
   const { data, isLoading, error, refetch } = usePrediction(symbol);
   const [showGuide, setShowGuide] = useState(false);
+  const t = useI18nStore((s) => s.t);
 
   return (
     <>
@@ -92,7 +94,7 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowGuide(false)}>
           <div className="bg-background border border-white/10 rounded-2xl p-6 max-w-md mx-4 space-y-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">ML Tahmin Rehberi</h3>
+              <h3 className="text-lg font-semibold">{t("mlPrediction.guide")}</h3>
               <button onClick={() => setShowGuide(false)} className="p-1 hover:bg-white/10 rounded-full">
                 <X className="w-4 h-4" />
               </button>
@@ -115,7 +117,7 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
               <Zap className="h-6 w-6 text-accent" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">ML TAHMİN</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("mlPrediction.title")}</p>
               <h3 className="mt-1 text-xl font-bold">{symbolLabel}</h3>
             </div>
           </div>
@@ -146,19 +148,19 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
         ) : error ? (
           <div className="flex items-center gap-3 p-4 bg-danger/10 rounded-xl text-danger">
             <AlertTriangle className="w-5 h-5" />
-            <span className="text-sm">Tahmin alınamadı</span>
+            <span className="text-sm">{t("mlPrediction.noData")}</span>
           </div>
         ) : data ? (
           <>
             {/* Direction & Confidence */}
             <div className="grid grid-cols-2 gap-4">
-              <DirectionBadge direction={data.direction} confidence={data.confidence} />
+              <DirectionBadge direction={data.direction} confidence={data.confidence} t={t} />
               <div className="bg-white/5 rounded-xl p-4">
-                <p className="text-xs text-textSecondary mb-2">Olasılık Dağılımı</p>
+                <p className="text-xs text-textSecondary mb-2">{t("common.confidence")}</p>
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="text-success">Yukarı</span>
+                      <span className="text-success">{t("common.bullish")}</span>
                       <span>{data.probability_up.toFixed(0)}%</span>
                     </div>
                     <div className="h-2 bg-white/10 rounded-full">
@@ -167,7 +169,7 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="text-danger">Aşağı</span>
+                      <span className="text-danger">{t("common.bearish")}</span>
                       <span>{data.probability_down.toFixed(0)}%</span>
                     </div>
                     <div className="h-2 bg-white/10 rounded-full">
@@ -182,15 +184,15 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
             <div className="bg-white/5 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Target className="w-4 h-4 text-accent" />
-                <p className="text-sm font-medium">Fiyat Hedefleri</p>
+                <p className="text-sm font-medium">{t("mlPrediction.target")}</p>
                 <span className="ml-auto text-xs text-textSecondary px-2 py-1 bg-white/10 rounded-full">
                   RR: {data.risk_reward.toFixed(2)}
                 </span>
               </div>
               <div className="space-y-1">
-                <PriceTarget label="Giriş Fiyatı" price={data.entry_price} pips={0} type="entry" />
-                <PriceTarget label="Hedef (TP)" price={data.target_price} pips={data.target_pips} type="target" />
-                <PriceTarget label="Stop Loss" price={data.stop_price} pips={data.stop_pips} type="stop" />
+                <PriceTarget label={t("mlPrediction.entry")} price={data.entry_price} pips={0} type="entry" />
+                <PriceTarget label={t("mlPrediction.target")} price={data.target_price} pips={data.target_pips} type="target" />
+                <PriceTarget label={t("mlPrediction.stopLoss")} price={data.stop_price} pips={data.stop_pips} type="stop" />
               </div>
             </div>
 
@@ -198,7 +200,7 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
             <div className="bg-white/5 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Activity className="w-4 h-4 text-accent" />
-                <p className="text-sm font-medium">Analiz Skorları</p>
+                <p className="text-sm font-medium">{t("mlPrediction.modelScore")}</p>
                 <span className="ml-auto text-xs text-textSecondary px-2 py-1 bg-white/10 rounded-full">
                   Vol: {data.volatility_regime}
                 </span>
@@ -213,7 +215,7 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
             {/* Key Levels */}
             {data.key_levels && data.key_levels.length > 0 && (
               <div className="bg-white/5 rounded-xl p-4">
-                <p className="text-sm font-medium mb-3">Kritik Seviyeler</p>
+                <p className="text-sm font-medium mb-3">{t("common.support")}/{t("common.resistance")}</p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {data.key_levels.slice(0, 4).map((level) => (
                     <div key={level.type} className="flex justify-between p-2 bg-white/5 rounded-lg">
@@ -227,7 +229,7 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
 
             {/* Reasoning */}
             <div className="space-y-2">
-              <p className="text-xs text-textSecondary uppercase tracking-wider">Model Gerekçeleri</p>
+              <p className="text-xs text-textSecondary uppercase tracking-wider">{t("claudeAnalysis.reasoning")}</p>
               <ul className="space-y-1.5 text-sm text-textSecondary max-h-32 overflow-auto">
                 {data.reasoning.slice(0, 5).map((reason, i) => (
                   <li key={i} className="flex gap-2">

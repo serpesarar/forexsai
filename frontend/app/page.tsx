@@ -1020,13 +1020,13 @@ export default function HomePage() {
           <div className="md:col-span-2 lg:col-span-3">
             <div className="flex items-center gap-3 mb-4">
               <Brain className="h-5 w-5 text-accent" />
-              <h2 className="text-lg font-bold">AI Tahmin Panelleri</h2>
+              <h2 className="text-lg font-bold">{t("panels.aiPrediction")}</h2>
               <Link
                 href="/trading"
                 className="ml-auto flex items-center gap-2 text-sm text-accent hover:underline"
               >
                 <Sparkles className="h-4 w-4" />
-                Tam Ekran Görünüm →
+                {t("panels.fullScreenView")} →
               </Link>
             </div>
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
