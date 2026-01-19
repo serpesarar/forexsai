@@ -321,17 +321,23 @@ async def calculate_adaptive_tp_sl(
         candles = await fetch_intraday_candles(symbol, interval="15m", limit=100)
     
     if not candles:
-        # Fallback to default pip-based levels
+        # Fallback to default pip-based levels from target_config
         config = get_symbol_config(symbol)
-        pip = config.pip_size
+        pip = config.pip_value
+        # Use symbol-specific targets
+        tp1_pips = config.targets[0].pips if config.targets else 20
+        tp2_pips = config.targets[1].pips if len(config.targets) > 1 else 30
+        tp3_pips = config.targets[2].pips if len(config.targets) > 2 else 50
+        sl_pips = config.stoploss_pips
+        
         return AdaptiveTPSL(
             entry=entry_price,
-            tp1=entry_price + (20 * pip if direction == "BUY" else -20 * pip),
-            tp2=entry_price + (30 * pip if direction == "BUY" else -30 * pip),
-            tp3=entry_price + (50 * pip if direction == "BUY" else -50 * pip),
-            stop_loss=entry_price + (-50 * pip if direction == "BUY" else 50 * pip),
+            tp1=entry_price + (tp1_pips * pip if direction == "BUY" else -tp1_pips * pip),
+            tp2=entry_price + (tp2_pips * pip if direction == "BUY" else -tp2_pips * pip),
+            tp3=entry_price + (tp3_pips * pip if direction == "BUY" else -tp3_pips * pip),
+            stop_loss=entry_price + (-sl_pips * pip if direction == "BUY" else sl_pips * pip),
             confidence=50.0,
-            reasoning=["Using default pip-based levels"],
+            reasoning=[f"Using {symbol} default levels: TP1={tp1_pips}, TP2={tp2_pips}, TP3={tp3_pips}, SL={sl_pips} pips"],
             fib_levels={},
             key_levels=[]
         )
