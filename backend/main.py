@@ -62,6 +62,7 @@ try:
         learning,
         fvg,
         claude_news,
+        auth,
     )
     from services.data_fetcher import fetch_latest_price
     from services.ml_service import run_nasdaq_signal, run_xauusd_signal
@@ -87,6 +88,7 @@ try:
     app.include_router(learning.router)
     app.include_router(fvg.router)
     app.include_router(claude_news.router)
+    app.include_router(auth.router)
     
     ROUTERS_LOADED = True
 except Exception as e:

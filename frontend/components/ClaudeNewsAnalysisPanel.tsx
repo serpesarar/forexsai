@@ -20,8 +20,11 @@ import {
   Target,
   Shield,
   Zap,
+  Crown,
+  Lock,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n/store";
+import { useIsPro, useIsAuthenticated } from "@/lib/auth/store";
 
 interface NewsAnalysisItem {
   headline: string;
@@ -61,6 +64,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export function ClaudeNewsAnalysisPanel() {
   const { t } = useI18n();
+  const isPro = useIsPro();
+  const isAuthenticated = useIsAuthenticated();
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedSymbol, setSelectedSymbol] = useState<"XAUUSD" | "NDX.INDX">("XAUUSD");
@@ -164,6 +169,29 @@ export function ClaudeNewsAnalysisPanel() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Pro Requirement Banner - shown for non-pro users */}
+        {!isPro && (
+          <div className="p-4 rounded-xl bg-gradient-to-r from-purple-900/50 to-pink-900/50 border border-purple-500/30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
+                <Crown className="w-5 h-5 text-purple-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-purple-200 font-medium">Pro Üyelik Gerekli</p>
+                <p className="text-sm text-slate-400">
+                  Claude AI analizi sadece Pro üyeler için kullanılabilir.
+                </p>
+              </div>
+              <a
+                href={isAuthenticated ? "/upgrade" : "/signup"}
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-medium transition-all shrink-0"
+              >
+                {isAuthenticated ? "Pro'ya Geç" : "Ücretsiz Kayıt"}
+              </a>
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="flex gap-2">
           <Button
@@ -178,20 +206,31 @@ export function ClaudeNewsAnalysisPanel() {
           </Button>
           <Button
             onClick={analyzeNews}
-            disabled={loading}
-            className="flex-1 bg-purple-600 hover:bg-purple-700"
+            disabled={loading || !isPro}
+            className={`flex-1 ${isPro ? "bg-purple-600 hover:bg-purple-700" : "bg-slate-700 cursor-not-allowed"}`}
             size="sm"
           >
-            <Sparkles className={`h-4 w-4 mr-2 ${loading ? "animate-pulse" : ""}`} />
-            {loading ? "Analiz Ediliyor..." : "Claude ile Analiz Et"}
+            {isPro ? (
+              <>
+                <Sparkles className={`h-4 w-4 mr-2 ${loading ? "animate-pulse" : ""}`} />
+                {loading ? "Analiz Ediliyor..." : "Claude ile Analiz Et"}
+              </>
+            ) : (
+              <>
+                <Lock className="h-4 w-4 mr-2" />
+                Pro Üyelik Gerekli
+              </>
+            )}
           </Button>
         </div>
 
-        {/* Cost Warning */}
-        <div className="text-xs text-slate-400 flex items-center gap-1">
-          <DollarSign className="h-3 w-3" />
-          <span>Her analiz ~$0.01-0.05 API maliyeti oluşturur</span>
-        </div>
+        {/* Cost Warning - only show for pro users */}
+        {isPro && (
+          <div className="text-xs text-slate-400 flex items-center gap-1">
+            <DollarSign className="h-3 w-3" />
+            <span>Her analiz ~$0.01-0.05 API maliyeti oluşturur</span>
+          </div>
+        )}
 
         {/* Error */}
         {error && (
