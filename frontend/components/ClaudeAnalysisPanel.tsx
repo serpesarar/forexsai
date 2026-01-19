@@ -16,6 +16,7 @@ import {
   Scale
 } from "lucide-react";
 import { useState } from "react";
+import { useI18nStore } from "../lib/i18n/store";
 
 type Props = {
   symbol: string;
@@ -58,6 +59,7 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
   const [shouldFetch, setShouldFetch] = useState(false);
   const { data, isLoading, error, refetch } = useAIAnalysis(symbol, shouldFetch);
   const [expanded, setExpanded] = useState(false);
+  const t = useI18nStore((s) => s.t);
   
   const handleAnalyze = () => {
     setShouldFetch(true);
@@ -73,7 +75,7 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
             <Sparkles className="h-6 w-6 text-purple-400" />
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">CLAUDE AI ANALİZ</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("claudeAnalysis.title")}</p>
             <h3 className="text-xl font-bold">{symbolLabel}</h3>
           </div>
         </div>
@@ -84,7 +86,7 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
         >
           <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""} text-purple-400`} />
           <span className="text-sm text-purple-400 font-medium">
-            {isLoading ? "Analiz..." : shouldFetch && data ? "Yenile" : "Analiz Et"}
+            {isLoading ? t("claudeAnalysis.analyzing") : shouldFetch && data ? t("claudeAnalysis.refresh") : t("claudeAnalysis.analyze")}
           </span>
         </button>
       </div>
@@ -92,8 +94,8 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
       {!shouldFetch && !data ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <Brain className="w-12 h-12 text-purple-400/50 mb-4" />
-          <p className="text-textSecondary text-sm mb-2">Claude AI analizi hazır</p>
-          <p className="text-textSecondary/70 text-xs">API tasarrufu için analiz butona basınca çalışır</p>
+          <p className="text-textSecondary text-sm mb-2">{t("claudeAnalysis.ready")}</p>
+          <p className="text-textSecondary/70 text-xs">{t("claudeAnalysis.apiSaving")}</p>
         </div>
       ) : isLoading ? (
         <div className="space-y-3">
@@ -104,7 +106,7 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
       ) : error ? (
         <div className="flex items-center gap-3 p-4 bg-danger/10 rounded-xl text-danger">
           <AlertTriangle className="w-5 h-5" />
-          <span className="text-sm">Claude analizi alınamadı</span>
+          <span className="text-sm">{t("claudeAnalysis.error")}</span>
         </div>
       ) : data ? (
         <>
@@ -113,20 +115,20 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
             <div className="bg-white/5 rounded-2xl p-5 text-center border border-white/5">
               <p className="text-xs uppercase text-textSecondary mb-3 tracking-wider">ML MODEL</p>
               <DirectionBadge direction={data.ml_prediction.direction} />
-              <p className="text-sm text-textSecondary mt-3 font-medium">{data.ml_prediction.confidence.toFixed(0)}% güven</p>
+              <p className="text-sm text-textSecondary mt-3 font-medium">{data.ml_prediction.confidence.toFixed(0)}% {t("mlPrediction.confidence")}</p>
             </div>
             
             <div className="bg-white/5 rounded-2xl p-5 flex flex-col items-center justify-center border border-white/5">
               <AgreementBadge agreement={data.claude_analysis.agreement} />
               <p className="text-xs text-textSecondary mt-3">
-                {data.claude_analysis.agreement ? "Aynı yönde" : "Farklı görüş"}
+                {data.claude_analysis.agreement ? t("claudeAnalysis.agreement") : t("claudeAnalysis.disagreement")}
               </p>
             </div>
             
             <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-2xl p-5 text-center border border-purple-500/20">
               <p className="text-xs uppercase text-purple-400 mb-3 tracking-wider">CLAUDE AI</p>
               <DirectionBadge direction={data.claude_analysis.claude_direction} isClaudeDecision />
-              <p className="text-sm text-textSecondary mt-3 font-medium">{data.claude_analysis.claude_confidence.toFixed(0)}% güven</p>
+              <p className="text-sm text-textSecondary mt-3 font-medium">{data.claude_analysis.claude_confidence.toFixed(0)}% {t("mlPrediction.confidence")}</p>
             </div>
           </div>
 
@@ -134,7 +136,7 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
           <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
             <div className="flex items-center gap-2">
               <Scale className="w-4 h-4 text-accent" />
-              <span className="text-sm text-textSecondary">Pozisyon Önerisi</span>
+              <span className="text-sm text-textSecondary">{t("claudeAnalysis.recommendation")}</span>
             </div>
             <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
               data.claude_analysis.position_size_suggestion === "No Trade" 
@@ -156,7 +158,7 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
             <div className="bg-success/5 rounded-xl p-3 border border-success/10">
               <div className="flex items-center gap-2 mb-2">
                 <Shield className="w-4 h-4 text-success" />
-                <p className="text-xs font-medium text-success">Güçlü Yönler</p>
+                <p className="text-xs font-medium text-success">{t("common.bullish")}</p>
               </div>
               <ul className="space-y-1">
                 {data.claude_analysis.strengths.slice(0, 3).map((s, i) => (
@@ -171,7 +173,7 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
             <div className="bg-danger/5 rounded-xl p-3 border border-danger/10">
               <div className="flex items-center gap-2 mb-2">
                 <AlertTriangle className="w-4 h-4 text-danger" />
-                <p className="text-xs font-medium text-danger">Riskler</p>
+                <p className="text-xs font-medium text-danger">{t("claudeAnalysis.riskAssessment")}</p>
               </div>
               <ul className="space-y-1">
                 {data.claude_analysis.weaknesses.slice(0, 3).map((w, i) => (
@@ -188,7 +190,7 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
           <div className="bg-white/5 rounded-xl p-3">
             <div className="flex items-center gap-2 mb-3">
               <Target className="w-4 h-4 text-accent" />
-              <p className="text-xs font-medium">Claude Önerileri</p>
+              <p className="text-xs font-medium">{t("claudeAnalysis.recommendation")}</p>
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">
               <div>
@@ -215,9 +217,9 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Brain className="w-4 h-4 text-accent" />
-                  <span className="text-xs font-medium">Claude'un Değerlendirmesi</span>
+                  <span className="text-xs font-medium">{t("claudeAnalysis.reasoning")}</span>
                 </div>
-                <span className="text-xs text-textSecondary">{expanded ? "Gizle" : "Göster"}</span>
+                <span className="text-xs text-textSecondary">{expanded ? t("claudeAnalysis.showLess") : t("claudeAnalysis.showMore")}</span>
               </div>
             </button>
             
