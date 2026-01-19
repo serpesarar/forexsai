@@ -17,6 +17,7 @@ from services.target_config import (
     calculate_stoploss_price,
     pips_from_price_change,
 )
+from services.adaptive_tp_sl import analyze_failure_point, save_failure_analysis
 
 logger = logging.getLogger(__name__)
 
@@ -227,6 +228,26 @@ async def check_prediction_outcome(
         
         if result.get("data"):
             logger.info(f"Recorded outcome for prediction {prediction.get('id')}: ML {'✓' if ml_correct else '✗'}, Targets: {targets_hit}")
+            
+            # If trade failed (hit stop or missed targets), analyze why
+            if hit_stop or (not hit_target and not ml_correct):
+                try:
+                    # Determine failure price (where it reversed)
+                    if ml_direction == "BUY":
+                        failure_price = high_price if high_price else current_price
+                    else:
+                        failure_price = low_price if low_price else current_price
+                    
+                    # Get candles for analysis
+                    candles = await fetch_intraday_candles(symbol, interval="15m", limit=100)
+                    
+                    if candles:
+                        analysis = await analyze_failure_point(prediction, failure_price, candles)
+                        await save_failure_analysis(analysis)
+                        logger.info(f"Failure analysis saved: {analysis.failure_reason}")
+                except Exception as ae:
+                    logger.warning(f"Could not analyze failure: {ae}")
+            
             return outcome
         
         return None

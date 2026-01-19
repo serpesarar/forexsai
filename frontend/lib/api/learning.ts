@@ -253,3 +253,117 @@ export function useTargetConfig(symbol: string) {
 }
 
 export { trigger1hOutcomeCheck };
+
+// ============================================
+// ADAPTIVE TP/SL API
+// ============================================
+
+export interface AdaptiveTPSL {
+  entry: number;
+  tp1: number;
+  tp2: number;
+  tp3: number;
+  stop_loss: number;
+  confidence: number;
+  reasoning: string[];
+  fib_levels: Record<string, number>;
+  key_levels: Array<{ type: string; price: number }>;
+  learned_adjustments: {
+    adjustments: Array<{ type: string; action: string; frequency: string }>;
+    confidence_modifier: number;
+    total_analyzed?: number;
+  };
+}
+
+export interface TPSuccessAnalysis {
+  total: number;
+  tp_analysis: Record<string, { success_rate: number; hit_count: number; total: number }>;
+  optimal_tp: string | null;
+  recommendations: string[];
+  period_days: number;
+}
+
+export interface FailurePattern {
+  id: string;
+  prediction_id: string;
+  symbol: string;
+  direction: string;
+  entry_price: number;
+  failure_price: number;
+  failure_reason: string;
+  rsi_at_failure: number | null;
+  volume_change: number | null;
+  nearest_resistance: number | null;
+  nearest_support: number | null;
+  fib_level_hit: string | null;
+  macd_divergence: boolean;
+  recommendation: string;
+  created_at: string;
+}
+
+async function fetchAdaptiveTPSL(
+  symbol: string,
+  direction: string,
+  entryPrice: number
+): Promise<AdaptiveTPSL> {
+  const res = await fetch(`${API_BASE}/api/learning/adaptive-tp-sl`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      symbol,
+      direction,
+      entry_price: entryPrice,
+    }),
+  });
+  if (!res.ok) throw new Error("Failed to fetch adaptive TP/SL");
+  return res.json();
+}
+
+async function fetchTPSuccessAnalysis(
+  symbol?: string,
+  days: number = 7
+): Promise<TPSuccessAnalysis> {
+  const params = new URLSearchParams({ days: String(days) });
+  if (symbol) params.append("symbol", symbol);
+  const res = await fetch(`${API_BASE}/api/learning/tp-success-analysis?${params}`);
+  if (!res.ok) throw new Error("Failed to fetch TP success analysis");
+  return res.json();
+}
+
+async function fetchFailurePatterns(
+  symbol?: string,
+  direction?: string,
+  limit: number = 50
+): Promise<{ patterns: FailurePattern[]; count: number; reason_stats: Record<string, number> }> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (symbol) params.append("symbol", symbol);
+  if (direction) params.append("direction", direction);
+  const res = await fetch(`${API_BASE}/api/learning/failure-patterns?${params}`);
+  if (!res.ok) throw new Error("Failed to fetch failure patterns");
+  return res.json();
+}
+
+export function useAdaptiveTPSL(symbol: string, direction: string, entryPrice: number, enabled: boolean = true) {
+  return useQuery({
+    queryKey: ["learning", "adaptive-tp-sl", symbol, direction, entryPrice],
+    queryFn: () => fetchAdaptiveTPSL(symbol, direction, entryPrice),
+    enabled: enabled && !!symbol && !!direction && entryPrice > 0,
+    staleTime: 60000, // 1 minute
+  });
+}
+
+export function useTPSuccessAnalysis(symbol?: string, days: number = 7) {
+  return useQuery({
+    queryKey: ["learning", "tp-success-analysis", symbol, days],
+    queryFn: () => fetchTPSuccessAnalysis(symbol, days),
+    staleTime: 60000,
+  });
+}
+
+export function useFailurePatterns(symbol?: string, direction?: string, limit: number = 50) {
+  return useQuery({
+    queryKey: ["learning", "failure-patterns", symbol, direction, limit],
+    queryFn: () => fetchFailurePatterns(symbol, direction, limit),
+    staleTime: 60000,
+  });
+}

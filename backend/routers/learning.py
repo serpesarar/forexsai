@@ -23,6 +23,11 @@ from services.learning_analyzer import (
     save_insights_to_db,
     get_active_insights,
 )
+from services.adaptive_tp_sl import (
+    calculate_adaptive_tp_sl,
+    get_learned_adjustments,
+    AdaptiveTPSL,
+)
 
 router = APIRouter(prefix="/api/learning", tags=["learning"])
 
@@ -443,6 +448,212 @@ async def get_self_learning_status(symbol: Optional[str] = Query(None)):
             "recent_error_distribution": error_distribution,
             "fake_move_rate": round(fake_move_count / max(1, len(recent_errors.get("data") or [])), 2),
             "learning_coverage": round(total_error_analyses / max(1, total_outcomes) * 100, 1)
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# ============================================
+# ADAPTIVE TP/SL ENDPOINTS
+# ============================================
+
+class AdaptiveTPSLRequest(BaseModel):
+    symbol: str
+    direction: str
+    entry_price: float
+
+
+class AdaptiveTPSLResponse(BaseModel):
+    entry: float
+    tp1: float
+    tp2: float
+    tp3: float
+    stop_loss: float
+    confidence: float
+    reasoning: List[str]
+    fib_levels: dict
+    key_levels: List[dict]
+    learned_adjustments: dict
+
+
+@router.post("/adaptive-tp-sl", response_model=AdaptiveTPSLResponse)
+async def get_adaptive_tp_sl(request: AdaptiveTPSLRequest):
+    """
+    Calculate adaptive TP/SL levels based on:
+    - Current market structure (S/R levels)
+    - Fibonacci retracement/extension
+    - RSI and volume analysis
+    - Historical failure patterns (learned adjustments)
+    
+    This endpoint learns from past failures and adjusts recommendations.
+    """
+    # Calculate adaptive levels
+    result = await calculate_adaptive_tp_sl(
+        symbol=request.symbol,
+        direction=request.direction,
+        entry_price=request.entry_price
+    )
+    
+    # Get learned adjustments from historical failures
+    learned = await get_learned_adjustments(request.symbol, request.direction)
+    
+    # Apply learned confidence modifier
+    adjusted_confidence = result.confidence + learned.get("confidence_modifier", 0)
+    adjusted_confidence = min(95, max(30, adjusted_confidence))
+    
+    return AdaptiveTPSLResponse(
+        entry=result.entry,
+        tp1=result.tp1,
+        tp2=result.tp2,
+        tp3=result.tp3,
+        stop_loss=result.stop_loss,
+        confidence=adjusted_confidence,
+        reasoning=result.reasoning,
+        fib_levels=result.fib_levels,
+        key_levels=result.key_levels,
+        learned_adjustments=learned
+    )
+
+
+@router.get("/failure-patterns")
+async def get_failure_patterns(
+    symbol: Optional[str] = Query(None),
+    direction: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=200)
+):
+    """
+    Get historical failure patterns for analysis.
+    Shows why trades failed at certain levels.
+    """
+    if not is_db_available():
+        return {"error": "Database not available", "patterns": []}
+    
+    client = get_supabase_client()
+    if client is None:
+        return {"error": "Database client not available", "patterns": []}
+    
+    try:
+        query = client.table("failure_analyses").select("*")
+        
+        if symbol:
+            query = query.eq("symbol", symbol)
+        if direction:
+            query = query.eq("direction", direction)
+        
+        result = query.order("created_at", desc=True).limit(limit).execute()
+        patterns = result.get("data") or []
+        
+        # Aggregate failure reasons
+        reason_stats = {}
+        for p in patterns:
+            for reason in (p.get("failure_reason") or "").split("|"):
+                if reason:
+                    reason_stats[reason] = reason_stats.get(reason, 0) + 1
+        
+        return {
+            "patterns": patterns,
+            "count": len(patterns),
+            "reason_stats": reason_stats
+        }
+        
+    except Exception as e:
+        return {"error": str(e), "patterns": []}
+
+
+@router.get("/tp-success-analysis")
+async def get_tp_success_analysis(
+    symbol: Optional[str] = Query(None),
+    days: int = Query(7, ge=1, le=90)
+):
+    """
+    Analyze which TP levels are most successful and at what conditions.
+    Returns insights for dynamic TP optimization.
+    """
+    if not is_db_available():
+        return {"error": "Database not available"}
+    
+    client = get_supabase_client()
+    if client is None:
+        return {"error": "Database client not available"}
+    
+    try:
+        from datetime import datetime, timedelta
+        cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
+        
+        query = client.table("multi_target_outcomes").select("*").gte("created_at", cutoff)
+        
+        if symbol:
+            query = query.eq("symbol", symbol)
+        
+        result = query.execute()
+        outcomes = result.get("data") or []
+        
+        if not outcomes:
+            return {
+                "total": 0,
+                "tp_analysis": {},
+                "optimal_tp": None,
+                "recommendations": []
+            }
+        
+        # Analyze each TP level
+        tp_stats = {
+            "tp1": {"hit": 0, "total": 0},
+            "tp2": {"hit": 0, "total": 0},
+            "tp3": {"hit": 0, "total": 0},
+            "sl": {"hit": 0, "total": 0}
+        }
+        
+        for o in outcomes:
+            for tp in ["tp1", "tp2", "tp3"]:
+                if o.get(f"{tp}_hit") is not None:
+                    tp_stats[tp]["total"] += 1
+                    if o.get(f"{tp}_hit"):
+                        tp_stats[tp]["hit"] += 1
+            
+            if o.get("sl_hit") is not None:
+                tp_stats["sl"]["total"] += 1
+                if o.get("sl_hit"):
+                    tp_stats["sl"]["hit"] += 1
+        
+        # Calculate success rates
+        tp_analysis = {}
+        for tp, stats in tp_stats.items():
+            if stats["total"] > 0:
+                tp_analysis[tp] = {
+                    "success_rate": round(stats["hit"] / stats["total"] * 100, 1),
+                    "hit_count": stats["hit"],
+                    "total": stats["total"]
+                }
+        
+        # Determine optimal TP (highest success rate with good volume)
+        optimal_tp = None
+        best_score = 0
+        for tp in ["tp1", "tp2", "tp3"]:
+            if tp in tp_analysis:
+                # Score = success_rate * log(total) to balance rate and volume
+                import math
+                score = tp_analysis[tp]["success_rate"] * math.log(tp_analysis[tp]["total"] + 1)
+                if score > best_score:
+                    best_score = score
+                    optimal_tp = tp
+        
+        # Generate recommendations
+        recommendations = []
+        if tp_analysis.get("tp1", {}).get("success_rate", 0) > 80:
+            recommendations.append("TP1 has high success - consider taking partial profits here")
+        if tp_analysis.get("tp3", {}).get("success_rate", 0) < 40:
+            recommendations.append("TP3 rarely hit - consider using TP2 as final target")
+        if tp_analysis.get("sl", {}).get("success_rate", 0) > 30:
+            recommendations.append("High SL hit rate - consider wider stops or better entries")
+        
+        return {
+            "total": len(outcomes),
+            "tp_analysis": tp_analysis,
+            "optimal_tp": optimal_tp,
+            "recommendations": recommendations,
+            "period_days": days
         }
         
     except Exception as e:
