@@ -506,6 +506,23 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
     # Normalize symbol
     normalized_symbol = "NDX.INDX" if symbol.upper() in ["NASDAQ", "NDX.INDX", "NDX"] else symbol.upper()
     
+    # For XAUUSD, get news impact analysis
+    news_sentiment = 0.0
+    news_confidence = 0.0
+    news_factors = []
+    is_gold = "XAU" in normalized_symbol
+    
+    if is_gold:
+        try:
+            from services.gold_news_analyzer import analyze_gold_news_impact
+            news_impact = await analyze_gold_news_impact()
+            news_sentiment = news_impact.sentiment_score
+            news_confidence = news_impact.confidence
+            news_factors = news_impact.key_factors
+            logger.info(f"Gold news sentiment: {news_sentiment:.2f}, confidence: {news_confidence:.0f}%, bias: {news_impact.direction_bias}")
+        except Exception as e:
+            logger.warning(f"Could not analyze gold news: {e}")
+    
     # Fetch data
     candles = await fetch_eod_candles(normalized_symbol, limit=250)
     live_price = await fetch_latest_price(normalized_symbol)
@@ -540,16 +557,36 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
         prob_down = float(proba[0])
         prob_up = float(proba[1])
         
-        # Determine direction
-        if prob_up > 0.6:
+        # For XAUUSD: Incorporate news sentiment into probabilities
+        if is_gold and abs(news_sentiment) > 0.1:
+            # News sentiment adjustment (max 20% shift)
+            sentiment_boost = news_sentiment * 0.2 * (news_confidence / 100)
+            prob_up = min(0.95, max(0.05, prob_up + sentiment_boost))
+            prob_down = 1 - prob_up
+            logger.info(f"Gold probabilities adjusted by news: UP {prob_up:.2f}, DOWN {prob_down:.2f}")
+        
+        # Determine direction - lower threshold for XAUUSD (0.55 vs 0.6)
+        direction_threshold = 0.55 if is_gold else 0.6
+        
+        if prob_up > direction_threshold:
             direction = "BUY"
             confidence = prob_up * 100
-        elif prob_down > 0.6:
+        elif prob_down > direction_threshold:
             direction = "SELL"
             confidence = prob_down * 100
         else:
-            direction = "HOLD"
-            confidence = max(prob_up, prob_down) * 100
+            # Even for HOLD, check if news gives strong signal
+            if is_gold and abs(news_sentiment) > 0.3:
+                if news_sentiment > 0.3:
+                    direction = "BUY"
+                    confidence = 55 + (news_sentiment * 20)
+                else:
+                    direction = "SELL"
+                    confidence = 55 + (abs(news_sentiment) * 20)
+                logger.info(f"Gold direction overridden by strong news: {direction}")
+            else:
+                direction = "HOLD"
+                confidence = max(prob_up, prob_down) * 100
         
     except Exception as e:
         logger.error(f"Model prediction error: {e}")
@@ -579,6 +616,11 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
     
     # Generate reasoning
     reasoning = _generate_reasoning(ta, direction, confidence, normalized_symbol)
+    
+    # Add news factors for XAUUSD
+    if is_gold and news_factors:
+        reasoning.insert(0, f"📰 News Impact ({news_confidence:.0f}% confidence):")
+        reasoning.extend(news_factors[:5])
     
     # Key levels
     key_levels = [
