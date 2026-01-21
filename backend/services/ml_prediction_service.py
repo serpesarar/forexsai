@@ -501,7 +501,7 @@ def _build_feature_vector(symbol: str, ta: dict, candles: list) -> Optional[np.n
 
 async def get_ml_prediction(symbol: str) -> PredictionResult:
     """Get ML prediction for symbol with direction and pip targets."""
-    from services.data_fetcher import fetch_eod_candles, fetch_intraday_candles, fetch_latest_price
+    from services.data_fetcher import fetch_eod_candles, fetch_30m_candles, fetch_latest_price
     
     # Normalize symbol
     normalized_symbol = "NDX.INDX" if symbol.upper() in ["NASDAQ", "NDX.INDX", "NDX"] else symbol.upper()
@@ -536,22 +536,20 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
         except Exception as e:
             logger.warning(f"Could not analyze gold news: {e}")
     
-    # Fetch data - MODEL WAS TRAINED ON 30-MIN DATA, use intraday as primary!
-    # EODHD supports 5m interval, we'll use that (closest to 30min training data)
-    intraday_candles = await fetch_intraday_candles(normalized_symbol, interval="5m", limit=500)
+    # Fetch data - MODEL WAS TRAINED ON 30-MIN (M30) DATA!
+    # Resample 5m candles to 30m to match training data
+    candles_30m = await fetch_30m_candles(normalized_symbol, limit=300)
     live_price = await fetch_latest_price(normalized_symbol)
     
-    # Primary: Use intraday data (model trained on 30-min candles)
-    if intraday_candles and len(intraday_candles) >= 100:
-        candles = intraday_candles
-        logger.info(f"{normalized_symbol} using INTRADAY data: {len(candles)} candles (5m)")
-        intraday_momentum = 0.0  # Will calculate below if needed
+    # Primary: Use 30-minute candles (model trained on M30)
+    if candles_30m and len(candles_30m) >= 50:
+        candles = candles_30m
+        logger.info(f"{normalized_symbol} using M30 data: {len(candles)} candles (30min)")
     else:
-        # Fallback to EOD only if intraday unavailable
+        # Fallback to EOD only if M30 unavailable
         eod_candles = await fetch_eod_candles(normalized_symbol, limit=250)
         candles = eod_candles
-        intraday_momentum = 0.0
-        logger.warning(f"{normalized_symbol} FALLBACK to EOD data - intraday unavailable")
+        logger.warning(f"{normalized_symbol} FALLBACK to EOD data - M30 unavailable (got {len(candles_30m) if candles_30m else 0} candles)")
     
     if not candles:
         return _default_prediction(normalized_symbol, "No candle data available")
