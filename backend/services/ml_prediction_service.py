@@ -501,7 +501,7 @@ def _build_feature_vector(symbol: str, ta: dict, candles: list) -> Optional[np.n
 
 async def get_ml_prediction(symbol: str) -> PredictionResult:
     """Get ML prediction for symbol with direction and pip targets."""
-    from services.data_fetcher import fetch_eod_candles, fetch_latest_price
+    from services.data_fetcher import fetch_eod_candles, fetch_intraday_candles, fetch_latest_price
     
     # Normalize symbol
     normalized_symbol = "NDX.INDX" if symbol.upper() in ["NASDAQ", "NDX.INDX", "NDX"] else symbol.upper()
@@ -536,9 +536,22 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
         except Exception as e:
             logger.warning(f"Could not analyze gold news: {e}")
     
-    # Fetch data
-    candles = await fetch_eod_candles(normalized_symbol, limit=250)
+    # Fetch data - MODEL WAS TRAINED ON 30-MIN DATA, use intraday as primary!
+    # EODHD supports 5m interval, we'll use that (closest to 30min training data)
+    intraday_candles = await fetch_intraday_candles(normalized_symbol, interval="5m", limit=500)
     live_price = await fetch_latest_price(normalized_symbol)
+    
+    # Primary: Use intraday data (model trained on 30-min candles)
+    if intraday_candles and len(intraday_candles) >= 100:
+        candles = intraday_candles
+        logger.info(f"{normalized_symbol} using INTRADAY data: {len(candles)} candles (5m)")
+        intraday_momentum = 0.0  # Will calculate below if needed
+    else:
+        # Fallback to EOD only if intraday unavailable
+        eod_candles = await fetch_eod_candles(normalized_symbol, limit=250)
+        candles = eod_candles
+        intraday_momentum = 0.0
+        logger.warning(f"{normalized_symbol} FALLBACK to EOD data - intraday unavailable")
     
     if not candles:
         return _default_prediction(normalized_symbol, "No candle data available")
@@ -578,8 +591,9 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
             prob_down = 1 - prob_up
             logger.info(f"Gold probabilities adjusted by news: UP {prob_up:.2f}, DOWN {prob_down:.2f}")
         
-        # Determine direction - lower threshold for XAUUSD (0.55 vs 0.6)
-        direction_threshold = 0.55 if is_gold else 0.6
+        # Determine direction - lowered thresholds for more responsive signals
+        # XAUUSD: 0.52, NASDAQ: 0.53 (was 0.55 and 0.6)
+        direction_threshold = 0.52 if is_gold else 0.53
         
         if prob_up > direction_threshold:
             direction = "BUY"
