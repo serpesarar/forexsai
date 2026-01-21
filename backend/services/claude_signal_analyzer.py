@@ -10,7 +10,8 @@ import json
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from typing import List, Optional, Literal
-import os
+
+from config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -191,7 +192,7 @@ async def analyze_signal_with_claude(prediction: dict, ta_data: dict) -> ClaudeA
         logger.error("anthropic package not installed")
         return _fallback_analysis(prediction)
     
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = settings.anthropic_api_key
     if not api_key:
         logger.warning("ANTHROPIC_API_KEY not set, using fallback analysis")
         return _fallback_analysis(prediction)
