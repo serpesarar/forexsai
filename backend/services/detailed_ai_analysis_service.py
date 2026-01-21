@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import re
+
+from config import settings
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -743,7 +744,7 @@ async def analyze_detailed_with_claude(context: Dict[str, Any]) -> Dict[str, Any
     except ImportError:
         return _fallback_detailed_analysis(context)
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = settings.anthropic_api_key
     if not api_key:
         return _fallback_detailed_analysis(context)
 
