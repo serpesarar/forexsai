@@ -164,6 +164,46 @@ async def fetch_intraday_candles(symbol: str, interval: str = "5m", limit: int =
         return []
 
 
+def _resample_to_30m(candles_5m: list[dict]) -> list[dict]:
+    """
+    Resample 5-minute candles to 30-minute candles.
+    Groups every 6 consecutive 5m candles into one 30m candle.
+    """
+    if not candles_5m or len(candles_5m) < 6:
+        return candles_5m
+    
+    result = []
+    for i in range(0, len(candles_5m) - 5, 6):
+        group = candles_5m[i:i+6]
+        candle_30m = {
+            "timestamp": group[0]["timestamp"],
+            "date": group[0].get("date", ""),
+            "open": group[0]["open"],
+            "high": max(c["high"] for c in group),
+            "low": min(c["low"] for c in group),
+            "close": group[-1]["close"],
+            "volume": sum(c.get("volume", 0) for c in group),
+        }
+        result.append(candle_30m)
+    
+    return result
+
+
+async def fetch_30m_candles(symbol: str, limit: int = 300) -> list[dict]:
+    """
+    Fetch 30-minute candles by resampling 5-minute data from EODHD.
+    Model was trained on M30 data, so this is the correct timeframe.
+    """
+    # Fetch 6x more 5m candles to get enough 30m candles
+    candles_5m = await fetch_intraday_candles(symbol, interval="5m", limit=limit * 6)
+    
+    if not candles_5m:
+        return []
+    
+    candles_30m = _resample_to_30m(candles_5m)
+    return candles_30m[-limit:]
+
+
 async def fetch_eod_candles(symbol: str, limit: int = 300) -> list[dict]:
     """
     Fetch end-of-day OHLC candles from EODHD (available on free plans).
