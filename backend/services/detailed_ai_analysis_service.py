@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 ANALYSIS_ENGINE_VERSION = "3.0.0"
 CONTEXT_PACK_VERSION = "3.0.0"  # Added: divergences, market_structure, liquidity_zones, economic_calendar
 
-# Model selection - Claude 3.5 Haiku is fast and cost-effective
-CLAUDE_MODEL = "claude-3-5-haiku-20241022"
+# Claude Haiku 4.5 - fastest, most cost-effective model
+CLAUDE_MODEL = "claude-haiku-4-5"
 CLAUDE_MAX_TOKENS = 1800  # Slightly increased for better analysis
 
 DETAILED_SYSTEM_PROMPT = """You are an institutional-grade market analysis engine. Your job is to produce a single actionable decision (BUY/SELL/HOLD/NO_TRADE) using ONLY the provided context pack. Do NOT invent or assume missing values.

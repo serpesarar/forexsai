@@ -23,8 +23,8 @@ from services.target_config import (
 
 logger = logging.getLogger(__name__)
 
-# Haiku 4.5 for error analysis - better quality
-ERROR_ANALYSIS_MODEL = "claude-haiku-4-5-20250514"
+# Claude Haiku 4.5 for error analysis
+ERROR_ANALYSIS_MODEL = "claude-haiku-4-5"
 ERROR_ANALYSIS_MAX_TOKENS = 1000
 
 # Analysis check intervals

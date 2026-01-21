@@ -15,8 +15,8 @@ from config import settings
 
 logger = logging.getLogger(__name__)
 
-# Claude 3.5 Haiku - fast and cost-effective
-CLAUDE_MODEL = "claude-3-5-haiku-20241022"
+# Claude Haiku 4.5 - fastest, most cost-effective model
+CLAUDE_MODEL = "claude-haiku-4-5"
 CLAUDE_MAX_TOKENS = 1200
 
 # System prompt for Claude - Expert Forex/Index Trader persona
