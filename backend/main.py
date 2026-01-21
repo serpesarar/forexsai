@@ -100,15 +100,20 @@ except Exception as e:
 
 @app.get("/api/debug")
 async def debug_info():
+    from config import settings
     return {
         "routers_loaded": ROUTERS_LOADED,
         "import_error": IMPORT_ERROR if not ROUTERS_LOADED else None,
-        "env_vars": {
+        "env_vars_os": {
             "EODHD_API_KEY": "set" if os.getenv("EODHD_API_KEY") else "not set",
             "ANTHROPIC_API_KEY": "set" if os.getenv("ANTHROPIC_API_KEY") else "not set",
             "SUPABASE_URL": "set" if os.getenv("SUPABASE_URL") else "not set",
             "SUPABASE_KEY": "set" if os.getenv("SUPABASE_KEY") else "not set",
             "SUPABASE_ANON_KEY": "set" if os.getenv("SUPABASE_ANON_KEY") else "not set",
+        },
+        "settings_config": {
+            "anthropic_api_key": "set" if settings.anthropic_api_key else "not set",
+            "eodhd_api_key": "set" if settings.eodhd_api_key else "not set",
         }
     }
 
