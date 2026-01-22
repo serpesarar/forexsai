@@ -196,7 +196,7 @@ async def debug_news_test():
                     "https://eodhistoricaldata.com/api/news",
                     params={
                         "api_token": settings.eodhd_api_key,
-                        "s": "XAUUSD,GLD.US",
+                        "s": "GOLD,GLD.US,DXY.INDX",
                         "limit": 5,
                         "fmt": "json",
                     },
