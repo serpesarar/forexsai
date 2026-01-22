@@ -164,17 +164,17 @@ async def fetch_intraday_candles(symbol: str, interval: str = "5m", limit: int =
         return []
 
 
-def _resample_to_30m(candles_5m: list[dict]) -> list[dict]:
+def _resample_to_30m(candles_1m: list[dict]) -> list[dict]:
     """
-    Resample 5-minute candles to 30-minute candles.
-    Groups every 6 consecutive 5m candles into one 30m candle.
+    Resample 1-minute candles to 30-minute candles.
+    Groups every 30 consecutive 1m candles into one 30m candle.
     """
-    if not candles_5m or len(candles_5m) < 6:
-        return candles_5m
+    if not candles_1m or len(candles_1m) < 30:
+        return []
     
     result = []
-    for i in range(0, len(candles_5m) - 5, 6):
-        group = candles_5m[i:i+6]
+    for i in range(0, len(candles_1m) - 29, 30):
+        group = candles_1m[i:i+30]
         candle_30m = {
             "timestamp": group[0]["timestamp"],
             "date": group[0].get("date", ""),
@@ -191,16 +191,18 @@ def _resample_to_30m(candles_5m: list[dict]) -> list[dict]:
 
 async def fetch_30m_candles(symbol: str, limit: int = 300) -> list[dict]:
     """
-    Fetch 30-minute candles by resampling 5-minute data from EODHD.
+    Fetch 30-minute candles by resampling 1-minute data from EODHD.
     Model was trained on M30 data, so this is the correct timeframe.
+    For forex symbols, EODHD only provides 1m interval.
     """
-    # Fetch 6x more 5m candles to get enough 30m candles
-    candles_5m = await fetch_intraday_candles(symbol, interval="5m", limit=limit * 6)
+    # For forex, use 1m interval (EODHD doesn't provide 5m for forex)
+    # Fetch 30x more 1m candles to get enough 30m candles
+    candles_1m = await fetch_intraday_candles(symbol, interval="1m", limit=limit * 30)
     
-    if not candles_5m:
+    if not candles_1m:
         return []
     
-    candles_30m = _resample_to_30m(candles_5m)
+    candles_30m = _resample_to_30m(candles_1m)
     return candles_30m[-limit:]
 
 

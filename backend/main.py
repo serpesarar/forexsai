@@ -200,12 +200,14 @@ async def debug_intraday_test(symbol: str):
         
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
+                # Use 1m for forex (EODHD only provides 1m for forex)
+                interval = "1m" if ".FOREX" in test_sym.upper() else "5m"
                 resp = await client.get(
                     url,
                     params={
                         "api_token": settings.eodhd_api_key,
                         "fmt": "json",
-                        "interval": "5m",
+                        "interval": interval,
                     },
                 )
                 test_result["status_code"] = resp.status_code
