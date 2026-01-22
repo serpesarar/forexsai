@@ -180,6 +180,61 @@ async def debug_ml_model(symbol: str):
     return result
 
 
+@app.get("/api/debug/news-test")
+async def debug_news_test():
+    """Test news API sources."""
+    import httpx
+    from config import settings
+    
+    result = {"eodhd_news": None, "marketaux_news": None}
+    
+    # Test EODHD News API
+    if settings.eodhd_api_key:
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.get(
+                    "https://eodhistoricaldata.com/api/news",
+                    params={
+                        "api_token": settings.eodhd_api_key,
+                        "s": "XAUUSD,GLD.US",
+                        "limit": 5,
+                        "fmt": "json",
+                    },
+                )
+                result["eodhd_status"] = resp.status_code
+                if resp.status_code == 200:
+                    data = resp.json()
+                    result["eodhd_news"] = [{"title": n.get("title", "")[:80], "date": n.get("date", "")} for n in (data or [])[:3]]
+                else:
+                    result["eodhd_error"] = resp.text[:200]
+        except Exception as e:
+            result["eodhd_error"] = str(e)
+    
+    # Test MarketAux
+    if settings.marketaux_api_key:
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.get(
+                    settings.marketaux_base_url,
+                    params={
+                        "api_token": settings.marketaux_api_key,
+                        "symbols": "XAUUSD,GOLD",
+                        "limit": 5,
+                        "language": "en",
+                    },
+                )
+                result["marketaux_status"] = resp.status_code
+                if resp.status_code == 200:
+                    data = resp.json().get("data", [])
+                    result["marketaux_news"] = [{"title": n.get("title", "")[:80], "published": n.get("published_at", "")} for n in (data or [])[:3]]
+                else:
+                    result["marketaux_error"] = resp.text[:200]
+        except Exception as e:
+            result["marketaux_error"] = str(e)
+    
+    return result
+
+
 @app.get("/api/debug/intraday-test/{symbol}")
 async def debug_intraday_test(symbol: str):
     """Test EODHD intraday API directly."""
