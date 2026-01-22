@@ -514,18 +514,21 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
     
     if is_gold:
         try:
-            from services.gold_news_analyzer_v2 import analyze_gold_news_impact_v2
-            news_impact = await analyze_gold_news_impact_v2()
-            news_sentiment = news_impact.sentiment_score
-            news_confidence = news_impact.confidence
-            news_factors = news_impact.key_factors
-            news_conflicts = news_impact.conflicts
+            # Try unified news analyzer first (includes Live TV + Twitter + EODHD)
+            from services.unified_news_analyzer import get_unified_analyzer
+            analyzer = get_unified_analyzer()
+            unified_impact = await analyzer.get_unified_impact("XAUUSD")
+            
+            news_sentiment = unified_impact.sentiment_score
+            news_confidence = unified_impact.confidence
+            news_factors = unified_impact.key_factors
+            news_conflicts = unified_impact.conflicts
             
             # Log detailed analysis
             logger.info(
-                f"Gold news V2: sentiment={news_sentiment:.3f}, "
-                f"confidence={news_confidence:.0f}%, bias={news_impact.direction_bias}, "
-                f"impact={news_impact.impact_level}, conflicts={len(news_conflicts)}"
+                f"Unified News: sentiment={news_sentiment:.3f}, "
+                f"confidence={news_confidence:.0f}%, bias={unified_impact.direction_bias}, "
+                f"trump={unified_impact.trump_sentiment:.2f}, fed={unified_impact.fed_sentiment:.2f}"
             )
             
             # If major conflicts, reduce news impact
@@ -534,7 +537,17 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
                 logger.info(f"Conflicts detected, reduced confidence to {news_confidence:.0f}%")
                 
         except Exception as e:
-            logger.warning(f"Could not analyze gold news: {e}")
+            logger.warning(f"Unified news failed, trying V2: {e}")
+            # Fallback to gold_news_analyzer_v2
+            try:
+                from services.gold_news_analyzer_v2 import analyze_gold_news_impact_v2
+                news_impact = await analyze_gold_news_impact_v2()
+                news_sentiment = news_impact.sentiment_score
+                news_confidence = news_impact.confidence
+                news_factors = news_impact.key_factors
+                news_conflicts = news_impact.conflicts
+            except Exception as e2:
+                logger.warning(f"Could not analyze gold news: {e2}")
     
     # Fetch data - MODEL WAS TRAINED ON 30-MIN (M30) DATA!
     # Resample 5m candles to 30m to match training data

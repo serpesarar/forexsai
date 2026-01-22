@@ -545,7 +545,7 @@ async def fetch_gold_news_v2(limit: int = 50) -> List[Dict]:
         "api_token": settings.eodhd_api_key,
         "limit": limit,
         "fmt": "json",
-        "s": "XAUUSD,GLD.US,GC.CMX,DXY.INDX",  # Gold + Dollar index
+        "s": "GOLD,GLD.US,GC.CMX,DXY.INDX,SPY.US",  # Gold + Dollar + Market
     }
     
     try:

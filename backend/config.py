@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = Field(default=None, env="ANTHROPIC_API_KEY")
     eodhd_api_key: str | None = Field(default=None, env="EODHD_API_KEY")
     marketaux_api_key: str | None = Field(default=None, env="MARKETAUX_API_KEY")
+    groq_api_key: str | None = Field(default=None, env="GROQ_API_KEY")
+    xai_api_key: str | None = Field(default=None, env="XAI_API_KEY")
+    x_bearer_token: str | None = Field(default=None, env="X_BEARER_TOKEN")
     marketaux_base_url: str = Field(
         default="https://api.marketaux.com/v1/news/all",
         env="MARKETAUX_BASE_URL",
