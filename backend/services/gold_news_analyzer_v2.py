@@ -549,7 +549,7 @@ async def fetch_gold_news_v2(limit: int = 50) -> List[Dict]:
     }
     
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
             response = await client.get(
                 "https://eodhistoricaldata.com/api/news",
                 params=params
