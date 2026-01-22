@@ -158,17 +158,22 @@ async def debug_ml_model(symbol: str):
     
     # Check data fetching
     try:
-        from services.data_fetcher import fetch_30m_candles, fetch_latest_price
+        from services.data_fetcher import fetch_30m_candles, fetch_latest_price, fetch_eod_candles
         normalized = "NDX.INDX" if symbol.upper() in ["NASDAQ", "NDX.INDX", "NDX"] else symbol.upper()
         
-        candles = await fetch_30m_candles(normalized, limit=50)
-        result["candles_30m_count"] = len(candles) if candles else 0
+        candles_30m = await fetch_30m_candles(normalized, limit=50)
+        result["candles_30m_count"] = len(candles_30m) if candles_30m else 0
+        
+        candles_eod = await fetch_eod_candles(normalized, limit=50)
+        result["candles_eod_count"] = len(candles_eod) if candles_eod else 0
         
         price = await fetch_latest_price(normalized)
         result["latest_price"] = price
         
-        if not candles or len(candles) < 50:
-            result["errors"].append(f"Insufficient M30 candles: {len(candles) if candles else 0}")
+        if not candles_30m or len(candles_30m) < 50:
+            result["info"].append(f"M30 candles: {len(candles_30m) if candles_30m else 0}")
+        if not candles_eod or len(candles_eod) < 50:
+            result["errors"].append(f"Insufficient EOD candles: {len(candles_eod) if candles_eod else 0}")
     except Exception as e:
         result["errors"].append(f"Data fetch error: {str(e)}")
     
