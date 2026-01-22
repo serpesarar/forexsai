@@ -127,7 +127,7 @@ class UnifiedNewsAnalyzer:
             return []
         
         try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
+            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
                 # Gold için en iyi semboller
                 symbols = "GOLD,GC.CMX,DXY.INDX,SPY.US"
                 

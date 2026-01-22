@@ -191,7 +191,7 @@ async def debug_news_test():
     # Test EODHD News API
     if settings.eodhd_api_key:
         try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
+            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
                 resp = await client.get(
                     "https://eodhistoricaldata.com/api/news",
                     params={
