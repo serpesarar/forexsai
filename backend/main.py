@@ -118,6 +118,63 @@ async def debug_info():
     }
 
 
+@app.get("/api/debug/ml-model/{symbol}")
+async def debug_ml_model(symbol: str):
+    """Debug ML model loading and prediction for a symbol."""
+    from pathlib import Path
+    result = {"symbol": symbol, "errors": [], "info": []}
+    
+    # Check model file
+    model_path = Path(__file__).parent / "models"
+    result["model_dir"] = str(model_path)
+    result["model_dir_exists"] = model_path.exists()
+    
+    if symbol.upper() in ["NASDAQ", "NDX.INDX", "NDX"]:
+        model_file = model_path / "model_lgbm_nasdaq.joblib"
+    elif symbol.upper() == "XAUUSD":
+        model_file = model_path / "model_lgbm_xauusd.joblib"
+    else:
+        model_file = None
+    
+    if model_file:
+        result["model_file"] = str(model_file)
+        result["model_file_exists"] = model_file.exists()
+        
+        if model_file.exists():
+            try:
+                import joblib
+                model = joblib.load(model_file)
+                result["model_loaded"] = True
+                result["model_type"] = str(type(model))
+                if hasattr(model, 'feature_names_in_'):
+                    features = list(model.feature_names_in_)
+                    result["feature_count"] = len(features)
+                    result["features_sample"] = features[:20]
+                else:
+                    result["errors"].append("Model has no feature_names_in_")
+            except Exception as e:
+                result["model_loaded"] = False
+                result["errors"].append(f"Model load error: {str(e)}")
+    
+    # Check data fetching
+    try:
+        from services.data_fetcher import fetch_30m_candles, fetch_latest_price
+        normalized = "NDX.INDX" if symbol.upper() in ["NASDAQ", "NDX.INDX", "NDX"] else symbol.upper()
+        
+        candles = await fetch_30m_candles(normalized, limit=50)
+        result["candles_30m_count"] = len(candles) if candles else 0
+        
+        price = await fetch_latest_price(normalized)
+        result["latest_price"] = price
+        
+        if not candles or len(candles) < 50:
+            result["errors"].append(f"Insufficient M30 candles: {len(candles) if candles else 0}")
+    except Exception as e:
+        result["errors"].append(f"Data fetch error: {str(e)}")
+    
+    return result
+
+
 # Startup event - start background scheduler
 @app.on_event("startup")
 async def startup_event():
