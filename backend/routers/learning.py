@@ -737,6 +737,11 @@ async def get_prediction_history(
             
             formatted.append(entry)
         
+        # Fix ml_correct based on hit_target (target hit = correct prediction)
+        for entry in formatted:
+            if entry.get("hit_target"):
+                entry["ml_correct"] = True
+        
         # Calculate summary stats
         total = len(formatted)
         with_outcome = [p for p in formatted if p.get("has_outcome")]
@@ -760,3 +765,37 @@ async def get_prediction_history(
         
     except Exception as e:
         return {"error": str(e), "predictions": []}
+
+
+@router.post("/fix-ml-correct")
+async def fix_ml_correct_in_database():
+    """
+    Fix ml_correct values in outcome_results table.
+    Sets ml_correct = True for all records where hit_target = True.
+    This corrects the previous bug where target hits were not counted as correct.
+    """
+    from database.supabase_client import get_supabase_client, is_db_available
+    
+    if not is_db_available():
+        return {"error": "Database not available"}
+    
+    client = get_supabase_client()
+    if client is None:
+        return {"error": "Database client not available"}
+    
+    try:
+        # Update all outcomes where hit_target is true but ml_correct is false
+        result = client.table("outcome_results").update({
+            "ml_correct": True
+        }).eq("hit_target", True).eq("ml_correct", False).execute()
+        
+        updated_count = len(result.get("data") or [])
+        
+        return {
+            "success": True,
+            "message": f"Fixed {updated_count} outcome records",
+            "updated_count": updated_count
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
