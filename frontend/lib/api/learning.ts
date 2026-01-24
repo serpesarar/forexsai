@@ -485,3 +485,72 @@ export function useAnalyzeWithClaude() {
       analyzeNewsWithClaude(symbol, limit, hoursBack),
   });
 }
+
+// ============================================================
+// PREDICTION HISTORY
+// ============================================================
+
+export interface PredictionHistoryItem {
+  id: string;
+  symbol: string;
+  timestamp: string;
+  ml_direction: string;
+  ml_confidence: number;
+  entry_price: number;
+  target_price: number;
+  stop_price: number;
+  claude_direction: string | null;
+  claude_confidence: number | null;
+  has_outcome: boolean;
+  exit_price?: number;
+  high_price?: number;
+  low_price?: number;
+  price_change_pct?: number;
+  actual_direction?: string;
+  hit_target?: boolean;
+  hit_stop?: boolean;
+  ml_correct?: boolean;
+  claude_correct?: boolean;
+  outcome_time?: string;
+}
+
+export interface PredictionHistorySummary {
+  total_predictions: number;
+  with_outcome: number;
+  pending_outcome: number;
+  ml_correct: number;
+  ml_accuracy: number | null;
+  target_hits: number;
+  stop_hits: number;
+  period_days: number;
+}
+
+export interface PredictionHistoryResponse {
+  predictions: PredictionHistoryItem[];
+  summary: PredictionHistorySummary;
+  error?: string;
+}
+
+async function fetchPredictionHistory(
+  symbol?: string,
+  days: number = 7,
+  limit: number = 50
+): Promise<PredictionHistoryResponse> {
+  const params = new URLSearchParams();
+  if (symbol) params.append("symbol", symbol);
+  params.append("days", days.toString());
+  params.append("limit", limit.toString());
+  
+  const res = await fetch(`${API_BASE}/api/learning/prediction-history?${params}`);
+  if (!res.ok) throw new Error("Failed to fetch prediction history");
+  return res.json();
+}
+
+export function usePredictionHistory(symbol?: string, days: number = 7, limit: number = 50) {
+  return useQuery({
+    queryKey: ["prediction-history", symbol, days, limit],
+    queryFn: () => fetchPredictionHistory(symbol, days, limit),
+    staleTime: 60000, // 1 minute
+    refetchInterval: 120000, // Auto refresh every 2 minutes
+  });
+}

@@ -658,3 +658,105 @@ async def get_tp_success_analysis(
         
     except Exception as e:
         return {"error": str(e)}
+
+
+@router.get("/prediction-history")
+async def get_prediction_history(
+    symbol: Optional[str] = Query(None, description="Filter by symbol (e.g., XAUUSD, NDX.INDX)"),
+    days: int = Query(7, ge=1, le=30, description="Number of days to look back"),
+    limit: int = Query(50, ge=1, le=200, description="Max number of records")
+):
+    """
+    Get detailed prediction history with outcomes for manual verification.
+    Shows each prediction with entry/exit prices, direction, result, and timing.
+    """
+    from database.supabase_client import get_supabase_client, is_db_available
+    from datetime import datetime, timedelta
+    
+    if not is_db_available():
+        return {"error": "Database not available", "predictions": []}
+    
+    client = get_supabase_client()
+    if client is None:
+        return {"error": "Database client not available", "predictions": []}
+    
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff_iso = cutoff.isoformat() + "Z"
+        
+        # Get predictions with their outcomes
+        query = client.table("prediction_logs").select(
+            "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, ml_target_price, ml_stop_price, claude_direction, claude_confidence, created_at, outcome_results(check_interval, entry_price, exit_price, high_price, low_price, price_change_pct, actual_direction, hit_target, hit_stop, ml_correct, claude_correct, created_at)"
+        ).gte("created_at", cutoff_iso).order("created_at", desc=True).limit(limit)
+        
+        if symbol:
+            query = query.eq("symbol", symbol)
+        
+        result = query.execute()
+        predictions = result.get("data") or []
+        
+        # Format for frontend
+        formatted = []
+        for pred in predictions:
+            outcomes = pred.get("outcome_results", [])
+            
+            # Get the 24h outcome (primary) or latest
+            primary_outcome = None
+            for o in outcomes:
+                if o.get("check_interval") == "24h":
+                    primary_outcome = o
+                    break
+            if not primary_outcome and outcomes:
+                primary_outcome = outcomes[0]
+            
+            entry = {
+                "id": pred.get("id"),
+                "symbol": pred.get("symbol"),
+                "timestamp": pred.get("created_at"),
+                "ml_direction": pred.get("ml_direction"),
+                "ml_confidence": pred.get("ml_confidence"),
+                "entry_price": pred.get("ml_entry_price"),
+                "target_price": pred.get("ml_target_price"),
+                "stop_price": pred.get("ml_stop_price"),
+                "claude_direction": pred.get("claude_direction"),
+                "claude_confidence": pred.get("claude_confidence"),
+                "has_outcome": primary_outcome is not None,
+            }
+            
+            if primary_outcome:
+                entry["exit_price"] = primary_outcome.get("exit_price")
+                entry["high_price"] = primary_outcome.get("high_price")
+                entry["low_price"] = primary_outcome.get("low_price")
+                entry["price_change_pct"] = primary_outcome.get("price_change_pct")
+                entry["actual_direction"] = primary_outcome.get("actual_direction")
+                entry["hit_target"] = primary_outcome.get("hit_target")
+                entry["hit_stop"] = primary_outcome.get("hit_stop")
+                entry["ml_correct"] = primary_outcome.get("ml_correct")
+                entry["claude_correct"] = primary_outcome.get("claude_correct")
+                entry["outcome_time"] = primary_outcome.get("created_at")
+            
+            formatted.append(entry)
+        
+        # Calculate summary stats
+        total = len(formatted)
+        with_outcome = [p for p in formatted if p.get("has_outcome")]
+        ml_correct = sum(1 for p in with_outcome if p.get("ml_correct"))
+        target_hits = sum(1 for p in with_outcome if p.get("hit_target"))
+        stop_hits = sum(1 for p in with_outcome if p.get("hit_stop"))
+        
+        return {
+            "predictions": formatted,
+            "summary": {
+                "total_predictions": total,
+                "with_outcome": len(with_outcome),
+                "pending_outcome": total - len(with_outcome),
+                "ml_correct": ml_correct,
+                "ml_accuracy": round(ml_correct / len(with_outcome) * 100, 1) if with_outcome else None,
+                "target_hits": target_hits,
+                "stop_hits": stop_hits,
+                "period_days": days
+            }
+        }
+        
+    except Exception as e:
+        return {"error": str(e), "predictions": []}

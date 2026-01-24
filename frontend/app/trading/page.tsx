@@ -7,6 +7,7 @@ import MLPredictionPanel from "../../components/MLPredictionPanel";
 import ClaudeAnalysisPanel from "../../components/ClaudeAnalysisPanel";
 import DetailedAnalysisPanel from "../../components/DetailedAnalysisPanel";
 import LearningDashboardPanel from "../../components/LearningDashboardPanel";
+import PredictionHistoryTable from "../../components/PredictionHistoryTable";
 import OrderBlockPanel from "../../components/OrderBlockPanel";
 import RTYHIIMDetectorPanel from "../../components/RTYHIIMDetectorPanel";
 import TradingChartWrapper from "../../components/TradingChartWrapper";
@@ -245,6 +246,19 @@ export default function TradingDashboard() {
               </div>
               <div className="transform-gpu transition-all duration-300">
                 <LearningDashboardPanel symbol={selectedSymbol} />
+              </div>
+            </section>
+
+            {/* Prediction History */}
+            <section>
+              <div className="mb-3 flex items-center gap-2">
+                <LineChart className="h-5 w-5 text-indigo-400" />
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
+                  Tahmin Geçmişi
+                </h2>
+              </div>
+              <div className="transform-gpu transition-all duration-300">
+                <PredictionHistoryTable symbol={selectedSymbol} />
               </div>
             </section>
           </div>
