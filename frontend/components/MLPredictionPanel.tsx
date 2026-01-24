@@ -8,6 +8,50 @@ import { useI18nStore } from "../lib/i18n/store";
 // Golden Ratio
 const PHI = 1.618;
 
+// Reasoning translation map - Turkish to English
+const REASONING_MAP: Record<string, string> = {
+  "RSI aşırı alım bölgesinde": "rsiOverbought",
+  "RSI aşırı satım bölgesinde": "rsiOversold",
+  "RSI nötr bölgede": "rsiNeutral",
+  "Güçlü yükseliş trendi: Fiyat > EMA20 > EMA50 > EMA200": "strongUptrend",
+  "Güçlü düşüş trendi: Fiyat < EMA20 < EMA50 < EMA200": "strongDowntrend",
+  "MACD histogram pozitif": "macdPositive",
+  "MACD histogram negatif": "macdNegative",
+  "Fiyat Bollinger ortalamasının üzerinde": "aboveBollinger",
+  "Fiyat Bollinger ortalamasının altında": "belowBollinger",
+  "Düşük volatilite ortamı": "lowVolatility",
+  "Yüksek volatilite ortamı": "highVolatility",
+  "Yükseliş momentumu tespit edildi": "bullishMomentum",
+  "Düşüş momentumu tespit edildi": "bearishMomentum",
+  "Negatif momentum": "negativeMomentum",
+};
+
+function translateReasoning(reason: string, t: (key: string) => string, locale: string): string {
+  // If English, try to translate from Turkish
+  if (locale === "en") {
+    // Check for exact match
+    const key = REASONING_MAP[reason];
+    if (key) {
+      return t(`mlPrediction.reasoning.${key}`);
+    }
+    // Check for partial matches (for dynamic values like RSI numbers)
+    for (const [turkishPattern, translationKey] of Object.entries(REASONING_MAP)) {
+      if (reason.includes(turkishPattern.split(":")[0]) || turkishPattern.includes(reason.split(":")[0])) {
+        // Try to extract numbers and rebuild
+        const numbers = reason.match(/[\d.]+/g);
+        let translated = t(`mlPrediction.reasoning.${translationKey}`);
+        if (numbers) {
+          // Replace placeholder or append numbers
+          translated = translated.replace(/\([\d.]+\)/, `(${numbers[0]})`);
+        }
+        return translated;
+      }
+    }
+  }
+  // Return original if no translation found or locale is Turkish
+  return reason;
+}
+
 type Props = {
   symbol: string;
   symbolLabel: string;
@@ -86,6 +130,7 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
   const { data, isLoading, error, refetch } = usePrediction(symbol);
   const [showGuide, setShowGuide] = useState(false);
   const t = useI18nStore((s) => s.t);
+  const locale = useI18nStore((s) => s.locale);
 
   return (
     <>
@@ -206,9 +251,9 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
                 </span>
               </div>
               <div className="space-y-3">
-                <ScoreBar label="Teknik" value={data.technical_score} color="bg-accent" />
-                <ScoreBar label="Momentum" value={data.momentum_score} color="bg-success" />
-                <ScoreBar label="Trend" value={data.trend_score} color="bg-blue-500" />
+                <ScoreBar label={t("mlPrediction.technical")} value={data.technical_score} color="bg-accent" />
+                <ScoreBar label={t("mlPrediction.momentum")} value={data.momentum_score} color="bg-success" />
+                <ScoreBar label={t("mlPrediction.trend")} value={data.trend_score} color="bg-blue-500" />
               </div>
             </div>
 
@@ -234,7 +279,7 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
                 {data.reasoning.slice(0, 5).map((reason, i) => (
                   <li key={i} className="flex gap-2">
                     <span className="text-accent">•</span>
-                    <span>{reason}</span>
+                    <span>{translateReasoning(reason, t, locale)}</span>
                   </li>
                 ))}
               </ul>
@@ -243,7 +288,7 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
             {/* Footer */}
             <div className="flex items-center justify-between text-xs text-textSecondary pt-3 border-t border-white/10">
               <span>Model: {data.model_version}</span>
-              <span>{new Date(data.timestamp).toLocaleTimeString("tr-TR")}</span>
+              <span>{new Date(data.timestamp).toLocaleTimeString(locale === "en" ? "en-US" : "tr-TR")}</span>
             </div>
           </>
         ) : null}

@@ -314,6 +314,9 @@
     "target": "Target",
     "stopLoss": "Stop Loss",
     "modelScore": "Model Score",
+    "technical": "Technical",
+    "momentum": "Momentum",
+    "trend": "Trend",
     "trendScore": "Trend Score",
     "volatilityScore": "Volatility Score",
     "momentumScore": "Momentum Score",
@@ -324,7 +327,23 @@
     "guideText5": "Higher confidence = stronger signal",
     "pips": "pips",
     "noData": "No prediction data available",
-    "loading": "Loading prediction..."
+    "loading": "Loading prediction...",
+    "reasoning": {
+      "rsiOverbought": "RSI in overbought zone",
+      "rsiOversold": "RSI in oversold zone",
+      "rsiNeutral": "RSI in neutral zone",
+      "strongUptrend": "Strong uptrend: Price > EMA20 > EMA50 > EMA200",
+      "strongDowntrend": "Strong downtrend: Price < EMA20 < EMA50 < EMA200",
+      "macdPositive": "MACD histogram positive",
+      "macdNegative": "MACD histogram negative",
+      "aboveBollinger": "Price above Bollinger middle band",
+      "belowBollinger": "Price below Bollinger middle band",
+      "lowVolatility": "Low volatility environment",
+      "highVolatility": "High volatility environment",
+      "bullishMomentum": "Bullish momentum detected",
+      "bearishMomentum": "Bearish momentum detected",
+      "negativeMomentum": "Negative momentum"
+    }
   },
   "claudeAnalysis": {
     "title": "CLAUDE AI ANALYSIS",
