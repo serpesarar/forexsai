@@ -314,6 +314,9 @@
     "target": "Hedef",
     "stopLoss": "Zarar Durdur",
     "modelScore": "Model Skoru",
+    "technical": "Teknik",
+    "momentum": "Momentum",
+    "trend": "Trend",
     "trendScore": "Trend Skoru",
     "volatilityScore": "Volatilite Skoru",
     "momentumScore": "Momentum Skoru",
@@ -324,7 +327,23 @@
     "guideText5": "Yüksek güven = daha güçlü sinyal",
     "pips": "pip",
     "noData": "Tahmin verisi mevcut değil",
-    "loading": "Tahmin yükleniyor..."
+    "loading": "Tahmin yükleniyor...",
+    "reasoning": {
+      "rsiOverbought": "RSI aşırı alım bölgesinde",
+      "rsiOversold": "RSI aşırı satım bölgesinde",
+      "rsiNeutral": "RSI nötr bölgede",
+      "strongUptrend": "Güçlü yükseliş trendi: Fiyat > EMA20 > EMA50 > EMA200",
+      "strongDowntrend": "Güçlü düşüş trendi: Fiyat < EMA20 < EMA50 < EMA200",
+      "macdPositive": "MACD histogram pozitif",
+      "macdNegative": "MACD histogram negatif",
+      "aboveBollinger": "Fiyat Bollinger ortalamasının üzerinde",
+      "belowBollinger": "Fiyat Bollinger ortalamasının altında",
+      "lowVolatility": "Düşük volatilite ortamı",
+      "highVolatility": "Yüksek volatilite ortamı",
+      "bullishMomentum": "Yükseliş momentumu tespit edildi",
+      "bearishMomentum": "Düşüş momentumu tespit edildi",
+      "negativeMomentum": "Negatif momentum"
+    }
   },
   "claudeAnalysis": {
     "title": "CLAUDE AI ANALİZ",
