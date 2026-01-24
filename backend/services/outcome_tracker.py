@@ -205,9 +205,10 @@ async def check_prediction_outcome(
         ml_correct = _is_prediction_correct(ml_direction, actual_direction)
         claude_correct = _is_prediction_correct(claude_direction, actual_direction) if claude_direction else None
         
-        # For ml_correct, also consider if any target was hit
-        if hit_target and not hit_stop:
-            ml_correct = True  # Target hit without stoploss = correct
+        # For ml_correct: if target was hit, trade is successful regardless of stop
+        # Because price reached our target = correct prediction
+        if hit_target:
+            ml_correct = True  # Target hit = correct (even if stop also hit later)
         
         outcome = {
             "prediction_id": prediction.get("id"),
