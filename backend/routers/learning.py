@@ -799,3 +799,83 @@ async def fix_ml_correct_in_database():
         
     except Exception as e:
         return {"error": str(e)}
+
+
+@router.post("/reset-ui-stats")
+async def reset_ui_stats(
+    symbol: Optional[str] = Query(None, description="Symbol to reset (or all if None)"),
+    keep_data: bool = Query(True, description="Keep underlying data, just reset stats display")
+):
+    """
+    Reset UI statistics display while preserving the underlying data.
+    This recalculates all accuracy metrics based on corrected ml_correct logic.
+    
+    Steps:
+    1. Fix all ml_correct values where hit_target=True
+    2. Return fresh recalculated stats
+    """
+    from database.supabase_client import get_supabase_client, is_db_available
+    from datetime import datetime, timedelta
+    
+    if not is_db_available():
+        return {"error": "Database not available"}
+    
+    client = get_supabase_client()
+    if client is None:
+        return {"error": "Database client not available"}
+    
+    try:
+        # Step 1: Fix ml_correct for all hit_target=True records
+        fix_query = client.table("outcome_results").update({
+            "ml_correct": True
+        }).eq("hit_target", True).eq("ml_correct", False)
+        
+        if symbol:
+            # Need to join with prediction_logs to filter by symbol
+            # Get prediction IDs for this symbol first
+            pred_result = client.table("prediction_logs").select("id").eq("symbol", symbol).execute()
+            pred_ids = [p["id"] for p in (pred_result.get("data") or [])]
+            if pred_ids:
+                fix_query = fix_query.in_("prediction_id", pred_ids)
+        
+        fix_result = fix_query.execute()
+        fixed_count = len(fix_result.get("data") or [])
+        
+        # Step 2: Get fresh stats
+        cutoff = datetime.utcnow() - timedelta(days=7)
+        cutoff_iso = cutoff.isoformat() + "Z"
+        
+        query = client.table("outcome_results").select(
+            "ml_correct, hit_target, hit_stop, prediction_logs(symbol)"
+        ).gte("created_at", cutoff_iso)
+        
+        result = query.execute()
+        outcomes = result.get("data") or []
+        
+        # Filter by symbol if specified
+        if symbol:
+            outcomes = [o for o in outcomes if o.get("prediction_logs", {}).get("symbol") == symbol]
+        
+        # Calculate fresh stats
+        total = len(outcomes)
+        ml_correct = sum(1 for o in outcomes if o.get("ml_correct") or o.get("hit_target"))
+        target_hits = sum(1 for o in outcomes if o.get("hit_target"))
+        stop_hits = sum(1 for o in outcomes if o.get("hit_stop"))
+        
+        return {
+            "success": True,
+            "fixed_records": fixed_count,
+            "fresh_stats": {
+                "total_outcomes": total,
+                "ml_correct": ml_correct,
+                "ml_accuracy": round(ml_correct / total * 100, 1) if total > 0 else None,
+                "target_hits": target_hits,
+                "stop_hits": stop_hits,
+                "target_hit_rate": round(target_hits / total * 100, 1) if total > 0 else None,
+            },
+            "symbol": symbol or "ALL",
+            "message": f"UI stats reset. Fixed {fixed_count} records. New accuracy: {round(ml_correct / total * 100, 1) if total > 0 else 0}%"
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}
