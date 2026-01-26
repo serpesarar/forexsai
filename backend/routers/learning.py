@@ -775,34 +775,49 @@ async def fix_ml_correct_in_database():
     This corrects the previous bug where target hits were not counted as correct.
     """
     from database.supabase_client import get_supabase_client, is_db_available
+    import httpx
+    import os
     
     if not is_db_available():
         return {"error": "Database not available"}
     
-    client = get_supabase_client()
-    if client is None:
-        return {"error": "Database client not available"}
-    
     try:
-        # Get all outcomes where hit_target is true but ml_correct is false
-        query = client.table("outcome_results").select("id, hit_target, ml_correct")
-        query = query.eq("hit_target", True).eq("ml_correct", False)
-        result = query.execute()
-        records_to_fix = result.get("data") or []
+        # Use direct RPC call for bulk update
+        url = os.environ.get("SUPABASE_URL", "").rstrip('/')
+        key = os.environ.get("SUPABASE_KEY", "")
         
-        # Update each record
-        updated_count = 0
-        for record in records_to_fix:
-            record_id = record.get("id")
-            if record_id:
-                update_result = client.table("outcome_results").eq("id", record_id).update({"ml_correct": True})
-                if update_result.get("data"):
-                    updated_count += 1
+        if not url or not key:
+            return {"error": "Supabase credentials not configured"}
+        
+        # First get count of records to fix
+        headers = {
+            "apikey": key,
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+        }
+        
+        with httpx.Client(timeout=30.0) as client:
+            # Get records to fix
+            get_url = f"{url}/rest/v1/outcome_results?hit_target=eq.true&ml_correct=eq.false&select=id"
+            response = client.get(get_url, headers=headers)
+            records = response.json() if response.status_code == 200 else []
+            
+            # Update each record
+            updated_count = 0
+            for record in records:
+                record_id = record.get("id")
+                if record_id:
+                    update_url = f"{url}/rest/v1/outcome_results?id=eq.{record_id}"
+                    update_response = client.patch(update_url, json={"ml_correct": True}, headers=headers)
+                    if update_response.status_code in [200, 201, 204]:
+                        updated_count += 1
         
         return {
             "success": True,
             "message": f"Fixed {updated_count} outcome records",
-            "updated_count": updated_count
+            "updated_count": updated_count,
+            "total_found": len(records)
         }
         
     except Exception as e:
@@ -822,74 +837,88 @@ async def reset_ui_stats(
     1. Fix all ml_correct values where hit_target=True
     2. Return fresh recalculated stats
     """
-    from database.supabase_client import get_supabase_client, is_db_available
+    from database.supabase_client import is_db_available
     from datetime import datetime, timedelta
+    import httpx
+    import os
     
     if not is_db_available():
         return {"error": "Database not available"}
     
-    client = get_supabase_client()
-    if client is None:
-        return {"error": "Database client not available"}
-    
     try:
-        # Step 1: Get all outcome records where hit_target=True but ml_correct=False
-        query = client.table("outcome_results").select("id, prediction_id, hit_target, ml_correct")
-        query = query.eq("hit_target", True).eq("ml_correct", False)
+        url = os.environ.get("SUPABASE_URL", "").rstrip('/')
+        key = os.environ.get("SUPABASE_KEY", "")
         
-        result = query.execute()
-        records_to_fix = result.get("data") or []
+        if not url or not key:
+            return {"error": "Supabase credentials not configured"}
         
-        # Filter by symbol if specified
-        if symbol and records_to_fix:
-            pred_result = client.table("prediction_logs").select("id").eq("symbol", symbol).execute()
-            pred_ids = set(p["id"] for p in (pred_result.get("data") or []))
-            records_to_fix = [r for r in records_to_fix if r.get("prediction_id") in pred_ids]
-        
-        # Update each record individually
-        fixed_count = 0
-        for record in records_to_fix:
-            record_id = record.get("id")
-            if record_id:
-                update_result = client.table("outcome_results").eq("id", record_id).update({"ml_correct": True})
-                if update_result.get("data"):
-                    fixed_count += 1
-        
-        # Step 2: Get fresh stats
-        cutoff = datetime.utcnow() - timedelta(days=7)
-        cutoff_iso = cutoff.isoformat() + "Z"
-        
-        query = client.table("outcome_results").select(
-            "ml_correct, hit_target, hit_stop, prediction_logs(symbol)"
-        ).gte("created_at", cutoff_iso)
-        
-        result = query.execute()
-        outcomes = result.get("data") or []
-        
-        # Filter by symbol if specified
-        if symbol:
-            outcomes = [o for o in outcomes if o.get("prediction_logs", {}).get("symbol") == symbol]
-        
-        # Calculate fresh stats
-        total = len(outcomes)
-        ml_correct = sum(1 for o in outcomes if o.get("ml_correct") or o.get("hit_target"))
-        target_hits = sum(1 for o in outcomes if o.get("hit_target"))
-        stop_hits = sum(1 for o in outcomes if o.get("hit_stop"))
-        
-        return {
-            "success": True,
-            "fixed_records": fixed_count,
-            "fresh_stats": {
-                "total_outcomes": total,
-                "ml_correct": ml_correct,
-                "ml_accuracy": round(ml_correct / total * 100, 1) if total > 0 else None,
-                "target_hits": target_hits,
-                "stop_hits": stop_hits,
-                "target_hit_rate": round(target_hits / total * 100, 1) if total > 0 else None,
-            },
-            "symbol": symbol or "ALL",
-            "message": f"UI stats reset. Fixed {fixed_count} records. New accuracy: {round(ml_correct / total * 100, 1) if total > 0 else 0}%"
+        headers = {
+            "apikey": key,
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
         }
+        
+        with httpx.Client(timeout=60.0) as client:
+            # Step 1: Get records to fix
+            get_url = f"{url}/rest/v1/outcome_results?hit_target=eq.true&ml_correct=eq.false&select=id,prediction_id"
+            response = client.get(get_url, headers=headers)
+            records_to_fix = response.json() if response.status_code == 200 else []
+            
+            # Filter by symbol if specified
+            if symbol and records_to_fix:
+                pred_url = f"{url}/rest/v1/prediction_logs?symbol=eq.{symbol}&select=id"
+                pred_response = client.get(pred_url, headers=headers)
+                pred_ids = set(p["id"] for p in (pred_response.json() if pred_response.status_code == 200 else []))
+                records_to_fix = [r for r in records_to_fix if r.get("prediction_id") in pred_ids]
+            
+            # Update each record
+            fixed_count = 0
+            for record in records_to_fix:
+                record_id = record.get("id")
+                if record_id:
+                    update_url = f"{url}/rest/v1/outcome_results?id=eq.{record_id}"
+                    update_response = client.patch(update_url, json={"ml_correct": True}, headers=headers)
+                    if update_response.status_code in [200, 201, 204]:
+                        fixed_count += 1
+            
+            # Step 2: Get fresh stats
+            cutoff = datetime.utcnow() - timedelta(days=7)
+            cutoff_iso = cutoff.isoformat() + "Z"
+            
+            stats_url = f"{url}/rest/v1/outcome_results?created_at=gte.{cutoff_iso}&select=ml_correct,hit_target,hit_stop,prediction_id"
+            stats_response = client.get(stats_url, headers=headers)
+            outcomes = stats_response.json() if stats_response.status_code == 200 else []
+            
+            # Filter by symbol if specified
+            if symbol and outcomes:
+                pred_url = f"{url}/rest/v1/prediction_logs?symbol=eq.{symbol}&select=id"
+                pred_response = client.get(pred_url, headers=headers)
+                pred_ids = set(p["id"] for p in (pred_response.json() if pred_response.status_code == 200 else []))
+                outcomes = [o for o in outcomes if o.get("prediction_id") in pred_ids]
+            
+            # Calculate fresh stats
+            total = len(outcomes)
+            ml_correct_count = sum(1 for o in outcomes if o.get("ml_correct") or o.get("hit_target"))
+            target_hits = sum(1 for o in outcomes if o.get("hit_target"))
+            stop_hits = sum(1 for o in outcomes if o.get("hit_stop"))
+            
+            accuracy = round(ml_correct_count / total * 100, 1) if total > 0 else 0
+            
+            return {
+                "success": True,
+                "fixed_records": fixed_count,
+                "fresh_stats": {
+                    "total_outcomes": total,
+                    "ml_correct": ml_correct_count,
+                    "ml_accuracy": accuracy,
+                    "target_hits": target_hits,
+                    "stop_hits": stop_hits,
+                    "target_hit_rate": round(target_hits / total * 100, 1) if total > 0 else None,
+                },
+                "symbol": symbol or "ALL",
+                "message": f"UI stats reset. Fixed {fixed_count} records. New accuracy: {accuracy}%"
+            }
         
     except Exception as e:
         return {"error": str(e)}
