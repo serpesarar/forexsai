@@ -784,12 +784,20 @@ async def fix_ml_correct_in_database():
         return {"error": "Database client not available"}
     
     try:
-        # Update all outcomes where hit_target is true but ml_correct is false
-        result = client.table("outcome_results").update({
-            "ml_correct": True
-        }).eq("hit_target", True).eq("ml_correct", False).execute()
+        # Get all outcomes where hit_target is true but ml_correct is false
+        query = client.table("outcome_results").select("id, hit_target, ml_correct")
+        query = query.eq("hit_target", True).eq("ml_correct", False)
+        result = query.execute()
+        records_to_fix = result.get("data") or []
         
-        updated_count = len(result.get("data") or [])
+        # Update each record
+        updated_count = 0
+        for record in records_to_fix:
+            record_id = record.get("id")
+            if record_id:
+                update_result = client.table("outcome_results").eq("id", record_id).update({"ml_correct": True})
+                if update_result.get("data"):
+                    updated_count += 1
         
         return {
             "success": True,
@@ -825,21 +833,27 @@ async def reset_ui_stats(
         return {"error": "Database client not available"}
     
     try:
-        # Step 1: Fix ml_correct for all hit_target=True records
-        fix_query = client.table("outcome_results").update({
-            "ml_correct": True
-        }).eq("hit_target", True).eq("ml_correct", False)
+        # Step 1: Get all outcome records where hit_target=True but ml_correct=False
+        query = client.table("outcome_results").select("id, prediction_id, hit_target, ml_correct")
+        query = query.eq("hit_target", True).eq("ml_correct", False)
         
-        if symbol:
-            # Need to join with prediction_logs to filter by symbol
-            # Get prediction IDs for this symbol first
+        result = query.execute()
+        records_to_fix = result.get("data") or []
+        
+        # Filter by symbol if specified
+        if symbol and records_to_fix:
             pred_result = client.table("prediction_logs").select("id").eq("symbol", symbol).execute()
-            pred_ids = [p["id"] for p in (pred_result.get("data") or [])]
-            if pred_ids:
-                fix_query = fix_query.in_("prediction_id", pred_ids)
+            pred_ids = set(p["id"] for p in (pred_result.get("data") or []))
+            records_to_fix = [r for r in records_to_fix if r.get("prediction_id") in pred_ids]
         
-        fix_result = fix_query.execute()
-        fixed_count = len(fix_result.get("data") or [])
+        # Update each record individually
+        fixed_count = 0
+        for record in records_to_fix:
+            record_id = record.get("id")
+            if record_id:
+                update_result = client.table("outcome_results").eq("id", record_id).update({"ml_correct": True})
+                if update_result.get("data"):
+                    fixed_count += 1
         
         # Step 2: Get fresh stats
         cutoff = datetime.utcnow() - timedelta(days=7)
