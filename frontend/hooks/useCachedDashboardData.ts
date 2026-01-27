@@ -169,10 +169,10 @@ export function cachedToSignalCard(cached: CachedSymbolData | null, symbol: stri
       nearestSupport: { price: nearestSupport.price, distance: nearestSupport.distance, distancePct: nearestSupport.distancePct },
       nearestResistance: { price: nearestResistance.price, distance: nearestResistance.distance, distancePct: nearestResistance.distancePct },
       trendChannel: {
-        distanceToUpper: 100,
-        distanceToLower: -100,
+        distanceToUpper: nearestResistance.distancePct || 2,
+        distanceToLower: nearestSupport.distancePct || -2,
         trendStrength: confidence / 100,
-        channelWidth: 200,
+        channelWidth: Math.abs((nearestResistance.price || currentPrice * 1.02) - (nearestSupport.price || currentPrice * 0.98)),
         rSquared: 0.75,
         slope: direction === "UP" ? 0.5 : direction === "DOWN" ? -0.5 : 0,
         trendQuality: confidence > 70 ? "strong" : confidence > 50 ? "moderate" : "weak",

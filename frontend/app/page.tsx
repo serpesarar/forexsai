@@ -837,9 +837,9 @@ export default function HomePage() {
           { label: "EMA 20", detail: signal.liveMetrics.emaDistances.ema20, maxDistance: 5 },
           { label: "EMA 50", detail: signal.liveMetrics.emaDistances.ema50, maxDistance: 8 },
           { label: "EMA 200", detail: signal.liveMetrics.emaDistances.ema200, maxDistance: 15 },
-          { label: "Channel U", detail: { distancePct: signal.liveMetrics.trendChannel.distanceToUpper, distance: signal.liveMetrics.trendChannel.distanceToUpper, emaValue: signal.liveMetrics.trendChannel.channelWidth, currentPrice: signal.currentPrice, period: 0 }, maxDistance: 100 },
-          { label: "Channel L", detail: { distancePct: signal.liveMetrics.trendChannel.distanceToLower, distance: signal.liveMetrics.trendChannel.distanceToLower, emaValue: signal.liveMetrics.trendChannel.channelWidth, currentPrice: signal.currentPrice, period: 0 }, maxDistance: 100 },
-          { label: "S/R Bias", detail: { distancePct: (signal.liveMetrics.nearestSupport.distancePct + signal.liveMetrics.nearestResistance.distancePct) / 2, distance: signal.liveMetrics.nearestSupport.distance + signal.liveMetrics.nearestResistance.distance, emaValue: signal.liveMetrics.nearestSupport.price, currentPrice: signal.currentPrice, period: 0 }, maxDistance: 5 },
+          { label: "Channel U", detail: { distancePct: signal.liveMetrics.trendChannel.distanceToUpper, distance: signal.liveMetrics.trendChannel.distanceToUpper, emaValue: signal.liveMetrics.trendChannel.channelWidth, currentPrice: signal.currentPrice, period: 0 }, maxDistance: 5 },
+          { label: "Channel L", detail: { distancePct: Math.abs(signal.liveMetrics.trendChannel.distanceToLower), distance: signal.liveMetrics.trendChannel.distanceToLower, emaValue: signal.liveMetrics.trendChannel.channelWidth, currentPrice: signal.currentPrice, period: 0 }, maxDistance: 5 },
+          { label: "S/R Bias", detail: { distancePct: Math.min(Math.abs(signal.liveMetrics.nearestSupport.distancePct || 0), Math.abs(signal.liveMetrics.nearestResistance.distancePct || 0)), distance: signal.liveMetrics.nearestSupport.distance + signal.liveMetrics.nearestResistance.distance, emaValue: signal.liveMetrics.nearestSupport.price, currentPrice: signal.currentPrice, period: 0 }, maxDistance: 5 },
         ].map((metric, index) => {
           const absDistance = Math.abs(metric.detail.distancePct);
           const proximityScore = Math.max(0, 100 - (absDistance / metric.maxDistance) * 100);
