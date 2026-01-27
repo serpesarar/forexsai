@@ -87,6 +87,9 @@ export interface MarketRegime {
   minus_di: number;
   trend_strength: "WEAK" | "MODERATE" | "STRONG" | "VERY_STRONG";
   trend_direction: Trend | null;
+  di_spread: number;
+  confidence_level: "HIGH_CONFIDENCE" | "LOW_CONFIDENCE" | "CONFLICTING";
+  regime_quality: number;
 }
 
 export interface PriceAction {
@@ -97,6 +100,10 @@ export interface PriceAction {
   last_swing_low: number;
   break_of_structure: boolean;
   change_of_character: boolean;
+  liquidity_sweep: boolean;
+  equal_highs_count: number;
+  equal_lows_count: number;
+  structure_quality: "VALID_BREAKOUT" | "FAKEOUT_TRAP" | "CHOPPY" | "AWAITING_CONFIRMATION";
 }
 
 export interface VolumeProfileData {
@@ -105,6 +112,9 @@ export interface VolumeProfileData {
   value_area_low: number;
   high_volume_nodes: number[];
   low_volume_nodes: number[];
+  hvn_resistances: number[];
+  hvn_supports: number[];
+  poc_is_relevant: boolean;
 }
 
 export interface PivotPoints {
@@ -116,25 +126,37 @@ export interface PivotPoints {
   s2: number;
   s3: number;
   timeframe: "DAILY" | "WEEKLY";
+  pivot_type: "FIBONACCI" | "CLASSIC" | "CAMARILLA";
 }
 
 export interface CorrelationData {
   dxy_correlation: number;
   dxy_trend: Trend;
+  dxy_strength: number;
   vix_level: number;
   vix_regime: "LOW" | "NORMAL" | "HIGH" | "EXTREME";
   bond_yield_trend: Trend;
+  bond_yield_level: number;
+  spx_trend: Trend;
   correlation_confirms: boolean;
+  confluence_score: number;
+  conflicting_signals: string[];
 }
 
 export interface PositionSizing {
   recommended_risk_percent: number;
+  base_risk_percent: number;
+  volatility_adjustment: number;
+  correlation_adjustment: number;
   stop_loss_pips: number;
   take_profit_pips: number;
   risk_reward_ratio: number;
   position_size_lots: number;
   max_loss_usd: number;
   potential_profit_usd: number;
+  session: "ASIA" | "LONDON" | "NEW_YORK" | "OVERLAP";
+  session_volatility: "LOW" | "NORMAL" | "HIGH" | "EXTREME";
+  high_impact_event: string | null;
 }
 
 export interface AdvancedAnalysis {
