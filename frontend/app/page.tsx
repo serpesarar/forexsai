@@ -834,18 +834,39 @@ export default function HomePage() {
       </div>
       <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
         {[
-          { label: "EMA 20", detail: signal.liveMetrics.emaDistances.ema20 },
-          { label: "EMA 50", detail: signal.liveMetrics.emaDistances.ema50 },
-          { label: "EMA 200", detail: signal.liveMetrics.emaDistances.ema200 },
-          { label: "Channel U", detail: { distancePct: signal.liveMetrics.trendChannel.distanceToUpper, distance: signal.liveMetrics.trendChannel.distanceToUpper, emaValue: signal.liveMetrics.trendChannel.channelWidth, currentPrice: signal.currentPrice, period: 0 } },
-          { label: "Channel L", detail: { distancePct: signal.liveMetrics.trendChannel.distanceToLower, distance: signal.liveMetrics.trendChannel.distanceToLower, emaValue: signal.liveMetrics.trendChannel.channelWidth, currentPrice: signal.currentPrice, period: 0 } },
-          { label: "S/R Bias", detail: { distancePct: signal.liveMetrics.nearestSupport.distance + signal.liveMetrics.nearestResistance.distance, distance: signal.liveMetrics.nearestSupport.distance + signal.liveMetrics.nearestResistance.distance, emaValue: signal.liveMetrics.nearestSupport.price, currentPrice: signal.currentPrice, period: 0 } },
-        ].map((metric, index) => (
-          <div key={`${signal.symbol}-${metric.label}-${index}`} className="rounded-lg border border-white/5 bg-white/5 p-3">
-            <CircularProgress value={Math.min(Math.abs(metric.detail.distancePct) * 40, 100)} size={64} strokeWidth={8} sublabel={formatPctShort(metric.detail.distancePct)} isInteractive onClick={() => {}} />
-            <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-textSecondary">{metric.label}</p>
-          </div>
-        ))}
+          { label: "EMA 20", detail: signal.liveMetrics.emaDistances.ema20, maxDistance: 5 },
+          { label: "EMA 50", detail: signal.liveMetrics.emaDistances.ema50, maxDistance: 8 },
+          { label: "EMA 200", detail: signal.liveMetrics.emaDistances.ema200, maxDistance: 15 },
+          { label: "Channel U", detail: { distancePct: signal.liveMetrics.trendChannel.distanceToUpper, distance: signal.liveMetrics.trendChannel.distanceToUpper, emaValue: signal.liveMetrics.trendChannel.channelWidth, currentPrice: signal.currentPrice, period: 0 }, maxDistance: 100 },
+          { label: "Channel L", detail: { distancePct: signal.liveMetrics.trendChannel.distanceToLower, distance: signal.liveMetrics.trendChannel.distanceToLower, emaValue: signal.liveMetrics.trendChannel.channelWidth, currentPrice: signal.currentPrice, period: 0 }, maxDistance: 100 },
+          { label: "S/R Bias", detail: { distancePct: (signal.liveMetrics.nearestSupport.distancePct + signal.liveMetrics.nearestResistance.distancePct) / 2, distance: signal.liveMetrics.nearestSupport.distance + signal.liveMetrics.nearestResistance.distance, emaValue: signal.liveMetrics.nearestSupport.price, currentPrice: signal.currentPrice, period: 0 }, maxDistance: 5 },
+        ].map((metric, index) => {
+          const absDistance = Math.abs(metric.detail.distancePct);
+          const proximityScore = Math.max(0, 100 - (absDistance / metric.maxDistance) * 100);
+          const isClose = absDistance < metric.maxDistance * 0.3;
+          const isFar = absDistance > metric.maxDistance * 0.7;
+          const colorClass = isClose ? "text-success" : isFar ? "text-amber-500" : "text-accent";
+          return (
+            <div key={`${signal.symbol}-${metric.label}-${index}`} className="rounded-lg border border-white/5 bg-white/5 p-3 group relative">
+              <CircularProgress 
+                value={proximityScore} 
+                size={64} 
+                strokeWidth={8} 
+                sublabel={formatPctShort(metric.detail.distancePct)} 
+                colorClassName={colorClass}
+                isInteractive 
+                onClick={() => {}} 
+              />
+              <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-textSecondary">{metric.label}</p>
+              <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className={`w-2 h-2 rounded-full ${isClose ? "bg-success" : isFar ? "bg-amber-500" : "bg-accent"}`} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-2 text-[9px] text-textSecondary/60 text-center">
+        Circle doluluk = Fiyatın seviyeye yakınlığı • Yeşil = Yakın • Turuncu = Uzak
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
         {signal.liveMetrics.supportResistance.map((level) => (
