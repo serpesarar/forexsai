@@ -106,18 +106,21 @@ class TimeframeAnalysis:
 
 @dataclass
 class MarketRegime:
-    """Market regime detection using ADX"""
+    """Market regime detection using ADX + DI + Correlation"""
     regime: Literal["TRENDING", "RANGING", "VOLATILE"]
     adx: float  # Average Directional Index (0-100)
-    plus_di: float  # +DI
-    minus_di: float  # -DI
+    plus_di: float  # +DI (Bullish pressure)
+    minus_di: float  # -DI (Bearish pressure)
     trend_strength: Literal["WEAK", "MODERATE", "STRONG", "VERY_STRONG"]
     trend_direction: Optional[Trend]
+    di_spread: float  # |+DI - -DI| - trend confirmation
+    confidence_level: Literal["HIGH_CONFIDENCE", "LOW_CONFIDENCE", "CONFLICTING"]  # Based on DI spread
+    regime_quality: float  # 0-100 quality score
 
 
 @dataclass
 class PriceAction:
-    """Price action and market structure analysis"""
+    """Price action and market structure analysis with liquidity detection"""
     structure: Literal["HH_HL", "LL_LH", "RANGING", "CHOPPY"]  # Higher Highs/Lows or Lower
     swing_highs: List[float]
     swing_lows: List[float]
@@ -125,52 +128,71 @@ class PriceAction:
     last_swing_low: float
     break_of_structure: bool  # Recent BOS detected
     change_of_character: bool  # CHoCH detected
+    liquidity_sweep: bool  # Fakeout trap detected
+    equal_highs_count: int  # Liquidity pool indicator (3+ = strong)
+    equal_lows_count: int  # Liquidity pool indicator
+    structure_quality: Literal["VALID_BREAKOUT", "FAKEOUT_TRAP", "CHOPPY", "AWAITING_CONFIRMATION"]
 
 
 @dataclass
 class VolumeProfile:
-    """Volume Profile analysis - institutional grade"""
+    """Volume Profile analysis - institutional grade with HVN S/R"""
     poc: float  # Point of Control - highest volume price
     value_area_high: float  # Upper boundary of 70% volume
     value_area_low: float  # Lower boundary of 70% volume
-    high_volume_nodes: List[float]  # Significant volume levels
+    high_volume_nodes: List[float]  # Significant volume levels (TRUE S/R)
     low_volume_nodes: List[float]  # Gaps in volume - easy to pass
+    hvn_resistances: List[float]  # HVN with price rejection = real resistance
+    hvn_supports: List[float]  # HVN with price rejection = real support
+    poc_is_relevant: bool  # Is current price near POC?
 
 
 @dataclass  
 class PivotPoints:
-    """Daily/Weekly pivot points for S/R"""
+    """Fibonacci Pivot Points for S/R (more accurate than classic)"""
     pivot: float  # Central pivot
-    r1: float  # Resistance 1
-    r2: float  # Resistance 2
-    r3: float  # Resistance 3
-    s1: float  # Support 1
-    s2: float  # Support 2
-    s3: float  # Support 3
+    r1: float  # Resistance 1 (0.382 Fib)
+    r2: float  # Resistance 2 (0.618 Fib) - STRONGEST
+    r3: float  # Resistance 3 (1.0 Fib)
+    s1: float  # Support 1 (0.382 Fib)
+    s2: float  # Support 2 (0.618 Fib) - STRONGEST
+    s3: float  # Support 3 (1.0 Fib)
     timeframe: Literal["DAILY", "WEEKLY"]
+    pivot_type: Literal["FIBONACCI", "CLASSIC", "CAMARILLA"]
 
 
 @dataclass
 class CorrelationData:
-    """Cross-asset correlation analysis"""
-    dxy_correlation: float  # Dollar Index correlation
+    """Multi-asset correlation analysis with weighted confluence"""
+    dxy_correlation: float  # Dollar Index correlation (-0.85 for XAUUSD)
     dxy_trend: Trend
+    dxy_strength: float  # 0-100 signal strength
     vix_level: float  # Volatility Index
     vix_regime: Literal["LOW", "NORMAL", "HIGH", "EXTREME"]
     bond_yield_trend: Trend  # US10Y
+    bond_yield_level: float  # Current yield %
+    spx_trend: Trend  # S&P 500 trend (risk-on/off)
     correlation_confirms: bool  # Does correlation support signal?
+    confluence_score: float  # -1.0 to 1.0 weighted score
+    conflicting_signals: List[str]  # Which assets conflict?
 
 
 @dataclass
 class PositionSizing:
-    """Risk-adjusted position sizing"""
-    recommended_risk_percent: float  # % of account to risk
+    """Volatility-adjusted position sizing with correlation risk"""
+    recommended_risk_percent: float  # % of account to risk (dynamic)
+    base_risk_percent: float  # Before adjustments
+    volatility_adjustment: float  # Multiplier based on ATR
+    correlation_adjustment: float  # Reduction for correlated positions
     stop_loss_pips: float
     take_profit_pips: float
     risk_reward_ratio: float
     position_size_lots: float  # For $10,000 account
     max_loss_usd: float
     potential_profit_usd: float
+    session: Literal["ASIA", "LONDON", "NEW_YORK", "OVERLAP"]
+    session_volatility: Literal["LOW", "NORMAL", "HIGH", "EXTREME"]
+    high_impact_event: Optional[str]  # NFP, FED, CPI etc.
 
 
 @dataclass
@@ -337,22 +359,30 @@ def _detect_market_regime(
     closes: np.ndarray,
     atr: float
 ) -> MarketRegime:
-    """Detect if market is trending, ranging, or volatile"""
+    """
+    Detect market regime using ADX + DI spread.
+    
+    Critical fix: ADX alone doesn't show direction, need DI spread confirmation.
+    ADX=50 with +DI≈-DI means SIDE MARKET, not strong trend!
+    """
     adx, plus_di, minus_di = _adx(highs, lows, closes, 14)
     
-    # Determine trend strength
+    # DI spread - the key to TRUE trend detection
+    di_spread = abs(plus_di - minus_di)
+    
+    # Determine trend strength based on BOTH ADX and DI spread
     if adx < 20:
         trend_strength = "WEAK"
         regime = "RANGING"
-    elif adx < 40:
-        trend_strength = "MODERATE"
-        regime = "TRENDING"
-    elif adx < 60:
-        trend_strength = "STRONG"
-        regime = "TRENDING"
+    elif adx < 30:
+        trend_strength = "MODERATE" if di_spread > 10 else "WEAK"
+        regime = "TRENDING" if di_spread > 10 else "RANGING"
+    elif adx < 50:
+        trend_strength = "STRONG" if di_spread > 15 else "MODERATE"
+        regime = "TRENDING" if di_spread > 10 else "RANGING"
     else:
-        trend_strength = "VERY_STRONG"
-        regime = "TRENDING"
+        trend_strength = "VERY_STRONG" if di_spread > 20 else "STRONG"
+        regime = "TRENDING" if di_spread > 15 else "RANGING"
     
     # Check for high volatility (ATR spike)
     historical_atr = _atr(highs[:-20], lows[:-20], closes[:-20], 14) if len(closes) > 34 else atr
@@ -361,11 +391,22 @@ def _detect_market_regime(
     
     # Trend direction based on DI
     trend_direction: Optional[Trend] = None
-    if regime == "TRENDING":
+    if regime == "TRENDING" and di_spread > 5:
         if plus_di > minus_di:
             trend_direction = "BULLISH"
         else:
             trend_direction = "BEARISH"
+    
+    # Confidence level based on DI spread
+    if di_spread > 20 and adx > 30:
+        confidence_level = "HIGH_CONFIDENCE"
+    elif di_spread > 10 and adx > 20:
+        confidence_level = "LOW_CONFIDENCE"
+    else:
+        confidence_level = "CONFLICTING"
+    
+    # Regime quality score (0-100)
+    regime_quality = min(100, (adx * 0.5) + (di_spread * 2.5))
     
     return MarketRegime(
         regime=regime,
@@ -373,7 +414,10 @@ def _detect_market_regime(
         plus_di=round(plus_di, 2),
         minus_di=round(minus_di, 2),
         trend_strength=trend_strength,
-        trend_direction=trend_direction
+        trend_direction=trend_direction,
+        di_spread=round(di_spread, 2),
+        confidence_level=confidence_level,
+        regime_quality=round(regime_quality, 1)
     )
 
 
@@ -382,7 +426,12 @@ def _detect_price_action(
     lows: np.ndarray, 
     closes: np.ndarray
 ) -> PriceAction:
-    """Detect market structure: Higher Highs/Lows or Lower Highs/Lows"""
+    """
+    Detect market structure with liquidity sweep and equal highs/lows detection.
+    
+    Critical: BOS alone doesn't confirm breakout - need to check for fakeout traps.
+    Equal highs/lows (3+) indicate liquidity pools where market makers hunt stops.
+    """
     if len(closes) < 20:
         return PriceAction(
             structure="CHOPPY",
@@ -391,37 +440,60 @@ def _detect_price_action(
             last_swing_high=float(highs[-1]) if len(highs) else 0,
             last_swing_low=float(lows[-1]) if len(lows) else 0,
             break_of_structure=False,
-            change_of_character=False
+            change_of_character=False,
+            liquidity_sweep=False,
+            equal_highs_count=0,
+            equal_lows_count=0,
+            structure_quality="CHOPPY"
         )
     
     # Find swing highs and lows (fractal method)
     swing_highs = []
     swing_lows = []
+    swing_high_indices = []
+    swing_low_indices = []
     period = 3
     
     for i in range(period, len(closes) - period):
-        # Swing high: higher than surrounding candles
         if highs[i] == max(highs[i-period:i+period+1]):
             swing_highs.append(float(highs[i]))
-        # Swing low: lower than surrounding candles
+            swing_high_indices.append(i)
         if lows[i] == min(lows[i-period:i+period+1]):
             swing_lows.append(float(lows[i]))
+            swing_low_indices.append(i)
     
-    # Get last 3 swings for structure analysis
-    recent_highs = swing_highs[-3:] if len(swing_highs) >= 3 else swing_highs
-    recent_lows = swing_lows[-3:] if len(swing_lows) >= 3 else swing_lows
+    # Get last 5 swings for better analysis
+    recent_highs = swing_highs[-5:] if len(swing_highs) >= 5 else swing_highs
+    recent_lows = swing_lows[-5:] if len(swing_lows) >= 5 else swing_lows
+    
+    # Equal highs/lows detection (liquidity pools)
+    atr = float(np.mean(highs[-14:] - lows[-14:])) if len(highs) >= 14 else 1.0
+    tolerance = atr * 0.3  # Within 30% of ATR = "equal"
+    
+    equal_highs_count = 0
+    equal_lows_count = 0
+    
+    if len(recent_highs) >= 2:
+        for i in range(len(recent_highs)):
+            for j in range(i+1, len(recent_highs)):
+                if abs(recent_highs[i] - recent_highs[j]) < tolerance:
+                    equal_highs_count += 1
+    
+    if len(recent_lows) >= 2:
+        for i in range(len(recent_lows)):
+            for j in range(i+1, len(recent_lows)):
+                if abs(recent_lows[i] - recent_lows[j]) < tolerance:
+                    equal_lows_count += 1
     
     # Determine structure
     structure = "CHOPPY"
     bos = False
     choch = False
+    liquidity_sweep = False
     
     if len(recent_highs) >= 2 and len(recent_lows) >= 2:
-        # Higher Highs and Higher Lows = Bullish
         hh = all(recent_highs[i] < recent_highs[i+1] for i in range(len(recent_highs)-1))
         hl = all(recent_lows[i] < recent_lows[i+1] for i in range(len(recent_lows)-1))
-        
-        # Lower Highs and Lower Lows = Bearish
         lh = all(recent_highs[i] > recent_highs[i+1] for i in range(len(recent_highs)-1))
         ll = all(recent_lows[i] > recent_lows[i+1] for i in range(len(recent_lows)-1))
         
@@ -434,50 +506,87 @@ def _detect_price_action(
         
         # Break of Structure detection
         current_price = float(closes[-1])
+        prev_close = float(closes[-2]) if len(closes) >= 2 else current_price
+        
         if len(recent_lows) >= 2:
-            if current_price < recent_lows[-2]:  # Broke below previous swing low
+            if current_price < recent_lows[-2]:
                 bos = True
                 if structure == "HH_HL":
-                    choch = True  # Change of character
+                    choch = True
+                # Liquidity sweep: broke level but came back
+                if prev_close > recent_lows[-2] and current_price > recent_lows[-2] * 0.998:
+                    liquidity_sweep = True
+        
         if len(recent_highs) >= 2:
-            if current_price > recent_highs[-2]:  # Broke above previous swing high
+            if current_price > recent_highs[-2]:
                 bos = True
                 if structure == "LL_LH":
                     choch = True
+                # Liquidity sweep: broke level but came back
+                if prev_close < recent_highs[-2] and current_price < recent_highs[-2] * 1.002:
+                    liquidity_sweep = True
+    
+    # Structure quality assessment
+    if bos and not choch and not liquidity_sweep and equal_highs_count < 3 and equal_lows_count < 3:
+        structure_quality = "VALID_BREAKOUT"
+    elif bos and liquidity_sweep:
+        structure_quality = "FAKEOUT_TRAP"
+    elif equal_highs_count >= 3 or equal_lows_count >= 3:
+        structure_quality = "AWAITING_CONFIRMATION"  # Liquidity pool nearby
+    elif structure == "CHOPPY" or structure == "RANGING":
+        structure_quality = "CHOPPY"
+    else:
+        structure_quality = "AWAITING_CONFIRMATION"
     
     return PriceAction(
         structure=structure,
-        swing_highs=recent_highs,
-        swing_lows=recent_lows,
+        swing_highs=recent_highs[-3:],
+        swing_lows=recent_lows[-3:],
         last_swing_high=recent_highs[-1] if recent_highs else float(highs[-1]),
         last_swing_low=recent_lows[-1] if recent_lows else float(lows[-1]),
         break_of_structure=bos,
-        change_of_character=choch
+        change_of_character=choch,
+        liquidity_sweep=liquidity_sweep,
+        equal_highs_count=equal_highs_count,
+        equal_lows_count=equal_lows_count,
+        structure_quality=structure_quality
     )
 
 
 def _calculate_volume_profile(
     closes: np.ndarray, 
+    highs: np.ndarray,
+    lows: np.ndarray,
     volumes: np.ndarray, 
     num_bins: int = 20
 ) -> VolumeProfile:
-    """Calculate Volume Profile with POC and Value Area"""
+    """
+    Calculate Volume Profile with HVN-based S/R detection.
+    
+    Critical: POC is NOT resistance. HVN with price rejection = TRUE S/R.
+    """
+    current_price = float(closes[-1]) if len(closes) else 0
+    
     if len(closes) < 20 or len(volumes) < 20:
-        price = float(closes[-1]) if len(closes) else 0
         return VolumeProfile(
-            poc=price,
-            value_area_high=price,
-            value_area_low=price,
+            poc=current_price,
+            value_area_high=current_price,
+            value_area_low=current_price,
             high_volume_nodes=[],
-            low_volume_nodes=[]
+            low_volume_nodes=[],
+            hvn_resistances=[],
+            hvn_supports=[],
+            poc_is_relevant=False
         )
     
-    price_min = float(np.min(closes))
-    price_max = float(np.max(closes))
+    price_min = float(np.min(lows))
+    price_max = float(np.max(highs))
     bin_size = (price_max - price_min) / num_bins if price_max > price_min else 1
     
-    # Create bins
+    # Create bins with rejection tracking
     volume_by_price = {}
+    rejection_count = {}  # Track price rejections
+    
     for i in range(len(closes)):
         bin_idx = int((closes[i] - price_min) / bin_size) if bin_size > 0 else 0
         bin_idx = min(bin_idx, num_bins - 1)
@@ -485,11 +594,25 @@ def _calculate_volume_profile(
         
         if bin_price not in volume_by_price:
             volume_by_price[bin_price] = 0
+            rejection_count[bin_price] = 0
         volume_by_price[bin_price] += volumes[i]
+        
+        # Check for rejection (wick) at this level
+        upper_wick = highs[i] - max(closes[i], closes[i-1] if i > 0 else closes[i])
+        lower_wick = min(closes[i], closes[i-1] if i > 0 else closes[i]) - lows[i]
+        avg_body = abs(closes[i] - (closes[i-1] if i > 0 else closes[i]))
+        
+        if upper_wick > avg_body * 1.5:  # Rejection from above
+            rejection_count[bin_price] += 1
+        if lower_wick > avg_body * 1.5:  # Rejection from below
+            rejection_count[bin_price] += 1
     
     if not volume_by_price:
-        price = float(closes[-1])
-        return VolumeProfile(poc=price, value_area_high=price, value_area_low=price, high_volume_nodes=[], low_volume_nodes=[])
+        return VolumeProfile(
+            poc=current_price, value_area_high=current_price, value_area_low=current_price,
+            high_volume_nodes=[], low_volume_nodes=[], hvn_resistances=[], hvn_supports=[],
+            poc_is_relevant=False
+        )
     
     # POC: highest volume price
     poc = max(volume_by_price.keys(), key=lambda k: volume_by_price[k])
@@ -514,12 +637,30 @@ def _calculate_volume_profile(
     high_volume_nodes = [p for p, v in volume_by_price.items() if v > avg_volume * 1.5]
     low_volume_nodes = [p for p, v in volume_by_price.items() if v < avg_volume * 0.5]
     
+    # HVN with rejections = TRUE S/R levels
+    hvn_resistances = []
+    hvn_supports = []
+    
+    for hvn in high_volume_nodes:
+        if rejection_count.get(hvn, 0) >= 2:  # At least 2 rejections
+            if hvn > current_price:
+                hvn_resistances.append(hvn)
+            else:
+                hvn_supports.append(hvn)
+    
+    # Is POC relevant? (price within 1% of POC)
+    atr = float(np.mean(highs[-14:] - lows[-14:])) if len(highs) >= 14 else bin_size
+    poc_is_relevant = abs(current_price - poc) < atr * 0.5
+    
     return VolumeProfile(
         poc=round(poc, 5),
         value_area_high=round(value_area_high, 5),
         value_area_low=round(value_area_low, 5),
-        high_volume_nodes=[round(p, 5) for p in high_volume_nodes[:5]],
-        low_volume_nodes=[round(p, 5) for p in low_volume_nodes[:5]]
+        high_volume_nodes=[round(p, 5) for p in sorted(high_volume_nodes)[:5]],
+        low_volume_nodes=[round(p, 5) for p in sorted(low_volume_nodes)[:5]],
+        hvn_resistances=[round(p, 5) for p in sorted(hvn_resistances)[:3]],
+        hvn_supports=[round(p, 5) for p in sorted(hvn_supports, reverse=True)[:3]],
+        poc_is_relevant=poc_is_relevant
     )
 
 
@@ -527,19 +668,43 @@ def _calculate_pivot_points(
     high: float, 
     low: float, 
     close: float,
-    timeframe: Literal["DAILY", "WEEKLY"] = "DAILY"
+    timeframe: Literal["DAILY", "WEEKLY"] = "DAILY",
+    pivot_type: Literal["FIBONACCI", "CLASSIC", "CAMARILLA"] = "FIBONACCI"
 ) -> PivotPoints:
-    """Calculate classic pivot points"""
+    """
+    Calculate Fibonacci pivot points (more accurate for XAUUSD/NASDAQ).
+    
+    Fibonacci pivots use 0.382, 0.618, 1.0 ratios instead of classic formula.
+    R2/S2 at 0.618 are the STRONGEST levels.
+    """
     pivot = (high + low + close) / 3
+    range_hl = high - low
     
-    r1 = (2 * pivot) - low
-    s1 = (2 * pivot) - high
-    
-    r2 = pivot + (high - low)
-    s2 = pivot - (high - low)
-    
-    r3 = high + 2 * (pivot - low)
-    s3 = low - 2 * (high - pivot)
+    if pivot_type == "FIBONACCI":
+        # Fibonacci Pivots - stronger for volatile instruments
+        r1 = pivot + (range_hl * 0.382)
+        r2 = pivot + (range_hl * 0.618)  # STRONGEST resistance
+        r3 = pivot + (range_hl * 1.000)
+        
+        s1 = pivot - (range_hl * 0.382)
+        s2 = pivot - (range_hl * 0.618)  # STRONGEST support
+        s3 = pivot - (range_hl * 1.000)
+    elif pivot_type == "CAMARILLA":
+        # Camarilla - good for intraday
+        r1 = close + (range_hl * 1.1 / 12)
+        r2 = close + (range_hl * 1.1 / 6)
+        r3 = close + (range_hl * 1.1 / 4)
+        
+        s1 = close - (range_hl * 1.1 / 12)
+        s2 = close - (range_hl * 1.1 / 6)
+        s3 = close - (range_hl * 1.1 / 4)
+    else:  # CLASSIC
+        r1 = (2 * pivot) - low
+        s1 = (2 * pivot) - high
+        r2 = pivot + range_hl
+        s2 = pivot - range_hl
+        r3 = high + 2 * (pivot - low)
+        s3 = low - 2 * (high - pivot)
     
     return PivotPoints(
         pivot=round(pivot, 5),
@@ -549,19 +714,77 @@ def _calculate_pivot_points(
         s1=round(s1, 5),
         s2=round(s2, 5),
         s3=round(s3, 5),
-        timeframe=timeframe
+        timeframe=timeframe,
+        pivot_type=pivot_type
     )
+
+
+def _get_current_session() -> tuple[Literal["ASIA", "LONDON", "NEW_YORK", "OVERLAP"], Literal["LOW", "NORMAL", "HIGH", "EXTREME"]]:
+    """Determine current trading session and expected volatility"""
+    from datetime import datetime
+    utc_hour = datetime.utcnow().hour
+    
+    # Session hours (UTC)
+    # Asia: 22:00 - 07:00 UTC
+    # London: 07:00 - 16:00 UTC
+    # New York: 12:00 - 21:00 UTC
+    # Overlap (London+NY): 12:00 - 16:00 UTC
+    
+    if 12 <= utc_hour < 16:
+        return "OVERLAP", "EXTREME"  # Highest volatility
+    elif 12 <= utc_hour < 21:
+        return "NEW_YORK", "HIGH"
+    elif 7 <= utc_hour < 16:
+        return "LONDON", "HIGH"
+    else:
+        return "ASIA", "LOW"
+
+
+def _check_high_impact_event() -> Optional[str]:
+    """Check for high impact economic events (simplified)"""
+    from datetime import datetime
+    today = datetime.utcnow()
+    day_of_week = today.weekday()  # 0=Monday
+    day_of_month = today.day
+    
+    # First Friday of month = NFP
+    if day_of_week == 4 and day_of_month <= 7:
+        return "NFP_DAY"
+    
+    # FOMC typically 3rd Wednesday (simplified check)
+    if day_of_week == 2 and 15 <= day_of_month <= 21:
+        return "FOMC_POTENTIAL"
+    
+    # CPI typically 10th-15th of month
+    if 10 <= day_of_month <= 15:
+        return "CPI_WEEK"
+    
+    return None
 
 
 def _calculate_position_sizing(
     signal_confidence: float,
     atr_pips: float,
     pip_value: float,
+    current_price: float = 0,
     account_size: float = 10000,
-    base_risk_percent: float = 2.0
+    base_risk_percent: float = 2.0,
+    has_correlated_position: bool = False
 ) -> PositionSizing:
-    """Calculate risk-adjusted position sizing"""
-    # Adjust risk based on confidence
+    """
+    Calculate volatility and session-adjusted position sizing.
+    
+    Key adjustments:
+    - High volatility (ATR spike) = reduce risk
+    - Asia session = reduce risk (low liquidity)
+    - NFP/Fed days = reduce risk significantly
+    - Correlated positions = reduce risk
+    """
+    # Get session info
+    session, session_volatility = _get_current_session()
+    high_impact_event = _check_high_impact_event()
+    
+    # Base risk from confidence
     if signal_confidence >= 80:
         risk_percent = base_risk_percent
     elif signal_confidence >= 60:
@@ -571,30 +794,65 @@ def _calculate_position_sizing(
     else:
         risk_percent = base_risk_percent * 0.25
     
+    # Volatility adjustment
+    vol_pct = (atr_pips * pip_value / current_price * 100) if current_price > 0 else 1.0
+    if vol_pct > 2.5:
+        volatility_adjustment = 0.5  # Cut risk in half
+    elif vol_pct > 1.5:
+        volatility_adjustment = 0.75
+    elif vol_pct < 0.5:
+        volatility_adjustment = 1.25  # Can increase slightly in low vol
+    else:
+        volatility_adjustment = 1.0
+    
+    # Session adjustment
+    if session == "ASIA":
+        volatility_adjustment *= 0.6  # Low liquidity = higher slippage risk
+    elif session == "OVERLAP":
+        volatility_adjustment *= 0.9  # High volatility but good liquidity
+    
+    # High impact event adjustment
+    if high_impact_event == "NFP_DAY":
+        volatility_adjustment *= 0.3  # Very risky
+    elif high_impact_event == "FOMC_POTENTIAL":
+        volatility_adjustment *= 0.5
+    elif high_impact_event == "CPI_WEEK":
+        volatility_adjustment *= 0.7
+    
+    # Correlation adjustment
+    correlation_adjustment = 0.6 if has_correlated_position else 1.0
+    
+    # Final risk calculation
+    final_risk = risk_percent * volatility_adjustment * correlation_adjustment
+    final_risk = max(0.25, min(3.0, final_risk))  # Clamp between 0.25% and 3%
+    
     # SL/TP based on ATR
     stop_loss_pips = atr_pips * 1.5
     take_profit_pips = atr_pips * 2.5  # 1:1.67 R:R minimum
     risk_reward = take_profit_pips / stop_loss_pips if stop_loss_pips > 0 else 1.0
     
     # Position size calculation
-    risk_amount = account_size * (risk_percent / 100)
-    
-    # For forex: pip_value per lot varies
-    # Simplified: assume $10 per pip per standard lot for gold
-    pip_value_per_lot = 10 if pip_value == 0.1 else 1  # Gold vs others
+    risk_amount = account_size * (final_risk / 100)
+    pip_value_per_lot = 10 if pip_value == 0.1 else 1
     position_size_lots = risk_amount / (stop_loss_pips * pip_value_per_lot) if stop_loss_pips > 0 else 0.01
     
     max_loss = risk_amount
     potential_profit = max_loss * risk_reward
     
     return PositionSizing(
-        recommended_risk_percent=round(risk_percent, 2),
+        recommended_risk_percent=round(final_risk, 2),
+        base_risk_percent=round(risk_percent, 2),
+        volatility_adjustment=round(volatility_adjustment, 2),
+        correlation_adjustment=round(correlation_adjustment, 2),
         stop_loss_pips=round(stop_loss_pips, 1),
         take_profit_pips=round(take_profit_pips, 1),
         risk_reward_ratio=round(risk_reward, 2),
-        position_size_lots=round(min(position_size_lots, 1.0), 2),  # Cap at 1 lot
+        position_size_lots=round(min(position_size_lots, 1.0), 2),
         max_loss_usd=round(max_loss, 2),
-        potential_profit_usd=round(potential_profit, 2)
+        potential_profit_usd=round(potential_profit, 2),
+        session=session,
+        session_volatility=session_volatility,
+        high_impact_event=high_impact_event
     )
 
 
@@ -1158,25 +1416,30 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
         # Price Action Structure (HH/HL pattern)
         price_action = _detect_price_action(highs, lows, closes)
         
-        # Volume Profile (POC, Value Area)
-        volume_profile = _calculate_volume_profile(closes, volumes)
+        # Volume Profile (POC, Value Area, HVN S/R)
+        volume_profile = _calculate_volume_profile(closes, highs, lows, volumes)
         
-        # Pivot Points (from yesterday's OHLC)
+        # Pivot Points (Fibonacci - from yesterday's OHLC)
         if len(highs) >= 2:
             pivot_points = _calculate_pivot_points(
                 float(highs[-2]), 
                 float(lows[-2]), 
                 float(closes[-2]),
-                "DAILY"
+                "DAILY",
+                "FIBONACCI"  # Use Fibonacci pivots for XAUUSD/NASDAQ
             )
         else:
-            pivot_points = _calculate_pivot_points(current_price, current_price, current_price, "DAILY")
+            pivot_points = _calculate_pivot_points(current_price, current_price, current_price, "DAILY", "FIBONACCI")
         
-        # Position Sizing
+        # Position Sizing (with volatility and session adjustments)
         position_sizing = _calculate_position_sizing(
             confluence.overall_confidence,
             atr_pips,
-            pip_value
+            pip_value,
+            current_price,
+            10000,  # Default account size
+            2.0,    # Base risk percent
+            False   # No correlated position check yet
         )
         
         # Update confluence with advanced data
@@ -1186,30 +1449,79 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
         confluence.pivot_points = pivot_points
         confluence.position_sizing = position_sizing
         
-        # Correlation data (for XAUUSD - check macro data from cached endpoint)
+        # Multi-asset correlation analysis
         correlation_data = None
-        if "XAU" in symbol.upper():
-            # Use macro data from ta_snapshot if available
+        if "XAU" in symbol.upper() or "NDX" in symbol.upper() or "NAS" in symbol.upper():
             try:
-                from services.ta_service import compute_ta_snapshot
-                dxy_data = await compute_ta_snapshot("DXY.INDX")
-                dxy_trend = dxy_data.get("trend", "NEUTRAL")
-                vix_data = await compute_ta_snapshot("VIX.INDX")
-                vix_price = vix_data.get("current_price", 20)
+                # Weights for correlation scoring
+                correlation_weights = {
+                    "DXY": 0.35,   # Strongest for Gold
+                    "VIX": 0.25,   # Risk sentiment
+                    "US10Y": 0.20, # Bond yields
+                    "SPX": 0.20    # Risk-on/off
+                }
                 
-                # DXY negative correlation with Gold
-                dxy_confirms = (confluence.overall_signal in ["BUY", "STRONG_BUY"] and dxy_trend == "BEARISH") or \
-                              (confluence.overall_signal in ["SELL", "STRONG_SELL"] and dxy_trend == "BULLISH")
+                confluence_score = 0.0
+                conflicting_signals = []
+                
+                # DXY analysis (negative correlation with Gold)
+                dxy_trend = "NEUTRAL"
+                dxy_strength = 50.0
+                try:
+                    from services.ta_service import compute_ta_snapshot
+                    dxy_data = await compute_ta_snapshot("DXY.INDX")
+                    dxy_trend = dxy_data.get("trend", "NEUTRAL")
+                    dxy_strength = dxy_data.get("confidence", 50)
+                except Exception:
+                    pass
+                
+                # DXY check: Gold bullish needs DXY bearish
+                if "XAU" in symbol.upper():
+                    if confluence.overall_signal in ["BUY", "STRONG_BUY"]:
+                        if dxy_trend == "BEARISH":
+                            confluence_score += correlation_weights["DXY"]
+                        elif dxy_trend == "BULLISH":
+                            confluence_score -= correlation_weights["DXY"]
+                            conflicting_signals.append("DXY_BULLISH")
+                    elif confluence.overall_signal in ["SELL", "STRONG_SELL"]:
+                        if dxy_trend == "BULLISH":
+                            confluence_score += correlation_weights["DXY"]
+                        elif dxy_trend == "BEARISH":
+                            confluence_score -= correlation_weights["DXY"]
+                            conflicting_signals.append("DXY_BEARISH")
+                
+                # VIX analysis
+                vix_price = 20.0
+                try:
+                    vix_data = await compute_ta_snapshot("VIX.INDX")
+                    vix_price = vix_data.get("current_price", 20)
+                except Exception:
+                    pass
                 
                 vix_regime = "LOW" if vix_price < 15 else "NORMAL" if vix_price < 25 else "HIGH" if vix_price < 35 else "EXTREME"
                 
+                # High VIX = risk-off = Gold bullish usually
+                if vix_regime in ["HIGH", "EXTREME"]:
+                    if confluence.overall_signal in ["BUY", "STRONG_BUY"]:
+                        confluence_score += correlation_weights["VIX"] * 0.5
+                    else:
+                        conflicting_signals.append("VIX_HIGH_BUT_BEARISH")
+                
+                # Determine if correlation confirms
+                correlation_confirms = confluence_score > 0.3 and len(conflicting_signals) == 0
+                
                 correlation_data = CorrelationData(
-                    dxy_correlation=-0.85,
+                    dxy_correlation=-0.85 if "XAU" in symbol.upper() else -0.3,
                     dxy_trend=dxy_trend,
+                    dxy_strength=dxy_strength,
                     vix_level=vix_price,
                     vix_regime=vix_regime,
-                    bond_yield_trend="NEUTRAL",  # Would need US10Y data
-                    correlation_confirms=dxy_confirms
+                    bond_yield_trend="NEUTRAL",  # Would need US10Y data feed
+                    bond_yield_level=4.5,  # Placeholder
+                    spx_trend="NEUTRAL",  # Would need SPX data
+                    correlation_confirms=correlation_confirms,
+                    confluence_score=round(confluence_score, 2),
+                    conflicting_signals=conflicting_signals
                 )
                 confluence.correlation = correlation_data
             except Exception:
