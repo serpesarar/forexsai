@@ -2,14 +2,19 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, 
   Maximize2, 
   Minimize2, 
   RefreshCw,
   TrendingUp,
-  BarChart3
+  BarChart3,
+  LogIn,
+  User,
+  ExternalLink
 } from "lucide-react";
+import { useAuthStore, useIsAuthenticated, useUser } from "../../lib/auth/store";
 
 declare global {
   interface Window {
@@ -165,7 +170,20 @@ function ChartPanel({
 }
 
 export default function ChartsPage() {
+  const router = useRouter();
+  const isAuthenticated = useIsAuthenticated();
+  const user = useUser();
+  const { checkAuth } = useAuthStore();
   const [fullscreenSymbol, setFullscreenSymbol] = useState<ChartSymbol | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const check = async () => {
+      await checkAuth();
+      setIsCheckingAuth(false);
+    };
+    check();
+  }, [checkAuth]);
 
   const handleFullscreen = (symbol: ChartSymbol) => {
     setFullscreenSymbol(symbol);
@@ -174,6 +192,67 @@ export default function ChartsPage() {
   const exitFullscreen = () => {
     setFullscreenSymbol(null);
   };
+
+  // Loading state
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="w-8 h-8 animate-spin text-accent" />
+          <p className="text-textSecondary">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not authenticated - show login prompt
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background text-white flex items-center justify-center p-6">
+        <div className="glass-card rounded-2xl p-8 max-w-md w-full text-center space-y-6">
+          <div className="flex justify-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/30 to-purple-500/30">
+              <BarChart3 className="h-8 w-8 text-accent" />
+            </div>
+          </div>
+          
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Grafikler</h1>
+            <p className="text-textSecondary">
+              Profesyonel grafik analizi için giriş yapmanız gerekmektedir.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <Link
+              href="/login"
+              className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-accent text-white font-semibold hover:bg-accent/90 transition"
+            >
+              <LogIn className="w-5 h-5" />
+              Giriş Yap
+            </Link>
+            
+            <Link
+              href="/signup"
+              className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-white/10 text-white font-semibold hover:bg-white/20 transition"
+            >
+              <User className="w-5 h-5" />
+              Hesap Oluştur
+            </Link>
+          </div>
+
+          <div className="pt-4 border-t border-white/10">
+            <Link
+              href="/"
+              className="text-sm text-textSecondary hover:text-white transition"
+            >
+              ← Ana Sayfaya Dön
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (fullscreenSymbol) {
     return (
@@ -227,7 +306,13 @@ export default function ChartsPage() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            {user && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
+                <User className="w-4 h-4 text-accent" />
+                <span className="text-sm">{user.email}</span>
+              </div>
+            )}
             <Link
               href="/"
               className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition text-sm"
