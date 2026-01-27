@@ -69,9 +69,10 @@ function TradingViewChart({
           locale: "tr",
           toolbar_bg: "#0a0a0f",
           enable_publishing: false,
-          allow_symbol_change: true,
+          allow_symbol_change: false,
           container_id: containerId,
           hide_side_toolbar: false,
+          save_image: false,
           studies: [
             "MASimple@tv-basicstudies",
             "RSI@tv-basicstudies",
@@ -243,12 +244,18 @@ export default function ChartsPage() {
         </div>
 
         {/* Info Banner */}
-        <div className="glass-card p-4 rounded-xl flex items-center gap-3 border border-accent/20">
-          <TrendingUp className="w-5 h-5 text-accent flex-shrink-0" />
-          <p className="text-sm text-textSecondary">
-            <span className="text-white font-medium">TradingView</span> tarafından sağlanan profesyonel grafikler. 
-            Tam özellikli analiz araçları, göstergeler ve çizim araçlarını kullanabilirsiniz.
-          </p>
+        <div className="glass-card p-4 rounded-xl space-y-2 border border-accent/20">
+          <div className="flex items-center gap-3">
+            <TrendingUp className="w-5 h-5 text-accent flex-shrink-0" />
+            <p className="text-sm text-textSecondary">
+              <span className="text-white font-medium">TradingView</span> tarafından sağlanan profesyonel grafikler. 
+              Tam özellikli analiz araçları, göstergeler ve çizim araçlarını kullanabilirsiniz.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-amber-400/80 pl-8">
+            <span>💡</span>
+            <span>Çizimlerinizi kaydetmek için grafik üzerinden TradingView hesabınıza giriş yapın. Çizimler hesabınızda saklanır ve her yerden erişebilirsiniz.</span>
+          </div>
         </div>
 
         {/* Charts Grid */}
