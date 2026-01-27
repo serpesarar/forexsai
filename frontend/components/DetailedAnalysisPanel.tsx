@@ -96,7 +96,52 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
   // Market regime with fallback
   const trend = marketRegime.trend || contextVolatility.level ? (contextVolatility.level === "HIGH" ? "VOLATILE" : "NORMAL") : "UNKNOWN";
   const volatility = marketRegime.volatility || contextVolatility.level || "UNKNOWN";
-  const volumeConfirm = marketRegime.volume_confirmation || marketRegime.liquidity || context?.volume?.status || "-";
+  
+  // Volume data from context
+  const volumeData = context?.volume || {};
+  const volumeStatus = volumeData.status || marketRegime.volume_confirmation || marketRegime.liquidity || "UNKNOWN";
+  const volumeRatio = volumeData.ratio;
+  const volumeLast = volumeData.last;
+  const volumeAvg20 = volumeData.avg20;
+  
+  // Volume analysis helper
+  const getVolumeWarning = () => {
+    if (!volumeRatio || volumeStatus === "UNKNOWN") return null;
+    
+    const priceDirection = ml.direction === "BUY" ? "up" : ml.direction === "SELL" ? "down" : null;
+    
+    if (volumeRatio < 0.6 && priceDirection) {
+      return {
+        type: "warning",
+        message: `⚠️ Düşük hacimle fiyat hareketi - ${priceDirection === "up" ? "Yükseliş" : "Düşüş"} güvenilir olmayabilir`,
+        color: "text-amber-400"
+      };
+    }
+    if (volumeRatio < 0.8 && priceDirection) {
+      return {
+        type: "caution",
+        message: `Hacim ortalamanın altında (${(volumeRatio * 100).toFixed(0)}%) - Dikkatli olun`,
+        color: "text-amber-300"
+      };
+    }
+    if (volumeRatio > 1.5) {
+      return {
+        type: "strong",
+        message: `✓ Güçlü hacim teyidi (${(volumeRatio * 100).toFixed(0)}%) - Hareket destekleniyor`,
+        color: "text-success"
+      };
+    }
+    if (volumeRatio > 1.2) {
+      return {
+        type: "good",
+        message: `Hacim ortalamanın üzerinde - İşlem güvenli`,
+        color: "text-emerald-400"
+      };
+    }
+    return null;
+  };
+  
+  const volumeWarning = getVolumeWarning();
 
   // Backend field mapping (Claude returns different names)
   const rmEntry = rm.recommended_entry ?? rm.entry;
@@ -208,11 +253,29 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
                   <p className="text-[10px] text-textSecondary">Volatilite</p>
                   <p className="font-semibold">{volatility !== "UNKNOWN" ? String(volatility) : "-"}</p>
                 </div>
-                <div className="p-3 rounded-xl bg-white/5 border border-white/5 col-span-2">
+                <div className="p-3 rounded-xl bg-white/5 border border-white/5">
                   <p className="text-[10px] text-textSecondary">Hacim Teyidi</p>
-                  <p className="font-semibold">{volumeConfirm}</p>
+                  <p className={`font-semibold ${volumeStatus === "STRONG" ? "text-success" : volumeStatus === "WEAK" ? "text-amber-400" : ""}`}>
+                    {volumeStatus !== "UNKNOWN" ? volumeStatus : "-"}
+                  </p>
+                  {volumeRatio && (
+                    <p className="text-[10px] text-textSecondary mt-1">
+                      Oran: {(volumeRatio * 100).toFixed(0)}%
+                    </p>
+                  )}
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+                  <p className="text-[10px] text-textSecondary">Son / Ort.20</p>
+                  <p className="font-mono text-xs">
+                    {volumeLast ? fmtNum(volumeLast, 0) : "-"} / {volumeAvg20 ? fmtNum(volumeAvg20, 0) : "-"}
+                  </p>
                 </div>
               </div>
+              {volumeWarning && (
+                <div className={`mt-3 p-3 rounded-xl bg-white/5 border border-white/5 text-xs ${volumeWarning.color}`}>
+                  {volumeWarning.message}
+                </div>
+              )}
             </div>
           </div>
 

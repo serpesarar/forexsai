@@ -51,7 +51,8 @@ export function usePrediction(symbol: string) {
     queryKey: ["prediction", symbol],
     queryFn: () => fetchPrediction(symbol),
     refetchInterval: 60000, // Refresh every 60 seconds
-    staleTime: 30000,
+    staleTime: 10000, // Data is stale after 10 seconds (allows manual refresh)
+    gcTime: 60000, // Keep in cache for 1 minute
   });
 }
 
