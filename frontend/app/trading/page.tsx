@@ -11,6 +11,7 @@ import PredictionHistoryTable from "../../components/PredictionHistoryTable";
 import OrderBlockPanelSimple from "../../components/OrderBlockPanelSimple";
 import RhythmDetectorSimple from "../../components/RhythmDetectorSimple";
 import TradingChartWrapper from "../../components/TradingChartWrapper";
+import LiveChartPanel from "../../components/LiveChartPanel";
 
 // Golden Ratio constant
 const PHI = 1.618;
@@ -181,21 +182,6 @@ export default function TradingDashboard() {
               </div>
             </section>
 
-            {/* Row 3: Candlestick Chart */}
-            <section>
-              <div className="mb-3 flex items-center gap-2">
-                <LineChart className="h-5 w-5 text-blue-400" />
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
-                  Fiyat Grafiği
-                </h2>
-              </div>
-              <TradingChartWrapper 
-                symbol={selectedSymbol} 
-                symbolLabel={currentSymbol.shortLabel}
-                initialTimeframe="1d" 
-                height={Math.round(300 * PHI)} 
-              />
-            </section>
           </div>
 
           {/* RIGHT COLUMN - Secondary Analysis (38.2%) */}
@@ -266,6 +252,39 @@ export default function TradingDashboard() {
             </section>
           </div>
         </div>
+
+        {/* Full-Width Charts Section */}
+        <section className="mt-8">
+          <div className="mb-4 flex items-center gap-2">
+            <LineChart className="h-6 w-6 text-blue-400" />
+            <h2 className="text-lg font-bold uppercase tracking-wider">
+              Canlı Fiyat Grafikleri
+            </h2>
+            <span className="ml-2 flex items-center gap-1 text-xs text-success">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+              </span>
+              Canlı
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-6">
+            {/* NASDAQ Chart */}
+            <LiveChartPanel 
+              symbol="NDX.INDX" 
+              symbolLabel="NASDAQ-100" 
+              height={450} 
+            />
+            
+            {/* XAUUSD Chart */}
+            <LiveChartPanel 
+              symbol="XAUUSD" 
+              symbolLabel="Gold (XAU/USD)" 
+              height={450} 
+            />
+          </div>
+        </section>
       </main>
     </div>
   );

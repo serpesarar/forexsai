@@ -30,10 +30,11 @@ import ClaudeAnalysisPanel from "../components/ClaudeAnalysisPanel";
 import PatternEngineV2 from "../components/PatternEngineV2";
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
+import { useLivePrices } from "../hooks/useLivePrices";
 
 const initialMarketTickers = [
-  { label: "NASDAQ", price: "21,547.35", change: "+1.2%", trend: "up" },
-  { label: "XAU/USD", price: "2,048.50", change: "-0.3%", trend: "down" },
+  { label: "NASDAQ", price: "--", change: "--%", trend: "up" as const },
+  { label: "XAU/USD", price: "--", change: "--%", trend: "up" as const },
 ];
 
 const initialSignalCards = [
@@ -316,7 +317,12 @@ function MiniSparkline({ values, accent }: { values: number[]; accent: string })
 export default function HomePage() {
   const [activeTf, setActiveTf] = useState<(typeof timeframes)[number]>("15m");
   const [theme, setTheme] = useState<"evening" | "morning">("evening");
-  const [marketTickers, setMarketTickers] = useState(initialMarketTickers);
+  
+  // Live prices hook - updates every 3 seconds with daily change %
+  const { tickers: liveTickers, isLoading: pricesLoading } = useLivePrices(3000);
+  const marketTickers = liveTickers.length > 0 ? liveTickers : initialMarketTickers;
+  
+  const [_marketTickersOld, setMarketTickers] = useState(initialMarketTickers);
   const [signalCards, setSignalCards] = useState(initialSignalCards);
   const [newsItems, setNewsItems] = useState(initialNewsItems);
   const [claudeSentiments, setClaudeSentiments] = useState<{ nasdaq?: any; xauusd?: any }>({});
@@ -1080,13 +1086,13 @@ export default function HomePage() {
             <TradingChartWrapper 
               symbol="NDX.INDX" 
               symbolLabel="NASDAQ" 
-              timeframe="1d" 
+              initialTimeframe="1d" 
               height={350} 
             />
             <TradingChartWrapper 
               symbol="XAUUSD" 
               symbolLabel="XAUUSD" 
-              timeframe="1d" 
+              initialTimeframe="1d" 
               height={350} 
             />
           </div>
