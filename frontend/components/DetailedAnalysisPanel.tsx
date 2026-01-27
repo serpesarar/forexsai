@@ -70,17 +70,39 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
   const decision = analysis.final_decision || "HOLD";
   const confidence = analysis.confidence;
 
-  const keyLevels = analysis.key_levels || {};
+  const keyLevels = analysis.key_levels || context?.levels || {};
   const marketRegime = analysis.market_regime || {};
-  const macroView = analysis.macro_view || {};
-  const newsImpact = analysis.news_impact || {};
+  const macroView = analysis.macro_view || context?.macro || {};
+  const newsImpact = analysis.news_impact || context?.news || {};
   const rm = analysis.risk_management || {};
+  
+  // Fallback to context data if analysis is missing values
+  const contextMacro = context?.macro || {};
+  const contextVolatility = context?.volatility || {};
+  const contextLevels = context?.levels || {};
+  const contextDistances = context?.distances || {};
   const redFlags = Array.isArray(analysis.red_flags) ? analysis.red_flags : [];
   const thesis = Array.isArray(analysis.thesis) ? analysis.thesis : [];
 
   const emaD = keyLevels.ema_distances_pct || {};
-  const ns = keyLevels.nearest_support || {};
-  const nr = keyLevels.nearest_resistance || {};
+  const ns = keyLevels.nearest_support || contextLevels.nearest_support || {};
+  const nr = keyLevels.nearest_resistance || contextLevels.nearest_resistance || {};
+  
+  // EMA distances fallback from context
+  const ema20Dist = emaD.ema20 ?? emaD.ema_20 ?? contextDistances.ema20_pct;
+  const ema50Dist = emaD.ema50 ?? emaD.ema_50 ?? contextDistances.ema50_pct;
+  const ema200Dist = emaD.ema200 ?? emaD.ema_200 ?? contextDistances.ema200_pct;
+  
+  // Market regime with fallback
+  const trend = marketRegime.trend || contextVolatility.level ? (contextVolatility.level === "HIGH" ? "VOLATILE" : "NORMAL") : "UNKNOWN";
+  const volatility = marketRegime.volatility || contextVolatility.level || "UNKNOWN";
+  const volumeConfirm = marketRegime.volume_confirmation || marketRegime.liquidity || context?.volume?.status || "-";
+
+  // Backend field mapping (Claude returns different names)
+  const rmEntry = rm.recommended_entry ?? rm.entry;
+  const rmTp = rm.recommended_tp ?? rm.take_profit;
+  const rmSl = rm.recommended_sl ?? rm.stop_loss;
+  const rmInvalidation = rm.invalidation ?? rm.size_rationale;
 
   return (
     <div className="glass-card p-8 space-y-6 rounded-2xl">
@@ -163,11 +185,11 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
                 </div>
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5">
                   <p className="text-[10px] text-textSecondary">EMA20 Uzaklık</p>
-                  <p className="font-mono font-semibold">{fmtPct(emaD.ema20, 2)}</p>
+                  <p className="font-mono font-semibold">{fmtPct(ema20Dist, 2)}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5">
                   <p className="text-[10px] text-textSecondary">EMA50 / EMA200</p>
-                  <p className="font-mono font-semibold">{fmtPct(emaD.ema50, 2)} / {fmtPct(emaD.ema200, 2)}</p>
+                  <p className="font-mono font-semibold">{fmtPct(ema50Dist, 2)} / {fmtPct(ema200Dist, 2)}</p>
                 </div>
               </div>
             </div>
@@ -180,15 +202,15 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5">
                   <p className="text-[10px] text-textSecondary">Trend</p>
-                  <p className="font-semibold">{marketRegime.trend ? String(marketRegime.trend) : "-"}</p>
+                  <p className="font-semibold">{trend !== "UNKNOWN" ? String(trend) : (context?.market_structure?.structure || "-")}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5">
                   <p className="text-[10px] text-textSecondary">Volatilite</p>
-                  <p className="font-semibold">{marketRegime.volatility ? String(marketRegime.volatility) : "-"}</p>
+                  <p className="font-semibold">{volatility !== "UNKNOWN" ? String(volatility) : "-"}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5 col-span-2">
                   <p className="text-[10px] text-textSecondary">Hacim Teyidi</p>
-                  <p className="font-semibold">{marketRegime.volume_confirmation ? String(marketRegime.volume_confirmation) : "-"}</p>
+                  <p className="font-semibold">{volumeConfirm}</p>
                 </div>
               </div>
             </div>
@@ -200,18 +222,16 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
                 <Globe className="w-4 h-4 text-emerald-400" />
                 <p className="text-xs font-semibold uppercase tracking-wider text-textSecondary">Makro Proxy</p>
               </div>
-              <div className="grid grid-cols-3 gap-3 text-sm">
+              <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5">
                   <p className="text-[10px] text-textSecondary">DXY</p>
-                  <p className="font-mono font-semibold">{fmtNum(macroView.dxy?.price, 2)}</p>
+                  <p className="font-mono font-semibold">{fmtNum(macroView.dxy?.price ?? contextMacro.dxy?.price, 2)}</p>
+                  {(macroView.dxy?.impact || contextMacro.dxy?.impact) && <p className="text-[10px] text-textSecondary">{macroView.dxy?.impact || contextMacro.dxy?.impact}</p>}
                 </div>
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5">
                   <p className="text-[10px] text-textSecondary">VIX</p>
-                  <p className="font-mono font-semibold">{fmtNum(macroView.vix?.price, 2)}</p>
-                </div>
-                <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                  <p className="text-[10px] text-textSecondary">USDTRY</p>
-                  <p className="font-mono font-semibold">{fmtNum(macroView.usdtry?.price, 4)}</p>
+                  <p className="font-mono font-semibold">{fmtNum(macroView.vix?.price ?? contextMacro.vix?.price ?? contextVolatility.vix, 2)}</p>
+                  {(macroView.vix?.impact || contextMacro.vix?.impact) && <p className="text-[10px] text-textSecondary">{macroView.vix?.impact || contextMacro.vix?.impact}</p>}
                 </div>
               </div>
             </div>
@@ -223,13 +243,22 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <div className="text-textSecondary">Başlık sayısı</div>
-                <div className="font-mono font-semibold">{typeof newsImpact.headline_count === "number" ? newsImpact.headline_count : "-"}</div>
+                <div className="font-mono font-semibold">{typeof newsImpact.headline_count === "number" ? newsImpact.headline_count : (newsImpact.count ?? "-")}</div>
               </div>
               <div className="flex items-center justify-between text-sm mt-2">
                 <div className="text-textSecondary">Tone</div>
                 <div className="font-semibold">{newsImpact.tone ? String(newsImpact.tone) : "-"}</div>
               </div>
-              {Array.isArray(newsImpact.notes) && newsImpact.notes.length > 0 && (
+              {Array.isArray(newsImpact.headlines) && newsImpact.headlines.length > 0 && (
+                <ul className="mt-3 space-y-1">
+                  {newsImpact.headlines.slice(0, 3).map((h: any, i: number) => (
+                    <li key={i} className="text-xs text-textSecondary truncate">
+                      {typeof h === "string" ? h : h?.title || String(h)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {Array.isArray(newsImpact.notes) && newsImpact.notes.length > 0 && !newsImpact.headlines && (
                 <ul className="mt-3 space-y-1">
                   {newsImpact.notes.slice(0, 3).map((n: any, i: number) => (
                     <li key={i} className="text-xs text-textSecondary">
@@ -249,24 +278,24 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
               <div className="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
                 <p className="text-[10px] text-textSecondary">Entry</p>
-                <p className="font-mono font-semibold">{fmtNum(rm.recommended_entry, 2)}</p>
+                <p className="font-mono font-semibold">{fmtNum(rmEntry, 2)}</p>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
                 <p className="text-[10px] text-success">TP</p>
-                <p className="font-mono font-semibold text-success">{fmtNum(rm.recommended_tp, 2)}</p>
+                <p className="font-mono font-semibold text-success">{fmtNum(rmTp, 2)}</p>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
                 <p className="text-[10px] text-danger">SL</p>
-                <p className="font-mono font-semibold text-danger">{fmtNum(rm.recommended_sl, 2)}</p>
+                <p className="font-mono font-semibold text-danger">{fmtNum(rmSl, 2)}</p>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
                 <p className="text-[10px] text-textSecondary">Boyut</p>
                 <p className="font-semibold">{rm.position_size ? String(rm.position_size) : "-"}</p>
               </div>
             </div>
-            {rm.invalidation && (
+            {rmInvalidation && (
               <div className="mt-3 text-xs text-textSecondary leading-relaxed">
-                <span className="font-semibold">Invalidation:</span> {String(rm.invalidation)}
+                <span className="font-semibold">Invalidation:</span> {String(rmInvalidation)}
               </div>
             )}
           </div>
