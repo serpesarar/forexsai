@@ -8,6 +8,9 @@ from typing import Optional, List, Dict, Any
 from pydantic import BaseModel
 import asyncio
 import logging
+import base64
+import httpx
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -204,6 +207,122 @@ async def get_live_news_alerts(minutes: int = Query(60, ge=1, le=1440)):
             for a in alerts
         ]
     }
+
+
+# =============================================================================
+# TWITTER AUTH HELPER
+# =============================================================================
+
+@router.post("/generate-bearer-token")
+async def generate_bearer_token():
+    """
+    Consumer Key/Secret'tan Bearer Token üret.
+    X API OAuth 2.0 Client Credentials flow kullanır.
+    """
+    consumer_key = os.environ.get("X_CONSUMER_KEY")
+    consumer_secret = os.environ.get("X_CONSUMER_SECRET")
+    
+    if not consumer_key or not consumer_secret:
+        return {
+            "error": "X_CONSUMER_KEY and X_CONSUMER_SECRET must be set",
+            "hint": "Set these in Railway environment variables"
+        }
+    
+    try:
+        # Base64 encode credentials
+        credentials = f"{consumer_key}:{consumer_secret}"
+        encoded = base64.b64encode(credentials.encode()).decode()
+        
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                "https://api.twitter.com/oauth2/token",
+                headers={
+                    "Authorization": f"Basic {encoded}",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                data={"grant_type": "client_credentials"}
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                bearer_token = result.get("access_token")
+                
+                if bearer_token:
+                    # Token'ı environment'a set et (runtime için)
+                    os.environ["X_BEARER_TOKEN"] = bearer_token
+                    
+                    return {
+                        "success": True,
+                        "message": "Bearer token generated and set",
+                        "token_preview": f"{bearer_token[:20]}...{bearer_token[-10:]}",
+                        "hint": "Add this to Railway as X_BEARER_TOKEN for persistence"
+                    }
+            
+            return {
+                "error": f"Twitter API error: {response.status_code}",
+                "details": response.text
+            }
+            
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@router.get("/test-twitter-api")
+async def test_twitter_api():
+    """Twitter API bağlantısını test et."""
+    bearer_token = os.environ.get("X_BEARER_TOKEN")
+    
+    if not bearer_token:
+        return {
+            "configured": False,
+            "error": "X_BEARER_TOKEN not set",
+            "hint": "Call /generate-bearer-token first or set X_BEARER_TOKEN in Railway"
+        }
+    
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            # Test with a simple user lookup
+            response = await client.get(
+                "https://api.twitter.com/2/users/by/username/Reuters",
+                headers={"Authorization": f"Bearer {bearer_token}"}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                return {
+                    "configured": True,
+                    "api_working": True,
+                    "test_user": data.get("data", {}),
+                    "message": "Twitter API is working!"
+                }
+            elif response.status_code == 401:
+                return {
+                    "configured": True,
+                    "api_working": False,
+                    "error": "Invalid or expired bearer token",
+                    "hint": "Regenerate bearer token"
+                }
+            elif response.status_code == 403:
+                return {
+                    "configured": True,
+                    "api_working": False,
+                    "error": "Access forbidden - may need higher API tier",
+                    "details": response.text
+                }
+            else:
+                return {
+                    "configured": True,
+                    "api_working": False,
+                    "error": f"API error: {response.status_code}",
+                    "details": response.text
+                }
+                
+    except Exception as e:
+        return {
+            "configured": True,
+            "api_working": False,
+            "error": str(e)
+        }
 
 
 # =============================================================================
