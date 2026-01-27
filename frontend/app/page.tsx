@@ -347,9 +347,13 @@ function MiniSparkline({ values, accent }: { values: number[]; accent: string })
   );
 }
 
+const trendTimeframes = ["M1", "M5", "M15", "M30", "H1", "H4"] as const;
+type TrendTimeframe = typeof trendTimeframes[number];
+
 export default function HomePage() {
   const [activeTf, setActiveTf] = useState<(typeof timeframes)[number]>("15m");
   const [theme, setTheme] = useState<"evening" | "morning">("evening");
+  const [trendTf, setTrendTf] = useState<TrendTimeframe>("M15");
   
   // Live prices hook - updates every 3 seconds with daily change %
   const { tickers: liveTickers, isLoading: pricesLoading } = useLivePrices(3000);
@@ -796,8 +800,21 @@ export default function HomePage() {
   };
 
   // Signal card renderer
+  const getTimeframeMultiplier = (tf: TrendTimeframe): number => {
+    const multipliers: Record<TrendTimeframe, number> = {
+      "M1": 0.2,
+      "M5": 0.5,
+      "M15": 1,
+      "M30": 1.5,
+      "H1": 2,
+      "H4": 4,
+    };
+    return multipliers[tf];
+  };
+
   const renderSignalCard = (signal: typeof signalCards[0]) => {
     const isDataLoading = !signal.currentPrice || signal.currentPrice === 0 || !hasCachedData;
+    const tfMultiplier = getTimeframeMultiplier(trendTf);
     
     return (
       <div className="glass-card card-hover p-5">
@@ -820,6 +837,24 @@ export default function HomePage() {
             </span>
           )}
         </div>
+        
+        {/* Timeframe Tabs */}
+        <div className="mt-3 flex gap-1 p-1 rounded-lg bg-white/5">
+          {trendTimeframes.map((tf) => (
+            <button
+              key={tf}
+              onClick={() => setTrendTf(tf)}
+              className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wider transition-all ${
+                trendTf === tf
+                  ? "bg-accent text-white shadow-lg"
+                  : "text-textSecondary hover:text-white hover:bg-white/10"
+              }`}
+            >
+              {tf}
+            </button>
+          ))}
+        </div>
+        
         <div className="mt-4 flex items-center justify-between gap-6">
           {isDataLoading ? (
             <div className="flex items-center justify-center w-[100px] h-[100px]">
@@ -864,13 +899,20 @@ export default function HomePage() {
             }
             const pipValue = signal.symbol === "XAUUSD" ? 0.1 : 1;
             const toPips = (dist: number) => Math.round(dist / pipValue);
+            const baseMaxPips = {
+              ema20: 50,
+              ema50: 100,
+              ema200: 200,
+              channel: 50,
+              sr: 50,
+            };
             const metrics = [
-              { label: "EMA 20", distance: signal.liveMetrics.emaDistances.ema20.distance, maxPips: 50 },
-              { label: "EMA 50", distance: signal.liveMetrics.emaDistances.ema50.distance, maxPips: 100 },
-              { label: "EMA 200", distance: signal.liveMetrics.emaDistances.ema200.distance, maxPips: 200 },
-              { label: "Channel U", distance: signal.liveMetrics.nearestResistance.distance, maxPips: 50 },
-              { label: "Channel L", distance: signal.liveMetrics.nearestSupport.distance, maxPips: 50 },
-              { label: "S/R Bias", distance: Math.abs(signal.liveMetrics.nearestSupport.distance) < Math.abs(signal.liveMetrics.nearestResistance.distance) ? signal.liveMetrics.nearestSupport.distance : signal.liveMetrics.nearestResistance.distance, maxPips: 50 },
+              { label: `EMA 20`, distance: signal.liveMetrics.emaDistances.ema20.distance, maxPips: Math.round(baseMaxPips.ema20 * tfMultiplier) },
+              { label: `EMA 50`, distance: signal.liveMetrics.emaDistances.ema50.distance, maxPips: Math.round(baseMaxPips.ema50 * tfMultiplier) },
+              { label: `EMA 200`, distance: signal.liveMetrics.emaDistances.ema200.distance, maxPips: Math.round(baseMaxPips.ema200 * tfMultiplier) },
+              { label: "Channel U", distance: signal.liveMetrics.nearestResistance.distance, maxPips: Math.round(baseMaxPips.channel * tfMultiplier) },
+              { label: "Channel L", distance: signal.liveMetrics.nearestSupport.distance, maxPips: Math.round(baseMaxPips.channel * tfMultiplier) },
+              { label: "S/R Bias", distance: Math.abs(signal.liveMetrics.nearestSupport.distance) < Math.abs(signal.liveMetrics.nearestResistance.distance) ? signal.liveMetrics.nearestSupport.distance : signal.liveMetrics.nearestResistance.distance, maxPips: Math.round(baseMaxPips.sr * tfMultiplier) },
             ];
             return metrics.map((metric, index) => {
               const pips = toPips(metric.distance);
@@ -902,7 +944,7 @@ export default function HomePage() {
           })()}
         </div>
         <div className="mt-2 text-[9px] text-textSecondary/60 text-center">
-          🟢 Fiyat seviyenin üstünde (yaklaştıkça dolar) • 🔴 Fiyat seviyenin altında (uzaklaştıkça dolar)
+          <span className="font-semibold text-accent">{trendTf}</span> • 🟢 Above level • 🔴 Below level • Max: {Math.round(50 * tfMultiplier)}-{Math.round(200 * tfMultiplier)} pips
         </div>
       <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
         {signal.liveMetrics.supportResistance.map((level) => (
