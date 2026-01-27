@@ -149,9 +149,12 @@ export default function TradingDashboard() {
           - Vertical sections follow same ratio
         */}
         
-        <div className="grid gap-6" style={{ gridTemplateColumns: `${PHI}fr 1fr` }}>
+        <div
+          className="grid gap-6 items-start"
+          style={{ gridTemplateColumns: `${PHI}fr 1fr`, alignItems: "start" }}
+        >
           {/* LEFT COLUMN - Primary Analysis (61.8%) */}
-          <div className="space-y-6">
+          <div className="space-y-6 self-start">
             {/* Row 1: ML Prediction - Large Primary Panel */}
             <section>
               <div className="mb-3 flex items-center gap-2">
