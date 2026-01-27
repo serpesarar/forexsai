@@ -23,8 +23,8 @@ import { fetcher } from "../lib/api";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { useI18nStore } from "../lib/i18n/store";
 import TradingChartWrapper from "../components/TradingChartWrapper";
-import OrderBlockPanel from "../components/OrderBlockPanel";
-import RTYHIIMDetectorPanel from "../components/RTYHIIMDetectorPanel";
+import OrderBlockPanelSimple from "../components/OrderBlockPanelSimple";
+import RhythmDetectorSimple from "../components/RhythmDetectorSimple";
 import MLPredictionPanel from "../components/MLPredictionPanel";
 import ClaudeAnalysisPanel from "../components/ClaudeAnalysisPanel";
 import PatternEngineV2 from "../components/PatternEngineV2";
@@ -1125,15 +1125,13 @@ export default function HomePage() {
           </div>
 
           {/* Order Block & Rhythm Detector Section - Full Width Stacked */}
-          <div className="md:col-span-2 lg:col-span-3">
-            <OrderBlockPanel symbol="NDX.INDX" symbolLabel="NASDAQ" />
-          </div>
-          <div className="md:col-span-2 lg:col-span-3">
-            <OrderBlockPanel symbol="XAUUSD" symbolLabel="XAUUSD" />
+          <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <OrderBlockPanelSimple symbol="NDX.INDX" symbolLabel="NASDAQ" />
+            <OrderBlockPanelSimple symbol="XAUUSD" symbolLabel="XAUUSD" />
           </div>
           <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <RTYHIIMDetectorPanel symbol="NDX.INDX" symbolLabel="NASDAQ" />
-            <RTYHIIMDetectorPanel symbol="XAUUSD" symbolLabel="XAUUSD" />
+            <RhythmDetectorSimple symbol="NDX.INDX" symbolLabel="NASDAQ" />
+            <RhythmDetectorSimple symbol="XAUUSD" symbolLabel="XAUUSD" />
           </div>
 
           {/* Charts Section */}
