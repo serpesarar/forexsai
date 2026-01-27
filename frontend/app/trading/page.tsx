@@ -8,8 +8,8 @@ import ClaudeAnalysisPanel from "../../components/ClaudeAnalysisPanel";
 import DetailedAnalysisPanel from "../../components/DetailedAnalysisPanel";
 import LearningDashboardPanel from "../../components/LearningDashboardPanel";
 import PredictionHistoryTable from "../../components/PredictionHistoryTable";
-import OrderBlockPanel from "../../components/OrderBlockPanel";
-import RTYHIIMDetectorPanel from "../../components/RTYHIIMDetectorPanel";
+import OrderBlockPanelSimple from "../../components/OrderBlockPanelSimple";
+import RhythmDetectorSimple from "../../components/RhythmDetectorSimple";
 import TradingChartWrapper from "../../components/TradingChartWrapper";
 
 // Golden Ratio constant
@@ -199,7 +199,7 @@ export default function TradingDashboard() {
           </div>
 
           {/* RIGHT COLUMN - Secondary Analysis (38.2%) */}
-          <div className="space-y-6">
+          <div className="space-y-6 self-start min-w-0 overflow-hidden">
             {/* Detailed Analysis */}
             <section>
               <div className="mb-3 flex items-center gap-2">
@@ -222,7 +222,7 @@ export default function TradingDashboard() {
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
-                <OrderBlockPanel symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                <OrderBlockPanelSimple symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
               </div>
             </section>
 
@@ -235,7 +235,7 @@ export default function TradingDashboard() {
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
-                <RTYHIIMDetectorPanel symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                <RhythmDetectorSimple symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
               </div>
             </section>
 
