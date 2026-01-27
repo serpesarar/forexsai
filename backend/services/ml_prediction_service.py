@@ -632,23 +632,26 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
     
     # Calculate pip targets based on ATR
     atr = ta["atr_14"]
-    pip_multiplier = 1.0 if "XAU" in normalized_symbol else 0.1  # Gold vs Index
+    # Pip value: XAUUSD = 0.01 (100 pips = $1), NASDAQ = 1.0 (points)
+    pip_value = 0.01 if "XAU" in normalized_symbol else 1.0
+    
+    # ATR-based price distances
+    target_distance = atr * 1.5
+    stop_distance = atr * 0.75
     
     if direction == "BUY":
-        target_pips = atr * 1.5 * pip_multiplier
-        stop_pips = atr * 0.75 * pip_multiplier
-        target_price = current_price + (target_pips / pip_multiplier)
-        stop_price = current_price - (stop_pips / pip_multiplier)
+        target_price = current_price + target_distance
+        stop_price = current_price - stop_distance
     elif direction == "SELL":
-        target_pips = atr * 1.5 * pip_multiplier
-        stop_pips = atr * 0.75 * pip_multiplier
-        target_price = current_price - (target_pips / pip_multiplier)
-        stop_price = current_price + (stop_pips / pip_multiplier)
+        target_price = current_price - target_distance
+        stop_price = current_price + stop_distance
     else:
-        target_pips = 0
-        stop_pips = 0
         target_price = current_price
         stop_price = current_price
+    
+    # Convert price difference to pips
+    target_pips = abs(target_price - current_price) / pip_value
+    stop_pips = abs(stop_price - current_price) / pip_value
     
     risk_reward = target_pips / stop_pips if stop_pips > 0 else 0
     
@@ -956,23 +959,26 @@ def _rule_based_prediction(symbol: str, ta: dict, current_price: float) -> Predi
         prob_down = 0.5
     
     atr = ta["atr_14"]
-    pip_multiplier = 1.0 if "XAU" in symbol else 0.1
+    # Pip value: XAUUSD = 0.01 (100 pips = $1), NASDAQ = 1.0 (points)
+    pip_value = 0.01 if "XAU" in symbol else 1.0
+    
+    # ATR-based price distances
+    target_distance = atr * 1.5
+    stop_distance = atr * 0.75
     
     if direction == "BUY":
-        target_pips = atr * 1.5 * pip_multiplier
-        stop_pips = atr * 0.75 * pip_multiplier
-        target_price = current_price + (target_pips / pip_multiplier)
-        stop_price = current_price - (stop_pips / pip_multiplier)
+        target_price = current_price + target_distance
+        stop_price = current_price - stop_distance
     elif direction == "SELL":
-        target_pips = atr * 1.5 * pip_multiplier
-        stop_pips = atr * 0.75 * pip_multiplier
-        target_price = current_price - (target_pips / pip_multiplier)
-        stop_price = current_price + (stop_pips / pip_multiplier)
+        target_price = current_price - target_distance
+        stop_price = current_price + stop_distance
     else:
-        target_pips = 0
-        stop_pips = 0
         target_price = current_price
         stop_price = current_price
+    
+    # Convert price difference to pips
+    target_pips = abs(target_price - current_price) / pip_value
+    stop_pips = abs(stop_price - current_price) / pip_value
     
     return PredictionResult(
         symbol=symbol,
