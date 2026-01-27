@@ -27,6 +27,8 @@ interface TradingChartProps {
   height?: number;
   onRefresh?: () => void;
   isLoading?: boolean;
+  currentTimeframe?: string;
+  onTimeframeChange?: (tf: string) => void;
 }
 
 // EMA calculation helper
@@ -63,6 +65,8 @@ export default function TradingChart({
   height = 400,
   onRefresh,
   isLoading = false,
+  currentTimeframe = "1d",
+  onTimeframeChange,
 }: TradingChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartInstanceRef = useRef<IChartApi | null>(null);
@@ -72,7 +76,6 @@ export default function TradingChart({
   const ema50SeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [selectedTimeframe, setSelectedTimeframe] = useState("1d");
   const [windowSize, setWindowSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
   const [chartReady, setChartReady] = useState(false);
   const [ohlcLegend, setOhlcLegend] = useState<{
@@ -340,9 +343,9 @@ export default function TradingChart({
             {["1h", "4h", "1d"].map((tf) => (
               <button
                 key={tf}
-                onClick={() => setSelectedTimeframe(tf)}
+                onClick={() => onTimeframeChange?.(tf)}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
-                  selectedTimeframe === tf ? "bg-accent text-white" : "text-textSecondary hover:text-white"
+                  currentTimeframe === tf ? "bg-accent text-white" : "text-textSecondary hover:text-white"
                 }`}
               >
                 {tf}
