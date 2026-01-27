@@ -192,7 +192,7 @@ export default function TradingDashboard() {
               <TradingChartWrapper 
                 symbol={selectedSymbol} 
                 symbolLabel={currentSymbol.shortLabel}
-                timeframe="1d" 
+                initialTimeframe="1d" 
                 height={Math.round(300 * PHI)} 
               />
             </section>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import TradingChart from "./TradingChart";
 
@@ -32,16 +33,18 @@ async function fetchChartData(symbol: string, timeframe: string): Promise<Candle
 interface TradingChartWrapperProps {
   symbol: string;
   symbolLabel: string;
-  timeframe?: string;
+  initialTimeframe?: string;
   height?: number;
 }
 
 export default function TradingChartWrapper({
   symbol,
   symbolLabel,
-  timeframe = "1d",
+  initialTimeframe = "1d",
   height = 400,
 }: TradingChartWrapperProps) {
+  const [timeframe, setTimeframe] = useState(initialTimeframe);
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["chart-data", symbol, timeframe],
     queryFn: () => fetchChartData(symbol, timeframe),
@@ -72,6 +75,8 @@ export default function TradingChartWrapper({
       height={height}
       onRefresh={() => refetch()}
       isLoading={isLoading}
+      currentTimeframe={timeframe}
+      onTimeframeChange={(tf) => setTimeframe(tf)}
     />
   );
 }
