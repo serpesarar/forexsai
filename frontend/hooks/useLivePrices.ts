@@ -29,43 +29,71 @@ const SYMBOLS_CONFIG = [
 
 async function fetchPriceData(symbol: string): Promise<{ price: number; previousClose: number } | null> {
   try {
-    // Fetch current price from cached endpoint
-    const cachedRes = await fetch(`${API_BASE}/api/data/cached/${encodeURIComponent(symbol)}`);
     let currentPrice: number | null = null;
-    
-    if (cachedRes.ok) {
-      const cachedData = await cachedRes.json();
-      currentPrice = cachedData?.data?.current_price ?? null;
+    let previousClose: number = 0;
+
+    // Try cached endpoint first
+    try {
+      const cachedRes = await fetch(`${API_BASE}/api/data/cached/${encodeURIComponent(symbol)}`);
+      if (cachedRes.ok) {
+        const cachedData = await cachedRes.json();
+        // Handle both response formats
+        currentPrice = cachedData?.data?.current_price 
+          ?? cachedData?.data?.ta_snapshot?.close 
+          ?? cachedData?.current_price 
+          ?? null;
+      }
+    } catch (e) {
+      console.warn(`Cached endpoint failed for ${symbol}:`, e);
     }
 
-    // Fetch previous close from OHLCV data
-    const ohlcvRes = await fetch(
-      `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=1d&limit=2`
-    );
-    
-    let previousClose = currentPrice ?? 0;
-    
-    if (ohlcvRes.ok) {
-      const ohlcvData = await ohlcvRes.json();
-      const candles = ohlcvData?.data || [];
+    // Fetch OHLCV data for previous close and fallback current price
+    try {
+      const ohlcvRes = await fetch(
+        `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=1d&limit=5`
+      );
       
-      if (candles.length >= 2) {
-        // Get previous day's close
-        previousClose = candles[candles.length - 2]?.close ?? previousClose;
-      } else if (candles.length === 1) {
-        // Use open as previous close if only one candle
-        previousClose = candles[0]?.open ?? previousClose;
+      if (ohlcvRes.ok) {
+        const ohlcvData = await ohlcvRes.json();
+        const candles = ohlcvData?.data || [];
+        
+        if (candles.length >= 2) {
+          // Get previous day's close
+          previousClose = candles[candles.length - 2]?.close ?? 0;
+          // Use latest candle close if no cached price
+          if (currentPrice === null) {
+            currentPrice = candles[candles.length - 1]?.close ?? null;
+          }
+        } else if (candles.length === 1) {
+          previousClose = candles[0]?.open ?? candles[0]?.close ?? 0;
+          if (currentPrice === null) {
+            currentPrice = candles[0]?.close ?? null;
+          }
+        }
       }
-      
-      // If no cached price, use latest candle close
-      if (currentPrice === null && candles.length > 0) {
-        currentPrice = candles[candles.length - 1]?.close ?? 0;
+    } catch (e) {
+      console.warn(`OHLCV endpoint failed for ${symbol}:`, e);
+    }
+
+    // Try prediction endpoint as last fallback
+    if (currentPrice === null) {
+      try {
+        const predRes = await fetch(`${API_BASE}/api/predictions/${encodeURIComponent(symbol)}`);
+        if (predRes.ok) {
+          const predData = await predRes.json();
+          currentPrice = predData?.entry_price ?? predData?.current_price ?? null;
+          if (previousClose === 0 && currentPrice) {
+            previousClose = currentPrice; // No change if we only have one price
+          }
+        }
+      } catch (e) {
+        console.warn(`Prediction endpoint failed for ${symbol}:`, e);
       }
     }
 
     if (currentPrice === null) return null;
 
-    return { price: currentPrice, previousClose };
+    return { price: currentPrice, previousClose: previousClose || currentPrice };
   } catch (error) {
     console.error(`Failed to fetch price for ${symbol}:`, error);
     return null;
