@@ -22,7 +22,8 @@ export function useDetailedAIAnalysis(symbol: string) {
   return useQuery({
     queryKey: ["ai-analysis", "detailed", symbol],
     queryFn: () => fetchDetailedAIAnalysis(symbol),
-    refetchInterval: 300000,
-    staleTime: 120000,
+    refetchInterval: 300000, // Auto refresh every 5 minutes
+    staleTime: 30000, // Data is stale after 30 seconds (allows manual refresh)
+    gcTime: 300000, // Keep in cache for 5 minutes
   });
 }

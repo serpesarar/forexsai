@@ -635,9 +635,41 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
     # Pip value: XAUUSD = 0.01 (100 pips = $1), NASDAQ = 1.0 (points)
     pip_value = 0.01 if "XAU" in normalized_symbol else 1.0
     
-    # ATR-based price distances
-    target_distance = atr * 1.5
-    stop_distance = atr * 0.75
+    # Dynamic R/R based on confidence and trend strength
+    # Higher confidence = more aggressive targets
+    # Base multipliers adjusted by market conditions
+    rsi = ta.get("rsi_14", 50)
+    adx = ta.get("adx_14", 20)
+    
+    # Base target/stop multipliers
+    base_target_mult = 1.5
+    base_stop_mult = 0.75
+    
+    # Adjust based on confidence (higher confidence = tighter stops, wider targets)
+    if confidence > 75:
+        target_mult = base_target_mult * 1.3  # 1.95
+        stop_mult = base_stop_mult * 0.85     # 0.64
+    elif confidence > 65:
+        target_mult = base_target_mult * 1.15  # 1.73
+        stop_mult = base_stop_mult * 0.9       # 0.68
+    elif confidence < 55:
+        target_mult = base_target_mult * 0.8   # 1.2
+        stop_mult = base_stop_mult * 1.2       # 0.9
+    else:
+        target_mult = base_target_mult
+        stop_mult = base_stop_mult
+    
+    # Adjust for trend strength (ADX)
+    if adx > 30:  # Strong trend
+        target_mult *= 1.1
+        stop_mult *= 0.9
+    elif adx < 20:  # Weak trend
+        target_mult *= 0.85
+        stop_mult *= 1.1
+    
+    # ATR-based price distances with dynamic multipliers
+    target_distance = atr * target_mult
+    stop_distance = atr * stop_mult
     
     if direction == "BUY":
         target_price = current_price + target_distance
@@ -962,9 +994,38 @@ def _rule_based_prediction(symbol: str, ta: dict, current_price: float) -> Predi
     # Pip value: XAUUSD = 0.01 (100 pips = $1), NASDAQ = 1.0 (points)
     pip_value = 0.01 if "XAU" in symbol else 1.0
     
-    # ATR-based price distances
-    target_distance = atr * 1.5
-    stop_distance = atr * 0.75
+    # Dynamic R/R based on confidence and trend strength
+    adx = ta.get("adx_14", 20)
+    
+    # Base target/stop multipliers
+    base_target_mult = 1.5
+    base_stop_mult = 0.75
+    
+    # Adjust based on confidence
+    if confidence > 75:
+        target_mult = base_target_mult * 1.3
+        stop_mult = base_stop_mult * 0.85
+    elif confidence > 65:
+        target_mult = base_target_mult * 1.15
+        stop_mult = base_stop_mult * 0.9
+    elif confidence < 55:
+        target_mult = base_target_mult * 0.8
+        stop_mult = base_stop_mult * 1.2
+    else:
+        target_mult = base_target_mult
+        stop_mult = base_stop_mult
+    
+    # Adjust for trend strength (ADX)
+    if adx > 30:
+        target_mult *= 1.1
+        stop_mult *= 0.9
+    elif adx < 20:
+        target_mult *= 0.85
+        stop_mult *= 1.1
+    
+    # ATR-based price distances with dynamic multipliers
+    target_distance = atr * target_mult
+    stop_distance = atr * stop_mult
     
     if direction == "BUY":
         target_price = current_price + target_distance
