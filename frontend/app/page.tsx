@@ -31,22 +31,53 @@ import PatternEngineV2 from "../components/PatternEngineV2";
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
 import { useLivePrices } from "../hooks/useLivePrices";
+import { useCachedDashboardData, cachedToSignalCard } from "../hooks/useCachedDashboardData";
 
 const initialMarketTickers = [
   { label: "NASDAQ", price: "--", change: "--%", trend: "up" as const },
   { label: "XAU/USD", price: "--", change: "--%", trend: "up" as const },
 ];
 
+// Placeholder shown only while cache is loading
+const loadingSignalCard = (symbol: string) => ({
+  symbol,
+  currentPrice: 0,
+  signal: "HOLD",
+  confidence: 0,
+  trend: "NEUTRAL" as string,
+  trendStrength: 0,
+  volatility: "MEDIUM" as string,
+  volumeConfirmed: false,
+  metrics: [
+    { label: "RSI", value: "-- (Loading)" },
+    { label: "Trend", value: "Loading..." },
+    { label: "Support", value: "--" },
+    { label: "Volatility", value: "--" },
+  ],
+  liveMetrics: {
+    supportResistance: [],
+    nearestSupport: { price: 0, distance: 0, distancePct: 0 },
+    nearestResistance: { price: 0, distance: 0, distancePct: 0 },
+    trendChannel: { distanceToUpper: 0, distanceToLower: 0, trendStrength: 0, channelWidth: 0, rSquared: 0, slope: 0, trendQuality: "weak" },
+    emaDistances: {
+      ema20: { distance: 0, distancePct: 0, emaValue: 0, period: 20 },
+      ema50: { distance: 0, distancePct: 0, emaValue: 0, period: 50 },
+      ema200: { distance: 0, distancePct: 0, emaValue: 0, period: 200 },
+    },
+  },
+  reasons: ["Loading cached data..."],
+});
+
 const initialSignalCards = [
   {
     symbol: "NASDAQ",
-    currentPrice: 21547.35,
-    signal: "BUY",
-    confidence: 75,
+    currentPrice: 0,
+    signal: "HOLD",
+    confidence: 0,
     trend: "NEUTRAL" as string,
-    trendStrength: 50,
+    trendStrength: 0,
     volatility: "MEDIUM" as string,
-    volumeConfirmed: true,
+    volumeConfirmed: false,
     metrics: [
       { label: "RSI", value: "45 (Neutral)" },
       { label: "Trend", value: "Bullish" },
@@ -117,18 +148,18 @@ const initialSignalCards = [
   },
   {
     symbol: "XAUUSD",
-    currentPrice: 2048.5,
+    currentPrice: 0,
     signal: "HOLD",
-    confidence: 62,
+    confidence: 0,
     trend: "NEUTRAL" as string,
-    trendStrength: 50,
+    trendStrength: 0,
     volatility: "MEDIUM" as string,
-    volumeConfirmed: true,
+    volumeConfirmed: false,
     metrics: [
-      { label: "RSI", value: "51 (Neutral)" },
-      { label: "Trend", value: "Sideways" },
-      { label: "Support", value: "2,010 (6/10)" },
-      { label: "Volatility", value: "Medium" },
+      { label: "RSI", value: "-- (Loading)" },
+      { label: "Trend", value: "Loading..." },
+      { label: "Support", value: "--" },
+      { label: "Volatility", value: "--" },
     ],
     liveMetrics: {
       supportResistance: [
@@ -322,8 +353,32 @@ export default function HomePage() {
   const { tickers: liveTickers, isLoading: pricesLoading } = useLivePrices(3000);
   const marketTickers = liveTickers.length > 0 ? liveTickers : initialMarketTickers;
   
+  // Cache hook - loads pre-computed data from backend immediately
+  const { nasdaq: cachedNasdaq, xauusd: cachedXauusd, hasData: hasCachedData } = useCachedDashboardData();
+  
   const [_marketTickersOld, setMarketTickers] = useState(initialMarketTickers);
   const [signalCards, setSignalCards] = useState(initialSignalCards);
+  
+  // Update signal cards from cache on first load
+  useEffect(() => {
+    if (hasCachedData) {
+      const nasdaqCard = cachedToSignalCard(cachedNasdaq ?? null, "NASDAQ");
+      const xauusdCard = cachedToSignalCard(cachedXauusd ?? null, "XAUUSD");
+      
+      setSignalCards((prev) => {
+        const updated = [...prev];
+        if (nasdaqCard) {
+          const idx = updated.findIndex(c => c.symbol === "NASDAQ");
+          if (idx >= 0) updated[idx] = nasdaqCard as any;
+        }
+        if (xauusdCard) {
+          const idx = updated.findIndex(c => c.symbol === "XAUUSD");
+          if (idx >= 0) updated[idx] = xauusdCard as any;
+        }
+        return updated;
+      });
+    }
+  }, [hasCachedData, cachedNasdaq, cachedXauusd]);
   const [newsItems, setNewsItems] = useState(initialNewsItems);
   const [claudeSentiments, setClaudeSentiments] = useState<{ nasdaq?: any; xauusd?: any }>({});
   const [claudePatterns, setClaudePatterns] = useState<{ nasdaq?: any; xauusd?: any }>({});
