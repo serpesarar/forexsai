@@ -7,6 +7,7 @@ import {
   ArrowUpRight,
   Brain,
   Clock,
+  Loader2,
   Moon,
   PlayCircle,
   RefreshCw,
@@ -795,87 +796,114 @@ export default function HomePage() {
   };
 
   // Signal card renderer
-  const renderSignalCard = (signal: typeof signalCards[0]) => (
-    <div className="glass-card card-hover p-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("trendAnalysis.title")}</p>
-          <h3 className="mt-2 text-lg font-semibold">{signal.symbol}</h3>
+  const renderSignalCard = (signal: typeof signalCards[0]) => {
+    const isDataLoading = !signal.currentPrice || signal.currentPrice === 0 || !hasCachedData;
+    
+    return (
+      <div className="glass-card card-hover p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("trendAnalysis.title")}</p>
+            <h3 className="mt-2 text-lg font-semibold">{signal.symbol}</h3>
+          </div>
+          {isDataLoading ? (
+            <span className="rounded-full px-3 py-1 text-xs font-semibold bg-white/10 text-textSecondary flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Loading...
+            </span>
+          ) : (
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              signal.trend === "BULLISH" ? "bg-success/20 text-success" :
+              signal.trend === "BEARISH" ? "bg-danger/20 text-danger" : "bg-white/10 text-textSecondary"
+            }`}>
+              {signal.trend || "NEUTRAL"}
+            </span>
+          )}
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-          signal.trend === "BULLISH" ? "bg-success/20 text-success" :
-          signal.trend === "BEARISH" ? "bg-danger/20 text-danger" : "bg-white/10 text-textSecondary"
-        }`}>
-          {signal.trend || "NEUTRAL"}
-        </span>
-      </div>
-      <div className="mt-4 flex items-center justify-between gap-6">
-        <CircularProgress
-          value={signal.confidence}
-          label={t("trendAnalysis.trendStrength")}
-          sublabel={`${signal.confidence}%`}
-          isInteractive
-          onClick={() => open("trend_channel", { ...signal.liveMetrics.trendChannel }, signal.symbol as "NASDAQ" | "XAUUSD", `Trend Channel Overview (${signal.symbol})`)}
-        />
-        <div className="flex-1 space-y-2 text-xs text-textSecondary">
-          <div className="flex items-center justify-between">
-            <span>Nearest Support</span>
-            <span className="font-mono">{signal.liveMetrics.nearestSupport.price} ({signal.liveMetrics.nearestSupport.distance})</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Nearest Resistance</span>
-            <span className="font-mono">{signal.liveMetrics.nearestResistance.price} ({signal.liveMetrics.nearestResistance.distance})</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Trend Strength</span>
-            <span className="font-mono">{Math.round(signal.liveMetrics.trendChannel.trendStrength * 100)}%</span>
-          </div>
-        </div>
-      </div>
-      <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
-        {(() => {
-          const pipValue = signal.symbol === "XAUUSD" ? 0.1 : 1;
-          const toPips = (dist: number) => Math.round(dist / pipValue);
-          const metrics = [
-            { label: "EMA 20", distance: signal.liveMetrics.emaDistances.ema20.distance, maxPips: 50 },
-            { label: "EMA 50", distance: signal.liveMetrics.emaDistances.ema50.distance, maxPips: 100 },
-            { label: "EMA 200", distance: signal.liveMetrics.emaDistances.ema200.distance, maxPips: 200 },
-            { label: "Channel U", distance: signal.liveMetrics.nearestResistance.distance, maxPips: 50 },
-            { label: "Channel L", distance: signal.liveMetrics.nearestSupport.distance, maxPips: 50 },
-            { label: "S/R Bias", distance: Math.abs(signal.liveMetrics.nearestSupport.distance) < Math.abs(signal.liveMetrics.nearestResistance.distance) ? signal.liveMetrics.nearestSupport.distance : signal.liveMetrics.nearestResistance.distance, maxPips: 50 },
-          ];
-          return metrics.map((metric, index) => {
-            const pips = toPips(metric.distance);
-            const absPips = Math.abs(pips);
-            const isAbove = metric.distance >= 0;
-            const fillPercent = isAbove 
-              ? Math.max(0, 100 - (absPips / metric.maxPips) * 100)
-              : Math.min(100, (absPips / metric.maxPips) * 100);
-            const colorClass = isAbove ? "text-success" : "text-danger";
-            const pipsLabel = `${pips >= 0 ? "+" : ""}${pips} pips`;
-            return (
-              <div key={`${signal.symbol}-${metric.label}-${index}`} className="rounded-lg border border-white/5 bg-white/5 p-3 group relative">
-                <CircularProgress 
-                  value={fillPercent} 
-                  size={64} 
-                  strokeWidth={8} 
-                  sublabel={pipsLabel} 
-                  colorClassName={colorClass}
-                  isInteractive 
-                  onClick={() => {}} 
-                />
-                <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-textSecondary">{metric.label}</p>
-                <div className="absolute -top-1 -right-1">
-                  <div className={`w-2 h-2 rounded-full ${isAbove ? "bg-success" : "bg-danger"}`} />
-                </div>
+        <div className="mt-4 flex items-center justify-between gap-6">
+          {isDataLoading ? (
+            <div className="flex items-center justify-center w-[100px] h-[100px]">
+              <div className="text-center">
+                <Loader2 className="h-8 w-8 animate-spin text-accent mx-auto" />
+                <p className="mt-2 text-[10px] text-textSecondary">Calculating...</p>
               </div>
-            );
-          });
-        })()}
-      </div>
-      <div className="mt-2 text-[9px] text-textSecondary/60 text-center">
-        🟢 Fiyat seviyenin üstünde (yaklaştıkça dolar) • 🔴 Fiyat seviyenin altında (uzaklaştıkça dolar)
-      </div>
+            </div>
+          ) : (
+            <CircularProgress
+              value={signal.confidence}
+              label={t("trendAnalysis.trendStrength")}
+              sublabel={`${signal.confidence}%`}
+              isInteractive
+              onClick={() => open("trend_channel", { ...signal.liveMetrics.trendChannel }, signal.symbol as "NASDAQ" | "XAUUSD", `Trend Channel Overview (${signal.symbol})`)}
+            />
+          )}
+          <div className="flex-1 space-y-2 text-xs text-textSecondary">
+            <div className="flex items-center justify-between">
+              <span>Nearest Support</span>
+              <span className="font-mono">{isDataLoading ? "..." : `${signal.liveMetrics.nearestSupport.price} (${signal.liveMetrics.nearestSupport.distance})`}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Nearest Resistance</span>
+              <span className="font-mono">{isDataLoading ? "..." : `${signal.liveMetrics.nearestResistance.price} (${signal.liveMetrics.nearestResistance.distance})`}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Trend Strength</span>
+              <span className="font-mono">{isDataLoading ? "..." : `${Math.round(signal.liveMetrics.trendChannel.trendStrength * 100)}%`}</span>
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
+          {(() => {
+            if (isDataLoading) {
+              return ["EMA 20", "EMA 50", "EMA 200", "Channel U", "Channel L", "S/R Bias"].map((label, index) => (
+                <div key={`${signal.symbol}-${label}-loading-${index}`} className="rounded-lg border border-white/5 bg-white/5 p-3 flex flex-col items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-textSecondary" />
+                  <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-textSecondary">{label}</p>
+                </div>
+              ));
+            }
+            const pipValue = signal.symbol === "XAUUSD" ? 0.1 : 1;
+            const toPips = (dist: number) => Math.round(dist / pipValue);
+            const metrics = [
+              { label: "EMA 20", distance: signal.liveMetrics.emaDistances.ema20.distance, maxPips: 50 },
+              { label: "EMA 50", distance: signal.liveMetrics.emaDistances.ema50.distance, maxPips: 100 },
+              { label: "EMA 200", distance: signal.liveMetrics.emaDistances.ema200.distance, maxPips: 200 },
+              { label: "Channel U", distance: signal.liveMetrics.nearestResistance.distance, maxPips: 50 },
+              { label: "Channel L", distance: signal.liveMetrics.nearestSupport.distance, maxPips: 50 },
+              { label: "S/R Bias", distance: Math.abs(signal.liveMetrics.nearestSupport.distance) < Math.abs(signal.liveMetrics.nearestResistance.distance) ? signal.liveMetrics.nearestSupport.distance : signal.liveMetrics.nearestResistance.distance, maxPips: 50 },
+            ];
+            return metrics.map((metric, index) => {
+              const pips = toPips(metric.distance);
+              const absPips = Math.abs(pips);
+              const isAbove = metric.distance >= 0;
+              const fillPercent = isAbove 
+                ? Math.max(0, 100 - (absPips / metric.maxPips) * 100)
+                : Math.min(100, (absPips / metric.maxPips) * 100);
+              const colorClass = isAbove ? "text-success" : "text-danger";
+              const pipsLabel = `${pips >= 0 ? "+" : ""}${pips} pips`;
+              return (
+                <div key={`${signal.symbol}-${metric.label}-${index}`} className="rounded-lg border border-white/5 bg-white/5 p-3 group relative">
+                  <CircularProgress 
+                    value={fillPercent} 
+                    size={64} 
+                    strokeWidth={8} 
+                    sublabel={pipsLabel} 
+                    colorClassName={colorClass}
+                    isInteractive 
+                    onClick={() => {}} 
+                  />
+                  <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-textSecondary">{metric.label}</p>
+                  <div className="absolute -top-1 -right-1">
+                    <div className={`w-2 h-2 rounded-full ${isAbove ? "bg-success" : "bg-danger"}`} />
+                  </div>
+                </div>
+              );
+            });
+          })()}
+        </div>
+        <div className="mt-2 text-[9px] text-textSecondary/60 text-center">
+          🟢 Fiyat seviyenin üstünde (yaklaştıkça dolar) • 🔴 Fiyat seviyenin altında (uzaklaştıkça dolar)
+        </div>
       <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
         {signal.liveMetrics.supportResistance.map((level) => (
           <div key={`${signal.symbol}-${level.price}`} className="flex items-center justify-between rounded-full border border-white/5 bg-white/5 px-3 py-2">
@@ -897,7 +925,8 @@ export default function HomePage() {
         {signal.reasons.map((reason) => (<p key={reason}>• {reason}</p>))}
       </div>
     </div>
-  );
+    );
+  };
 
   // Claude patterns card renderer
   const renderClaudePatternCard = () => (
@@ -1017,22 +1046,41 @@ export default function HomePage() {
 
           {/* Market Tickers */}
           <div className="hidden lg:flex items-center gap-6">
-            {marketTickers.map((ticker) => (
-              <div key={ticker.label} className="group flex items-center gap-3 px-4 py-2 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10 transition-all duration-300">
-                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${ticker.trend === "up" ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
-                  {ticker.trend === "up" ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+            {marketTickers.map((ticker) => {
+              const isLoadingPrice = pricesLoading || ticker.price === "--" || ticker.price === "-";
+              return (
+                <div key={ticker.label} className="group flex items-center gap-3 px-4 py-2 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10 transition-all duration-300">
+                  {isLoadingPrice ? (
+                    <>
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 animate-pulse">
+                        <Loader2 className="h-4 w-4 animate-spin text-textSecondary" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase tracking-wider text-textSecondary">{ticker.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-sm text-textSecondary">Loading...</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${ticker.trend === "up" ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
+                        {ticker.trend === "up" ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase tracking-wider text-textSecondary">{ticker.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-sm font-semibold">${ticker.price}</span>
+                          <span className={`font-mono text-xs px-1.5 py-0.5 rounded ${ticker.trend === "up" ? "bg-success/20 text-success" : "bg-danger/20 text-danger"}`}>
+                            {ticker.change}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
-                <div>
-                  <span className="text-[10px] uppercase tracking-wider text-textSecondary">{ticker.label}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-semibold">${ticker.price}</span>
-                    <span className={`font-mono text-xs px-1.5 py-0.5 rounded ${ticker.trend === "up" ? "bg-success/20 text-success" : "bg-danger/20 text-danger"}`}>
-                      {ticker.change}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Actions - Desktop */}
