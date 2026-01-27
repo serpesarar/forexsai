@@ -121,8 +121,15 @@ export default function TradingDashboard() {
             <p className="text-sm text-textSecondary mt-1">ML Model + Claude AI Analysis</p>
           </div>
 
-          {/* Right Side - Home Link + Time */}
-          <div className="flex items-center gap-6">
+          {/* Right Side - Navigation + Time */}
+          <div className="flex items-center gap-4">
+            <Link 
+              href="/charts"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-accent/10 border border-accent/20 hover:bg-accent/20 hover:border-accent/30 transition-all duration-200 text-accent"
+            >
+              <BarChart3 className="h-4 w-4" />
+              <span className="text-sm font-medium">Grafikler</span>
+            </Link>
             <Link 
               href="/"
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200"
