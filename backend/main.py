@@ -64,6 +64,7 @@ try:
         claude_news,
         auth,
         live_news,
+        mtf_analysis,
     )
     from services.data_fetcher import fetch_latest_price
     from services.ml_service import run_nasdaq_signal, run_xauusd_signal
@@ -91,6 +92,7 @@ try:
     app.include_router(claude_news.router)
     app.include_router(auth.router)
     app.include_router(live_news.router)
+    app.include_router(mtf_analysis.router)
     
     ROUTERS_LOADED = True
 except Exception as e:
