@@ -34,6 +34,7 @@ import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContex
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
 import { useLivePrices } from "../hooks/useLivePrices";
 import { useCachedDashboardData, cachedToSignalCard } from "../hooks/useCachedDashboardData";
+import { useSingleTimeframeAnalysis, type Timeframe, type TimeframeAnalysis } from "../hooks/useMTFAnalysis";
 
 const initialMarketTickers = [
   { label: "NASDAQ", price: "--", change: "--%", trend: "up" as const },
@@ -347,13 +348,12 @@ function MiniSparkline({ values, accent }: { values: number[]; accent: string })
   );
 }
 
-const trendTimeframes = ["M1", "M5", "M15", "M30", "H1", "H4"] as const;
-type TrendTimeframe = typeof trendTimeframes[number];
+const trendTimeframes: Timeframe[] = ["M1", "M5", "M15", "M30", "H1", "H4"];
 
 export default function HomePage() {
   const [activeTf, setActiveTf] = useState<(typeof timeframes)[number]>("15m");
   const [theme, setTheme] = useState<"evening" | "morning">("evening");
-  const [trendTf, setTrendTf] = useState<TrendTimeframe>("M15");
+  const [trendTf, setTrendTf] = useState<Timeframe>("M15");
   
   // Live prices hook - updates every 3 seconds with daily change %
   const { tickers: liveTickers, isLoading: pricesLoading } = useLivePrices(3000);
@@ -361,6 +361,10 @@ export default function HomePage() {
   
   // Cache hook - loads pre-computed data from backend immediately
   const { nasdaq: cachedNasdaq, xauusd: cachedXauusd, hasData: hasCachedData } = useCachedDashboardData();
+  
+  // MTF Analysis hooks - fetch real technical analysis per timeframe
+  const { data: nasdaqMTF, isLoading: nasdaqMTFLoading } = useSingleTimeframeAnalysis("NDX.INDX", trendTf, 30000);
+  const { data: xauusdMTF, isLoading: xauusdMTFLoading } = useSingleTimeframeAnalysis("XAUUSD", trendTf, 30000);
   
   const [_marketTickersOld, setMarketTickers] = useState(initialMarketTickers);
   const [signalCards, setSignalCards] = useState(initialSignalCards);
@@ -800,21 +804,29 @@ export default function HomePage() {
   };
 
   // Signal card renderer
-  const getTimeframeMultiplier = (tf: TrendTimeframe): number => {
-    const multipliers: Record<TrendTimeframe, number> = {
+  const getTimeframeMultiplier = (tf: Timeframe): number => {
+    const multipliers: Record<Timeframe, number> = {
       "M1": 0.2,
       "M5": 0.5,
       "M15": 1,
       "M30": 1.5,
       "H1": 2,
       "H4": 4,
+      "D1": 1,
     };
     return multipliers[tf];
   };
 
   const renderSignalCard = (signal: typeof signalCards[0]) => {
-    const isDataLoading = !signal.currentPrice || signal.currentPrice === 0 || !hasCachedData;
+    const isMTFLoading = signal.symbol === "NASDAQ" ? nasdaqMTFLoading : xauusdMTFLoading;
+    const mtfData = signal.symbol === "NASDAQ" ? nasdaqMTF : xauusdMTF;
+    const isDataLoading = (!signal.currentPrice || signal.currentPrice === 0 || !hasCachedData) && !mtfData;
     const tfMultiplier = getTimeframeMultiplier(trendTf);
+    
+    // Use MTF data if available, otherwise fall back to cached data
+    const currentTrend = mtfData?.trend || signal.trend || "NEUTRAL";
+    const currentConfidence = mtfData?.confidence || signal.confidence;
+    const atrThreshold = mtfData?.max_pip_threshold || Math.round(50 * tfMultiplier);
     
     return (
       <div className="glass-card card-hover p-5">
@@ -823,18 +835,28 @@ export default function HomePage() {
             <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("trendAnalysis.title")}</p>
             <h3 className="mt-2 text-lg font-semibold">{signal.symbol}</h3>
           </div>
-          {isDataLoading ? (
+          {isDataLoading || isMTFLoading ? (
             <span className="rounded-full px-3 py-1 text-xs font-semibold bg-white/10 text-textSecondary flex items-center gap-1">
               <Loader2 className="h-3 w-3 animate-spin" />
               Loading...
             </span>
           ) : (
-            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-              signal.trend === "BULLISH" ? "bg-success/20 text-success" :
-              signal.trend === "BEARISH" ? "bg-danger/20 text-danger" : "bg-white/10 text-textSecondary"
-            }`}>
-              {signal.trend || "NEUTRAL"}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                currentTrend === "BULLISH" ? "bg-success/20 text-success" :
+                currentTrend === "BEARISH" ? "bg-danger/20 text-danger" : "bg-white/10 text-textSecondary"
+              }`}>
+                {currentTrend}
+              </span>
+              {mtfData?.signal && (
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                  mtfData.signal.includes("BUY") ? "bg-success/30 text-success" :
+                  mtfData.signal.includes("SELL") ? "bg-danger/30 text-danger" : "bg-white/10 text-textSecondary"
+                }`}>
+                  {mtfData.signal.replace("_", " ")}
+                </span>
+              )}
+            </div>
           )}
         </div>
         
@@ -856,7 +878,7 @@ export default function HomePage() {
         </div>
         
         <div className="mt-4 flex items-center justify-between gap-6">
-          {isDataLoading ? (
+          {isDataLoading || isMTFLoading ? (
             <div className="flex items-center justify-center w-[100px] h-[100px]">
               <div className="text-center">
                 <Loader2 className="h-8 w-8 animate-spin text-accent mx-auto" />
@@ -865,26 +887,61 @@ export default function HomePage() {
             </div>
           ) : (
             <CircularProgress
-              value={signal.confidence}
+              value={currentConfidence}
               label={t("trendAnalysis.trendStrength")}
-              sublabel={`${signal.confidence}%`}
+              sublabel={`${Math.round(currentConfidence)}%`}
               isInteractive
               onClick={() => open("trend_channel", { ...signal.liveMetrics.trendChannel }, signal.symbol as "NASDAQ" | "XAUUSD", `Trend Channel Overview (${signal.symbol})`)}
             />
           )}
           <div className="flex-1 space-y-2 text-xs text-textSecondary">
-            <div className="flex items-center justify-between">
-              <span>Nearest Support</span>
-              <span className="font-mono">{isDataLoading ? "..." : `${signal.liveMetrics.nearestSupport.price} (${signal.liveMetrics.nearestSupport.distance})`}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Nearest Resistance</span>
-              <span className="font-mono">{isDataLoading ? "..." : `${signal.liveMetrics.nearestResistance.price} (${signal.liveMetrics.nearestResistance.distance})`}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Trend Strength</span>
-              <span className="font-mono">{isDataLoading ? "..." : `${Math.round(signal.liveMetrics.trendChannel.trendStrength * 100)}%`}</span>
-            </div>
+            {mtfData ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <span>RSI (14)</span>
+                  <span className={`font-mono ${mtfData.rsi14 > 70 ? "text-danger" : mtfData.rsi14 < 30 ? "text-success" : ""}`}>
+                    {mtfData.rsi14.toFixed(1)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>ATR SL/TP</span>
+                  <span className="font-mono text-[10px]">
+                    SL: {mtfData.atr.dynamic_sl_pips}p / TP: {mtfData.atr.dynamic_tp_pips}p
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Volatility</span>
+                  <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${
+                    mtfData.atr.volatility_level === "LOW" ? "bg-success/20 text-success" :
+                    mtfData.atr.volatility_level === "HIGH" || mtfData.atr.volatility_level === "EXTREME" ? "bg-danger/20 text-danger" :
+                    "bg-white/10"
+                  }`}>
+                    {mtfData.atr.volatility_level}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Volume</span>
+                  <span className={`font-mono text-[10px] ${mtfData.volume.volume_confirmation ? "text-success" : ""}`}>
+                    {mtfData.volume.volume_ratio.toFixed(2)}x {mtfData.volume.volume_trend}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <span>Nearest Support</span>
+                  <span className="font-mono">{isDataLoading ? "..." : `${signal.liveMetrics.nearestSupport.price}`}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Nearest Resistance</span>
+                  <span className="font-mono">{isDataLoading ? "..." : `${signal.liveMetrics.nearestResistance.price}`}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Trend Strength</span>
+                  <span className="font-mono">{isDataLoading ? "..." : `${Math.round(signal.liveMetrics.trendChannel.trendStrength * 100)}%`}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
         <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
@@ -897,22 +954,27 @@ export default function HomePage() {
                 </div>
               ));
             }
-            const pipValue = signal.symbol === "XAUUSD" ? 0.1 : 1;
-            const toPips = (dist: number) => Math.round(dist / pipValue);
-            const baseMaxPips = {
-              ema20: 50,
-              ema50: 100,
-              ema200: 200,
-              channel: 50,
-              sr: 50,
-            };
+            // Use MTF data if available for more accurate EMA distances
+            const dynamicMaxPips = atrThreshold || Math.round(50 * tfMultiplier);
+            const toPips = (dist: number) => Math.round(dist);
+            
+            // If MTF data is available, use it; otherwise fallback to cached data
+            const ema20Dist = mtfData?.ema.ema20_distance ?? signal.liveMetrics.emaDistances.ema20.distance;
+            const ema50Dist = mtfData?.ema.ema50_distance ?? signal.liveMetrics.emaDistances.ema50.distance;
+            const ema200Dist = mtfData?.ema.ema200_distance ?? signal.liveMetrics.emaDistances.ema200.distance;
+            
+            const nearestSupport = mtfData?.supports?.[0];
+            const nearestResistance = mtfData?.resistances?.[0];
+            const supportDist = nearestSupport?.distance_pips ?? signal.liveMetrics.nearestSupport.distance;
+            const resistanceDist = nearestResistance?.distance_pips ?? signal.liveMetrics.nearestResistance.distance;
+            
             const metrics = [
-              { label: `EMA 20`, distance: signal.liveMetrics.emaDistances.ema20.distance, maxPips: Math.round(baseMaxPips.ema20 * tfMultiplier) },
-              { label: `EMA 50`, distance: signal.liveMetrics.emaDistances.ema50.distance, maxPips: Math.round(baseMaxPips.ema50 * tfMultiplier) },
-              { label: `EMA 200`, distance: signal.liveMetrics.emaDistances.ema200.distance, maxPips: Math.round(baseMaxPips.ema200 * tfMultiplier) },
-              { label: "Channel U", distance: signal.liveMetrics.nearestResistance.distance, maxPips: Math.round(baseMaxPips.channel * tfMultiplier) },
-              { label: "Channel L", distance: signal.liveMetrics.nearestSupport.distance, maxPips: Math.round(baseMaxPips.channel * tfMultiplier) },
-              { label: "S/R Bias", distance: Math.abs(signal.liveMetrics.nearestSupport.distance) < Math.abs(signal.liveMetrics.nearestResistance.distance) ? signal.liveMetrics.nearestSupport.distance : signal.liveMetrics.nearestResistance.distance, maxPips: Math.round(baseMaxPips.sr * tfMultiplier) },
+              { label: `EMA 20`, distance: ema20Dist, maxPips: dynamicMaxPips, above: mtfData?.ema.price_above_ema20 },
+              { label: `EMA 50`, distance: ema50Dist, maxPips: dynamicMaxPips * 2, above: mtfData?.ema.price_above_ema50 },
+              { label: `EMA 200`, distance: ema200Dist, maxPips: dynamicMaxPips * 4, above: mtfData?.ema.price_above_ema200 },
+              { label: "BB Upper", distance: mtfData ? (mtfData.current_price - mtfData.bollinger.upper) : resistanceDist, maxPips: dynamicMaxPips },
+              { label: "BB Lower", distance: mtfData ? (mtfData.current_price - mtfData.bollinger.lower) : supportDist, maxPips: dynamicMaxPips },
+              { label: "%B", distance: mtfData ? ((mtfData.bollinger.percent_b - 0.5) * 100) : 0, maxPips: 50, isBollinger: true },
             ];
             return metrics.map((metric, index) => {
               const pips = toPips(metric.distance);
