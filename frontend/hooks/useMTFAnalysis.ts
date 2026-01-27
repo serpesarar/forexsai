@@ -80,6 +80,72 @@ export interface TimeframeAnalysis {
   max_pip_threshold: number;
 }
 
+export interface MarketRegime {
+  regime: "TRENDING" | "RANGING" | "VOLATILE";
+  adx: number;
+  plus_di: number;
+  minus_di: number;
+  trend_strength: "WEAK" | "MODERATE" | "STRONG" | "VERY_STRONG";
+  trend_direction: Trend | null;
+}
+
+export interface PriceAction {
+  structure: "HH_HL" | "LL_LH" | "RANGING" | "CHOPPY";
+  swing_highs: number[];
+  swing_lows: number[];
+  last_swing_high: number;
+  last_swing_low: number;
+  break_of_structure: boolean;
+  change_of_character: boolean;
+}
+
+export interface VolumeProfileData {
+  poc: number;
+  value_area_high: number;
+  value_area_low: number;
+  high_volume_nodes: number[];
+  low_volume_nodes: number[];
+}
+
+export interface PivotPoints {
+  pivot: number;
+  r1: number;
+  r2: number;
+  r3: number;
+  s1: number;
+  s2: number;
+  s3: number;
+  timeframe: "DAILY" | "WEEKLY";
+}
+
+export interface CorrelationData {
+  dxy_correlation: number;
+  dxy_trend: Trend;
+  vix_level: number;
+  vix_regime: "LOW" | "NORMAL" | "HIGH" | "EXTREME";
+  bond_yield_trend: Trend;
+  correlation_confirms: boolean;
+}
+
+export interface PositionSizing {
+  recommended_risk_percent: number;
+  stop_loss_pips: number;
+  take_profit_pips: number;
+  risk_reward_ratio: number;
+  position_size_lots: number;
+  max_loss_usd: number;
+  potential_profit_usd: number;
+}
+
+export interface AdvancedAnalysis {
+  market_regime: MarketRegime;
+  price_action: PriceAction;
+  volume_profile: VolumeProfileData;
+  pivot_points: PivotPoints;
+  position_sizing: PositionSizing;
+  correlation: CorrelationData | null;
+}
+
 export interface MTFConfluence {
   overall_signal: Signal;
   overall_confidence: number;
@@ -91,6 +157,12 @@ export interface MTFConfluence {
   alignment_score: number;
   recommendation: string;
   risk_level: "LOW" | "MEDIUM" | "HIGH";
+  market_regime: MarketRegime | null;
+  price_action: PriceAction | null;
+  volume_profile: VolumeProfileData | null;
+  pivot_points: PivotPoints | null;
+  correlation: CorrelationData | null;
+  position_sizing: PositionSizing | null;
 }
 
 export interface MTFAnalysisResult {
@@ -101,6 +173,7 @@ export interface MTFAnalysisResult {
   pip_value: number;
   timeframes: Record<Timeframe, TimeframeAnalysis>;
   confluence: MTFConfluence;
+  advanced?: AdvancedAnalysis;
 }
 
 export interface SingleTimeframeResult {

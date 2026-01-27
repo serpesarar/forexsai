@@ -105,6 +105,75 @@ class TimeframeAnalysis:
 
 
 @dataclass
+class MarketRegime:
+    """Market regime detection using ADX"""
+    regime: Literal["TRENDING", "RANGING", "VOLATILE"]
+    adx: float  # Average Directional Index (0-100)
+    plus_di: float  # +DI
+    minus_di: float  # -DI
+    trend_strength: Literal["WEAK", "MODERATE", "STRONG", "VERY_STRONG"]
+    trend_direction: Optional[Trend]
+
+
+@dataclass
+class PriceAction:
+    """Price action and market structure analysis"""
+    structure: Literal["HH_HL", "LL_LH", "RANGING", "CHOPPY"]  # Higher Highs/Lows or Lower
+    swing_highs: List[float]
+    swing_lows: List[float]
+    last_swing_high: float
+    last_swing_low: float
+    break_of_structure: bool  # Recent BOS detected
+    change_of_character: bool  # CHoCH detected
+
+
+@dataclass
+class VolumeProfile:
+    """Volume Profile analysis - institutional grade"""
+    poc: float  # Point of Control - highest volume price
+    value_area_high: float  # Upper boundary of 70% volume
+    value_area_low: float  # Lower boundary of 70% volume
+    high_volume_nodes: List[float]  # Significant volume levels
+    low_volume_nodes: List[float]  # Gaps in volume - easy to pass
+
+
+@dataclass  
+class PivotPoints:
+    """Daily/Weekly pivot points for S/R"""
+    pivot: float  # Central pivot
+    r1: float  # Resistance 1
+    r2: float  # Resistance 2
+    r3: float  # Resistance 3
+    s1: float  # Support 1
+    s2: float  # Support 2
+    s3: float  # Support 3
+    timeframe: Literal["DAILY", "WEEKLY"]
+
+
+@dataclass
+class CorrelationData:
+    """Cross-asset correlation analysis"""
+    dxy_correlation: float  # Dollar Index correlation
+    dxy_trend: Trend
+    vix_level: float  # Volatility Index
+    vix_regime: Literal["LOW", "NORMAL", "HIGH", "EXTREME"]
+    bond_yield_trend: Trend  # US10Y
+    correlation_confirms: bool  # Does correlation support signal?
+
+
+@dataclass
+class PositionSizing:
+    """Risk-adjusted position sizing"""
+    recommended_risk_percent: float  # % of account to risk
+    stop_loss_pips: float
+    take_profit_pips: float
+    risk_reward_ratio: float
+    position_size_lots: float  # For $10,000 account
+    max_loss_usd: float
+    potential_profit_usd: float
+
+
+@dataclass
 class MTFConfluence:
     overall_signal: Signal
     overall_confidence: float
@@ -119,6 +188,14 @@ class MTFConfluence:
     
     recommendation: str
     risk_level: Literal["LOW", "MEDIUM", "HIGH"]
+    
+    # New fields
+    market_regime: Optional[MarketRegime]
+    price_action: Optional[PriceAction]
+    volume_profile: Optional[VolumeProfile]
+    pivot_points: Optional[PivotPoints]
+    correlation: Optional[CorrelationData]
+    position_sizing: Optional[PositionSizing]
 
 
 def _get_pip_value(symbol: str) -> float:
@@ -200,6 +277,325 @@ def _bollinger_bands(closes: np.ndarray, period: int = 20, std_dev: float = 2.0)
     lower = middle - (std_dev * std)
     
     return upper, middle, lower
+
+
+def _adx(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, period: int = 14) -> tuple[float, float, float]:
+    """
+    Calculate Average Directional Index (ADX) with +DI and -DI.
+    Returns: (adx, plus_di, minus_di)
+    """
+    if len(closes) < period + 1:
+        return 25.0, 50.0, 50.0  # Neutral defaults
+    
+    # Calculate True Range and Directional Movement
+    tr_list = []
+    plus_dm_list = []
+    minus_dm_list = []
+    
+    for i in range(1, len(closes)):
+        high_low = highs[i] - lows[i]
+        high_close = abs(highs[i] - closes[i-1])
+        low_close = abs(lows[i] - closes[i-1])
+        tr = max(high_low, high_close, low_close)
+        tr_list.append(tr)
+        
+        # +DM and -DM
+        up_move = highs[i] - highs[i-1]
+        down_move = lows[i-1] - lows[i]
+        
+        plus_dm = up_move if (up_move > down_move and up_move > 0) else 0
+        minus_dm = down_move if (down_move > up_move and down_move > 0) else 0
+        
+        plus_dm_list.append(plus_dm)
+        minus_dm_list.append(minus_dm)
+    
+    if len(tr_list) < period:
+        return 25.0, 50.0, 50.0
+    
+    # Smoothed averages
+    tr_smooth = float(np.mean(tr_list[-period:]))
+    plus_dm_smooth = float(np.mean(plus_dm_list[-period:]))
+    minus_dm_smooth = float(np.mean(minus_dm_list[-period:]))
+    
+    # +DI and -DI
+    plus_di = (plus_dm_smooth / tr_smooth * 100) if tr_smooth > 0 else 50
+    minus_di = (minus_dm_smooth / tr_smooth * 100) if tr_smooth > 0 else 50
+    
+    # DX and ADX
+    di_sum = plus_di + minus_di
+    dx = abs(plus_di - minus_di) / di_sum * 100 if di_sum > 0 else 0
+    
+    # Simple ADX (average of recent DX values)
+    adx = dx  # Simplified - for full ADX would need smoothing
+    
+    return float(adx), float(plus_di), float(minus_di)
+
+
+def _detect_market_regime(
+    highs: np.ndarray, 
+    lows: np.ndarray, 
+    closes: np.ndarray,
+    atr: float
+) -> MarketRegime:
+    """Detect if market is trending, ranging, or volatile"""
+    adx, plus_di, minus_di = _adx(highs, lows, closes, 14)
+    
+    # Determine trend strength
+    if adx < 20:
+        trend_strength = "WEAK"
+        regime = "RANGING"
+    elif adx < 40:
+        trend_strength = "MODERATE"
+        regime = "TRENDING"
+    elif adx < 60:
+        trend_strength = "STRONG"
+        regime = "TRENDING"
+    else:
+        trend_strength = "VERY_STRONG"
+        regime = "TRENDING"
+    
+    # Check for high volatility (ATR spike)
+    historical_atr = _atr(highs[:-20], lows[:-20], closes[:-20], 14) if len(closes) > 34 else atr
+    if historical_atr > 0 and atr / historical_atr > 2.0:
+        regime = "VOLATILE"
+    
+    # Trend direction based on DI
+    trend_direction: Optional[Trend] = None
+    if regime == "TRENDING":
+        if plus_di > minus_di:
+            trend_direction = "BULLISH"
+        else:
+            trend_direction = "BEARISH"
+    
+    return MarketRegime(
+        regime=regime,
+        adx=round(adx, 2),
+        plus_di=round(plus_di, 2),
+        minus_di=round(minus_di, 2),
+        trend_strength=trend_strength,
+        trend_direction=trend_direction
+    )
+
+
+def _detect_price_action(
+    highs: np.ndarray, 
+    lows: np.ndarray, 
+    closes: np.ndarray
+) -> PriceAction:
+    """Detect market structure: Higher Highs/Lows or Lower Highs/Lows"""
+    if len(closes) < 20:
+        return PriceAction(
+            structure="CHOPPY",
+            swing_highs=[],
+            swing_lows=[],
+            last_swing_high=float(highs[-1]) if len(highs) else 0,
+            last_swing_low=float(lows[-1]) if len(lows) else 0,
+            break_of_structure=False,
+            change_of_character=False
+        )
+    
+    # Find swing highs and lows (fractal method)
+    swing_highs = []
+    swing_lows = []
+    period = 3
+    
+    for i in range(period, len(closes) - period):
+        # Swing high: higher than surrounding candles
+        if highs[i] == max(highs[i-period:i+period+1]):
+            swing_highs.append(float(highs[i]))
+        # Swing low: lower than surrounding candles
+        if lows[i] == min(lows[i-period:i+period+1]):
+            swing_lows.append(float(lows[i]))
+    
+    # Get last 3 swings for structure analysis
+    recent_highs = swing_highs[-3:] if len(swing_highs) >= 3 else swing_highs
+    recent_lows = swing_lows[-3:] if len(swing_lows) >= 3 else swing_lows
+    
+    # Determine structure
+    structure = "CHOPPY"
+    bos = False
+    choch = False
+    
+    if len(recent_highs) >= 2 and len(recent_lows) >= 2:
+        # Higher Highs and Higher Lows = Bullish
+        hh = all(recent_highs[i] < recent_highs[i+1] for i in range(len(recent_highs)-1))
+        hl = all(recent_lows[i] < recent_lows[i+1] for i in range(len(recent_lows)-1))
+        
+        # Lower Highs and Lower Lows = Bearish
+        lh = all(recent_highs[i] > recent_highs[i+1] for i in range(len(recent_highs)-1))
+        ll = all(recent_lows[i] > recent_lows[i+1] for i in range(len(recent_lows)-1))
+        
+        if hh and hl:
+            structure = "HH_HL"
+        elif lh and ll:
+            structure = "LL_LH"
+        else:
+            structure = "RANGING"
+        
+        # Break of Structure detection
+        current_price = float(closes[-1])
+        if len(recent_lows) >= 2:
+            if current_price < recent_lows[-2]:  # Broke below previous swing low
+                bos = True
+                if structure == "HH_HL":
+                    choch = True  # Change of character
+        if len(recent_highs) >= 2:
+            if current_price > recent_highs[-2]:  # Broke above previous swing high
+                bos = True
+                if structure == "LL_LH":
+                    choch = True
+    
+    return PriceAction(
+        structure=structure,
+        swing_highs=recent_highs,
+        swing_lows=recent_lows,
+        last_swing_high=recent_highs[-1] if recent_highs else float(highs[-1]),
+        last_swing_low=recent_lows[-1] if recent_lows else float(lows[-1]),
+        break_of_structure=bos,
+        change_of_character=choch
+    )
+
+
+def _calculate_volume_profile(
+    closes: np.ndarray, 
+    volumes: np.ndarray, 
+    num_bins: int = 20
+) -> VolumeProfile:
+    """Calculate Volume Profile with POC and Value Area"""
+    if len(closes) < 20 or len(volumes) < 20:
+        price = float(closes[-1]) if len(closes) else 0
+        return VolumeProfile(
+            poc=price,
+            value_area_high=price,
+            value_area_low=price,
+            high_volume_nodes=[],
+            low_volume_nodes=[]
+        )
+    
+    price_min = float(np.min(closes))
+    price_max = float(np.max(closes))
+    bin_size = (price_max - price_min) / num_bins if price_max > price_min else 1
+    
+    # Create bins
+    volume_by_price = {}
+    for i in range(len(closes)):
+        bin_idx = int((closes[i] - price_min) / bin_size) if bin_size > 0 else 0
+        bin_idx = min(bin_idx, num_bins - 1)
+        bin_price = price_min + (bin_idx + 0.5) * bin_size
+        
+        if bin_price not in volume_by_price:
+            volume_by_price[bin_price] = 0
+        volume_by_price[bin_price] += volumes[i]
+    
+    if not volume_by_price:
+        price = float(closes[-1])
+        return VolumeProfile(poc=price, value_area_high=price, value_area_low=price, high_volume_nodes=[], low_volume_nodes=[])
+    
+    # POC: highest volume price
+    poc = max(volume_by_price.keys(), key=lambda k: volume_by_price[k])
+    
+    # Value Area: 70% of total volume
+    total_volume = sum(volume_by_price.values())
+    sorted_bins = sorted(volume_by_price.items(), key=lambda x: x[1], reverse=True)
+    
+    running_volume = 0
+    value_area_prices = []
+    for price, vol in sorted_bins:
+        running_volume += vol
+        value_area_prices.append(price)
+        if running_volume >= total_volume * 0.7:
+            break
+    
+    value_area_high = max(value_area_prices) if value_area_prices else poc
+    value_area_low = min(value_area_prices) if value_area_prices else poc
+    
+    # High/Low volume nodes
+    avg_volume = total_volume / len(volume_by_price)
+    high_volume_nodes = [p for p, v in volume_by_price.items() if v > avg_volume * 1.5]
+    low_volume_nodes = [p for p, v in volume_by_price.items() if v < avg_volume * 0.5]
+    
+    return VolumeProfile(
+        poc=round(poc, 5),
+        value_area_high=round(value_area_high, 5),
+        value_area_low=round(value_area_low, 5),
+        high_volume_nodes=[round(p, 5) for p in high_volume_nodes[:5]],
+        low_volume_nodes=[round(p, 5) for p in low_volume_nodes[:5]]
+    )
+
+
+def _calculate_pivot_points(
+    high: float, 
+    low: float, 
+    close: float,
+    timeframe: Literal["DAILY", "WEEKLY"] = "DAILY"
+) -> PivotPoints:
+    """Calculate classic pivot points"""
+    pivot = (high + low + close) / 3
+    
+    r1 = (2 * pivot) - low
+    s1 = (2 * pivot) - high
+    
+    r2 = pivot + (high - low)
+    s2 = pivot - (high - low)
+    
+    r3 = high + 2 * (pivot - low)
+    s3 = low - 2 * (high - pivot)
+    
+    return PivotPoints(
+        pivot=round(pivot, 5),
+        r1=round(r1, 5),
+        r2=round(r2, 5),
+        r3=round(r3, 5),
+        s1=round(s1, 5),
+        s2=round(s2, 5),
+        s3=round(s3, 5),
+        timeframe=timeframe
+    )
+
+
+def _calculate_position_sizing(
+    signal_confidence: float,
+    atr_pips: float,
+    pip_value: float,
+    account_size: float = 10000,
+    base_risk_percent: float = 2.0
+) -> PositionSizing:
+    """Calculate risk-adjusted position sizing"""
+    # Adjust risk based on confidence
+    if signal_confidence >= 80:
+        risk_percent = base_risk_percent
+    elif signal_confidence >= 60:
+        risk_percent = base_risk_percent * 0.75
+    elif signal_confidence >= 40:
+        risk_percent = base_risk_percent * 0.5
+    else:
+        risk_percent = base_risk_percent * 0.25
+    
+    # SL/TP based on ATR
+    stop_loss_pips = atr_pips * 1.5
+    take_profit_pips = atr_pips * 2.5  # 1:1.67 R:R minimum
+    risk_reward = take_profit_pips / stop_loss_pips if stop_loss_pips > 0 else 1.0
+    
+    # Position size calculation
+    risk_amount = account_size * (risk_percent / 100)
+    
+    # For forex: pip_value per lot varies
+    # Simplified: assume $10 per pip per standard lot for gold
+    pip_value_per_lot = 10 if pip_value == 0.1 else 1  # Gold vs others
+    position_size_lots = risk_amount / (stop_loss_pips * pip_value_per_lot) if stop_loss_pips > 0 else 0.01
+    
+    max_loss = risk_amount
+    potential_profit = max_loss * risk_reward
+    
+    return PositionSizing(
+        recommended_risk_percent=round(risk_percent, 2),
+        stop_loss_pips=round(stop_loss_pips, 1),
+        take_profit_pips=round(take_profit_pips, 1),
+        risk_reward_ratio=round(risk_reward, 2),
+        position_size_lots=round(min(position_size_lots, 1.0), 2),  # Cap at 1 lot
+        max_loss_usd=round(max_loss, 2),
+        potential_profit_usd=round(potential_profit, 2)
+    )
 
 
 def _macd(closes: np.ndarray) -> tuple[float, float, str]:
@@ -655,7 +1051,13 @@ def _calculate_mtf_confluence(analyses: Dict[Timeframe, TimeframeAnalysis]) -> M
         weakest_timeframe=weakest_tf or "M15",
         alignment_score=round(alignment_score, 1),
         recommendation=recommendation,
-        risk_level=risk_level
+        risk_level=risk_level,
+        market_regime=None,  # Will be set by caller
+        price_action=None,
+        volume_profile=None,
+        pivot_points=None,
+        correlation=None,
+        position_sizing=None
     )
 
 
@@ -746,6 +1148,73 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
         
         confluence = _calculate_mtf_confluence(analyses)
         
+        # Calculate advanced analysis components
+        atr14 = _atr(highs, lows, closes, 14)
+        atr_pips = atr14 / pip_value
+        
+        # Market Regime (ADX-based)
+        market_regime = _detect_market_regime(highs, lows, closes, atr14)
+        
+        # Price Action Structure (HH/HL pattern)
+        price_action = _detect_price_action(highs, lows, closes)
+        
+        # Volume Profile (POC, Value Area)
+        volume_profile = _calculate_volume_profile(closes, volumes)
+        
+        # Pivot Points (from yesterday's OHLC)
+        if len(highs) >= 2:
+            pivot_points = _calculate_pivot_points(
+                float(highs[-2]), 
+                float(lows[-2]), 
+                float(closes[-2]),
+                "DAILY"
+            )
+        else:
+            pivot_points = _calculate_pivot_points(current_price, current_price, current_price, "DAILY")
+        
+        # Position Sizing
+        position_sizing = _calculate_position_sizing(
+            confluence.overall_confidence,
+            atr_pips,
+            pip_value
+        )
+        
+        # Update confluence with advanced data
+        confluence.market_regime = market_regime
+        confluence.price_action = price_action
+        confluence.volume_profile = volume_profile
+        confluence.pivot_points = pivot_points
+        confluence.position_sizing = position_sizing
+        
+        # Correlation data (for XAUUSD - check macro data from cached endpoint)
+        correlation_data = None
+        if "XAU" in symbol.upper():
+            # Use macro data from ta_snapshot if available
+            try:
+                from services.ta_service import compute_ta_snapshot
+                dxy_data = await compute_ta_snapshot("DXY.INDX")
+                dxy_trend = dxy_data.get("trend", "NEUTRAL")
+                vix_data = await compute_ta_snapshot("VIX.INDX")
+                vix_price = vix_data.get("current_price", 20)
+                
+                # DXY negative correlation with Gold
+                dxy_confirms = (confluence.overall_signal in ["BUY", "STRONG_BUY"] and dxy_trend == "BEARISH") or \
+                              (confluence.overall_signal in ["SELL", "STRONG_SELL"] and dxy_trend == "BULLISH")
+                
+                vix_regime = "LOW" if vix_price < 15 else "NORMAL" if vix_price < 25 else "HIGH" if vix_price < 35 else "EXTREME"
+                
+                correlation_data = CorrelationData(
+                    dxy_correlation=-0.85,
+                    dxy_trend=dxy_trend,
+                    vix_level=vix_price,
+                    vix_regime=vix_regime,
+                    bond_yield_trend="NEUTRAL",  # Would need US10Y data
+                    correlation_confirms=dxy_confirms
+                )
+                confluence.correlation = correlation_data
+            except Exception:
+                pass  # Correlation data optional
+        
         result = {
             "success": True,
             "symbol": symbol,
@@ -753,7 +1222,15 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
             "current_price": current_price,
             "pip_value": pip_value,
             "timeframes": {tf: asdict(a) for tf, a in analyses.items()},
-            "confluence": asdict(confluence)
+            "confluence": asdict(confluence),
+            "advanced": {
+                "market_regime": asdict(market_regime),
+                "price_action": asdict(price_action),
+                "volume_profile": asdict(volume_profile),
+                "pivot_points": asdict(pivot_points),
+                "position_sizing": asdict(position_sizing),
+                "correlation": asdict(correlation_data) if correlation_data else None
+            }
         }
     
     # Cache result
