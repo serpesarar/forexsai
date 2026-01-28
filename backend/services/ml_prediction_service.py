@@ -809,6 +809,61 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
     except Exception as candle_err:
         logger.debug(f"Candlestick integration skipped: {candle_err}")
     
+    # ═══════════════════════════════════════════════════════════════════
+    # SUPPORT/RESISTANCE INTEGRATION
+    # ═══════════════════════════════════════════════════════════════════
+    sr_data = {"near_support": False, "near_resistance": False, "breakout_potential": False}
+    try:
+        from services.mtf_analysis_service import get_mtf_analysis
+        sr_mtf = await get_mtf_analysis(normalized_symbol)
+        
+        if sr_mtf.get("success") and "advanced" in sr_mtf:
+            adv = sr_mtf["advanced"]
+            
+            # Check pivot points for S/R
+            pivots = adv.get("pivot_points", {})
+            pivot_price = pivots.get("pivot", current_price)
+            s1 = pivots.get("s1", current_price - 50)
+            s2 = pivots.get("s2", current_price - 100)
+            r1 = pivots.get("r1", current_price + 50)
+            r2 = pivots.get("r2", current_price + 100)
+            
+            pip_val = 0.1 if "XAU" in normalized_symbol else 1.0
+            
+            # Distance to nearest S/R in pips
+            dist_to_s1 = abs(current_price - s1) / pip_val
+            dist_to_r1 = abs(current_price - r1) / pip_val
+            
+            # Near support (within 30 pips)
+            if current_price < pivot_price and dist_to_s1 < 30:
+                sr_data["near_support"] = True
+                mtf_adjustments["warnings"].append(f"📍 S1 yakın ({dist_to_s1:.0f} pips)")
+                # Near support = more bullish potential
+                if prob_up < prob_down:
+                    mtf_adjustments["confidence_multiplier"] *= 0.85
+                    mtf_adjustments["warnings"].append("⚠️ SELL ama destek yakın - dikkat")
+            
+            # Near resistance (within 30 pips)
+            if current_price > pivot_price and dist_to_r1 < 30:
+                sr_data["near_resistance"] = True
+                mtf_adjustments["warnings"].append(f"📍 R1 yakın ({dist_to_r1:.0f} pips)")
+                # Near resistance = more bearish potential
+                if prob_up > prob_down:
+                    mtf_adjustments["confidence_multiplier"] *= 0.85
+                    mtf_adjustments["warnings"].append("⚠️ BUY ama direnç yakın - dikkat")
+            
+            # Breakout potential (price broke S1/R1)
+            if current_price < s1:
+                sr_data["breakout_potential"] = True
+                mtf_adjustments["warnings"].append("🔻 S1 kırıldı - düşüş ivmesi")
+            elif current_price > r1:
+                sr_data["breakout_potential"] = True
+                mtf_adjustments["warnings"].append("🔺 R1 kırıldı - yükseliş ivmesi")
+            
+            logger.info(f"S/R check: near_support={sr_data['near_support']}, near_resistance={sr_data['near_resistance']}")
+    except Exception as sr_err:
+        logger.debug(f"S/R integration skipped: {sr_err}")
+    
     try:
         # Get prediction probabilities
         proba = model.predict_proba(feature_df)[0]

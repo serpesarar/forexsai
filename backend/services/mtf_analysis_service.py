@@ -1365,18 +1365,36 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
     
     async def fetch_tf_candles(tf: str) -> tuple:
         """Fetch candles for a specific timeframe"""
-        from services.data_fetcher import fetch_ohlc_data
+        from services.data_fetcher import fetch_ohlc_data, fetch_30m_candles
         
         data_tf = timeframe_data_map.get(tf, "1h")
         config = timeframe_configs.get(tf, timeframe_configs["H1"])
         
-        candles = await fetch_ohlc_data(symbol, data_tf, config["candles"])
+        candles = None
         
-        if not candles:
-            # Fallback to EOD data
-            candles = await fetch_eod_candles(symbol, limit=config["candles"])
+        try:
+            # Try fetching specific timeframe data
+            if tf in ["M15", "M30"]:
+                # Use 30m candles for M15/M30 (more reliable)
+                candles = await fetch_30m_candles(symbol, limit=config["candles"])
+            elif tf in ["H1", "H4"]:
+                candles = await fetch_ohlc_data(symbol, data_tf, config["candles"])
+            else:
+                candles = await fetch_ohlc_data(symbol, data_tf, config["candles"])
+        except Exception as e:
+            logger.warning(f"Failed to fetch {tf} data: {e}")
         
-        if not candles:
+        if not candles or len(candles) < 20:
+            # Fallback to EOD data with appropriate scaling
+            try:
+                eod_candles = await fetch_eod_candles(symbol, limit=config["candles"])
+                if eod_candles:
+                    candles = eod_candles
+                    logger.info(f"Using EOD fallback for {tf}: {len(candles)} candles")
+            except Exception as e:
+                logger.warning(f"EOD fallback failed for {tf}: {e}")
+        
+        if not candles or len(candles) < 20:
             return None, None, None, None
             
         closes = np.array([c["close"] for c in candles], dtype=float)
