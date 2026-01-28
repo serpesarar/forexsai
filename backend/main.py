@@ -351,6 +351,20 @@ async def get_cot_data(symbol: str):
         return {"success": False, "error": str(e)}
 
 
+@app.get("/api/candlestick-patterns/{symbol}")
+async def get_candlestick_patterns(symbol: str):
+    """
+    Get candlestick patterns for a symbol across M15, M30, H1, H4 timeframes.
+    Returns detected patterns with explanations in Turkish.
+    """
+    try:
+        from services.candlestick_pattern_service import detect_candlestick_patterns
+        result = await detect_candlestick_patterns(symbol, ["15m", "30m", "1h", "4h"])
+        return {"success": True, "data": result}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 # Startup event - start background scheduler
 @app.on_event("startup")
 async def startup_event():

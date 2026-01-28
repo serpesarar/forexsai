@@ -372,6 +372,91 @@ export const TRADING_INFO: Record<string, InfoData> = {
     ],
     importance: "high",
   },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CANDLESTICK PATTERNS (MUM FORMASYONLARI)
+  // ═══════════════════════════════════════════════════════════════════
+
+  candlestick_engulfing: {
+    title: "Engulfing (Yutan Formasyon)",
+    description: "Önceki mumun gövdesini tamamen kaplayan büyük mum. Güçlü dönüş sinyali.",
+    usage: "Trend dönüşlerinde kullan. Destek/dirençte daha güvenilir.",
+    levels: [
+      { value: "Bullish Engulfing", meaning: "Yeşil mum kırmızıyı yutar", action: "🟢 LONG ara" },
+      { value: "Bearish Engulfing", meaning: "Kırmızı mum yeşili yutar", action: "🔴 SHORT ara" },
+    ],
+    example: "Düşüş sonrası büyük yeşil mum → Dönüş başlıyor",
+    importance: "high",
+  },
+
+  candlestick_hammer: {
+    title: "Hammer (Çekiç)",
+    description: "Küçük gövde, uzun alt fitil (gövdenin 2+ katı). Alıcılar düşük fiyatları reddetti.",
+    usage: "Düşüş trendi sonunda ara. Onay mumu bekle.",
+    levels: [
+      { value: "Hammer", meaning: "Dipte çekiç", action: "🟢 Potansiyel dip" },
+      { value: "Hanging Man", meaning: "Tepede çekiç", action: "🔴 Potansiyel tepe" },
+    ],
+    example: "Destek seviyesinde hammer → LONG için hazırlan",
+    importance: "high",
+  },
+
+  candlestick_doji: {
+    title: "Doji",
+    description: "Açılış = Kapanış. Piyasada kararsızlık var.",
+    usage: "Tek başına sinyal değil! Sonraki mumu bekle.",
+    levels: [
+      { value: "Normal Doji", meaning: "Kararsızlık", action: "⏸️ Bekle" },
+      { value: "Dragonfly Doji", meaning: "Dipte uzun alt fitil", action: "🟢 Bullish potansiyel" },
+      { value: "Gravestone Doji", meaning: "Tepede uzun üst fitil", action: "🔴 Bearish potansiyel" },
+    ],
+    importance: "medium",
+  },
+
+  candlestick_harami: {
+    title: "Harami",
+    description: "Küçük mum, önceki büyük mumun gövdesi içinde kalır. Hamile anlamına gelir.",
+    usage: "Trend dönüş sinyali ama onay gerekli.",
+    levels: [
+      { value: "Bullish Harami", meaning: "Düşüş sonrası küçük yeşil", action: "🟢 Dönüş başlıyor olabilir" },
+      { value: "Bearish Harami", meaning: "Yükseliş sonrası küçük kırmızı", action: "🔴 Dönüş başlıyor olabilir" },
+    ],
+    importance: "medium",
+  },
+
+  candlestick_star: {
+    title: "Morning/Evening Star (Sabah/Akşam Yıldızı)",
+    description: "3 mumlu güçlü dönüş formasyonu. Ortadaki küçük mum 'yıldız'.",
+    usage: "En güvenilir dönüş formasyonlarından biri.",
+    levels: [
+      { value: "Morning Star", meaning: "Büyük kırmızı → Küçük → Büyük yeşil", action: "🟢 Güçlü LONG" },
+      { value: "Evening Star", meaning: "Büyük yeşil → Küçük → Büyük kırmızı", action: "🔴 Güçlü SHORT" },
+    ],
+    example: "Destek + Morning Star = %90 güvenilir LONG",
+    importance: "critical",
+  },
+
+  candlestick_shooting_star: {
+    title: "Shooting Star (Kayan Yıldız)",
+    description: "Küçük gövde altta, uzun üst fitil. Satıcılar yüksek fiyatları reddetti.",
+    usage: "Yükseliş trendi tepesinde ara.",
+    levels: [
+      { value: "Shooting Star", meaning: "Tepede uzun üst fitil", action: "🔴 Dönüş uyarısı" },
+      { value: "Inverted Hammer", meaning: "Dipte uzun üst fitil", action: "🟢 Potansiyel dönüş" },
+    ],
+    importance: "high",
+  },
+
+  candlestick_soldiers_crows: {
+    title: "Three White Soldiers / Black Crows",
+    description: "Üst üste 3 güçlü mum. Trend başlangıcı veya devamı.",
+    usage: "Momentum sinyali. Trendle işlem aç.",
+    levels: [
+      { value: "3 White Soldiers", meaning: "3 yeşil mum yükseliyor", action: "🟢 Güçlü yükseliş başladı" },
+      { value: "3 Black Crows", meaning: "3 kırmızı mum düşüyor", action: "🔴 Güçlü düşüş başladı" },
+    ],
+    importance: "high",
+  },
 };
 
 // ═══════════════════════════════════════════════════════════════════

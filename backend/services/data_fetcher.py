@@ -206,6 +206,85 @@ async def fetch_30m_candles(symbol: str, limit: int = 300) -> list[dict]:
     return candles_30m[-limit:]
 
 
+async def fetch_ohlc_data(symbol: str, timeframe: str = "1h", limit: int = 50) -> list[dict]:
+    """
+    Fetch OHLC data for any timeframe by resampling from available data.
+    
+    Args:
+        symbol: Trading symbol
+        timeframe: "15m", "30m", "1h", "4h", "1d"
+        limit: Number of candles to return
+    
+    Returns list of dicts with keys: open, high, low, close, volume
+    """
+    tf_lower = timeframe.lower()
+    
+    # For daily, use EOD data
+    if tf_lower in ["1d", "d", "daily"]:
+        return await fetch_eod_candles(symbol, limit)
+    
+    # For intraday, fetch and resample as needed
+    if tf_lower == "15m":
+        # Fetch 1m and resample to 15m
+        candles_1m = await fetch_intraday_candles(symbol, interval="1m", limit=limit * 20)
+        if not candles_1m:
+            return []
+        return _resample_candles(candles_1m, 15)[-limit:]
+    
+    elif tf_lower == "30m":
+        return await fetch_30m_candles(symbol, limit)
+    
+    elif tf_lower in ["1h", "h1", "60m"]:
+        # Fetch 1m and resample to 1h
+        candles_1m = await fetch_intraday_candles(symbol, interval="1m", limit=limit * 65)
+        if not candles_1m:
+            # Fallback to direct 1h fetch
+            return await fetch_intraday_candles(symbol, interval="1h", limit=limit)
+        return _resample_candles(candles_1m, 60)[-limit:]
+    
+    elif tf_lower in ["4h", "h4", "240m"]:
+        # Fetch 1h and resample to 4h
+        candles_1h = await fetch_intraday_candles(symbol, interval="1h", limit=limit * 5)
+        if not candles_1h:
+            return []
+        return _resample_candles(candles_1h, 4)[-limit:]
+    
+    # Default: return 1h data
+    return await fetch_intraday_candles(symbol, interval="1h", limit=limit)
+
+
+def _resample_candles(candles: list[dict], period: int) -> list[dict]:
+    """
+    Resample candles to a larger timeframe.
+    
+    Args:
+        candles: List of OHLC candles
+        period: Number of candles to group
+    
+    Returns resampled candles
+    """
+    if not candles or len(candles) < period:
+        return []
+    
+    result = []
+    for i in range(0, len(candles) - period + 1, period):
+        group = candles[i:i+period]
+        if not group:
+            continue
+        resampled = {
+            "timestamp": group[0].get("timestamp", 0),
+            "date": group[0].get("date", ""),
+            "open": group[0].get("open", 0),
+            "high": max(c.get("high", 0) for c in group),
+            "low": min(c.get("low", float('inf')) for c in group),
+            "close": group[-1].get("close", 0),
+            "volume": sum(c.get("volume", 0) for c in group),
+        }
+        result.append(resampled)
+    
+    return result
+
+
 async def fetch_eod_candles(symbol: str, limit: int = 300) -> list[dict]:
     """
     Fetch end-of-day OHLC candles from EODHD (available on free plans).
