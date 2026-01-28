@@ -1342,33 +1342,57 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
     if current_price is None:
         return {"success": False, "error": "Could not fetch current price"}
     
-    # Fetch daily candles for higher timeframes
-    eod_candles = await fetch_eod_candles(symbol, limit=250)
-    
-    if not eod_candles:
-        return {"success": False, "error": "Could not fetch OHLCV data"}
-    
-    # Convert to numpy arrays
-    closes = np.array([c["close"] for c in eod_candles], dtype=float)
-    highs = np.array([c.get("high", c["close"]) for c in eod_candles], dtype=float)
-    lows = np.array([c.get("low", c["close"]) for c in eod_candles], dtype=float)
-    volumes = np.array([c.get("volume", 0) for c in eod_candles], dtype=float)
-    
-    # For intraday, we'll simulate by using different lookback periods on daily data
-    # In production, you'd fetch actual intraday data from your data provider
+    # Timeframe to data source mapping
+    timeframe_data_map = {
+        "M1": "1m",
+        "M5": "5m",
+        "M15": "15m",
+        "M30": "30m",
+        "H1": "1h",
+        "H4": "4h",
+        "D1": "1d",
+    }
     
     timeframe_configs = {
-        "M1": {"lookback": 20, "multiplier": 0.2},
-        "M5": {"lookback": 30, "multiplier": 0.5},
-        "M15": {"lookback": 50, "multiplier": 1.0},
-        "M30": {"lookback": 75, "multiplier": 1.5},
-        "H1": {"lookback": 100, "multiplier": 2.0},
-        "H4": {"lookback": 150, "multiplier": 4.0},
-        "D1": {"lookback": 220, "multiplier": 1.0},
+        "M1": {"lookback": 50, "candles": 100},
+        "M5": {"lookback": 50, "candles": 100},
+        "M15": {"lookback": 50, "candles": 100},
+        "M30": {"lookback": 50, "candles": 100},
+        "H1": {"lookback": 100, "candles": 200},
+        "H4": {"lookback": 100, "candles": 200},
+        "D1": {"lookback": 220, "candles": 250},
     }
+    
+    async def fetch_tf_candles(tf: str) -> tuple:
+        """Fetch candles for a specific timeframe"""
+        from services.data_fetcher import fetch_ohlc_data
+        
+        data_tf = timeframe_data_map.get(tf, "1h")
+        config = timeframe_configs.get(tf, timeframe_configs["H1"])
+        
+        candles = await fetch_ohlc_data(symbol, data_tf, config["candles"])
+        
+        if not candles:
+            # Fallback to EOD data
+            candles = await fetch_eod_candles(symbol, limit=config["candles"])
+        
+        if not candles:
+            return None, None, None, None
+            
+        closes = np.array([c["close"] for c in candles], dtype=float)
+        highs = np.array([c.get("high", c["close"]) for c in candles], dtype=float)
+        lows = np.array([c.get("low", c["close"]) for c in candles], dtype=float)
+        volumes = np.array([c.get("volume", 0) for c in candles], dtype=float)
+        
+        return closes, highs, lows, volumes
     
     if timeframe:
         # Single timeframe analysis
+        closes, highs, lows, volumes = await fetch_tf_candles(timeframe)
+        
+        if closes is None or len(closes) < 20:
+            return {"success": False, "error": f"Could not fetch data for {timeframe}"}
+        
         config = timeframe_configs.get(timeframe, timeframe_configs["M15"])
         lookback = min(config["lookback"], len(closes))
         
@@ -1392,23 +1416,43 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
     else:
         # All timeframes + MTF confluence
         analyses = {}
+        
+        # Fetch data for each timeframe
         for tf, config in timeframe_configs.items():
-            lookback = min(config["lookback"], len(closes))
+            tf_closes, tf_highs, tf_lows, tf_volumes = await fetch_tf_candles(tf)
+            
+            if tf_closes is None or len(tf_closes) < 20:
+                continue
+                
+            lookback = min(config["lookback"], len(tf_closes))
             analyses[tf] = _analyze_timeframe(
                 symbol, tf,
-                closes[-lookback:],
-                highs[-lookback:],
-                lows[-lookback:],
-                volumes[-lookback:],
+                tf_closes[-lookback:],
+                tf_highs[-lookback:],
+                tf_lows[-lookback:],
+                tf_volumes[-lookback:],
                 current_price,
                 pip_value
             )
         
+        if not analyses:
+            return {"success": False, "error": "Could not fetch data for any timeframe"}
+        
         confluence = _calculate_mtf_confluence(analyses)
         
+        # Use H1 data for advanced components (fallback to first available)
+        h1_closes, h1_highs, h1_lows, h1_volumes = await fetch_tf_candles("H1")
+        if h1_closes is None:
+            h1_closes, h1_highs, h1_lows, h1_volumes = await fetch_tf_candles("D1")
+        
+        if h1_closes is None:
+            closes = highs = lows = volumes = np.array([current_price])
+        else:
+            closes, highs, lows, volumes = h1_closes, h1_highs, h1_lows, h1_volumes
+        
         # Calculate advanced analysis components
-        atr14 = _atr(highs, lows, closes, 14)
-        atr_pips = atr14 / pip_value
+        atr14 = _atr(highs, lows, closes, 14) if len(closes) > 14 else 0.0
+        atr_pips = atr14 / pip_value if atr14 > 0 else 0.0
         
         # Market Regime (ADX-based)
         market_regime = _detect_market_regime(highs, lows, closes, atr14)
