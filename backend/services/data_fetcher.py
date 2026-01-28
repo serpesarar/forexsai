@@ -56,7 +56,7 @@ async def fetch_latest_price(symbol: str) -> Optional[float]:
     now_ts = datetime.utcnow().timestamp()
     with _cache_lock:
         cached = _price_cache.get(key)
-        if cached and now_ts - cached[0] < 30:  # 30s TTL
+        if cached and now_ts - cached[0] < 5:  # 5s TTL for more accurate prices
             return cached[1]
 
     is_xau = (symbol or "").upper().startswith("XAU")
