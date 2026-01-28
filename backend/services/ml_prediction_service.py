@@ -810,59 +810,56 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
         logger.debug(f"Candlestick integration skipped: {candle_err}")
     
     # ═══════════════════════════════════════════════════════════════════
-    # SUPPORT/RESISTANCE INTEGRATION
+    # ADVANCED SUPPORT/RESISTANCE INTEGRATION (5-Layer S/R Feature Engine)
     # ═══════════════════════════════════════════════════════════════════
-    sr_data = {"near_support": False, "near_resistance": False, "breakout_potential": False}
+    sr_features = {}
     try:
-        from services.mtf_analysis_service import get_mtf_analysis
-        sr_mtf = await get_mtf_analysis(normalized_symbol)
+        from services.sr_ml_features import get_sr_features_for_ml
+        sr_features = await get_sr_features_for_ml(normalized_symbol, current_price)
         
-        if sr_mtf.get("success") and "advanced" in sr_mtf:
-            adv = sr_mtf["advanced"]
-            
-            # Check pivot points for S/R
-            pivots = adv.get("pivot_points", {})
-            pivot_price = pivots.get("pivot", current_price)
-            s1 = pivots.get("s1", current_price - 50)
-            s2 = pivots.get("s2", current_price - 100)
-            r1 = pivots.get("r1", current_price + 50)
-            r2 = pivots.get("r2", current_price + 100)
-            
-            pip_val = 0.1 if "XAU" in normalized_symbol else 1.0
-            
-            # Distance to nearest S/R in pips
-            dist_to_s1 = abs(current_price - s1) / pip_val
-            dist_to_r1 = abs(current_price - r1) / pip_val
-            
-            # Near support (within 30 pips)
-            if current_price < pivot_price and dist_to_s1 < 30:
-                sr_data["near_support"] = True
-                mtf_adjustments["warnings"].append(f"📍 S1 yakın ({dist_to_s1:.0f} pips)")
-                # Near support = more bullish potential
-                if prob_up < prob_down:
-                    mtf_adjustments["confidence_multiplier"] *= 0.85
-                    mtf_adjustments["warnings"].append("⚠️ SELL ama destek yakın - dikkat")
-            
-            # Near resistance (within 30 pips)
-            if current_price > pivot_price and dist_to_r1 < 30:
-                sr_data["near_resistance"] = True
-                mtf_adjustments["warnings"].append(f"📍 R1 yakın ({dist_to_r1:.0f} pips)")
-                # Near resistance = more bearish potential
-                if prob_up > prob_down:
-                    mtf_adjustments["confidence_multiplier"] *= 0.85
-                    mtf_adjustments["warnings"].append("⚠️ BUY ama direnç yakın - dikkat")
-            
-            # Breakout potential (price broke S1/R1)
-            if current_price < s1:
-                sr_data["breakout_potential"] = True
-                mtf_adjustments["warnings"].append("🔻 S1 kırıldı - düşüş ivmesi")
-            elif current_price > r1:
-                sr_data["breakout_potential"] = True
-                mtf_adjustments["warnings"].append("🔺 R1 kırıldı - yükseliş ivmesi")
-            
-            logger.info(f"S/R check: near_support={sr_data['near_support']}, near_resistance={sr_data['near_resistance']}")
+        # S/R dynamic weight'i MTF adjustments'a ekle
+        sr_weight = sr_features.get('sr_dynamic_weight', 0.5)
+        
+        # Yüksek S/R ağırlığı = güven artışı
+        if sr_weight > 0.7:
+            mtf_adjustments["confidence_multiplier"] *= 1.1
+            mtf_adjustments["warnings"].append(f"📊 Güçlü S/R bölgesi (ağırlık: {sr_weight:.0%})")
+        
+        # Yakın direnç kontrolü
+        if sr_features.get('sr_nearest_resistance_distance', 100) < 20:
+            strength = sr_features.get('sr_nearest_resistance_strength', 50)
+            mtf_adjustments["warnings"].append(f"📍 R1: {sr_features['sr_nearest_resistance_distance']:.0f} pip (güç: {strength:.0f}%)")
+            if strength > 70:
+                mtf_adjustments["confidence_multiplier"] *= 0.85
+        
+        # Yakın destek kontrolü
+        if sr_features.get('sr_nearest_support_distance', 100) < 20:
+            strength = sr_features.get('sr_nearest_support_strength', 50)
+            mtf_adjustments["warnings"].append(f"📍 S1: {sr_features['sr_nearest_support_distance']:.0f} pip (güç: {strength:.0f}%)")
+            if strength > 70:
+                mtf_adjustments["confidence_multiplier"] *= 0.85
+        
+        # MTF Confluence kontrolü
+        confluence = sr_features.get('sr_timeframe_confluence', 0)
+        if confluence > 0.6:
+            mtf_adjustments["warnings"].append(f"✅ S/R MTF uyumu: {confluence:.0%}")
+            mtf_adjustments["confidence_multiplier"] *= 1.05
+        
+        # Cluster bölgesi uyarısı
+        if sr_features.get('sr_is_clustered', False):
+            mtf_adjustments["warnings"].append("⚡ S/R cluster - volatilite bekleniyor")
+        
+        # Regime uyumu
+        regime = sr_features.get('sr_regime_type', 'UNKNOWN')
+        alignment = sr_features.get('sr_regime_alignment', 0.5)
+        if alignment > 0.7:
+            mtf_adjustments["warnings"].append(f"🎯 Regime uyumlu: {regime}")
+        
+        logger.info(f"S/R Features: weight={sr_weight:.2f}, confluence={confluence:.2f}, "
+                   f"nearest_R={sr_features.get('sr_nearest_resistance_distance', 0):.0f}pip, "
+                   f"nearest_S={sr_features.get('sr_nearest_support_distance', 0):.0f}pip")
     except Exception as sr_err:
-        logger.debug(f"S/R integration skipped: {sr_err}")
+        logger.debug(f"S/R Feature Engine skipped: {sr_err}")
     
     try:
         # Get prediction probabilities
@@ -1129,6 +1126,48 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
         confidence = adjusted_confidence
     except Exception as fb_err:
         logger.debug(f"Could not apply learning feedback: {fb_err}")
+    
+    # ═══════════════════════════════════════════════════════════════════
+    # S/R POST-PROCESSING - Final sinyal ayarlama
+    # ═══════════════════════════════════════════════════════════════════
+    if sr_features:
+        try:
+            from services.sr_ml_features import post_process_with_sr
+            
+            pre_result = {
+                'direction': direction,
+                'confidence': confidence,
+                'warnings': reasoning.copy()
+            }
+            
+            post_result = post_process_with_sr(pre_result, sr_features)
+            
+            # S/R post-processing sonuçlarını uygula
+            if post_result.get('sr_adjustments'):
+                for adj in post_result['sr_adjustments']:
+                    if adj['type'] == 'resistance_block' and direction == 'BUY':
+                        # BUY ama güçlü direnç yakın - HOLD yap veya güven azalt
+                        if adj['new_confidence'] < 40:
+                            direction = 'HOLD'
+                            logger.warning(f"BUY -> HOLD: {adj['reason']}")
+                        confidence = adj['new_confidence']
+                    elif adj['type'] == 'support_block' and direction == 'SELL':
+                        # SELL ama güçlü destek yakın - HOLD yap veya güven azalt
+                        if adj['new_confidence'] < 40:
+                            direction = 'HOLD'
+                            logger.warning(f"SELL -> HOLD: {adj['reason']}")
+                        confidence = adj['new_confidence']
+                    elif adj['type'] == 'confluence_boost':
+                        confidence = adj['new_confidence']
+                
+                # Yeni uyarıları ekle
+                for warning in post_result.get('warnings', []):
+                    if warning not in reasoning:
+                        reasoning.append(warning)
+                
+                logger.info(f"S/R Post-process: {direction} @ {confidence:.1f}%, adjustments={len(post_result['sr_adjustments'])}")
+        except Exception as pp_err:
+            logger.debug(f"S/R post-processing skipped: {pp_err}")
     
     return PredictionResult(
         symbol=normalized_symbol,
