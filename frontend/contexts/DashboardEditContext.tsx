@@ -51,7 +51,9 @@ interface DashboardEditContextType {
 const DEFAULT_LAYOUT: DashboardLayout = {
   cards: [
     { id: "signal-nasdaq", title: "NASDAQ Trend", column: "left", order: 0, visible: true, size: "medium", collapsed: false },
-    { id: "signal-xauusd", title: "XAUUSD Trend", column: "left", order: 1, visible: true, size: "medium", collapsed: false },
+    { id: "advanced-nasdaq", title: "NASDAQ MTF Analysis", column: "left", order: 1, visible: true, size: "medium", collapsed: false },
+    { id: "signal-xauusd", title: "XAUUSD Trend", column: "left", order: 2, visible: true, size: "medium", collapsed: false },
+    { id: "advanced-xauusd", title: "XAUUSD MTF Analysis", column: "left", order: 3, visible: true, size: "medium", collapsed: false },
     { id: "pattern-engine", title: "Pattern Engine V2", column: "center", order: 0, visible: true, size: "large", collapsed: false },
     { id: "claude-patterns", title: "Claude Patterns", column: "center", order: 1, visible: true, size: "medium", collapsed: false },
     { id: "sentiment", title: "AI Sentiment", column: "right", order: 0, visible: true, size: "medium", collapsed: false },
@@ -62,7 +64,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "rhythm-detectors", title: "Rhythm Detectors", column: "center", order: 5, visible: true, size: "full", collapsed: false },
     { id: "charts", title: "Trading Charts", column: "center", order: 6, visible: true, size: "full", collapsed: false },
   ],
-  version: 3,
+  version: 4,
 };
 
 const LAYOUT_STORAGE_KEY = "dashboard-layout-v2";
