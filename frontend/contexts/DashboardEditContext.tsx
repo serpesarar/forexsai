@@ -66,7 +66,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "rhythm-detectors", title: "Rhythm Detectors", column: "center", order: 5, visible: true, size: "full", collapsed: false },
     { id: "charts", title: "Trading Charts", column: "center", order: 6, visible: true, size: "full", collapsed: false },
   ],
-  version: 4,
+  version: 5,
 };
 
 const LAYOUT_STORAGE_KEY = "dashboard-layout-v2";
