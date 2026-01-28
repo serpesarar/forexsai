@@ -31,6 +31,7 @@ import MLPredictionPanel from "../components/MLPredictionPanel";
 import ClaudeAnalysisPanel from "../components/ClaudeAnalysisPanel";
 import PatternEngineV2 from "../components/PatternEngineV2";
 import AdvancedAnalysisPanel from "../components/AdvancedAnalysisPanel";
+import InstitutionalDataPanel from "../components/InstitutionalDataPanel";
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
 import { useLivePrices } from "../hooks/useLivePrices";
@@ -803,6 +804,8 @@ export default function HomePage() {
         return <AdvancedAnalysisPanel symbol="NASDAQ" />;
       case "advanced-xauusd":
         return <AdvancedAnalysisPanel symbol="XAUUSD" />;
+      case "institutional-data":
+        return <InstitutionalDataPanel />;
       default:
         return null;
     }

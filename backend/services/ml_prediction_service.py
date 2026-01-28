@@ -689,6 +689,47 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
     except Exception as mtf_err:
         logger.warning(f"MTF integration skipped: {mtf_err}")
     
+    # ═══════════════════════════════════════════════════════════════════
+    # SLIPPAGE MONITOR INTEGRATION
+    # ═══════════════════════════════════════════════════════════════════
+    slippage_data = {"position_multiplier": 1.0, "warning": None, "confidence_penalty": 0}
+    try:
+        from services.slippage_monitor import get_slippage_adjustment
+        slippage_data = await get_slippage_adjustment()
+        
+        if slippage_data.get("high_slippage_mode"):
+            mtf_adjustments["warnings"].append(slippage_data.get("warning", "⚠️ High slippage detected"))
+            logger.info(f"Slippage adjustment: multiplier={slippage_data['position_multiplier']}, penalty={slippage_data['confidence_penalty']}%")
+    except Exception as slip_err:
+        logger.debug(f"Slippage monitor skipped: {slip_err}")
+    
+    # ═══════════════════════════════════════════════════════════════════
+    # COT REPORT INTEGRATION (Institutional Positioning)
+    # ═══════════════════════════════════════════════════════════════════
+    cot_data = {"confidence_adjustment": 0, "signal": "NEUTRAL", "warning": None}
+    try:
+        from services.cot_report_service import get_cot_adjustment
+        cot_data = await get_cot_adjustment(normalized_symbol)
+        
+        if cot_data.get("signal") == "TREND_EXHAUSTION":
+            # Speculators overcrowded - reduce confidence significantly
+            mtf_adjustments["confidence_multiplier"] *= 0.75
+            mtf_adjustments["warnings"].append(cot_data.get("reason", "⚠️ COT: Trend exhaustion risk"))
+        elif cot_data.get("confidence_adjustment", 0) != 0:
+            # Apply COT adjustment
+            adj = cot_data["confidence_adjustment"]
+            if adj > 0:
+                mtf_adjustments["confidence_multiplier"] *= (1 + adj)
+            else:
+                mtf_adjustments["confidence_multiplier"] *= (1 + adj)
+        
+        if cot_data.get("warning"):
+            mtf_adjustments["warnings"].append(cot_data["warning"])
+        
+        logger.info(f"COT adjustment: signal={cot_data['signal']}, adj={cot_data['confidence_adjustment']:+.0%}, spec_long={cot_data.get('spec_long_percent', 50):.0f}%")
+    except Exception as cot_err:
+        logger.debug(f"COT integration skipped: {cot_err}")
+    
     try:
         # Get prediction probabilities
         proba = model.predict_proba(feature_df)[0]
