@@ -30,6 +30,7 @@ import RhythmDetectorSimple from "../components/RhythmDetectorSimple";
 import MLPredictionPanel from "../components/MLPredictionPanel";
 import ClaudeAnalysisPanel from "../components/ClaudeAnalysisPanel";
 import PatternEngineV2 from "../components/PatternEngineV2";
+import AdvancedAnalysisPanel from "../components/AdvancedAnalysisPanel";
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
 import { useLivePrices } from "../hooks/useLivePrices";
@@ -798,6 +799,10 @@ export default function HomePage() {
         return renderSentimentCard();
       case "news":
         return renderNewsCard();
+      case "advanced-nasdaq":
+        return <AdvancedAnalysisPanel symbol="NASDAQ" />;
+      case "advanced-xauusd":
+        return <AdvancedAnalysisPanel symbol="XAUUSD" />;
       default:
         return null;
     }

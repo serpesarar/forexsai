@@ -588,6 +588,107 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
     if model is None or feature_df is None:
         return _rule_based_prediction(normalized_symbol, ta, current_price)
     
+    # ═══════════════════════════════════════════════════════════════════
+    # MTF ADVANCED DATA INTEGRATION - Professional Trading Enhancements
+    # ═══════════════════════════════════════════════════════════════════
+    mtf_adjustments = {
+        "confidence_multiplier": 1.0,
+        "direction_override": None,
+        "warnings": [],
+        "session": "UNKNOWN",
+        "regime": "UNKNOWN",
+        "liquidity_sweep": False,
+        "high_impact_event": None
+    }
+    
+    try:
+        from services.mtf_analysis_service import get_mtf_analysis
+        mtf_data = await get_mtf_analysis(normalized_symbol)
+        
+        if mtf_data.get("success") and "advanced" in mtf_data:
+            adv = mtf_data["advanced"]
+            
+            # 1. Market Regime Check
+            regime = adv.get("market_regime", {})
+            regime_type = regime.get("regime", "TRENDING")
+            confidence_level = regime.get("confidence_level", "LOW_CONFIDENCE")
+            di_spread = regime.get("di_spread", 0)
+            mtf_adjustments["regime"] = regime_type
+            
+            if confidence_level == "CONFLICTING":
+                mtf_adjustments["confidence_multiplier"] *= 0.7
+                mtf_adjustments["warnings"].append("⚠️ DI çelişkili - trend belirsiz")
+            elif confidence_level == "LOW_CONFIDENCE":
+                mtf_adjustments["confidence_multiplier"] *= 0.85
+            
+            if regime_type == "RANGING" and di_spread < 10:
+                mtf_adjustments["confidence_multiplier"] *= 0.8
+                mtf_adjustments["warnings"].append("📊 Yan piyasa - trade riskli")
+            
+            # 2. Price Action / Liquidity Sweep Detection
+            price_action = adv.get("price_action", {})
+            structure_quality = price_action.get("structure_quality", "CHOPPY")
+            liquidity_sweep = price_action.get("liquidity_sweep", False)
+            equal_highs = price_action.get("equal_highs_count", 0)
+            equal_lows = price_action.get("equal_lows_count", 0)
+            mtf_adjustments["liquidity_sweep"] = liquidity_sweep
+            
+            if structure_quality == "FAKEOUT_TRAP":
+                mtf_adjustments["confidence_multiplier"] *= 0.5
+                mtf_adjustments["warnings"].append("🚨 FAKEOUT TRAP tespit edildi!")
+            elif structure_quality == "CHOPPY":
+                mtf_adjustments["confidence_multiplier"] *= 0.7
+                mtf_adjustments["warnings"].append("⚠️ Choppy piyasa yapısı")
+            
+            if liquidity_sweep:
+                mtf_adjustments["warnings"].append("💧 Likidite süpürmesi tespit - ters hareket riski")
+            
+            if equal_highs >= 3:
+                mtf_adjustments["warnings"].append(f"🎯 {equal_highs}x Equal Highs = Likidite havuzu")
+            if equal_lows >= 3:
+                mtf_adjustments["warnings"].append(f"🎯 {equal_lows}x Equal Lows = Likidite havuzu")
+            
+            # 3. Position Sizing / Session Check
+            pos_sizing = adv.get("position_sizing", {})
+            session = pos_sizing.get("session", "UNKNOWN")
+            session_vol = pos_sizing.get("session_volatility", "NORMAL")
+            high_impact = pos_sizing.get("high_impact_event")
+            vol_adj = pos_sizing.get("volatility_adjustment", 1.0)
+            mtf_adjustments["session"] = session
+            mtf_adjustments["high_impact_event"] = high_impact
+            
+            if session == "ASIA":
+                mtf_adjustments["confidence_multiplier"] *= 0.85
+                mtf_adjustments["warnings"].append("🌙 Asya seansı - düşük likidite")
+            
+            if high_impact == "NFP_DAY":
+                mtf_adjustments["confidence_multiplier"] *= 0.4
+                mtf_adjustments["direction_override"] = "HOLD"
+                mtf_adjustments["warnings"].append("🔴 NFP GÜNÜ - Trade önerilmez!")
+            elif high_impact == "FOMC_POTENTIAL":
+                mtf_adjustments["confidence_multiplier"] *= 0.6
+                mtf_adjustments["warnings"].append("🟠 FOMC potansiyeli - dikkatli ol")
+            elif high_impact == "CPI_WEEK":
+                mtf_adjustments["confidence_multiplier"] *= 0.8
+                mtf_adjustments["warnings"].append("🟡 CPI haftası - volatilite bekleniyor")
+            
+            # 4. Correlation Check
+            correlation = adv.get("correlation", {})
+            if correlation:
+                corr_confirms = correlation.get("correlation_confirms", True)
+                conflicting = correlation.get("conflicting_signals", [])
+                
+                if not corr_confirms and conflicting:
+                    mtf_adjustments["confidence_multiplier"] *= 0.75
+                    for sig in conflicting[:2]:
+                        mtf_adjustments["warnings"].append(f"⚡ Korelasyon çelişkisi: {sig}")
+            
+            logger.info(f"MTF adjustments applied: mult={mtf_adjustments['confidence_multiplier']:.2f}, "
+                       f"regime={regime_type}, session={session}, warnings={len(mtf_adjustments['warnings'])}")
+            
+    except Exception as mtf_err:
+        logger.warning(f"MTF integration skipped: {mtf_err}")
+    
     try:
         # Get prediction probabilities
         proba = model.predict_proba(feature_df)[0]
@@ -625,6 +726,18 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
             else:
                 direction = "HOLD"
                 confidence = max(prob_up, prob_down) * 100
+        
+        # ═══════════════════════════════════════════════════════════════════
+        # APPLY MTF ADJUSTMENTS TO FINAL DECISION
+        # ═══════════════════════════════════════════════════════════════════
+        if mtf_adjustments["direction_override"]:
+            original_direction = direction
+            direction = mtf_adjustments["direction_override"]
+            logger.info(f"Direction overridden by MTF: {original_direction} -> {direction}")
+        
+        # Apply confidence multiplier from MTF analysis
+        confidence = confidence * mtf_adjustments["confidence_multiplier"]
+        confidence = max(25, min(95, confidence))  # Clamp 25-95%
         
     except Exception as e:
         logger.error(f"Model prediction error: {e}")
@@ -689,6 +802,11 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
     
     # Generate reasoning
     reasoning = _generate_reasoning(ta, direction, confidence, normalized_symbol)
+    
+    # Add MTF warnings to reasoning
+    if mtf_adjustments["warnings"]:
+        reasoning.insert(0, f"📊 MTF Analysis ({mtf_adjustments['regime']} | {mtf_adjustments['session']}):")
+        reasoning.extend(mtf_adjustments["warnings"][:5])
     
     # Add news factors for XAUUSD
     if is_gold and news_factors:

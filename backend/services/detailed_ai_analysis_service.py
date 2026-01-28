@@ -78,6 +78,17 @@ Calculate long_score and short_score (0-100 each) based on:
 - ML direction opposite to strong trend (ADX > 30) → SMALL or HOLD (counter-trend warning)
 - VIX > 25 → reduce position size by one level
 
+### Step 4.5: MTF Advanced Data Checks (CRITICAL - if mtf_advanced is provided)
+- If mtf_advanced.market_regime.confidence_level == "CONFLICTING" → reduce confidence by 30%
+- If mtf_advanced.price_action.structure_quality == "FAKEOUT_TRAP" → force HOLD or NO_TRADE
+- If mtf_advanced.price_action.liquidity_sweep == true → add warning, reduce confidence by 20%
+- If mtf_advanced.position_sizing.high_impact_event == "NFP_DAY" → force NO_TRADE
+- If mtf_advanced.position_sizing.high_impact_event == "FOMC_POTENTIAL" → max position SMALL
+- If mtf_advanced.position_sizing.session == "ASIA" → reduce confidence by 15%
+- If mtf_advanced.correlation.correlation_confirms == false → reduce confidence by 25%
+- Use mtf_advanced.pivot_points.r2/s2 (Fibonacci 0.618) as STRONGEST S/R levels
+- Use mtf_advanced.volume_profile.hvn_resistances/hvn_supports as TRUE support/resistance
+
 ### Step 5: Final Decision
 - Based on scores, gating, and contradictions
 - BUY if long_score > short_score + 20 and no critical red flags
@@ -506,6 +517,59 @@ async def build_context_pack(symbol: str) -> Dict[str, Any]:
     market_structure = _get_market_structure(closes, highs, lows)
     liquidity_zones = _get_liquidity_zones(highs, lows, current_price)
     economic_calendar = _get_economic_calendar_flags()
+    
+    # ═══════════════════════════════════════════════════════════════════
+    # MTF ADVANCED DATA INTEGRATION - Professional Trading Enhancements
+    # ═══════════════════════════════════════════════════════════════════
+    mtf_advanced = None
+    try:
+        from services.mtf_analysis_service import get_mtf_analysis
+        mtf_data = await get_mtf_analysis(normalized_symbol)
+        
+        if mtf_data.get("success") and "advanced" in mtf_data:
+            adv = mtf_data["advanced"]
+            mtf_advanced = {
+                "market_regime": {
+                    "type": adv.get("market_regime", {}).get("regime", "UNKNOWN"),
+                    "adx": adv.get("market_regime", {}).get("adx", 0),
+                    "di_spread": adv.get("market_regime", {}).get("di_spread", 0),
+                    "confidence_level": adv.get("market_regime", {}).get("confidence_level", "LOW_CONFIDENCE"),
+                    "trend_direction": adv.get("market_regime", {}).get("trend_direction"),
+                },
+                "price_action": {
+                    "structure": adv.get("price_action", {}).get("structure", "CHOPPY"),
+                    "structure_quality": adv.get("price_action", {}).get("structure_quality", "CHOPPY"),
+                    "liquidity_sweep": adv.get("price_action", {}).get("liquidity_sweep", False),
+                    "equal_highs_count": adv.get("price_action", {}).get("equal_highs_count", 0),
+                    "equal_lows_count": adv.get("price_action", {}).get("equal_lows_count", 0),
+                    "break_of_structure": adv.get("price_action", {}).get("break_of_structure", False),
+                },
+                "volume_profile": {
+                    "poc": adv.get("volume_profile", {}).get("poc", 0),
+                    "hvn_resistances": adv.get("volume_profile", {}).get("hvn_resistances", []),
+                    "hvn_supports": adv.get("volume_profile", {}).get("hvn_supports", []),
+                    "poc_is_relevant": adv.get("volume_profile", {}).get("poc_is_relevant", False),
+                },
+                "pivot_points": {
+                    "pivot": adv.get("pivot_points", {}).get("pivot", 0),
+                    "r1": adv.get("pivot_points", {}).get("r1", 0),
+                    "r2": adv.get("pivot_points", {}).get("r2", 0),  # Fibonacci 0.618 = strongest
+                    "s1": adv.get("pivot_points", {}).get("s1", 0),
+                    "s2": adv.get("pivot_points", {}).get("s2", 0),  # Fibonacci 0.618 = strongest
+                    "pivot_type": adv.get("pivot_points", {}).get("pivot_type", "FIBONACCI"),
+                },
+                "position_sizing": {
+                    "recommended_risk_percent": adv.get("position_sizing", {}).get("recommended_risk_percent", 2.0),
+                    "volatility_adjustment": adv.get("position_sizing", {}).get("volatility_adjustment", 1.0),
+                    "session": adv.get("position_sizing", {}).get("session", "UNKNOWN"),
+                    "session_volatility": adv.get("position_sizing", {}).get("session_volatility", "NORMAL"),
+                    "high_impact_event": adv.get("position_sizing", {}).get("high_impact_event"),
+                },
+                "correlation": adv.get("correlation", {}),
+            }
+            logger.info(f"MTF advanced data added to context pack for {normalized_symbol}")
+    except Exception as mtf_err:
+        logger.warning(f"Could not fetch MTF advanced data: {mtf_err}")
 
     macro_symbols = {
         "dxy": "DXY.INDX",
@@ -624,6 +688,8 @@ async def build_context_pack(symbol: str) -> Dict[str, Any]:
         "market_structure": market_structure,
         "liquidity_zones": liquidity_zones,
         "economic_calendar": economic_calendar,
+        # MTF ADVANCED DATA - Professional Trading Enhancements
+        "mtf_advanced": mtf_advanced,
     }
 
 
