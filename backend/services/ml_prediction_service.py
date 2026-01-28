@@ -730,6 +730,56 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
     except Exception as cot_err:
         logger.debug(f"COT integration skipped: {cot_err}")
     
+    # ═══════════════════════════════════════════════════════════════════
+    # PATTERN ENGINE INTEGRATION
+    # ═══════════════════════════════════════════════════════════════════
+    pattern_data = {"patterns": [], "recommendation": "HOLD", "confidence_boost": 0}
+    try:
+        from services.pattern_analyzer import run_claude_pattern_analysis
+        pattern_result = await run_claude_pattern_analysis(normalized_symbol, ["15m", "1h"], lang="tr")
+        
+        all_patterns = []
+        bullish_count = 0
+        bearish_count = 0
+        total_confidence = 0
+        
+        for tf, analysis in pattern_result.get("analyses", {}).items():
+            patterns = analysis.get("detected_patterns", [])
+            for p in patterns:
+                all_patterns.append(p)
+                conf = p.get("confidence", 70)
+                total_confidence += conf
+                if p.get("signal") == "bullish":
+                    bullish_count += 1
+                elif p.get("signal") == "bearish":
+                    bearish_count += 1
+        
+        pattern_data["patterns"] = all_patterns
+        
+        # Apply pattern-based adjustments
+        if len(all_patterns) > 0:
+            avg_confidence = total_confidence / len(all_patterns)
+            
+            # Strong bullish/bearish pattern consensus boosts confidence
+            if bullish_count >= 2 and bearish_count == 0:
+                pattern_data["recommendation"] = "BUY"
+                pattern_data["confidence_boost"] = min(0.15, avg_confidence / 1000)
+                mtf_adjustments["confidence_multiplier"] *= (1 + pattern_data["confidence_boost"])
+                mtf_adjustments["warnings"].append(f"📊 Pattern: {bullish_count} bullish pattern tespit edildi")
+            elif bearish_count >= 2 and bullish_count == 0:
+                pattern_data["recommendation"] = "SELL"
+                pattern_data["confidence_boost"] = min(0.15, avg_confidence / 1000)
+                mtf_adjustments["confidence_multiplier"] *= (1 + pattern_data["confidence_boost"])
+                mtf_adjustments["warnings"].append(f"📊 Pattern: {bearish_count} bearish pattern tespit edildi")
+            elif bullish_count > 0 and bearish_count > 0:
+                # Mixed signals - reduce confidence
+                mtf_adjustments["confidence_multiplier"] *= 0.9
+                mtf_adjustments["warnings"].append(f"⚡ Pattern çelişkisi: {bullish_count} bullish vs {bearish_count} bearish")
+        
+        logger.info(f"Pattern Engine: {len(all_patterns)} patterns, bullish={bullish_count}, bearish={bearish_count}")
+    except Exception as pattern_err:
+        logger.debug(f"Pattern Engine integration skipped: {pattern_err}")
+    
     try:
         # Get prediction probabilities
         proba = model.predict_proba(feature_df)[0]
