@@ -780,6 +780,35 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
     except Exception as pattern_err:
         logger.debug(f"Pattern Engine integration skipped: {pattern_err}")
     
+    # ═══════════════════════════════════════════════════════════════════
+    # CANDLESTICK PATTERN INTEGRATION (M15, M30, H1, H4)
+    # ═══════════════════════════════════════════════════════════════════
+    candlestick_data = {"patterns": [], "signal": "NEUTRAL", "adjustment": 0}
+    try:
+        from services.candlestick_pattern_service import get_candlestick_adjustment
+        candlestick_data = await get_candlestick_adjustment(normalized_symbol)
+        
+        if candlestick_data.get("has_patterns"):
+            signal = candlestick_data.get("strongest_signal", "NEUTRAL")
+            adjustment = candlestick_data.get("confidence_adjustment", 0)
+            
+            if signal == "BULLISH" and adjustment > 0:
+                mtf_adjustments["confidence_multiplier"] *= (1 + adjustment)
+                patterns_str = ", ".join(candlestick_data.get("patterns_summary", [])[:3])
+                mtf_adjustments["warnings"].append(f"🕯️ Mum Formasyonu: {patterns_str}")
+            elif signal == "BEARISH" and adjustment > 0:
+                mtf_adjustments["confidence_multiplier"] *= (1 + adjustment)
+                patterns_str = ", ".join(candlestick_data.get("patterns_summary", [])[:3])
+                mtf_adjustments["warnings"].append(f"🕯️ Mum Formasyonu: {patterns_str}")
+            elif signal == "MIXED":
+                mtf_adjustments["confidence_multiplier"] *= 0.9
+                mtf_adjustments["warnings"].append("⚡ Mum formasyonları çelişkili")
+            
+            logger.info(f"Candlestick: {candlestick_data['bullish_count']} bullish, "
+                       f"{candlestick_data['bearish_count']} bearish, signal={signal}, adj={adjustment:+.0%}")
+    except Exception as candle_err:
+        logger.debug(f"Candlestick integration skipped: {candle_err}")
+    
     try:
         # Get prediction probabilities
         proba = model.predict_proba(feature_df)[0]
