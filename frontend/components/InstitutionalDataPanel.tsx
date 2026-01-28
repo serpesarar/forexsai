@@ -13,6 +13,7 @@ import {
   Percent,
   Clock,
 } from "lucide-react";
+import { InfoClickable, InfoBadge } from "./InfoTooltip";
 
 interface COTData {
   report_date: string;
@@ -149,6 +150,7 @@ export default function InstitutionalDataPanel({ className = "" }: Institutional
             <div className="flex items-center gap-2 mb-2">
               <Gauge className={`w-4 h-4 ${slippageData.high_slippage_mode ? 'text-red-400' : 'text-cyan-400'}`} />
               <span className="text-xs text-gray-400">Slippage Monitor</span>
+              <InfoBadge infoKey="slippage" />
               {slippageData.high_slippage_mode && (
                 <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full ml-auto">
                   ⚠️ HIGH
@@ -157,12 +159,14 @@ export default function InstitutionalDataPanel({ className = "" }: Institutional
             </div>
             
             <div className="grid grid-cols-3 gap-3 text-center">
-              <div>
-                <div className={`text-lg font-bold ${slippageData.average_slippage > 3 ? 'text-red-400' : slippageData.average_slippage > 1.5 ? 'text-yellow-400' : 'text-green-400'}`}>
-                  {slippageData.average_slippage.toFixed(1)}
+              <InfoClickable infoKey="slippage">
+                <div>
+                  <div className={`text-lg font-bold ${slippageData.average_slippage > 3 ? 'text-red-400' : slippageData.average_slippage > 1.5 ? 'text-yellow-400' : 'text-green-400'}`}>
+                    {slippageData.average_slippage.toFixed(1)}
+                  </div>
+                  <div className="text-xs text-gray-500">Avg Pips</div>
                 </div>
-                <div className="text-xs text-gray-500">Avg Pips</div>
-              </div>
+              </InfoClickable>
               <div>
                 <div className="text-lg font-bold text-white">
                   {(slippageData.position_multiplier * 100).toFixed(0)}%
@@ -197,31 +201,38 @@ export default function InstitutionalDataPanel({ className = "" }: Institutional
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-amber-400" />
                 <span className="text-sm font-medium text-white">GOLD COT</span>
+                <InfoBadge infoKey="cot_speculators" />
               </div>
-              <span className={`text-xs font-bold px-2 py-0.5 rounded ${getSignalColor(cotData.XAUUSD.signal)}`}>
-                {cotData.XAUUSD.signal}
-              </span>
+              <InfoClickable infoKey="cot_speculators">
+                <span className={`text-xs font-bold px-2 py-0.5 rounded ${getSignalColor(cotData.XAUUSD.signal)} cursor-help`}>
+                  {cotData.XAUUSD.signal}
+                </span>
+              </InfoClickable>
             </div>
             
             <div className="grid grid-cols-2 gap-3 mb-2">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1">
-                  <Users className="w-3 h-3 text-blue-400" />
-                  <span className="text-xs text-gray-400">Commercials</span>
+              <InfoClickable infoKey="cot_commercials">
+                <div className="text-center cursor-help hover:bg-gray-700/30 rounded p-1">
+                  <div className="flex items-center justify-center gap-1">
+                    <Users className="w-3 h-3 text-blue-400" />
+                    <span className="text-xs text-gray-400">Commercials</span>
+                  </div>
+                  <div className={`text-sm font-bold ${cotData.XAUUSD.commercials_net > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {cotData.XAUUSD.commercials_net > 0 ? '+' : ''}{(cotData.XAUUSD.commercials_net / 1000).toFixed(0)}K
+                  </div>
                 </div>
-                <div className={`text-sm font-bold ${cotData.XAUUSD.commercials_net > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {cotData.XAUUSD.commercials_net > 0 ? '+' : ''}{(cotData.XAUUSD.commercials_net / 1000).toFixed(0)}K
+              </InfoClickable>
+              <InfoClickable infoKey="cot_speculators">
+                <div className="text-center cursor-help hover:bg-gray-700/30 rounded p-1">
+                  <div className="flex items-center justify-center gap-1">
+                    <Activity className="w-3 h-3 text-purple-400" />
+                    <span className="text-xs text-gray-400">Speculators</span>
+                  </div>
+                  <div className={`text-sm font-bold ${cotData.XAUUSD.speculators_net > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {cotData.XAUUSD.speculators_net > 0 ? '+' : ''}{(cotData.XAUUSD.speculators_net / 1000).toFixed(0)}K
+                  </div>
                 </div>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1">
-                  <Activity className="w-3 h-3 text-purple-400" />
-                  <span className="text-xs text-gray-400">Speculators</span>
-                </div>
-                <div className={`text-sm font-bold ${cotData.XAUUSD.speculators_net > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {cotData.XAUUSD.speculators_net > 0 ? '+' : ''}{(cotData.XAUUSD.speculators_net / 1000).toFixed(0)}K
-                </div>
-              </div>
+              </InfoClickable>
             </div>
             
             <div className="flex items-center justify-between text-xs">

@@ -15,6 +15,7 @@ import {
   Calendar,
   RefreshCw,
 } from "lucide-react";
+import { InfoClickable, InfoBadge } from "./InfoTooltip";
 
 interface MTFAdvancedData {
   market_regime: {
@@ -220,20 +221,29 @@ export default function AdvancedAnalysisPanel({ symbol, className = "" }: Advanc
             <div className="flex items-center gap-2 mb-2">
               <BarChart3 className="w-4 h-4 text-indigo-400" />
               <span className="text-xs text-gray-400">Market Regime</span>
+              <InfoBadge infoKey="market_regime" />
             </div>
-            <div className={`text-lg font-bold ${regimeColor}`}>
-              {market_regime.regime}
-            </div>
+            <InfoClickable infoKey="market_regime">
+              <div className={`text-lg font-bold ${regimeColor}`}>
+                {market_regime.regime}
+              </div>
+            </InfoClickable>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs text-gray-500">ADX: {market_regime.adx.toFixed(1)}</span>
+              <InfoClickable infoKey="adx">
+                <span className="text-xs text-gray-500 hover:text-cyan-400">ADX: {market_regime.adx.toFixed(1)}</span>
+              </InfoClickable>
               <span className="text-xs text-gray-500">|</span>
-              <span className={`text-xs ${confidenceColor}`}>
-                {market_regime.confidence_level.replace("_", " ")}
-              </span>
+              <InfoClickable infoKey="confidence">
+                <span className={`text-xs ${confidenceColor} hover:underline`}>
+                  {market_regime.confidence_level.replace("_", " ")}
+                </span>
+              </InfoClickable>
             </div>
-            <div className="text-xs text-gray-500 mt-1">
-              DI Spread: {market_regime.di_spread.toFixed(1)}
-            </div>
+            <InfoClickable infoKey="di_spread">
+              <div className="text-xs text-gray-500 mt-1 hover:text-cyan-400">
+                DI Spread: {market_regime.di_spread.toFixed(1)}
+              </div>
+            </InfoClickable>
           </div>
 
           {/* Price Action */}
@@ -247,18 +257,23 @@ export default function AdvancedAnalysisPanel({ symbol, className = "" }: Advanc
                 <Activity className="w-4 h-4 text-yellow-400" />
               )}
               <span className="text-xs text-gray-400">Price Action</span>
+              <InfoBadge infoKey="liquidity_sweep" />
             </div>
-            <div className={`text-lg font-bold ${structureColor}`}>
-              {price_action.structure_quality.replace("_", " ")}
-            </div>
+            <InfoClickable infoKey="liquidity_sweep">
+              <div className={`text-lg font-bold ${structureColor}`}>
+                {price_action.structure_quality.replace("_", " ")}
+              </div>
+            </InfoClickable>
             <div className="text-xs text-gray-500 mt-1">
               Structure: {price_action.structure}
             </div>
             {(price_action.equal_highs_count >= 2 || price_action.equal_lows_count >= 2) && (
-              <div className="text-xs text-yellow-400 mt-1">
-                {price_action.equal_highs_count >= 2 && `🎯 ${price_action.equal_highs_count}x EQ Highs`}
-                {price_action.equal_lows_count >= 2 && ` 🎯 ${price_action.equal_lows_count}x EQ Lows`}
-              </div>
+              <InfoClickable infoKey="equal_highs_lows">
+                <div className="text-xs text-yellow-400 mt-1 hover:underline cursor-help">
+                  {price_action.equal_highs_count >= 2 && `🎯 ${price_action.equal_highs_count}x EQ Highs`}
+                  {price_action.equal_lows_count >= 2 && ` 🎯 ${price_action.equal_lows_count}x EQ Lows`}
+                </div>
+              </InfoClickable>
             )}
           </div>
 
@@ -267,16 +282,21 @@ export default function AdvancedAnalysisPanel({ symbol, className = "" }: Advanc
             <div className="flex items-center gap-2 mb-2">
               <Clock className="w-4 h-4 text-cyan-400" />
               <span className="text-xs text-gray-400">Trading Session</span>
+              <InfoBadge infoKey="session" />
             </div>
-            <div className={`text-lg font-bold ${sessionColor}`}>
-              {position_sizing.session}
-            </div>
+            <InfoClickable infoKey="session">
+              <div className={`text-lg font-bold ${sessionColor}`}>
+                {position_sizing.session}
+              </div>
+            </InfoClickable>
             <div className="text-xs text-gray-500 mt-1">
               Volatilite: {position_sizing.session_volatility}
             </div>
-            <div className="text-xs text-gray-500 mt-1">
-              Risk Ayarı: {(position_sizing.volatility_adjustment * 100).toFixed(0)}%
-            </div>
+            <InfoClickable infoKey="volatility_adjustment">
+              <div className="text-xs text-gray-500 mt-1 hover:text-cyan-400">
+                Risk Ayarı: {(position_sizing.volatility_adjustment * 100).toFixed(0)}%
+              </div>
+            </InfoClickable>
           </div>
 
           {/* Position Sizing */}
@@ -284,10 +304,13 @@ export default function AdvancedAnalysisPanel({ symbol, className = "" }: Advanc
             <div className="flex items-center gap-2 mb-2">
               <Shield className="w-4 h-4 text-emerald-400" />
               <span className="text-xs text-gray-400">Position Sizing</span>
+              <InfoBadge infoKey="position_size" />
             </div>
-            <div className="text-lg font-bold text-emerald-400">
-              %{position_sizing.recommended_risk_percent.toFixed(2)}
-            </div>
+            <InfoClickable infoKey="position_size">
+              <div className="text-lg font-bold text-emerald-400">
+                %{position_sizing.recommended_risk_percent.toFixed(2)}
+              </div>
+            </InfoClickable>
             <div className="text-xs text-gray-500 mt-1">
               Önerilen Risk
             </div>
@@ -299,6 +322,7 @@ export default function AdvancedAnalysisPanel({ symbol, className = "" }: Advanc
           <div className="flex items-center gap-2 mb-3">
             <Target className="w-4 h-4 text-amber-400" />
             <span className="text-xs text-gray-400">Fibonacci Pivot Points</span>
+            <InfoBadge infoKey="pivot_points" />
             <span className="text-xs text-amber-400/70 ml-auto">{pivot_points.pivot_type}</span>
           </div>
           <div className="grid grid-cols-7 gap-1 text-center text-xs">
