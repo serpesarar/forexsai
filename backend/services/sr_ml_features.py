@@ -14,12 +14,20 @@ ML modeline doğrudan feature olarak giriyor.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+import threading
+from dataclasses import dataclass, asdict
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
+# =========================================================================
+# GLOBAL S/R CACHE (15 dakikada bir güncellenir)
+# =========================================================================
+_sr_cache: Dict[str, dict] = {}
+_sr_cache_lock = threading.Lock()
+_SR_CACHE_TTL_SECONDS = 900  # 15 dakika
 
 
 @dataclass
@@ -34,6 +42,9 @@ class SRLevel:
     volume_confirmation: float  # 0-1
     first_touch_date: datetime
     is_broken: bool = False
+    # YENİ: Age ve Freshness alanları
+    last_touch_bars_ago: int = 0  # Son test kaç bar önce
+    age_days: int = 0  # Seviye kaç gün önce oluştu
 
 
 @dataclass 
@@ -55,6 +66,10 @@ class SRFeatures:
     sr_rejection_count_total: int
     sr_volume_confirmation_avg: float
     
+    # YENİ: Freshness feature'ları
+    sr_freshness_score: float  # 0-1, tazelik (son test ne kadar yakın)
+    sr_age_score: float  # 0-1, yaş skoru
+    
     # Regime bilgisi
     sr_regime_type: str  # RANGING, TRENDING_BULL, TRENDING_BEAR
     sr_is_clustered: bool
@@ -64,13 +79,36 @@ class SRFeatureEngine:
     """
     Destek/Direnç noktalarını ML modeline hazırlayan engine.
     5 katman: Mesafe, Güç, Confluence, Regime, Cluster
+    
+    Cache: 15 dakikada bir güncellenir (DBSCAN maliyetli)
     """
     
     def __init__(self, symbol: str = 'XAUUSD'):
         self.symbol = symbol.upper()
         self.pip_value = 0.1 if 'XAU' in self.symbol else (1.0 if 'NDX' in self.symbol or 'NAS' in self.symbol else 0.0001)
-        self._sr_cache: Dict[str, List[SRLevel]] = {}
         self._atr_cache: Dict[str, float] = {}
+    
+    def _get_cached_sr(self) -> Optional[dict]:
+        """Cache'den S/R verilerini al (15 dk TTL)"""
+        cache_key = f"sr_{self.symbol}"
+        with _sr_cache_lock:
+            if cache_key in _sr_cache:
+                cached = _sr_cache[cache_key]
+                age = (datetime.utcnow() - cached['timestamp']).total_seconds()
+                if age < _SR_CACHE_TTL_SECONDS:
+                    logger.debug(f"S/R cache hit for {self.symbol} (age: {age:.0f}s)")
+                    return cached['data']
+        return None
+    
+    def _set_cached_sr(self, data: dict):
+        """S/R verilerini cache'e yaz"""
+        cache_key = f"sr_{self.symbol}"
+        with _sr_cache_lock:
+            _sr_cache[cache_key] = {
+                'timestamp': datetime.utcnow(),
+                'data': data
+            }
+        logger.debug(f"S/R cache set for {self.symbol}")
     
     async def generate_sr_features(self, current_price: float) -> SRFeatures:
         """
@@ -121,6 +159,8 @@ class SRFeatureEngine:
                 sr_touch_count_avg=strength_features['avg_touch_count'],
                 sr_rejection_count_total=strength_features['total_rejection_count'],
                 sr_volume_confirmation_avg=strength_features['avg_volume_confirmation'],
+                sr_freshness_score=strength_features.get('avg_freshness_score', 0.5),
+                sr_age_score=strength_features.get('avg_age_score', 0.5),
                 sr_regime_type=regime_feature['regime_type'],
                 sr_is_clustered=cluster_feature['is_dense']
             )
@@ -145,6 +185,8 @@ class SRFeatureEngine:
             sr_touch_count_avg=0.0,
             sr_rejection_count_total=0,
             sr_volume_confirmation_avg=0.0,
+            sr_freshness_score=0.5,
+            sr_age_score=0.5,
             sr_regime_type="UNKNOWN",
             sr_is_clustered=False
         )
@@ -354,15 +396,29 @@ class SRFeatureEngine:
                 volume_score = level.volume_confirmation
                 rejection_score = min(level.rejection_count / 3, 1.0)
                 
-                # Age score
-                age_days = (datetime.utcnow() - level.first_touch_date).days
-                age_score = min(age_days / 30, 1.0)
+                # YENİ: Freshness skoru (son test ne kadar yakın)
+                # 10 bar önce = %100, 20 bar = %50, 40+ bar = %25
+                bars_ago = max(1, level.last_touch_bars_ago)
+                freshness_score = min(10 / bars_ago, 1.0)
                 
-                # Toplam strength
+                # YENİ: Age skoru (yaş - daha eski = daha güçlü, ama çok eski = zayıf)
+                # 7-30 gün = optimal, <7 gün = çok yeni, >60 gün = eski
+                age_days = level.age_days if level.age_days > 0 else (datetime.utcnow() - level.first_touch_date).days
+                if age_days < 7:
+                    age_score = age_days / 7 * 0.7  # Çok yeni, güç %70'e kadar
+                elif age_days <= 30:
+                    age_score = 1.0  # Optimal yaş = %100
+                elif age_days <= 60:
+                    age_score = 1.0 - (age_days - 30) / 60  # Yavaş düşüş
+                else:
+                    age_score = 0.5  # 60+ gün = %50 güç
+                
+                # Toplam strength (freshness eklendi)
                 total_strength = (
-                    touch_score * 0.25 +
-                    volume_score * 0.25 +
-                    rejection_score * 0.25 +
+                    touch_score * 0.20 +
+                    volume_score * 0.20 +
+                    rejection_score * 0.20 +
+                    freshness_score * 0.15 +  # YENİ
                     age_score * 0.15 +
                     tf_weight * 0.10
                 )
@@ -375,7 +431,9 @@ class SRFeatureEngine:
                     'level': level.price,
                     'strength': total_strength,
                     'distance_weight': distance_weight,
-                    'weighted_strength': total_strength * distance_weight
+                    'weighted_strength': total_strength * distance_weight,
+                    'freshness_score': freshness_score,
+                    'age_score': age_score
                 })
                 
                 total_touch += level.touch_count
@@ -386,14 +444,20 @@ class SRFeatureEngine:
         # Ağırlıklı strength
         if all_strengths:
             weighted_strength = sum(s['weighted_strength'] for s in all_strengths) / len(all_strengths)
+            avg_freshness = sum(s['freshness_score'] for s in all_strengths) / len(all_strengths)
+            avg_age_score = sum(s['age_score'] for s in all_strengths) / len(all_strengths)
         else:
             weighted_strength = 0.5
+            avg_freshness = 0.5
+            avg_age_score = 0.5
         
         return {
             'weighted_strength': weighted_strength,
             'avg_touch_count': total_touch / max(count, 1),
             'total_rejection_count': total_rejection,
             'avg_volume_confirmation': total_volume_conf / max(count, 1),
+            'avg_freshness_score': avg_freshness,
+            'avg_age_score': avg_age_score,
             'all_strengths': all_strengths
         }
     
