@@ -289,6 +289,68 @@ async def debug_intraday_test(symbol: str):
     return result
 
 
+# ═══════════════════════════════════════════════════════════════════
+# SLIPPAGE & COT API ENDPOINTS
+# ═══════════════════════════════════════════════════════════════════
+
+@app.get("/api/slippage/stats")
+async def get_slippage_stats():
+    """Get slippage statistics and current position multiplier."""
+    try:
+        from services.slippage_monitor import get_slippage_stats, get_position_multiplier
+        stats = await get_slippage_stats()
+        return {
+            "success": True,
+            "data": {
+                "average_slippage": stats.average_slippage,
+                "max_slippage": stats.max_slippage,
+                "min_slippage": stats.min_slippage,
+                "favorable_count": stats.favorable_count,
+                "unfavorable_count": stats.unfavorable_count,
+                "total_trades": stats.total_trades,
+                "position_multiplier": stats.position_multiplier,
+                "high_slippage_mode": stats.high_slippage_mode,
+                "last_10_trades": stats.last_10_trades,
+            }
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/api/slippage/log")
+async def log_execution(data: dict):
+    """Log a trade execution for slippage tracking."""
+    try:
+        from services.slippage_monitor import handle_execution_webhook
+        result = await handle_execution_webhook(data)
+        return result
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/cot/summary")
+async def get_cot_summary():
+    """Get COT report summary for all tracked symbols."""
+    try:
+        from services.cot_report_service import get_cot_summary
+        summary = await get_cot_summary()
+        return {"success": True, "data": summary}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/cot/{symbol}")
+async def get_cot_data(symbol: str):
+    """Get COT report data for a specific symbol."""
+    try:
+        from services.cot_report_service import fetch_cot_data
+        from dataclasses import asdict
+        cot = await fetch_cot_data(symbol)
+        return {"success": True, "data": asdict(cot)}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 # Startup event - start background scheduler
 @app.on_event("startup")
 async def startup_event():
