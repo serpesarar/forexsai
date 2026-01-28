@@ -823,26 +823,119 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
             prob_down = 1 - prob_up
             logger.info(f"Gold probabilities adjusted by news: UP {prob_up:.2f}, DOWN {prob_down:.2f}")
         
-        # Determine direction - lowered thresholds for more responsive signals
-        # XAUUSD: 0.52, NASDAQ: 0.53 (was 0.55 and 0.6)
-        direction_threshold = 0.52 if is_gold else 0.53
+        # ═══════════════════════════════════════════════════════════════════
+        # TREND CONFIRMATION - Check EMA alignment before making decision
+        # ═══════════════════════════════════════════════════════════════════
+        ema_20 = ta.get("ema_20", current_price)
+        ema_50 = ta.get("ema_50", current_price)
+        ema_200 = ta.get("ema_200", current_price)
         
-        if prob_up > direction_threshold:
-            direction = "BUY"
-            confidence = prob_up * 100
-        elif prob_down > direction_threshold:
-            direction = "SELL"
-            confidence = prob_down * 100
+        # Calculate trend strength from EMA positions
+        price_above_ema20 = current_price > ema_20
+        price_above_ema50 = current_price > ema_50
+        price_above_ema200 = current_price > ema_200
+        ema20_above_ema50 = ema_20 > ema_50
+        ema50_above_ema200 = ema_50 > ema_200
+        
+        # Strong bullish: Price > EMA20 > EMA50 > EMA200
+        strong_bullish_trend = price_above_ema20 and ema20_above_ema50 and ema50_above_ema200
+        # Strong bearish: Price < EMA20 < EMA50 < EMA200
+        strong_bearish_trend = not price_above_ema20 and not ema20_above_ema50 and not ema50_above_ema200
+        
+        # Calculate momentum confirmation
+        momentum_3 = ta.get("momentum_3", 0)
+        momentum_10 = ta.get("momentum_10", 0)
+        rsi_14 = ta.get("rsi_14", 50)
+        macd_hist = ta.get("macd_hist", 0)
+        
+        # Bullish momentum: positive momentum + RSI > 50 + MACD positive
+        bullish_momentum = momentum_3 > 0 and momentum_10 > 0 and rsi_14 > 50
+        bearish_momentum = momentum_3 < 0 and momentum_10 < 0 and rsi_14 < 50
+        
+        # Trend score (-1 to +1)
+        trend_score = 0
+        if strong_bullish_trend:
+            trend_score += 0.4
+        elif strong_bearish_trend:
+            trend_score -= 0.4
+        if price_above_ema200:
+            trend_score += 0.2
         else:
-            # Even for HOLD, check if news gives strong signal
-            if is_gold and abs(news_sentiment) > 0.3:
+            trend_score -= 0.2
+        if bullish_momentum:
+            trend_score += 0.2
+        elif bearish_momentum:
+            trend_score -= 0.2
+        if macd_hist > 0:
+            trend_score += 0.1
+        else:
+            trend_score -= 0.1
+        
+        logger.info(f"Trend analysis: score={trend_score:.2f}, bullish={strong_bullish_trend}, bearish={strong_bearish_trend}")
+        
+        # Determine direction with TREND CONFIRMATION
+        # Higher thresholds + trend must align
+        direction_threshold = 0.55 if is_gold else 0.55
+        
+        # Model says BUY
+        if prob_up > direction_threshold:
+            if trend_score >= 0:
+                # Trend confirms BUY
+                direction = "BUY"
+                confidence = prob_up * 100
+                if strong_bullish_trend:
+                    confidence *= 1.1  # Boost for strong trend alignment
+            else:
+                # Trend conflicts - reduce confidence or switch to HOLD
+                if trend_score < -0.3:
+                    direction = "HOLD"
+                    confidence = 50
+                    mtf_adjustments["warnings"].append("⚠️ Model BUY ama trend bearish - bekle")
+                    logger.warning(f"BUY signal rejected: trend_score={trend_score:.2f}")
+                else:
+                    direction = "BUY"
+                    confidence = prob_up * 100 * 0.7  # Reduced confidence
+                    mtf_adjustments["warnings"].append("⚡ Trend zayıf - dikkatli ol")
+        
+        # Model says SELL
+        elif prob_down > direction_threshold:
+            if trend_score <= 0:
+                # Trend confirms SELL
+                direction = "SELL"
+                confidence = prob_down * 100
+                if strong_bearish_trend:
+                    confidence *= 1.1  # Boost for strong trend alignment
+            else:
+                # Trend conflicts - reduce confidence or switch to HOLD
+                if trend_score > 0.3:
+                    direction = "HOLD"
+                    confidence = 50
+                    mtf_adjustments["warnings"].append("⚠️ Model SELL ama trend bullish - bekle")
+                    logger.warning(f"SELL signal rejected: trend_score={trend_score:.2f}")
+                else:
+                    direction = "SELL"
+                    confidence = prob_down * 100 * 0.7  # Reduced confidence
+                    mtf_adjustments["warnings"].append("⚡ Trend zayıf - dikkatli ol")
+        
+        # Model uncertain
+        else:
+            # Check if strong trend exists despite model uncertainty
+            if strong_bullish_trend and bullish_momentum and rsi_14 < 70:
+                direction = "BUY"
+                confidence = 55 + (trend_score * 20)
+                mtf_adjustments["warnings"].append("📈 Güçlü yükseliş trendi tespit")
+            elif strong_bearish_trend and bearish_momentum and rsi_14 > 30:
+                direction = "SELL"
+                confidence = 55 + (abs(trend_score) * 20)
+                mtf_adjustments["warnings"].append("📉 Güçlü düşüş trendi tespit")
+            elif is_gold and abs(news_sentiment) > 0.3:
                 if news_sentiment > 0.3:
                     direction = "BUY"
                     confidence = 55 + (news_sentiment * 20)
                 else:
                     direction = "SELL"
                     confidence = 55 + (abs(news_sentiment) * 20)
-                logger.info(f"Gold direction overridden by strong news: {direction}")
+                logger.info(f"Gold direction by strong news: {direction}")
             else:
                 direction = "HOLD"
                 confidence = max(prob_up, prob_down) * 100
