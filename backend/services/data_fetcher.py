@@ -7,11 +7,18 @@ from typing import Any, Optional
 import httpx
 
 from config import settings
+from services.api_cache import api_cache, APICache
 
 
 _price_cache: dict[str, tuple[float, float]] = {}  # symbol -> (ts_epoch, price)
 _eod_cache: dict[str, tuple[float, list[dict]]] = {}  # symbol -> (ts_epoch, rows)
+_intraday_cache: dict[str, tuple[float, list[dict]]] = {}  # symbol:interval -> (ts, rows)
 _cache_lock = Lock()
+
+# Increased TTLs to reduce API calls
+PRICE_TTL = 30  # Was 5s, now 30s
+INTRADAY_TTL = 60  # 60 seconds
+EOD_TTL = 600  # 10 minutes
 
 
 def _normalize_eodhd_symbol(symbol: str) -> str:
@@ -56,7 +63,7 @@ async def fetch_latest_price(symbol: str) -> Optional[float]:
     now_ts = datetime.utcnow().timestamp()
     with _cache_lock:
         cached = _price_cache.get(key)
-        if cached and now_ts - cached[0] < 5:  # 5s TTL for more accurate prices
+        if cached and now_ts - cached[0] < PRICE_TTL:  # 30s TTL (was 5s)
             return cached[1]
 
     is_xau = (symbol or "").upper().startswith("XAU")
@@ -111,6 +118,14 @@ async def fetch_intraday_candles(symbol: str, interval: str = "5m", limit: int =
         return []
     
     eod_symbol = _normalize_eodhd_symbol(symbol)
+    cache_key = f"{eod_symbol}:{interval}"
+    now_ts = datetime.utcnow().timestamp()
+    
+    # Check cache first (60s TTL)
+    with _cache_lock:
+        cached = _intraday_cache.get(cache_key)
+        if cached and now_ts - cached[0] < INTRADAY_TTL:
+            return cached[1][-limit:]
     
     # Map interval to EODHD format
     interval_map = {"1m": "1m", "5m": "5m", "15m": "5m", "1h": "1h"}
@@ -159,9 +174,16 @@ async def fetch_intraday_candles(symbol: str, interval: str = "5m", limit: int =
                     "volume": float(row.get("volume") or 0.0),
                 })
             
+            # Cache the result
+            with _cache_lock:
+                _intraday_cache[cache_key] = (now_ts, cleaned)
+            
             return cleaned[-limit:]
     except Exception:
-        return []
+        # Return stale cache on error
+        with _cache_lock:
+            cached = _intraday_cache.get(cache_key)
+            return cached[1][-limit:] if cached else []
 
 
 def _resample_to_30m(candles_1m: list[dict]) -> list[dict]:

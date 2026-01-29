@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
+from threading import Lock
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
 import sys
@@ -373,8 +374,12 @@ async def fetch_intraday_candles(symbol: str, interval: str = "1m", limit: int =
     return []
 
 
+_rtyhiim_cache: Dict[str, tuple] = {}  # symbol -> (timestamp, prices)
+_rtyhiim_cache_lock = Lock()
+RTYHIIM_CACHE_TTL = 60  # 60 seconds
+
 async def fetch_live_prices(symbol: str, limit: int = 600) -> List[float]:
-    """Fetch live intraday prices for rhythm detection."""
+    """Fetch live intraday prices for rhythm detection. Uses 60s cache."""
     if not settings.eodhd_api_key:
         return []
     
@@ -385,6 +390,13 @@ async def fetch_live_prices(symbol: str, limit: int = 600) -> List[float]:
         eod_symbol = "NDX.INDX"
     else:
         eod_symbol = symbol
+    
+    # Check cache first
+    now_ts = datetime.utcnow().timestamp()
+    with _rtyhiim_cache_lock:
+        cached = _rtyhiim_cache.get(eod_symbol)
+        if cached and now_ts - cached[0] < RTYHIIM_CACHE_TTL:
+            return cached[1][-limit:]
     
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
@@ -400,6 +412,8 @@ async def fetch_live_prices(symbol: str, limit: int = 600) -> List[float]:
                 if data and isinstance(data, list):
                     prices = [float(d.get("close", d.get("price", 0))) for d in data[-limit:]]
                     if prices and len(prices) > 50:
+                        with _rtyhiim_cache_lock:
+                            _rtyhiim_cache[eod_symbol] = (now_ts, prices)
                         return prices
             
             # Fallback to EOD data
@@ -415,6 +429,8 @@ async def fetch_live_prices(symbol: str, limit: int = 600) -> List[float]:
                 if data and isinstance(data, list):
                     prices = [float(d.get("close", 0)) for d in reversed(data[:limit])]
                     if prices:
+                        with _rtyhiim_cache_lock:
+                            _rtyhiim_cache[eod_symbol] = (now_ts, prices)
                         return prices
     except Exception:
         pass
