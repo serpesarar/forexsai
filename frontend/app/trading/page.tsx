@@ -52,28 +52,28 @@ export default function TradingDashboard() {
         {/* Animated gradient line */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-accent to-transparent animate-pulse" />
         
-        <div className="mx-auto flex max-w-[1800px] items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-[1800px] items-center justify-between px-3 py-2 md:px-6 md:py-4">
           {/* Symbol Dropdown */}
           <div className="relative z-50">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className={`group flex items-center gap-4 rounded-2xl bg-gradient-to-r ${currentSymbol.color} px-6 py-4 border ${currentSymbol.border} transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-accent/20 active:scale-[0.98]`}
+              className={`group flex items-center gap-2 md:gap-4 rounded-xl md:rounded-2xl bg-gradient-to-r ${currentSymbol.color} px-3 py-2 md:px-6 md:py-4 border ${currentSymbol.border} transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-accent/20 active:scale-[0.98]`}
             >
-              <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 transition-transform duration-300 group-hover:rotate-12`}>
-                <SymbolIcon className={`h-6 w-6 ${currentSymbol.accent}`} />
+              <div className={`flex h-8 w-8 md:h-12 md:w-12 items-center justify-center rounded-lg md:rounded-xl bg-white/10 transition-transform duration-300 group-hover:rotate-12`}>
+                <SymbolIcon className={`h-4 w-4 md:h-6 md:w-6 ${currentSymbol.accent}`} />
               </div>
-              <div className="text-left min-w-[120px]">
-                <p className="text-xs text-textSecondary font-medium">Aktif Sembol</p>
-                <p className="text-lg font-bold">{currentSymbol.label}</p>
+              <div className="text-left">
+                <p className="text-[10px] md:text-xs text-textSecondary font-medium">Aktif Sembol</p>
+                <p className="text-sm md:text-lg font-bold">{currentSymbol.shortLabel}</p>
               </div>
-              <ChevronDown className={`ml-2 h-5 w-5 transition-transform duration-300 ${dropdownOpen ? "rotate-180" : ""}`} />
+              <ChevronDown className={`h-4 w-4 md:h-5 md:w-5 transition-transform duration-300 ${dropdownOpen ? "rotate-180" : ""}`} />
             </button>
 
             {/* Dropdown Menu - Fixed positioning */}
             {dropdownOpen && (
               <>
                 <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setDropdownOpen(false)} />
-                <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-80 overflow-hidden rounded-2xl border border-white/10 bg-background shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-64 md:w-80 overflow-hidden rounded-xl md:rounded-2xl border border-white/10 bg-background shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
                   {(Object.entries(SYMBOLS) as [SymbolKey, typeof SYMBOLS[SymbolKey]][]).map(([key, sym]) => {
                     const Icon = sym.icon;
                     const isSelected = key === selectedSymbol;
@@ -84,18 +84,18 @@ export default function TradingDashboard() {
                           setSelectedSymbol(key);
                           setDropdownOpen(false);
                         }}
-                        className={`flex w-full items-center gap-4 px-6 py-5 transition-all duration-200 ${
+                        className={`flex w-full items-center gap-3 md:gap-4 px-4 py-3 md:px-6 md:py-5 transition-all duration-200 ${
                           isSelected 
                             ? `bg-gradient-to-r ${sym.color} border-l-4 ${sym.border}` 
                             : "hover:bg-white/5 border-l-4 border-transparent"
                         }`}
                       >
-                        <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${isSelected ? "bg-white/20" : "bg-white/10"}`}>
-                          <Icon className={`h-6 w-6 ${sym.accent}`} />
+                        <div className={`flex h-9 w-9 md:h-12 md:w-12 items-center justify-center rounded-lg md:rounded-xl ${isSelected ? "bg-white/20" : "bg-white/10"}`}>
+                          <Icon className={`h-4 w-4 md:h-6 md:w-6 ${sym.accent}`} />
                         </div>
                         <div className="text-left flex-1">
-                          <p className="font-bold text-base">{sym.label}</p>
-                          <p className="text-sm text-textSecondary">{sym.shortLabel}</p>
+                          <p className="font-bold text-sm md:text-base">{sym.shortLabel}</p>
+                          <p className="text-xs md:text-sm text-textSecondary hidden md:block">{sym.label}</p>
                         </div>
                         {isSelected && (
                           <div className="h-3 w-3 rounded-full bg-accent animate-pulse" />
@@ -108,58 +108,63 @@ export default function TradingDashboard() {
             )}
           </div>
 
-          {/* Title - Animated */}
-          <div className="text-center">
+          {/* Title - Animated - Hidden on mobile */}
+          <div className="hidden lg:block text-center">
             <div className="flex items-center justify-center gap-3">
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center animate-pulse">
                 <Brain className="h-4 w-4 text-white" />
               </div>
-              <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white to-white/70 bg-clip-text">
+              <h1 className="text-xl xl:text-2xl font-bold tracking-tight bg-gradient-to-r from-white to-white/70 bg-clip-text">
                 AI Trading Dashboard
               </h1>
             </div>
-            <p className="text-sm text-textSecondary mt-1">ML Model + Claude AI Analysis</p>
+            <p className="text-xs xl:text-sm text-textSecondary mt-1">ML Model + Claude AI Analysis</p>
           </div>
 
           {/* Right Side - Navigation + Time */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <Link 
               href="/charts"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-accent/10 border border-accent/20 hover:bg-accent/20 hover:border-accent/30 transition-all duration-200 text-accent"
+              className="flex items-center gap-1.5 md:gap-2 px-2.5 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl bg-accent/10 border border-accent/20 hover:bg-accent/20 hover:border-accent/30 transition-all duration-200 text-accent"
             >
               <BarChart3 className="h-4 w-4" />
-              <span className="text-sm font-medium">Grafikler</span>
+              <span className="text-xs md:text-sm font-medium hidden sm:inline">Grafikler</span>
             </Link>
             <Link 
               href="/"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200"
+              className="flex items-center gap-1.5 md:gap-2 px-2.5 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200"
             >
               <Home className="h-4 w-4" />
-              <span className="text-sm">Ana Sayfa</span>
+              <span className="text-xs md:text-sm hidden sm:inline">Ana Sayfa</span>
             </Link>
-            <div className="text-right">
+            <div className="text-right hidden md:block">
               <p className="text-sm font-mono font-bold">{new Date().toLocaleDateString("tr-TR")}</p>
               <p className="text-xs text-textSecondary flex items-center gap-1 justify-end">
                 <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
                 Canlı Analiz
               </p>
             </div>
+            {/* Mobile live indicator */}
+            <div className="flex md:hidden items-center gap-1 px-2 py-1 rounded-full bg-success/20">
+              <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+              <span className="text-[10px] font-bold text-success">LIVE</span>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content - Golden Ratio Layout */}
-      <main className="mx-auto max-w-[1800px] p-6">
+      <main className="mx-auto max-w-[1800px] p-3 md:p-6">
         {/* 
           Golden Ratio Grid Layout:
           - Main prediction area: 61.8% width (φ / (1 + φ))
           - Side panels: 38.2% width (1 / (1 + φ))
           - Vertical sections follow same ratio
+          - Mobile: Single column
         */}
         
         <div
-          className="grid gap-6 items-start"
-          style={{ gridTemplateColumns: `${PHI}fr 1fr`, alignItems: "start" }}
+          className="grid gap-4 md:gap-6 items-start grid-cols-1 lg:grid-cols-[1.618fr_1fr]" 
         >
           {/* LEFT COLUMN - Primary Analysis (61.8%) */}
           <div className="space-y-6 self-start">
@@ -192,7 +197,7 @@ export default function TradingDashboard() {
           </div>
 
           {/* RIGHT COLUMN - Secondary Analysis (38.2%) */}
-          <div className="space-y-6 self-start min-w-0 overflow-hidden">
+          <div className="space-y-4 md:space-y-6 self-start min-w-0 overflow-hidden">
             {/* Detailed Analysis */}
             <section>
               <div className="mb-3 flex items-center gap-2">
@@ -261,10 +266,10 @@ export default function TradingDashboard() {
         </div>
 
         {/* Full-Width Charts Section */}
-        <section className="mt-8">
-          <div className="mb-4 flex items-center gap-2">
-            <LineChart className="h-6 w-6 text-blue-400" />
-            <h2 className="text-lg font-bold uppercase tracking-wider">
+        <section className="mt-6 md:mt-8">
+          <div className="mb-3 md:mb-4 flex items-center gap-2">
+            <LineChart className="h-5 w-5 md:h-6 md:w-6 text-blue-400" />
+            <h2 className="text-base md:text-lg font-bold uppercase tracking-wider">
               Canlı Fiyat Grafikleri
             </h2>
             <span className="ml-2 flex items-center gap-1 text-xs text-success">
@@ -281,14 +286,14 @@ export default function TradingDashboard() {
             <LiveChartPanel 
               symbol="NDX.INDX" 
               symbolLabel="NASDAQ-100" 
-              height={450} 
+              height={300} 
             />
             
             {/* XAUUSD Chart */}
             <LiveChartPanel 
               symbol="XAUUSD" 
               symbolLabel="Gold (XAU/USD)" 
-              height={450} 
+              height={300} 
             />
           </div>
         </section>

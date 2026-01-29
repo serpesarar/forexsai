@@ -1273,27 +1273,27 @@ export default function HomePage() {
             <div className="flex h-12 md:h-14 items-center justify-between">
               
               {/* Navigation Tabs */}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5 md:gap-1">
                 <Link
                   href="/"
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 border border-white/10 text-sm font-medium text-white"
+                  className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg bg-white/10 border border-white/10 text-xs md:text-sm font-medium text-white"
                 >
-                  <Brain className="h-4 w-4 text-accent" />
+                  <Brain className="h-3.5 w-3.5 md:h-4 md:w-4 text-accent" />
                   <span className="hidden sm:inline">Dashboard</span>
                 </Link>
                 <Link
                   href="/charts"
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all"
+                  className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all"
                 >
-                  <LineChart className="h-4 w-4" />
+                  <LineChart className="h-3.5 w-3.5 md:h-4 md:w-4" />
                   <span className="hidden sm:inline">Grafikler</span>
                 </Link>
                 <Link
                   href="/trading"
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all"
+                  className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all"
                 >
-                  <BarChart3 className="h-4 w-4" />
-                  <span className="hidden sm:inline">AI Trading Panel</span>
+                  <BarChart3 className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">AI Trading</span>
                 </Link>
               </div>
               
@@ -1301,7 +1301,7 @@ export default function HomePage() {
               <button
                 onClick={fetchAll}
                 disabled={isLoading}
-                className="group relative overflow-hidden flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold text-white transition-all duration-300 disabled:opacity-70"
+                className="group relative overflow-hidden flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-bold text-white transition-all duration-300 disabled:opacity-70"
               >
                 {/* Animated gradient background */}
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 bg-[length:200%_100%] group-hover:bg-[position:100%_0] transition-all duration-500" />
@@ -1312,13 +1312,14 @@ export default function HomePage() {
                 {/* Glow */}
                 <div className="absolute -inset-1 bg-emerald-500/30 rounded-lg blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 
-                <span className="relative flex items-center gap-2">
+                <span className="relative flex items-center gap-1.5 md:gap-2">
                   {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 md:h-4 md:w-4 animate-spin" />
                   ) : (
-                    <PlayCircle className="h-4 w-4" />
+                    <PlayCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />
                   )}
-                  <span className="uppercase tracking-wider">{isLoading ? t("common.running") : t("common.runAnalysis")}</span>
+                  <span className="uppercase tracking-wider hidden sm:inline">{isLoading ? t("common.running") : t("common.runAnalysis")}</span>
+                  <span className="uppercase tracking-wider sm:hidden">RUN</span>
                 </span>
               </button>
             </div>

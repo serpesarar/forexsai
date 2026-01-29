@@ -132,37 +132,37 @@ function ChartPanel({
   }, []);
 
   return (
-    <div className="glass-card rounded-2xl overflow-hidden">
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent/30 to-blue-500/30">
-            <BarChart3 className="h-5 w-5 text-accent" />
+    <div className="glass-card rounded-xl md:rounded-2xl overflow-hidden">
+      <div className="flex items-center justify-between p-3 md:p-4 border-b border-white/10">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg md:rounded-xl bg-gradient-to-br from-accent/30 to-blue-500/30">
+            <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-accent" />
           </div>
           <div>
-            <h3 className="font-bold text-lg">{symbol.label}</h3>
-            <p className="text-xs text-textSecondary">{symbol.description}</p>
+            <h3 className="font-bold text-base md:text-lg">{symbol.label}</h3>
+            <p className="text-[10px] md:text-xs text-textSecondary">{symbol.description}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => onFullscreen(symbol)}
-            className="p-2 rounded-lg hover:bg-white/10 transition text-textSecondary hover:text-white"
+            className="p-1.5 md:p-2 rounded-lg hover:bg-white/10 transition text-textSecondary hover:text-white"
             title="Tam Ekran"
           >
-            <Maximize2 className="w-5 h-5" />
+            <Maximize2 className="w-4 h-4 md:w-5 md:h-5" />
           </button>
         </div>
       </div>
       <div className="relative">
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
-            <RefreshCw className="w-8 h-8 animate-spin text-accent" />
+            <RefreshCw className="w-6 h-6 md:w-8 md:h-8 animate-spin text-accent" />
           </div>
         )}
         <TradingViewChart 
           symbol={symbol} 
           containerId={`tv_chart_${symbol.id}`}
-          height={450}
+          height={350}
         />
       </div>
     </div>
@@ -286,60 +286,61 @@ export default function ChartsPage() {
 
   return (
     <div className="min-h-screen bg-background text-white">
-      <div className="max-w-[1800px] mx-auto p-6 space-y-6">
+      <div className="max-w-[1800px] mx-auto p-3 md:p-6 space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 md:gap-4">
             <Link 
               href="/trading" 
-              className="p-2 rounded-xl hover:bg-white/10 transition"
+              className="p-1.5 md:p-2 rounded-lg md:rounded-xl hover:bg-white/10 transition"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
             </Link>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-accent/30 to-purple-500/30">
-                <BarChart3 className="h-6 w-6 text-accent" />
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="flex h-9 w-9 md:h-12 md:w-12 items-center justify-center rounded-lg md:rounded-xl bg-gradient-to-br from-accent/30 to-purple-500/30">
+                <BarChart3 className="h-4 w-4 md:h-6 md:w-6 text-accent" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Canlı Grafikler</h1>
-                <p className="text-sm text-textSecondary">TradingView ile profesyonel grafik analizi</p>
+                <h1 className="text-lg md:text-2xl font-bold">Canlı Grafikler</h1>
+                <p className="text-xs md:text-sm text-textSecondary hidden sm:block">TradingView ile profesyonel grafik analizi</p>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4 w-full sm:w-auto justify-end">
             {user && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
+              <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
                 <User className="w-4 h-4 text-accent" />
                 <span className="text-sm">{user.email}</span>
               </div>
             )}
             <Link
               href="/"
-              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition text-sm"
+              className="px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl bg-white/5 hover:bg-white/10 transition text-xs md:text-sm"
             >
               Ana Sayfa
             </Link>
             <Link
               href="/trading"
-              className="px-4 py-2 rounded-xl bg-accent/20 hover:bg-accent/30 transition text-sm text-accent"
+              className="px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl bg-accent/20 hover:bg-accent/30 transition text-xs md:text-sm text-accent"
             >
-              Trading Dashboard
+              <span className="hidden sm:inline">Trading Dashboard</span>
+              <span className="sm:hidden">Trading</span>
             </Link>
           </div>
         </div>
 
         {/* Info Banner */}
-        <div className="glass-card p-4 rounded-xl space-y-2 border border-accent/20">
-          <div className="flex items-center gap-3">
-            <TrendingUp className="w-5 h-5 text-accent flex-shrink-0" />
-            <p className="text-sm text-textSecondary">
-              <span className="text-white font-medium">TradingView</span> tarafından sağlanan profesyonel grafikler. 
-              Tam özellikli analiz araçları, göstergeler ve çizim araçlarını kullanabilirsiniz.
+        <div className="glass-card p-3 md:p-4 rounded-lg md:rounded-xl space-y-2 border border-accent/20">
+          <div className="flex items-start md:items-center gap-2 md:gap-3">
+            <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-accent flex-shrink-0 mt-0.5 md:mt-0" />
+            <p className="text-xs md:text-sm text-textSecondary">
+              <span className="text-white font-medium">TradingView</span> tarafından sağlanan profesyonel grafikler.
+              <span className="hidden sm:inline"> Tam özellikli analiz araçları, göstergeler ve çizim araçlarını kullanabilirsiniz.</span>
             </p>
           </div>
-          <div className="flex items-center gap-2 text-xs text-amber-400/80 pl-8">
+          <div className="hidden sm:flex items-center gap-2 text-xs text-amber-400/80 pl-6 md:pl-8">
             <span>💡</span>
-            <span>Çizimlerinizi kaydetmek için grafik üzerinden TradingView hesabınıza giriş yapın. Çizimler hesabınızda saklanır ve her yerden erişebilirsiniz.</span>
+            <span>Çizimlerinizi kaydetmek için grafik üzerinden TradingView hesabınıza giriş yapın.</span>
           </div>
         </div>
 
