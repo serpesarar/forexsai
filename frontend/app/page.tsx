@@ -35,6 +35,7 @@ import InstitutionalDataPanel from "../components/InstitutionalDataPanel";
 import CandlestickPatternPanel from "../components/CandlestickPatternPanel";
 import MLFactorPanel from "../components/MLFactorPanel";
 import { NasdaqEarningsPanel } from "../components/EarningsPanel";
+import AnimatedBackground from "../components/ui/AnimatedBackground";
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
 import { useLivePrices } from "../hooks/useLivePrices";
@@ -842,11 +843,11 @@ export default function HomePage() {
     const atrThreshold = mtfData?.max_pip_threshold || Math.round(50 * tfMultiplier);
     
     return (
-      <div className="glass-card card-hover p-5">
-        <div className="flex items-center justify-between">
+      <div className="signal-card-premium p-5 shimmer-effect">
+        <div className="flex items-center justify-between relative z-10">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("trendAnalysis.title")}</p>
-            <h3 className="mt-2 text-lg font-semibold">{signal.symbol}</h3>
+            <h3 className="mt-2 text-lg font-semibold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">{signal.symbol}</h3>
           </div>
           {isDataLoading || isMTFLoading ? (
             <span className="rounded-full px-3 py-1 text-xs font-semibold bg-white/10 text-textSecondary flex items-center gap-1">
@@ -1047,7 +1048,7 @@ export default function HomePage() {
 
   // Claude patterns card renderer
   const renderClaudePatternCard = () => (
-    <div className="glass-card card-hover p-5">
+    <div className="glass-premium rounded-2xl p-5 transition-all duration-300 hover:shadow-glow-sm">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("claudePatterns.title")}</p>
@@ -1083,7 +1084,7 @@ export default function HomePage() {
 
   // Sentiment card renderer
   const renderSentimentCard = () => (
-    <div className="glass-card card-hover p-5">
+    <div className="glass-premium rounded-2xl p-5 transition-all duration-300 hover:shadow-glow-sm">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("sentiment.title")}</p>
@@ -1100,7 +1101,7 @@ export default function HomePage() {
 
   // News card renderer
   const renderNewsCard = () => (
-    <div className="glass-card card-hover p-5">
+    <div className="glass-premium rounded-2xl p-5 transition-all duration-300 hover:shadow-glow-sm">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("news.title")}</p>
@@ -1140,9 +1141,12 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-textPrimary">
+    <div className="min-h-screen text-textPrimary relative">
+      {/* Animated Background */}
+      <AnimatedBackground />
+      
       {/* Premium Header */}
-      <header className="relative overflow-hidden border-b border-white/10 bg-gradient-to-b from-slate-900 to-background">
+      <header className="header-premium sticky top-0 z-50 relative overflow-hidden">
         {/* Animated top border */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-accent to-transparent animate-pulse" />
         
