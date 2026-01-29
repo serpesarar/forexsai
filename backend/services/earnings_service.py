@@ -1,15 +1,16 @@
 """
 NASDAQ Earnings Calendar & Scenario Analysis Service
-EOD Historical Data API'den earnings verisi çeker ve senaryo analizi yapar
+Yahoo Finance API'den earnings verisi çeker ve senaryo analizi yapar
 """
 
-import httpx
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
 
-from config import settings
+import yfinance as yf
 
 class ImportanceLevel(str, Enum):
     CRITICAL = "CRITICAL"
@@ -290,74 +291,95 @@ class NASDAQScenarioEngine:
 
 
 class EarningsCalendarService:
-    """EOD Historical Data API'den earnings takvimi çeker"""
+    """Yahoo Finance API'den earnings takvimi çeker (ücretsiz)"""
     
     def __init__(self):
-        self.base_url = "https://eodhistoricaldata.com/api"
         self.scenario_engine = NASDAQScenarioEngine()
+        self._executor = ThreadPoolExecutor(max_workers=5)
+    
+    def _fetch_single_ticker_earnings(self, symbol: str, days_ahead: int) -> Optional[EarningsEvent]:
+        """Tek bir ticker için earnings verisi çek (sync)"""
+        try:
+            ticker = yf.Ticker(symbol)
+            calendar = ticker.calendar
+            
+            if not calendar or "Earnings Date" not in calendar:
+                return None
+            
+            earnings_dates = calendar.get("Earnings Date", [])
+            if not earnings_dates:
+                return None
+            
+            # İlk earnings date'i al
+            next_earnings = earnings_dates[0] if isinstance(earnings_dates, list) else earnings_dates
+            
+            # Tarih kontrolü
+            today = datetime.now().date()
+            max_date = today + timedelta(days=days_ahead)
+            
+            if isinstance(next_earnings, datetime):
+                earnings_date = next_earnings.date()
+            else:
+                earnings_date = next_earnings
+            
+            if earnings_date < today or earnings_date > max_date:
+                return None
+            
+            # EPS ve Revenue tahminleri
+            eps_avg = calendar.get("Earnings Average")
+            rev_avg = calendar.get("Revenue Average")
+            
+            # Revenue milyar'a çevir
+            if rev_avg and rev_avg > 1_000_000_000:
+                rev_avg = rev_avg / 1_000_000_000
+            
+            return EarningsEvent(
+                symbol=symbol,
+                company_name=ticker.info.get("shortName", symbol),
+                date=str(earnings_date),
+                time="AMC",  # Yahoo bunu vermez, varsayılan
+                expected_eps=float(eps_avg) if eps_avg else None,
+                expected_revenue=float(rev_avg) if rev_avg else None,
+                importance=get_importance_level(symbol),
+                nasdaq_weight=NASDAQ_WEIGHTS.get(symbol, 0)
+            )
+        except Exception as e:
+            print(f"Error fetching {symbol}: {e}")
+            return None
     
     async def fetch_earnings_calendar(self, days_ahead: int = 7) -> List[EarningsEvent]:
-        """Önümüzdeki X gün için earnings takvimi (EOD API)"""
+        """Önümüzdeki X gün için earnings takvimi (Yahoo Finance)"""
         
-        from_date = datetime.now().strftime("%Y-%m-%d")
-        to_date = (datetime.now() + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
+        loop = asyncio.get_event_loop()
+        events = []
         
-        # EOD API earnings endpoint
-        # https://eodhistoricaldata.com/api/calendar/earnings?api_token=XXX&from=2024-01-01&to=2024-01-31
+        # NASDAQ-100 top 20 için paralel fetch
+        symbols = list(NASDAQ_WEIGHTS.keys())
         
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{self.base_url}/calendar/earnings",
-                params={
-                    "api_token": settings.eodhd_api_key,
-                    "from": from_date,
-                    "to": to_date,
-                    "fmt": "json"
-                },
-                timeout=30
+        # ThreadPoolExecutor ile paralel çalıştır
+        futures = [
+            loop.run_in_executor(
+                self._executor, 
+                self._fetch_single_ticker_earnings, 
+                symbol, 
+                days_ahead
             )
-            
-            if response.status_code != 200:
-                print(f"EOD Earnings API error: {response.status_code}")
-                return []
-            
-            data = response.json()
-            events = []
-            
-            # EOD API format: {"earnings": [...]}
-            earnings_list = data.get("earnings", []) if isinstance(data, dict) else data
-            
-            for item in earnings_list:
-                # EOD format: code field contains symbol (e.g., "AAPL.US")
-                raw_symbol = item.get("code", "") or item.get("symbol", "")
-                # Remove exchange suffix (.US, .NASDAQ)
-                symbol = raw_symbol.split(".")[0].upper()
-                
-                # Sadece NASDAQ-100 şirketlerini filtrele
-                if symbol not in NASDAQ_WEIGHTS:
-                    continue
-                
-                # EOD fields: report_date, eps_estimate, eps_actual, revenue_estimate, revenue_actual
-                events.append(EarningsEvent(
-                    symbol=symbol,
-                    company_name=item.get("name", symbol),
-                    date=item.get("report_date", item.get("date", "")),
-                    time=item.get("before_after_market", "TNS"),  # "bmo" or "amc"
-                    expected_eps=item.get("eps_estimate"),
-                    expected_revenue=item.get("revenue_estimate"),
-                    actual_eps=item.get("eps_actual"),
-                    actual_revenue=item.get("revenue_actual"),
-                    importance=get_importance_level(symbol),
-                    nasdaq_weight=NASDAQ_WEIGHTS.get(symbol, 0)
-                ))
-            
-            # Önem sırasına göre sırala
-            events.sort(key=lambda x: (
-                {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}[x.importance.value],
-                x.date
-            ))
-            
-            return events
+            for symbol in symbols
+        ]
+        
+        results = await asyncio.gather(*futures, return_exceptions=True)
+        
+        for result in results:
+            if isinstance(result, EarningsEvent):
+                events.append(result)
+        
+        # Önem sırasına göre sırala
+        events.sort(key=lambda x: (
+            {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}[x.importance.value],
+            x.date
+        ))
+        
+        return events
     
     async def get_earnings_with_scenarios(self, days_ahead: int = 7) -> List[Dict]:
         """Earnings takvimi + senaryo analizleri"""
