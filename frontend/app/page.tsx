@@ -33,6 +33,7 @@ import PatternEngineV2 from "../components/PatternEngineV2";
 import AdvancedAnalysisPanel from "../components/AdvancedAnalysisPanel";
 import InstitutionalDataPanel from "../components/InstitutionalDataPanel";
 import CandlestickPatternPanel from "../components/CandlestickPatternPanel";
+import MLFactorPanel from "../components/MLFactorPanel";
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
 import { useLivePrices } from "../hooks/useLivePrices";
@@ -1269,6 +1270,12 @@ export default function HomePage() {
         {/* Bottom gradient line */}
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </header>
+
+      {/* ML Factor Toggle Panel */}
+      <MLFactorPanel 
+        baseConfidence={signalCards[0]?.confidence || 60} 
+        locale={locale}
+      />
 
       <DraggableDashboard>
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-4 md:gap-6 md:px-6 md:py-8 md:grid-cols-2 lg:grid-cols-3 pb-20 md:pb-8">

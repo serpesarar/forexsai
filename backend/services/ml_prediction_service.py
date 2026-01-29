@@ -546,8 +546,14 @@ def _build_feature_vector(symbol: str, ta: dict, candles: list) -> Optional[np.n
     return df
 
 
-async def get_ml_prediction(symbol: str) -> PredictionResult:
-    """Get ML prediction for symbol with direction and pip targets."""
+async def get_ml_prediction(symbol: str, enabled_factors: list = None) -> PredictionResult:
+    """Get ML prediction for symbol with direction and pip targets.
+    
+    Args:
+        symbol: Trading symbol (e.g. 'XAUUSD', 'NDX.INDX')
+        enabled_factors: Optional list of factor IDs to apply (trend,confluence,session,pattern,candle,cot,sr,news,regime)
+                        If None, all factors are enabled.
+    """
     from services.data_fetcher import fetch_eod_candles, fetch_30m_candles, fetch_latest_price
     
     # Normalize symbol
@@ -712,7 +718,14 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
     # ═══════════════════════════════════════════════════════════════════
     # CONFIDENCE ADJUSTMENTS - Collected separately, applied with weighted avg
     # ═══════════════════════════════════════════════════════════════════
-    confidence_adjustments = []  # List of {multiplier, weight, reason}
+    # Factor IDs: trend, confluence, session, pattern, candle, cot, sr, news, regime
+    all_factors = enabled_factors if enabled_factors else ['trend', 'confluence', 'session', 'pattern', 'candle', 'cot', 'sr', 'news', 'regime']
+    confidence_adjustments = []  # List of {multiplier, weight, reason, factor_id}
+    
+    def add_adjustment(factor_id: str, multiplier: float, weight: int, reason: str):
+        """Only add adjustment if factor is enabled"""
+        if factor_id in all_factors:
+            confidence_adjustments.append({'multiplier': multiplier, 'weight': weight, 'reason': reason, 'factor_id': factor_id})
     mtf_adjustments = {
         "confidence_multiplier": 1.0,
         "direction_override": None,
@@ -737,13 +750,13 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
             
             # Collect adjustments with weights (weight 1-3, 3=critical)
             if confidence_level == "CONFLICTING":
-                confidence_adjustments.append({'multiplier': 0.7, 'weight': 2, 'reason': 'DI çelişkili'})
+                add_adjustment('regime', 0.7, 2, 'DI çelişkili')
                 mtf_adjustments["warnings"].append("⚠️ DI çelişkili - trend belirsiz")
             elif confidence_level == "LOW_CONFIDENCE":
-                confidence_adjustments.append({'multiplier': 0.85, 'weight': 1, 'reason': 'Düşük güven'})
+                add_adjustment('regime', 0.85, 1, 'Düşük güven')
             
             if regime_type == "RANGING" and di_spread < 10:
-                confidence_adjustments.append({'multiplier': 0.8, 'weight': 2, 'reason': 'Yan piyasa'})
+                add_adjustment('regime', 0.8, 2, 'Yan piyasa')
                 mtf_adjustments["warnings"].append("📊 Yan piyasa - trade riskli")
             
             # 2. Price Action / Liquidity Sweep Detection
@@ -755,10 +768,10 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
             mtf_adjustments["liquidity_sweep"] = liquidity_sweep
             
             if structure_quality == "FAKEOUT_TRAP":
-                confidence_adjustments.append({'multiplier': 0.5, 'weight': 3, 'reason': 'Fakeout trap'})
+                add_adjustment('trend', 0.5, 3, 'Fakeout trap')
                 mtf_adjustments["warnings"].append("🚨 FAKEOUT TRAP tespit edildi!")
             elif structure_quality == "CHOPPY":
-                confidence_adjustments.append({'multiplier': 0.7, 'weight': 2, 'reason': 'Choppy piyasa'})
+                add_adjustment('trend', 0.7, 2, 'Choppy piyasa')
                 mtf_adjustments["warnings"].append("⚠️ Choppy piyasa yapısı")
             
             if liquidity_sweep:
@@ -777,19 +790,19 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
             mtf_adjustments["high_impact_event"] = high_impact
             
             if session == "ASIA":
-                confidence_adjustments.append({'multiplier': 0.85, 'weight': 1, 'reason': 'Asya seansı'})
+                add_adjustment('session', 0.85, 1, 'Asya seansı')
                 mtf_adjustments["warnings"].append("🌙 Asya seansı - düşük likidite")
             
             # High impact events get highest weight (3)
             if high_impact == "NFP_DAY":
-                confidence_adjustments.append({'multiplier': 0.4, 'weight': 3, 'reason': 'NFP günü'})
+                add_adjustment('news', 0.4, 3, 'NFP günü')
                 mtf_adjustments["direction_override"] = "HOLD"
                 mtf_adjustments["warnings"].append("🔴 NFP GÜNÜ - Trade önerilmez!")
             elif high_impact == "FOMC_POTENTIAL":
-                confidence_adjustments.append({'multiplier': 0.6, 'weight': 3, 'reason': 'FOMC'})
+                add_adjustment('news', 0.6, 3, 'FOMC')
                 mtf_adjustments["warnings"].append("🟠 FOMC potansiyeli - dikkatli ol")
             elif high_impact == "CPI_WEEK":
-                confidence_adjustments.append({'multiplier': 0.8, 'weight': 2, 'reason': 'CPI haftası'})
+                add_adjustment('news', 0.8, 2, 'CPI haftası')
                 mtf_adjustments["warnings"].append("🟡 CPI haftası - volatilite bekleniyor")
             
             # 4. Correlation Check
@@ -799,7 +812,7 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
                 conflicting = correlation.get("conflicting_signals", [])
                 
                 if not corr_confirms and conflicting:
-                    confidence_adjustments.append({'multiplier': 0.75, 'weight': 1, 'reason': 'Korelasyon çelişkisi'})
+                    add_adjustment('confluence', 0.75, 1, 'Korelasyon çelişkisi')
                     for sig in conflicting[:2]:
                         mtf_adjustments["warnings"].append(f"⚡ Korelasyon çelişkisi: {sig}")
             
@@ -814,11 +827,11 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
     # ═══════════════════════════════════════════════════════════════════
     try:
         if cot_data and cot_data.get("signal") == "TREND_EXHAUSTION":
-            confidence_adjustments.append({'multiplier': 0.75, 'weight': 2, 'reason': 'COT exhaustion'})
+            add_adjustment('cot', 0.75, 2, 'COT exhaustion')
             mtf_adjustments["warnings"].append(cot_data.get("reason", "⚠️ COT: Trend exhaustion risk"))
         elif cot_data and cot_data.get("confidence_adjustment", 0) != 0:
             adj = cot_data["confidence_adjustment"]
-            confidence_adjustments.append({'multiplier': 1 + adj, 'weight': 1, 'reason': 'COT adjustment'})
+            add_adjustment('cot', 1 + adj, 1, 'COT adjustment')
         
         if cot_data and cot_data.get("warning"):
             mtf_adjustments["warnings"].append(cot_data["warning"])
@@ -857,15 +870,15 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
             if bullish_count >= 2 and bearish_count == 0:
                 pattern_data["recommendation"] = "BUY"
                 boost = min(0.15, avg_confidence / 1000)
-                confidence_adjustments.append({'multiplier': 1 + boost, 'weight': 1, 'reason': 'Bullish patterns'})
+                add_adjustment('pattern', 1 + boost, 1, 'Bullish patterns')
                 mtf_adjustments["warnings"].append(f"📊 Pattern: {bullish_count} bullish pattern tespit edildi")
             elif bearish_count >= 2 and bullish_count == 0:
                 pattern_data["recommendation"] = "SELL"
                 boost = min(0.15, avg_confidence / 1000)
-                confidence_adjustments.append({'multiplier': 1 + boost, 'weight': 1, 'reason': 'Bearish patterns'})
+                add_adjustment('pattern', 1 + boost, 1, 'Bearish patterns')
                 mtf_adjustments["warnings"].append(f"📊 Pattern: {bearish_count} bearish pattern tespit edildi")
             elif bullish_count > 0 and bearish_count > 0:
-                confidence_adjustments.append({'multiplier': 0.9, 'weight': 1, 'reason': 'Pattern çelişkisi'})
+                add_adjustment('pattern', 0.9, 1, 'Pattern çelişkisi')
                 mtf_adjustments["warnings"].append(f"⚡ Pattern çelişkisi: {bullish_count} bullish vs {bearish_count} bearish")
         
         logger.info(f"Pattern processed: {len(all_patterns)} patterns")
@@ -881,15 +894,15 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
             adjustment = candlestick_data.get("confidence_adjustment", 0)
             
             if signal == "BULLISH" and adjustment > 0:
-                confidence_adjustments.append({'multiplier': 1 + adjustment, 'weight': 1, 'reason': 'Bullish candles'})
+                add_adjustment('candle', 1 + adjustment, 1, 'Bullish candles')
                 patterns_str = ", ".join(candlestick_data.get("patterns_summary", [])[:3])
                 mtf_adjustments["warnings"].append(f"🕯️ Mum Formasyonu: {patterns_str}")
             elif signal == "BEARISH" and adjustment > 0:
-                confidence_adjustments.append({'multiplier': 1 + adjustment, 'weight': 1, 'reason': 'Bearish candles'})
+                add_adjustment('candle', 1 + adjustment, 1, 'Bearish candles')
                 patterns_str = ", ".join(candlestick_data.get("patterns_summary", [])[:3])
                 mtf_adjustments["warnings"].append(f"🕯️ Mum Formasyonu: {patterns_str}")
             elif signal == "MIXED":
-                confidence_adjustments.append({'multiplier': 0.9, 'weight': 1, 'reason': 'Candle çelişkisi'})
+                add_adjustment('candle', 0.9, 1, 'Candle çelişkisi')
                 mtf_adjustments["warnings"].append("⚡ Mum formasyonları çelişkili")
             
             logger.info(f"Candlestick: {candlestick_data['bullish_count']} bullish, "
@@ -906,7 +919,7 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
             
             # S/R weight > 0.7 = strong zone
             if sr_weight > 0.7:
-                confidence_adjustments.append({'multiplier': 1.1, 'weight': 2, 'reason': 'Güçlü S/R bölgesi'})
+                add_adjustment('sr', 1.1, 2, 'Güçlü S/R bölgesi')
                 mtf_adjustments["warnings"].append(f"📊 Güçlü S/R bölgesi (ağırlık: {sr_weight:.0%})")
             
             # Near resistance (critical weight=2)
@@ -914,19 +927,19 @@ async def get_ml_prediction(symbol: str) -> PredictionResult:
                 strength = sr_features.get('sr_nearest_resistance_strength', 50)
                 mtf_adjustments["warnings"].append(f"📍 R1: {sr_features['sr_nearest_resistance_distance']:.0f} pip (güç: {strength:.0f}%)")
                 if strength > 70:
-                    confidence_adjustments.append({'multiplier': 0.85, 'weight': 2, 'reason': 'Yakın güçlü direnç'})
+                    add_adjustment('sr', 0.85, 2, 'Yakın güçlü direnç')
             
             # Near support (critical weight=2)
             if sr_features.get('sr_nearest_support_distance', 100) < 20:
                 strength = sr_features.get('sr_nearest_support_strength', 50)
                 mtf_adjustments["warnings"].append(f"📍 S1: {sr_features['sr_nearest_support_distance']:.0f} pip (güç: {strength:.0f}%)")
                 if strength > 70:
-                    confidence_adjustments.append({'multiplier': 0.85, 'weight': 2, 'reason': 'Yakın güçlü destek'})
+                    add_adjustment('sr', 0.85, 2, 'Yakın güçlü destek')
             
             # MTF Confluence
             confluence = sr_features.get('sr_timeframe_confluence', 0)
             if confluence > 0.6:
-                confidence_adjustments.append({'multiplier': 1.05, 'weight': 1, 'reason': 'S/R confluence'})
+                add_adjustment('confluence', 1.05, 1, 'S/R confluence')
                 mtf_adjustments["warnings"].append(f"✅ S/R MTF uyumu: {confluence:.0%}")
             
             # Cluster warning

@@ -30,12 +30,21 @@ export interface PredictionData {
   model_version: string;
 }
 
-async function fetchPrediction(symbol: string): Promise<PredictionData> {
-  const res = await fetch(`${API_BASE}/api/prediction/${symbol}`);
+async function fetchPrediction(symbol: string, enabledFactors?: string[]): Promise<PredictionData> {
+  let url = `${API_BASE}/api/prediction/${symbol}`;
+  if (enabledFactors && enabledFactors.length > 0) {
+    url += `?enabled_factors=${enabledFactors.join(",")}`;
+  }
+  const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch prediction for ${symbol}`);
   }
   return res.json();
+}
+
+// Fetch with custom factors (for factor panel)
+export async function fetchPredictionWithFactors(symbol: string, enabledFactors: string[]): Promise<PredictionData> {
+  return fetchPrediction(symbol, enabledFactors);
 }
 
 async function fetchAllPredictions(): Promise<PredictionData[]> {

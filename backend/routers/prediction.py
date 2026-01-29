@@ -37,15 +37,27 @@ class PredictionResponse(BaseModel):
 
 
 @router.get("/{symbol}", response_model=PredictionResponse)
-async def get_prediction(symbol: str):
+async def get_prediction(
+    symbol: str,
+    enabled_factors: Optional[str] = Query(
+        default=None,
+        description="Comma-separated list of enabled factor IDs (trend,confluence,session,pattern,candle,cot,sr,news,regime)"
+    )
+):
     """
     Get ML prediction for a symbol.
     
     Returns direction (BUY/SELL/HOLD), confidence, pip targets, and analysis.
+    Optional enabled_factors query param to filter which confidence factors are applied.
     """
     from services.ml_prediction_service import get_ml_prediction
     
-    result = await get_ml_prediction(symbol)
+    # Parse enabled factors if provided
+    factor_list = None
+    if enabled_factors:
+        factor_list = [f.strip() for f in enabled_factors.split(",") if f.strip()]
+    
+    result = await get_ml_prediction(symbol, enabled_factors=factor_list)
     
     return PredictionResponse(
         symbol=result.symbol,
