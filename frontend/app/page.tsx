@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Activity,
   ArrowDownRight,
@@ -18,6 +19,7 @@ import {
   LineChart,
 } from "lucide-react";
 import Link from "next/link";
+import { useAuthStore, useIsAuthenticated } from "../lib/auth/store";
 import CircularProgress from "../components/CircularProgress";
 import DetailPanel from "../components/DetailPanel";
 import { useDashboardStore, useDetailPanelStore } from "../lib/store";
@@ -357,9 +359,26 @@ function MiniSparkline({ values, accent }: { values: number[]; accent: string })
 const trendTimeframes: Timeframe[] = ["M1", "M5", "M15", "M30", "H1", "H4"];
 
 export default function HomePage() {
+  const router = useRouter();
+  const isAuthenticated = useIsAuthenticated();
+  const { checkAuth } = useAuthStore();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  
   const [activeTf, setActiveTf] = useState<(typeof timeframes)[number]>("15m");
   const [theme, setTheme] = useState<"evening" | "morning">("evening");
   const [trendTf, setTrendTf] = useState<Timeframe>("M15");
+  
+  // Auth check - redirect to welcome if not authenticated
+  useEffect(() => {
+    const check = async () => {
+      const authed = await checkAuth();
+      setIsCheckingAuth(false);
+      if (!authed) {
+        router.push("/welcome");
+      }
+    };
+    check();
+  }, [checkAuth, router]);
   
   // Live prices hook - updates every 3 seconds with daily change %
   const { tickers: liveTickers, isLoading: pricesLoading } = useLivePrices(3000);
@@ -1139,6 +1158,30 @@ export default function HomePage() {
       </div>
     );
   };
+
+  // Show loading while checking auth
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent via-purple-500 to-cyan-500 flex items-center justify-center animate-pulse">
+              <Activity className="w-8 h-8 text-white" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-accent" />
+            <span className="text-textSecondary">Yükleniyor...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, will redirect (handled in useEffect)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen text-textPrimary relative">
