@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Calendar, 
   TrendingUp, 
@@ -201,14 +202,16 @@ export default function NasdaqEarningsPanel() {
                   <div className="text-xs font-bold text-white">{formatDate(date)}</div>
                   <div className="mt-1 space-y-0.5 max-h-16 overflow-y-auto">
                     {dayEvents.slice(0, 3).map((event) => (
-                      <button
+                      <motion.button
                         key={event.symbol}
-                        className={`w-full text-[9px] px-1 py-0.5 rounded cursor-pointer font-medium hover:scale-105 transition-transform
+                        className={`w-full text-[9px] px-1 py-0.5 rounded cursor-pointer font-medium
                           ${importanceColors[event.importance]}`}
+                        whileHover={{ scale: 1.1, y: -1 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={() => setSelectedEvent(event)}
                       >
                         {event.symbol}
-                      </button>
+                      </motion.button>
                     ))}
                     {dayEvents.length > 3 && (
                       <div className="text-[9px] text-gray-500">+{dayEvents.length - 3}</div>
@@ -232,9 +235,13 @@ export default function NasdaqEarningsPanel() {
           )}
 
           {events.map((event) => (
-            <div
+            <motion.div
               key={`${event.symbol}-${event.date}`}
-              className={`p-3 rounded-xl mb-2 cursor-pointer border transition-all hover:scale-[1.01]
+              layout
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.02, x: 4 }}
+              className={`p-3 rounded-xl mb-2 cursor-pointer border transition-colors
                 ${selectedEvent?.symbol === event.symbol
                   ? "ring-2 ring-purple-500 " + importanceColors[event.importance]
                   : importanceColors[event.importance]
@@ -270,15 +277,20 @@ export default function NasdaqEarningsPanel() {
                   </div>
                 )}
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
         {/* Scenario Detail Panel */}
-        {selectedEvent && selectedEvent.scenarios.length > 0 && (
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-slate-800/95 border-t border-purple-500/30 p-4 max-h-[50%] overflow-y-auto animate-in slide-in-from-bottom duration-300"
-          >
+        <AnimatePresence>
+          {selectedEvent && selectedEvent.scenarios.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="absolute bottom-0 left-0 right-0 bg-slate-800/95 backdrop-blur-xl border-t border-purple-500/30 p-4 max-h-[50%] overflow-y-auto shadow-2xl"
+            >
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-bold text-white">
                   {selectedEvent.symbol} Senaryolar
@@ -346,8 +358,9 @@ export default function NasdaqEarningsPanel() {
                   </div>
                 ))}
               </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Backdrop */}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Settings2, X, ChevronRight, RotateCcw, RefreshCw, Loader2, Shield, Zap, Target, Flame } from "lucide-react";
 import { fetchPredictionWithStrategy } from "../lib/api/prediction";
 
@@ -258,24 +259,33 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
         <div className="p-3 border-b border-white/10">
           <p className="text-xs text-textSecondary mb-2 font-medium">PRESET STRATEJİLER</p>
           <div className="grid grid-cols-2 gap-2">
-            {STRATEGIES.map((strategy) => (
-              <button
+            {STRATEGIES.map((strategy, index) => (
+              <motion.button
                 key={strategy.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.05 }}
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => selectStrategy(strategy.id)}
-                className={`flex items-center gap-2 p-2.5 rounded-lg transition-all text-left
+                className={`flex items-center gap-2 p-2.5 rounded-lg transition-colors text-left
                   ${selectedStrategy === strategy.id 
-                    ? `${strategy.color} text-white shadow-lg` 
+                    ? `${strategy.color} text-white shadow-lg shadow-${strategy.color.replace('bg-', '')}/30` 
                     : "bg-white/5 hover:bg-white/10 border border-white/10"
                   }`}
               >
-                <div className={`p-1 rounded ${selectedStrategy === strategy.id ? "bg-white/20" : "bg-white/10"}`}>
+                <motion.div 
+                  className={`p-1 rounded ${selectedStrategy === strategy.id ? "bg-white/20" : "bg-white/10"}`}
+                  animate={{ rotate: selectedStrategy === strategy.id ? [0, -10, 10, 0] : 0 }}
+                  transition={{ duration: 0.5 }}
+                >
                   {strategy.icon}
-                </div>
+                </motion.div>
                 <div>
                   <p className="text-xs font-medium">{locale === "en" ? strategy.nameEn : strategy.name}</p>
                   <p className="text-[10px] opacity-70">{strategy.description}</p>
                 </div>
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
@@ -283,11 +293,15 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
         {/* Layer List */}
         <div className="overflow-y-auto flex-1 p-3">
           <p className="text-xs text-textSecondary mb-2 font-medium">KATMANLAR</p>
-          {layers.map((layer) => (
-            <div
+          {layers.map((layer, index) => (
+            <motion.div
               key={layer.id}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 }}
+              whileHover={{ scale: 1.02, x: 4 }}
               onClick={() => toggleLayer(layer.id)}
-              className={`p-3 rounded-xl mb-2 cursor-pointer transition-all border
+              className={`p-3 rounded-xl mb-2 cursor-pointer transition-colors border
                 ${layer.enabled 
                   ? "bg-gradient-to-r " + layer.color + " bg-opacity-20 border-white/20" 
                   : "bg-white/5 border-transparent hover:bg-white/10"
@@ -320,7 +334,7 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
                   </span>
                 ))}
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
@@ -333,12 +347,17 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
       </div>
 
       {/* Backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 z-20 lg:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-20 lg:hidden"
+            onClick={() => setIsOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }
