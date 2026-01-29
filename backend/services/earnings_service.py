@@ -1,16 +1,15 @@
 """
 NASDAQ Earnings Calendar & Scenario Analysis Service
-Finnhub API'den earnings verisi çeker ve senaryo analizi yapar
+EOD Historical Data API'den earnings verisi çeker ve senaryo analizi yapar
 """
 
-import os
 import httpx
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Literal
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
 
-FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "")
+from config import settings
 
 class ImportanceLevel(str, Enum):
     CRITICAL = "CRITICAL"
@@ -291,50 +290,63 @@ class NASDAQScenarioEngine:
 
 
 class EarningsCalendarService:
-    """Finnhub API'den earnings takvimi çeker"""
+    """EOD Historical Data API'den earnings takvimi çeker"""
     
     def __init__(self):
-        self.api_key = FINNHUB_API_KEY
-        self.base_url = "https://finnhub.io/api/v1"
+        self.base_url = "https://eodhistoricaldata.com/api"
         self.scenario_engine = NASDAQScenarioEngine()
     
     async def fetch_earnings_calendar(self, days_ahead: int = 7) -> List[EarningsEvent]:
-        """Önümüzdeki X gün için earnings takvimi"""
+        """Önümüzdeki X gün için earnings takvimi (EOD API)"""
         
         from_date = datetime.now().strftime("%Y-%m-%d")
         to_date = (datetime.now() + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
+        
+        # EOD API earnings endpoint
+        # https://eodhistoricaldata.com/api/calendar/earnings?api_token=XXX&from=2024-01-01&to=2024-01-31
         
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{self.base_url}/calendar/earnings",
                 params={
+                    "api_token": settings.eodhd_api_key,
                     "from": from_date,
                     "to": to_date,
-                    "token": self.api_key
+                    "fmt": "json"
                 },
                 timeout=30
             )
             
             if response.status_code != 200:
+                print(f"EOD Earnings API error: {response.status_code}")
                 return []
             
             data = response.json()
             events = []
             
-            for item in data.get("earningsCalendar", []):
-                symbol = item.get("symbol", "")
+            # EOD API format: {"earnings": [...]}
+            earnings_list = data.get("earnings", []) if isinstance(data, dict) else data
+            
+            for item in earnings_list:
+                # EOD format: code field contains symbol (e.g., "AAPL.US")
+                raw_symbol = item.get("code", "") or item.get("symbol", "")
+                # Remove exchange suffix (.US, .NASDAQ)
+                symbol = raw_symbol.split(".")[0].upper()
                 
                 # Sadece NASDAQ-100 şirketlerini filtrele
                 if symbol not in NASDAQ_WEIGHTS:
                     continue
                 
+                # EOD fields: report_date, eps_estimate, eps_actual, revenue_estimate, revenue_actual
                 events.append(EarningsEvent(
                     symbol=symbol,
                     company_name=item.get("name", symbol),
-                    date=item.get("date", ""),
-                    time=item.get("hour", "TNS"),
-                    expected_eps=item.get("epsEstimate"),
-                    expected_revenue=item.get("revenueEstimate"),
+                    date=item.get("report_date", item.get("date", "")),
+                    time=item.get("before_after_market", "TNS"),  # "bmo" or "amc"
+                    expected_eps=item.get("eps_estimate"),
+                    expected_revenue=item.get("revenue_estimate"),
+                    actual_eps=item.get("eps_actual"),
+                    actual_revenue=item.get("revenue_actual"),
                     importance=get_importance_level(symbol),
                     nasdaq_weight=NASDAQ_WEIGHTS.get(symbol, 0)
                 ))
