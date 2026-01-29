@@ -1146,53 +1146,71 @@ export default function HomePage() {
       <AnimatedBackground />
       
       {/* Premium Header */}
-      <header className="header-premium sticky top-0 z-50 relative overflow-hidden">
-        {/* Animated top border */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-accent to-transparent animate-pulse" />
+      <header className="sticky top-0 z-50 relative overflow-hidden">
+        {/* Glass background with blur */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-800/90 to-slate-900/95 backdrop-blur-2xl" />
         
-        <div className="mx-auto flex h-[56px] md:h-[72px] max-w-7xl items-center justify-between px-4 md:px-6">
+        {/* Animated gradient border - top */}
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
+        
+        {/* Animated gradient border - bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-accent/20 via-purple-500/30 to-accent/20" />
+        
+        {/* Glow effect */}
+        <div className="absolute inset-0 bg-gradient-to-b from-accent/5 via-transparent to-transparent pointer-events-none" />
+        
+        <div className="relative mx-auto flex h-[72px] md:h-[88px] max-w-7xl items-center justify-between px-6 md:px-8">
           {/* Logo & Title */}
-          <div className="flex items-center gap-2 md:gap-3 group">
+          <div className="flex items-center gap-4 group cursor-pointer">
             <div className="relative">
-              <div className="absolute -inset-1 rounded-full bg-accent/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full border border-white/20 bg-white/5 shadow-lg">
-                <Activity className="h-4 w-4 md:h-5 md:w-5 text-accent" />
+              {/* Outer glow ring */}
+              <div className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-accent/30 via-purple-500/20 to-accent/30 blur-lg opacity-0 group-hover:opacity-100 transition-all duration-700" />
+              {/* Logo container */}
+              <div className="relative flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/5 shadow-2xl backdrop-blur-sm">
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/20 to-purple-500/10" />
+                <Activity className="relative h-6 w-6 md:h-7 md:w-7 text-accent drop-shadow-lg" />
               </div>
             </div>
-            <div>
-              <p className="text-sm md:text-base font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">{t("header.title")}</p>
-              <p className="hidden sm:block text-[10px] uppercase tracking-[0.3em] text-textSecondary">{t("header.subtitle")}</p>
+            <div className="flex flex-col">
+              <h1 className="text-lg md:text-xl font-bold bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent tracking-tight">{t("header.title")}</h1>
+              <div className="flex items-center gap-2">
+                <p className="text-[11px] md:text-xs uppercase tracking-[0.25em] text-white/50 font-medium">{t("header.subtitle")}</p>
+                <span className="hidden md:inline-flex h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+              </div>
             </div>
           </div>
 
-          {/* Market Tickers */}
-          <div className="hidden lg:flex items-center gap-6">
+          {/* Market Tickers - Premium */}
+          <div className="hidden lg:flex items-center gap-3">
             {marketTickers.map((ticker) => {
               const isLoadingPrice = pricesLoading || ticker.price === "--" || ticker.price === "-";
               return (
-                <div key={ticker.label} className="group flex items-center gap-3 px-4 py-2 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/10 transition-all duration-300">
+                <div key={ticker.label} className="group relative flex items-center gap-3 px-5 py-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.02] hover:from-white/[0.12] hover:to-white/[0.04] hover:border-white/20 transition-all duration-500 backdrop-blur-sm">
+                  {/* Hover glow */}
+                  <div className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${ticker.trend === "up" ? "bg-success/5" : "bg-danger/5"}`} />
+                  
                   {isLoadingPrice ? (
                     <>
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 animate-pulse">
-                        <Loader2 className="h-4 w-4 animate-spin text-textSecondary" />
+                      <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 animate-pulse">
+                        <Loader2 className="h-5 w-5 animate-spin text-white/40" />
                       </div>
-                      <div>
-                        <span className="text-[10px] uppercase tracking-wider text-textSecondary">{ticker.label}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm text-textSecondary">Loading...</span>
+                      <div className="relative">
+                        <span className="text-xs uppercase tracking-widest text-white/40 font-semibold">{ticker.label}</span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="font-mono text-base text-white/30">Loading...</span>
                         </div>
                       </div>
                     </>
                   ) : (
                     <>
-                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${ticker.trend === "up" ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
-                        {ticker.trend === "up" ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                      <div className={`relative flex h-10 w-10 items-center justify-center rounded-xl ${ticker.trend === "up" ? "bg-success/15 text-success" : "bg-danger/15 text-danger"} shadow-lg`}>
+                        {ticker.trend === "up" ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
                       </div>
-                      <div>
-                        <span className="text-[10px] uppercase tracking-wider text-textSecondary">{ticker.label}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm font-semibold">${ticker.price}</span>
-                          <span className={`font-mono text-xs px-1.5 py-0.5 rounded ${ticker.trend === "up" ? "bg-success/20 text-success" : "bg-danger/20 text-danger"}`}>
+                      <div className="relative">
+                        <span className="text-xs uppercase tracking-widest text-white/50 font-semibold">{ticker.label}</span>
+                        <div className="flex items-center gap-2.5 mt-0.5">
+                          <span className="font-mono text-base md:text-lg font-bold text-white">${ticker.price}</span>
+                          <span className={`font-mono text-xs font-semibold px-2 py-0.5 rounded-lg ${ticker.trend === "up" ? "bg-success/20 text-success" : "bg-danger/20 text-danger"}`}>
                             {ticker.change}
                           </span>
                         </div>
@@ -1205,38 +1223,46 @@ export default function HomePage() {
           </div>
 
           {/* Actions - Desktop */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2">
             <Link
               href="/charts"
-              className="group relative overflow-hidden flex items-center gap-2 rounded-xl bg-gradient-to-r from-accent/20 to-purple-500/20 border border-accent/30 px-4 py-2.5 text-sm font-semibold text-accent hover:from-accent/30 hover:to-purple-500/30 transition-all duration-300"
+              className="group relative overflow-hidden flex items-center gap-2 rounded-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 px-4 py-2.5 text-sm font-semibold text-white/80 hover:text-white hover:border-white/20 hover:from-white/15 hover:to-white/10 transition-all duration-300"
             >
-              <LineChart className="h-4 w-4" />
-              Grafikler
+              <LineChart className="h-4 w-4 text-accent" />
+              <span>Grafikler</span>
             </Link>
             <Link
               href="/trading"
-              className="group relative overflow-hidden flex items-center gap-2 rounded-xl bg-gradient-to-r from-accent/20 to-purple-500/20 border border-accent/30 px-4 py-2.5 text-sm font-semibold text-accent hover:from-accent/30 hover:to-purple-500/30 transition-all duration-300"
+              className="group relative overflow-hidden flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent/20 to-purple-500/20 border border-accent/30 px-4 py-2.5 text-sm font-semibold text-accent hover:from-accent/30 hover:to-purple-500/30 hover:border-accent/50 transition-all duration-300"
             >
               <BarChart3 className="h-4 w-4" />
-              AI Trading Panel
+              <span>AI Trading Panel</span>
             </Link>
+            
+            {/* Primary CTA Button */}
             <button
               onClick={fetchAll}
-              className="relative overflow-hidden flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:from-emerald-500 hover:to-teal-400 transition-all duration-300"
+              className="group relative overflow-hidden flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 bg-[length:200%_100%] hover:bg-[position:100%_0] px-6 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all duration-500"
             >
-              <PlayCircle className="h-4 w-4" />
+              <PlayCircle className="h-5 w-5" />
               {isLoading ? t("common.running") : t("common.runAnalysis")}
             </button>
+            
+            {/* Divider */}
+            <div className="h-8 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent mx-1" />
+            
             <button
               onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-textSecondary hover:border-white/20 hover:bg-white/10 transition-all duration-300"
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/60 hover:text-white hover:border-white/20 hover:bg-white/10 transition-all duration-300"
             >
-              {theme === "evening" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {theme === "evening" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
             <LanguageSwitcher />
             <EditModeButton />
-            <div className="hidden lg:flex items-center gap-4 pl-4 border-l border-white/10">
-              <label className="flex items-center gap-2 text-xs text-textSecondary cursor-pointer">
+            
+            {/* Live Status */}
+            <div className="hidden xl:flex items-center gap-4 pl-3 ml-1 border-l border-white/10">
+              <label className="flex items-center gap-2.5 text-sm text-white/60 cursor-pointer hover:text-white/80 transition-colors">
                 <input
                   type="checkbox"
                   checked={autoRefresh}
@@ -1245,12 +1271,12 @@ export default function HomePage() {
                 />
                 {t("common.auto30s")}
               </label>
-              <div className="flex items-center gap-2 text-xs">
+              <div className="flex items-center gap-2">
                 <div className="relative">
-                  <div className="h-2 w-2 rounded-full bg-success" />
-                  <div className="absolute inset-0 h-2 w-2 rounded-full bg-success animate-ping" />
+                  <div className="h-2.5 w-2.5 rounded-full bg-success shadow-lg shadow-success/50" />
+                  <div className="absolute inset-0 h-2.5 w-2.5 rounded-full bg-success animate-ping" />
                 </div>
-                <span className="text-success font-medium">{t("common.live")}</span>
+                <span className="text-sm text-success font-semibold">{t("common.live")}</span>
               </div>
             </div>
           </div>
