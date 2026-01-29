@@ -1145,161 +1145,188 @@ export default function HomePage() {
       {/* Animated Background */}
       <AnimatedBackground />
       
-      {/* Premium Header */}
-      <header className="sticky top-0 z-50 relative overflow-hidden">
-        {/* Glass background with blur */}
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-800/90 to-slate-900/95 backdrop-blur-2xl" />
+      {/* ═══════════════════════════════════════════════════════════════════════════════ */}
+      {/* PREMIUM HEADER - Two-tier professional design                                   */}
+      {/* ═══════════════════════════════════════════════════════════════════════════════ */}
+      <header className="sticky top-0 z-50 relative">
+        {/* Animated mesh background */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.15),transparent_50%),radial-gradient(ellipse_at_bottom_right,rgba(6,182,212,0.1),transparent_50%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-slate-900/95 to-slate-900/98 backdrop-blur-xl" />
         
-        {/* Animated gradient border - top */}
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
+        {/* Animated top accent line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent to-transparent animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-r from-accent via-purple-500 to-cyan-400 animate-gradient-x" style={{ animationDuration: '3s' }} />
+        </div>
         
-        {/* Animated gradient border - bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-accent/20 via-purple-500/30 to-accent/20" />
-        
-        {/* Glow effect */}
-        <div className="absolute inset-0 bg-gradient-to-b from-accent/5 via-transparent to-transparent pointer-events-none" />
-        
-        <div className="relative mx-auto flex h-[72px] md:h-[88px] max-w-7xl items-center justify-between px-6 md:px-8">
-          {/* Logo & Title */}
-          <div className="flex items-center gap-4 group cursor-pointer">
-            <div className="relative">
-              {/* Outer glow ring */}
-              <div className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-accent/30 via-purple-500/20 to-accent/30 blur-lg opacity-0 group-hover:opacity-100 transition-all duration-700" />
-              {/* Logo container */}
-              <div className="relative flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/5 shadow-2xl backdrop-blur-sm">
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/20 to-purple-500/10" />
-                <Activity className="relative h-6 w-6 md:h-7 md:w-7 text-accent drop-shadow-lg" />
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <h1 className="text-lg md:text-xl font-bold bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent tracking-tight">{t("header.title")}</h1>
-              <div className="flex items-center gap-2">
-                <p className="text-[11px] md:text-xs uppercase tracking-[0.25em] text-white/50 font-medium">{t("header.subtitle")}</p>
-                <span className="hidden md:inline-flex h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-              </div>
-            </div>
-          </div>
-
-          {/* Market Tickers - Premium */}
-          <div className="hidden lg:flex items-center gap-3">
-            {marketTickers.map((ticker) => {
-              const isLoadingPrice = pricesLoading || ticker.price === "--" || ticker.price === "-";
-              return (
-                <div key={ticker.label} className="group relative flex items-center gap-3 px-5 py-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.02] hover:from-white/[0.12] hover:to-white/[0.04] hover:border-white/20 transition-all duration-500 backdrop-blur-sm">
-                  {/* Hover glow */}
-                  <div className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${ticker.trend === "up" ? "bg-success/5" : "bg-danger/5"}`} />
-                  
-                  {isLoadingPrice ? (
-                    <>
-                      <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 animate-pulse">
-                        <Loader2 className="h-5 w-5 animate-spin text-white/40" />
-                      </div>
-                      <div className="relative">
-                        <span className="text-xs uppercase tracking-widest text-white/40 font-semibold">{ticker.label}</span>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="font-mono text-base text-white/30">Loading...</span>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className={`relative flex h-10 w-10 items-center justify-center rounded-xl ${ticker.trend === "up" ? "bg-success/15 text-success" : "bg-danger/15 text-danger"} shadow-lg`}>
-                        {ticker.trend === "up" ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
-                      </div>
-                      <div className="relative">
-                        <span className="text-xs uppercase tracking-widest text-white/50 font-semibold">{ticker.label}</span>
-                        <div className="flex items-center gap-2.5 mt-0.5">
-                          <span className="font-mono text-base md:text-lg font-bold text-white">${ticker.price}</span>
-                          <span className={`font-mono text-xs font-semibold px-2 py-0.5 rounded-lg ${ticker.trend === "up" ? "bg-success/20 text-success" : "bg-danger/20 text-danger"}`}>
-                            {ticker.change}
-                          </span>
-                        </div>
-                      </div>
-                    </>
-                  )}
+        {/* ─────────────── TOP ROW: Brand + Tickers + Status ─────────────── */}
+        <div className="relative border-b border-white/[0.06]">
+          <div className="mx-auto max-w-[1600px] px-4 md:px-6 lg:px-8">
+            <div className="flex h-16 md:h-20 items-center justify-between">
+              
+              {/* Brand Section */}
+              <div className="flex items-center gap-5">
+                {/* Logo */}
+                <div className="relative group">
+                  <div className="absolute -inset-3 rounded-2xl bg-gradient-to-r from-accent/40 via-purple-500/30 to-cyan-400/40 blur-xl opacity-0 group-hover:opacity-100 transition-all duration-700" />
+                  <div className="relative flex h-11 w-11 md:h-12 md:w-12 items-center justify-center rounded-xl bg-gradient-to-br from-accent via-purple-500 to-cyan-500 shadow-lg shadow-accent/30">
+                    <Activity className="h-5 w-5 md:h-6 md:w-6 text-white" />
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Actions - Desktop */}
-          <div className="hidden md:flex items-center gap-2">
-            <Link
-              href="/charts"
-              className="group relative overflow-hidden flex items-center gap-2 rounded-xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 px-4 py-2.5 text-sm font-semibold text-white/80 hover:text-white hover:border-white/20 hover:from-white/15 hover:to-white/10 transition-all duration-300"
-            >
-              <LineChart className="h-4 w-4 text-accent" />
-              <span>Grafikler</span>
-            </Link>
-            <Link
-              href="/trading"
-              className="group relative overflow-hidden flex items-center gap-2 rounded-xl bg-gradient-to-br from-accent/20 to-purple-500/20 border border-accent/30 px-4 py-2.5 text-sm font-semibold text-accent hover:from-accent/30 hover:to-purple-500/30 hover:border-accent/50 transition-all duration-300"
-            >
-              <BarChart3 className="h-4 w-4" />
-              <span>AI Trading Panel</span>
-            </Link>
-            
-            {/* Primary CTA Button */}
-            <button
-              onClick={fetchAll}
-              className="group relative overflow-hidden flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 bg-[length:200%_100%] hover:bg-[position:100%_0] px-6 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all duration-500"
-            >
-              <PlayCircle className="h-5 w-5" />
-              {isLoading ? t("common.running") : t("common.runAnalysis")}
-            </button>
-            
-            {/* Divider */}
-            <div className="h-8 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent mx-1" />
-            
-            <button
-              onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/60 hover:text-white hover:border-white/20 hover:bg-white/10 transition-all duration-300"
-            >
-              {theme === "evening" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </button>
-            <LanguageSwitcher />
-            <EditModeButton />
-            
-            {/* Live Status */}
-            <div className="hidden xl:flex items-center gap-4 pl-3 ml-1 border-l border-white/10">
-              <label className="flex items-center gap-2.5 text-sm text-white/60 cursor-pointer hover:text-white/80 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={autoRefresh}
-                  onChange={(e) => toggleAutoRefresh(e.target.checked)}
-                  className="h-4 w-4 accent-accent rounded"
-                />
-                {t("common.auto30s")}
-              </label>
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <div className="h-2.5 w-2.5 rounded-full bg-success shadow-lg shadow-success/50" />
-                  <div className="absolute inset-0 h-2.5 w-2.5 rounded-full bg-success animate-ping" />
+                
+                {/* Title */}
+                <div>
+                  <h1 className="text-xl md:text-2xl font-black tracking-tight">
+                    <span className="bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent">AI Trading</span>
+                    <span className="bg-gradient-to-r from-accent to-cyan-400 bg-clip-text text-transparent ml-2">Dashboard</span>
+                  </h1>
+                  <div className="flex items-center gap-3 mt-0.5">
+                    <span className="text-[10px] md:text-xs font-semibold uppercase tracking-[0.2em] text-white/40">Quantitative Analysis</span>
+                    <div className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-success/20 border border-success/30">
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success"></span>
+                      </span>
+                      <span className="text-[10px] font-bold text-success uppercase tracking-wider">Live</span>
+                    </div>
+                  </div>
                 </div>
-                <span className="text-sm text-success font-semibold">{t("common.live")}</span>
+              </div>
+              
+              {/* Market Tickers - Center */}
+              <div className="hidden xl:flex items-center gap-2">
+                {marketTickers.map((ticker) => {
+                  const isLoadingPrice = pricesLoading || ticker.price === "--" || ticker.price === "-";
+                  const isUp = ticker.trend === "up";
+                  return (
+                    <div key={ticker.label} className="group relative">
+                      {/* Glow on hover */}
+                      <div className={`absolute -inset-1 rounded-xl opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500 ${isUp ? "bg-success/20" : "bg-danger/20"}`} />
+                      
+                      <div className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-300 ${
+                        isUp 
+                          ? "bg-success/[0.08] border-success/20 hover:border-success/40" 
+                          : "bg-danger/[0.08] border-danger/20 hover:border-danger/40"
+                      }`}>
+                        {isLoadingPrice ? (
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-lg bg-white/10 animate-pulse flex items-center justify-center">
+                              <Loader2 className="h-4 w-4 animate-spin text-white/30" />
+                            </div>
+                            <div>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-white/50">{ticker.label}</span>
+                              <div className="font-mono text-sm text-white/30">Loading...</div>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${isUp ? "bg-success/20" : "bg-danger/20"}`}>
+                              {isUp ? <ArrowUpRight className="h-4 w-4 text-success" /> : <ArrowDownRight className="h-4 w-4 text-danger" />}
+                            </div>
+                            <div>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-white/50">{ticker.label}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-lg font-bold text-white">${ticker.price}</span>
+                                <span className={`font-mono text-xs font-bold px-1.5 py-0.5 rounded ${isUp ? "bg-success/20 text-success" : "bg-danger/20 text-danger"}`}>
+                                  {ticker.change}
+                                </span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Right Section - Quick Actions */}
+              <div className="flex items-center gap-2">
+                <div className="hidden lg:flex items-center gap-2 mr-3 pr-3 border-r border-white/10">
+                  <label className="flex items-center gap-2 text-xs text-white/50 cursor-pointer hover:text-white/70 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={autoRefresh}
+                      onChange={(e) => toggleAutoRefresh(e.target.checked)}
+                      className="h-3.5 w-3.5 accent-accent rounded"
+                    />
+                    <span className="hidden xl:inline">{t("common.auto30s")}</span>
+                  </label>
+                </div>
+                
+                <button
+                  onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/50 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all"
+                >
+                  {theme === "evening" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                </button>
+                <LanguageSwitcher />
+                <EditModeButton />
               </div>
             </div>
-          </div>
-
-          {/* Actions - Mobile */}
-          <div className="flex md:hidden items-center gap-2">
-            <button
-              onClick={fetchAll}
-              className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-r from-emerald-600 to-teal-500 text-white"
-            >
-              <PlayCircle className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-textSecondary"
-            >
-              {theme === "evening" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
           </div>
         </div>
         
-        {/* Bottom gradient line */}
-        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        {/* ─────────────── BOTTOM ROW: Navigation + CTA ─────────────── */}
+        <div className="relative bg-gradient-to-r from-white/[0.02] via-white/[0.04] to-white/[0.02]">
+          <div className="mx-auto max-w-[1600px] px-4 md:px-6 lg:px-8">
+            <div className="flex h-12 md:h-14 items-center justify-between">
+              
+              {/* Navigation Tabs */}
+              <div className="flex items-center gap-1">
+                <Link
+                  href="/"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 border border-white/10 text-sm font-medium text-white"
+                >
+                  <Brain className="h-4 w-4 text-accent" />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </Link>
+                <Link
+                  href="/charts"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all"
+                >
+                  <LineChart className="h-4 w-4" />
+                  <span className="hidden sm:inline">Grafikler</span>
+                </Link>
+                <Link
+                  href="/trading"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  <span className="hidden sm:inline">AI Trading Panel</span>
+                </Link>
+              </div>
+              
+              {/* CTA Button */}
+              <button
+                onClick={fetchAll}
+                disabled={isLoading}
+                className="group relative overflow-hidden flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold text-white transition-all duration-300 disabled:opacity-70"
+              >
+                {/* Animated gradient background */}
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 bg-[length:200%_100%] group-hover:bg-[position:100%_0] transition-all duration-500" />
+                {/* Shine effect */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
+                </div>
+                {/* Glow */}
+                <div className="absolute -inset-1 bg-emerald-500/30 rounded-lg blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                <span className="relative flex items-center gap-2">
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <PlayCircle className="h-4 w-4" />
+                  )}
+                  <span className="uppercase tracking-wider">{isLoading ? t("common.running") : t("common.runAnalysis")}</span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Bottom glow line */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
       </header>
 
       {/* ML Factor Toggle Panel */}
