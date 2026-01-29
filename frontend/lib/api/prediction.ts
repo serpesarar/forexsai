@@ -47,6 +47,16 @@ export async function fetchPredictionWithFactors(symbol: string, enabledFactors:
   return fetchPrediction(symbol, enabledFactors);
 }
 
+// Fetch with strategy preset (for layer panel)
+export async function fetchPredictionWithStrategy(symbol: string, strategy: string): Promise<PredictionData> {
+  const url = `${API_BASE}/api/prediction/${symbol}?strategy=${strategy}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch prediction for ${symbol} with strategy ${strategy}`);
+  }
+  return res.json();
+}
+
 async function fetchAllPredictions(): Promise<PredictionData[]> {
   const res = await fetch(`${API_BASE}/api/prediction/`);
   if (!res.ok) {

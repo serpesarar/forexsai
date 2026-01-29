@@ -1,141 +1,173 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Settings2, X, ChevronRight, RotateCcw, RefreshCw, Loader2 } from "lucide-react";
-import { fetchPredictionWithFactors, type PredictionData } from "../lib/api/prediction";
+import { useState, useCallback } from "react";
+import { Settings2, X, ChevronRight, RotateCcw, RefreshCw, Loader2, Shield, Zap, Target, Flame } from "lucide-react";
+import { fetchPredictionWithStrategy } from "../lib/api/prediction";
 
-type Factor = {
+// Katman tabanlı yapılandırma
+type Layer = {
   id: string;
   name: string;
   nameEn: string;
-  multiplier: number;
-  enabled: boolean;
-  weight: 1 | 2 | 3;
   description: string;
+  weight: number;
+  logic: "harmonic" | "geometric" | "arithmetic";
+  factors: string[];
+  enabled: boolean;
+  color: string;
 };
 
-const DEFAULT_FACTORS: Factor[] = [
-  { id: "trend", name: "Trend Analizi", nameEn: "Trend Analysis", multiplier: 0.7, enabled: true, weight: 2, description: "EMA uyumu ve trend yönü" },
-  { id: "confluence", name: "Confluence", nameEn: "Confluence", multiplier: 1.15, enabled: true, weight: 2, description: "MTF ve S/R uyumu" },
-  { id: "session", name: "Seans", nameEn: "Session", multiplier: 0.85, enabled: true, weight: 1, description: "Asia/London/NY seansı" },
-  { id: "pattern", name: "Pattern", nameEn: "Pattern", multiplier: 1.15, enabled: true, weight: 1, description: "Chart pattern tespiti" },
-  { id: "candle", name: "Mum Formasyon", nameEn: "Candlestick", multiplier: 0.9, enabled: true, weight: 1, description: "Candlestick pattern" },
-  { id: "cot", name: "COT Raporu", nameEn: "COT Report", multiplier: 0.75, enabled: true, weight: 2, description: "Institutional positioning" },
-  { id: "sr", name: "S/R Analizi", nameEn: "S/R Analysis", multiplier: 1.1, enabled: true, weight: 2, description: "Support/Resistance" },
-  { id: "news", name: "Haber", nameEn: "News Sentiment", multiplier: 0.95, enabled: true, weight: 1, description: "Gold news sentiment" },
-  { id: "regime", name: "Market Regime", nameEn: "Market Regime", multiplier: 0.8, enabled: true, weight: 2, description: "Trending/Ranging" },
+const LAYERS: Layer[] = [
+  {
+    id: "critical",
+    name: "Kritik Katman",
+    nameEn: "Critical Layer",
+    description: "Trend & Market Regime (Harmonic Mean)",
+    weight: 0.50,
+    logic: "harmonic",
+    factors: ["trend", "regime"],
+    enabled: true,
+    color: "from-red-500 to-orange-500"
+  },
+  {
+    id: "technical",
+    name: "Teknik Katman",
+    nameEn: "Technical Layer",
+    description: "S/R & Pattern Analysis (Geometric Mean)",
+    weight: 0.30,
+    logic: "geometric",
+    factors: ["sr", "pattern", "candle"],
+    enabled: true,
+    color: "from-blue-500 to-cyan-500"
+  },
+  {
+    id: "context",
+    name: "Context Katman",
+    nameEn: "Context Layer",
+    description: "News, COT & Session (Arithmetic Mean)",
+    weight: 0.20,
+    logic: "arithmetic",
+    factors: ["news", "cot", "session", "confluence"],
+    enabled: true,
+    color: "from-purple-500 to-pink-500"
+  }
+];
+
+// Preset stratejiler
+type Strategy = {
+  id: string;
+  name: string;
+  nameEn: string;
+  description: string;
+  icon: React.ReactNode;
+  enabledLayers: string[];
+  threshold: number;
+  color: string;
+};
+
+const STRATEGIES: Strategy[] = [
+  {
+    id: "ultra_safe",
+    name: "Ultra Güvenli",
+    nameEn: "Ultra Safe",
+    description: "Yüksek win rate, az trade",
+    icon: <Shield className="w-4 h-4" />,
+    enabledLayers: ["critical", "technical"],
+    threshold: 0.58,
+    color: "bg-emerald-500"
+  },
+  {
+    id: "balanced",
+    name: "Dengeli",
+    nameEn: "Balanced",
+    description: "Optimal win rate/trade",
+    icon: <Target className="w-4 h-4" />,
+    enabledLayers: ["critical", "technical", "context"],
+    threshold: 0.55,
+    color: "bg-blue-500"
+  },
+  {
+    id: "full_power",
+    name: "Full Power",
+    nameEn: "Full Power",
+    description: "Tüm faktörler aktif",
+    icon: <Zap className="w-4 h-4" />,
+    enabledLayers: ["critical", "technical", "context"],
+    threshold: 0.52,
+    color: "bg-yellow-500"
+  },
+  {
+    id: "aggressive",
+    name: "Agresif",
+    nameEn: "Aggressive",
+    description: "Çok trade, düşük filtre",
+    icon: <Flame className="w-4 h-4" />,
+    enabledLayers: ["critical"],
+    threshold: 0.50,
+    color: "bg-red-500"
+  }
 ];
 
 type Props = {
   baseConfidence: number;
   symbol?: string;
-  onFactorsChange?: (factors: Factor[], finalConfidence: number) => void;
+  onStrategyChange?: (strategy: string, confidence: number) => void;
   locale?: string;
 };
 
-export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onFactorsChange, locale = "tr" }: Props) {
+export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onStrategyChange, locale = "tr" }: Props) {
   const [isOpen, setIsOpen] = useState(false);
-  const [factors, setFactors] = useState<Factor[]>(DEFAULT_FACTORS);
+  const [layers, setLayers] = useState<Layer[]>(LAYERS);
+  const [selectedStrategy, setSelectedStrategy] = useState<string>("balanced");
   const [liveConfidence, setLiveConfidence] = useState(baseConfidence);
   const [isLoading, setIsLoading] = useState(false);
-  const [lastPrediction, setLastPrediction] = useState<PredictionData | null>(null);
 
-  const calculateWeightedConfidence = useCallback((factorList: Factor[], base: number): number => {
-    const activeFactors = factorList.filter(f => f.enabled);
-    if (activeFactors.length === 0) return base;
-
-    // Sort by impact (furthest from 1.0) and weight
-    const sorted = [...activeFactors].sort((a, b) => {
-      const impactA = Math.abs(1 - a.multiplier) * a.weight;
-      const impactB = Math.abs(1 - b.multiplier) * b.weight;
-      return impactB - impactA;
-    });
-
-    // Take top 4 most impactful
-    const top4 = sorted.slice(0, 4);
-
-    // Weighted average calculation
-    let weightedSum = 0;
-    let totalWeight = 0;
-
-    for (const f of top4) {
-      weightedSum += f.multiplier * f.weight;
-      totalWeight += f.weight;
-    }
-
-    const avgMultiplier = totalWeight > 0 ? weightedSum / totalWeight : 1.0;
-    const clampedMultiplier = Math.max(0.5, Math.min(1.3, avgMultiplier));
-    const finalConfidence = Math.max(30, Math.min(95, base * clampedMultiplier));
-
-    return finalConfidence;
+  // Strateji seçildiğinde katmanları güncelle
+  const selectStrategy = useCallback((strategyId: string) => {
+    const strategy = STRATEGIES.find(s => s.id === strategyId);
+    if (!strategy) return;
+    
+    setSelectedStrategy(strategyId);
+    setLayers(prev => prev.map(layer => ({
+      ...layer,
+      enabled: strategy.enabledLayers.includes(layer.id)
+    })));
   }, []);
 
-  // Fetch real prediction from backend with enabled factors
-  const fetchWithFactors = useCallback(async () => {
-    const enabledFactors = factors.filter(f => f.enabled).map(f => f.id);
-    if (enabledFactors.length === 0) {
-      setLiveConfidence(baseConfidence);
-      return;
-    }
-    
+  // Backend'den gerçek confidence al
+  const fetchWithStrategy = useCallback(async () => {
     setIsLoading(true);
     try {
-      const prediction = await fetchPredictionWithFactors(symbol, enabledFactors);
-      setLastPrediction(prediction);
+      const prediction = await fetchPredictionWithStrategy(symbol, selectedStrategy);
       setLiveConfidence(prediction.confidence);
-      onFactorsChange?.(factors, prediction.confidence);
+      onStrategyChange?.(selectedStrategy, prediction.confidence);
     } catch (err) {
-      console.error("Factor prediction fetch failed:", err);
-      // Fallback to local calculation
-      const newConfidence = calculateWeightedConfidence(factors, baseConfidence);
-      setLiveConfidence(newConfidence);
+      console.error("Strategy prediction fetch failed:", err);
+      setLiveConfidence(baseConfidence);
     } finally {
       setIsLoading(false);
     }
-  }, [factors, symbol, baseConfidence, calculateWeightedConfidence, onFactorsChange]);
+  }, [symbol, selectedStrategy, baseConfidence, onStrategyChange]);
 
-  // Initial calculation (local) on factor change
-  useEffect(() => {
-    const newConfidence = calculateWeightedConfidence(factors, baseConfidence);
-    setLiveConfidence(newConfidence);
-  }, [factors, baseConfidence, calculateWeightedConfidence]);
-
-  const toggleFactor = (id: string) => {
-    setFactors(prev => prev.map(f => 
-      f.id === id ? { ...f, enabled: !f.enabled } : f
+  // Katman toggle
+  const toggleLayer = (layerId: string) => {
+    setLayers(prev => prev.map(l => 
+      l.id === layerId ? { ...l, enabled: !l.enabled } : l
     ));
+    setSelectedStrategy(""); // Custom mode
   };
 
-  const resetFactors = () => {
-    setFactors(DEFAULT_FACTORS);
+  const resetToBalanced = () => {
+    selectStrategy("balanced");
   };
 
-  const getMultiplierColor = (mult: number) => {
-    if (mult > 1.05) return "text-success";
-    if (mult < 0.95) return "text-danger";
-    return "text-textSecondary";
-  };
-
-  const getWeightBadge = (weight: 1 | 2 | 3) => {
-    const colors = {
-      1: "bg-blue-500/20 text-blue-400",
-      2: "bg-yellow-500/20 text-yellow-400",
-      3: "bg-red-500/20 text-red-400",
-    };
-    const labels = { 1: "Low", 2: "Med", 3: "High" };
-    return (
-      <span className={`text-[10px] px-1.5 py-0.5 rounded ${colors[weight]}`}>
-        {labels[weight]}
-      </span>
-    );
-  };
-
-  const activeCount = factors.filter(f => f.enabled).length;
+  const activeLayerCount = layers.filter(l => l.enabled).length;
   const confidenceChange = liveConfidence - baseConfidence;
+  const currentStrategy = STRATEGIES.find(s => s.id === selectedStrategy);
 
   return (
     <>
-      {/* Toggle Button - Fixed position */}
+      {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`fixed top-20 right-4 z-40 flex items-center gap-2 px-3 py-2 rounded-lg 
@@ -143,26 +175,28 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onF
           transition-all duration-200 shadow-lg backdrop-blur-sm border border-white/10`}
       >
         <Settings2 className="w-4 h-4" />
-        <span className="text-sm font-medium">ML Faktörler</span>
-        <span className="text-xs bg-white/20 px-1.5 py-0.5 rounded-full">{activeCount}/9</span>
+        <span className="text-sm font-medium">ML Strateji</span>
+        <span className="text-xs bg-white/20 px-1.5 py-0.5 rounded-full">{activeLayerCount}/3</span>
         <ChevronRight className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {/* Sliding Panel */}
       <div
-        className={`fixed top-16 right-0 h-[calc(100vh-4rem)] w-80 bg-background/95 backdrop-blur-xl 
+        className={`fixed top-16 right-0 h-[calc(100vh-4rem)] w-96 bg-background/95 backdrop-blur-xl 
           border-l border-white/10 shadow-2xl z-30 transition-transform duration-300 ease-out
           ${isOpen ? "translate-x-0" : "translate-x-full"}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           <div>
-            <h3 className="font-semibold">ML Karar Faktörleri</h3>
-            <p className="text-xs text-textSecondary mt-0.5">Aktif faktörleri seçin</p>
+            <h3 className="font-semibold">ML Strateji Seçimi</h3>
+            <p className="text-xs text-textSecondary mt-0.5">
+              {currentStrategy ? (locale === "en" ? currentStrategy.nameEn : currentStrategy.name) : "Özel Mod"}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={fetchWithFactors}
+              onClick={fetchWithStrategy}
               disabled={isLoading}
               className="p-1.5 hover:bg-white/10 rounded-lg transition disabled:opacity-50"
               title="Backend'den Güncelle"
@@ -174,9 +208,9 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onF
               )}
             </button>
             <button
-              onClick={resetFactors}
+              onClick={resetToBalanced}
               className="p-1.5 hover:bg-white/10 rounded-lg transition"
-              title="Sıfırla"
+              title="Dengeli'ye Sıfırla"
             >
               <RotateCcw className="w-4 h-4 text-textSecondary" />
             </button>
@@ -189,14 +223,14 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onF
           </div>
         </div>
 
-        {/* Live Confidence Display */}
+        {/* Confidence Display */}
         <div className="p-4 border-b border-white/10 bg-white/5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-textSecondary">Base Confidence</span>
+            <span className="text-sm text-textSecondary">Base</span>
             <span className="font-mono text-sm">{baseConfidence.toFixed(1)}%</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Final Confidence</span>
+            <span className="text-sm font-medium">Final</span>
             <div className="flex items-center gap-2">
               <span className={`text-xs ${confidenceChange >= 0 ? "text-success" : "text-danger"}`}>
                 {confidenceChange >= 0 ? "+" : ""}{confidenceChange.toFixed(1)}%
@@ -220,57 +254,80 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onF
           </div>
         </div>
 
-        {/* Factor List */}
-        <div className="overflow-y-auto h-[calc(100%-180px)] p-2">
-          {factors.map((factor) => (
+        {/* Strategy Presets */}
+        <div className="p-3 border-b border-white/10">
+          <p className="text-xs text-textSecondary mb-2 font-medium">PRESET STRATEJİLER</p>
+          <div className="grid grid-cols-2 gap-2">
+            {STRATEGIES.map((strategy) => (
+              <button
+                key={strategy.id}
+                onClick={() => selectStrategy(strategy.id)}
+                className={`flex items-center gap-2 p-2.5 rounded-lg transition-all text-left
+                  ${selectedStrategy === strategy.id 
+                    ? `${strategy.color} text-white shadow-lg` 
+                    : "bg-white/5 hover:bg-white/10 border border-white/10"
+                  }`}
+              >
+                <div className={`p-1 rounded ${selectedStrategy === strategy.id ? "bg-white/20" : "bg-white/10"}`}>
+                  {strategy.icon}
+                </div>
+                <div>
+                  <p className="text-xs font-medium">{locale === "en" ? strategy.nameEn : strategy.name}</p>
+                  <p className="text-[10px] opacity-70">{strategy.description}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Layer List */}
+        <div className="overflow-y-auto flex-1 p-3">
+          <p className="text-xs text-textSecondary mb-2 font-medium">KATMANLAR</p>
+          {layers.map((layer) => (
             <div
-              key={factor.id}
-              onClick={() => toggleFactor(factor.id)}
-              className={`flex items-center gap-3 p-3 rounded-xl mb-2 cursor-pointer transition-all
-                ${factor.enabled 
-                  ? "bg-accent/10 border border-accent/30" 
-                  : "bg-white/5 border border-transparent hover:bg-white/10"
+              key={layer.id}
+              onClick={() => toggleLayer(layer.id)}
+              className={`p-3 rounded-xl mb-2 cursor-pointer transition-all border
+                ${layer.enabled 
+                  ? "bg-gradient-to-r " + layer.color + " bg-opacity-20 border-white/20" 
+                  : "bg-white/5 border-transparent hover:bg-white/10"
                 }`}
             >
-              {/* Checkbox */}
-              <div className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-all
-                ${factor.enabled 
-                  ? "bg-accent border-accent" 
-                  : "border-white/30"
-                }`}
-              >
-                {factor.enabled && (
-                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
-              </div>
-
-              {/* Factor Info */}
-              <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <span className={`font-medium text-sm ${factor.enabled ? "text-white" : "text-textSecondary"}`}>
-                    {locale === "en" ? factor.nameEn : factor.name}
+                  <div className={`w-4 h-4 rounded flex items-center justify-center border-2
+                    ${layer.enabled ? "bg-white border-white" : "border-white/30"}`}
+                  >
+                    {layer.enabled && (
+                      <svg className="w-2.5 h-2.5 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className={`font-medium text-sm ${layer.enabled ? "text-white" : "text-textSecondary"}`}>
+                    {locale === "en" ? layer.nameEn : layer.name}
                   </span>
-                  {getWeightBadge(factor.weight)}
                 </div>
-                <p className="text-xs text-textSecondary truncate mt-0.5">
-                  {factor.description}
-                </p>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${layer.enabled ? "bg-white/20" : "bg-white/10"}`}>
+                  {(layer.weight * 100).toFixed(0)}%
+                </span>
               </div>
-
-              {/* Multiplier */}
-              <div className={`font-mono text-sm font-bold ${getMultiplierColor(factor.multiplier)}`}>
-                ×{factor.multiplier.toFixed(2)}
+              <p className="text-xs opacity-70 ml-6">{layer.description}</p>
+              <div className="flex gap-1 mt-2 ml-6">
+                {layer.factors.map(f => (
+                  <span key={f} className="text-[10px] px-1.5 py-0.5 bg-white/10 rounded">
+                    {f}
+                  </span>
+                ))}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Footer Info */}
+        {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-white/10 bg-background/95">
           <p className="text-[10px] text-textSecondary text-center">
-            💡 En etkili 4 faktör weighted average ile uygulanır (max 0.5-1.3x)
+            💡 Kritik: Harmonic | Teknik: Geometric | Context: Arithmetic Mean
           </p>
         </div>
       </div>

@@ -42,13 +42,18 @@ async def get_prediction(
     enabled_factors: Optional[str] = Query(
         default=None,
         description="Comma-separated list of enabled factor IDs (trend,confluence,session,pattern,candle,cot,sr,news,regime)"
+    ),
+    strategy: Optional[str] = Query(
+        default="balanced",
+        description="Preset strategy: ultra_safe, balanced, full_power, aggressive"
     )
 ):
     """
     Get ML prediction for a symbol.
     
     Returns direction (BUY/SELL/HOLD), confidence, pip targets, and analysis.
-    Optional enabled_factors query param to filter which confidence factors are applied.
+    - enabled_factors: Filter which confidence factors are applied
+    - strategy: Preset layer configuration (ultra_safe, balanced, full_power, aggressive)
     """
     from services.ml_prediction_service import get_ml_prediction
     
@@ -57,7 +62,12 @@ async def get_prediction(
     if enabled_factors:
         factor_list = [f.strip() for f in enabled_factors.split(",") if f.strip()]
     
-    result = await get_ml_prediction(symbol, enabled_factors=factor_list)
+    # Validate strategy
+    valid_strategies = ["ultra_safe", "balanced", "full_power", "aggressive"]
+    if strategy not in valid_strategies:
+        strategy = "balanced"
+    
+    result = await get_ml_prediction(symbol, enabled_factors=factor_list, strategy=strategy)
     
     return PredictionResponse(
         symbol=result.symbol,

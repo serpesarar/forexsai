@@ -4,13 +4,14 @@ Supports NASDAQ and XAUUSD with direction prediction and pip targets.
 
 OPTIMIZATIONS:
 1. Parallel async calls (asyncio.gather) - 2-3s -> 800ms latency
-2. Capped multiplier system (max 4 critical multipliers)
-3. Weighted average instead of cascade multiplication
+2. Layered confidence with harmonic/geometric/arithmetic means
+3. Preset strategies: ultra_safe, balanced, full_power, aggressive
 """
 from __future__ import annotations
 
 import asyncio
 import logging
+import math
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -19,20 +20,189 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+# ═══════════════════════════════════════════════════════════════════
+# CONFIDENCE LAYERS CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════
+CONFIDENCE_LAYERS = {
+    # Kritik Katman (50% ağırlık) - Olmazsa olmaz
+    "critical": {
+        "factors": ["trend", "regime"],
+        "weight": 0.50,
+        "logic": "harmonic",  # Küçük değerleri yumuşatır
+        "description": "Trend & Market Regime"
+    },
+    # Teknik Katman (30% ağırlık) - S/R ve volume
+    "technical": {
+        "factors": ["sr", "pattern", "candle"],
+        "weight": 0.30,
+        "logic": "geometric",  # Dengeli etki
+        "description": "S/R & Pattern Analysis"
+    },
+    # Context Katman (20% ağırlık) - Dış faktörler
+    "context": {
+        "factors": ["news", "cot", "session", "confluence"],
+        "weight": 0.20,
+        "logic": "arithmetic",  # Basit ortalama
+        "description": "News, COT & Session"
+    }
+}
 
-def _apply_confidence_adjustments(base_confidence: float, adjustments: List[Dict[str, Any]]) -> float:
+# Preset stratejiler
+STRATEGY_PRESETS = {
+    "ultra_safe": {
+        "name": "Ultra Güvenli",
+        "description": "Yüksek win rate, az trade",
+        "enabled_layers": ["critical", "technical"],
+        "threshold": 0.58,
+        "floor_ratio": 0.7
+    },
+    "balanced": {
+        "name": "Dengeli",
+        "description": "Optimal win rate/trade sayısı",
+        "enabled_layers": ["critical", "technical", "context"],
+        "threshold": 0.55,
+        "floor_ratio": 0.6
+    },
+    "full_power": {
+        "name": "Full Power",
+        "description": "Tüm faktörler aktif",
+        "enabled_layers": ["critical", "technical", "context"],
+        "threshold": 0.52,
+        "floor_ratio": 0.5
+    },
+    "aggressive": {
+        "name": "Agresif",
+        "description": "Çok trade, düşük filtre",
+        "enabled_layers": ["critical"],
+        "threshold": 0.50,
+        "floor_ratio": 0.4
+    }
+}
+
+
+def _harmonic_mean(values: List[float]) -> float:
+    """Harmonik ortalama - küçük değerleri yumuşatır"""
+    valid = [v for v in values if v > 0]
+    if not valid:
+        return 1.0
+    return len(valid) / sum(1/v for v in valid)
+
+def _geometric_mean(values: List[float]) -> float:
+    """Geometrik ortalama - dengeli etki"""
+    valid = [v for v in values if v > 0]
+    if not valid:
+        return 1.0
+    return math.prod(valid) ** (1/len(valid))
+
+def _arithmetic_mean(values: List[float]) -> float:
+    """Aritmetik ortalama - basit ortalama"""
+    if not values:
+        return 1.0
+    return sum(values) / len(values)
+
+def _apply_layered_confidence(
+    base_confidence: float, 
+    adjustments: List[Dict[str, Any]], 
+    strategy: str = "balanced"
+) -> tuple[float, dict]:
     """
-    Apply confidence adjustments using weighted average instead of cascade multiplication.
+    Katmanlı confidence hesaplama.
+    
+    Her katman kendi ortalama yöntemiyle hesaplanır:
+    - Critical (50%): Harmonic mean - küçük değerler yumuşar
+    - Technical (30%): Geometric mean - dengeli
+    - Context (20%): Arithmetic mean - basit
+    
+    Returns: (final_confidence, layer_details)
+    """
+    preset = STRATEGY_PRESETS.get(strategy, STRATEGY_PRESETS["balanced"])
+    enabled_layers = preset["enabled_layers"]
+    floor_ratio = preset["floor_ratio"]
+    
+    # Faktörleri katmanlara grupla
+    layer_multipliers = {layer: [] for layer in CONFIDENCE_LAYERS}
+    
+    for adj in adjustments:
+        factor_id = adj.get('factor_id', '')
+        multiplier = adj.get('multiplier', 1.0)
+        
+        for layer_name, layer_config in CONFIDENCE_LAYERS.items():
+            if factor_id in layer_config['factors']:
+                layer_multipliers[layer_name].append(multiplier)
+                break
+    
+    # Her katmanı hesapla
+    layer_details = {}
+    final_score = 0.0
+    total_weight = 0.0
+    
+    for layer_name, layer_config in CONFIDENCE_LAYERS.items():
+        if layer_name not in enabled_layers:
+            layer_details[layer_name] = {"enabled": False, "score": 1.0}
+            continue
+        
+        values = layer_multipliers[layer_name]
+        if not values:
+            values = [1.0]  # Default: neutral
+        
+        # Katman mantığına göre ortalama
+        logic = layer_config['logic']
+        if logic == "harmonic":
+            layer_score = _harmonic_mean(values)
+        elif logic == "geometric":
+            layer_score = _geometric_mean(values)
+        else:
+            layer_score = _arithmetic_mean(values)
+        
+        weight = layer_config['weight']
+        final_score += layer_score * weight
+        total_weight += weight
+        
+        layer_details[layer_name] = {
+            "enabled": True,
+            "score": round(layer_score, 3),
+            "logic": logic,
+            "factors_count": len(values),
+            "weight": weight
+        }
+    
+    # Normalize eğer tüm katmanlar aktif değilse
+    if total_weight > 0 and total_weight < 1.0:
+        final_score = final_score / total_weight
+    
+    # Final confidence hesapla
+    adjusted_confidence = base_confidence * final_score
+    
+    # Floor: Model kendi fikrini koruyabilsin
+    floor = base_confidence * floor_ratio
+    final_confidence = max(adjusted_confidence, floor)
+    
+    # Clamp 30-95%
+    final_confidence = max(30, min(95, final_confidence))
+    
+    return final_confidence, layer_details
+
+def _apply_confidence_adjustments(base_confidence: float, adjustments: List[Dict[str, Any]], strategy: str = "balanced") -> float:
+    """
+    Apply confidence adjustments using layered approach.
     
     PROBLEM: Cascade multiplication causes over-optimization
     0.60 × 0.7 × 1.15 × 0.85 × 1.15 = 0.47 (too aggressive)
     
-    SOLUTION: Weighted average of top 4 most impactful adjustments
-    - Trend conflict: weight=3 (most critical)
-    - S/R proximity: weight=2 (critical)
-    - Session/Event: weight=2 (critical)
-    - Pattern/COT: weight=1 (supporting)
+    SOLUTION: Layered confidence with different mean types per layer
+    - Critical layer: Harmonic mean (softens small values)
+    - Technical layer: Geometric mean (balanced)
+    - Context layer: Arithmetic mean (simple average)
     """
+    if not adjustments:
+        return base_confidence
+    
+    final_conf, _ = _apply_layered_confidence(base_confidence, adjustments, strategy)
+    return final_conf
+
+
+def _apply_confidence_adjustments_legacy(base_confidence: float, adjustments: List[Dict[str, Any]]) -> float:
+    """Legacy: Weighted average of top 4 adjustments (kept for fallback)"""
     if not adjustments:
         return base_confidence
     
@@ -546,13 +716,14 @@ def _build_feature_vector(symbol: str, ta: dict, candles: list) -> Optional[np.n
     return df
 
 
-async def get_ml_prediction(symbol: str, enabled_factors: list = None) -> PredictionResult:
+async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy: str = "balanced") -> PredictionResult:
     """Get ML prediction for symbol with direction and pip targets.
     
     Args:
         symbol: Trading symbol (e.g. 'XAUUSD', 'NDX.INDX')
         enabled_factors: Optional list of factor IDs to apply (trend,confluence,session,pattern,candle,cot,sr,news,regime)
                         If None, all factors are enabled.
+        strategy: Preset strategy (ultra_safe, balanced, full_power, aggressive)
     """
     from services.data_fetcher import fetch_eod_candles, fetch_30m_candles, fetch_latest_price
     
@@ -1095,11 +1266,12 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None) -> Predic
             direction = mtf_adjustments["direction_override"]
             logger.info(f"Direction overridden by MTF: {original_direction} -> {direction}")
         
-        # Apply weighted average instead of cascade multiplication
+        # Apply layered confidence with strategy preset
         # This prevents over-optimization (0.6 × 0.7 × 1.15 × 0.85 = 0.47 problem)
         if confidence_adjustments:
-            confidence = _apply_confidence_adjustments(confidence, confidence_adjustments)
-            logger.info(f"Weighted avg applied: {len(confidence_adjustments)} factors -> {confidence:.1f}%")
+            confidence, layer_details = _apply_layered_confidence(confidence, confidence_adjustments, strategy)
+            logger.info(f"Layered confidence ({strategy}): {len(confidence_adjustments)} factors -> {confidence:.1f}%")
+            logger.debug(f"Layer details: {layer_details}")
         
         confidence = max(30, min(95, confidence))  # Clamp 30-95%
         
