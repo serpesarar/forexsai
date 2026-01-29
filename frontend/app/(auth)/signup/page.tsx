@@ -41,21 +41,17 @@ function SignupForm() {
     }
   }, [searchParams]);
 
-  // Password strength
+  // Password strength - simplified (min 5 chars)
   const getPasswordStrength = (pw: string) => {
-    let score = 0;
-    if (pw.length >= 8) score++;
-    if (pw.length >= 12) score++;
-    if (/[A-Z]/.test(pw)) score++;
-    if (/[a-z]/.test(pw)) score++;
-    if (/[0-9]/.test(pw)) score++;
-    if (/[^A-Za-z0-9]/.test(pw)) score++;
-    return Math.min(score, 4);
+    if (pw.length < 5) return 0;
+    if (pw.length < 8) return 1;
+    if (pw.length < 12) return 2;
+    return 3;
   };
 
   const passwordStrength = getPasswordStrength(password);
-  const strengthLabels = ["Çok Zayıf", "Zayıf", "Orta", "Güçlü", "Çok Güçlü"];
-  const strengthColors = ["bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-green-500", "bg-emerald-500"];
+  const strengthLabels = ["Çok Kısa", "Orta", "İyi", "Güçlü"];
+  const strengthColors = ["bg-red-500", "bg-yellow-500", "bg-green-500", "bg-emerald-500"];
 
   // Validate referral code
   const validateReferralCode = async (code: string) => {
@@ -87,8 +83,8 @@ function SignupForm() {
       return;
     }
 
-    if (password.length < 8) {
-      setError("Şifre en az 8 karakter olmalı");
+    if (password.length < 5) {
+      setError("Şifre en az 5 karakter olmalı");
       setLoading(false);
       return;
     }
@@ -124,7 +120,7 @@ function SignupForm() {
   // Step validation
   const canProceed = () => {
     if (step === 1) return email.includes("@") && email.includes(".");
-    if (step === 2) return password.length >= 8 && password === confirmPassword;
+    if (step === 2) return password.length >= 5 && password === confirmPassword;
     if (step === 3) return true;
     return false;
   };

@@ -130,15 +130,9 @@ def validate_email(email: str) -> bool:
 
 
 def validate_password(password: str) -> Tuple[bool, Optional[str]]:
-    """Validate password strength"""
-    if len(password) < 8:
-        return False, "Şifre en az 8 karakter olmalı"
-    if not re.search(r'[A-Z]', password):
-        return False, "Şifre en az 1 büyük harf içermeli"
-    if not re.search(r'[a-z]', password):
-        return False, "Şifre en az 1 küçük harf içermeli"
-    if not re.search(r'[0-9]', password):
-        return False, "Şifre en az 1 rakam içermeli"
+    """Validate password strength - minimum 5 characters"""
+    if len(password) < 5:
+        return False, "Şifre en az 5 karakter olmalı"
     return True, None
 
 

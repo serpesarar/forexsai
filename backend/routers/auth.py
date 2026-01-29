@@ -32,7 +32,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 class SignupRequest(BaseModel):
     email: EmailStr
-    password: str = Field(..., min_length=8, max_length=128)
+    password: str = Field(..., min_length=5, max_length=128)
     full_name: Optional[str] = Field(None, max_length=100)
     referral_code: Optional[str] = Field(None, max_length=20)
 
