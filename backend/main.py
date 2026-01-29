@@ -65,6 +65,7 @@ try:
         auth,
         live_news,
         mtf_analysis,
+        earnings,
     )
     from services.data_fetcher import fetch_latest_price
     from services.ml_service import run_nasdaq_signal, run_xauusd_signal
@@ -93,6 +94,7 @@ try:
     app.include_router(auth.router)
     app.include_router(live_news.router)
     app.include_router(mtf_analysis.router)
+    app.include_router(earnings.router)
     
     ROUTERS_LOADED = True
 except Exception as e:

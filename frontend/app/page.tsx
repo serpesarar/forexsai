@@ -34,6 +34,7 @@ import AdvancedAnalysisPanel from "../components/AdvancedAnalysisPanel";
 import InstitutionalDataPanel from "../components/InstitutionalDataPanel";
 import CandlestickPatternPanel from "../components/CandlestickPatternPanel";
 import MLFactorPanel from "../components/MLFactorPanel";
+import { NasdaqEarningsPanel } from "../components/EarningsPanel";
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
 import { useLivePrices } from "../hooks/useLivePrices";
@@ -1276,6 +1277,9 @@ export default function HomePage() {
         baseConfidence={signalCards[0]?.confidence || 60} 
         locale={locale}
       />
+      
+      {/* NASDAQ Earnings Calendar Panel */}
+      <NasdaqEarningsPanel />
 
       <DraggableDashboard>
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-4 md:gap-6 md:px-6 md:py-8 md:grid-cols-2 lg:grid-cols-3 pb-20 md:pb-8">
