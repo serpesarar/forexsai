@@ -9,7 +9,7 @@ import {
   CheckCircle2, Users, Crown
 } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 function SignupForm() {
   const router = useRouter();
