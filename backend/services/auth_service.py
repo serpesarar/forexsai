@@ -173,38 +173,9 @@ async def get_supabase():
 
 async def check_rate_limit(identifier: str, action: str) -> Tuple[bool, Optional[str]]:
     """
-    Check if action is allowed for identifier (IP or user_id).
-    Returns (allowed, error_message)
+    Rate limiting disabled - always allow
     """
-    if action not in RATE_LIMITS:
-        return True, None
-    
-    max_count, window_seconds = RATE_LIMITS[action]
-    
-    if max_count == 0:
-        return False, "Bu özellik üyelik seviyeniz için kullanılamaz"
-    
-    client = await get_supabase()
-    if not client:
-        # If no DB, allow (fail open for dev)
-        return True, None
-    
-    try:
-        result = client.rpc('check_rate_limit', {
-            'p_identifier': identifier,
-            'p_action': action,
-            'p_max_count': max_count,
-            'p_window_seconds': window_seconds
-        }).execute()
-        
-        allowed = result.data
-        if not allowed:
-            return False, f"Çok fazla deneme. Lütfen {window_seconds // 60} dakika bekleyin."
-        return True, None
-        
-    except Exception as e:
-        logger.error(f"Rate limit check failed: {e}")
-        return True, None  # Fail open
+    return True, None
 
 
 # =============================================================================
