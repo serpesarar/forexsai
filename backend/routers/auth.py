@@ -432,55 +432,61 @@ class ResetPasswordRequest(BaseModel):
 @router.post("/forgot-password")
 async def forgot_password(body: ForgotPasswordRequest):
     """Send password reset email"""
-    from services.auth_service import get_supabase, generate_token
-    from services.email_service import send_password_reset_email
-    import hashlib
-    from datetime import datetime, timedelta
-    
-    client = await get_supabase()
-    if not client:
-        return {"success": True, "message": "Eğer email kayıtlıysa, şifre sıfırlama linki gönderildi."}
-    
-    # Find user
-    user = client.table("user_profiles")\
-        .select("id, full_name, email")\
-        .eq("email", body.email.lower())\
-        .single()\
-        .execute()
-    
-    if not user.data:
-        # Don't reveal if email exists
-        return {"success": True, "message": "Eğer email kayıtlıysa, şifre sıfırlama linki gönderildi."}
-    
-    # Generate reset token
-    token = generate_token()
-    token_hash = hashlib.sha256(token.encode()).hexdigest()
-    expires_at = datetime.utcnow() + timedelta(hours=1)
-    
-    # Store token (reuse email_verifications table)
+    import traceback
     try:
-        client.table("email_verifications").insert({
-            "user_id": user.data["id"],
-            "token_hash": token_hash,
-            "expires_at": expires_at.isoformat(),
-            "verification_type": "password_reset"
-        }).execute()
-    except:
-        # Update existing
-        client.table("email_verifications").update({
-            "token_hash": token_hash,
-            "expires_at": expires_at.isoformat(),
-            "verification_type": "password_reset"
-        }).eq("user_id", user.data["id"]).execute()
-    
-    # Send email
-    await send_password_reset_email(
-        to=body.email.lower(),
-        token=token,
-        full_name=user.data.get("full_name")
-    )
-    
-    return {"success": True, "message": "Şifre sıfırlama linki email adresinize gönderildi."}
+        from services.auth_service import get_supabase, generate_token
+        from services.email_service import send_password_reset_email
+        import hashlib
+        from datetime import datetime, timedelta
+        
+        client = await get_supabase()
+        if not client:
+            return {"success": True, "message": "Eğer email kayıtlıysa, şifre sıfırlama linki gönderildi."}
+        
+        # Find user
+        user = client.table("user_profiles")\
+            .select("id, full_name, email")\
+            .eq("email", body.email.lower())\
+            .single()\
+            .execute()
+        
+        if not user.data:
+            # Don't reveal if email exists
+            return {"success": True, "message": "Eğer email kayıtlıysa, şifre sıfırlama linki gönderildi."}
+        
+        # Generate reset token
+        token = generate_token()
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        expires_at = datetime.utcnow() + timedelta(hours=1)
+        
+        # Store token (reuse email_verifications table)
+        try:
+            client.table("email_verifications").insert({
+                "user_id": user.data["id"],
+                "token_hash": token_hash,
+                "expires_at": expires_at.isoformat(),
+                "verification_type": "password_reset"
+            }).execute()
+        except:
+            # Update existing
+            client.table("email_verifications").update({
+                "token_hash": token_hash,
+                "expires_at": expires_at.isoformat(),
+                "verification_type": "password_reset"
+            }).eq("user_id", user.data["id"]).execute()
+        
+        # Send email
+        await send_password_reset_email(
+            to=body.email.lower(),
+            token=token,
+            full_name=user.data.get("full_name")
+        )
+        
+        return {"success": True, "message": "Şifre sıfırlama linki email adresinize gönderildi."}
+    except Exception as e:
+        print(f"Forgot password error: {e}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Hata: {str(e)}")
 
 
 @router.post("/reset-password")
