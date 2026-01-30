@@ -82,7 +82,15 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
   const contextLevels = context?.levels || {};
   const contextDistances = context?.distances || {};
   const redFlags = Array.isArray(analysis.red_flags) ? analysis.red_flags : [];
-  const thesis = Array.isArray(analysis.thesis) ? analysis.thesis : [];
+  
+  // Thesis can be an object with bull_case/bear_case or an array
+  const thesisObj = analysis.thesis || {};
+  const thesisSummary = typeof thesisObj === 'object' && !Array.isArray(thesisObj) ? thesisObj.summary : null;
+  const bullCase = Array.isArray(thesisObj.bull_case) ? thesisObj.bull_case : [];
+  const bearCase = Array.isArray(thesisObj.bear_case) ? thesisObj.bear_case : [];
+  const whyDecision = typeof thesisObj === 'object' ? thesisObj.why_this_decision : null;
+  // Legacy support: if thesis is an array, use it directly
+  const thesisArray = Array.isArray(thesisObj) ? thesisObj : [];
 
   const emaD = keyLevels.ema_distances_pct || {};
   const ns = keyLevels.nearest_support || contextLevels.nearest_support || {};
@@ -363,30 +371,66 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
             )}
           </div>
 
-          {(thesis.length > 0 || redFlags.length > 0) && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="bg-success/5 rounded-2xl p-5 border border-success/10">
-                <div className="flex items-center gap-2 mb-3">
-                  <ShieldAlert className="w-4 h-4 text-success" />
-                  <p className="text-xs font-semibold uppercase tracking-wider text-success">Tez</p>
+          {(bullCase.length > 0 || bearCase.length > 0 || thesisArray.length > 0 || redFlags.length > 0 || thesisSummary) && (
+            <div className="space-y-4">
+              {/* Thesis Summary */}
+              {thesisSummary && (
+                <div className="bg-white/5 rounded-2xl p-5 border border-white/5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ShieldAlert className="w-4 h-4 text-accent" />
+                    <p className="text-xs font-semibold uppercase tracking-wider text-textSecondary">Tez Özeti</p>
+                  </div>
+                  <p className="text-sm text-textSecondary leading-relaxed">{String(thesisSummary)}</p>
+                  {whyDecision && (
+                    <p className="text-xs text-textSecondary mt-2 pt-2 border-t border-white/10">
+                      <span className="font-semibold">Karar Nedeni:</span> {String(whyDecision)}
+                    </p>
+                  )}
                 </div>
-                <ul className="space-y-1">
-                  {thesis.slice(0, 6).map((t: any, i: number) => (
-                    <li key={i} className="text-xs text-textSecondary">{String(t)}</li>
-                  ))}
-                </ul>
-              </div>
+              )}
 
-              <div className="bg-danger/5 rounded-2xl p-5 border border-danger/10">
-                <div className="flex items-center gap-2 mb-3">
-                  <AlertTriangle className="w-4 h-4 text-danger" />
-                  <p className="text-xs font-semibold uppercase tracking-wider text-danger">Red Flags</p>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Bull Case (Positive Thesis) */}
+                <div className="bg-success/5 rounded-2xl p-5 border border-success/10">
+                  <div className="flex items-center gap-2 mb-3">
+                    <TrendingUp className="w-4 h-4 text-success" />
+                    <p className="text-xs font-semibold uppercase tracking-wider text-success">Boğa Tezi</p>
+                  </div>
+                  <ul className="space-y-1">
+                    {bullCase.length > 0 ? (
+                      bullCase.slice(0, 6).map((t: any, i: number) => (
+                        <li key={i} className="text-xs text-textSecondary">• {String(t)}</li>
+                      ))
+                    ) : thesisArray.length > 0 ? (
+                      thesisArray.slice(0, 6).map((t: any, i: number) => (
+                        <li key={i} className="text-xs text-textSecondary">• {String(t)}</li>
+                      ))
+                    ) : (
+                      <li className="text-xs text-textSecondary/50">Veri yok</li>
+                    )}
+                  </ul>
                 </div>
-                <ul className="space-y-1">
-                  {redFlags.slice(0, 6).map((r: any, i: number) => (
-                    <li key={i} className="text-xs text-textSecondary">{String(r)}</li>
-                  ))}
-                </ul>
+
+                {/* Bear Case / Red Flags */}
+                <div className="bg-danger/5 rounded-2xl p-5 border border-danger/10">
+                  <div className="flex items-center gap-2 mb-3">
+                    <TrendingDown className="w-4 h-4 text-danger" />
+                    <p className="text-xs font-semibold uppercase tracking-wider text-danger">Ayı Tezi / Riskler</p>
+                  </div>
+                  <ul className="space-y-1">
+                    {bearCase.length > 0 ? (
+                      bearCase.slice(0, 6).map((r: any, i: number) => (
+                        <li key={i} className="text-xs text-textSecondary">• {String(r)}</li>
+                      ))
+                    ) : redFlags.length > 0 ? (
+                      redFlags.slice(0, 6).map((r: any, i: number) => (
+                        <li key={i} className="text-xs text-textSecondary">• {String(r)}</li>
+                      ))
+                    ) : (
+                      <li className="text-xs text-textSecondary/50">Veri yok</li>
+                    )}
+                  </ul>
+                </div>
               </div>
             </div>
           )}
