@@ -272,7 +272,7 @@ async def signup(
         if ip_address and user_agent:
             fingerprint = get_client_fingerprint(ip_address, user_agent)
         
-        # 8. Create user
+        # 8. Create user - ACTIVE by default (no email verification required)
         new_referral_code = generate_referral_code()
         
         user_data = {
@@ -281,8 +281,8 @@ async def signup(
             "membership_tier": "free",
             "referral_code": new_referral_code,
             "referred_by": referred_by,
-            "status": "pending",
-            "email_verified": False,
+            "status": "active",  # Changed from "pending" to "active"
+            "email_verified": True,  # Changed from False to True
             "signup_ip": ip_address,
             "signup_fingerprint": fingerprint,
         }
@@ -301,36 +301,41 @@ async def signup(
             "salt": salt
         }).execute()
         
-        # 10. Create verification token
-        verification_token = generate_token()
-        client.table("email_verifications").insert({
-            "user_id": user_id,
-            "token": verification_token,
-            "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat()
-        }).execute()
+        # 10. Skip email verification (no email service configured)
+        # verification_token = generate_token()
+        # client.table("email_verifications").insert({
+        #     "user_id": user_id,
+        #     "token": verification_token,
+        #     "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat()
+        # }).execute()
         
         # 11. Create referral record if referred
         if referred_by:
             client.table("referrals").insert({
                 "referrer_id": referred_by,
                 "referred_id": user_id,
-                "status": "pending"
+                "status": "completed"  # Changed from "pending" to "completed"
             }).execute()
+            
+            # Update referrer's count
+            try:
+                client.rpc('increment_referral_count', {'p_user_id': referred_by}).execute()
+            except:
+                pass
         
-        # 12. Update daily metrics
+        # 12. Update daily metrics (optional)
         try:
             client.rpc('increment_daily_metric', {'p_metric': 'total_signups'}).execute()
         except:
             pass
         
-        # 13. TODO: Send verification email (implement with Resend/SendGrid)
-        logger.info(f"New signup: {email}, verification token: {verification_token[:8]}...")
+        logger.info(f"New signup (auto-verified): {email}")
         
         return SignupResult(
             success=True,
             user_id=user_id,
             referral_code=new_referral_code,
-            verification_sent=True
+            verification_sent=False  # Changed from True to False
         )
         
     except Exception as e:
@@ -488,13 +493,13 @@ async def login(
             
             return AuthResult(success=False, error="Email veya şifre hatalı", error_code="INVALID_CREDENTIALS")
         
-        # 7. Check email verification
-        if not user["email_verified"]:
-            return AuthResult(
-                success=False, 
-                error="Lütfen önce email adresinizi doğrulayın",
-                error_code="EMAIL_NOT_VERIFIED"
-            )
+        # 7. Skip email verification check (auto-verified on signup)
+        # if not user["email_verified"]:
+        #     return AuthResult(
+        #         success=False, 
+        #         error="Lütfen önce email adresinizi doğrulayın",
+        #         error_code="EMAIL_NOT_VERIFIED"
+        #     )
         
         # 8. Create session
         session_token = generate_token(48)
