@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 RESEND_API_KEY = settings.resend_api_key if hasattr(settings, 'resend_api_key') else None
 FROM_EMAIL = "ForexsAI <noreply@forexsai.com>"
-SITE_URL = "https://forexsai.com"
+SITE_URL = "https://www.forexsai.com"
 
 # Email template with ForexsAI branding
 def get_email_template(title: str, content: str, button_text: str, button_url: str) -> str:
