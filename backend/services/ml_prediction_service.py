@@ -1281,8 +1281,8 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     
     # Calculate pip targets based on ATR
     atr = ta["atr_14"]
-    # Pip value: XAUUSD = 0.01 (100 pips = $1), NASDAQ = 1.0 (points)
-    pip_value = 0.01 if "XAU" in normalized_symbol else 1.0
+    # Pip value: XAUUSD = 0.1 ($0.10 = 1 pip), NASDAQ = 1.0 (points)
+    pip_value = 0.1 if "XAU" in normalized_symbol else 1.0
     
     # Dynamic R/R based on confidence and trend strength
     # Higher confidence = more aggressive targets
@@ -1687,8 +1687,8 @@ def _rule_based_prediction(symbol: str, ta: dict, current_price: float) -> Predi
         prob_down = 0.5
     
     atr = ta["atr_14"]
-    # Pip value: XAUUSD = 0.01 (100 pips = $1), NASDAQ = 1.0 (points)
-    pip_value = 0.01 if "XAU" in symbol else 1.0
+    # Pip value: XAUUSD = 0.1 ($0.10 = 1 pip), NASDAQ = 1.0 (points)
+    pip_value = 0.1 if "XAU" in symbol else 1.0
     
     # Dynamic R/R based on confidence and trend strength
     adx = ta.get("adx_14", 20)
