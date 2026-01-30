@@ -154,21 +154,31 @@ async def signup_user(request: Request, body: SignupRequest):
     Register a new user account.
     
     - Email must be unique
-    - Password must be at least 8 characters with uppercase, lowercase, and number
+    - Password must be at least 5 characters
     - Optional referral code for bonus rewards
-    - Verification email will be sent
     """
-    result = await signup(
-        email=body.email,
-        password=body.password,
-        full_name=body.full_name,
-        referral_code=body.referral_code,
-        ip_address=get_client_ip(request),
-        user_agent=get_user_agent(request)
-    )
-    
-    if not result.success:
-        raise HTTPException(status_code=400, detail=result.error)
+    import traceback
+    try:
+        result = await signup(
+            email=body.email,
+            password=body.password,
+            full_name=body.full_name,
+            referral_code=body.referral_code,
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request)
+        )
+        
+        if not result.success:
+            # Log detailed error
+            print(f"Signup failed: {result.error} | Code: {result.error_code}")
+            raise HTTPException(status_code=400, detail=result.error)
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Log full traceback
+        print(f"Signup exception: {str(e)}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Signup error: {str(e)}")
     
     return SignupResponse(
         success=True,
