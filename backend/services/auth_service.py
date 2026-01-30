@@ -340,7 +340,8 @@ async def signup(
         
     except Exception as e:
         logger.error(f"Signup error: {e}")
-        return SignupResult(success=False, error="Beklenmeyen bir hata oluştu", error_code="UNKNOWN_ERROR")
+        # Return actual error message for debugging
+        return SignupResult(success=False, error=f"Hata: {str(e)}", error_code="UNKNOWN_ERROR")
 
 
 # =============================================================================
