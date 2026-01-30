@@ -414,3 +414,128 @@ async def validate_referral_code(code: str):
         }
     
     return {"valid": False, "message": "Geçersiz referans kodu"}
+
+
+# =============================================================================
+# Password Reset Endpoints
+# =============================================================================
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(..., min_length=5, max_length=128)
+
+
+@router.post("/forgot-password")
+async def forgot_password(body: ForgotPasswordRequest):
+    """Send password reset email"""
+    from services.auth_service import get_supabase, generate_token
+    from services.email_service import send_password_reset_email
+    import hashlib
+    from datetime import datetime, timedelta
+    
+    client = await get_supabase()
+    if not client:
+        return {"success": True, "message": "Eğer email kayıtlıysa, şifre sıfırlama linki gönderildi."}
+    
+    # Find user
+    user = client.table("user_profiles")\
+        .select("id, full_name, email")\
+        .eq("email", body.email.lower())\
+        .single()\
+        .execute()
+    
+    if not user.data:
+        # Don't reveal if email exists
+        return {"success": True, "message": "Eğer email kayıtlıysa, şifre sıfırlama linki gönderildi."}
+    
+    # Generate reset token
+    token = generate_token()
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    expires_at = datetime.utcnow() + timedelta(hours=1)
+    
+    # Store token (reuse email_verifications table)
+    try:
+        client.table("email_verifications").insert({
+            "user_id": user.data["id"],
+            "token_hash": token_hash,
+            "expires_at": expires_at.isoformat(),
+            "verification_type": "password_reset"
+        }).execute()
+    except:
+        # Update existing
+        client.table("email_verifications").update({
+            "token_hash": token_hash,
+            "expires_at": expires_at.isoformat(),
+            "verification_type": "password_reset"
+        }).eq("user_id", user.data["id"]).execute()
+    
+    # Send email
+    await send_password_reset_email(
+        to=body.email.lower(),
+        token=token,
+        full_name=user.data.get("full_name")
+    )
+    
+    return {"success": True, "message": "Şifre sıfırlama linki email adresinize gönderildi."}
+
+
+@router.post("/reset-password")
+async def reset_password(body: ResetPasswordRequest):
+    """Reset password with token"""
+    from services.auth_service import get_supabase, hash_password, validate_password
+    import hashlib
+    from datetime import datetime
+    
+    # Validate new password
+    is_valid, error = validate_password(body.new_password)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error)
+    
+    client = await get_supabase()
+    if not client:
+        raise HTTPException(status_code=500, detail="Veritabanı bağlantısı kurulamadı")
+    
+    token_hash = hashlib.sha256(body.token.encode()).hexdigest()
+    
+    # Find token
+    verification = client.table("email_verifications")\
+        .select("user_id, expires_at")\
+        .eq("token_hash", token_hash)\
+        .eq("verification_type", "password_reset")\
+        .single()\
+        .execute()
+    
+    if not verification.data:
+        raise HTTPException(status_code=400, detail="Geçersiz veya süresi dolmuş token")
+    
+    # Check expiry
+    expires_at = datetime.fromisoformat(verification.data["expires_at"].replace("Z", "+00:00"))
+    if datetime.now(expires_at.tzinfo) > expires_at:
+        raise HTTPException(status_code=400, detail="Token süresi dolmuş. Lütfen yeni bir link isteyin.")
+    
+    user_id = verification.data["user_id"]
+    
+    # Update password
+    password_hash = hash_password(body.new_password)
+    client.table("user_credentials").update({
+        "password_hash": password_hash,
+        "updated_at": datetime.utcnow().isoformat()
+    }).eq("user_id", user_id).execute()
+    
+    # Delete used token
+    client.table("email_verifications")\
+        .delete()\
+        .eq("token_hash", token_hash)\
+        .execute()
+    
+    # Invalidate all sessions
+    client.table("user_sessions")\
+        .delete()\
+        .eq("user_id", user_id)\
+        .execute()
+    
+    return {"success": True, "message": "Şifreniz başarıyla değiştirildi. Yeni şifrenizle giriş yapabilirsiniz."}
