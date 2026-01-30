@@ -547,7 +547,7 @@ async def login(
         
     except Exception as e:
         logger.error(f"Login error: {e}")
-        return AuthResult(success=False, error="Giriş sırasında hata oluştu", error_code="UNKNOWN_ERROR")
+        return AuthResult(success=False, error=f"Login hatası: {str(e)}", error_code="UNKNOWN_ERROR")
 
 
 # =============================================================================
