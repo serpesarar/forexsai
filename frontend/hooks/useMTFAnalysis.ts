@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 export type Timeframe = "M1" | "M5" | "M15" | "M30" | "H1" | "H4" | "D1";
 export type Signal = "STRONG_BUY" | "BUY" | "NEUTRAL" | "SELL" | "STRONG_SELL";

@@ -73,7 +73,7 @@ interface AdvancedAnalysisPanelProps {
   className?: string;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 export default function AdvancedAnalysisPanel({ symbol, className = "" }: AdvancedAnalysisPanelProps) {
   const [data, setData] = useState<MTFAdvancedData | null>(null);

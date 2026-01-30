@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 export interface LearningHealth {
   db_available: boolean;

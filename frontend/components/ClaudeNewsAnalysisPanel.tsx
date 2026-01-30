@@ -60,7 +60,7 @@ interface ClaudeAnalysisResponse {
   key_opportunities: string[];
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 export function ClaudeNewsAnalysisPanel() {
   const { t } = useI18n();

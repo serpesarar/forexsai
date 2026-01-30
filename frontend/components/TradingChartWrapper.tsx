@@ -19,7 +19,7 @@ interface ChartDataResponse {
   data: CandleData[];
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 async function fetchChartData(symbol: string, timeframe: string): Promise<CandleData[]> {
   const res = await fetch(

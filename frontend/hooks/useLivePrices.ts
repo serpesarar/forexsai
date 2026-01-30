@@ -20,7 +20,7 @@ interface MarketTicker {
   trend: "up" | "down";
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 const SYMBOLS_CONFIG = [
   { symbol: "NDX.INDX", label: "NASDAQ" },

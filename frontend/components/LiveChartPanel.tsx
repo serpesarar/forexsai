@@ -27,7 +27,7 @@ interface LiveChartPanelProps {
   height?: number;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 const TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h"] as const;
 type TimeframeType = (typeof TIMEFRAMES)[number];

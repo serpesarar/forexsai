@@ -48,7 +48,7 @@ interface CandlestickPatternPanelProps {
   className?: string;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 const TIMEFRAME_LABELS: Record<string, string> = {
   "15m": "M15",

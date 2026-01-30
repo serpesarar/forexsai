@@ -40,7 +40,7 @@ interface InstitutionalDataPanelProps {
   className?: string;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 export default function InstitutionalDataPanel({ className = "" }: InstitutionalDataPanelProps) {
   const [cotData, setCotData] = useState<{ XAUUSD: COTData; NASDAQ: COTData } | null>(null);
