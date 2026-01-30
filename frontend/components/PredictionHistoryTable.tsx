@@ -15,7 +15,7 @@ import {
   ChevronUp,
   Filter,
 } from "lucide-react";
-import { usePredictionHistory, PredictionHistoryItem } from "../lib/api/learning";
+import { usePredictionHistory, PredictionHistoryItem, fixMlCorrectInDatabase } from "../lib/api/learning";
 import { useI18nStore } from "../lib/i18n/store";
 
 interface PredictionHistoryTableProps {
@@ -112,20 +112,48 @@ export default function PredictionHistoryTable({ symbol }: PredictionHistoryTabl
   const [limit, setLimit] = useState(30);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [filterResult, setFilterResult] = useState<"all" | "correct" | "wrong" | "pending">("all");
+  const [isFixing, setIsFixing] = useState(false);
   
   const { data, isLoading, error, refetch } = usePredictionHistory(symbol, days, limit);
   const t = useI18nStore((s) => s.t);
   const locale = useI18nStore((s) => s.locale);
 
+  // Fix database ml_correct values
+  const handleFixDatabase = async () => {
+    setIsFixing(true);
+    try {
+      await fixMlCorrectInDatabase();
+      refetch();
+    } catch (e) {
+      console.error("Failed to fix database:", e);
+    } finally {
+      setIsFixing(false);
+    }
+  };
+
   const predictions = data?.predictions || [];
   const summary = data?.summary;
 
-  // Filter predictions
+  // Recalculate accurate stats: if hit_target=true, it's correct regardless of ml_correct field
+  const correctedSummary = summary ? {
+    ...summary,
+    // Count predictions where target was hit as correct
+    ml_correct: predictions.filter(p => p.has_outcome && (p.hit_target || p.ml_correct)).length,
+    // Recalculate accuracy: correct predictions / predictions with outcome
+    ml_accuracy: (() => {
+      const withOutcome = predictions.filter(p => p.has_outcome);
+      if (withOutcome.length === 0) return null;
+      const correct = withOutcome.filter(p => p.hit_target || p.ml_correct).length;
+      return Math.round(correct / withOutcome.length * 100);
+    })(),
+  } : null;
+
+  // Filter predictions - treat hit_target as correct
   const filteredPredictions = predictions.filter((p) => {
     if (filterResult === "all") return true;
     if (filterResult === "pending") return !p.has_outcome;
-    if (filterResult === "correct") return p.ml_correct === true;
-    if (filterResult === "wrong") return p.ml_correct === false;
+    if (filterResult === "correct") return p.hit_target || p.ml_correct === true;
+    if (filterResult === "wrong") return p.has_outcome && !p.hit_target && p.ml_correct === false;
     return true;
   });
 
@@ -185,34 +213,49 @@ export default function PredictionHistoryTable({ symbol }: PredictionHistoryTabl
       </div>
 
       {/* Summary Stats */}
-      {summary && summary.with_outcome > 0 && (
+      {correctedSummary && correctedSummary.with_outcome > 0 && (
         <div className="px-4 py-3 border-b border-white/10 bg-white/5">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center text-sm">
             <div>
               <div className="text-2xl font-bold text-white">
-                {summary.ml_accuracy !== null ? `${summary.ml_accuracy}%` : "-"}
+                {correctedSummary.ml_accuracy !== null ? `${correctedSummary.ml_accuracy}%` : "-"}
               </div>
               <div className="text-xs text-textSecondary">
                 {locale === "en" ? "ML Accuracy" : "ML Doğruluk"}
               </div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-success">{summary.target_hits}</div>
+              <div className="text-2xl font-bold text-success">{correctedSummary.target_hits}</div>
               <div className="text-xs text-textSecondary">
                 {locale === "en" ? "Target Hits" : "Hedef Vuruş"}
               </div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-danger">{summary.stop_hits}</div>
+              <div className="text-2xl font-bold text-danger">{correctedSummary.stop_hits}</div>
               <div className="text-xs text-textSecondary">
                 {locale === "en" ? "Stop Hits" : "Stop Vuruş"}
               </div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-yellow-400">{summary.pending_outcome}</div>
+              <div className="text-2xl font-bold text-yellow-400">{correctedSummary.pending_outcome}</div>
               <div className="text-xs text-textSecondary">
                 {locale === "en" ? "Pending" : "Bekliyor"}
               </div>
+            </div>
+            <div>
+              <button
+                onClick={handleFixDatabase}
+                disabled={isFixing}
+                className="text-xs bg-accent/20 text-accent px-2 py-1 rounded hover:bg-accent/30 transition-colors disabled:opacity-50"
+                title={locale === "en" ? "Fix database accuracy values" : "Veritabanı doğruluk değerlerini düzelt"}
+              >
+                {isFixing ? (
+                  <RefreshCw className="w-3 h-3 animate-spin inline mr-1" />
+                ) : (
+                  <CheckCircle className="w-3 h-3 inline mr-1" />
+                )}
+                {locale === "en" ? "Fix Data" : "Veriyi Düzelt"}
+              </button>
             </div>
           </div>
         </div>

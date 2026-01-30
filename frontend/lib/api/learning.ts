@@ -554,3 +554,30 @@ export function usePredictionHistory(symbol?: string, days: number = 7, limit: n
     refetchInterval: 120000, // Auto refresh every 2 minutes
   });
 }
+
+// Fix ml_correct values in database where hit_target=true but ml_correct=false
+export async function fixMlCorrectInDatabase(): Promise<{ success: boolean; updated_count?: number; error?: string }> {
+  const res = await fetch(`${API_BASE}/api/learning/fix-ml-correct`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const error = await res.text();
+    return { success: false, error };
+  }
+  return res.json();
+}
+
+// Reset and recalculate UI stats
+export async function resetUiStats(symbol?: string): Promise<any> {
+  const params = new URLSearchParams();
+  if (symbol) params.append("symbol", symbol);
+  
+  const res = await fetch(`${API_BASE}/api/learning/reset-ui-stats?${params}`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const error = await res.text();
+    return { success: false, error };
+  }
+  return res.json();
+}
