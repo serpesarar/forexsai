@@ -922,3 +922,126 @@ async def reset_ui_stats(
         
     except Exception as e:
         return {"error": str(e)}
+
+
+@router.get("/strategy-performance")
+async def get_strategy_performance(
+    days: int = Query(30, ge=1, le=90, description="Number of days to analyze")
+):
+    """
+    Get performance statistics for each ML strategy (ultra_safe, balanced, full_power, aggressive).
+    Shows accuracy, win rate, and trade count for each strategy per symbol.
+    """
+    from datetime import datetime, timedelta
+    
+    if not is_db_available():
+        return {"error": "Database not available"}
+    
+    client = get_supabase_client()
+    if client is None:
+        return {"error": "Database client not available"}
+    
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff_iso = cutoff.isoformat() + "Z"
+        
+        # Get all predictions with outcomes
+        result = client.table("prediction_logs").select(
+            "id, symbol, ml_direction, ml_confidence, factors, created_at, outcome_results(ml_correct, hit_target, hit_stop)"
+        ).gte("created_at", cutoff_iso).execute()
+        
+        predictions = result.get("data") or []
+        
+        # Classify each prediction by confidence level into strategy buckets
+        def classify_strategy(confidence: float) -> str:
+            if confidence >= 70:
+                return "ultra_safe"
+            elif confidence >= 60:
+                return "balanced"
+            elif confidence >= 52:
+                return "full_power"
+            else:
+                return "aggressive"
+        
+        # Initialize stats
+        stats = {}
+        for symbol in ["NDX.INDX", "XAUUSD"]:
+            stats[symbol] = {}
+            for strategy in ["ultra_safe", "balanced", "full_power", "aggressive"]:
+                stats[symbol][strategy] = {
+                    "total": 0,
+                    "with_outcome": 0,
+                    "correct": 0,
+                    "target_hits": 0,
+                    "stop_hits": 0,
+                    "confidence_sum": 0,
+                }
+        
+        # Process predictions
+        for pred in predictions:
+            symbol = pred.get("symbol")
+            if symbol not in stats:
+                continue
+            
+            confidence = pred.get("ml_confidence", 50)
+            strategy = classify_strategy(confidence)
+            
+            stats[symbol][strategy]["total"] += 1
+            stats[symbol][strategy]["confidence_sum"] += confidence
+            
+            outcomes = pred.get("outcome_results", [])
+            if outcomes:
+                outcome = outcomes[0]
+                stats[symbol][strategy]["with_outcome"] += 1
+                
+                if outcome.get("ml_correct") or outcome.get("hit_target"):
+                    stats[symbol][strategy]["correct"] += 1
+                if outcome.get("hit_target"):
+                    stats[symbol][strategy]["target_hits"] += 1
+                if outcome.get("hit_stop"):
+                    stats[symbol][strategy]["stop_hits"] += 1
+        
+        # Calculate percentages
+        result_data = {}
+        for symbol, symbol_stats in stats.items():
+            result_data[symbol] = {}
+            for strategy, s in symbol_stats.items():
+                avg_conf = round(s["confidence_sum"] / s["total"], 1) if s["total"] > 0 else 0
+                
+                result_data[symbol][strategy] = {
+                    "total_predictions": s["total"],
+                    "with_outcome": s["with_outcome"],
+                    "correct": s["correct"],
+                    "accuracy": round(s["correct"] / s["with_outcome"] * 100, 1) if s["with_outcome"] > 0 else None,
+                    "target_hit_rate": round(s["target_hits"] / s["with_outcome"] * 100, 1) if s["with_outcome"] > 0 else None,
+                    "stop_hit_rate": round(s["stop_hits"] / s["with_outcome"] * 100, 1) if s["with_outcome"] > 0 else None,
+                    "avg_confidence": avg_conf,
+                    "target_hits": s["target_hits"],
+                    "stop_hits": s["stop_hits"],
+                }
+        
+        # Find best strategy per symbol
+        best_strategies = {}
+        for symbol, symbol_data in result_data.items():
+            best = None
+            best_accuracy = -1
+            for strategy, data in symbol_data.items():
+                if data["accuracy"] is not None and data["accuracy"] > best_accuracy and data["with_outcome"] >= 3:
+                    best_accuracy = data["accuracy"]
+                    best = strategy
+            best_strategies[symbol] = {"strategy": best, "accuracy": best_accuracy if best else None}
+        
+        return {
+            "period_days": days,
+            "strategies": result_data,
+            "best_strategies": best_strategies,
+            "strategy_descriptions": {
+                "ultra_safe": "Yüksek güven (70%+), az trade",
+                "balanced": "Dengeli (60-70%), optimal",
+                "full_power": "Tüm faktörler (52-60%)",
+                "aggressive": "Düşük filtre (50-52%)"
+            }
+        }
+        
+    except Exception as e:
+        return {"error": str(e)}

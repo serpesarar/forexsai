@@ -74,7 +74,8 @@ async def log_prediction(
     symbol: str,
     context: Dict[str, Any],
     analysis: Dict[str, Any],
-    timeframe: str = "1d"
+    timeframe: str = "1d",
+    strategy: Optional[str] = None
 ) -> Optional[str]:
     """
     Log a prediction to the database.
@@ -117,6 +118,10 @@ async def log_prediction(
             "factors": factors,
             "outcome_checked": False,
         }
+        
+        # Add strategy if provided
+        if strategy:
+            record["strategy"] = strategy
         
         result = client.table("prediction_logs").insert(record).execute()
         

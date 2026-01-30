@@ -36,6 +36,7 @@ import AdvancedAnalysisPanel from "../components/AdvancedAnalysisPanel";
 import InstitutionalDataPanel from "../components/InstitutionalDataPanel";
 import CandlestickPatternPanel from "../components/CandlestickPatternPanel";
 import MLFactorPanel from "../components/MLFactorPanel";
+import StrategyPerformancePanel from "../components/StrategyPerformancePanel";
 import { NasdaqEarningsPanel } from "../components/EarningsPanel";
 import AnimatedBackground from "../components/ui/AnimatedBackground";
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
@@ -1462,6 +1463,11 @@ export default function HomePage() {
               initialTimeframe="1d" 
               height={350} 
             />
+          </div>
+
+          {/* Strategy Performance Analysis */}
+          <div className="md:col-span-2 lg:col-span-3">
+            <StrategyPerformancePanel />
           </div>
       </main>
       </DraggableDashboard>
