@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "../../../lib/auth/store";
 import { 
   Eye, EyeOff, Mail, Lock, ArrowRight, Sparkles, 
   TrendingUp, Shield, Zap, AlertCircle, Loader2 
@@ -12,6 +13,7 @@ const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuthStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -24,21 +26,11 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const result = await login(email, password);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.detail || "Giriş başarısız");
+      if (!result.success) {
+        throw new Error(result.error || "Giriş başarısız");
       }
-
-      // Store token
-      localStorage.setItem("auth_token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
 
       // Redirect to dashboard
       router.push("/");
