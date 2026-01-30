@@ -3,6 +3,9 @@ import { persist } from "zustand/middleware";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
+// Track hydration state
+let hasHydrated = false;
+
 export interface User {
   id: string;
   email: string;
@@ -21,10 +24,12 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  _hasHydrated: boolean;
   
   // Actions
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
+  setHasHydrated: (state: boolean) => void;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -38,9 +43,11 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isLoading: false,
       isAuthenticated: false,
+      _hasHydrated: false,
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setToken: (token) => set({ token }),
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       login: async (email, password) => {
         set({ isLoading: true });
@@ -122,23 +129,56 @@ export const useAuthStore = create<AuthState>()(
       },
 
       checkAuth: async () => {
-        const { token, refreshUser } = get();
+        const { token, user } = get();
+        
+        // If we have token and user from persist, consider authenticated
+        if (token && user) {
+          set({ isAuthenticated: true });
+          return true;
+        }
         
         if (!token) {
           set({ isAuthenticated: false });
           return false;
         }
 
-        await refreshUser();
+        // Token exists but no user - try to refresh
+        await get().refreshUser();
         return get().isAuthenticated;
       },
     }),
     {
       name: "xauusd-auth",
       partialize: (state) => ({ token: state.token, user: state.user }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.setHasHydrated(true);
+          // If token and user exist after hydration, set authenticated
+          if (state.token && state.user) {
+            state.isAuthenticated = true;
+          }
+        }
+        hasHydrated = true;
+      },
     }
   )
 );
+
+// Export hydration check
+export const waitForHydration = () => {
+  return new Promise<void>((resolve) => {
+    if (hasHydrated || useAuthStore.getState()._hasHydrated) {
+      resolve();
+    } else {
+      const unsub = useAuthStore.subscribe((state) => {
+        if (state._hasHydrated) {
+          unsub();
+          resolve();
+        }
+      });
+    }
+  });
+};
 
 // Helper hooks
 export const useUser = () => useAuthStore((state) => state.user);

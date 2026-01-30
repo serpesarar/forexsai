@@ -19,7 +19,7 @@ import {
   LineChart,
 } from "lucide-react";
 import Link from "next/link";
-import { useAuthStore, useIsAuthenticated } from "../lib/auth/store";
+import { useAuthStore, useIsAuthenticated, waitForHydration } from "../lib/auth/store";
 import CircularProgress from "../components/CircularProgress";
 import DetailPanel from "../components/DetailPanel";
 import { useDashboardStore, useDetailPanelStore } from "../lib/store";
@@ -368,9 +368,11 @@ export default function HomePage() {
   const [theme, setTheme] = useState<"evening" | "morning">("evening");
   const [trendTf, setTrendTf] = useState<Timeframe>("M15");
   
-  // Auth check - redirect to welcome if not authenticated
+  // Auth check - wait for hydration then redirect if not authenticated
   useEffect(() => {
     const check = async () => {
+      // Wait for Zustand persist to hydrate from localStorage
+      await waitForHydration();
       const authed = await checkAuth();
       setIsCheckingAuth(false);
       if (!authed) {
