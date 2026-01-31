@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { useI18n } from "@/lib/i18n";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -84,23 +85,35 @@ export function TopNav() {
           }`}
         >
           <div className="flex items-center justify-between w-full">
-            {/* Logo - Enhanced */}
+            {/* Logo - Enhanced with Image */}
             <Link
-              href="/"
+              href="/welcome"
+              aria-label="ForexsAi home"
               className="flex items-center gap-2.5 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00E0C6]/50 rounded-xl p-1 -ml-1"
             >
               <motion.div
-                whileHover={{ scale: 1.08, rotate: 4 }}
+                whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-[#00E0C6] to-[#3B82F6] flex items-center justify-center shadow-lg shadow-[#00E0C6]/25"
+                className="relative w-8 h-8 md:w-9 md:h-9 group-hover:drop-shadow-[0_0_8px_rgba(0,224,198,0.4)]"
               >
-                <span className="text-[#0B1220] font-bold text-sm md:text-base">F</span>
+                <Image
+                  src="/logo.png"
+                  alt="ForexsAi logo"
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-contain"
+                  priority
+                />
               </motion.div>
-              <span className="text-xl md:text-2xl font-bold tracking-tight">
-                <span className="text-white">Forex</span>
+              <motion.span 
+                className="text-xl md:text-2xl font-bold tracking-tight"
+                whileHover={{ y: -1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                <span className="text-white">Forexs</span>
                 <AIText prefersReducedMotion={prefersReducedMotion ?? false} />
-              </span>
+              </motion.span>
             </Link>
 
             {/* Desktop Nav - Larger */}
