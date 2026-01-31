@@ -1,0 +1,486 @@
+{
+  "nav": {
+    "features": "Features",
+    "howItWorks": "How It Works",
+    "pricing": "Pricing",
+    "login": "Login",
+    "startFree": "Start Free"
+  },
+  "hero": {
+    "headline": "AI-powered market analysis for NASDAQ and XAUUSD — clearer trends, faster decisions.",
+    "subheadline": "Multi-timeframe signals, pattern detection, and confidence scoring in one dashboard. Data-driven insights, no hype.",
+    "ctaPrimary": "Start Free",
+    "ctaSecondary": "View Demo",
+    "disclaimer": "Not financial advice. For informational purposes only."
+  },
+  "valueProps": {
+    "title": "Built for serious traders",
+    "items": {
+      "accuracy": {
+        "title": "Data-First Accuracy",
+        "description": "Machine learning models trained on years of market data, not guesswork."
+      },
+      "speed": {
+        "title": "Real-Time Signals",
+        "description": "Analysis refreshes every 30 seconds with live price integration."
+      },
+      "focus": {
+        "title": "Focused Markets",
+        "description": "Specialized for NASDAQ and XAUUSD — depth over breadth."
+      },
+      "transparency": {
+        "title": "Explainable AI",
+        "description": "Understand why each signal is generated with factor breakdowns."
+      }
+    }
+  },
+  "howItWorks": {
+    "title": "How it works",
+    "subtitle": "Three steps to actionable insights",
+    "steps": {
+      "1": {
+        "title": "Connect",
+        "description": "Create your free account in seconds. No credit card required."
+      },
+      "2": {
+        "title": "Analyze",
+        "description": "Our AI processes multi-timeframe data across technical indicators."
+      },
+      "3": {
+        "title": "Decide",
+        "description": "Review confidence scores, pattern matches, and trend alignment."
+      }
+    }
+  },
+  "features": {
+    "title": "Features built for precision",
+    "subtitle": "Every tool designed to reduce noise and highlight what matters",
+    "items": {
+      "mtf": {
+        "title": "Multi-Timeframe Analysis",
+        "description": "Align trends across M15, H1, H4, and D1 timeframes for higher-confluence signals."
+      },
+      "patterns": {
+        "title": "Pattern Recognition Engine",
+        "description": "Detect harmonic patterns, candlestick formations, and support/resistance zones automatically."
+      },
+      "confidence": {
+        "title": "Confidence Scoring",
+        "description": "Each signal includes a statistical confidence score based on historical backtesting."
+      },
+      "ml": {
+        "title": "ML Factor Panel",
+        "description": "Customize which market factors the AI prioritizes — risk tolerance, volatility, trend strength."
+      },
+      "alerts": {
+        "title": "Smart Alerts",
+        "description": "Get notified when high-confidence setups form, directly in your dashboard or email."
+      },
+      "claude": {
+        "title": "Claude AI Analysis",
+        "description": "Natural language breakdown of complex market conditions (Pro tier)."
+      }
+    }
+  },
+  "trust": {
+    "title": "Built on transparency",
+    "subtitle": "No hidden agendas. Your data, your control.",
+    "items": {
+      "data": {
+        "title": "Data Security",
+        "description": "Enterprise-grade encryption. Your trading data never leaves secure servers."
+      },
+      "privacy": {
+        "title": "Privacy First",
+        "description": "No selling of user data. No third-party tracking."
+      },
+      "advice": {
+        "title": "Not Financial Advice",
+        "description": "ForexsAi provides analytical tools. All trading decisions are your responsibility."
+      }
+    }
+  },
+  "footer": {
+    "tagline": "AI-powered market analysis. Built for traders who value precision.",
+    "links": {
+      "product": "Product",
+      "features": "Features",
+      "pricing": "Pricing",
+      "changelog": "Changelog",
+      "company": "Company",
+      "about": "About",
+      "blog": "Blog",
+      "careers": "Careers",
+      "legal": "Legal",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "disclaimer": "Risk Disclaimer"
+    },
+    "copyright": "All rights reserved."
+  },
+  "about": {
+    "hero": {
+      "title": "Power of Data, Vision of Expertise",
+      "subtitle": "10 years of professional experience and AI trained on 49 million rows of data. Institutional-grade analysis for individual investors."
+    },
+    "story": {
+      "title": "Our Story",
+      "p1": "It all started in 2014, in a finance office in Istanbul. Over years as a professional trader, our founder noticed a harsh reality: Individual investors were fighting at a serious disadvantage against institutional players. While hedge funds and investment banks used million-dollar algorithmic systems, retail traders were still battling with traditional indicators.",
+      "p2": "We set out to eliminate this inequality. We collected 49 million rows of NASDAQ-100 and XAU/USD data from 2000 to present. After 9 months of intensive training, ForexsAi was born — an AI platform that brings institutional-grade analysis power to everyone."
+    },
+    "mission": {
+      "title": "Our Mission",
+      "text": "To create equal opportunity in financial markets. Using artificial intelligence and machine learning technologies, we provide individual investors with institutional-level analysis tools and guide them toward more informed decisions."
+    },
+    "vision": {
+      "title": "Our Vision",
+      "text": "To become the world's most trusted AI-powered financial analysis platform. By combining technology and human expertise, we help investors cut through market noise and make data-driven decisions."
+    },
+    "values": {
+      "title": "Our Values",
+      "transparency": { "title": "Transparency", "text": "We openly share how our AI model works. No black boxes." },
+      "accuracy": { "title": "Accuracy", "text": "Every prediction is backed by millions of data points." },
+      "education": { "title": "Education", "text": "We don't give investment advice, we help you make informed decisions." },
+      "innovation": { "title": "Innovation", "text": "We adapt to market changes with continuously learning models." }
+    },
+    "technology": {
+      "title": "Our Technology",
+      "description": "ForexsAi is built on cutting-edge machine learning algorithms.",
+      "items": {
+        "data": { "title": "49M+ Data Rows", "text": "NASDAQ-100 and XAU/USD data from 2000 to present" },
+        "training": { "title": "9 Months Training", "text": "Comprehensive backtest and optimization process" },
+        "realtime": { "title": "Real-Time", "text": "Analysis updated every 30 seconds" },
+        "accuracy": { "title": "78%+ Accuracy", "text": "Success rate based on backtest results" }
+      }
+    },
+    "team": {
+      "title": "Our Team",
+      "description": "An expert team in finance, artificial intelligence, and software development."
+    },
+    "stats": {
+      "data": "Data Rows Processed",
+      "years": "Years of Backtest",
+      "training": "Months of Training",
+      "accuracy": "Accuracy Rate"
+    }
+  },
+  "pricingPage": {
+    "title": "Simple, Transparent Pricing",
+    "subtitle": "Currently all features are free during early access.",
+    "free": {
+      "title": "Early Access",
+      "price": "$0",
+      "period": "/forever",
+      "features": [
+        "All AI Signals",
+        "Live Market Data",
+        "Multi-Timeframe Analysis",
+        "Pattern Detection",
+        "Community Access"
+      ],
+      "cta": "Start Now"
+    },
+    "pro": {
+      "title": "Pro (Coming Soon)",
+      "price": "TBA",
+      "features": [
+        "Custom Email Alerts",
+        "Advanced API Access",
+        "Unlimited Backtest Reports",
+        "1-on-1 Expert Support"
+      ],
+      "cta": "Join Waitlist"
+    }
+  },
+  "featuresPage": {
+    "title": "Institutional-Grade Analysis Tools",
+    "subtitle": "The technologies hedge funds use, now in the hands of individual investors.",
+    "items": {
+      "mtf": {
+        "title": "Multi-Timeframe Analysis (MTF)",
+        "description": "Looking at a single timeframe is misleading. Our algorithm analyzes trends across M15, H1, H4, and Daily charts simultaneously. When all timeframes align, it generates powerful signals — this is the 'confluence' strategy used by institutional traders.",
+        "bullets": [
+          "Trend Alignment: 80%+ success rate when all timeframes align.",
+          "Noise Filter: Short-term fluctuations against the main trend are automatically filtered.",
+          "Dynamic Support/Resistance: Critical levels from higher timeframes are auto-marked.",
+          "Confidence Score: A 0-100 reliability score is calculated for each signal."
+        ]
+      },
+      "patterns": {
+        "title": "Advanced Pattern Detection",
+        "description": "Our AI model detects classic and harmonic patterns in milliseconds. It catches opportunities the human eye might miss and calculates theoretical target prices for each pattern.",
+        "bullets": [
+          "Classic Patterns: Head & Shoulders, Double Top/Bottom, Flag, Triangle.",
+          "Harmonic Patterns: Gartley, Butterfly, Bat, Crab, Shark.",
+          "Candlestick Analysis: Bullish/Bearish Engulfing, Hammer, Doji, Morning/Evening Star.",
+          "Auto Targets: Theoretical target and stop-loss levels for each pattern."
+        ]
+      },
+      "ai": {
+        "title": "AI and Machine Learning",
+        "description": "Go beyond rule-based systems. Our ML model was trained for 9 months on 49 million rows of data from 2000 to present. It learns past patterns to predict future probable movements.",
+        "bullets": [
+          "Deep Learning: Time series analysis with LSTM and Transformer architectures.",
+          "Volume Profile: Detects fake-outs through volume analysis.",
+          "Sentiment Analysis: Indicators measuring market psychology.",
+          "Continuous Learning: Model adapts to new market conditions."
+        ]
+      },
+      "realtime": {
+        "title": "Real-Time Analysis",
+        "description": "Markets change every moment. ForexsAi provides instant information with analysis updated every 30 seconds. Don't miss opportunities, see risks early.",
+        "bullets": [
+          "30-Second Updates: Analysis continuously refreshed.",
+          "Live Price Integration: Real-time market data.",
+          "Instant Notifications: Alerts on critical signal changes.",
+          "Dashboard: All data on a single screen."
+        ]
+      },
+      "signals": {
+        "title": "Smart Signal System",
+        "description": "Each signal is generated through multi-factor analysis. Presented with confidence score, risk/reward ratio, and suggested position size.",
+        "bullets": [
+          "Confidence Score: 0-100 reliability rating.",
+          "Risk/Reward: R:R ratio calculated for each signal.",
+          "Entry/Exit Levels: Suggested entry, stop-loss, and take-profit.",
+          "Backtest Results: Historical performance statistics."
+        ]
+      }
+    }
+  },
+  "legal": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "lastUpdate": "Last Updated: January 31, 2025",
+      "intro": "At ForexsAi, we value your privacy. This Privacy Policy explains how your personal data is collected, used, protected, and what your rights are. By using our platform, you agree to this policy.",
+      "sections": {
+        "data": {
+          "title": "1. Data Collection",
+          "account": { "title": "1.1 Account Information", "text": "When you register on our platform, we collect: email address, encrypted password (hash), name (optional), profile picture (optional)." },
+          "usage": { "title": "1.2 Usage Data", "text": "Data automatically collected when using our services: IP address, browser type and version, device information, page view statistics, session duration, preferred language settings." },
+          "analytics": { "title": "1.3 Analytics Data", "text": "To improve platform performance: feature usage, error reports, performance metrics. This data is collected anonymously and is not linked to your personal identity." }
+        },
+        "purpose": {
+          "title": "2. Purpose of Data Use",
+          "service": { "title": "2.1 Service Delivery", "text": "To create and manage your account, provide AI-powered market analysis, deliver personalized experience, provide technical support." },
+          "communication": { "title": "2.2 Communication", "text": "Important updates and announcements, security notifications, account activity alerts, marketing communications (with your consent)." },
+          "development": { "title": "2.3 Development", "text": "To improve service quality, develop new features, optimize user experience, detect and fix errors." }
+        },
+        "security": {
+          "title": "3. Data Security",
+          "encryption": { "title": "3.1 Encryption", "text": "All data transfers are protected with 256-bit SSL/TLS encryption. Passwords are hashed using bcrypt algorithm. Sensitive data is protected with AES-256 encryption standard." },
+          "infrastructure": { "title": "3.2 Infrastructure Security", "text": "Your data is hosted on secure cloud infrastructure (Railway, Supabase). Regular security audits and penetration tests are conducted. 24/7 monitoring and threat detection is active." },
+          "access": { "title": "3.3 Access Control", "text": "Access to your data is limited to authorized personnel who need it for their job duties. All access is logged and audited." }
+        },
+        "thirdParty": {
+          "title": "4. Third-Party Sharing",
+          "providers": { "title": "4.1 Service Providers", "text": "Data is shared with the following trusted service providers: Supabase (database and authentication), Railway (application hosting), Resend (email services). These providers comply with GDPR and industry standards." },
+          "legal": { "title": "4.2 Legal Requirements", "text": "In case of legal obligation (court order, official request, etc.), your data may be shared with authorities. We will inform you to the extent permitted by law." },
+          "noSale": { "title": "4.3 Sale or Transfer", "text": "Your personal data is never sold to third parties or shared for marketing purposes under any circumstances." }
+        },
+        "rights": {
+          "title": "5. User Rights",
+          "access": { "title": "5.1 Right of Access", "text": "You can request a copy of all data we store about you." },
+          "correction": { "title": "5.2 Right to Correction", "text": "You can request correction of incorrect or incomplete data." },
+          "deletion": { "title": "5.3 Right to Deletion", "text": "You can permanently delete your account and all associated data. Deletion is completed within 30 days." },
+          "portability": { "title": "5.4 Data Portability", "text": "You can request your data in a commonly used, machine-readable format (JSON)." },
+          "objection": { "title": "5.5 Right to Object", "text": "You can object to data processing or opt out of marketing communications." }
+        },
+        "cookies": {
+          "title": "6. Cookies",
+          "required": { "title": "6.1 Required Cookies", "text": "Cookies necessary for session management and security are used. Service cannot be provided without these cookies." },
+          "analytics": { "title": "6.2 Analytics Cookies", "text": "Anonymous cookies may be used to analyze service usage. You can disable these cookies in your browser settings." },
+          "preferences": { "title": "6.3 Preference Cookies", "text": "Cookies are used to remember your settings such as language preference, theme selection." }
+        },
+        "contact": {
+          "title": "7. Contact",
+          "text": "For questions about our privacy policy or your personal data, please contact us:",
+          "email": "Email: privacy@forexsai.com",
+          "response": "We will respond to your requests within 30 days."
+        }
+      }
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "lastUpdate": "Last Updated: January 31, 2025",
+      "warning": { "title": "Important Notice", "text": "Please read these terms carefully. By using our platform, you agree to these terms. We strongly recommend reading our Risk Disclaimer as well." },
+      "sections": {
+        "service": {
+          "title": "1. Service Description and Acceptance",
+          "description": { "title": "1.1 Our Services", "text": "ForexsAi is an AI-powered financial market analysis platform. It provides technical analysis, ML-based predictions, pattern detection, and sentiment analysis services for NASDAQ-100 and XAU/USD (Gold) instruments." },
+          "acceptance": { "title": "1.2 Acceptance", "text": "By registering on our platform or using our services, you declare that you have read, understood, and accepted these Terms of Service, Privacy Policy, and Risk Disclaimer." },
+          "age": { "title": "1.3 Age Requirement", "text": "You must be at least 18 years old to use our services. If you are under 18, you cannot use our platform." }
+        },
+        "disclaimer": {
+          "title": "2. Disclaimer",
+          "notAdvice": { "title": "2.1 Not Investment Advice", "text": "All analyses, predictions, signals, and data provided by ForexsAi are for INFORMATIONAL AND EDUCATIONAL PURPOSES ONLY. This content cannot be interpreted as investment advice, financial consulting, or buy/sell recommendations." },
+          "noGuarantee": { "title": "2.2 No Guarantee", "text": "The platform is provided 'as is' and 'as available'. No guarantee is given for the accuracy of analyses, realization of predictions, or any return. Past performance is not indicative of future results." },
+          "liability": { "title": "2.3 Liability for Losses", "text": "ForexsAi cannot be held responsible for any direct, indirect, incidental, special, or consequential loss or damage arising from the use of our platform. All investment decisions and their outcomes are entirely the user's responsibility." }
+        },
+        "prohibited": {
+          "title": "3. Prohibited Uses",
+          "automation": { "title": "3.1 Automated Access", "text": "Access to the platform with bots, scrapers, crawlers, or similar automated tools is strictly prohibited. API limits and usage rules must be followed." },
+          "sharing": { "title": "3.2 Content Sharing", "text": "Unauthorized copying, distribution, or republishing of premium content, analyses, or predictions is prohibited." },
+          "abuse": { "title": "3.3 Abuse", "text": "Actions that endanger platform security, behavior that interferes with other users' services, sharing false or misleading information, creating fake accounts are strictly prohibited." },
+          "commercial": { "title": "3.4 Commercial Use", "text": "Using, selling, or relicensing data obtained with an individual license for commercial purposes is prohibited." }
+        },
+        "payments": {
+          "title": "4. Fees and Payments",
+          "free": { "title": "4.1 Free Plan", "text": "All features are offered free during the Early Access period. This may change and changes will be announced in advance." },
+          "premium": { "title": "4.2 Premium Plans", "text": "Prices for premium plans to be offered in the future will be clearly stated on the pricing page. Subscription fees are collected in advance." },
+          "refund": { "title": "4.3 Refund Policy", "text": "Due to the nature of digital services, no refunds are made after purchase. However, evaluation may be made for technical issues." }
+        },
+        "account": {
+          "title": "5. Account Management",
+          "security": { "title": "5.1 Account Security", "text": "You are responsible for the security of your account information. Using a strong password and not sharing your account information with anyone is recommended." },
+          "suspension": { "title": "5.2 Account Suspension", "text": "Your account may be temporarily or permanently suspended in case of violation of terms of service. This may be applied without prior notice." },
+          "deletion": { "title": "5.3 Account Deletion", "text": "You can delete your account at any time. Account deletion is completed within 30 days and all your data is permanently deleted." }
+        },
+        "ip": {
+          "title": "6. Intellectual Property",
+          "content": { "title": "6.1 Platform Content", "text": "ForexsAi platform, logo, designs, software, algorithms, and all content are protected under intellectual property rights." },
+          "license": { "title": "6.2 Usage License", "text": "You are granted a personal, non-transferable, non-exclusive, and limited usage license. This license covers using our services only for the specified purposes." },
+          "feedback": { "title": "6.3 Feedback", "text": "You cannot claim any rights over feedback, suggestions, or ideas you provide regarding the platform, and these are considered transferred to ForexsAi." }
+        },
+        "disputes": {
+          "title": "7. Dispute Resolution",
+          "law": { "title": "7.1 Applicable Law", "text": "This agreement is subject to the laws of the Republic of Turkey and will be interpreted according to this law." },
+          "jurisdiction": { "title": "7.2 Jurisdiction", "text": "Istanbul Courts and Enforcement Offices are authorized for disputes arising from this agreement." },
+          "mediation": { "title": "7.3 Mediation", "text": "The parties agree to first resort to mediation for dispute resolution." }
+        },
+        "changes": {
+          "title": "8. Changes",
+          "modifications": { "title": "8.1 Term Changes", "text": "These Terms of Service may be changed at any time. Important changes will be notified by email." },
+          "continued": { "title": "8.2 Continued Use", "text": "Continuing to use the platform after changes means you accept the updated terms." },
+          "validity": { "title": "8.3 Validity", "text": "If any provision of these terms is found invalid or unenforceable, it does not affect the validity of other provisions." }
+        }
+      },
+      "acceptance": { "title": "Acceptance Declaration", "text": "By registering on the ForexsAi platform or using our services, you declare that you have read, understood, and accepted all the above terms. If you do not accept these terms, please do not use our platform." }
+    },
+    "risk": {
+      "title": "Risk Disclaimer",
+      "subtitle": "Please read carefully before trading",
+      "critical": { "title": "⚠️ CRITICAL WARNING", "text": "Trading in financial markets involves high risk and may result in the loss of all invested capital. Content provided by ForexsAi is NOT INVESTMENT ADVICE. All trades are entirely your own responsibility." },
+      "sections": {
+        "general": {
+          "title": "1. General Risk Warning",
+          "capital": { "title": "1.1 Capital Loss Risk", "text": "Trading in financial markets (Forex, Commodities, Stock Indices, etc.) carries the risk of losing ALL or a significant portion of your invested capital. Never trade with money you cannot afford to lose." },
+          "leverage": { "title": "1.2 Leverage Risk", "text": "Leveraged products (CFD, Forex, etc.) multiply both gains and losses. Even small price movements can significantly affect your account balance. Leverage can cause you to lose more than your invested amount." },
+          "volatility": { "title": "1.3 Market Volatility", "text": "Financial markets can experience sudden and severe price movements due to economic events, geopolitical developments, central bank decisions, and unexpected news." }
+        },
+        "ai": {
+          "title": "2. AI and Model Risks",
+          "errors": { "title": "2.1 Model Errors", "text": "Machine learning models used by ForexsAi are trained on historical data. These models may produce incorrect predictions and their performance may decline as market conditions change." },
+          "past": { "title": "2.2 Past Performance Is Not a Guarantee", "text": "Backtest results and historical accuracy rates are NOT a guarantee or indicator of future performance." },
+          "technical": { "title": "2.3 Technical Errors", "text": "Analyses may be incorrect due to software errors, server outages, data delays, or incorrect data flow." }
+        },
+        "notAdvice": {
+          "title": "3. Not Investment Advice",
+          "info": { "title": "3.1 Informational Purpose", "text": "ALL analyses, predictions, signals, charts, and AI commentary provided by the ForexsAi platform are for INFORMATIONAL AND EDUCATIONAL PURPOSES ONLY." },
+          "notLicensed": { "title": "3.2 Not Licensed Advisory", "text": "ForexsAi is NOT an investment advisory company licensed by the SEC or similar regulatory bodies. Professional investment advisor consultation is recommended for professional investment decisions." },
+          "responsibility": { "title": "3.3 Personal Responsibility", "text": "All investment decisions you make based on data on the platform and their outcomes are entirely your responsibility." }
+        },
+        "market": {
+          "title": "4. Market-Specific Risks",
+          "nasdaq": { "title": "4.1 NASDAQ-100 Risks", "text": "This technology-heavy index carries sectoral concentration risk. Negative developments in the technology sector can disproportionately affect the index." },
+          "gold": { "title": "4.2 Gold (XAU/USD) Risks", "text": "Gold prices are affected by the dollar index, interest rates, inflation expectations, and geopolitical risks." },
+          "liquidity": { "title": "4.3 Liquidity Risk", "text": "Liquidity may decrease outside market hours, before/after important news, or during holiday periods." }
+        },
+        "protection": {
+          "title": "5. Ways to Protect Yourself",
+          "education": { "title": "5.1 Education", "text": "Acquire sufficient knowledge about financial markets, technical analysis, and risk management before trading." },
+          "riskMgmt": { "title": "5.2 Risk Management", "text": "Only risk a small percentage of your capital on each trade (1-2% recommended). Use stop-loss orders." },
+          "emotional": { "title": "5.3 Emotional Control", "text": "Do not chase losses. Do not open trades with FOMO (fear of missing out)." },
+          "professional": { "title": "5.4 Professional Support", "text": "We strongly recommend consulting a licensed financial advisor before making important investment decisions." }
+        }
+      },
+      "acknowledgment": {
+        "title": "Acknowledgment Statement",
+        "intro": "By using the ForexsAi platform, you declare that you have READ, UNDERSTOOD, AND ACCEPTED the following:",
+        "items": [
+          "I know that trading in financial markets involves high risk and I may lose all my capital.",
+          "I understand that content provided by the platform is not investment advice.",
+          "I accept that the responsibility for all my investment decisions and their outcomes belongs to me.",
+          "I commit not to trade with money I cannot afford to lose.",
+          "I understand that AI predictions may be wrong and past performance is not a guarantee of the future."
+        ]
+      }
+    }
+  },
+  "blog": {
+    "title": "Blog",
+    "subtitle": "Market analyses, AI trading strategies, and financial education content",
+    "comingSoon": "Coming Soon!",
+    "comingSoonText": "Our blog section is under construction. Very soon we will share detailed articles about market analyses, educational content, and AI trading strategies.",
+    "featured": "Featured",
+    "readTime": "min",
+    "newsletter": {
+      "title": "Stay Updated",
+      "subtitle": "Subscribe to our newsletter for new articles and market analyses.",
+      "placeholder": "Your email address",
+      "button": "Coming Soon"
+    },
+    "categories": {
+      "aiTrading": "AI & Trading",
+      "marketAnalysis": "Market Analysis",
+      "commodity": "Commodity",
+      "education": "Education"
+    },
+    "posts": {
+      "1": {
+        "title": "Technical Analysis with AI: Trading Strategies of the Future",
+        "excerpt": "Discover how machine learning models are used in financial markets and how they differ from traditional technical analysis.",
+        "readTime": "8 min",
+        "date": "Jan 28, 2025"
+      },
+      "2": {
+        "title": "NASDAQ-100: A Guide to Investing in Tech Stocks",
+        "excerpt": "Everything you need to know about the NASDAQ-100 index, which includes America's largest technology companies.",
+        "readTime": "6 min",
+        "date": "Jan 25, 2025"
+      },
+      "3": {
+        "title": "Gold Investment: XAU/USD Analysis Techniques",
+        "excerpt": "Learn fundamental and technical analysis methods for gold as a safe-haven asset.",
+        "readTime": "7 min",
+        "date": "Jan 22, 2025"
+      },
+      "4": {
+        "title": "Risk Management: Stop-Loss and Take-Profit Strategies",
+        "excerpt": "Risk management techniques and position sizing methods used by professional traders.",
+        "readTime": "10 min",
+        "date": "Jan 18, 2025"
+      }
+    }
+  },
+  "careers": {
+    "title": "Careers",
+    "subtitle": "Let's build the future of AI-powered financial analysis platform together",
+    "mission": {
+      "title": "Our Mission",
+      "text": "At ForexsAi, we aim to provide institutional-level analysis tools to individual investors using artificial intelligence and machine learning technologies. Join our team and contribute to shaping the future of the fintech sector."
+    },
+    "whyUs": "Why ForexsAi?",
+    "benefits": {
+      "remote": { "title": "Remote Work", "description": "Work from anywhere in the world" },
+      "flexible": { "title": "Flexible Hours", "description": "Set your own working hours" },
+      "growth": { "title": "Fast Growth", "description": "Career development with startup dynamism" },
+      "learning": { "title": "Continuous Learning", "description": "Development opportunities in AI and fintech" },
+      "health": { "title": "Health Insurance", "description": "Comprehensive private health insurance" },
+      "equipment": { "title": "Equipment Support", "description": "Work equipment and home office support" }
+    },
+    "openPositions": "Open Positions",
+    "apply": "Apply",
+    "requirements": "Requirements:",
+    "noPosition": {
+      "title": "Can't Find the Position You're Looking For?",
+      "text": "We always want to meet talented professionals. Send us your CV, and we'll contact you when a suitable position opens.",
+      "button": "Send CV"
+    },
+    "departments": {
+      "engineering": "Engineering",
+      "aiData": "AI & Data",
+      "research": "Research"
+    }
+  }
+}

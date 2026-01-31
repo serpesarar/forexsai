@@ -138,19 +138,43 @@
     },
     "values": {
       "title": "Our Values",
-      "transparency": { "title": "Transparency", "text": "We openly share how our AI model works. No black boxes." },
-      "accuracy": { "title": "Accuracy", "text": "Every prediction is backed by millions of data points." },
-      "education": { "title": "Education", "text": "We don't give investment advice, we help you make informed decisions." },
-      "innovation": { "title": "Innovation", "text": "We adapt to market changes with continuously learning models." }
+      "transparency": {
+        "title": "Transparency",
+        "text": "We openly share how our AI model works. No black boxes."
+      },
+      "accuracy": {
+        "title": "Accuracy",
+        "text": "Every prediction is backed by millions of data points."
+      },
+      "education": {
+        "title": "Education",
+        "text": "We don't give investment advice, we help you make informed decisions."
+      },
+      "innovation": {
+        "title": "Innovation",
+        "text": "We adapt to market changes with continuously learning models."
+      }
     },
     "technology": {
       "title": "Our Technology",
       "description": "ForexsAi is built on cutting-edge machine learning algorithms.",
       "items": {
-        "data": { "title": "49M+ Data Rows", "text": "NASDAQ-100 and XAU/USD data from 2000 to present" },
-        "training": { "title": "9 Months Training", "text": "Comprehensive backtest and optimization process" },
-        "realtime": { "title": "Real-Time", "text": "Analysis updated every 30 seconds" },
-        "accuracy": { "title": "78%+ Accuracy", "text": "Success rate based on backtest results" }
+        "data": {
+          "title": "49M+ Data Rows",
+          "text": "NASDAQ-100 and XAU/USD data from 2000 to present"
+        },
+        "training": {
+          "title": "9 Months Training",
+          "text": "Comprehensive backtest and optimization process"
+        },
+        "realtime": {
+          "title": "Real-Time",
+          "text": "Analysis updated every 30 seconds"
+        },
+        "accuracy": {
+          "title": "78%+ Accuracy",
+          "text": "Success rate based on backtest results"
+        }
       }
     },
     "team": {
@@ -256,41 +280,101 @@
       "sections": {
         "data": {
           "title": "1. Data Collection",
-          "account": { "title": "1.1 Account Information", "text": "When you register on our platform, we collect: email address, encrypted password (hash), name (optional), profile picture (optional)." },
-          "usage": { "title": "1.2 Usage Data", "text": "Data automatically collected when using our services: IP address, browser type and version, device information, page view statistics, session duration, preferred language settings." },
-          "analytics": { "title": "1.3 Analytics Data", "text": "To improve platform performance: feature usage, error reports, performance metrics. This data is collected anonymously and is not linked to your personal identity." }
+          "account": {
+            "title": "1.1 Account Information",
+            "text": "When you register on our platform, we collect: email address, encrypted password (hash), name (optional), profile picture (optional)."
+          },
+          "usage": {
+            "title": "1.2 Usage Data",
+            "text": "Data automatically collected when using our services: IP address, browser type and version, device information, page view statistics, session duration, preferred language settings."
+          },
+          "analytics": {
+            "title": "1.3 Analytics Data",
+            "text": "To improve platform performance: feature usage, error reports, performance metrics. This data is collected anonymously and is not linked to your personal identity."
+          }
         },
         "purpose": {
           "title": "2. Purpose of Data Use",
-          "service": { "title": "2.1 Service Delivery", "text": "To create and manage your account, provide AI-powered market analysis, deliver personalized experience, provide technical support." },
-          "communication": { "title": "2.2 Communication", "text": "Important updates and announcements, security notifications, account activity alerts, marketing communications (with your consent)." },
-          "development": { "title": "2.3 Development", "text": "To improve service quality, develop new features, optimize user experience, detect and fix errors." }
+          "service": {
+            "title": "2.1 Service Delivery",
+            "text": "To create and manage your account, provide AI-powered market analysis, deliver personalized experience, provide technical support."
+          },
+          "communication": {
+            "title": "2.2 Communication",
+            "text": "Important updates and announcements, security notifications, account activity alerts, marketing communications (with your consent)."
+          },
+          "development": {
+            "title": "2.3 Development",
+            "text": "To improve service quality, develop new features, optimize user experience, detect and fix errors."
+          }
         },
         "security": {
           "title": "3. Data Security",
-          "encryption": { "title": "3.1 Encryption", "text": "All data transfers are protected with 256-bit SSL/TLS encryption. Passwords are hashed using bcrypt algorithm. Sensitive data is protected with AES-256 encryption standard." },
-          "infrastructure": { "title": "3.2 Infrastructure Security", "text": "Your data is hosted on secure cloud infrastructure (Railway, Supabase). Regular security audits and penetration tests are conducted. 24/7 monitoring and threat detection is active." },
-          "access": { "title": "3.3 Access Control", "text": "Access to your data is limited to authorized personnel who need it for their job duties. All access is logged and audited." }
+          "encryption": {
+            "title": "3.1 Encryption",
+            "text": "All data transfers are protected with 256-bit SSL/TLS encryption. Passwords are hashed using bcrypt algorithm. Sensitive data is protected with AES-256 encryption standard."
+          },
+          "infrastructure": {
+            "title": "3.2 Infrastructure Security",
+            "text": "Your data is hosted on secure cloud infrastructure (Railway, Supabase). Regular security audits and penetration tests are conducted. 24/7 monitoring and threat detection is active."
+          },
+          "access": {
+            "title": "3.3 Access Control",
+            "text": "Access to your data is limited to authorized personnel who need it for their job duties. All access is logged and audited."
+          }
         },
         "thirdParty": {
           "title": "4. Third-Party Sharing",
-          "providers": { "title": "4.1 Service Providers", "text": "Data is shared with the following trusted service providers: Supabase (database and authentication), Railway (application hosting), Resend (email services). These providers comply with GDPR and industry standards." },
-          "legal": { "title": "4.2 Legal Requirements", "text": "In case of legal obligation (court order, official request, etc.), your data may be shared with authorities. We will inform you to the extent permitted by law." },
-          "noSale": { "title": "4.3 Sale or Transfer", "text": "Your personal data is never sold to third parties or shared for marketing purposes under any circumstances." }
+          "providers": {
+            "title": "4.1 Service Providers",
+            "text": "Data is shared with the following trusted service providers: Supabase (database and authentication), Railway (application hosting), Resend (email services). These providers comply with GDPR and industry standards."
+          },
+          "legal": {
+            "title": "4.2 Legal Requirements",
+            "text": "In case of legal obligation (court order, official request, etc.), your data may be shared with authorities. We will inform you to the extent permitted by law."
+          },
+          "noSale": {
+            "title": "4.3 Sale or Transfer",
+            "text": "Your personal data is never sold to third parties or shared for marketing purposes under any circumstances."
+          }
         },
         "rights": {
           "title": "5. User Rights",
-          "access": { "title": "5.1 Right of Access", "text": "You can request a copy of all data we store about you." },
-          "correction": { "title": "5.2 Right to Correction", "text": "You can request correction of incorrect or incomplete data." },
-          "deletion": { "title": "5.3 Right to Deletion", "text": "You can permanently delete your account and all associated data. Deletion is completed within 30 days." },
-          "portability": { "title": "5.4 Data Portability", "text": "You can request your data in a commonly used, machine-readable format (JSON)." },
-          "objection": { "title": "5.5 Right to Object", "text": "You can object to data processing or opt out of marketing communications." }
+          "access": {
+            "title": "5.1 Right of Access",
+            "text": "You can request a copy of all data we store about you."
+          },
+          "correction": {
+            "title": "5.2 Right to Correction",
+            "text": "You can request correction of incorrect or incomplete data."
+          },
+          "deletion": {
+            "title": "5.3 Right to Deletion",
+            "text": "You can permanently delete your account and all associated data. Deletion is completed within 30 days."
+          },
+          "portability": {
+            "title": "5.4 Data Portability",
+            "text": "You can request your data in a commonly used, machine-readable format (JSON)."
+          },
+          "objection": {
+            "title": "5.5 Right to Object",
+            "text": "You can object to data processing or opt out of marketing communications."
+          }
         },
         "cookies": {
           "title": "6. Cookies",
-          "required": { "title": "6.1 Required Cookies", "text": "Cookies necessary for session management and security are used. Service cannot be provided without these cookies." },
-          "analytics": { "title": "6.2 Analytics Cookies", "text": "Anonymous cookies may be used to analyze service usage. You can disable these cookies in your browser settings." },
-          "preferences": { "title": "6.3 Preference Cookies", "text": "Cookies are used to remember your settings such as language preference, theme selection." }
+          "required": {
+            "title": "6.1 Required Cookies",
+            "text": "Cookies necessary for session management and security are used. Service cannot be provided without these cookies."
+          },
+          "analytics": {
+            "title": "6.2 Analytics Cookies",
+            "text": "Anonymous cookies may be used to analyze service usage. You can disable these cookies in your browser settings."
+          },
+          "preferences": {
+            "title": "6.3 Preference Cookies",
+            "text": "Cookies are used to remember your settings such as language preference, theme selection."
+          }
         },
         "contact": {
           "title": "7. Contact",
@@ -303,95 +387,227 @@
     "terms": {
       "title": "Terms of Service",
       "lastUpdate": "Last Updated: January 31, 2025",
-      "warning": { "title": "Important Notice", "text": "Please read these terms carefully. By using our platform, you agree to these terms. We strongly recommend reading our Risk Disclaimer as well." },
+      "warning": {
+        "title": "Important Notice",
+        "text": "Please read these terms carefully. By using our platform, you agree to these terms. We strongly recommend reading our Risk Disclaimer as well."
+      },
       "sections": {
         "service": {
           "title": "1. Service Description and Acceptance",
-          "description": { "title": "1.1 Our Services", "text": "ForexsAi is an AI-powered financial market analysis platform. It provides technical analysis, ML-based predictions, pattern detection, and sentiment analysis services for NASDAQ-100 and XAU/USD (Gold) instruments." },
-          "acceptance": { "title": "1.2 Acceptance", "text": "By registering on our platform or using our services, you declare that you have read, understood, and accepted these Terms of Service, Privacy Policy, and Risk Disclaimer." },
-          "age": { "title": "1.3 Age Requirement", "text": "You must be at least 18 years old to use our services. If you are under 18, you cannot use our platform." }
+          "description": {
+            "title": "1.1 Our Services",
+            "text": "ForexsAi is an AI-powered financial market analysis platform. It provides technical analysis, ML-based predictions, pattern detection, and sentiment analysis services for NASDAQ-100 and XAU/USD (Gold) instruments."
+          },
+          "acceptance": {
+            "title": "1.2 Acceptance",
+            "text": "By registering on our platform or using our services, you declare that you have read, understood, and accepted these Terms of Service, Privacy Policy, and Risk Disclaimer."
+          },
+          "age": {
+            "title": "1.3 Age Requirement",
+            "text": "You must be at least 18 years old to use our services. If you are under 18, you cannot use our platform."
+          }
         },
         "disclaimer": {
           "title": "2. Disclaimer",
-          "notAdvice": { "title": "2.1 Not Investment Advice", "text": "All analyses, predictions, signals, and data provided by ForexsAi are for INFORMATIONAL AND EDUCATIONAL PURPOSES ONLY. This content cannot be interpreted as investment advice, financial consulting, or buy/sell recommendations." },
-          "noGuarantee": { "title": "2.2 No Guarantee", "text": "The platform is provided 'as is' and 'as available'. No guarantee is given for the accuracy of analyses, realization of predictions, or any return. Past performance is not indicative of future results." },
-          "liability": { "title": "2.3 Liability for Losses", "text": "ForexsAi cannot be held responsible for any direct, indirect, incidental, special, or consequential loss or damage arising from the use of our platform. All investment decisions and their outcomes are entirely the user's responsibility." }
+          "notAdvice": {
+            "title": "2.1 Not Investment Advice",
+            "text": "All analyses, predictions, signals, and data provided by ForexsAi are for INFORMATIONAL AND EDUCATIONAL PURPOSES ONLY. This content cannot be interpreted as investment advice, financial consulting, or buy/sell recommendations."
+          },
+          "noGuarantee": {
+            "title": "2.2 No Guarantee",
+            "text": "The platform is provided 'as is' and 'as available'. No guarantee is given for the accuracy of analyses, realization of predictions, or any return. Past performance is not indicative of future results."
+          },
+          "liability": {
+            "title": "2.3 Liability for Losses",
+            "text": "ForexsAi cannot be held responsible for any direct, indirect, incidental, special, or consequential loss or damage arising from the use of our platform. All investment decisions and their outcomes are entirely the user's responsibility."
+          }
         },
         "prohibited": {
           "title": "3. Prohibited Uses",
-          "automation": { "title": "3.1 Automated Access", "text": "Access to the platform with bots, scrapers, crawlers, or similar automated tools is strictly prohibited. API limits and usage rules must be followed." },
-          "sharing": { "title": "3.2 Content Sharing", "text": "Unauthorized copying, distribution, or republishing of premium content, analyses, or predictions is prohibited." },
-          "abuse": { "title": "3.3 Abuse", "text": "Actions that endanger platform security, behavior that interferes with other users' services, sharing false or misleading information, creating fake accounts are strictly prohibited." },
-          "commercial": { "title": "3.4 Commercial Use", "text": "Using, selling, or relicensing data obtained with an individual license for commercial purposes is prohibited." }
+          "automation": {
+            "title": "3.1 Automated Access",
+            "text": "Access to the platform with bots, scrapers, crawlers, or similar automated tools is strictly prohibited. API limits and usage rules must be followed."
+          },
+          "sharing": {
+            "title": "3.2 Content Sharing",
+            "text": "Unauthorized copying, distribution, or republishing of premium content, analyses, or predictions is prohibited."
+          },
+          "abuse": {
+            "title": "3.3 Abuse",
+            "text": "Actions that endanger platform security, behavior that interferes with other users' services, sharing false or misleading information, creating fake accounts are strictly prohibited."
+          },
+          "commercial": {
+            "title": "3.4 Commercial Use",
+            "text": "Using, selling, or relicensing data obtained with an individual license for commercial purposes is prohibited."
+          }
         },
         "payments": {
           "title": "4. Fees and Payments",
-          "free": { "title": "4.1 Free Plan", "text": "All features are offered free during the Early Access period. This may change and changes will be announced in advance." },
-          "premium": { "title": "4.2 Premium Plans", "text": "Prices for premium plans to be offered in the future will be clearly stated on the pricing page. Subscription fees are collected in advance." },
-          "refund": { "title": "4.3 Refund Policy", "text": "Due to the nature of digital services, no refunds are made after purchase. However, evaluation may be made for technical issues." }
+          "free": {
+            "title": "4.1 Free Plan",
+            "text": "All features are offered free during the Early Access period. This may change and changes will be announced in advance."
+          },
+          "premium": {
+            "title": "4.2 Premium Plans",
+            "text": "Prices for premium plans to be offered in the future will be clearly stated on the pricing page. Subscription fees are collected in advance."
+          },
+          "refund": {
+            "title": "4.3 Refund Policy",
+            "text": "Due to the nature of digital services, no refunds are made after purchase. However, evaluation may be made for technical issues."
+          }
         },
         "account": {
           "title": "5. Account Management",
-          "security": { "title": "5.1 Account Security", "text": "You are responsible for the security of your account information. Using a strong password and not sharing your account information with anyone is recommended." },
-          "suspension": { "title": "5.2 Account Suspension", "text": "Your account may be temporarily or permanently suspended in case of violation of terms of service. This may be applied without prior notice." },
-          "deletion": { "title": "5.3 Account Deletion", "text": "You can delete your account at any time. Account deletion is completed within 30 days and all your data is permanently deleted." }
+          "security": {
+            "title": "5.1 Account Security",
+            "text": "You are responsible for the security of your account information. Using a strong password and not sharing your account information with anyone is recommended."
+          },
+          "suspension": {
+            "title": "5.2 Account Suspension",
+            "text": "Your account may be temporarily or permanently suspended in case of violation of terms of service. This may be applied without prior notice."
+          },
+          "deletion": {
+            "title": "5.3 Account Deletion",
+            "text": "You can delete your account at any time. Account deletion is completed within 30 days and all your data is permanently deleted."
+          }
         },
         "ip": {
           "title": "6. Intellectual Property",
-          "content": { "title": "6.1 Platform Content", "text": "ForexsAi platform, logo, designs, software, algorithms, and all content are protected under intellectual property rights." },
-          "license": { "title": "6.2 Usage License", "text": "You are granted a personal, non-transferable, non-exclusive, and limited usage license. This license covers using our services only for the specified purposes." },
-          "feedback": { "title": "6.3 Feedback", "text": "You cannot claim any rights over feedback, suggestions, or ideas you provide regarding the platform, and these are considered transferred to ForexsAi." }
+          "content": {
+            "title": "6.1 Platform Content",
+            "text": "ForexsAi platform, logo, designs, software, algorithms, and all content are protected under intellectual property rights."
+          },
+          "license": {
+            "title": "6.2 Usage License",
+            "text": "You are granted a personal, non-transferable, non-exclusive, and limited usage license. This license covers using our services only for the specified purposes."
+          },
+          "feedback": {
+            "title": "6.3 Feedback",
+            "text": "You cannot claim any rights over feedback, suggestions, or ideas you provide regarding the platform, and these are considered transferred to ForexsAi."
+          }
         },
         "disputes": {
           "title": "7. Dispute Resolution",
-          "law": { "title": "7.1 Applicable Law", "text": "This agreement is subject to the laws of the Republic of Turkey and will be interpreted according to this law." },
-          "jurisdiction": { "title": "7.2 Jurisdiction", "text": "Istanbul Courts and Enforcement Offices are authorized for disputes arising from this agreement." },
-          "mediation": { "title": "7.3 Mediation", "text": "The parties agree to first resort to mediation for dispute resolution." }
+          "law": {
+            "title": "7.1 Applicable Law",
+            "text": "This agreement is subject to the laws of the Republic of Turkey and will be interpreted according to this law."
+          },
+          "jurisdiction": {
+            "title": "7.2 Jurisdiction",
+            "text": "Istanbul Courts and Enforcement Offices are authorized for disputes arising from this agreement."
+          },
+          "mediation": {
+            "title": "7.3 Mediation",
+            "text": "The parties agree to first resort to mediation for dispute resolution."
+          }
         },
         "changes": {
           "title": "8. Changes",
-          "modifications": { "title": "8.1 Term Changes", "text": "These Terms of Service may be changed at any time. Important changes will be notified by email." },
-          "continued": { "title": "8.2 Continued Use", "text": "Continuing to use the platform after changes means you accept the updated terms." },
-          "validity": { "title": "8.3 Validity", "text": "If any provision of these terms is found invalid or unenforceable, it does not affect the validity of other provisions." }
+          "modifications": {
+            "title": "8.1 Term Changes",
+            "text": "These Terms of Service may be changed at any time. Important changes will be notified by email."
+          },
+          "continued": {
+            "title": "8.2 Continued Use",
+            "text": "Continuing to use the platform after changes means you accept the updated terms."
+          },
+          "validity": {
+            "title": "8.3 Validity",
+            "text": "If any provision of these terms is found invalid or unenforceable, it does not affect the validity of other provisions."
+          }
         }
       },
-      "acceptance": { "title": "Acceptance Declaration", "text": "By registering on the ForexsAi platform or using our services, you declare that you have read, understood, and accepted all the above terms. If you do not accept these terms, please do not use our platform." }
+      "acceptance": {
+        "title": "Acceptance Declaration",
+        "text": "By registering on the ForexsAi platform or using our services, you declare that you have read, understood, and accepted all the above terms. If you do not accept these terms, please do not use our platform."
+      }
     },
     "risk": {
       "title": "Risk Disclaimer",
       "subtitle": "Please read carefully before trading",
-      "critical": { "title": "⚠️ CRITICAL WARNING", "text": "Trading in financial markets involves high risk and may result in the loss of all invested capital. Content provided by ForexsAi is NOT INVESTMENT ADVICE. All trades are entirely your own responsibility." },
+      "critical": {
+        "title": "⚠️ CRITICAL WARNING",
+        "text": "Trading in financial markets involves high risk and may result in the loss of all invested capital. Content provided by ForexsAi is NOT INVESTMENT ADVICE. All trades are entirely your own responsibility."
+      },
       "sections": {
         "general": {
           "title": "1. General Risk Warning",
-          "capital": { "title": "1.1 Capital Loss Risk", "text": "Trading in financial markets (Forex, Commodities, Stock Indices, etc.) carries the risk of losing ALL or a significant portion of your invested capital. Never trade with money you cannot afford to lose." },
-          "leverage": { "title": "1.2 Leverage Risk", "text": "Leveraged products (CFD, Forex, etc.) multiply both gains and losses. Even small price movements can significantly affect your account balance. Leverage can cause you to lose more than your invested amount." },
-          "volatility": { "title": "1.3 Market Volatility", "text": "Financial markets can experience sudden and severe price movements due to economic events, geopolitical developments, central bank decisions, and unexpected news." }
+          "capital": {
+            "title": "1.1 Capital Loss Risk",
+            "text": "Trading in financial markets (Forex, Commodities, Stock Indices, etc.) carries the risk of losing ALL or a significant portion of your invested capital. Never trade with money you cannot afford to lose."
+          },
+          "leverage": {
+            "title": "1.2 Leverage Risk",
+            "text": "Leveraged products (CFD, Forex, etc.) multiply both gains and losses. Even small price movements can significantly affect your account balance. Leverage can cause you to lose more than your invested amount."
+          },
+          "volatility": {
+            "title": "1.3 Market Volatility",
+            "text": "Financial markets can experience sudden and severe price movements due to economic events, geopolitical developments, central bank decisions, and unexpected news."
+          }
         },
         "ai": {
           "title": "2. AI and Model Risks",
-          "errors": { "title": "2.1 Model Errors", "text": "Machine learning models used by ForexsAi are trained on historical data. These models may produce incorrect predictions and their performance may decline as market conditions change." },
-          "past": { "title": "2.2 Past Performance Is Not a Guarantee", "text": "Backtest results and historical accuracy rates are NOT a guarantee or indicator of future performance." },
-          "technical": { "title": "2.3 Technical Errors", "text": "Analyses may be incorrect due to software errors, server outages, data delays, or incorrect data flow." }
+          "errors": {
+            "title": "2.1 Model Errors",
+            "text": "Machine learning models used by ForexsAi are trained on historical data. These models may produce incorrect predictions and their performance may decline as market conditions change."
+          },
+          "past": {
+            "title": "2.2 Past Performance Is Not a Guarantee",
+            "text": "Backtest results and historical accuracy rates are NOT a guarantee or indicator of future performance."
+          },
+          "technical": {
+            "title": "2.3 Technical Errors",
+            "text": "Analyses may be incorrect due to software errors, server outages, data delays, or incorrect data flow."
+          }
         },
         "notAdvice": {
           "title": "3. Not Investment Advice",
-          "info": { "title": "3.1 Informational Purpose", "text": "ALL analyses, predictions, signals, charts, and AI commentary provided by the ForexsAi platform are for INFORMATIONAL AND EDUCATIONAL PURPOSES ONLY." },
-          "notLicensed": { "title": "3.2 Not Licensed Advisory", "text": "ForexsAi is NOT an investment advisory company licensed by the SEC or similar regulatory bodies. Professional investment advisor consultation is recommended for professional investment decisions." },
-          "responsibility": { "title": "3.3 Personal Responsibility", "text": "All investment decisions you make based on data on the platform and their outcomes are entirely your responsibility." }
+          "info": {
+            "title": "3.1 Informational Purpose",
+            "text": "ALL analyses, predictions, signals, charts, and AI commentary provided by the ForexsAi platform are for INFORMATIONAL AND EDUCATIONAL PURPOSES ONLY."
+          },
+          "notLicensed": {
+            "title": "3.2 Not Licensed Advisory",
+            "text": "ForexsAi is NOT an investment advisory company licensed by the SEC or similar regulatory bodies. Professional investment advisor consultation is recommended for professional investment decisions."
+          },
+          "responsibility": {
+            "title": "3.3 Personal Responsibility",
+            "text": "All investment decisions you make based on data on the platform and their outcomes are entirely your responsibility."
+          }
         },
         "market": {
           "title": "4. Market-Specific Risks",
-          "nasdaq": { "title": "4.1 NASDAQ-100 Risks", "text": "This technology-heavy index carries sectoral concentration risk. Negative developments in the technology sector can disproportionately affect the index." },
-          "gold": { "title": "4.2 Gold (XAU/USD) Risks", "text": "Gold prices are affected by the dollar index, interest rates, inflation expectations, and geopolitical risks." },
-          "liquidity": { "title": "4.3 Liquidity Risk", "text": "Liquidity may decrease outside market hours, before/after important news, or during holiday periods." }
+          "nasdaq": {
+            "title": "4.1 NASDAQ-100 Risks",
+            "text": "This technology-heavy index carries sectoral concentration risk. Negative developments in the technology sector can disproportionately affect the index."
+          },
+          "gold": {
+            "title": "4.2 Gold (XAU/USD) Risks",
+            "text": "Gold prices are affected by the dollar index, interest rates, inflation expectations, and geopolitical risks."
+          },
+          "liquidity": {
+            "title": "4.3 Liquidity Risk",
+            "text": "Liquidity may decrease outside market hours, before/after important news, or during holiday periods."
+          }
         },
         "protection": {
           "title": "5. Ways to Protect Yourself",
-          "education": { "title": "5.1 Education", "text": "Acquire sufficient knowledge about financial markets, technical analysis, and risk management before trading." },
-          "riskMgmt": { "title": "5.2 Risk Management", "text": "Only risk a small percentage of your capital on each trade (1-2% recommended). Use stop-loss orders." },
-          "emotional": { "title": "5.3 Emotional Control", "text": "Do not chase losses. Do not open trades with FOMO (fear of missing out)." },
-          "professional": { "title": "5.4 Professional Support", "text": "We strongly recommend consulting a licensed financial advisor before making important investment decisions." }
+          "education": {
+            "title": "5.1 Education",
+            "text": "Acquire sufficient knowledge about financial markets, technical analysis, and risk management before trading."
+          },
+          "riskMgmt": {
+            "title": "5.2 Risk Management",
+            "text": "Only risk a small percentage of your capital on each trade (1-2% recommended). Use stop-loss orders."
+          },
+          "emotional": {
+            "title": "5.3 Emotional Control",
+            "text": "Do not chase losses. Do not open trades with FOMO (fear of missing out)."
+          },
+          "professional": {
+            "title": "5.4 Professional Support",
+            "text": "We strongly recommend consulting a licensed financial advisor before making important investment decisions."
+          }
         }
       },
       "acknowledgment": {
@@ -462,12 +678,30 @@
     },
     "whyUs": "Why ForexsAi?",
     "benefits": {
-      "remote": { "title": "Remote Work", "description": "Work from anywhere in the world" },
-      "flexible": { "title": "Flexible Hours", "description": "Set your own working hours" },
-      "growth": { "title": "Fast Growth", "description": "Career development with startup dynamism" },
-      "learning": { "title": "Continuous Learning", "description": "Development opportunities in AI and fintech" },
-      "health": { "title": "Health Insurance", "description": "Comprehensive private health insurance" },
-      "equipment": { "title": "Equipment Support", "description": "Work equipment and home office support" }
+      "remote": {
+        "title": "Remote Work",
+        "description": "Work from anywhere in the world"
+      },
+      "flexible": {
+        "title": "Flexible Hours",
+        "description": "Set your own working hours"
+      },
+      "growth": {
+        "title": "Fast Growth",
+        "description": "Career development with startup dynamism"
+      },
+      "learning": {
+        "title": "Continuous Learning",
+        "description": "Development opportunities in AI and fintech"
+      },
+      "health": {
+        "title": "Health Insurance",
+        "description": "Comprehensive private health insurance"
+      },
+      "equipment": {
+        "title": "Equipment Support",
+        "description": "Work equipment and home office support"
+      }
     },
     "openPositions": "Open Positions",
     "apply": "Apply",
@@ -481,6 +715,44 @@
       "engineering": "Engineering",
       "aiData": "AI & Data",
       "research": "Research"
+    },
+    "demo": {
+      "title": "ForexsAi Interactive Demo",
+      "subtitle": "Experience AI analysis without risk.",
+      "start": "Start Demo",
+      "steps": {
+        "select": {
+          "title": "Asset Selection",
+          "text": "Select the pair you want to analyze."
+        },
+        "analyzing": {
+          "title": "AI Analysis",
+          "text": "Scanning M15, H4 and Daily charts..."
+        },
+        "signal": {
+          "title": "Signal Detected",
+          "text": "Strong Opportunity Detected!"
+        },
+        "result": {
+          "title": "Trade Result",
+          "text": "AI prediction realized successfully."
+        }
+      },
+      "ui": {
+        "confidence": "Confidence Score",
+        "entry": "Entry",
+        "target": "Target",
+        "stop": "Stop",
+        "buy": "BUY (LONG)",
+        "sell": "SELL (SHORT)",
+        "analyze": "Analyze",
+        "executing": "Executing...",
+        "success": "Success"
+      },
+      "cta": {
+        "title": "Start Winning in Real Markets",
+        "button": "Create Account"
+      }
     }
   }
 }

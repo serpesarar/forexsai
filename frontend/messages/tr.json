@@ -138,19 +138,43 @@
     },
     "values": {
       "title": "Değerlerimiz",
-      "transparency": { "title": "Şeffaflık", "text": "AI modelimizin nasıl çalıştığını açıkça paylaşıyoruz. Kara kutu yok." },
-      "accuracy": { "title": "Doğruluk", "text": "Her tahmin, milyonlarca veri noktasıyla destekleniyor." },
-      "education": { "title": "Eğitim", "text": "Yatırım tavsiyesi vermiyoruz, bilinçli karar almanıza yardımcı oluyoruz." },
-      "innovation": { "title": "İnovasyon", "text": "Sürekli öğrenen modellerle piyasa değişimlerine adapte oluyoruz." }
+      "transparency": {
+        "title": "Şeffaflık",
+        "text": "AI modelimizin nasıl çalıştığını açıkça paylaşıyoruz. Kara kutu yok."
+      },
+      "accuracy": {
+        "title": "Doğruluk",
+        "text": "Her tahmin, milyonlarca veri noktasıyla destekleniyor."
+      },
+      "education": {
+        "title": "Eğitim",
+        "text": "Yatırım tavsiyesi vermiyoruz, bilinçli karar almanıza yardımcı oluyoruz."
+      },
+      "innovation": {
+        "title": "İnovasyon",
+        "text": "Sürekli öğrenen modellerle piyasa değişimlerine adapte oluyoruz."
+      }
     },
     "technology": {
       "title": "Teknolojimiz",
       "description": "ForexsAi, son teknoloji makine öğrenmesi algoritmaları üzerine inşa edilmiştir.",
       "items": {
-        "data": { "title": "49M+ Veri Satırı", "text": "2000'den bugüne NASDAQ-100 ve XAU/USD verileri" },
-        "training": { "title": "9 Ay Eğitim", "text": "Kapsamlı backtest ve optimizasyon süreci" },
-        "realtime": { "title": "Gerçek Zamanlı", "text": "30 saniyede bir güncellenen analizler" },
-        "accuracy": { "title": "%78+ Doğruluk", "text": "Backtest sonuçlarına göre başarı oranı" }
+        "data": {
+          "title": "49M+ Veri Satırı",
+          "text": "2000'den bugüne NASDAQ-100 ve XAU/USD verileri"
+        },
+        "training": {
+          "title": "9 Ay Eğitim",
+          "text": "Kapsamlı backtest ve optimizasyon süreci"
+        },
+        "realtime": {
+          "title": "Gerçek Zamanlı",
+          "text": "30 saniyede bir güncellenen analizler"
+        },
+        "accuracy": {
+          "title": "%78+ Doğruluk",
+          "text": "Backtest sonuçlarına göre başarı oranı"
+        }
       }
     },
     "team": {
@@ -256,41 +280,101 @@
       "sections": {
         "data": {
           "title": "1. Toplanan Veriler",
-          "account": { "title": "1.1 Hesap Bilgileri", "text": "Platformumuza kayıt olduğunuzda aşağıdaki bilgileri topluyoruz: E-posta adresi, şifrelenmiş parola (hash), ad-soyad (isteğe bağlı), profil fotoğrafı (isteğe bağlı)." },
-          "usage": { "title": "1.2 Kullanım Verileri", "text": "Hizmetlerimizi kullandığınızda otomatik olarak toplanan veriler: IP adresi, tarayıcı türü ve sürümü, cihaz bilgileri, sayfa görüntüleme istatistikleri, oturum süreleri, tercih edilen dil ayarları." },
-          "analytics": { "title": "1.3 Analitik Veriler", "text": "Platform performansını iyileştirmek için: Hangi özelliklerin kullanıldığı, hata raporları, performans metrikleri. Bu veriler anonim olarak toplanır ve kişisel kimliğinizle ilişkilendirilmez." }
+          "account": {
+            "title": "1.1 Hesap Bilgileri",
+            "text": "Platformumuza kayıt olduğunuzda aşağıdaki bilgileri topluyoruz: E-posta adresi, şifrelenmiş parola (hash), ad-soyad (isteğe bağlı), profil fotoğrafı (isteğe bağlı)."
+          },
+          "usage": {
+            "title": "1.2 Kullanım Verileri",
+            "text": "Hizmetlerimizi kullandığınızda otomatik olarak toplanan veriler: IP adresi, tarayıcı türü ve sürümü, cihaz bilgileri, sayfa görüntüleme istatistikleri, oturum süreleri, tercih edilen dil ayarları."
+          },
+          "analytics": {
+            "title": "1.3 Analitik Veriler",
+            "text": "Platform performansını iyileştirmek için: Hangi özelliklerin kullanıldığı, hata raporları, performans metrikleri. Bu veriler anonim olarak toplanır ve kişisel kimliğinizle ilişkilendirilmez."
+          }
         },
         "purpose": {
           "title": "2. Verilerin Kullanım Amacı",
-          "service": { "title": "2.1 Hizmet Sunumu", "text": "Hesabınızı oluşturmak ve yönetmek, AI destekli piyasa analizleri sunmak, kişiselleştirilmiş deneyim sağlamak, teknik destek vermek." },
-          "communication": { "title": "2.2 İletişim", "text": "Önemli güncellemeler ve duyurular, güvenlik bildirimleri, hesap aktivitesi uyarıları, pazarlama iletişimleri (onayınız dahilinde)." },
-          "development": { "title": "2.3 Geliştirme", "text": "Hizmet kalitesini artırmak, yeni özellikler geliştirmek, kullanıcı deneyimini optimize etmek, hataları tespit ve düzeltmek." }
+          "service": {
+            "title": "2.1 Hizmet Sunumu",
+            "text": "Hesabınızı oluşturmak ve yönetmek, AI destekli piyasa analizleri sunmak, kişiselleştirilmiş deneyim sağlamak, teknik destek vermek."
+          },
+          "communication": {
+            "title": "2.2 İletişim",
+            "text": "Önemli güncellemeler ve duyurular, güvenlik bildirimleri, hesap aktivitesi uyarıları, pazarlama iletişimleri (onayınız dahilinde)."
+          },
+          "development": {
+            "title": "2.3 Geliştirme",
+            "text": "Hizmet kalitesini artırmak, yeni özellikler geliştirmek, kullanıcı deneyimini optimize etmek, hataları tespit ve düzeltmek."
+          }
         },
         "security": {
           "title": "3. Veri Güvenliği",
-          "encryption": { "title": "3.1 Şifreleme", "text": "Tüm veri transferleri 256-bit SSL/TLS şifreleme ile korunmaktadır. Parolalar bcrypt algoritması ile hash'lenerek saklanır. Hassas veriler AES-256 şifreleme standardı ile korunur." },
-          "infrastructure": { "title": "3.2 Altyapı Güvenliği", "text": "Verileriniz güvenli bulut altyapısında (Railway, Supabase) barındırılmaktadır. Düzenli güvenlik denetimleri ve penetrasyon testleri yapılmaktadır. 7/24 izleme ve tehdit tespiti aktiftir." },
-          "access": { "title": "3.3 Erişim Kontrolü", "text": "Verilerinize erişim, yalnızca görev tanımı gereği erişmesi gereken yetkili personel ile sınırlıdır. Tüm erişimler loglanır ve denetlenir." }
+          "encryption": {
+            "title": "3.1 Şifreleme",
+            "text": "Tüm veri transferleri 256-bit SSL/TLS şifreleme ile korunmaktadır. Parolalar bcrypt algoritması ile hash'lenerek saklanır. Hassas veriler AES-256 şifreleme standardı ile korunur."
+          },
+          "infrastructure": {
+            "title": "3.2 Altyapı Güvenliği",
+            "text": "Verileriniz güvenli bulut altyapısında (Railway, Supabase) barındırılmaktadır. Düzenli güvenlik denetimleri ve penetrasyon testleri yapılmaktadır. 7/24 izleme ve tehdit tespiti aktiftir."
+          },
+          "access": {
+            "title": "3.3 Erişim Kontrolü",
+            "text": "Verilerinize erişim, yalnızca görev tanımı gereği erişmesi gereken yetkili personel ile sınırlıdır. Tüm erişimler loglanır ve denetlenir."
+          }
         },
         "thirdParty": {
           "title": "4. Üçüncü Taraf Paylaşımları",
-          "providers": { "title": "4.1 Hizmet Sağlayıcılar", "text": "Aşağıdaki güvenilir hizmet sağlayıcılarla veri paylaşımı yapılmaktadır: Supabase (veritabanı ve kimlik doğrulama), Railway (uygulama barındırma), Resend (e-posta hizmetleri). Bu sağlayıcılar GDPR ve endüstri standartlarına uygundur." },
-          "legal": { "title": "4.2 Yasal Zorunluluklar", "text": "Yasal bir zorunluluk halinde (mahkeme kararı, resmi talep vb.) verileriniz yetkili makamlarla paylaşılabilir. Bu durumda, yasaların izin verdiği ölçüde sizi bilgilendireceğiz." },
-          "noSale": { "title": "4.3 Satış veya Transfer", "text": "Kişisel verileriniz hiçbir koşulda üçüncü taraflara satılmaz veya pazarlama amacıyla paylaşılmaz." }
+          "providers": {
+            "title": "4.1 Hizmet Sağlayıcılar",
+            "text": "Aşağıdaki güvenilir hizmet sağlayıcılarla veri paylaşımı yapılmaktadır: Supabase (veritabanı ve kimlik doğrulama), Railway (uygulama barındırma), Resend (e-posta hizmetleri). Bu sağlayıcılar GDPR ve endüstri standartlarına uygundur."
+          },
+          "legal": {
+            "title": "4.2 Yasal Zorunluluklar",
+            "text": "Yasal bir zorunluluk halinde (mahkeme kararı, resmi talep vb.) verileriniz yetkili makamlarla paylaşılabilir. Bu durumda, yasaların izin verdiği ölçüde sizi bilgilendireceğiz."
+          },
+          "noSale": {
+            "title": "4.3 Satış veya Transfer",
+            "text": "Kişisel verileriniz hiçbir koşulda üçüncü taraflara satılmaz veya pazarlama amacıyla paylaşılmaz."
+          }
         },
         "rights": {
           "title": "5. Kullanıcı Hakları",
-          "access": { "title": "5.1 Erişim Hakkı", "text": "Hakkınızda sakladığımız tüm verilerin bir kopyasını talep edebilirsiniz." },
-          "correction": { "title": "5.2 Düzeltme Hakkı", "text": "Yanlış veya eksik verilerinizin düzeltilmesini isteyebilirsiniz." },
-          "deletion": { "title": "5.3 Silme Hakkı", "text": "Hesabınızı ve ilişkili tüm verilerinizi kalıcı olarak sildirebilirsiniz. Silme işlemi 30 gün içinde tamamlanır." },
-          "portability": { "title": "5.4 Veri Taşınabilirliği", "text": "Verilerinizi yaygın kullanılan, makine tarafından okunabilir bir formatta (JSON) talep edebilirsiniz." },
-          "objection": { "title": "5.5 İtiraz Hakkı", "text": "Verilerinizin işlenmesine itiraz edebilir veya pazarlama iletişimlerinden çıkabilirsiniz." }
+          "access": {
+            "title": "5.1 Erişim Hakkı",
+            "text": "Hakkınızda sakladığımız tüm verilerin bir kopyasını talep edebilirsiniz."
+          },
+          "correction": {
+            "title": "5.2 Düzeltme Hakkı",
+            "text": "Yanlış veya eksik verilerinizin düzeltilmesini isteyebilirsiniz."
+          },
+          "deletion": {
+            "title": "5.3 Silme Hakkı",
+            "text": "Hesabınızı ve ilişkili tüm verilerinizi kalıcı olarak sildirebilirsiniz. Silme işlemi 30 gün içinde tamamlanır."
+          },
+          "portability": {
+            "title": "5.4 Veri Taşınabilirliği",
+            "text": "Verilerinizi yaygın kullanılan, makine tarafından okunabilir bir formatta (JSON) talep edebilirsiniz."
+          },
+          "objection": {
+            "title": "5.5 İtiraz Hakkı",
+            "text": "Verilerinizin işlenmesine itiraz edebilir veya pazarlama iletişimlerinden çıkabilirsiniz."
+          }
         },
         "cookies": {
           "title": "6. Çerezler (Cookies)",
-          "required": { "title": "6.1 Zorunlu Çerezler", "text": "Oturum yönetimi ve güvenlik için gerekli çerezler kullanılmaktadır. Bu çerezler olmadan hizmet verilemez." },
-          "analytics": { "title": "6.2 Analitik Çerezler", "text": "Hizmet kullanımını analiz etmek için anonim çerezler kullanılabilir. Bu çerezleri tarayıcı ayarlarınızdan devre dışı bırakabilirsiniz." },
-          "preferences": { "title": "6.3 Tercih Çerezleri", "text": "Dil tercihi, tema seçimi gibi ayarlarınızı hatırlamak için çerezler kullanılır." }
+          "required": {
+            "title": "6.1 Zorunlu Çerezler",
+            "text": "Oturum yönetimi ve güvenlik için gerekli çerezler kullanılmaktadır. Bu çerezler olmadan hizmet verilemez."
+          },
+          "analytics": {
+            "title": "6.2 Analitik Çerezler",
+            "text": "Hizmet kullanımını analiz etmek için anonim çerezler kullanılabilir. Bu çerezleri tarayıcı ayarlarınızdan devre dışı bırakabilirsiniz."
+          },
+          "preferences": {
+            "title": "6.3 Tercih Çerezleri",
+            "text": "Dil tercihi, tema seçimi gibi ayarlarınızı hatırlamak için çerezler kullanılır."
+          }
         },
         "contact": {
           "title": "7. İletişim",
@@ -303,95 +387,227 @@
     "terms": {
       "title": "Kullanım Koşulları",
       "lastUpdate": "Son Güncelleme: 31 Ocak 2025",
-      "warning": { "title": "Önemli Uyarı", "text": "Lütfen bu koşulları dikkatlice okuyunuz. Platformumuzu kullanarak bu koşulları kabul etmiş sayılırsınız. Ayrıca Risk Uyarısı sayfamızı da okumanızı şiddetle tavsiye ederiz." },
+      "warning": {
+        "title": "Önemli Uyarı",
+        "text": "Lütfen bu koşulları dikkatlice okuyunuz. Platformumuzu kullanarak bu koşulları kabul etmiş sayılırsınız. Ayrıca Risk Uyarısı sayfamızı da okumanızı şiddetle tavsiye ederiz."
+      },
       "sections": {
         "service": {
           "title": "1. Hizmet Tanımı ve Kabul",
-          "description": { "title": "1.1 Hizmetlerimiz", "text": "ForexsAi, yapay zeka destekli finansal piyasa analiz platformudur. NASDAQ-100 ve XAU/USD (Altın) enstrümanları için teknik analiz, ML tabanlı tahminler, formasyon tespiti ve sentiment analizi hizmetleri sunmaktadır." },
-          "acceptance": { "title": "1.2 Kabul", "text": "Platformumuza kayıt olarak veya hizmetlerimizi kullanarak bu Kullanım Koşulları'nı, Gizlilik Politikası'nı ve Risk Uyarısı'nı okuduğunuzu, anladığınızı ve kabul ettiğinizi beyan edersiniz." },
-          "age": { "title": "1.3 Yaş Sınırı", "text": "Hizmetlerimizi kullanabilmek için en az 18 yaşında olmanız gerekmektedir. 18 yaşından küçükseniz platformumuzu kullanamazsınız." }
+          "description": {
+            "title": "1.1 Hizmetlerimiz",
+            "text": "ForexsAi, yapay zeka destekli finansal piyasa analiz platformudur. NASDAQ-100 ve XAU/USD (Altın) enstrümanları için teknik analiz, ML tabanlı tahminler, formasyon tespiti ve sentiment analizi hizmetleri sunmaktadır."
+          },
+          "acceptance": {
+            "title": "1.2 Kabul",
+            "text": "Platformumuza kayıt olarak veya hizmetlerimizi kullanarak bu Kullanım Koşulları'nı, Gizlilik Politikası'nı ve Risk Uyarısı'nı okuduğunuzu, anladığınızı ve kabul ettiğinizi beyan edersiniz."
+          },
+          "age": {
+            "title": "1.3 Yaş Sınırı",
+            "text": "Hizmetlerimizi kullanabilmek için en az 18 yaşında olmanız gerekmektedir. 18 yaşından küçükseniz platformumuzu kullanamazsınız."
+          }
         },
         "disclaimer": {
           "title": "2. Sorumluluk Reddi",
-          "notAdvice": { "title": "2.1 Yatırım Tavsiyesi Değildir", "text": "ForexsAi tarafından sunulan tüm analizler, tahminler, sinyaller ve veriler YALNIZCA bilgilendirme ve eğitim amaçlıdır. Bu içerikler herhangi bir şekilde yatırım tavsiyesi, finansal danışmanlık veya alım-satım önerisi olarak yorumlanamaz." },
-          "noGuarantee": { "title": "2.2 Garanti Yokluğu", "text": "Platform 'olduğu gibi' ve 'mevcut olduğu şekliyle' sunulmaktadır. Analizlerin doğruluğu, tahminlerin gerçekleşmesi veya herhangi bir getiri garantisi verilmemektedir. Geçmiş performans, gelecekteki sonuçların göstergesi değildir." },
-          "liability": { "title": "2.3 Kayıp Sorumluluğu", "text": "Platformumuzun kullanımından kaynaklanan doğrudan, dolaylı, arızi, özel veya sonuç olarak ortaya çıkan herhangi bir kayıp veya zarardan ForexsAi sorumlu tutulamaz. Tüm yatırım kararları ve bunların sonuçları tamamen kullanıcının sorumluluğundadır." }
+          "notAdvice": {
+            "title": "2.1 Yatırım Tavsiyesi Değildir",
+            "text": "ForexsAi tarafından sunulan tüm analizler, tahminler, sinyaller ve veriler YALNIZCA bilgilendirme ve eğitim amaçlıdır. Bu içerikler herhangi bir şekilde yatırım tavsiyesi, finansal danışmanlık veya alım-satım önerisi olarak yorumlanamaz."
+          },
+          "noGuarantee": {
+            "title": "2.2 Garanti Yokluğu",
+            "text": "Platform 'olduğu gibi' ve 'mevcut olduğu şekliyle' sunulmaktadır. Analizlerin doğruluğu, tahminlerin gerçekleşmesi veya herhangi bir getiri garantisi verilmemektedir. Geçmiş performans, gelecekteki sonuçların göstergesi değildir."
+          },
+          "liability": {
+            "title": "2.3 Kayıp Sorumluluğu",
+            "text": "Platformumuzun kullanımından kaynaklanan doğrudan, dolaylı, arızi, özel veya sonuç olarak ortaya çıkan herhangi bir kayıp veya zarardan ForexsAi sorumlu tutulamaz. Tüm yatırım kararları ve bunların sonuçları tamamen kullanıcının sorumluluğundadır."
+          }
         },
         "prohibited": {
           "title": "3. Yasaklı Kullanımlar",
-          "automation": { "title": "3.1 Otomatik Erişim", "text": "Bot, scraper, crawler veya benzeri otomatik araçlarla platforma erişim kesinlikle yasaktır. API limitleri ve kullanım kurallarına uyulması zorunludur." },
-          "sharing": { "title": "3.2 İçerik Paylaşımı", "text": "Premium içeriklerin, analizlerin veya tahminlerin izinsiz olarak kopyalanması, dağıtılması veya yeniden yayınlanması yasaktır." },
-          "abuse": { "title": "3.3 Kötüye Kullanım", "text": "Platformun güvenliğini tehlikeye atacak eylemler, diğer kullanıcıların hizmetlerini engelleyecek davranışlar, yanlış veya yanıltıcı bilgi paylaşımı, sahte hesap oluşturma kesinlikle yasaktır." },
-          "commercial": { "title": "3.4 Ticari Kullanım", "text": "Bireysel lisans ile elde edilen verilerin ticari amaçlarla kullanılması, satılması veya yeniden lisanslanması yasaktır." }
+          "automation": {
+            "title": "3.1 Otomatik Erişim",
+            "text": "Bot, scraper, crawler veya benzeri otomatik araçlarla platforma erişim kesinlikle yasaktır. API limitleri ve kullanım kurallarına uyulması zorunludur."
+          },
+          "sharing": {
+            "title": "3.2 İçerik Paylaşımı",
+            "text": "Premium içeriklerin, analizlerin veya tahminlerin izinsiz olarak kopyalanması, dağıtılması veya yeniden yayınlanması yasaktır."
+          },
+          "abuse": {
+            "title": "3.3 Kötüye Kullanım",
+            "text": "Platformun güvenliğini tehlikeye atacak eylemler, diğer kullanıcıların hizmetlerini engelleyecek davranışlar, yanlış veya yanıltıcı bilgi paylaşımı, sahte hesap oluşturma kesinlikle yasaktır."
+          },
+          "commercial": {
+            "title": "3.4 Ticari Kullanım",
+            "text": "Bireysel lisans ile elde edilen verilerin ticari amaçlarla kullanılması, satılması veya yeniden lisanslanması yasaktır."
+          }
         },
         "payments": {
           "title": "4. Ücretler ve Ödemeler",
-          "free": { "title": "4.1 Ücretsiz Plan", "text": "Early Access döneminde tüm özellikler ücretsiz olarak sunulmaktadır. Bu durum değişebilir ve değişiklikler önceden duyurulacaktır." },
-          "premium": { "title": "4.2 Premium Planlar", "text": "Gelecekte sunulacak premium planların ücretleri, fiyatlandırma sayfasında açıkça belirtilecektir. Abonelik ücretleri peşin olarak tahsil edilir." },
-          "refund": { "title": "4.3 İade Politikası", "text": "Dijital hizmet niteliği gereği, satın alma işleminden sonra iade yapılmamaktadır. Ancak teknik sorunlardan kaynaklanan durumlarda değerlendirme yapılabilir." }
+          "free": {
+            "title": "4.1 Ücretsiz Plan",
+            "text": "Early Access döneminde tüm özellikler ücretsiz olarak sunulmaktadır. Bu durum değişebilir ve değişiklikler önceden duyurulacaktır."
+          },
+          "premium": {
+            "title": "4.2 Premium Planlar",
+            "text": "Gelecekte sunulacak premium planların ücretleri, fiyatlandırma sayfasında açıkça belirtilecektir. Abonelik ücretleri peşin olarak tahsil edilir."
+          },
+          "refund": {
+            "title": "4.3 İade Politikası",
+            "text": "Dijital hizmet niteliği gereği, satın alma işleminden sonra iade yapılmamaktadır. Ancak teknik sorunlardan kaynaklanan durumlarda değerlendirme yapılabilir."
+          }
         },
         "account": {
           "title": "5. Hesap Yönetimi",
-          "security": { "title": "5.1 Hesap Güvenliği", "text": "Hesap bilgilerinizin güvenliğinden siz sorumlusunuz. Güçlü parola kullanmanız ve hesap bilgilerinizi kimseyle paylaşmamanız önerilir." },
-          "suspension": { "title": "5.2 Hesap Askıya Alma", "text": "Kullanım koşullarının ihlali durumunda hesabınız geçici veya kalıcı olarak askıya alınabilir. Bu durum önceden bildirilmeden uygulanabilir." },
-          "deletion": { "title": "5.3 Hesap Silme", "text": "Hesabınızı istediğiniz zaman silebilirsiniz. Hesap silme işlemi 30 gün içinde tamamlanır ve tüm verileriniz kalıcı olarak silinir." }
+          "security": {
+            "title": "5.1 Hesap Güvenliği",
+            "text": "Hesap bilgilerinizin güvenliğinden siz sorumlusunuz. Güçlü parola kullanmanız ve hesap bilgilerinizi kimseyle paylaşmamanız önerilir."
+          },
+          "suspension": {
+            "title": "5.2 Hesap Askıya Alma",
+            "text": "Kullanım koşullarının ihlali durumunda hesabınız geçici veya kalıcı olarak askıya alınabilir. Bu durum önceden bildirilmeden uygulanabilir."
+          },
+          "deletion": {
+            "title": "5.3 Hesap Silme",
+            "text": "Hesabınızı istediğiniz zaman silebilirsiniz. Hesap silme işlemi 30 gün içinde tamamlanır ve tüm verileriniz kalıcı olarak silinir."
+          }
         },
         "ip": {
           "title": "6. Fikri Mülkiyet",
-          "content": { "title": "6.1 Platform İçeriği", "text": "ForexsAi platformu, logosu, tasarımları, yazılımı, algoritmaları ve tüm içerikleri fikri mülkiyet hakları kapsamında korunmaktadır." },
-          "license": { "title": "6.2 Kullanım Lisansı", "text": "Size kişisel, devredilemeyen, münhasır olmayan ve sınırlı bir kullanım lisansı verilmektedir. Bu lisans, hizmetlerimizi yalnızca belirlenen amaçlar doğrultusunda kullanmanızı kapsar." },
-          "feedback": { "title": "6.3 Geri Bildirim", "text": "Platforma ilişkin sağladığınız geri bildirimler, öneriler veya fikirler üzerinde herhangi bir hak talep edemezsiniz ve bunlar ForexsAi'ye devredilmiş sayılır." }
+          "content": {
+            "title": "6.1 Platform İçeriği",
+            "text": "ForexsAi platformu, logosu, tasarımları, yazılımı, algoritmaları ve tüm içerikleri fikri mülkiyet hakları kapsamında korunmaktadır."
+          },
+          "license": {
+            "title": "6.2 Kullanım Lisansı",
+            "text": "Size kişisel, devredilemeyen, münhasır olmayan ve sınırlı bir kullanım lisansı verilmektedir. Bu lisans, hizmetlerimizi yalnızca belirlenen amaçlar doğrultusunda kullanmanızı kapsar."
+          },
+          "feedback": {
+            "title": "6.3 Geri Bildirim",
+            "text": "Platforma ilişkin sağladığınız geri bildirimler, öneriler veya fikirler üzerinde herhangi bir hak talep edemezsiniz ve bunlar ForexsAi'ye devredilmiş sayılır."
+          }
         },
         "disputes": {
           "title": "7. Uyuşmazlık Çözümü",
-          "law": { "title": "7.1 Geçerli Hukuk", "text": "Bu sözleşme Türkiye Cumhuriyeti hukukuna tabidir ve bu hukuka göre yorumlanacaktır." },
-          "jurisdiction": { "title": "7.2 Yargı Yetkisi", "text": "Bu sözleşmeden doğabilecek uyuşmazlıklarda İstanbul Mahkemeleri ve İcra Daireleri yetkilidir." },
-          "mediation": { "title": "7.3 Arabuluculuk", "text": "Taraflar, uyuşmazlıkların çözümünde öncelikle arabuluculuk yoluna başvurmayı kabul ederler." }
+          "law": {
+            "title": "7.1 Geçerli Hukuk",
+            "text": "Bu sözleşme Türkiye Cumhuriyeti hukukuna tabidir ve bu hukuka göre yorumlanacaktır."
+          },
+          "jurisdiction": {
+            "title": "7.2 Yargı Yetkisi",
+            "text": "Bu sözleşmeden doğabilecek uyuşmazlıklarda İstanbul Mahkemeleri ve İcra Daireleri yetkilidir."
+          },
+          "mediation": {
+            "title": "7.3 Arabuluculuk",
+            "text": "Taraflar, uyuşmazlıkların çözümünde öncelikle arabuluculuk yoluna başvurmayı kabul ederler."
+          }
         },
         "changes": {
           "title": "8. Değişiklikler",
-          "modifications": { "title": "8.1 Koşul Değişiklikleri", "text": "Bu Kullanım Koşulları herhangi bir zamanda değiştirilebilir. Önemli değişiklikler e-posta ile bildirilecektir." },
-          "continued": { "title": "8.2 Devam Eden Kullanım", "text": "Değişikliklerden sonra platformu kullanmaya devam etmeniz, güncellenmiş koşulları kabul ettiğiniz anlamına gelir." },
-          "validity": { "title": "8.3 Geçerlilik", "text": "Bu koşulların herhangi bir hükmünün geçersiz veya uygulanamaz bulunması, diğer hükümlerin geçerliliğini etkilemez." }
+          "modifications": {
+            "title": "8.1 Koşul Değişiklikleri",
+            "text": "Bu Kullanım Koşulları herhangi bir zamanda değiştirilebilir. Önemli değişiklikler e-posta ile bildirilecektir."
+          },
+          "continued": {
+            "title": "8.2 Devam Eden Kullanım",
+            "text": "Değişikliklerden sonra platformu kullanmaya devam etmeniz, güncellenmiş koşulları kabul ettiğiniz anlamına gelir."
+          },
+          "validity": {
+            "title": "8.3 Geçerlilik",
+            "text": "Bu koşulların herhangi bir hükmünün geçersiz veya uygulanamaz bulunması, diğer hükümlerin geçerliliğini etkilemez."
+          }
         }
       },
-      "acceptance": { "title": "Kabul Beyanı", "text": "ForexsAi platformuna kayıt olarak veya hizmetlerimizi kullanarak yukarıdaki tüm koşulları okuduğunuzu, anladığınızı ve kabul ettiğinizi beyan edersiniz. Bu koşulları kabul etmiyorsanız, lütfen platformumuzu kullanmayınız." }
+      "acceptance": {
+        "title": "Kabul Beyanı",
+        "text": "ForexsAi platformuna kayıt olarak veya hizmetlerimizi kullanarak yukarıdaki tüm koşulları okuduğunuzu, anladığınızı ve kabul ettiğinizi beyan edersiniz. Bu koşulları kabul etmiyorsanız, lütfen platformumuzu kullanmayınız."
+      }
     },
     "risk": {
       "title": "Risk Uyarısı",
       "subtitle": "Lütfen işlem yapmadan önce dikkatlice okuyunuz",
-      "critical": { "title": "⚠️ KRİTİK UYARI", "text": "Finansal piyasalarda işlem yapmak yüksek risk içerir ve yatırılan sermayenin tamamının kaybedilmesine neden olabilir. ForexsAi tarafından sunulan içerikler YATIRIM TAVSİYESİ DEĞİLDİR. Tüm işlemler tamamen kendi sorumluluğunuzdadır." },
+      "critical": {
+        "title": "⚠️ KRİTİK UYARI",
+        "text": "Finansal piyasalarda işlem yapmak yüksek risk içerir ve yatırılan sermayenin tamamının kaybedilmesine neden olabilir. ForexsAi tarafından sunulan içerikler YATIRIM TAVSİYESİ DEĞİLDİR. Tüm işlemler tamamen kendi sorumluluğunuzdadır."
+      },
       "sections": {
         "general": {
           "title": "1. Genel Risk Uyarısı",
-          "capital": { "title": "1.1 Sermaye Kaybı Riski", "text": "Finansal piyasalarda (Forex, Emtia, Hisse Senedi Endeksleri vb.) işlem yapmak, yatırdığınız sermayenin TAMAMINI veya önemli bir kısmını kaybetme riski taşır. Asla kaybetmeyi göze alamayacağınız parayla işlem yapmayınız." },
-          "leverage": { "title": "1.2 Kaldıraç Riski", "text": "Kaldıraçlı ürünler (CFD, Forex vb.) hem kazançları hem de kayıpları katlar. Küçük fiyat hareketleri bile hesap bakiyenizi önemli ölçüde etkileyebilir. Kaldıraç, yatırdığınız tutardan fazlasını kaybetmenize neden olabilir." },
-          "volatility": { "title": "1.3 Piyasa Volatilitesi", "text": "Finansal piyasalar, ekonomik olaylar, jeopolitik gelişmeler, merkez bankası kararları ve beklenmedik haberler nedeniyle ani ve şiddetli fiyat hareketlerine maruz kalabilir." }
+          "capital": {
+            "title": "1.1 Sermaye Kaybı Riski",
+            "text": "Finansal piyasalarda (Forex, Emtia, Hisse Senedi Endeksleri vb.) işlem yapmak, yatırdığınız sermayenin TAMAMINI veya önemli bir kısmını kaybetme riski taşır. Asla kaybetmeyi göze alamayacağınız parayla işlem yapmayınız."
+          },
+          "leverage": {
+            "title": "1.2 Kaldıraç Riski",
+            "text": "Kaldıraçlı ürünler (CFD, Forex vb.) hem kazançları hem de kayıpları katlar. Küçük fiyat hareketleri bile hesap bakiyenizi önemli ölçüde etkileyebilir. Kaldıraç, yatırdığınız tutardan fazlasını kaybetmenize neden olabilir."
+          },
+          "volatility": {
+            "title": "1.3 Piyasa Volatilitesi",
+            "text": "Finansal piyasalar, ekonomik olaylar, jeopolitik gelişmeler, merkez bankası kararları ve beklenmedik haberler nedeniyle ani ve şiddetli fiyat hareketlerine maruz kalabilir."
+          }
         },
         "ai": {
           "title": "2. Yapay Zeka ve Model Riskleri",
-          "errors": { "title": "2.1 Model Hataları", "text": "ForexsAi tarafından kullanılan makine öğrenmesi modelleri, geçmiş veriler üzerinde eğitilmiştir. Bu modeller hatalı tahminler üretebilir ve piyasa koşulları değiştiğinde performansları düşebilir." },
-          "past": { "title": "2.2 Geçmiş Performans Garantisi Değildir", "text": "Backtest sonuçları ve geçmiş doğruluk oranları, gelecekteki performansın garantisi veya göstergesi DEĞİLDİR." },
-          "technical": { "title": "2.3 Teknik Hatalar", "text": "Yazılım hataları, sunucu kesintileri, veri gecikmesi veya yanlış veri akışı nedeniyle analizler hatalı olabilir." }
+          "errors": {
+            "title": "2.1 Model Hataları",
+            "text": "ForexsAi tarafından kullanılan makine öğrenmesi modelleri, geçmiş veriler üzerinde eğitilmiştir. Bu modeller hatalı tahminler üretebilir ve piyasa koşulları değiştiğinde performansları düşebilir."
+          },
+          "past": {
+            "title": "2.2 Geçmiş Performans Garantisi Değildir",
+            "text": "Backtest sonuçları ve geçmiş doğruluk oranları, gelecekteki performansın garantisi veya göstergesi DEĞİLDİR."
+          },
+          "technical": {
+            "title": "2.3 Teknik Hatalar",
+            "text": "Yazılım hataları, sunucu kesintileri, veri gecikmesi veya yanlış veri akışı nedeniyle analizler hatalı olabilir."
+          }
         },
         "notAdvice": {
           "title": "3. Yatırım Tavsiyesi Değildir",
-          "info": { "title": "3.1 Bilgilendirme Amaçlı", "text": "ForexsAi platformu tarafından sunulan TÜM analizler, tahminler, sinyaller, grafikler ve AI yorumları YALNIZCA bilgilendirme ve eğitim amaçlıdır." },
-          "notLicensed": { "title": "3.2 Lisanslı Danışmanlık Değildir", "text": "ForexsAi, SPK (Sermaye Piyasası Kurulu) veya benzeri düzenleyici kurumlar tarafından lisanslı bir yatırım danışmanlığı şirketi DEĞİLDİR." },
-          "responsibility": { "title": "3.3 Kişisel Sorumluluk", "text": "Platform üzerindeki verilere dayanarak aldığınız tüm yatırım kararları ve bunların sonuçları tamamen sizin sorumluluğunuzdadır." }
+          "info": {
+            "title": "3.1 Bilgilendirme Amaçlı",
+            "text": "ForexsAi platformu tarafından sunulan TÜM analizler, tahminler, sinyaller, grafikler ve AI yorumları YALNIZCA bilgilendirme ve eğitim amaçlıdır."
+          },
+          "notLicensed": {
+            "title": "3.2 Lisanslı Danışmanlık Değildir",
+            "text": "ForexsAi, SPK (Sermaye Piyasası Kurulu) veya benzeri düzenleyici kurumlar tarafından lisanslı bir yatırım danışmanlığı şirketi DEĞİLDİR."
+          },
+          "responsibility": {
+            "title": "3.3 Kişisel Sorumluluk",
+            "text": "Platform üzerindeki verilere dayanarak aldığınız tüm yatırım kararları ve bunların sonuçları tamamen sizin sorumluluğunuzdadır."
+          }
         },
         "market": {
           "title": "4. Piyasa Spesifik Riskler",
-          "nasdaq": { "title": "4.1 NASDAQ-100 Riskleri", "text": "Teknoloji ağırlıklı bu endeks, sektörel konsantrasyon riski taşır. Teknoloji sektöründeki olumsuz gelişmeler endeksi orantısız şekilde etkileyebilir." },
-          "gold": { "title": "4.2 Altın (XAU/USD) Riskleri", "text": "Altın fiyatları; dolar endeksi, faiz oranları, enflasyon beklentileri ve jeopolitik risklerden etkilenir." },
-          "liquidity": { "title": "4.3 Likidite Riski", "text": "Piyasa saatleri dışında, önemli haberler öncesinde/sonrasında veya tatil dönemlerinde likidite düşebilir." }
+          "nasdaq": {
+            "title": "4.1 NASDAQ-100 Riskleri",
+            "text": "Teknoloji ağırlıklı bu endeks, sektörel konsantrasyon riski taşır. Teknoloji sektöründeki olumsuz gelişmeler endeksi orantısız şekilde etkileyebilir."
+          },
+          "gold": {
+            "title": "4.2 Altın (XAU/USD) Riskleri",
+            "text": "Altın fiyatları; dolar endeksi, faiz oranları, enflasyon beklentileri ve jeopolitik risklerden etkilenir."
+          },
+          "liquidity": {
+            "title": "4.3 Likidite Riski",
+            "text": "Piyasa saatleri dışında, önemli haberler öncesinde/sonrasında veya tatil dönemlerinde likidite düşebilir."
+          }
         },
         "protection": {
           "title": "5. Kendinizi Koruma Yöntemleri",
-          "education": { "title": "5.1 Eğitim", "text": "İşlem yapmadan önce finansal piyasalar, teknik analiz ve risk yönetimi hakkında yeterli bilgi edininiz." },
-          "riskMgmt": { "title": "5.2 Risk Yönetimi", "text": "Her işlemde sermayenizin yalnızca küçük bir yüzdesini riske atınız (%1-2 önerilir). Stop-loss emirleri kullanınız." },
-          "emotional": { "title": "5.3 Duygusal Kontrol", "text": "Kayıpların peşinden koşmayınız. FOMO (kaçırma korkusu) ile işlem açmayınız." },
-          "professional": { "title": "5.4 Profesyonel Destek", "text": "Önemli yatırım kararları almadan önce lisanslı bir finansal danışmana danışmanız şiddetle tavsiye edilir." }
+          "education": {
+            "title": "5.1 Eğitim",
+            "text": "İşlem yapmadan önce finansal piyasalar, teknik analiz ve risk yönetimi hakkında yeterli bilgi edininiz."
+          },
+          "riskMgmt": {
+            "title": "5.2 Risk Yönetimi",
+            "text": "Her işlemde sermayenizin yalnızca küçük bir yüzdesini riske atınız (%1-2 önerilir). Stop-loss emirleri kullanınız."
+          },
+          "emotional": {
+            "title": "5.3 Duygusal Kontrol",
+            "text": "Kayıpların peşinden koşmayınız. FOMO (kaçırma korkusu) ile işlem açmayınız."
+          },
+          "professional": {
+            "title": "5.4 Profesyonel Destek",
+            "text": "Önemli yatırım kararları almadan önce lisanslı bir finansal danışmana danışmanız şiddetle tavsiye edilir."
+          }
         }
       },
       "acknowledgment": {
@@ -462,12 +678,30 @@
     },
     "whyUs": "Neden ForexsAi?",
     "benefits": {
-      "remote": { "title": "Uzaktan Çalışma", "description": "Dünyanın her yerinden çalışabilirsiniz" },
-      "flexible": { "title": "Esnek Saatler", "description": "Kendi çalışma saatlerinizi belirleyin" },
-      "growth": { "title": "Hızlı Büyüme", "description": "Startup dinamizmi ile kariyer gelişimi" },
-      "learning": { "title": "Sürekli Öğrenme", "description": "AI ve fintech alanında gelişim fırsatları" },
-      "health": { "title": "Sağlık Sigortası", "description": "Kapsamlı özel sağlık sigortası" },
-      "equipment": { "title": "Ekipman Desteği", "description": "Çalışma ekipmanı ve home office desteği" }
+      "remote": {
+        "title": "Uzaktan Çalışma",
+        "description": "Dünyanın her yerinden çalışabilirsiniz"
+      },
+      "flexible": {
+        "title": "Esnek Saatler",
+        "description": "Kendi çalışma saatlerinizi belirleyin"
+      },
+      "growth": {
+        "title": "Hızlı Büyüme",
+        "description": "Startup dinamizmi ile kariyer gelişimi"
+      },
+      "learning": {
+        "title": "Sürekli Öğrenme",
+        "description": "AI ve fintech alanında gelişim fırsatları"
+      },
+      "health": {
+        "title": "Sağlık Sigortası",
+        "description": "Kapsamlı özel sağlık sigortası"
+      },
+      "equipment": {
+        "title": "Ekipman Desteği",
+        "description": "Çalışma ekipmanı ve home office desteği"
+      }
     },
     "openPositions": "Açık Pozisyonlar",
     "apply": "Başvur",
@@ -481,6 +715,44 @@
       "engineering": "Engineering",
       "aiData": "AI & Data",
       "research": "Research"
+    },
+    "demo": {
+      "title": "ForexsAi İnteraktif Demo",
+      "subtitle": "Yapay zeka analizini risk almadan deneyimleyin.",
+      "start": "Demoyu Başlat",
+      "steps": {
+        "select": {
+          "title": "Varlık Seçimi",
+          "text": "Analiz etmek istediğiniz pariteyi seçin."
+        },
+        "analyzing": {
+          "title": "Yapay Zeka Analizi",
+          "text": "M15, H4 ve Günlük grafikler taranıyor..."
+        },
+        "signal": {
+          "title": "Sinyal Tespiti",
+          "text": "Güçlü bir Fırsat Tespit Edildi!"
+        },
+        "result": {
+          "title": "İşlem Sonucu",
+          "text": "Yapay zeka öngörüsü başarıyla gerçekleşti."
+        }
+      },
+      "ui": {
+        "confidence": "Güven Skoru",
+        "entry": "Giriş",
+        "target": "Hedef",
+        "stop": "Stop",
+        "buy": "ALIŞ (LONG)",
+        "sell": "SATIŞ (SHORT)",
+        "analyze": "Analiz Et",
+        "executing": "İşlem Açılıyor...",
+        "success": "Başarılı"
+      },
+      "cta": {
+        "title": "Gerçek Piyasada Kazanmaya Başlayın",
+        "button": "Hesap Oluştur"
+      }
     }
   }
 }
