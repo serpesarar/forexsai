@@ -169,5 +169,38 @@
       ],
       "cta": "Join Waitlist"
     }
+  },
+  "featuresPage": {
+    "title": "Analytical Excellence",
+    "subtitle": "Technologies that X-ray the market.",
+    "items": {
+      "mtf": {
+        "title": "Multi-Timeframe (MTF)",
+        "description": "Looking at a single timeframe is misleading. Our algorithm analyzes trends across M15, H1, H4, and Daily charts simultaneously and generates signals when all align.",
+        "bullets": [
+          "Trend Alignment: All timeframes must align for 80%+ success rate.",
+          "Noise Filter: Momentary M1 moves against H4 trend are filtered out.",
+          "Dynamic Support: Support levels from higher timeframes are auto-drawn."
+        ]
+      },
+      "patterns": {
+        "title": "Pattern Detection",
+        "description": "Scans classic technical analysis patterns (Head & Shoulders, Double Bottom, Flag) in milliseconds and catches opportunities the human eye might miss.",
+        "bullets": [
+          "Harmonic Patterns: Gartley, Butterfly, Bat.",
+          "Candlestick: Bullish Engulfing, Hammer, Doji, etc.",
+          "Price Target: The theoretical target of the pattern is shown on the chart."
+        ]
+      },
+      "ai": {
+        "title": "AI and Machine Learning",
+        "description": "Go beyond rule-based (algorithmic) systems. Our ML model uses probability distributions learned from 24 years of data.",
+        "bullets": [
+          "Sentiment Analysis: Measures market psychology from news.",
+          "Volume Weight: Filters fake-outs with volume analysis.",
+          "Continuous Learning: Model updates itself for new market conditions."
+        ]
+      }
+    }
   }
 }

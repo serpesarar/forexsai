@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { motion } from "framer-motion";
 import { useI18n } from "@/lib/i18n";
 import { AnimatedBackground } from "@/components/welcome/AnimatedBackground";
@@ -92,7 +94,7 @@ export default function PricingPage() {
                         title={t("pricingPage.free.title")}
                         price={t("pricingPage.free.price")}
                         period={t("pricingPage.free.period")}
-                        features={t("pricingPage.free.features") as unknown as string[]} // Type assertion needed for array from translation
+                        features={Array.isArray(t("pricingPage.free.features")) ? t("pricingPage.free.features") : []}
                         cta={t("pricingPage.free.cta")}
                         highlight={true}
                         delay={0.1}
@@ -100,7 +102,7 @@ export default function PricingPage() {
                     <PriceCard
                         title={t("pricingPage.pro.title")}
                         price={t("pricingPage.pro.price")}
-                        features={t("pricingPage.pro.features") as unknown as string[]}
+                        features={Array.isArray(t("pricingPage.pro.features")) ? t("pricingPage.pro.features") : []}
                         cta={t("pricingPage.pro.cta")}
                         highlight={false}
                         delay={0.2}

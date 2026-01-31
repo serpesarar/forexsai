@@ -13,7 +13,7 @@ interface I18nContextType {
   locale: Locale;
   messages: any;
   setLocale: (locale: Locale) => void;
-  t: (key: string) => string;
+  t: (key: string) => any;
 }
 
 const I18nContext = createContext<I18nContextType | null>(null);
@@ -39,13 +39,15 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setLocaleState(newLocale);
   };
 
-  const t = (key: string): string => {
+  const t = (key: string): any => {
     const keys = key.split(".");
     let value = messages;
     for (const k of keys) {
       value = value?.[k];
     }
-    return typeof value === "string" ? value : key;
+    // Return arrays and objects as-is, strings as-is, fallback to key
+    if (value === undefined || value === null) return key;
+    return value;
   };
 
   return (

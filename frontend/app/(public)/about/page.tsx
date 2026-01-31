@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { motion, useInView } from "framer-motion";
 import { useI18n } from "@/lib/i18n";
 import { AnimatedBackground } from "@/components/welcome/AnimatedBackground";

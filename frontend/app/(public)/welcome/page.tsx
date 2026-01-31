@@ -1,6 +1,5 @@
 "use client";
 
-import { I18nProvider } from "@/lib/i18n";
 import { TopNav } from "@/components/welcome/TopNav";
 import { Hero } from "@/components/welcome/Hero";
 import { ValueProps } from "@/components/welcome/ValueProps";
@@ -11,16 +10,14 @@ import { Footer } from "@/components/welcome/Footer";
 
 export default function WelcomePage() {
   return (
-    <I18nProvider>
-      <main className="min-h-screen bg-[#0B1220] text-[#E5E7EB]">
-        <TopNav />
-        <Hero />
-        <ValueProps />
-        <HowItWorks />
-        <FeaturesGrid />
-        <TrustSection />
-        <Footer />
-      </main>
-    </I18nProvider>
+    <main className="min-h-screen bg-[#0B1220] text-[#E5E7EB]">
+      <TopNav />
+      <Hero />
+      <ValueProps />
+      <HowItWorks />
+      <FeaturesGrid />
+      <TrustSection />
+      <Footer />
+    </main>
   );
 }
