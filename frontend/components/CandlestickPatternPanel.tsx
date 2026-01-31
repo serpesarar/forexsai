@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import { useI18nStore } from "../lib/i18n/store";
 
 interface CandlestickPattern {
   id: string;
@@ -61,6 +62,7 @@ export default function CandlestickPatternPanel({
   symbol = "XAUUSD", 
   className = "" 
 }: CandlestickPatternPanelProps) {
+  const { t, locale } = useI18nStore();
   const [data, setData] = useState<CandlestickData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,15 +81,15 @@ export default function CandlestickPatternPanel({
         setData(result.data);
         setError(null);
       } else {
-        setError(result.error || "Veri alınamadı");
+        setError(result.error || t("candlestickPanel.dataError"));
       }
       setLastUpdate(new Date());
     } catch (err) {
-      setError("Bağlantı hatası");
+      setError(t("candlestickPanel.connectionError"));
     } finally {
       setLoading(false);
     }
-  }, [activeSymbol]);
+  }, [activeSymbol, t]);
 
   useEffect(() => {
     fetchData();
@@ -141,7 +143,7 @@ export default function CandlestickPatternPanel({
       <div className={`bg-gray-900/80 backdrop-blur-sm rounded-xl border border-gray-700/50 p-4 ${className}`}>
         <div className="flex items-center justify-center py-8">
           <RefreshCw className="w-6 h-6 text-amber-400 animate-spin" />
-          <span className="ml-2 text-gray-400">Mum formasyonları analiz ediliyor...</span>
+          <span className="ml-2 text-gray-400">{t("candlestickPanel.loading")}</span>
         </div>
       </div>
     );
@@ -154,7 +156,7 @@ export default function CandlestickPatternPanel({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CandlestickChart className="w-5 h-5 text-amber-400" />
-            <span className="font-semibold text-white">Mum Formasyonları</span>
+            <span className="font-semibold text-white">{t("candlestickPanel.title")}</span>
           </div>
           <div className="flex items-center gap-2">
             {/* Symbol Selector */}
@@ -195,21 +197,21 @@ export default function CandlestickPatternPanel({
             <div className="grid grid-cols-4 gap-2">
               <div className="bg-green-900/20 rounded-lg p-2 text-center">
                 <div className="text-lg font-bold text-green-400">{data.bullish_count}</div>
-                <div className="text-xs text-gray-400">Boğa</div>
+                <div className="text-xs text-gray-400">{t("candlestickPanel.bullish")}</div>
               </div>
               <div className="bg-red-900/20 rounded-lg p-2 text-center">
                 <div className="text-lg font-bold text-red-400">{data.bearish_count}</div>
-                <div className="text-xs text-gray-400">Ayı</div>
+                <div className="text-xs text-gray-400">{t("candlestickPanel.bearish")}</div>
               </div>
               <div className="bg-yellow-900/20 rounded-lg p-2 text-center">
                 <div className="text-lg font-bold text-yellow-400">{data.neutral_count}</div>
-                <div className="text-xs text-gray-400">Nötr</div>
+                <div className="text-xs text-gray-400">{t("candlestickPanel.neutral")}</div>
               </div>
               <div className={`rounded-lg p-2 text-center ${getSignalBg(data.strongest_signal || "")}`}>
                 <div className={`text-sm font-bold ${getSignalColor(data.strongest_signal || "")}`}>
                   {data.strongest_signal || "—"}
                 </div>
-                <div className="text-xs text-gray-400">Sinyal</div>
+                <div className="text-xs text-gray-400">{t("candlestickPanel.signal")}</div>
               </div>
             </div>
 
@@ -218,7 +220,7 @@ export default function CandlestickPatternPanel({
               <div className={`rounded-lg p-2 flex items-center justify-between ${
                 data.ml_adjustment > 0 ? "bg-green-900/20" : "bg-red-900/20"
               }`}>
-                <span className="text-xs text-gray-400">ML Güven Ayarı:</span>
+                <span className="text-xs text-gray-400">{t("candlestickPanel.mlConfidence")}:</span>
                 <span className={`text-sm font-bold ${
                   data.ml_adjustment > 0 ? "text-green-400" : "text-red-400"
                 }`}>
@@ -237,7 +239,7 @@ export default function CandlestickPatternPanel({
                     : "bg-gray-800/50 text-gray-400 hover:bg-gray-700/50"
                 }`}
               >
-                Tümü
+                {t("candlestickPanel.all")}
               </button>
               {Object.entries(TIMEFRAME_LABELS).map(([key, label]) => (
                 <button
@@ -264,7 +266,7 @@ export default function CandlestickPatternPanel({
               {filteredPatterns.length === 0 ? (
                 <div className="text-center py-6 text-gray-500">
                   <CandlestickChart className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Bu zaman diliminde aktif formasyon yok</p>
+                  <p className="text-sm">{t("candlestickPanel.noPatterns")}</p>
                 </div>
               ) : (
                 filteredPatterns.map((pattern, idx) => (
@@ -289,7 +291,7 @@ export default function CandlestickPatternPanel({
                         )}
                         <div className="text-left">
                           <div className={`font-medium ${getSignalColor(pattern.signal)}`}>
-                            {pattern.name_tr}
+                            {locale === "tr" ? pattern.name_tr : pattern.name}
                           </div>
                           <div className="flex items-center gap-2 text-xs text-gray-500">
                             <Clock className="w-3 h-3" />
@@ -320,9 +322,9 @@ export default function CandlestickPatternPanel({
                           <div className="bg-gray-800/50 rounded p-2">
                             <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
                               <Info className="w-3 h-3" />
-                              Açıklama
+                              {t("candlestickPanel.description")}
                             </div>
-                            <p className="text-sm text-gray-300">{pattern.description_tr}</p>
+                            <p className="text-sm text-gray-300">{locale === "tr" ? pattern.description_tr : pattern.description_tr}</p>
                           </div>
                           <div className={`rounded p-2 ${
                             pattern.signal === "bullish" 
@@ -339,10 +341,10 @@ export default function CandlestickPatternPanel({
                               ) : (
                                 <AlertTriangle className="w-3 h-3 text-yellow-400" />
                               )}
-                              Ne Yapmalı?
+                              {t("candlestickPanel.whatToDo")}
                             </div>
                             <p className={`text-sm font-medium ${getSignalColor(pattern.signal)}`}>
-                              {pattern.action_tr}
+                              {locale === "tr" ? pattern.action_tr : pattern.action_tr}
                             </p>
                           </div>
                         </div>

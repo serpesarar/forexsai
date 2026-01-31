@@ -143,6 +143,24 @@
     "patternInfo": "Formasyon Bilgisi",
     "tradingStrategy": "İşlem Stratejisi",
     "historicalPerformance": "Geçmiş Performans",
+    "success": "Başarı",
+    "move": "Hareket",
+    "overview": "Genel Bakış",
+    "signalDistribution": "Sinyal Dağılımı",
+    "avgCompletion": "Ort. Tamamlanma",
+    "avgSuccess": "Ort. Başarı",
+    "confirmed": "Onaylı",
+    "totalActive": "Toplam Aktif",
+    "stageLegend": "Aşama Açıklaması",
+    "detectedForming": "Tespit Edildi / Oluşuyor",
+    "backToList": "Listeye dön",
+    "sortCompletion": "Sırala: Tamamlanma",
+    "sortSuccessRate": "Sırala: Başarı Oranı",
+    "sortNewest": "Sırala: En Yeni",
+    "keyPriceLevels": "Anahtar Fiyat Seviyeleri",
+    "historicalAccuracy": "Geçmiş doğruluk",
+    "riskToRewardRatio": "Risk/Ödül oranı",
+    "projectedPriceChange": "Beklenen fiyat değişimi",
     "stages": {
       "detected": "Tespit Edildi",
       "forming": "Oluşuyor",
@@ -410,6 +428,21 @@
     "stopLoss": "SL",
     "totalAnalyzed": "Toplam {count} analiz",
     "check": "kontrol"
+  },
+  "candlestickPanel": {
+    "title": "Mum Formasyonları",
+    "loading": "Mum formasyonları analiz ediliyor...",
+    "bullish": "Boğa",
+    "bearish": "Ayı",
+    "neutral": "Nötr",
+    "signal": "Sinyal",
+    "mlConfidence": "ML Güven Ayarı",
+    "all": "Tümü",
+    "noPatterns": "Bu zaman diliminde aktif formasyon yok",
+    "description": "Açıklama",
+    "whatToDo": "Ne Yapmalı?",
+    "dataError": "Veri alınamadı",
+    "connectionError": "Bağlantı hatası"
   }
 }
 

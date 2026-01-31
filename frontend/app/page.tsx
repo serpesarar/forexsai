@@ -1006,12 +1006,12 @@ export default function HomePage() {
             const resistanceDist = nearestResistance?.distance_pips ?? signal.liveMetrics.nearestResistance.distance;
             
             const metrics = [
-              { label: `EMA 20`, distance: ema20Dist, maxPips: dynamicMaxPips, above: mtfData?.ema.price_above_ema20 },
-              { label: `EMA 50`, distance: ema50Dist, maxPips: dynamicMaxPips * 2, above: mtfData?.ema.price_above_ema50 },
-              { label: `EMA 200`, distance: ema200Dist, maxPips: dynamicMaxPips * 4, above: mtfData?.ema.price_above_ema200 },
-              { label: "BB Upper", distance: mtfData ? (mtfData.current_price - mtfData.bollinger.upper) : resistanceDist, maxPips: dynamicMaxPips },
-              { label: "BB Lower", distance: mtfData ? (mtfData.current_price - mtfData.bollinger.lower) : supportDist, maxPips: dynamicMaxPips },
-              { label: "%B", distance: mtfData ? ((mtfData.bollinger.percent_b - 0.5) * 100) : 0, maxPips: 50, isBollinger: true },
+              { label: `EMA 20`, distance: ema20Dist, maxPips: dynamicMaxPips, above: mtfData?.ema.price_above_ema20, period: 20, emaLevel: mtfData?.ema.ema20 },
+              { label: `EMA 50`, distance: ema50Dist, maxPips: dynamicMaxPips * 2, above: mtfData?.ema.price_above_ema50, period: 50, emaLevel: mtfData?.ema.ema50 },
+              { label: `EMA 200`, distance: ema200Dist, maxPips: dynamicMaxPips * 4, above: mtfData?.ema.price_above_ema200, period: 200, emaLevel: mtfData?.ema.ema200 },
+              { label: "BB Upper", distance: mtfData ? (mtfData.current_price - mtfData.bollinger.upper) : resistanceDist, maxPips: dynamicMaxPips, isBollinger: true, bbLevel: mtfData?.bollinger.upper },
+              { label: "BB Lower", distance: mtfData ? (mtfData.current_price - mtfData.bollinger.lower) : supportDist, maxPips: dynamicMaxPips, isBollinger: true, bbLevel: mtfData?.bollinger.lower },
+              { label: "%B", distance: mtfData ? ((mtfData.bollinger.percent_b - 0.5) * 100) : 0, maxPips: 50, isBollinger: true, percentB: mtfData?.bollinger.percent_b },
             ];
             return metrics.map((metric, index) => {
               const pips = toPips(metric.distance);
@@ -1022,6 +1022,34 @@ export default function HomePage() {
                 : Math.min(100, (absPips / metric.maxPips) * 100);
               const colorClass = isAbove ? "text-success" : "text-danger";
               const pipsLabel = `${pips >= 0 ? "+" : ""}${pips} pips`;
+              
+              const handleMetricClick = () => {
+                if (metric.period) {
+                  open("ema_distance", {
+                    period: metric.period,
+                    distance: metric.distance,
+                    distancePct: (metric.distance / (mtfData?.current_price || 1)) * 100,
+                    isAbove: isAbove,
+                    emaLevel: metric.emaLevel || 0,
+                    currentPrice: mtfData?.current_price || 0,
+                    timeframe: trendTf,
+                  }, signal.symbol as "NASDAQ" | "XAUUSD", `EMA ${metric.period}`);
+                } else if (metric.isBollinger) {
+                  open("trend_channel", {
+                    type: metric.label,
+                    distance: metric.distance,
+                    level: metric.bbLevel || metric.percentB || 0,
+                    currentPrice: mtfData?.current_price || 0,
+                    upper: mtfData?.bollinger.upper,
+                    lower: mtfData?.bollinger.lower,
+                    middle: mtfData?.bollinger.middle,
+                    percentB: mtfData?.bollinger.percent_b,
+                    trendStrength: 0.5,
+                    timeframe: trendTf,
+                  }, signal.symbol as "NASDAQ" | "XAUUSD", metric.label);
+                }
+              };
+              
               return (
                 <div key={`${signal.symbol}-${metric.label}-${index}`} className="rounded-lg border border-white/5 bg-white/5 p-3 group relative">
                   <CircularProgress 
@@ -1031,7 +1059,7 @@ export default function HomePage() {
                     sublabel={pipsLabel} 
                     colorClassName={colorClass}
                     isInteractive 
-                    onClick={() => {}} 
+                    onClick={handleMetricClick} 
                   />
                   <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-textSecondary">{metric.label}</p>
                   <div className="absolute -top-1 -right-1">

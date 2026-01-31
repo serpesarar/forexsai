@@ -143,6 +143,24 @@
     "patternInfo": "Pattern Information",
     "tradingStrategy": "Trading Strategy",
     "historicalPerformance": "Historical Performance",
+    "success": "Success",
+    "move": "Move",
+    "overview": "Overview",
+    "signalDistribution": "Signal Distribution",
+    "avgCompletion": "Avg Completion",
+    "avgSuccess": "Avg Success",
+    "confirmed": "Confirmed",
+    "totalActive": "Total Active",
+    "stageLegend": "Stage Legend",
+    "detectedForming": "Detected / Forming",
+    "backToList": "Back to list",
+    "sortCompletion": "Sort: Completion",
+    "sortSuccessRate": "Sort: Success Rate",
+    "sortNewest": "Sort: Newest",
+    "keyPriceLevels": "Key Price Levels",
+    "historicalAccuracy": "Historical accuracy",
+    "riskToRewardRatio": "Risk to reward ratio",
+    "projectedPriceChange": "Projected price change",
     "stages": {
       "detected": "Detected",
       "forming": "Forming",
@@ -410,6 +428,21 @@
     "stopLoss": "SL",
     "totalAnalyzed": "Total {count} analyzed",
     "check": "check"
+  },
+  "candlestickPanel": {
+    "title": "Candlestick Patterns",
+    "loading": "Analyzing candlestick patterns...",
+    "bullish": "Bullish",
+    "bearish": "Bearish",
+    "neutral": "Neutral",
+    "signal": "Signal",
+    "mlConfidence": "ML Confidence Adj",
+    "all": "All",
+    "noPatterns": "No active patterns in this timeframe",
+    "description": "Description",
+    "whatToDo": "What to do?",
+    "dataError": "Data could not be retrieved",
+    "connectionError": "Connection error"
   }
 }
 

@@ -259,11 +259,11 @@ function PatternCard({
       {/* Compact Stats Row */}
       <div className="mt-2.5 flex items-center justify-between gap-2 text-[10px]">
         <div className="flex items-center gap-1 text-gray-400">
-          <span className="uppercase">Success</span>
+          <span className="uppercase">{t("patternEngine.success")}</span>
           <span className="font-mono font-semibold text-white">{pattern.successRate}%</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="uppercase text-gray-400">Move</span>
+          <span className="uppercase text-gray-400">{t("patternEngine.move")}</span>
           <span className={`font-mono font-semibold ${pattern.expectedMove >= 0 ? "text-emerald-400" : "text-red-400"}`}>
             {pattern.expectedMove >= 0 ? "+" : ""}{pattern.expectedMove}%
           </span>
@@ -282,7 +282,7 @@ function PatternCard({
   );
 }
 
-// Pattern Detail Modal - Click on card
+// Pattern Detail Modal - Click on card (uses Portal for proper layering)
 function PatternDetailModal({
   pattern,
   onClose,
@@ -292,6 +292,7 @@ function PatternDetailModal({
   onClose: () => void;
   t: (key: string) => string;
 }) {
+  const [mounted, setMounted] = useState(false);
   const patternName = t(`patternEngine.patterns.${pattern.patternKey}.name`) || pattern.patternKey;
   const patternDesc = t(`patternEngine.patterns.${pattern.patternKey}.description`) || "";
   const afterCompletion = t(`patternEngine.patterns.${pattern.patternKey}.afterCompletion`) || "";
@@ -299,15 +300,25 @@ function PatternDetailModal({
   const stageName = t(`patternEngine.stages.${pattern.stage}`) || pattern.stage;
   const riskReward = Math.abs((pattern.target - pattern.entry) / (pattern.entry - pattern.stopLoss)).toFixed(2);
 
+  useEffect(() => {
+    setMounted(true);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   const formatDate = (iso: string) => {
     const d = new Date(iso);
     return d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  if (!mounted) return null;
+
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
+      <div className="relative max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-white/10 bg-slate-900 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-slate-900/95 p-4 backdrop-blur">
           <div className="flex items-center gap-3">
             <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${pattern.signal === "bullish" ? "bg-emerald-500/20" : pattern.signal === "bearish" ? "bg-red-500/20" : "bg-gray-500/20"}`}>
@@ -386,6 +397,8 @@ function PatternDetailModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
 
 // FULLSCREEN Panel Modal - Expanded view with more details (uses Portal)
@@ -460,9 +473,9 @@ function FullscreenPatternModal({
             onChange={(e) => setSortBy(e.target.value as any)}
             className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-accent focus:outline-none"
           >
-            <option value="completion">Sort: Completion</option>
-            <option value="successRate">Sort: Success Rate</option>
-            <option value="detected">Sort: Newest</option>
+            <option value="completion">{t("patternEngine.sortCompletion")}</option>
+            <option value="successRate">{t("patternEngine.sortSuccessRate")}</option>
+            <option value="detected">{t("patternEngine.sortNewest")}</option>
           </select>
           {/* Filter */}
           <div className="flex rounded-lg border border-white/10 bg-white/5 p-1">
@@ -483,15 +496,15 @@ function FullscreenPatternModal({
       <div className="flex h-[calc(100vh-73px)]">
         {/* Stats Sidebar */}
         <div className="w-72 flex-shrink-0 border-r border-white/10 bg-slate-900/50 p-4 space-y-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">Overview</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t("patternEngine.overview")}</h3>
           
           {/* Signal Distribution */}
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs text-gray-500 uppercase mb-3">Signal Distribution</p>
+            <p className="text-xs text-gray-500 uppercase mb-3">{t("patternEngine.signalDistribution")}</p>
             <div className="flex items-center gap-3">
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-emerald-400">Bullish</span>
+                  <span className="text-xs text-emerald-400">{t("common.bullish")}</span>
                   <span className="text-sm font-bold text-emerald-400">{stats.bullish}</span>
                 </div>
                 <div className="h-2 rounded-full bg-white/10 overflow-hidden">
@@ -500,7 +513,7 @@ function FullscreenPatternModal({
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-red-400">Bearish</span>
+                  <span className="text-xs text-red-400">{t("common.bearish")}</span>
                   <span className="text-sm font-bold text-red-400">{stats.bearish}</span>
                 </div>
                 <div className="h-2 rounded-full bg-white/10 overflow-hidden">
@@ -513,31 +526,31 @@ function FullscreenPatternModal({
           {/* Key Metrics */}
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
-              <p className="text-[10px] uppercase text-gray-500">Avg Completion</p>
+              <p className="text-[10px] uppercase text-gray-500">{t("patternEngine.avgCompletion")}</p>
               <p className="mt-1 text-2xl font-bold text-white">{stats.avgCompletion}%</p>
             </div>
             <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
-              <p className="text-[10px] uppercase text-gray-500">Avg Success</p>
+              <p className="text-[10px] uppercase text-gray-500">{t("patternEngine.avgSuccess")}</p>
               <p className="mt-1 text-2xl font-bold text-white">{stats.avgSuccess}%</p>
             </div>
             <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
-              <p className="text-[10px] uppercase text-gray-500">Confirmed</p>
+              <p className="text-[10px] uppercase text-gray-500">{t("patternEngine.confirmed")}</p>
               <p className="mt-1 text-2xl font-bold text-emerald-400">{stats.confirmed}</p>
             </div>
             <div className="rounded-xl border border-accent/20 bg-accent/5 p-3 text-center">
-              <p className="text-[10px] uppercase text-gray-500">Total Active</p>
+              <p className="text-[10px] uppercase text-gray-500">{t("patternEngine.totalActive")}</p>
               <p className="mt-1 text-2xl font-bold text-accent">{stats.total}</p>
             </div>
           </div>
 
           {/* Legend */}
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs text-gray-500 uppercase mb-3">Stage Legend</p>
+            <p className="text-xs text-gray-500 uppercase mb-3">{t("patternEngine.stageLegend")}</p>
             <div className="space-y-2 text-xs">
-              <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-blue-500" /><span className="text-gray-400">Detected / Forming</span></div>
-              <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-amber-500" /><span className="text-gray-400">Confirming</span></div>
-              <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-500" /><span className="text-gray-400">Confirmed / Active</span></div>
-              <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-purple-500" /><span className="text-gray-400">Completed</span></div>
+              <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-blue-500" /><span className="text-gray-400">{t("patternEngine.detectedForming")}</span></div>
+              <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-amber-500" /><span className="text-gray-400">{t("patternEngine.stages.confirming")}</span></div>
+              <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-500" /><span className="text-gray-400">{t("patternEngine.stages.confirmed")} / {t("patternEngine.stages.active")}</span></div>
+              <div className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-purple-500" /><span className="text-gray-400">{t("patternEngine.stages.completed")}</span></div>
             </div>
           </div>
         </div>
@@ -548,7 +561,7 @@ function FullscreenPatternModal({
             // Selected Pattern Detail View
             <div className="mx-auto max-w-4xl">
               <button onClick={() => setSelectedPattern(null)} className="mb-4 flex items-center gap-2 text-sm text-gray-400 hover:text-white">
-                <ChevronRight className="h-4 w-4 rotate-180" /> Back to list
+                <ChevronRight className="h-4 w-4 rotate-180" /> {t("patternEngine.backToList")}
               </button>
               
               <div className="grid gap-6 lg:grid-cols-2">
@@ -602,7 +615,7 @@ function FullscreenPatternModal({
                 <div className="space-y-4">
                   {/* Price Levels */}
                   <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                    <h3 className="text-sm font-semibold text-white mb-4">Key Price Levels</h3>
+                    <h3 className="text-sm font-semibold text-white mb-4">{t("patternEngine.keyPriceLevels")}</h3>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
                         <div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-emerald-400" /><span className="text-sm text-gray-400">{t("patternEngine.entryZone")}</span></div>
@@ -624,19 +637,19 @@ function FullscreenPatternModal({
                     <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/0 p-5">
                       <div className="flex items-center gap-2 text-xs uppercase text-gray-500"><BarChart3 className="h-4 w-4" />{t("patternEngine.successRate")}</div>
                       <p className="mt-2 text-3xl font-bold text-white">{selectedPattern.successRate}%</p>
-                      <p className="mt-1 text-xs text-gray-500">Historical accuracy</p>
+                      <p className="mt-1 text-xs text-gray-500">{t("patternEngine.historicalAccuracy")}</p>
                     </div>
                     <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/0 p-5">
                       <div className="flex items-center gap-2 text-xs uppercase text-gray-500"><Target className="h-4 w-4" />{t("patternEngine.riskReward")}</div>
                       <p className="mt-2 text-3xl font-bold text-white">1:{Math.abs((selectedPattern.target - selectedPattern.entry) / (selectedPattern.entry - selectedPattern.stopLoss)).toFixed(1)}</p>
-                      <p className="mt-1 text-xs text-gray-500">Risk to reward ratio</p>
+                      <p className="mt-1 text-xs text-gray-500">{t("patternEngine.riskToRewardRatio")}</p>
                     </div>
                     <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/0 p-5">
                       <div className="flex items-center gap-2 text-xs uppercase text-gray-500"><TrendUp className="h-4 w-4" />{t("patternEngine.expectedMove")}</div>
                       <p className={`mt-2 text-3xl font-bold ${selectedPattern.expectedMove >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                         {selectedPattern.expectedMove >= 0 ? "+" : ""}{selectedPattern.expectedMove}%
                       </p>
-                      <p className="mt-1 text-xs text-gray-500">Projected price change</p>
+                      <p className="mt-1 text-xs text-gray-500">{t("patternEngine.projectedPriceChange")}</p>
                     </div>
                     <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-white/0 p-5">
                       <div className="flex items-center gap-2 text-xs uppercase text-gray-500"><Timer className="h-4 w-4" />{t("patternEngine.detected")}</div>
@@ -688,11 +701,11 @@ function FullscreenPatternModal({
                     </div>
                     <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px]">
                       <div className="rounded-lg bg-white/5 py-1.5">
-                        <p className="text-gray-500 uppercase">Success</p>
+                        <p className="text-gray-500 uppercase">{t("patternEngine.success")}</p>
                         <p className="font-mono font-semibold text-white">{pattern.successRate}%</p>
                       </div>
                       <div className="rounded-lg bg-white/5 py-1.5">
-                        <p className="text-gray-500 uppercase">Move</p>
+                        <p className="text-gray-500 uppercase">{t("patternEngine.move")}</p>
                         <p className={`font-mono font-semibold ${pattern.expectedMove >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                           {pattern.expectedMove >= 0 ? "+" : ""}{pattern.expectedMove}%
                         </p>
