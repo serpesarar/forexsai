@@ -100,25 +100,23 @@ export default function CareersPage() {
                     <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 mb-6">
                         <Users className="w-10 h-10 text-emerald-400" />
                     </div>
-                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Kariyer</h1>
+                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{t("careers.title")}</h1>
                     <p className="text-lg text-[#E5E7EB]/60 max-w-2xl mx-auto">
-                        AI destekli finansal analiz platformunun geleceğini birlikte inşa edelim
+                        {t("careers.subtitle")}
                     </p>
                 </div>
 
                 {/* Mission Statement */}
                 <div className="glass-premium p-8 rounded-3xl mb-16 text-center">
-                    <h2 className="text-2xl font-bold text-white mb-4">Misyonumuz</h2>
+                    <h2 className="text-2xl font-bold text-white mb-4">{t("careers.mission.title")}</h2>
                     <p className="text-lg text-[#E5E7EB]/70 max-w-3xl mx-auto leading-relaxed">
-                        ForexsAi olarak, yapay zeka ve makine öğrenmesi teknolojilerini kullanarak bireysel yatırımcılara 
-                        kurumsal düzeyde analiz araçları sunmayı hedefliyoruz. Ekibimize katılarak fintech sektörünün 
-                        geleceğini şekillendirmeye katkıda bulunun.
+                        {t("careers.mission.text")}
                     </p>
                 </div>
 
                 {/* Benefits */}
                 <div className="mb-16">
-                    <h2 className="text-2xl font-bold text-white text-center mb-8">Neden ForexsAi?</h2>
+                    <h2 className="text-2xl font-bold text-white text-center mb-8">{t("careers.whyUs")}</h2>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {benefits.map((benefit, idx) => (
                             <div key={idx} className="glass-premium p-6 rounded-2xl flex items-start gap-4">
@@ -136,7 +134,7 @@ export default function CareersPage() {
 
                 {/* Open Positions */}
                 <div className="mb-16">
-                    <h2 className="text-2xl font-bold text-white text-center mb-8">Açık Pozisyonlar</h2>
+                    <h2 className="text-2xl font-bold text-white text-center mb-8">{t("careers.openPositions")}</h2>
                     <div className="space-y-6">
                         {openPositions.map((position, idx) => {
                             const colors = colorClasses[position.color as keyof typeof colorClasses];
@@ -165,7 +163,7 @@ export default function CareersPage() {
                                             </div>
                                             <p className="text-[#E5E7EB]/70 mb-4">{position.description}</p>
                                             <div className="space-y-2">
-                                                <p className="text-sm font-semibold text-white">Gereksinimler:</p>
+                                                <p className="text-sm font-semibold text-white">{t("careers.requirements")}</p>
                                                 <ul className="grid md:grid-cols-2 gap-2">
                                                     {position.requirements.map((req, reqIdx) => (
                                                         <li key={reqIdx} className="flex items-start gap-2 text-sm text-[#E5E7EB]/60">
@@ -181,7 +179,7 @@ export default function CareersPage() {
                                                 href="mailto:careers@forexsai.com"
                                                 className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r ${colors.bg} border ${colors.border} ${colors.text} font-semibold hover:opacity-80 transition-opacity`}
                                             >
-                                                Başvur
+                                                {t("careers.apply")}
                                             </a>
                                         </div>
                                     </div>
@@ -193,17 +191,16 @@ export default function CareersPage() {
 
                 {/* No Matching Position */}
                 <div className="glass-premium p-8 rounded-3xl text-center">
-                    <h2 className="text-2xl font-bold text-white mb-3">Aradığınız Pozisyon Yok mu?</h2>
+                    <h2 className="text-2xl font-bold text-white mb-3">{t("careers.noPosition.title")}</h2>
                     <p className="text-[#E5E7EB]/60 mb-6 max-w-lg mx-auto">
-                        Yetenekli profesyonellerle her zaman tanışmak isteriz. CV'nizi bize gönderin, 
-                        uygun bir pozisyon açıldığında sizinle iletişime geçelim.
+                        {t("careers.noPosition.text")}
                     </p>
                     <a
                         href="mailto:careers@forexsai.com"
                         className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold hover:opacity-90 transition-opacity"
                     >
                         <Briefcase className="w-5 h-5" />
-                        CV Gönder
+                        {t("careers.noPosition.button")}
                     </a>
                     <p className="text-sm text-[#E5E7EB]/40 mt-4">careers@forexsai.com</p>
                 </div>

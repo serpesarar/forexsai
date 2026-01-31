@@ -94,19 +94,18 @@ export default function BlogPage() {
                     <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 mb-6">
                         <BookOpen className="w-10 h-10 text-indigo-400" />
                     </div>
-                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Blog</h1>
+                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{t("blog.title")}</h1>
                     <p className="text-lg text-[#E5E7EB]/60 max-w-2xl mx-auto">
-                        Piyasa analizleri, AI trading stratejileri ve finansal eğitim içerikleri
+                        {t("blog.subtitle")}
                     </p>
                 </div>
 
                 {/* Coming Soon Banner */}
                 <div className="glass-premium p-8 rounded-3xl mb-12 text-center border-2 border-dashed border-indigo-500/30">
                     <Sparkles className="w-12 h-12 text-indigo-400 mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-white mb-2">Yakında Geliyor!</h2>
+                    <h2 className="text-2xl font-bold text-white mb-2">{t("blog.comingSoon")}</h2>
                     <p className="text-[#E5E7EB]/60 max-w-lg mx-auto">
-                        Blog bölümümüz yapım aşamasında. Çok yakında piyasa analizleri, eğitim içerikleri ve 
-                        AI trading stratejileri hakkında detaylı yazılar paylaşacağız.
+                        {t("blog.comingSoonText")}
                     </p>
                 </div>
 
@@ -125,7 +124,7 @@ export default function BlogPage() {
                                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${colors.badge}`}>
                                             {post.category}
                                         </span>
-                                        <span className="text-xs text-[#E5E7EB]/40">Öne Çıkan</span>
+                                        <span className="text-xs text-[#E5E7EB]/40">{t("blog.featured")}</span>
                                     </div>
                                     <h2 className="text-2xl font-bold text-white mb-3 group-hover:text-indigo-400 transition-colors">
                                         {post.title}
@@ -177,14 +176,14 @@ export default function BlogPage() {
 
                 {/* Newsletter */}
                 <div className="mt-16 glass-premium p-8 rounded-3xl text-center">
-                    <h2 className="text-2xl font-bold text-white mb-3">Güncel Kalın</h2>
+                    <h2 className="text-2xl font-bold text-white mb-3">{t("blog.newsletter.title")}</h2>
                     <p className="text-[#E5E7EB]/60 mb-6 max-w-lg mx-auto">
-                        Yeni yazılar ve piyasa analizleri için bültenimize abone olun.
+                        {t("blog.newsletter.subtitle")}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
                         <input
                             type="email"
-                            placeholder="E-posta adresiniz"
+                            placeholder={t("blog.newsletter.placeholder") as string}
                             className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-indigo-500/50"
                             disabled
                         />
@@ -192,7 +191,7 @@ export default function BlogPage() {
                             className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold opacity-50 cursor-not-allowed"
                             disabled
                         >
-                            Yakında
+                            {t("blog.newsletter.button")}
                         </button>
                     </div>
                 </div>
