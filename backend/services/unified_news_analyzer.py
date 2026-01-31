@@ -555,7 +555,18 @@ async def get_news_sentiment_for_ml(symbol: str = "XAUUSD") -> Dict[str, float]:
     """
     analyzer = get_unified_analyzer()
     impact = await analyzer.get_unified_impact(symbol)
-    return impact.ml_features
+    features = impact.ml_features.copy()
+    
+    # Add COMEX features for gold
+    if "XAU" in symbol.upper() or "GOLD" in symbol.upper():
+        try:
+            from services.comex_news_service import get_comex_news_for_ml
+            comex_features = await get_comex_news_for_ml(symbol)
+            features.update(comex_features)
+        except Exception as e:
+            logger.warning(f"COMEX features not available: {e}")
+    
+    return features
 
 
 async def get_news_direction_bias(symbol: str = "XAUUSD") -> tuple[str, float, float]:
