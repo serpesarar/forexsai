@@ -117,5 +117,57 @@
       "disclaimer": "Risk Disclaimer"
     },
     "copyright": "All rights reserved."
+  },
+  "about": {
+    "hero": {
+      "title": "Power of Data, Vision of Expertise",
+      "subtitle": "10 years of professional experience met with AI trained on 49 million rows of data."
+    },
+    "story": {
+      "title": "Our Story",
+      "p1": "Our founder is a Turkish financial expert with over 10 years of professional trading experience. The vision was to combine human insight with machine precision to cut through market noise.",
+      "p2": "ForexsAi is not just another indicator. It is a proprietary AI model trained for 9 months on 49 million rows of market data dating back to 2000. Our mission is to democratize institutional-grade analysis for the individual investor."
+    },
+    "stats": {
+      "data": "Data Rows Processed",
+      "years": "Years of Backtest",
+      "training": "Months of Training",
+      "accuracy": "Accuracy Rate"
+    }
+  },
+  "legal": {
+    "title": "Legal Information",
+    "risk": {
+      "title": "Risk Disclaimer",
+      "content": "Trading in Forex, commodities, and crypto markets involves high risk and may not be suitable for all investors. Leverage can lead to significant losses. Data, signals, and analysis provided by ForexsAi are for informational and educational purposes only and do not constitute investment advice. Past performance is not indicative of future results."
+    }
+  },
+  "pricingPage": {
+    "title": "Simple, Transparent Pricing",
+    "subtitle": "Currently all features are free during early access.",
+    "free": {
+      "title": "Early Access",
+      "price": "$0",
+      "period": "/forever",
+      "features": [
+        "All AI Signals",
+        "Live Market Data",
+        "Multi-Timeframe Analysis",
+        "Pattern Detection",
+        "Community Access"
+      ],
+      "cta": "Start Now"
+    },
+    "pro": {
+      "title": "Pro (Coming Soon)",
+      "price": "TBA",
+      "features": [
+        "Custom Email Alerts",
+        "Advanced API Access",
+        "Unlimited Backtest Reports",
+        "1-on-1 Expert Support"
+      ],
+      "cta": "Join Waitlist"
+    }
   }
 }

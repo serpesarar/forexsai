@@ -3,119 +3,171 @@
     "features": "Özellikler",
     "howItWorks": "Nasıl Çalışır",
     "pricing": "Fiyatlandırma",
-    "login": "Giriş",
+    "login": "Giriş Yap",
     "startFree": "Ücretsiz Başla"
   },
   "hero": {
-    "headline": "NASDAQ ve XAUUSD için yapay zeka destekli piyasa analizi — net trendler, hızlı kararlar.",
-    "subheadline": "Çok zaman dilimli sinyaller, desen tespiti ve güven skorlaması tek panoda. Veri odaklı analizler, abartı yok.",
-    "ctaPrimary": "Ücretsiz Başla",
-    "ctaSecondary": "Demo İzle",
-    "disclaimer": "Finansal tavsiye değildir. Sadece bilgilendirme amaçlıdır."
+    "headline": "NASDAQ ve XAUUSD İçin Kurumsal Düzeyde Yapay Zeka Analizi",
+    "subheadline": "Karmaşık piyasa verilerini net alım-satım sinyallerine dönüştürün. Çoklu zaman dilimi analizi, gelişmiş formasyon tespiti ve güven skorlaması tek bir platformda.",
+    "ctaPrimary": "Analize Başla",
+    "ctaSecondary": "Demoyu İncele",
+    "disclaimer": "Sunulan veriler yatırım tavsiyesi değildir. Yalnızca analiz ve eğitim amaçlıdır."
   },
   "valueProps": {
-    "title": "Ciddi traderlar için tasarlandı",
+    "title": "Profesyonel Yatırımcılar İçin Tasarlandı",
     "items": {
       "accuracy": {
-        "title": "Veri Odaklı Doğruluk",
-        "description": "Yıllarca piyasa verisiyle eğitilmiş makine öğrenmesi modelleri, tahmin değil."
+        "title": "Veri Odaklı Hassasiyet",
+        "description": "Milyonlarca tarihsel veri noktasıyla eğitilmiş gelişmiş algoritmalar ile piyasa hareketlerini önceden sezin."
       },
       "speed": {
-        "title": "Gerçek Zamanlı Sinyaller",
-        "description": "Canlı fiyat entegrasyonuyla her 30 saniyede bir yenilenen analiz."
+        "title": "Canlı Piyasa Entegrasyonu",
+        "description": "30 saniyede bir güncellenen analizlerle piyasa ritmini anlık yakalayın. Gecikme yok."
       },
       "focus": {
-        "title": "Odaklı Piyasalar",
-        "description": "NASDAQ ve XAUUSD için uzmanlaşmış — genişlik yerine derinlik."
+        "title": "Uzmanlaşmış Odak",
+        "description": "Sadece NASDAQ ve XAUUSD üzerine özelleştirilmiş derinlemesine modelleme."
       },
       "transparency": {
-        "title": "Açıklanabilir Yapay Zeka",
-        "description": "Her sinyalin neden üretildiğini faktör dökümü ile anlayın."
+        "title": "Şeffaf Analiz Mantığı",
+        "description": "Yapay zekanın karar mekanizmasını, faktör ağırlıklarını ve güven skorlarını şeffaflıkla inceleyin."
       }
     }
   },
   "howItWorks": {
-    "title": "Nasıl çalışır",
-    "subtitle": "Eyleme dönüştürülebilir içgörülere üç adım",
+    "title": "Çalışma Prensibi",
+    "subtitle": "Veriden stratejiye giden en kestirme yol",
     "steps": {
       "1": {
-        "title": "Bağlan",
-        "description": "Saniyeler içinde ücretsiz hesabınızı oluşturun. Kredi kartı gerekmez."
+        "title": "Veri İşleme",
+        "description": "Sistem, çoklu borsalardan gelen fiyat, hacim ve volatilite verilerini anlık olarak işler."
       },
       "2": {
-        "title": "Analiz Et",
-        "description": "Yapay zekamız teknik göstergeler arasında çok zaman dilimli verileri işler."
+        "title": "Yapay Zeka Analizi",
+        "description": "Derin öğrenme modelleri, teknik indikatörler ve mum formasyonlarını tarayarak fırsatları belirler."
       },
       "3": {
-        "title": "Karar Ver",
-        "description": "Güven skorlarını, desen eşleşmelerini ve trend uyumunu inceleyin."
+        "title": "Stratejik Sinyal",
+        "description": "Risk analizi yapılmış, giriş-çıkış bölgeleri belirlenmiş net sinyalleri ekranınıza yansıtır."
       }
     }
   },
   "features": {
-    "title": "Hassasiyet için tasarlanmış özellikler",
-    "subtitle": "Her araç gürültüyü azaltmak ve önemli olanı vurgulamak için tasarlandı",
+    "title": "Piyasa Hakimiyeti İçin Gelişmiş Araçlar",
+    "subtitle": "Gerekli tüm teknik ve temel analiz araçları, gürültüden arındırılmış tek bir arayüzde",
     "items": {
       "mtf": {
-        "title": "Çok Zaman Dilimli Analiz",
-        "description": "Daha yüksek uyumlu sinyaller için M15, H1, H4 ve D1 zaman dilimlerinde trendleri hizalayın."
+        "title": "Çoklu Zaman Dilimi (MTF)",
+        "description": "M15, H1, H4 ve D1 grafiklerinin uyumunu analiz ederek trendin gerçek yönünü teyit edin."
       },
       "patterns": {
-        "title": "Desen Tanıma Motoru",
-        "description": "Harmonik desenleri, mum çubuğu formasyonlarını ve destek/direnç bölgelerini otomatik tespit edin."
+        "title": "Otomatik Formasyon Tespiti",
+        "description": "Harmonik yapılar, bayrak formasyonları ve kritik destek/direnç seviyeleri otomatik çizilir."
       },
       "confidence": {
-        "title": "Güven Skorlaması",
-        "description": "Her sinyal, geçmiş backtesting'e dayalı istatistiksel bir güven skoru içerir."
+        "title": "Akıllı Güven Skoru",
+        "description": "Her sinyal için geçmiş başarı oranlarına dayalı istatistiksel bir güven yüzdesi hesaplanır."
       },
       "ml": {
-        "title": "ML Faktör Paneli",
-        "description": "Yapay zekanın hangi piyasa faktörlerine öncelik vereceğini özelleştirin — risk toleransı, volatilite, trend gücü."
+        "title": "ML Faktör Analizi",
+        "description": "Volatilite, momentum ve trend gücünün yapay zeka gözüyle ağırlıklandırılmış detaylı dökümü."
       },
       "alerts": {
-        "title": "Akıllı Uyarılar",
-        "description": "Yüksek güvenli kurulumlar oluştuğunda, doğrudan panonuzda veya e-postada bildirim alın."
+        "title": "Kritik Seviye Uyarıları",
+        "description": "Yüksek olasılıklı fırsatlar oluştuğunda masaüstü ve mobil bildirimlerle anında haberdar olun."
       },
       "claude": {
-        "title": "Claude AI Analizi",
-        "description": "Karmaşık piyasa koşullarının doğal dil dökümü (Pro katmanı)."
+        "title": "Claude AI Yorumu",
+        "description": "Piyasa koşullarının ve teknik görünümün, yapay zeka tarafından hazırlanmış detaylı metin özeti."
       }
     }
   },
   "trust": {
-    "title": "Şeffaflık üzerine inşa edildi",
-    "subtitle": "Gizli ajandalar yok. Veriniz sizin kontrolünüzde.",
+    "title": "Güven ve Şeffaflık",
+    "subtitle": "Kullanıcı verisi ve güvenliği bizim önceliğimizdir.",
     "items": {
       "data": {
-        "title": "Veri Güvenliği",
-        "description": "Kurumsal düzeyde şifreleme. Trading verileriniz asla güvenli sunucuları terk etmez."
+        "title": "Uçtan Uca Şifreleme",
+        "description": "Tüm verileriniz endüstri standardı şifreleme protokolleri ile korunmaktadır."
       },
       "privacy": {
-        "title": "Gizlilik Öncelikli",
-        "description": "Kullanıcı verilerinin satışı yok. Üçüncü taraf izleme yok."
+        "title": "Gizlilik Garantisi",
+        "description": "Kullanıcı verileri asla üçüncü taraflarla paylaşılmaz veya ticari amaçla kullanılmaz."
       },
       "advice": {
-        "title": "Finansal Tavsiye Değildir",
-        "description": "ForexsAi analitik araçlar sağlar. Tüm trading kararları sizin sorumluluğunuzdadır."
+        "title": "Risk Yönetimi",
+        "description": "Platform analitik destek sağlar. Yatırım kararları ve risk yönetimi kullanıcının sorumluluğundadır."
       }
     }
   },
   "footer": {
-    "tagline": "Yapay zeka destekli piyasa analizi. Hassasiyeti değer veren traderlar için tasarlandı.",
+    "tagline": "Modern yatırımcılar için yeni nesil analiz platformu.",
     "links": {
       "product": "Ürün",
       "features": "Özellikler",
       "pricing": "Fiyatlandırma",
-      "changelog": "Değişiklik Günlüğü",
-      "company": "Şirket",
+      "changelog": "Güncellemeler",
+      "company": "Kurumsal",
       "about": "Hakkımızda",
       "blog": "Blog",
       "careers": "Kariyer",
       "legal": "Yasal",
-      "privacy": "Gizlilik Politikası",
-      "terms": "Kullanım Koşulları",
-      "disclaimer": "Risk Beyanı"
+      "privacy": "Gizlilik",
+      "terms": "Kullanım Şartları",
+      "disclaimer": "Yasal Uyarı"
     },
     "copyright": "Tüm hakları saklıdır."
+  },
+  "about": {
+    "hero": {
+      "title": "Verinin Gücü, Uzmanlığın Vizyonu",
+      "subtitle": "10 yıllık profesyonel tecrübe ve 49 milyon satır veri ile eğitilmiş yapay zeka."
+    },
+    "story": {
+      "title": "Hikayemiz",
+      "p1": "Kurucumuz, 10 yıllık profesyonel trader geçmişine sahip bir Türk finans uzmanıdır. Piyasalardaki gürültüyü ve manipülasyonu aşmak için insan öngörüsünü makine hassasiyetiyle birleştirme vizyonuyla yola çıktı.",
+      "p2": "ForexsAi, sıradan bir gösterge seti değildir. 2000 yılından günümüze uzanan 49 milyon satır piyasa verisi ile tam 9 ay boyunca eğitilmiş özel bir yapay zeka modelidir. Amacımız, kurumsal düzeydeki bu analiz gücünü bireysel yatırımcıya sunmaktır."
+    },
+    "stats": {
+      "data": "İşlenen Veri Satırı",
+      "years": "Yıl Backtest Verisi",
+      "training": "Ay Eğitim Süresi",
+      "accuracy": "Başarı Oranı"
+    }
+  },
+  "legal": {
+    "title": "Yasal Bilgilendirme",
+    "risk": {
+      "title": "Risk Bildirimi",
+      "content": "Forex, emtia ve kripto para piyasalarında işlem yapmak yüksek risk içerir ve tüm yatırımcılar için uygun olmayabilir. Kaldıraçlı işlem yapmak, büyük kayıplara yol açabilir. ForexsAi tarafından sunulan veriler, sinyaller ve analizler yalnızca bilgilendirme ve eğitim amaçlıdır; kesinlikle yatırım tavsiyesi (sermaye piyasası mevzuatı gereği) değildir. Geçmiş performans, gelecek sonuçların garantisi olamaz. Kullanıcılar, bu platformdaki bilgilere dayanarak aldıkları kararlardan tamamen kendileri sorumludur."
+    }
+  },
+  "pricingPage": {
+    "title": "Basit, Şeffaf Fiyatlandırma",
+    "subtitle": "Şuan tüm özellikler erken erişim sürecinde ücretsizdir.",
+    "free": {
+      "title": "Erken Erişim",
+      "price": "₺0",
+      "period": "/sonsuza kadar",
+      "features": [
+        "Tüm Yapay Zeka Sinyalleri",
+        "Canlı Piyasa Verisi",
+        "M15 - D1 Çoklu Analiz",
+        "Formasyon Tespiti",
+        "Topluluk Erişimi"
+      ],
+      "cta": "Hemen Başla"
+    },
+    "pro": {
+      "title": "Pro (Yakında)",
+      "price": "Belirleniyor",
+      "features": [
+        "Özel E-posta Uyarıları",
+        "Gelişmiş API Erişimi",
+        "Sınırsız Backtest Raporları",
+        "1-e-1 Uzman Desteği"
+      ],
+      "cta": "Bekleme Listesi"
+    }
   }
 }

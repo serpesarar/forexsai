@@ -9,6 +9,7 @@ const jetBrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jet
 export const metadata: Metadata = {
   title: "ForexsAi - AI-Powered Market Analysis",
   description: "AI-powered market analysis for NASDAQ and XAUUSD - clearer trends, faster decisions.",
+  manifest: "/site.webmanifest",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
