@@ -13,6 +13,19 @@ export function Hero() {
     <section className="relative min-h-screen flex items-center justify-center pt-24 pb-16 overflow-hidden">
       <AnimatedBackground />
 
+      {/* Aurora Gradient Overlay */}
+      <div 
+        className="absolute inset-0 z-[1] pointer-events-none"
+        style={{
+          background: `
+            radial-gradient(ellipse 80% 50% at 20% 40%, rgba(168, 85, 247, 0.12) 0%, transparent 60%),
+            radial-gradient(ellipse 60% 40% at 80% 30%, rgba(99, 102, 241, 0.10) 0%, transparent 55%),
+            radial-gradient(ellipse 50% 30% at 50% 80%, rgba(14, 165, 233, 0.08) 0%, transparent 50%),
+            radial-gradient(ellipse 40% 25% at 70% 70%, rgba(236, 72, 153, 0.06) 0%, transparent 45%)
+          `,
+        }}
+      />
+
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         {/* Badge */}
         <motion.div
