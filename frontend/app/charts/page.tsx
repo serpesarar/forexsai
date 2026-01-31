@@ -33,13 +33,13 @@ const CHART_SYMBOLS: ChartSymbol[] = [
   {
     id: "nasdaq",
     label: "NASDAQ-100",
-    tradingViewSymbol: "NASDAQ:NDX",
+    tradingViewSymbol: "PEPPERSTONE:NAS100",
     description: "NASDAQ-100 Endeksi"
   },
   {
     id: "xauusd",
     label: "XAUUSD",
-    tradingViewSymbol: "OANDA:XAUUSD",
+    tradingViewSymbol: "PEPPERSTONE:XAUUSD",
     description: "Altın/USD Paritesi"
   }
 ];
@@ -77,7 +77,16 @@ function TradingViewChart({
           allow_symbol_change: false,
           container_id: containerId,
           hide_side_toolbar: false,
-          save_image: false,
+          save_image: true,
+          hide_top_toolbar: false,
+          withdateranges: true,
+          details: true,
+          hotlist: false,
+          calendar: false,
+          show_popup_button: false,
+          popup_width: "1000",
+          popup_height: "650",
+          no_referral_id: true,
           studies: [
             "MASimple@tv-basicstudies",
             "RSI@tv-basicstudies",
@@ -329,18 +338,35 @@ export default function ChartsPage() {
           </div>
         </div>
 
-        {/* Info Banner */}
-        <div className="glass-card p-3 md:p-4 rounded-lg md:rounded-xl space-y-2 border border-accent/20">
-          <div className="flex items-start md:items-center gap-2 md:gap-3">
-            <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-accent flex-shrink-0 mt-0.5 md:mt-0" />
-            <p className="text-xs md:text-sm text-textSecondary">
-              <span className="text-white font-medium">TradingView</span> tarafından sağlanan profesyonel grafikler.
-              <span className="hidden sm:inline"> Tam özellikli analiz araçları, göstergeler ve çizim araçlarını kullanabilirsiniz.</span>
-            </p>
+        {/* TradingView Login Info Banner */}
+        <div className="glass-card p-4 md:p-5 rounded-xl md:rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-500/10 to-purple-500/10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-blue-500/20 flex-shrink-0">
+                <TrendingUp className="w-5 h-5 text-blue-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white mb-1">TradingView Grafikleri</h3>
+                <p className="text-sm text-textSecondary">
+                  Çizim yapabilmek ve kaydetmek için grafik üzerindeki <span className="text-blue-400 font-medium">"Giriş Yap"</span> butonundan TradingView hesabınıza giriş yapın.
+                </p>
+              </div>
+            </div>
+            <a
+              href="https://www.tradingview.com/accounts/signin/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold transition whitespace-nowrap"
+            >
+              <ExternalLink className="w-4 h-4" />
+              TradingView'e Git
+            </a>
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-xs text-amber-400/80 pl-6 md:pl-8">
-            <span>💡</span>
-            <span>Çizimlerinizi kaydetmek için grafik üzerinden TradingView hesabınıza giriş yapın.</span>
+          <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap gap-4 text-xs text-textSecondary">
+            <span className="flex items-center gap-1">✏️ Çizim araçları</span>
+            <span className="flex items-center gap-1">� 50+ gösterge</span>
+            <span className="flex items-center gap-1">💾 Otomatik kayıt</span>
+            <span className="flex items-center gap-1">🔄 Canlı veri</span>
           </div>
         </div>
 
