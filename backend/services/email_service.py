@@ -14,6 +14,9 @@ FROM_EMAIL = "ForexsAI <noreply@forexsai.com>"
 SITE_URL = "https://www.forexsai.com"
 
 # Email template with ForexsAI branding
+# Logo URL - upload your logo to a public URL (e.g., your domain or CDN)
+LOGO_URL = "https://www.forexsai.com/logo.png"
+
 def get_email_template(title: str, content: str, button_text: str, button_url: str) -> str:
     return f"""
 <!DOCTYPE html>
@@ -23,25 +26,32 @@ def get_email_template(title: str, content: str, button_text: str, button_url: s
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0a0f1a;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0f1a; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0B1220;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0B1220; padding: 40px 20px;">
         <tr>
             <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0d1829 0%, #1a2744 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 255, 200, 0.1);">
-                    <!-- Header with Logo -->
+                <table width="600" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0d1829 0%, #131f33 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 224, 198, 0.08);">
+                    <!-- Header with Centered Round Logo -->
                     <tr>
-                        <td style="padding: 0;">
-                            <img src="https://i.imgur.com/YourImageId.png" alt="ForexsAI" style="width: 100%; height: auto; display: block;" />
+                        <td style="padding: 40px 40px 20px 40px; text-align: center;">
+                            <!-- Logo Circle -->
+                            <div style="display: inline-block; width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, rgba(0, 224, 198, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%); padding: 4px; box-shadow: 0 8px 32px rgba(0, 224, 198, 0.2);">
+                                <img src="{LOGO_URL}" alt="ForexsAI" style="width: 64px; height: 64px; border-radius: 50%; display: block; object-fit: cover;" />
+                            </div>
+                            <!-- Brand Name -->
+                            <p style="margin: 16px 0 0 0; font-size: 20px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">
+                                Forexs<span style="background: linear-gradient(90deg, #00E0C6, #3B82F6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">AI</span>
+                            </p>
                         </td>
                     </tr>
                     
                     <!-- Content -->
                     <tr>
-                        <td style="padding: 40px 40px 20px 40px;">
-                            <h1 style="margin: 0 0 20px 0; font-size: 28px; font-weight: 700; color: #ffffff; text-align: center;">
+                        <td style="padding: 20px 40px 20px 40px;">
+                            <h1 style="margin: 0 0 20px 0; font-size: 26px; font-weight: 700; color: #ffffff; text-align: center;">
                                 {title}
                             </h1>
-                            <p style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.6; color: #a0aec0; text-align: center;">
+                            <p style="margin: 0 0 30px 0; font-size: 15px; line-height: 1.7; color: #94a3b8; text-align: center;">
                                 {content}
                             </p>
                             
@@ -49,7 +59,7 @@ def get_email_template(title: str, content: str, button_text: str, button_url: s
                             <table width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td align="center" style="padding: 20px 0;">
-                                        <a href="{button_url}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #00ffc8 0%, #00d9a8 100%); color: #0a0f1a; text-decoration: none; font-size: 16px; font-weight: 700; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 255, 200, 0.4);">
+                                        <a href="{button_url}" style="display: inline-block; padding: 14px 36px; background: linear-gradient(135deg, #00E0C6 0%, #3B82F6 100%); color: #0B1220; text-decoration: none; font-size: 15px; font-weight: 700; border-radius: 50px; box-shadow: 0 4px 20px rgba(0, 224, 198, 0.35);">
                                             {button_text}
                                         </a>
                                     </td>
@@ -60,13 +70,13 @@ def get_email_template(title: str, content: str, button_text: str, button_url: s
                     
                     <!-- Footer -->
                     <tr>
-                        <td style="padding: 20px 40px 40px 40px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                            <p style="margin: 0; font-size: 12px; color: #64748b; text-align: center;">
+                        <td style="padding: 24px 40px 32px 40px; border-top: 1px solid rgba(255, 255, 255, 0.06);">
+                            <p style="margin: 0; font-size: 12px; color: #64748b; text-align: center; line-height: 1.6;">
                                 Bu email ForexsAI tarafından gönderilmiştir.<br>
                                 Eğer bu işlemi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
                             </p>
-                            <p style="margin: 15px 0 0 0; font-size: 12px; color: #64748b; text-align: center;">
-                                © 2024 ForexsAI - Yapay Zeka Destekli Trading
+                            <p style="margin: 16px 0 0 0; font-size: 11px; color: #475569; text-align: center;">
+                                © 2024 ForexsAI - AI-Powered Market Analysis
                             </p>
                         </td>
                     </tr>
