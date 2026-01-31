@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "ForexsAi - AI-Powered Market Analysis",
   description: "AI-powered market analysis for NASDAQ and XAUUSD - clearer trends, faster decisions.",
   manifest: "/site.webmanifest",
+  metadataBase: new URL("https://www.forexsai.com"),
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -17,6 +18,32 @@ export const metadata: Metadata = {
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
     ],
     apple: "/apple-touch-icon.png",
+    shortcut: "/favicon.ico",
+  },
+  openGraph: {
+    title: "ForexsAi - AI-Powered Market Analysis",
+    description: "AI-powered market analysis for NASDAQ and XAUUSD - clearer trends, faster decisions.",
+    url: "https://www.forexsai.com",
+    siteName: "ForexsAi",
+    images: [
+      {
+        url: "/android-chrome-512x512.png",
+        width: 512,
+        height: 512,
+        alt: "ForexsAi Logo",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "ForexsAi - AI-Powered Market Analysis",
+    description: "AI-powered market analysis for NASDAQ and XAUUSD - clearer trends, faster decisions.",
+    images: ["/android-chrome-512x512.png"],
+  },
+  other: {
+    "google-site-verification": "your-verification-code",
   },
 };
 
