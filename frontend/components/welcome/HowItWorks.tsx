@@ -13,9 +13,15 @@ const icons = {
 export function HowItWorks() {
   const { t } = useI18n();
 
+  const steps = [
+    { key: 1, icon: icons[1] },
+    { key: 2, icon: icons[2] },
+    { key: 3, icon: icons[3] },
+  ];
+
   return (
-    <section id="how-it-works" className="py-24 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
+    <section id="how-it-works" className="py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div className="max-w-5xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -31,45 +37,54 @@ export function HowItWorks() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[1, 2, 3].map((step, index) => {
-            const Icon = icons[step as keyof typeof icons];
-            return (
-              <motion.div
-                key={step}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.15 }}
-                className="relative"
-              >
-                {/* Connector line */}
-                {index < 2 && (
-                  <div className="hidden md:block absolute top-12 left-full w-full h-px bg-gradient-to-r from-[#00E0C6]/50 to-transparent" />
-                )}
+        {/* Steps Container with Connector */}
+        <div className="relative">
+          {/* Background Connector Line - only on desktop */}
+          <div className="hidden md:block absolute top-[60px] left-[16.67%] right-[16.67%] h-[1px]">
+            <div className="w-full h-full bg-gradient-to-r from-transparent via-[#00E0C6]/30 to-transparent" />
+          </div>
 
-                <div className="relative p-8 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:border-[#00E0C6]/20 transition-colors">
-                  {/* Step number */}
-                  <div className="absolute -top-4 left-8 w-8 h-8 rounded-full bg-[#00E0C6] text-[#0B1220] font-bold flex items-center justify-center">
-                    {step}
-                  </div>
-
-                  <div className="pt-4">
-                    <div className="w-12 h-12 rounded-xl bg-[#00E0C6]/10 flex items-center justify-center mb-6">
-                      <Icon className="w-6 h-6 text-[#00E0C6]" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6">
+            {steps.map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <motion.div
+                  key={step.key}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.15 }}
+                  className="relative"
+                >
+                  {/* Card */}
+                  <div className="relative p-6 md:p-8 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-[#00E0C6]/20 transition-all duration-300 hover:bg-white/[0.04]">
+                    {/* Step number badge */}
+                    <div className="absolute -top-3 left-6 md:left-8">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#00E0C6] to-[#3B82F6] text-[#0B1220] text-sm font-bold flex items-center justify-center shadow-lg shadow-[#00E0C6]/20">
+                        {step.key}
+                      </div>
                     </div>
 
-                    <h3 className="text-xl font-semibold text-white mb-3">
-                      {t(`howItWorks.steps.${step}.title`)}
-                    </h3>
-                    <p className="text-[#E5E7EB]/70 leading-relaxed">
-                      {t(`howItWorks.steps.${step}.description`)}
-                    </p>
+                    {/* Content */}
+                    <div className="pt-4">
+                      {/* Icon */}
+                      <div className="w-11 h-11 rounded-xl bg-[#00E0C6]/10 flex items-center justify-center mb-5">
+                        <Icon className="w-5 h-5 text-[#00E0C6]" />
+                      </div>
+
+                      {/* Text */}
+                      <h3 className="text-lg font-semibold text-white mb-2">
+                        {t(`howItWorks.steps.${step.key}.title`)}
+                      </h3>
+                      <p className="text-[#E5E7EB]/60 text-sm leading-relaxed">
+                        {t(`howItWorks.steps.${step.key}.description`)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            );
-          })}
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
