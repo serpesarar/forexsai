@@ -13,7 +13,7 @@ export default function NasdaqPanel() {
   const { data, isLoading, refetch, error } = useNasdaq();
 
   return (
-    <div className="glass-card p-6 space-y-4">
+    <div className="glass-premium p-6 space-y-4">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-textSecondary">NASDAQ 100 Analysis</p>

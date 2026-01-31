@@ -142,7 +142,7 @@ export default function AccountPage() {
         )}
 
         {/* Profile Card */}
-        <div className="glass-card rounded-2xl overflow-hidden">
+        <div className="glass-premium rounded-2xl overflow-hidden">
           <div className="p-6 border-b border-white/10 bg-gradient-to-r from-accent/10 to-purple-500/10">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               {/* Avatar */}
@@ -236,7 +236,7 @@ export default function AccountPage() {
         </div>
 
         {/* Referral Code */}
-        <div className="glass-card rounded-2xl p-6">
+        <div className="glass-premium rounded-2xl p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Shield className="w-5 h-5 text-accent" />
             Referans Kodu
@@ -262,7 +262,7 @@ export default function AccountPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Link
             href="/account/settings"
-            className="glass-card rounded-xl p-5 flex items-center gap-4 hover:bg-white/5 transition group"
+            className="glass-premium rounded-xl p-5 flex items-center gap-4 hover:bg-white/5 transition group"
           >
             <div className="p-3 rounded-xl bg-blue-500/20 group-hover:bg-blue-500/30 transition">
               <Settings className="w-6 h-6 text-blue-400" />
@@ -275,7 +275,7 @@ export default function AccountPage() {
 
           <Link
             href="/account/notifications"
-            className="glass-card rounded-xl p-5 flex items-center gap-4 hover:bg-white/5 transition group"
+            className="glass-premium rounded-xl p-5 flex items-center gap-4 hover:bg-white/5 transition group"
           >
             <div className="p-3 rounded-xl bg-purple-500/20 group-hover:bg-purple-500/30 transition">
               <Bell className="w-6 h-6 text-purple-400" />
@@ -288,7 +288,7 @@ export default function AccountPage() {
 
           <Link
             href="/account/appearance"
-            className="glass-card rounded-xl p-5 flex items-center gap-4 hover:bg-white/5 transition group"
+            className="glass-premium rounded-xl p-5 flex items-center gap-4 hover:bg-white/5 transition group"
           >
             <div className="p-3 rounded-xl bg-pink-500/20 group-hover:bg-pink-500/30 transition">
               <Palette className="w-6 h-6 text-pink-400" />
@@ -302,7 +302,7 @@ export default function AccountPage() {
           {user.membership_tier === "free" && (
             <Link
               href="/pricing"
-              className="glass-card rounded-xl p-5 flex items-center gap-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 hover:from-yellow-500/20 hover:to-orange-500/20 transition group border border-yellow-500/30"
+              className="glass-premium rounded-xl p-5 flex items-center gap-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 hover:from-yellow-500/20 hover:to-orange-500/20 transition group border border-yellow-500/30"
             >
               <div className="p-3 rounded-xl bg-yellow-500/20 group-hover:bg-yellow-500/30 transition">
                 <Crown className="w-6 h-6 text-yellow-400" />

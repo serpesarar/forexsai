@@ -733,7 +733,7 @@ export default function PatternEngineV2() {
   const xauusdPatterns = filteredPatterns.filter((p) => p.symbol === "XAUUSD");
 
   return (
-    <div className="glass-card p-4">
+    <div className="glass-premium p-4">
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">

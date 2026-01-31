@@ -114,7 +114,7 @@ export default function AppearancePage() {
         )}
 
         {/* Theme */}
-        <div className="glass-card rounded-2xl p-6">
+        <div className="glass-premium rounded-2xl p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Palette className="w-5 h-5 text-accent" />
             Tema
@@ -150,7 +150,7 @@ export default function AppearancePage() {
         </div>
 
         {/* Language */}
-        <div className="glass-card rounded-2xl p-6">
+        <div className="glass-premium rounded-2xl p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Globe className="w-5 h-5 text-accent" />
             Dil
@@ -180,7 +180,7 @@ export default function AppearancePage() {
         </div>
 
         {/* Additional Options */}
-        <div className="glass-card rounded-2xl p-6">
+        <div className="glass-premium rounded-2xl p-6">
           <h3 className="font-semibold mb-4">Ek Ayarlar</h3>
           
           <div className="space-y-4">

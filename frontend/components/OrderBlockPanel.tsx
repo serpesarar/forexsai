@@ -65,7 +65,7 @@ export default function OrderBlockPanel({ symbol = "NDX.INDX", symbolLabel = "NA
         type="orderblock"
         symbol={symbolLabel}
       />
-      <div className="glass-card p-6 space-y-4">
+      <div className="glass-premium p-6 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-sm text-textSecondary">Order Block Detector (SMC) • {symbolLabel}</p>

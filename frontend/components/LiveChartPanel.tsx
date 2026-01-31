@@ -266,7 +266,7 @@ export default function LiveChartPanel({
   const isPositive = priceChange >= 0;
 
   return (
-    <div className="glass-card rounded-2xl overflow-hidden">
+    <div className="glass-premium rounded-2xl overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/5">
         <div className="flex items-center gap-3">

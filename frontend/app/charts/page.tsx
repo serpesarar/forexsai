@@ -141,7 +141,7 @@ function ChartPanel({
   }, []);
 
   return (
-    <div className="glass-card rounded-xl md:rounded-2xl overflow-hidden">
+    <div className="glass-premium rounded-xl md:rounded-2xl overflow-hidden">
       <div className="flex items-center justify-between p-3 md:p-4 border-b border-white/10">
         <div className="flex items-center gap-2 md:gap-3">
           <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg md:rounded-xl bg-gradient-to-br from-accent/30 to-blue-500/30">
@@ -218,7 +218,7 @@ export default function ChartsPage() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background text-white flex items-center justify-center p-6">
-        <div className="glass-card rounded-2xl p-8 max-w-md w-full text-center space-y-6">
+        <div className="glass-premium rounded-2xl p-8 max-w-md w-full text-center space-y-6">
           <div className="flex justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/30 to-purple-500/30">
               <BarChart3 className="h-8 w-8 text-accent" />
@@ -339,7 +339,7 @@ export default function ChartsPage() {
         </div>
 
         {/* TradingView Login Info Banner */}
-        <div className="glass-card p-4 md:p-5 rounded-xl md:rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-500/10 to-purple-500/10">
+        <div className="glass-premium p-4 md:p-5 rounded-xl md:rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-500/10 to-purple-500/10">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className="p-2 rounded-xl bg-blue-500/20 flex-shrink-0">

@@ -15,7 +15,7 @@ export default function ClaudePatternPanel() {
   const activeData = (data as any)?.analyses?.[active];
 
   return (
-    <div className="glass-card p-6 space-y-4">
+    <div className="glass-premium p-6 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm text-textSecondary">Claude AI - Pattern Detection</p>

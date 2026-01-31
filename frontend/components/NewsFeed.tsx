@@ -9,7 +9,7 @@ export default function NewsFeed() {
   const { data, isLoading, refetch, error } = useNews();
 
   return (
-    <div className="glass-card p-6 space-y-4">
+    <div className="glass-premium p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-textSecondary">Fundamental News</p>

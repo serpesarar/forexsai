@@ -13,7 +13,7 @@ export default function XauusdPanel() {
   const { data, isLoading, refetch, error } = useXauusd();
 
   return (
-    <div className="glass-card p-6 space-y-4">
+    <div className="glass-premium p-6 space-y-4">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-textSecondary">XAU/USD Analysis</p>

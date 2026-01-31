@@ -96,7 +96,7 @@ export default function NotificationsPage() {
         )}
 
         {/* Email Notifications */}
-        <div className="glass-card rounded-2xl p-6">
+        <div className="glass-premium rounded-2xl p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Mail className="w-5 h-5 text-accent" />
             E-posta Bildirimleri
@@ -154,7 +154,7 @@ export default function NotificationsPage() {
         </div>
 
         {/* Push Notifications */}
-        <div className="glass-card rounded-2xl p-6">
+        <div className="glass-premium rounded-2xl p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Smartphone className="w-5 h-5 text-accent" />
             Push Bildirimleri

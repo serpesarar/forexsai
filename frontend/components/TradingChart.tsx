@@ -312,7 +312,7 @@ export default function TradingChart({
       className={
         isFullscreen
           ? "fixed inset-0 z-50 bg-background flex flex-col"
-          : "glass-card rounded-2xl overflow-hidden"
+          : "glass-premium rounded-2xl overflow-hidden"
       }
     >
       {/* Header */}

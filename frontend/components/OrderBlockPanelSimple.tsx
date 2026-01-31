@@ -52,7 +52,7 @@ export default function OrderBlockPanelSimple({ symbol = "NDX.INDX", symbolLabel
   const SignalIcon = signalStyle?.icon || AlertCircle;
 
   return (
-    <div className="glass-card p-5 space-y-4">
+    <div className="glass-premium p-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

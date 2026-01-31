@@ -80,7 +80,7 @@ export default function HelpPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <a
             href="mailto:support@forexsai.com"
-            className="glass-card rounded-xl p-4 flex items-center gap-3 hover:bg-white/5 transition group"
+            className="glass-premium rounded-xl p-4 flex items-center gap-3 hover:bg-white/5 transition group"
           >
             <div className="p-2 rounded-lg bg-blue-500/20 group-hover:bg-blue-500/30 transition">
               <Mail className="w-5 h-5 text-blue-400" />
@@ -95,7 +95,7 @@ export default function HelpPage() {
             href="https://t.me/forexsai"
             target="_blank"
             rel="noopener noreferrer"
-            className="glass-card rounded-xl p-4 flex items-center gap-3 hover:bg-white/5 transition group"
+            className="glass-premium rounded-xl p-4 flex items-center gap-3 hover:bg-white/5 transition group"
           >
             <div className="p-2 rounded-lg bg-purple-500/20 group-hover:bg-purple-500/30 transition">
               <MessageCircle className="w-5 h-5 text-purple-400" />
@@ -110,7 +110,7 @@ export default function HelpPage() {
             href="https://forexsai.com/docs"
             target="_blank"
             rel="noopener noreferrer"
-            className="glass-card rounded-xl p-4 flex items-center gap-3 hover:bg-white/5 transition group"
+            className="glass-premium rounded-xl p-4 flex items-center gap-3 hover:bg-white/5 transition group"
           >
             <div className="p-2 rounded-lg bg-green-500/20 group-hover:bg-green-500/30 transition">
               <FileText className="w-5 h-5 text-green-400" />
@@ -123,7 +123,7 @@ export default function HelpPage() {
         </div>
 
         {/* FAQ */}
-        <div className="glass-card rounded-2xl overflow-hidden">
+        <div className="glass-premium rounded-2xl overflow-hidden">
           <div className="p-4 border-b border-white/10">
             <h3 className="font-semibold flex items-center gap-2">
               <HelpCircle className="w-5 h-5 text-accent" />
@@ -163,7 +163,7 @@ export default function HelpPage() {
         </div>
 
         {/* Contact Info */}
-        <div className="glass-card rounded-2xl p-6 text-center">
+        <div className="glass-premium rounded-2xl p-6 text-center">
           <p className="text-textSecondary mb-4">
             Sorunuz hala çözülmedi mi? Bize ulaşın.
           </p>

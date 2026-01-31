@@ -55,7 +55,7 @@ export default function TradingChartWrapper({
 
   if (error) {
     return (
-      <div className="glass-card rounded-2xl p-8 text-center">
+      <div className="glass-premium rounded-2xl p-8 text-center">
         <p className="text-danger">Grafik verisi yüklenemedi</p>
         <button
           onClick={() => refetch()}

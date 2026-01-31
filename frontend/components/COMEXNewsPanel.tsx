@@ -129,7 +129,7 @@ export default function COMEXNewsPanel() {
   };
 
   return (
-    <div className="glass-card p-5 space-y-4">
+    <div className="glass-premium p-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

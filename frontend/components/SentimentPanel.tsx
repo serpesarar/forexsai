@@ -9,7 +9,7 @@ export default function SentimentPanel() {
   const [open, setOpen] = useState(true);
 
   return (
-    <div className="glass-card p-6 space-y-4">
+    <div className="glass-premium p-6 space-y-4">
       <div>
         <p className="text-sm text-textSecondary">Market Sentiment Analysis</p>
         <h3 className="text-lg font-semibold">Macro Intelligence</h3>

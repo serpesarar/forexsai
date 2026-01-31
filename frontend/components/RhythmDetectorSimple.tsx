@@ -30,7 +30,7 @@ export default function RhythmDetectorSimple({ symbol = "NDX.INDX", symbolLabel 
   const breakoutDir = consolidation?.breakout_direction;
 
   return (
-    <div className="glass-card p-5 space-y-4">
+    <div className="glass-premium p-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

@@ -155,7 +155,7 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
           </div>
         </div>
       )}
-      <div className="glass-card p-8 space-y-6 rounded-2xl">
+      <div className="glass-premium p-8 space-y-6 rounded-2xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-accent/30 to-blue-500/30">

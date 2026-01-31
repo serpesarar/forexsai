@@ -186,7 +186,7 @@ export default function StrategyPerformancePanel() {
 
   if (error) {
     return (
-      <div className="glass-card p-6 rounded-2xl">
+      <div className="glass-premium p-6 rounded-2xl">
         <div className="flex items-center gap-3 text-danger">
           <AlertTriangle className="w-5 h-5" />
           <span>Strateji verileri yüklenemedi</span>
@@ -196,7 +196,7 @@ export default function StrategyPerformancePanel() {
   }
 
   return (
-    <div className="glass-card p-6 rounded-2xl space-y-6">
+    <div className="glass-premium p-6 rounded-2xl space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

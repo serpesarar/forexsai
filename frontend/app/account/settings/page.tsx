@@ -158,7 +158,7 @@ export default function SettingsPage() {
         )}
 
         {/* Change Password */}
-        <div className="glass-card rounded-2xl p-6">
+        <div className="glass-premium rounded-2xl p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Key className="w-5 h-5 text-accent" />
             Şifre Değiştir
@@ -231,7 +231,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Security Info */}
-        <div className="glass-card rounded-2xl p-6">
+        <div className="glass-premium rounded-2xl p-6">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Shield className="w-5 h-5 text-accent" />
             Güvenlik Bilgileri
@@ -256,7 +256,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Delete Account */}
-        <div className="glass-card rounded-2xl p-6 border border-red-500/30">
+        <div className="glass-premium rounded-2xl p-6 border border-red-500/30">
           <h3 className="font-semibold mb-2 flex items-center gap-2 text-red-400">
             <Trash2 className="w-5 h-5" />
             Hesabı Sil

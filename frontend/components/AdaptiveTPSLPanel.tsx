@@ -48,7 +48,7 @@ export default function AdaptiveTPSLPanel({
 
   if (!entryPrice || entryPrice <= 0) {
     return (
-      <div className="glass-card p-6 rounded-2xl">
+      <div className="glass-premium p-6 rounded-2xl">
         <div className="flex items-center gap-3 text-textSecondary">
           <Target className="w-5 h-5" />
           <span className="text-sm">Enter a position to see adaptive TP/SL levels</span>
@@ -59,7 +59,7 @@ export default function AdaptiveTPSLPanel({
 
   if (isLoading) {
     return (
-      <div className="glass-card p-6 rounded-2xl space-y-4">
+      <div className="glass-premium p-6 rounded-2xl space-y-4">
         <div className="flex items-center gap-3">
           <RefreshCw className="w-5 h-5 animate-spin text-accent" />
           <span className="text-sm text-textSecondary">Calculating adaptive levels...</span>
@@ -75,7 +75,7 @@ export default function AdaptiveTPSLPanel({
 
   if (error || !adaptive) {
     return (
-      <div className="glass-card p-6 rounded-2xl">
+      <div className="glass-premium p-6 rounded-2xl">
         <div className="flex items-center gap-3 text-danger">
           <AlertTriangle className="w-5 h-5" />
           <span className="text-sm">Failed to calculate adaptive levels</span>
@@ -92,7 +92,7 @@ export default function AdaptiveTPSLPanel({
   };
 
   return (
-    <div className="glass-card p-6 rounded-2xl space-y-5">
+    <div className="glass-premium p-6 rounded-2xl space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

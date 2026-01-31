@@ -140,7 +140,7 @@ export function SortableCard({ card, children }: SortableCardProps) {
 
       {/* Collapsed State */}
       {card.collapsed ? (
-        <div className="glass-card p-4 flex items-center justify-between">
+        <div className="glass-premium p-4 flex items-center justify-between">
           <span className="text-sm font-medium text-textSecondary">{card.title}</span>
           <ChevronDown className="w-4 h-4 text-textSecondary" />
         </div>
@@ -302,7 +302,7 @@ export function DraggableDashboard({ children }: DraggableDashboardProps) {
         easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)",
       }}>
         {activeCard && (
-          <div className="glass-card p-4 rounded-2xl shadow-2xl shadow-primary/30 border-2 border-primary/50 opacity-90 scale-105">
+          <div className="glass-premium p-4 rounded-2xl shadow-2xl shadow-primary/30 border-2 border-primary/50 opacity-90 scale-105">
             <div className="flex items-center gap-3">
               <Move className="w-5 h-5 text-primary" />
               <span className="font-medium">{activeCard.title}</span>

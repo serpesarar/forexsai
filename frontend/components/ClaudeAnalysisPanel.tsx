@@ -67,7 +67,7 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
   };
 
   return (
-    <div className="glass-card p-8 space-y-6 rounded-2xl">
+    <div className="glass-premium p-8 space-y-6 rounded-2xl">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

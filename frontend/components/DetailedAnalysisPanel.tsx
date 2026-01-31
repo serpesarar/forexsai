@@ -158,7 +158,7 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
   const rmInvalidation = rm.invalidation ?? rm.size_rationale;
 
   return (
-    <div className="glass-card p-8 space-y-6 rounded-2xl">
+    <div className="glass-premium p-8 space-y-6 rounded-2xl">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500/30 to-sky-500/30">
