@@ -39,7 +39,7 @@ import MLFactorPanel from "../components/MLFactorPanel";
 import StrategyPerformancePanel from "../components/StrategyPerformancePanel";
 import { NasdaqEarningsPanel } from "../components/EarningsPanel";
 import UserMenu from "../components/UserMenu";
-import AnimatedBackground from "../components/ui/AnimatedBackground";
+import { TradingBackground } from "../components/TradingBackground";
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
 import { useLivePrices } from "../hooks/useLivePrices";
@@ -1189,8 +1189,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen text-textPrimary relative">
-      {/* Animated Background */}
-      <AnimatedBackground />
+      {/* Animated Background with Star Particles */}
+      <TradingBackground />
       
       {/* ═══════════════════════════════════════════════════════════════════════════════ */}
       {/* PREMIUM HEADER - Two-tier professional design                                   */}
@@ -1215,9 +1215,9 @@ export default function HomePage() {
               <div className="flex items-center gap-5">
                 {/* Logo */}
                 <div className="relative group">
-                  <div className="absolute -inset-3 rounded-2xl bg-gradient-to-r from-accent/40 via-purple-500/30 to-cyan-400/40 blur-xl opacity-0 group-hover:opacity-100 transition-all duration-700" />
-                  <div className="relative flex h-11 w-11 md:h-12 md:w-12 items-center justify-center rounded-xl bg-gradient-to-br from-accent via-purple-500 to-cyan-500 shadow-lg shadow-accent/30">
-                    <Activity className="h-5 w-5 md:h-6 md:w-6 text-white" />
+                  <div className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-accent/30 via-purple-500/20 to-cyan-400/30 blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                  <div className="relative h-11 w-11 md:h-12 md:w-12 rounded-xl overflow-hidden border border-white/10 bg-white/5 shadow-lg">
+                    <img src="/bu.png" alt="ForexsAI" className="w-full h-full object-cover" />
                   </div>
                 </div>
                 
