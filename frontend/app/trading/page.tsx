@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronDown, TrendingUp, Activity, BarChart3, Brain, Sparkles, LineChart, Home } from "lucide-react";
+import { ChevronDown, TrendingUp, Activity, BarChart3, Brain, Sparkles, LineChart, Home, Zap } from "lucide-react";
+import Image from "next/image";
+import { TradingBackground } from "../../components/TradingBackground";
 import Link from "next/link";
 import MLPredictionPanel from "../../components/MLPredictionPanel";
 import ClaudeAnalysisPanel from "../../components/ClaudeAnalysisPanel";
@@ -41,18 +43,27 @@ type SymbolKey = keyof typeof SYMBOLS;
 export default function TradingDashboard() {
   const [selectedSymbol, setSelectedSymbol] = useState<SymbolKey>("NDX.INDX");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [currentDate, setCurrentDate] = useState<string>("");
+
+  // Set date only on client to avoid hydration mismatch
+  useEffect(() => {
+    setCurrentDate(new Date().toLocaleDateString("tr-TR"));
+  }, []);
 
   const currentSymbol = SYMBOLS[selectedSymbol];
   const SymbolIcon = currentSymbol.icon;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header with Symbol Selector - Animated */}
+    <div className="min-h-screen bg-background relative">
+      {/* Animated Background */}
+      <TradingBackground />
+      {/* Header with Symbol Selector - Premium Design */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-background/80 backdrop-blur-xl">
         {/* Animated gradient line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-accent to-transparent animate-pulse" />
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#00E0C6]/50 to-transparent" />
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#00E0C6] to-transparent animate-pulse opacity-50" />
         
-        <div className="mx-auto flex max-w-[1800px] items-center justify-between px-3 py-2 md:px-6 md:py-4">
+        <div className="mx-auto flex max-w-[1800px] items-center justify-between px-3 py-2 md:px-6 md:py-3">
           {/* Symbol Dropdown */}
           <div className="relative z-50">
             <button
@@ -108,53 +119,78 @@ export default function TradingDashboard() {
             )}
           </div>
 
-          {/* Title - Animated - Hidden on mobile */}
-          <div className="hidden lg:block text-center">
-            <div className="flex items-center justify-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center animate-pulse">
-                <Brain className="h-4 w-4 text-white" />
+          {/* Logo + Title - Premium Design */}
+          <div className="hidden lg:flex items-center gap-4">
+            {/* Logo */}
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-[#00E0C6]/20 to-[#3B82F6]/20 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative h-10 w-10 rounded-xl overflow-hidden border border-white/10 bg-white/5">
+                <Image
+                  src="/bu.png"
+                  alt="ForexsAI"
+                  width={40}
+                  height={40}
+                  className="object-cover"
+                />
               </div>
-              <h1 className="text-xl xl:text-2xl font-bold tracking-tight bg-gradient-to-r from-white to-white/70 bg-clip-text">
-                AI Trading Dashboard
-              </h1>
             </div>
-            <p className="text-xs xl:text-sm text-textSecondary mt-1">ML Model + Claude AI Analysis</p>
+            
+            {/* Title */}
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg xl:text-xl font-bold tracking-tight">
+                  <span className="text-white">AI Trading</span>
+                  <span className="ml-1.5 bg-gradient-to-r from-[#00E0C6] to-[#3B82F6] bg-clip-text text-transparent">Dashboard</span>
+                </h1>
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#00E0C6]/10 border border-[#00E0C6]/20">
+                  <Zap className="h-3 w-3 text-[#00E0C6]" />
+                  <span className="text-[10px] font-bold text-[#00E0C6] uppercase tracking-wider">Live</span>
+                </div>
+              </div>
+              <p className="text-[11px] text-white/40 font-medium tracking-wide">Quantitative Analysis • ML Model + Claude AI</p>
+            </div>
           </div>
 
           {/* Right Side - Navigation + Time */}
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-2 md:gap-3">
             <Link 
               href="/charts"
-              className="flex items-center gap-1.5 md:gap-2 px-2.5 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl bg-accent/10 border border-accent/20 hover:bg-accent/20 hover:border-accent/30 transition-all duration-200 text-accent"
+              className="group flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-xl bg-gradient-to-r from-[#00E0C6]/10 to-[#3B82F6]/10 border border-[#00E0C6]/20 hover:border-[#00E0C6]/40 hover:from-[#00E0C6]/20 hover:to-[#3B82F6]/20 transition-all duration-300"
             >
-              <BarChart3 className="h-4 w-4" />
-              <span className="text-xs md:text-sm font-medium hidden sm:inline">Grafikler</span>
+              <BarChart3 className="h-4 w-4 text-[#00E0C6] group-hover:scale-110 transition-transform" />
+              <span className="text-xs md:text-sm font-semibold text-white/90 hidden sm:inline">Grafikler</span>
             </Link>
             <Link 
               href="/"
-              className="flex items-center gap-1.5 md:gap-2 px-2.5 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200"
+              className="group flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
             >
-              <Home className="h-4 w-4" />
-              <span className="text-xs md:text-sm hidden sm:inline">Ana Sayfa</span>
+              <Home className="h-4 w-4 text-white/70 group-hover:text-white group-hover:scale-110 transition-all" />
+              <span className="text-xs md:text-sm font-medium text-white/70 group-hover:text-white hidden sm:inline">Ana Sayfa</span>
             </Link>
-            <div className="text-right hidden md:block">
-              <p className="text-sm font-mono font-bold">{new Date().toLocaleDateString("tr-TR")}</p>
-              <p className="text-xs text-textSecondary flex items-center gap-1 justify-end">
-                <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
+            <div className="text-right hidden md:block pl-3 border-l border-white/10">
+              <p className="text-sm font-mono font-bold text-white/90">{currentDate || "—"}</p>
+              <p className="text-[10px] text-white/40 flex items-center gap-1.5 justify-end font-medium">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00E0C6] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00E0C6]"></span>
+                </span>
                 Canlı Analiz
               </p>
             </div>
             {/* Mobile live indicator */}
-            <div className="flex md:hidden items-center gap-1 px-2 py-1 rounded-full bg-success/20">
-              <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-              <span className="text-[10px] font-bold text-success">LIVE</span>
+            <div className="flex md:hidden items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#00E0C6]/10 border border-[#00E0C6]/20">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00E0C6] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#00E0C6]"></span>
+              </span>
+              <span className="text-[10px] font-bold text-[#00E0C6]">LIVE</span>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content - Golden Ratio Layout */}
-      <main className="mx-auto max-w-[1800px] p-3 md:p-6">
+      <main className="relative z-10 mx-auto max-w-[1800px] p-3 md:p-6">
         {/* 
           Golden Ratio Grid Layout:
           - Main prediction area: 61.8% width (φ / (1 + φ))
