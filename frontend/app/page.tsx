@@ -1376,14 +1376,16 @@ export default function HomePage() {
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
       </header>
 
-      {/* ML Factor Toggle Panel */}
-      <MLFactorPanel 
-        baseConfidence={signalCards[0]?.confidence || 60} 
-        locale={locale}
-      />
-      
-      {/* NASDAQ Earnings Calendar Panel */}
-      <NasdaqEarningsPanel />
+      {/* ML Factor Toggle Panel + Earnings - Stacked Layout */}
+      <div className="fixed top-32 right-4 z-50 flex flex-col gap-4 w-80">
+        <MLFactorPanel 
+          baseConfidence={signalCards[0]?.confidence || 60} 
+          locale={locale}
+        />
+        
+        {/* NASDAQ Earnings Calendar Panel */}
+        <NasdaqEarningsPanel />
+      </div>
 
       <DraggableDashboard>
       <main className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-4 md:gap-6 md:px-6 md:py-8 md:grid-cols-2 lg:grid-cols-3 pb-20 md:pb-8">

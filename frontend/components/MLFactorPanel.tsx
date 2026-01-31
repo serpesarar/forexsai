@@ -168,17 +168,17 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
 
   return (
     <>
-      {/* Toggle Button - positioned below header */}
+      {/* Toggle Button - now inside fixed container */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed top-36 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-xl 
+        className={`w-full flex items-center justify-center gap-2 px-5 py-4 rounded-xl 
           ${isOpen ? "bg-accent text-white" : "bg-gradient-to-r from-accent/80 to-blue-500/80 text-white hover:from-accent hover:to-blue-500"} 
           transition-all duration-200 shadow-xl backdrop-blur-sm border border-white/20`}
       >
-        <Settings2 className="w-5 h-5" />
-        <span className="text-sm font-semibold">ML Strateji</span>
+        <Settings2 className="w-6 h-6" />
+        <span className="text-base font-semibold">ML Strateji</span>
         <span className="text-xs bg-white/30 px-2 py-0.5 rounded-full font-bold">{activeLayerCount}/3</span>
-        <ChevronRight className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronRight className={`w-5 h-5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {/* Sliding Panel */}

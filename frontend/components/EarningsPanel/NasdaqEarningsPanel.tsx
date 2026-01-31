@@ -118,21 +118,21 @@ export default function NasdaqEarningsPanel() {
 
   return (
     <>
-      {/* Toggle Button */}
+      {/* Toggle Button - now inside fixed container */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed top-32 right-4 z-40 flex items-center gap-2 px-3 py-2 rounded-lg 
-          ${isOpen ? "bg-purple-500 text-white" : "bg-white/10 hover:bg-white/20"} 
-          transition-all duration-200 shadow-lg backdrop-blur-sm border border-white/10`}
+        className={`w-full flex items-center justify-center gap-2 px-5 py-4 rounded-xl 
+          ${isOpen ? "bg-purple-500 text-white" : "bg-gradient-to-r from-purple-500/80 to-pink-500/80 text-white hover:from-purple-500 hover:to-pink-500"} 
+          transition-all duration-200 shadow-xl backdrop-blur-sm border border-white/20`}
       >
-        <Calendar className="w-4 h-4" />
-        <span className="text-sm font-medium">Earnings</span>
+        <Calendar className="w-6 h-6" />
+        <span className="text-base font-semibold">Açıklanacak Kazançlar</span>
         {criticalCount > 0 && (
-          <span className="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full animate-pulse">
+          <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full animate-pulse font-bold">
             {criticalCount}
           </span>
         )}
-        <ChevronRight className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronRight className={`w-5 h-5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {/* Panel */}
