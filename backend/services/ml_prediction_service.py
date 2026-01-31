@@ -736,6 +736,11 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     news_factors = []
     is_gold = "XAU" in normalized_symbol
     
+    # COMEX news impact (for gold)
+    comex_impact = 0.0
+    comex_should_block = False
+    comex_block_reason = ""
+    
     if is_gold:
         try:
             # Try unified news analyzer first (includes Live TV + Twitter + EODHD)
@@ -772,6 +777,35 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
                 news_conflicts = news_impact.conflicts
             except Exception as e2:
                 logger.warning(f"Could not analyze gold news: {e2}")
+        
+        # COMEX/CME news check (margin hikes, rate decisions)
+        try:
+            from services.comex_news_service import get_comex_service
+            comex_service = get_comex_service()
+            comex_result = await comex_service.get_comex_impact(use_ai=False)
+            
+            comex_impact = comex_result.overall_impact
+            comex_should_block = comex_result.should_block_trading
+            comex_block_reason = comex_result.block_reason
+            
+            # Add COMEX factors to news factors
+            if comex_result.high_impact_news:
+                for cn in comex_result.high_impact_news[:2]:
+                    news_factors.append(f"⚡ COMEX: {cn.title[:50]}...")
+            
+            logger.info(
+                f"COMEX News: impact={comex_impact:.3f}, score={comex_result.impact_score}, "
+                f"direction={comex_result.direction}, block={comex_should_block}"
+            )
+            
+            # Blend COMEX into news sentiment (COMEX is very important for gold)
+            if abs(comex_impact) > 0.1:
+                # COMEX weight: 30% of total news sentiment
+                news_sentiment = news_sentiment * 0.7 + comex_impact * 0.3
+                logger.info(f"Blended news sentiment with COMEX: {news_sentiment:.3f}")
+                
+        except Exception as e:
+            logger.warning(f"COMEX news check failed: {e}")
     
     # Fetch data - MODEL WAS TRAINED ON 30-MIN (M30) DATA!
     # Resample 5m candles to 30m to match training data
