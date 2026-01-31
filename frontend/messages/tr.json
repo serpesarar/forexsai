@@ -171,36 +171,35 @@
     }
   },
   "featuresPage": {
-  "title": "Analitik Üstünlük",
-  "subtitle": "Piyasanın röntgenini çeken teknolojiler.",
-  "items": {
-    "mtf": {
-      "title": "Çoklu Zaman Dilimi (MTF)",
-      "description": "Tek bir zaman dilimine bakmak yanıltıcıdır. Algoritmamız M15, H1, H4 ve Günlük grafiklerdeki trendleri aynı anda analiz eder ve hepsi aynı yönü gösterdiğinde sinyal üretir.",
-      "bullets": [
-        "Trend Uyumu: %80+ başarı oranı için tüm zaman dilimleri hizalanmalı.",
-        "Gürültü Filtresi: M1'deki anlık hareketler, H4 trendine ters ise elenir.",
-        "Dinamik Destek: Üst zaman diliminden gelen destek seviyeleri otomatik çizilir."
-      ]
-    },
-    "patterns": {
-      "title": "Formasyon Tespiti",
-      "description": "Klasik teknik analiz formasyonlarını (OBO, İkili Dip, Bayrak) milisaniyeler içinde tarar ve insan gözünün kaçırabileceği fırsatları yakalar.",
-      "bullets": [
-        "Harmonik Formasyonlar: Gartley, Butterfly, Bat.",
-        "Mum Çubuğu: Yutan Boğa, Çekiç, Doji vb.",
-        "Hedef Fiyat: Formasyonun teorik hedefi grafikte gösterilir."
-      ]
-    },
-    "ai": {
-      "title": "Yapay Zeka ve Makine Öğrenmesi",
-      "description": "Kural tabanlı (algoritmik) sistemlerin ötesine geçin. ML modelimiz, geçmiş 24 yılın verisinden öğrendiği olasılık dağılımlarını kullanır.",
-      "bullets": [
-        "Duygu Analizi: Haberlerden gelen piyasa psikolojisini ölçer.",
-        "Hacim Ağırlığı: Sahte kırılımları (fake-out) hacim analizi ile eler.",
-        "Sürekli Öğrenme: Model yeni piyasa koşullarına göre kendini günceller."
-      ]
+    "title": "Analitik Üstünlük",
+    "subtitle": "Piyasanın röntgenini çeken teknolojiler.",
+    "items": {
+      "mtf": {
+        "title": "Çoklu Zaman Dilimi (MTF)",
+        "description": "Tek bir zaman dilimine bakmak yanıltıcıdır. Algoritmamız M15, H1, H4 ve Günlük grafiklerdeki trendleri aynı anda analiz eder ve hepsi aynı yönü gösterdiğinde sinyal üretir.",
+        "bullets": [
+          "Trend Uyumu: %80+ başarı oranı için tüm zaman dilimleri hizalanmalı.",
+          "Gürültü Filtresi: M1'deki anlık hareketler, H4 trendine ters ise elenir.",
+          "Dinamik Destek: Üst zaman diliminden gelen destek seviyeleri otomatik çizilir."
+        ]
+      },
+      "patterns": {
+        "title": "Formasyon Tespiti",
+        "description": "Klasik teknik analiz formasyonlarını (OBO, İkili Dip, Bayrak) milisaniyeler içinde tarar ve insan gözünün kaçırabileceği fırsatları yakalar.",
+        "bullets": [
+          "Harmonik Formasyonlar: Gartley, Butterfly, Bat.",
+          "Mum Çubuğu: Yutan Boğa, Çekiç, Doji vb.",
+          "Hedef Fiyat: Formasyonun teorik hedefi grafikte gösterilir."
+        ]
+      },
+      "ai": {
+        "title": "Yapay Zeka ve Makine Öğrenmesi",
+        "description": "Kural tabanlı (algoritmik) sistemlerin ötesine geçin. ML modelimiz, geçmiş 24 yılın verisinden öğrendiği olasılık dağılımlarını kullanır.",
+        "bullets": [
+          "Duygu Analizi: Haberlerden gelen piyasa psikolojisini ölçer.",
+          "Hacim Ağırlığı: Sahte kırılımları (fake-out) hacim analizi ile eler.",
+          "Sürekli Öğrenme: Model yeni piyasa koşullarına göre kendini günceller."
+        ]
+      }
     }
   }
-}
-}
