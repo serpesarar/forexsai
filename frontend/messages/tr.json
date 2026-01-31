@@ -1,0 +1,121 @@
+{
+  "nav": {
+    "features": "Özellikler",
+    "howItWorks": "Nasıl Çalışır",
+    "pricing": "Fiyatlandırma",
+    "login": "Giriş",
+    "startFree": "Ücretsiz Başla"
+  },
+  "hero": {
+    "headline": "NASDAQ ve XAUUSD için yapay zeka destekli piyasa analizi — net trendler, hızlı kararlar.",
+    "subheadline": "Çok zaman dilimli sinyaller, desen tespiti ve güven skorlaması tek panoda. Veri odaklı analizler, abartı yok.",
+    "ctaPrimary": "Ücretsiz Başla",
+    "ctaSecondary": "Demo İzle",
+    "disclaimer": "Finansal tavsiye değildir. Sadece bilgilendirme amaçlıdır."
+  },
+  "valueProps": {
+    "title": "Ciddi traderlar için tasarlandı",
+    "items": {
+      "accuracy": {
+        "title": "Veri Odaklı Doğruluk",
+        "description": "Yıllarca piyasa verisiyle eğitilmiş makine öğrenmesi modelleri, tahmin değil."
+      },
+      "speed": {
+        "title": "Gerçek Zamanlı Sinyaller",
+        "description": "Canlı fiyat entegrasyonuyla her 30 saniyede bir yenilenen analiz."
+      },
+      "focus": {
+        "title": "Odaklı Piyasalar",
+        "description": "NASDAQ ve XAUUSD için uzmanlaşmış — genişlik yerine derinlik."
+      },
+      "transparency": {
+        "title": "Açıklanabilir Yapay Zeka",
+        "description": "Her sinyalin neden üretildiğini faktör dökümü ile anlayın."
+      }
+    }
+  },
+  "howItWorks": {
+    "title": "Nasıl çalışır",
+    "subtitle": "Eyleme dönüştürülebilir içgörülere üç adım",
+    "steps": {
+      "1": {
+        "title": "Bağlan",
+        "description": "Saniyeler içinde ücretsiz hesabınızı oluşturun. Kredi kartı gerekmez."
+      },
+      "2": {
+        "title": "Analiz Et",
+        "description": "Yapay zekamız teknik göstergeler arasında çok zaman dilimli verileri işler."
+      },
+      "3": {
+        "title": "Karar Ver",
+        "description": "Güven skorlarını, desen eşleşmelerini ve trend uyumunu inceleyin."
+      }
+    }
+  },
+  "features": {
+    "title": "Hassasiyet için tasarlanmış özellikler",
+    "subtitle": "Her araç gürültüyü azaltmak ve önemli olanı vurgulamak için tasarlandı",
+    "items": {
+      "mtf": {
+        "title": "Çok Zaman Dilimli Analiz",
+        "description": "Daha yüksek uyumlu sinyaller için M15, H1, H4 ve D1 zaman dilimlerinde trendleri hizalayın."
+      },
+      "patterns": {
+        "title": "Desen Tanıma Motoru",
+        "description": "Harmonik desenleri, mum çubuğu formasyonlarını ve destek/direnç bölgelerini otomatik tespit edin."
+      },
+      "confidence": {
+        "title": "Güven Skorlaması",
+        "description": "Her sinyal, geçmiş backtesting'e dayalı istatistiksel bir güven skoru içerir."
+      },
+      "ml": {
+        "title": "ML Faktör Paneli",
+        "description": "Yapay zekanın hangi piyasa faktörlerine öncelik vereceğini özelleştirin — risk toleransı, volatilite, trend gücü."
+      },
+      "alerts": {
+        "title": "Akıllı Uyarılar",
+        "description": "Yüksek güvenli kurulumlar oluştuğunda, doğrudan panonuzda veya e-postada bildirim alın."
+      },
+      "claude": {
+        "title": "Claude AI Analizi",
+        "description": "Karmaşık piyasa koşullarının doğal dil dökümü (Pro katmanı)."
+      }
+    }
+  },
+  "trust": {
+    "title": "Şeffaflık üzerine inşa edildi",
+    "subtitle": "Gizli ajandalar yok. Veriniz sizin kontrolünüzde.",
+    "items": {
+      "data": {
+        "title": "Veri Güvenliği",
+        "description": "Kurumsal düzeyde şifreleme. Trading verileriniz asla güvenli sunucuları terk etmez."
+      },
+      "privacy": {
+        "title": "Gizlilik Öncelikli",
+        "description": "Kullanıcı verilerinin satışı yok. Üçüncü taraf izleme yok."
+      },
+      "advice": {
+        "title": "Finansal Tavsiye Değildir",
+        "description": "ForexsAi analitik araçlar sağlar. Tüm trading kararları sizin sorumluluğunuzdadır."
+      }
+    }
+  },
+  "footer": {
+    "tagline": "Yapay zeka destekli piyasa analizi. Hassasiyeti değer veren traderlar için tasarlandı.",
+    "links": {
+      "product": "Ürün",
+      "features": "Özellikler",
+      "pricing": "Fiyatlandırma",
+      "changelog": "Değişiklik Günlüğü",
+      "company": "Şirket",
+      "about": "Hakkımızda",
+      "blog": "Blog",
+      "careers": "Kariyer",
+      "legal": "Yasal",
+      "privacy": "Gizlilik Politikası",
+      "terms": "Kullanım Koşulları",
+      "disclaimer": "Risk Beyanı"
+    },
+    "copyright": "Tüm hakları saklıdır."
+  }
+}

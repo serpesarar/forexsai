@@ -1,0 +1,121 @@
+{
+  "nav": {
+    "features": "Features",
+    "howItWorks": "How It Works",
+    "pricing": "Pricing",
+    "login": "Login",
+    "startFree": "Start Free"
+  },
+  "hero": {
+    "headline": "AI-powered market analysis for NASDAQ and XAUUSD — clearer trends, faster decisions.",
+    "subheadline": "Multi-timeframe signals, pattern detection, and confidence scoring in one dashboard. Data-driven insights, no hype.",
+    "ctaPrimary": "Start Free",
+    "ctaSecondary": "View Demo",
+    "disclaimer": "Not financial advice. For informational purposes only."
+  },
+  "valueProps": {
+    "title": "Built for serious traders",
+    "items": {
+      "accuracy": {
+        "title": "Data-First Accuracy",
+        "description": "Machine learning models trained on years of market data, not guesswork."
+      },
+      "speed": {
+        "title": "Real-Time Signals",
+        "description": "Analysis refreshes every 30 seconds with live price integration."
+      },
+      "focus": {
+        "title": "Focused Markets",
+        "description": "Specialized for NASDAQ and XAUUSD — depth over breadth."
+      },
+      "transparency": {
+        "title": "Explainable AI",
+        "description": "Understand why each signal is generated with factor breakdowns."
+      }
+    }
+  },
+  "howItWorks": {
+    "title": "How it works",
+    "subtitle": "Three steps to actionable insights",
+    "steps": {
+      "1": {
+        "title": "Connect",
+        "description": "Create your free account in seconds. No credit card required."
+      },
+      "2": {
+        "title": "Analyze",
+        "description": "Our AI processes multi-timeframe data across technical indicators."
+      },
+      "3": {
+        "title": "Decide",
+        "description": "Review confidence scores, pattern matches, and trend alignment."
+      }
+    }
+  },
+  "features": {
+    "title": "Features built for precision",
+    "subtitle": "Every tool designed to reduce noise and highlight what matters",
+    "items": {
+      "mtf": {
+        "title": "Multi-Timeframe Analysis",
+        "description": "Align trends across M15, H1, H4, and D1 timeframes for higher-confluence signals."
+      },
+      "patterns": {
+        "title": "Pattern Recognition Engine",
+        "description": "Detect harmonic patterns, candlestick formations, and support/resistance zones automatically."
+      },
+      "confidence": {
+        "title": "Confidence Scoring",
+        "description": "Each signal includes a statistical confidence score based on historical backtesting."
+      },
+      "ml": {
+        "title": "ML Factor Panel",
+        "description": "Customize which market factors the AI prioritizes — risk tolerance, volatility, trend strength."
+      },
+      "alerts": {
+        "title": "Smart Alerts",
+        "description": "Get notified when high-confidence setups form, directly in your dashboard or email."
+      },
+      "claude": {
+        "title": "Claude AI Analysis",
+        "description": "Natural language breakdown of complex market conditions (Pro tier)."
+      }
+    }
+  },
+  "trust": {
+    "title": "Built on transparency",
+    "subtitle": "No hidden agendas. Your data, your control.",
+    "items": {
+      "data": {
+        "title": "Data Security",
+        "description": "Enterprise-grade encryption. Your trading data never leaves secure servers."
+      },
+      "privacy": {
+        "title": "Privacy First",
+        "description": "No selling of user data. No third-party tracking."
+      },
+      "advice": {
+        "title": "Not Financial Advice",
+        "description": "ForexsAi provides analytical tools. All trading decisions are your responsibility."
+      }
+    }
+  },
+  "footer": {
+    "tagline": "AI-powered market analysis. Built for traders who value precision.",
+    "links": {
+      "product": "Product",
+      "features": "Features",
+      "pricing": "Pricing",
+      "changelog": "Changelog",
+      "company": "Company",
+      "about": "About",
+      "blog": "Blog",
+      "careers": "Careers",
+      "legal": "Legal",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "disclaimer": "Risk Disclaimer"
+    },
+    "copyright": "All rights reserved."
+  }
+}

@@ -7,8 +7,8 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jetBrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains-mono" });
 
 export const metadata: Metadata = {
-  title: "AI Trading Dashboard",
-  description: "FULL STACK AI TRADING DASHBOARD - GÜNCEL",
+  title: "ForexsAi - AI-Powered Market Analysis",
+  description: "AI-powered market analysis for NASDAQ and XAUUSD - clearer trends, faster decisions.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
