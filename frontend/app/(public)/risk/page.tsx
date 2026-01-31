@@ -14,101 +14,53 @@ export default function RiskPage() {
     const riskSections = [
         {
             icon: TrendingDown,
-            title: "1. Genel Risk Uyarısı",
+            title: t("legal.risk.sections.general.title"),
             color: "red",
             content: [
-                {
-                    subtitle: "1.1 Sermaye Kaybı Riski",
-                    text: "Finansal piyasalarda (Forex, Emtia, Hisse Senedi Endeksleri vb.) işlem yapmak, yatırdığınız sermayenin TAMAMINI veya önemli bir kısmını kaybetme riski taşır. Asla kaybetmeyi göze alamayacağınız parayla işlem yapmayınız."
-                },
-                {
-                    subtitle: "1.2 Kaldıraç Riski",
-                    text: "Kaldıraçlı ürünler (CFD, Forex vb.) hem kazançları hem de kayıpları katlar. Küçük fiyat hareketleri bile hesap bakiyenizi önemli ölçüde etkileyebilir. Kaldıraç, yatırdığınız tutardan fazlasını kaybetmenize neden olabilir."
-                },
-                {
-                    subtitle: "1.3 Piyasa Volatilitesi",
-                    text: "Finansal piyasalar, ekonomik olaylar, jeopolitik gelişmeler, merkez bankası kararları ve beklenmedik haberler nedeniyle ani ve şiddetli fiyat hareketlerine maruz kalabilir. Bu volatilite, stop-loss emirlerinin beklenen fiyattan farklı seviyelerde gerçekleşmesine (slippage) neden olabilir."
-                }
+                { subtitle: t("legal.risk.sections.general.capital.title"), text: t("legal.risk.sections.general.capital.text") },
+                { subtitle: t("legal.risk.sections.general.leverage.title"), text: t("legal.risk.sections.general.leverage.text") },
+                { subtitle: t("legal.risk.sections.general.volatility.title"), text: t("legal.risk.sections.general.volatility.text") }
             ]
         },
         {
             icon: Brain,
-            title: "2. Yapay Zeka ve Model Riskleri",
+            title: t("legal.risk.sections.ai.title"),
             color: "purple",
             content: [
-                {
-                    subtitle: "2.1 Model Hataları",
-                    text: "ForexsAi tarafından kullanılan makine öğrenmesi modelleri, geçmiş veriler üzerinde eğitilmiştir. Bu modeller hatalı tahminler üretebilir ve piyasa koşulları değiştiğinde performansları düşebilir."
-                },
-                {
-                    subtitle: "2.2 Geçmiş Performans Garantisi Değildir",
-                    text: "Backtest sonuçları ve geçmiş doğruluk oranları, gelecekteki performansın garantisi veya göstergesi DEĞİLDİR. Piyasa dinamikleri sürekli değişir ve geçmişte çalışan stratejiler gelecekte başarısız olabilir."
-                },
-                {
-                    subtitle: "2.3 Teknik Hatalar",
-                    text: "Yazılım hataları, sunucu kesintileri, veri gecikmesi veya yanlış veri akışı nedeniyle analizler hatalı olabilir. Sistemin 7/24 kesintisiz çalışacağı garanti edilmemektedir."
-                }
+                { subtitle: t("legal.risk.sections.ai.errors.title"), text: t("legal.risk.sections.ai.errors.text") },
+                { subtitle: t("legal.risk.sections.ai.past.title"), text: t("legal.risk.sections.ai.past.text") },
+                { subtitle: t("legal.risk.sections.ai.technical.title"), text: t("legal.risk.sections.ai.technical.text") }
             ]
         },
         {
             icon: XCircle,
-            title: "3. Yatırım Tavsiyesi Değildir",
+            title: t("legal.risk.sections.notAdvice.title"),
             color: "amber",
             content: [
-                {
-                    subtitle: "3.1 Bilgilendirme Amaçlı",
-                    text: "ForexsAi platformu tarafından sunulan TÜM analizler, tahminler, sinyaller, grafikler ve AI yorumları YALNIZCA bilgilendirme ve eğitim amaçlıdır. Bu içerikler hiçbir şekilde yatırım tavsiyesi, finansal danışmanlık veya alım-satım önerisi olarak yorumlanamaz."
-                },
-                {
-                    subtitle: "3.2 Lisanslı Danışmanlık Değildir",
-                    text: "ForexsAi, SPK (Sermaye Piyasası Kurulu) veya benzeri düzenleyici kurumlar tarafından lisanslı bir yatırım danışmanlığı şirketi DEĞİLDİR. Profesyonel yatırım kararları için lisanslı bir yatırım danışmanına başvurmanız önerilir."
-                },
-                {
-                    subtitle: "3.3 Kişisel Sorumluluk",
-                    text: "Platform üzerindeki verilere dayanarak aldığınız tüm yatırım kararları ve bunların sonuçları tamamen sizin sorumluluğunuzdadır. ForexsAi, kullanıcıların işlemlerinden kaynaklanan hiçbir kayıp veya zarardan sorumlu tutulamaz."
-                }
+                { subtitle: t("legal.risk.sections.notAdvice.info.title"), text: t("legal.risk.sections.notAdvice.info.text") },
+                { subtitle: t("legal.risk.sections.notAdvice.notLicensed.title"), text: t("legal.risk.sections.notAdvice.notLicensed.text") },
+                { subtitle: t("legal.risk.sections.notAdvice.responsibility.title"), text: t("legal.risk.sections.notAdvice.responsibility.text") }
             ]
         },
         {
             icon: BarChart3,
-            title: "4. Piyasa Spesifik Riskler",
+            title: t("legal.risk.sections.market.title"),
             color: "cyan",
             content: [
-                {
-                    subtitle: "4.1 NASDAQ-100 Riskleri",
-                    text: "Teknoloji ağırlıklı bu endeks, sektörel konsantrasyon riski taşır. Teknoloji sektöründeki olumsuz gelişmeler endeksi orantısız şekilde etkileyebilir. ABD piyasa saatleri dışında likidite azalabilir."
-                },
-                {
-                    subtitle: "4.2 Altın (XAU/USD) Riskleri",
-                    text: "Altın fiyatları; dolar endeksi, faiz oranları, enflasyon beklentileri ve jeopolitik risklerden etkilenir. Kısa vadede yüksek volatilite gösterebilir. Spread'ler haber saatlerinde genişleyebilir."
-                },
-                {
-                    subtitle: "4.3 Likidite Riski",
-                    text: "Piyasa saatleri dışında, önemli haberler öncesinde/sonrasında veya tatil dönemlerinde likidite düşebilir. Bu durum, emirlerin istenilen fiyattan gerçekleşmemesine neden olabilir."
-                }
+                { subtitle: t("legal.risk.sections.market.nasdaq.title"), text: t("legal.risk.sections.market.nasdaq.text") },
+                { subtitle: t("legal.risk.sections.market.gold.title"), text: t("legal.risk.sections.market.gold.text") },
+                { subtitle: t("legal.risk.sections.market.liquidity.title"), text: t("legal.risk.sections.market.liquidity.text") }
             ]
         },
         {
             icon: Shield,
-            title: "5. Kendinizi Koruma Yöntemleri",
+            title: t("legal.risk.sections.protection.title"),
             color: "emerald",
             content: [
-                {
-                    subtitle: "5.1 Eğitim",
-                    text: "İşlem yapmadan önce finansal piyasalar, teknik analiz ve risk yönetimi hakkında yeterli bilgi edininiz. Demo hesaplarda pratik yapınız."
-                },
-                {
-                    subtitle: "5.2 Risk Yönetimi",
-                    text: "Her işlemde sermayenizin yalnızca küçük bir yüzdesini riske atınız (%1-2 önerilir). Stop-loss emirleri kullanınız. Portföyünüzü çeşitlendiriniz."
-                },
-                {
-                    subtitle: "5.3 Duygusal Kontrol",
-                    text: "Kayıpların peşinden koşmayınız. FOMO (kaçırma korkusu) ile işlem açmayınız. İşlem planınıza sadık kalınız."
-                },
-                {
-                    subtitle: "5.4 Profesyonel Destek",
-                    text: "Önemli yatırım kararları almadan önce lisanslı bir finansal danışmana danışmanız şiddetle tavsiye edilir."
-                }
+                { subtitle: t("legal.risk.sections.protection.education.title"), text: t("legal.risk.sections.protection.education.text") },
+                { subtitle: t("legal.risk.sections.protection.riskMgmt.title"), text: t("legal.risk.sections.protection.riskMgmt.text") },
+                { subtitle: t("legal.risk.sections.protection.emotional.title"), text: t("legal.risk.sections.protection.emotional.text") },
+                { subtitle: t("legal.risk.sections.protection.professional.title"), text: t("legal.risk.sections.protection.professional.text") }
             ]
         }
     ];
@@ -157,8 +109,8 @@ export default function RiskPage() {
                     <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-red-500/20 to-rose-500/20 border border-red-500/30 mb-6 animate-pulse">
                         <AlertTriangle className="w-10 h-10 text-red-400" />
                     </div>
-                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Risk Uyarısı</h1>
-                    <p className="text-lg text-[#E5E7EB]/60">Lütfen işlem yapmadan önce dikkatlice okuyunuz</p>
+                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{t("legal.risk.title")}</h1>
+                    <p className="text-lg text-[#E5E7EB]/60">{t("legal.risk.subtitle")}</p>
                 </div>
 
                 {/* Critical Warning Banner */}
@@ -166,11 +118,9 @@ export default function RiskPage() {
                     <div className="flex items-center gap-4">
                         <AlertOctagon className="w-12 h-12 text-red-400 flex-shrink-0" />
                         <div>
-                            <h2 className="text-xl font-bold text-red-400 mb-2">⚠️ KRİTİK UYARI</h2>
+                            <h2 className="text-xl font-bold text-red-400 mb-2">{t("legal.risk.critical.title")}</h2>
                             <p className="text-white/90 leading-relaxed">
-                                Finansal piyasalarda işlem yapmak yüksek risk içerir ve yatırılan sermayenin tamamının kaybedilmesine neden olabilir. 
-                                ForexsAi tarafından sunulan içerikler <strong>YATIRIM TAVSİYESİ DEĞİLDİR</strong>. 
-                                Tüm işlemler tamamen kendi sorumluluğunuzdadır.
+                                {t("legal.risk.critical.text")}
                             </p>
                         </div>
                     </div>
@@ -206,31 +156,17 @@ export default function RiskPage() {
                     <div className="flex items-start gap-4">
                         <AlertTriangle className="w-8 h-8 text-red-400 flex-shrink-0 mt-1" />
                         <div>
-                            <h2 className="text-xl font-bold text-white mb-4">Kabul Beyanı</h2>
+                            <h2 className="text-xl font-bold text-white mb-4">{t("legal.risk.acknowledgment.title")}</h2>
                             <p className="text-[#E5E7EB]/80 leading-relaxed mb-4">
-                                ForexsAi platformunu kullanarak aşağıdaki hususları <strong className="text-white">OKUDUĞUNUZU, ANLADIĞINIZI VE KABUL ETTİĞİNİZİ</strong> beyan etmiş olursunuz:
+                                {t("legal.risk.acknowledgment.intro")}
                             </p>
                             <ul className="space-y-2 text-[#E5E7EB]/70">
-                                <li className="flex items-start gap-2">
-                                    <span className="text-red-400">•</span>
-                                    Finansal piyasalarda işlem yapmanın yüksek risk içerdiğini ve sermayemizin tamamını kaybedebileceğimi biliyorum.
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-red-400">•</span>
-                                    Platform tarafından sunulan içeriklerin yatırım tavsiyesi olmadığını anlıyorum.
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-red-400">•</span>
-                                    Tüm yatırım kararlarımın ve sonuçlarının sorumluluğunun bana ait olduğunu kabul ediyorum.
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-red-400">•</span>
-                                    Kaybetmeyi göze alamayacağım parayla işlem yapmayacağımı taahhüt ediyorum.
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-red-400">•</span>
-                                    AI tahminlerinin hatalı olabileceğini ve geçmiş performansın gelecek garantisi olmadığını anlıyorum.
-                                </li>
+                                {(t("legal.risk.acknowledgment.items") as unknown as string[])?.map?.((item: string, idx: number) => (
+                                    <li key={idx} className="flex items-start gap-2">
+                                        <span className="text-red-400">•</span>
+                                        {item}
+                                    </li>
+                                )) || null}
                             </ul>
                         </div>
                     </div>

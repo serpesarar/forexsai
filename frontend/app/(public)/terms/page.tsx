@@ -14,150 +14,75 @@ export default function TermsPage() {
     const sections = [
         {
             icon: CheckCircle,
-            title: "1. Hizmet Tanımı ve Kabul",
+            title: t("legal.terms.sections.service.title"),
             content: [
-                {
-                    subtitle: "1.1 Hizmetlerimiz",
-                    text: "ForexsAi, yapay zeka destekli finansal piyasa analiz platformudur. NASDAQ-100 ve XAU/USD (Altın) enstrümanları için teknik analiz, ML tabanlı tahminler, formasyon tespiti ve sentiment analizi hizmetleri sunmaktadır."
-                },
-                {
-                    subtitle: "1.2 Kabul",
-                    text: "Platformumuza kayıt olarak veya hizmetlerimizi kullanarak bu Kullanım Koşulları'nı, Gizlilik Politikası'nı ve Risk Uyarısı'nı okuduğunuzu, anladığınızı ve kabul ettiğinizi beyan edersiniz."
-                },
-                {
-                    subtitle: "1.3 Yaş Sınırı",
-                    text: "Hizmetlerimizi kullanabilmek için en az 18 yaşında olmanız gerekmektedir. 18 yaşından küçükseniz platformumuzu kullanamazsınız."
-                }
+                { subtitle: t("legal.terms.sections.service.description.title"), text: t("legal.terms.sections.service.description.text") },
+                { subtitle: t("legal.terms.sections.service.acceptance.title"), text: t("legal.terms.sections.service.acceptance.text") },
+                { subtitle: t("legal.terms.sections.service.age.title"), text: t("legal.terms.sections.service.age.text") }
             ]
         },
         {
             icon: Scale,
-            title: "2. Sorumluluk Reddi",
+            title: t("legal.terms.sections.disclaimer.title"),
             content: [
-                {
-                    subtitle: "2.1 Yatırım Tavsiyesi Değildir",
-                    text: "ForexsAi tarafından sunulan tüm analizler, tahminler, sinyaller ve veriler YALNIZCA bilgilendirme ve eğitim amaçlıdır. Bu içerikler herhangi bir şekilde yatırım tavsiyesi, finansal danışmanlık veya alım-satım önerisi olarak yorumlanamaz."
-                },
-                {
-                    subtitle: "2.2 Garanti Yokluğu",
-                    text: "Platform 'olduğu gibi' ve 'mevcut olduğu şekliyle' sunulmaktadır. Analizlerin doğruluğu, tahminlerin gerçekleşmesi veya herhangi bir getiri garantisi verilmemektedir. Geçmiş performans, gelecekteki sonuçların göstergesi değildir."
-                },
-                {
-                    subtitle: "2.3 Kayıp Sorumluluğu",
-                    text: "Platformumuzun kullanımından kaynaklanan doğrudan, dolaylı, arızi, özel veya sonuç olarak ortaya çıkan herhangi bir kayıp veya zarardan ForexsAi sorumlu tutulamaz. Tüm yatırım kararları ve bunların sonuçları tamamen kullanıcının sorumluluğundadır."
-                }
+                { subtitle: t("legal.terms.sections.disclaimer.notAdvice.title"), text: t("legal.terms.sections.disclaimer.notAdvice.text") },
+                { subtitle: t("legal.terms.sections.disclaimer.noGuarantee.title"), text: t("legal.terms.sections.disclaimer.noGuarantee.text") },
+                { subtitle: t("legal.terms.sections.disclaimer.liability.title"), text: t("legal.terms.sections.disclaimer.liability.text") }
             ]
         },
         {
             icon: Ban,
-            title: "3. Yasaklı Kullanımlar",
+            title: t("legal.terms.sections.prohibited.title"),
             content: [
-                {
-                    subtitle: "3.1 Otomatik Erişim",
-                    text: "Bot, scraper, crawler veya benzeri otomatik araçlarla platforma erişim kesinlikle yasaktır. API limitleri ve kullanım kurallarına uyulması zorunludur."
-                },
-                {
-                    subtitle: "3.2 İçerik Paylaşımı",
-                    text: "Premium içeriklerin, analizlerin veya tahminlerin izinsiz olarak kopyalanması, dağıtılması veya yeniden yayınlanması yasaktır."
-                },
-                {
-                    subtitle: "3.3 Kötüye Kullanım",
-                    text: "Platformun güvenliğini tehlikeye atacak eylemler, diğer kullanıcıların hizmetlerini engelleyecek davranışlar, yanlış veya yanıltıcı bilgi paylaşımı, sahte hesap oluşturma kesinlikle yasaktır."
-                },
-                {
-                    subtitle: "3.4 Ticari Kullanım",
-                    text: "Bireysel lisans ile elde edilen verilerin ticari amaçlarla kullanılması, satılması veya yeniden lisanslanması yasaktır."
-                }
+                { subtitle: t("legal.terms.sections.prohibited.automation.title"), text: t("legal.terms.sections.prohibited.automation.text") },
+                { subtitle: t("legal.terms.sections.prohibited.sharing.title"), text: t("legal.terms.sections.prohibited.sharing.text") },
+                { subtitle: t("legal.terms.sections.prohibited.abuse.title"), text: t("legal.terms.sections.prohibited.abuse.text") },
+                { subtitle: t("legal.terms.sections.prohibited.commercial.title"), text: t("legal.terms.sections.prohibited.commercial.text") }
             ]
         },
         {
             icon: CreditCard,
-            title: "4. Ücretler ve Ödemeler",
+            title: t("legal.terms.sections.payments.title"),
             content: [
-                {
-                    subtitle: "4.1 Ücretsiz Plan",
-                    text: "Early Access döneminde tüm özellikler ücretsiz olarak sunulmaktadır. Bu durum değişebilir ve değişiklikler önceden duyurulacaktır."
-                },
-                {
-                    subtitle: "4.2 Premium Planlar",
-                    text: "Gelecekte sunulacak premium planların ücretleri, fiyatlandırma sayfasında açıkça belirtilecektir. Abonelik ücretleri peşin olarak tahsil edilir."
-                },
-                {
-                    subtitle: "4.3 İade Politikası",
-                    text: "Dijital hizmet niteliği gereği, satın alma işleminden sonra iade yapılmamaktadır. Ancak teknik sorunlardan kaynaklanan durumlarda değerlendirme yapılabilir."
-                }
+                { subtitle: t("legal.terms.sections.payments.free.title"), text: t("legal.terms.sections.payments.free.text") },
+                { subtitle: t("legal.terms.sections.payments.premium.title"), text: t("legal.terms.sections.payments.premium.text") },
+                { subtitle: t("legal.terms.sections.payments.refund.title"), text: t("legal.terms.sections.payments.refund.text") }
             ]
         },
         {
             icon: RefreshCw,
-            title: "5. Hesap Yönetimi",
+            title: t("legal.terms.sections.account.title"),
             content: [
-                {
-                    subtitle: "5.1 Hesap Güvenliği",
-                    text: "Hesap bilgilerinizin güvenliğinden siz sorumlusunuz. Güçlü parola kullanmanız ve hesap bilgilerinizi kimseyle paylaşmamanız önerilir."
-                },
-                {
-                    subtitle: "5.2 Hesap Askıya Alma",
-                    text: "Kullanım koşullarının ihlali durumunda hesabınız geçici veya kalıcı olarak askıya alınabilir. Bu durum önceden bildirilmeden uygulanabilir."
-                },
-                {
-                    subtitle: "5.3 Hesap Silme",
-                    text: "Hesabınızı istediğiniz zaman silebilirsiniz. Hesap silme işlemi 30 gün içinde tamamlanır ve tüm verileriniz kalıcı olarak silinir."
-                }
+                { subtitle: t("legal.terms.sections.account.security.title"), text: t("legal.terms.sections.account.security.text") },
+                { subtitle: t("legal.terms.sections.account.suspension.title"), text: t("legal.terms.sections.account.suspension.text") },
+                { subtitle: t("legal.terms.sections.account.deletion.title"), text: t("legal.terms.sections.account.deletion.text") }
             ]
         },
         {
             icon: FileText,
-            title: "6. Fikri Mülkiyet",
+            title: t("legal.terms.sections.ip.title"),
             content: [
-                {
-                    subtitle: "6.1 Platform İçeriği",
-                    text: "ForexsAi platformu, logosu, tasarımları, yazılımı, algoritmaları ve tüm içerikleri fikri mülkiyet hakları kapsamında korunmaktadır."
-                },
-                {
-                    subtitle: "6.2 Kullanım Lisansı",
-                    text: "Size kişisel, devredilemeyen, münhasır olmayan ve sınırlı bir kullanım lisansı verilmektedir. Bu lisans, hizmetlerimizi yalnızca belirlenen amaçlar doğrultusunda kullanmanızı kapsar."
-                },
-                {
-                    subtitle: "6.3 Geri Bildirim",
-                    text: "Platforma ilişkin sağladığınız geri bildirimler, öneriler veya fikirler üzerinde herhangi bir hak talep edemezsiniz ve bunlar ForexsAi'ye devredilmiş sayılır."
-                }
+                { subtitle: t("legal.terms.sections.ip.content.title"), text: t("legal.terms.sections.ip.content.text") },
+                { subtitle: t("legal.terms.sections.ip.license.title"), text: t("legal.terms.sections.ip.license.text") },
+                { subtitle: t("legal.terms.sections.ip.feedback.title"), text: t("legal.terms.sections.ip.feedback.text") }
             ]
         },
         {
             icon: Gavel,
-            title: "7. Uyuşmazlık Çözümü",
+            title: t("legal.terms.sections.disputes.title"),
             content: [
-                {
-                    subtitle: "7.1 Geçerli Hukuk",
-                    text: "Bu sözleşme Türkiye Cumhuriyeti hukukuna tabidir ve bu hukuka göre yorumlanacaktır."
-                },
-                {
-                    subtitle: "7.2 Yargı Yetkisi",
-                    text: "Bu sözleşmeden doğabilecek uyuşmazlıklarda İstanbul Mahkemeleri ve İcra Daireleri yetkilidir."
-                },
-                {
-                    subtitle: "7.3 Arabuluculuk",
-                    text: "Taraflar, uyuşmazlıkların çözümünde öncelikle arabuluculuk yoluna başvurmayı kabul ederler."
-                }
+                { subtitle: t("legal.terms.sections.disputes.law.title"), text: t("legal.terms.sections.disputes.law.text") },
+                { subtitle: t("legal.terms.sections.disputes.jurisdiction.title"), text: t("legal.terms.sections.disputes.jurisdiction.text") },
+                { subtitle: t("legal.terms.sections.disputes.mediation.title"), text: t("legal.terms.sections.disputes.mediation.text") }
             ]
         },
         {
             icon: Globe,
-            title: "8. Değişiklikler",
+            title: t("legal.terms.sections.changes.title"),
             content: [
-                {
-                    subtitle: "8.1 Koşul Değişiklikleri",
-                    text: "Bu Kullanım Koşulları herhangi bir zamanda değiştirilebilir. Önemli değişiklikler e-posta ile bildirilecektir."
-                },
-                {
-                    subtitle: "8.2 Devam Eden Kullanım",
-                    text: "Değişikliklerden sonra platformu kullanmaya devam etmeniz, güncellenmiş koşulları kabul ettiğiniz anlamına gelir."
-                },
-                {
-                    subtitle: "8.3 Geçerlilik",
-                    text: "Bu koşulların herhangi bir hükmünün geçersiz veya uygulanamaz bulunması, diğer hükümlerin geçerliliğini etkilemez."
-                }
+                { subtitle: t("legal.terms.sections.changes.modifications.title"), text: t("legal.terms.sections.changes.modifications.text") },
+                { subtitle: t("legal.terms.sections.changes.continued.title"), text: t("legal.terms.sections.changes.continued.text") },
+                { subtitle: t("legal.terms.sections.changes.validity.title"), text: t("legal.terms.sections.changes.validity.text") }
             ]
         }
     ];
@@ -173,8 +98,8 @@ export default function TermsPage() {
                     <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 mb-6">
                         <FileText className="w-10 h-10 text-indigo-400" />
                     </div>
-                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Kullanım Koşulları</h1>
-                    <p className="text-lg text-[#E5E7EB]/60">Son Güncelleme: 31 Ocak 2025</p>
+                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{t("legal.terms.title")}</h1>
+                    <p className="text-lg text-[#E5E7EB]/60">{t("legal.terms.lastUpdate")}</p>
                 </div>
 
                 {/* Important Notice */}
@@ -184,10 +109,9 @@ export default function TermsPage() {
                             <Scale className="w-5 h-5 text-amber-400" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-semibold text-amber-400 mb-2">Önemli Uyarı</h3>
+                            <h3 className="text-lg font-semibold text-amber-400 mb-2">{t("legal.terms.warning.title")}</h3>
                             <p className="text-[#E5E7EB]/70 leading-relaxed">
-                                Lütfen bu koşulları dikkatlice okuyunuz. Platformumuzu kullanarak bu koşulları kabul etmiş sayılırsınız. 
-                                Ayrıca Risk Uyarısı sayfamızı da okumanızı şiddetle tavsiye ederiz.
+                                {t("legal.terms.warning.text")}
                             </p>
                         </div>
                     </div>
@@ -219,11 +143,10 @@ export default function TermsPage() {
                 <div className="mt-8 glass-premium p-8 rounded-3xl bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20">
                     <div className="flex items-center gap-4 mb-4">
                         <CheckCircle className="w-8 h-8 text-emerald-400" />
-                        <h2 className="text-xl font-bold text-white">Kabul Beyanı</h2>
+                        <h2 className="text-xl font-bold text-white">{t("legal.terms.acceptance.title")}</h2>
                     </div>
                     <p className="text-[#E5E7EB]/70 leading-relaxed">
-                        ForexsAi platformuna kayıt olarak veya hizmetlerimizi kullanarak yukarıdaki tüm koşulları okuduğunuzu, 
-                        anladığınızı ve kabul ettiğinizi beyan edersiniz. Bu koşulları kabul etmiyorsanız, lütfen platformumuzu kullanmayınız.
+                        {t("legal.terms.acceptance.text")}
                     </p>
                 </div>
             </div>
