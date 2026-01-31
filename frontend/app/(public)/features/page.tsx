@@ -7,10 +7,18 @@ import { useI18n } from "@/lib/i18n";
 import { AnimatedBackground } from "@/components/welcome/AnimatedBackground";
 import { TopNav } from "@/components/welcome/TopNav";
 import { Footer } from "@/components/welcome/Footer";
-import { Layers, Brain, CandlestickChart, Activity } from "lucide-react";
+import { Layers, Brain, CandlestickChart, Activity, Zap, Signal } from "lucide-react";
 
 export default function FeaturesPage() {
     const { t } = useI18n();
+
+    const features = [
+        { key: "mtf", icon: Layers, color: "text-indigo-400", bg: "bg-indigo-500/10" },
+        { key: "patterns", icon: CandlestickChart, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+        { key: "ai", icon: Brain, color: "text-purple-400", bg: "bg-purple-500/10" },
+        { key: "realtime", icon: Zap, color: "text-amber-400", bg: "bg-amber-500/10" },
+        { key: "signals", icon: Signal, color: "text-cyan-400", bg: "bg-cyan-500/10" }
+    ];
 
     return (
         <main className="min-h-screen bg-[#0B1220] text-[#E5E7EB] font-sans">
@@ -32,29 +40,7 @@ export default function FeaturesPage() {
                 </motion.div>
 
                 <div className="space-y-32">
-                    {[
-                        {
-                            key: "mtf",
-                            icon: Layers,
-                            color: "text-indigo-400",
-                            bg: "bg-indigo-500/10",
-                            image: "/mtf-demo.png" // Placeholder
-                        },
-                        {
-                            key: "patterns",
-                            icon: CandlestickChart,
-                            color: "text-emerald-400",
-                            bg: "bg-emerald-500/10",
-                            image: "/patterns-demo.png"
-                        },
-                        {
-                            key: "ai",
-                            icon: Brain,
-                            color: "text-purple-400",
-                            bg: "bg-purple-500/10",
-                            image: "/ai-demo.png"
-                        }
-                    ].map((feature, i) => (
+                    {features.map((feature, i) => (
                         <motion.div
                             key={feature.key}
                             initial={{ opacity: 0, y: 40 }}

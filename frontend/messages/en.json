@@ -121,12 +121,41 @@
   "about": {
     "hero": {
       "title": "Power of Data, Vision of Expertise",
-      "subtitle": "10 years of professional experience met with AI trained on 49 million rows of data."
+      "subtitle": "10 years of professional experience and AI trained on 49 million rows of data. Institutional-grade analysis for individual investors."
     },
     "story": {
       "title": "Our Story",
-      "p1": "Our founder is a Turkish financial expert with over 10 years of professional trading experience. The vision was to combine human insight with machine precision to cut through market noise.",
-      "p2": "ForexsAi is not just another indicator. It is a proprietary AI model trained for 9 months on 49 million rows of market data dating back to 2000. Our mission is to democratize institutional-grade analysis for the individual investor."
+      "p1": "It all started in 2014, in a finance office in Istanbul. Over years as a professional trader, our founder noticed a harsh reality: Individual investors were fighting at a serious disadvantage against institutional players. While hedge funds and investment banks used million-dollar algorithmic systems, retail traders were still battling with traditional indicators.",
+      "p2": "We set out to eliminate this inequality. We collected 49 million rows of NASDAQ-100 and XAU/USD data from 2000 to present. After 9 months of intensive training, ForexsAi was born — an AI platform that brings institutional-grade analysis power to everyone."
+    },
+    "mission": {
+      "title": "Our Mission",
+      "text": "To create equal opportunity in financial markets. Using artificial intelligence and machine learning technologies, we provide individual investors with institutional-level analysis tools and guide them toward more informed decisions."
+    },
+    "vision": {
+      "title": "Our Vision",
+      "text": "To become the world's most trusted AI-powered financial analysis platform. By combining technology and human expertise, we help investors cut through market noise and make data-driven decisions."
+    },
+    "values": {
+      "title": "Our Values",
+      "transparency": { "title": "Transparency", "text": "We openly share how our AI model works. No black boxes." },
+      "accuracy": { "title": "Accuracy", "text": "Every prediction is backed by millions of data points." },
+      "education": { "title": "Education", "text": "We don't give investment advice, we help you make informed decisions." },
+      "innovation": { "title": "Innovation", "text": "We adapt to market changes with continuously learning models." }
+    },
+    "technology": {
+      "title": "Our Technology",
+      "description": "ForexsAi is built on cutting-edge machine learning algorithms.",
+      "items": {
+        "data": { "title": "49M+ Data Rows", "text": "NASDAQ-100 and XAU/USD data from 2000 to present" },
+        "training": { "title": "9 Months Training", "text": "Comprehensive backtest and optimization process" },
+        "realtime": { "title": "Real-Time", "text": "Analysis updated every 30 seconds" },
+        "accuracy": { "title": "78%+ Accuracy", "text": "Success rate based on backtest results" }
+      }
+    },
+    "team": {
+      "title": "Our Team",
+      "description": "An expert team in finance, artificial intelligence, and software development."
     },
     "stats": {
       "data": "Data Rows Processed",
@@ -164,34 +193,57 @@
     }
   },
   "featuresPage": {
-    "title": "Analytical Excellence",
-    "subtitle": "Technologies that X-ray the market.",
+    "title": "Institutional-Grade Analysis Tools",
+    "subtitle": "The technologies hedge funds use, now in the hands of individual investors.",
     "items": {
       "mtf": {
-        "title": "Multi-Timeframe (MTF)",
-        "description": "Looking at a single timeframe is misleading. Our algorithm analyzes trends across M15, H1, H4, and Daily charts simultaneously and generates signals when all align.",
+        "title": "Multi-Timeframe Analysis (MTF)",
+        "description": "Looking at a single timeframe is misleading. Our algorithm analyzes trends across M15, H1, H4, and Daily charts simultaneously. When all timeframes align, it generates powerful signals — this is the 'confluence' strategy used by institutional traders.",
         "bullets": [
-          "Trend Alignment: All timeframes must align for 80%+ success rate.",
-          "Noise Filter: Momentary M1 moves against H4 trend are filtered out.",
-          "Dynamic Support: Support levels from higher timeframes are auto-drawn."
+          "Trend Alignment: 80%+ success rate when all timeframes align.",
+          "Noise Filter: Short-term fluctuations against the main trend are automatically filtered.",
+          "Dynamic Support/Resistance: Critical levels from higher timeframes are auto-marked.",
+          "Confidence Score: A 0-100 reliability score is calculated for each signal."
         ]
       },
       "patterns": {
-        "title": "Pattern Detection",
-        "description": "Scans classic technical analysis patterns (Head & Shoulders, Double Bottom, Flag) in milliseconds and catches opportunities the human eye might miss.",
+        "title": "Advanced Pattern Detection",
+        "description": "Our AI model detects classic and harmonic patterns in milliseconds. It catches opportunities the human eye might miss and calculates theoretical target prices for each pattern.",
         "bullets": [
-          "Harmonic Patterns: Gartley, Butterfly, Bat.",
-          "Candlestick: Bullish Engulfing, Hammer, Doji, etc.",
-          "Price Target: The theoretical target of the pattern is shown on the chart."
+          "Classic Patterns: Head & Shoulders, Double Top/Bottom, Flag, Triangle.",
+          "Harmonic Patterns: Gartley, Butterfly, Bat, Crab, Shark.",
+          "Candlestick Analysis: Bullish/Bearish Engulfing, Hammer, Doji, Morning/Evening Star.",
+          "Auto Targets: Theoretical target and stop-loss levels for each pattern."
         ]
       },
       "ai": {
         "title": "AI and Machine Learning",
-        "description": "Go beyond rule-based (algorithmic) systems. Our ML model uses probability distributions learned from 24 years of data.",
+        "description": "Go beyond rule-based systems. Our ML model was trained for 9 months on 49 million rows of data from 2000 to present. It learns past patterns to predict future probable movements.",
         "bullets": [
-          "Sentiment Analysis: Measures market psychology from news.",
-          "Volume Weight: Filters fake-outs with volume analysis.",
-          "Continuous Learning: Model updates itself for new market conditions."
+          "Deep Learning: Time series analysis with LSTM and Transformer architectures.",
+          "Volume Profile: Detects fake-outs through volume analysis.",
+          "Sentiment Analysis: Indicators measuring market psychology.",
+          "Continuous Learning: Model adapts to new market conditions."
+        ]
+      },
+      "realtime": {
+        "title": "Real-Time Analysis",
+        "description": "Markets change every moment. ForexsAi provides instant information with analysis updated every 30 seconds. Don't miss opportunities, see risks early.",
+        "bullets": [
+          "30-Second Updates: Analysis continuously refreshed.",
+          "Live Price Integration: Real-time market data.",
+          "Instant Notifications: Alerts on critical signal changes.",
+          "Dashboard: All data on a single screen."
+        ]
+      },
+      "signals": {
+        "title": "Smart Signal System",
+        "description": "Each signal is generated through multi-factor analysis. Presented with confidence score, risk/reward ratio, and suggested position size.",
+        "bullets": [
+          "Confidence Score: 0-100 reliability rating.",
+          "Risk/Reward: R:R ratio calculated for each signal.",
+          "Entry/Exit Levels: Suggested entry, stop-loss, and take-profit.",
+          "Backtest Results: Historical performance statistics."
         ]
       }
     }
@@ -373,6 +425,32 @@
       "marketAnalysis": "Market Analysis",
       "commodity": "Commodity",
       "education": "Education"
+    },
+    "posts": {
+      "1": {
+        "title": "Technical Analysis with AI: Trading Strategies of the Future",
+        "excerpt": "Discover how machine learning models are used in financial markets and how they differ from traditional technical analysis.",
+        "readTime": "8 min",
+        "date": "Jan 28, 2025"
+      },
+      "2": {
+        "title": "NASDAQ-100: A Guide to Investing in Tech Stocks",
+        "excerpt": "Everything you need to know about the NASDAQ-100 index, which includes America's largest technology companies.",
+        "readTime": "6 min",
+        "date": "Jan 25, 2025"
+      },
+      "3": {
+        "title": "Gold Investment: XAU/USD Analysis Techniques",
+        "excerpt": "Learn fundamental and technical analysis methods for gold as a safe-haven asset.",
+        "readTime": "7 min",
+        "date": "Jan 22, 2025"
+      },
+      "4": {
+        "title": "Risk Management: Stop-Loss and Take-Profit Strategies",
+        "excerpt": "Risk management techniques and position sizing methods used by professional traders.",
+        "readTime": "10 min",
+        "date": "Jan 18, 2025"
+      }
     }
   },
   "careers": {

@@ -121,12 +121,41 @@
   "about": {
     "hero": {
       "title": "Verinin Gücü, Uzmanlığın Vizyonu",
-      "subtitle": "10 yıllık profesyonel tecrübe ve 49 milyon satır veri ile eğitilmiş yapay zeka."
+      "subtitle": "10 yıllık profesyonel tecrübe ve 49 milyon satır veri ile eğitilmiş yapay zeka. Kurumsal düzeyde analiz, bireysel yatırımcıya."
     },
     "story": {
       "title": "Hikayemiz",
-      "p1": "Kurucumuz, 10 yıllık profesyonel trader geçmişine sahip bir Türk finans uzmanıdır. Piyasalardaki gürültüyü ve manipülasyonu aşmak için insan öngörüsünü makine hassasiyetiyle birleştirme vizyonuyla yola çıktı.",
-      "p2": "ForexsAi, sıradan bir gösterge seti değildir. 2000 yılından günümüze uzanan 49 milyon satır piyasa verisi ile tam 9 ay boyunca eğitilmiş özel bir yapay zeka modelidir. Amacımız, kurumsal düzeydeki bu analiz gücünü bireysel yatırımcıya sunmaktır."
+      "p1": "Her şey 2014 yılında, İstanbul'da bir finans ofisinde başladı. Kurucumuz, profesyonel trader olarak geçirdiği yıllar boyunca bir gerçeği fark etti: Bireysel yatırımcılar, kurumsal oyunculara karşı ciddi bir dezavantajla mücadele ediyordu. Hedge fonları ve yatırım bankaları milyonlarca dolarlık algoritmik sistemler kullanırken, bireysel yatırımcılar hâlâ geleneksel göstergelerle savaşıyordu.",
+      "p2": "Bu adaletsizliği ortadan kaldırmak için yola çıktık. 2000 yılından bugüne kadar olan 49 milyon satır NASDAQ-100 ve XAU/USD verisini topladık. 9 ay boyunca süren yoğun bir eğitim sürecinin ardından, ForexsAi doğdu — kurumsal düzeyde analiz gücünü herkesin erişimine açan bir yapay zeka platformu."
+    },
+    "mission": {
+      "title": "Misyonumuz",
+      "text": "Finansal piyasalarda fırsat eşitliği yaratmak. Yapay zeka ve makine öğrenmesi teknolojilerini kullanarak, bireysel yatırımcılara kurumsal düzeyde analiz araçları sunmak ve onları daha bilinçli kararlar almaya yönlendirmek."
+    },
+    "vision": {
+      "title": "Vizyonumuz",
+      "text": "Dünyanın en güvenilir AI destekli finansal analiz platformu olmak. Teknoloji ve insan uzmanlığını birleştirerek, yatırımcıların piyasa gürültüsünü aşmasına ve veriye dayalı kararlar almasına yardımcı olmak."
+    },
+    "values": {
+      "title": "Değerlerimiz",
+      "transparency": { "title": "Şeffaflık", "text": "AI modelimizin nasıl çalıştığını açıkça paylaşıyoruz. Kara kutu yok." },
+      "accuracy": { "title": "Doğruluk", "text": "Her tahmin, milyonlarca veri noktasıyla destekleniyor." },
+      "education": { "title": "Eğitim", "text": "Yatırım tavsiyesi vermiyoruz, bilinçli karar almanıza yardımcı oluyoruz." },
+      "innovation": { "title": "İnovasyon", "text": "Sürekli öğrenen modellerle piyasa değişimlerine adapte oluyoruz." }
+    },
+    "technology": {
+      "title": "Teknolojimiz",
+      "description": "ForexsAi, son teknoloji makine öğrenmesi algoritmaları üzerine inşa edilmiştir.",
+      "items": {
+        "data": { "title": "49M+ Veri Satırı", "text": "2000'den bugüne NASDAQ-100 ve XAU/USD verileri" },
+        "training": { "title": "9 Ay Eğitim", "text": "Kapsamlı backtest ve optimizasyon süreci" },
+        "realtime": { "title": "Gerçek Zamanlı", "text": "30 saniyede bir güncellenen analizler" },
+        "accuracy": { "title": "%78+ Doğruluk", "text": "Backtest sonuçlarına göre başarı oranı" }
+      }
+    },
+    "team": {
+      "title": "Ekibimiz",
+      "description": "Finans, yapay zeka ve yazılım geliştirme alanlarında uzman bir ekip."
     },
     "stats": {
       "data": "İşlenen Veri Satırı",
@@ -164,34 +193,57 @@
     }
   },
   "featuresPage": {
-    "title": "Analitik Üstünlük",
-    "subtitle": "Piyasanın röntgenini çeken teknolojiler.",
+    "title": "Kurumsal Düzeyde Analiz Araçları",
+    "subtitle": "Hedge fonların kullandığı teknolojiler, artık bireysel yatırımcıların elinde.",
     "items": {
       "mtf": {
-        "title": "Çoklu Zaman Dilimi (MTF)",
-        "description": "Tek bir zaman dilimine bakmak yanıltıcıdır. Algoritmamız M15, H1, H4 ve Günlük grafiklerdeki trendleri aynı anda analiz eder ve hepsi aynı yönü gösterdiğinde sinyal üretir.",
+        "title": "Çoklu Zaman Dilimi Analizi (MTF)",
+        "description": "Tek bir zaman dilimine bakmak yanıltıcıdır. Algoritmamız M15, H1, H4 ve Günlük grafiklerdeki trendleri eş zamanlı analiz eder. Tüm zaman dilimleri aynı yönü gösterdiğinde güçlü sinyaller üretir — bu, kurumsal traderların kullandığı 'confluence' stratejisidir.",
         "bullets": [
-          "Trend Uyumu: %80+ başarı oranı için tüm zaman dilimleri hizalanmalı.",
-          "Gürültü Filtresi: M1'deki anlık hareketler, H4 trendine ters ise elenir.",
-          "Dinamik Destek: Üst zaman diliminden gelen destek seviyeleri otomatik çizilir."
+          "Trend Uyumu: Tüm zaman dilimleri hizalandığında %80+ başarı oranı.",
+          "Gürültü Filtresi: Kısa vadeli dalgalanmalar, ana trende ters ise otomatik elenir.",
+          "Dinamik Destek/Direnç: Üst zaman dilimlerinden gelen kritik seviyeler otomatik işaretlenir.",
+          "Güven Skoru: Her sinyal için 0-100 arası güvenilirlik puanı hesaplanır."
         ]
       },
       "patterns": {
-        "title": "Formasyon Tespiti",
-        "description": "Klasik teknik analiz formasyonlarını (OBO, İkili Dip, Bayrak) milisaniyeler içinde tarar ve insan gözünün kaçırabileceği fırsatları yakalar.",
+        "title": "Gelişmiş Formasyon Tespiti",
+        "description": "Yapay zeka modelimiz, klasik ve harmonik formasyonları milisaniyeler içinde tespit eder. İnsan gözünün kaçırabileceği fırsatları yakalar ve her formasyon için teorik hedef fiyat hesaplar.",
         "bullets": [
-          "Harmonik Formasyonlar: Gartley, Butterfly, Bat.",
-          "Mum Çubuğu: Yutan Boğa, Çekiç, Doji vb.",
-          "Hedef Fiyat: Formasyonun teorik hedefi grafikte gösterilir."
+          "Klasik Formasyonlar: Omuz-Baş-Omuz, İkili Dip/Tepe, Bayrak, Üçgen.",
+          "Harmonik Formasyonlar: Gartley, Butterfly, Bat, Crab, Shark.",
+          "Mum Çubuğu Analizi: Yutan Boğa/Ayı, Çekiç, Doji, Morning/Evening Star.",
+          "Otomatik Hedef: Her formasyon için teorik hedef ve stop-loss seviyeleri."
         ]
       },
       "ai": {
         "title": "Yapay Zeka ve Makine Öğrenmesi",
-        "description": "Kural tabanlı (algoritmik) sistemlerin ötesine geçin. ML modelimiz, geçmiş 24 yılın verisinden öğrendiği olasılık dağılımlarını kullanır.",
+        "description": "Kural tabanlı sistemlerin ötesine geçin. ML modelimiz, 2000'den bugüne 49 milyon satır veri üzerinde 9 ay eğitildi. Geçmiş kalıpları öğrenerek gelecekteki olası hareketleri tahmin eder.",
         "bullets": [
-          "Duygu Analizi: Haberlerden gelen piyasa psikolojisini ölçer.",
-          "Hacim Ağırlığı: Sahte kırılımları (fake-out) hacim analizi ile eler.",
-          "Sürekli Öğrenme: Model yeni piyasa koşullarına göre kendini günceller."
+          "Derin Öğrenme: LSTM ve Transformer mimarileri ile zaman serisi analizi.",
+          "Hacim Profili: Sahte kırılımları (fake-out) hacim analizi ile tespit eder.",
+          "Sentiment Analizi: Piyasa psikolojisini ölçen göstergeler.",
+          "Sürekli Öğrenme: Model, yeni piyasa koşullarına adapte olur."
+        ]
+      },
+      "realtime": {
+        "title": "Gerçek Zamanlı Analiz",
+        "description": "Piyasa her an değişir. ForexsAi, 30 saniyede bir güncellenen analizlerle size anlık bilgi sunar. Fırsatları kaçırmayın, riskleri erkenden görün.",
+        "bullets": [
+          "30 Saniye Güncelleme: Analizler sürekli yenilenir.",
+          "Canlı Fiyat Entegrasyonu: Gerçek zamanlı piyasa verileri.",
+          "Anlık Bildirimler: Kritik sinyal değişikliklerinde uyarı.",
+          "Dashboard: Tüm veriler tek bir ekranda."
+        ]
+      },
+      "signals": {
+        "title": "Akıllı Sinyal Sistemi",
+        "description": "Her sinyal, çoklu faktör analizi sonucu üretilir. Güven skoru, risk/ödül oranı ve önerilen pozisyon boyutu ile birlikte sunulur.",
+        "bullets": [
+          "Güven Skoru: 0-100 arası güvenilirlik puanı.",
+          "Risk/Ödül: Her sinyal için R:R oranı hesaplanır.",
+          "Giriş/Çıkış Seviyeleri: Önerilen entry, stop-loss ve take-profit.",
+          "Backtest Sonuçları: Geçmiş performans istatistikleri."
         ]
       }
     }
@@ -373,6 +425,32 @@
       "marketAnalysis": "Piyasa Analizi",
       "commodity": "Emtia",
       "education": "Eğitim"
+    },
+    "posts": {
+      "1": {
+        "title": "Yapay Zeka ile Teknik Analiz: Geleceğin Ticaret Stratejileri",
+        "excerpt": "Makine öğrenmesi modellerinin finansal piyasalarda nasıl kullanıldığını ve geleneksel teknik analizden farkını keşfedin.",
+        "readTime": "8 dk",
+        "date": "28 Ocak 2025"
+      },
+      "2": {
+        "title": "NASDAQ-100: Teknoloji Hisselerine Yatırım Rehberi",
+        "excerpt": "ABD'nin en büyük teknoloji şirketlerini içeren NASDAQ-100 endeksi hakkında bilmeniz gereken her şey.",
+        "readTime": "6 dk",
+        "date": "25 Ocak 2025"
+      },
+      "3": {
+        "title": "Altın Yatırımı: XAU/USD Analiz Teknikleri",
+        "excerpt": "Güvenli liman varlığı olarak altının temel ve teknik analiz yöntemlerini öğrenin.",
+        "readTime": "7 dk",
+        "date": "22 Ocak 2025"
+      },
+      "4": {
+        "title": "Risk Yönetimi: Stop-Loss ve Take-Profit Stratejileri",
+        "excerpt": "Profesyonel traderların kullandığı risk yönetimi teknikleri ve pozisyon boyutlandırma yöntemleri.",
+        "readTime": "10 dk",
+        "date": "18 Ocak 2025"
+      }
     }
   },
   "careers": {

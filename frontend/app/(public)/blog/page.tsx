@@ -9,48 +9,11 @@ import { Footer } from "@/components/welcome/Footer";
 import { BookOpen, Clock, ArrowRight, TrendingUp, Brain, BarChart3, Sparkles } from "lucide-react";
 import Link from "next/link";
 
-const blogPosts = [
-    {
-        id: 1,
-        title: "Yapay Zeka ile Teknik Analiz: Geleceğin Ticaret Stratejileri",
-        excerpt: "Makine öğrenmesi modellerinin finansal piyasalarda nasıl kullanıldığını ve geleneksel teknik analizden farkını keşfedin.",
-        category: "AI & Trading",
-        readTime: "8 dk",
-        date: "28 Ocak 2025",
-        icon: Brain,
-        color: "purple",
-        featured: true
-    },
-    {
-        id: 2,
-        title: "NASDAQ-100: Teknoloji Hisselerine Yatırım Rehberi",
-        excerpt: "ABD'nin en büyük teknoloji şirketlerini içeren NASDAQ-100 endeksi hakkında bilmeniz gereken her şey.",
-        category: "Piyasa Analizi",
-        readTime: "6 dk",
-        date: "25 Ocak 2025",
-        icon: TrendingUp,
-        color: "emerald"
-    },
-    {
-        id: 3,
-        title: "Altın Yatırımı: XAU/USD Analiz Teknikleri",
-        excerpt: "Güvenli liman varlığı olarak altının temel ve teknik analiz yöntemlerini öğrenin.",
-        category: "Emtia",
-        readTime: "7 dk",
-        date: "22 Ocak 2025",
-        icon: Sparkles,
-        color: "amber"
-    },
-    {
-        id: 4,
-        title: "Risk Yönetimi: Stop-Loss ve Take-Profit Stratejileri",
-        excerpt: "Profesyonel traderların kullandığı risk yönetimi teknikleri ve pozisyon boyutlandırma yöntemleri.",
-        category: "Eğitim",
-        readTime: "10 dk",
-        date: "18 Ocak 2025",
-        icon: BarChart3,
-        color: "cyan"
-    }
+const blogPostsConfig = [
+    { id: 1, categoryKey: "aiTrading", icon: Brain, color: "purple", featured: true },
+    { id: 2, categoryKey: "marketAnalysis", icon: TrendingUp, color: "emerald", featured: false },
+    { id: 3, categoryKey: "commodity", icon: Sparkles, color: "amber", featured: false },
+    { id: 4, categoryKey: "education", icon: BarChart3, color: "cyan", featured: false }
 ];
 
 const colorClasses = {
@@ -110,7 +73,7 @@ export default function BlogPage() {
                 </div>
 
                 {/* Featured Post */}
-                {blogPosts.filter(p => p.featured).map(post => {
+                {blogPostsConfig.filter(p => p.featured).map(post => {
                     const colors = colorClasses[post.color as keyof typeof colorClasses];
                     return (
                         <div key={post.id} className="glass-premium p-8 rounded-3xl mb-8 relative overflow-hidden group cursor-pointer hover:border-indigo-500/30 transition-all">
@@ -122,20 +85,20 @@ export default function BlogPage() {
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-3">
                                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${colors.badge}`}>
-                                            {post.category}
+                                            {t(`blog.categories.${post.categoryKey}`)}
                                         </span>
                                         <span className="text-xs text-[#E5E7EB]/40">{t("blog.featured")}</span>
                                     </div>
                                     <h2 className="text-2xl font-bold text-white mb-3 group-hover:text-indigo-400 transition-colors">
-                                        {post.title}
+                                        {t(`blog.posts.${post.id}.title`)}
                                     </h2>
-                                    <p className="text-[#E5E7EB]/60 mb-4">{post.excerpt}</p>
+                                    <p className="text-[#E5E7EB]/60 mb-4">{t(`blog.posts.${post.id}.excerpt`)}</p>
                                     <div className="flex items-center gap-4 text-sm text-[#E5E7EB]/40">
                                         <span className="flex items-center gap-1">
                                             <Clock className="w-4 h-4" />
-                                            {post.readTime}
+                                            {t(`blog.posts.${post.id}.readTime`)}
                                         </span>
-                                        <span>{post.date}</span>
+                                        <span>{t(`blog.posts.${post.id}.date`)}</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center">
@@ -148,7 +111,7 @@ export default function BlogPage() {
 
                 {/* Post Grid */}
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {blogPosts.filter(p => !p.featured).map(post => {
+                    {blogPostsConfig.filter(p => !p.featured).map(post => {
                         const colors = colorClasses[post.color as keyof typeof colorClasses];
                         return (
                             <div key={post.id} className="glass-premium p-6 rounded-2xl group cursor-pointer hover:border-white/20 transition-all">
@@ -156,18 +119,18 @@ export default function BlogPage() {
                                     <post.icon className={`w-6 h-6 ${colors.text}`} />
                                 </div>
                                 <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${colors.badge} mb-3`}>
-                                    {post.category}
+                                    {t(`blog.categories.${post.categoryKey}`)}
                                 </span>
                                 <h3 className="text-lg font-bold text-white mb-2 group-hover:text-indigo-400 transition-colors line-clamp-2">
-                                    {post.title}
+                                    {t(`blog.posts.${post.id}.title`)}
                                 </h3>
-                                <p className="text-sm text-[#E5E7EB]/60 mb-4 line-clamp-2">{post.excerpt}</p>
+                                <p className="text-sm text-[#E5E7EB]/60 mb-4 line-clamp-2">{t(`blog.posts.${post.id}.excerpt`)}</p>
                                 <div className="flex items-center justify-between text-xs text-[#E5E7EB]/40">
                                     <span className="flex items-center gap-1">
                                         <Clock className="w-3 h-3" />
-                                        {post.readTime}
+                                        {t(`blog.posts.${post.id}.readTime`)}
                                     </span>
-                                    <span>{post.date}</span>
+                                    <span>{t(`blog.posts.${post.id}.date`)}</span>
                                 </div>
                             </div>
                         );
