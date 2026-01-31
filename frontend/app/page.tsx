@@ -38,6 +38,7 @@ import CandlestickPatternPanel from "../components/CandlestickPatternPanel";
 import MLFactorPanel from "../components/MLFactorPanel";
 import StrategyPerformancePanel from "../components/StrategyPerformancePanel";
 import { NasdaqEarningsPanel } from "../components/EarningsPanel";
+import UserMenu from "../components/UserMenu";
 import AnimatedBackground from "../components/ui/AnimatedBackground";
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
@@ -1308,6 +1309,11 @@ export default function HomePage() {
                 </button>
                 <LanguageSwitcher />
                 <EditModeButton />
+                
+                {/* User Menu */}
+                <div className="hidden md:block ml-2 pl-2 border-l border-white/10">
+                  <UserMenu />
+                </div>
               </div>
             </div>
           </div>
@@ -1503,7 +1509,9 @@ export default function HomePage() {
           <Activity className="h-5 w-5" />
           <span className="text-[10px] mt-1">Dashboard</span>
         </button>
-        <LanguageSwitcher />
+        <Link href="/account" className="mobile-nav-item">
+          <UserMenu />
+        </Link>
       </nav>
     </div>
   );
