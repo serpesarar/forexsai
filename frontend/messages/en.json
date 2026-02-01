@@ -722,40 +722,38 @@
     "subtitle": "Interactive guided tour on the real dashboard.",
     "start": "Start Tour",
     "tour": {
-      "trend": {
-        "title": "Trend Analysis",
-        "desc": "Shows trend direction, strength, and s/r levels from M1 to H4. Timing is key with the 'Bars to Contact' counter."
+      "dashboard": {
+        "title": "Main Dashboard & Trend Analysis",
+        "desc": "Here you see the overall direction of the market. AI scans all timeframes from M1 to H4. 'Bars to Contact' predicts when price will touch the trend line, helping you perfect your trade timing."
       },
       "patterns": {
         "title": "Pattern Engine",
-        "desc": "AI detects patterns like 'Double Bottom', 'Flag' instantly. Click to see detailed targets and success rates."
+        "desc": "Technical patterns like 'Double Bottom', 'Hammer', 'Flag' are detected instantly on the chart. Success rate and expected direction (Bullish/Bearish) are shown next to each pattern."
+      },
+      "popup": {
+        "title": "Pattern Expectation & Strategy",
+        "desc": "Clicking on a detected pattern opens this detail card. It explains what the pattern means (e.g., reversal signal after a drop), target price, stop level, and risk/reward ratio. It offers financial literacy, not just a signal."
       },
       "ml": {
         "title": "ML Strategies (Pro+)",
-        "desc": "Institutional-grade machine learning predictions. Filter by confidence score (e.g., 80%+) to see only the strongest signals."
+        "desc": "Our institutional-grade machine learning models filter signals with over 80% confidence score. The 'Earnings Calendar' on the right panel shows earnings dates and expected volatility for NASDAQ companies, combining fundamental with technical analysis."
       },
-      "earnings": {
-        "title": "Earnings Calendar",
-        "desc": "Track earnings dates and expected volatility movements for NASDAQ sub-companies from this panel."
+      "sentiment": {
+        "title": "Claude Interpretation & Sentiment",
+        "desc": "Instead of complex data, LLM (Large Language Model) gives you a market summary: 'Bullish market prevailing, buyers are strong'. It interprets news flow and technical data as 'Neutral', 'Positive', or 'Negative'."
       },
       "rhythm": {
         "title": "Rhythm Detector",
-        "desc": "Captures 'rhythmic' movements where price is stuck in a specific range. Ideal for scalping."
-      },
-      "sentiment": {
-        "title": "Claude Interpretation",
-        "desc": "LLM analyzes market data and gives you a clear summary instead of technical jargon: 'Neutral', 'Bullish', or 'Bearish'."
-      },
-      "popup": {
-        "title": "Pattern Detail",
-        "desc": "Completion rate (78%), target price, stop level, and expected movement direction are detailed here."
+        "desc": "Captures moments when price 'zigzags' within a specific channel. It provides precise support/resistance points, ideal for scalpers looking to buy low and sell high in a ranging market."
       }
     },
     "ui": {
       "clickToExplore": "Click for details",
       "next": "Next Step",
       "back": "Go Back",
-      "finish": "Finish Tour"
+      "finish": "Finish Tour",
+      "startTour": "Start Interactive Tour",
+      "skip": "Skip Tour"
     }
   }
 }

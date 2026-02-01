@@ -722,40 +722,38 @@
     "subtitle": "Gerçek dashboard üzerinde interaktif bir gezinti.",
     "start": "Turu Başlat",
     "tour": {
-      "trend": {
-        "title": "Trend Analizi",
-        "desc": "M1'den H4'e kadar trend yönünü, gücünü ve destek/direnç seviyelerini gösterir. 'Trende Değmesine Kalan Çubuk' sayacı ile zamanlamayı yakalayın."
+      "dashboard": {
+        "title": "Ana Dashboard & Trend Analizi",
+        "desc": "Burada piyasanın genel yönünü görürsünüz. Yapay zeka, M1'den H4'e kadar tüm zaman dilimlerini tarar. 'Trende Değmesine Kalan Çubuk', fiyatın trend çizgisine ne zaman temas edeceğini tahmin eder, böylece işlem zamanlamanızı mükemmelleştirirsiniz."
       },
       "patterns": {
         "title": "Formasyon Motoru",
-        "desc": "Yapay zeka, 'Double Bottom', 'Flag' gibi formasyonları anlık tespit eder. Tıklayarak detaylı hedef ve başarı oranını görebilirsiniz."
+        "desc": "Grafik üzerinde oluşan 'Double Bottom', 'Hammer', 'Flag' gibi teknik formasyonlar anlık olarak tespit edilir. Her formasyonun yanında başarı oranı ve beklenen hareket yönü (Bullish/Bearish) yazar."
+      },
+      "popup": {
+        "title": "Formasyon Beklentisi & Strateji",
+        "desc": "Tespit edilen formasyona tıkladığınızda bu detay kartı açılır. Burada formasyonun ne anlama geldiği (örn: düşüş sonrası dönüş sinyali), hedef fiyatı, stop seviyesi ve risk/getiri oranı detaylıca açıklanır. Sadece sinyal değil, finansal okuryazarlık sunar."
       },
       "ml": {
         "title": "ML Stratejileri (Pro+)",
-        "desc": "Kurumsal düzeyde makine öğrenmesi tahminleri. Güven skoru filtresini (örn: %80+) ayarlayarak sadece en güçlü sinyalleri görüntüleyebilirsiniz."
+        "desc": "Kurumsal düzeyde makine öğrenmesi modellerimiz, %80 ve üzeri güven skoruna sahip sinyalleri filtreler. Sağ paneldeki 'Kazanç Takvimi', NASDAQ şirketlerinin bilanço tarihlerini ve beklenen volatiliteyi göstererek temel analizi teknik analizle birleştirir."
       },
-      "earnings": {
-        "title": "Kazanç Takvimi",
-        "desc": "NASDAQ alt şirketlerinin bilanço tarihlerini ve beklenen volatilite hareketlerini bu panelden takip edebilirsiniz."
+      "sentiment": {
+        "title": "Claude Yorumu & Sentiment",
+        "desc": "Karmaşık grafik verileri yerine, LLM (Büyük Dil Modeli) size piyasanın özetini sunar: 'Boğa piyasası hakim, alıcılar güçlü'. Haber akışını ve teknik verileri harmanlayarak 'Nötr', 'Pozitif' veya 'Negatif' olarak yorumlar."
       },
       "rhythm": {
         "title": "Ritim Dedektörü",
-        "desc": "Fiyatın belirli bir aralıkta sıkıştığı 'ritmik' hareketleri yakalar. Scalping işlemleri için idealdir."
-      },
-      "sentiment": {
-        "title": "Claude Yorumu",
-        "desc": "Piyasa verilerini analiz eden LLM, size teknik jargon yerine anlaşılır bir özet sunar: 'Nötr', 'Boğa' veya 'Ayı'."
-      },
-      "popup": {
-        "title": "Formasyon Detayı",
-        "desc": "Formasyonun tamamlanma oranı (%78), hedef fiyat, stop seviyesi ve beklenen hareketin yönü burada detaylandırılır."
+        "desc": "Fiyatın belirli bir kanal içinde 'zikzak' çizdiği anları yakalar. Özellikle yatay piyasada (ranging market) dipten alıp tepeden satmak isteyen scalperlar için milimetrik destek-direnç noktaları verir."
       }
     },
     "ui": {
       "clickToExplore": "Detaylar için tıklayın",
       "next": "Sonraki Adım",
       "back": "Geri Dön",
-      "finish": "Turu Tamamla"
+      "finish": "Turu Tamamla",
+      "startTour": "İnteraktif Turu Başlat",
+      "skip": "Turu Geç"
     }
   }
 }
