@@ -715,44 +715,47 @@
       "engineering": "Engineering",
       "aiData": "AI & Data",
       "research": "Research"
-    },
-    "demo": {
-      "title": "ForexsAi İnteraktif Demo",
-      "subtitle": "Yapay zeka analizini risk almadan deneyimleyin.",
-      "start": "Demoyu Başlat",
-      "steps": {
-        "select": {
-          "title": "Varlık Seçimi",
-          "text": "Analiz etmek istediğiniz pariteyi seçin."
-        },
-        "analyzing": {
-          "title": "Yapay Zeka Analizi",
-          "text": "M15, H4 ve Günlük grafikler taranıyor..."
-        },
-        "signal": {
-          "title": "Sinyal Tespiti",
-          "text": "Güçlü bir Fırsat Tespit Edildi!"
-        },
-        "result": {
-          "title": "İşlem Sonucu",
-          "text": "Yapay zeka öngörüsü başarıyla gerçekleşti."
-        }
+    }
+  },
+  "demo": {
+    "title": "ForexsAi Platform Turu",
+    "subtitle": "Gerçek dashboard üzerinde interaktif bir gezinti.",
+    "start": "Turu Başlat",
+    "tour": {
+      "trend": {
+        "title": "Trend Analizi",
+        "desc": "M1'den H4'e kadar trend yönünü, gücünü ve destek/direnç seviyelerini gösterir. 'Trende Değmesine Kalan Çubuk' sayacı ile zamanlamayı yakalayın."
       },
-      "ui": {
-        "confidence": "Güven Skoru",
-        "entry": "Giriş",
-        "target": "Hedef",
-        "stop": "Stop",
-        "buy": "ALIŞ (LONG)",
-        "sell": "SATIŞ (SHORT)",
-        "analyze": "Analiz Et",
-        "executing": "İşlem Açılıyor...",
-        "success": "Başarılı"
+      "patterns": {
+        "title": "Formasyon Motoru",
+        "desc": "Yapay zeka, 'Double Bottom', 'Flag' gibi formasyonları anlık tespit eder. Tıklayarak detaylı hedef ve başarı oranını görebilirsiniz."
       },
-      "cta": {
-        "title": "Gerçek Piyasada Kazanmaya Başlayın",
-        "button": "Hesap Oluştur"
+      "ml": {
+        "title": "ML Stratejileri (Pro+)",
+        "desc": "Kurumsal düzeyde makine öğrenmesi tahminleri. Güven skoru filtresini (örn: %80+) ayarlayarak sadece en güçlü sinyalleri görüntüleyebilirsiniz."
+      },
+      "earnings": {
+        "title": "Kazanç Takvimi",
+        "desc": "NASDAQ alt şirketlerinin bilanço tarihlerini ve beklenen volatilite hareketlerini bu panelden takip edebilirsiniz."
+      },
+      "rhythm": {
+        "title": "Ritim Dedektörü",
+        "desc": "Fiyatın belirli bir aralıkta sıkıştığı 'ritmik' hareketleri yakalar. Scalping işlemleri için idealdir."
+      },
+      "sentiment": {
+        "title": "Claude Yorumu",
+        "desc": "Piyasa verilerini analiz eden LLM, size teknik jargon yerine anlaşılır bir özet sunar: 'Nötr', 'Boğa' veya 'Ayı'."
+      },
+      "popup": {
+        "title": "Formasyon Detayı",
+        "desc": "Formasyonun tamamlanma oranı (%78), hedef fiyat, stop seviyesi ve beklenen hareketin yönü burada detaylandırılır."
       }
+    },
+    "ui": {
+      "clickToExplore": "Detaylar için tıklayın",
+      "next": "Sonraki Adım",
+      "back": "Geri Dön",
+      "finish": "Turu Tamamla"
     }
   }
 }

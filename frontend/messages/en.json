@@ -715,44 +715,47 @@
       "engineering": "Engineering",
       "aiData": "AI & Data",
       "research": "Research"
-    },
-    "demo": {
-      "title": "ForexsAi Interactive Demo",
-      "subtitle": "Experience AI analysis without risk.",
-      "start": "Start Demo",
-      "steps": {
-        "select": {
-          "title": "Asset Selection",
-          "text": "Select the pair you want to analyze."
-        },
-        "analyzing": {
-          "title": "AI Analysis",
-          "text": "Scanning M15, H4 and Daily charts..."
-        },
-        "signal": {
-          "title": "Signal Detected",
-          "text": "Strong Opportunity Detected!"
-        },
-        "result": {
-          "title": "Trade Result",
-          "text": "AI prediction realized successfully."
-        }
+    }
+  },
+  "demo": {
+    "title": "ForexsAi Platform Tour",
+    "subtitle": "Interactive guided tour on the real dashboard.",
+    "start": "Start Tour",
+    "tour": {
+      "trend": {
+        "title": "Trend Analysis",
+        "desc": "Shows trend direction, strength, and s/r levels from M1 to H4. Timing is key with the 'Bars to Contact' counter."
       },
-      "ui": {
-        "confidence": "Confidence Score",
-        "entry": "Entry",
-        "target": "Target",
-        "stop": "Stop",
-        "buy": "BUY (LONG)",
-        "sell": "SELL (SHORT)",
-        "analyze": "Analyze",
-        "executing": "Executing...",
-        "success": "Success"
+      "patterns": {
+        "title": "Pattern Engine",
+        "desc": "AI detects patterns like 'Double Bottom', 'Flag' instantly. Click to see detailed targets and success rates."
       },
-      "cta": {
-        "title": "Start Winning in Real Markets",
-        "button": "Create Account"
+      "ml": {
+        "title": "ML Strategies (Pro+)",
+        "desc": "Institutional-grade machine learning predictions. Filter by confidence score (e.g., 80%+) to see only the strongest signals."
+      },
+      "earnings": {
+        "title": "Earnings Calendar",
+        "desc": "Track earnings dates and expected volatility movements for NASDAQ sub-companies from this panel."
+      },
+      "rhythm": {
+        "title": "Rhythm Detector",
+        "desc": "Captures 'rhythmic' movements where price is stuck in a specific range. Ideal for scalping."
+      },
+      "sentiment": {
+        "title": "Claude Interpretation",
+        "desc": "LLM analyzes market data and gives you a clear summary instead of technical jargon: 'Neutral', 'Bullish', or 'Bearish'."
+      },
+      "popup": {
+        "title": "Pattern Detail",
+        "desc": "Completion rate (78%), target price, stop level, and expected movement direction are detailed here."
       }
+    },
+    "ui": {
+      "clickToExplore": "Click for details",
+      "next": "Next Step",
+      "back": "Go Back",
+      "finish": "Finish Tour"
     }
   }
 }
