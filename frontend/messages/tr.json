@@ -755,5 +755,43 @@
       "startTour": "İnteraktif Turu Başlat",
       "skip": "Turu Geç"
     }
+  },
+  "auth": {
+    "signup": {
+      "title": "Profesyonel Yatırımcı Hesabı",
+      "subtitle": "Yapay zeka analizlerine erişim için ücretsiz hesap oluşturun.",
+      "emailLabel": "E-posta Adresi",
+      "emailPlaceholder": "ornek@sirket.com",
+      "continue": "Devam Et",
+      "freeFeatures": "Ücretsiz Erişim:",
+      "features": [
+        "Canlı NASDAQ & XAUUSD Verisi",
+        "30 Saniyelik AI Sinyalleri",
+        "Temel Formasyon Tespiti"
+      ],
+      "passwordTitle": "Güvenlik",
+      "passwordSubtitle": "Hesabınız 256-bit şifreleme ile korunur.",
+      "passwordLabel": "Şifre",
+      "passwordRepeatLabel": "Şifre (Tekrar)",
+      "passwordPlaceholder": "Güçlü bir şifre belirleyin",
+      "weak": "Zayıf",
+      "medium": "Orta",
+      "strong": "Güçlü",
+      "secure": "Çok Güçlü",
+      "profileTitle": "Son Adım",
+      "profileSubtitle": "Size nasıl hitap edelim?",
+      "nameLabel": "Ad Soyad",
+      "namePlaceholder": "Adınız Soyadınız",
+      "referralLabel": "Davet Kodu (Opsiyonel)",
+      "referralInfo": "5 arkadaş davet edin, 1 hafta PRO kazanın.",
+      "complete": "Hesabı Oluştur",
+      "successTitle": "Hoş Geldiniz! 🎉",
+      "successText": "Hesabınız başarıyla oluşturuldu.",
+      "yourReferral": "Size özel davet kodunuz:",
+      "shareWhatsApp": "WhatsApp'ta Paylaş",
+      "copyLink": "Linki Kopyala",
+      "loginLink": "Giriş Yap",
+      "haveAccount": "Zaten hesabınız var mı?"
+    }
   }
 }

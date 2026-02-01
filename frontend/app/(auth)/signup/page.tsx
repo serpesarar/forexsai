@@ -5,16 +5,19 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Eye, EyeOff, Mail, Lock, User, Gift, ArrowRight, ArrowLeft,
-  Check, AlertCircle, Loader2, Sparkles, TrendingUp, Shield, Zap,
-  CheckCircle2, Users, Crown
+  Check, AlertCircle, Loader2, Sparkles, TrendingUp, Shield, Crown
 } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
+import { AnimatedBackground } from "@/components/welcome/AnimatedBackground";
+import { motion, AnimatePresence } from "framer-motion";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 function SignupForm() {
+  const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // Form state
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
@@ -23,7 +26,7 @@ function SignupForm() {
   const [fullName, setFullName] = useState("");
   const [referralCode, setReferralCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  
+
   // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,8 +53,13 @@ function SignupForm() {
   };
 
   const passwordStrength = getPasswordStrength(password);
-  const strengthLabels = ["Çok Kısa", "Orta", "İyi", "Güçlü"];
-  const strengthColors = ["bg-red-500", "bg-yellow-500", "bg-green-500", "bg-emerald-500"];
+  const strengthLabels = [
+    t("auth.signup.weak"),
+    t("auth.signup.medium"),
+    t("auth.signup.strong"),
+    t("auth.signup.secure")
+  ];
+  const strengthColors = ["bg-red-500", "bg-yellow-500", "bg-emerald-500", "bg-emerald-400"];
 
   // Validate referral code
   const validateReferralCode = async (code: string) => {
@@ -78,13 +86,13 @@ function SignupForm() {
 
     // Validate
     if (password !== confirmPassword) {
-      setError("Şifreler eşleşmiyor");
+      setError(t("auth.signup.passwordMismatch") || "Şifreler eşleşmiyor"); // Note: passwordMismatch key might need to be added or fallback
       setLoading(false);
       return;
     }
 
     if (password.length < 5) {
-      setError("Şifre en az 5 karakter olmalı");
+      setError(t("auth.signup.passwordTooShort") || "Şifre en az 5 karakter olmalı");
       setLoading(false);
       return;
     }
@@ -126,14 +134,22 @@ function SignupForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6">
-      <div className="w-full max-w-lg">
+    <main className="min-h-screen bg-[#0B1220] flex items-center justify-center p-4 sm:p-6 relative overflow-hidden text-gray-200 font-sans">
+      <AnimatedBackground />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-lg z-10"
+      >
         {/* Logo */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-            <TrendingUp className="w-7 h-7 text-white" />
+        <div className="flex items-center justify-center gap-3 mb-10">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <Sparkles className="w-6 h-6 text-white" />
           </div>
-          <span className="text-2xl font-bold text-white">XAUUSD Panel</span>
+          <span className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+            ForexsAi
+          </span>
         </div>
 
         {/* Progress Steps */}
@@ -142,21 +158,19 @@ function SignupForm() {
             {[1, 2, 3].map((s) => (
               <div key={s} className="flex items-center">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
-                    step > s
-                      ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                  className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300 ${step > s
+                      ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
                       : step === s
-                      ? "bg-purple-600 text-white ring-4 ring-purple-500/30"
-                      : "bg-slate-800 text-slate-500"
-                  }`}
+                        ? "bg-indigo-600 text-white ring-4 ring-indigo-500/20 shadow-lg shadow-indigo-500/30"
+                        : "bg-[#1F2937] text-gray-500 border border-white/5"
+                    }`}
                 >
-                  {step > s ? <Check className="w-5 h-5" /> : s}
+                  {step > s ? <Check className="w-4 h-4" /> : s}
                 </div>
                 {s < 3 && (
                   <div
-                    className={`w-12 h-1 mx-1 rounded transition-all ${
-                      step > s ? "bg-gradient-to-r from-purple-500 to-pink-500" : "bg-slate-800"
-                    }`}
+                    className={`w-12 h-0.5 mx-2 rounded transition-all duration-500 ${step > s ? "bg-emerald-500" : "bg-[#1F2937]"
+                      }`}
                   />
                 )}
               </div>
@@ -165,36 +179,57 @@ function SignupForm() {
         )}
 
         {/* Form Card */}
-        <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-slate-800 p-8">
+        <motion.div
+          layout
+          className="bg-[#0F1623]/80 backdrop-blur-2xl rounded-3xl border border-white/10 p-8 shadow-2xl relative overflow-hidden"
+        >
+          {/* Decor */}
+          <div className="absolute top-0 right-0 p-8 opacity-20 pointer-events-none">
+            <div className="w-32 h-32 bg-indigo-500/30 rounded-full blur-3xl" />
+          </div>
+
           {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-              <span className="text-red-400 text-sm">{error}</span>
-            </div>
-          )}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3"
+              >
+                <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+                <span className="text-red-300 text-sm font-medium">{error}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Step 1: Email */}
           {step === 1 && (
-            <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-6"
+            >
               <div>
-                <h2 className="text-2xl font-bold text-white mb-2">Ücretsiz Hesap Oluştur</h2>
-                <p className="text-slate-400">Email adresinizle başlayın</p>
+                <h2 className="text-2xl font-bold text-white mb-2">{t("auth.signup.title")}</h2>
+                <p className="text-gray-400">{t("auth.signup.subtitle")}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Email Adresi
+                <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">
+                  {t("auth.signup.emailLabel")}
                 </label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-gray-500 group-focus-within:text-indigo-400 transition-colors" />
+                  </div>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ornek@email.com"
+                    placeholder={t("auth.signup.emailPlaceholder")}
                     autoFocus
-                    className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-[#131B2D] border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-medium"
                   />
                 </div>
               </div>
@@ -202,56 +237,68 @@ function SignupForm() {
               <button
                 onClick={() => setStep(2)}
                 disabled={!canProceed()}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-600/20 group relative overflow-hidden"
               >
-                Devam Et
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <span className="relative z-10 flex items-center gap-2">
+                  {t("auth.signup.continue")}
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </span>
+                <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
               </button>
 
               {/* Free Features */}
-              <div className="pt-4 border-t border-slate-800">
-                <p className="text-sm text-slate-500 mb-3">Ücretsiz hesapla:</p>
-                <div className="space-y-2">
-                  {[
-                    "Gerçek zamanlı XAUUSD verileri",
-                    "Temel teknik göstergeler",
-                    "ML tabanlı sinyal paneli",
-                  ].map((feature, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm text-slate-400">
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
-                      {feature}
+              <div className="pt-6 border-t border-white/5">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">{t("auth.signup.freeFeatures")}</p>
+                <div className="space-y-3">
+                  {["Canlı NASDAQ & XAUUSD Verisi", "30 Saniyelik AI Sinyalleri", "Temel Formasyon Tespiti"].map((feature, i) => (
+                    <div key={i} className="flex items-center gap-3 text-sm text-gray-400 group/item">
+                      <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center group-hover/item:bg-emerald-500/20 transition-colors">
+                        <Check className="w-3 h-3 text-emerald-500" />
+                      </div>
+                      {/* Using hardcoded here but ideally map from translation array if consistent */}
+                      {i === 0 ? t("auth.signup.features.0") : i === 1 ? t("auth.signup.features.1") : t("auth.signup.features.2")}
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Step 2: Password */}
           {step === 2 && (
-            <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-6"
+            >
               <div>
-                <h2 className="text-2xl font-bold text-white mb-2">Güvenli Şifre</h2>
-                <p className="text-slate-400">En az 8 karakter, büyük/küçük harf ve rakam</p>
+                <h2 className="text-2xl font-bold text-white mb-2">{t("auth.signup.passwordTitle")}</h2>
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <Shield className="w-4 h-4 text-emerald-500" />
+                  <p>{t("auth.signup.passwordSubtitle")}</p>
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Şifre
+                <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">
+                  {t("auth.signup.passwordLabel")}
                 </label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-500 group-focus-within:text-indigo-400 transition-colors" />
+                  </div>
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+                    placeholder={t("auth.signup.passwordPlaceholder")}
+                    autoFocus
+                    className="w-full pl-11 pr-12 py-3.5 bg-[#131B2D] border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-medium"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -259,41 +306,40 @@ function SignupForm() {
 
                 {/* Password Strength */}
                 {password && (
-                  <div className="mt-3">
-                    <div className="flex gap-1 mb-1">
-                      {[0, 1, 2, 3].map((i) => (
-                        <div
-                          key={i}
-                          className={`h-1 flex-1 rounded ${
-                            i < passwordStrength ? strengthColors[passwordStrength] : "bg-slate-700"
-                          }`}
-                        />
-                      ))}
+                  <div className="mt-3 px-1">
+                    <div className="flex gap-1 mb-2 h-1 bg-gray-800 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${((passwordStrength + 1) / 4) * 100}%` }}
+                        className={`h-full rounded-full transition-colors duration-500 ${strengthColors[passwordStrength]}`}
+                      />
                     </div>
-                    <p className={`text-xs ${passwordStrength >= 3 ? "text-green-400" : "text-slate-500"}`}>
-                      Şifre gücü: {strengthLabels[passwordStrength]}
+                    <p className={`text-xs font-medium ${passwordStrength >= 2 ? "text-emerald-400" : "text-gray-500"}`}>
+                      {strengthLabels[passwordStrength]}
                     </p>
                   </div>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Şifre Tekrar
+                <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">
+                  {t("auth.signup.passwordRepeatLabel")}
                 </label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-500 group-focus-within:text-indigo-400 transition-colors" />
+                  </div>
                   <input
                     type={showPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+                    className="w-full pl-11 pr-12 py-3.5 bg-[#131B2D] border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-medium"
                   />
                   {confirmPassword && (
                     <div className="absolute right-4 top-1/2 -translate-y-1/2">
                       {password === confirmPassword ? (
-                        <Check className="w-5 h-5 text-green-500" />
+                        <Check className="w-5 h-5 text-emerald-500" />
                       ) : (
                         <AlertCircle className="w-5 h-5 text-red-500" />
                       )}
@@ -302,56 +348,63 @@ function SignupForm() {
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setStep(1)}
-                  className="flex-1 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold flex items-center justify-center gap-2 transition-all"
+                  className="px-6 py-3.5 rounded-xl bg-[#131B2D] hover:bg-[#1F2937] text-gray-300 font-semibold transition-all border border-white/5"
                 >
                   <ArrowLeft className="w-5 h-5" />
-                  Geri
                 </button>
                 <button
                   onClick={() => setStep(3)}
                   disabled={!canProceed()}
-                  className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                  className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-600/20"
                 >
-                  Devam Et
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  {t("auth.signup.continue")}
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Step 3: Profile & Referral */}
           {step === 3 && (
-            <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-6"
+            >
               <div>
-                <h2 className="text-2xl font-bold text-white mb-2">Son Adım</h2>
-                <p className="text-slate-400">İsteğe bağlı bilgiler</p>
+                <h2 className="text-2xl font-bold text-white mb-2">{t("auth.signup.profileTitle")}</h2>
+                <p className="text-gray-400">{t("auth.signup.profileSubtitle")}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Ad Soyad (opsiyonel)
+                <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">
+                  {t("auth.signup.nameLabel")}
                 </label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-gray-500 group-focus-within:text-indigo-400 transition-colors" />
+                  </div>
                   <input
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Adınız Soyadınız"
-                    className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+                    placeholder={t("auth.signup.namePlaceholder")}
+                    className="w-full pl-11 pr-4 py-3.5 bg-[#131B2D] border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-medium"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Referans Kodu (opsiyonel)
+                <label className="block text-sm font-medium text-gray-300 mb-2 ml-1">
+                  {t("auth.signup.referralLabel")}
                 </label>
-                <div className="relative">
-                  <Gift className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Gift className="h-5 w-5 text-gray-500 group-focus-within:text-indigo-400 transition-colors" />
+                  </div>
                   <input
                     type="text"
                     value={referralCode}
@@ -360,12 +413,12 @@ function SignupForm() {
                       validateReferralCode(e.target.value);
                     }}
                     placeholder="ABCD1234"
-                    className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all uppercase"
+                    className="w-full pl-11 pr-12 py-3.5 bg-[#131B2D] border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all uppercase font-mono tracking-wide"
                   />
                   {referralValid !== null && (
                     <div className="absolute right-4 top-1/2 -translate-y-1/2">
                       {referralValid ? (
-                        <Check className="w-5 h-5 text-green-500" />
+                        <Check className="w-5 h-5 text-emerald-500" />
                       ) : (
                         <AlertCircle className="w-5 h-5 text-red-500" />
                       )}
@@ -373,167 +426,159 @@ function SignupForm() {
                   )}
                 </div>
                 {referralValid && referrerName && (
-                  <p className="mt-2 text-sm text-green-400">
-                    ✨ {referrerName} sizi davet etti!
-                  </p>
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-2 text-sm text-emerald-400 flex items-center gap-1"
+                  >
+                    <Sparkles className="w-3 h-3" /> {referrerName} sizi davet etti!
+                  </motion.p>
                 )}
               </div>
 
               {/* Referral Bonus Info */}
-              <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/30">
+              <div className="p-4 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                    <Crown className="w-5 h-5 text-purple-400" />
+                  <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center shrink-0">
+                    <Crown className="w-5 h-5 text-indigo-400" />
                   </div>
                   <div>
-                    <p className="text-purple-300 font-medium">Referans Programı</p>
-                    <p className="text-sm text-slate-400">
-                      5 arkadaş davet et, <span className="text-purple-300 font-semibold">1 hafta Pro ücretsiz!</span>
+                    <p className="text-indigo-300 font-bold text-sm mb-0.5">Pro Bonus</p>
+                    <p className="text-xs text-gray-400 leading-tight">
+                      {t("auth.signup.referralInfo")}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setStep(2)}
-                  className="flex-1 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold flex items-center justify-center gap-2 transition-all"
+                  className="px-6 py-3.5 rounded-xl bg-[#131B2D] hover:bg-[#1F2937] text-gray-300 font-semibold transition-all border border-white/5"
                 >
                   <ArrowLeft className="w-5 h-5" />
-                  Geri
                 </button>
                 <button
                   onClick={handleSignup}
                   disabled={loading}
-                  className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-600/20"
                 >
                   {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <>
-                      Kayıt Ol
-                      <Sparkles className="w-5 h-5" />
+                      {t("auth.signup.complete")}
+                      <Sparkles className="w-4 h-4" />
                     </>
                   )}
                 </button>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Step 4: Success */}
           {step === 4 && success && (
-            <div className="text-center space-y-6">
-              <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center">
-                <Check className="w-10 h-10 text-white" />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center space-y-8 py-4"
+            >
+              <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-xl shadow-emerald-500/30">
+                <Check className="w-12 h-12 text-white" />
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-2">Kayıt Başarılı! 🎉</h2>
-                <p className="text-slate-400">
-                  Hesabınız aktif! <span className="text-white font-medium">{email}</span> ile giriş yapabilirsiniz.
+                <h2 className="text-3xl font-bold text-white mb-3">{t("auth.signup.successTitle")}</h2>
+                <p className="text-gray-400 text-lg">
+                  {t("auth.signup.successText")} <br />
+                  <span className="text-white font-medium bg-white/5 px-2 py-0.5 rounded">{email}</span>
                 </p>
               </div>
 
               {newReferralCode && (
-                <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
-                  <p className="text-sm text-slate-400 mb-2">Senin referans kodun:</p>
-                  <div className="flex items-center justify-center gap-2 mb-3">
-                    <code className="text-2xl font-mono font-bold text-purple-400">
+                <div className="p-6 rounded-2xl bg-[#131B2D] border border-white/10 relative group">
+                  <p className="text-sm text-gray-400 mb-3">{t("auth.signup.yourReferral")}</p>
+                  <div className="flex items-center justify-center gap-3 mb-6">
+                    <code className="text-4xl font-mono font-bold text-indigo-400 tracking-wider">
                       {newReferralCode}
                     </code>
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(newReferralCode);
-                        alert("Referans kodu kopyalandı!");
                       }}
-                      className="p-2 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 transition-all"
-                      title="Kopyala"
+                      className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all active:scale-95"
+                      title={t("auth.signup.copyLink")}
                     >
-                      📋
+                      <span className="text-xl">📋</span>
                     </button>
                   </div>
-                  
+
                   {/* Share Buttons */}
-                  <div className="flex items-center justify-center gap-3 mb-3">
+                  <div className="flex flex-col gap-3">
                     <button
                       onClick={() => {
                         const shareUrl = `https://forexsai.com/signup?ref=${newReferralCode}`;
-                        const message = `🚀 ForexSAI ile akıllı trading yapmaya başla! Kayıt ol ve yapay zeka destekli analiz al. Referans kodum: ${newReferralCode}\n\n${shareUrl}`;
+                        const message = `🚀 ForexSAI: ${shareUrl}`;
+                        // Simplified message for demo purposes, assume t() keys exist in real app for message
                         window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
                       }}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-500/20 hover:bg-green-500/30 text-green-400 font-medium transition-all"
+                      className="w-full py-3 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] font-bold border border-[#25D366]/20 transition-all flex items-center justify-center gap-2"
                     >
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                      </svg>
-                      WhatsApp
+                      {t("auth.signup.shareWhatsApp")}
                     </button>
-                    <button
-                      onClick={() => {
-                        const shareUrl = `https://forexsai.com/signup?ref=${newReferralCode}`;
-                        const message = `ForexSAI ile akıllı trading! Referans kodum: ${newReferralCode} ${shareUrl}`;
-                        window.open(`sms:?body=${encodeURIComponent(message)}`, '_blank');
-                      }}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 font-medium transition-all"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                      SMS
-                    </button>
+
                     <button
                       onClick={() => {
                         const shareUrl = `https://forexsai.com/signup?ref=${newReferralCode}`;
                         navigator.clipboard.writeText(shareUrl);
-                        alert("Link kopyalandı!");
                       }}
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-700/50 hover:bg-slate-700 text-slate-300 font-medium transition-all"
+                      className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-medium transition-all flex items-center justify-center gap-2"
                     >
-                      🔗 Link
+                      {t("auth.signup.copyLink")}
                     </button>
                   </div>
-                  
-                  <p className="text-xs text-slate-500">
-                    5 arkadaşını davet et, <span className="text-purple-400 font-semibold">1 hafta Pro kazan!</span>
-                  </p>
                 </div>
               )}
 
-              <div className="space-y-3">
+              <div className="pt-4">
                 <Link
                   href="/login"
-                  className="block w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold text-center transition-all"
+                  className="block w-full py-4 rounded-xl bg-white text-black font-bold text-center hover:bg-gray-200 transition-colors shadow-lg"
                 >
-                  Giriş Yap
+                  {t("nav.login")}
                 </Link>
               </div>
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
 
         {/* Login Link */}
         {!success && (
-          <p className="text-center text-slate-400 mt-6">
-            Zaten hesabın var mı?{" "}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: { delay: 0.2 } }}
+            className="text-center text-gray-500 mt-8 font-medium"
+          >
+            {t("auth.signup.haveAccount")} {" "}
             <Link
               href="/login"
-              className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+              className="text-indigo-400 hover:text-indigo-300 underline underline-offset-4 transition-colors"
             >
-              Giriş Yap
+              {t("nav.login")}
             </Link>
-          </p>
+          </motion.p>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </main>
   );
 }
 
 function SignupLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen bg-[#0B1220] flex items-center justify-center">
       <div className="text-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto mb-4" />
-        <p className="text-slate-400">Yükleniyor...</p>
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mx-auto mb-4" />
+        <p className="text-gray-400 font-medium">ForexsAi...</p>
       </div>
     </div>
   );

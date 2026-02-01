@@ -755,5 +755,43 @@
       "startTour": "Start Interactive Tour",
       "skip": "Skip Tour"
     }
+  },
+  "auth": {
+    "signup": {
+      "title": "Professional Trader Account",
+      "subtitle": "Create a free account to access AI-powered analytics.",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "name@company.com",
+      "continue": "Continue",
+      "freeFeatures": "Free Access:",
+      "features": [
+        "Live NASDAQ & XAUUSD Data",
+        "30-Second AI Signals",
+        "Basic Pattern Detection"
+      ],
+      "passwordTitle": "Security",
+      "passwordSubtitle": "Your account is protected with 256-bit encryption.",
+      "passwordLabel": "Password",
+      "passwordRepeatLabel": "Password (Repeat)",
+      "passwordPlaceholder": "Create a strong password",
+      "weak": "Weak",
+      "medium": "Medium",
+      "strong": "Strong",
+      "secure": "Very Strong",
+      "profileTitle": "Last Step",
+      "profileSubtitle": "How should we address you?",
+      "nameLabel": "Full Name",
+      "namePlaceholder": "Your Name",
+      "referralLabel": "Invite Code (Optional)",
+      "referralInfo": "Invite 5 friends, get 1 week PRO free.",
+      "complete": "Create Account",
+      "successTitle": "Welcome! 🎉",
+      "successText": "Your account has been successfully created.",
+      "yourReferral": "Your exclusive invite code:",
+      "shareWhatsApp": "Share on WhatsApp",
+      "copyLink": "Copy Link",
+      "loginLink": "Login",
+      "haveAccount": "Already have an account?"
+    }
   }
 }
