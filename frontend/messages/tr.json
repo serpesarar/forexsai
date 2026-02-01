@@ -1,4 +1,10 @@
 {
+  "ui": {
+    "back": "Geri",
+    "next": "İleri",
+    "close": "Kapat",
+    "loading": "Yükleniyor..."
+  },
   "nav": {
     "features": "Özellikler",
     "howItWorks": "Nasıl Çalışır",
@@ -757,7 +763,15 @@
     }
   },
   "auth": {
+    "login": {
+      "failed": "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.",
+      "forgotPassword": "Şifremi Unuttum?",
+      "headline": "Yapay Zeka Destekli Piyasa Analizi",
+      "subheadline": "NASDAQ ve XAUUSD için en net trendler, anlık sinyaller."
+    },
     "signup": {
+      "dontHaveAccount": "Hesabınız yok mu?",
+      "loginLink": "Giriş Yap",
       "title": "Profesyonel Yatırımcı Hesabı",
       "subtitle": "Yapay zeka analizlerine erişim için ücretsiz hesap oluşturun.",
       "emailLabel": "E-posta Adresi",

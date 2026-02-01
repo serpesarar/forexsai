@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Menu, X, ArrowRight } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { usePathname } from "next/navigation";
 
 // Animated shine component for the AI text
@@ -80,9 +81,8 @@ export function TopNav() {
               ? "rgba(11, 18, 32, 0.85)"
               : "rgba(11, 18, 32, 0.55)",
           }}
-          className={`max-w-7xl mx-auto px-6 h-[72px] md:h-[76px] rounded-2xl backdrop-blur-lg border border-white/[0.10] flex items-center transition-shadow duration-300 ${
-            scrolled ? "shadow-2xl shadow-black/30" : "shadow-lg shadow-black/20"
-          }`}
+          className={`max-w-7xl mx-auto px-6 h-[72px] md:h-[76px] rounded-2xl backdrop-blur-lg border border-white/[0.10] flex items-center transition-shadow duration-300 ${scrolled ? "shadow-2xl shadow-black/30" : "shadow-lg shadow-black/20"
+            }`}
         >
           <div className="flex items-center justify-between w-full">
             {/* Logo - Enhanced with Image */}
@@ -106,7 +106,7 @@ export function TopNav() {
                   priority
                 />
               </motion.div>
-              <motion.span 
+              <motion.span
                 className="text-xl md:text-2xl font-bold tracking-tight"
                 whileHover={{ y: -1 }}
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
@@ -164,29 +164,9 @@ export function TopNav() {
 
             {/* Right Section */}
             <div className="hidden md:flex items-center gap-4">
-              {/* Language Selector - Segmented Pill */}
-              <div className="flex items-center p-1 rounded-full bg-white/[0.06] border border-white/[0.08]">
-                {["en", "tr"].map((lang) => (
-                  <button
-                    key={lang}
-                    onClick={() => setLocale(lang as "en" | "tr")}
-                    className={`relative px-3.5 py-1.5 text-sm font-medium rounded-full transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00E0C6]/50 ${
-                      locale === lang
-                        ? "text-[#0B1220]"
-                        : "text-[#E5E7EB]/60 hover:text-[#E5E7EB]"
-                    }`}
-                    aria-label={`Switch to ${lang === "en" ? "English" : "Turkish"}`}
-                  >
-                    {locale === lang && (
-                      <motion.div
-                        layoutId="langPill"
-                        className="absolute inset-0 bg-gradient-to-r from-[#00E0C6] to-[#3B82F6] rounded-full"
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative z-10 uppercase">{lang}</span>
-                  </button>
-                ))}
+              {/* Language Selector */}
+              <div className="hidden md:block">
+                <LanguageSwitcher />
               </div>
 
               {/* Login - Subtle secondary */}
@@ -273,9 +253,8 @@ export function TopNav() {
                   <button
                     key={lang}
                     onClick={() => setLocale(lang as "en" | "tr")}
-                    className={`relative px-4 py-1.5 text-sm font-medium rounded-full transition-all ${
-                      locale === lang ? "text-[#0B1220]" : "text-[#E5E7EB]/60"
-                    }`}
+                    className={`relative px-4 py-1.5 text-sm font-medium rounded-full transition-all ${locale === lang ? "text-[#0B1220]" : "text-[#E5E7EB]/60"
+                      }`}
                   >
                     {locale === lang && (
                       <motion.div

@@ -24,7 +24,7 @@ import CircularProgress from "../components/CircularProgress";
 import DetailPanel from "../components/DetailPanel";
 import { useDashboardStore, useDetailPanelStore } from "../lib/store";
 import { fetcher } from "../lib/api";
-import LanguageSwitcher from "../components/LanguageSwitcher";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { useI18nStore } from "../lib/i18n/store";
 import TradingChartWrapper from "../components/TradingChartWrapper";
 import OrderBlockPanelSimple from "../components/OrderBlockPanelSimple";
@@ -365,11 +365,11 @@ export default function HomePage() {
   const isAuthenticated = useIsAuthenticated();
   const { checkAuth } = useAuthStore();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  
+
   const [activeTf, setActiveTf] = useState<(typeof timeframes)[number]>("15m");
   const [theme, setTheme] = useState<"evening" | "morning">("evening");
   const [trendTf, setTrendTf] = useState<Timeframe>("M15");
-  
+
   // Auth check - wait for hydration then redirect if not authenticated
   useEffect(() => {
     const check = async () => {
@@ -383,27 +383,27 @@ export default function HomePage() {
     };
     check();
   }, [checkAuth, router]);
-  
+
   // Live prices hook - updates every 3 seconds with daily change %
   const { tickers: liveTickers, isLoading: pricesLoading } = useLivePrices(3000);
   const marketTickers = liveTickers.length > 0 ? liveTickers : initialMarketTickers;
-  
+
   // Cache hook - loads pre-computed data from backend immediately
   const { nasdaq: cachedNasdaq, xauusd: cachedXauusd, hasData: hasCachedData } = useCachedDashboardData();
-  
+
   // MTF Analysis hooks - fetch real technical analysis per timeframe
   const { data: nasdaqMTF, isLoading: nasdaqMTFLoading } = useSingleTimeframeAnalysis("NDX.INDX", trendTf, 30000);
   const { data: xauusdMTF, isLoading: xauusdMTFLoading } = useSingleTimeframeAnalysis("XAUUSD", trendTf, 30000);
-  
+
   const [_marketTickersOld, setMarketTickers] = useState(initialMarketTickers);
   const [signalCards, setSignalCards] = useState(initialSignalCards);
-  
+
   // Update signal cards from cache on first load
   useEffect(() => {
     if (hasCachedData) {
       const nasdaqCard = cachedToSignalCard(cachedNasdaq ?? null, "NASDAQ");
       const xauusdCard = cachedToSignalCard(cachedXauusd ?? null, "XAUUSD");
-      
+
       setSignalCards((prev) => {
         const updated = [...prev];
         if (nasdaqCard) {
@@ -552,13 +552,13 @@ export default function HomePage() {
         });
         const nearestSupport = sr.find((l: any) => l.type === "support") ?? card.liveMetrics.nearestSupport;
         const nearestResistance = sr.find((l: any) => l.type === "resistance") ?? card.liveMetrics.nearestResistance;
-        
+
         // Extract trend from API metrics
         const apiTrend = apiSignal?.metrics?.trend || "NEUTRAL";
         const apiTrendStrength = apiSignal?.metrics?.trend_strength || 50;
         const apiVolatility = apiSignal?.metrics?.volatility || "MEDIUM";
         const apiVolumeConfirmed = apiSignal?.metrics?.volume_confirmed ?? true;
-        
+
         return {
           ...card,
           currentPrice: price,
@@ -791,7 +791,7 @@ export default function HomePage() {
   };
 
   const { isEditMode, layout } = useDashboardEdit();
-  
+
   // Helper to check card visibility
   const isCardVisible = (cardId: string) => {
     const card = layout.cards.find(c => c.id === cardId);
@@ -859,12 +859,12 @@ export default function HomePage() {
     const mtfData = signal.symbol === "NASDAQ" ? nasdaqMTF : xauusdMTF;
     const isDataLoading = (!signal.currentPrice || signal.currentPrice === 0 || !hasCachedData) && !mtfData;
     const tfMultiplier = getTimeframeMultiplier(trendTf);
-    
+
     // Use MTF data if available, otherwise fall back to cached data
     const currentTrend = mtfData?.trend || signal.trend || "NEUTRAL";
     const currentConfidence = mtfData?.confidence || signal.confidence;
     const atrThreshold = mtfData?.max_pip_threshold || Math.round(50 * tfMultiplier);
-    
+
     return (
       <div className="signal-card-premium p-5 shimmer-effect">
         <div className="flex items-center justify-between relative z-10">
@@ -879,41 +879,38 @@ export default function HomePage() {
             </span>
           ) : (
             <div className="flex items-center gap-2">
-              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                currentTrend === "BULLISH" ? "bg-success/20 text-success" :
-                currentTrend === "BEARISH" ? "bg-danger/20 text-danger" : "bg-white/10 text-textSecondary"
-              }`}>
+              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${currentTrend === "BULLISH" ? "bg-success/20 text-success" :
+                  currentTrend === "BEARISH" ? "bg-danger/20 text-danger" : "bg-white/10 text-textSecondary"
+                }`}>
                 {currentTrend}
               </span>
               {mtfData?.signal && (
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                  mtfData.signal.includes("BUY") ? "bg-success/30 text-success" :
-                  mtfData.signal.includes("SELL") ? "bg-danger/30 text-danger" : "bg-white/10 text-textSecondary"
-                }`}>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${mtfData.signal.includes("BUY") ? "bg-success/30 text-success" :
+                    mtfData.signal.includes("SELL") ? "bg-danger/30 text-danger" : "bg-white/10 text-textSecondary"
+                  }`}>
                   {mtfData.signal.replace("_", " ")}
                 </span>
               )}
             </div>
           )}
         </div>
-        
+
         {/* Timeframe Tabs */}
         <div className="mt-3 flex gap-1 p-1 rounded-lg bg-white/5">
           {trendTimeframes.map((tf) => (
             <button
               key={tf}
               onClick={() => setTrendTf(tf)}
-              className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wider transition-all ${
-                trendTf === tf
+              className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wider transition-all ${trendTf === tf
                   ? "bg-accent text-white shadow-lg"
                   : "text-textSecondary hover:text-white hover:bg-white/10"
-              }`}
+                }`}
             >
               {tf}
             </button>
           ))}
         </div>
-        
+
         <div className="mt-4 flex items-center justify-between gap-6">
           {isDataLoading || isMTFLoading ? (
             <div className="flex items-center justify-center w-[100px] h-[100px]">
@@ -948,11 +945,10 @@ export default function HomePage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Volatility</span>
-                  <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${
-                    mtfData.atr.volatility_level === "LOW" ? "bg-success/20 text-success" :
-                    mtfData.atr.volatility_level === "HIGH" || mtfData.atr.volatility_level === "EXTREME" ? "bg-danger/20 text-danger" :
-                    "bg-white/10"
-                  }`}>
+                  <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${mtfData.atr.volatility_level === "LOW" ? "bg-success/20 text-success" :
+                      mtfData.atr.volatility_level === "HIGH" || mtfData.atr.volatility_level === "EXTREME" ? "bg-danger/20 text-danger" :
+                        "bg-white/10"
+                    }`}>
                     {mtfData.atr.volatility_level}
                   </span>
                 </div>
@@ -994,17 +990,17 @@ export default function HomePage() {
             // Use MTF data if available for more accurate EMA distances
             const dynamicMaxPips = atrThreshold || Math.round(50 * tfMultiplier);
             const toPips = (dist: number) => Math.round(dist);
-            
+
             // If MTF data is available, use it; otherwise fallback to cached data
             const ema20Dist = mtfData?.ema.ema20_distance ?? signal.liveMetrics.emaDistances.ema20.distance;
             const ema50Dist = mtfData?.ema.ema50_distance ?? signal.liveMetrics.emaDistances.ema50.distance;
             const ema200Dist = mtfData?.ema.ema200_distance ?? signal.liveMetrics.emaDistances.ema200.distance;
-            
+
             const nearestSupport = mtfData?.supports?.[0];
             const nearestResistance = mtfData?.resistances?.[0];
             const supportDist = nearestSupport?.distance_pips ?? signal.liveMetrics.nearestSupport.distance;
             const resistanceDist = nearestResistance?.distance_pips ?? signal.liveMetrics.nearestResistance.distance;
-            
+
             const metrics = [
               { label: `EMA 20`, distance: ema20Dist, maxPips: dynamicMaxPips, above: mtfData?.ema.price_above_ema20, period: 20, emaLevel: mtfData?.ema.ema20 },
               { label: `EMA 50`, distance: ema50Dist, maxPips: dynamicMaxPips * 2, above: mtfData?.ema.price_above_ema50, period: 50, emaLevel: mtfData?.ema.ema50 },
@@ -1017,12 +1013,12 @@ export default function HomePage() {
               const pips = toPips(metric.distance);
               const absPips = Math.abs(pips);
               const isAbove = metric.distance >= 0;
-              const fillPercent = isAbove 
+              const fillPercent = isAbove
                 ? Math.max(0, 100 - (absPips / metric.maxPips) * 100)
                 : Math.min(100, (absPips / metric.maxPips) * 100);
               const colorClass = isAbove ? "text-success" : "text-danger";
               const pipsLabel = `${pips >= 0 ? "+" : ""}${pips} pips`;
-              
+
               const handleMetricClick = () => {
                 if (metric.period) {
                   open("ema_distance", {
@@ -1049,17 +1045,17 @@ export default function HomePage() {
                   }, signal.symbol as "NASDAQ" | "XAUUSD", metric.label);
                 }
               };
-              
+
               return (
                 <div key={`${signal.symbol}-${metric.label}-${index}`} className="rounded-lg border border-white/5 bg-white/5 p-3 group relative">
-                  <CircularProgress 
-                    value={fillPercent} 
-                    size={64} 
-                    strokeWidth={8} 
-                    sublabel={pipsLabel} 
+                  <CircularProgress
+                    value={fillPercent}
+                    size={64}
+                    strokeWidth={8}
+                    sublabel={pipsLabel}
                     colorClassName={colorClass}
-                    isInteractive 
-                    onClick={handleMetricClick} 
+                    isInteractive
+                    onClick={handleMetricClick}
                   />
                   <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-textSecondary">{metric.label}</p>
                   <div className="absolute -top-1 -right-1">
@@ -1073,27 +1069,27 @@ export default function HomePage() {
         <div className="mt-2 text-[9px] text-textSecondary/60 text-center">
           <span className="font-semibold text-accent">{trendTf}</span> • 🟢 Above level • 🔴 Below level • Max: {Math.round(50 * tfMultiplier)}-{Math.round(200 * tfMultiplier)} pips
         </div>
-      <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-        {signal.liveMetrics.supportResistance.map((level) => (
-          <div key={`${signal.symbol}-${level.price}`} className="flex items-center justify-between rounded-full border border-white/5 bg-white/5 px-3 py-2">
-            <span className="font-mono">{level.price}</span>
-            <span className={`text-[10px] uppercase ${level.type === "support" ? "text-success" : "text-danger"}`}>{level.type}</span>
-            <span className="text-[10px] text-textSecondary">{Math.round(level.strength * 100)}%</span>
-          </div>
-        ))}
+        <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+          {signal.liveMetrics.supportResistance.map((level) => (
+            <div key={`${signal.symbol}-${level.price}`} className="flex items-center justify-between rounded-full border border-white/5 bg-white/5 px-3 py-2">
+              <span className="font-mono">{level.price}</span>
+              <span className={`text-[10px] uppercase ${level.type === "support" ? "text-success" : "text-danger"}`}>{level.type}</span>
+              <span className="text-[10px] text-textSecondary">{Math.round(level.strength * 100)}%</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+          {signal.metrics.map((metric) => (
+            <div key={metric.label} className="rounded-lg border border-white/5 bg-white/5 p-3">
+              <p className="text-textSecondary uppercase tracking-[0.2em] text-[10px]">{metric.label}</p>
+              <p className="mt-1 font-mono text-sm">{metric.value}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 space-y-1 text-xs text-textSecondary">
+          {signal.reasons.map((reason) => (<p key={reason}>• {reason}</p>))}
+        </div>
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
-        {signal.metrics.map((metric) => (
-          <div key={metric.label} className="rounded-lg border border-white/5 bg-white/5 p-3">
-            <p className="text-textSecondary uppercase tracking-[0.2em] text-[10px]">{metric.label}</p>
-            <p className="mt-1 font-mono text-sm">{metric.value}</p>
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 space-y-1 text-xs text-textSecondary">
-        {signal.reasons.map((reason) => (<p key={reason}>• {reason}</p>))}
-      </div>
-    </div>
     );
   };
 
@@ -1219,7 +1215,7 @@ export default function HomePage() {
     <div className="min-h-screen text-textPrimary relative">
       {/* Animated Background with Star Particles */}
       <TradingBackground />
-      
+
       {/* ═══════════════════════════════════════════════════════════════════════════════ */}
       {/* PREMIUM HEADER - Two-tier professional design                                   */}
       {/* ═══════════════════════════════════════════════════════════════════════════════ */}
@@ -1227,18 +1223,18 @@ export default function HomePage() {
         {/* Animated mesh background */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.15),transparent_50%),radial-gradient(ellipse_at_bottom_right,rgba(6,182,212,0.1),transparent_50%)]" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-slate-900/95 to-slate-900/98 backdrop-blur-xl" />
-        
+
         {/* Animated top accent line */}
         <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent to-transparent animate-pulse" />
           <div className="absolute inset-0 bg-gradient-to-r from-accent via-purple-500 to-cyan-400 animate-gradient-x" style={{ animationDuration: '3s' }} />
         </div>
-        
+
         {/* ─────────────── TOP ROW: Brand + Tickers + Status ─────────────── */}
         <div className="relative border-b border-white/[0.06]">
           <div className="mx-auto max-w-[1600px] px-4 md:px-6 lg:px-8">
             <div className="flex h-16 md:h-20 items-center justify-between">
-              
+
               {/* Brand Section */}
               <div className="flex items-center gap-5">
                 {/* Logo */}
@@ -1248,7 +1244,7 @@ export default function HomePage() {
                     <img src="/bu.png" alt="ForexsAI" className="w-full h-full object-cover" />
                   </div>
                 </div>
-                
+
                 {/* Title */}
                 <div>
                   <h1 className="text-xl md:text-2xl font-black tracking-tight">
@@ -1267,7 +1263,7 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Market Tickers - Center */}
               <div className="hidden xl:flex items-center gap-2">
                 {marketTickers.map((ticker) => {
@@ -1277,12 +1273,11 @@ export default function HomePage() {
                     <div key={ticker.label} className="group relative">
                       {/* Glow on hover */}
                       <div className={`absolute -inset-1 rounded-xl opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500 ${isUp ? "bg-success/20" : "bg-danger/20"}`} />
-                      
-                      <div className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-300 ${
-                        isUp 
-                          ? "bg-success/[0.08] border-success/20 hover:border-success/40" 
+
+                      <div className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-300 ${isUp
+                          ? "bg-success/[0.08] border-success/20 hover:border-success/40"
                           : "bg-danger/[0.08] border-danger/20 hover:border-danger/40"
-                      }`}>
+                        }`}>
                         {isLoadingPrice ? (
                           <div className="flex items-center gap-3">
                             <div className="h-8 w-8 rounded-lg bg-white/10 animate-pulse flex items-center justify-center">
@@ -1314,7 +1309,7 @@ export default function HomePage() {
                   );
                 })}
               </div>
-              
+
               {/* Right Section - Quick Actions */}
               <div className="flex items-center gap-2">
                 <div className="hidden lg:flex items-center gap-2 mr-3 pr-3 border-r border-white/10">
@@ -1328,7 +1323,7 @@ export default function HomePage() {
                     <span className="hidden xl:inline">{t("common.auto30s")}</span>
                   </label>
                 </div>
-                
+
                 <button
                   onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
                   className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/50 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all"
@@ -1337,7 +1332,7 @@ export default function HomePage() {
                 </button>
                 <LanguageSwitcher />
                 <EditModeButton />
-                
+
                 {/* User Menu */}
                 <div className="hidden md:block ml-2 pl-2 border-l border-white/10">
                   <UserMenu />
@@ -1346,12 +1341,12 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        
+
         {/* ─────────────── BOTTOM ROW: Navigation + CTA ─────────────── */}
         <div className="relative bg-gradient-to-r from-white/[0.02] via-white/[0.04] to-white/[0.02]">
           <div className="mx-auto max-w-[1600px] px-4 md:px-6 lg:px-8">
             <div className="flex h-12 md:h-14 items-center justify-between">
-              
+
               {/* Navigation Tabs */}
               <div className="flex items-center gap-0.5 md:gap-1">
                 <Link
@@ -1376,7 +1371,7 @@ export default function HomePage() {
                   <span className="hidden sm:inline">AI Trading</span>
                 </Link>
               </div>
-              
+
               {/* CTA Button */}
               <button
                 onClick={fetchAll}
@@ -1391,7 +1386,7 @@ export default function HomePage() {
                 </div>
                 {/* Glow */}
                 <div className="absolute -inset-1 bg-emerald-500/30 rounded-lg blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
+
                 <span className="relative flex items-center gap-1.5 md:gap-2">
                   {isLoading ? (
                     <Loader2 className="h-3.5 w-3.5 md:h-4 md:w-4 animate-spin" />
@@ -1405,28 +1400,28 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        
+
         {/* Bottom glow line */}
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent" />
       </header>
 
       {/* ML Factor Toggle Panel + Earnings - Stacked Layout */}
       <div className="fixed top-32 right-4 z-50 flex flex-col gap-4 w-80">
-        <MLFactorPanel 
-          baseConfidence={signalCards[0]?.confidence || 60} 
+        <MLFactorPanel
+          baseConfidence={signalCards[0]?.confidence || 60}
           locale={locale}
         />
-        
+
         {/* NASDAQ Earnings Calendar Panel */}
         <NasdaqEarningsPanel />
       </div>
 
       <DraggableDashboard>
-      <main className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-4 md:gap-6 md:px-6 md:py-8 md:grid-cols-2 lg:grid-cols-3 pb-20 md:pb-8">
-        {/* Dynamic columns based on layout.cards order */}
-        {renderColumn("left")}
-        {renderColumn("center")}
-        {renderColumn("right")}
+        <main className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-4 md:gap-6 md:px-6 md:py-8 md:grid-cols-2 lg:grid-cols-3 pb-20 md:pb-8">
+          {/* Dynamic columns based on layout.cards order */}
+          {renderColumn("left")}
+          {renderColumn("center")}
+          {renderColumn("right")}
 
           {/* ML Prediction & Claude AI Section - Full Width Cards */}
           <div className="md:col-span-2 lg:col-span-3">
@@ -1487,17 +1482,17 @@ export default function HomePage() {
 
           {/* Charts Section */}
           <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <TradingChartWrapper 
-              symbol="NDX.INDX" 
-              symbolLabel="NASDAQ" 
-              initialTimeframe="1d" 
-              height={350} 
+            <TradingChartWrapper
+              symbol="NDX.INDX"
+              symbolLabel="NASDAQ"
+              initialTimeframe="1d"
+              height={350}
             />
-            <TradingChartWrapper 
-              symbol="XAUUSD" 
-              symbolLabel="XAUUSD" 
-              initialTimeframe="1d" 
-              height={350} 
+            <TradingChartWrapper
+              symbol="XAUUSD"
+              symbolLabel="XAUUSD"
+              initialTimeframe="1d"
+              height={350}
             />
           </div>
 
@@ -1505,7 +1500,7 @@ export default function HomePage() {
           <div className="md:col-span-2 lg:col-span-3">
             <StrategyPerformancePanel />
           </div>
-      </main>
+        </main>
       </DraggableDashboard>
 
       <DetailPanel
@@ -1522,7 +1517,7 @@ export default function HomePage() {
 
       {/* Mobile Bottom Navigation */}
       <nav className="mobile-nav md:hidden flex items-center justify-around">
-        <button 
+        <button
           onClick={fetchAll}
           className={`mobile-nav-item ${isLoading ? 'text-accent' : ''}`}
         >

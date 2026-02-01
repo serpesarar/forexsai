@@ -1,24 +1,33 @@
 "use client";
 
-import { Globe } from "lucide-react";
-import { useI18nStore } from "../lib/i18n/store";
+import { motion } from "framer-motion";
+import { useI18n } from "@/lib/i18n";
 
-export default function LanguageSwitcher() {
-  const { locale, setLocale } = useI18nStore();
+export function LanguageSwitcher() {
+  const { locale, setLocale } = useI18n();
 
   return (
-    <button
-      onClick={() => setLocale(locale === "en" ? "tr" : "en")}
-      className="flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-textSecondary transition hover:border-white/30"
-      title={locale === "en" ? "Türkçe'ye geç" : "Switch to English"}
-    >
-      <Globe className="h-3.5 w-3.5" />
-      {locale === "en" ? "EN" : "TR"}
-    </button>
+    <div className="flex items-center p-1 rounded-full bg-white/[0.06] border border-white/[0.08] backdrop-blur-md">
+      {["en", "tr"].map((lang) => (
+        <button
+          key={lang}
+          onClick={() => setLocale(lang as "en" | "tr")}
+          className={`relative px-3.5 py-1.5 text-sm font-medium rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#00E0C6]/50 ${locale === lang
+              ? "text-[#0B1220]"
+              : "text-[#E5E7EB]/60 hover:text-[#E5E7EB]"
+            }`}
+          aria-label={`Switch to ${lang === "en" ? "English" : "Turkish"}`}
+        >
+          {locale === lang && (
+            <motion.div
+              layoutId="langPillSwitcher"
+              className="absolute inset-0 bg-gradient-to-r from-[#00E0C6] to-[#3B82F6] rounded-full"
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            />
+          )}
+          <span className="relative z-10 uppercase">{lang}</span>
+        </button>
+      ))}
+    </div>
   );
 }
-
-
-
-
-

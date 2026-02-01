@@ -1,4 +1,10 @@
 {
+  "ui": {
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "loading": "Loading..."
+  },
   "nav": {
     "features": "Features",
     "howItWorks": "How It Works",
@@ -757,7 +763,15 @@
     }
   },
   "auth": {
+    "login": {
+      "failed": "Login failed. Please check your credentials.",
+      "forgotPassword": "Forgot Password?",
+      "headline": "AI-Powered Market Analysis",
+      "subheadline": "Clear trends and instant signals for NASDAQ and XAUUSD."
+    },
     "signup": {
+      "dontHaveAccount": "Don't have an account?",
+      "loginLink": "Sign In",
       "title": "Professional Trader Account",
       "subtitle": "Create a free account to access AI-powered analytics.",
       "emailLabel": "Email Address",

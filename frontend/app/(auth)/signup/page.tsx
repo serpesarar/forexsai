@@ -8,6 +8,7 @@ import {
   Check, AlertCircle, Loader2, Sparkles, TrendingUp, Shield, Crown
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { AnimatedBackground } from "@/components/welcome/AnimatedBackground";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -15,6 +16,10 @@ const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 function SignupForm() {
   const { t } = useI18n();
+  // ... (rest of imports/logic kept same if possible, but line numbers differ)
+  // This replacement chunk is tricky with surrounding context.
+  // Better to just insert the component in the JSX.
+
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -137,6 +142,10 @@ function SignupForm() {
     <main className="min-h-screen bg-[#0B1220] flex items-center justify-center p-4 sm:p-6 relative overflow-hidden text-gray-200 font-sans">
       <AnimatedBackground />
 
+      <div className="absolute top-4 right-4 z-50">
+        <LanguageSwitcher />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -159,10 +168,10 @@ function SignupForm() {
               <div key={s} className="flex items-center">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300 ${step > s
-                      ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                      : step === s
-                        ? "bg-indigo-600 text-white ring-4 ring-indigo-500/20 shadow-lg shadow-indigo-500/30"
-                        : "bg-[#1F2937] text-gray-500 border border-white/5"
+                    ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                    : step === s
+                      ? "bg-indigo-600 text-white ring-4 ring-indigo-500/20 shadow-lg shadow-indigo-500/30"
+                      : "bg-[#1F2937] text-gray-500 border border-white/5"
                     }`}
                 >
                   {step > s ? <Check className="w-4 h-4" /> : s}
