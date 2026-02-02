@@ -386,7 +386,6 @@ export default function HomePage() {
 
   // Live prices hook - updates every 3 seconds with daily change %
   const { tickers: liveTickers, isLoading: pricesLoading } = useLivePrices(3000);
-  const marketTickers = liveTickers.length > 0 ? liveTickers : initialMarketTickers;
 
   // Cache hook - loads pre-computed data from backend immediately
   const { nasdaq: cachedNasdaq, xauusd: cachedXauusd, hasData: hasCachedData } = useCachedDashboardData();
@@ -395,7 +394,13 @@ export default function HomePage() {
   const { data: nasdaqMTF, isLoading: nasdaqMTFLoading } = useSingleTimeframeAnalysis("NDX.INDX", trendTf, 30000);
   const { data: xauusdMTF, isLoading: xauusdMTFLoading } = useSingleTimeframeAnalysis("XAUUSD", trendTf, 30000);
 
-  const [_marketTickersOld, setMarketTickers] = useState(initialMarketTickers);
+  const [manualTickers, setMarketTickers] = useState(initialMarketTickers);
+
+  // Use live tickers if available and valid, otherwise fallback to manual fetch
+  const marketTickers = useMemo(() => {
+    const hasLiveData = liveTickers.some(t => t.price !== "--" && t.price !== "-");
+    return hasLiveData ? liveTickers : manualTickers;
+  }, [liveTickers, manualTickers]);
   const [signalCards, setSignalCards] = useState(initialSignalCards);
 
   // Update signal cards from cache on first load
@@ -880,13 +885,13 @@ export default function HomePage() {
           ) : (
             <div className="flex items-center gap-2">
               <span className={`rounded-full px-3 py-1 text-xs font-semibold ${currentTrend === "BULLISH" ? "bg-success/20 text-success" :
-                  currentTrend === "BEARISH" ? "bg-danger/20 text-danger" : "bg-white/10 text-textSecondary"
+                currentTrend === "BEARISH" ? "bg-danger/20 text-danger" : "bg-white/10 text-textSecondary"
                 }`}>
                 {currentTrend}
               </span>
               {mtfData?.signal && (
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${mtfData.signal.includes("BUY") ? "bg-success/30 text-success" :
-                    mtfData.signal.includes("SELL") ? "bg-danger/30 text-danger" : "bg-white/10 text-textSecondary"
+                  mtfData.signal.includes("SELL") ? "bg-danger/30 text-danger" : "bg-white/10 text-textSecondary"
                   }`}>
                   {mtfData.signal.replace("_", " ")}
                 </span>
@@ -902,8 +907,8 @@ export default function HomePage() {
               key={tf}
               onClick={() => setTrendTf(tf)}
               className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-wider transition-all ${trendTf === tf
-                  ? "bg-accent text-white shadow-lg"
-                  : "text-textSecondary hover:text-white hover:bg-white/10"
+                ? "bg-accent text-white shadow-lg"
+                : "text-textSecondary hover:text-white hover:bg-white/10"
                 }`}
             >
               {tf}
@@ -946,8 +951,8 @@ export default function HomePage() {
                 <div className="flex items-center justify-between">
                   <span>Volatility</span>
                   <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${mtfData.atr.volatility_level === "LOW" ? "bg-success/20 text-success" :
-                      mtfData.atr.volatility_level === "HIGH" || mtfData.atr.volatility_level === "EXTREME" ? "bg-danger/20 text-danger" :
-                        "bg-white/10"
+                    mtfData.atr.volatility_level === "HIGH" || mtfData.atr.volatility_level === "EXTREME" ? "bg-danger/20 text-danger" :
+                      "bg-white/10"
                     }`}>
                     {mtfData.atr.volatility_level}
                   </span>
@@ -1275,8 +1280,8 @@ export default function HomePage() {
                       <div className={`absolute -inset-1 rounded-xl opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500 ${isUp ? "bg-success/20" : "bg-danger/20"}`} />
 
                       <div className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-300 ${isUp
-                          ? "bg-success/[0.08] border-success/20 hover:border-success/40"
-                          : "bg-danger/[0.08] border-danger/20 hover:border-danger/40"
+                        ? "bg-success/[0.08] border-success/20 hover:border-success/40"
+                        : "bg-danger/[0.08] border-danger/20 hover:border-danger/40"
                         }`}>
                         {isLoadingPrice ? (
                           <div className="flex items-center gap-3">
