@@ -30,6 +30,7 @@ import {
   TrendingUp as TrendUp,
 } from "lucide-react";
 import { useI18nStore } from "../lib/i18n/store";
+import { useLivePrices } from "../hooks/useLivePrices";
 
 // Pattern type definition
 interface Pattern {
@@ -50,9 +51,14 @@ interface Pattern {
   expectedMove: number; // Percentage
 }
 
-// Mock data generator - in real app, this comes from API
-const generateMockPatterns = (): Pattern[] => {
+// Pattern generator with live prices
+const generatePatternsWithPrices = (nasdaqPrice: number, xauusdPrice: number): Pattern[] => {
   const now = new Date();
+  
+  // Use live prices, with fallback to reasonable defaults
+  const nasdaq = nasdaqPrice || 21500;
+  const gold = xauusdPrice || 2800;
+  
   return [
     {
       id: "p1",
@@ -65,10 +71,10 @@ const generateMockPatterns = (): Pattern[] => {
       successRate: 72,
       detectedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(),
       detectedCandle: 45,
-      entry: 21450,
-      target: 21680,
-      stopLoss: 21320,
-      currentPrice: 21547,
+      entry: Math.round(nasdaq * 0.998),
+      target: Math.round(nasdaq * 1.012),
+      stopLoss: Math.round(nasdaq * 0.992),
+      currentPrice: nasdaq,
       expectedMove: 1.07,
     },
     {
@@ -82,10 +88,10 @@ const generateMockPatterns = (): Pattern[] => {
       successRate: 68,
       detectedAt: new Date(now.getTime() - 8 * 60 * 60 * 1000).toISOString(),
       detectedCandle: 12,
-      entry: 21500,
-      target: 21850,
-      stopLoss: 21350,
-      currentPrice: 21547,
+      entry: Math.round(nasdaq * 0.999),
+      target: Math.round(nasdaq * 1.018),
+      stopLoss: Math.round(nasdaq * 0.993),
+      currentPrice: nasdaq,
       expectedMove: 1.63,
     },
     {
@@ -99,10 +105,10 @@ const generateMockPatterns = (): Pattern[] => {
       successRate: 65,
       detectedAt: new Date(now.getTime() - 45 * 60 * 1000).toISOString(),
       detectedCandle: 8,
-      entry: 21560,
-      target: 21380,
-      stopLoss: 21640,
-      currentPrice: 21547,
+      entry: Math.round(nasdaq * 1.001),
+      target: Math.round(nasdaq * 0.992),
+      stopLoss: Math.round(nasdaq * 1.005),
+      currentPrice: nasdaq,
       expectedMove: -0.84,
     },
     {
@@ -116,10 +122,10 @@ const generateMockPatterns = (): Pattern[] => {
       successRate: 71,
       detectedAt: new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString(),
       detectedCandle: 28,
-      entry: 2045,
-      target: 2068,
-      stopLoss: 2032,
-      currentPrice: 2048.5,
+      entry: Math.round(gold * 0.999 * 100) / 100,
+      target: Math.round(gold * 1.011 * 100) / 100,
+      stopLoss: Math.round(gold * 0.994 * 100) / 100,
+      currentPrice: gold,
       expectedMove: 1.12,
     },
     {
@@ -133,10 +139,10 @@ const generateMockPatterns = (): Pattern[] => {
       successRate: 74,
       detectedAt: new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString(),
       detectedCandle: 6,
-      entry: 2052,
-      target: 2018,
-      stopLoss: 2072,
-      currentPrice: 2048.5,
+      entry: Math.round(gold * 1.002 * 100) / 100,
+      target: Math.round(gold * 0.985 * 100) / 100,
+      stopLoss: Math.round(gold * 1.012 * 100) / 100,
+      currentPrice: gold,
       expectedMove: -1.66,
     },
     {
@@ -150,10 +156,10 @@ const generateMockPatterns = (): Pattern[] => {
       successRate: 62,
       detectedAt: new Date(now.getTime() - 20 * 60 * 1000).toISOString(),
       detectedCandle: 3,
-      entry: 2047,
-      target: 2062,
-      stopLoss: 2039,
-      currentPrice: 2048.5,
+      entry: Math.round(gold * 0.9995 * 100) / 100,
+      target: Math.round(gold * 1.007 * 100) / 100,
+      stopLoss: Math.round(gold * 0.996 * 100) / 100,
+      currentPrice: gold,
       expectedMove: 0.73,
     },
   ];
@@ -734,8 +740,13 @@ export default function PatternEngineV2() {
   const [selectedSymbol, setSelectedSymbol] = useState<"ALL" | "NASDAQ" | "XAUUSD">("ALL");
   const [selectedPattern, setSelectedPattern] = useState<Pattern | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Get live prices for realistic pattern targets
+  const { prices } = useLivePrices(10000);
+  const nasdaqPrice = prices.get("NDX.INDX")?.price || 0;
+  const xauusdPrice = prices.get("XAUUSD")?.price || 0;
 
-  const patterns = useMemo(() => generateMockPatterns(), []);
+  const patterns = useMemo(() => generatePatternsWithPrices(nasdaqPrice, xauusdPrice), [nasdaqPrice, xauusdPrice]);
 
   const filteredPatterns = useMemo(() => {
     if (selectedSymbol === "ALL") return patterns;
