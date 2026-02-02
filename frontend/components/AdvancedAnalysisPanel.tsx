@@ -85,14 +85,55 @@ export default function AdvancedAnalysisPanel({ symbol, className = "" }: Advanc
     try {
       setLoading(true);
       const normalizedSymbol = symbol.toUpperCase() === "NASDAQ" ? "NDX.INDX" : symbol;
-      const res = await fetch(`${API_BASE}/api/mtf-analysis/${normalizedSymbol}`);
+      const res = await fetch(`${API_BASE}/api/mtf/analysis?symbol=${encodeURIComponent(normalizedSymbol)}`);
       
       if (!res.ok) throw new Error("Failed to fetch MTF analysis");
       
       const json = await res.json();
       
-      if (json.success && json.advanced) {
-        setData(json.advanced);
+      if (json.success && json.confluence) {
+        // Extract advanced data from confluence response
+        const advanced: MTFAdvancedData = {
+          market_regime: json.confluence.market_regime || {
+            regime: "UNKNOWN",
+            adx: 0,
+            plus_di: 0,
+            minus_di: 0,
+            di_spread: 0,
+            confidence_level: "LOW_CONFIDENCE",
+            trend_direction: null,
+            regime_quality: 0
+          },
+          price_action: json.confluence.price_action || {
+            structure: "CHOPPY",
+            structure_quality: "CHOPPY",
+            liquidity_sweep: false,
+            equal_highs_count: 0,
+            equal_lows_count: 0,
+            break_of_structure: false
+          },
+          volume_profile: json.confluence.volume_profile || {
+            poc: 0,
+            hvn_resistances: [],
+            hvn_supports: [],
+            poc_is_relevant: false
+          },
+          pivot_points: json.confluence.pivot_points || {
+            pivot: 0,
+            r1: 0, r2: 0, r3: 0,
+            s1: 0, s2: 0, s3: 0,
+            pivot_type: "CLASSIC"
+          },
+          position_sizing: json.confluence.position_sizing || {
+            recommended_risk_percent: 1,
+            volatility_adjustment: 0,
+            session: "UNKNOWN",
+            session_volatility: "NORMAL",
+            high_impact_event: null
+          },
+          correlation: json.confluence.correlation || null
+        };
+        setData(advanced);
         setLastUpdate(new Date());
         setError(null);
       } else {
