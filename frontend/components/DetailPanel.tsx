@@ -21,7 +21,7 @@ function useGuideContent(type: DetailType | null, data: Record<string, any> | nu
   
   if (!type || !data) return null;
 
-  const formatPrice = (v: number) => v?.toLocaleString(undefined, { maximumFractionDigits: 2 }) ?? "--";
+  const formatPrice = (v: number) => v?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? "--";
   
   if (type === "ema_distance") {
     const period = data.period || 20;
