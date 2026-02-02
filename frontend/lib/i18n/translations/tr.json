@@ -370,6 +370,7 @@
     "refresh": "Yenile",
     "ready": "Claude AI analizi hazır",
     "apiSaving": "API tasarrufu için analiz butona basınca çalışır",
+    "lastAnalysis": "Son Analiz",
     "agreement": "MUTABIK",
     "disagreement": "FARKLI GÖRÜŞ",
     "mlDecision": "ML Kararı",

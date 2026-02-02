@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Brain,
   RefreshCw,
@@ -13,9 +13,11 @@ import {
   Newspaper,
   Globe,
   Activity,
+  Clock,
 } from "lucide-react";
 import { useDetailedAIAnalysis } from "../lib/api/detailedAiAnalysis";
 import { useI18nStore } from "../lib/i18n/store";
+import { useClaudeAnalysisStore } from "../lib/claudeAnalysisStore";
 
 type Props = {
   symbol: string;
@@ -62,8 +64,23 @@ function mlLabel(direction: string, t: (key: string) => string) {
 
 export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
   const { t, locale } = useI18nStore();
-  const { data, isLoading, isFetching, error, refetch } = useDetailedAIAnalysis(symbol);
+  const { data: fetchedData, isLoading, isFetching, error, refetch } = useDetailedAIAnalysis(symbol);
   const [showContext, setShowContext] = useState(false);
+  const { getDetailed, setDetailed, getLastUpdated } = useClaudeAnalysisStore();
+  
+  // Get persisted data
+  const persistedData = getDetailed(symbol);
+  const lastUpdated = getLastUpdated(symbol);
+  
+  // Use fetched data if available, otherwise use persisted data
+  const data = fetchedData || persistedData;
+  
+  // Persist new data when fetched
+  useEffect(() => {
+    if (fetchedData) {
+      setDetailed(symbol, fetchedData);
+    }
+  }, [fetchedData, symbol, setDetailed]);
 
   const analysis = (data?.analysis || {}) as any;
   const context = (data?.context || {}) as any;
@@ -181,6 +198,14 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
           </button>
         </div>
       </div>
+
+      {/* Show last updated time if we have persisted data */}
+      {lastUpdated && data && !isLoading && (
+        <div className="flex items-center gap-2 text-xs text-textSecondary bg-white/5 px-3 py-2 rounded-lg">
+          <Clock className="w-3 h-3" />
+          <span>{t("claudeAnalysis.lastAnalysis")}: {new Date(lastUpdated).toLocaleString(locale === "en" ? "en-US" : "tr-TR")}</span>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-3">

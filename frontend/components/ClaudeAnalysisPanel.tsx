@@ -13,10 +13,12 @@ import {
   Sparkles,
   Shield,
   Target,
-  Scale
+  Scale,
+  Clock
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useI18nStore } from "../lib/i18n/store";
+import { useClaudeAnalysisStore } from "../lib/claudeAnalysisStore";
 
 type Props = {
   symbol: string;
@@ -57,9 +59,24 @@ function AgreementBadge({ agreement, t }: { agreement: boolean; t: (key: string)
 
 export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
   const [shouldFetch, setShouldFetch] = useState(false);
-  const { data, isLoading, error, refetch } = useAIAnalysis(symbol, shouldFetch);
+  const { data: fetchedData, isLoading, error, refetch } = useAIAnalysis(symbol, shouldFetch);
   const [expanded, setExpanded] = useState(false);
   const { t, locale } = useI18nStore();
+  const { getAnalysis, setAnalysis, getLastUpdated } = useClaudeAnalysisStore();
+  
+  // Get persisted data
+  const persistedData = getAnalysis(symbol);
+  const lastUpdated = getLastUpdated(symbol);
+  
+  // Use fetched data if available, otherwise use persisted data
+  const data = fetchedData || persistedData;
+  
+  // Persist new data when fetched
+  useEffect(() => {
+    if (fetchedData) {
+      setAnalysis(symbol, fetchedData);
+    }
+  }, [fetchedData, symbol, setAnalysis]);
   
   const handleAnalyze = () => {
     setShouldFetch(true);
@@ -91,7 +108,15 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
         </button>
       </div>
 
-      {!shouldFetch && !data ? (
+      {/* Show last updated time if we have persisted data */}
+      {lastUpdated && data && !isLoading && (
+        <div className="flex items-center gap-2 text-xs text-textSecondary bg-white/5 px-3 py-2 rounded-lg">
+          <Clock className="w-3 h-3" />
+          <span>{t("claudeAnalysis.lastAnalysis")}: {new Date(lastUpdated).toLocaleString(locale === "en" ? "en-US" : "tr-TR")}</span>
+        </div>
+      )}
+
+      {!data && !isLoading ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <Brain className="w-12 h-12 text-purple-400/50 mb-4" />
           <p className="text-textSecondary text-sm mb-2">{t("claudeAnalysis.ready")}</p>

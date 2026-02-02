@@ -370,6 +370,7 @@
     "refresh": "Refresh",
     "ready": "Claude AI analysis ready",
     "apiSaving": "Click to start analysis (saves API credits)",
+    "lastAnalysis": "Last Analysis",
     "agreement": "Both models agree",
     "disagreement": "Models have different views",
     "mlDecision": "ML Decision",
