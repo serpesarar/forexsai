@@ -17,76 +17,84 @@ export interface InfoData {
   importance: "critical" | "high" | "medium" | "low";
 }
 
-export const TRADING_INFO: Record<string, InfoData> = {
+// Locale-based trading info
+export function getTradingInfo(locale: string): Record<string, InfoData> {
+  const isEn = locale === "en";
+  
+  return {
   // ═══════════════════════════════════════════════════════════════════
-  // TEMEL GÖSTERGELER
+  // BASIC INDICATORS
   // ═══════════════════════════════════════════════════════════════════
   
   rsi: {
     title: "RSI (Relative Strength Index)",
-    description: "Fiyatın aşırı alım veya aşırı satım bölgesinde olup olmadığını gösteren momentum göstergesi.",
-    usage: "Trend dönüşlerini ve aşırı hareketleri tespit etmek için kullanılır.",
+    description: isEn 
+      ? "Momentum indicator showing whether price is in overbought or oversold territory."
+      : "Fiyatın aşırı alım veya aşırı satım bölgesinde olup olmadığını gösteren momentum göstergesi.",
+    usage: isEn 
+      ? "Used to detect trend reversals and extreme moves."
+      : "Trend dönüşlerini ve aşırı hareketleri tespit etmek için kullanılır.",
     levels: [
-      { value: "< 30", meaning: "Aşırı Satım", action: "🟢 LONG fırsatı ara" },
-      { value: "30-50", meaning: "Zayıf/Düşüş", action: "⚠️ Dikkatli ol" },
-      { value: "50-70", meaning: "Güçlü/Yükseliş", action: "📈 Trend devam" },
-      { value: "> 70", meaning: "Aşırı Alım", action: "🔴 SHORT fırsatı ara" },
+      { value: "< 30", meaning: isEn ? "Oversold" : "Aşırı Satım", action: isEn ? "🟢 Look for LONG" : "🟢 LONG fırsatı ara" },
+      { value: "30-50", meaning: isEn ? "Weak/Bearish" : "Zayıf/Düşüş", action: isEn ? "⚠️ Be careful" : "⚠️ Dikkatli ol" },
+      { value: "50-70", meaning: isEn ? "Strong/Bullish" : "Güçlü/Yükseliş", action: isEn ? "📈 Trend continues" : "📈 Trend devam" },
+      { value: "> 70", meaning: isEn ? "Overbought" : "Aşırı Alım", action: isEn ? "🔴 Look for SHORT" : "🔴 SHORT fırsatı ara" },
     ],
-    example: "RSI 25 → Fiyat çok düştü, toparlanma gelebilir",
+    example: isEn ? "RSI 25 → Price dropped a lot, recovery may come" : "RSI 25 → Fiyat çok düştü, toparlanma gelebilir",
     importance: "high",
   },
 
   macd: {
     title: "MACD (Moving Average Convergence Divergence)",
-    description: "İki hareketli ortalama arasındaki farkı gösteren trend takip göstergesi.",
-    usage: "Trend yönü ve momentum değişimlerini tespit eder.",
+    description: isEn ? "Trend-following indicator showing difference between two moving averages." : "İki hareketli ortalama arasındaki farkı gösteren trend takip göstergesi.",
+    usage: isEn ? "Detects trend direction and momentum changes." : "Trend yönü ve momentum değişimlerini tespit eder.",
     levels: [
-      { value: "MACD > Signal", meaning: "Bullish Crossover", action: "🟢 LONG sinyali" },
-      { value: "MACD < Signal", meaning: "Bearish Crossover", action: "🔴 SHORT sinyali" },
-      { value: "Histogram +", meaning: "Yükseliş momentumu", action: "📈 Trend güçleniyor" },
-      { value: "Histogram -", meaning: "Düşüş momentumu", action: "📉 Trend zayıflıyor" },
+      { value: "MACD > Signal", meaning: "Bullish Crossover", action: isEn ? "🟢 LONG signal" : "🟢 LONG sinyali" },
+      { value: "MACD < Signal", meaning: "Bearish Crossover", action: isEn ? "🔴 SHORT signal" : "🔴 SHORT sinyali" },
+      { value: "Histogram +", meaning: isEn ? "Rising momentum" : "Yükseliş momentumu", action: isEn ? "📈 Trend strengthening" : "📈 Trend güçleniyor" },
+      { value: "Histogram -", meaning: isEn ? "Falling momentum" : "Düşüş momentumu", action: isEn ? "📉 Trend weakening" : "📉 Trend zayıflıyor" },
     ],
-    example: "MACD signal'ı yukarı keserse → BUY sinyali",
+    example: isEn ? "MACD crosses signal upward → BUY signal" : "MACD signal'ı yukarı keserse → BUY sinyali",
     importance: "high",
   },
 
   adx: {
     title: "ADX (Average Directional Index)",
-    description: "Trendin gücünü ölçer (yön göstermez, sadece güç).",
-    usage: "Piyasanın trendde mi yoksa yatay mı olduğunu anlamak için.",
+    description: isEn ? "Measures trend strength (not direction, only strength)." : "Trendin gücünü ölçer (yön göstermez, sadece güç).",
+    usage: isEn ? "To understand if market is trending or sideways." : "Piyasanın trendde mi yoksa yatay mı olduğunu anlamak için.",
     levels: [
-      { value: "< 20", meaning: "Zayıf/Yatay Piyasa", action: "⚠️ Range trading yap" },
-      { value: "20-40", meaning: "Gelişen Trend", action: "📊 Trend takip et" },
-      { value: "40-60", meaning: "Güçlü Trend", action: "🚀 Trendle git" },
-      { value: "> 60", meaning: "Aşırı Güçlü Trend", action: "⚡ Dikkat, tükenme yakın" },
+      { value: "< 20", meaning: isEn ? "Weak/Sideways" : "Zayıf/Yatay Piyasa", action: isEn ? "⚠️ Range trading" : "⚠️ Range trading yap" },
+      { value: "20-40", meaning: isEn ? "Developing Trend" : "Gelişen Trend", action: isEn ? "📊 Follow trend" : "📊 Trend takip et" },
+      { value: "40-60", meaning: isEn ? "Strong Trend" : "Güçlü Trend", action: isEn ? "🚀 Go with trend" : "🚀 Trendle git" },
+      { value: "> 60", meaning: isEn ? "Very Strong Trend" : "Aşırı Güçlü Trend", action: isEn ? "⚡ Caution, exhaustion near" : "⚡ Dikkat, tükenme yakın" },
     ],
-    example: "ADX 50 + DI+ > DI- → Güçlü yükseliş trendi",
+    example: isEn ? "ADX 50 + DI+ > DI- → Strong uptrend" : "ADX 50 + DI+ > DI- → Güçlü yükseliş trendi",
     importance: "critical",
   },
 
   di_spread: {
-    title: "DI Spread (+DI / -DI Farkı)",
-    description: "Trendin yönünü ve gücünü birlikte gösteren ADX bileşeni.",
-    usage: "ADX yüksek ama DI spread düşükse → Gerçek trend yok!",
+    title: isEn ? "DI Spread (+DI / -DI Difference)" : "DI Spread (+DI / -DI Farkı)",
+    description: isEn ? "ADX component showing trend direction and strength together." : "Trendin yönünü ve gücünü birlikte gösteren ADX bileşeni.",
+    usage: isEn ? "If ADX high but DI spread low → No real trend!" : "ADX yüksek ama DI spread düşükse → Gerçek trend yok!",
     levels: [
-      { value: "+DI >> -DI", meaning: "Güçlü Bullish", action: "🟢 LONG" },
-      { value: "-DI >> +DI", meaning: "Güçlü Bearish", action: "🔴 SHORT" },
-      { value: "+DI ≈ -DI", meaning: "Kararsız/Ranging", action: "⚠️ BEKLE" },
+      { value: "+DI >> -DI", meaning: isEn ? "Strong Bullish" : "Güçlü Bullish", action: "🟢 LONG" },
+      { value: "-DI >> +DI", meaning: isEn ? "Strong Bearish" : "Güçlü Bearish", action: "🔴 SHORT" },
+      { value: "+DI ≈ -DI", meaning: isEn ? "Indecisive/Ranging" : "Kararsız/Ranging", action: isEn ? "⚠️ WAIT" : "⚠️ BEKLE" },
     ],
-    example: "ADX=50, DI Spread=5 → ADX yüksek ama trend yok, FAKE!",
+    example: isEn ? "ADX=50, DI Spread=5 → ADX high but no trend, FAKE!" : "ADX=50, DI Spread=5 → ADX yüksek ama trend yok, FAKE!",
     importance: "critical",
   },
 
   atr: {
     title: "ATR (Average True Range)",
-    description: "Volatiliteyi (fiyat dalgalanmasını) ölçer.",
-    usage: "Stop loss ve position sizing için kritik.",
+    description: isEn ? "Measures volatility (price fluctuation)." : "Volatiliteyi (fiyat dalgalanmasını) ölçer.",
+    usage: isEn ? "Critical for stop loss and position sizing." : "Stop loss ve position sizing için kritik.",
     levels: [
-      { value: "Düşük ATR", meaning: "Düşük Volatilite", action: "📊 Küçük SL, büyük pozisyon" },
-      { value: "Normal ATR", meaning: "Normal Piyasa", action: "✅ Standart parametreler" },
-      { value: "Yüksek ATR", meaning: "Yüksek Volatilite", action: "⚠️ Geniş SL, küçük pozisyon" },
+      { value: isEn ? "Low ATR" : "Düşük ATR", meaning: isEn ? "Low Volatility" : "Düşük Volatilite", action: isEn ? "📊 Small SL, large position" : "📊 Küçük SL, büyük pozisyon" },
+      { value: isEn ? "Normal ATR" : "Normal ATR", meaning: isEn ? "Normal Market" : "Normal Piyasa", action: isEn ? "✅ Standard parameters" : "✅ Standart parametreler" },
+      { value: isEn ? "High ATR" : "Yüksek ATR", meaning: isEn ? "High Volatility" : "Yüksek Volatilite", action: isEn ? "⚠️ Wide SL, small position" : "⚠️ Geniş SL, küçük pozisyon" },
     ],
-    example: "ATR 30 → SL en az 30-45 pip olmalı",
+    example: isEn ? "ATR 30 → SL should be at least 30-45 pips" : "ATR 30 → SL en az 30-45 pip olmalı",
     importance: "high",
   },
 
@@ -95,69 +103,69 @@ export const TRADING_INFO: Record<string, InfoData> = {
   // ═══════════════════════════════════════════════════════════════════
 
   market_regime: {
-    title: "Market Regime (Piyasa Rejimi)",
-    description: "Piyasanın mevcut durumunu belirler: Trend mi, Range mi?",
-    usage: "Strateji seçimi için kritik. Trend piyasada trend takip, range'de scalping.",
+    title: isEn ? "Market Regime" : "Market Regime (Piyasa Rejimi)",
+    description: isEn ? "Determines market's current state: Trending or Ranging?" : "Piyasanın mevcut durumunu belirler: Trend mi, Range mi?",
+    usage: isEn ? "Critical for strategy selection. Trend following in trends, scalping in ranges." : "Strateji seçimi için kritik. Trend piyasada trend takip, range'de scalping.",
     levels: [
-      { value: "STRONG_TREND", meaning: "Güçlü Trend", action: "🚀 Trend takip stratejisi" },
-      { value: "WEAK_TREND", meaning: "Zayıf Trend", action: "📊 Dikkatli trend takip" },
-      { value: "RANGING", meaning: "Yatay Piyasa", action: "📈📉 Range trading" },
-      { value: "VOLATILE", meaning: "Volatil", action: "⚠️ Küçük pozisyon" },
-      { value: "CHOPPY", meaning: "Dalgalı", action: "🚫 Trade yapma" },
+      { value: "STRONG_TREND", meaning: isEn ? "Strong Trend" : "Güçlü Trend", action: isEn ? "🚀 Trend following strategy" : "🚀 Trend takip stratejisi" },
+      { value: "WEAK_TREND", meaning: isEn ? "Weak Trend" : "Zayıf Trend", action: isEn ? "📊 Careful trend following" : "📊 Dikkatli trend takip" },
+      { value: "RANGING", meaning: isEn ? "Sideways Market" : "Yatay Piyasa", action: "📈📉 Range trading" },
+      { value: "VOLATILE", meaning: isEn ? "Volatile" : "Volatil", action: isEn ? "⚠️ Small position" : "⚠️ Küçük pozisyon" },
+      { value: "CHOPPY", meaning: isEn ? "Choppy" : "Dalgalı", action: isEn ? "🚫 Don't trade" : "🚫 Trade yapma" },
     ],
     importance: "critical",
   },
 
   liquidity_sweep: {
-    title: "Liquidity Sweep (Stop Avlama)",
-    description: "Büyük oyuncuların stop loss'ları tetikleyip geri döndüğü durum.",
-    usage: "Fakeout tespiti için kritik. Sweep sonrası ters yöne trade aç.",
+    title: isEn ? "Liquidity Sweep (Stop Hunt)" : "Liquidity Sweep (Stop Avlama)",
+    description: isEn ? "Situation where big players trigger stop losses and reverse." : "Büyük oyuncuların stop loss'ları tetikleyip geri döndüğü durum.",
+    usage: isEn ? "Critical for fakeout detection. Trade opposite direction after sweep." : "Fakeout tespiti için kritik. Sweep sonrası ters yöne trade aç.",
     levels: [
-      { value: "DETECTED", meaning: "Sweep Tespit Edildi", action: "⚠️ Geri dönüşü bekle" },
-      { value: "FAKEOUT_TRAP", meaning: "Tuzak Hareketi", action: "🔴 Confidence ×0.5" },
-      { value: "NONE", meaning: "Normal Hareket", action: "✅ Normal işlem" },
+      { value: "DETECTED", meaning: isEn ? "Sweep Detected" : "Sweep Tespit Edildi", action: isEn ? "⚠️ Wait for reversal" : "⚠️ Geri dönüşü bekle" },
+      { value: "FAKEOUT_TRAP", meaning: isEn ? "Trap Move" : "Tuzak Hareketi", action: "🔴 Confidence ×0.5" },
+      { value: "NONE", meaning: isEn ? "Normal Move" : "Normal Hareket", action: isEn ? "✅ Normal trade" : "✅ Normal işlem" },
     ],
-    example: "Fiyat direnç kırdı, 30 pip yukarı gitti, hemen geri döndü → SWEEP",
+    example: isEn ? "Price broke resistance, went 30 pips up, immediately reversed → SWEEP" : "Fiyat direnç kırdı, 30 pip yukarı gitti, hemen geri döndü → SWEEP",
     importance: "critical",
   },
 
   session: {
-    title: "Trading Session (İşlem Seansı)",
-    description: "Hangi piyasanın açık olduğunu gösterir.",
-    usage: "Her seansın farklı volatilite ve davranışı var.",
+    title: isEn ? "Trading Session" : "Trading Session (İşlem Seansı)",
+    description: isEn ? "Shows which market is open." : "Hangi piyasanın açık olduğunu gösterir.",
+    usage: isEn ? "Each session has different volatility and behavior." : "Her seansın farklı volatilite ve davranışı var.",
     levels: [
-      { value: "ASIA", meaning: "Tokyo Seansı", action: "⚠️ Düşük volatilite, -15% confidence" },
-      { value: "LONDON", meaning: "Londra Seansı", action: "🚀 Yüksek volatilite, trend başlangıcı" },
-      { value: "NY", meaning: "New York Seansı", action: "⚡ En yüksek volatilite" },
-      { value: "OVERLAP", meaning: "Londra-NY Kesişimi", action: "🔥 Maksimum likidite" },
+      { value: "ASIA", meaning: isEn ? "Tokyo Session" : "Tokyo Seansı", action: isEn ? "⚠️ Low volatility, -15% confidence" : "⚠️ Düşük volatilite, -15% confidence" },
+      { value: "LONDON", meaning: isEn ? "London Session" : "Londra Seansı", action: isEn ? "🚀 High volatility, trend start" : "🚀 Yüksek volatilite, trend başlangıcı" },
+      { value: "NY", meaning: isEn ? "New York Session" : "New York Seansı", action: isEn ? "⚡ Highest volatility" : "⚡ En yüksek volatilite" },
+      { value: "OVERLAP", meaning: isEn ? "London-NY Overlap" : "Londra-NY Kesişimi", action: isEn ? "🔥 Maximum liquidity" : "🔥 Maksimum likidite" },
     ],
     importance: "high",
   },
 
   pivot_points: {
     title: "Fibonacci Pivot Points",
-    description: "Gün içi destek/direnç seviyeleri. Fibonacci oranlarıyla hesaplanır.",
-    usage: "Entry, exit ve stop loss seviyeleri için kullan.",
+    description: isEn ? "Intraday support/resistance levels. Calculated with Fibonacci ratios." : "Gün içi destek/direnç seviyeleri. Fibonacci oranlarıyla hesaplanır.",
+    usage: isEn ? "Use for entry, exit and stop loss levels." : "Entry, exit ve stop loss seviyeleri için kullan.",
     levels: [
-      { value: "R2 (0.618)", meaning: "Güçlü Direnç", action: "🔴 Short için ideal" },
-      { value: "R1", meaning: "İlk Direnç", action: "📊 Kar al seviyesi" },
-      { value: "Pivot", meaning: "Denge Noktası", action: "↔️ Yön belirleyici" },
-      { value: "S1", meaning: "İlk Destek", action: "📊 Kar al seviyesi" },
-      { value: "S2 (0.618)", meaning: "Güçlü Destek", action: "🟢 Long için ideal" },
+      { value: "R2 (0.618)", meaning: isEn ? "Strong Resistance" : "Güçlü Direnç", action: isEn ? "🔴 Ideal for short" : "🔴 Short için ideal" },
+      { value: "R1", meaning: isEn ? "First Resistance" : "İlk Direnç", action: isEn ? "📊 Take profit level" : "📊 Kar al seviyesi" },
+      { value: "Pivot", meaning: isEn ? "Balance Point" : "Denge Noktası", action: isEn ? "↔️ Direction determiner" : "↔️ Yön belirleyici" },
+      { value: "S1", meaning: isEn ? "First Support" : "İlk Destek", action: isEn ? "📊 Take profit level" : "📊 Kar al seviyesi" },
+      { value: "S2 (0.618)", meaning: isEn ? "Strong Support" : "Güçlü Destek", action: isEn ? "🟢 Ideal for long" : "🟢 Long için ideal" },
     ],
-    example: "Fiyat S2'ye düştü + RSI <30 → Güçlü LONG fırsatı",
+    example: isEn ? "Price dropped to S2 + RSI <30 → Strong LONG opportunity" : "Fiyat S2'ye düştü + RSI <30 → Güçlü LONG fırsatı",
     importance: "high",
   },
 
   hvn_levels: {
-    title: "HVN (High Volume Node) Seviyeleri",
-    description: "En çok işlem hacminin gerçekleştiği fiyat seviyeleri.",
-    usage: "POC'dan daha güvenilir S/R seviyeleri. Fiyat buralarda tepki verir.",
+    title: isEn ? "HVN (High Volume Node) Levels" : "HVN (High Volume Node) Seviyeleri",
+    description: isEn ? "Price levels where most trading volume occurred." : "En çok işlem hacminin gerçekleştiği fiyat seviyeleri.",
+    usage: isEn ? "More reliable S/R levels than POC. Price reacts at these levels." : "POC'dan daha güvenilir S/R seviyeleri. Fiyat buralarda tepki verir.",
     levels: [
-      { value: "HVN Resistance", meaning: "Hacim Direnci", action: "🔴 Satış baskısı güçlü" },
-      { value: "HVN Support", meaning: "Hacim Desteği", action: "🟢 Alım baskısı güçlü" },
+      { value: "HVN Resistance", meaning: isEn ? "Volume Resistance" : "Hacim Direnci", action: isEn ? "🔴 Strong selling pressure" : "🔴 Satış baskısı güçlü" },
+      { value: "HVN Support", meaning: isEn ? "Volume Support" : "Hacim Desteği", action: isEn ? "🟢 Strong buying pressure" : "🟢 Alım baskısı güçlü" },
     ],
-    example: "Fiyat HVN direncine yaklaştı → Geri dönüş beklenir",
+    example: isEn ? "Price approached HVN resistance → Reversal expected" : "Fiyat HVN direncine yaklaştı → Geri dönüş beklenir",
     importance: "high",
   },
 
@@ -167,38 +175,38 @@ export const TRADING_INFO: Record<string, InfoData> = {
 
   cot_commercials: {
     title: "COT Commercials (Hedgers)",
-    description: "Büyük şirketler ve hedger'ların pozisyonları. 'Smart Money' olarak bilinir.",
-    usage: "Genellikle trend sonlarında doğru taraftadırlar.",
+    description: isEn ? "Positions of large corporations and hedgers. Known as 'Smart Money'." : "Büyük şirketler ve hedger'ların pozisyonları. 'Smart Money' olarak bilinir.",
+    usage: isEn ? "Usually on the right side at trend endings." : "Genellikle trend sonlarında doğru taraftadırlar.",
     levels: [
-      { value: "Net Long", meaning: "Alım Yapıyorlar", action: "🟢 Bullish sinyal" },
-      { value: "Net Short", meaning: "Satış Yapıyorlar", action: "🔴 Bearish sinyal" },
+      { value: "Net Long", meaning: isEn ? "Buying" : "Alım Yapıyorlar", action: isEn ? "🟢 Bullish signal" : "🟢 Bullish sinyal" },
+      { value: "Net Short", meaning: isEn ? "Selling" : "Satış Yapıyorlar", action: isEn ? "🔴 Bearish signal" : "🔴 Bearish sinyal" },
     ],
-    example: "Commercials 50K net long → Güçlü yükseliş sinyali",
+    example: isEn ? "Commercials 50K net long → Strong bullish signal" : "Commercials 50K net long → Güçlü yükseliş sinyali",
     importance: "high",
   },
 
   cot_speculators: {
     title: "COT Speculators (Funds)",
-    description: "Hedge fonlar ve spekülatörlerin pozisyonları. Genellikle trend ortasında doğru.",
-    usage: "Ekstrem pozisyonlarda TERS yöne dikkat et!",
+    description: isEn ? "Positions of hedge funds and speculators. Usually right in the middle of trends." : "Hedge fonlar ve spekülatörlerin pozisyonları. Genellikle trend ortasında doğru.",
+    usage: isEn ? "Watch for OPPOSITE direction at extreme positions!" : "Ekstrem pozisyonlarda TERS yöne dikkat et!",
     levels: [
-      { value: "< 30% Long", meaning: "Aşırı Pessimist", action: "🟢 Contrarian BUY" },
-      { value: "30-70% Long", meaning: "Normal", action: "📊 Trend takip" },
-      { value: "> 80% Long", meaning: "Aşırı Crowded", action: "⚠️ TREND EXHAUSTION riski" },
+      { value: "< 30% Long", meaning: isEn ? "Extremely Pessimistic" : "Aşırı Pessimist", action: "🟢 Contrarian BUY" },
+      { value: "30-70% Long", meaning: "Normal", action: isEn ? "📊 Follow trend" : "📊 Trend takip" },
+      { value: "> 80% Long", meaning: isEn ? "Extremely Crowded" : "Aşırı Crowded", action: isEn ? "⚠️ TREND EXHAUSTION risk" : "⚠️ TREND EXHAUSTION riski" },
     ],
-    example: "Speculators 85% long → Trend sonu yakın, dikkat!",
+    example: isEn ? "Speculators 85% long → Trend end near, be careful!" : "Speculators 85% long → Trend sonu yakın, dikkat!",
     importance: "critical",
   },
 
   slippage: {
-    title: "Slippage (Kayma)",
-    description: "Sinyal fiyatı ile gerçekleşen fiyat arasındaki fark.",
-    usage: "Yüksek slippage = broker sorunlu veya volatilite çok yüksek.",
+    title: isEn ? "Slippage" : "Slippage (Kayma)",
+    description: isEn ? "Difference between signal price and execution price." : "Sinyal fiyatı ile gerçekleşen fiyat arasındaki fark.",
+    usage: isEn ? "High slippage = broker issue or volatility too high." : "Yüksek slippage = broker sorunlu veya volatilite çok yüksek.",
     levels: [
-      { value: "< 1 pip", meaning: "Mükemmel", action: "✅ Normal pozisyon" },
-      { value: "1-3 pip", meaning: "Kabul Edilebilir", action: "📊 Normal işlem" },
-      { value: "> 3 pip", meaning: "Yüksek", action: "⚠️ Pozisyon %30 azalt" },
-      { value: "> 5 pip", meaning: "Aşırı", action: "🚫 Trade yapma" },
+      { value: "< 1 pip", meaning: isEn ? "Excellent" : "Mükemmel", action: isEn ? "✅ Normal position" : "✅ Normal pozisyon" },
+      { value: "1-3 pip", meaning: isEn ? "Acceptable" : "Kabul Edilebilir", action: isEn ? "📊 Normal trade" : "📊 Normal işlem" },
+      { value: "> 3 pip", meaning: isEn ? "High" : "Yüksek", action: isEn ? "⚠️ Reduce position 30%" : "⚠️ Pozisyon %30 azalt" },
+      { value: "> 5 pip", meaning: isEn ? "Extreme" : "Aşırı", action: isEn ? "🚫 Don't trade" : "🚫 Trade yapma" },
     ],
     importance: "high",
   },
@@ -208,39 +216,39 @@ export const TRADING_INFO: Record<string, InfoData> = {
   // ═══════════════════════════════════════════════════════════════════
 
   confidence: {
-    title: "Sinyal Güveni (Confidence)",
-    description: "ML modelinin sinyale olan güven yüzdesi.",
-    usage: "Düşük güven = küçük pozisyon veya trade yapma.",
+    title: isEn ? "Signal Confidence" : "Sinyal Güveni (Confidence)",
+    description: isEn ? "ML model's confidence percentage in the signal." : "ML modelinin sinyale olan güven yüzdesi.",
+    usage: isEn ? "Low confidence = small position or don't trade." : "Düşük güven = küçük pozisyon veya trade yapma.",
     levels: [
-      { value: "< 50%", meaning: "Düşük Güven", action: "🚫 Trade yapma" },
-      { value: "50-65%", meaning: "Orta Güven", action: "📊 Küçük pozisyon" },
-      { value: "65-80%", meaning: "İyi Güven", action: "✅ Normal pozisyon" },
-      { value: "> 80%", meaning: "Yüksek Güven", action: "🚀 Tam pozisyon" },
+      { value: "< 50%", meaning: isEn ? "Low Confidence" : "Düşük Güven", action: isEn ? "🚫 Don't trade" : "🚫 Trade yapma" },
+      { value: "50-65%", meaning: isEn ? "Medium Confidence" : "Orta Güven", action: isEn ? "📊 Small position" : "📊 Küçük pozisyon" },
+      { value: "65-80%", meaning: isEn ? "Good Confidence" : "İyi Güven", action: isEn ? "✅ Normal position" : "✅ Normal pozisyon" },
+      { value: "> 80%", meaning: isEn ? "High Confidence" : "Yüksek Güven", action: isEn ? "🚀 Full position" : "🚀 Tam pozisyon" },
     ],
     importance: "critical",
   },
 
   direction: {
-    title: "Sinyal Yönü",
-    description: "ML modelinin tahmin ettiği fiyat yönü.",
-    usage: "Diğer göstergelerle teyit et, tek başına kullanma.",
+    title: isEn ? "Signal Direction" : "Sinyal Yönü",
+    description: isEn ? "Price direction predicted by ML model." : "ML modelinin tahmin ettiği fiyat yönü.",
+    usage: isEn ? "Confirm with other indicators, don't use alone." : "Diğer göstergelerle teyit et, tek başına kullanma.",
     levels: [
-      { value: "BUY", meaning: "Yükseliş Beklentisi", action: "🟢 LONG pozisyon aç" },
-      { value: "SELL", meaning: "Düşüş Beklentisi", action: "🔴 SHORT pozisyon aç" },
-      { value: "HOLD", meaning: "Belirsiz", action: "⏸️ Bekle, işlem yapma" },
+      { value: "BUY", meaning: isEn ? "Bullish Expectation" : "Yükseliş Beklentisi", action: isEn ? "🟢 Open LONG position" : "🟢 LONG pozisyon aç" },
+      { value: "SELL", meaning: isEn ? "Bearish Expectation" : "Düşüş Beklentisi", action: isEn ? "🔴 Open SHORT position" : "🔴 SHORT pozisyon aç" },
+      { value: "HOLD", meaning: isEn ? "Uncertain" : "Belirsiz", action: isEn ? "⏸️ Wait, don't trade" : "⏸️ Bekle, işlem yapma" },
     ],
     importance: "critical",
   },
 
   risk_reward: {
-    title: "Risk/Reward Oranı",
-    description: "Potansiyel kar / potansiyel zarar oranı.",
-    usage: "Minimum 1:2 olmalı, ideal 1:3+",
+    title: isEn ? "Risk/Reward Ratio" : "Risk/Reward Oranı",
+    description: isEn ? "Potential profit / potential loss ratio." : "Potansiyel kar / potansiyel zarar oranı.",
+    usage: isEn ? "Should be minimum 1:2, ideal 1:3+" : "Minimum 1:2 olmalı, ideal 1:3+",
     levels: [
-      { value: "< 1:1", meaning: "Kötü", action: "🚫 Trade yapma" },
-      { value: "1:1 - 1:2", meaning: "Kabul Edilebilir", action: "⚠️ Sadece güçlü sinyallerde" },
-      { value: "1:2 - 1:3", meaning: "İyi", action: "✅ Normal trade" },
-      { value: "> 1:3", meaning: "Mükemmel", action: "🚀 Ideal setup" },
+      { value: "< 1:1", meaning: isEn ? "Bad" : "Kötü", action: isEn ? "🚫 Don't trade" : "🚫 Trade yapma" },
+      { value: "1:1 - 1:2", meaning: isEn ? "Acceptable" : "Kabul Edilebilir", action: isEn ? "⚠️ Only on strong signals" : "⚠️ Sadece güçlü sinyallerde" },
+      { value: "1:2 - 1:3", meaning: isEn ? "Good" : "İyi", action: isEn ? "✅ Normal trade" : "✅ Normal trade" },
+      { value: "> 1:3", meaning: isEn ? "Excellent" : "Mükemmel", action: "🚀 Ideal setup" },
     ],
     importance: "high",
   },
@@ -251,31 +259,31 @@ export const TRADING_INFO: Record<string, InfoData> = {
 
   nfp_day: {
     title: "NFP (Non-Farm Payrolls)",
-    description: "ABD istihdam verileri. Ayda bir kez, en önemli ekonomik veri.",
-    usage: "NFP günü trade yapma! Aşırı volatilite ve spread genişlemesi.",
+    description: isEn ? "US employment data. Once a month, most important economic data." : "ABD istihdam verileri. Ayda bir kez, en önemli ekonomik veri.",
+    usage: isEn ? "Don't trade on NFP day! Extreme volatility and spread widening." : "NFP günü trade yapma! Aşırı volatilite ve spread genişlemesi.",
     levels: [
-      { value: "DETECTED", meaning: "NFP Günü", action: "🚫 TRADE YAPMA" },
+      { value: "DETECTED", meaning: isEn ? "NFP Day" : "NFP Günü", action: isEn ? "🚫 DON'T TRADE" : "🚫 TRADE YAPMA" },
     ],
-    example: "Her ayın ilk Cuma'sı 15:30 TR saati",
+    example: isEn ? "First Friday of each month 8:30 AM EST" : "Her ayın ilk Cuma'sı 15:30 TR saati",
     importance: "critical",
   },
 
   fomc: {
-    title: "FOMC (Fed Faiz Kararı)",
-    description: "Federal Reserve faiz kararı ve basın toplantısı.",
-    usage: "FOMC günleri çok volatil. Karar öncesi trade kapatın.",
+    title: isEn ? "FOMC (Fed Interest Rate Decision)" : "FOMC (Fed Faiz Kararı)",
+    description: isEn ? "Federal Reserve interest rate decision and press conference." : "Federal Reserve faiz kararı ve basın toplantısı.",
+    usage: isEn ? "FOMC days are very volatile. Close trades before decision." : "FOMC günleri çok volatil. Karar öncesi trade kapatın.",
     levels: [
-      { value: "POTENTIAL", meaning: "FOMC Yaklaşıyor", action: "⚠️ Maksimum SMALL pozisyon" },
+      { value: "POTENTIAL", meaning: isEn ? "FOMC Approaching" : "FOMC Yaklaşıyor", action: isEn ? "⚠️ Maximum SMALL position" : "⚠️ Maksimum SMALL pozisyon" },
     ],
     importance: "critical",
   },
 
   cpi: {
-    title: "CPI (Enflasyon Verisi)",
-    description: "Tüketici fiyat endeksi. Enflasyonu ölçer.",
-    usage: "CPI günü altın ve dolar çok hareketli.",
+    title: isEn ? "CPI (Inflation Data)" : "CPI (Enflasyon Verisi)",
+    description: isEn ? "Consumer Price Index. Measures inflation." : "Tüketici fiyat endeksi. Enflasyonu ölçer.",
+    usage: isEn ? "Gold and dollar very volatile on CPI day." : "CPI günü altın ve dolar çok hareketli.",
     levels: [
-      { value: "POTENTIAL", meaning: "CPI Yaklaşıyor", action: "⚠️ Dikkatli ol" },
+      { value: "POTENTIAL", meaning: isEn ? "CPI Approaching" : "CPI Yaklaşıyor", action: isEn ? "⚠️ Be careful" : "⚠️ Dikkatli ol" },
     ],
     importance: "high",
   },
@@ -285,25 +293,25 @@ export const TRADING_INFO: Record<string, InfoData> = {
   // ═══════════════════════════════════════════════════════════════════
 
   dxy_correlation: {
-    title: "DXY (Dolar Endeksi) Korelasyonu",
-    description: "XAUUSD ile negatif korelasyon. DXY yükselirse altın düşer.",
-    usage: "Sinyal ile DXY çelişiyorsa güveni azalt.",
+    title: isEn ? "DXY (Dollar Index) Correlation" : "DXY (Dolar Endeksi) Korelasyonu",
+    description: isEn ? "Negative correlation with XAUUSD. If DXY rises, gold falls." : "XAUUSD ile negatif korelasyon. DXY yükselirse altın düşer.",
+    usage: isEn ? "If signal conflicts with DXY, reduce confidence." : "Sinyal ile DXY çelişiyorsa güveni azalt.",
     levels: [
-      { value: "CONFIRMS", meaning: "Sinyal Teyit", action: "✅ Güven artır" },
-      { value: "CONFLICTS", meaning: "Çelişki Var", action: "⚠️ Confidence -25%" },
+      { value: "CONFIRMS", meaning: isEn ? "Signal Confirmed" : "Sinyal Teyit", action: isEn ? "✅ Increase confidence" : "✅ Güven artır" },
+      { value: "CONFLICTS", meaning: isEn ? "Conflict Exists" : "Çelişki Var", action: "⚠️ Confidence -25%" },
     ],
     importance: "high",
   },
 
   vix: {
-    title: "VIX (Korku Endeksi)",
-    description: "Piyasa volatilitesi ve risk iştahı göstergesi.",
-    usage: "VIX yüksekken risk off, altın yükselir.",
+    title: isEn ? "VIX (Fear Index)" : "VIX (Korku Endeksi)",
+    description: isEn ? "Market volatility and risk appetite indicator." : "Piyasa volatilitesi ve risk iştahı göstergesi.",
+    usage: isEn ? "When VIX is high, risk off, gold rises." : "VIX yüksekken risk off, altın yükselir.",
     levels: [
-      { value: "< 15", meaning: "Düşük Korku", action: "📈 Risk on, hisse al" },
-      { value: "15-25", meaning: "Normal", action: "📊 Normal işlem" },
-      { value: "> 25", meaning: "Yüksek Korku", action: "⚠️ Risk off, altın güçlü" },
-      { value: "> 35", meaning: "Panik", action: "🚨 Altın çok güçlü" },
+      { value: "< 15", meaning: isEn ? "Low Fear" : "Düşük Korku", action: isEn ? "📈 Risk on, buy stocks" : "📈 Risk on, hisse al" },
+      { value: "15-25", meaning: "Normal", action: isEn ? "📊 Normal trading" : "📊 Normal işlem" },
+      { value: "> 25", meaning: isEn ? "High Fear" : "Yüksek Korku", action: isEn ? "⚠️ Risk off, gold strong" : "⚠️ Risk off, altın güçlü" },
+      { value: "> 35", meaning: isEn ? "Panic" : "Panik", action: isEn ? "🚨 Gold very strong" : "🚨 Altın çok güçlü" },
     ],
     importance: "medium",
   },
@@ -313,36 +321,36 @@ export const TRADING_INFO: Record<string, InfoData> = {
   // ═══════════════════════════════════════════════════════════════════
 
   order_block: {
-    title: "Order Block (Emir Bloğu)",
-    description: "Büyük kurumsal emirlerin bıraktığı ayak izleri.",
-    usage: "Fiyat order block'a döndüğünde tepki beklenir.",
+    title: isEn ? "Order Block" : "Order Block (Emir Bloğu)",
+    description: isEn ? "Footprints left by large institutional orders." : "Büyük kurumsal emirlerin bıraktığı ayak izleri.",
+    usage: isEn ? "Price reaction expected when returning to order block." : "Fiyat order block'a döndüğünde tepki beklenir.",
     levels: [
-      { value: "Bullish OB", meaning: "Alım Bölgesi", action: "🟢 Long için bekle" },
-      { value: "Bearish OB", meaning: "Satım Bölgesi", action: "🔴 Short için bekle" },
+      { value: "Bullish OB", meaning: isEn ? "Buy Zone" : "Alım Bölgesi", action: isEn ? "🟢 Wait for long" : "🟢 Long için bekle" },
+      { value: "Bearish OB", meaning: isEn ? "Sell Zone" : "Satım Bölgesi", action: isEn ? "🔴 Wait for short" : "🔴 Short için bekle" },
     ],
     importance: "high",
   },
 
   fvg: {
     title: "FVG (Fair Value Gap)",
-    description: "Fiyatın boşluk bırakarak geçtiği bölge. Doldurulması beklenir.",
-    usage: "Fiyat genellikle FVG'yi doldurmak için geri döner.",
+    description: isEn ? "Area where price passed leaving a gap. Expected to be filled." : "Fiyatın boşluk bırakarak geçtiği bölge. Doldurulması beklenir.",
+    usage: isEn ? "Price usually returns to fill the FVG." : "Fiyat genellikle FVG'yi doldurmak için geri döner.",
     levels: [
-      { value: "Bullish FVG", meaning: "Aşağıda Boşluk", action: "🟢 Destek görevi görür" },
-      { value: "Bearish FVG", meaning: "Yukarıda Boşluk", action: "🔴 Direnç görevi görür" },
+      { value: "Bullish FVG", meaning: isEn ? "Gap Below" : "Aşağıda Boşluk", action: isEn ? "🟢 Acts as support" : "🟢 Destek görevi görür" },
+      { value: "Bearish FVG", meaning: isEn ? "Gap Above" : "Yukarıda Boşluk", action: isEn ? "🔴 Acts as resistance" : "🔴 Direnç görevi görür" },
     ],
     importance: "medium",
   },
 
   equal_highs_lows: {
-    title: "Equal Highs/Lows (Eşit Tepeler/Dipler)",
-    description: "Fiyatın aynı seviyeye birden fazla kez dokunması.",
-    usage: "Buralarda stop loss'lar birikir. Sweep için hedef!",
+    title: isEn ? "Equal Highs/Lows" : "Equal Highs/Lows (Eşit Tepeler/Dipler)",
+    description: isEn ? "Price touching the same level multiple times." : "Fiyatın aynı seviyeye birden fazla kez dokunması.",
+    usage: isEn ? "Stop losses accumulate here. Target for sweep!" : "Buralarda stop loss'lar birikir. Sweep için hedef!",
     levels: [
-      { value: "Equal Highs", meaning: "Likidite Havuzu (Üst)", action: "⚠️ Fake breakout riski" },
-      { value: "Equal Lows", meaning: "Likidite Havuzu (Alt)", action: "⚠️ Fake breakdown riski" },
+      { value: "Equal Highs", meaning: isEn ? "Liquidity Pool (Top)" : "Likidite Havuzu (Üst)", action: isEn ? "⚠️ Fake breakout risk" : "⚠️ Fake breakout riski" },
+      { value: "Equal Lows", meaning: isEn ? "Liquidity Pool (Bottom)" : "Likidite Havuzu (Alt)", action: isEn ? "⚠️ Fake breakdown risk" : "⚠️ Fake breakdown riski" },
     ],
-    example: "3 kez aynı dirençe dokundu → Sweep gelecek",
+    example: isEn ? "Touched same resistance 3 times → Sweep coming" : "3 kez aynı dirençe dokundu → Sweep gelecek",
     importance: "high",
   },
 
@@ -351,25 +359,25 @@ export const TRADING_INFO: Record<string, InfoData> = {
   // ═══════════════════════════════════════════════════════════════════
 
   position_size: {
-    title: "Pozisyon Büyüklüğü",
-    description: "Risk yönetimine göre hesaplanan lot miktarı.",
-    usage: "Hesap bakiyesinin %1-2'sinden fazla riske girme.",
+    title: isEn ? "Position Size" : "Pozisyon Büyüklüğü",
+    description: isEn ? "Lot amount calculated based on risk management." : "Risk yönetimine göre hesaplanan lot miktarı.",
+    usage: isEn ? "Don't risk more than 1-2% of account balance." : "Hesap bakiyesinin %1-2'sinden fazla riske girme.",
     levels: [
-      { value: "SMALL", meaning: "Küçük Pozisyon", action: "📊 %0.5 risk" },
-      { value: "MEDIUM", meaning: "Normal Pozisyon", action: "✅ %1 risk" },
-      { value: "LARGE", meaning: "Büyük Pozisyon", action: "⚠️ %2 risk (max)" },
+      { value: "SMALL", meaning: isEn ? "Small Position" : "Küçük Pozisyon", action: "📊 0.5% risk" },
+      { value: "MEDIUM", meaning: isEn ? "Normal Position" : "Normal Pozisyon", action: "✅ 1% risk" },
+      { value: "LARGE", meaning: isEn ? "Large Position" : "Büyük Pozisyon", action: "⚠️ 2% risk (max)" },
     ],
     importance: "critical",
   },
 
   volatility_adjustment: {
-    title: "Volatilite Ayarlaması",
-    description: "ATR'ye göre pozisyon büyüklüğü ayarı.",
-    usage: "Yüksek volatilitede pozisyonu küçült.",
+    title: isEn ? "Volatility Adjustment" : "Volatilite Ayarlaması",
+    description: isEn ? "Position size adjustment based on ATR." : "ATR'ye göre pozisyon büyüklüğü ayarı.",
+    usage: isEn ? "Reduce position in high volatility." : "Yüksek volatilitede pozisyonu küçült.",
     levels: [
-      { value: "> 1.0", meaning: "Düşük Volatilite", action: "📈 Pozisyon büyütülebilir" },
-      { value: "0.7-1.0", meaning: "Normal", action: "✅ Standart pozisyon" },
-      { value: "< 0.7", meaning: "Yüksek Volatilite", action: "⚠️ Pozisyon küçült" },
+      { value: "> 1.0", meaning: isEn ? "Low Volatility" : "Düşük Volatilite", action: isEn ? "📈 Can increase position" : "📈 Pozisyon büyütülebilir" },
+      { value: "0.7-1.0", meaning: "Normal", action: isEn ? "✅ Standard position" : "✅ Standart pozisyon" },
+      { value: "< 0.7", meaning: isEn ? "High Volatility" : "Yüksek Volatilite", action: isEn ? "⚠️ Reduce position" : "⚠️ Pozisyon küçült" },
     ],
     importance: "high",
   },
@@ -379,86 +387,94 @@ export const TRADING_INFO: Record<string, InfoData> = {
   // ═══════════════════════════════════════════════════════════════════
 
   candlestick_engulfing: {
-    title: "Engulfing (Yutan Formasyon)",
-    description: "Önceki mumun gövdesini tamamen kaplayan büyük mum. Güçlü dönüş sinyali.",
-    usage: "Trend dönüşlerinde kullan. Destek/dirençte daha güvenilir.",
+    title: isEn ? "Engulfing Pattern" : "Engulfing (Yutan Formasyon)",
+    description: isEn ? "Large candle completely covering previous candle's body. Strong reversal signal." : "Önceki mumun gövdesini tamamen kaplayan büyük mum. Güçlü dönüş sinyali.",
+    usage: isEn ? "Use at trend reversals. More reliable at support/resistance." : "Trend dönüşlerinde kullan. Destek/dirençte daha güvenilir.",
     levels: [
-      { value: "Bullish Engulfing", meaning: "Yeşil mum kırmızıyı yutar", action: "🟢 LONG ara" },
-      { value: "Bearish Engulfing", meaning: "Kırmızı mum yeşili yutar", action: "🔴 SHORT ara" },
+      { value: "Bullish Engulfing", meaning: isEn ? "Green candle engulfs red" : "Yeşil mum kırmızıyı yutar", action: isEn ? "🟢 Look for LONG" : "🟢 LONG ara" },
+      { value: "Bearish Engulfing", meaning: isEn ? "Red candle engulfs green" : "Kırmızı mum yeşili yutar", action: isEn ? "🔴 Look for SHORT" : "🔴 SHORT ara" },
     ],
-    example: "Düşüş sonrası büyük yeşil mum → Dönüş başlıyor",
+    example: isEn ? "Large green candle after downtrend → Reversal starting" : "Düşüş sonrası büyük yeşil mum → Dönüş başlıyor",
     importance: "high",
   },
 
   candlestick_hammer: {
-    title: "Hammer (Çekiç)",
-    description: "Küçük gövde, uzun alt fitil (gövdenin 2+ katı). Alıcılar düşük fiyatları reddetti.",
-    usage: "Düşüş trendi sonunda ara. Onay mumu bekle.",
+    title: isEn ? "Hammer" : "Hammer (Çekiç)",
+    description: isEn ? "Small body, long lower wick (2x+ body). Buyers rejected low prices." : "Küçük gövde, uzun alt fitil (gövdenin 2+ katı). Alıcılar düşük fiyatları reddetti.",
+    usage: isEn ? "Look at end of downtrend. Wait for confirmation candle." : "Düşüş trendi sonunda ara. Onay mumu bekle.",
     levels: [
-      { value: "Hammer", meaning: "Dipte çekiç", action: "🟢 Potansiyel dip" },
-      { value: "Hanging Man", meaning: "Tepede çekiç", action: "🔴 Potansiyel tepe" },
+      { value: "Hammer", meaning: isEn ? "Hammer at bottom" : "Dipte çekiç", action: isEn ? "🟢 Potential bottom" : "🟢 Potansiyel dip" },
+      { value: "Hanging Man", meaning: isEn ? "Hammer at top" : "Tepede çekiç", action: isEn ? "🔴 Potential top" : "🔴 Potansiyel tepe" },
     ],
-    example: "Destek seviyesinde hammer → LONG için hazırlan",
+    example: isEn ? "Hammer at support level → Prepare for LONG" : "Destek seviyesinde hammer → LONG için hazırlan",
     importance: "high",
   },
 
   candlestick_doji: {
     title: "Doji",
-    description: "Açılış = Kapanış. Piyasada kararsızlık var.",
-    usage: "Tek başına sinyal değil! Sonraki mumu bekle.",
+    description: isEn ? "Open = Close. Market indecision." : "Açılış = Kapanış. Piyasada kararsızlık var.",
+    usage: isEn ? "Not a signal alone! Wait for next candle." : "Tek başına sinyal değil! Sonraki mumu bekle.",
     levels: [
-      { value: "Normal Doji", meaning: "Kararsızlık", action: "⏸️ Bekle" },
-      { value: "Dragonfly Doji", meaning: "Dipte uzun alt fitil", action: "🟢 Bullish potansiyel" },
-      { value: "Gravestone Doji", meaning: "Tepede uzun üst fitil", action: "🔴 Bearish potansiyel" },
+      { value: "Normal Doji", meaning: isEn ? "Indecision" : "Kararsızlık", action: isEn ? "⏸️ Wait" : "⏸️ Bekle" },
+      { value: "Dragonfly Doji", meaning: isEn ? "Long lower wick at bottom" : "Dipte uzun alt fitil", action: isEn ? "🟢 Bullish potential" : "🟢 Bullish potansiyel" },
+      { value: "Gravestone Doji", meaning: isEn ? "Long upper wick at top" : "Tepede uzun üst fitil", action: isEn ? "🔴 Bearish potential" : "🔴 Bearish potansiyel" },
     ],
     importance: "medium",
   },
 
   candlestick_harami: {
     title: "Harami",
-    description: "Küçük mum, önceki büyük mumun gövdesi içinde kalır. Hamile anlamına gelir.",
-    usage: "Trend dönüş sinyali ama onay gerekli.",
+    description: isEn ? "Small candle stays inside previous large candle's body." : "Küçük mum, önceki büyük mumun gövdesi içinde kalır. Hamile anlamına gelir.",
+    usage: isEn ? "Trend reversal signal but confirmation needed." : "Trend dönüş sinyali ama onay gerekli.",
     levels: [
-      { value: "Bullish Harami", meaning: "Düşüş sonrası küçük yeşil", action: "🟢 Dönüş başlıyor olabilir" },
-      { value: "Bearish Harami", meaning: "Yükseliş sonrası küçük kırmızı", action: "🔴 Dönüş başlıyor olabilir" },
+      { value: "Bullish Harami", meaning: isEn ? "Small green after downtrend" : "Düşüş sonrası küçük yeşil", action: isEn ? "🟢 Reversal may be starting" : "🟢 Dönüş başlıyor olabilir" },
+      { value: "Bearish Harami", meaning: isEn ? "Small red after uptrend" : "Yükseliş sonrası küçük kırmızı", action: isEn ? "🔴 Reversal may be starting" : "🔴 Dönüş başlıyor olabilir" },
     ],
     importance: "medium",
   },
 
   candlestick_star: {
-    title: "Morning/Evening Star (Sabah/Akşam Yıldızı)",
-    description: "3 mumlu güçlü dönüş formasyonu. Ortadaki küçük mum 'yıldız'.",
-    usage: "En güvenilir dönüş formasyonlarından biri.",
+    title: isEn ? "Morning/Evening Star" : "Morning/Evening Star (Sabah/Akşam Yıldızı)",
+    description: isEn ? "3-candle strong reversal pattern. Middle small candle is the 'star'." : "3 mumlu güçlü dönüş formasyonu. Ortadaki küçük mum 'yıldız'.",
+    usage: isEn ? "One of the most reliable reversal patterns." : "En güvenilir dönüş formasyonlarından biri.",
     levels: [
-      { value: "Morning Star", meaning: "Büyük kırmızı → Küçük → Büyük yeşil", action: "🟢 Güçlü LONG" },
-      { value: "Evening Star", meaning: "Büyük yeşil → Küçük → Büyük kırmızı", action: "🔴 Güçlü SHORT" },
+      { value: "Morning Star", meaning: isEn ? "Big red → Small → Big green" : "Büyük kırmızı → Küçük → Büyük yeşil", action: isEn ? "🟢 Strong LONG" : "🟢 Güçlü LONG" },
+      { value: "Evening Star", meaning: isEn ? "Big green → Small → Big red" : "Büyük yeşil → Küçük → Büyük kırmızı", action: isEn ? "🔴 Strong SHORT" : "🔴 Güçlü SHORT" },
     ],
-    example: "Destek + Morning Star = %90 güvenilir LONG",
+    example: isEn ? "Support + Morning Star = 90% reliable LONG" : "Destek + Morning Star = %90 güvenilir LONG",
     importance: "critical",
   },
 
   candlestick_shooting_star: {
-    title: "Shooting Star (Kayan Yıldız)",
-    description: "Küçük gövde altta, uzun üst fitil. Satıcılar yüksek fiyatları reddetti.",
-    usage: "Yükseliş trendi tepesinde ara.",
+    title: isEn ? "Shooting Star" : "Shooting Star (Kayan Yıldız)",
+    description: isEn ? "Small body at bottom, long upper wick. Sellers rejected high prices." : "Küçük gövde altta, uzun üst fitil. Satıcılar yüksek fiyatları reddetti.",
+    usage: isEn ? "Look at top of uptrend." : "Yükseliş trendi tepesinde ara.",
     levels: [
-      { value: "Shooting Star", meaning: "Tepede uzun üst fitil", action: "🔴 Dönüş uyarısı" },
-      { value: "Inverted Hammer", meaning: "Dipte uzun üst fitil", action: "🟢 Potansiyel dönüş" },
+      { value: "Shooting Star", meaning: isEn ? "Long upper wick at top" : "Tepede uzun üst fitil", action: isEn ? "🔴 Reversal warning" : "🔴 Dönüş uyarısı" },
+      { value: "Inverted Hammer", meaning: isEn ? "Long upper wick at bottom" : "Dipte uzun üst fitil", action: isEn ? "🟢 Potential reversal" : "🟢 Potansiyel dönüş" },
     ],
     importance: "high",
   },
 
   candlestick_soldiers_crows: {
     title: "Three White Soldiers / Black Crows",
-    description: "Üst üste 3 güçlü mum. Trend başlangıcı veya devamı.",
-    usage: "Momentum sinyali. Trendle işlem aç.",
+    description: isEn 
+      ? "3 consecutive strong candles. Trend start or continuation."
+      : "Üst üste 3 güçlü mum. Trend başlangıcı veya devamı.",
+    usage: isEn 
+      ? "Momentum signal. Trade with the trend."
+      : "Momentum sinyali. Trendle işlem aç.",
     levels: [
-      { value: "3 White Soldiers", meaning: "3 yeşil mum yükseliyor", action: "🟢 Güçlü yükseliş başladı" },
-      { value: "3 Black Crows", meaning: "3 kırmızı mum düşüyor", action: "🔴 Güçlü düşüş başladı" },
+      { value: "3 White Soldiers", meaning: isEn ? "3 green candles rising" : "3 yeşil mum yükseliyor", action: isEn ? "🟢 Strong uptrend started" : "🟢 Güçlü yükseliş başladı" },
+      { value: "3 Black Crows", meaning: isEn ? "3 red candles falling" : "3 kırmızı mum düşüyor", action: isEn ? "🔴 Strong downtrend started" : "🔴 Güçlü düşüş başladı" },
     ],
     importance: "high",
   },
-};
+  };
+}
+
+// Legacy export for compatibility
+export const TRADING_INFO = getTradingInfo("tr");
 
 // ═══════════════════════════════════════════════════════════════════
 // INFO MODAL COMPONENT
@@ -472,8 +488,9 @@ interface InfoModalProps {
 }
 
 export function InfoModal({ isOpen, onClose, infoKey, customData }: InfoModalProps) {
-  const { t } = useI18nStore();
-  const info = customData || TRADING_INFO[infoKey];
+  const { t, locale } = useI18nStore();
+  const tradingInfo = getTradingInfo(locale);
+  const info = customData || tradingInfo[infoKey];
   
   if (!isOpen || !info) return null;
 
