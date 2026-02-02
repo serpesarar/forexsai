@@ -2,6 +2,7 @@
 
 import { useState, useCallback, ReactNode } from "react";
 import { X, Info, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, HelpCircle } from "lucide-react";
+import { useI18nStore } from "../lib/i18n/store";
 
 // ═══════════════════════════════════════════════════════════════════
 // TRADING INFO DATABASE - Tüm göstergeler ve değerlerin açıklamaları
@@ -471,6 +472,7 @@ interface InfoModalProps {
 }
 
 export function InfoModal({ isOpen, onClose, infoKey, customData }: InfoModalProps) {
+  const { t } = useI18nStore();
   const info = customData || TRADING_INFO[infoKey];
   
   if (!isOpen || !info) return null;
@@ -486,10 +488,10 @@ export function InfoModal({ isOpen, onClose, infoKey, customData }: InfoModalPro
 
   const getImportanceLabel = (importance: string) => {
     switch (importance) {
-      case "critical": return "KRİTİK";
-      case "high": return "YÜKSEK";
-      case "medium": return "ORTA";
-      default: return "DÜŞÜK";
+      case "critical": return t("infoTooltip.importance.critical");
+      case "high": return t("infoTooltip.importance.high");
+      case "medium": return t("infoTooltip.importance.medium");
+      default: return t("infoTooltip.importance.low");
     }
   };
 
@@ -515,7 +517,7 @@ export function InfoModal({ isOpen, onClose, infoKey, customData }: InfoModalPro
                 <h3 className="text-lg font-bold text-white">{info.title}</h3>
               </div>
               <span className={`inline-block text-xs px-2 py-0.5 rounded border ${getImportanceColor(info.importance)}`}>
-                {getImportanceLabel(info.importance)} ÖNEMLİ
+                {getImportanceLabel(info.importance)} {t("infoTooltip.importanceLabel")}
               </span>
             </div>
             <button 
@@ -531,20 +533,20 @@ export function InfoModal({ isOpen, onClose, infoKey, customData }: InfoModalPro
         <div className="p-5 overflow-y-auto max-h-[60vh] space-y-4">
           {/* Description */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-300 mb-1">📖 Açıklama</h4>
+            <h4 className="text-sm font-semibold text-gray-300 mb-1">📖 {t("infoTooltip.description")}</h4>
             <p className="text-sm text-gray-400">{info.description}</p>
           </div>
 
           {/* Usage */}
           <div>
-            <h4 className="text-sm font-semibold text-gray-300 mb-1">🎯 Kullanım</h4>
+            <h4 className="text-sm font-semibold text-gray-300 mb-1">🎯 {t("infoTooltip.usage")}</h4>
             <p className="text-sm text-gray-400">{info.usage}</p>
           </div>
 
           {/* Levels */}
           {info.levels && info.levels.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-gray-300 mb-2">📊 Seviyeler ve Aksiyonlar</h4>
+              <h4 className="text-sm font-semibold text-gray-300 mb-2">📊 {t("infoTooltip.levelsAndActions")}</h4>
               <div className="space-y-2">
                 {info.levels.map((level, idx) => (
                   <div 
@@ -565,7 +567,7 @@ export function InfoModal({ isOpen, onClose, infoKey, customData }: InfoModalPro
           {/* Example */}
           {info.example && (
             <div className="bg-blue-900/20 rounded-lg p-3 border border-blue-500/20">
-              <h4 className="text-sm font-semibold text-blue-400 mb-1">💡 Örnek</h4>
+              <h4 className="text-sm font-semibold text-blue-400 mb-1">💡 {t("infoTooltip.example")}</h4>
               <p className="text-sm text-gray-300">{info.example}</p>
             </div>
           )}
@@ -574,7 +576,7 @@ export function InfoModal({ isOpen, onClose, infoKey, customData }: InfoModalPro
         {/* Footer */}
         <div className="bg-gray-800/50 px-5 py-3 border-t border-gray-700/50">
           <p className="text-xs text-gray-500 text-center">
-            Tıklayarak veya ESC tuşuyla kapatın
+            {t("infoTooltip.closeHint")}
           </p>
         </div>
       </div>
@@ -594,6 +596,7 @@ interface InfoClickableProps {
 }
 
 export function InfoClickable({ infoKey, children, className = "", customData }: InfoClickableProps) {
+  const { t, locale } = useI18nStore();
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -601,7 +604,7 @@ export function InfoClickable({ infoKey, children, className = "", customData }:
       <span 
         className={`cursor-help hover:opacity-80 transition-opacity ${className}`}
         onClick={() => setIsOpen(true)}
-        title="Bilgi için tıklayın"
+        title={locale === "en" ? "Click for info" : "Bilgi için tıklayın"}
       >
         {children}
       </span>
@@ -625,6 +628,7 @@ interface InfoBadgeProps {
 }
 
 export function InfoBadge({ infoKey, className = "" }: InfoBadgeProps) {
+  const { locale } = useI18nStore();
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -632,7 +636,7 @@ export function InfoBadge({ infoKey, className = "" }: InfoBadgeProps) {
       <button
         onClick={() => setIsOpen(true)}
         className={`inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-700/50 hover:bg-gray-600/50 transition-colors ${className}`}
-        title="Bilgi için tıklayın"
+        title={locale === "en" ? "Click for info" : "Bilgi için tıklayın"}
       >
         <HelpCircle className="w-3 h-3 text-gray-400" />
       </button>

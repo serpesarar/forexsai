@@ -15,7 +15,7 @@ import {
   Zap,
   Sparkles,
 } from "lucide-react";
-import LanguageSwitcher from "./LanguageSwitcher";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 interface MarketTicker {
   label: string;

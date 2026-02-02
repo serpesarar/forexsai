@@ -1,10 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useI18n } from "@/lib/i18n";
+import { useI18nStore } from "@/lib/i18n/store";
 
 export function LanguageSwitcher() {
-  const { locale, setLocale } = useI18n();
+  const { locale, setLocale } = useI18nStore();
 
   return (
     <div className="flex items-center p-1 rounded-full bg-white/[0.06] border border-white/[0.08] backdrop-blur-md">

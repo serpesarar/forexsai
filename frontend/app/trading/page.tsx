@@ -14,6 +14,8 @@ import OrderBlockPanelSimple from "../../components/OrderBlockPanelSimple";
 import RhythmDetectorSimple from "../../components/RhythmDetectorSimple";
 import TradingChartWrapper from "../../components/TradingChartWrapper";
 import LiveChartPanel from "../../components/LiveChartPanel";
+import { LanguageSwitcher } from "../../components/LanguageSwitcher";
+import { useI18nStore } from "../../lib/i18n/store";
 
 // Golden Ratio constant
 const PHI = 1.618;
@@ -41,14 +43,15 @@ const SYMBOLS = {
 type SymbolKey = keyof typeof SYMBOLS;
 
 export default function TradingDashboard() {
+  const { t, locale } = useI18nStore();
   const [selectedSymbol, setSelectedSymbol] = useState<SymbolKey>("NDX.INDX");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState<string>("");
 
   // Set date only on client to avoid hydration mismatch
   useEffect(() => {
-    setCurrentDate(new Date().toLocaleDateString("tr-TR"));
-  }, []);
+    setCurrentDate(new Date().toLocaleDateString(locale === "en" ? "en-US" : "tr-TR"));
+  }, [locale]);
 
   const currentSymbol = SYMBOLS[selectedSymbol];
   const SymbolIcon = currentSymbol.icon;
@@ -74,7 +77,7 @@ export default function TradingDashboard() {
                 <SymbolIcon className={`h-4 w-4 md:h-6 md:w-6 ${currentSymbol.accent}`} />
               </div>
               <div className="text-left">
-                <p className="text-[10px] md:text-xs text-textSecondary font-medium">Aktif Sembol</p>
+                <p className="text-[10px] md:text-xs text-textSecondary font-medium">{t("tradingPage.activeSymbol")}</p>
                 <p className="text-sm md:text-lg font-bold">{currentSymbol.shortLabel}</p>
               </div>
               <ChevronDown className={`h-4 w-4 md:h-5 md:w-5 transition-transform duration-300 ${dropdownOpen ? "rotate-180" : ""}`} />
@@ -158,14 +161,14 @@ export default function TradingDashboard() {
               className="group flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-xl bg-gradient-to-r from-[#00E0C6]/10 to-[#3B82F6]/10 border border-[#00E0C6]/20 hover:border-[#00E0C6]/40 hover:from-[#00E0C6]/20 hover:to-[#3B82F6]/20 transition-all duration-300"
             >
               <BarChart3 className="h-4 w-4 text-[#00E0C6] group-hover:scale-110 transition-transform" />
-              <span className="text-xs md:text-sm font-semibold text-white/90 hidden sm:inline">Grafikler</span>
+              <span className="text-xs md:text-sm font-semibold text-white/90 hidden sm:inline">{t("tradingPage.charts")}</span>
             </Link>
             <Link 
               href="/"
               className="group flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
             >
               <Home className="h-4 w-4 text-white/70 group-hover:text-white group-hover:scale-110 transition-all" />
-              <span className="text-xs md:text-sm font-medium text-white/70 group-hover:text-white hidden sm:inline">Ana Sayfa</span>
+              <span className="text-xs md:text-sm font-medium text-white/70 group-hover:text-white hidden sm:inline">{t("tradingPage.homePage")}</span>
             </Link>
             <div className="text-right hidden md:block pl-3 border-l border-white/10">
               <p className="text-sm font-mono font-bold text-white/90">{currentDate || "—"}</p>
@@ -174,7 +177,7 @@ export default function TradingDashboard() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00E0C6] opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00E0C6]"></span>
                 </span>
-                Canlı Analiz
+                {t("tradingPage.liveAnalysis")}
               </p>
             </div>
             {/* Mobile live indicator */}
@@ -185,6 +188,8 @@ export default function TradingDashboard() {
               </span>
               <span className="text-[10px] font-bold text-[#00E0C6]">LIVE</span>
             </div>
+            {/* Language Switcher */}
+            <LanguageSwitcher />
           </div>
         </div>
       </header>
@@ -209,7 +214,7 @@ export default function TradingDashboard() {
               <div className="mb-3 flex items-center gap-2">
                 <Brain className="h-5 w-5 text-accent" />
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
-                  ML Model Tahmini
+                  {t("tradingPage.mlModelPrediction")}
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
@@ -222,7 +227,7 @@ export default function TradingDashboard() {
               <div className="mb-3 flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-purple-400" />
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
-                  Claude AI Analizi
+                  {t("tradingPage.claudeAIAnalysis")}
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
@@ -239,7 +244,7 @@ export default function TradingDashboard() {
               <div className="mb-3 flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-sky-400" />
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
-                  Detaylı Analiz
+                  {t("tradingPage.detailedAnalysis")}
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
@@ -265,7 +270,7 @@ export default function TradingDashboard() {
               <div className="mb-3 flex items-center gap-2">
                 <Activity className="h-5 w-5 text-pink-400" />
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
-                  Ritim Dedektörü
+                  {t("tradingPage.rhythmDetector")}
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
@@ -278,7 +283,7 @@ export default function TradingDashboard() {
               <div className="mb-3 flex items-center gap-2">
                 <Brain className="h-5 w-5 text-purple-400" />
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
-                  Öğrenme Sistemi
+                  {t("tradingPage.learningSystem")}
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
@@ -291,7 +296,7 @@ export default function TradingDashboard() {
               <div className="mb-3 flex items-center gap-2">
                 <LineChart className="h-5 w-5 text-indigo-400" />
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
-                  Tahmin Geçmişi
+                  {t("tradingPage.predictionHistory")}
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
@@ -306,14 +311,14 @@ export default function TradingDashboard() {
           <div className="mb-3 md:mb-4 flex items-center gap-2">
             <LineChart className="h-5 w-5 md:h-6 md:w-6 text-blue-400" />
             <h2 className="text-base md:text-lg font-bold uppercase tracking-wider">
-              Canlı Fiyat Grafikleri
+              {t("tradingPage.livePriceCharts")}
             </h2>
             <span className="ml-2 flex items-center gap-1 text-xs text-success">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
               </span>
-              Canlı
+              {t("tradingPage.live")}
             </span>
           </div>
           

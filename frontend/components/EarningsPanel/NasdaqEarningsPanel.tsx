@@ -15,6 +15,7 @@ import {
   Target,
   Loader2
 } from "lucide-react";
+import { useI18nStore } from "../../lib/i18n/store";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
@@ -58,14 +59,14 @@ const importanceBadgeColors = {
   LOW: "bg-green-500 text-white",
 };
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string, locale: string = "tr"): string {
   const date = new Date(dateStr);
-  return date.toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
+  return date.toLocaleDateString(locale === "en" ? "en-US" : "tr-TR", { day: "numeric", month: "short" });
 }
 
-function formatWeekday(dateStr: string): string {
+function formatWeekday(dateStr: string, locale: string = "tr"): string {
   const date = new Date(dateStr);
-  return date.toLocaleDateString("tr-TR", { weekday: "short" });
+  return date.toLocaleDateString(locale === "en" ? "en-US" : "tr-TR", { weekday: "short" });
 }
 
 function getNext7Days(): string[] {
@@ -80,6 +81,7 @@ function getNext7Days(): string[] {
 }
 
 export default function NasdaqEarningsPanel() {
+  const { t, locale } = useI18nStore();
   const [isOpen, setIsOpen] = useState(false);
   const [events, setEvents] = useState<EarningsEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<EarningsEvent | null>(null);
@@ -95,7 +97,7 @@ export default function NasdaqEarningsPanel() {
       const data = await res.json();
       setEvents(data.events || []);
     } catch (err) {
-      setError("Earnings verisi alınamadı");
+      setError(t("earnings.dataError"));
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -126,7 +128,7 @@ export default function NasdaqEarningsPanel() {
           transition-all duration-200 shadow-xl backdrop-blur-sm border border-white/20`}
       >
         <Calendar className="w-6 h-6" />
-        <span className="text-base font-semibold">Açıklanacak Kazançlar</span>
+        <span className="text-base font-semibold">{t("earnings.title")}</span>
         {criticalCount > 0 && (
           <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full animate-pulse font-bold">
             {criticalCount}
@@ -149,7 +151,7 @@ export default function NasdaqEarningsPanel() {
             </div>
             <div>
               <h3 className="font-bold text-white">NASDAQ Earnings</h3>
-              <p className="text-xs text-gray-400">Haftalık Takvim & Senaryo</p>
+              <p className="text-xs text-gray-400">{t("earnings.subtitle")}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -198,8 +200,8 @@ export default function NasdaqEarningsPanel() {
                       : "bg-white/5"
                   }`}
                 >
-                  <div className="text-[10px] text-gray-500">{formatWeekday(date)}</div>
-                  <div className="text-xs font-bold text-white">{formatDate(date)}</div>
+                  <div className="text-[10px] text-gray-500">{formatWeekday(date, locale)}</div>
+                  <div className="text-xs font-bold text-white">{formatDate(date, locale)}</div>
                   <div className="mt-1 space-y-0.5 max-h-16 overflow-y-auto">
                     {dayEvents.slice(0, 3).map((event) => (
                       <motion.button
@@ -225,12 +227,12 @@ export default function NasdaqEarningsPanel() {
 
         {/* Events List */}
         <div className="overflow-y-auto h-[calc(100%-280px)] p-3">
-          <p className="text-xs text-gray-400 mb-2 font-medium">BU HAFTA</p>
+          <p className="text-xs text-gray-400 mb-2 font-medium">{t("earnings.thisWeek")}</p>
           
           {events.length === 0 && !isLoading && (
             <div className="text-center text-gray-500 py-8">
               <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Earnings verisi yok</p>
+              <p className="text-sm">{t("earnings.noData")}</p>
             </div>
           )}
 
@@ -257,7 +259,7 @@ export default function NasdaqEarningsPanel() {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-400">
                   <Clock className="w-3 h-3" />
-                  {formatDate(event.date)} {event.time}
+                  {formatDate(event.date, locale)} {event.time}
                 </div>
               </div>
               
@@ -293,7 +295,7 @@ export default function NasdaqEarningsPanel() {
             >
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-bold text-white">
-                  {selectedEvent.symbol} Senaryolar
+                  {selectedEvent.symbol} {t("earnings.scenarios")}
                 </h4>
                 <button
                   onClick={() => setSelectedEvent(null)}

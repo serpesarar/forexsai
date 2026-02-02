@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Settings2, X, ChevronRight, RotateCcw, RefreshCw, Loader2, Shield, Zap, Target, Flame } from "lucide-react";
 import { fetchPredictionWithStrategy } from "../lib/api/prediction";
+import { useI18nStore } from "../lib/i18n/store";
 
 // Katman tabanlı yapılandırma
 type Layer = {
@@ -117,6 +118,7 @@ type Props = {
 };
 
 export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onStrategyChange, locale = "tr" }: Props) {
+  const { t } = useI18nStore();
   const [isOpen, setIsOpen] = useState(false);
   const [layers, setLayers] = useState<Layer[]>(LAYERS);
   const [selectedStrategy, setSelectedStrategy] = useState<string>("balanced");
@@ -176,7 +178,7 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
           transition-all duration-200 shadow-xl backdrop-blur-sm border border-white/20`}
       >
         <Settings2 className="w-6 h-6" />
-        <span className="text-base font-semibold">ML Strateji</span>
+        <span className="text-base font-semibold">{t("mlStrategy.title")}</span>
         <span className="text-xs bg-white/30 px-2 py-0.5 rounded-full font-bold">{activeLayerCount}/3</span>
         <ChevronRight className={`w-5 h-5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
@@ -190,9 +192,9 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           <div>
-            <h3 className="font-semibold">ML Strateji Seçimi</h3>
+            <h3 className="font-semibold">{t("mlStrategy.strategySelection")}</h3>
             <p className="text-xs text-textSecondary mt-0.5">
-              {currentStrategy ? (locale === "en" ? currentStrategy.nameEn : currentStrategy.name) : "Özel Mod"}
+              {currentStrategy ? (locale === "en" ? currentStrategy.nameEn : currentStrategy.name) : t("mlStrategy.customMode")}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -200,7 +202,7 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
               onClick={fetchWithStrategy}
               disabled={isLoading}
               className="p-1.5 hover:bg-white/10 rounded-lg transition disabled:opacity-50"
-              title="Backend'den Güncelle"
+              title={t("mlStrategy.updateFromBackend")}
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 text-accent animate-spin" />
@@ -211,7 +213,7 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
             <button
               onClick={resetToBalanced}
               className="p-1.5 hover:bg-white/10 rounded-lg transition"
-              title="Dengeli'ye Sıfırla"
+              title={t("mlStrategy.resetToBalanced")}
             >
               <RotateCcw className="w-4 h-4 text-textSecondary" />
             </button>
@@ -227,11 +229,11 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
         {/* Confidence Display */}
         <div className="p-4 border-b border-white/10 bg-white/5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-textSecondary">Base</span>
+            <span className="text-sm text-textSecondary">{t("mlStrategy.base")}</span>
             <span className="font-mono text-sm">{baseConfidence.toFixed(1)}%</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Final</span>
+            <span className="text-sm font-medium">{t("mlStrategy.final")}</span>
             <div className="flex items-center gap-2">
               <span className={`text-xs ${confidenceChange >= 0 ? "text-success" : "text-danger"}`}>
                 {confidenceChange >= 0 ? "+" : ""}{confidenceChange.toFixed(1)}%
@@ -257,7 +259,7 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
 
         {/* Strategy Presets */}
         <div className="p-3 border-b border-white/10">
-          <p className="text-xs text-textSecondary mb-2 font-medium">PRESET STRATEJİLER</p>
+          <p className="text-xs text-textSecondary mb-2 font-medium">{t("mlStrategy.presetStrategies")}</p>
           <div className="grid grid-cols-2 gap-2">
             {STRATEGIES.map((strategy, index) => (
               <motion.button
@@ -292,7 +294,7 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
 
         {/* Layer List */}
         <div className="overflow-y-auto flex-1 p-3">
-          <p className="text-xs text-textSecondary mb-2 font-medium">KATMANLAR</p>
+          <p className="text-xs text-textSecondary mb-2 font-medium">{t("mlStrategy.layers")}</p>
           {layers.map((layer, index) => (
             <motion.div
               key={layer.id}
@@ -341,7 +343,7 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
         {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-white/10 bg-background/95">
           <p className="text-[10px] text-textSecondary text-center">
-            💡 Kritik: Harmonic | Teknik: Geometric | Context: Arithmetic Mean
+            {t("mlStrategy.footerTip")}
           </p>
         </div>
       </div>

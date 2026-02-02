@@ -15,18 +15,19 @@ import {
   Activity,
 } from "lucide-react";
 import { useDetailedAIAnalysis } from "../lib/api/detailedAiAnalysis";
+import { useI18nStore } from "../lib/i18n/store";
 
 type Props = {
   symbol: string;
   symbolLabel: string;
 };
 
-function DecisionBadge({ decision }: { decision: string }) {
+function DecisionBadge({ decision, t }: { decision: string; t: (key: string) => string }) {
   const config =
     {
-      BUY: { bg: "bg-success/20", text: "text-success", icon: TrendingUp, label: "ALIŞ" },
-      SELL: { bg: "bg-danger/20", text: "text-danger", icon: TrendingDown, label: "SATIŞ" },
-      HOLD: { bg: "bg-white/10", text: "text-textSecondary", icon: Minus, label: "BEKLE" },
+      BUY: { bg: "bg-success/20", text: "text-success", icon: TrendingUp, label: t("directions.buy") },
+      SELL: { bg: "bg-danger/20", text: "text-danger", icon: TrendingDown, label: t("directions.sell") },
+      HOLD: { bg: "bg-white/10", text: "text-textSecondary", icon: Minus, label: t("directions.hold") },
     }[decision] || { bg: "bg-white/10", text: "text-textSecondary", icon: Minus, label: decision };
 
   const Icon = config.icon;
@@ -50,16 +51,17 @@ function fmtPct(v: any, digits = 2) {
   return `${n.toFixed(digits)}%`;
 }
 
-function mlLabel(direction: string) {
+function mlLabel(direction: string, t: (key: string) => string) {
   if (!direction) return "-";
   const d = String(direction).toUpperCase();
-  if (d === "BUY") return "ALIŞ";
-  if (d === "SELL") return "SATIŞ";
-  if (d === "HOLD") return "BEKLE";
+  if (d === "BUY") return t("directions.buy");
+  if (d === "SELL") return t("directions.sell");
+  if (d === "HOLD") return t("directions.hold");
   return d;
 }
 
 export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
+  const { t, locale } = useI18nStore();
   const { data, isLoading, isFetching, error, refetch } = useDetailedAIAnalysis(symbol);
   const [showContext, setShowContext] = useState(false);
 
@@ -165,7 +167,7 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
             <Brain className="h-6 w-6 text-sky-400" />
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">DETAYLI ANALİZ</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("detailedAnalysis.title")}</p>
             <h3 className="text-xl font-bold">{symbolLabel}</h3>
           </div>
         </div>
@@ -189,23 +191,23 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
       ) : error ? (
         <div className="flex items-center gap-3 p-4 bg-danger/10 rounded-xl text-danger">
           <AlertTriangle className="w-5 h-5" />
-          <span className="text-sm">Detaylı analiz alınamadı</span>
+          <span className="text-sm">{t("detailedAnalysis.error")}</span>
         </div>
       ) : data ? (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3 bg-white/5 rounded-2xl p-5 border border-white/5">
             <div className="flex flex-wrap items-center gap-3">
-              <DecisionBadge decision={decision} />
+              <DecisionBadge decision={decision} t={t} />
               <div className="text-sm text-textSecondary">
-                <span className="font-medium">Claude Güven:</span> {typeof confidence === "number" ? `${confidence.toFixed(0)}%` : "-"}
+                <span className="font-medium">{t("detailedAnalysis.claudeConfidence")}:</span> {typeof confidence === "number" ? `${confidence.toFixed(0)}%` : "-"}
               </div>
 
               <div className="hidden sm:block h-6 w-px bg-white/10" />
 
               <div className="text-sm text-textSecondary">
-                <span className="font-medium">ML:</span> {mlLabel(ml.direction)}
+                <span className="font-medium">ML:</span> {mlLabel(ml.direction, t)}
                 <span className="text-textSecondary"> · </span>
-                <span className="font-medium">Güven:</span> {typeof ml.confidence === "number" ? `${Number(ml.confidence).toFixed(0)}%` : "-"}
+                <span className="font-medium">{t("detailedAnalysis.mlConfidence")}:</span> {typeof ml.confidence === "number" ? `${Number(ml.confidence).toFixed(0)}%` : "-"}
               </div>
             </div>
             <div className="text-xs text-textSecondary">
@@ -223,21 +225,21 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
             <div className="bg-white/5 rounded-2xl p-5 border border-white/5">
               <div className="flex items-center gap-2 mb-3">
                 <Target className="w-4 h-4 text-accent" />
-                <p className="text-xs font-semibold uppercase tracking-wider text-textSecondary">Seviyeler & Uzaklıklar</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-textSecondary">{t("detailedAnalysis.levelsDistances")}</p>
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                  <p className="text-[10px] text-textSecondary">En Yakın Destek</p>
+                  <p className="text-[10px] text-textSecondary">{t("detailedAnalysis.nearestSupport")}</p>
                   <p className="font-mono font-semibold">{fmtNum(ns.price, 2)}</p>
-                  <p className="text-[11px] text-textSecondary">Uzaklık: {fmtPct(ns.distance_pct, 2)}</p>
+                  <p className="text-[11px] text-textSecondary">{t("detailedAnalysis.distance")}: {fmtPct(ns.distance_pct, 2)}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                  <p className="text-[10px] text-textSecondary">En Yakın Direnç</p>
+                  <p className="text-[10px] text-textSecondary">{t("detailedAnalysis.nearestResistance")}</p>
                   <p className="font-mono font-semibold">{fmtNum(nr.price, 2)}</p>
-                  <p className="text-[11px] text-textSecondary">Uzaklık: {fmtPct(nr.distance_pct, 2)}</p>
+                  <p className="text-[11px] text-textSecondary">{t("detailedAnalysis.distance")}: {fmtPct(nr.distance_pct, 2)}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                  <p className="text-[10px] text-textSecondary">EMA20 Uzaklık</p>
+                  <p className="text-[10px] text-textSecondary">EMA20 {t("detailedAnalysis.distance")}</p>
                   <p className="font-mono font-semibold">{fmtPct(ema20Dist, 2)}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5">
@@ -250,7 +252,7 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
             <div className="bg-white/5 rounded-2xl p-5 border border-white/5">
               <div className="flex items-center gap-2 mb-3">
                 <Activity className="w-4 h-4 text-cyan-400" />
-                <p className="text-xs font-semibold uppercase tracking-wider text-textSecondary">Piyasa Rejimi</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-textSecondary">{t("detailedAnalysis.marketRegime")}</p>
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5">
@@ -262,18 +264,18 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
                   <p className="font-semibold">{volatility !== "UNKNOWN" ? String(volatility) : "-"}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                  <p className="text-[10px] text-textSecondary">Hacim Teyidi</p>
+                  <p className="text-[10px] text-textSecondary">{t("detailedAnalysis.volumeConfirmation")}</p>
                   <p className={`font-semibold ${volumeStatus === "STRONG" ? "text-success" : volumeStatus === "WEAK" ? "text-amber-400" : ""}`}>
                     {volumeStatus !== "UNKNOWN" ? volumeStatus : "-"}
                   </p>
                   {volumeRatio && (
                     <p className="text-[10px] text-textSecondary mt-1">
-                      Oran: {(volumeRatio * 100).toFixed(0)}%
+                      {t("detailedAnalysis.ratio")}: {(volumeRatio * 100).toFixed(0)}%
                     </p>
                   )}
                 </div>
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5">
-                  <p className="text-[10px] text-textSecondary">Son / Ort.20</p>
+                  <p className="text-[10px] text-textSecondary">{t("detailedAnalysis.lastAvg")}</p>
                   <p className="font-mono text-xs">
                     {volumeLast ? fmtNum(volumeLast, 0) : "-"} / {volumeAvg20 ? fmtNum(volumeAvg20, 0) : "-"}
                   </p>
@@ -291,7 +293,7 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
             <div className="bg-white/5 rounded-2xl p-5 border border-white/5">
               <div className="flex items-center gap-2 mb-3">
                 <Globe className="w-4 h-4 text-emerald-400" />
-                <p className="text-xs font-semibold uppercase tracking-wider text-textSecondary">Makro Proxy</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-textSecondary">{t("detailedAnalysis.macroProxy")}</p>
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="p-3 rounded-xl bg-white/5 border border-white/5">
@@ -310,10 +312,10 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
             <div className="bg-white/5 rounded-2xl p-5 border border-white/5">
               <div className="flex items-center gap-2 mb-3">
                 <Newspaper className="w-4 h-4 text-amber-400" />
-                <p className="text-xs font-semibold uppercase tracking-wider text-textSecondary">Haber Etkisi</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-textSecondary">{t("detailedAnalysis.newsImpact")}</p>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <div className="text-textSecondary">Başlık sayısı</div>
+                <div className="text-textSecondary">{t("detailedAnalysis.headlineCount")}</div>
                 <div className="font-mono font-semibold">{typeof newsImpact.headline_count === "number" ? newsImpact.headline_count : (newsImpact.count ?? "-")}</div>
               </div>
               <div className="flex items-center justify-between text-sm mt-2">
@@ -344,7 +346,7 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
           <div className="bg-white/5 rounded-2xl p-5 border border-white/5">
             <div className="flex items-center gap-2 mb-3">
               <Target className="w-4 h-4 text-accent" />
-              <p className="text-xs font-semibold uppercase tracking-wider text-textSecondary">Risk Yönetimi</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-textSecondary">{t("detailedAnalysis.riskManagement")}</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
               <div className="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
@@ -360,7 +362,7 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
                 <p className="font-mono font-semibold text-danger">{fmtNum(rmSl, 2)}</p>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/5 text-center">
-                <p className="text-[10px] text-textSecondary">Boyut</p>
+                <p className="text-[10px] text-textSecondary">{t("detailedAnalysis.size")}</p>
                 <p className="font-semibold">{rm.position_size ? String(rm.position_size) : "-"}</p>
               </div>
             </div>
@@ -378,12 +380,12 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
                 <div className="bg-white/5 rounded-2xl p-5 border border-white/5">
                   <div className="flex items-center gap-2 mb-3">
                     <ShieldAlert className="w-4 h-4 text-accent" />
-                    <p className="text-xs font-semibold uppercase tracking-wider text-textSecondary">Tez Özeti</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-textSecondary">{t("detailedAnalysis.thesisSummary")}</p>
                   </div>
                   <p className="text-sm text-textSecondary leading-relaxed">{String(thesisSummary)}</p>
                   {whyDecision && (
                     <p className="text-xs text-textSecondary mt-2 pt-2 border-t border-white/10">
-                      <span className="font-semibold">Karar Nedeni:</span> {String(whyDecision)}
+                      <span className="font-semibold">{t("detailedAnalysis.decisionReason")}:</span> {String(whyDecision)}
                     </p>
                   )}
                 </div>
@@ -394,7 +396,7 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
                 <div className="bg-success/5 rounded-2xl p-5 border border-success/10">
                   <div className="flex items-center gap-2 mb-3">
                     <TrendingUp className="w-4 h-4 text-success" />
-                    <p className="text-xs font-semibold uppercase tracking-wider text-success">Boğa Tezi</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-success">{t("detailedAnalysis.bullThesis")}</p>
                   </div>
                   <ul className="space-y-1">
                     {bullCase.length > 0 ? (
@@ -406,7 +408,7 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
                         <li key={i} className="text-xs text-textSecondary">• {String(t)}</li>
                       ))
                     ) : (
-                      <li className="text-xs text-textSecondary/50">Veri yok</li>
+                      <li className="text-xs text-textSecondary/50">{t("detailedAnalysis.noData")}</li>
                     )}
                   </ul>
                 </div>
@@ -415,7 +417,7 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
                 <div className="bg-danger/5 rounded-2xl p-5 border border-danger/10">
                   <div className="flex items-center gap-2 mb-3">
                     <TrendingDown className="w-4 h-4 text-danger" />
-                    <p className="text-xs font-semibold uppercase tracking-wider text-danger">Ayı Tezi / Riskler</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-danger">{t("detailedAnalysis.bearThesis")}</p>
                   </div>
                   <ul className="space-y-1">
                     {bearCase.length > 0 ? (
@@ -427,7 +429,7 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
                         <li key={i} className="text-xs text-textSecondary">• {String(r)}</li>
                       ))
                     ) : (
-                      <li className="text-xs text-textSecondary/50">Veri yok</li>
+                      <li className="text-xs text-textSecondary/50">{t("detailedAnalysis.noData")}</li>
                     )}
                   </ul>
                 </div>
@@ -440,10 +442,10 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
               onClick={() => setShowContext(!showContext)}
               className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition text-xs"
             >
-              {showContext ? "Context Gizle" : "Context Göster"}
+              {showContext ? t("detailedAnalysis.hideContext") : t("detailedAnalysis.showContext")}
             </button>
             <span>
-              {analysis.timestamp ? new Date(String(analysis.timestamp)).toLocaleTimeString("tr-TR") : ""}
+              {analysis.timestamp ? new Date(String(analysis.timestamp)).toLocaleTimeString(locale === "en" ? "en-US" : "tr-TR") : ""}
             </span>
           </div>
 

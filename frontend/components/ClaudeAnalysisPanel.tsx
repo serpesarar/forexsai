@@ -23,11 +23,11 @@ type Props = {
   symbolLabel: string;
 };
 
-function DirectionBadge({ direction, isClaudeDecision }: { direction: string; isClaudeDecision?: boolean }) {
+function DirectionBadge({ direction, isClaudeDecision, t }: { direction: string; isClaudeDecision?: boolean; t: (key: string) => string }) {
   const config = {
-    BUY: { bg: "bg-success/20", text: "text-success", icon: TrendingUp, label: "ALIŞ" },
-    SELL: { bg: "bg-danger/20", text: "text-danger", icon: TrendingDown, label: "SATIŞ" },
-    HOLD: { bg: "bg-white/10", text: "text-textSecondary", icon: Minus, label: "BEKLE" },
+    BUY: { bg: "bg-success/20", text: "text-success", icon: TrendingUp, label: t("directions.buy") },
+    SELL: { bg: "bg-danger/20", text: "text-danger", icon: TrendingDown, label: t("directions.sell") },
+    HOLD: { bg: "bg-white/10", text: "text-textSecondary", icon: Minus, label: t("directions.hold") },
   }[direction] || { bg: "bg-white/10", text: "text-textSecondary", icon: Minus, label: direction };
 
   const Icon = config.icon;
@@ -41,16 +41,16 @@ function DirectionBadge({ direction, isClaudeDecision }: { direction: string; is
   );
 }
 
-function AgreementBadge({ agreement }: { agreement: boolean }) {
+function AgreementBadge({ agreement, t }: { agreement: boolean; t: (key: string) => string }) {
   return agreement ? (
     <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-success/10 text-success">
       <CheckCircle2 className="w-4 h-4" />
-      <span className="text-xs font-medium">MUTABIK</span>
+      <span className="text-xs font-medium">{t("claudeAnalysis.agreed")}</span>
     </div>
   ) : (
     <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning/10 text-warning">
       <XCircle className="w-4 h-4" />
-      <span className="text-xs font-medium">FARKLI GÖRÜŞ</span>
+      <span className="text-xs font-medium">{t("claudeAnalysis.different")}</span>
     </div>
   );
 }
@@ -59,7 +59,7 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
   const [shouldFetch, setShouldFetch] = useState(false);
   const { data, isLoading, error, refetch } = useAIAnalysis(symbol, shouldFetch);
   const [expanded, setExpanded] = useState(false);
-  const t = useI18nStore((s) => s.t);
+  const { t, locale } = useI18nStore();
   
   const handleAnalyze = () => {
     setShouldFetch(true);
@@ -114,12 +114,12 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-white/5 rounded-2xl p-5 text-center border border-white/5">
               <p className="text-xs uppercase text-textSecondary mb-3 tracking-wider">ML MODEL</p>
-              <DirectionBadge direction={data.ml_prediction.direction} />
+              <DirectionBadge direction={data.ml_prediction.direction} t={t} />
               <p className="text-sm text-textSecondary mt-3 font-medium">{data.ml_prediction.confidence.toFixed(0)}% {t("mlPrediction.confidence")}</p>
             </div>
             
             <div className="bg-white/5 rounded-2xl p-5 flex flex-col items-center justify-center border border-white/5">
-              <AgreementBadge agreement={data.claude_analysis.agreement} />
+              <AgreementBadge agreement={data.claude_analysis.agreement} t={t} />
               <p className="text-xs text-textSecondary mt-3">
                 {data.claude_analysis.agreement ? t("claudeAnalysis.agreement") : t("claudeAnalysis.disagreement")}
               </p>
@@ -127,7 +127,7 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
             
             <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-2xl p-5 text-center border border-purple-500/20">
               <p className="text-xs uppercase text-purple-400 mb-3 tracking-wider">CLAUDE AI</p>
-              <DirectionBadge direction={data.claude_analysis.claude_direction} isClaudeDecision />
+              <DirectionBadge direction={data.claude_analysis.claude_direction} isClaudeDecision t={t} />
               <p className="text-sm text-textSecondary mt-3 font-medium">{data.claude_analysis.claude_confidence.toFixed(0)}% {t("mlPrediction.confidence")}</p>
             </div>
           </div>
@@ -147,9 +147,9 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
                 ? "bg-accent/20 text-accent"
                 : "bg-warning/20 text-warning"
             }`}>
-              {data.claude_analysis.position_size_suggestion === "No Trade" ? "İşlem Yapma" :
-               data.claude_analysis.position_size_suggestion === "Large" ? "Büyük" :
-               data.claude_analysis.position_size_suggestion === "Medium" ? "Orta" : "Küçük"}
+              {data.claude_analysis.position_size_suggestion === "No Trade" ? t("claudeAnalysis.positionSize.noTrade") :
+               data.claude_analysis.position_size_suggestion === "Large" ? t("claudeAnalysis.positionSize.large") :
+               data.claude_analysis.position_size_suggestion === "Medium" ? t("claudeAnalysis.positionSize.medium") : t("claudeAnalysis.positionSize.small")}
             </span>
           </div>
 
@@ -236,7 +236,7 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
               <Brain className="w-3 h-3" />
               {data.claude_analysis.model_used}
             </span>
-            <span>{new Date(data.claude_analysis.timestamp).toLocaleTimeString("tr-TR")}</span>
+            <span>{new Date(data.claude_analysis.timestamp).toLocaleTimeString(locale === "en" ? "en-US" : "tr-TR")}</span>
           </div>
         </>
       ) : null}

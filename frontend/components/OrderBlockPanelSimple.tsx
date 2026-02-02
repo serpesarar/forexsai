@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 import { useOrderBlockDetect } from "../lib/api/orderBlocks";
 import { useFVGDetect } from "../lib/api/fvg";
+import { useI18nStore } from "../lib/i18n/store";
 
 interface OrderBlockPanelSimpleProps {
   symbol?: string;
@@ -11,6 +12,7 @@ interface OrderBlockPanelSimpleProps {
 }
 
 export default function OrderBlockPanelSimple({ symbol = "NDX.INDX", symbolLabel = "NASDAQ" }: OrderBlockPanelSimpleProps) {
+  const { t } = useI18nStore();
   const [timeframe, setTimeframe] = useState<"5m" | "15m" | "1h" | "4h">("15m");
 
   const payload = useMemo(() => ({
@@ -56,8 +58,8 @@ export default function OrderBlockPanelSimple({ symbol = "NDX.INDX", symbolLabel
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-semibold">Smart Money Zones</h3>
-          <p className="text-xs text-textSecondary">{symbolLabel} • Order Blocks & FVG</p>
+          <h3 className="text-base font-semibold">{t("orderBlock.title")}</h3>
+          <p className="text-xs text-textSecondary">{symbolLabel} • {t("orderBlock.subtitle")}</p>
         </div>
         <button
           onClick={() => refetch()}
@@ -95,12 +97,12 @@ export default function OrderBlockPanelSimple({ symbol = "NDX.INDX", symbolLabel
               </div>
               <div>
                 <p className={`text-lg font-bold ${signalStyle.text}`}>{signal.action}</p>
-                <p className="text-xs text-textSecondary">SMC Sinyali</p>
+                <p className="text-xs text-textSecondary">{t("orderBlock.smcSignal")}</p>
               </div>
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold">{Math.round(signal.confidence * 100)}%</p>
-              <p className="text-xs text-textSecondary">Güven</p>
+              <p className="text-xs text-textSecondary">{t("orderBlock.confidence")}</p>
             </div>
           </div>
           
@@ -119,7 +121,7 @@ export default function OrderBlockPanelSimple({ symbol = "NDX.INDX", symbolLabel
         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4 text-emerald-400" />
-            <span className="text-xs font-medium text-emerald-400">Destek Bölgesi</span>
+            <span className="text-xs font-medium text-emerald-400">{t("orderBlock.supportZone")}</span>
           </div>
           {nearestBullish ? (
             <>
@@ -127,11 +129,11 @@ export default function OrderBlockPanelSimple({ symbol = "NDX.INDX", symbolLabel
                 {Number(nearestBullish.zone_low).toFixed(2)}
               </p>
               <p className="text-[10px] text-textSecondary mt-1">
-                Güç: {Math.round(nearestBullish.score)}/100
+                {t("orderBlock.strength")}: {Math.round(nearestBullish.score)}/100
               </p>
             </>
           ) : (
-            <p className="text-xs text-textSecondary">Tespit edilmedi</p>
+            <p className="text-xs text-textSecondary">{t("orderBlock.notDetected")}</p>
           )}
         </div>
 
@@ -139,7 +141,7 @@ export default function OrderBlockPanelSimple({ symbol = "NDX.INDX", symbolLabel
         <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-2">
             <TrendingDown className="w-4 h-4 text-red-400" />
-            <span className="text-xs font-medium text-red-400">Direnç Bölgesi</span>
+            <span className="text-xs font-medium text-red-400">{t("orderBlock.resistanceZone")}</span>
           </div>
           {nearestBearish ? (
             <>
@@ -147,11 +149,11 @@ export default function OrderBlockPanelSimple({ symbol = "NDX.INDX", symbolLabel
                 {Number(nearestBearish.zone_high).toFixed(2)}
               </p>
               <p className="text-[10px] text-textSecondary mt-1">
-                Güç: {Math.round(nearestBearish.score)}/100
+                {t("orderBlock.strength")}: {Math.round(nearestBearish.score)}/100
               </p>
             </>
           ) : (
-            <p className="text-xs text-textSecondary">Tespit edilmedi</p>
+            <p className="text-xs text-textSecondary">{t("orderBlock.notDetected")}</p>
           )}
         </div>
       </div>
@@ -160,9 +162,9 @@ export default function OrderBlockPanelSimple({ symbol = "NDX.INDX", symbolLabel
       {fvgData && (fvgData.nearest_bullish || fvgData.nearest_bearish) && (
         <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-cyan-400">Fiyat Boşlukları (FVG)</span>
+            <span className="text-xs font-medium text-cyan-400">{t("orderBlock.fvgTitle")}</span>
             <span className="text-[10px] text-textSecondary">
-              {fvgData.unfilled_count || 0} açık
+              {fvgData.unfilled_count || 0} {t("orderBlock.open")}
             </span>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
@@ -184,7 +186,7 @@ export default function OrderBlockPanelSimple({ symbol = "NDX.INDX", symbolLabel
 
       {/* Kontrol Listesi - Ne Var Ne Yok */}
       <div className="bg-white/5 rounded-xl p-3">
-        <p className="text-xs font-medium text-textSecondary mb-2">Yapı Kontrolü</p>
+        <p className="text-xs font-medium text-textSecondary mb-2">{t("orderBlock.structureCheck")}</p>
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="flex items-center gap-2">
             {orderBlocks.some(ob => ob.has_choch) ? (
@@ -193,7 +195,7 @@ export default function OrderBlockPanelSimple({ symbol = "NDX.INDX", symbolLabel
               <XCircle className="w-3 h-3 text-zinc-500" />
             )}
             <span className={orderBlocks.some(ob => ob.has_choch) ? "text-white" : "text-textSecondary"}>
-              CHoCH (Trend Kırılımı)
+              {t("orderBlock.choch")}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -203,7 +205,7 @@ export default function OrderBlockPanelSimple({ symbol = "NDX.INDX", symbolLabel
               <XCircle className="w-3 h-3 text-zinc-500" />
             )}
             <span className={orderBlocks.some(ob => ob.has_bos) ? "text-white" : "text-textSecondary"}>
-              BOS (Yapı Kırılımı)
+              {t("orderBlock.bos")}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -213,7 +215,7 @@ export default function OrderBlockPanelSimple({ symbol = "NDX.INDX", symbolLabel
               <XCircle className="w-3 h-3 text-zinc-500" />
             )}
             <span className={fvgData?.unfilled_count ? "text-white" : "text-textSecondary"}>
-              FVG (Fiyat Boşluğu)
+              {t("orderBlock.fvg")}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -232,7 +234,7 @@ export default function OrderBlockPanelSimple({ symbol = "NDX.INDX", symbolLabel
       {/* Yükleniyor */}
       {(isLoading || fvgLoading) && (
         <div className="text-center py-2">
-          <p className="text-xs text-textSecondary animate-pulse">Analiz ediliyor...</p>
+          <p className="text-xs text-textSecondary animate-pulse">{t("orderBlock.analyzing")}</p>
         </div>
       )}
     </div>

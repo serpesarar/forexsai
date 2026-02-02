@@ -23,12 +23,14 @@ import {
   triggerOutcomeCheck,
   trigger1hOutcomeCheck,
 } from "../lib/api/learning";
+import { useI18nStore } from "../lib/i18n/store";
 
 interface LearningDashboardPanelProps {
   symbol?: string;
 }
 
 export default function LearningDashboardPanel({ symbol }: LearningDashboardPanelProps) {
+  const { t, locale } = useI18nStore();
   const [days, setDays] = useState(7);
   const [isCheckingOutcomes, setIsCheckingOutcomes] = useState(false);
   const [checkInterval, setCheckInterval] = useState<"1h" | "24h">("1h");
@@ -60,7 +62,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
         <div className="flex items-center gap-2 text-zinc-400">
           <RefreshCw className="w-4 h-4 animate-spin" />
-          <span>Loading learning system...</span>
+          <span>{t("learningDashboard.loading")}</span>
         </div>
       </div>
     );
@@ -71,10 +73,10 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
         <div className="flex items-center gap-2 text-amber-400">
           <AlertTriangle className="w-5 h-5" />
-          <span className="font-medium">Learning System Offline</span>
+          <span className="font-medium">{t("learningDashboard.offline")}</span>
         </div>
         <p className="text-zinc-500 text-sm mt-2">
-          Database not configured. Set SUPABASE_URL and SUPABASE_KEY in .env
+          {t("learningDashboard.dbNotConfigured")}
         </p>
       </div>
     );
@@ -91,10 +93,10 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
       <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Brain className="w-5 h-5 text-purple-400" />
-          <h2 className="font-semibold text-white">Learning Dashboard</h2>
+          <h2 className="font-semibold text-white">{t("learningDashboard.title")}</h2>
           <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full flex items-center gap-1">
             <Database className="w-3 h-3" />
-            Connected
+            {t("learningDashboard.connected")}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -103,9 +105,9 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
             onChange={(e) => setDays(Number(e.target.value))}
             className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-sm text-white"
           >
-            <option value={7}>7 gün</option>
-            <option value={14}>14 gün</option>
-            <option value={30}>30 gün</option>
+            <option value={7}>7 {t("learningDashboard.days")}</option>
+            <option value={14}>14 {t("learningDashboard.days")}</option>
+            <option value={30}>30 {t("learningDashboard.days")}</option>
           </select>
           <button
             onClick={handleCheckOutcomes}
@@ -130,10 +132,10 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
             <div className="bg-zinc-800/50 rounded-lg p-3">
               <div className="flex items-center gap-2 text-zinc-400 text-xs mb-1">
                 <BarChart3 className="w-3.5 h-3.5" />
-                Toplam Tahmin
+                {t("learningDashboard.totalPredictions")}
               </div>
               <div className="text-2xl font-bold text-white">{totalPredictions}</div>
-              <div className="text-xs text-zinc-500">Son {days} gün</div>
+              <div className="text-xs text-zinc-500">{t("learningDashboard.lastUpdate")}: {days} {t("learningDashboard.days")}</div>
             </div>
 
             {/* ML Accuracy */}
@@ -148,7 +150,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
                     {(mlAccuracy * 100).toFixed(1)}%
                   </div>
                   <div className="text-xs text-zinc-500">
-                    {accuracy?.ml_correct_count || 0} doğru
+                    {accuracy?.ml_correct_count || 0} {t("learningDashboard.correct")}
                   </div>
                 </>
               ) : (
@@ -168,7 +170,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
                     {(claudeAccuracy * 100).toFixed(1)}%
                   </div>
                   <div className="text-xs text-zinc-500">
-                    {accuracy?.claude_correct_count || 0} doğru
+                    {accuracy?.claude_correct_count || 0} {t("learningDashboard.correct")}
                   </div>
                 </>
               ) : (
@@ -180,14 +182,14 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
             <div className="bg-zinc-800/50 rounded-lg p-3">
               <div className="flex items-center gap-2 text-zinc-400 text-xs mb-1">
                 <Target className="w-3.5 h-3.5 text-green-400" />
-                İkisi de Doğru
+                {t("learningDashboard.bothCorrect")}
               </div>
               {accuracy?.both_correct_rate !== null ? (
                 <>
                   <div className={`text-2xl font-bold ${getAccuracyColor(accuracy?.both_correct_rate || 0)}`}>
                     {((accuracy?.both_correct_rate || 0) * 100).toFixed(1)}%
                   </div>
-                  <div className="text-xs text-zinc-500">Konsensüs</div>
+                  <div className="text-xs text-zinc-500">{t("learningDashboard.consensus")}</div>
                 </>
               ) : (
                 <div className="text-lg text-zinc-500">—</div>
@@ -198,7 +200,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
           {/* Accuracy Comparison Bar */}
           {mlAccuracy !== null && claudeAccuracy !== null && (
             <div className="bg-zinc-800/50 rounded-lg p-4">
-              <div className="text-sm font-medium text-zinc-300 mb-3">Model Karşılaştırması</div>
+              <div className="text-sm font-medium text-zinc-300 mb-3">{t("learningDashboard.modelComparison")}</div>
               <div className="space-y-3">
                 {/* ML Bar */}
                 <div>
@@ -237,15 +239,15 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
               <div className="mt-3 text-center">
                 {mlAccuracy > claudeAccuracy ? (
                   <span className="inline-flex items-center gap-1 text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full">
-                    <Zap className="w-3 h-3" /> ML Model önde (+{((mlAccuracy - claudeAccuracy) * 100).toFixed(1)}%)
+                    <Zap className="w-3 h-3" /> {t("learningDashboard.mlAhead")} (+{((mlAccuracy - claudeAccuracy) * 100).toFixed(1)}%)
                   </span>
                 ) : claudeAccuracy > mlAccuracy ? (
                   <span className="inline-flex items-center gap-1 text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full">
-                    <Brain className="w-3 h-3" /> Claude önde (+{((claudeAccuracy - mlAccuracy) * 100).toFixed(1)}%)
+                    <Brain className="w-3 h-3" /> {t("learningDashboard.claudeAhead")} (+{((claudeAccuracy - mlAccuracy) * 100).toFixed(1)}%)
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 text-xs bg-zinc-700 text-zinc-400 px-2 py-1 rounded-full">
-                    Eşit performans
+                    {t("learningDashboard.equalPerformance")}
                   </span>
                 )}
               </div>
@@ -257,7 +259,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
             <div className="bg-zinc-800/50 rounded-lg p-4">
               <div className="text-sm font-medium text-zinc-300 mb-3 flex items-center gap-2">
                 <Activity className="w-4 h-4" />
-                Son Tahminler
+                {t("learningDashboard.recentPredictions")}
               </div>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {predictions.predictions.slice(0, 5).map((pred) => (
@@ -267,7 +269,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-zinc-400 text-xs">
-                        {new Date(pred.created_at).toLocaleDateString("tr-TR", {
+                        {new Date(pred.created_at).toLocaleDateString(locale === "en" ? "en-US" : "tr-TR", {
                           day: "2-digit",
                           month: "2-digit",
                           hour: "2-digit",
@@ -280,11 +282,11 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
                     <div className="flex items-center gap-2">
                       {pred.outcome_checked ? (
                         <span className="text-xs text-green-400 flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3" /> Kontrol edildi
+                          <CheckCircle className="w-3 h-3" /> {t("learningDashboard.checked")}
                         </span>
                       ) : (
                         <span className="text-xs text-zinc-500 flex items-center gap-1">
-                          <RefreshCw className="w-3 h-3" /> Bekliyor
+                          <RefreshCw className="w-3 h-3" /> {t("learningDashboard.waiting")}
                         </span>
                       )}
                     </div>
@@ -300,7 +302,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
               <div className="text-sm font-medium text-zinc-300 mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Target className="w-4 h-4 text-cyan-400" />
-                  Hedef Seviyeleri Başarı Oranı
+                  {t("learningDashboard.targetLevels")}
                 </div>
                 <div className="flex items-center gap-2">
                   <select
@@ -308,8 +310,8 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
                     onChange={(e) => setCheckInterval(e.target.value as "1h" | "24h")}
                     className="bg-zinc-700 border border-zinc-600 rounded px-2 py-0.5 text-xs text-white"
                   >
-                    <option value="1h">1 Saat</option>
-                    <option value="24h">24 Saat</option>
+                    <option value="1h">1 {t("learningDashboard.hour")}</option>
+                    <option value="24h">24 {t("learningDashboard.hours")}</option>
                   </select>
                 </div>
               </div>
@@ -352,7 +354,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
                       <div className="flex justify-between text-xs mb-1">
                         <span className="text-red-400">Stoploss ({multiTarget.config?.stoploss_pips} pips)</span>
                         <span className={accuracy.stoploss_hit_rate > 0.3 ? "text-red-400" : "text-green-400"}>
-                          {(accuracy.stoploss_hit_rate * 100).toFixed(1)}% ({accuracy.stoploss_hits} kez)
+                          {(accuracy.stoploss_hit_rate * 100).toFixed(1)}% ({accuracy.stoploss_hits} {t("learningDashboard.times")})
                         </span>
                       </div>
                       <div className="h-2 bg-zinc-700 rounded-full overflow-hidden">
@@ -365,7 +367,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
 
                     {/* Summary */}
                     <div className="pt-2 text-xs text-zinc-400 text-center">
-                      Toplam {accuracy.analyzed_predictions} analiz | {checkInterval} kontrol
+                      {t("learningDashboard.totalAnalysis")} {accuracy.analyzed_predictions} | {checkInterval} {t("learningDashboard.check")}
                     </div>
                   </div>
                 );
@@ -374,7 +376,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
               {/* No multi-target data yet */}
               {(!multiTarget.accuracy_1h?.target_accuracy || Object.keys(multiTarget.accuracy_1h.target_accuracy).length === 0) && (
                 <div className="text-xs text-zinc-500 text-center py-4">
-                  Henüz hedef bazlı veri yok. Outcome kontrolü yapılınca burada görünecek.
+                  {t("learningDashboard.noTargetData")}
                 </div>
               )}
             </div>
@@ -384,9 +386,9 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
           {totalPredictions === 0 && (
             <div className="text-center py-8">
               <Database className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-              <p className="text-zinc-400">Henüz yeterli veri yok</p>
+              <p className="text-zinc-400">{t("learningDashboard.noDataYet")}</p>
               <p className="text-zinc-500 text-sm mt-1">
-                Detaylı analiz yaptıkça veriler burada birikecek
+                {t("learningDashboard.dataWillAccumulate")}
               </p>
             </div>
           )}
@@ -396,7 +398,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
             <div className="bg-zinc-800/50 rounded-lg p-4">
               <div className="text-sm font-medium text-zinc-300 mb-3 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-400" />
-                Öğrenme İçgörüleri
+                {t("learningDashboard.learningInsights")}
               </div>
               <div className="space-y-2">
                 {dashboard.active_insights.slice(0, 3).map((insight: any, idx: number) => (
