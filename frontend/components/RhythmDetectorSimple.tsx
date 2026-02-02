@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { RefreshCw, TrendingUp, TrendingDown, Minus, Activity, Target } from "lucide-react";
+import { RefreshCw, TrendingUp, TrendingDown, Minus, Activity, Target, HelpCircle, X } from "lucide-react";
 import { useRtyhiimDetect, useConsolidation } from "../lib/api/rtyhiim";
 import { useI18nStore } from "../lib/i18n/store";
 
@@ -11,9 +11,10 @@ interface RhythmDetectorSimpleProps {
 }
 
 export default function RhythmDetectorSimple({ symbol = "NDX.INDX", symbolLabel = "NASDAQ" }: RhythmDetectorSimpleProps) {
-  const { t } = useI18nStore();
+  const { t, locale } = useI18nStore();
   const { data, isLoading, refetch } = useRtyhiimDetect(symbol);
   const { data: consolidation } = useConsolidation(symbol, 20, "1m");
+  const [showInfo, setShowInfo] = useState(false);
 
   const state = (data as any)?.state;
 
@@ -32,6 +33,47 @@ export default function RhythmDetectorSimple({ symbol = "NDX.INDX", symbolLabel 
   const breakoutDir = consolidation?.breakout_direction;
 
   return (
+    <>
+      {/* Info Modal */}
+      {showInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowInfo(false)}>
+          <div className="bg-background border border-white/10 rounded-2xl p-6 max-w-lg mx-4 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">{locale === "en" ? "Market Rhythm Guide" : "Piyasa Ritmi Rehberi"}</h3>
+              <button onClick={() => setShowInfo(false)} className="p-1 hover:bg-white/10 rounded-full">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-3 text-sm text-textSecondary">
+              <div className="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                <p className="font-medium text-emerald-400 mb-1">BUY {locale === "en" ? "Signal" : "Sinyali"}</p>
+                <p>{locale === "en" ? "Pattern detected with upward momentum. High confidence = stronger signal." : "Yukarı momentum ile pattern tespit edildi. Yüksek güven = güçlü sinyal."}</p>
+              </div>
+              <div className="p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+                <p className="font-medium text-red-400 mb-1">SELL {locale === "en" ? "Signal" : "Sinyali"}</p>
+                <p>{locale === "en" ? "Pattern detected with downward momentum. Look for short opportunities." : "Aşağı momentum ile pattern tespit edildi. Short fırsatları arayın."}</p>
+              </div>
+              <div className="p-3 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
+                <p className="font-medium text-cyan-400 mb-1">{locale === "en" ? "Consolidation (Sideways)" : "Konsolidasyon (Yatay)"}</p>
+                <p>{locale === "en" ? "Price moving in a range. Wait for breakout direction before entering." : "Fiyat dar aralıkta hareket ediyor. Giriş yapmadan kırılım yönünü bekleyin."}</p>
+              </div>
+              <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                <p className="font-medium text-amber-400 mb-1">{locale === "en" ? "Trending" : "Trend"}</p>
+                <p>{locale === "en" ? "Clear directional movement. Trade with the trend, not against it." : "Net yönlü hareket. Trendle işlem yapın, karşısında değil."}</p>
+              </div>
+              <div className="p-3 bg-white/5 rounded-lg">
+                <p className="font-medium text-white mb-1">{locale === "en" ? "Key Metrics" : "Önemli Metrikler"}</p>
+                <ul className="space-y-1 text-xs">
+                  <li>• <strong>{locale === "en" ? "Period" : "Periyot"}:</strong> {locale === "en" ? "Dominant cycle duration in seconds" : "Baskın döngü süresi (saniye)"}</li>
+                  <li>• <strong>{locale === "en" ? "Regularity" : "Düzenlilik"}:</strong> {locale === "en" ? "How consistent the pattern is (higher = more reliable)" : "Pattern ne kadar tutarlı (yüksek = güvenilir)"}</li>
+                  <li>• <strong>{locale === "en" ? "Amplitude" : "Genlik"}:</strong> {locale === "en" ? "Price swing magnitude" : "Fiyat salınım büyüklüğü"}</li>
+                </ul>
+              </div>
+              <p className="text-xs p-3 bg-white/5 rounded-lg">💡 {locale === "en" ? "Use with other indicators for confirmation. High regularity + clear direction = best signals." : "Teyit için diğer göstergelerle birlikte kullanın. Yüksek düzenlilik + net yön = en iyi sinyaller."}</p>
+            </div>
+          </div>
+        </div>
+      )}
     <div className="glass-premium p-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -39,13 +81,21 @@ export default function RhythmDetectorSimple({ symbol = "NDX.INDX", symbolLabel 
           <h3 className="text-base font-semibold">{t("rhythmPanel.title")}</h3>
           <p className="text-xs text-textSecondary">{symbolLabel} • {t("rhythmPanel.subtitle")}</p>
         </div>
-        <button
-          onClick={() => refetch()}
-          disabled={isLoading}
-          className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition disabled:opacity-50"
-        >
-          <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowInfo(true)}
+            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition"
+          >
+            <HelpCircle className="w-4 h-4 text-textSecondary" />
+          </button>
+          <button
+            onClick={() => refetch()}
+            disabled={isLoading}
+            className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+          </button>
+        </div>
       </div>
 
       {/* Ana Durum Kartı */}
@@ -184,5 +234,6 @@ export default function RhythmDetectorSimple({ symbol = "NDX.INDX", symbolLabel 
         </div>
       )}
     </div>
+    </>
   );
 }

@@ -22,7 +22,9 @@ interface CandlestickPattern {
   strength: number;
   timeframe: string;
   confidence: number;
+  description: string;
   description_tr: string;
+  action: string;
   action_tr: string;
 }
 
@@ -324,7 +326,7 @@ export default function CandlestickPatternPanel({
                               <Info className="w-3 h-3" />
                               {t("candlestickPanel.description")}
                             </div>
-                            <p className="text-sm text-gray-300">{locale === "tr" ? pattern.description_tr : pattern.description_tr}</p>
+                            <p className="text-sm text-gray-300">{locale === "tr" ? pattern.description_tr : (pattern.description || pattern.description_tr)}</p>
                           </div>
                           <div className={`rounded p-2 ${
                             pattern.signal === "bullish" 
@@ -344,7 +346,7 @@ export default function CandlestickPatternPanel({
                               {t("candlestickPanel.whatToDo")}
                             </div>
                             <p className={`text-sm font-medium ${getSignalColor(pattern.signal)}`}>
-                              {locale === "tr" ? pattern.action_tr : pattern.action_tr}
+                              {locale === "tr" ? pattern.action_tr : (pattern.action || pattern.action_tr)}
                             </p>
                           </div>
                         </div>

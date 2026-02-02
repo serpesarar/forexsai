@@ -145,12 +145,12 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
               </button>
             </div>
             <div className="space-y-3 text-sm text-textSecondary">
-              <p><strong className="text-white">BUY:</strong> Model yukarı hareket bekliyor</p>
-              <p><strong className="text-white">SELL:</strong> Model aşağı hareket bekliyor</p>
-              <p><strong className="text-white">HOLD:</strong> Belirsiz, bekleyin</p>
-              <p><strong className="text-white">Target Pips:</strong> ATR bazlı kar hedefi</p>
-              <p><strong className="text-white">R/R:</strong> Risk/Reward oranı (1.5+ önerilir)</p>
-              <p className="text-xs mt-4 p-3 bg-white/5 rounded-lg">💡 %70+ güvenle işlem açın. Yüksek volatilitede pozisyon küçültün.</p>
+              <p><strong className="text-white">BUY:</strong> {locale === "en" ? "Model expects upward movement" : "Model yukarı hareket bekliyor"}</p>
+              <p><strong className="text-white">SELL:</strong> {locale === "en" ? "Model expects downward movement" : "Model aşağı hareket bekliyor"}</p>
+              <p><strong className="text-white">HOLD:</strong> {locale === "en" ? "Uncertain, wait for clarity" : "Belirsiz, bekleyin"}</p>
+              <p><strong className="text-white">Target Pips:</strong> {locale === "en" ? "ATR-based profit target" : "ATR bazlı kar hedefi"}</p>
+              <p><strong className="text-white">R/R:</strong> {locale === "en" ? "Risk/Reward ratio (1.5+ recommended)" : "Risk/Reward oranı (1.5+ önerilir)"}</p>
+              <p className="text-xs mt-4 p-3 bg-white/5 rounded-lg">💡 {locale === "en" ? "Open trades with 70%+ confidence. Reduce position size in high volatility." : "%70+ güvenle işlem açın. Yüksek volatilitede pozisyon küçültün."}</p>
             </div>
           </div>
         </div>
