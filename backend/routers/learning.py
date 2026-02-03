@@ -1005,11 +1005,17 @@ async def get_strategy_performance(
         cutoff_iso = cutoff.isoformat() + "Z"
         
         # Get all predictions with outcomes
-        result = client.table("prediction_logs").select(
-            "id, symbol, ml_direction, ml_confidence, factors, created_at, outcome_results(ml_correct, hit_target, hit_stop)"
-        ).gte("created_at", cutoff_iso).execute()
-        
-        predictions = result.get("data") or []
+        predictions = []
+        try:
+            result = client.table("prediction_logs").select(
+                "id, symbol, strategy, ml_direction, ml_confidence, factors, created_at, outcome_results(ml_correct, hit_target, hit_stop)"
+            ).gte("created_at", cutoff_iso).execute()
+            predictions = result.get("data") or []
+        except Exception:
+            result = client.table("prediction_logs").select(
+                "id, symbol, ml_direction, ml_confidence, factors, created_at, outcome_results(ml_correct, hit_target, hit_stop)"
+            ).gte("created_at", cutoff_iso).execute()
+            predictions = result.get("data") or []
         
         # Classify each prediction by confidence level into strategy buckets
         def classify_strategy(confidence: float) -> str:
@@ -1043,7 +1049,9 @@ async def get_strategy_performance(
                 continue
             
             confidence = pred.get("ml_confidence", 50)
-            strategy = classify_strategy(confidence)
+            strategy = pred.get("strategy") or classify_strategy(confidence)
+            if strategy not in stats[symbol]:
+                strategy = classify_strategy(confidence)
             
             stats[symbol][strategy]["total"] += 1
             stats[symbol][strategy]["confidence_sum"] += confidence
