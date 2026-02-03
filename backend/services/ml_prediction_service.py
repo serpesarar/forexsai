@@ -1574,6 +1574,52 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
             logger.debug(f"S/R post-processing skipped: {pp_err}")
     
     # ═══════════════════════════════════════════════════════════════════
+    # ADVANCED TRADING ENGINE - 5 Katmanlı Karar Sistemi
+    # ═══════════════════════════════════════════════════════════════════
+    try:
+        from services.trading_engine import (
+            MarketRegimeDetector, ConfluenceEngine, 
+            LayeredDecisionMaker, extract_ohlcv
+        )
+        from services.trading_engine.mtf_analyzer import TimeframeAnalysis
+        from services.trading_engine.constants import PriceStructure
+        
+        # Rejim tespiti (candle verisi varsa)
+        if candles and len(candles) >= 50:
+            _, highs, lows, closes, _ = extract_ohlcv(candles)
+            
+            regime_detector = MarketRegimeDetector()
+            regime = regime_detector.detect(highs, lows, closes)
+            
+            # Rejim bazlı karar
+            if regime.position_size_multiplier == 0:
+                # HIGH_VOL_CHOPPY - TİCARET YAPMA
+                direction = "HOLD"
+                confidence = min(confidence, 40)
+                reasoning.append(f"🚫 Rejim: {regime.regime.value} - Trade önerilmez")
+                reasoning.extend(regime.reasoning)
+            elif regime.trend_direction:
+                # Trend var - counter-trend kontrolü
+                basic_dir = "LONG" if direction == "BUY" else ("SHORT" if direction == "SELL" else None)
+                if basic_dir and basic_dir != regime.trend_direction and not regime.counter_trend_allowed:
+                    # Counter-trend yasak
+                    old_dir = direction
+                    direction = "HOLD"
+                    confidence = min(confidence, 45)
+                    reasoning.append(f"⚠️ Counter-trend: {old_dir} vs Rejim {regime.trend_direction}")
+                else:
+                    # Trend uyumlu - confidence boost
+                    if basic_dir == regime.trend_direction:
+                        confidence = min(100, confidence * 1.1)
+                        reasoning.append(f"✅ Rejim Uyumu: {regime.regime.value} ({regime.trend_direction})")
+            
+            # Pozisyon boyut çarpanı
+            if regime.position_size_multiplier < 1.0:
+                reasoning.append(f"📊 Pozisyon: {regime.position_size_multiplier:.0%} (rejim ayarı)")
+    except Exception as te_err:
+        logger.debug(f"Trading engine skipped: {te_err}")
+    
+    # ═══════════════════════════════════════════════════════════════════
     # SIGNAL STABILITY CHECK - Prevent rapid direction flip-flopping
     # ═══════════════════════════════════════════════════════════════════
     allow_change, stability_reason = _should_allow_direction_change(
@@ -1581,17 +1627,14 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     )
     
     if not allow_change:
-        # Revert to cached signal direction
         cached = _get_cached_signal(normalized_symbol)
         if cached:
             old_direction = cached["direction"]
             logger.warning(f"Signal stability: {direction} -> {old_direction} ({stability_reason})")
             reasoning.append(f"⚡ Sinyal Stabilitesi: {stability_reason}")
             direction = old_direction
-            # Keep confidence but add warning
-            confidence = min(confidence, cached["confidence"] + 5)  # Don't inflate confidence
+            confidence = min(confidence, cached["confidence"] + 5)
     else:
-        # Update cache with new signal
         _update_signal_cache(normalized_symbol, direction, confidence, current_price)
         if stability_reason and stability_reason not in ["İlk sinyal", "Aynı yön", "HOLD geçişi"]:
             reasoning.append(f"✅ {stability_reason}")
