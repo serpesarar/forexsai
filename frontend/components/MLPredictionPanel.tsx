@@ -4,6 +4,8 @@ import { usePrediction } from "../lib/api/prediction";
 import { TrendingUp, TrendingDown, Minus, Target, AlertTriangle, Activity, RefreshCw, HelpCircle, X, Zap } from "lucide-react";
 import { useState } from "react";
 import { useI18nStore } from "../lib/i18n/store";
+import { useMLStrategyStore } from "../lib/store";
+import { usePredictionWithConfig } from "../lib/api/prediction";
 
 // Golden Ratio
 const PHI = 1.618;
@@ -127,7 +129,8 @@ function PriceTarget({ label, price, pips, type }: { label: string; price: numbe
 }
 
 export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
-  const { data, isLoading, isFetching, error, refetch } = usePrediction(symbol);
+  const config = useMLStrategyStore((s) => s.getConfig(symbol));
+  const { data, isLoading, isFetching, error, refetch } = usePredictionWithConfig(symbol, config);
   const [showGuide, setShowGuide] = useState(false);
   const t = useI18nStore((s) => s.t);
   const locale = useI18nStore((s) => s.locale);

@@ -30,8 +30,16 @@ export interface PredictionData {
   model_version: string;
 }
 
-async function fetchPrediction(symbol: string, enabledFactors?: string[], logToDb: boolean = false): Promise<PredictionData> {
+async function fetchPrediction(
+  symbol: string,
+  enabledFactors?: string[],
+  logToDb: boolean = false,
+  strategy?: string | null
+): Promise<PredictionData> {
   const params = new URLSearchParams();
+  if (strategy) {
+    params.append("strategy", strategy);
+  }
   if (enabledFactors && enabledFactors.length > 0) {
     params.append("enabled_factors", enabledFactors.join(","));
   }
@@ -72,11 +80,27 @@ async function fetchAllPredictions(): Promise<PredictionData[]> {
 
 export function usePrediction(symbol: string, logToDb: boolean = true) {
   return useQuery({
-    queryKey: ["prediction", symbol],
+    queryKey: ["prediction", symbol, logToDb],
     queryFn: () => fetchPrediction(symbol, undefined, logToDb),
     refetchInterval: 60000, // Refresh every 60 seconds - logs to DB each time
     staleTime: 10000, // Data is stale after 10 seconds (allows manual refresh)
     gcTime: 60000, // Keep in cache for 1 minute
+  });
+}
+
+export function usePredictionWithConfig(
+  symbol: string,
+  config: { strategy?: string | null; enabledFactors?: string[] | null },
+  logToDb: boolean = true
+) {
+  const strategy = config.strategy || null;
+  const enabledFactors = config.enabledFactors || undefined;
+  return useQuery({
+    queryKey: ["prediction", symbol, logToDb, strategy, enabledFactors?.join(",") || ""],
+    queryFn: () => fetchPrediction(symbol, enabledFactors, logToDb, strategy),
+    refetchInterval: 60000,
+    staleTime: 10000,
+    gcTime: 60000,
   });
 }
 

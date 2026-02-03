@@ -39,6 +39,18 @@ interface NewsState {
   setCategoryFilter: (value: NewsState["categoryFilter"]) => void;
 }
 
+type MLStrategyConfig = {
+  strategy: string | null;
+  enabledFactors: string[] | null;
+};
+
+interface MLStrategyState {
+  configs: Record<string, MLStrategyConfig>;
+  getConfig: (symbol: string) => MLStrategyConfig;
+  setPresetStrategy: (symbol: string, strategy: string) => void;
+  setCustomFactors: (symbol: string, enabledFactors: string[]) => void;
+}
+
 const customAnalysisMock = {
   summary: "NASDAQ momentum accelerating while XAUUSD remains range-bound.",
   insights: [
@@ -97,4 +109,23 @@ export const useNewsStore = create<NewsState>((set) => ({
   categoryFilter: "all",
   setImpactFilter: (value) => set({ impactFilter: value }),
   setCategoryFilter: (value) => set({ categoryFilter: value }),
+}));
+
+export const useMLStrategyStore = create<MLStrategyState>((set, get) => ({
+  configs: {},
+  getConfig: (symbol) => get().configs[symbol] || { strategy: "balanced", enabledFactors: null },
+  setPresetStrategy: (symbol, strategy) =>
+    set((state) => ({
+      configs: {
+        ...state.configs,
+        [symbol]: { strategy, enabledFactors: null },
+      },
+    })),
+  setCustomFactors: (symbol, enabledFactors) =>
+    set((state) => ({
+      configs: {
+        ...state.configs,
+        [symbol]: { strategy: null, enabledFactors },
+      },
+    })),
 }));

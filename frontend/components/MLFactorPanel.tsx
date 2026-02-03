@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Settings2, X, ChevronRight, RotateCcw, RefreshCw, Loader2, Shield, Zap, Target, Flame } from "lucide-react";
 import { fetchPredictionWithStrategy } from "../lib/api/prediction";
 import { useI18nStore } from "../lib/i18n/store";
+import { useMLStrategyStore } from "../lib/store";
 
 // Katman tabanlı yapılandırma
 type Layer = {
@@ -119,6 +120,8 @@ type Props = {
 
 export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onStrategyChange, locale = "tr" }: Props) {
   const { t } = useI18nStore();
+  const setPresetStrategy = useMLStrategyStore((s) => s.setPresetStrategy);
+  const setCustomFactors = useMLStrategyStore((s) => s.setCustomFactors);
   const [isOpen, setIsOpen] = useState(false);
   const [layers, setLayers] = useState<Layer[]>(LAYERS);
   const [selectedStrategy, setSelectedStrategy] = useState<string>("balanced");
@@ -129,6 +132,9 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
   const selectStrategy = useCallback(async (strategyId: string) => {
     const strategy = STRATEGIES.find(s => s.id === strategyId);
     if (!strategy) return;
+
+    // Persist strategy choice so ML Prediction panel refetches instantly
+    setPresetStrategy(symbol, strategyId);
     
     setSelectedStrategy(strategyId);
     setLayers(prev => prev.map(layer => ({
@@ -174,9 +180,17 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
 
   // Katman toggle
   const toggleLayer = (layerId: string) => {
-    setLayers(prev => prev.map(l => 
-      l.id === layerId ? { ...l, enabled: !l.enabled } : l
-    ));
+    setLayers(prev => {
+      const next = prev.map(l => (l.id === layerId ? { ...l, enabled: !l.enabled } : l));
+
+      // Custom mode: derive enabled factors from enabled layers
+      const enabledFactors = next
+        .filter(l => l.enabled)
+        .flatMap(l => l.factors);
+
+      setCustomFactors(symbol, enabledFactors);
+      return next;
+    });
     setSelectedStrategy(""); // Custom mode
   };
 
