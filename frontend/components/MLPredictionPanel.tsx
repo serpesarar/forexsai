@@ -127,7 +127,7 @@ function PriceTarget({ label, price, pips, type }: { label: string; price: numbe
 }
 
 export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
-  const { data, isLoading, error, refetch } = usePrediction(symbol);
+  const { data, isLoading, isFetching, error, refetch } = usePrediction(symbol);
   const [showGuide, setShowGuide] = useState(false);
   const t = useI18nStore((s) => s.t);
   const locale = useI18nStore((s) => s.locale);
@@ -175,11 +175,12 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
               <HelpCircle className="w-4 h-4 text-textSecondary" />
             </button>
             <button
-              onClick={() => refetch()}
+              onClick={() => void refetch()}
+              disabled={isFetching}
               className="p-2 rounded-full hover:bg-white/10 transition"
               aria-label="Yenile"
             >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
             </button>
           </div>
         </div>

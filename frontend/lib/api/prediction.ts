@@ -40,7 +40,7 @@ async function fetchPrediction(symbol: string, enabledFactors?: string[], logToD
   }
   const queryString = params.toString();
   const url = `${API_BASE}/api/prediction/${symbol}${queryString ? `?${queryString}` : ""}`;
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Failed to fetch prediction for ${symbol}`);
   }
@@ -55,7 +55,7 @@ export async function fetchPredictionWithFactors(symbol: string, enabledFactors:
 // Fetch with strategy preset (for layer panel) - logs to DB for learning
 export async function fetchPredictionWithStrategy(symbol: string, strategy: string): Promise<PredictionData> {
   const url = `${API_BASE}/api/prediction/${symbol}?strategy=${strategy}&log_to_db=true`;
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Failed to fetch prediction for ${symbol} with strategy ${strategy}`);
   }
