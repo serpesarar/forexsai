@@ -1048,7 +1048,10 @@ async def get_strategy_performance(
             if symbol not in stats:
                 continue
             
-            confidence = pred.get("ml_confidence", 50)
+            try:
+                confidence = float(pred.get("ml_confidence", 50) or 50)
+            except Exception:
+                confidence = 50
             strategy = pred.get("strategy") or classify_strategy(confidence)
             if strategy not in stats[symbol]:
                 strategy = classify_strategy(confidence)
@@ -1056,9 +1059,14 @@ async def get_strategy_performance(
             stats[symbol][strategy]["total"] += 1
             stats[symbol][strategy]["confidence_sum"] += confidence
             
-            outcomes = pred.get("outcome_results", [])
+            outcomes = pred.get("outcome_results") or []
+            if isinstance(outcomes, dict):
+                outcomes = [outcomes]
+            if not isinstance(outcomes, list):
+                outcomes = []
+
             if outcomes:
-                outcome = outcomes[0]
+                outcome = outcomes[0] if isinstance(outcomes[0], dict) else {}
                 stats[symbol][strategy]["with_outcome"] += 1
                 
                 if outcome.get("ml_correct") or outcome.get("hit_target"):
