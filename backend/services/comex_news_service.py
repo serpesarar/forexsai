@@ -43,7 +43,9 @@ CME_RSS_FEEDS = {
 ALTERNATIVE_RSS_FEEDS = {
     "investing_gold": "https://www.investing.com/rss/news_301.rss",  # Gold news
     "investing_commodities": "https://www.investing.com/rss/news_14.rss",  # Commodities
-    "fxstreet_gold": "https://www.fxstreet.com/rss/gold",
+    # FXStreet doesn't expose a dedicated /rss/gold feed (404). Use the general news feed
+    # and filter gold-related headlines in code.
+    "fxstreet_news": "https://www.fxstreet.com/rss/news",
 }
 
 # =============================================================================
@@ -184,7 +186,11 @@ async def fetch_rss_feed(url: str, timeout: float = 10.0) -> List[Dict[str, Any]
             response = await client.get(url, headers=headers)
             
             if response.status_code != 200:
-                logger.warning(f"RSS fetch failed for {url}: {response.status_code}")
+                # 404/403 are common for public RSS endpoints (blocked/removed). Don't spam error logs.
+                if response.status_code in (403, 404):
+                    logger.info(f"RSS fetch failed for {url}: {response.status_code}")
+                else:
+                    logger.warning(f"RSS fetch failed for {url}: {response.status_code}")
                 return []
             
             # Parse XML
@@ -445,6 +451,16 @@ class COMEXNewsService:
                 continue
             if isinstance(result, list):
                 for item in result:
+                    # FXStreet feed is general. Keep only gold-related headlines.
+                    try:
+                        src = (item.get("source") or "").lower()
+                        if "fxstreet.com/rss/news" in src:
+                            text = f"{item.get('title','')} {item.get('content','')}".lower()
+                            if not any(k in text for k in ("gold", "xau", "bullion", "xau/usd", "xauusd")):
+                                continue
+                    except Exception:
+                        pass
+
                     # Deduplicate
                     news_id = self._generate_news_id(item["title"], item["source"])
                     if news_id in self._seen_hashes:
