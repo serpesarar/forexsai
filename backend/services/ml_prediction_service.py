@@ -1574,48 +1574,186 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
             logger.debug(f"S/R post-processing skipped: {pp_err}")
     
     # ═══════════════════════════════════════════════════════════════════
-    # ADVANCED TRADING ENGINE - 5 Katmanlı Karar Sistemi
+    # ADVANCED TRADING ENGINE - Tüm EKSİK'ler Entegre (#1-10)
     # ═══════════════════════════════════════════════════════════════════
     try:
         from services.trading_engine import (
-            MarketRegimeDetector, ConfluenceEngine, 
-            LayeredDecisionMaker, extract_ohlcv
+            MarketRegimeDetector, extract_ohlcv,
+            validate_mtf_consensus, apply_regime_blocking,
+            resolve_pattern_conflicts, resolve_layer_conflict,
+            get_adaptive_threshold, check_portfolio_risk,
+            check_signal_validity, get_state_machine,
+            sync_learning_check, NULL_SIGNAL_REASONS
         )
-        from services.trading_engine.mtf_analyzer import TimeframeAnalysis
-        from services.trading_engine.constants import PriceStructure
         
-        # Rejim tespiti (candle verisi varsa)
-        if candles and len(candles) >= 50:
+        strategy = strategy if 'strategy' in dir() else 'balanced'
+        
+        # ═══════════════════════════════════════════════════════════════
+        # EKSİK #1, #3: State Machine + Minimum Duration Check
+        # ═══════════════════════════════════════════════════════════════
+        validity_check = check_signal_validity(
+            symbol=normalized_symbol,
+            new_direction=direction,
+            new_confidence=confidence,
+            current_price=current_price,
+            strategy=strategy
+        )
+        
+        if not validity_check['valid']:
+            null_sig = validity_check.get('null_signal', {})
+            direction = "HOLD"
+            confidence = min(confidence, 45)
+            null_reason = null_sig.get('null_reason', validity_check['reason'])
+            reasoning.append(f"⏳ {null_reason}")
+            if null_sig.get('retry_after_minutes'):
+                reasoning.append(f"🔄 Tekrar kontrol: {null_sig['retry_after_minutes']}dk sonra")
+            logger.info(f"State machine block: {validity_check['reason']}")
+        
+        # ═══════════════════════════════════════════════════════════════
+        # EKSİK #9: Portfolio Risk Check
+        # ═══════════════════════════════════════════════════════════════
+        if direction != "HOLD":
+            portfolio_check = check_portfolio_risk(normalized_symbol, direction)
+            if not portfolio_check['can_trade']:
+                direction = "HOLD"
+                confidence = min(confidence, 40)
+                reasoning.append(f"🛡️ Portföy Riski: {portfolio_check['reason']}")
+                logger.warning(f"Portfolio risk block: {portfolio_check['reason']}")
+            elif portfolio_check['warnings']:
+                for warn in portfolio_check['warnings']:
+                    reasoning.append(f"⚠️ {warn}")
+        
+        # ═══════════════════════════════════════════════════════════════
+        # EKSİK #6: Regime Hard Block
+        # ═══════════════════════════════════════════════════════════════
+        if candles and len(candles) >= 50 and direction != "HOLD":
             _, highs, lows, closes, _ = extract_ohlcv(candles)
             
             regime_detector = MarketRegimeDetector()
             regime = regime_detector.detect(highs, lows, closes)
             
-            # Rejim bazlı karar
-            if regime.position_size_multiplier == 0:
-                # HIGH_VOL_CHOPPY - TİCARET YAPMA
-                direction = "HOLD"
-                confidence = min(confidence, 40)
-                reasoning.append(f"🚫 Rejim: {regime.regime.value} - Trade önerilmez")
-                reasoning.extend(regime.reasoning)
-            elif regime.trend_direction:
-                # Trend var - counter-trend kontrolü
-                basic_dir = "LONG" if direction == "BUY" else ("SHORT" if direction == "SELL" else None)
-                if basic_dir and basic_dir != regime.trend_direction and not regime.counter_trend_allowed:
-                    # Counter-trend yasak
-                    old_dir = direction
-                    direction = "HOLD"
-                    confidence = min(confidence, 45)
-                    reasoning.append(f"⚠️ Counter-trend: {old_dir} vs Rejim {regime.trend_direction}")
-                else:
-                    # Trend uyumlu - confidence boost
-                    if basic_dir == regime.trend_direction:
-                        confidence = min(100, confidence * 1.1)
-                        reasoning.append(f"✅ Rejim Uyumu: {regime.regime.value} ({regime.trend_direction})")
+            regime_check = apply_regime_blocking(direction, regime.regime, regime.confidence)
             
-            # Pozisyon boyut çarpanı
-            if regime.position_size_multiplier < 1.0:
-                reasoning.append(f"📊 Pozisyon: {regime.position_size_multiplier:.0%} (rejim ayarı)")
+            if regime_check['blocked']:
+                old_dir = direction
+                direction = regime_check['new_direction'] or "HOLD"
+                confidence = min(confidence, 40) * regime_check['confidence_multiplier']
+                reasoning.append(f"🚫 {regime_check['reason']}")
+                logger.warning(f"Regime block: {old_dir} -> {direction} ({regime_check['reason']})")
+            else:
+                # Confidence multiplier uygula
+                if regime_check['confidence_multiplier'] < 1.0:
+                    confidence *= regime_check['confidence_multiplier']
+                    reasoning.append(f"📊 Rejim: {regime.regime.value} (pozisyon: {regime_check['confidence_multiplier']:.0%})")
+                
+                if regime.trend_direction:
+                    basic_dir = "UP" if direction == "BUY" else ("DOWN" if direction == "SELL" else None)
+                    if basic_dir == regime.trend_direction:
+                        confidence = min(100, confidence * 1.05)
+                        reasoning.append(f"✅ Rejim Uyumu: {regime.regime.value}")
+        
+        # ═══════════════════════════════════════════════════════════════
+        # EKSİK #2: MTF Hard Veto
+        # ═══════════════════════════════════════════════════════════════
+        if direction != "HOLD":
+            mtf_data = {}
+            # MTF verisi varsa kullan (mtf_analysis'den geliyorsa)
+            if 'mtf_analysis' in dir() and mtf_analysis:
+                mtf_data = mtf_analysis
+            elif 'ta' in dir() and ta:
+                # Basit MTF approximation
+                trend_up = ta.get('ema_20', 0) > ta.get('ema_50', 0) > ta.get('ema_200', 0)
+                trend_down = ta.get('ema_20', 0) < ta.get('ema_50', 0) < ta.get('ema_200', 0)
+                mtf_data = {
+                    '4H': {
+                        'trend': 'UP' if trend_up else ('DOWN' if trend_down else 'NEUTRAL'),
+                        'confidence': abs(trend_score) / 100 if trend_score else 0.5
+                    }
+                }
+            
+            if mtf_data:
+                mtf_check = validate_mtf_consensus(normalized_symbol, direction, mtf_data)
+                
+                if not mtf_check['allowed']:
+                    old_dir = direction
+                    direction = mtf_check['override_signal'] or "HOLD"
+                    confidence = min(confidence, 45)
+                    reasoning.append(f"🔴 {mtf_check['reason']}")
+                    logger.warning(f"MTF veto: {old_dir} -> {direction}")
+                elif mtf_check['confidence_penalty'] > 0:
+                    confidence *= (1 - mtf_check['confidence_penalty'])
+                    reasoning.append(f"🟡 {mtf_check['reason']}")
+        
+        # ═══════════════════════════════════════════════════════════════
+        # EKSİK #4: Adaptive Threshold
+        # ═══════════════════════════════════════════════════════════════
+        if direction != "HOLD":
+            try:
+                from services.error_analysis_service import get_symbol_performance
+                perf_data = await get_symbol_performance(normalized_symbol) if 'await' in dir() else None
+            except:
+                perf_data = None
+            
+            threshold_info = get_adaptive_threshold(normalized_symbol, strategy, perf_data)
+            adaptive_min = threshold_info['threshold'] * 100
+            
+            if confidence < adaptive_min:
+                old_conf = confidence
+                direction = "HOLD"
+                reasoning.append(f"📉 Confidence {old_conf:.0f}% < Adaptif threshold {adaptive_min:.0f}%")
+                if threshold_info.get('reason'):
+                    reasoning.append(f"   ({threshold_info['reason']})")
+        
+        # ═══════════════════════════════════════════════════════════════
+        # EKSİK #5: Pattern Conflict Resolution (pattern varsa)
+        # ═══════════════════════════════════════════════════════════════
+        if 'patterns' in dir() and patterns and direction != "HOLD":
+            pattern_resolution = resolve_pattern_conflicts(patterns)
+            
+            if pattern_resolution['has_conflict']:
+                if pattern_resolution['conflict_severity'] == 'major':
+                    # Ciddi çakışma - dikkatli ol
+                    confidence *= pattern_resolution['confidence_adjustment']
+                    reasoning.append(f"⚡ Pattern çakışması (ciddi): confidence x{pattern_resolution['confidence_adjustment']:.0%}")
+                    
+                    # Dominant pattern farklı yönde ise
+                    if pattern_resolution['dominant_direction'] and pattern_resolution['dominant_direction'] != direction:
+                        reasoning.append(f"   Dominant pattern: {pattern_resolution['dominant_direction']}")
+                elif pattern_resolution['conflict_severity'] == 'minor':
+                    confidence *= pattern_resolution['confidence_adjustment']
+                    reasoning.append(f"⚡ Pattern çakışması (minor)")
+                
+                if pattern_resolution['ignored_patterns']:
+                    ignored_names = [p.get('name', '?') for p in pattern_resolution['ignored_patterns'][:3]]
+                    reasoning.append(f"   Ignored: {', '.join(ignored_names)}")
+        
+        # ═══════════════════════════════════════════════════════════════
+        # EKSİK #7: Learning Proaktif Check
+        # ═══════════════════════════════════════════════════════════════
+        if direction != "HOLD":
+            try:
+                # Cached performance'dan kontrol (sync)
+                from services.error_analysis_service import get_cached_symbol_stats
+                cached_perf = get_cached_symbol_stats(normalized_symbol)
+            except:
+                cached_perf = None
+            
+            learning_check = sync_learning_check(normalized_symbol, direction, cached_perf)
+            
+            if not learning_check['allow']:
+                old_dir = direction
+                direction = "HOLD"
+                confidence = min(confidence, 35)
+                reasoning.append(f"📚 Learning Block: {learning_check['reason']}")
+                logger.warning(f"Learning block: {old_dir} -> HOLD ({learning_check['reason']})")
+            elif learning_check['recommendation'] == 'CAUTION':
+                confidence *= learning_check['confidence_adjustment']
+                reasoning.append(f"📚 Learning Uyarısı: {learning_check['reason']}")
+            elif learning_check['success_rate'] and learning_check['success_rate'] > 0.6:
+                # Başarılı setup - küçük bonus
+                confidence = min(100, confidence * learning_check['confidence_adjustment'])
+                reasoning.append(f"📚 Learning: {learning_check['reason']}")
+    
     except Exception as te_err:
         logger.debug(f"Trading engine skipped: {te_err}")
     

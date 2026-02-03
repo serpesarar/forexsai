@@ -86,3 +86,80 @@ CONFLUENCE_WEIGHTS = {
     "pattern": 0.15,
     "temporal": 0.10
 }
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# EKSİK #3: Minimum Signal Duration (saat)
+# ═══════════════════════════════════════════════════════════════════════════════
+MIN_SIGNAL_DURATION_HOURS = {
+    'ultra_safe': 8,    # 8 saat minimum aynı sinyal
+    'balanced': 4,      # 4 saat
+    'full_power': 2,    # 2 saat
+    'aggressive': 1     # 1 saat
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# EKSİK #5: Pattern TF Önceliği
+# ═══════════════════════════════════════════════════════════════════════════════
+TF_PRIORITY = {
+    '1W': 7, '1D': 6, '4H': 5, '1H': 4, '30m': 3, '15m': 2, '5m': 1
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# EKSİK #10: NULL Signal Reasons
+# ═══════════════════════════════════════════════════════════════════════════════
+NULL_SIGNAL_REASONS = {
+    'COOLDOWN': 'Sinyal değişimi için bekleme süresi',
+    'MIN_DURATION': 'Minimum sinyal süresi dolmadı',
+    'INSUFFICIENT_CONFIDENCE': 'Yeterli confidence yok',
+    'MTF_VETO': 'Üst timeframe onay vermiyor',
+    'REGIME_BLOCK': 'Piyasa rejimi uygun değil',
+    'LAYER_CONFLICT': 'Katmanlar arası çelişki',
+    'PATTERN_CONFLICT': 'Pattern çakışması çözülemedi',
+    'PATTERN_INVALID': 'Pattern henüz tamamlanmadı',
+    'LEARNING_WARNING': 'Benzer setup\'lar başarısız olmuş',
+    'PORTFOLIO_RISK': 'Portföy risk limiti dolu',
+    'AWAITING_CONFIRMATION': 'Entry trigger bekleniyor',
+    'DAILY_LIMIT': 'Günlük trade limiti doldu',
+    'CONSECUTIVE_LOSS': 'Ardışık kayıp limiti aşıldı',
+    'PRICE_MOVEMENT': 'Yeterli fiyat hareketi yok'
+}
+
+# NULL Signal için retry süreleri (dakika)
+NULL_RETRY_TIMES = {
+    'COOLDOWN': 30,
+    'MIN_DURATION': 60,
+    'INSUFFICIENT_CONFIDENCE': 15,
+    'MTF_VETO': 60,
+    'REGIME_BLOCK': 120,
+    'LAYER_CONFLICT': 30,
+    'PATTERN_CONFLICT': 15,
+    'PATTERN_INVALID': 15,
+    'LEARNING_WARNING': 60,
+    'PORTFOLIO_RISK': 240,
+    'AWAITING_CONFIRMATION': 5,
+    'DAILY_LIMIT': 480,
+    'CONSECUTIVE_LOSS': 240,
+    'PRICE_MOVEMENT': 15
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Adaptive Threshold Base Values
+# ═══════════════════════════════════════════════════════════════════════════════
+ADAPTIVE_THRESHOLD_CONFIG = {
+    'base_threshold': 0.65,
+    'low_winrate_boost': 0.10,    # Win rate < 40% ise +%10
+    'high_winrate_reduce': 0.05,  # Win rate > 70% ise -%5
+    'min_samples': 5,             # Minimum sample sayısı
+    'lookback_days': 7            # Kaç günlük veri
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Portfolio Risk Config
+# ═══════════════════════════════════════════════════════════════════════════════
+PORTFOLIO_RISK_CONFIG = {
+    'max_drawdown_pct': 10,       # %10 max DD
+    'max_correlated_risk': 0.3,   # Aynı sektörde max %30 risk
+    'daily_loss_limit': 3,        # Günlük max %3 kayıp
+    'max_open_trades': 3,         # Max açık pozisyon
+    'dd_warning_threshold': 0.8   # DD limitinin %80'inde uyarı
+}
