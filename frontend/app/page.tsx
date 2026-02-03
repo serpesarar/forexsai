@@ -1414,6 +1414,7 @@ export default function HomePage() {
       <div className="fixed top-32 right-4 z-50 flex flex-col gap-4 w-80">
         <MLFactorPanel
           baseConfidence={signalCards[0]?.confidence || 60}
+          applyToSymbols={["NDX.INDX", "XAUUSD"]}
           locale={locale}
         />
 

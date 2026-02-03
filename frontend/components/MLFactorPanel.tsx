@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Settings2, X, ChevronRight, RotateCcw, RefreshCw, Loader2, Shield, Zap, Target, Flame } from "lucide-react";
 import { fetchPredictionWithStrategy } from "../lib/api/prediction";
@@ -114,14 +114,22 @@ const STRATEGIES: Strategy[] = [
 type Props = {
   baseConfidence: number;
   symbol?: string;
+  applyToSymbols?: string[];
   onStrategyChange?: (strategy: string, confidence: number) => void;
   locale?: string;
 };
 
-export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onStrategyChange, locale = "tr" }: Props) {
+export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", applyToSymbols, onStrategyChange, locale = "tr" }: Props) {
   const { t } = useI18nStore();
   const setPresetStrategy = useMLStrategyStore((s) => s.setPresetStrategy);
   const setCustomFactors = useMLStrategyStore((s) => s.setCustomFactors);
+
+  const applyKey = (applyToSymbols && applyToSymbols.length > 0) ? applyToSymbols.join(",") : "";
+  const targetSymbols = useMemo(() => {
+    if (applyToSymbols && applyToSymbols.length > 0) return applyToSymbols;
+    return [symbol];
+  }, [applyKey, symbol]);
+
   const [isOpen, setIsOpen] = useState(false);
   const [layers, setLayers] = useState<Layer[]>(LAYERS);
   const [selectedStrategy, setSelectedStrategy] = useState<string>("balanced");
@@ -134,7 +142,7 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
     if (!strategy) return;
 
     // Persist strategy choice so ML Prediction panel refetches instantly
-    setPresetStrategy(symbol, strategyId);
+    targetSymbols.forEach((sym) => setPresetStrategy(sym, strategyId));
     
     setSelectedStrategy(strategyId);
     setLayers(prev => prev.map(layer => ({
@@ -188,7 +196,7 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
         .filter(l => l.enabled)
         .flatMap(l => l.factors);
 
-      setCustomFactors(symbol, enabledFactors);
+      targetSymbols.forEach((sym) => setCustomFactors(sym, enabledFactors));
       return next;
     });
     setSelectedStrategy(""); // Custom mode
