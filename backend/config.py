@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     rtyhiim_tick_rate_hz: float = Field(default=1.0, env="RTYHIIM_TICK_RATE_HZ")
     rtyhiim_min_period_s: float = Field(default=8.0, env="RTYHIIM_MIN_PERIOD_S")
     rtyhiim_max_period_s: float = Field(default=240.0, env="RTYHIIM_MAX_PERIOD_S")
+    
+    # Telegram
+    TELEGRAM_BOT_TOKEN: str | None = Field(default=None, env="TELEGRAM_BOT_TOKEN")
+    TELEGRAM_CHAT_ID: str | None = Field(default=None, env="TELEGRAM_CHAT_ID")
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 

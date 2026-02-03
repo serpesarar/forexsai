@@ -28,6 +28,8 @@ from services.adaptive_tp_sl import (
     get_learned_adjustments,
     AdaptiveTPSL,
 )
+from services.multi_target_tracker import tracker as multi_target_tracker
+from services.telegram_service import telegram_notifier
 
 router = APIRouter(prefix="/api/learning", tags=["learning"])
 
@@ -1103,3 +1105,160 @@ async def get_strategy_performance(
         }
     except Exception as e:
         return {"error": str(e)}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MULTI-TARGET TRACKING ENDPOINTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/multi-target/create")
+async def create_multi_target_tracking(
+    symbol: str,
+    strategy: str,
+    direction: str,
+    entry_price: float,
+    prediction_id: Optional[str] = None
+):
+    """Yeni multi-target tracking oluştur"""
+    result = await multi_target_tracker.create_tracking(
+        prediction_id=prediction_id,
+        symbol=symbol,
+        strategy=strategy,
+        direction=direction,
+        entry_price=entry_price
+    )
+    return result
+
+
+@router.get("/multi-target/analysis/{symbol}")
+async def get_multi_target_analysis(
+    symbol: str,
+    strategy: Optional[str] = None,
+    days: int = Query(30, ge=1, le=365)
+):
+    """Strateji bazlı multi-target analizi"""
+    return await multi_target_tracker.get_strategy_analysis(symbol, strategy, days)
+
+
+@router.post("/multi-target/update-price")
+async def update_multi_target_price(symbol: str, current_price: float):
+    """Fiyat güncellemesi ve target hit kontrolü"""
+    hits = await multi_target_tracker.update_price(symbol, current_price)
+    
+    # Telegram bildirimi gönder
+    for hit in hits:
+        if hit.get('level') == 'SL':
+            await telegram_notifier.send_stop_loss(symbol, hit['pips'])
+        else:
+            await telegram_notifier.send_target_hit(symbol, hit['level'], hit['pips'])
+    
+    return {"hits": hits, "count": len(hits)}
+
+
+@router.get("/strategy-performance/{symbol}")
+async def get_strategy_performance(
+    symbol: str,
+    days: int = Query(30, ge=1, le=365)
+):
+    """Her strateji için ayrı performans analizi"""
+    strategies = ['ultra_safe', 'balanced', 'full_power', 'aggressive']
+    result = {}
+    
+    for strategy in strategies:
+        for direction in ['BUY', 'SELL']:
+            analysis = await multi_target_tracker.get_strategy_analysis(
+                symbol=symbol, strategy=strategy, days=days
+            )
+            if strategy not in result:
+                result[strategy] = {}
+            result[strategy][direction] = analysis
+    
+    return {"symbol": symbol, "period_days": days, "strategies": result}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# NOTIFICATION SETTINGS ENDPOINTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/notifications/settings")
+async def get_notification_settings(user_id: Optional[str] = None):
+    """Kullanıcı bildirim ayarlarını getir"""
+    try:
+        from database.supabase_client import supabase
+        if user_id:
+            result = supabase.table('user_notification_settings').select('*').eq('user_id', user_id).execute()
+        else:
+            result = supabase.table('user_notification_settings').select('*').limit(1).execute()
+        
+        if result.data:
+            return result.data[0]
+        return {
+            "telegram_enabled": False,
+            "notify_ultra_safe": True,
+            "notify_balanced": True,
+            "notify_full_power": False,
+            "notify_aggressive": False,
+            "notify_new_signal": True,
+            "notify_tp1": True,
+            "notify_tp2": True,
+            "notify_tp3": False,
+            "notify_sl": True,
+            "min_confidence": 0.60,
+            "symbols": ["XAUUSD", "NDX.INDX"]
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@router.put("/notifications/settings")
+async def update_notification_settings(
+    telegram_chat_id: Optional[str] = None,
+    telegram_enabled: bool = False,
+    notify_ultra_safe: bool = True,
+    notify_balanced: bool = True,
+    notify_full_power: bool = False,
+    notify_aggressive: bool = False,
+    notify_new_signal: bool = True,
+    notify_tp1: bool = True,
+    notify_tp2: bool = True,
+    notify_tp3: bool = False,
+    notify_sl: bool = True,
+    min_confidence: float = 0.60,
+    symbols: List[str] = ["XAUUSD", "NDX.INDX"],
+    user_id: Optional[str] = None
+):
+    """Bildirim ayarlarını güncelle"""
+    try:
+        from database.supabase_client import supabase
+        data = {
+            "telegram_chat_id": telegram_chat_id,
+            "telegram_enabled": telegram_enabled,
+            "notify_ultra_safe": notify_ultra_safe,
+            "notify_balanced": notify_balanced,
+            "notify_full_power": notify_full_power,
+            "notify_aggressive": notify_aggressive,
+            "notify_new_signal": notify_new_signal,
+            "notify_tp1": notify_tp1,
+            "notify_tp2": notify_tp2,
+            "notify_tp3": notify_tp3,
+            "notify_sl": notify_sl,
+            "min_confidence": min_confidence,
+            "symbols": symbols
+        }
+        
+        if user_id:
+            data["user_id"] = user_id
+            result = supabase.table('user_notification_settings').upsert(data).execute()
+        else:
+            result = supabase.table('user_notification_settings').insert(data).execute()
+        
+        return {"success": True, "data": result.data}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/notifications/test")
+async def test_notification(chat_id: Optional[str] = None):
+    """Test bildirimi gönder"""
+    result = await telegram_notifier.test_connection(chat_id)
+    return result
