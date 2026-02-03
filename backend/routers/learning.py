@@ -1004,9 +1004,7 @@ async def reset_ui_stats(
 async def get_strategy_performance(
     days: int = Query(30, ge=1, le=90, description="Number of days to analyze")
 ):
-    """
-    Get performance statistics for each ML strategy.
-    """
+    """Get performance statistics for each ML strategy."""
     from datetime import datetime, timedelta
     
     if not is_db_available():
@@ -1016,118 +1014,92 @@ async def get_strategy_performance(
     if client is None:
         return {"error": "Database client not available"}
     
-    cutoff = datetime.utcnow() - timedelta(days=days)
-    cutoff_iso = cutoff.isoformat() + "Z"
-    
-    # Get predictions - wrapped in try/except
-    predictions = []
     try:
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff_iso = cutoff.isoformat() + "Z"
+        
+        # Get predictions
         result = client.table("prediction_logs").select(
             "id, symbol, strategy, ml_confidence"
         ).gte("created_at", cutoff_iso).limit(500).execute()
         predictions = getattr(result, 'data', None) or []
-    except Exception as e:
-        return {"error": f"Prediction fetch failed: {e}", "step": "predictions"}
-    
-    # Get outcomes - wrapped in try/except
-    outcomes_map = {}
-    try:
+        
+        # Get outcomes
         outcome_result = client.table("outcome_results").select(
             "prediction_id, ml_correct, hit_target, hit_stop"
         ).eq("check_interval", "24h").limit(1000).execute()
         outcomes_list = getattr(outcome_result, 'data', None) or []
-        for o in outcomes_list:
-            pid = o.get("prediction_id")
-            if pid:
-                outcomes_map[pid] = o
-    except Exception as e:
-        return {"error": f"Outcome fetch failed: {e}", "step": "outcomes"}
-    
-    # Classify by confidence
-    def classify_strategy(conf: float) -> str:
-        if conf >= 70:
-            return "ultra_safe"
-        elif conf >= 60:
-            return "balanced"
-        elif conf >= 52:
-            return "full_power"
-        return "aggressive"
-    
-    # Initialize stats
-    stats = {}
-    for sym in ["NDX.INDX", "XAUUSD"]:
-        stats[sym] = {}
-        for strat in ["ultra_safe", "balanced", "full_power", "aggressive"]:
-            stats[sym][strat] = {"total": 0, "with_outcome": 0, "correct": 0, "target_hits": 0, "stop_hits": 0, "confidence_sum": 0}
-    
-    # Process predictions
-    for pred in predictions:
-        sym = pred.get("symbol")
-        if sym not in stats:
-            continue
+        outcomes_map = {o.get("prediction_id"): o for o in outcomes_list if o.get("prediction_id")}
         
-        try:
-            conf = float(pred.get("ml_confidence", 50) or 50)
-        except:
-            conf = 50
-        strat = pred.get("strategy") or classify_strategy(conf)
-        if strat not in stats[sym]:
-            strat = classify_strategy(conf)
+        # Classify by confidence
+        def classify(conf):
+            if conf >= 70: return "ultra_safe"
+            if conf >= 60: return "balanced"
+            if conf >= 52: return "full_power"
+            return "aggressive"
         
-        stats[sym][strat]["total"] += 1
-        stats[sym][strat]["confidence_sum"] += conf
+        # Initialize stats
+        stats = {sym: {s: {"total": 0, "with_outcome": 0, "correct": 0, "target_hits": 0, "stop_hits": 0, "conf_sum": 0} 
+                       for s in ["ultra_safe", "balanced", "full_power", "aggressive"]} 
+                 for sym in ["NDX.INDX", "XAUUSD"]}
         
-        pred_id = pred.get("id")
-        outcome = outcomes_map.get(pred_id) if pred_id else None
+        # Process
+        for p in predictions:
+            sym = p.get("symbol")
+            if sym not in stats:
+                continue
+            try:
+                conf = float(p.get("ml_confidence", 50) or 50)
+            except:
+                conf = 50
+            strat = p.get("strategy") or classify(conf)
+            if strat not in stats[sym]:
+                strat = classify(conf)
+            
+            stats[sym][strat]["total"] += 1
+            stats[sym][strat]["conf_sum"] += conf
+            
+            outcome = outcomes_map.get(p.get("id"))
+            if outcome:
+                stats[sym][strat]["with_outcome"] += 1
+                if outcome.get("ml_correct") or outcome.get("hit_target"):
+                    stats[sym][strat]["correct"] += 1
+                if outcome.get("hit_target"):
+                    stats[sym][strat]["target_hits"] += 1
+                if outcome.get("hit_stop"):
+                    stats[sym][strat]["stop_hits"] += 1
         
-        if outcome:
-            stats[sym][strat]["with_outcome"] += 1
-            if outcome.get("ml_correct") or outcome.get("hit_target"):
-                stats[sym][strat]["correct"] += 1
-            if outcome.get("hit_target"):
-                stats[sym][strat]["target_hits"] += 1
-            if outcome.get("hit_stop"):
-                stats[sym][strat]["stop_hits"] += 1
-    
-    # Build result
-    result_data = {}
-    for sym, sym_stats in stats.items():
-        result_data[sym] = {}
-        for strat, s in sym_stats.items():
-            avg_conf = round(s["confidence_sum"] / s["total"], 1) if s["total"] > 0 else 0
-            result_data[sym][strat] = {
-                "total_predictions": s["total"],
-                "with_outcome": s["with_outcome"],
-                "correct": s["correct"],
-                "accuracy": round(s["correct"] / s["with_outcome"] * 100, 1) if s["with_outcome"] > 0 else None,
-                "target_hit_rate": round(s["target_hits"] / s["with_outcome"] * 100, 1) if s["with_outcome"] > 0 else None,
-                "stop_hit_rate": round(s["stop_hits"] / s["with_outcome"] * 100, 1) if s["with_outcome"] > 0 else None,
-                "avg_confidence": avg_conf,
-                "target_hits": s["target_hits"],
-                "stop_hits": s["stop_hits"],
-            }
-    
-    # Find best strategy
-    best_strategies = {}
-    for sym, sym_data in result_data.items():
-        best = None
-        best_acc = -1
-        for strat, data in sym_data.items():
-            if data["accuracy"] is not None and data["accuracy"] > best_acc and data["with_outcome"] >= 3:
-                best_acc = data["accuracy"]
-                best = strat
-        best_strategies[sym] = {"strategy": best, "accuracy": best_acc if best else None}
-    
-    return {
-        "period_days": days,
-        "predictions_count": len(predictions),
-        "outcomes_count": len(outcomes_map),
-        "strategies": result_data,
-        "best_strategies": best_strategies,
-        "strategy_descriptions": {
-            "ultra_safe": "Yüksek güven (70%+), az trade",
-            "balanced": "Dengeli (60-70%), optimal",
-            "full_power": "Tüm faktörler (52-60%)",
-            "aggressive": "Düşük filtre (50-52%)"
+        # Build result
+        result_data = {}
+        for sym, sym_stats in stats.items():
+            result_data[sym] = {}
+            for strat, s in sym_stats.items():
+                wo = s["with_outcome"]
+                result_data[sym][strat] = {
+                    "total_predictions": s["total"],
+                    "with_outcome": wo,
+                    "correct": s["correct"],
+                    "accuracy": round(s["correct"] / wo * 100, 1) if wo > 0 else None,
+                    "target_hit_rate": round(s["target_hits"] / wo * 100, 1) if wo > 0 else None,
+                    "stop_hit_rate": round(s["stop_hits"] / wo * 100, 1) if wo > 0 else None,
+                    "avg_confidence": round(s["conf_sum"] / s["total"], 1) if s["total"] > 0 else 0,
+                }
+        
+        # Best strategy
+        best = {}
+        for sym, sd in result_data.items():
+            b, ba = None, -1
+            for st, d in sd.items():
+                if d["accuracy"] and d["accuracy"] > ba and d["with_outcome"] >= 3:
+                    ba, b = d["accuracy"], st
+            best[sym] = {"strategy": b, "accuracy": ba if b else None}
+        
+        return {
+            "period_days": days,
+            "predictions_count": len(predictions),
+            "outcomes_count": len(outcomes_map),
+            "strategies": result_data,
+            "best_strategies": best
         }
-    }
+    except Exception as e:
+        return {"error": str(e)}
