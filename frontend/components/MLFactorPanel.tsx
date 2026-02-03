@@ -6,6 +6,7 @@ import { Settings2, X, ChevronRight, RotateCcw, RefreshCw, Loader2, Shield, Zap,
 import { fetchPredictionWithStrategy } from "../lib/api/prediction";
 import { useI18nStore } from "../lib/i18n/store";
 import { useMLStrategyStore } from "../lib/store";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Katman tabanlı yapılandırma
 type Layer = {
@@ -121,6 +122,7 @@ type Props = {
 
 export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", applyToSymbols, onStrategyChange, locale = "tr" }: Props) {
   const { t } = useI18nStore();
+  const queryClient = useQueryClient();
   const setPresetStrategy = useMLStrategyStore((s) => s.setPresetStrategy);
   const setCustomFactors = useMLStrategyStore((s) => s.setCustomFactors);
 
@@ -143,6 +145,11 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
 
     // Persist strategy choice so ML Prediction panel refetches instantly
     targetSymbols.forEach((sym) => setPresetStrategy(sym, strategyId));
+
+    // Force refetch of prediction queries for all affected symbols
+    targetSymbols.forEach((sym) => {
+      queryClient.invalidateQueries({ queryKey: ["prediction", sym] });
+    });
     
     setSelectedStrategy(strategyId);
     setLayers(prev => prev.map(layer => ({
@@ -163,7 +170,7 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
     } finally {
       setIsLoading(false);
     }
-  }, [symbol, baseConfidence, onStrategyChange]);
+  }, [targetSymbols, setPresetStrategy, queryClient, symbol, baseConfidence, onStrategyChange]);
 
   // Initial fetch on mount
   useEffect(() => {
@@ -197,6 +204,11 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
         .flatMap(l => l.factors);
 
       targetSymbols.forEach((sym) => setCustomFactors(sym, enabledFactors));
+
+      // Force refetch of prediction queries for all affected symbols
+      targetSymbols.forEach((sym) => {
+        queryClient.invalidateQueries({ queryKey: ["prediction", sym] });
+      });
       return next;
     });
     setSelectedStrategy(""); // Custom mode
