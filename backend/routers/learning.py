@@ -1025,18 +1025,17 @@ async def get_strategy_performance(
         
         logger.info(f"Fetching strategy performance for last {days} days (since {cutoff_iso})")
         
-        # Get all predictions with outcomes
+        # Get all predictions with outcomes - simpler query without join
         predictions = []
         try:
             result = client.table("prediction_logs").select(
-                "id, symbol, strategy, ml_direction, ml_confidence, factors, created_at, outcome_results(ml_correct, hit_target, hit_stop)"
-            ).gte("created_at", cutoff_iso).execute()
-            predictions = result.get("data") or []
-        except Exception:
-            result = client.table("prediction_logs").select(
-                "id, symbol, ml_direction, ml_confidence, factors, created_at, outcome_results(ml_correct, hit_target, hit_stop)"
-            ).gte("created_at", cutoff_iso).execute()
-            predictions = result.get("data") or []
+                "id, symbol, strategy, ml_direction, ml_confidence, factors, created_at"
+            ).gte("created_at", cutoff_iso).limit(500).execute()
+            predictions = result.data if hasattr(result, 'data') else result.get("data") or []
+            logger.info(f"Found {len(predictions)} predictions")
+        except Exception as fetch_err:
+            logger.error(f"Prediction fetch failed: {fetch_err}")
+            return {"error": f"Database query failed: {str(fetch_err)}"}
         
         # Classify each prediction by confidence level into strategy buckets
         def classify_strategy(confidence: float) -> str:
@@ -1080,22 +1079,27 @@ async def get_strategy_performance(
             stats[symbol][strategy]["total"] += 1
             stats[symbol][strategy]["confidence_sum"] += confidence
             
-            outcomes = pred.get("outcome_results") or []
-            if isinstance(outcomes, dict):
-                outcomes = [outcomes]
-            if not isinstance(outcomes, list):
-                outcomes = []
-
-            if outcomes:
-                outcome = outcomes[0] if isinstance(outcomes[0], dict) else {}
-                stats[symbol][strategy]["with_outcome"] += 1
-                
-                if outcome.get("ml_correct") or outcome.get("hit_target"):
-                    stats[symbol][strategy]["correct"] += 1
-                if outcome.get("hit_target"):
-                    stats[symbol][strategy]["target_hits"] += 1
-                if outcome.get("hit_stop"):
-                    stats[symbol][strategy]["stop_hits"] += 1
+            # Fetch outcome for this prediction
+            try:
+                pred_id = pred.get("id")
+                if pred_id:
+                    outcome_result = client.table("outcome_results").select(
+                        "ml_correct, hit_target, hit_stop"
+                    ).eq("prediction_id", pred_id).eq("check_interval", "24h").limit(1).execute()
+                    outcomes = outcome_result.data if hasattr(outcome_result, 'data') else outcome_result.get("data") or []
+                    
+                    if outcomes and len(outcomes) > 0:
+                        outcome = outcomes[0]
+                        stats[symbol][strategy]["with_outcome"] += 1
+                        
+                        if outcome.get("ml_correct") or outcome.get("hit_target"):
+                            stats[symbol][strategy]["correct"] += 1
+                        if outcome.get("hit_target"):
+                            stats[symbol][strategy]["target_hits"] += 1
+                        if outcome.get("hit_stop"):
+                            stats[symbol][strategy]["stop_hits"] += 1
+            except Exception as outcome_err:
+                logger.debug(f"Could not fetch outcome for {pred.get('id')}: {outcome_err}")
         
         # Calculate percentages
         result_data = {}
