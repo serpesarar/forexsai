@@ -6,6 +6,7 @@ OPTIMIZATIONS:
 1. Parallel async calls (asyncio.gather) - 2-3s -> 800ms latency
 2. Layered confidence with harmonic/geometric/arithmetic means
 3. Preset strategies: ultra_safe, balanced, full_power, aggressive
+4. SIGNAL STABILITY: Prevents flip-flopping between BUY/SELL
 """
 from __future__ import annotations
 
@@ -13,12 +14,91 @@ import asyncio
 import logging
 import math
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional, Literal, Dict, Any
 import numpy as np
+from threading import Lock
 
 logger = logging.getLogger(__name__)
+
+# ═══════════════════════════════════════════════════════════════════
+# SIGNAL STABILITY SYSTEM - Prevents rapid direction changes (scalping)
+# ═══════════════════════════════════════════════════════════════════
+_signal_cache: Dict[str, Dict[str, Any]] = {}  # symbol -> {direction, confidence, timestamp, price}
+_signal_lock = Lock()
+
+# Stability parameters
+SIGNAL_COOLDOWN_MINUTES = 30  # Minimum time before direction can change
+MIN_CONFIDENCE_FOR_REVERSAL = 65  # Minimum confidence to override existing signal
+MIN_PRICE_CHANGE_PCT = 0.3  # Minimum price change % to consider new signal
+
+def _get_cached_signal(symbol: str) -> Optional[Dict[str, Any]]:
+    """Get the last cached signal for a symbol."""
+    with _signal_lock:
+        return _signal_cache.get(symbol)
+
+def _update_signal_cache(symbol: str, direction: str, confidence: float, price: float):
+    """Update the signal cache for a symbol."""
+    with _signal_lock:
+        _signal_cache[symbol] = {
+            "direction": direction,
+            "confidence": confidence,
+            "price": price,
+            "timestamp": datetime.utcnow()
+        }
+
+def _should_allow_direction_change(
+    symbol: str,
+    new_direction: str,
+    new_confidence: float,
+    current_price: float
+) -> tuple[bool, str]:
+    """
+    Check if a direction change should be allowed based on stability rules.
+    
+    Returns: (should_allow, reason)
+    """
+    cached = _get_cached_signal(symbol)
+    
+    if cached is None:
+        return True, "İlk sinyal"
+    
+    old_direction = cached["direction"]
+    old_confidence = cached["confidence"]
+    old_price = cached["price"]
+    old_time = cached["timestamp"]
+    
+    # Same direction is always allowed
+    if new_direction == old_direction:
+        return True, "Aynı yön"
+    
+    # HOLD transitions are always allowed
+    if old_direction == "HOLD" or new_direction == "HOLD":
+        return True, "HOLD geçişi"
+    
+    # Calculate time since last signal
+    time_since = (datetime.utcnow() - old_time).total_seconds() / 60
+    
+    # Calculate price change percentage
+    price_change_pct = abs((current_price - old_price) / old_price * 100)
+    
+    # Rule 1: Within cooldown period, require high confidence
+    if time_since < SIGNAL_COOLDOWN_MINUTES:
+        if new_confidence < MIN_CONFIDENCE_FOR_REVERSAL:
+            return False, f"Soğuma süresi ({time_since:.0f}dk < {SIGNAL_COOLDOWN_MINUTES}dk), güven yetersiz ({new_confidence:.0f}% < {MIN_CONFIDENCE_FOR_REVERSAL}%)"
+        # Allow if confidence is high enough
+        logger.info(f"Direction change allowed early due to high confidence: {new_confidence:.1f}%")
+    
+    # Rule 2: Require significant price movement for reversal
+    if price_change_pct < MIN_PRICE_CHANGE_PCT and new_confidence < 70:
+        return False, f"Fiyat değişimi yetersiz ({price_change_pct:.2f}% < {MIN_PRICE_CHANGE_PCT}%)"
+    
+    # Rule 3: New confidence should be higher than old for reversal
+    if new_confidence < old_confidence * 0.9:  # Allow 10% margin
+        return False, f"Yeni güven eski güvenden düşük ({new_confidence:.0f}% < {old_confidence:.0f}%)"
+    
+    return True, f"Yön değişikliği onaylandı (süre: {time_since:.0f}dk, fiyat: {price_change_pct:.2f}%)"
 
 # ═══════════════════════════════════════════════════════════════════
 # CONFIDENCE LAYERS CONFIGURATION
@@ -1492,6 +1572,30 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
                 logger.info(f"S/R Post-process: {direction} @ {confidence:.1f}%, adjustments={len(post_result['sr_adjustments'])}")
         except Exception as pp_err:
             logger.debug(f"S/R post-processing skipped: {pp_err}")
+    
+    # ═══════════════════════════════════════════════════════════════════
+    # SIGNAL STABILITY CHECK - Prevent rapid direction flip-flopping
+    # ═══════════════════════════════════════════════════════════════════
+    allow_change, stability_reason = _should_allow_direction_change(
+        normalized_symbol, direction, confidence, current_price
+    )
+    
+    if not allow_change:
+        # Revert to cached signal direction
+        cached = _get_cached_signal(normalized_symbol)
+        if cached:
+            old_direction = cached["direction"]
+            logger.warning(f"Signal stability: {direction} -> {old_direction} ({stability_reason})")
+            reasoning.append(f"⚡ Sinyal Stabilitesi: {stability_reason}")
+            direction = old_direction
+            # Keep confidence but add warning
+            confidence = min(confidence, cached["confidence"] + 5)  # Don't inflate confidence
+    else:
+        # Update cache with new signal
+        _update_signal_cache(normalized_symbol, direction, confidence, current_price)
+        if stability_reason and stability_reason not in ["İlk sinyal", "Aynı yön", "HOLD geçişi"]:
+            reasoning.append(f"✅ {stability_reason}")
+            logger.info(f"Signal updated: {direction} @ {confidence:.1f}% ({stability_reason})")
     
     return PredictionResult(
         symbol=normalized_symbol,

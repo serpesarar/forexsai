@@ -263,6 +263,8 @@ async def check_all_pending_outcomes():
     Use this to process old predictions that were never checked.
     """
     from database.supabase_client import get_supabase_client
+    import logging
+    logger = logging.getLogger(__name__)
     
     if not is_db_available():
         return {"error": "Database not available", "outcomes_checked": 0}
@@ -283,24 +285,36 @@ async def check_all_pending_outcomes():
             return {"message": "No pending predictions found", "outcomes_checked": 0}
         
         outcomes = []
+        errors = []
+        skipped_existing = 0
+        
         for pred in predictions:
+            pred_id = pred.get("id", "unknown")
+            
             # Check if outcome already exists
             existing = client.table("outcome_results").select("id").eq(
-                "prediction_id", pred["id"]
+                "prediction_id", pred_id
             ).eq("check_interval", "24h").execute()
             
             if existing.get("data"):
                 # Mark as checked if outcome exists
                 from services.prediction_logger import mark_prediction_checked
-                await mark_prediction_checked(pred["id"])
+                await mark_prediction_checked(pred_id)
+                skipped_existing += 1
                 continue
             
-            # Check outcome
-            outcome = await check_prediction_outcome(pred, "24h")
-            if outcome:
-                outcomes.append(outcome)
-                from services.prediction_logger import mark_prediction_checked
-                await mark_prediction_checked(pred["id"])
+            # Check outcome with error handling
+            try:
+                outcome = await check_prediction_outcome(pred, "24h")
+                if outcome:
+                    outcomes.append(outcome)
+                    from services.prediction_logger import mark_prediction_checked
+                    await mark_prediction_checked(pred_id)
+                else:
+                    errors.append({"id": pred_id[:8], "error": "check_prediction_outcome returned None"})
+            except Exception as check_err:
+                errors.append({"id": pred_id[:8], "error": str(check_err)[:100]})
+                logger.error(f"Outcome check failed for {pred_id}: {check_err}")
         
         correct_count = sum(1 for o in outcomes if o.get("ml_correct"))
         
@@ -308,11 +322,14 @@ async def check_all_pending_outcomes():
             "outcomes_checked": len(outcomes),
             "ml_correct": correct_count,
             "ml_incorrect": len(outcomes) - correct_count,
-            "total_pending_found": len(predictions)
+            "total_pending_found": len(predictions),
+            "skipped_existing": skipped_existing,
+            "errors": errors[:10] if errors else None  # Show first 10 errors
         }
         
     except Exception as e:
-        return {"error": str(e), "outcomes_checked": 0}
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()[:500], "outcomes_checked": 0}
 
 
 @router.get("/multi-target-dashboard")
@@ -992,6 +1009,8 @@ async def get_strategy_performance(
     Shows accuracy, win rate, and trade count for each strategy per symbol.
     """
     from datetime import datetime, timedelta
+    import logging
+    logger = logging.getLogger(__name__)
     
     if not is_db_available():
         return {"error": "Database not available"}
@@ -1003,6 +1022,8 @@ async def get_strategy_performance(
     try:
         cutoff = datetime.utcnow() - timedelta(days=days)
         cutoff_iso = cutoff.isoformat() + "Z"
+        
+        logger.info(f"Fetching strategy performance for last {days} days (since {cutoff_iso})")
         
         # Get all predictions with outcomes
         predictions = []

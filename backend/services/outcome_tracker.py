@@ -128,8 +128,16 @@ async def check_prediction_outcome(
     stop_price = prediction.get("ml_stop_price")
     ml_direction = prediction.get("ml_direction", "HOLD")
     
-    if not symbol or entry_price is None:
-        logger.warning(f"Invalid prediction data: {prediction.get('id')}")
+    # Log what we're checking
+    pred_id = prediction.get('id', 'unknown')
+    logger.info(f"Checking outcome for {pred_id[:8]}: symbol={symbol}, entry={entry_price}, dir={ml_direction}")
+    
+    if not symbol:
+        logger.warning(f"Missing symbol for prediction {pred_id}")
+        return None
+    
+    if entry_price is None:
+        logger.warning(f"Missing entry_price for prediction {pred_id}")
         return None
     
     try:
@@ -141,17 +149,27 @@ async def check_prediction_outcome(
             pred_time = datetime.utcnow() - timedelta(hours=1)
         
         # Get HIGH/LOW prices since prediction (crucial for accurate target detection)
-        price_data = await get_high_low_since_prediction(symbol, pred_time, check_interval)
+        try:
+            price_data = await get_high_low_since_prediction(symbol, pred_time, check_interval)
+        except Exception as price_err:
+            logger.warning(f"get_high_low_since_prediction failed for {pred_id[:8]}: {price_err}")
+            price_data = {"high": None, "low": None, "current": None}
         
         high_price = price_data.get("high")
         low_price = price_data.get("low")
         current_price = price_data.get("current")
         
         if current_price is None:
-            current_price = await fetch_latest_price(symbol)
+            try:
+                current_price = await fetch_latest_price(symbol)
+            except Exception as fetch_err:
+                logger.warning(f"fetch_latest_price failed for {symbol}: {fetch_err}")
+        
         if current_price is None:
-            logger.warning(f"Could not fetch price for {symbol}")
+            logger.warning(f"Could not fetch any price for {symbol}, prediction {pred_id[:8]}")
             return None
+        
+        logger.info(f"Prices for {pred_id[:8]}: current={current_price}, high={high_price}, low={low_price}")
         
         # Use high/low for proper target detection
         price_change_pct = ((current_price - entry_price) / entry_price) * 100

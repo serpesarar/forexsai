@@ -28,12 +28,14 @@ DATA_UPDATE_INTERVAL = 5  # Update price/TA data every 5 seconds
 NEWS_UPDATE_INTERVAL = 300  # Update news every 5 minutes
 OUTCOME_CHECK_INTERVAL = 300  # Check outcomes every 5 minutes
 ERROR_ANALYSIS_INTERVAL = 3600  # Analyze errors every hour
+PREDICTION_LOG_INTERVAL = 3600  # Log predictions every hour
 
 # Last update timestamps
 _last_news_update: Dict[str, datetime] = {}
 _last_news_hash: Dict[str, str] = {}
 _last_outcome_check: Optional[datetime] = None
 _last_error_analysis: Optional[datetime] = None
+_last_prediction_log: Dict[str, datetime] = {}  # Per symbol
 
 # Scheduler running flag
 _scheduler_running = False
@@ -260,6 +262,71 @@ async def analyze_errors_if_needed():
         logger.error(f"Error in error analysis: {e}")
 
 
+async def log_predictions_if_needed():
+    """Log predictions to database periodically for learning system."""
+    global _last_prediction_log
+    
+    now = datetime.utcnow()
+    
+    for symbol in TRACKED_SYMBOLS:
+        # Check if we need to log for this symbol
+        last_log = _last_prediction_log.get(symbol)
+        if last_log and (now - last_log).total_seconds() < PREDICTION_LOG_INTERVAL:
+            continue
+        
+        _last_prediction_log[symbol] = now
+        
+        try:
+            from services.prediction_logger import log_prediction
+            from database.supabase_client import is_db_available
+            
+            if not is_db_available():
+                continue
+            
+            # Get ML prediction
+            ml_prediction = await get_ml_prediction(symbol, strategy="balanced")
+            
+            # Build context for logging
+            context = {
+                "symbol": symbol,
+                "ml_prediction": {
+                    "direction": ml_prediction.direction,
+                    "confidence": ml_prediction.confidence,
+                    "probability_up": ml_prediction.probability_up,
+                    "probability_down": ml_prediction.probability_down,
+                    "entry_price": ml_prediction.entry_price,
+                    "target_price": ml_prediction.target_price,
+                    "stop_price": ml_prediction.stop_price,
+                },
+                "ta": {},
+                "distances": {},
+                "volume": {},
+                "trend_channel": {},
+                "macro": {},
+                "news": {},
+            }
+            
+            analysis = {
+                "final_decision": ml_prediction.direction,
+                "confidence": ml_prediction.confidence,
+                "model_used": ml_prediction.model_version,
+            }
+            
+            pred_id = await log_prediction(
+                symbol=symbol,
+                context=context,
+                analysis=analysis,
+                timeframe="1d",
+                strategy="balanced"  # Default strategy for auto-logged predictions
+            )
+            
+            if pred_id:
+                logger.info(f"Auto-logged prediction {pred_id[:8]} for {symbol}")
+                
+        except Exception as e:
+            logger.error(f"Error auto-logging prediction for {symbol}: {e}")
+
+
 async def background_scheduler_loop():
     """Main background scheduler loop."""
     global _scheduler_running
@@ -278,6 +345,8 @@ async def background_scheduler_loop():
             await check_outcomes_if_needed()
             # Analyze errors periodically (self-learning)
             await analyze_errors_if_needed()
+            # Log predictions periodically for learning
+            await log_predictions_if_needed()
         except Exception as e:
             logger.error(f"Scheduler error: {e}")
         
