@@ -722,13 +722,31 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     Args:
         symbol: Trading symbol (e.g. 'XAUUSD', 'NDX.INDX')
         enabled_factors: Optional list of factor IDs to apply (trend,confluence,session,pattern,candle,cot,sr,news,regime)
-                        If None, all factors are enabled.
+                        If None, factors are determined by strategy preset.
         strategy: Preset strategy (ultra_safe, balanced, full_power, aggressive)
     """
     from services.data_fetcher import fetch_eod_candles, fetch_30m_candles, fetch_latest_price
     
     # Normalize symbol
     normalized_symbol = "NDX.INDX" if symbol.upper() in ["NASDAQ", "NDX.INDX", "NDX"] else symbol.upper()
+    
+    # ═══════════════════════════════════════════════════════════════════
+    # STRATEGY-BASED FACTOR SELECTION
+    # Different strategies enable different factors for confidence calculation
+    # ═══════════════════════════════════════════════════════════════════
+    if enabled_factors is None:
+        # Get factors based on strategy preset
+        preset = STRATEGY_PRESETS.get(strategy, STRATEGY_PRESETS["balanced"])
+        enabled_layers = preset["enabled_layers"]
+        
+        # Map layers to factors
+        strategy_factors = []
+        for layer_name in enabled_layers:
+            layer_config = CONFIDENCE_LAYERS.get(layer_name, {})
+            strategy_factors.extend(layer_config.get("factors", []))
+        
+        enabled_factors = strategy_factors if strategy_factors else ['trend', 'confluence', 'session', 'pattern', 'candle', 'cot', 'sr', 'news', 'regime']
+        logger.info(f"Strategy '{strategy}' enabled factors: {enabled_factors}")
     
     # For XAUUSD, get news impact analysis
     news_sentiment = 0.0
@@ -924,7 +942,8 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     # CONFIDENCE ADJUSTMENTS - Collected separately, applied with weighted avg
     # ═══════════════════════════════════════════════════════════════════
     # Factor IDs: trend, confluence, session, pattern, candle, cot, sr, news, regime
-    all_factors = enabled_factors if enabled_factors else ['trend', 'confluence', 'session', 'pattern', 'candle', 'cot', 'sr', 'news', 'regime']
+    # enabled_factors is already set based on strategy at the start of the function
+    all_factors = enabled_factors
     confidence_adjustments = []  # List of {multiplier, weight, reason, factor_id}
     
     def add_adjustment(factor_id: str, multiplier: float, weight: int, reason: str):
