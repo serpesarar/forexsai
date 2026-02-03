@@ -55,6 +55,6 @@ docs/
 Thumbs.db
 
 # Large model files (if any)
-*.pkl
-*.joblib
 models/*.bin
+!models/*.joblib
+!models/*.pkl
