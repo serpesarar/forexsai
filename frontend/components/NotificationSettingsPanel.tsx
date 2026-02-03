@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, Send, Check, X, Settings, MessageCircle } from "lucide-react";
+import { Bell, Send, Check, X, Settings, MessageCircle, ExternalLink, Copy, HelpCircle } from "lucide-react";
 
 interface NotificationSettings {
+  telegram_bot_token: string | null;
   telegram_chat_id: string | null;
   telegram_enabled: boolean;
   notify_ultra_safe: boolean;
@@ -20,6 +21,7 @@ interface NotificationSettings {
 }
 
 const DEFAULT_SETTINGS: NotificationSettings = {
+  telegram_bot_token: null,
   telegram_chat_id: null,
   telegram_enabled: false,
   notify_ultra_safe: true,
@@ -90,22 +92,29 @@ export default function NotificationSettingsPanel() {
 
   const testTelegram = async () => {
     if (!settings.telegram_chat_id) {
-      setTestResult({ ok: false, message: "Please enter Chat ID first" });
+      setTestResult({ ok: false, message: "Lütfen önce Chat ID girin" });
+      return;
+    }
+    if (!settings.telegram_bot_token) {
+      setTestResult({ ok: false, message: "Lütfen önce Bot Token girin" });
       return;
     }
     setTesting(true);
     try {
-      const res = await fetch(
-        `/api/learning/notifications/test?chat_id=${settings.telegram_chat_id}`,
-        { method: "POST" }
-      );
+      const params = new URLSearchParams({
+        chat_id: settings.telegram_chat_id,
+        bot_token: settings.telegram_bot_token,
+      });
+      const res = await fetch(`/api/learning/notifications/test?${params}`, {
+        method: "POST",
+      });
       const data = await res.json();
       setTestResult({
         ok: data.ok,
-        message: data.ok ? "Test message sent!" : data.error || "Failed",
+        message: data.ok ? "✅ Test mesajı gönderildi!" : data.error || "Bağlantı başarısız",
       });
     } catch (e) {
-      setTestResult({ ok: false, message: "Connection failed" });
+      setTestResult({ ok: false, message: "Bağlantı hatası" });
     } finally {
       setTesting(false);
       setTimeout(() => setTestResult(null), 5000);
@@ -141,36 +150,97 @@ export default function NotificationSettingsPanel() {
         <h2 className="text-lg font-semibold text-white">Notification Settings</h2>
       </div>
 
-      {/* Telegram Connection */}
-      <div className="mb-6 p-4 bg-gray-800 rounded-lg">
-        <div className="flex items-center gap-2 mb-3">
-          <MessageCircle className="w-4 h-4 text-blue-400" />
-          <span className="text-white font-medium">Telegram Connection</span>
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Chat ID (e.g., -100123456789)"
-            value={settings.telegram_chat_id || ""}
-            onChange={(e) => setSettings({ ...settings, telegram_chat_id: e.target.value })}
-            className="flex-1 bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600 text-sm"
-          />
-          <button
-            onClick={testTelegram}
-            disabled={testing}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50"
+      {/* Telegram Setup Guide */}
+      <div className="mb-6 p-4 bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg border border-blue-800">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <MessageCircle className="w-5 h-5 text-blue-400" />
+            <span className="text-white font-medium">Telegram Bağlantısı</span>
+          </div>
+          <a
+            href="https://t.me/BotFather"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1"
           >
-            {testing ? "Testing..." : "Test"}
-          </button>
+            @BotFather <ExternalLink className="w-3 h-3" />
+          </a>
         </div>
-        <label className="flex items-center gap-2 mt-3 cursor-pointer">
+
+        {/* Setup Steps */}
+        <div className="bg-gray-900/50 rounded-lg p-3 mb-4 text-sm">
+          <div className="flex items-center gap-2 text-yellow-400 mb-2">
+            <HelpCircle className="w-4 h-4" />
+            <span className="font-medium">Kurulum Adımları</span>
+          </div>
+          <ol className="text-gray-300 space-y-2 ml-6 list-decimal">
+            <li>
+              Telegram&apos;da{" "}
+              <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className="text-blue-400">
+                @BotFather
+              </a>
+              &apos;a git
+            </li>
+            <li><code className="bg-gray-800 px-1 rounded">/newbot</code> yaz ve bot adını gir</li>
+            <li>Bot token&apos;ını kopyala (örn: <code className="bg-gray-800 px-1 rounded text-xs">123456:ABC-DEF...</code>)</li>
+            <li>
+              <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-blue-400">
+                @userinfobot
+              </a>
+              &apos;a git ve Chat ID&apos;ni öğren
+            </li>
+            <li>Aşağıya bilgileri yapıştır ve &quot;Test&quot; butonuna bas</li>
+          </ol>
+        </div>
+
+        {/* Bot Token Input */}
+        <div className="space-y-3">
+          <div>
+            <label className="text-gray-400 text-xs mb-1 block">Bot Token (BotFather&apos;dan)</label>
+            <div className="flex gap-2">
+              <input
+                type="password"
+                placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+                value={settings.telegram_bot_token || ""}
+                onChange={(e) => setSettings({ ...settings, telegram_bot_token: e.target.value })}
+                className="flex-1 bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600 text-sm font-mono"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-gray-400 text-xs mb-1 block">Chat ID (@userinfobot&apos;tan)</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="123456789 veya -100123456789"
+                value={settings.telegram_chat_id || ""}
+                onChange={(e) => setSettings({ ...settings, telegram_chat_id: e.target.value })}
+                className="flex-1 bg-gray-700 text-white px-3 py-2 rounded-lg border border-gray-600 text-sm font-mono"
+              />
+              <button
+                onClick={testTelegram}
+                disabled={testing || !settings.telegram_chat_id}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50 flex items-center gap-1"
+              >
+                <Send className="w-4 h-4" />
+                {testing ? "..." : "Test"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <label className="flex items-center gap-2 mt-4 cursor-pointer">
           <input
             type="checkbox"
             checked={settings.telegram_enabled}
             onChange={(e) => setSettings({ ...settings, telegram_enabled: e.target.checked })}
-            className="w-4 h-4 rounded"
+            className="w-4 h-4 rounded accent-green-500"
           />
-          <span className="text-gray-300 text-sm">Enable Telegram notifications</span>
+          <span className="text-white text-sm">Telegram bildirimlerini aktif et</span>
+          {settings.telegram_enabled && settings.telegram_chat_id && (
+            <span className="text-green-400 text-xs ml-2">✓ Aktif</span>
+          )}
         </label>
       </div>
 

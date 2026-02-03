@@ -1212,6 +1212,7 @@ async def get_notification_settings(user_id: Optional[str] = None):
 
 @router.put("/notifications/settings")
 async def update_notification_settings(
+    telegram_bot_token: Optional[str] = None,
     telegram_chat_id: Optional[str] = None,
     telegram_enabled: bool = False,
     notify_ultra_safe: bool = True,
@@ -1231,6 +1232,7 @@ async def update_notification_settings(
     try:
         from database.supabase_client import supabase
         data = {
+            "telegram_bot_token": telegram_bot_token,
             "telegram_chat_id": telegram_chat_id,
             "telegram_enabled": telegram_enabled,
             "notify_ultra_safe": notify_ultra_safe,
@@ -1258,7 +1260,21 @@ async def update_notification_settings(
 
 
 @router.post("/notifications/test")
-async def test_notification(chat_id: Optional[str] = None):
-    """Test bildirimi gönder"""
-    result = await telegram_notifier.test_connection(chat_id)
+async def test_notification(
+    chat_id: Optional[str] = None,
+    bot_token: Optional[str] = None
+):
+    """Test bildirimi gönder - kullanıcının kendi bot'uyla"""
+    from services.telegram_service import TelegramNotifier
+    
+    if bot_token and chat_id:
+        # Kullanıcının kendi bot'u ile test
+        custom_notifier = TelegramNotifier()
+        custom_notifier._bot_token = bot_token
+        custom_notifier._default_chat_id = chat_id
+        result = await custom_notifier.test_connection(chat_id)
+    else:
+        # Global bot ile test
+        result = await telegram_notifier.test_connection(chat_id)
+    
     return result
