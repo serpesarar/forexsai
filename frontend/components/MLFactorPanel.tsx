@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Settings2, X, ChevronRight, RotateCcw, RefreshCw, Loader2, Shield, Zap, Target, Flame } from "lucide-react";
 import { fetchPredictionWithStrategy } from "../lib/api/prediction";
@@ -125,8 +125,8 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
   const [liveConfidence, setLiveConfidence] = useState(baseConfidence);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Strateji seçildiğinde katmanları güncelle
-  const selectStrategy = useCallback((strategyId: string) => {
+  // Strateji seçildiğinde katmanları güncelle ve backend'den veri çek
+  const selectStrategy = useCallback(async (strategyId: string) => {
     const strategy = STRATEGIES.find(s => s.id === strategyId);
     if (!strategy) return;
     
@@ -135,6 +135,26 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", onS
       ...layer,
       enabled: strategy.enabledLayers.includes(layer.id)
     })));
+    
+    // Immediately fetch new prediction with selected strategy
+    setIsLoading(true);
+    try {
+      const prediction = await fetchPredictionWithStrategy(symbol, strategyId);
+      setLiveConfidence(prediction.confidence);
+      onStrategyChange?.(strategyId, prediction.confidence);
+    } catch (err) {
+      console.error("Strategy prediction fetch failed:", err);
+      setLiveConfidence(baseConfidence);
+      onStrategyChange?.(strategyId, baseConfidence);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [symbol, baseConfidence, onStrategyChange]);
+
+  // Initial fetch on mount
+  useEffect(() => {
+    selectStrategy(selectedStrategy);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Backend'den gerçek confidence al
