@@ -27,14 +27,21 @@ const SYMBOLS_CONFIG = [
   { symbol: "XAUUSD", label: "XAU/USD" },
 ];
 
+const previousCloseCache = new Map<string, { previousClose: number; fetchedAt: number }>();
+
 async function fetchPriceData(symbol: string): Promise<{ price: number; previousClose: number } | null> {
   try {
     let currentPrice: number | null = null;
     let previousClose: number = 0;
 
+    const cachedPrev = previousCloseCache.get(symbol);
+    if (cachedPrev && Date.now() - cachedPrev.fetchedAt < 30 * 60 * 1000) {
+      previousClose = cachedPrev.previousClose;
+    }
+
     // Try cached endpoint first
     try {
-      const cachedRes = await fetch(`${API_BASE}/api/data/cached/${encodeURIComponent(symbol)}`);
+      const cachedRes = await fetch(`${API_BASE}/api/data/cached/${encodeURIComponent(symbol)}`, { cache: "no-store" });
       if (cachedRes.ok) {
         const cachedData = await cachedRes.json();
         // Handle both response formats
@@ -50,7 +57,8 @@ async function fetchPriceData(symbol: string): Promise<{ price: number; previous
     // Fetch OHLCV data for previous close and fallback current price
     try {
       const ohlcvRes = await fetch(
-        `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=1d&limit=5`
+        `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=1d&limit=50`,
+        { cache: "no-store" }
       );
       
       if (ohlcvRes.ok) {
@@ -59,13 +67,23 @@ async function fetchPriceData(symbol: string): Promise<{ price: number; previous
         
         if (candles.length >= 2) {
           // Get previous day's close
-          previousClose = candles[candles.length - 2]?.close ?? 0;
+          if (!previousClose) {
+            previousClose = candles[candles.length - 2]?.close ?? 0;
+            if (previousClose) {
+              previousCloseCache.set(symbol, { previousClose, fetchedAt: Date.now() });
+            }
+          }
           // Use latest candle close if no cached price
           if (currentPrice === null) {
             currentPrice = candles[candles.length - 1]?.close ?? null;
           }
         } else if (candles.length === 1) {
-          previousClose = candles[0]?.open ?? candles[0]?.close ?? 0;
+          if (!previousClose) {
+            previousClose = candles[0]?.open ?? candles[0]?.close ?? 0;
+            if (previousClose) {
+              previousCloseCache.set(symbol, { previousClose, fetchedAt: Date.now() });
+            }
+          }
           if (currentPrice === null) {
             currentPrice = candles[0]?.close ?? null;
           }
@@ -78,7 +96,7 @@ async function fetchPriceData(symbol: string): Promise<{ price: number; previous
     // Try prediction endpoint as last fallback
     if (currentPrice === null) {
       try {
-        const predRes = await fetch(`${API_BASE}/api/predictions/${encodeURIComponent(symbol)}`);
+        const predRes = await fetch(`${API_BASE}/api/prediction/${encodeURIComponent(symbol)}`, { cache: "no-store" });
         if (predRes.ok) {
           const predData = await predRes.json();
           currentPrice = predData?.entry_price ?? predData?.current_price ?? null;
