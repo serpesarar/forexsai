@@ -146,7 +146,7 @@ NULL_RETRY_TIMES = {
 # Adaptive Threshold Base Values
 # ═══════════════════════════════════════════════════════════════════════════════
 ADAPTIVE_THRESHOLD_CONFIG = {
-    'base_threshold': 0.65,
+    'base_threshold': 0.55,       # 0.65 -> 0.55 (daha fazla sinyal için)
     'low_winrate_boost': 0.10,    # Win rate < 40% ise +%10
     'high_winrate_reduce': 0.05,  # Win rate > 70% ise -%5
     'min_samples': 5,             # Minimum sample sayısı
