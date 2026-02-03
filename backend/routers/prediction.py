@@ -46,6 +46,10 @@ async def get_prediction(
     strategy: Optional[str] = Query(
         default="balanced",
         description="Preset strategy: ultra_safe, balanced, full_power, aggressive"
+    ),
+    log_to_db: bool = Query(
+        default=False,
+        description="Log this prediction to database for learning"
     )
 ):
     """
@@ -54,6 +58,7 @@ async def get_prediction(
     Returns direction (BUY/SELL/HOLD), confidence, pip targets, and analysis.
     - enabled_factors: Filter which confidence factors are applied
     - strategy: Preset layer configuration (ultra_safe, balanced, full_power, aggressive)
+    - log_to_db: If true, logs prediction to database for learning system
     """
     from services.ml_prediction_service import get_ml_prediction
     
@@ -68,6 +73,47 @@ async def get_prediction(
         strategy = "balanced"
     
     result = await get_ml_prediction(symbol, enabled_factors=factor_list, strategy=strategy)
+    
+    # Log to database if requested (for learning system)
+    if log_to_db:
+        try:
+            from services.prediction_logger import log_prediction
+            from database.supabase_client import is_db_available
+            
+            if is_db_available():
+                context = {
+                    "symbol": symbol,
+                    "ml_prediction": {
+                        "direction": result.direction,
+                        "confidence": result.confidence,
+                        "probability_up": result.probability_up,
+                        "probability_down": result.probability_down,
+                        "entry_price": result.entry_price,
+                        "target_price": result.target_price,
+                        "stop_price": result.stop_price,
+                    },
+                    "ta": {},
+                    "distances": {},
+                    "volume": {},
+                    "trend_channel": {},
+                    "macro": {},
+                    "news": {},
+                }
+                analysis = {
+                    "final_decision": result.direction,
+                    "confidence": result.confidence,
+                    "model_used": result.model_version,
+                }
+                await log_prediction(
+                    symbol=symbol,
+                    context=context,
+                    analysis=analysis,
+                    timeframe="1d",
+                    strategy=strategy
+                )
+        except Exception as e:
+            import logging
+            logging.warning(f"Failed to log prediction: {e}")
     
     return PredictionResponse(
         symbol=result.symbol,

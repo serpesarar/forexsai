@@ -30,11 +30,16 @@ export interface PredictionData {
   model_version: string;
 }
 
-async function fetchPrediction(symbol: string, enabledFactors?: string[]): Promise<PredictionData> {
-  let url = `${API_BASE}/api/prediction/${symbol}`;
+async function fetchPrediction(symbol: string, enabledFactors?: string[], logToDb: boolean = false): Promise<PredictionData> {
+  const params = new URLSearchParams();
   if (enabledFactors && enabledFactors.length > 0) {
-    url += `?enabled_factors=${enabledFactors.join(",")}`;
+    params.append("enabled_factors", enabledFactors.join(","));
   }
+  if (logToDb) {
+    params.append("log_to_db", "true");
+  }
+  const queryString = params.toString();
+  const url = `${API_BASE}/api/prediction/${symbol}${queryString ? `?${queryString}` : ""}`;
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch prediction for ${symbol}`);
@@ -47,9 +52,9 @@ export async function fetchPredictionWithFactors(symbol: string, enabledFactors:
   return fetchPrediction(symbol, enabledFactors);
 }
 
-// Fetch with strategy preset (for layer panel)
+// Fetch with strategy preset (for layer panel) - logs to DB for learning
 export async function fetchPredictionWithStrategy(symbol: string, strategy: string): Promise<PredictionData> {
-  const url = `${API_BASE}/api/prediction/${symbol}?strategy=${strategy}`;
+  const url = `${API_BASE}/api/prediction/${symbol}?strategy=${strategy}&log_to_db=true`;
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch prediction for ${symbol} with strategy ${strategy}`);
@@ -65,11 +70,11 @@ async function fetchAllPredictions(): Promise<PredictionData[]> {
   return res.json();
 }
 
-export function usePrediction(symbol: string) {
+export function usePrediction(symbol: string, logToDb: boolean = true) {
   return useQuery({
     queryKey: ["prediction", symbol],
-    queryFn: () => fetchPrediction(symbol),
-    refetchInterval: 60000, // Refresh every 60 seconds
+    queryFn: () => fetchPrediction(symbol, undefined, logToDb),
+    refetchInterval: 60000, // Refresh every 60 seconds - logs to DB each time
     staleTime: 10000, // Data is stale after 10 seconds (allows manual refresh)
     gcTime: 60000, // Keep in cache for 1 minute
   });

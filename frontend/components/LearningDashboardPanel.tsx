@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Brain,
   TrendingUp,
@@ -39,6 +39,28 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
   const { data: dashboard, isLoading: dashboardLoading, refetch } = useLearningDashboard(symbol, days);
   const { data: multiTarget, refetch: refetchMulti } = useMultiTargetDashboard(symbol, days);
   const { data: predictions } = usePredictions(symbol, 10);
+
+  // Auto-check outcomes on mount and every 5 minutes
+  useEffect(() => {
+    if (!health?.db_available) return;
+    
+    const checkOutcomes = async () => {
+      try {
+        await trigger1hOutcomeCheck();
+        refetch();
+        refetchMulti();
+      } catch (e) {
+        console.error("Auto outcome check failed:", e);
+      }
+    };
+    
+    // Check on mount
+    checkOutcomes();
+    
+    // Check every 5 minutes
+    const interval = setInterval(checkOutcomes, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [health?.db_available, refetch, refetchMulti]);
 
   const handleCheckOutcomes = async () => {
     setIsCheckingOutcomes(true);
