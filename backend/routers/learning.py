@@ -256,6 +256,65 @@ async def trigger_1h_outcome_check():
     }
 
 
+@router.post("/check-all-pending")
+async def check_all_pending_outcomes():
+    """
+    Check ALL pending predictions regardless of age.
+    Use this to process old predictions that were never checked.
+    """
+    from database.supabase_client import get_supabase_client
+    
+    if not is_db_available():
+        return {"error": "Database not available", "outcomes_checked": 0}
+    
+    client = get_supabase_client()
+    if client is None:
+        return {"error": "Database client not available", "outcomes_checked": 0}
+    
+    try:
+        # Get ALL unchecked predictions
+        result = client.table("prediction_logs").select("*").eq(
+            "outcome_checked", False
+        ).limit(100).execute()
+        
+        predictions = result.get("data") or []
+        
+        if not predictions:
+            return {"message": "No pending predictions found", "outcomes_checked": 0}
+        
+        outcomes = []
+        for pred in predictions:
+            # Check if outcome already exists
+            existing = client.table("outcome_results").select("id").eq(
+                "prediction_id", pred["id"]
+            ).eq("check_interval", "24h").execute()
+            
+            if existing.get("data"):
+                # Mark as checked if outcome exists
+                from services.prediction_logger import mark_prediction_checked
+                await mark_prediction_checked(pred["id"])
+                continue
+            
+            # Check outcome
+            outcome = await check_prediction_outcome(pred, "24h")
+            if outcome:
+                outcomes.append(outcome)
+                from services.prediction_logger import mark_prediction_checked
+                await mark_prediction_checked(pred["id"])
+        
+        correct_count = sum(1 for o in outcomes if o.get("ml_correct"))
+        
+        return {
+            "outcomes_checked": len(outcomes),
+            "ml_correct": correct_count,
+            "ml_incorrect": len(outcomes) - correct_count,
+            "total_pending_found": len(predictions)
+        }
+        
+    except Exception as e:
+        return {"error": str(e), "outcomes_checked": 0}
+
+
 @router.get("/multi-target-dashboard")
 async def get_multi_target_dashboard(
     symbol: Optional[str] = Query(None),
