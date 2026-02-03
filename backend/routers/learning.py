@@ -1023,19 +1023,28 @@ async def get_strategy_performance(
         cutoff = datetime.utcnow() - timedelta(days=days)
         cutoff_iso = cutoff.isoformat() + "Z"
         
-        logger.info(f"Fetching strategy performance for last {days} days (since {cutoff_iso})")
-        
-        # Get all predictions with outcomes - simpler query without join
+        # Get predictions
         predictions = []
         try:
-            result = client.table("prediction_logs").select(
-                "id, symbol, strategy, ml_direction, ml_confidence, factors, created_at"
-            ).gte("created_at", cutoff_iso).limit(500).execute()
-            predictions = result.data if hasattr(result, 'data') else result.get("data") or []
-            logger.info(f"Found {len(predictions)} predictions")
+            result = client.table("prediction_logs").select("*").gte("created_at", cutoff_iso).limit(500).execute()
+            predictions = result.data if hasattr(result, 'data') else (result.get("data") if isinstance(result, dict) else [])
+            if predictions is None:
+                predictions = []
         except Exception as fetch_err:
-            logger.error(f"Prediction fetch failed: {fetch_err}")
-            return {"error": f"Database query failed: {str(fetch_err)}"}
+            return {"error": f"Prediction query failed: {str(fetch_err)}", "predictions": 0}
+        
+        # Get all outcomes in one query
+        outcomes_map = {}
+        try:
+            outcome_result = client.table("outcome_results").select(
+                "prediction_id, ml_correct, hit_target, hit_stop"
+            ).eq("check_interval", "24h").gte("created_at", cutoff_iso).limit(1000).execute()
+            outcomes_list = outcome_result.data if hasattr(outcome_result, 'data') else (outcome_result.get("data") if isinstance(outcome_result, dict) else [])
+            if outcomes_list:
+                for o in outcomes_list:
+                    outcomes_map[o.get("prediction_id")] = o
+        except Exception as outcome_err:
+            logger.warning(f"Outcome query failed: {outcome_err}")
         
         # Classify each prediction by confidence level into strategy buckets
         def classify_strategy(confidence: float) -> str:
@@ -1079,27 +1088,19 @@ async def get_strategy_performance(
             stats[symbol][strategy]["total"] += 1
             stats[symbol][strategy]["confidence_sum"] += confidence
             
-            # Fetch outcome for this prediction
-            try:
-                pred_id = pred.get("id")
-                if pred_id:
-                    outcome_result = client.table("outcome_results").select(
-                        "ml_correct, hit_target, hit_stop"
-                    ).eq("prediction_id", pred_id).eq("check_interval", "24h").limit(1).execute()
-                    outcomes = outcome_result.data if hasattr(outcome_result, 'data') else outcome_result.get("data") or []
-                    
-                    if outcomes and len(outcomes) > 0:
-                        outcome = outcomes[0]
-                        stats[symbol][strategy]["with_outcome"] += 1
-                        
-                        if outcome.get("ml_correct") or outcome.get("hit_target"):
-                            stats[symbol][strategy]["correct"] += 1
-                        if outcome.get("hit_target"):
-                            stats[symbol][strategy]["target_hits"] += 1
-                        if outcome.get("hit_stop"):
-                            stats[symbol][strategy]["stop_hits"] += 1
-            except Exception as outcome_err:
-                logger.debug(f"Could not fetch outcome for {pred.get('id')}: {outcome_err}")
+            # Look up outcome from pre-fetched map
+            pred_id = pred.get("id")
+            outcome = outcomes_map.get(pred_id) if pred_id else None
+            
+            if outcome:
+                stats[symbol][strategy]["with_outcome"] += 1
+                
+                if outcome.get("ml_correct") or outcome.get("hit_target"):
+                    stats[symbol][strategy]["correct"] += 1
+                if outcome.get("hit_target"):
+                    stats[symbol][strategy]["target_hits"] += 1
+                if outcome.get("hit_stop"):
+                    stats[symbol][strategy]["stop_hits"] += 1
         
         # Calculate percentages
         result_data = {}
