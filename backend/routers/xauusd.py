@@ -26,12 +26,13 @@ class GoldNewsResponse(BaseModel):
 
 
 @router.post("/xauusd", response_model=SignalResponse)
-async def run_xauusd() -> SignalResponse:
+async def run_xauusd(timeframe: str = "1h") -> SignalResponse:
     """
     Run XAUUSD trend analysis using real-time data and trend_analyzer.
     Returns signal, confidence, reasoning, and metrics.
+    timeframe: 5m, 15m, 30m, 1h, 4h, 1d
     """
-    result = await run_xauusd_signal_async()
+    result = await run_xauusd_signal_async(timeframe=timeframe)
     return SignalResponse(
         signal=result.signal,
         confidence=result.confidence,

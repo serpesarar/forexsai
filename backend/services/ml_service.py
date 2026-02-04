@@ -22,7 +22,7 @@ def _path_exists(path: str) -> bool:
     return Path(path).expanduser().exists()
 
 
-async def run_nasdaq_signal_async(current_price: float | None = None) -> SignalResult:
+async def run_nasdaq_signal_async(current_price: float | None = None, timeframe: str = "1h") -> SignalResult:
     """
     Run NASDAQ trend analysis using the new trend_analyzer.
     Returns SignalResult for backward compatibility.
@@ -30,7 +30,7 @@ async def run_nasdaq_signal_async(current_price: float | None = None) -> SignalR
     from services.trend_analyzer import run_trend_analysis
     
     try:
-        analysis = await run_trend_analysis("NDX.INDX", include_hourly=False)
+        analysis = await run_trend_analysis("NDX.INDX", include_hourly=False, timeframe=timeframe)
         
         # Map trend to signal
         if analysis.trend == "BULLISH" and analysis.confidence > 60:
@@ -93,7 +93,7 @@ async def run_nasdaq_signal_async(current_price: float | None = None) -> SignalR
         )
 
 
-async def run_xauusd_signal_async(current_price: float | None = None) -> SignalResult:
+async def run_xauusd_signal_async(current_price: float | None = None, timeframe: str = "1h") -> SignalResult:
     """
     Run XAUUSD trend analysis using the new trend_analyzer.
     Returns SignalResult for backward compatibility.
@@ -101,7 +101,7 @@ async def run_xauusd_signal_async(current_price: float | None = None) -> SignalR
     from services.trend_analyzer import run_trend_analysis
     
     try:
-        analysis = await run_trend_analysis("XAUUSD.FOREX", include_hourly=False)
+        analysis = await run_trend_analysis("XAUUSD.FOREX", include_hourly=False, timeframe=timeframe)
         
         # Map trend to signal
         if analysis.trend == "BULLISH" and analysis.confidence > 60:
