@@ -67,6 +67,7 @@ try:
         mtf_analysis,
         earnings,
         trading_engine_test,
+        emel_pulse,
     )
     from services.data_fetcher import fetch_latest_price
     from services.ml_service import run_nasdaq_signal, run_xauusd_signal
@@ -97,6 +98,7 @@ try:
     app.include_router(mtf_analysis.router)
     app.include_router(earnings.router)
     app.include_router(trading_engine_test.router)
+    app.include_router(emel_pulse.router)
     
     ROUTERS_LOADED = True
 except Exception as e:
