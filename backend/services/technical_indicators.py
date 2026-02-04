@@ -111,32 +111,44 @@ def clean_ohlc_data(
 
 def calculate_ema(values: np.ndarray, period: int) -> Optional[float]:
     """
-    Calculate EMA with proper warmup period.
-    Returns None if insufficient data.
+    Calculate EMA with proper warmup period (TradingView standard).
+    Uses SMA of first `period` values as seed, then applies EMA formula.
+    
+    TradingView formula:
+    - First EMA = SMA(close, period)
+    - EMA = (Close * k) + (EMA[1] * (1-k)) where k = 2/(period+1)
     """
-    min_required = period
-    if len(values) < min_required:
+    if len(values) < period:
         return None
     
     alpha = 2.0 / (period + 1.0)
-    ema = float(values[0])
     
-    for v in values[1:]:
+    # TradingView standard: First EMA = SMA of first `period` values
+    ema = float(np.mean(values[:period]))
+    
+    # Then apply EMA formula for remaining values
+    for v in values[period:]:
         ema = alpha * float(v) + (1 - alpha) * ema
     
     return float(ema)
 
 
 def calculate_ema_series(values: np.ndarray, period: int) -> np.ndarray:
-    """Calculate full EMA series"""
+    """Calculate full EMA series (TradingView standard)"""
     if len(values) < period:
         return np.full(len(values), np.nan)
     
     alpha = 2.0 / (period + 1.0)
     ema = np.zeros(len(values))
-    ema[0] = values[0]
     
-    for i in range(1, len(values)):
+    # TradingView standard: First EMA = SMA of first `period` values
+    ema[period - 1] = np.mean(values[:period])
+    
+    # Fill earlier values with SMA
+    ema[:period - 1] = ema[period - 1]
+    
+    # Then apply EMA formula for remaining values
+    for i in range(period, len(values)):
         ema[i] = alpha * values[i] + (1 - alpha) * ema[i - 1]
     
     return ema
