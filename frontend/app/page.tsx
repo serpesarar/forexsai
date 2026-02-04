@@ -38,6 +38,8 @@ import CandlestickPatternPanel from "../components/CandlestickPatternPanel";
 import MLFactorPanel from "../components/MLFactorPanel";
 import StrategyPerformancePanel from "../components/StrategyPerformancePanel";
 import { NasdaqEarningsPanel } from "../components/EarningsPanel";
+import EmelPanel from "../components/panels/EmelPanel";
+import PulsePanel from "../components/panels/PulsePanel";
 import UserMenu from "../components/UserMenu";
 import { TradingBackground } from "../components/TradingBackground";
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
@@ -840,6 +842,10 @@ export default function HomePage() {
         return <InstitutionalDataPanel />;
       case "candlestick-patterns":
         return <CandlestickPatternPanel symbol="XAUUSD" />;
+      case "emel-panel":
+        return <EmelPanel symbol="NDX.INDX" onSwitchMode={() => {}} />;
+      case "pulse-panel":
+        return <PulsePanel symbol="NDX.INDX" onSwitchMode={() => {}} />;
       default:
         return null;
     }
