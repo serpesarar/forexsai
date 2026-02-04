@@ -501,34 +501,42 @@ def get_volatility_level(atr_pct: float, symbol: str) -> VolatilityLevel:
 
 async def run_trend_analysis(
     symbol: str,
-    include_hourly: bool = False
+    include_hourly: bool = False,
+    timeframe: str = "1h"  # Use intraday data for accurate EMA
 ) -> TrendAnalysisResult:
     """
     Main trend analysis function.
     Computes all metrics and returns TrendAnalysisResult.
+    Now uses intraday data (1h default) for EMA accuracy matching TradingView.
     """
     # Cache check (5 min TTL)
-    cache_key = f"trend_analysis:{symbol}:{include_hourly}"
+    cache_key = f"trend_analysis:{symbol}:{timeframe}:{include_hourly}"
     cached = get_cached(cache_key)
     if cached:
         return cached
     
-    # Fetch data
+    # Fetch INTRADAY data (not EOD) for accurate EMA matching TradingView
     try:
-        eod_data = await fetch_eod_candles(symbol, limit=300)
+        from services.data_fetcher import fetch_intraday_candles, fetch_latest_price
+        ohlcv_data = await fetch_intraday_candles(symbol, interval=timeframe, limit=300)
         live_price = await fetch_latest_price(symbol)
     except Exception as e:
-        raise ValueError(f"Veri çekilemedi: {symbol} - {str(e)}")
+        # Fallback to EOD if intraday fails
+        try:
+            ohlcv_data = await fetch_eod_candles(symbol, limit=300)
+            live_price = await fetch_latest_price(symbol)
+        except Exception as e2:
+            raise ValueError(f"Veri çekilemedi: {symbol} - {str(e2)}")
     
-    if len(eod_data) < 50:
-        raise ValueError(f"Yetersiz veri: {symbol} ({len(eod_data)} gün)")
+    if len(ohlcv_data) < 50:
+        raise ValueError(f"Yetersiz veri: {symbol} ({len(ohlcv_data)} candles)")
     
-    # Extract OHLCV
-    opens = np.array([d["open"] for d in eod_data])
-    highs = np.array([d["high"] for d in eod_data])
-    lows = np.array([d["low"] for d in eod_data])
-    closes = np.array([d["close"] for d in eod_data])
-    volumes = np.array([d.get("volume", 0) for d in eod_data])
+    # Extract OHLCV from intraday data
+    opens = np.array([d["open"] for d in ohlcv_data])
+    highs = np.array([d["high"] for d in ohlcv_data])
+    lows = np.array([d["low"] for d in ohlcv_data])
+    closes = np.array([d["close"] for d in ohlcv_data])
+    volumes = np.array([d.get("volume", 0) for d in ohlcv_data])
     
     # Clean data (rolling MAD based)
     clean_opens, clean_highs, clean_lows, clean_closes, data_quality = clean_ohlc_data(
