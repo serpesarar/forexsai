@@ -24,22 +24,23 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
     EMEL Panel - 9 Kontrol Noktası ile Detaylı Analiz
     """
     try:
-        from services.ml_prediction_service import get_ml_prediction, _calculate_ta
+        from services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
         from services.market_data_service import get_ohlcv_data
         
         # Get market data
-        ohlcv = await get_ohlcv_data(symbol, timeframe, limit=200)
+        ohlcv = await get_ohlcv_data(symbol, timeframe, limit=250)
         if not ohlcv or len(ohlcv) < 50:
             return {"error": "Yetersiz veri"}
         
-        closes = [c["close"] for c in ohlcv]
-        highs = [c["high"] for c in ohlcv]
-        lows = [c["low"] for c in ohlcv]
-        volumes = [c.get("volume", 0) for c in ohlcv]
-        current_price = closes[-1]
+        # Convert to numpy arrays - CRITICAL for correct EMA calculation
+        closes = np.array([c["close"] for c in ohlcv], dtype=np.float64)
+        highs = np.array([c["high"] for c in ohlcv], dtype=np.float64)
+        lows = np.array([c["low"] for c in ohlcv], dtype=np.float64)
+        volumes = np.array([c.get("volume", 0) for c in ohlcv], dtype=np.float64)
+        current_price = float(closes[-1])
         
-        # Calculate TA
-        ta = _calculate_ta(closes, highs, lows, volumes)
+        # Calculate TA with numpy arrays
+        ta = _compute_technical_indicators(closes, highs, lows, volumes)
         
         # Get ML prediction for context
         prediction = await get_ml_prediction(symbol, "balanced")
@@ -529,7 +530,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
     PULSE Panel - Anlık Scalp Analizi
     """
     try:
-        from services.ml_prediction_service import _calculate_ta
+        from services.ml_prediction_service import _compute_technical_indicators
         from services.market_data_service import get_ohlcv_data
         
         # Get market data
@@ -537,14 +538,15 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         if not ohlcv or len(ohlcv) < 20:
             return {"error": "Yetersiz veri"}
         
-        closes = [c["close"] for c in ohlcv]
-        highs = [c["high"] for c in ohlcv]
-        lows = [c["low"] for c in ohlcv]
-        volumes = [c.get("volume", 0) for c in ohlcv]
-        current_price = closes[-1]
+        # Convert to numpy arrays for correct calculation
+        closes = np.array([c["close"] for c in ohlcv], dtype=np.float64)
+        highs = np.array([c["high"] for c in ohlcv], dtype=np.float64)
+        lows = np.array([c["low"] for c in ohlcv], dtype=np.float64)
+        volumes = np.array([c.get("volume", 0) for c in ohlcv], dtype=np.float64)
+        current_price = float(closes[-1])
         
         # Calculate TA
-        ta = _calculate_ta(closes, highs, lows, volumes)
+        ta = _compute_technical_indicators(closes, highs, lows, volumes)
         
         # Last 5 candles direction
         last_5 = []
@@ -671,3 +673,86 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
     except Exception as e:
         logger.error(f"PULSE analysis error: {e}")
         return {"error": str(e)}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# EMA DEBUG ENDPOINT - TradingView Karşılaştırması
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/debug/ema/{symbol}")
+async def debug_ema_calculation(symbol: str, timeframe: str = "1H"):
+    """
+    EMA Debug - TradingView değerleriyle karşılaştırma için
+    """
+    try:
+        from services.market_data_service import get_ohlcv_data
+        
+        # Get market data - need 250+ candles for EMA200
+        ohlcv = await get_ohlcv_data(symbol, timeframe, limit=300)
+        if not ohlcv:
+            return {"error": "Veri alınamadı"}
+        
+        # Convert to numpy arrays
+        closes = np.array([c["close"] for c in ohlcv], dtype=np.float64)
+        
+        # Manual EMA calculation for verification
+        def calculate_ema_manual(values, period):
+            """Standard EMA formula matching TradingView"""
+            if len(values) < period:
+                return None
+            alpha = 2.0 / (period + 1.0)
+            # Start with SMA for first value
+            ema = float(np.mean(values[:period]))
+            # Then apply EMA formula
+            for v in values[period:]:
+                ema = alpha * float(v) + (1 - alpha) * ema
+            return ema
+        
+        current_price = float(closes[-1])
+        
+        # Calculate EMAs
+        ema20 = calculate_ema_manual(closes, 20)
+        ema50 = calculate_ema_manual(closes, 50)
+        ema200 = calculate_ema_manual(closes, 200)
+        
+        # Also calculate using our existing function for comparison
+        from services.ml_prediction_service import _compute_technical_indicators
+        highs = np.array([c["high"] for c in ohlcv], dtype=np.float64)
+        lows = np.array([c["low"] for c in ohlcv], dtype=np.float64)
+        volumes = np.array([c.get("volume", 0) for c in ohlcv], dtype=np.float64)
+        ta = _compute_technical_indicators(closes, highs, lows, volumes)
+        
+        return {
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "data_points": len(closes),
+            "current_price": round(current_price, 2),
+            "manual_ema": {
+                "ema20": round(ema20, 2) if ema20 else None,
+                "ema50": round(ema50, 2) if ema50 else None,
+                "ema200": round(ema200, 2) if ema200 else None,
+            },
+            "service_ema": {
+                "ema20": round(ta.get("ema_20", 0), 2),
+                "ema50": round(ta.get("ema_50", 0), 2),
+                "ema200": round(ta.get("ema_200", 0), 2),
+            },
+            "distances": {
+                "price_to_ema20": round(current_price - (ema20 or current_price), 2),
+                "price_to_ema50": round(current_price - (ema50 or current_price), 2),
+                "price_to_ema200": round(current_price - (ema200 or current_price), 2),
+            },
+            "distances_pct": {
+                "price_to_ema20_pct": round(((current_price - (ema20 or current_price)) / current_price) * 100, 3) if ema20 else None,
+                "price_to_ema50_pct": round(((current_price - (ema50 or current_price)) / current_price) * 100, 3) if ema50 else None,
+                "price_to_ema200_pct": round(((current_price - (ema200 or current_price)) / current_price) * 100, 3) if ema200 else None,
+            },
+            "first_5_closes": [round(c, 2) for c in closes[:5]],
+            "last_5_closes": [round(c, 2) for c in closes[-5:]],
+            "note": "TradingView'deki EMA değerleriyle karşılaştırın. ±5 pips içinde olmalı."
+        }
+        
+    except Exception as e:
+        logger.error(f"EMA debug error: {e}")
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()}
