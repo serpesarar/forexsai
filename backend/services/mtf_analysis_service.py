@@ -23,7 +23,7 @@ from services.data_fetcher import fetch_eod_candles, fetch_intraday_candles, fet
 # Cache for MTF analysis results
 _mtf_cache: Dict[str, tuple[float, dict]] = {}  # key -> (timestamp, data)
 _cache_lock = Lock()
-CACHE_TTL_SECONDS = 30
+CACHE_TTL_SECONDS = 10
 
 
 Timeframe = Literal["M1", "M5", "M15", "M30", "H1", "H4", "D1"]

@@ -72,3 +72,25 @@ export function useClaudeSentiment() {
     staleTime: 30000
   });
 }
+export async function submitReport(payload: { type: string; message: string; email?: string, user_id?: string }) {
+  return fetcher("/api/admin/report", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function useAdminMetrics() {
+  return useQuery({
+    queryKey: ["admin-metrics"],
+    queryFn: () => fetcher<{ total_users: number, active_users_24h: number, total_reports: number, pending_reports: number }>("/api/admin/metrics"),
+    refetchInterval: 60000,
+  });
+}
+
+export function useAdminReports() {
+  return useQuery({
+    queryKey: ["admin-reports"],
+    queryFn: () => fetcher<any[]>("/api/admin/reports"),
+    refetchInterval: 30000,
+  });
+}

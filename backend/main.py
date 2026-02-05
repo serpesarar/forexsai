@@ -99,6 +99,7 @@ try:
     app.include_router(earnings.router)
     app.include_router(trading_engine_test.router)
     app.include_router(emel_pulse.router)
+    app.include_router(admin.router)
     
     ROUTERS_LOADED = True
 except Exception as e:

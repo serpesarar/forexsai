@@ -16,9 +16,9 @@ _intraday_cache: dict[str, tuple[float, list[dict]]] = {}  # symbol:interval -> 
 _cache_lock = Lock()
 
 # Increased TTLs to reduce API calls
-PRICE_TTL = 30  # Was 5s, now 30s
-INTRADAY_TTL = 60  # 60 seconds
-EOD_TTL = 600  # 10 minutes
+PRICE_TTL = 10  # Was 30s, now 10s for faster updates
+INTRADAY_TTL = 15  # Was 60s, now 15s for faster timeframe switching
+EOD_TTL = 600  # 10 minutes (unchanged)
 
 
 def _normalize_eodhd_symbol(symbol: str) -> str:
