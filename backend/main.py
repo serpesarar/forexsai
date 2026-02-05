@@ -68,6 +68,7 @@ try:
         earnings,
         trading_engine_test,
         emel_pulse,
+        admin,
     )
     from services.data_fetcher import fetch_latest_price
     from services.ml_service import run_nasdaq_signal, run_xauusd_signal
