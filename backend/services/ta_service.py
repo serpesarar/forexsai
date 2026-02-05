@@ -6,6 +6,7 @@ from typing import List, Literal, Tuple
 import numpy as np
 
 from services.data_fetcher import fetch_eod_candles, fetch_latest_price
+from services.technical_indicators import calculate_ema, calculate_rsi
 
 
 Trend = Literal["BULLISH", "BEARISH", "NEUTRAL"]
@@ -20,13 +21,12 @@ class Level:
 
 
 def _ema(values: np.ndarray, period: int) -> float:
-    if len(values) < period:
-        return float(values[-1]) if len(values) else 0.0
-    alpha = 2.0 / (period + 1.0)
-    ema = float(values[0])
-    for v in values[1:]:
-        ema = alpha * float(v) + (1 - alpha) * ema
-    return float(ema)
+    """
+    Calculate EMA using TradingView standard.
+    Delegates to technical_indicators.calculate_ema for accuracy.
+    """
+    result = calculate_ema(values, period)
+    return float(result) if result is not None else (float(values[-1]) if len(values) else 0.0)
 
 
 def _rsi(values: np.ndarray, period: int = 14) -> float:

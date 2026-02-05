@@ -18,6 +18,7 @@ from threading import Lock
 import numpy as np
 
 from services.data_fetcher import fetch_eod_candles, fetch_intraday_candles, fetch_latest_price
+from services.technical_indicators import calculate_ema, calculate_rsi, calculate_atr
 
 
 # Cache for MTF analysis results
@@ -234,14 +235,12 @@ def _get_pip_value(symbol: str) -> float:
 
 
 def _ema(values: np.ndarray, period: int) -> float:
-    """Calculate Exponential Moving Average"""
-    if len(values) < period:
-        return float(values[-1]) if len(values) else 0.0
-    alpha = 2.0 / (period + 1.0)
-    ema = float(values[0])
-    for v in values[1:]:
-        ema = alpha * float(v) + (1 - alpha) * ema
-    return float(ema)
+    """
+    Calculate EMA using TradingView standard.
+    First EMA = SMA of first `period` values, then apply EMA formula.
+    """
+    result = calculate_ema(values, period)
+    return float(result) if result is not None else (float(values[-1]) if len(values) else 0.0)
 
 
 def _sma(values: np.ndarray, period: int) -> float:
