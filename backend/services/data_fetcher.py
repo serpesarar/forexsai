@@ -245,34 +245,49 @@ async def fetch_ohlc_data(symbol: str, timeframe: str = "1h", limit: int = 50) -
     if tf_lower in ["1d", "d", "daily"]:
         return await fetch_eod_candles(symbol, limit)
     
-    # For intraday, fetch and resample as needed
-    if tf_lower == "15m":
-        # Fetch 1m and resample to 15m
-        candles_1m = await fetch_intraday_candles(symbol, interval="1m", limit=limit * 20)
-        if not candles_1m:
+    # For M1, fetch 1m directly
+    if tf_lower in ["1m", "m1"]:
+        return await fetch_intraday_candles(symbol, interval="1m", limit=limit)
+    
+    # For M5, fetch 5m directly
+    if tf_lower in ["5m", "m5"]:
+        return await fetch_intraday_candles(symbol, interval="5m", limit=limit)
+    
+    # For 15m, fetch 5m and resample to 15m (EODHD doesn't support 15m)
+    if tf_lower in ["15m", "m15"]:
+        candles_5m = await fetch_intraday_candles(symbol, interval="5m", limit=limit * 4)
+        if not candles_5m:
             return []
-        return _resample_candles(candles_1m, 15)[-limit:]
+        return _resample_candles(candles_5m, 3)[-limit:]  # 5m x 3 = 15m
     
-    elif tf_lower == "30m":
-        return await fetch_30m_candles(symbol, limit)
+    # For 30m, resample from 5m
+    if tf_lower in ["30m", "m30"]:
+        candles_5m = await fetch_intraday_candles(symbol, interval="5m", limit=limit * 7)
+        if not candles_5m:
+            return []
+        return _resample_candles(candles_5m, 6)[-limit:]  # 5m x 6 = 30m
     
-    elif tf_lower in ["1h", "h1", "60m"]:
-        # Fetch 1m and resample to 1h
-        candles_1m = await fetch_intraday_candles(symbol, interval="1m", limit=limit * 65)
-        if not candles_1m:
-            # Fallback to direct 1h fetch
-            return await fetch_intraday_candles(symbol, interval="1h", limit=limit)
-        return _resample_candles(candles_1m, 60)[-limit:]
+    # For 1H, try 1h directly first, fallback to resample
+    if tf_lower in ["1h", "h1", "60m"]:
+        candles_1h = await fetch_intraday_candles(symbol, interval="1h", limit=limit)
+        if candles_1h:
+            return candles_1h
+        # Fallback: resample from 5m
+        candles_5m = await fetch_intraday_candles(symbol, interval="5m", limit=limit * 13)
+        if not candles_5m:
+            return []
+        return _resample_candles(candles_5m, 12)[-limit:]  # 5m x 12 = 1h
     
-    elif tf_lower in ["4h", "h4", "240m"]:
-        # Fetch 1h and resample to 4h
+    # For 4H, resample from 1h
+    if tf_lower in ["4h", "h4", "240m"]:
         candles_1h = await fetch_intraday_candles(symbol, interval="1h", limit=limit * 5)
         if not candles_1h:
             return []
-        return _resample_candles(candles_1h, 4)[-limit:]
+        return _resample_candles(candles_1h, 4)[-limit:]  # 1h x 4 = 4h
     
     # Default: return 1h data
     return await fetch_intraday_candles(symbol, interval="1h", limit=limit)
+
 
 
 def _resample_candles(candles: list[dict], period: int) -> list[dict]:

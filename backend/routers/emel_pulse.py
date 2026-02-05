@@ -496,6 +496,47 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         if vol_status == "fail":
             conditions.append("Hacim artmalı")
         
+        # ─────────────────────────────────────────────────────────────────────
+        # LEARNING ENTEGRASYONU - Sinyali kaydet
+        # ─────────────────────────────────────────────────────────────────────
+        if decision in ["BUY", "SELL"]:
+            try:
+                from services.prediction_logger import log_prediction
+                
+                context = {
+                    "ta": ta,
+                    "source": "EMEL",
+                    "checks_summary": {
+                        "green": green_count,
+                        "yellow": yellow_count,
+                        "red": red_count
+                    },
+                    "ml_prediction": {
+                        "direction": signal,
+                        "confidence": confidence,
+                        "entry_price": current_price,
+                        "target_price": prediction.get("target_price"),
+                        "stop_price": prediction.get("stop_price")
+                    }
+                }
+                
+                analysis = {
+                    "final_decision": decision,
+                    "confidence": confidence,
+                    "model_used": "EMEL-9-Check"
+                }
+                
+                await log_prediction(
+                    symbol=symbol,
+                    context=context,
+                    analysis=analysis,
+                    timeframe=timeframe,
+                    strategy="EMEL"
+                )
+                logger.info(f"EMEL signal logged: {symbol} {decision} @ {current_price}")
+            except Exception as log_err:
+                logger.warning(f"Failed to log EMEL prediction: {log_err}")
+        
         return {
             "symbol": symbol,
             "timeframe": timeframe,
@@ -626,10 +667,59 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         potential_loss = abs(current_price - stop)
         rr_ratio = potential_profit / potential_loss if potential_loss > 0 else 0
         
+        # Sinyal yönünü belirle
+        pulse_signal = "HOLD"
+        if trend_direction == "up" and trend_strength > 0.6:
+            pulse_signal = "BUY"
+        elif trend_direction == "down" and trend_strength > 0.6:
+            pulse_signal = "SELL"
+        
+        # ─────────────────────────────────────────────────────────────────────
+        # LEARNING ENTEGRASYONU - Sinyali kaydet
+        # ─────────────────────────────────────────────────────────────────────
+        if pulse_signal in ["BUY", "SELL"]:
+            try:
+                from services.prediction_logger import log_prediction
+                
+                context = {
+                    "ta": ta,
+                    "source": "PULSE",
+                    "momentum": {
+                        "rsi": rsi_14,
+                        "macd_hist": macd_hist,
+                        "stoch_k": stoch_k
+                    },
+                    "ml_prediction": {
+                        "direction": pulse_signal,
+                        "confidence": round(trend_strength * 100),
+                        "entry_price": current_price,
+                        "target_price": target,
+                        "stop_price": stop
+                    }
+                }
+                
+                analysis = {
+                    "final_decision": pulse_signal,
+                    "confidence": round(trend_strength * 100),
+                    "model_used": "PULSE-Scalp"
+                }
+                
+                await log_prediction(
+                    symbol=symbol,
+                    context=context,
+                    analysis=analysis,
+                    timeframe=timeframe,
+                    strategy="PULSE"
+                )
+                logger.info(f"PULSE signal logged: {symbol} {pulse_signal} @ {current_price}")
+            except Exception as log_err:
+                logger.warning(f"Failed to log PULSE prediction: {log_err}")
+        
         return {
             "symbol": symbol,
             "timeframe": timeframe,
             "timestamp": datetime.now().isoformat(),
+            "signal": pulse_signal,
             "trend": {
                 "direction": trend_direction,
                 "strength": round(trend_strength, 2),

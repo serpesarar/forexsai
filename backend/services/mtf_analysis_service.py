@@ -1373,14 +1373,9 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
         candles = None
         
         try:
-            # Try fetching specific timeframe data
-            if tf in ["M15", "M30"]:
-                # Use 30m candles for M15/M30 (more reliable)
-                candles = await fetch_30m_candles(symbol, limit=config["candles"])
-            elif tf in ["H1", "H4"]:
-                candles = await fetch_ohlc_data(symbol, data_tf, config["candles"])
-            else:
-                candles = await fetch_ohlc_data(symbol, data_tf, config["candles"])
+            # Try fetching specific timeframe data using proper timeframe mapping
+            # M15 -> 15m, M30 -> 30m, H1 -> 1h, H4 -> 4h, D1 -> 1d
+            candles = await fetch_ohlc_data(symbol, data_tf, config["candles"])
         except Exception as e:
             logger.warning(f"Failed to fetch {tf} data: {e}")
         
