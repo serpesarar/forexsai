@@ -669,10 +669,40 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         
         # Sinyal yönünü belirle
         pulse_signal = "HOLD"
+        decision_notes = []
+        
         if trend_direction == "up" and trend_strength > 0.6:
             pulse_signal = "BUY"
         elif trend_direction == "down" and trend_strength > 0.6:
             pulse_signal = "SELL"
+            
+        # ─────────────────────────────────────────────────────────────────────
+        # EK FİLTRELER (Filtreler sinyali HOLD'a çekebilir)
+        # ─────────────────────────────────────────────────────────────────────
+        
+        # 1. R/R Ratio Filtresi (Minimum 1.5 olmalı)
+        if pulse_signal in ["BUY", "SELL"] and rr_ratio < 1.5:
+            decision_notes.append(f"Düşük R/R Oranı ({rr_ratio:.2f} < 1.5)")
+            pulse_signal = "HOLD"
+            
+        # 2. RSI Overbought/Oversold Filtresi
+        if pulse_signal == "BUY" and rsi_14 > 75:
+            decision_notes.append(f"Aşırı Alım Bölgesi (RSI: {rsi_14:.1f})")
+            pulse_signal = "HOLD"
+        elif pulse_signal == "SELL" and rsi_14 < 25:
+            decision_notes.append(f"Aşırı Satım Bölgesi (RSI: {rsi_14:.1f})")
+            pulse_signal = "HOLD"
+            
+        # 3. Volume Confirmation (Opsiyonel ama güçlendirici, şimdilik sadece not düşüyoruz)
+        if pulse_signal in ["BUY", "SELL"] and volume_status != "high":
+            decision_notes.append("Düşük hacim onayı")
+            # Not: Sinyali iptal etmiyoruz ama not düşüyoruz. Eğer çok katı olsun isterseniz HOLD'a çekilebilir.
+            
+        # ─────────────────────────────────────────────────────────────────────
+        # SUGGESTION GÜNCELLEME (Filtre notlarını ekle)
+        # ─────────────────────────────────────────────────────────────────────
+        if pulse_signal == "HOLD" and decision_notes:
+            suggestion_text = f"Filtre Engeli: {', '.join(decision_notes)}. İşlem riskli görünüyor."
         
         # ─────────────────────────────────────────────────────────────────────
         # LEARNING ENTEGRASYONU - Sinyali kaydet
