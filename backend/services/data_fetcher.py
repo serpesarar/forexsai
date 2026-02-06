@@ -127,9 +127,17 @@ async def fetch_intraday_candles(symbol: str, interval: str = "5m", limit: int =
         if cached and now_ts - cached[0] < INTRADAY_TTL:
             return cached[1][-limit:]
     
-    # Map interval to EODHD format
-    interval_map = {"1m": "1m", "5m": "5m", "15m": "5m", "1h": "1h"}
-    eodhd_interval = interval_map.get(interval, "5m")
+    # Map interval to EODHD format (EODHD only supports: 1m, 5m, 1h)
+    interval_lower = interval.lower()
+    interval_map = {
+        "1m": "1m", "m1": "1m",
+        "5m": "5m", "m5": "5m",
+        "15m": "5m", "m15": "5m",
+        "30m": "5m", "m30": "5m",
+        "1h": "1h", "h1": "1h", "60m": "1h",
+        "4h": "1h", "h4": "1h",
+    }
+    eodhd_interval = interval_map.get(interval_lower, "5m")
     
     url = f"https://eodhistoricaldata.com/api/intraday/{eod_symbol}"
     

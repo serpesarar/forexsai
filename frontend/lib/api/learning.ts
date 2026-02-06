@@ -121,6 +121,16 @@ async function triggerOutcomeCheck(interval: string = "24h"): Promise<any> {
   return res.json();
 }
 
+async function triggerCleanAllPending(): Promise<any> {
+  const res = await fetch(`${API_BASE}/api/learning/check-all-pending`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Failed to clean all pending");
+  return res.json();
+}
+
+export { triggerCleanAllPending };
+
 export function useLearningHealth() {
   return useQuery({
     queryKey: ["learning", "health"],

@@ -517,16 +517,21 @@ async def run_trend_analysis(
     
     # Fetch INTRADAY data (not EOD) for accurate EMA matching TradingView
     try:
-        from services.data_fetcher import fetch_intraday_candles, fetch_latest_price
-        ohlcv_data = await fetch_intraday_candles(symbol, interval=timeframe, limit=300)
+        from services.data_fetcher import fetch_ohlc_data, fetch_latest_price
+        # Use fetch_ohlc_data which properly resamples timeframes (e.g., 15m from 5m data)
+        ohlcv_data = await fetch_ohlc_data(symbol, timeframe=timeframe, limit=300)
         live_price = await fetch_latest_price(symbol)
     except Exception as e:
-        # Fallback to EOD if intraday fails
-        try:
-            ohlcv_data = await fetch_eod_candles(symbol, limit=300)
-            live_price = await fetch_latest_price(symbol)
-        except Exception as e2:
-            raise ValueError(f"Veri çekilemedi: {symbol} - {str(e2)}")
+        # Fallback to EOD ONLY for hourly+ timeframes
+        tf_lower = timeframe.lower()
+        if tf_lower in ("1h", "h1", "4h", "h4", "1d", "d"):
+            try:
+                ohlcv_data = await fetch_eod_candles(symbol, limit=300)
+                live_price = await fetch_latest_price(symbol)
+            except Exception as e2:
+                raise ValueError(f"Veri çekilemedi: {symbol} - {str(e2)}")
+        else:
+            raise ValueError(f"Intraday veri çekilemedi ({timeframe}): {symbol} - {str(e)}")
     
     if len(ohlcv_data) < 50:
         raise ValueError(f"Yetersiz veri: {symbol} ({len(ohlcv_data)} candles)")

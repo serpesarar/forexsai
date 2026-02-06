@@ -19,6 +19,8 @@ import {
   Zap,
 } from "lucide-react";
 
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
+
 interface CheckItem {
   id: number;
   name: string;
@@ -73,7 +75,7 @@ export default function EmelPanel({ symbol, onSwitchMode }: EmelPanelProps) {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/panel/emel/${symbol}?timeframe=${timeframe}`);
+      const res = await fetch(`${API_BASE}/api/panel/emel/${symbol}?timeframe=${timeframe}`);
       const json = await res.json();
       if (!json.error) {
         setData(json);

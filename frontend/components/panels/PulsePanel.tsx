@@ -14,6 +14,8 @@ import {
   Clock,
 } from "lucide-react";
 
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
+
 interface PulseData {
   symbol: string;
   timeframe: string;
@@ -71,7 +73,7 @@ export default function PulsePanel({ symbol, onSwitchMode }: PulsePanelProps) {
 
   const fetchData = async () => {
     try {
-      const res = await fetch(`/api/panel/pulse/${symbol}?timeframe=${timeframe}`);
+      const res = await fetch(`${API_BASE}/api/panel/pulse/${symbol}?timeframe=${timeframe}`);
       const json = await res.json();
       if (!json.error) {
         setData(json);

@@ -45,7 +45,7 @@ Dosya: backend/routers/emel_pulse.py (Satır ~915)
 Endpoint: GET /api/panel/pulse-ml/{symbol}
 
 DEĞİŞİKLİKLER (v2):
-- ML güveni %60 → %45 SCOUT / %60 CONFIRM (iki kademe)
+- ML güveni %60 → %52 SCOUT / %55 CONFIRM (iki kademe)
 - EMA50 tek → EMA20 + EMA50 + MACD üçlü onay
 - R/R 1.0 → 1.2 (optimal)
 
@@ -57,8 +57,8 @@ Puanlama (0-100):
   5. Hacim onayı: 10 puan max
 
 Sinyal Tipleri:
-  HOLD:    skor <40 veya ML <%45
-  SCOUT:   skor 40-64, ML >=%45
+  HOLD:    skor <40 veya ML <%52
+  SCOUT:   skor 40-64, ML >=%52
   CONFIRM: skor 65+, ML >=%55
 
 ==============================================================

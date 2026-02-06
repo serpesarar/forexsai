@@ -1353,14 +1353,17 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
     }
     
     timeframe_configs = {
-        "M1": {"lookback": 50, "candles": 100},
-        "M5": {"lookback": 50, "candles": 100},
-        "M15": {"lookback": 50, "candles": 100},
-        "M30": {"lookback": 50, "candles": 100},
-        "H1": {"lookback": 100, "candles": 200},
+        "M1": {"lookback": 50, "candles": 300},
+        "M5": {"lookback": 50, "candles": 300},
+        "M15": {"lookback": 60, "candles": 300},
+        "M30": {"lookback": 60, "candles": 250},
+        "H1": {"lookback": 100, "candles": 250},
         "H4": {"lookback": 100, "candles": 200},
-        "D1": {"lookback": 220, "candles": 250},
+        "D1": {"lookback": 220, "candles": 300},
     }
+    
+    # Short timeframes should NEVER use daily data - it gives wrong EMAs
+    intraday_only_tfs = {"M1", "M5", "M15", "M30"}
     
     async def fetch_tf_candles(tf: str) -> tuple:
         """Fetch candles for a specific timeframe"""
@@ -1379,14 +1382,19 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
             logger.warning(f"Failed to fetch {tf} data: {e}")
         
         if not candles or len(candles) < 20:
-            # Fallback to EOD data with appropriate scaling
-            try:
-                eod_candles = await fetch_eod_candles(symbol, limit=config["candles"])
-                if eod_candles:
-                    candles = eod_candles
-                    logger.info(f"Using EOD fallback for {tf}: {len(candles)} candles")
-            except Exception as e:
-                logger.warning(f"EOD fallback failed for {tf}: {e}")
+            # For short timeframes (M1-M30), do NOT fall back to daily data
+            # Daily EMA values are completely wrong for intraday timeframes
+            if tf in intraday_only_tfs:
+                logger.warning(f"Insufficient intraday data for {tf} ({len(candles) if candles else 0} candles). NOT using EOD fallback.")
+            else:
+                # Only H1, H4, D1 can fall back to EOD
+                try:
+                    eod_candles = await fetch_eod_candles(symbol, limit=config["candles"])
+                    if eod_candles:
+                        candles = eod_candles
+                        logger.info(f"Using EOD fallback for {tf}: {len(candles)} candles")
+                except Exception as e:
+                    logger.warning(f"EOD fallback failed for {tf}: {e}")
         
         if not candles or len(candles) < 20:
             return None, None, None, None

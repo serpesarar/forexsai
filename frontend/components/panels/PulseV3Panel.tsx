@@ -17,6 +17,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
+
 interface PulseV3Data {
   symbol: string;
   timestamp: string;
@@ -61,7 +63,7 @@ export default function PulseV3Panel({ symbol }: PulseV3PanelProps) {
 
   const fetchData = async () => {
     try {
-      const res = await fetch(`/api/panel/pulse-v3/${symbol}`);
+      const res = await fetch(`${API_BASE}/api/panel/pulse-v3/${symbol}`);
       const json = await res.json();
       if (!json.error) {
         setData(json);

@@ -263,8 +263,10 @@ async def check_all_pending_outcomes():
     """
     Check ALL pending predictions regardless of age.
     Use this to process old predictions that were never checked.
+    Very old predictions (>3 days) are force-marked as checked to clear dashboard.
     """
     from database.supabase_client import get_supabase_client
+    from datetime import datetime, timedelta
     import logging
     logger = logging.getLogger(__name__)
     
@@ -279,7 +281,7 @@ async def check_all_pending_outcomes():
         # Get ALL unchecked predictions
         result = client.table("prediction_logs").select("*").eq(
             "outcome_checked", False
-        ).limit(100).execute()
+        ).order("created_at", desc=True).limit(200).execute()
         
         predictions = result.get("data") or []
         
@@ -289,6 +291,9 @@ async def check_all_pending_outcomes():
         outcomes = []
         errors = []
         skipped_existing = 0
+        force_closed = 0
+        now = datetime.utcnow()
+        old_cutoff = now - timedelta(days=3)
         
         for pred in predictions:
             pred_id = pred.get("id", "unknown")
@@ -299,11 +304,19 @@ async def check_all_pending_outcomes():
             ).eq("check_interval", "24h").execute()
             
             if existing.get("data"):
-                # Mark as checked if outcome exists
                 from services.prediction_logger import mark_prediction_checked
                 await mark_prediction_checked(pred_id)
                 skipped_existing += 1
                 continue
+            
+            # Check prediction age
+            created_at = pred.get("created_at", "")
+            try:
+                pred_time = datetime.fromisoformat(created_at.replace("Z", "+00:00")).replace(tzinfo=None)
+            except:
+                pred_time = now - timedelta(days=30)
+            
+            is_very_old = pred_time < old_cutoff
             
             # Check outcome with error handling
             try:
@@ -312,11 +325,23 @@ async def check_all_pending_outcomes():
                     outcomes.append(outcome)
                     from services.prediction_logger import mark_prediction_checked
                     await mark_prediction_checked(pred_id)
+                elif is_very_old:
+                    # Force-close very old predictions that can't be checked
+                    from services.prediction_logger import mark_prediction_checked
+                    await mark_prediction_checked(pred_id)
+                    force_closed += 1
+                    logger.info(f"Force-closed old pending prediction {pred_id[:8]} from {created_at}")
                 else:
-                    errors.append({"id": pred_id[:8], "error": "check_prediction_outcome returned None"})
+                    errors.append({"id": pred_id[:8], "error": "outcome check returned None"})
             except Exception as check_err:
-                errors.append({"id": pred_id[:8], "error": str(check_err)[:100]})
-                logger.error(f"Outcome check failed for {pred_id}: {check_err}")
+                if is_very_old:
+                    from services.prediction_logger import mark_prediction_checked
+                    await mark_prediction_checked(pred_id)
+                    force_closed += 1
+                    logger.info(f"Force-closed old failed prediction {pred_id[:8]}: {check_err}")
+                else:
+                    errors.append({"id": pred_id[:8], "error": str(check_err)[:100]})
+                    logger.error(f"Outcome check failed for {pred_id}: {check_err}")
         
         correct_count = sum(1 for o in outcomes if o.get("ml_correct"))
         
@@ -326,7 +351,8 @@ async def check_all_pending_outcomes():
             "ml_incorrect": len(outcomes) - correct_count,
             "total_pending_found": len(predictions),
             "skipped_existing": skipped_existing,
-            "errors": errors[:10] if errors else None  # Show first 10 errors
+            "force_closed_old": force_closed,
+            "errors": errors[:10] if errors else None
         }
         
     except Exception as e:

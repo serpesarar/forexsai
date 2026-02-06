@@ -968,8 +968,8 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
             ml_pts = 40
         elif ml_confidence >= 60:
             ml_pts = 30
-        elif ml_confidence >= 45:
-            ml_pts = 20  # Eskiden 0 veriyordu, şimdi SCOUT için yeterli
+        elif ml_confidence >= 52:
+            ml_pts = 20  # SCOUT için yeterli (52%+)
         else:
             ml_pts = 0
             notes.append(f"ML güveni düşük ({ml_confidence:.1f}%)")
@@ -1059,7 +1059,7 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
         if score >= 65 and ml_confidence >= 55:
             signal_type = "CONFIRM"
             signal = ml_direction
-        elif score >= 40 and ml_confidence >= 45:
+        elif score >= 40 and ml_confidence >= 52:
             signal_type = "SCOUT"
             signal = ml_direction
         else:

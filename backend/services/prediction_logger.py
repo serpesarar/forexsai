@@ -102,6 +102,11 @@ async def log_prediction(
         
         factors = _extract_factors(context, analysis)
         
+        # Store strategy inside factors JSONB (no separate column in schema)
+        if strategy:
+            factors["strategy"] = strategy
+            factors["source"] = context.get("source", strategy)
+        
         record = {
             "symbol": symbol,
             "timeframe": timeframe,
@@ -118,10 +123,6 @@ async def log_prediction(
             "factors": factors,
             "outcome_checked": False,
         }
-        
-        # Add strategy if provided
-        if strategy:
-            record["strategy"] = strategy
         
         result = client.table("prediction_logs").insert(record).execute()
         
