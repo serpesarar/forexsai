@@ -380,28 +380,6 @@ async def get_candlestick_patterns(symbol: str):
         return {"success": False, "error": str(e)}
 
 
-@app.get("/api/debug/h4/{symbol}")
-async def debug_h4(symbol: str):
-    """Debug endpoint to trace H4 analysis failure."""
-    import traceback as tb
-    steps = []
-    try:
-        steps.append("1. Importing...")
-        from services.mtf_analysis_service import get_mtf_analysis
-        steps.append("2. Calling get_mtf_analysis...")
-        result = await get_mtf_analysis(symbol, "H4")
-        steps.append(f"3. Got result: success={result.get('success')}")
-        if not result.get('success'):
-            return {"steps": steps, "error": result.get('error')}
-        steps.append("4. Trying json.dumps...")
-        json_str = json.dumps(result, cls=NumpySafeEncoder)
-        steps.append(f"5. JSON OK, len={len(json_str)}")
-        return {"steps": steps, "success": True, "result_keys": list(result.keys())}
-    except Exception as e:
-        steps.append(f"FAILED: {type(e).__name__}: {str(e)}")
-        return {"steps": steps, "error": str(e), "traceback": tb.format_exc()}
-
-
 # Startup event - start DataHub and background scheduler
 @app.on_event("startup")
 async def startup_event():
