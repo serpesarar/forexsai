@@ -1436,15 +1436,20 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
         
         # Pass ALL candles to _analyze_timeframe so EMA200 gets enough data.
         # The function internally handles lookback for swing/SR detection only.
-        analysis = _analyze_timeframe(
-            symbol, timeframe,
-            closes,
-            highs,
-            lows,
-            volumes,
-            current_price,
-            pip_value
-        )
+        try:
+            analysis = _analyze_timeframe(
+                symbol, timeframe,
+                closes,
+                highs,
+                lows,
+                volumes,
+                current_price,
+                pip_value
+            )
+        except Exception as e:
+            import traceback
+            logger.error(f"[MTF] _analyze_timeframe FAILED for {symbol} {timeframe}: {e}\n{traceback.format_exc()}")
+            return {"success": False, "error": f"Analysis error: {str(e)}"}
         
         result = {
             "success": True,

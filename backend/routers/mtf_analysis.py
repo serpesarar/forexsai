@@ -6,10 +6,14 @@ Endpoints for MTF technical analysis with ATR, Bollinger, Volume, and Confluence
 
 from __future__ import annotations
 
+import logging
+import traceback
 from typing import Optional, Literal
 from fastapi import APIRouter, Query, HTTPException
 
 from services.mtf_analysis_service import get_mtf_analysis, Timeframe
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(prefix="/api/mtf", tags=["mtf-analysis"])
@@ -46,7 +50,11 @@ async def mtf_analysis(
         )
     
     tf = timeframe.upper() if timeframe else None
-    result = await get_mtf_analysis(symbol, tf)
+    try:
+        result = await get_mtf_analysis(symbol, tf)
+    except Exception as e:
+        logger.error(f"MTF analysis error for {symbol} {tf}: {e}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Analysis error: {str(e)}")
     
     if not result.get("success"):
         raise HTTPException(status_code=500, detail=result.get("error", "Analysis failed"))
