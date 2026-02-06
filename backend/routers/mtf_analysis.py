@@ -101,9 +101,13 @@ async def single_timeframe(symbol: str, timeframe: str) -> dict:
             detail=f"Invalid timeframe. Must be one of: {', '.join(valid_timeframes)}"
         )
     
-    result = await get_mtf_analysis(symbol, tf)
+    try:
+        result = await get_mtf_analysis(symbol, tf)
+    except Exception as e:
+        logger.error(f"MTF timeframe error {symbol} {tf}: {e}\n{traceback.format_exc()}")
+        return {"success": False, "error": f"Analysis error: {str(e)}", "traceback": traceback.format_exc()}
     
     if not result.get("success"):
-        raise HTTPException(status_code=500, detail=result.get("error", "Analysis failed"))
+        return {"success": False, "error": result.get("error", "Analysis failed")}
     
     return result
