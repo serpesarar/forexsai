@@ -373,9 +373,19 @@ async def get_candlestick_patterns(symbol: str):
         return {"success": False, "error": str(e)}
 
 
-# Startup event - start background scheduler
+# Startup event - start DataHub and background scheduler
 @app.on_event("startup")
 async def startup_event():
+    # Start DataHub first (centralized data pump)
+    try:
+        import asyncio
+        from services.data_hub import start_data_hub
+        asyncio.create_task(start_data_hub())
+        print("DataHub started - centralized market data pump")
+    except Exception as e:
+        print(f"Failed to start DataHub: {e}")
+    
+    # Then start background scheduler
     try:
         from services.background_scheduler import start_scheduler
         start_scheduler()
@@ -387,11 +397,27 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     try:
+        from services.data_hub import stop_data_hub
+        stop_data_hub()
+        print("DataHub stopped")
+    except Exception as e:
+        print(f"Error stopping DataHub: {e}")
+    try:
         from services.background_scheduler import stop_scheduler
         stop_scheduler()
         print("Background scheduler stopped")
     except Exception as e:
         print(f"Error stopping scheduler: {e}")
+
+
+@app.get("/api/datahub/status")
+async def datahub_status():
+    """Get DataHub status - shows what data is cached and when it was last fetched."""
+    try:
+        from services.data_hub import get_hub_status
+        return get_hub_status()
+    except Exception as e:
+        return {"error": str(e)}
 
 
 if __name__ == "__main__":

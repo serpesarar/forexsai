@@ -54,9 +54,18 @@ def _extract_price(payload: Any) -> Optional[float]:
 async def fetch_latest_price(symbol: str) -> Optional[float]:
     """
     Live price fetch.
-    - Primary: EODHD REST real-time (more reliable than websocket in local dev)
-    - For XAU: fallback to goldprice.org when EODHD returns NA
+    Primary: DataHub (updated every 5s, 0 API calls)
+    Fallback: Direct EODHD API (only during startup before DataHub populates)
     """
+    # Try DataHub first (0 API calls)
+    try:
+        from services.data_hub import get_price
+        hub_price = get_price(symbol)
+        if hub_price is not None:
+            return hub_price
+    except ImportError:
+        pass
+    
     if not settings.eodhd_api_key:
         return None
 
@@ -239,15 +248,27 @@ async def fetch_30m_candles(symbol: str, limit: int = 300) -> list[dict]:
 
 async def fetch_ohlc_data(symbol: str, timeframe: str = "1h", limit: int = 50) -> list[dict]:
     """
-    Fetch OHLC data for any timeframe by resampling from available data.
+    Fetch OHLC data for any timeframe.
+    Primary: DataHub (pre-fetched & resampled, 0 API calls)
+    Fallback: Direct EODHD API (only during startup)
     
     Args:
         symbol: Trading symbol
-        timeframe: "15m", "30m", "1h", "4h", "1d"
+        timeframe: "5m", "15m", "30m", "1h", "4h", "1d"
         limit: Number of candles to return
     
     Returns list of dicts with keys: open, high, low, close, volume
     """
+    # Try DataHub first (0 API calls)
+    try:
+        from services.data_hub import get_candles
+        hub_candles = get_candles(symbol, timeframe, limit)
+        if hub_candles:
+            return hub_candles
+    except ImportError:
+        pass
+    
+    # Fallback to direct API (only during startup before DataHub populates)
     tf_lower = timeframe.lower()
     
     # For daily, use EOD data

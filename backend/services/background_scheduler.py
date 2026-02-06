@@ -46,9 +46,17 @@ _scheduler_running = False
 
 
 async def _get_macro_data() -> Dict[str, Any]:
-    """Get macro data with 5-minute cache to save API calls."""
-    global _last_macro_update, _cached_macro
+    """Get macro data from DataHub (0 API calls). DataHub fetches every 5min."""
+    try:
+        from services.data_hub import get_macro
+        macro = get_macro()
+        if macro and any(v.get("price") for v in macro.values()):
+            return macro
+    except ImportError:
+        pass
     
+    # Fallback: direct fetch with local cache (only before DataHub populates)
+    global _last_macro_update, _cached_macro
     now = datetime.utcnow()
     if _last_macro_update and (now - _last_macro_update).total_seconds() < MACRO_UPDATE_INTERVAL and _cached_macro:
         return _cached_macro
