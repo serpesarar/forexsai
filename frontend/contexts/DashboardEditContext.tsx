@@ -56,7 +56,8 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "advanced-xauusd", title: "XAUUSD MTF Analysis", column: "left", order: 3, visible: true, size: "medium", collapsed: false },
     { id: "emel-panel", title: "EMEL Panel - 9 Kontrol", column: "center", order: 0, visible: true, size: "large", collapsed: false },
     { id: "pulse-panel", title: "PULSE Panel - Scalp", column: "center", order: 1, visible: true, size: "large", collapsed: false },
-    { id: "pattern-engine", title: "Pattern Engine V2", column: "center", order: 2, visible: true, size: "large", collapsed: false },
+    { id: "pulse-v3", title: "PULSE 3 - Hybrid Scalp", column: "center", order: 2, visible: true, size: "large", collapsed: false },
+    { id: "pattern-engine", title: "Pattern Engine V2", column: "center", order: 3, visible: true, size: "large", collapsed: false },
     { id: "claude-patterns", title: "Claude Patterns", column: "center", order: 3, visible: true, size: "medium", collapsed: false },
     { id: "sentiment", title: "AI Sentiment", column: "right", order: 0, visible: true, size: "medium", collapsed: false },
     { id: "institutional-data", title: "Institutional Data", column: "right", order: 1, visible: true, size: "medium", collapsed: false },
@@ -68,7 +69,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "rhythm-detectors", title: "Rhythm Detectors", column: "center", order: 7, visible: true, size: "full", collapsed: false },
     { id: "charts", title: "Trading Charts", column: "center", order: 8, visible: true, size: "full", collapsed: false },
   ],
-  version: 7,
+  version: 8,
 };
 
 const LAYOUT_STORAGE_KEY = "dashboard-layout-v2";

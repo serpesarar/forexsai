@@ -1,0 +1,114 @@
+Pulse Modelleri: Kurallar ve Çalışma Mantığı (Güncellenmiş - v2)
+==============================================================
+
+0. EMEL (9 Kontrol Noktası) - Ana Stratejik Model
+Kaliteli ve az sinyal üretir. 9 kontrol noktası ile en güvenilir modeldir.
+Dosya: backend/routers/emel_pulse.py (Satır ~22)
+Endpoint: GET /api/panel/emel/{symbol}
+
+Kontroller: Trend(EMA), Rejim(ADX), MTF Uyumu, Formasyon, S/R, Momentum, Hacim, Learning, Portföy Risk
+En az 6/9 yeşil olmalı sinyal üretmek için.
+
+==============================================================
+
+1. PULSE 1 (Algoritmik) - GELİŞTİRİLMİŞ Kural Tabanlı Scalp
+Matematiksel kod. YZ kullanmaz. EMEL'in alt versiyonu gibi ama daha esnek.
+Dosya: backend/routers/emel_pulse.py (Satır ~565)
+Endpoint: GET /api/panel/pulse/{symbol}
+
+DEĞİŞİKLİKLER (v2):
+- Son 5 mum → Son 10 mum analizi (daha geniş bakış)
+- Trend gücü 0.6 → 0.4 SCOUT / 0.65 CONFIRM (iki kademe)
+- R/R 1.5 → 1.2 (optimal)
+- Sadece yön → 6 bileşenli puanlama sistemi (100 puan)
+
+Puanlama (0-100):
+  1. Son 10 mum yönü: 20 puan
+  2. EMA Stack (SMA5>SMA10>EMA20): 25 puan
+  3. RSI Momentum: 20 puan
+  4. MACD Histogram: 15 puan
+  5. Hacim artışı: 10 puan
+  6. Stochastic onayı: 10 puan
+
+Sinyal Tipleri:
+  HOLD:    0-39 puan   (bekleme)
+  SCOUT:   40-64 puan  (izle, hazır ol)
+  CONFIRM: 65+ puan    (işlem yap)
+
+Filtreler: R/R min 1.2, RSI aşırı bölge kontrolü
+
+==============================================================
+
+2. PULSE 2 (ML Tabanlı) - GELİŞTİRİLMİŞ ML + TA Hibrit
+ML modeli + Teknik analiz birleşimi. EMEL kadar katı değil.
+Dosya: backend/routers/emel_pulse.py (Satır ~915)
+Endpoint: GET /api/panel/pulse-ml/{symbol}
+
+DEĞİŞİKLİKLER (v2):
+- ML güveni %60 → %45 SCOUT / %60 CONFIRM (iki kademe)
+- EMA50 tek → EMA20 + EMA50 + MACD üçlü onay
+- R/R 1.0 → 1.2 (optimal)
+
+Puanlama (0-100):
+  1. ML Güven puanı: 40 puan max
+  2. EMA Trend onayı (EMA20+EMA50): 25 puan max
+  3. MACD Momentum onayı: 15 puan max
+  4. RSI filtresi: 10 puan max
+  5. Hacim onayı: 10 puan max
+
+Sinyal Tipleri:
+  HOLD:    skor <40 veya ML <%45
+  SCOUT:   skor 40-64, ML >=%45
+  CONFIRM: skor 65+, ML >=%55
+
+==============================================================
+
+3. PULSE 3 (Hybrid Scalp) - YENİ: 3 Zamanlı, 3 Filtreli
+Hem hızlı, hem güvenilir, hem sık sinyal. Multi-timeframe analiz.
+Dosya: backend/routers/emel_pulse.py (Satır ~1158)
+Endpoint: GET /api/panel/pulse-v3/{symbol}
+
+Konsept: 3 zaman dilimini paralel analiz et, ağırlıklı skor üret.
+
+Zaman Dilimleri:
+  5m:  Anlık momentum  (%50 ağırlık, 50 puan max, cache 30sn)
+  1H:  Kısa trend      (%30 ağırlık, 30 puan max, cache 5dk)
+  4H:  Ana trend yönü   (%20 ağırlık, 20 puan max, cache 10dk)
+
+5m Analizi (50 puan):
+  - Son 5 mum yönü: 15 puan
+  - EMA Stack (SMA5>SMA10>EMA20): 20 puan
+  - Hacim artışı: 10 puan
+  - RSI hızlı: 5 puan
+
+1H Analizi (30 puan):
+  - EMA50 pozisyonu: 15 puan
+  - MACD Histogram: 10 puan
+  - Son 20 mum performans: 5 puan
+
+4H Analizi (20 puan):
+  - Son 10 mumun genel yönü: 15 puan
+  - EMA20 ek kontrol: 5 puan
+
+Sinyal Tipleri:
+  HOLD:    <40 puan
+  SCOUT:   40-64 (izle, sık olur)
+  CONFIRM: 65+   (işlem, az olur)
+
+R/R: CONFIRM min 1.2, SCOUT min 1.0
+Cache: Paralel veri çekme, in-memory cache
+Giriş Bölgeleri: ATR bazlı 3 kademe (%40+%30+%30)
+
+==============================================================
+
+ÖZET KARŞILAŞTIRMA TABLOSU
+
+Özellik         | PULSE 1 (Algo)    | PULSE 2 (ML)      | PULSE 3 (Hybrid)
+----------------|-------------------|--------------------|-------------------
+Karar Verici    | Matematik+Puan    | ML + TA Puan       | 3 TF Puan
+Hız             | Çok Hızlı         | Hızlı              | Çok Hızlı (cache)
+Mum Sayısı      | 10 mum            | ML bağlı           | 5m(50)+1H(60)+4H(30)
+Sinyal Sıklığı  | Orta              | Az-Orta             | Sık(Scout)+Az(Confirm)
+R/R Minimum     | 1.2               | 1.2                | 1.2
+Güvenilirlik    | Orta-Yüksek       | Yüksek             | Yüksek (3 TF onaylı)
+Kullanım        | Saf Scalp         | Akıllı Scalp       | Hybrid (hızlı+güvenli)

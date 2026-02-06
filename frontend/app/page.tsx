@@ -40,6 +40,7 @@ import StrategyPerformancePanel from "../components/StrategyPerformancePanel";
 import { NasdaqEarningsPanel } from "../components/EarningsPanel";
 import EmelPanel from "../components/panels/EmelPanel";
 import PulsePanel from "../components/panels/PulsePanel";
+import PulseV3Panel from "../components/panels/PulseV3Panel";
 import UserMenu from "../components/UserMenu";
 import { TradingBackground } from "../components/TradingBackground";
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
@@ -846,6 +847,8 @@ export default function HomePage() {
         return <EmelPanel symbol="NDX.INDX" onSwitchMode={() => {}} />;
       case "pulse-panel":
         return <PulsePanel symbol="NDX.INDX" onSwitchMode={() => {}} />;
+      case "pulse-v3":
+        return <PulseV3Panel symbol="NDX.INDX" />;
       default:
         return null;
     }
