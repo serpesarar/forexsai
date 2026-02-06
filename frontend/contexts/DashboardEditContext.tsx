@@ -50,26 +50,36 @@ interface DashboardEditContextType {
 
 const DEFAULT_LAYOUT: DashboardLayout = {
   cards: [
-    { id: "signal-nasdaq", title: "NASDAQ Trend", column: "left", order: 0, visible: true, size: "medium", collapsed: false },
+    // ─── LEFT COLUMN: NASDAQ ─────────────────────────────────────
+    { id: "signal-nasdaq", title: "NASDAQ Trend Analysis", column: "left", order: 0, visible: true, size: "medium", collapsed: false },
     { id: "advanced-nasdaq", title: "NASDAQ MTF Analysis", column: "left", order: 1, visible: true, size: "medium", collapsed: false },
-    { id: "signal-xauusd", title: "XAUUSD Trend", column: "left", order: 2, visible: true, size: "medium", collapsed: false },
-    { id: "advanced-xauusd", title: "XAUUSD MTF Analysis", column: "left", order: 3, visible: true, size: "medium", collapsed: false },
+
+    // ─── CENTER COLUMN: COMMON / ANALYSIS ────────────────────────
     { id: "emel-panel", title: "EMEL Panel - 9 Kontrol", column: "center", order: 0, visible: true, size: "large", collapsed: false },
-    { id: "pulse-panel", title: "PULSE Panel - Scalp", column: "center", order: 1, visible: true, size: "large", collapsed: false },
+    { id: "pulse-panel", title: "PULSE 1 - Algoritmik Scalp", column: "center", order: 1, visible: true, size: "large", collapsed: false },
     { id: "pulse-v3", title: "PULSE 3 - Hybrid Scalp", column: "center", order: 2, visible: true, size: "large", collapsed: false },
     { id: "pattern-engine", title: "Pattern Engine V2", column: "center", order: 3, visible: true, size: "large", collapsed: false },
-    { id: "claude-patterns", title: "Claude Patterns", column: "center", order: 3, visible: true, size: "medium", collapsed: false },
-    { id: "sentiment", title: "AI Sentiment", column: "right", order: 0, visible: true, size: "medium", collapsed: false },
-    { id: "institutional-data", title: "Institutional Data", column: "right", order: 1, visible: true, size: "medium", collapsed: false },
-    { id: "candlestick-patterns", title: "Mum Formasyonları", column: "right", order: 2, visible: true, size: "medium", collapsed: false },
-    { id: "news", title: "Market News", column: "right", order: 3, visible: true, size: "medium", collapsed: false },
-    { id: "ai-panels", title: "AI Tahmin Panelleri", column: "center", order: 4, visible: true, size: "full", collapsed: false },
-    { id: "order-blocks-nasdaq", title: "Order Blocks NASDAQ", column: "center", order: 5, visible: true, size: "full", collapsed: false },
-    { id: "order-blocks-xauusd", title: "Order Blocks XAUUSD", column: "center", order: 6, visible: true, size: "full", collapsed: false },
-    { id: "rhythm-detectors", title: "Rhythm Detectors", column: "center", order: 7, visible: true, size: "full", collapsed: false },
-    { id: "charts", title: "Trading Charts", column: "center", order: 8, visible: true, size: "full", collapsed: false },
+    { id: "claude-patterns", title: "Claude Patterns", column: "center", order: 4, visible: true, size: "medium", collapsed: false },
+    { id: "sentiment", title: "AI Sentiment", column: "center", order: 5, visible: true, size: "medium", collapsed: false },
+    { id: "news", title: "Market News", column: "center", order: 6, visible: true, size: "medium", collapsed: false },
+    { id: "comex-news", title: "COMEX News", column: "center", order: 7, visible: true, size: "medium", collapsed: false },
+    { id: "learning-dashboard", title: "Learning Dashboard", column: "center", order: 8, visible: true, size: "large", collapsed: false },
+    { id: "strategy-performance", title: "Strateji Performansı", column: "center", order: 9, visible: true, size: "large", collapsed: false },
+
+    // ─── RIGHT COLUMN: XAUUSD ────────────────────────────────────
+    { id: "signal-xauusd", title: "XAUUSD Trend Analysis", column: "right", order: 0, visible: true, size: "medium", collapsed: false },
+    { id: "advanced-xauusd", title: "XAUUSD MTF Analysis", column: "right", order: 1, visible: true, size: "medium", collapsed: false },
+    { id: "institutional-data", title: "Institutional Data", column: "right", order: 2, visible: true, size: "medium", collapsed: false },
+    { id: "candlestick-patterns", title: "Mum Formasyonları", column: "right", order: 3, visible: true, size: "medium", collapsed: false },
+
+    // ─── FULL WIDTH SECTIONS (rendered below grid) ───────────────
+    { id: "ai-panels", title: "AI Tahmin Panelleri", column: "center", order: 20, visible: true, size: "full", collapsed: false },
+    { id: "order-blocks-nasdaq", title: "Order Blocks NASDAQ", column: "center", order: 21, visible: true, size: "full", collapsed: false },
+    { id: "order-blocks-xauusd", title: "Order Blocks XAUUSD", column: "center", order: 22, visible: true, size: "full", collapsed: false },
+    { id: "rhythm-detectors", title: "Rhythm Detectors", column: "center", order: 23, visible: true, size: "full", collapsed: false },
+    { id: "charts", title: "Trading Charts", column: "center", order: 24, visible: true, size: "full", collapsed: false },
   ],
-  version: 8,
+  version: 9,
 };
 
 const LAYOUT_STORAGE_KEY = "dashboard-layout-v2";
@@ -85,14 +95,22 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
   const [dragOverCardId, setDragOverCardId] = useState<string | null>(null);
   const isUndoRedo = useRef(false);
 
-  // Load layout from localStorage on mount
+  // Load layout from localStorage on mount, merge in any new panels from DEFAULT
   useEffect(() => {
     try {
       const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.version >= 2) {
+        const parsed: DashboardLayout = JSON.parse(saved);
+        if (parsed.version >= DEFAULT_LAYOUT.version) {
           setLayout(parsed);
+        } else {
+          // Merge: keep user customizations but add new cards from DEFAULT
+          const existingIds = new Set(parsed.cards.map((c: DashboardCard) => c.id));
+          const newCards = DEFAULT_LAYOUT.cards.filter(c => !existingIds.has(c.id));
+          setLayout({
+            cards: [...parsed.cards, ...newCards],
+            version: DEFAULT_LAYOUT.version,
+          });
         }
       }
     } catch (e) {

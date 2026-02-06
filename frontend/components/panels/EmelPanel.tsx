@@ -51,9 +51,14 @@ interface EmelData {
 }
 
 interface EmelPanelProps {
-  symbol: string;
-  onSwitchMode: () => void;
+  symbol?: string;
+  onSwitchMode?: () => void;
 }
+
+const SYMBOLS = [
+  { key: "NDX.INDX", label: "NASDAQ" },
+  { key: "XAUUSD", label: "XAUUSD" },
+];
 
 const CHECK_ICONS: Record<number, any> = {
   1: TrendingUp,
@@ -67,7 +72,8 @@ const CHECK_ICONS: Record<number, any> = {
   9: Shield,
 };
 
-export default function EmelPanel({ symbol, onSwitchMode }: EmelPanelProps) {
+export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitchMode }: EmelPanelProps) {
+  const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
   const [data, setData] = useState<EmelData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState("1H");
@@ -75,7 +81,7 @@ export default function EmelPanel({ symbol, onSwitchMode }: EmelPanelProps) {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/panel/emel/${symbol}?timeframe=${timeframe}`);
+      const res = await fetch(`${API_BASE}/api/panel/emel/${activeSymbol}?timeframe=${timeframe}`);
       const json = await res.json();
       if (!json.error) {
         setData(json);
@@ -89,9 +95,9 @@ export default function EmelPanel({ symbol, onSwitchMode }: EmelPanelProps) {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 60000); // Her dakika güncelle
+    const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
-  }, [symbol, timeframe]);
+  }, [activeSymbol, timeframe]);
 
   const getColorClass = (color: string) => {
     switch (color) {
@@ -147,6 +153,22 @@ export default function EmelPanel({ symbol, onSwitchMode }: EmelPanelProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Symbol Switcher */}
+            <div className="flex rounded-lg overflow-hidden border border-gray-700">
+              {SYMBOLS.map((s) => (
+                <button
+                  key={s.key}
+                  onClick={() => setActiveSymbol(s.key)}
+                  className={`px-3 py-1.5 text-xs font-bold transition-all ${
+                    activeSymbol === s.key
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-800 text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
             <select
               value={timeframe}
               onChange={(e) => setTimeframe(e.target.value)}
@@ -163,13 +185,15 @@ export default function EmelPanel({ symbol, onSwitchMode }: EmelPanelProps) {
             >
               <RefreshCw className={`w-4 h-4 text-gray-400 ${loading ? "animate-spin" : ""}`} />
             </button>
-            <button
-              onClick={onSwitchMode}
-              className="flex items-center gap-2 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm"
-            >
-              <Zap className="w-4 h-4" />
-              Pulse Moda Geç
-            </button>
+            {onSwitchMode && (
+              <button
+                onClick={onSwitchMode}
+                className="flex items-center gap-2 bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1.5 rounded-lg text-xs"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                PULSE
+              </button>
+            )}
           </div>
         </div>
       </div>

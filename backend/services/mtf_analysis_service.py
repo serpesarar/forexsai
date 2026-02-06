@@ -1413,15 +1413,14 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
         if closes is None or len(closes) < 20:
             return {"success": False, "error": f"Could not fetch data for {timeframe}"}
         
-        config = timeframe_configs.get(timeframe, timeframe_configs["M15"])
-        lookback = min(config["lookback"], len(closes))
-        
+        # Pass ALL candles to _analyze_timeframe so EMA200 gets enough data.
+        # The function internally handles lookback for swing/SR detection only.
         analysis = _analyze_timeframe(
             symbol, timeframe,
-            closes[-lookback:],
-            highs[-lookback:],
-            lows[-lookback:],
-            volumes[-lookback:],
+            closes,
+            highs,
+            lows,
+            volumes,
             current_price,
             pip_value
         )
@@ -1443,14 +1442,14 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
             
             if tf_closes is None or len(tf_closes) < 20:
                 continue
-                
-            lookback = min(config["lookback"], len(tf_closes))
+            
+            # Pass ALL candles so indicators (especially EMA200) have enough data
             analyses[tf] = _analyze_timeframe(
                 symbol, tf,
-                tf_closes[-lookback:],
-                tf_highs[-lookback:],
-                tf_lows[-lookback:],
-                tf_volumes[-lookback:],
+                tf_closes,
+                tf_highs,
+                tf_lows,
+                tf_volumes,
                 current_price,
                 pip_value
             )

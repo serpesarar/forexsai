@@ -61,11 +61,17 @@ interface PulseData {
 }
 
 interface PulsePanelProps {
-  symbol: string;
-  onSwitchMode: () => void;
+  symbol?: string;
+  onSwitchMode?: () => void;
 }
 
-export default function PulsePanel({ symbol, onSwitchMode }: PulsePanelProps) {
+const SYMBOLS = [
+  { key: "NDX.INDX", label: "NASDAQ" },
+  { key: "XAUUSD", label: "XAUUSD" },
+];
+
+export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitchMode }: PulsePanelProps) {
+  const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
   const [data, setData] = useState<PulseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState("5m");
@@ -73,7 +79,7 @@ export default function PulsePanel({ symbol, onSwitchMode }: PulsePanelProps) {
 
   const fetchData = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/panel/pulse/${symbol}?timeframe=${timeframe}`);
+      const res = await fetch(`${API_BASE}/api/panel/pulse/${activeSymbol}?timeframe=${timeframe}`);
       const json = await res.json();
       if (!json.error) {
         setData(json);
@@ -87,10 +93,11 @@ export default function PulsePanel({ symbol, onSwitchMode }: PulsePanelProps) {
   };
 
   useEffect(() => {
+    setLoading(true);
     fetchData();
-    const interval = setInterval(fetchData, 30000); // Her 30 saniyede güncelle
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
-  }, [symbol, timeframe]);
+  }, [activeSymbol, timeframe]);
 
   const getTrendColor = (direction: string) => {
     if (direction === "up") return "text-green-400";
@@ -127,11 +134,27 @@ export default function PulsePanel({ symbol, onSwitchMode }: PulsePanelProps) {
               <Zap className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">PULSE MODU - ANLIK NABIZ</h2>
-              <p className="text-xs text-gray-400">Scalp • Hızlı • Her 5sn Güncelleme</p>
+              <h2 className="text-lg font-bold text-white">PULSE 1 - ALGORİTMİK SCALP</h2>
+              <p className="text-xs text-gray-400">6 Bileşen Puan Sistemi • SCOUT / CONFIRM</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Symbol Switcher */}
+            <div className="flex rounded-lg overflow-hidden border border-gray-700">
+              {SYMBOLS.map((s) => (
+                <button
+                  key={s.key}
+                  onClick={() => setActiveSymbol(s.key)}
+                  className={`px-3 py-1.5 text-xs font-bold transition-all ${
+                    activeSymbol === s.key
+                      ? "bg-yellow-600 text-white"
+                      : "bg-gray-800 text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
             <select
               value={timeframe}
               onChange={(e) => setTimeframe(e.target.value)}
@@ -146,13 +169,15 @@ export default function PulsePanel({ symbol, onSwitchMode }: PulsePanelProps) {
             >
               <RefreshCw className={`w-4 h-4 text-gray-400 ${loading ? "animate-spin" : ""}`} />
             </button>
-            <button
-              onClick={onSwitchMode}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
-            >
-              <Brain className="w-4 h-4" />
-              Emel Moda Geç
-            </button>
+            {onSwitchMode && (
+              <button
+                onClick={onSwitchMode}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs"
+              >
+                <Brain className="w-3.5 h-3.5" />
+                EMEL
+              </button>
+            )}
           </div>
         </div>
       </div>

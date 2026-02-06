@@ -53,17 +53,23 @@ interface PulseV3Data {
 }
 
 interface PulseV3PanelProps {
-  symbol: string;
+  symbol?: string;
 }
 
-export default function PulseV3Panel({ symbol }: PulseV3PanelProps) {
+const SYMBOLS = [
+  { key: "NDX.INDX", label: "NASDAQ" },
+  { key: "XAUUSD", label: "XAUUSD" },
+];
+
+export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: PulseV3PanelProps) {
+  const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
   const [data, setData] = useState<PulseV3Data | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   const fetchData = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/panel/pulse-v3/${symbol}`);
+      const res = await fetch(`${API_BASE}/api/panel/pulse-v3/${activeSymbol}`);
       const json = await res.json();
       if (!json.error) {
         setData(json);
@@ -77,10 +83,11 @@ export default function PulseV3Panel({ symbol }: PulseV3PanelProps) {
   };
 
   useEffect(() => {
+    setLoading(true);
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
-  }, [symbol]);
+  }, [activeSymbol]);
 
   const getSignalColor = (type: string) => {
     if (type === "CONFIRM") return "from-green-900/60 to-green-800/30";
@@ -147,6 +154,22 @@ export default function PulseV3Panel({ symbol }: PulseV3PanelProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Symbol Switcher */}
+            <div className="flex rounded-lg overflow-hidden border border-gray-700">
+              {SYMBOLS.map((s) => (
+                <button
+                  key={s.key}
+                  onClick={() => setActiveSymbol(s.key)}
+                  className={`px-3 py-1.5 text-xs font-bold transition-all ${
+                    activeSymbol === s.key
+                      ? "bg-orange-600 text-white"
+                      : "bg-gray-800 text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
             <button
               onClick={fetchData}
               className="p-2 bg-gray-800 rounded-lg hover:bg-gray-700"

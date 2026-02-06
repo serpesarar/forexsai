@@ -41,6 +41,8 @@ import { NasdaqEarningsPanel } from "../components/EarningsPanel";
 import EmelPanel from "../components/panels/EmelPanel";
 import PulsePanel from "../components/panels/PulsePanel";
 import PulseV3Panel from "../components/panels/PulseV3Panel";
+import LearningDashboardPanel from "../components/LearningDashboardPanel";
+import COMEXNewsPanel from "../components/COMEXNewsPanel";
 import UserMenu from "../components/UserMenu";
 import { TradingBackground } from "../components/TradingBackground";
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
@@ -816,17 +818,19 @@ export default function HomePage() {
       .sort((a, b) => a.order - b.order);
   };
 
-  // Dynamic card content renderer
+  // Dynamic card content renderer - ALL panels must be listed here for edit mode
   const renderCardContent = (cardId: string): React.ReactNode => {
     switch (cardId) {
-      case "signal-nasdaq":
+      case "signal-nasdaq": {
         const nasdaqSignal = signalCards.find(s => s.symbol === "NASDAQ");
         if (!nasdaqSignal) return null;
         return renderSignalCard(nasdaqSignal);
-      case "signal-xauusd":
+      }
+      case "signal-xauusd": {
         const xauusdSignal = signalCards.find(s => s.symbol === "XAUUSD");
         if (!xauusdSignal) return null;
         return renderSignalCard(xauusdSignal);
+      }
       case "pattern-engine":
         return <PatternEngineV2 />;
       case "claude-patterns":
@@ -835,6 +839,8 @@ export default function HomePage() {
         return renderSentimentCard();
       case "news":
         return renderNewsCard();
+      case "comex-news":
+        return <COMEXNewsPanel />;
       case "advanced-nasdaq":
         return <AdvancedAnalysisPanel symbol="NASDAQ" />;
       case "advanced-xauusd":
@@ -844,11 +850,15 @@ export default function HomePage() {
       case "candlestick-patterns":
         return <CandlestickPatternPanel symbol="XAUUSD" />;
       case "emel-panel":
-        return <EmelPanel symbol="NDX.INDX" onSwitchMode={() => {}} />;
+        return <EmelPanel />;
       case "pulse-panel":
-        return <PulsePanel symbol="NDX.INDX" onSwitchMode={() => {}} />;
+        return <PulsePanel />;
       case "pulse-v3":
-        return <PulseV3Panel symbol="NDX.INDX" />;
+        return <PulseV3Panel />;
+      case "learning-dashboard":
+        return <LearningDashboardPanel />;
+      case "strategy-performance":
+        return <StrategyPerformancePanel />;
       default:
         return null;
     }
@@ -1187,9 +1197,9 @@ export default function HomePage() {
     </div>
   );
 
-  // Render a column with sorted cards
+  // Render a column with sorted cards (exclude full-width cards - they render below)
   const renderColumn = (column: "left" | "center" | "right") => {
-    const cards = getColumnCards(column);
+    const cards = getColumnCards(column).filter(c => c.size !== "full");
     return (
       <div className="flex flex-col gap-6">
         {cards.map((card) => (
@@ -1439,82 +1449,87 @@ export default function HomePage() {
           {renderColumn("right")}
 
           {/* ML Prediction & Claude AI Section - Full Width Cards */}
-          <div className="md:col-span-2 lg:col-span-3">
-            <div className="flex items-center gap-3 mb-4">
-              <Brain className="h-5 w-5 text-accent" />
-              <h2 className="text-lg font-bold">{t("panels.aiPrediction")}</h2>
-              <Link
-                href="/trading"
-                className="ml-auto flex items-center gap-2 text-sm text-accent hover:underline"
-              >
-                <Sparkles className="h-4 w-4" />
-                {t("panels.fullScreenView")} →
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-              {/* NASDAQ Panels */}
-              <div className="space-y-6">
-                <div className="relative">
-                  <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 blur-sm" />
+          {getCard("ai-panels")?.visible !== false && (
+            <div className="md:col-span-2 lg:col-span-3">
+              <div className="flex items-center gap-3 mb-4">
+                <Brain className="h-5 w-5 text-accent" />
+                <h2 className="text-lg font-bold">{t("panels.aiPrediction")}</h2>
+                <Link
+                  href="/trading"
+                  className="ml-auto flex items-center gap-2 text-sm text-accent hover:underline"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {t("panels.fullScreenView")} →
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                {/* NASDAQ Panels */}
+                <div className="space-y-6">
                   <div className="relative">
-                    <MLPredictionPanel symbol="NDX.INDX" symbolLabel="NASDAQ" />
+                    <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 blur-sm" />
+                    <div className="relative">
+                      <MLPredictionPanel symbol="NDX.INDX" symbolLabel="NASDAQ" />
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-sm" />
+                    <div className="relative">
+                      <ClaudeAnalysisPanel symbol="NDX.INDX" symbolLabel="NASDAQ" />
+                    </div>
                   </div>
                 </div>
-                <div className="relative">
-                  <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-sm" />
+                {/* XAUUSD Panels */}
+                <div className="space-y-6">
                   <div className="relative">
-                    <ClaudeAnalysisPanel symbol="NDX.INDX" symbolLabel="NASDAQ" />
+                    <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 blur-sm" />
+                    <div className="relative">
+                      <MLPredictionPanel symbol="XAUUSD" symbolLabel="XAUUSD" />
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-sm" />
+                    <div className="relative">
+                      <ClaudeAnalysisPanel symbol="XAUUSD" symbolLabel="XAUUSD" />
+                    </div>
                   </div>
                 </div>
               </div>
-              {/* XAUUSD Panels */}
-              <div className="space-y-6">
-                <div className="relative">
-                  <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 blur-sm" />
-                  <div className="relative">
-                    <MLPredictionPanel symbol="XAUUSD" symbolLabel="XAUUSD" />
-                  </div>
-                </div>
-                <div className="relative">
-                  <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-sm" />
-                  <div className="relative">
-                    <ClaudeAnalysisPanel symbol="XAUUSD" symbolLabel="XAUUSD" />
-                  </div>
-                </div>
-              </div>
             </div>
-          </div>
+          )}
 
-          {/* Order Block & Rhythm Detector Section - Full Width Stacked */}
-          <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <OrderBlockPanelSimple symbol="NDX.INDX" symbolLabel="NASDAQ" />
-            <OrderBlockPanelSimple symbol="XAUUSD" symbolLabel="XAUUSD" />
-          </div>
-          <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <RhythmDetectorSimple symbol="NDX.INDX" symbolLabel="NASDAQ" />
-            <RhythmDetectorSimple symbol="XAUUSD" symbolLabel="XAUUSD" />
-          </div>
+          {/* Order Block Section */}
+          {(getCard("order-blocks-nasdaq")?.visible !== false || getCard("order-blocks-xauusd")?.visible !== false) && (
+            <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {getCard("order-blocks-nasdaq")?.visible !== false && <OrderBlockPanelSimple symbol="NDX.INDX" symbolLabel="NASDAQ" />}
+              {getCard("order-blocks-xauusd")?.visible !== false && <OrderBlockPanelSimple symbol="XAUUSD" symbolLabel="XAUUSD" />}
+            </div>
+          )}
+
+          {/* Rhythm Detector Section */}
+          {getCard("rhythm-detectors")?.visible !== false && (
+            <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <RhythmDetectorSimple symbol="NDX.INDX" symbolLabel="NASDAQ" />
+              <RhythmDetectorSimple symbol="XAUUSD" symbolLabel="XAUUSD" />
+            </div>
+          )}
 
           {/* Charts Section */}
-          <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <TradingChartWrapper
-              symbol="NDX.INDX"
-              symbolLabel="NASDAQ"
-              initialTimeframe="1d"
-              height={350}
-            />
-            <TradingChartWrapper
-              symbol="XAUUSD"
-              symbolLabel="XAUUSD"
-              initialTimeframe="1d"
-              height={350}
-            />
-          </div>
-
-          {/* Strategy Performance Analysis */}
-          <div className="md:col-span-2 lg:col-span-3">
-            <StrategyPerformancePanel />
-          </div>
+          {getCard("charts")?.visible !== false && (
+            <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <TradingChartWrapper
+                symbol="NDX.INDX"
+                symbolLabel="NASDAQ"
+                initialTimeframe="1d"
+                height={350}
+              />
+              <TradingChartWrapper
+                symbol="XAUUSD"
+                symbolLabel="XAUUSD"
+                initialTimeframe="1d"
+                height={350}
+              />
+            </div>
+          )}
         </main>
       </DraggableDashboard>
 

@@ -44,7 +44,7 @@ interface COMEXImpact {
   last_update: string;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 export default function COMEXNewsPanel() {
   const [data, setData] = useState<COMEXImpact | null>(null);
