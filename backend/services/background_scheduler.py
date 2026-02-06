@@ -23,10 +23,12 @@ logger = logging.getLogger(__name__)
 # Symbols to track
 TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD"]
 
-# Update intervals (seconds)
-DATA_UPDATE_INTERVAL = 5  # Update price/TA data every 5 seconds
-NEWS_UPDATE_INTERVAL = 300  # Update news every 5 minutes
-OUTCOME_CHECK_INTERVAL = 300  # Check outcomes every 5 minutes
+# Update intervals (seconds) - OPTIMIZED for 100K daily API call limit
+# Each EODHD intraday/real-time request = 5 API calls
+DATA_UPDATE_INTERVAL = 60   # Update price/TA data every 60 seconds (was 5s!)
+MACRO_UPDATE_INTERVAL = 300  # Update macro data (DXY, VIX, USDTRY) every 5 minutes
+NEWS_UPDATE_INTERVAL = 600   # Update news every 10 minutes
+OUTCOME_CHECK_INTERVAL = 600  # Check outcomes every 10 minutes
 ERROR_ANALYSIS_INTERVAL = 3600  # Analyze errors every hour
 PREDICTION_LOG_INTERVAL = 3600  # Log predictions every hour
 
@@ -36,15 +38,38 @@ _last_news_hash: Dict[str, str] = {}
 _last_outcome_check: Optional[datetime] = None
 _last_error_analysis: Optional[datetime] = None
 _last_prediction_log: Dict[str, datetime] = {}  # Per symbol
+_last_macro_update: Optional[datetime] = None
+_cached_macro: Dict[str, Any] = {}  # Cached macro data
 
 # Scheduler running flag
 _scheduler_running = False
 
 
+async def _get_macro_data() -> Dict[str, Any]:
+    """Get macro data with 5-minute cache to save API calls."""
+    global _last_macro_update, _cached_macro
+    
+    now = datetime.utcnow()
+    if _last_macro_update and (now - _last_macro_update).total_seconds() < MACRO_UPDATE_INTERVAL and _cached_macro:
+        return _cached_macro
+    
+    macro = {}
+    for key, sym in [("dxy", "DXY.INDX"), ("vix", "VIX.INDX"), ("usdtry", "USDTRY")]:
+        try:
+            price = await fetch_latest_price(sym)
+            macro[key] = {"symbol": sym, "price": float(price) if price else None}
+        except Exception:
+            macro[key] = _cached_macro.get(key, {"symbol": sym, "price": None})
+    
+    _cached_macro = macro
+    _last_macro_update = now
+    return macro
+
+
 async def update_symbol_data(symbol: str) -> Optional[Dict[str, Any]]:
     """Fetch and update data for a single symbol."""
     try:
-        # Get ML prediction
+        # Get ML prediction (uses internal cache in ml_prediction_service)
         ml_prediction = await get_ml_prediction(symbol)
         ml_dict = {
             "symbol": ml_prediction.symbol,
@@ -65,14 +90,11 @@ async def update_symbol_data(symbol: str) -> Optional[Dict[str, Any]]:
         # Get TA snapshot
         ta_snapshot = await compute_ta_snapshot(symbol)
         
-        # Get latest price
+        # Get latest price (uses 60s cache in data_fetcher)
         current_price = await fetch_latest_price(symbol)
         
-        # Get macro data
-        macro = {}
-        for key, sym in [("dxy", "DXY.INDX"), ("vix", "VIX.INDX"), ("usdtry", "USDTRY")]:
-            price = await fetch_latest_price(sym)
-            macro[key] = {"symbol": sym, "price": float(price) if price else None}
+        # Get macro data (uses 5-minute cache)
+        macro = await _get_macro_data()
         
         # Session info
         now_utc = datetime.utcnow()

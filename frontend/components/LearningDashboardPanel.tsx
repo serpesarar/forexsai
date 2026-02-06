@@ -22,7 +22,6 @@ import {
   useMultiTargetDashboard,
   triggerOutcomeCheck,
   trigger1hOutcomeCheck,
-  triggerCleanAllPending,
 } from "../lib/api/learning";
 import { useI18nStore } from "../lib/i18n/store";
 
@@ -47,9 +46,6 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
     
     const checkOutcomes = async () => {
       try {
-        // First clean old stuck pending predictions
-        await triggerCleanAllPending();
-        // Then check 1h outcomes
         await trigger1hOutcomeCheck();
         refetch();
         refetchMulti();
@@ -69,8 +65,6 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
   const handleCheckOutcomes = async () => {
     setIsCheckingOutcomes(true);
     try {
-      // Clean old pending first
-      await triggerCleanAllPending();
       if (checkInterval === "1h") {
         await trigger1hOutcomeCheck();
       } else {

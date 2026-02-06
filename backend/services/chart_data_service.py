@@ -21,42 +21,32 @@ _TIMEFRAME_MINUTES = {
 
 
 async def fetch_ohlcv_data(symbol: str, timeframe: str, limit: int) -> List[ChartCandle]:
+    """Fetch OHLCV data using centralized data_fetcher (shared cache)."""
     if not settings.eodhd_api_key:
         return _generate_mock_candles(symbol, timeframe, limit)
 
-    url = f"https://eodhistoricaldata.com/api/intraday/{symbol}"
-    params = {
-        "api_token": settings.eodhd_api_key,
-        "interval": timeframe,
-        "fmt": "json",
-    }
-
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            payload = response.json()
+        from services.data_fetcher import fetch_ohlc_data
+        raw_candles = await fetch_ohlc_data(symbol, timeframe=timeframe, limit=limit)
+        if not raw_candles:
+            return _generate_mock_candles(symbol, timeframe, limit)
+        
+        candles: List[ChartCandle] = []
+        for item in raw_candles[-limit:]:
+            timestamp = _parse_timestamp(item.get("date") or item.get("datetime", ""))
+            candles.append(
+                ChartCandle(
+                    timestamp=timestamp,
+                    open=float(item.get("open", 0.0)),
+                    high=float(item.get("high", 0.0)),
+                    low=float(item.get("low", 0.0)),
+                    close=float(item.get("close", 0.0)),
+                    volume=int(item.get("volume") or 0),
+                )
+            )
+        return candles
     except Exception:
         return _generate_mock_candles(symbol, timeframe, limit)
-
-    if not isinstance(payload, list):
-        return _generate_mock_candles(symbol, timeframe, limit)
-
-    candles: List[ChartCandle] = []
-    for item in payload[-limit:]:
-        timestamp = _parse_timestamp(item.get("datetime") or item.get("date"))
-        candles.append(
-            ChartCandle(
-                timestamp=timestamp,
-                open=float(item.get("open", 0.0)),
-                high=float(item.get("high", 0.0)),
-                low=float(item.get("low", 0.0)),
-                close=float(item.get("close", 0.0)),
-                volume=int(item.get("volume") or 0),
-            )
-        )
-
-    return candles
 
 
 def build_support_resistance(candles: List[ChartCandle]) -> List[SupportResistanceLevel]:

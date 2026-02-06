@@ -21,11 +21,13 @@ class APICache:
     - economic events: 600s (10 min)
     """
     
-    TTL_REALTIME = 30      # Real-time price (was 5s!)
-    TTL_INTRADAY = 60      # Intraday candles
-    TTL_EOD = 600          # Daily candles
-    TTL_NEWS = 300         # News articles
-    TTL_EVENTS = 600       # Economic events
+    # Optimized for 100K daily EODHD API call limit
+    # Each intraday request = 5 API calls, real-time = 1 API call
+    TTL_REALTIME = 60      # Real-time price (1 API call each)
+    TTL_INTRADAY = 300     # Intraday candles (5 API calls each)
+    TTL_EOD = 1800         # Daily candles (5 API calls each)
+    TTL_NEWS = 600         # News articles (5 API calls each)
+    TTL_EVENTS = 1800      # Economic events
     TTL_FUNDAMENTALS = 3600  # Fundamentals (1 hour)
     
     def __init__(self):

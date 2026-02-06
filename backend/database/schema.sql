@@ -41,6 +41,9 @@ CREATE TABLE IF NOT EXISTS prediction_logs (
     --   "volatility": "LOW"
     -- }
     
+    -- Strateji adı (EMEL, PULSE, PULSE_V3, balanced, etc.)
+    strategy VARCHAR(32),
+    
     -- Takip durumu
     outcome_checked BOOLEAN DEFAULT FALSE,
     

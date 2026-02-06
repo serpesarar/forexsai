@@ -102,7 +102,7 @@ async def log_prediction(
         
         factors = _extract_factors(context, analysis)
         
-        # Store strategy inside factors JSONB (no separate column in schema)
+        # Store strategy in both the column and factors JSONB
         if strategy:
             factors["strategy"] = strategy
             factors["source"] = context.get("source", strategy)
@@ -123,6 +123,10 @@ async def log_prediction(
             "factors": factors,
             "outcome_checked": False,
         }
+        
+        # Add strategy column if provided (user has this column in Supabase)
+        if strategy:
+            record["strategy"] = strategy
         
         result = client.table("prediction_logs").insert(record).execute()
         

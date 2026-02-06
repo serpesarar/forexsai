@@ -15,10 +15,11 @@ _eod_cache: dict[str, tuple[float, list[dict]]] = {}  # symbol -> (ts_epoch, row
 _intraday_cache: dict[str, tuple[float, list[dict]]] = {}  # symbol:interval -> (ts, rows)
 _cache_lock = Lock()
 
-# Increased TTLs to reduce API calls
-PRICE_TTL = 10  # Was 30s, now 10s for faster updates
-INTRADAY_TTL = 15  # Was 60s, now 15s for faster timeframe switching
-EOD_TTL = 600  # 10 minutes (unchanged)
+# Cache TTLs optimized for 100K daily API call limit
+# Each intraday/real-time request = 5 API calls on EODHD
+PRICE_TTL = 60       # 60s - real-time price (1 API call each)
+INTRADAY_TTL = 300   # 5 min - intraday candles (5 API calls each)
+EOD_TTL = 1800       # 30 min - daily candles (5 API calls each)
 
 
 def _normalize_eodhd_symbol(symbol: str) -> str:
@@ -63,7 +64,7 @@ async def fetch_latest_price(symbol: str) -> Optional[float]:
     now_ts = datetime.utcnow().timestamp()
     with _cache_lock:
         cached = _price_cache.get(key)
-        if cached and now_ts - cached[0] < PRICE_TTL:  # 30s TTL (was 5s)
+        if cached and now_ts - cached[0] < PRICE_TTL:
             return cached[1]
 
     is_xau = (symbol or "").upper().startswith("XAU")
@@ -121,7 +122,7 @@ async def fetch_intraday_candles(symbol: str, interval: str = "5m", limit: int =
     cache_key = f"{eod_symbol}:{interval}"
     now_ts = datetime.utcnow().timestamp()
     
-    # Check cache first (60s TTL)
+    # Check cache first (5 min TTL - each call costs 5 API calls)
     with _cache_lock:
         cached = _intraday_cache.get(cache_key)
         if cached and now_ts - cached[0] < INTRADAY_TTL:
@@ -221,18 +222,18 @@ def _resample_to_30m(candles_1m: list[dict]) -> list[dict]:
 
 async def fetch_30m_candles(symbol: str, limit: int = 300) -> list[dict]:
     """
-    Fetch 30-minute candles by resampling 1-minute data from EODHD.
+    Fetch 30-minute candles by resampling 5-minute data from EODHD.
     Model was trained on M30 data, so this is the correct timeframe.
-    For forex symbols, EODHD only provides 1m interval.
+    Uses 5m data (EODHD supports 5m) and resamples 6×5m = 30m.
+    Much more efficient than using 1m data (saves ~5x API calls).
     """
-    # For forex, use 1m interval (EODHD doesn't provide 5m for forex)
-    # Fetch 30x more 1m candles to get enough 30m candles
-    candles_1m = await fetch_intraday_candles(symbol, interval="1m", limit=limit * 30)
+    # Use 5m interval and resample to 30m (6 × 5m = 30m)
+    candles_5m = await fetch_intraday_candles(symbol, interval="5m", limit=limit * 7)
     
-    if not candles_1m:
+    if not candles_5m:
         return []
     
-    candles_30m = _resample_to_30m(candles_1m)
+    candles_30m = _resample_candles(candles_5m, 6)
     return candles_30m[-limit:]
 
 
@@ -342,7 +343,7 @@ async def fetch_eod_candles(symbol: str, limit: int = 300) -> list[dict]:
     now_ts = datetime.utcnow().timestamp()
     with _cache_lock:
         cached = _eod_cache.get(eod_symbol)
-        if cached and now_ts - cached[0] < 600:  # 10m TTL
+        if cached and now_ts - cached[0] < EOD_TTL:  # 30m TTL
             return cached[1][-limit:]
     # Pull a bit more than needed in case of holidays/weekends; then slice.
     from_date = (datetime.utcnow() - timedelta(days=max(30, limit * 2))).date().isoformat()

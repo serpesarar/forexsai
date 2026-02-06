@@ -333,107 +333,26 @@ def _calculate_consolidation_score(
 
 
 async def fetch_intraday_candles(symbol: str, interval: str = "1m", limit: int = 100) -> List[Dict]:
-    """Intraday mum verisi çek."""
-    if not settings.eodhd_api_key:
-        return []
-    
-    # Symbol normalizasyonu
-    if symbol.upper() == "XAUUSD":
-        eod_symbol = "XAUUSD.FOREX"
-    elif symbol.upper() in ("NDX.INDX", "NASDAQ", "NDX"):
-        eod_symbol = "NDX.INDX"
-    else:
-        eod_symbol = symbol
-    
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            url = f"https://eodhistoricaldata.com/api/intraday/{eod_symbol}"
-            resp = await client.get(url, params={
-                "api_token": settings.eodhd_api_key,
-                "fmt": "json",
-                "interval": interval
-            })
-            
-            if resp.status_code == 200:
-                data = resp.json()
-                if data and isinstance(data, list):
-                    candles = []
-                    for d in data[-limit:]:
-                        candles.append({
-                            "timestamp": d.get("timestamp", 0),
-                            "open": float(d.get("open", 0)),
-                            "high": float(d.get("high", 0)),
-                            "low": float(d.get("low", 0)),
-                            "close": float(d.get("close", 0)),
-                            "volume": float(d.get("volume", 0))
-                        })
-                    return candles
-    except Exception:
-        pass
-    
-    return []
+    """Intraday mum verisi çek - uses centralized data_fetcher with caching."""
+    from services.data_fetcher import fetch_intraday_candles as _central_fetch
+    return await _central_fetch(symbol, interval=interval, limit=limit)
 
-
-_rtyhiim_cache: Dict[str, tuple] = {}  # symbol -> (timestamp, prices)
-_rtyhiim_cache_lock = Lock()
-RTYHIIM_CACHE_TTL = 60  # 60 seconds
 
 async def fetch_live_prices(symbol: str, limit: int = 600) -> List[float]:
-    """Fetch live intraday prices for rhythm detection. Uses 60s cache."""
-    if not settings.eodhd_api_key:
-        return []
+    """Fetch live intraday prices for rhythm detection. Uses centralized cached data."""
+    from services.data_fetcher import fetch_intraday_candles as _central_fetch
     
-    # Normalize symbol for EODHD
-    if symbol.upper() == "XAUUSD":
-        eod_symbol = "XAUUSD.FOREX"
-    elif symbol.upper() in ("NDX.INDX", "NASDAQ", "NDX"):
-        eod_symbol = "NDX.INDX"
-    else:
-        eod_symbol = symbol
+    # Use 5m candles from centralized cache (much cheaper than 1m)
+    candles = await _central_fetch(symbol, interval="5m", limit=limit)
+    if candles:
+        return [float(c.get("close", 0)) for c in candles[-limit:]]
     
-    # Check cache first
-    now_ts = datetime.utcnow().timestamp()
-    with _rtyhiim_cache_lock:
-        cached = _rtyhiim_cache.get(eod_symbol)
-        if cached and now_ts - cached[0] < RTYHIIM_CACHE_TTL:
-            return cached[1][-limit:]
+    # Fallback to EOD
+    from services.data_fetcher import fetch_eod_candles
+    eod = await fetch_eod_candles(symbol, limit=limit)
+    if eod:
+        return [float(c.get("close", 0)) for c in eod[-limit:]]
     
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            # Try intraday data first
-            url = f"https://eodhistoricaldata.com/api/intraday/{eod_symbol}"
-            resp = await client.get(url, params={
-                "api_token": settings.eodhd_api_key,
-                "fmt": "json",
-                "interval": "1m"
-            })
-            if resp.status_code == 200:
-                data = resp.json()
-                if data and isinstance(data, list):
-                    prices = [float(d.get("close", d.get("price", 0))) for d in data[-limit:]]
-                    if prices and len(prices) > 50:
-                        with _rtyhiim_cache_lock:
-                            _rtyhiim_cache[eod_symbol] = (now_ts, prices)
-                        return prices
-            
-            # Fallback to EOD data
-            url = f"https://eodhistoricaldata.com/api/eod/{eod_symbol}"
-            resp = await client.get(url, params={
-                "api_token": settings.eodhd_api_key,
-                "fmt": "json",
-                "period": "d",
-                "order": "d"
-            })
-            if resp.status_code == 200:
-                data = resp.json()
-                if data and isinstance(data, list):
-                    prices = [float(d.get("close", 0)) for d in reversed(data[:limit])]
-                    if prices:
-                        with _rtyhiim_cache_lock:
-                            _rtyhiim_cache[eod_symbol] = (now_ts, prices)
-                        return prices
-    except Exception:
-        pass
     return []
 
 

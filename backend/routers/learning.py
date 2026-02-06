@@ -262,11 +262,10 @@ async def trigger_1h_outcome_check():
 async def check_all_pending_outcomes():
     """
     Check ALL pending predictions regardless of age.
-    Use this to process old predictions that were never checked.
-    Very old predictions (>3 days) are force-marked as checked to clear dashboard.
+    Records are NEVER deleted or force-closed - they stay in Supabase.
+    Only marks outcome_checked=True when a real outcome is recorded.
     """
     from database.supabase_client import get_supabase_client
-    from datetime import datetime, timedelta
     import logging
     logger = logging.getLogger(__name__)
     
@@ -291,9 +290,6 @@ async def check_all_pending_outcomes():
         outcomes = []
         errors = []
         skipped_existing = 0
-        force_closed = 0
-        now = datetime.utcnow()
-        old_cutoff = now - timedelta(days=3)
         
         for pred in predictions:
             pred_id = pred.get("id", "unknown")
@@ -304,44 +300,24 @@ async def check_all_pending_outcomes():
             ).eq("check_interval", "24h").execute()
             
             if existing.get("data"):
+                # Outcome exists but prediction not marked - fix it
                 from services.prediction_logger import mark_prediction_checked
                 await mark_prediction_checked(pred_id)
                 skipped_existing += 1
                 continue
             
-            # Check prediction age
-            created_at = pred.get("created_at", "")
-            try:
-                pred_time = datetime.fromisoformat(created_at.replace("Z", "+00:00")).replace(tzinfo=None)
-            except:
-                pred_time = now - timedelta(days=30)
-            
-            is_very_old = pred_time < old_cutoff
-            
-            # Check outcome with error handling
+            # Try to check outcome - never force-close
             try:
                 outcome = await check_prediction_outcome(pred, "24h")
                 if outcome:
                     outcomes.append(outcome)
                     from services.prediction_logger import mark_prediction_checked
                     await mark_prediction_checked(pred_id)
-                elif is_very_old:
-                    # Force-close very old predictions that can't be checked
-                    from services.prediction_logger import mark_prediction_checked
-                    await mark_prediction_checked(pred_id)
-                    force_closed += 1
-                    logger.info(f"Force-closed old pending prediction {pred_id[:8]} from {created_at}")
                 else:
                     errors.append({"id": pred_id[:8], "error": "outcome check returned None"})
             except Exception as check_err:
-                if is_very_old:
-                    from services.prediction_logger import mark_prediction_checked
-                    await mark_prediction_checked(pred_id)
-                    force_closed += 1
-                    logger.info(f"Force-closed old failed prediction {pred_id[:8]}: {check_err}")
-                else:
-                    errors.append({"id": pred_id[:8], "error": str(check_err)[:100]})
-                    logger.error(f"Outcome check failed for {pred_id}: {check_err}")
+                errors.append({"id": pred_id[:8], "error": str(check_err)[:100]})
+                logger.error(f"Outcome check failed for {pred_id}: {check_err}")
         
         correct_count = sum(1 for o in outcomes if o.get("ml_correct"))
         
@@ -351,7 +327,6 @@ async def check_all_pending_outcomes():
             "ml_incorrect": len(outcomes) - correct_count,
             "total_pending_found": len(predictions),
             "skipped_existing": skipped_existing,
-            "force_closed_old": force_closed,
             "errors": errors[:10] if errors else None
         }
         
