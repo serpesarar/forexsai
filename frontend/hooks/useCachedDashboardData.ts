@@ -79,15 +79,15 @@ export function useCachedDashboardData() {
   const nasdaqQuery = useQuery({
     queryKey: ["cached-dashboard", "NDX.INDX"],
     queryFn: () => fetchCachedData("NDX.INDX"),
-    staleTime: 5000,
-    refetchInterval: 5000, // Refresh every 5 seconds
+    staleTime: 30000,
+    refetchInterval: 30000, // Backend updates every 60s, 30s is plenty
   });
 
   const xauusdQuery = useQuery({
     queryKey: ["cached-dashboard", "XAUUSD"],
     queryFn: () => fetchCachedData("XAUUSD"),
-    staleTime: 5000,
-    refetchInterval: 5000,
+    staleTime: 30000,
+    refetchInterval: 30000,
   });
 
   const isLoading = nasdaqQuery.isLoading || xauusdQuery.isLoading;

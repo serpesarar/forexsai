@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { usePageVisibility } from "./usePageVisibility";
 
 interface LivePriceData {
   symbol: string;
@@ -162,16 +163,19 @@ export function useLivePrices(refreshInterval: number = 3000): {
     setIsLoading(false);
   }, []);
 
+  const isTabVisible = usePageVisibility();
+
   // Initial fetch
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  // Periodic refresh
+  // Periodic refresh - pauses when tab is hidden
   useEffect(() => {
+    if (!isTabVisible) return;
     const interval = setInterval(refresh, refreshInterval);
     return () => clearInterval(interval);
-  }, [refresh, refreshInterval]);
+  }, [refresh, refreshInterval, isTabVisible]);
 
   // Convert to MarketTicker format for header
   const tickers: MarketTicker[] = SYMBOLS_CONFIG.map(({ symbol, label }) => {
