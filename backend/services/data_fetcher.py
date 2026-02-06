@@ -154,7 +154,7 @@ async def fetch_intraday_candles(symbol: str, interval: str = "5m", limit: int =
     candles_per_day = {"5m": 78, "1h": 7, "1m": 390}.get(eodhd_interval, 78)
     trading_days_needed = math.ceil(limit / max(candles_per_day, 1))
     calendar_days = max(int(trading_days_needed * 1.6) + 5, 7)
-    from_ts = int((datetime.utcnow() - __import__('datetime').timedelta(days=calendar_days)).timestamp())
+    from_ts = int((datetime.utcnow() - timedelta(days=calendar_days)).timestamp())
     
     url = f"https://eodhistoricaldata.com/api/intraday/{eod_symbol}"
     

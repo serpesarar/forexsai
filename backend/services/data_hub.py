@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from threading import Lock
 from typing import Any, Dict, List, Optional
 
@@ -148,7 +148,7 @@ async def _fetch_candles_from_api(symbol: str, interval: str, limit: int = 500) 
     trading_days_needed = math.ceil(limit / max(candles_per_day, 1))
     # Add buffer for weekends/holidays (multiply by 1.6)
     calendar_days = max(int(trading_days_needed * 1.6) + 5, 7)
-    from_ts = int((datetime.utcnow() - __import__('datetime').timedelta(days=calendar_days)).timestamp())
+    from_ts = int((datetime.utcnow() - timedelta(days=calendar_days)).timestamp())
     
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
@@ -198,7 +198,7 @@ async def _fetch_eod_from_api(symbol: str, limit: int = 300) -> List[Dict]:
     if not settings.eodhd_api_key:
         return []
     eod_symbol = _normalize_symbol(symbol)
-    from_date = (datetime.utcnow() - __import__('datetime').timedelta(days=max(30, limit * 2))).date().isoformat()
+    from_date = (datetime.utcnow() - timedelta(days=max(30, limit * 2))).date().isoformat()
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(
