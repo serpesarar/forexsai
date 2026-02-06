@@ -224,6 +224,11 @@ async def mark_prediction_checked(prediction_id: str) -> bool:
         if result.get("error"):
             logger.error(f"Failed to mark prediction {prediction_id} checked: {result['error']}")
             return False
+        data = result.get("data")
+        if not data or len(data) == 0:
+            logger.warning(f"mark_prediction_checked: update returned empty data for {prediction_id[:8]}, result={result}")
+            return False
+        logger.info(f"Marked prediction {prediction_id[:8]} as checked, rows affected: {len(data)}")
         return True
     except Exception as e:
         logger.error(f"Failed to mark prediction checked: {e}")
