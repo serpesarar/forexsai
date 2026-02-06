@@ -562,7 +562,7 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# PULSE PANEL - HIZLI SCALP ANALİZİ
+# PULSE 1 (ALGORİTMİK) - KURAL TABANLI SCALP
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/pulse/{symbol}")
@@ -792,6 +792,137 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         
     except Exception as e:
         logger.error(f"PULSE analysis error: {e}")
+        return {"error": str(e)}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PULSE 2 (ML TABANLI) - KULLANICI MODELİ + ESNEK KURALLAR
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/pulse-ml/{symbol}")
+async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
+    """
+    PULSE 2 - ML Tabanlı Scalp (Kullanıcı Modeli)
+    ML modelini kullanır ama EMEL kadar katı değildir (4-5 kural).
+    """
+    try:
+        from services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
+        from services.market_data_service import get_ohlcv_data
+        
+        # 1. Market Data (ML için en az 100 bar gerekli)
+        ohlcv = await get_ohlcv_data(symbol, timeframe, limit=200)
+        if not ohlcv or len(ohlcv) < 50:
+            return {"error": "Yetersiz veri"}
+            
+        closes = np.array([c["close"] for c in ohlcv], dtype=np.float64)
+        highs = np.array([c["high"] for c in ohlcv], dtype=np.float64)
+        lows = np.array([c["low"] for c in ohlcv], dtype=np.float64)
+        volumes = np.array([c.get("volume", 0) for c in ohlcv], dtype=np.float64)
+        current_price = float(closes[-1])
+        
+        # 2. ML Tahmini Al (Aggressive modu kullanıyoruz çünkü Scalp)
+        prediction = await get_ml_prediction(symbol, "aggressive")
+        
+        ml_direction = prediction.get("direction", "HOLD")
+        ml_confidence = prediction.get("confidence", 0)
+        
+        # 3. Teknik İndikatörler
+        ta = _compute_technical_indicators(closes, highs, lows, volumes)
+        ema_20 = ta.get("ema_20", current_price)
+        ema_50 = ta.get("ema_50", current_price)
+        rsi_14 = ta.get("rsi_14", 50)
+        
+        # 4. Sinyal Mantığı (Esnek Kurallar)
+        signal = "HOLD"
+        notes = []
+        
+        # Kural 1: ML Güveni Kontrolü
+        if ml_confidence >= 60:
+            # Kural 2: Trend Uyumu (EMA50) - EMEL kadar katı değil
+            trend_ok = False
+            if ml_direction == "BUY" and current_price > ema_50:
+                trend_ok = True
+            elif ml_direction == "SELL" and current_price < ema_50:
+                trend_ok = True
+                
+            if trend_ok:
+                # Kural 3: RSI Filtresi (Aşırı bölgelerden kaçın)
+                rsi_ok = False
+                if ml_direction == "BUY" and rsi_14 < 75:
+                    rsi_ok = True
+                elif ml_direction == "SELL" and rsi_14 > 25:
+                    rsi_ok = True
+                else:
+                    notes.append(f"RSI Riski ({rsi_14:.1f})")
+                    
+                if rsi_ok:
+                    signal = ml_direction
+            else:
+                notes.append(f"Trend (EMA50) ML yönünü desteklemiyor")
+        else:
+            notes.append(f"ML Güveni Düşük ({ml_confidence:.1f}%)")
+            
+        # Hedef / Stop Belirleme (ML'den gelen veya ATR bazlı)
+        target = prediction.get("target_price")
+        stop = prediction.get("stop_price")
+        
+        if not target or not stop:
+            # Fallback: ATR bazlı basit stop/target
+            atr = ta.get("atr", current_price * 0.002) # Varsayılan %0.2
+            if signal == "BUY":
+                stop = current_price - (atr * 1.5)
+                target = current_price + (atr * 2.5)
+            elif signal == "SELL":
+                stop = current_price + (atr * 1.5)
+                target = current_price - (atr * 2.5)
+        
+        # Kural 4: R/R Oranı Kontrolü
+        if signal != "HOLD" and target and stop:
+            profit = abs(target - current_price)
+            risk = abs(current_price - stop)
+            rr_ratio = profit / risk if risk > 0 else 0
+            
+            if rr_ratio < 1.0: # Çok esnek
+                signal = "HOLD"
+                notes.append(f"R/R Çok Düşük ({rr_ratio:.2f})")
+        else:
+            rr_ratio = 0
+            
+        # Loglama
+        if signal in ["BUY", "SELL"]:
+            try:
+                from services.prediction_logger import log_prediction
+                await log_prediction(
+                    symbol=symbol,
+                    context={"source": "PULSE_ML", "ta": ta, "ml": prediction},
+                    analysis={"final_decision": signal, "confidence": ml_confidence, "model_used": "PULSE-ML-V1"},
+                    timeframe=timeframe,
+                    strategy="PULSE_ML"
+                )
+            except Exception as log_err:
+                logger.warning(f"Failed to log PULSE-ML prediction: {log_err}")
+
+        return {
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "timestamp": datetime.now().isoformat(),
+            "signal": signal,
+            "confidence": ml_confidence,
+            "model_type": "PULSE_ML_V1",
+            "price": current_price,
+            "target": round(target, 2) if target else 0,
+            "stop": round(stop, 2) if stop else 0,
+            "rr_ratio": round(rr_ratio, 2),
+            "details": {
+                "ml_direction": ml_direction,
+                "ema_50": round(ema_50, 2),
+                "rsi_14": round(rsi_14, 1),
+                "notes": notes
+            }
+        }
+            
+    except Exception as e:
+        logger.error(f"PULSE-ML analysis error: {e}")
         return {"error": str(e)}
 
 

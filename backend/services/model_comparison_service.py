@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ModelSignal:
-    model_name: str  # "EMEL" or "PULSE"
+    model_name: str  # "EMEL", "PULSE_ALGO", "PULSE_ML"
     symbol: str
     timeframe: str
     signal: str  # "BUY", "SELL", "HOLD"
@@ -43,30 +43,34 @@ class ModelSignal:
 
 _comparison_results: Dict[str, List[Dict[str, Any]]] = {
     "EMEL": [],
-    "PULSE": []
+    "PULSE_ALGO": [],
+    "PULSE_ML": []
 }
 
 async def run_model_comparison(symbol: str = "NDX.INDX", timeframe: str = "M15") -> Dict[str, Any]:
     """
-    Run both EMEL and PULSE models on same data and compare signals.
+    Run EMEL, PULSE (Algo) and PULSE (ML) models on same data and compare signals.
     Returns comparison result.
     """
     try:
         # Import model endpoints
-        from routers.emel_pulse import get_emel_analysis, get_pulse_analysis
+        from routers.emel_pulse import get_emel_analysis, get_pulse_analysis, get_pulse_ml_analysis
         
-        # Run both models
+        # Run all models
         emel_result = await get_emel_analysis(symbol, timeframe)
-        pulse_result = await get_pulse_analysis(symbol, timeframe)
+        pulse_algo_result = await get_pulse_analysis(symbol, timeframe)
+        pulse_ml_result = await get_pulse_ml_analysis(symbol, timeframe)
         
         # Extract signals
         emel_signal = emel_result.get("signal", "HOLD")
-        pulse_signal = pulse_result.get("signal", "HOLD")
+        pulse_algo_signal = pulse_algo_result.get("signal", "HOLD")
+        pulse_ml_signal = pulse_ml_result.get("signal", "HOLD")
         
         emel_confidence = emel_result.get("confidence", 0)
-        pulse_confidence = pulse_result.get("trend_strength", 0) * 100
+        pulse_algo_confidence = pulse_algo_result.get("trend_strength", 0) * 100
+        pulse_ml_confidence = pulse_ml_result.get("confidence", 0)
         
-        # Log both predictions for tracking
+        # Log all predictions for tracking
         current_price = emel_result.get("price", 0)
         
         comparison = {
@@ -74,54 +78,39 @@ async def run_model_comparison(symbol: str = "NDX.INDX", timeframe: str = "M15")
             "symbol": symbol,
             "timeframe": timeframe,
             "price": current_price,
-            "emel": {
-                "signal": emel_signal,
-                "confidence": emel_confidence,
-                "checks": f"{emel_result.get('summary', {}).get('green_count', 0)}/9",
-                "rejections": emel_result.get("summary", {}).get("rejections", [])
+            "models": {
+                "EMEL": {
+                    "signal": emel_signal,
+                    "confidence": emel_confidence,
+                    "checks": f"{emel_result.get('summary', {}).get('green_count', 0)}/9",
+                    "type": "ML (Strict)"
+                },
+                "PULSE_ALGO": {
+                    "signal": pulse_algo_signal,
+                    "confidence": pulse_algo_confidence,
+                    "trend_strength": pulse_algo_result.get("trend_strength", 0),
+                    "type": "Algorithmic"
+                },
+                "PULSE_ML": {
+                    "signal": pulse_ml_signal,
+                    "confidence": pulse_ml_confidence,
+                    "type": "ML (Flexible)"
+                }
             },
-            "pulse": {
-                "signal": pulse_signal,
-                "confidence": pulse_confidence,
-                "trend_strength": pulse_result.get("trend_strength", 0),
-                "rr_ratio": pulse_result.get("rr_ratio", 0)
-            },
-            "agreement": emel_signal == pulse_signal,
-            "combined_signal": _combine_signals(emel_signal, pulse_signal, emel_confidence, pulse_confidence)
+            "agreement": emel_signal == pulse_algo_signal == pulse_ml_signal,
+            "combined_signal": _combine_signals(emel_signal, pulse_algo_signal, pulse_ml_signal)
         }
         
-        # Store for analysis
-        _comparison_results["EMEL"].append({
-            "time": datetime.now(),
-            "signal": emel_signal,
-            "confidence": emel_confidence,
-            "price": current_price
-        })
-        _comparison_results["PULSE"].append({
-            "time": datetime.now(),
-            "signal": pulse_signal,
-            "confidence": pulse_confidence,
-            "price": current_price
-        })
+        # Store for analysis (In-memory buffer)
+        _comparison_results["EMEL"].append(_create_log_entry(emel_signal, emel_confidence, current_price))
+        _comparison_results["PULSE_ALGO"].append(_create_log_entry(pulse_algo_signal, pulse_algo_confidence, current_price))
+        _comparison_results["PULSE_ML"].append(_create_log_entry(pulse_ml_signal, pulse_ml_confidence, current_price))
         
-        # Log to DB if signal exists
-        if emel_signal in ["BUY", "SELL"]:
-            await log_prediction(
-                symbol=symbol,
-                context={"source": "EMEL_COMPARISON", "ta": emel_result.get("ta", {})},
-                analysis={"final_decision": emel_signal, "confidence": emel_confidence, "model_used": "EMEL-9-Check"},
-                timeframe=timeframe,
-                strategy="EMEL"
-            )
-            
-        if pulse_signal in ["BUY", "SELL"]:
-            await log_prediction(
-                symbol=symbol,
-                context={"source": "PULSE_COMPARISON", "ta": pulse_result.get("ta", {})},
-                analysis={"final_decision": pulse_signal, "confidence": pulse_confidence, "model_used": "PULSE-Scalp"},
-                timeframe=timeframe,
-                strategy="PULSE"
-            )
+        # Note: Database logging is handled inside the endpoints themselves now.
+        # Except for EMEL which might need manual logging if we want to track it specifically
+        # But get_emel_analysis doesn't log by default, so we should log it here if needed.
+        # Actually, let's let each endpoint handle its own logging or log here if they don't.
+        # Pulse endpoints log themselves. EMEL logs via log_prediction if it finds a signal.
         
         return comparison
         
@@ -130,28 +119,46 @@ async def run_model_comparison(symbol: str = "NDX.INDX", timeframe: str = "M15")
         return {"error": str(e)}
 
 
-def _combine_signals(
-    emel_signal: str, 
-    pulse_signal: str, 
-    emel_confidence: float, 
-    pulse_confidence: float
-) -> str:
+def _create_log_entry(signal, confidence, price):
+    return {
+        "time": datetime.now(),
+        "signal": signal,
+        "confidence": confidence,
+        "price": price
+    }
+
+
+def _combine_signals(emel: str, pulse_algo: str, pulse_ml: str) -> str:
     """
-    Combine EMEL and PULSE signals with weighted confidence.
-    EMEL has higher weight (0.7) because it's more conservative.
+    Combine 3 signals.
+    Priority: EMEL > PULSE_ML > PULSE_ALGO
+    But confirmation increases confidence.
     """
-    # If both agree, use that signal
-    if emel_signal == pulse_signal:
-        return emel_signal
+    signals = [s for s in [emel, pulse_algo, pulse_ml] if s in ["BUY", "SELL"]]
     
-    # If disagreement, prefer EMEL (more conservative)
-    if emel_signal in ["BUY", "SELL"]:
-        return emel_signal
+    if not signals:
+        return "HOLD"
+        
+    # If all agree
+    if len(set(signals)) == 1 and len(signals) == 3:
+        return f"STRONG_{signals[0]}"
+        
+    # If majority agree
+    from collections import Counter
+    counts = Counter(signals)
+    most_common, count = counts.most_common(1)[0]
     
-    # If EMEL is HOLD but PULSE has strong signal
-    if pulse_confidence > 80:
-        return pulse_signal
-    
+    if count >= 2:
+        return most_common
+        
+    # If disagreement, trust EMEL
+    if emel in ["BUY", "SELL"]:
+        return emel
+        
+    # If EMEL is HOLD, check Pulse ML
+    if pulse_ml in ["BUY", "SELL"]:
+        return pulse_ml
+        
     return "HOLD"
 
 
@@ -161,8 +168,7 @@ def _combine_signals(
 
 async def get_model_performance_stats(days: int = 7) -> Dict[str, Any]:
     """
-    Get performance statistics for both models.
-    Retrieves from prediction_logs and calculates accuracy.
+    Get performance statistics for all 3 models.
     """
     if not is_db_available():
         return {"error": "Database not available"}
@@ -175,23 +181,21 @@ async def get_model_performance_stats(days: int = 7) -> Dict[str, Any]:
         cutoff = datetime.now() - timedelta(days=days)
         cutoff_iso = cutoff.isoformat()
         
-        # Get EMEL predictions
-        emel_result = client.table("prediction_logs").select(
-            "id, created_at, symbol, ml_direction, ml_confidence, claude_direction, actual_outcome, outcome_checked"
-        ).eq("strategy", "EMEL").gte("created_at", cutoff_iso).execute()
-        
-        # Get PULSE predictions
-        pulse_result = client.table("prediction_logs").select(
-            "id, created_at, symbol, ml_direction, ml_confidence, claude_direction, actual_outcome, outcome_checked"
-        ).eq("strategy", "PULSE").gte("created_at", cutoff_iso).execute()
-        
-        emel_data = emel_result.get("data", [])
-        pulse_data = pulse_result.get("data", [])
+        # Helper to fetch stats
+        async def fetch_stats(strategy_name):
+            res = client.table("prediction_logs").select(
+                "id, symbol, ml_direction, ml_confidence, actual_outcome, outcome_checked"
+            ).eq("strategy", strategy_name).gte("created_at", cutoff_iso).execute()
+            return res.get("data", [])
+
+        emel_data = await fetch_stats("EMEL")
+        pulse_algo_data = await fetch_stats("PULSE") # Old pulse logs
+        pulse_ml_data = await fetch_stats("PULSE_ML")
         
         # Calculate stats
         def calc_stats(data: List[Dict]) -> Dict[str, Any]:
             if not data:
-                return {"total": 0, "checked": 0, "correct": 0, "accuracy": 0}
+                return {"total": 0, "accuracy": 0}
             
             total = len(data)
             checked = len([d for d in data if d.get("outcome_checked")])
@@ -202,19 +206,18 @@ async def get_model_performance_stats(days: int = 7) -> Dict[str, Any]:
                 "checked": checked,
                 "correct": correct,
                 "accuracy": round(correct / checked * 100, 1) if checked > 0 else 0,
-                "buy_signals": len([d for d in data if d.get("ml_direction") == "BUY"]),
-                "sell_signals": len([d for d in data if d.get("ml_direction") == "SELL"]),
-                "avg_confidence": round(sum(d.get("ml_confidence", 0) for d in data) / len(data), 1) if data else 0
+                "signals": {
+                    "BUY": len([d for d in data if d.get("ml_direction") == "BUY"]),
+                    "SELL": len([d for d in data if d.get("ml_direction") == "SELL"])
+                }
             }
         
         return {
             "period_days": days,
-            "emel": calc_stats(emel_data),
-            "pulse": calc_stats(pulse_data),
-            "comparison": {
-                "emel_signal_count": len(emel_data),
-                "pulse_signal_count": len(pulse_data),
-                "pulse_vs_emel_ratio": round(len(pulse_data) / len(emel_data), 2) if emel_data else 0
+            "models": {
+                "EMEL": calc_stats(emel_data),
+                "PULSE_ALGO": calc_stats(pulse_algo_data),
+                "PULSE_ML": calc_stats(pulse_ml_data)
             }
         }
         
