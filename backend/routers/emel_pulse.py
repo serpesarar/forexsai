@@ -867,12 +867,50 @@ async def debug_ema_calculation(symbol: str, timeframe: str = "1H"):
                 "price_to_ema50_pct": round(((current_price - (ema50 or current_price)) / current_price) * 100, 3) if ema50 else None,
                 "price_to_ema200_pct": round(((current_price - (ema200 or current_price)) / current_price) * 100, 3) if ema200 else None,
             },
-            "first_5_closes": [round(c, 2) for c in closes[:5]],
-            "last_5_closes": [round(c, 2) for c in closes[-5:]],
-            "note": "TradingView'deki EMA değerleriyle karşılaştırın. ±5 pips içinde olmalı."
+            \"first_5_closes\": [round(c, 2) for c in closes[:5]],
+            \"last_5_closes\": [round(c, 2) for c in closes[-5:]],
+            \"note\": \"TradingView'deki EMA değerleriyle karşılaştırın. ±5 pips içinde olmalı.\"
         }
         
     except Exception as e:
         logger.error(f"EMA debug error: {e}")
         import traceback
         return {"error": str(e), "traceback": traceback.format_exc()}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MODEL KARŞILAŞTIRMA
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/compare/{symbol}")
+async def compare_models(symbol: str, timeframe: str = "M15"):
+    """
+    Run both EMEL and PULSE models and compare their signals.
+    Logs predictions to database for performance tracking.
+    """
+    try:
+        from services.model_comparison_service import run_model_comparison
+        
+        result = await run_model_comparison(symbol, timeframe)
+        return result
+        
+    except Exception as e:
+        logger.error(f"Model comparison error: {e}")
+        return {"error": str(e)}
+
+
+@router.get("/performance-stats")
+async def get_performance_stats(days: int = 7):
+    """
+    Get performance statistics for EMEL vs PULSE models.
+    """
+    try:
+        from services.model_comparison_service import get_model_performance_stats
+        
+        stats = await get_model_performance_stats(days)
+        return stats
+        
+    except Exception as e:
+        logger.error(f"Performance stats error: {e}")
+        return {"error": str(e)}
+

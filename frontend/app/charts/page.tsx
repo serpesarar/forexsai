@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { 
-  ArrowLeft, 
-  Maximize2, 
-  Minimize2, 
+import {
+  ArrowLeft,
+  Maximize2,
+  Minimize2,
   RefreshCw,
   TrendingUp,
   BarChart3,
@@ -44,14 +44,14 @@ const CHART_SYMBOLS: ChartSymbol[] = [
   }
 ];
 
-function TradingViewChart({ 
-  symbol, 
-  containerId, 
+function TradingViewChart({
+  symbol,
+  containerId,
   height = 500,
-  isFullscreen = false 
-}: { 
-  symbol: ChartSymbol; 
-  containerId: string; 
+  isFullscreen = false
+}: {
+  symbol: ChartSymbol;
+  containerId: string;
   height?: number;
   isFullscreen?: boolean;
 }) {
@@ -87,6 +87,11 @@ function TradingViewChart({
           popup_width: "1000",
           popup_height: "650",
           no_referral_id: true,
+          // localStorage çizim koruma parametreleri
+          client_id: "forexsai_charts",
+          user_id: "public",
+          auto_save_delay: 5,
+          load_last_chart: true,
           studies: [
             "MASimple@tv-basicstudies",
             "RSI@tv-basicstudies",
@@ -111,26 +116,26 @@ function TradingViewChart({
       if (widgetRef.current) {
         try {
           widgetRef.current.remove?.();
-        } catch (e) {}
+        } catch (e) { }
       }
     };
   }, [symbol.tradingViewSymbol, containerId]);
 
   return (
-    <div 
+    <div
       ref={containerRef}
-      id={containerId} 
+      id={containerId}
       style={{ height: isFullscreen ? "calc(100vh - 120px)" : height }}
       className="w-full"
     />
   );
 }
 
-function ChartPanel({ 
-  symbol, 
-  onFullscreen 
-}: { 
-  symbol: ChartSymbol; 
+function ChartPanel({
+  symbol,
+  onFullscreen
+}: {
+  symbol: ChartSymbol;
   onFullscreen: (symbol: ChartSymbol) => void;
 }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -168,8 +173,8 @@ function ChartPanel({
             <RefreshCw className="w-6 h-6 md:w-8 md:h-8 animate-spin text-accent" />
           </div>
         )}
-        <TradingViewChart 
-          symbol={symbol} 
+        <TradingViewChart
+          symbol={symbol}
           containerId={`tv_chart_${symbol.id}`}
           height={350}
         />
@@ -224,7 +229,7 @@ export default function ChartsPage() {
               <BarChart3 className="h-8 w-8 text-accent" />
             </div>
           </div>
-          
+
           <div>
             <h1 className="text-2xl font-bold mb-2">Grafikler</h1>
             <p className="text-textSecondary">
@@ -240,7 +245,7 @@ export default function ChartsPage() {
               <LogIn className="w-5 h-5" />
               Giriş Yap
             </Link>
-            
+
             <Link
               href="/signup"
               className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-white/10 text-white font-semibold hover:bg-white/20 transition"
@@ -284,8 +289,8 @@ export default function ChartsPage() {
             <span>Küçült</span>
           </button>
         </div>
-        <TradingViewChart 
-          symbol={fullscreenSymbol} 
+        <TradingViewChart
+          symbol={fullscreenSymbol}
           containerId={`tv_fullscreen_${fullscreenSymbol.id}`}
           isFullscreen={true}
         />
@@ -299,8 +304,8 @@ export default function ChartsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2 md:gap-4">
-            <Link 
-              href="/trading" 
+            <Link
+              href="/trading"
               className="p-1.5 md:p-2 rounded-lg md:rounded-xl hover:bg-white/10 transition"
             >
               <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
@@ -373,9 +378,9 @@ export default function ChartsPage() {
         {/* Charts Grid */}
         <div className="space-y-6">
           {CHART_SYMBOLS.map((symbol) => (
-            <ChartPanel 
-              key={symbol.id} 
-              symbol={symbol} 
+            <ChartPanel
+              key={symbol.id}
+              symbol={symbol}
               onFullscreen={handleFullscreen}
             />
           ))}
