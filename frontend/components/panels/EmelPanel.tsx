@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useI18nStore } from "../../lib/i18n/store";
 import {
   TrendingUp,
   TrendingDown,
@@ -73,6 +74,7 @@ const CHECK_ICONS: Record<number, any> = {
 };
 
 export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitchMode }: EmelPanelProps) {
+  const { t } = useI18nStore();
   const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
   const [data, setData] = useState<EmelData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -148,8 +150,8 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
               <Brain className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">EMEL ANALİZ MODU</h2>
-              <p className="text-xs text-gray-400">Stratejik • Kontrollü • 9 Checkpoint</p>
+              <h2 className="text-lg font-bold text-white">{t("emel.title")}</h2>
+              <p className="text-xs text-gray-400">{t("emel.subtitle")}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -202,7 +204,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
       {data && (
         <div className="grid grid-cols-4 gap-4 p-4 bg-gray-800/50">
           <div className="bg-gray-900 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-500 mb-1">SİNYAL</p>
+            <p className="text-xs text-gray-500 mb-1">{t("emel.signal")}</p>
             <p className={`text-xl font-bold ${
               data.signal === "BUY" ? "text-green-400" :
               data.signal === "SELL" ? "text-red-400" : "text-yellow-400"
@@ -211,15 +213,15 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
             </p>
           </div>
           <div className="bg-gray-900 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-500 mb-1">GÜVEN</p>
+            <p className="text-xs text-gray-500 mb-1">{t("emel.confidence")}</p>
             <p className="text-xl font-bold text-blue-400">%{data.confidence.toFixed(0)}</p>
           </div>
           <div className="bg-gray-900 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-500 mb-1">FİYAT</p>
+            <p className="text-xs text-gray-500 mb-1">{t("emel.price")}</p>
             <p className="text-xl font-bold text-white">{data.price.toFixed(2)}</p>
           </div>
           <div className="bg-gray-900 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-500 mb-1">SKOR</p>
+            <p className="text-xs text-gray-500 mb-1">{t("emel.score")}</p>
             <div className="flex items-center justify-center gap-1">
               <span className="text-green-400">{data.summary.green_count}🟢</span>
               <span className="text-yellow-400">{data.summary.yellow_count}🟡</span>
@@ -232,7 +234,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
       {/* 9 Checkpoint Cards */}
       <div className="p-4">
         <h3 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
-          📋 KONTROL NOKTALARI ({data?.checks.length || 0}/9 Aktif)
+          📋 {t("emel.checkpoints")} ({data?.checks.length || 0}/9 {t("emel.active")})
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {data?.checks.map((check) => {
@@ -294,12 +296,12 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
           }`}>
             <div className="flex items-center gap-2 mb-3">
               <Brain className="w-5 h-5" />
-              <span className="font-bold text-white">EMEL KARARI: {data.summary.decision}</span>
+              <span className="font-bold text-white">{t("emel.decision")} {data.summary.decision}</span>
             </div>
 
             {data.summary.rejections.length > 0 && (
               <div className="mb-3">
-                <p className="text-sm text-gray-400 mb-1">Neden?</p>
+                <p className="text-sm text-gray-400 mb-1">{t("emel.why")}</p>
                 <div className="space-y-1">
                   {data.summary.rejections.map((r, i) => (
                     <p key={i} className="text-sm text-red-400">{r}</p>
@@ -310,7 +312,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
 
             {data.summary.entry_conditions.length > 0 && (
               <div>
-                <p className="text-sm text-gray-400 mb-1">Ne Zaman İşlem Yapılır?</p>
+                <p className="text-sm text-gray-400 mb-1">{t("emel.whenToTrade")}</p>
                 <div className="space-y-1">
                   {data.summary.entry_conditions.map((c, i) => (
                     <p key={i} className="text-sm text-blue-400">→ {c}</p>
@@ -321,7 +323,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
 
             <div className="mt-3 pt-3 border-t border-gray-700">
               <p className="text-xs text-gray-500">
-                💡 ALTERNATİF: Pulse moduna geçerek anlık fırsatları değerlendir.
+                💡 {t("emel.alternative")}
               </p>
             </div>
           </div>

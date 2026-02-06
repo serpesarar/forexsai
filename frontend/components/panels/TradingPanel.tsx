@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useI18nStore } from "../../lib/i18n/store";
 import EmelPanel from "./EmelPanel";
 import PulsePanel from "./PulsePanel";
 
@@ -9,6 +10,7 @@ interface TradingPanelProps {
 }
 
 export default function TradingPanel({ symbol = "XAUUSD" }: TradingPanelProps) {
+  const { t } = useI18nStore();
   const [mode, setMode] = useState<"emel" | "pulse">("emel");
   const [selectedSymbol, setSelectedSymbol] = useState(symbol);
 
@@ -34,7 +36,7 @@ export default function TradingPanel({ symbol = "XAUUSD" }: TradingPanelProps) {
                 : "text-gray-400 hover:text-white"
             }`}
           >
-            🧠 EMEL (Stratejik)
+            🧠 EMEL
           </button>
           <button
             onClick={() => setMode("pulse")}
@@ -44,7 +46,7 @@ export default function TradingPanel({ symbol = "XAUUSD" }: TradingPanelProps) {
                 : "text-gray-400 hover:text-white"
             }`}
           >
-            ⚡ PULSE (Scalp)
+            ⚡ PULSE
           </button>
         </div>
       </div>

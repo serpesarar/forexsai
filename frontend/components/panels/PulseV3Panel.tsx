@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useI18nStore } from "../../lib/i18n/store";
 import {
   TrendingUp,
   TrendingDown,
@@ -62,21 +63,29 @@ const SYMBOLS = [
 ];
 
 export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: PulseV3PanelProps) {
+  const { t } = useI18nStore();
   const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
   const [data, setData] = useState<PulseV3Data | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   const fetchData = async () => {
     try {
+      setError(null);
       const res = await fetch(`${API_BASE}/api/panel/pulse-v3/${activeSymbol}`);
       const json = await res.json();
-      if (!json.error) {
+      if (json.error) {
+        setError(json.error);
+        setData(null);
+      } else {
         setData(json);
         setLastUpdate(new Date());
       }
     } catch (e) {
       console.error("PULSE V3 fetch error:", e);
+      setError("fetch_error");
+      setData(null);
     } finally {
       setLoading(false);
     }
@@ -97,10 +106,10 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
 
   const getSignalBadge = (type: string) => {
     if (type === "CONFIRM")
-      return { bg: "bg-green-500", text: "GÜÇLÜ SİNYAL", icon: CheckCircle };
+      return { bg: "bg-green-500", text: t("pulseV3.strongSignal"), icon: CheckCircle };
     if (type === "SCOUT")
-      return { bg: "bg-yellow-500", text: "İZLEME MODU", icon: Eye };
-    return { bg: "bg-gray-500", text: "BEKLE", icon: Clock };
+      return { bg: "bg-yellow-500", text: t("pulseV3.watchMode"), icon: Eye };
+    return { bg: "bg-gray-500", text: t("pulseV3.wait"), icon: Clock };
   };
 
   const getTrendIcon = (trend: string) => {
@@ -130,6 +139,29 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
     );
   }
 
+  if (error && !data && !loading) {
+    return (
+      <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+        <div className="bg-gradient-to-r from-orange-900/50 to-amber-900/50 p-4 border-b border-gray-800">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
+              <Zap className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">{t("pulseV3.title")}</h2>
+              <p className="text-xs text-gray-400">{t("pulseV3.subtitle")}</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-8 text-center">
+          <Activity className="w-12 h-12 text-yellow-500 mx-auto mb-3 opacity-50" />
+          <p className="text-yellow-400 font-medium mb-1">{activeSymbol}</p>
+          <p className="text-gray-400 text-sm">{t("pulse.insufficientData")}</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!data) return null;
 
   const badge = getSignalBadge(data.signal_type);
@@ -146,10 +178,10 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">
-                PULSE 3 - HYBRID SCALP
+                {t("pulseV3.title")}
               </h2>
               <p className="text-xs text-gray-400">
-                3 Zamanlı • Hızlı • Her 30sn Güncelleme
+                {t("pulseV3.subtitle")}
               </p>
             </div>
           </div>
@@ -248,16 +280,16 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
               }`}
             >
               {data.direction === "BUY"
-                ? "ALIŞ"
+                ? t("pulseV3.buy")
                 : data.direction === "SELL"
-                  ? "SATIŞ"
-                  : "NÖTR"}
+                  ? t("pulseV3.sell")
+                  : t("pulseV3.neutral")}
             </span>
           </div>
 
           {/* Price */}
           <p className="text-gray-400 text-sm mt-1">
-            Fiyat: <span className="text-white font-bold">{data.price}</span>
+            {t("pulseV3.priceLabel")} <span className="text-white font-bold">{data.price}</span>
           </p>
         </div>
       </div>
@@ -281,10 +313,10 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
             </div>
             <div className={`text-xs ${getTrendColor(info.trend)}`}>
               {info.trend === "up"
-                ? "Yukarı"
+                ? t("pulseV3.up")
                 : info.trend === "down"
-                  ? "Aşağı"
-                  : "Nötr"}
+                  ? t("pulseV3.down")
+                  : t("pulseV3.neutral")}
             </div>
             {/* Progress bar */}
             <div className="h-1.5 bg-gray-700 rounded-full mt-2 overflow-hidden">
@@ -308,7 +340,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         {/* Levels */}
         <div className="bg-gray-800 rounded-lg p-3">
           <h3 className="text-xs font-medium text-gray-400 mb-2 flex items-center gap-1">
-            <Target className="w-3 h-3" /> SEVİYELER
+            <Target className="w-3 h-3" /> {t("pulseV3.levels")}
           </h3>
           <div className="space-y-1.5 text-sm">
             <div className="flex justify-between">
@@ -339,17 +371,17 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         {/* Target/Stop/R:R */}
         <div className="bg-gray-800 rounded-lg p-3">
           <h3 className="text-xs font-medium text-gray-400 mb-2 flex items-center gap-1">
-            <Brain className="w-3 h-3" /> HEDEf / STOP
+            <Brain className="w-3 h-3" /> {t("pulseV3.targetStop")}
           </h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-green-400">Hedef:</span>
+              <span className="text-green-400">{t("pulseV3.target")}</span>
               <span className="text-white font-bold">
                 {data.levels.target.toFixed(0)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-red-400">Stop:</span>
+              <span className="text-red-400">{t("pulseV3.stop")}</span>
               <span className="text-white font-bold">
                 {data.levels.stop.toFixed(0)}
               </span>
@@ -385,7 +417,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg p-3 border border-blue-800">
           <div className="flex items-center gap-2 mb-2">
             <Brain className="w-4 h-4 text-blue-400" />
-            <span className="font-medium text-white text-sm">ANALİZ</span>
+            <span className="font-medium text-white text-sm">{t("pulseV3.analysis")}</span>
           </div>
           <p className="text-gray-300 text-sm">{data.suggestion}</p>
         </div>
@@ -395,7 +427,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       {data.entry_zones && data.entry_zones.length > 0 && (
         <div className="px-4 pb-4">
           <h4 className="text-xs font-medium text-gray-400 mb-2">
-            GİRİŞ BÖLGELERİ
+            {t("pulseV3.entryZones")}
           </h4>
           <div className="grid grid-cols-3 gap-2">
             {data.entry_zones.map((zone, idx) => (
@@ -431,9 +463,9 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       <div className="px-4 py-2 bg-gray-800/50 border-t border-gray-800 text-center">
         <p className="text-xs text-gray-500">
           {lastUpdate
-            ? `Son güncelleme: ${lastUpdate.toLocaleTimeString()}`
-            : "Güncelleniyor..."}{" "}
-          | Geçerlilik: {(data.valid_for_seconds / 60).toFixed(0)} dk
+            ? `${t("pulseV3.lastUpdate")} ${lastUpdate.toLocaleTimeString()}`
+            : t("pulseV3.updating")}{" "}
+          | {t("pulseV3.validity")} {(data.valid_for_seconds / 60).toFixed(0)} {t("pulseV3.min")}
         </p>
       </div>
     </div>

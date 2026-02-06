@@ -31,7 +31,7 @@ interface LearningDashboardPanelProps {
 
 export default function LearningDashboardPanel({ symbol }: LearningDashboardPanelProps) {
   const { t, locale } = useI18nStore();
-  const [days, setDays] = useState(7);
+  const [days, setDays] = useState(30);
   const [isCheckingOutcomes, setIsCheckingOutcomes] = useState(false);
   const [checkInterval, setCheckInterval] = useState<"1h" | "24h">("1h");
 
@@ -341,7 +341,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
               {/* Config Info */}
               <div className="text-xs text-zinc-500 mb-3">
                 {symbol === "NDX.INDX" ? "NASDAQ" : symbol === "XAUUSD" ? "XAUUSD" : symbol}: 
-                Hedefler {multiTarget.config.targets.map(t => `${t.name}: ${t.pips} pips`).join(", ")} | 
+                {t("learningDashboard.targets")} {multiTarget.config.targets.map(tgt => `${tgt.name}: ${tgt.pips} pips`).join(", ")} | 
                 SL: {multiTarget.config.stoploss_pips} pips
               </div>
 
@@ -356,8 +356,8 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
                       <div key={name}>
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-cyan-400">{name} ({multiTarget.config?.targets.find(t => t.name === name)?.pips || 0} pips)</span>
-                          <span className={getAccuracyColor(data.hit_rate)}>
-                            {(data.hit_rate * 100).toFixed(1)}% ({data.hit_count}/{data.total})
+                          <span className={getAccuracyColor(data.hit_rate || 0)}>
+                            {isNaN(data.hit_rate) ? "0.0" : (data.hit_rate * 100).toFixed(1)}% ({data.hit_count}/{data.total})
                           </span>
                         </div>
                         <div className="h-2 bg-zinc-700 rounded-full overflow-hidden">
@@ -375,14 +375,14 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
                     <div className="pt-2 border-t border-zinc-700">
                       <div className="flex justify-between text-xs mb-1">
                         <span className="text-red-400">Stoploss ({multiTarget.config?.stoploss_pips} pips)</span>
-                        <span className={accuracy.stoploss_hit_rate > 0.3 ? "text-red-400" : "text-green-400"}>
-                          {(accuracy.stoploss_hit_rate * 100).toFixed(1)}% ({accuracy.stoploss_hits} {t("learningDashboard.times")})
+                        <span className={(accuracy.stoploss_hit_rate || 0) > 0.3 ? "text-red-400" : "text-green-400"}>
+                          {isNaN(accuracy.stoploss_hit_rate) ? "0.0" : (accuracy.stoploss_hit_rate * 100).toFixed(1)}% ({accuracy.stoploss_hits || 0} {t("learningDashboard.times")})
                         </span>
                       </div>
                       <div className="h-2 bg-zinc-700 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-red-500 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min(accuracy.stoploss_hit_rate * 100, 100)}%` }}
+                          style={{ width: `${Math.min((accuracy.stoploss_hit_rate || 0) * 100, 100)}%` }}
                         />
                       </div>
                     </div>
