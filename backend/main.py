@@ -18,40 +18,10 @@ for env_path in env_paths:
         break
 
 import json
-import math
-import numpy as np
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
-
-class NumpySafeEncoder(json.JSONEncoder):
-    """JSON encoder that handles numpy types (np.bool_, np.integer, np.floating, np.ndarray)."""
-    def default(self, obj):
-        if isinstance(obj, np.bool_):
-            return bool(obj)
-        if isinstance(obj, np.integer):
-            return int(obj)
-        if isinstance(obj, np.floating):
-            val = float(obj)
-            if math.isnan(val) or math.isinf(val):
-                return 0.0
-            return val
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return super().default(obj)
-
-
-class NumpySafeJSONResponse(JSONResponse):
-    """JSONResponse that uses NumpySafeEncoder for numpy type serialization."""
-    def render(self, content) -> bytes:
-        return json.dumps(
-            content,
-            ensure_ascii=False,
-            allow_nan=False,
-            cls=NumpySafeEncoder,
-        ).encode("utf-8")
-
+from utils.json_response import NumpySafeJSONResponse, NumpySafeEncoder
 
 app = FastAPI(
     title="AI Trading Dashboard API",
