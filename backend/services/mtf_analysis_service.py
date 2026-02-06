@@ -25,6 +25,20 @@ from services.technical_indicators import calculate_ema, calculate_rsi, calculat
 logger = logging.getLogger(__name__)
 
 
+def _sanitize_for_json(obj):
+    """Recursively replace NaN/Inf float values with None for JSON serialization."""
+    import math
+    if isinstance(obj, dict):
+        return {k: _sanitize_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_sanitize_for_json(v) for v in obj]
+    elif isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return 0.0
+        return obj
+    return obj
+
+
 # Cache for MTF analysis results
 _mtf_cache: Dict[str, tuple[float, dict]] = {}  # key -> (timestamp, data)
 _cache_lock = Lock()
@@ -1456,7 +1470,7 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
             "symbol": symbol,
             "timeframe": timeframe,
             "timestamp": datetime.utcnow().isoformat(),
-            "analysis": asdict(analysis),
+            "analysis": _sanitize_for_json(asdict(analysis)),
             "debug": {
                 "candle_count": len(closes),
                 "first_close": round(float(closes[0]), 2),
@@ -1479,15 +1493,19 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
                 continue
             
             # Pass ALL candles so indicators (especially EMA200) have enough data
-            analyses[tf] = _analyze_timeframe(
-                symbol, tf,
-                tf_closes,
-                tf_highs,
-                tf_lows,
-                tf_volumes,
-                current_price,
-                pip_value
-            )
+            try:
+                analyses[tf] = _analyze_timeframe(
+                    symbol, tf,
+                    tf_closes,
+                    tf_highs,
+                    tf_lows,
+                    tf_volumes,
+                    current_price,
+                    pip_value
+                )
+            except Exception as e:
+                logger.error(f"[MTF] _analyze_timeframe FAILED for {symbol} {tf}: {e}")
+                continue
         
         if not analyses:
             return {"success": False, "error": "Could not fetch data for any timeframe"}
@@ -1631,16 +1649,16 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
             "timestamp": datetime.utcnow().isoformat(),
             "current_price": current_price,
             "pip_value": pip_value,
-            "timeframes": {tf: asdict(a) for tf, a in analyses.items()},
-            "confluence": asdict(confluence),
-            "advanced": {
+            "timeframes": _sanitize_for_json({tf: asdict(a) for tf, a in analyses.items()}),
+            "confluence": _sanitize_for_json(asdict(confluence)),
+            "advanced": _sanitize_for_json({
                 "market_regime": asdict(market_regime),
                 "price_action": asdict(price_action),
                 "volume_profile": asdict(volume_profile),
                 "pivot_points": asdict(pivot_points),
                 "position_sizing": asdict(position_sizing),
                 "correlation": asdict(correlation_data) if correlation_data else None
-            }
+            })
         }
     
     # Cache result
