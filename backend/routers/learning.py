@@ -307,18 +307,20 @@ async def check_all_pending_outcomes():
                 skipped_existing += 1
                 continue
             
-            # Try to check outcome - never force-close
+            # Try to check outcome
             try:
                 outcome = await check_prediction_outcome(pred, "24h")
                 if outcome:
                     outcomes.append(outcome)
-                    from services.prediction_logger import mark_prediction_checked
-                    await mark_prediction_checked(pred_id)
                 else:
-                    errors.append({"id": pred_id[:8], "error": "outcome check returned None"})
+                    errors.append({"id": pred_id[:8], "error": "outcome check returned None (old data unavailable)"})
             except Exception as check_err:
                 errors.append({"id": pred_id[:8], "error": str(check_err)[:100]})
                 logger.error(f"Outcome check failed for {pred_id}: {check_err}")
+            
+            # Always mark as checked - prevents stale "Waiting" status
+            from services.prediction_logger import mark_prediction_checked
+            await mark_prediction_checked(pred_id)
         
         correct_count = sum(1 for o in outcomes if o.get("ml_correct"))
         
