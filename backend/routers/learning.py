@@ -259,28 +259,6 @@ async def trigger_1h_outcome_check():
     }
 
 
-@router.post("/debug-mark-checked")
-async def debug_mark_checked(prediction_id: str = Query(...)):
-    """Debug endpoint to test mark_prediction_checked and see raw response."""
-    from database.supabase_client import get_supabase_client
-    client = get_supabase_client()
-    if not client:
-        return {"error": "no client"}
-    
-    # Build the query object to inspect URL
-    query = client.table("prediction_logs").eq("id", prediction_id)
-    url = query._build_url()
-    
-    # Try the update
-    result = query.update({"outcome_checked": True})
-    
-    return {
-        "url_built": url,
-        "result": result,
-        "prediction_id": prediction_id
-    }
-
-
 @router.post("/check-all-pending")
 async def check_all_pending_outcomes():
     """
