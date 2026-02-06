@@ -105,7 +105,7 @@ class MultiTargetTracker:
                                 updates['final_result'] = f'TP{i}'
                                 hits.append({'id': t['id'], 'level': f'TP{i}', 'pips': float(t[f'tp{i}_pips'])})
                 
-                self.supabase.table('multi_target_predictions').update(updates).eq('id', t['id']).execute()
+                self.supabase.table('multi_target_predictions').eq('id', t['id']).update(updates)
             return hits
         except Exception as e:
             logger.error(f"Update price error: {e}")

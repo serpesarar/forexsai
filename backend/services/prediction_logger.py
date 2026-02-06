@@ -218,9 +218,12 @@ async def mark_prediction_checked(prediction_id: str) -> bool:
         return False
     
     try:
-        client.table("prediction_logs").update(
+        result = client.table("prediction_logs").eq("id", prediction_id).update(
             {"outcome_checked": True}
-        ).eq("id", prediction_id).execute()
+        )
+        if result.get("error"):
+            logger.error(f"Failed to mark prediction {prediction_id} checked: {result['error']}")
+            return False
         return True
     except Exception as e:
         logger.error(f"Failed to mark prediction checked: {e}")

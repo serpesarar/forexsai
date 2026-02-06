@@ -469,11 +469,11 @@ async def forgot_password(body: ForgotPasswordRequest):
             }).execute()
         except:
             # Update existing
-            client.table("email_verifications").update({
+            client.table("email_verifications").eq("user_id", user.data["id"]).update({
                 "token_hash": token_hash,
                 "expires_at": expires_at.isoformat(),
                 "verification_type": "password_reset"
-            }).eq("user_id", user.data["id"]).execute()
+            })
         
         # Send email
         await send_password_reset_email(
@@ -527,10 +527,10 @@ async def reset_password(body: ResetPasswordRequest):
     
     # Update password
     password_hash = hash_password(body.new_password)
-    client.table("user_credentials").update({
+    client.table("user_credentials").eq("user_id", user_id).update({
         "password_hash": password_hash,
         "updated_at": datetime.utcnow().isoformat()
-    }).eq("user_id", user_id).execute()
+    })
     
     # Delete used token
     client.table("email_verifications")\

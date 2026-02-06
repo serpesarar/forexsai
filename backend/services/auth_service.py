@@ -347,22 +347,22 @@ async def verify_email(token: str) -> Tuple[bool, Optional[str]]:
         user_id = verification["user_id"]
         
         # Update user
-        client.table("user_profiles").update({
+        client.table("user_profiles").eq("id", user_id).update({
             "email_verified": True,
             "email_verified_at": datetime.utcnow().isoformat(),
             "status": "active"
-        }).eq("id", user_id).execute()
+        })
         
         # Mark token as used
-        client.table("email_verifications").update({
+        client.table("email_verifications").eq("id", verification["id"]).update({
             "used_at": datetime.utcnow().isoformat()
-        }).eq("id", verification["id"]).execute()
+        })
         
         # Complete referral if exists
-        client.table("referrals").update({
+        client.table("referrals").eq("referred_id", user_id).update({
             "status": "completed",
             "completed_at": datetime.utcnow().isoformat()
-        }).eq("referred_id", user_id).execute()
+        })
         
         # Check and award referral bonus
         await check_referral_reward(user_id)
@@ -461,7 +461,7 @@ async def login(
             if failed >= 5:
                 update_data["locked_until"] = (datetime.utcnow() + timedelta(minutes=15)).isoformat()
             
-            client.table("user_profiles").update(update_data).eq("id", user_id).execute()
+            client.table("user_profiles").eq("id", user_id).update(update_data)
             
             return AuthResult(success=False, error="Email veya şifre hatalı", error_code="INVALID_CREDENTIALS")
         
@@ -492,12 +492,12 @@ async def login(
         }).execute()
         
         # 9. Update user stats
-        client.table("user_profiles").update({
+        client.table("user_profiles").eq("id", user_id).update({
             "last_login_at": datetime.utcnow().isoformat(),
             "login_count": user.get("login_count", 0) + 1,
             "failed_login_attempts": 0,
             "locked_until": None
-        }).eq("id", user_id).execute()
+        })
         
         # 10. Build response
         profile = UserProfile(
@@ -566,9 +566,9 @@ async def validate_session(token: str) -> Optional[UserProfile]:
         user = user_result.data
         
         # Update last activity
-        client.table("user_sessions").update({
+        client.table("user_sessions").eq("id", session["id"]).update({
             "last_activity_at": datetime.utcnow().isoformat()
-        }).eq("id", session["id"]).execute()
+        })
         
         return UserProfile(
             id=user["id"],
@@ -643,17 +643,17 @@ async def check_referral_reward(referred_user_id: str) -> bool:
             await grant_pro_membership(referrer_id, REFERRAL_REWARD_DAYS, "referral_reward")
             
             # Mark referrals as rewarded
-            client.table("referrals").update({
+            client.table("referrals").eq("referrer_id", referrer_id).eq("status", "completed").update({
                 "status": "rewarded",
                 "rewarded_at": datetime.utcnow().isoformat(),
                 "reward_type": "pro_membership",
                 "reward_days": REFERRAL_REWARD_DAYS
-            }).eq("referrer_id", referrer_id).eq("status", "completed").execute()
+            })
             
             # Update referral count
-            client.table("user_profiles").update({
+            client.table("user_profiles").eq("id", referrer_id).update({
                 "referral_count": count
-            }).eq("id", referrer_id).execute()
+            })
             
             logger.info(f"Awarded {REFERRAL_REWARD_DAYS} days pro to referrer {referrer_id}")
             return True
@@ -692,10 +692,10 @@ async def grant_pro_membership(user_id: str, days: int, reason: str) -> bool:
             new_expiry = datetime.utcnow() + timedelta(days=days)
         
         # Update user
-        client.table("user_profiles").update({
+        client.table("user_profiles").eq("id", user_id).update({
             "membership_tier": "pro",
             "tier_expires_at": new_expiry.isoformat()
-        }).eq("id", user_id).execute()
+        })
         
         # Create subscription record
         pro_package = client.table("subscription_packages")\
@@ -755,10 +755,10 @@ async def check_feature_access(user_id: str, feature: str) -> Tuple[bool, Option
             expiry = datetime.fromisoformat(user.data["tier_expires_at"].replace("Z", "+00:00"))
             if datetime.now(expiry.tzinfo) > expiry:
                 # Tier expired, downgrade to free
-                client.table("user_profiles").update({
+                client.table("user_profiles").eq("id", user_id).update({
                     "membership_tier": "free",
                     "tier_expires_at": None
-                }).eq("id", user_id).execute()
+                })
                 tier = "free"
         
         # Feature access matrix
@@ -803,14 +803,13 @@ async def track_claude_usage(user_id: str, endpoint: str, tokens: int, cost: flo
         }).execute()
         
         # Update user total
-        client.table("user_profiles").update({
-            "total_claude_calls": client.table("user_profiles")
-                .select("total_claude_calls")
-                .eq("id", user_id)
-                .single()
-                .execute()
-                .data.get("total_claude_calls", 0) + 1
-        }).eq("id", user_id).execute()
+        current = client.table("user_profiles").select("total_claude_calls").eq("id", user_id).execute()
+        current_count = 0
+        if current.get("data") and len(current["data"]) > 0:
+            current_count = current["data"][0].get("total_claude_calls", 0) or 0
+        client.table("user_profiles").eq("id", user_id).update({
+            "total_claude_calls": current_count + 1
+        })
         
         return True
         

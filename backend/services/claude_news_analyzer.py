@@ -302,7 +302,7 @@ async def update_claude_analysis(
         return False
     
     try:
-        client.table("news_cache").update({
+        client.table("news_cache").eq("headline_hash", headline_hash).update({
             "claude_analyzed": True,
             "claude_analyzed_at": datetime.utcnow().isoformat(),
             "claude_sentiment": analysis.sentiment,
@@ -312,7 +312,7 @@ async def update_claude_analysis(
             "claude_key_entities": analysis.key_entities,
             "claude_rationale": analysis.rationale,
             "claude_override_signal": analysis.override_signal,
-        }).eq("headline_hash", headline_hash).execute()
+        })
         
         return True
     except Exception as e:
