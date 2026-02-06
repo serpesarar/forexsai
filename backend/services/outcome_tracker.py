@@ -325,14 +325,16 @@ async def check_pending_outcomes(check_interval: str = "24h") -> List[Dict[str, 
             ).eq("check_interval", check_interval).execute()
             
             if existing.get("data"):
+                # Already has outcome for this interval - mark as checked if not already
+                await mark_prediction_checked(pred["id"])
                 continue
             
             outcome = await check_prediction_outcome(pred, check_interval)
             if outcome:
                 outcomes.append(outcome)
             
-            if check_interval == "24h":
-                await mark_prediction_checked(pred["id"])
+            # Mark as checked for all intervals (not just 24h)
+            await mark_prediction_checked(pred["id"])
         
         return outcomes
         

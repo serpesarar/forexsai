@@ -12,6 +12,7 @@ from database.supabase_client import is_db_available, get_init_error
 from services.prediction_logger import get_recent_predictions
 from services.outcome_tracker import (
     check_pending_outcomes,
+    check_prediction_outcome,
     get_accuracy_summary,
     get_multi_target_accuracy,
     check_multi_target_outcome,
