@@ -26,12 +26,23 @@ logger = logging.getLogger(__name__)
 
 
 def _sanitize_for_json(obj):
-    """Recursively replace NaN/Inf float values with None for JSON serialization."""
+    """Recursively convert numpy types and NaN/Inf to JSON-safe Python types."""
     import math
     if isinstance(obj, dict):
-        return {k: _sanitize_for_json(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
+        return {str(k): _sanitize_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
         return [_sanitize_for_json(v) for v in obj]
+    elif isinstance(obj, np.ndarray):
+        return [_sanitize_for_json(v) for v in obj.tolist()]
+    elif isinstance(obj, (np.integer,)):
+        return int(obj)
+    elif isinstance(obj, (np.floating,)):
+        val = float(obj)
+        if math.isnan(val) or math.isinf(val):
+            return 0.0
+        return val
+    elif isinstance(obj, (np.bool_,)):
+        return bool(obj)
     elif isinstance(obj, float):
         if math.isnan(obj) or math.isinf(obj):
             return 0.0
@@ -1660,6 +1671,9 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
                 "correlation": asdict(correlation_data) if correlation_data else None
             })
         }
+    
+    # Sanitize entire result for JSON serialization (numpy types, NaN, Inf)
+    result = _sanitize_for_json(result)
     
     # Cache result
     with _cache_lock:
