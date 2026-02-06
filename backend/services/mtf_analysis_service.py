@@ -17,8 +17,12 @@ from typing import List, Literal, Optional, Dict, Any
 from threading import Lock
 import numpy as np
 
+import logging
+
 from services.data_fetcher import fetch_eod_candles, fetch_intraday_candles, fetch_latest_price
 from services.technical_indicators import calculate_ema, calculate_rsi, calculate_atr
+
+logger = logging.getLogger(__name__)
 
 
 # Cache for MTF analysis results
@@ -238,9 +242,17 @@ def _ema(values: np.ndarray, period: int) -> float:
     """
     Calculate EMA using TradingView standard.
     First EMA = SMA of first `period` values, then apply EMA formula.
+    If insufficient data for the period, use SMA of all available data.
     """
     result = calculate_ema(values, period)
-    return float(result) if result is not None else (float(values[-1]) if len(values) else 0.0)
+    if result is not None:
+        return float(result)
+    # Insufficient candles for this EMA period - use SMA of available data
+    # This is more accurate than returning current price
+    if len(values) > 0:
+        logger.warning(f"EMA{period}: only {len(values)} candles (need {period}), using SMA fallback")
+        return float(np.mean(values))
+    return 0.0
 
 
 def _sma(values: np.ndarray, period: int) -> float:
@@ -1067,9 +1079,15 @@ def _analyze_timeframe(
     """Analyze a single timeframe"""
     
     # EMA calculations
+    logger.info(f"[EMA DEBUG] {symbol} {timeframe}: {len(closes)} candles, "
+                f"last_close={closes[-1]:.2f}, current_price={current_price:.2f}")
+    
     ema20 = _ema(closes, 20)
     ema50 = _ema(closes, 50)
     ema200 = _ema(closes, 200)
+    
+    logger.info(f"[EMA DEBUG] {symbol} {timeframe}: EMA20={ema20:.2f}, EMA50={ema50:.2f}, "
+                f"EMA200={ema200:.2f} (candles={len(closes)})")
     
     ema20_dist = (current_price - ema20) / pip_value
     ema50_dist = (current_price - ema50) / pip_value
@@ -1354,11 +1372,11 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
     
     timeframe_configs = {
         "M1": {"lookback": 50, "candles": 300},
-        "M5": {"lookback": 50, "candles": 300},
-        "M15": {"lookback": 60, "candles": 300},
-        "M30": {"lookback": 60, "candles": 250},
-        "H1": {"lookback": 100, "candles": 250},
-        "H4": {"lookback": 100, "candles": 200},
+        "M5": {"lookback": 50, "candles": 500},
+        "M15": {"lookback": 60, "candles": 500},
+        "M30": {"lookback": 60, "candles": 300},
+        "H1": {"lookback": 100, "candles": 500},
+        "H4": {"lookback": 100, "candles": 300},
         "D1": {"lookback": 220, "candles": 300},
     }
     
@@ -1413,6 +1431,9 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
         if closes is None or len(closes) < 20:
             return {"success": False, "error": f"Could not fetch data for {timeframe}"}
         
+        logger.info(f"[MTF] {symbol} {timeframe}: Got {len(closes)} candles, "
+                     f"first_close={closes[0]:.2f}, last_close={closes[-1]:.2f}")
+        
         # Pass ALL candles to _analyze_timeframe so EMA200 gets enough data.
         # The function internally handles lookback for swing/SR detection only.
         analysis = _analyze_timeframe(
@@ -1430,7 +1451,16 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
             "symbol": symbol,
             "timeframe": timeframe,
             "timestamp": datetime.utcnow().isoformat(),
-            "analysis": asdict(analysis)
+            "analysis": asdict(analysis),
+            "debug": {
+                "candle_count": len(closes),
+                "first_close": round(float(closes[0]), 2),
+                "last_close": round(float(closes[-1]), 2),
+                "current_price": current_price,
+                "ema20_has_full_data": len(closes) >= 20,
+                "ema50_has_full_data": len(closes) >= 50,
+                "ema200_has_full_data": len(closes) >= 200,
+            }
         }
     else:
         # All timeframes + MTF confluence

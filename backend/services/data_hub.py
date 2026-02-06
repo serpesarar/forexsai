@@ -140,6 +140,16 @@ async def _fetch_candles_from_api(symbol: str, interval: str, limit: int = 500) 
     if not settings.eodhd_api_key:
         return []
     eod_symbol = _normalize_symbol(symbol)
+    
+    # Calculate how far back we need to go based on interval and limit
+    # EODHD requires 'from' param for historical intraday data
+    import math
+    candles_per_day = {"5m": 78, "1h": 7, "1m": 390}.get(interval, 78)
+    trading_days_needed = math.ceil(limit / max(candles_per_day, 1))
+    # Add buffer for weekends/holidays (multiply by 1.6)
+    calendar_days = max(int(trading_days_needed * 1.6) + 5, 7)
+    from_ts = int((datetime.utcnow() - __import__('datetime').timedelta(days=calendar_days)).timestamp())
+    
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(
@@ -148,6 +158,7 @@ async def _fetch_candles_from_api(symbol: str, interval: str, limit: int = 500) 
                     "api_token": settings.eodhd_api_key,
                     "fmt": "json",
                     "interval": interval,
+                    "from": from_ts,
                 },
             )
             if resp.status_code == 402:
@@ -175,6 +186,7 @@ async def _fetch_candles_from_api(symbol: str, interval: str, limit: int = 500) 
                     "close": float(row.get("close") or 0.0),
                     "volume": float(row.get("volume") or 0.0),
                 })
+            logger.info(f"[DataHub] Fetched {len(cleaned)} {interval} candles for {symbol} (requested {limit}, from {calendar_days}d ago)")
             return cleaned[-limit:]
     except Exception as e:
         logger.debug(f"Candle fetch failed for {symbol} {interval}: {e}")
@@ -290,7 +302,7 @@ async def _pump_cycle():
         
         # ── 5m candles (every 5min) ──
         if _should_fetch(f"5m:{symbol}", CANDLE_5M_INTERVAL):
-            candles = await _fetch_candles_from_api(symbol, "5m", limit=500)
+            candles = await _fetch_candles_from_api(symbol, "5m", limit=1500)
             if candles:
                 with _lock:
                     _candles_5m[symbol] = {"candles": candles, "timestamp": now_ts}
@@ -299,7 +311,7 @@ async def _pump_cycle():
         
         # ── 1h candles (every 5min) ──
         if _should_fetch(f"1h:{symbol}", CANDLE_1H_INTERVAL):
-            candles = await _fetch_candles_from_api(symbol, "1h", limit=500)
+            candles = await _fetch_candles_from_api(symbol, "1h", limit=1000)
             if candles:
                 with _lock:
                     _candles_1h[symbol] = {"candles": candles, "timestamp": now_ts}
