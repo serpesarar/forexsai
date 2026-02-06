@@ -29,7 +29,7 @@ interface LiveChartPanelProps {
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
-const TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h"] as const;
+const TIMEFRAMES = ["5m", "15m", "1h", "4h"] as const;
 type TimeframeType = (typeof TIMEFRAMES)[number];
 
 async function fetchChartData(symbol: string, timeframe: string): Promise<CandleData[]> {
@@ -113,7 +113,7 @@ export default function LiveChartPanel({
     };
     
     fetchPrice();
-    const interval = setInterval(fetchPrice, 2000);
+    const interval = setInterval(fetchPrice, 5000);
     return () => clearInterval(interval);
   }, [symbol]);
 

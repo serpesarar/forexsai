@@ -88,7 +88,7 @@ export default function PulsePanel({ symbol, onSwitchMode }: PulsePanelProps) {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000); // Her 5 saniyede güncelle
+    const interval = setInterval(fetchData, 30000); // Her 30 saniyede güncelle
     return () => clearInterval(interval);
   }, [symbol, timeframe]);
 
@@ -137,7 +137,6 @@ export default function PulsePanel({ symbol, onSwitchMode }: PulsePanelProps) {
               onChange={(e) => setTimeframe(e.target.value)}
               className="bg-gray-800 text-white text-sm px-3 py-1.5 rounded-lg border border-gray-700"
             >
-              <option value="1m">1m</option>
               <option value="5m">5m</option>
               <option value="15m">15m</option>
             </select>

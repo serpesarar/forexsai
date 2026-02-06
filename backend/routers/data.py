@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Literal
 
 from fastapi import APIRouter, Query
 
-from services.data_fetcher import fetch_eod_candles, fetch_latest_price
+from services.data_fetcher import fetch_eod_candles, fetch_latest_price, fetch_ohlc_data
 from services.ta_service import compute_ta_snapshot
 
 
@@ -13,9 +13,15 @@ router = APIRouter(prefix="/api/data", tags=["data"])
 
 
 def _date_to_ms(date_str: str) -> int:
-    # Expect YYYY-MM-DD; interpret as UTC midnight
-    dt = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-    return int(dt.timestamp() * 1000)
+    # Expect YYYY-MM-DD or YYYY-MM-DD HH:MM:SS; interpret as UTC
+    try:
+        if " " in date_str:
+            dt = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+        else:
+            dt = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        return int(dt.timestamp() * 1000)
+    except Exception:
+        return 0
 
 
 @router.get("/ohlcv")
@@ -26,23 +32,30 @@ async def ohlcv(
 ) -> Dict[str, Any]:
     """
     Chart data endpoint used by frontend `useChartData`.
-    Note: Some EODHD plans don't allow intraday; we serve daily candles for all timeframes.
+    Returns proper intraday data for 5m/15m/1h/4h timeframes via DataHub.
+    Falls back to EOD for daily timeframe.
     """
-    # Daily candles
-    rows = await fetch_eod_candles(symbol, limit=limit)
+    tf_lower = timeframe.lower()
+    
+    # Use fetch_ohlc_data which reads from DataHub first (0 API calls)
+    rows = await fetch_ohlc_data(symbol, timeframe=tf_lower, limit=limit)
+    
     data: List[Dict[str, Any]] = []
     for r in rows:
-        ds = r.get("date") or ""
-        if not ds:
-            continue
+        # Handle both intraday (datetime) and EOD (date) formats
+        ts = r.get("timestamp", 0)
+        if not ts:
+            ds = r.get("date") or r.get("datetime") or ""
+            if ds:
+                ts = _date_to_ms(ds)
         data.append(
             {
-                "timestamp": _date_to_ms(ds),
-                "open": r["open"],
-                "high": r["high"],
-                "low": r["low"],
-                "close": r["close"],
-                "volume": r.get("volume") or 0.0,
+                "timestamp": ts,
+                "open": float(r.get("open", 0)),
+                "high": float(r.get("high", 0)),
+                "low": float(r.get("low", 0)),
+                "close": float(r.get("close", 0)),
+                "volume": float(r.get("volume", 0)),
             }
         )
 
