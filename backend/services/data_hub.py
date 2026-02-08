@@ -1,28 +1,33 @@
 """
-DataHub - Centralized Market Data Store
-=======================================
+DataHub - Centralized Market Data Store with Persistent Cache
+=============================================================
 Single source of truth for all market data in the system.
 
-Architecture:
-  EODHD API → DataHub (in-memory) → All services read from here
+Architecture (v2 - Persistent Cache):
+  Startup:  Supabase (candle_cache) → DataHub (in-memory)
+  Running:  EODHD API (delta only) → DataHub (in-memory) → persist to Supabase
+  Restart:  Load from Supabase (0 API calls) → fetch only new candles
 
-Fetch schedule:
-  - Real-time price: every 5s per symbol (1 API call each = 2/cycle)
-  - 5m candles: every 5min per symbol (5 API calls each = 10/cycle)
-  - 1h candles: every 5min per symbol (5 API calls each = 10/cycle)  
-  - EOD candles: every 30min per symbol (5 API calls each = 10/cycle)
+Fetch schedule (after initial seed):
+  - Real-time price: every 30s per symbol (1 API call each)
+  - 5m candles: every 5min, DELTA only (24 candles = ~2h)
+  - 1h candles: every 5min, DELTA only (6 candles = ~6h)
+  - EOD candles: every 30min, DELTA only (5 candles = ~5 days)
 
 Derived (computed, 0 API calls):
   - 15m candles: resampled from 5m (3x)
   - 30m candles: resampled from 5m (6x)
   - 4h candles: resampled from 1h (4x)
 
-Daily API budget estimate (HEAVILY OPTIMIZED):
-  Price: 2 symbols × 1 call × 2/min × 60min × 24h = 5,760 calls (was 5s→30s)
-  5m:    2 symbols × 5 calls × 12/hour × 24h = 2,880 calls (was 1500→500)
-  1h:    2 symbols × 5 calls × 12/hour × 24h = 2,880 calls (was 1000→500)
-  EOD:   2 symbols × 5 calls × 2/hour × 24h = 480 calls (was 300→100)
-  TOTAL: ~12,000 / 100,000 limit (12% usage) - MUCH BETTER!
+Daily API budget (after first seed):
+  Price: 2 symbols × 1 call × 2/min × 60min × 24h = 5,760 calls
+  5m:    2 symbols × 1 call × 12/hour × 24h = 576 calls (delta=24 candles)
+  1h:    2 symbols × 1 call × 12/hour × 24h = 576 calls (delta=6 candles)
+  EOD:   2 symbols × 1 call × 2/hour × 24h = 96 calls (delta=5 candles)
+  TOTAL: ~7,000 / 100,000 limit (7% usage)
+
+  First-time seed (one-time): ~20 extra calls for full history
+  Subsequent days: only delta → 93% reduction vs original design
 """
 
 from __future__ import annotations
@@ -287,12 +292,59 @@ def _mark_fetched(key: str):
     _last_fetch[key] = datetime.utcnow().timestamp()
 
 
+# Track whether initial seed has been done (first fetch = full, subsequent = delta)
+_initial_seed_done: Dict[str, bool] = {}
+
+# Delta fetch limits (much smaller than full seed)
+DELTA_LIMIT_5M = 24      # ~2 hours of 5m candles
+DELTA_LIMIT_1H = 6        # ~6 hours of 1h candles
+DELTA_LIMIT_EOD = 5       # ~5 days of EOD candles
+FULL_SEED_LIMIT_5M = 500  # Full seed: ~41 hours
+FULL_SEED_LIMIT_1H = 500  # Full seed: ~20 days
+FULL_SEED_LIMIT_EOD = 100 # Full seed: ~100 days
+
+
+def _persist_async(symbol: str, timeframe: str, candles: List[Dict]):
+    """Persist candles to Supabase in background (non-blocking)."""
+    try:
+        from services.candle_cache_store import persist_candles
+        persist_candles(symbol, timeframe, candles)
+    except Exception as e:
+        logger.debug(f"Persist failed for {symbol}/{timeframe}: {e}")
+
+
+def _merge_candles(existing: List[Dict], new_candles: List[Dict], limit: int) -> List[Dict]:
+    """Merge new candles into existing, deduplicate by timestamp, keep latest `limit`."""
+    if not new_candles:
+        return existing
+    if not existing:
+        return new_candles[-limit:]
+    
+    # Build a dict keyed by timestamp for dedup
+    merged = {}
+    for c in existing:
+        key = c.get("timestamp") or c.get("date", "")
+        if key:
+            merged[key] = c
+    for c in new_candles:
+        key = c.get("timestamp") or c.get("date", "")
+        if key:
+            merged[key] = c  # New data overwrites old
+    
+    # Sort by timestamp ascending and trim
+    result = sorted(merged.values(), key=lambda x: x.get("timestamp", 0) or 0)
+    return result[-limit:]
+
+
 async def _pump_cycle():
     """One pump cycle: fetch what's due, rebuild derived data."""
     now_ts = datetime.utcnow().timestamp()
     
     for symbol in TRACKED_SYMBOLS:
-        # ── Price (every 5s) ──
+        seed_key = symbol
+        is_seeded = _initial_seed_done.get(seed_key, False)
+        
+        # ── Price (every 30s) ──
         if _should_fetch(f"price:{symbol}", PRICE_INTERVAL):
             price = await _fetch_price_from_api(symbol)
             if price is not None:
@@ -302,29 +354,45 @@ async def _pump_cycle():
         
         # ── 5m candles (every 5min) ──
         if _should_fetch(f"5m:{symbol}", CANDLE_5M_INTERVAL):
-            candles = await _fetch_candles_from_api(symbol, "5m", limit=500)
+            fetch_limit = FULL_SEED_LIMIT_5M if not is_seeded else DELTA_LIMIT_5M
+            candles = await _fetch_candles_from_api(symbol, "5m", limit=fetch_limit)
             if candles:
                 with _lock:
-                    _candles_5m[symbol] = {"candles": candles, "timestamp": now_ts}
+                    existing = (_candles_5m.get(symbol) or {}).get("candles", [])
+                    merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_5M)
+                    _candles_5m[symbol] = {"candles": merged, "timestamp": now_ts}
                     _rebuild_derived(symbol)
                 _mark_fetched(f"5m:{symbol}")
+                _persist_async(symbol, "5m", candles)
         
         # ── 1h candles (every 5min) ──
         if _should_fetch(f"1h:{symbol}", CANDLE_1H_INTERVAL):
-            candles = await _fetch_candles_from_api(symbol, "1h", limit=500)
+            fetch_limit = FULL_SEED_LIMIT_1H if not is_seeded else DELTA_LIMIT_1H
+            candles = await _fetch_candles_from_api(symbol, "1h", limit=fetch_limit)
             if candles:
                 with _lock:
-                    _candles_1h[symbol] = {"candles": candles, "timestamp": now_ts}
+                    existing = (_candles_1h.get(symbol) or {}).get("candles", [])
+                    merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_1H)
+                    _candles_1h[symbol] = {"candles": merged, "timestamp": now_ts}
                     _rebuild_derived(symbol)
                 _mark_fetched(f"1h:{symbol}")
+                _persist_async(symbol, "1h", candles)
         
         # ── EOD candles (every 30min) ──
         if _should_fetch(f"eod:{symbol}", CANDLE_EOD_INTERVAL):
-            candles = await _fetch_eod_from_api(symbol, limit=100)
+            fetch_limit = FULL_SEED_LIMIT_EOD if not is_seeded else DELTA_LIMIT_EOD
+            candles = await _fetch_eod_from_api(symbol, limit=fetch_limit)
             if candles:
                 with _lock:
-                    _candles_eod[symbol] = {"candles": candles, "timestamp": now_ts}
+                    existing = (_candles_eod.get(symbol) or {}).get("candles", [])
+                    merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_EOD)
+                    _candles_eod[symbol] = {"candles": merged, "timestamp": now_ts}
                 _mark_fetched(f"eod:{symbol}")
+                _persist_async(symbol, "eod", candles)
+        
+        # Mark this symbol as seeded after first full cycle
+        if not is_seeded:
+            _initial_seed_done[seed_key] = True
     
     # ── Macro data (every 5min) ──
     if _should_fetch("macro", MACRO_INTERVAL):
@@ -334,6 +402,54 @@ async def _pump_cycle():
                 with _lock:
                     _macro_data[key] = {"symbol": sym, "price": price, "timestamp": now_ts}
         _mark_fetched("macro")
+
+
+def _load_from_persistent_cache():
+    """Load historical candles from Supabase into memory on startup."""
+    try:
+        from services.candle_cache_store import load_candles
+    except Exception as e:
+        logger.warning(f"Candle cache store not available: {e}")
+        return
+    
+    now_ts = datetime.utcnow().timestamp()
+    loaded_any = False
+    
+    for symbol in TRACKED_SYMBOLS:
+        # Load 5m candles
+        cached_5m = load_candles(symbol, "5m", limit=FULL_SEED_LIMIT_5M)
+        if cached_5m:
+            with _lock:
+                _candles_5m[symbol] = {"candles": cached_5m, "timestamp": now_ts}
+                _rebuild_derived(symbol)
+            loaded_any = True
+            logger.info(f"[DataHub] Loaded {len(cached_5m)} cached 5m candles for {symbol}")
+        
+        # Load 1h candles
+        cached_1h = load_candles(symbol, "1h", limit=FULL_SEED_LIMIT_1H)
+        if cached_1h:
+            with _lock:
+                _candles_1h[symbol] = {"candles": cached_1h, "timestamp": now_ts}
+                _rebuild_derived(symbol)
+            loaded_any = True
+            logger.info(f"[DataHub] Loaded {len(cached_1h)} cached 1h candles for {symbol}")
+        
+        # Load EOD candles
+        cached_eod = load_candles(symbol, "eod", limit=FULL_SEED_LIMIT_EOD)
+        if cached_eod:
+            with _lock:
+                _candles_eod[symbol] = {"candles": cached_eod, "timestamp": now_ts}
+            loaded_any = True
+            logger.info(f"[DataHub] Loaded {len(cached_eod)} cached EOD candles for {symbol}")
+        
+        # If we loaded cached data, mark as seeded so pump only fetches delta
+        if cached_5m or cached_1h or cached_eod:
+            _initial_seed_done[symbol] = True
+    
+    if loaded_any:
+        logger.info("[DataHub] Persistent cache loaded — will only fetch delta from EODHD")
+    else:
+        logger.info("[DataHub] No persistent cache found — will do full seed from EODHD")
 
 
 async def start_data_hub():
@@ -346,9 +462,11 @@ async def start_data_hub():
     _hub_running = True
     logger.info("DataHub started - centralized market data pump")
     
-    # Initial fetch for all data
+    # ── Step 1: Load from persistent cache (Supabase) ──
+    _load_from_persistent_cache()
+    
+    # ── Step 2: Reset fetch timestamps to trigger immediate delta fetch ──
     for symbol in TRACKED_SYMBOLS:
-        _mark_fetched(f"price:{symbol}")  # Will be reset below
         _last_fetch[f"price:{symbol}"] = 0
         _last_fetch[f"5m:{symbol}"] = 0
         _last_fetch[f"1h:{symbol}"] = 0
@@ -449,5 +567,12 @@ def get_hub_status() -> Dict[str, Any]:
             "candles_eod": {s: len(_candles_eod.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
             "macro": {k: v.get("price") for k, v in _macro_data.items()},
             "last_fetch": {k: datetime.fromtimestamp(v).isoformat() for k, v in _last_fetch.items()},
+            "seeded_from_cache": dict(_initial_seed_done),
         }
+    # Add persistent cache stats
+    try:
+        from services.candle_cache_store import get_cache_stats
+        status["persistent_cache"] = get_cache_stats()
+    except Exception:
+        status["persistent_cache"] = {"available": False}
     return status

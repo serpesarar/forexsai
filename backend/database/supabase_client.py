@@ -118,6 +118,24 @@ class TableQuery:
             logger.error(f"Supabase insert error: {e}")
             return {"data": None, "error": str(e)}
     
+    def upsert(self, data, on_conflict: str = "") -> Dict[str, Any]:
+        """Insert or update rows. data can be a dict (single) or list of dicts (bulk)."""
+        try:
+            headers = {**self.client.headers, "Prefer": "return=representation,resolution=merge-duplicates"}
+            if on_conflict:
+                headers["Prefer"] = f"return=representation,resolution=merge-duplicates"
+            with httpx.Client(timeout=60.0) as client:
+                url = f"{self.client.url}/rest/v1/{self.table_name}"
+                if on_conflict:
+                    url += f"?on_conflict={on_conflict}"
+                payload = data if isinstance(data, list) else [data]
+                response = client.post(url, json=payload, headers=headers)
+                response.raise_for_status()
+                return {"data": response.json(), "error": None}
+        except Exception as e:
+            logger.error(f"Supabase upsert error: {e}")
+            return {"data": None, "error": str(e)}
+
     def update(self, data: Dict[str, Any]) -> Dict[str, Any]:
         try:
             with httpx.Client(timeout=30.0) as client:
