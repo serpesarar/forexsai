@@ -17,12 +17,12 @@ Derived (computed, 0 API calls):
   - 30m candles: resampled from 5m (6x)
   - 4h candles: resampled from 1h (4x)
 
-Daily API budget estimate:
-  Price: 2 symbols × 1 call × 12/min × 60min × 24h = 34,560 calls
-  5m:    2 symbols × 5 calls × 12/hour × 24h = 2,880 calls
-  1h:    2 symbols × 5 calls × 12/hour × 24h = 2,880 calls
-  EOD:   2 symbols × 5 calls × 2/hour × 24h = 480 calls
-  TOTAL: ~40,800 / 100,000 limit (41% usage)
+Daily API budget estimate (HEAVILY OPTIMIZED):
+  Price: 2 symbols × 1 call × 2/min × 60min × 24h = 5,760 calls (was 5s→30s)
+  5m:    2 symbols × 5 calls × 12/hour × 24h = 2,880 calls (was 1500→500)
+  1h:    2 symbols × 5 calls × 12/hour × 24h = 2,880 calls (was 1000→500)
+  EOD:   2 symbols × 5 calls × 2/hour × 24h = 480 calls (was 300→100)
+  TOTAL: ~12,000 / 100,000 limit (12% usage) - MUCH BETTER!
 """
 
 from __future__ import annotations
@@ -48,7 +48,7 @@ TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD"]
 # ═══════════════════════════════════════════════════════════════
 # FETCH INTERVALS (seconds)
 # ═══════════════════════════════════════════════════════════════
-PRICE_INTERVAL = 5        # Fetch live price every 5 seconds
+PRICE_INTERVAL = 30       # Fetch live price every 30 seconds
 CANDLE_5M_INTERVAL = 300  # Fetch 5m candles every 5 minutes
 CANDLE_1H_INTERVAL = 300  # Fetch 1h candles every 5 minutes
 CANDLE_EOD_INTERVAL = 1800  # Fetch EOD candles every 30 minutes
@@ -302,7 +302,7 @@ async def _pump_cycle():
         
         # ── 5m candles (every 5min) ──
         if _should_fetch(f"5m:{symbol}", CANDLE_5M_INTERVAL):
-            candles = await _fetch_candles_from_api(symbol, "5m", limit=1500)
+            candles = await _fetch_candles_from_api(symbol, "5m", limit=500)
             if candles:
                 with _lock:
                     _candles_5m[symbol] = {"candles": candles, "timestamp": now_ts}
@@ -311,7 +311,7 @@ async def _pump_cycle():
         
         # ── 1h candles (every 5min) ──
         if _should_fetch(f"1h:{symbol}", CANDLE_1H_INTERVAL):
-            candles = await _fetch_candles_from_api(symbol, "1h", limit=1000)
+            candles = await _fetch_candles_from_api(symbol, "1h", limit=500)
             if candles:
                 with _lock:
                     _candles_1h[symbol] = {"candles": candles, "timestamp": now_ts}
@@ -320,7 +320,7 @@ async def _pump_cycle():
         
         # ── EOD candles (every 30min) ──
         if _should_fetch(f"eod:{symbol}", CANDLE_EOD_INTERVAL):
-            candles = await _fetch_eod_from_api(symbol, limit=300)
+            candles = await _fetch_eod_from_api(symbol, limit=100)
             if candles:
                 with _lock:
                     _candles_eod[symbol] = {"candles": candles, "timestamp": now_ts}
