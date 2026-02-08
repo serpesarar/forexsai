@@ -59,35 +59,51 @@ export default function OrderBlockPanelSimple({ symbol = "NDX.INDX", symbolLabel
       {/* Info Modal */}
       {showInfo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowInfo(false)}>
-          <div className="bg-background border border-white/10 rounded-2xl p-6 max-w-lg mx-4 space-y-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-background border border-white/10 rounded-2xl p-6 max-w-lg mx-4 space-y-4 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">{locale === "en" ? "Smart Money Zones Guide" : "Smart Money Bölgeleri Rehberi"}</h3>
+              <h3 className="text-lg font-semibold">{t("orderBlock.infoTitle")}</h3>
               <button onClick={() => setShowInfo(false)} className="p-1 hover:bg-white/10 rounded-full">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="space-y-3 text-sm text-textSecondary">
+              {/* Algorithm Overview */}
+              <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                <p className="font-medium text-purple-400 mb-1">{t("orderBlock.infoAlgoTitle")}</p>
+                <p className="text-xs">{t("orderBlock.infoAlgoDesc")}</p>
+              </div>
               <div className="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
-                <p className="font-medium text-emerald-400 mb-1">{locale === "en" ? "Bullish Order Block (Support)" : "Bullish Order Block (Destek)"}</p>
-                <p>{locale === "en" ? "Zone where institutional buyers entered. Price tends to bounce from these levels. Look for LONG entries when price returns here." : "Kurumsal alıcıların girdiği bölge. Fiyat bu seviyelerden sıçrama eğilimindedir. Fiyat buraya döndüğünde LONG girişi arayın."}</p>
+                <p className="font-medium text-emerald-400 mb-1">{t("orderBlock.infoBullish")}</p>
+                <p>{t("orderBlock.infoBullishDesc")}</p>
               </div>
               <div className="p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-                <p className="font-medium text-red-400 mb-1">{locale === "en" ? "Bearish Order Block (Resistance)" : "Bearish Order Block (Direnç)"}</p>
-                <p>{locale === "en" ? "Zone where institutional sellers entered. Price tends to reject from these levels. Look for SHORT entries when price returns here." : "Kurumsal satıcıların girdiği bölge. Fiyat bu seviyelerden reddedilme eğilimindedir. Fiyat buraya döndüğünde SHORT girişi arayın."}</p>
+                <p className="font-medium text-red-400 mb-1">{t("orderBlock.infoBearish")}</p>
+                <p>{t("orderBlock.infoBearishDesc")}</p>
               </div>
               <div className="p-3 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
                 <p className="font-medium text-cyan-400 mb-1">FVG (Fair Value Gap)</p>
-                <p>{locale === "en" ? "Imbalance zones where price moved too fast. Price often returns to fill these gaps before continuing." : "Fiyatın çok hızlı hareket ettiği dengesizlik bölgeleri. Fiyat genellikle devam etmeden önce bu boşlukları doldurmak için geri döner."}</p>
+                <p>{t("orderBlock.infoFvgDesc")}</p>
               </div>
               <div className="p-3 bg-white/5 rounded-lg">
-                <p className="font-medium text-white mb-1">{locale === "en" ? "Structure Signals" : "Yapı Sinyalleri"}</p>
+                <p className="font-medium text-white mb-1">{t("orderBlock.infoStructure")}</p>
                 <ul className="space-y-1 text-xs">
-                  <li>• <strong>CHoCH:</strong> {locale === "en" ? "Change of Character - potential trend reversal" : "Karakter Değişikliği - potansiyel trend dönüşü"}</li>
-                  <li>• <strong>BOS:</strong> {locale === "en" ? "Break of Structure - trend continuation confirmation" : "Yapı Kırılımı - trend devam teyidi"}</li>
-                  <li>• <strong>{locale === "en" ? "Score" : "Skor"}:</strong> {locale === "en" ? "Higher score = stronger zone (look for 70+)" : "Yüksek skor = güçlü bölge (70+ arayın)"}</li>
+                  <li>• <strong>CHoCH:</strong> {t("orderBlock.infoChochDesc")}</li>
+                  <li>• <strong>BOS:</strong> {t("orderBlock.infoBosDesc")}</li>
+                  <li>• <strong>{t("orderBlock.infoScoreLabel")}:</strong> {t("orderBlock.infoScoreDesc")}</li>
                 </ul>
               </div>
-              <p className="text-xs p-3 bg-white/5 rounded-lg">💡 {locale === "en" ? "Best entries: Price returns to OB + FVG overlap + CHoCH/BOS confirmation = high probability trade." : "En iyi girişler: Fiyat OB'ye döner + FVG örtüşmesi + CHoCH/BOS teyidi = yüksek olasılıklı işlem."}</p>
+              {/* Scoring Algorithm */}
+              <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                <p className="font-medium text-amber-400 mb-1">{t("orderBlock.infoScoringTitle")}</p>
+                <ul className="space-y-1 text-xs">
+                  <li>• {t("orderBlock.infoScoring1")}</li>
+                  <li>• {t("orderBlock.infoScoring2")}</li>
+                  <li>• {t("orderBlock.infoScoring3")}</li>
+                  <li>• {t("orderBlock.infoScoring4")}</li>
+                  <li>• {t("orderBlock.infoScoring5")}</li>
+                </ul>
+              </div>
+              <p className="text-xs p-3 bg-white/5 rounded-lg">💡 {t("orderBlock.infoTip")}</p>
             </div>
           </div>
         </div>

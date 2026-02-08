@@ -20,6 +20,7 @@ import {
   useLearningDashboard,
   usePredictions,
   useMultiTargetDashboard,
+  useAccuracyByModel,
   triggerOutcomeCheck,
   trigger1hOutcomeCheck,
 } from "../lib/api/learning";
@@ -39,6 +40,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
   const { data: dashboard, isLoading: dashboardLoading, refetch } = useLearningDashboard(symbol, days);
   const { data: multiTarget, refetch: refetchMulti } = useMultiTargetDashboard(symbol, days);
   const { data: predictions } = usePredictions(symbol, 10);
+  const { data: modelAccuracy } = useAccuracyByModel(symbol, days);
 
   // Auto-check outcomes on mount and every 5 minutes
   useEffect(() => {
@@ -272,6 +274,74 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
                     {t("learningDashboard.equalPerformance")}
                   </span>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Per-Model Accuracy Breakdown */}
+          {modelAccuracy?.models && modelAccuracy.models.length > 0 && (
+            <div className="bg-zinc-800/50 rounded-lg p-4">
+              <div className="text-sm font-medium text-zinc-300 mb-3 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-cyan-400" />
+                {t("learningDashboard.modelBreakdown")}
+              </div>
+              <div className="space-y-3">
+                {modelAccuracy.models.map((model) => {
+                  const strategyLabel = {
+                    EMEL: "EMEL (9-Check)",
+                    PULSE: "Pulse 1 (Algo)",
+                    PULSE_ML: "Pulse 2 (ML+TA)",
+                    PULSE_V3: "Pulse 3 (Hybrid)",
+                  }[model.strategy] || model.strategy;
+                  const strategyColor = {
+                    EMEL: "text-amber-400",
+                    PULSE: "text-blue-400",
+                    PULSE_ML: "text-purple-400",
+                    PULSE_V3: "text-cyan-400",
+                  }[model.strategy] || "text-zinc-400";
+                  const barColor = {
+                    EMEL: "bg-amber-500",
+                    PULSE: "bg-blue-500",
+                    PULSE_ML: "bg-purple-500",
+                    PULSE_V3: "bg-cyan-500",
+                  }[model.strategy] || "bg-zinc-500";
+
+                  return (
+                    <div key={model.strategy} className="bg-zinc-800 rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`text-xs font-semibold ${strategyColor}`}>{strategyLabel}</span>
+                        <span className="text-[10px] text-zinc-500">{model.total_predictions} {t("learningDashboard.predictions")}</span>
+                      </div>
+                      {/* ML Accuracy Bar */}
+                      <div className="mb-1.5">
+                        <div className="flex justify-between text-[10px] mb-0.5">
+                          <span className="text-zinc-400">ML</span>
+                          <span className={model.ml_accuracy !== null ? getAccuracyColor(model.ml_accuracy) : "text-zinc-500"}>
+                            {model.ml_accuracy !== null ? `${(model.ml_accuracy * 100).toFixed(1)}%` : "—"}
+                            {model.ml_accuracy !== null && ` (${model.ml_correct}/${model.with_outcome})`}
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+                          <div className={`h-full ${barColor} rounded-full transition-all duration-500`} style={{ width: `${(model.ml_accuracy || 0) * 100}%` }} />
+                        </div>
+                      </div>
+                      {/* Target Hit Rate */}
+                      {model.target_hit_rate !== null && (
+                        <div>
+                          <div className="flex justify-between text-[10px] mb-0.5">
+                            <span className="text-zinc-400">{t("learningDashboard.targetHit")}</span>
+                            <span className={getAccuracyColor(model.target_hit_rate || 0)}>
+                              {(model.target_hit_rate * 100).toFixed(1)}% ({model.target_hits}/{model.with_outcome})
+                            </span>
+                          </div>
+                          <div className="h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+                            <div className={`h-full bg-green-500 rounded-full transition-all duration-500`} style={{ width: `${(model.target_hit_rate || 0) * 100}%` }} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

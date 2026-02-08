@@ -30,7 +30,7 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         # Get market data
         ohlcv = await get_ohlcv_data(symbol, timeframe, limit=250)
         if not ohlcv or len(ohlcv) < 50:
-            return {"error": "Yetersiz veri"}
+            return {"error": "Insufficient data"}
         
         # Convert to numpy arrays - CRITICAL for correct EMA calculation
         closes = np.array([c["close"] for c in ohlcv], dtype=np.float64)
@@ -583,7 +583,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         # Get market data - 100 bar (EMA20 için yeterli)
         ohlcv = await get_ohlcv_data(symbol, timeframe, limit=100)
         if not ohlcv or len(ohlcv) < 20:
-            return {"error": "Yetersiz veri"}
+            return {"error": "Insufficient data"}
         
         closes = np.array([c["close"] for c in ohlcv], dtype=np.float64)
         highs = np.array([c["high"] for c in ohlcv], dtype=np.float64)
@@ -778,24 +778,24 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         # ─── FİLTRELER ────────────────────────────────────────────────────
         # R/R minimum 1.2 (eskiden 1.5 idi - çok katıydı)
         if pulse_signal in ["BUY", "SELL"] and rr_ratio < 1.2:
-            decision_notes.append(f"R/R düşük ({rr_ratio:.2f} < 1.2)")
+            decision_notes.append(f"R/R low ({rr_ratio:.2f} < 1.2)")
             if signal_type == "CONFIRM":
-                signal_type = "SCOUT"  # CONFIRM → SCOUT düşür, tamamen iptal etme
+                signal_type = "SCOUT"  # CONFIRM → SCOUT downgrade
             else:
                 pulse_signal = "HOLD"
                 signal_type = "HOLD"
         
         # RSI aşırı bölge filtresi
         if pulse_signal == "BUY" and rsi_14 > 78:
-            decision_notes.append(f"Aşırı alım riski (RSI: {rsi_14:.1f})")
+            decision_notes.append(f"Overbought risk (RSI: {rsi_14:.1f})")
             signal_type = "SCOUT"
         elif pulse_signal == "SELL" and rsi_14 < 22:
-            decision_notes.append(f"Aşırı satım riski (RSI: {rsi_14:.1f})")
+            decision_notes.append(f"Oversold risk (RSI: {rsi_14:.1f})")
             signal_type = "SCOUT"
         
         # Hacim notu (iptal değil, bilgi)
         if pulse_signal in ["BUY", "SELL"] and volume_status == "low":
-            decision_notes.append("Düşük hacim - dikkatli ol")
+            decision_notes.append("Low volume - be cautious")
         
         # ─── SUGGESTION ───────────────────────────────────────────────────
         rsi_trend = "up" if rsi_14 > 50 else "down" if rsi_14 < 50 else "neutral"
@@ -804,21 +804,21 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         
         if signal_type == "CONFIRM":
             if pulse_signal == "BUY":
-                suggestion_text = f"🟢 Güçlü AL sinyali (skor: {score:.0f}). Hedef: {r1:.0f}, Stop: {s1:.0f}"
+                suggestion_text = f"🟢 Strong BUY signal (score: {score:.0f}). Target: {r1:.0f}, Stop: {s1:.0f}"
             else:
-                suggestion_text = f"🔴 Güçlü SAT sinyali (skor: {score:.0f}). Hedef: {s1:.0f}, Stop: {r1:.0f}"
+                suggestion_text = f"🔴 Strong SELL signal (score: {score:.0f}). Target: {s1:.0f}, Stop: {r1:.0f}"
         elif signal_type == "SCOUT":
             if pulse_signal == "BUY":
-                suggestion_text = f"👀 Yukarı momentum oluşuyor (skor: {score:.0f}). {s1:.0f} üzerinde kal, güçlenirse değerlendir."
+                suggestion_text = f"👀 Bullish momentum building (score: {score:.0f}). Hold above {s1:.0f}, consider if strengthens."
             elif pulse_signal == "SELL":
-                suggestion_text = f"👀 Aşağı momentum oluşuyor (skor: {score:.0f}). {r1:.0f} altında kal, güçlenirse değerlendir."
+                suggestion_text = f"👀 Bearish momentum building (score: {score:.0f}). Hold below {r1:.0f}, consider if strengthens."
             else:
-                suggestion_text = f"👀 İzleme modu (skor: {score:.0f}). Yön netleşmedi."
+                suggestion_text = f"👀 Watch mode (score: {score:.0f}). Direction unclear."
         else:
-            suggestion_text = f"⏱️ Bekleme modu (skor: {score:.0f}). Güçlü trend oluşumu yok."
+            suggestion_text = f"⏱️ Hold mode (score: {score:.0f}). No strong trend formation."
         
         if decision_notes:
-            suggestion_text += f" | Notlar: {', '.join(decision_notes)}"
+            suggestion_text += f" | Notes: {', '.join(decision_notes)}"
         
         # ─── LEARNING ENTEGRASYONU ────────────────────────────────────────
         if pulse_signal in ["BUY", "SELL"] and signal_type == "CONFIRM":
@@ -934,7 +934,7 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
         # 1. Market Data
         ohlcv = await get_ohlcv_data(symbol, timeframe, limit=200)
         if not ohlcv or len(ohlcv) < 50:
-            return {"error": "Yetersiz veri"}
+            return {"error": "Insufficient data"}
             
         closes = np.array([c["close"] for c in ohlcv], dtype=np.float64)
         highs = np.array([c["high"] for c in ohlcv], dtype=np.float64)
@@ -1091,19 +1091,19 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
             if rr_ratio < 1.2:
                 if signal_type == "CONFIRM":
                     signal_type = "SCOUT"
-                    notes.append(f"R/R düşük ({rr_ratio:.2f}), SCOUT'a düşürüldü")
+                    notes.append(f"R/R low ({rr_ratio:.2f}), downgraded to SCOUT")
                 else:
                     signal = "HOLD"
                     signal_type = "HOLD"
-                    notes.append(f"R/R çok düşük ({rr_ratio:.2f})")
+                    notes.append(f"R/R too low ({rr_ratio:.2f})")
             
         # ─── SUGGESTION ──────────────────────────────────────────────────
         if signal_type == "CONFIRM":
-            suggestion = f"🟢 ML onaylı {'AL' if signal == 'BUY' else 'SAT'} sinyali (skor: {score:.0f}, ML: %{ml_confidence:.0f})"
+            suggestion = f"🟢 ML confirmed {'BUY' if signal == 'BUY' else 'SELL'} signal (score: {score:.0f}, ML: {ml_confidence:.0f}%)"
         elif signal_type == "SCOUT":
-            suggestion = f"👀 ML izleme modu (skor: {score:.0f}). Güçlenirse değerlendir."
+            suggestion = f"👀 ML watch mode (score: {score:.0f}). Consider if strengthens."
         else:
-            suggestion = f"⏱️ Bekleme. ML skor: {score:.0f}/100"
+            suggestion = f"⏱️ Hold. ML score: {score:.0f}/100"
         
         # Loglama (sadece CONFIRM)
         if signal in ["BUY", "SELL"] and signal_type == "CONFIRM":
@@ -1183,7 +1183,7 @@ def _cache_set(key: str, data: Any):
 
 
 async def _fetch_tf_data(symbol: str, tf: str, limit: int, cache_seconds: int):
-    """Fetch OHLCV data with caching"""
+    """Fetch OHLCV data with caching. Falls back to EOD daily for symbols without intraday (e.g. XAUUSD)."""
     cache_key = f"p3_{symbol}_{tf}"
     cached = _cache_get(cache_key, cache_seconds)
     if cached is not None:
@@ -1191,6 +1191,13 @@ async def _fetch_tf_data(symbol: str, tf: str, limit: int, cache_seconds: int):
     
     from services.market_data_service import get_ohlcv_data
     ohlcv = await get_ohlcv_data(symbol, tf, limit=limit)
+    if ohlcv:
+        _cache_set(cache_key, ohlcv)
+        return ohlcv
+    
+    # Fallback: use EOD daily data for symbols without intraday support (e.g. XAUUSD)
+    logger.warning(f"No intraday {tf} data for {symbol}, falling back to EOD daily")
+    ohlcv = await get_ohlcv_data(symbol, "1d", limit=limit)
     if ohlcv:
         _cache_set(cache_key, ohlcv)
     return ohlcv
@@ -1202,7 +1209,7 @@ def _analyze_5m(closes, highs, lows, volumes, ta) -> Dict:
     details = {}
     
     if len(closes) < 10:
-        return {"score": 25.0, "trend": "neutral", "details": {"error": "yetersiz veri"}}
+        return {"score": 25.0, "trend": "neutral", "details": {"error": "insufficient data"}}
     
     # 1. Son 5 mum yönü (15 puan)
     last_5_dirs = []
@@ -1292,7 +1299,7 @@ def _analyze_5m(closes, highs, lows, volumes, ta) -> Dict:
 def _analyze_1h(closes, ta) -> Dict:
     """1 saatlik analiz - 30 puan üzerinden"""
     if len(closes) < 20:
-        return {"score": 15.0, "trend": "neutral", "details": {"error": "yetersiz veri"}}
+        return {"score": 15.0, "trend": "neutral", "details": {"error": "insufficient data"}}
     
     score = 0.0
     details = {}
@@ -1356,7 +1363,7 @@ def _analyze_1h(closes, ta) -> Dict:
 def _analyze_4h(closes, ta) -> Dict:
     """4 saatlik analiz - 20 puan üzerinden"""
     if len(closes) < 10:
-        return {"score": 10.0, "trend": "neutral", "details": {"error": "yetersiz veri"}}
+        return {"score": 10.0, "trend": "neutral", "details": {"error": "insufficient data"}}
     
     score = 0.0
     details = {}
@@ -1427,7 +1434,7 @@ async def get_pulse_v3_analysis(symbol: str):
         )
         
         if not data_5m or len(data_5m) < 15:
-            return {"error": "Yetersiz 5m verisi"}
+            return {"error": "Insufficient data for this symbol. Intraday data may not be available.", "error_key": "pulse.insufficientData"}
         
         # Convert 5m data
         c5 = np.array([c["close"] for c in data_5m], dtype=np.float64)
@@ -1518,31 +1525,31 @@ async def get_pulse_v3_analysis(symbol: str):
         notes = []
         if signal_type == "CONFIRM" and rr_ratio < 1.2:
             signal_type = "SCOUT"
-            notes.append(f"R/R düşük ({rr_ratio:.2f}), SCOUT'a düşürüldü")
+            notes.append(f"R/R low ({rr_ratio:.2f}), downgraded to SCOUT")
         elif signal_type == "SCOUT" and rr_ratio < 1.0:
             signal_type = "HOLD"
             direction = "NEUTRAL"
-            notes.append(f"R/R çok düşük ({rr_ratio:.2f})")
+            notes.append(f"R/R too low ({rr_ratio:.2f})")
         
-        # Timeframe uyumsuzluk notu
+        # Timeframe conflict note
         if up_votes == 1 and down_votes == 1:
-            notes.append("Zaman dilimleri çelişkili")
+            notes.append("Timeframes conflicting")
         
         # ─── SUGGESTION ──────────────────────────────────────────────────
         if signal_type == "CONFIRM":
             if direction == "BUY":
-                suggestion = f"🚀 Güçlü yukarı sinyali (skor: {total_score:.0f}). 3 TF uyumlu. Hedef: {target:.0f}, Stop: {stop:.0f}"
+                suggestion = f"🚀 Strong BUY signal (score: {total_score:.0f}). 3 TF aligned. Target: {target:.0f}, Stop: {stop:.0f}"
             else:
-                suggestion = f"🔻 Güçlü aşağı sinyali (skor: {total_score:.0f}). 3 TF uyumlu. Hedef: {target:.0f}, Stop: {stop:.0f}"
+                suggestion = f"🔻 Strong SELL signal (score: {total_score:.0f}). 3 TF aligned. Target: {target:.0f}, Stop: {stop:.0f}"
         elif signal_type == "SCOUT":
             if direction == "BUY":
-                suggestion = f"👀 Yukarı momentum oluşuyor (skor: {total_score:.0f}). {s1:.0f} desteği üzerinde kalırsa değerlendir."
+                suggestion = f"👀 Bullish momentum building (score: {total_score:.0f}). Consider if holds above {s1:.0f} support."
             elif direction == "SELL":
-                suggestion = f"👀 Aşağı momentum oluşuyor (skor: {total_score:.0f}). {r1:.0f} direnci altında kalırsa değerlendir."
+                suggestion = f"👀 Bearish momentum building (score: {total_score:.0f}). Consider if stays below {r1:.0f} resistance."
             else:
-                suggestion = f"👀 İzleme modu (skor: {total_score:.0f}). Yön netleşmedi."
+                suggestion = f"👀 Watch mode (score: {total_score:.0f}). Direction unclear."
         else:
-            suggestion = f"⏱️ Bekleme modu (skor: {total_score:.0f}). Güçlü trend oluşumu yok. 4H trendi izle."
+            suggestion = f"⏱️ Hold mode (score: {total_score:.0f}). No strong trend. Watch 4H trend."
         
         if notes:
             suggestion += f" | {', '.join(notes)}"
@@ -1552,15 +1559,15 @@ async def get_pulse_v3_analysis(symbol: str):
         entry_zones = []
         if direction == "BUY":
             entry_zones = [
-                {"price": round(current_price, 2), "share": 40, "label": "Anlık"},
-                {"price": round(current_price - atr * 0.5, 2), "share": 30, "label": "Düşüşte"},
-                {"price": round(current_price - atr, 2), "share": 30, "label": "Destek"},
+                {"price": round(current_price, 2), "share": 40, "label": "Instant"},
+                {"price": round(current_price - atr * 0.5, 2), "share": 30, "label": "On Dip"},
+                {"price": round(current_price - atr, 2), "share": 30, "label": "Support"},
             ]
         elif direction == "SELL":
             entry_zones = [
-                {"price": round(current_price, 2), "share": 40, "label": "Anlık"},
-                {"price": round(current_price + atr * 0.5, 2), "share": 30, "label": "Yükselişte"},
-                {"price": round(current_price + atr, 2), "share": 30, "label": "Direnç"},
+                {"price": round(current_price, 2), "share": 40, "label": "Instant"},
+                {"price": round(current_price + atr * 0.5, 2), "share": 30, "label": "On Rise"},
+                {"price": round(current_price + atr, 2), "share": 30, "label": "Resistance"},
             ]
         
         # ─── LEARNING ENTEGRASYONU ────────────────────────────────────────

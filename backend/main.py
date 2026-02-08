@@ -366,6 +366,51 @@ async def get_cot_data(symbol: str):
         return {"success": False, "error": str(e)}
 
 
+@app.get("/api/cot/history/{symbol}")
+async def get_cot_history(symbol: str):
+    """Get COT historical data for a symbol (up to 52 weeks)."""
+    try:
+        from services.cot_report_service import get_cot_history as _get_history
+        history = _get_history(symbol)
+        return {"success": True, "data": history}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/whale/dashboard")
+async def get_whale_dashboard():
+    """Get whale tracking dashboard data for all symbols."""
+    try:
+        from services.whale_tracker_service import get_whale_dashboard as _get_dashboard
+        data = await _get_dashboard()
+        return {"success": True, "data": data}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/whale/{symbol}")
+async def get_whale_snapshot(symbol: str):
+    """Get whale tracking snapshot for a specific symbol."""
+    try:
+        from services.whale_tracker_service import get_whale_snapshot as _get_snap
+        from dataclasses import asdict
+        snap = await _get_snap(symbol)
+        return {"success": True, "data": asdict(snap)}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/whale/features/{symbol}")
+async def get_whale_features(symbol: str):
+    """Get whale ML features for a specific symbol."""
+    try:
+        from services.whale_tracker_service import get_whale_features as _get_feats
+        feats = await _get_feats(symbol)
+        return {"success": True, "data": feats}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 @app.get("/api/candlestick-patterns/{symbol}")
 async def get_candlestick_patterns(symbol: str):
     """

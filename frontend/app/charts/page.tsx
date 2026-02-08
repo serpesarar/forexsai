@@ -15,6 +15,8 @@ import {
   ExternalLink
 } from "lucide-react";
 import { useAuthStore, useIsAuthenticated, useUser } from "../../lib/auth/store";
+import SharedNavHeader from "../../components/SharedNavHeader";
+import { useI18nStore } from "../../lib/i18n/store";
 
 declare global {
   interface Window {
@@ -188,6 +190,7 @@ export default function ChartsPage() {
   const isAuthenticated = useIsAuthenticated();
   const user = useUser();
   const { checkAuth } = useAuthStore();
+  const { t } = useI18nStore();
   const [fullscreenSymbol, setFullscreenSymbol] = useState<ChartSymbol | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
@@ -213,7 +216,7 @@ export default function ChartsPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <RefreshCw className="w-8 h-8 animate-spin text-accent" />
-          <p className="text-textSecondary">Yükleniyor...</p>
+          <p className="text-textSecondary">{t("common.loading") || "Loading..."}</p>
         </div>
       </div>
     );
@@ -231,9 +234,9 @@ export default function ChartsPage() {
           </div>
 
           <div>
-            <h1 className="text-2xl font-bold mb-2">Grafikler</h1>
+            <h1 className="text-2xl font-bold mb-2">{t("chartsPage.title")}</h1>
             <p className="text-textSecondary">
-              Profesyonel grafik analizi için giriş yapmanız gerekmektedir.
+              {t("chartsPage.subtitle")}
             </p>
           </div>
 
@@ -243,7 +246,7 @@ export default function ChartsPage() {
               className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-accent text-white font-semibold hover:bg-accent/90 transition"
             >
               <LogIn className="w-5 h-5" />
-              Giriş Yap
+              {t("common.login") || "Sign In"}
             </Link>
 
             <Link
@@ -251,7 +254,7 @@ export default function ChartsPage() {
               className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-white/10 text-white font-semibold hover:bg-white/20 transition"
             >
               <User className="w-5 h-5" />
-              Hesap Oluştur
+              {t("common.signup") || "Sign Up"}
             </Link>
           </div>
 
@@ -260,7 +263,7 @@ export default function ChartsPage() {
               href="/"
               className="text-sm text-textSecondary hover:text-white transition"
             >
-              ← Ana Sayfaya Dön
+              ← {t("nav.homePage")}
             </Link>
           </div>
         </div>
@@ -278,7 +281,7 @@ export default function ChartsPage() {
             </div>
             <div>
               <h2 className="font-bold text-xl">{fullscreenSymbol.label}</h2>
-              <p className="text-xs text-textSecondary">{fullscreenSymbol.description} - Tam Ekran</p>
+              <p className="text-xs text-textSecondary">{fullscreenSymbol.description}</p>
             </div>
           </div>
           <button
@@ -286,7 +289,7 @@ export default function ChartsPage() {
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition"
           >
             <Minimize2 className="w-5 h-5" />
-            <span>Küçült</span>
+            <span>{t("common.minimize") || "Minimize"}</span>
           </button>
         </div>
         <TradingViewChart
@@ -300,49 +303,10 @@ export default function ChartsPage() {
 
   return (
     <div className="min-h-screen bg-background text-white">
-      <div className="max-w-[1800px] mx-auto p-3 md:p-6 space-y-4 md:space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2 md:gap-4">
-            <Link
-              href="/trading"
-              className="p-1.5 md:p-2 rounded-lg md:rounded-xl hover:bg-white/10 transition"
-            >
-              <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
-            </Link>
-            <div className="flex items-center gap-2 md:gap-3">
-              <div className="flex h-9 w-9 md:h-12 md:w-12 items-center justify-center rounded-lg md:rounded-xl bg-gradient-to-br from-accent/30 to-purple-500/30">
-                <BarChart3 className="h-4 w-4 md:h-6 md:w-6 text-accent" />
-              </div>
-              <div>
-                <h1 className="text-lg md:text-2xl font-bold">Canlı Grafikler</h1>
-                <p className="text-xs md:text-sm text-textSecondary hidden sm:block">TradingView ile profesyonel grafik analizi</p>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 md:gap-4 w-full sm:w-auto justify-end">
-            {user && (
-              <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
-                <User className="w-4 h-4 text-accent" />
-                <span className="text-sm">{user.email}</span>
-              </div>
-            )}
-            <Link
-              href="/"
-              className="px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl bg-white/5 hover:bg-white/10 transition text-xs md:text-sm"
-            >
-              Ana Sayfa
-            </Link>
-            <Link
-              href="/trading"
-              className="px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl bg-accent/20 hover:bg-accent/30 transition text-xs md:text-sm text-accent"
-            >
-              <span className="hidden sm:inline">Trading Dashboard</span>
-              <span className="sm:hidden">Trading</span>
-            </Link>
-          </div>
-        </div>
+      {/* Shared Premium Header */}
+      <SharedNavHeader activePage="charts" />
 
+      <div className="max-w-[1600px] mx-auto p-3 md:p-6 space-y-4 md:space-y-6">
         {/* TradingView Login Info Banner */}
         <div className="glass-premium p-4 md:p-5 rounded-xl md:rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-500/10 to-purple-500/10">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -351,9 +315,9 @@ export default function ChartsPage() {
                 <TrendingUp className="w-5 h-5 text-blue-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-white mb-1">TradingView Grafikleri</h3>
+                <h3 className="font-semibold text-white mb-1">{t("chartsPage.tradingViewTitle")}</h3>
                 <p className="text-sm text-textSecondary">
-                  Çizim yapabilmek ve kaydetmek için grafik üzerindeki <span className="text-blue-400 font-medium">"Giriş Yap"</span> butonundan TradingView hesabınıza giriş yapın.
+                  {t("chartsPage.tradingViewDesc")}
                 </p>
               </div>
             </div>
@@ -364,14 +328,14 @@ export default function ChartsPage() {
               className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold transition whitespace-nowrap"
             >
               <ExternalLink className="w-4 h-4" />
-              TradingView'e Git
+              {t("chartsPage.goToTradingView")}
             </a>
           </div>
           <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap gap-4 text-xs text-textSecondary">
-            <span className="flex items-center gap-1">✏️ Çizim araçları</span>
-            <span className="flex items-center gap-1">� 50+ gösterge</span>
-            <span className="flex items-center gap-1">💾 Otomatik kayıt</span>
-            <span className="flex items-center gap-1">🔄 Canlı veri</span>
+            <span className="flex items-center gap-1">✏️ {t("chartsPage.drawingTools")}</span>
+            <span className="flex items-center gap-1">📊 {t("chartsPage.indicators")}</span>
+            <span className="flex items-center gap-1">💾 {t("chartsPage.autoSave")}</span>
+            <span className="flex items-center gap-1">🔄 {t("chartsPage.liveData")}</span>
           </div>
         </div>
 
@@ -388,7 +352,7 @@ export default function ChartsPage() {
 
         {/* Footer Info */}
         <div className="text-center text-xs text-textSecondary py-4">
-          Grafikler TradingView tarafından sağlanmaktadır. Gerçek zamanlı veriler için TradingView hesabınızla giriş yapabilirsiniz.
+          {t("chartsPage.footer")}
         </div>
       </div>
     </div>

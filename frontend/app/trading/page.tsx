@@ -5,6 +5,7 @@ import { ChevronDown, TrendingUp, Activity, BarChart3, Brain, Sparkles, LineChar
 import Image from "next/image";
 import { TradingBackground } from "../../components/TradingBackground";
 import Link from "next/link";
+import SharedNavHeader from "../../components/SharedNavHeader";
 import MLPredictionPanel from "../../components/MLPredictionPanel";
 import ClaudeAnalysisPanel from "../../components/ClaudeAnalysisPanel";
 import DetailedAnalysisPanel from "../../components/DetailedAnalysisPanel";
@@ -14,7 +15,6 @@ import OrderBlockPanelSimple from "../../components/OrderBlockPanelSimple";
 import RhythmDetectorSimple from "../../components/RhythmDetectorSimple";
 import TradingChartWrapper from "../../components/TradingChartWrapper";
 import LiveChartPanel from "../../components/LiveChartPanel";
-import { LanguageSwitcher } from "../../components/LanguageSwitcher";
 import { useI18nStore } from "../../lib/i18n/store";
 
 // Golden Ratio constant
@@ -56,146 +56,62 @@ export default function TradingDashboard() {
   const currentSymbol = SYMBOLS[selectedSymbol];
   const SymbolIcon = currentSymbol.icon;
 
+  const symbolSelector = (
+    <div className="relative z-50">
+      <button
+        onClick={() => setDropdownOpen(!dropdownOpen)}
+        className={`group flex items-center gap-2 md:gap-3 rounded-xl bg-gradient-to-r ${currentSymbol.color} px-3 py-2 md:px-4 md:py-2.5 border ${currentSymbol.border} transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]`}
+      >
+        <div className={`flex h-7 w-7 md:h-9 md:w-9 items-center justify-center rounded-lg bg-white/10`}>
+          <SymbolIcon className={`h-3.5 w-3.5 md:h-5 md:w-5 ${currentSymbol.accent}`} />
+        </div>
+        <div className="text-left">
+          <p className="text-[9px] md:text-[10px] text-textSecondary font-medium">{t("tradingPage.activeSymbol")}</p>
+          <p className="text-xs md:text-sm font-bold">{currentSymbol.shortLabel}</p>
+        </div>
+        <ChevronDown className={`h-3.5 w-3.5 md:h-4 md:w-4 transition-transform duration-300 ${dropdownOpen ? "rotate-180" : ""}`} />
+      </button>
+      {dropdownOpen && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setDropdownOpen(false)} />
+          <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-64 overflow-hidden rounded-xl border border-white/10 bg-background shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+            {(Object.entries(SYMBOLS) as [SymbolKey, typeof SYMBOLS[SymbolKey]][]).map(([key, sym]) => {
+              const Icon = sym.icon;
+              const isSelected = key === selectedSymbol;
+              return (
+                <button
+                  key={key}
+                  onClick={() => { setSelectedSymbol(key); setDropdownOpen(false); }}
+                  className={`flex w-full items-center gap-3 px-4 py-3 transition-all duration-200 ${
+                    isSelected ? `bg-gradient-to-r ${sym.color} border-l-4 ${sym.border}` : "hover:bg-white/5 border-l-4 border-transparent"
+                  }`}
+                >
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${isSelected ? "bg-white/20" : "bg-white/10"}`}>
+                    <Icon className={`h-4 w-4 ${sym.accent}`} />
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="font-bold text-sm">{sym.shortLabel}</p>
+                    <p className="text-xs text-textSecondary">{sym.label}</p>
+                  </div>
+                  {isSelected && <div className="h-3 w-3 rounded-full bg-accent animate-pulse" />}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background relative">
       {/* Animated Background */}
       <TradingBackground />
-      {/* Header with Symbol Selector - Premium Design */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-background/80 backdrop-blur-xl">
-        {/* Animated gradient line */}
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#00E0C6]/50 to-transparent" />
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#00E0C6] to-transparent animate-pulse opacity-50" />
-        
-        <div className="mx-auto flex max-w-[1800px] items-center justify-between px-3 py-2 md:px-6 md:py-3">
-          {/* Symbol Dropdown */}
-          <div className="relative z-50">
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className={`group flex items-center gap-2 md:gap-4 rounded-xl md:rounded-2xl bg-gradient-to-r ${currentSymbol.color} px-3 py-2 md:px-6 md:py-4 border ${currentSymbol.border} transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-accent/20 active:scale-[0.98]`}
-            >
-              <div className={`flex h-8 w-8 md:h-12 md:w-12 items-center justify-center rounded-lg md:rounded-xl bg-white/10 transition-transform duration-300 group-hover:rotate-12`}>
-                <SymbolIcon className={`h-4 w-4 md:h-6 md:w-6 ${currentSymbol.accent}`} />
-              </div>
-              <div className="text-left">
-                <p className="text-[10px] md:text-xs text-textSecondary font-medium">{t("tradingPage.activeSymbol")}</p>
-                <p className="text-sm md:text-lg font-bold">{currentSymbol.shortLabel}</p>
-              </div>
-              <ChevronDown className={`h-4 w-4 md:h-5 md:w-5 transition-transform duration-300 ${dropdownOpen ? "rotate-180" : ""}`} />
-            </button>
-
-            {/* Dropdown Menu - Fixed positioning */}
-            {dropdownOpen && (
-              <>
-                <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setDropdownOpen(false)} />
-                <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-64 md:w-80 overflow-hidden rounded-xl md:rounded-2xl border border-white/10 bg-background shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-                  {(Object.entries(SYMBOLS) as [SymbolKey, typeof SYMBOLS[SymbolKey]][]).map(([key, sym]) => {
-                    const Icon = sym.icon;
-                    const isSelected = key === selectedSymbol;
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => {
-                          setSelectedSymbol(key);
-                          setDropdownOpen(false);
-                        }}
-                        className={`flex w-full items-center gap-3 md:gap-4 px-4 py-3 md:px-6 md:py-5 transition-all duration-200 ${
-                          isSelected 
-                            ? `bg-gradient-to-r ${sym.color} border-l-4 ${sym.border}` 
-                            : "hover:bg-white/5 border-l-4 border-transparent"
-                        }`}
-                      >
-                        <div className={`flex h-9 w-9 md:h-12 md:w-12 items-center justify-center rounded-lg md:rounded-xl ${isSelected ? "bg-white/20" : "bg-white/10"}`}>
-                          <Icon className={`h-4 w-4 md:h-6 md:w-6 ${sym.accent}`} />
-                        </div>
-                        <div className="text-left flex-1">
-                          <p className="font-bold text-sm md:text-base">{sym.shortLabel}</p>
-                          <p className="text-xs md:text-sm text-textSecondary hidden md:block">{sym.label}</p>
-                        </div>
-                        {isSelected && (
-                          <div className="h-3 w-3 rounded-full bg-accent animate-pulse" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Logo + Title - Premium Design */}
-          <div className="hidden lg:flex items-center gap-4">
-            {/* Logo */}
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-[#00E0C6]/20 to-[#3B82F6]/20 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative h-10 w-10 rounded-xl overflow-hidden border border-white/10 bg-white/5">
-                <Image
-                  src="/bu.png"
-                  alt="ForexsAI"
-                  width={40}
-                  height={40}
-                  className="object-cover"
-                />
-              </div>
-            </div>
-            
-            {/* Title */}
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg xl:text-xl font-bold tracking-tight">
-                  <span className="text-white">AI Trading</span>
-                  <span className="ml-1.5 bg-gradient-to-r from-[#00E0C6] to-[#3B82F6] bg-clip-text text-transparent">Dashboard</span>
-                </h1>
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#00E0C6]/10 border border-[#00E0C6]/20">
-                  <Zap className="h-3 w-3 text-[#00E0C6]" />
-                  <span className="text-[10px] font-bold text-[#00E0C6] uppercase tracking-wider">Live</span>
-                </div>
-              </div>
-              <p className="text-[11px] text-white/40 font-medium tracking-wide">Quantitative Analysis • ML Model + Claude AI</p>
-            </div>
-          </div>
-
-          {/* Right Side - Navigation + Time */}
-          <div className="flex items-center gap-2 md:gap-3">
-            <Link 
-              href="/charts"
-              className="group flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-xl bg-gradient-to-r from-[#00E0C6]/10 to-[#3B82F6]/10 border border-[#00E0C6]/20 hover:border-[#00E0C6]/40 hover:from-[#00E0C6]/20 hover:to-[#3B82F6]/20 transition-all duration-300"
-            >
-              <BarChart3 className="h-4 w-4 text-[#00E0C6] group-hover:scale-110 transition-transform" />
-              <span className="text-xs md:text-sm font-semibold text-white/90 hidden sm:inline">{t("tradingPage.charts")}</span>
-            </Link>
-            <Link 
-              href="/"
-              className="group flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
-            >
-              <Home className="h-4 w-4 text-white/70 group-hover:text-white group-hover:scale-110 transition-all" />
-              <span className="text-xs md:text-sm font-medium text-white/70 group-hover:text-white hidden sm:inline">{t("tradingPage.homePage")}</span>
-            </Link>
-            <div className="text-right hidden md:block pl-3 border-l border-white/10">
-              <p className="text-sm font-mono font-bold text-white/90">{currentDate || "—"}</p>
-              <p className="text-[10px] text-white/40 flex items-center gap-1.5 justify-end font-medium">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00E0C6] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00E0C6]"></span>
-                </span>
-                {t("tradingPage.liveAnalysis")}
-              </p>
-            </div>
-            {/* Mobile live indicator */}
-            <div className="flex md:hidden items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[#00E0C6]/10 border border-[#00E0C6]/20">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00E0C6] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#00E0C6]"></span>
-              </span>
-              <span className="text-[10px] font-bold text-[#00E0C6]">LIVE</span>
-            </div>
-            {/* Language Switcher */}
-            <LanguageSwitcher />
-          </div>
-        </div>
-      </header>
+      {/* Shared Premium Header */}
+      <SharedNavHeader activePage="trading" rightContent={symbolSelector} />
 
       {/* Main Content - Golden Ratio Layout */}
-      <main className="relative z-10 mx-auto max-w-[1800px] p-3 md:p-6">
+      <main className="relative z-10 mx-auto max-w-[1600px] p-3 md:p-6">
         {/* 
           Golden Ratio Grid Layout:
           - Main prediction area: 61.8% width (φ / (1 + φ))

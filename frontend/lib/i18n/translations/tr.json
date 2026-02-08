@@ -102,7 +102,11 @@
     "sideways": "Yatay",
     "low": "Düşük",
     "medium": "Orta",
-    "high": "Yüksek"
+    "high": "Yüksek",
+    "loading": "Yükleniyor...",
+    "login": "Giriş Yap",
+    "signup": "Hesap Oluştur",
+    "minimize": "Küçült"
   },
   "header": {
     "title": "AI Trading Dashboard",
@@ -407,7 +411,27 @@
     "fvgTitle": "Fiyat Boşlukları (FVG)",
     "open": "açık",
     "structureCheck": "Yapı Kontrolü",
-    "analyzing": "Analiz ediliyor..."
+    "analyzing": "Analiz ediliyor...",
+    "infoTitle": "Smart Money Bölgeleri Rehberi",
+    "infoAlgoTitle": "Nasıl Çalışır (Algoritma)",
+    "infoAlgoDesc": "Smart Money Concepts (SMC) kullanır: Fraktal swing noktalarını tespit eder → ATR-normalize edilmiş yer değiştirmeyi ölçer → CHoCH/BOS yapı kırılımları ile order block'ları belirler → her bölgeyi (0-100) yer değiştirme gücü, yapı teyidi, FVG varlığı ve hacim oranına göre puanlar. Sadece 50+ puan alan ve ≤2 kez test edilen bölgeler gösterilir.",
+    "infoBullish": "Bullish Order Block (Destek)",
+    "infoBullishDesc": "Kurumsal alıcıların girdiği bölge. Fiyat bu seviyelerden sıçrama eğilimindedir. Fiyat buraya döndüğünde LONG girişi arayın.",
+    "infoBearish": "Bearish Order Block (Direnç)",
+    "infoBearishDesc": "Kurumsal satıcıların girdiği bölge. Fiyat bu seviyelerden reddedilme eğilimindedir. Fiyat buraya döndüğünde SHORT girişi arayın.",
+    "infoFvgDesc": "Fiyatın çok hızlı hareket ettiği dengesizlik bölgeleri. Fiyat genellikle devam etmeden önce bu boşlukları doldurmak için geri döner.",
+    "infoStructure": "Yapı Sinyalleri",
+    "infoChochDesc": "Karakter Değişikliği - ATR yer değiştirmesi ile tespit edilen potansiyel trend dönüşü",
+    "infoBosDesc": "Yapı Kırılımı - fiyat önceki swing high/low'u kırarak trend devamını teyit eder",
+    "infoScoreLabel": "Skor",
+    "infoScoreDesc": "Yüksek skor = güçlü bölge (70+ arayın). Yer değiştirme, CHoCH, BOS, FVG ve hacime göre hesaplanır.",
+    "infoScoringTitle": "Puanlama Detayı (0-100)",
+    "infoScoring1": "Taban: 40 puan",
+    "infoScoring2": "Yer değiştirme gücü: +30 puana kadar (ATR-normalize hareket büyüklüğü)",
+    "infoScoring3": "CHoCH teyidi: +10 puan",
+    "infoScoring4": "BOS teyidi: +10 puan",
+    "infoScoring5": "FVG varlığı: +5 puan | Hacim artışı: +5 puana kadar",
+    "infoTip": "En iyi girişler: Fiyat OB'ye döner + FVG örtüşmesi + CHoCH/BOS teyidi = yüksek olasılıklı işlem."
   },
   "rhythmDetector": {
     "title": "RİTİM DEDEKTÖRÜ",
@@ -610,7 +634,10 @@
     "dataWillAccumulate": "Detaylı analiz yaptıkça veriler burada birikecek",
     "learningInsights": "Öğrenme İçgörüleri",
     "checked": "Kontrol edildi",
-    "waiting": "Bekliyor"
+    "waiting": "Bekliyor",
+    "modelBreakdown": "Model Bazlı Doğruluk",
+    "predictions": "tahmin",
+    "targetHit": "Hedef Tutma"
   },
   "predictionHistory": {
     "title": "TAHMİN GEÇMİŞİ",
@@ -685,6 +712,31 @@
     "why": "Neden?",
     "whenToTrade": "Ne Zaman İşlem Yapılır?",
     "alternative": "ALTERNATİF: Pulse moduna geçerek anlık fırsatları değerlendir."
+  },
+  "nav": {
+    "charts": "Grafikler",
+    "dashboard": "Dashboard",
+    "trading": "AI Trading",
+    "homePage": "Ana Sayfa"
+  },
+  "whale": {
+    "title": "Balina Takibi",
+    "activeAlerts": "Aktif Uyarılar",
+    "noData": "Balina verisi bulunamadı",
+    "updatesEveryFriday": "Cuma güncellenir",
+    "pressureRange": "-1.0 ile +1.0"
+  },
+  "chartsPage": {
+    "title": "Canlı Grafikler",
+    "subtitle": "TradingView ile profesyonel grafik analizi",
+    "tradingViewTitle": "TradingView Grafikleri",
+    "tradingViewDesc": "Çizim yapabilmek ve kaydetmek için grafik üzerindeki \"Giriş Yap\" butonundan TradingView hesabınıza giriş yapın.",
+    "goToTradingView": "TradingView'e Git",
+    "drawingTools": "Çizim araçları",
+    "indicators": "50+ gösterge",
+    "autoSave": "Otomatik kayıt",
+    "liveData": "Canlı veri",
+    "footer": "Grafikler TradingView tarafından sağlanmaktadır. Gerçek zamanlı veriler için TradingView hesabınızla giriş yapabilirsiniz."
   }
 }
 

@@ -131,6 +131,50 @@ async function triggerCleanAllPending(): Promise<any> {
 
 export { triggerCleanAllPending };
 
+// Per-model accuracy types
+export interface ModelAccuracyItem {
+  strategy: string;
+  total_predictions: number;
+  with_outcome: number;
+  ml_accuracy: number | null;
+  ml_correct: number;
+  claude_accuracy: number | null;
+  claude_correct: number;
+  target_hit_rate: number | null;
+  target_hits: number;
+  stop_hit_rate: number | null;
+  stop_hits: number;
+}
+
+export interface ModelAccuracyResponse {
+  models: ModelAccuracyItem[];
+  total: number;
+  days: number;
+  check_interval: string;
+  symbol: string | null;
+  error?: string;
+}
+
+async function fetchAccuracyByModel(symbol?: string, days: number = 30, checkInterval: string = "24h"): Promise<ModelAccuracyResponse> {
+  const params = new URLSearchParams();
+  if (symbol) params.append("symbol", symbol);
+  params.append("days", days.toString());
+  params.append("check_interval", checkInterval);
+  
+  const res = await fetch(`${API_BASE}/api/learning/accuracy-by-model?${params}`);
+  if (!res.ok) throw new Error("Failed to fetch accuracy by model");
+  return res.json();
+}
+
+export function useAccuracyByModel(symbol?: string, days: number = 30, checkInterval: string = "24h") {
+  return useQuery({
+    queryKey: ["learning", "accuracy-by-model", symbol, days, checkInterval],
+    queryFn: () => fetchAccuracyByModel(symbol, days, checkInterval),
+    staleTime: 60000,
+    refetchInterval: 120000,
+  });
+}
+
 export function useLearningHealth() {
   return useQuery({
     queryKey: ["learning", "health"],

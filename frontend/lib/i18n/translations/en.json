@@ -102,7 +102,11 @@
     "sideways": "Sideways",
     "low": "Low",
     "medium": "Medium",
-    "high": "High"
+    "high": "High",
+    "loading": "Loading...",
+    "login": "Sign In",
+    "signup": "Create Account",
+    "minimize": "Minimize"
   },
   "header": {
     "title": "AI Trading Dashboard",
@@ -415,7 +419,27 @@
     "fvgTitle": "Fair Value Gaps (FVG)",
     "open": "open",
     "structureCheck": "Structure Check",
-    "analyzing": "Analyzing..."
+    "analyzing": "Analyzing...",
+    "infoTitle": "Smart Money Zones Guide",
+    "infoAlgoTitle": "How It Works (Algorithm)",
+    "infoAlgoDesc": "Uses Smart Money Concepts (SMC): Detects fractal swing points → measures ATR-normalized displacement → identifies order blocks with CHoCH/BOS structure breaks → scores each zone (0-100) based on displacement strength, structure confirmation, FVG presence, and volume ratio. Only zones scoring 50+ with ≤2 retests are shown.",
+    "infoBullish": "Bullish Order Block (Support)",
+    "infoBullishDesc": "Zone where institutional buyers entered. Price tends to bounce from these levels. Look for LONG entries when price returns here.",
+    "infoBearish": "Bearish Order Block (Resistance)",
+    "infoBearishDesc": "Zone where institutional sellers entered. Price tends to reject from these levels. Look for SHORT entries when price returns here.",
+    "infoFvgDesc": "Imbalance zones where price moved too fast. Price often returns to fill these gaps before continuing.",
+    "infoStructure": "Structure Signals",
+    "infoChochDesc": "Change of Character - potential trend reversal detected via ATR displacement",
+    "infoBosDesc": "Break of Structure - price breaks previous swing high/low, confirming trend continuation",
+    "infoScoreLabel": "Score",
+    "infoScoreDesc": "Higher score = stronger zone (look for 70+). Based on displacement, CHoCH, BOS, FVG, and volume.",
+    "infoScoringTitle": "Scoring Breakdown (0-100)",
+    "infoScoring1": "Base: 40 points",
+    "infoScoring2": "Displacement strength: up to +30 points (ATR-normalized move size)",
+    "infoScoring3": "CHoCH confirmation: +10 points",
+    "infoScoring4": "BOS confirmation: +10 points",
+    "infoScoring5": "FVG presence: +5 points | Volume spike: up to +5 points",
+    "infoTip": "Best entries: Price returns to OB + FVG overlap + CHoCH/BOS confirmation = high probability trade."
   },
   "rhythmDetector": {
     "title": "RHYTHM DETECTOR",
@@ -618,7 +642,10 @@
     "dataWillAccumulate": "Data will accumulate as you run detailed analysis",
     "learningInsights": "Learning Insights",
     "checked": "Checked",
-    "waiting": "Waiting"
+    "waiting": "Waiting",
+    "modelBreakdown": "Accuracy by Model",
+    "predictions": "predictions",
+    "targetHit": "Target Hit"
   },
   "predictionHistory": {
     "title": "PREDICTION HISTORY",
@@ -693,5 +720,30 @@
     "why": "Why?",
     "whenToTrade": "When to Trade?",
     "alternative": "ALTERNATIVE: Switch to Pulse mode for instant opportunities."
+  },
+  "nav": {
+    "charts": "Charts",
+    "dashboard": "Dashboard",
+    "trading": "AI Trading",
+    "homePage": "Home"
+  },
+  "whale": {
+    "title": "Whale Tracker",
+    "activeAlerts": "Active Alerts",
+    "noData": "No whale data available",
+    "updatesEveryFriday": "Updates Friday",
+    "pressureRange": "-1.0 to +1.0"
+  },
+  "chartsPage": {
+    "title": "Live Charts",
+    "subtitle": "Professional chart analysis with TradingView",
+    "tradingViewTitle": "TradingView Charts",
+    "tradingViewDesc": "To draw and save on charts, log in with the \"Sign In\" button on the chart using your TradingView account.",
+    "goToTradingView": "Go to TradingView",
+    "drawingTools": "Drawing tools",
+    "indicators": "50+ indicators",
+    "autoSave": "Auto save",
+    "liveData": "Live data",
+    "footer": "Charts are provided by TradingView. You can log in with your TradingView account for real-time data."
   }
 }

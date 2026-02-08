@@ -116,6 +116,122 @@ async def get_accuracy(
     return summary
 
 
+@router.get("/accuracy-by-model")
+async def get_accuracy_by_model(
+    symbol: Optional[str] = Query(None),
+    days: int = Query(30, ge=1, le=90),
+    check_interval: str = Query("24h")
+):
+    """Get accuracy breakdown per model/strategy (EMEL, PULSE, PULSE_ML, PULSE_V3)."""
+    if not is_db_available():
+        return {"error": "Database not available"}
+    
+    from database.supabase_client import get_supabase_client
+    client = get_supabase_client()
+    if not client:
+        return {"error": "Database client not available"}
+    
+    from datetime import datetime, timedelta
+    cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
+    
+    try:
+        # Get all predictions with outcomes in the time range
+        query = client.table("prediction_logs").select(
+            "id, strategy, ml_direction, claude_direction, factors, created_at"
+        ).gte("created_at", cutoff).eq("outcome_checked", True)
+        
+        if symbol:
+            query = query.eq("symbol", symbol)
+        
+        pred_result = query.order("created_at", desc=True).limit(500).execute()
+        predictions = pred_result.get("data") or []
+        
+        if not predictions:
+            return {"models": [], "total": 0, "days": days}
+        
+        # Get outcome results for these predictions
+        pred_ids = [p["id"] for p in predictions]
+        
+        # Build a map of prediction_id -> outcome
+        outcome_map = {}
+        # Fetch in batches of 50
+        for i in range(0, len(pred_ids), 50):
+            batch = pred_ids[i:i+50]
+            for pid in batch:
+                outcome_result = client.table("outcome_results").select(
+                    "prediction_id, ml_correct, claude_correct, hit_target, hit_stop"
+                ).eq("prediction_id", pid).eq("check_interval", check_interval).execute()
+                outcomes = outcome_result.get("data") or []
+                if outcomes:
+                    outcome_map[pid] = outcomes[0]
+        
+        # Group by strategy
+        strategy_stats = {}
+        for pred in predictions:
+            strategy = pred.get("strategy") or pred.get("factors", {}).get("strategy") or pred.get("factors", {}).get("source") or "UNKNOWN"
+            
+            if strategy not in strategy_stats:
+                strategy_stats[strategy] = {
+                    "strategy": strategy,
+                    "total": 0,
+                    "ml_correct": 0,
+                    "claude_correct": 0,
+                    "target_hit": 0,
+                    "stop_hit": 0,
+                    "no_outcome": 0,
+                }
+            
+            stats = strategy_stats[strategy]
+            stats["total"] += 1
+            
+            outcome = outcome_map.get(pred["id"])
+            if outcome:
+                if outcome.get("ml_correct"):
+                    stats["ml_correct"] += 1
+                if outcome.get("claude_correct"):
+                    stats["claude_correct"] += 1
+                if outcome.get("hit_target"):
+                    stats["target_hit"] += 1
+                if outcome.get("hit_stop"):
+                    stats["stop_hit"] += 1
+            else:
+                stats["no_outcome"] += 1
+        
+        # Calculate percentages
+        models = []
+        for strategy, stats in strategy_stats.items():
+            total = stats["total"]
+            with_outcome = total - stats["no_outcome"]
+            models.append({
+                "strategy": stats["strategy"],
+                "total_predictions": total,
+                "with_outcome": with_outcome,
+                "ml_accuracy": round(stats["ml_correct"] / with_outcome, 3) if with_outcome > 0 else None,
+                "ml_correct": stats["ml_correct"],
+                "claude_accuracy": round(stats["claude_correct"] / with_outcome, 3) if with_outcome > 0 else None,
+                "claude_correct": stats["claude_correct"],
+                "target_hit_rate": round(stats["target_hit"] / with_outcome, 3) if with_outcome > 0 else None,
+                "target_hits": stats["target_hit"],
+                "stop_hit_rate": round(stats["stop_hit"] / with_outcome, 3) if with_outcome > 0 else None,
+                "stop_hits": stats["stop_hit"],
+            })
+        
+        # Sort by total predictions descending
+        models.sort(key=lambda m: m["total_predictions"], reverse=True)
+        
+        return {
+            "models": models,
+            "total": len(predictions),
+            "days": days,
+            "check_interval": check_interval,
+            "symbol": symbol,
+        }
+    
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()[:300]}
+
+
 @router.get("/factor-analysis")
 async def get_factor_analysis(
     symbol: Optional[str] = Query(None),
