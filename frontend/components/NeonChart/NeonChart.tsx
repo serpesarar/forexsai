@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ColorType,
   createChart,
@@ -47,10 +47,10 @@ const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const TIMEFRAMES = ["5m", "15m", "1h", "4h", "1d"] as const;
 
 const EMA_CONFIG = {
-  20: { color: "#ec4899", glowColor: "rgba(236,72,153,0.5)", width: 1.5, label: "EMA20" },
-  50: { color: "#f97316", glowColor: "rgba(249,115,22,0.5)", width: 2, label: "EMA50" },
-  200: { color: "#e2e8f0", glowColor: "rgba(226,232,240,0.4)", width: 2.5, label: "EMA200" },
-} as const;
+  20: { color: "#ec4899", glowColor: "rgba(236,72,153,0.5)", width: 1 as const, label: "EMA20" },
+  50: { color: "#f97316", glowColor: "rgba(249,115,22,0.5)", width: 2 as const, label: "EMA50" },
+  200: { color: "#e2e8f0", glowColor: "rgba(226,232,240,0.4)", width: 3 as const, label: "EMA200" },
+};
 
 // ─── Data fetching ────────────────────────────────────────────────
 async function fetchChartData(symbol: string, timeframe: string): Promise<CandleData[]> {
@@ -276,7 +276,7 @@ export default function NeonChart({
       const period = Number(periodStr);
       const series = chart.addLineSeries({
         color: config.color,
-        lineWidth: config.width as 1 | 2 | 3 | 4,
+        lineWidth: config.width,
         priceLineVisible: false,
         lastValueVisible: false,
         crosshairMarkerVisible: false,
@@ -384,6 +384,7 @@ export default function NeonChart({
   const displayPrice = livePrice || priceInfo?.price || 0;
   const isXAU = symbol.toUpperCase().includes("XAU");
   const proximityPeriods = new Set(proximityAlerts.map((a) => a.emaPeriod));
+  const hasData = Boolean(chartData && chartData.length > 0);
 
   // ═══════════════════════════════════════════════════════════
   //  RENDER
@@ -485,13 +486,25 @@ export default function NeonChart({
           <div className={styles.chartWrapper} style={{ height }}>
             <div ref={chartContainerRef} style={{ height: "100%", width: "100%" }} />
 
-            {/* Loading overlay */}
-            {(isLoading || !chartData?.length) && (
+            {/* Loading overlay - only show when no data at all */}
+            {isLoading && !hasData && (
               <div className={styles.loadingOverlay}>
                 <div className={styles.loadingSpinner}>
                   <div className={styles.neonSpinner} />
                   <span style={{ color: "#64748b", fontSize: "0.8rem" }}>
-                    {isLoading ? "Veri yükleniyor..." : "Grafik verisi yok"}
+                    Veri yükleniyor...
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* No data state */}
+            {!isLoading && !hasData && (
+              <div className={styles.loadingOverlay}>
+                <div className={styles.loadingSpinner}>
+                  <Activity className="w-8 h-8 text-slate-600" />
+                  <span style={{ color: "#64748b", fontSize: "0.8rem" }}>
+                    Bu zaman diliminde veri bulunamadı
                   </span>
                 </div>
               </div>
@@ -635,12 +648,11 @@ export default function NeonChart({
                       : period === 50
                       ? styles.dot50
                       : styles.dot200
-                  }`}
+                  } ${isProx ? styles.emaBadgeProximity : ""}`}
                   style={
                     isProx
                       ? {
                           boxShadow: `0 0 10px ${config.color}, 0 0 20px ${config.glowColor}`,
-                          animation: "emaPulse 1s ease-in-out infinite",
                         }
                       : {}
                   }

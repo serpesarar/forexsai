@@ -156,6 +156,11 @@
 .chartWrapper {
   position: relative;
   border-radius: 16px;
+  overflow: visible;
+}
+
+.chartWrapper > div:first-child {
+  border-radius: 16px;
   overflow: hidden;
 }
 
@@ -208,12 +213,12 @@
 }
 
 .emaBadgeProximity {
-  animation: emaPulse 1s ease-in-out infinite;
+  animation: dotPulse 1s ease-in-out infinite;
 }
 
-@keyframes emaPulse {
-  0%, 100% { transform: translateY(-50%) scale(1); }
-  50% { transform: translateY(-50%) scale(1.15); }
+@keyframes dotPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.4); }
 }
 
 .emaBadgeValue {
