@@ -390,9 +390,14 @@ async def _pump_cycle():
                 _mark_fetched(f"eod:{symbol}")
                 _persist_async(symbol, "eod", candles)
         
-        # Mark this symbol as seeded after first full cycle
+        # Mark as seeded ONLY if we actually got data (avoid marking on 402/empty)
         if not is_seeded:
-            _initial_seed_done[seed_key] = True
+            has_5m = bool((_candles_5m.get(symbol) or {}).get("candles"))
+            has_1h = bool((_candles_1h.get(symbol) or {}).get("candles"))
+            has_eod = bool((_candles_eod.get(symbol) or {}).get("candles"))
+            if has_5m or has_1h or has_eod:
+                _initial_seed_done[seed_key] = True
+                logger.info(f"[DataHub] {symbol} seeded: 5m={has_5m}, 1h={has_1h}, eod={has_eod}")
     
     # ── Macro data (every 5min) ──
     if _should_fetch("macro", MACRO_INTERVAL):

@@ -49,6 +49,8 @@ interface PulseData {
   volume: {
     status: string;
     label: string;
+    ratio?: number;
+    available?: boolean;
   };
   suggestion: {
     text: string;
@@ -348,13 +350,21 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
               <div className="text-center py-4">
                 <p className={`text-2xl font-bold ${
                   data.volume.status === "high" ? "text-green-400" :
-                  data.volume.status === "low" ? "text-red-400" : "text-gray-400"
+                  data.volume.status === "low" ? "text-red-400" :
+                  data.volume.status === "normal" ? "text-yellow-400" : "text-gray-500"
                 }`}>
                   {data.volume.label}
                 </p>
+                {data.volume.available && data.volume.ratio != null && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    {data.volume.ratio.toFixed(2)}x avg
+                  </p>
+                )}
                 <p className="text-xs text-gray-500 mt-2">
-                  {data.volume.status === "high" ? t("pulse.buyersActive") :
-                   data.volume.status === "low" ? t("pulse.lowInterest") : t("pulse.noData")}
+                  {data.volume.available
+                    ? (data.volume.status === "high" ? t("pulse.buyersActive") :
+                       data.volume.status === "low" ? t("pulse.lowInterest") : "")
+                    : t("pulse.noData")}
                 </p>
               </div>
             </div>

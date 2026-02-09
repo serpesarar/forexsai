@@ -867,7 +867,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
             "trend": {
                 "direction": trend_direction,
                 "strength": round(trend_strength, 2),
-                "label": f"{'YUKARI' if trend_direction == 'up' else 'AŞAĞI' if trend_direction == 'down' else 'NÖTR'} EĞİLİMİ",
+                "label": f"{'UPTREND' if trend_direction == 'up' else 'DOWNTREND' if trend_direction == 'down' else 'NEUTRAL'}",
                 "strength_pct": round(trend_strength * 100),
                 "last_5_candles": last_5
             },
@@ -891,7 +891,9 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
             },
             "volume": {
                 "status": volume_status,
-                "label": "Yüksek ▲" if volume_status == "high" else "Düşük ▼" if volume_status == "low" else "Bilinmiyor"
+                "label": "High ▲" if volume_status == "high" else "Low ▼" if volume_status == "low" else "Normal" if volume_status == "normal" else "N/A",
+                "ratio": round(volume_ratio, 2),
+                "available": volume_status != "unknown"
             },
             "score_breakdown": score_details,
             "decision_notes": decision_notes,
