@@ -48,6 +48,7 @@ const StrategyPerformancePanel = lazy(() => import("../components/StrategyPerfor
 const EmelPanel = lazy(() => import("../components/panels/EmelPanel"));
 const PulsePanel = lazy(() => import("../components/panels/PulsePanel"));
 const PulseV3Panel = lazy(() => import("../components/panels/PulseV3Panel"));
+const ClearTrendPanel = lazy(() => import("../components/panels/ClearTrendPanel"));
 const LearningDashboardPanel = lazy(() => import("../components/LearningDashboardPanel"));
 const COMEXNewsPanel = lazy(() => import("../components/COMEXNewsPanel"));
 const WhaleTrackerPanel = lazy(() => import("../components/WhaleTrackerPanel"));
@@ -857,6 +858,8 @@ export default function HomePage() {
         return <InstitutionalDataPanel />;
       case "candlestick-patterns":
         return <CandlestickPatternPanel symbol="XAUUSD" />;
+      case "clear-trend":
+        return <ClearTrendPanel />;
       case "emel-panel":
         return <EmelPanel />;
       case "pulse-panel":

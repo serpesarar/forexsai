@@ -55,7 +55,8 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "advanced-nasdaq", title: "NASDAQ MTF Analysis", column: "left", order: 1, visible: true, size: "medium", collapsed: false },
 
     // ─── CENTER COLUMN: COMMON / ANALYSIS ────────────────────────
-    { id: "emel-panel", title: "EMEL Panel - 9 Kontrol", column: "center", order: 0, visible: true, size: "large", collapsed: false },
+    { id: "clear-trend", title: "Clear Trend Analysis", column: "center", order: 0, visible: true, size: "large", collapsed: false },
+    { id: "emel-panel", title: "EMEL Panel - 9 Checkpoints", column: "center", order: 1, visible: false, size: "large", collapsed: false },
     { id: "pulse-panel", title: "PULSE 1 - Algoritmik Scalp", column: "center", order: 1, visible: true, size: "large", collapsed: false },
     { id: "pulse-v3", title: "PULSE 3 - Hybrid Scalp", column: "center", order: 2, visible: true, size: "large", collapsed: false },
     { id: "pattern-engine", title: "Pattern Engine V2", column: "center", order: 3, visible: true, size: "large", collapsed: false },
@@ -64,17 +65,17 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "news", title: "Market News", column: "center", order: 6, visible: true, size: "medium", collapsed: false },
     { id: "comex-news", title: "COMEX News", column: "center", order: 7, visible: true, size: "medium", collapsed: false },
     { id: "learning-dashboard", title: "Learning Dashboard", column: "center", order: 8, visible: true, size: "large", collapsed: false },
-    { id: "strategy-performance", title: "Strateji Performansı", column: "center", order: 9, visible: true, size: "large", collapsed: false },
+    { id: "strategy-performance", title: "Strategy Performance", column: "center", order: 9, visible: true, size: "large", collapsed: false },
 
     // ─── RIGHT COLUMN: XAUUSD ────────────────────────────────────
     { id: "signal-xauusd", title: "XAUUSD Trend Analysis", column: "right", order: 0, visible: true, size: "medium", collapsed: false },
     { id: "advanced-xauusd", title: "XAUUSD MTF Analysis", column: "right", order: 1, visible: true, size: "medium", collapsed: false },
     { id: "whale-tracker", title: "Whale Tracker", column: "right", order: 2, visible: true, size: "medium", collapsed: false },
     { id: "institutional-data", title: "Institutional Data", column: "right", order: 3, visible: false, size: "medium", collapsed: false },
-    { id: "candlestick-patterns", title: "Mum Formasyonları", column: "right", order: 4, visible: true, size: "medium", collapsed: false },
+    { id: "candlestick-patterns", title: "Candlestick Patterns", column: "right", order: 4, visible: true, size: "medium", collapsed: false },
 
     // ─── FULL WIDTH SECTIONS (rendered below grid) ───────────────
-    { id: "ai-panels", title: "AI Tahmin Panelleri", column: "center", order: 20, visible: true, size: "full", collapsed: false },
+    { id: "ai-panels", title: "AI Prediction Panels", column: "center", order: 20, visible: true, size: "full", collapsed: false },
     { id: "order-blocks-nasdaq", title: "Order Blocks NASDAQ", column: "center", order: 21, visible: true, size: "full", collapsed: false },
     { id: "order-blocks-xauusd", title: "Order Blocks XAUUSD", column: "center", order: 22, visible: true, size: "full", collapsed: false },
     { id: "rhythm-detectors", title: "Rhythm Detectors", column: "center", order: 23, visible: true, size: "full", collapsed: false },

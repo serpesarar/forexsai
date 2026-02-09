@@ -76,6 +76,7 @@ try:
         trading_engine_test,
         emel_pulse,
         admin,
+        clear_trend,
     )
     from services.data_fetcher import fetch_latest_price
     from services.ml_service import run_nasdaq_signal, run_xauusd_signal
@@ -108,6 +109,7 @@ try:
     app.include_router(trading_engine_test.router)
     app.include_router(emel_pulse.router)
     app.include_router(admin.router)
+    app.include_router(clear_trend.router)
     
     ROUTERS_LOADED = True
 except Exception as e:

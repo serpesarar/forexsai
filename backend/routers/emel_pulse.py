@@ -904,7 +904,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
                 "target_distance": round(potential_profit, 1),
                 "stop_distance": round(potential_loss, 1),
                 "rr_ratio": round(rr_ratio, 2),
-                "timeframe_estimate": "15-30 dk"
+                "timeframe_estimate": "15-30 min"
             }
         }
         
