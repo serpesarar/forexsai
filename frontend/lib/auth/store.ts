@@ -49,7 +49,33 @@ export const useAuthStore = create<AuthState>()(
       setToken: (token) => set({ token }),
       setHasHydrated: (state) => set({ _hasHydrated: state }),
 
-      login: async (email, password) => {
+      login: async (emailOrToken: string, passwordOrUser?: string | any) => {
+        // Check if this is a direct login with token and user
+        if (typeof emailOrToken === "string" && typeof passwordOrUser === "object" && passwordOrUser !== null) {
+          // Direct login with token and user
+          const token = emailOrToken;
+          const user = passwordOrUser;
+          
+          const formattedUser: User = {
+            ...user,
+            is_pro: ["pro", "enterprise", "admin"].includes(user.membership_tier),
+            can_use_claude: ["pro", "enterprise", "admin"].includes(user.membership_tier),
+          };
+
+          set({
+            user: formattedUser,
+            token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+
+          return { success: true };
+        }
+        
+        // Regular login with email and password
+        const email = emailOrToken;
+        const password = passwordOrUser as string;
+        
         set({ isLoading: true });
         try {
           const res = await fetch(`${API_BASE}/api/auth/login`, {

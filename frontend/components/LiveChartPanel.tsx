@@ -92,7 +92,7 @@ export default function LiveChartPanel({
 
   const [timeframe, setTimeframe] = useState<TimeframeType>("15m");
   const [livePrice, setLivePrice] = useState<number | null>(null);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   // Fetch chart data
   const { data: chartData, isLoading, refetch } = useQuery({
@@ -295,12 +295,14 @@ export default function LiveChartPanel({
 
         <div className="flex items-center gap-3">
           {/* Live indicator */}
-          <div className="flex items-center gap-2 text-xs text-textSecondary">
+          <div className="flex items-center gap-2 text-xs text-gray-400">
             <div className="relative">
               <div className="h-2 w-2 rounded-full bg-success" />
               <div className="absolute inset-0 h-2 w-2 rounded-full bg-success animate-ping" />
             </div>
-            <span className="font-mono">{lastUpdate.toLocaleTimeString("tr-TR")}</span>
+            <span className="font-mono" suppressHydrationWarning>
+              {lastUpdate ? lastUpdate.toLocaleTimeString("tr-TR") : "--:--"}
+            </span>
           </div>
 
           {/* Timeframe buttons */}

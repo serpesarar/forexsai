@@ -49,7 +49,7 @@ export default function PremiumHeader({
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
   const [glowIntensity, setGlowIntensity] = useState(0);
-  const [time, setTime] = useState(new Date());
+  const [time, setTime] = useState<Date | null>(null);
 
   // Mouse tracking for spotlight effect
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -71,6 +71,7 @@ export default function PremiumHeader({
 
   // Live clock
   useEffect(() => {
+    setTime(new Date());
     const interval = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
@@ -282,7 +283,9 @@ export default function PremiumHeader({
             {/* Clock */}
             <div className="flex items-center gap-1.5 text-xs text-gray-500 font-mono">
               <Clock className="h-3.5 w-3.5" />
-              {time.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+              <span suppressHydrationWarning>
+                {time ? time.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) : "--:--"}
+              </span>
             </div>
           </div>
         </div>

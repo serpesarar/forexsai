@@ -382,10 +382,9 @@ export default function HomePage() {
   const [theme, setTheme] = useState<"evening" | "morning">("evening");
   const [trendTf, setTrendTf] = useState<Timeframe>("M15");
 
-  // Auth check - wait for hydration then redirect if not authenticated
+  // Auth check
   useEffect(() => {
     const check = async () => {
-      // Wait for Zustand persist to hydrate from localStorage
       await waitForHydration();
       const authed = await checkAuth();
       setIsCheckingAuth(false);
@@ -394,7 +393,7 @@ export default function HomePage() {
       }
     };
     check();
-  }, [checkAuth, router]);
+  }, []);
 
   // Live prices hook - updates every 10 seconds (DataHub updates every 5s)
   const { tickers: liveTickers, isLoading: pricesLoading } = useLivePrices(10000);
