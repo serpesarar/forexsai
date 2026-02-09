@@ -18,6 +18,7 @@ import { useAuthStore, useIsAuthenticated, useUser } from "../../lib/auth/store"
 import SharedNavHeader from "../../components/SharedNavHeader";
 import { useI18nStore } from "../../lib/i18n/store";
 import AuthGuard from "../../components/AuthGuard";
+import { NeonChart } from "../../components/NeonChart";
 
 declare global {
   interface Window {
@@ -277,7 +278,23 @@ function ChartsPageContent() {
           </div>
         </div>
 
-        {/* Charts Grid */}
+        {/* Neon EMA Charts */}
+        <div className="space-y-6">
+          <NeonChart
+            symbol="NDX.INDX"
+            symbolLabel="NASDAQ-100"
+            initialTimeframe="1h"
+            height={480}
+          />
+          <NeonChart
+            symbol="XAUUSD.FOREX"
+            symbolLabel="XAUUSD"
+            initialTimeframe="1h"
+            height={480}
+          />
+        </div>
+
+        {/* TradingView Charts */}
         <div className="space-y-6">
           {CHART_SYMBOLS.map((symbol) => (
             <ChartPanel
