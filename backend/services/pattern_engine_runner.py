@@ -4,8 +4,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List
 
-import httpx
-
 from config import settings
 
 
@@ -16,29 +14,22 @@ def _path_exists(path: str) -> bool:
 def run_pattern_engine(last_n: int, select_top: float, output_selected_only: bool) -> dict:
     """
     Non-mock, deterministic "pattern engine" based on live EOD candles.
-    Note: Intraday is not available on some EODHD plans; we use daily candles.
+    Uses DataHub cached EOD data (0 API calls).
     """
     model_ok = _path_exists(settings.pattern_engine_path)
     status = None if model_ok else f"Runtime not found: {settings.pattern_engine_path}"
 
-    # Pull recent daily candles for NDX.INDX
+    # Pull recent daily candles from DataHub (0 API calls)
     symbol = "NDX.INDX"
     now = datetime.utcnow()
-    from_date = (now - timedelta(days=400)).date().isoformat()
 
     closes: List[float] = []
     try:
-        r = httpx.get(
-            f"https://eodhistoricaldata.com/api/eod/{symbol}",
-            params={"api_token": settings.eodhd_api_key, "fmt": "json", "period": "d", "from": from_date},
-            timeout=15.0,
-        )
-        r.raise_for_status()
-        data = r.json()
-        if isinstance(data, list):
-            for row in data:
-                if isinstance(row, dict) and row.get("close") is not None:
-                    closes.append(float(row["close"]))
+        from services.data_hub import get_candles
+        eod_data = get_candles(symbol, "eod", 400)
+        for row in eod_data:
+            if isinstance(row, dict) and row.get("close") is not None:
+                closes.append(float(row["close"]))
     except Exception:
         closes = []
 
