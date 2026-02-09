@@ -17,6 +17,7 @@ import {
 import { useAuthStore, useIsAuthenticated, useUser } from "../../lib/auth/store";
 import SharedNavHeader from "../../components/SharedNavHeader";
 import { useI18nStore } from "../../lib/i18n/store";
+import AuthGuard from "../../components/AuthGuard";
 
 declare global {
   interface Window {
@@ -186,21 +187,19 @@ function ChartPanel({
 }
 
 export default function ChartsPage() {
+  return (
+    <AuthGuard>
+      <ChartsPageContent />
+    </AuthGuard>
+  );
+}
+
+function ChartsPageContent() {
   const router = useRouter();
   const isAuthenticated = useIsAuthenticated();
   const user = useUser();
-  const { checkAuth } = useAuthStore();
   const { t } = useI18nStore();
   const [fullscreenSymbol, setFullscreenSymbol] = useState<ChartSymbol | null>(null);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-
-  useEffect(() => {
-    const check = async () => {
-      await checkAuth();
-      setIsCheckingAuth(false);
-    };
-    check();
-  }, [checkAuth]);
 
   const handleFullscreen = (symbol: ChartSymbol) => {
     setFullscreenSymbol(symbol);
@@ -209,67 +208,6 @@ export default function ChartsPage() {
   const exitFullscreen = () => {
     setFullscreenSymbol(null);
   };
-
-  // Loading state
-  if (isCheckingAuth) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <RefreshCw className="w-8 h-8 animate-spin text-accent" />
-          <p className="text-textSecondary">{t("common.loading") || "Loading..."}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Not authenticated - show login prompt
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background text-white flex items-center justify-center p-6">
-        <div className="glass-premium rounded-2xl p-8 max-w-md w-full text-center space-y-6">
-          <div className="flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent/30 to-purple-500/30">
-              <BarChart3 className="h-8 w-8 text-accent" />
-            </div>
-          </div>
-
-          <div>
-            <h1 className="text-2xl font-bold mb-2">{t("chartsPage.title")}</h1>
-            <p className="text-textSecondary">
-              {t("chartsPage.subtitle")}
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <Link
-              href="/login"
-              className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-accent text-white font-semibold hover:bg-accent/90 transition"
-            >
-              <LogIn className="w-5 h-5" />
-              {t("common.login") || "Sign In"}
-            </Link>
-
-            <Link
-              href="/signup"
-              className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl bg-white/10 text-white font-semibold hover:bg-white/20 transition"
-            >
-              <User className="w-5 h-5" />
-              {t("common.signup") || "Sign Up"}
-            </Link>
-          </div>
-
-          <div className="pt-4 border-t border-white/10">
-            <Link
-              href="/"
-              className="text-sm text-textSecondary hover:text-white transition"
-            >
-              ← {t("nav.homePage")}
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (fullscreenSymbol) {
     return (

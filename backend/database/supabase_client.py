@@ -147,6 +147,17 @@ class TableQuery:
             logger.error(f"Supabase update error: {e}")
             return {"data": None, "error": str(e)}
 
+    def delete(self) -> Dict[str, Any]:
+        try:
+            with httpx.Client(timeout=30.0) as client:
+                url = self._build_url()
+                response = client.delete(url, headers=self.client.headers)
+                response.raise_for_status()
+                return {"data": response.json() if response.text else [], "error": None}
+        except Exception as e:
+            logger.error(f"Supabase delete error: {e}")
+            return {"data": None, "error": str(e)}
+
 
 _client: Optional[SupabaseRestClient] = None
 

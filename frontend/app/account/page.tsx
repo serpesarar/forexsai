@@ -22,6 +22,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useAuthStore, useUser, useIsAuthenticated } from "../../lib/auth/store";
+import AuthGuard from "../../components/AuthGuard";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
@@ -33,6 +34,14 @@ const TIER_CONFIG = {
 };
 
 export default function AccountPage() {
+  return (
+    <AuthGuard>
+      <AccountPageContent />
+    </AuthGuard>
+  );
+}
+
+function AccountPageContent() {
   const router = useRouter();
   const user = useUser();
   const isAuthenticated = useIsAuthenticated();
@@ -63,11 +72,7 @@ export default function AccountPage() {
     }
   }, [user]);
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated && _hasHydrated) {
-      router.push("/login");
-    }
-  }, [isLoading, isAuthenticated, router, _hasHydrated]);
+  // Auth redirect handled by AuthGuard wrapper
 
   const handleCopyReferral = () => {
     if (user?.referral_code) {

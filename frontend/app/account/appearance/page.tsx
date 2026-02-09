@@ -14,6 +14,7 @@ import {
   Monitor,
 } from "lucide-react";
 import { useAuthStore, useUser, useIsAuthenticated } from "../../../lib/auth/store";
+import AuthGuard from "../../../components/AuthGuard";
 
 const THEMES = [
   { id: "dark", name: "Koyu", icon: Moon, color: "bg-slate-800" },
@@ -27,6 +28,14 @@ const LANGUAGES = [
 ];
 
 export default function AppearancePage() {
+  return (
+    <AuthGuard>
+      <AppearancePageContent />
+    </AuthGuard>
+  );
+}
+
+function AppearancePageContent() {
   const router = useRouter();
   const user = useUser();
   const isAuthenticated = useIsAuthenticated();

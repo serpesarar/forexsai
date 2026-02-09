@@ -4,8 +4,17 @@ import { useAdminMetrics, useAdminReports } from "@/lib/api";
 import { Loader2, Users, Activity, MessageSquareWarning, Search, Filter, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import AuthGuard from "@/components/AuthGuard";
 
 export default function AdminDashboard() {
+    return (
+        <AuthGuard>
+            <AdminDashboardContent />
+        </AuthGuard>
+    );
+}
+
+function AdminDashboardContent() {
     const { data: metrics, isLoading: metricsLoading } = useAdminMetrics();
     const { data: reports, isLoading: reportsLoading } = useAdminReports();
     const [filter, setFilter] = useState("all");

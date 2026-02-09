@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import AuthGuard from "@/components/AuthGuard";
 import {
   ArrowLeft,
   HelpCircle,
@@ -41,6 +42,14 @@ const FAQ_ITEMS = [
 ];
 
 export default function HelpPage() {
+  return (
+    <AuthGuard>
+      <HelpPageContent />
+    </AuthGuard>
+  );
+}
+
+function HelpPageContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 

@@ -16,6 +16,7 @@ import RhythmDetectorSimple from "../../components/RhythmDetectorSimple";
 import TradingChartWrapper from "../../components/TradingChartWrapper";
 import LiveChartPanel from "../../components/LiveChartPanel";
 import { useI18nStore } from "../../lib/i18n/store";
+import AuthGuard from "../../components/AuthGuard";
 
 // Golden Ratio constant
 const PHI = 1.618;
@@ -42,7 +43,7 @@ const SYMBOLS = {
 
 type SymbolKey = keyof typeof SYMBOLS;
 
-export default function TradingDashboard() {
+function TradingDashboardContent() {
   const { t, locale } = useI18nStore();
   const [selectedSymbol, setSelectedSymbol] = useState<SymbolKey>("NDX.INDX");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -272,6 +273,14 @@ function MLPredictionPanelLarge({ symbol, symbolLabel }: { symbol: string; symbo
 }
 
 // Enhanced Claude Analysis Panel - Larger version for main view
+export default function TradingDashboard() {
+  return (
+    <AuthGuard>
+      <TradingDashboardContent />
+    </AuthGuard>
+  );
+}
+
 function ClaudeAnalysisPanelLarge({ symbol, symbolLabel }: { symbol: string; symbolLabel: string }) {
   return (
     <div className="relative">

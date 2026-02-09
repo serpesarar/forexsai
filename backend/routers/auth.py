@@ -330,8 +330,8 @@ async def get_referral_stats(user: UserProfile = Depends(require_auth)):
         .eq("referrer_id", user.id)\
         .execute()
     
-    total = len(referrals.data) if referrals.data else 0
-    completed = sum(1 for r in (referrals.data or []) if r["status"] in ["completed", "rewarded"])
+    total = len(referrals.get("data", [])) if referrals.get("data") else 0
+    completed = sum(1 for r in (referrals.get("data") or []) if r["status"] in ["completed", "rewarded"])
     pending = total - completed
     
     # Calculate progress to reward
@@ -387,7 +387,7 @@ async def get_packages():
         .order("display_order")\
         .execute()
     
-    return {"packages": packages.data or []}
+    return {"packages": packages.get("data") or []}
 
 
 @router.get("/validate-referral/{code}")
@@ -400,13 +400,12 @@ async def validate_referral_code(code: str):
         return {"valid": False, "message": "Doğrulama yapılamadı"}
     
     result = client.table("user_profiles")\
-        .select("id, full_name")\
+        .select("id,full_name")\
         .eq("referral_code", code.upper())\
-        .single()\
         .execute()
     
-    if result.data:
-        name = result.data.get("full_name", "Bir kullanıcı")
+    if result.get("data") and len(result["data"]) > 0:
+        name = result["data"][0].get("full_name", "Bir kullanıcı")
         return {
             "valid": True,
             "message": f"{name} sizi davet etti!",
@@ -445,14 +444,15 @@ async def forgot_password(body: ForgotPasswordRequest):
         
         # Find user
         user = client.table("user_profiles")\
-            .select("id, full_name, email")\
+            .select("id,full_name,email")\
             .eq("email", body.email.lower())\
-            .single()\
             .execute()
         
-        if not user.data:
+        if not user.get("data") or len(user["data"]) == 0:
             # Don't reveal if email exists
             return {"success": True, "message": "Eğer email kayıtlıysa, şifre sıfırlama linki gönderildi."}
+        
+        user_data = user["data"][0]
         
         # Generate reset token
         token = generate_token()
@@ -462,14 +462,14 @@ async def forgot_password(body: ForgotPasswordRequest):
         # Store token (reuse email_verifications table)
         try:
             client.table("email_verifications").insert({
-                "user_id": user.data["id"],
+                "user_id": user_data["id"],
                 "token_hash": token_hash,
                 "expires_at": expires_at.isoformat(),
                 "verification_type": "password_reset"
-            }).execute()
+            })
         except:
             # Update existing
-            client.table("email_verifications").eq("user_id", user.data["id"]).update({
+            client.table("email_verifications").eq("user_id", user_data["id"]).update({
                 "token_hash": token_hash,
                 "expires_at": expires_at.isoformat(),
                 "verification_type": "password_reset"
@@ -479,7 +479,7 @@ async def forgot_password(body: ForgotPasswordRequest):
         await send_password_reset_email(
             to=body.email.lower(),
             token=token,
-            full_name=user.data.get("full_name")
+            full_name=user_data.get("full_name")
         )
         
         return {"success": True, "message": "Şifre sıfırlama linki email adresinize gönderildi."}
@@ -509,21 +509,21 @@ async def reset_password(body: ResetPasswordRequest):
     
     # Find token
     verification = client.table("email_verifications")\
-        .select("user_id, expires_at")\
+        .select("user_id,expires_at")\
         .eq("token_hash", token_hash)\
         .eq("verification_type", "password_reset")\
-        .single()\
         .execute()
     
-    if not verification.data:
+    if not verification.get("data") or len(verification["data"]) == 0:
         raise HTTPException(status_code=400, detail="Geçersiz veya süresi dolmuş token")
     
     # Check expiry
-    expires_at = datetime.fromisoformat(verification.data["expires_at"].replace("Z", "+00:00"))
+    v_data = verification["data"][0]
+    expires_at = datetime.fromisoformat(v_data["expires_at"].replace("Z", "+00:00"))
     if datetime.now(expires_at.tzinfo) > expires_at:
         raise HTTPException(status_code=400, detail="Token süresi dolmuş. Lütfen yeni bir link isteyin.")
     
-    user_id = verification.data["user_id"]
+    user_id = v_data["user_id"]
     
     # Update password
     password_hash = hash_password(body.new_password)
@@ -534,14 +534,12 @@ async def reset_password(body: ResetPasswordRequest):
     
     # Delete used token
     client.table("email_verifications")\
-        .delete()\
         .eq("token_hash", token_hash)\
-        .execute()
+        .delete()
     
     # Invalidate all sessions
     client.table("user_sessions")\
-        .delete()\
         .eq("user_id", user_id)\
-        .execute()
+        .delete()
     
     return {"success": True, "message": "Şifreniz başarıyla değiştirildi. Yeni şifrenizle giriş yapabilirsiniz."}

@@ -146,25 +146,13 @@ def get_client_fingerprint(ip: str, user_agent: str) -> str:
 # SUPABASE CLIENT
 # =============================================================================
 
-_supabase_client = None
-
 async def get_supabase():
-    """Get or create Supabase client"""
-    global _supabase_client
-    
-    if _supabase_client is None:
-        if not settings.supabase_url or not settings.supabase_key:
-            logger.warning("Supabase not configured")
-            return None
-        
-        try:
-            from supabase import create_client
-            _supabase_client = create_client(settings.supabase_url, settings.supabase_key)
-        except Exception as e:
-            logger.error(f"Failed to create Supabase client: {e}")
-            return None
-    
-    return _supabase_client
+    """Get custom Supabase REST client (uses httpx directly)"""
+    from database.supabase_client import get_supabase_client
+    client = get_supabase_client()
+    if client is None:
+        logger.warning("Supabase REST client not available")
+    return client
 
 
 # =============================================================================
@@ -221,7 +209,7 @@ async def signup(
     try:
         # 4. Check if email exists
         existing = client.table("user_profiles").select("id").eq("email", email.lower()).execute()
-        if existing.data:
+        if existing.get("data"):
             return SignupResult(success=False, error="Bu email zaten kayıtlı", error_code="EMAIL_EXISTS")
         
         # 5. Hash password
@@ -233,10 +221,9 @@ async def signup(
             referrer = client.table("user_profiles")\
                 .select("id")\
                 .eq("referral_code", referral_code.upper())\
-                .single()\
                 .execute()
-            if referrer.data:
-                referred_by = referrer.data["id"]
+            if referrer.get("data") and len(referrer["data"]) > 0:
+                referred_by = referrer["data"][0]["id"]
         
         # 7. Generate fingerprint
         fingerprint = None
@@ -258,19 +245,19 @@ async def signup(
             "signup_fingerprint": fingerprint,
         }
         
-        result = client.table("user_profiles").insert(user_data).execute()
+        result = client.table("user_profiles").insert(user_data)
         
-        if not result.data:
+        if not result.get("data"):
             return SignupResult(success=False, error="Kayıt oluşturulamadı", error_code="INSERT_FAILED")
         
-        user_id = result.data[0]["id"]
+        user_id = result["data"][0]["id"]
         
         # 9. Store password separately (in a secure way)
         client.table("user_credentials").insert({
             "user_id": user_id,
             "password_hash": password_hash,
             "salt": salt
-        }).execute()
+        })
         
         # 10. Skip email verification (no email service configured)
         # verification_token = generate_token()
@@ -285,20 +272,14 @@ async def signup(
             client.table("referrals").insert({
                 "referrer_id": referred_by,
                 "referred_id": user_id,
-                "status": "completed"  # Changed from "pending" to "completed"
-            }).execute()
+                "status": "completed"
+            })
             
-            # Update referrer's count
-            try:
-                client.rpc('increment_referral_count', {'p_user_id': referred_by}).execute()
-            except:
-                pass
-        
-        # 12. Update daily metrics (optional)
-        try:
-            client.rpc('increment_daily_metric', {'p_metric': 'total_signups'}).execute()
-        except:
+            # Update referrer's count (rpc not available in custom client, skip)
             pass
+        
+        # 12. Update daily metrics (optional, rpc not available in custom client)
+        pass
         
         logger.info(f"New signup (auto-verified): {email}")
         
@@ -331,13 +312,12 @@ async def verify_email(token: str) -> Tuple[bool, Optional[str]]:
             .select("*")\
             .eq("token", token)\
             .is_("used_at", "null")\
-            .single()\
             .execute()
         
-        if not result.data:
+        if not result.get("data") or len(result["data"]) == 0:
             return False, "Geçersiz veya süresi dolmuş doğrulama linki"
         
-        verification = result.data
+        verification = result["data"][0]
         
         # Check expiry
         expires_at = datetime.fromisoformat(verification["expires_at"].replace("Z", "+00:00"))
@@ -368,10 +348,8 @@ async def verify_email(token: str) -> Tuple[bool, Optional[str]]:
         await check_referral_reward(user_id)
         
         # Update metrics
-        try:
-            client.rpc('increment_daily_metric', {'p_metric': 'verified_signups'}).execute()
-        except:
-            pass
+        # rpc not available in custom client, skip metrics
+        pass
         
         return True, None
         
@@ -413,13 +391,12 @@ async def login(
         user_result = client.table("user_profiles")\
             .select("*")\
             .eq("email", email.lower())\
-            .single()\
             .execute()
         
-        if not user_result.data:
+        if not user_result.get("data") or len(user_result["data"]) == 0:
             return AuthResult(success=False, error="Email veya şifre hatalı", error_code="INVALID_CREDENTIALS")
         
-        user = user_result.data
+        user = user_result["data"][0]
         user_id = user["id"]
         
         # 3. Check account status
@@ -444,13 +421,12 @@ async def login(
         creds_result = client.table("user_credentials")\
             .select("*")\
             .eq("user_id", user_id)\
-            .single()\
             .execute()
         
-        if not creds_result.data:
+        if not creds_result.get("data") or len(creds_result["data"]) == 0:
             return AuthResult(success=False, error="Kimlik bilgileri bulunamadı", error_code="NO_CREDENTIALS")
         
-        creds = creds_result.data
+        creds = creds_result["data"][0]
         
         # 6. Verify password
         if not verify_password(password, creds["password_hash"], creds["salt"]):
@@ -489,7 +465,7 @@ async def login(
             "device_info": device_info,
             "ip_address": ip_address,
             "expires_at": (datetime.utcnow() + timedelta(days=7)).isoformat()
-        }).execute()
+        })
         
         # 9. Update user stats
         client.table("user_profiles").eq("id", user_id).update({
@@ -538,32 +514,30 @@ async def validate_session(token: str) -> Optional[UserProfile]:
         session_result = client.table("user_sessions")\
             .select("*")\
             .eq("token_hash", token_hash)\
-            .single()\
             .execute()
         
-        if not session_result.data:
+        if not session_result.get("data") or len(session_result["data"]) == 0:
             return None
         
-        session = session_result.data
+        session = session_result["data"][0]
         
         # Check expiry
         expires_at = datetime.fromisoformat(session["expires_at"].replace("Z", "+00:00"))
         if datetime.now(expires_at.tzinfo) > expires_at:
             # Delete expired session
-            client.table("user_sessions").delete().eq("id", session["id"]).execute()
+            client.table("user_sessions").eq("id", session["id"]).delete()
             return None
         
         # Get user
         user_result = client.table("user_profiles")\
             .select("*")\
             .eq("id", session["user_id"])\
-            .single()\
             .execute()
         
-        if not user_result.data:
+        if not user_result.get("data") or len(user_result["data"]) == 0:
             return None
         
-        user = user_result.data
+        user = user_result["data"][0]
         
         # Update last activity
         client.table("user_sessions").eq("id", session["id"]).update({
@@ -597,7 +571,7 @@ async def logout(token: str) -> bool:
     
     try:
         token_hash = hashlib.sha256(token.encode()).hexdigest()
-        client.table("user_sessions").delete().eq("token_hash", token_hash).execute()
+        client.table("user_sessions").eq("token_hash", token_hash).delete()
         return True
     except Exception as e:
         logger.error(f"Logout error: {e}")
@@ -620,23 +594,21 @@ async def check_referral_reward(referred_user_id: str) -> bool:
             .select("referrer_id")\
             .eq("referred_id", referred_user_id)\
             .eq("status", "completed")\
-            .single()\
             .execute()
         
-        if not referral.data:
+        if not referral.get("data") or len(referral["data"]) == 0:
             return False
         
-        referrer_id = referral.data["referrer_id"]
+        referrer_id = referral["data"][0]["referrer_id"]
         
         # Count completed referrals
         count_result = client.table("referrals")\
-            .select("id", count="exact")\
+            .select("id")\
             .eq("referrer_id", referrer_id)\
             .eq("status", "completed")\
-            .neq("status", "rewarded")\
             .execute()
         
-        count = count_result.count or 0
+        count = len(count_result.get("data", []))
         
         if count >= REFERRAL_REWARD_THRESHOLD:
             # Award pro membership
@@ -676,13 +648,12 @@ async def grant_pro_membership(user_id: str, days: int, reason: str) -> bool:
         user = client.table("user_profiles")\
             .select("tier_expires_at")\
             .eq("id", user_id)\
-            .single()\
             .execute()
         
         current_expiry = None
-        if user.data and user.data.get("tier_expires_at"):
+        if user.get("data") and len(user["data"]) > 0 and user["data"][0].get("tier_expires_at"):
             current_expiry = datetime.fromisoformat(
-                user.data["tier_expires_at"].replace("Z", "+00:00")
+                user["data"][0]["tier_expires_at"].replace("Z", "+00:00")
             )
         
         # Calculate new expiry (extend if already pro)
@@ -701,18 +672,17 @@ async def grant_pro_membership(user_id: str, days: int, reason: str) -> bool:
         pro_package = client.table("subscription_packages")\
             .select("id")\
             .eq("slug", "pro")\
-            .single()\
             .execute()
         
-        if pro_package.data:
+        if pro_package.get("data") and len(pro_package["data"]) > 0:
             client.table("user_subscriptions").insert({
                 "user_id": user_id,
-                "package_id": pro_package.data["id"],
+                "package_id": pro_package["data"][0]["id"],
                 "status": "active",
                 "starts_at": datetime.utcnow().isoformat(),
                 "ends_at": new_expiry.isoformat(),
                 "auto_renew": False
-            }).execute()
+            })
         
         return True
         
@@ -740,19 +710,18 @@ async def check_feature_access(user_id: str, feature: str) -> Tuple[bool, Option
     
     try:
         user = client.table("user_profiles")\
-            .select("membership_tier, tier_expires_at")\
+            .select("membership_tier,tier_expires_at")\
             .eq("id", user_id)\
-            .single()\
             .execute()
         
-        if not user.data:
+        if not user.get("data") or len(user["data"]) == 0:
             return False, "Kullanıcı bulunamadı"
         
-        tier = user.data["membership_tier"]
+        tier = user["data"][0]["membership_tier"]
         
         # Check tier expiry
-        if tier in ["pro", "enterprise"] and user.data.get("tier_expires_at"):
-            expiry = datetime.fromisoformat(user.data["tier_expires_at"].replace("Z", "+00:00"))
+        if tier in ["pro", "enterprise"] and user["data"][0].get("tier_expires_at"):
+            expiry = datetime.fromisoformat(user["data"][0]["tier_expires_at"].replace("Z", "+00:00"))
             if datetime.now(expiry.tzinfo) > expiry:
                 # Tier expired, downgrade to free
                 client.table("user_profiles").eq("id", user_id).update({
@@ -800,7 +769,7 @@ async def track_claude_usage(user_id: str, endpoint: str, tokens: int, cost: flo
             "endpoint": endpoint,
             "tokens_used": tokens,
             "cost_usd": cost
-        }).execute()
+        })
         
         # Update user total
         current = client.table("user_profiles").select("total_claude_calls").eq("id", user_id).execute()
@@ -832,13 +801,12 @@ async def check_claude_limit(user_id: str) -> Tuple[bool, Optional[str], int]:
         user = client.table("user_profiles")\
             .select("membership_tier")\
             .eq("id", user_id)\
-            .single()\
             .execute()
         
-        if not user.data:
+        if not user.get("data") or len(user["data"]) == 0:
             return False, "Kullanıcı bulunamadı", 0
         
-        tier = user.data["membership_tier"]
+        tier = user["data"][0]["membership_tier"]
         
         if tier == "free":
             return False, "Claude analizi Pro üyelik gerektirir", 0
@@ -852,12 +820,12 @@ async def check_claude_limit(user_id: str) -> Tuple[bool, Optional[str], int]:
         # Count today's usage
         today = datetime.utcnow().date().isoformat()
         usage = client.table("claude_usage")\
-            .select("id", count="exact")\
+            .select("id")\
             .eq("user_id", user_id)\
             .gte("created_at", today)\
             .execute()
         
-        used = usage.count or 0
+        used = len(usage.get("data", []))
         remaining = max(0, limit - used)
         
         if used >= limit:

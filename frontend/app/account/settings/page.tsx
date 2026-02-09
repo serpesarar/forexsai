@@ -16,10 +16,19 @@ import {
   Key,
 } from "lucide-react";
 import { useAuthStore, useUser, useIsAuthenticated } from "../../../lib/auth/store";
+import AuthGuard from "../../../components/AuthGuard";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 export default function SettingsPage() {
+  return (
+    <AuthGuard>
+      <SettingsPageContent />
+    </AuthGuard>
+  );
+}
+
+function SettingsPageContent() {
   const router = useRouter();
   const user = useUser();
   const isAuthenticated = useIsAuthenticated();

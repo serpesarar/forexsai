@@ -15,8 +15,17 @@ import {
   Newspaper,
 } from "lucide-react";
 import { useAuthStore, useUser, useIsAuthenticated } from "../../../lib/auth/store";
+import AuthGuard from "../../../components/AuthGuard";
 
 export default function NotificationsPage() {
+  return (
+    <AuthGuard>
+      <NotificationsPageContent />
+    </AuthGuard>
+  );
+}
+
+function NotificationsPageContent() {
   const router = useRouter();
   const user = useUser();
   const isAuthenticated = useIsAuthenticated();
