@@ -163,6 +163,7 @@ def _calculate_trend(
     # Calculate EMAs
     ema_20 = calculate_ema(closes, 20) or closes[-1]
     ema_50 = calculate_ema(closes, 50) or closes[-1]
+    ema_200 = calculate_ema(closes, 200) if len(closes) >= 200 else (calculate_ema(closes, len(closes)) if len(closes) >= 20 else float(closes[-1]))
     
     current_price = float(closes[-1])
     
@@ -206,6 +207,7 @@ def _calculate_trend(
         "description": description,
         "ema_20": round(ema_20, 2),
         "ema_50": round(ema_50, 2),
+        "ema_200": round(ema_200, 2) if ema_200 else 0,
     }
 
 
@@ -407,6 +409,25 @@ async def get_clear_trend(symbol: str, timeframe: str = "1H"):
             price_display = f"{current_price:.1f}"
             price_decimals = 1
         
+        # Build chart data for frontend mini chart
+        recent_closes = [round(float(c), price_decimals) for c in closes[-50:]]
+        
+        # Linear regression trend channel
+        channel_closes = closes[-50:] if len(closes) >= 50 else closes
+        x = np.arange(len(channel_closes), dtype=float)
+        try:
+            slope, intercept = np.polyfit(x, channel_closes.astype(float), 1)
+            fitted = slope * x + intercept
+            residual = channel_closes - fitted
+            std_dev = float(np.std(residual))
+            upper_band = [round(float(f + 2 * std_dev), price_decimals) for f in fitted]
+            lower_band = [round(float(f - 2 * std_dev), price_decimals) for f in fitted]
+            middle_line = [round(float(f), price_decimals) for f in fitted]
+        except Exception:
+            upper_band = recent_closes
+            lower_band = recent_closes
+            middle_line = recent_closes
+        
         return {
             "symbol": symbol,
             "timeframe": timeframe,
@@ -420,6 +441,14 @@ async def get_clear_trend(symbol: str, timeframe: str = "1H"):
             "levels": levels_data,
             "trade_zones": trade_zones,
             "pip_value": pip_value,
+            "chart_data": {
+                "closes": recent_closes,
+                "trend_channel": {
+                    "upper": upper_band,
+                    "lower": lower_band,
+                    "middle": middle_line,
+                }
+            },
             "explanations": {
                 "trend": "Trend direction based on EMA20 and EMA50 positioning",
                 "strength": "How strong the trend is (0-100). Above 70 is strong, below 30 is weak",
