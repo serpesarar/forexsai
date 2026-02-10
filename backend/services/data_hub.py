@@ -149,7 +149,7 @@ async def _fetch_candles_from_api(symbol: str, interval: str, limit: int = 500) 
     # Calculate how far back we need to go based on interval and limit
     # EODHD requires 'from' param for historical intraday data
     import math
-    candles_per_day = {"5m": 78, "1h": 7, "1m": 390}.get(interval, 78)
+    candles_per_day = {"1m": 1320, "5m": 264, "15m": 88, "30m": 44, "1h": 22}.get(interval, 78)
     trading_days_needed = math.ceil(limit / max(candles_per_day, 1))
     # Add buffer for weekends/holidays (multiply by 1.6)
     calendar_days = max(int(trading_days_needed * 1.6) + 5, 7)
@@ -303,12 +303,17 @@ def _mark_fetched(key: str):
 _initial_seed_done: Dict[str, bool] = {}
 
 # Delta fetch limits (much smaller than full seed)
-DELTA_LIMIT_5M = 24      # ~2 hours of 5m candles
+DELTA_LIMIT_5M = 24       # ~2 hours of 5m candles
 DELTA_LIMIT_1H = 6        # ~6 hours of 1h candles
 DELTA_LIMIT_EOD = 5       # ~5 days of EOD candles
-FULL_SEED_LIMIT_5M = 500  # Full seed: ~41 hours
-FULL_SEED_LIMIT_1H = 500  # Full seed: ~20 days
-FULL_SEED_LIMIT_EOD = 100 # Full seed: ~100 days
+
+# Full seed limits — sized so EMA200 works on ALL derived timeframes:
+#   5m:  1500 → 15m=500, 30m=250, 1h=125 (XAUUSD: 1h derived from 5m)
+#   1h:  800  → 4h=200 (NDX: fetched directly)
+#   EOD: 365  → EMA200 with full year of data
+FULL_SEED_LIMIT_5M = 1500   # ~5.2 days of 5m candles
+FULL_SEED_LIMIT_1H = 800    # ~114 days of 1h candles
+FULL_SEED_LIMIT_EOD = 365   # ~1 year of daily candles
 
 # Symbols where EODHD only supports 1m intraday interval (not 5m/1h)
 # For these: fetch 1m → resample to 5m → derive 15m/30m/1h/4h
