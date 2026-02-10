@@ -11,13 +11,15 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 from typing import List, Optional, Literal
 
+import httpx
+
 from config import settings
 
 logger = logging.getLogger(__name__)
 
-# Claude Haiku 4.5 - fastest, most cost-effective model
-CLAUDE_MODEL = "claude-haiku-4-5"
-CLAUDE_MAX_TOKENS = 1200
+# DeepSeek R1 model
+DEEPSEEK_MODEL = "deepseek-reasoner"
+DEEPSEEK_MAX_TOKENS = 1200
 
 # System prompt for Claude - Expert Forex/Index Trader persona
 TRADING_SYSTEM_PROMPT = """Sen deneyimli bir forex ve endeks trader'ısın. 15+ yıllık profesyonel trading tecrüben var.
@@ -184,40 +186,40 @@ Kısa ve öz yanıtla.""".format(direction=direction, confidence=confidence)
 
 async def analyze_signal_with_claude(prediction: dict, ta_data: dict) -> ClaudeAnalysisResult:
     """
-    Send ML prediction and TA data to Claude for independent analysis.
+    Send ML prediction and TA data to DeepSeek R1 for independent analysis.
     """
-    try:
-        import anthropic
-    except ImportError:
-        logger.error("anthropic package not installed")
-        return _fallback_analysis(prediction)
-    
-    api_key = settings.anthropic_api_key
+    api_key = settings.deepseek_api_key
     if not api_key:
-        logger.warning("ANTHROPIC_API_KEY not set, using fallback analysis")
+        logger.warning("DEEP_SEEKR1 not set, using fallback analysis")
         return _fallback_analysis(prediction)
-    
-    client = anthropic.Anthropic(api_key=api_key)
     
     prompt = _build_analysis_prompt(prediction, ta_data)
+    # Prepend system prompt to user message (R1 doesn't support system role well)
+    full_prompt = f"{TRADING_SYSTEM_PROMPT}\n\n---\n\n{prompt}"
     
     try:
-        message = client.messages.create(
-            model=CLAUDE_MODEL,
-            max_tokens=CLAUDE_MAX_TOKENS,
-            system=TRADING_SYSTEM_PROMPT,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
+        async with httpx.AsyncClient(timeout=90.0) as client:
+            resp = await client.post(
+                "https://api.deepseek.com/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": DEEPSEEK_MODEL,
+                    "max_tokens": DEEPSEEK_MAX_TOKENS,
+                    "messages": [{"role": "user", "content": full_prompt}],
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            response_text = data["choices"][0]["message"]["content"]
         
-        response_text = message.content[0].text
-        
-        # Parse Claude's response
+        # Parse DeepSeek's response
         return _parse_claude_response(prediction, response_text)
         
     except Exception as e:
-        logger.error(f"Claude API error: {e}")
+        logger.error(f"DeepSeek API error: {e}")
         return _fallback_analysis(prediction)
 
 

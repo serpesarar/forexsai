@@ -36,28 +36,31 @@ Use this data to infer key patterns. Keep strings concise and JSON-valid.
 {language_line}
 """.strip()
 
-    async with httpx.AsyncClient(timeout=25.0) as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.post(
-            "https://api.anthropic.com/v1/messages",
+            "https://api.deepseek.com/chat/completions",
             headers={
-                "x-api-key": settings.anthropic_api_key,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
+                "Authorization": f"Bearer {settings.deepseek_api_key}",
+                "Content-Type": "application/json",
             },
             json={
-                "model": "claude-3-haiku-20240307",
+                "model": "deepseek-reasoner",
                 "max_tokens": 700,
-                "temperature": 0.2,
                 "messages": [{"role": "user", "content": prompt}],
             },
         )
         resp.raise_for_status()
         data = resp.json()
-        text = ""
-        for block in data.get("content", []) or []:
-            if block.get("type") == "text":
-                text = block.get("text", "")
-                break
+        text = data["choices"][0]["message"]["content"]
+        # Clean up markdown if present
+        text = text.strip()
+        if text.startswith("```json"):
+            text = text[7:]
+        if text.startswith("```"):
+            text = text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
+        text = text.strip()
         return json.loads(text)
 
 
@@ -68,20 +71,20 @@ async def run_claude_pattern_analysis(symbol: str, timeframes: list[str], lang: 
     series = [{"d": r.get("date"), "c": r.get("close")} for r in eod]
     series_json = json.dumps(series, ensure_ascii=False)
 
-    if not settings.anthropic_api_key:
+    if not settings.deepseek_api_key:
         # Minimal fallback without hallucinating hardcoded prices
         analyses: Dict[str, dict] = {}
         for timeframe in timeframes:
             analyses[timeframe] = {
                 "detected_patterns": [],
-                "summary": f"{timeframe} timeframe pattern analysis unavailable (ANTHROPIC_API_KEY missing).",
+                "summary": f"{timeframe} timeframe pattern analysis unavailable (DEEP_SEEKR1 key missing).",
                 "recommendation": "HOLD",
             }
         return {
             "analyses": analyses,
             "current_price": current_price_value,
             "timestamp": datetime.utcnow().isoformat() + "Z",
-            "model_status": "ANTHROPIC_API_KEY missing",
+            "model_status": "DEEP_SEEKR1 key missing",
         }
 
     try:
@@ -125,5 +128,5 @@ async def run_claude_pattern_analysis(symbol: str, timeframes: list[str], lang: 
             "analyses": analyses,
             "current_price": current_price_value,
             "timestamp": datetime.utcnow().isoformat() + "Z",
-            "model_status": "Claude request failed",
+            "model_status": "DeepSeek request failed",
         }

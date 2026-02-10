@@ -8,6 +8,7 @@ from config import settings
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+import httpx
 import numpy as np
 
 from services.data_fetcher import fetch_eod_candles, fetch_latest_price
@@ -21,9 +22,9 @@ logger = logging.getLogger(__name__)
 ANALYSIS_ENGINE_VERSION = "3.0.0"
 CONTEXT_PACK_VERSION = "3.0.0"  # Added: divergences, market_structure, liquidity_zones, economic_calendar
 
-# Claude Haiku 4.5 - fastest, most cost-effective model
-CLAUDE_MODEL = "claude-haiku-4-5"
-CLAUDE_MAX_TOKENS = 1800  # Slightly increased for better analysis
+# DeepSeek R1 model
+DEEPSEEK_MODEL = "deepseek-reasoner"
+DEEPSEEK_MAX_TOKENS = 1800
 
 DETAILED_SYSTEM_PROMPT = """You are an institutional-grade market analysis engine. Your job is to produce a single actionable decision (BUY/SELL/HOLD/NO_TRADE) using ONLY the provided context pack. Do NOT invent or assume missing values.
 
@@ -804,16 +805,9 @@ def _fallback_detailed_analysis(context: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def analyze_detailed_with_claude(context: Dict[str, Any]) -> Dict[str, Any]:
-    try:
-        import anthropic
-    except ImportError:
-        return _fallback_detailed_analysis(context)
-
-    api_key = settings.anthropic_api_key
+    api_key = settings.deepseek_api_key
     if not api_key:
         return _fallback_detailed_analysis(context)
-
-    client = anthropic.Anthropic(api_key=api_key)
 
     user_prompt = f"""Analyze the following context pack and return ONLY valid JSON matching the schema in your instructions.
 
@@ -826,25 +820,37 @@ Remember:
 3. Apply risk gating rules
 4. Output ONLY the JSON response, no additional text"""
 
+    # Prepend system prompt to user message (R1 doesn't support system role well)
+    full_prompt = f"{DETAILED_SYSTEM_PROMPT}\n\n---\n\n{user_prompt}"
+
     try:
-        message = client.messages.create(
-            model=CLAUDE_MODEL,
-            max_tokens=CLAUDE_MAX_TOKENS,
-            system=DETAILED_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_prompt}],
-        )
-        response_text = message.content[0].text if getattr(message, "content", None) else ""
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            resp = await client.post(
+                "https://api.deepseek.com/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": DEEPSEEK_MODEL,
+                    "max_tokens": DEEPSEEK_MAX_TOKENS,
+                    "messages": [{"role": "user", "content": full_prompt}],
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            response_text = data["choices"][0]["message"]["content"]
 
         parsed = _parse_claude_json(response_text)
         if parsed is not None:
             parsed["timestamp"] = parsed.get("timestamp") or (datetime.utcnow().isoformat() + "Z")
-            parsed["model_used"] = parsed.get("model_used") or CLAUDE_MODEL
+            parsed["model_used"] = parsed.get("model_used") or DEEPSEEK_MODEL
             parsed["engine_version"] = ANALYSIS_ENGINE_VERSION
             return parsed
 
         # JSON parse failed - return partial response
         return {
-            "data_quality": {"score": 40, "missing_fields": ["valid_json"], "notes": ["Claude response was not valid JSON"]},
+            "data_quality": {"score": 40, "missing_fields": ["valid_json"], "notes": ["DeepSeek response was not valid JSON"]},
             "final_decision": context.get("ml_prediction", {}).get("direction", "HOLD"),
             "confidence": float(context.get("ml_prediction", {}).get("confidence", 50.0)) * 0.7,
             "thesis": {"summary": response_text[:1000], "bull_case": [], "bear_case": [], "why_this_decision": "JSON parse failed"},
@@ -853,19 +859,18 @@ Remember:
             "key_levels": {},
             "macro_view": {"dxy": {}, "vix": {}, "notes": []},
             "risk_management": {"position_size": "NO_TRADE", "entry": "needs_price", "stop_loss": "needs_levels", "take_profit": "needs_levels", "invalidation": "JSON parse failed", "size_rationale": "Cannot trade without valid analysis"},
-            "red_flags": ["Claude response was not valid JSON - raw response logged"],
+            "red_flags": ["DeepSeek response was not valid JSON - raw response logged"],
             "gating_applied": ["json_parse_failure"],
-            "next_data_needed": ["Valid JSON response from Claude"],
+            "next_data_needed": ["Valid JSON response from DeepSeek"],
             "timestamp": datetime.utcnow().isoformat() + "Z",
-            "model_used": CLAUDE_MODEL,
+            "model_used": DEEPSEEK_MODEL,
             "engine_version": ANALYSIS_ENGINE_VERSION,
             "raw_response_preview": response_text[:500]
         }
     except Exception as e:
-        logger.error(f"Claude detailed analysis error: {e}")
-        # Return fallback with actual error message for debugging
+        logger.error(f"DeepSeek detailed analysis error: {e}")
         fallback = _fallback_detailed_analysis(context)
-        fallback["red_flags"] = [f"Claude API error: {str(e)}"]
+        fallback["red_flags"] = [f"DeepSeek API error: {str(e)}"]
         return fallback
 
 

@@ -26,8 +26,8 @@ async def run_claude_sentiment(symbol: str = "NDX.INDX", lang: str = "en") -> di
         "timestamp": datetime.utcnow().isoformat() + "Z",
     }
 
-    if not settings.anthropic_api_key:
-        # Fallback deterministic sentiment if Claude key missing
+    if not settings.deepseek_api_key:
+        # Fallback deterministic sentiment if DeepSeek key missing
         return {
             "sentiment": "NEUTRAL",
             "confidence": 0.55,
@@ -39,13 +39,13 @@ async def run_claude_sentiment(symbol: str = "NDX.INDX", lang: str = "en") -> di
                     "factor": "Headlines availability",
                     "impact": "neutral",
                     "weight": 0.4,
-                    "reasoning": "ANTHROPIC_API_KEY missing; using fallback logic.",
+                    "reasoning": "DEEP_SEEKR1 key missing; using fallback logic.",
                 }
             ],
-            "analysis": "Claude disabled; fallback sentiment used.",
+            "analysis": "DeepSeek disabled; fallback sentiment used.",
             "recommendation": "HOLD",
             "market_data_summary": market_data_summary,
-            "model_status": "ANTHROPIC_API_KEY missing",
+            "model_status": "DEEP_SEEKR1 missing",
             "headlines": headlines,
         }
 
@@ -72,29 +72,31 @@ Headlines:
 """.strip()
 
     try:
-        async with httpx.AsyncClient(timeout=20.0) as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.post(
-                "https://api.anthropic.com/v1/messages",
+                "https://api.deepseek.com/chat/completions",
                 headers={
-                    "x-api-key": settings.anthropic_api_key,
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json",
+                    "Authorization": f"Bearer {settings.deepseek_api_key}",
+                    "Content-Type": "application/json",
                 },
                 json={
-                    "model": "claude-3-haiku-20240307",
+                    "model": "deepseek-reasoner",
                     "max_tokens": 600,
-                    "temperature": 0.2,
                     "messages": [{"role": "user", "content": prompt}],
                 },
             )
             resp.raise_for_status()
             data = resp.json()
-            # Anthropics returns list content blocks; take first text block
-            text = ""
-            for block in data.get("content", []) or []:
-                if block.get("type") == "text":
-                    text = block.get("text", "")
-                    break
+            text = data["choices"][0]["message"]["content"]
+            # Clean markdown if present
+            text = text.strip()
+            if text.startswith("```json"):
+                text = text[7:]
+            if text.startswith("```"):
+                text = text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+            text = text.strip()
             parsed = json.loads(text)
             # Attach metadata we maintain in our API response
             parsed["market_data_summary"] = market_data_summary
@@ -110,15 +112,15 @@ Headlines:
             "probability_sideways": 25,
             "key_factors": [
                 {
-                    "factor": "Claude request error",
+                    "factor": "DeepSeek request error",
                     "impact": "neutral",
                     "weight": 0.5,
                     "reasoning": str(e),
                 }
             ],
-            "analysis": "Claude request failed; fallback sentiment used.",
+            "analysis": "DeepSeek request failed; fallback sentiment used.",
             "recommendation": "HOLD",
             "market_data_summary": market_data_summary,
-            "model_status": "Claude request failed",
+            "model_status": "DeepSeek request failed",
             "headlines": headlines,
         }

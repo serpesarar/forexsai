@@ -330,40 +330,33 @@ async def call_claude_api(
     temperature: float = 0.0
 ) -> Optional[Dict]:
     """
-    Call Claude API with the given prompt.
+    Call DeepSeek R1 API with the given prompt.
     Returns parsed JSON response or None on error.
     """
-    if not settings.anthropic_api_key:
-        logger.error("ANTHROPIC_API_KEY not configured")
+    if not settings.deepseek_api_key:
+        logger.error("DEEP_SEEKR1 not configured")
         return None
     
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=90.0) as client:
             response = await client.post(
-                "https://api.anthropic.com/v1/messages",
+                "https://api.deepseek.com/chat/completions",
                 headers={
-                    "x-api-key": settings.anthropic_api_key,
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json",
+                    "Authorization": f"Bearer {settings.deepseek_api_key}",
+                    "Content-Type": "application/json",
                 },
                 json={
-                    "model": "claude-3-5-sonnet-20241022",
+                    "model": "deepseek-reasoner",
                     "max_tokens": max_tokens,
-                    "temperature": temperature,  # Deterministic
                     "messages": [{"role": "user", "content": prompt}],
                 }
             )
             response.raise_for_status()
             data = response.json()
             
-            # Extract text content
-            text = ""
-            for block in data.get("content", []):
-                if block.get("type") == "text":
-                    text = block.get("text", "")
-                    break
+            # Extract text content (OpenAI-compatible format)
+            text = data["choices"][0]["message"]["content"]
             
-            # Parse JSON
             # Clean up any markdown formatting
             text = text.strip()
             if text.startswith("```json"):
@@ -379,17 +372,17 @@ async def call_claude_api(
             # Add token usage for cost tracking
             usage = data.get("usage", {})
             result["_tokens"] = {
-                "input": usage.get("input_tokens", 0),
-                "output": usage.get("output_tokens", 0),
+                "input": usage.get("prompt_tokens", 0),
+                "output": usage.get("completion_tokens", 0),
             }
             
             return result
             
     except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse Claude response as JSON: {e}")
+        logger.error(f"Failed to parse DeepSeek response as JSON: {e}")
         return None
     except Exception as e:
-        logger.error(f"Claude API error: {e}")
+        logger.error(f"DeepSeek API error: {e}")
         return None
 
 
