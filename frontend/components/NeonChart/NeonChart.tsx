@@ -54,20 +54,39 @@ const EMA_CONFIG = {
 
 // ─── Data fetching ────────────────────────────────────────────────
 async function fetchChartData(symbol: string, timeframe: string): Promise<CandleData[]> {
-  const res = await fetch(
-    `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=${timeframe}&limit=300`
-  );
-  if (!res.ok) throw new Error("Failed to fetch chart data");
-  const data = await res.json();
-  return data.data || [];
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    const res = await fetch(
+      `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=${timeframe}&limit=300`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const candles = data.data || [];
+    // If intraday returns empty, try daily as fallback
+    if (candles.length === 0 && timeframe !== "1d") {
+      return fetchChartData(symbol, "1d");
+    }
+    return candles;
+  } catch {
+    return [];
+  }
 }
 
 async function fetchLivePrice(symbol: string): Promise<number | null> {
   try {
-    const res = await fetch(`${API_BASE}/api/data/cached/${encodeURIComponent(symbol)}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(
+      `${API_BASE}/api/data/cached/${encodeURIComponent(symbol)}`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
     if (!res.ok) return null;
     const data = await res.json();
-    return data?.data?.current_price ?? null;
+    return data?.data?.current_price ?? data?.data?.ta_snapshot?.current_price ?? null;
   } catch {
     return null;
   }
