@@ -289,7 +289,7 @@ function ChartsPageContent() {
           <NeonChart
             symbol="XAUUSD.FOREX"
             symbolLabel="XAUUSD"
-            initialTimeframe="1d"
+            initialTimeframe="1h"
             height={480}
           />
         </div>
