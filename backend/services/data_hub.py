@@ -148,11 +148,12 @@ async def _fetch_candles_from_api(symbol: str, interval: str, limit: int = 500) 
     
     # Calculate how far back we need to go based on interval and limit
     # EODHD requires 'from' param for historical intraday data
+    # Use CONSERVATIVE (stock market) estimates so we always fetch enough days
     import math
-    candles_per_day = {"1m": 1320, "5m": 264, "15m": 88, "30m": 44, "1h": 22}.get(interval, 78)
+    candles_per_day = {"1m": 390, "5m": 78, "15m": 26, "30m": 13, "1h": 7}.get(interval, 78)
     trading_days_needed = math.ceil(limit / max(candles_per_day, 1))
-    # Add buffer for weekends/holidays (multiply by 1.6)
-    calendar_days = max(int(trading_days_needed * 1.6) + 5, 7)
+    # Buffer for weekends/holidays (×2 to be safe)
+    calendar_days = max(int(trading_days_needed * 2) + 7, 14)
     from_ts = int((datetime.utcnow() - timedelta(days=calendar_days)).timestamp())
     
     try:
@@ -521,15 +522,26 @@ async def start_data_hub():
 
 
 def force_reseed():
-    """Force a full re-seed on next pump cycle by clearing seed flags and fetch timestamps."""
+    """Force a full re-seed by clearing ALL in-memory data and seed flags."""
     global _initial_seed_done
     _initial_seed_done = {}
-    for symbol in TRACKED_SYMBOLS:
-        _last_fetch[f"5m:{symbol}"] = 0
-        _last_fetch[f"1h:{symbol}"] = 0
-        _last_fetch[f"eod:{symbol}"] = 0
-    logger.info("[DataHub] Force re-seed scheduled — next pump cycle will do full fetch")
-    return {"status": "ok", "message": "Re-seed scheduled for next pump cycle"}
+    with _lock:
+        for symbol in TRACKED_SYMBOLS:
+            # Clear all candle caches so merge starts fresh
+            _candles_5m.pop(symbol, None)
+            _candles_15m.pop(symbol, None)
+            _candles_30m.pop(symbol, None)
+            _candles_1h.pop(symbol, None)
+            _candles_4h.pop(symbol, None)
+            _candles_eod.pop(symbol, None)
+            # Reset fetch timestamps to trigger immediate fetch
+            _last_fetch[f"price:{symbol}"] = 0
+            _last_fetch[f"5m:{symbol}"] = 0
+            _last_fetch[f"1h:{symbol}"] = 0
+            _last_fetch[f"eod:{symbol}"] = 0
+    _last_fetch["macro"] = 0
+    logger.info("[DataHub] Force re-seed: cleared all in-memory caches and seed flags")
+    return {"status": "ok", "message": "All caches cleared — full re-seed on next pump cycle"}
 
 
 def stop_data_hub():

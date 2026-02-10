@@ -28,7 +28,7 @@ def _date_to_ms(date_str: str) -> int:
 async def ohlcv(
     symbol: str = Query(default="NDX.INDX"),
     timeframe: str = Query(default="1d"),
-    limit: int = Query(default=500, ge=50, le=500),
+    limit: int = Query(default=500, ge=50, le=1500),
 ) -> Dict[str, Any]:
     """
     Chart data endpoint used by frontend `useChartData`.
