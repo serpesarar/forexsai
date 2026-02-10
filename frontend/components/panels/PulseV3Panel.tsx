@@ -62,6 +62,15 @@ const SYMBOLS = [
   { key: "XAUUSD", label: "XAUUSD" },
 ];
 
+/* ── Neon helpers ── */
+const signalNeon: Record<string, { accent: string; glow: string; bg: string }> = {
+  CONFIRM: { accent: "#00ff88", glow: "rgba(0,255,136,0.15)", bg: "rgba(0,255,136,0.06)" },
+  SCOUT:   { accent: "#f0b429", glow: "rgba(240,180,41,0.15)", bg: "rgba(240,180,41,0.06)" },
+  HOLD:    { accent: "#818cf8", glow: "rgba(129,140,248,0.15)", bg: "rgba(129,140,248,0.06)" },
+};
+
+const dirNeon: Record<string, string> = { BUY: "#00ff88", SELL: "#ff3366", NEUTRAL: "#f0b429" };
+
 export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: PulseV3PanelProps) {
   const { t } = useI18nStore();
   const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
@@ -98,41 +107,20 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
     return () => clearInterval(interval);
   }, [activeSymbol]);
 
-  const getSignalColor = (type: string) => {
-    if (type === "CONFIRM") return "from-green-900/60 to-green-800/30";
-    if (type === "SCOUT") return "from-yellow-900/60 to-yellow-800/30";
-    return "from-gray-900/60 to-gray-800/30";
-  };
-
   const getSignalBadge = (type: string) => {
-    if (type === "CONFIRM")
-      return { bg: "bg-green-500", text: t("pulseV3.strongSignal"), icon: CheckCircle };
-    if (type === "SCOUT")
-      return { bg: "bg-yellow-500", text: t("pulseV3.watchMode"), icon: Eye };
-    return { bg: "bg-gray-500", text: t("pulseV3.wait"), icon: Clock };
-  };
-
-  const getTrendIcon = (trend: string) => {
-    if (trend === "up") return <ArrowUp className="w-4 h-4 text-green-400" />;
-    if (trend === "down")
-      return <ArrowDown className="w-4 h-4 text-red-400" />;
-    return <Activity className="w-4 h-4 text-yellow-400" />;
-  };
-
-  const getTrendColor = (trend: string) => {
-    if (trend === "up") return "text-green-400";
-    if (trend === "down") return "text-red-400";
-    return "text-yellow-400";
+    if (type === "CONFIRM") return { text: t("pulseV3.strongSignal"), icon: CheckCircle };
+    if (type === "SCOUT") return { text: t("pulseV3.watchMode"), icon: Eye };
+    return { text: t("pulseV3.wait"), icon: Clock };
   };
 
   if (loading && !data) {
     return (
-      <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 animate-pulse">
-        <div className="h-10 bg-gray-800 rounded w-2/3 mb-4" />
-        <div className="h-32 bg-gray-800 rounded-lg mb-4" />
+      <div className="rounded-2xl p-6 animate-pulse" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="h-10 rounded w-2/3 mb-4" style={{ background: "rgba(255,255,255,0.04)" }} />
+        <div className="h-32 rounded-xl mb-4" style={{ background: "rgba(255,255,255,0.04)" }} />
         <div className="grid grid-cols-3 gap-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-24 bg-gray-800 rounded-lg" />
+            <div key={i} className="h-24 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }} />
           ))}
         </div>
       </div>
@@ -141,22 +129,20 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
 
   if (error && !data && !loading) {
     return (
-      <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
-        <div className="bg-gradient-to-r from-orange-900/50 to-amber-900/50 p-4 border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
-              <Zap className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">{t("pulseV3.title")}</h2>
-              <p className="text-xs text-gray-400">{t("pulseV3.subtitle")}</p>
-            </div>
+      <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="px-4 py-3 flex items-center gap-2.5" style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(240,180,41,0.2)", boxShadow: "0 0 12px rgba(240,180,41,0.3)" }}>
+            <Zap className="w-4 h-4" style={{ color: "#f0b429" }} />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-white/90 font-mono">{t("pulseV3.title")}</h2>
+            <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulseV3.subtitle")}</p>
           </div>
         </div>
         <div className="p-8 text-center">
-          <Activity className="w-12 h-12 text-yellow-500 mx-auto mb-3 opacity-50" />
-          <p className="text-yellow-400 font-medium mb-1">{activeSymbol}</p>
-          <p className="text-gray-400 text-sm">{t("pulse.insufficientData")}</p>
+          <Activity className="w-12 h-12 mx-auto mb-3 opacity-40" style={{ color: "#f0b429" }} />
+          <p className="font-medium mb-1 font-mono text-sm" style={{ color: "#f0b429" }}>{activeSymbol}</p>
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulse.insufficientData")}</p>
         </div>
       </div>
     );
@@ -164,307 +150,210 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
 
   if (!data) return null;
 
+  const nc = signalNeon[data.signal_type] || signalNeon.HOLD;
+  const dc = dirNeon[data.direction] || dirNeon.NEUTRAL;
   const badge = getSignalBadge(data.signal_type);
   const BadgeIcon = badge.icon;
 
+  const scoreStroke = nc.accent;
+  const scorePct = (data.pulse_score / 100) * 301.6;
+
   return (
-    <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-orange-900/50 to-amber-900/50 p-3 border-b border-gray-800">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-bold text-white truncate">
-                {t("pulseV3.title")}
-              </h2>
-              <p className="text-xs text-gray-400 truncate">
-                {t("pulseV3.subtitle")}
-              </p>
-            </div>
+    <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)", boxShadow: `0 0 40px ${nc.glow}, inset 0 1px 0 rgba(255,255,255,0.04)` }}>
+
+      {/* ── Header ── */}
+      <div className="px-4 py-3 flex items-center justify-between flex-wrap gap-2" style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${nc.accent}20`, boxShadow: `0 0 12px ${nc.accent}40` }}>
+            <Zap className="w-4 h-4" style={{ color: nc.accent }} />
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {/* Symbol Switcher */}
-            <div className="flex rounded-lg overflow-hidden border border-gray-700">
-              {SYMBOLS.map((s) => (
-                <button
-                  key={s.key}
-                  onClick={() => setActiveSymbol(s.key)}
-                  className={`px-2 py-1 text-xs font-bold transition-all ${
-                    activeSymbol === s.key
-                      ? "bg-orange-600 text-white"
-                      : "bg-gray-800 text-gray-400 hover:text-white"
-                  }`}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={fetchData}
-              className="p-1.5 bg-gray-800 rounded-lg hover:bg-gray-700"
-            >
-              <RefreshCw
-                className={`w-3.5 h-3.5 text-gray-400 ${loading ? "animate-spin" : ""}`}
-              />
-            </button>
+          <div className="min-w-0">
+            <h2 className="text-sm font-bold text-white/90 truncate font-mono">{t("pulseV3.title")}</h2>
+            <p className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulseV3.subtitle")}</p>
           </div>
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
+            {SYMBOLS.map((s) => (
+              <button key={s.key} onClick={() => setActiveSymbol(s.key)}
+                className="px-2.5 py-1 text-[10px] font-bold font-mono transition-all"
+                style={{
+                  background: activeSymbol === s.key ? `${nc.accent}25` : "rgba(255,255,255,0.03)",
+                  color: activeSymbol === s.key ? nc.accent : "rgba(255,255,255,0.4)",
+                  borderRight: "1px solid rgba(255,255,255,0.05)",
+                }}
+              >{s.label}</button>
+            ))}
+          </div>
+          <button onClick={fetchData} className="p-1.5 rounded-lg transition-all hover:brightness-150" style={{ background: "rgba(255,255,255,0.05)" }}>
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: "rgba(255,255,255,0.35)" }} />
+          </button>
         </div>
       </div>
 
-      {/* Main Score + Signal */}
-      <div className={`p-6 bg-gradient-to-b ${getSignalColor(data.signal_type)}`}>
-        <div className="text-center">
-          {/* Score Circle */}
-          <div className="relative inline-flex items-center justify-center w-28 h-28 mb-3">
-            <svg className="w-28 h-28 -rotate-90">
-              <circle
-                cx="56"
-                cy="56"
-                r="48"
-                fill="none"
-                stroke="#1f2937"
-                strokeWidth="8"
-              />
-              <circle
-                cx="56"
-                cy="56"
-                r="48"
-                fill="none"
-                stroke={
-                  data.signal_type === "CONFIRM"
-                    ? "#22c55e"
-                    : data.signal_type === "SCOUT"
-                      ? "#eab308"
-                      : "#6b7280"
-                }
-                strokeWidth="8"
-                strokeDasharray={`${(data.pulse_score / 100) * 301.6} 301.6`}
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute text-center">
-              <span className="text-2xl font-bold text-white">
-                {data.pulse_score}
-              </span>
-              <span className="text-xs text-gray-400 block">/100</span>
-            </div>
+      {/* ── Main Score + Signal ── */}
+      <div className="p-6 text-center" style={{ background: nc.bg }}>
+        {/* Score Circle */}
+        <div className="relative inline-flex items-center justify-center w-28 h-28 mb-3">
+          <svg className="w-28 h-28 -rotate-90">
+            <circle cx="56" cy="56" r="48" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+            <circle cx="56" cy="56" r="48" fill="none" stroke={scoreStroke} strokeWidth="8"
+              strokeDasharray={`${scorePct} 301.6`} strokeLinecap="round"
+              style={{ filter: `drop-shadow(0 0 8px ${nc.accent}60)` }} />
+          </svg>
+          <div className="absolute text-center">
+            <span className="text-2xl font-bold font-mono" style={{ color: nc.accent, textShadow: `0 0 12px ${nc.glow}` }}>{data.pulse_score}</span>
+            <span className="text-[10px] font-mono block" style={{ color: "rgba(255,255,255,0.25)" }}>/100</span>
           </div>
-
-          {/* Signal Badge */}
-          <div
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${badge.bg} text-black font-bold text-sm`}
-          >
-            <BadgeIcon className="w-4 h-4" />
-            {badge.text}
-          </div>
-
-          {/* Direction */}
-          <div className="mt-3 flex items-center justify-center gap-2">
-            {data.direction === "BUY" ? (
-              <TrendingUp className="w-6 h-6 text-green-400" />
-            ) : data.direction === "SELL" ? (
-              <TrendingDown className="w-6 h-6 text-red-400" />
-            ) : (
-              <Activity className="w-6 h-6 text-yellow-400" />
-            )}
-            <span
-              className={`text-xl font-bold ${
-                data.direction === "BUY"
-                  ? "text-green-400"
-                  : data.direction === "SELL"
-                    ? "text-red-400"
-                    : "text-yellow-400"
-              }`}
-            >
-              {data.direction === "BUY"
-                ? t("pulseV3.buy")
-                : data.direction === "SELL"
-                  ? t("pulseV3.sell")
-                  : t("pulseV3.neutral")}
-            </span>
-          </div>
-
-          {/* Price */}
-          <p className="text-gray-400 text-sm mt-1">
-            {t("pulseV3.priceLabel")} <span className="text-white font-bold">{data.price}</span>
-          </p>
         </div>
+
+        {/* Signal Badge */}
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold font-mono"
+          style={{ background: `${nc.accent}20`, color: nc.accent, border: `1px solid ${nc.accent}40`, boxShadow: `0 0 16px ${nc.accent}30` }}>
+          <BadgeIcon className="w-3.5 h-3.5" />
+          {badge.text}
+        </div>
+
+        {/* Direction */}
+        <div className="mt-3 flex items-center justify-center gap-2">
+          {data.direction === "BUY" ? (
+            <TrendingUp className="w-5 h-5" style={{ color: dc, filter: `drop-shadow(0 0 6px ${dc})` }} />
+          ) : data.direction === "SELL" ? (
+            <TrendingDown className="w-5 h-5" style={{ color: dc, filter: `drop-shadow(0 0 6px ${dc})` }} />
+          ) : (
+            <Activity className="w-5 h-5" style={{ color: dc, filter: `drop-shadow(0 0 6px ${dc})` }} />
+          )}
+          <span className="text-lg font-bold font-mono" style={{ color: dc, textShadow: `0 0 12px ${dc}40` }}>
+            {data.direction === "BUY" ? t("pulseV3.buy") : data.direction === "SELL" ? t("pulseV3.sell") : t("pulseV3.neutral")}
+          </span>
+        </div>
+
+        <p className="text-sm font-mono mt-1.5" style={{ color: "rgba(255,255,255,0.35)" }}>
+          {t("pulseV3.priceLabel")} <span className="font-bold text-white/80">{data.price}</span>
+        </p>
       </div>
 
-      {/* 3 Timeframe Scores */}
-      <div className="grid grid-cols-3 gap-3 p-4">
-        {Object.entries(data.timeframes).map(([tf, info]) => (
-          <div
-            key={tf}
-            className="bg-gray-800 rounded-lg p-3 text-center border border-gray-700"
-          >
-            <div className="text-xs text-gray-500 mb-1 uppercase font-medium">
-              {tf}
+      {/* ── 3 Timeframe Scores ── */}
+      <div className="grid grid-cols-3 gap-2.5 p-3">
+        {Object.entries(data.timeframes).map(([tf, info]) => {
+          const trendC = info.trend === "up" ? "#00ff88" : info.trend === "down" ? "#ff3366" : "#f0b429";
+          return (
+            <div key={tf} className="rounded-xl p-3 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="text-[10px] uppercase tracking-widest font-mono mb-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>{tf}</div>
+              <div className="flex items-center justify-center gap-1 mb-1">
+                {info.trend === "up" ? <ArrowUp className="w-3.5 h-3.5" style={{ color: trendC }} /> :
+                  info.trend === "down" ? <ArrowDown className="w-3.5 h-3.5" style={{ color: trendC }} /> :
+                  <Activity className="w-3.5 h-3.5" style={{ color: trendC }} />}
+                <span className="text-lg font-bold font-mono text-white/90">{info.raw_score}</span>
+                <span className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.25)" }}>/{info.max}</span>
+              </div>
+              <div className="text-[10px] font-mono" style={{ color: trendC }}>
+                {info.trend === "up" ? t("pulseV3.up") : info.trend === "down" ? t("pulseV3.down") : t("pulseV3.neutral")}
+              </div>
+              <div className="h-1.5 rounded-full mt-2 overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${(info.raw_score / info.max) * 100}%`, background: `linear-gradient(90deg, ${trendC}80, ${trendC})`, boxShadow: `0 0 8px ${trendC}50` }} />
+              </div>
             </div>
-            <div className="flex items-center justify-center gap-1 mb-1">
-              {getTrendIcon(info.trend)}
-              <span className="text-lg font-bold text-white">
-                {info.raw_score}
-              </span>
-              <span className="text-xs text-gray-500">/{info.max}</span>
-            </div>
-            <div className={`text-xs ${getTrendColor(info.trend)}`}>
-              {info.trend === "up"
-                ? t("pulseV3.up")
-                : info.trend === "down"
-                  ? t("pulseV3.down")
-                  : t("pulseV3.neutral")}
-            </div>
-            {/* Progress bar */}
-            <div className="h-1.5 bg-gray-700 rounded-full mt-2 overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  info.trend === "up"
-                    ? "bg-green-500"
-                    : info.trend === "down"
-                      ? "bg-red-500"
-                      : "bg-yellow-500"
-                }`}
-                style={{ width: `${(info.raw_score / info.max) * 100}%` }}
-              />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* Levels + R/R */}
-      <div className="grid grid-cols-2 gap-4 px-4 pb-4">
-        {/* Levels */}
-        <div className="bg-gray-800 rounded-lg p-3">
-          <h3 className="text-xs font-medium text-gray-400 mb-2 flex items-center gap-1">
-            <Target className="w-3 h-3" /> {t("pulseV3.levels")}
+      {/* ── Levels + R/R ── */}
+      <div className="grid grid-cols-2 gap-2.5 px-3 pb-3">
+        <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+          <h3 className="text-[10px] uppercase tracking-widest font-mono mb-2.5 flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <Target className="w-3 h-3" style={{ color: "#00ccff" }} /> {t("pulseV3.levels")}
           </h3>
-          <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between">
-              <span className="text-red-400">R2:</span>
-              <span className="text-white">{data.levels.r2.toFixed(0)}</span>
+          <div className="space-y-1.5 text-sm font-mono">
+            <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: "rgba(255,51,102,0.06)" }}>
+              <span style={{ color: "#ff3366" }}>R2</span>
+              <span className="text-white/80">{data.levels.r2.toFixed(0)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-red-400">R1:</span>
-              <span className="text-white">{data.levels.r1.toFixed(0)}</span>
+            <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: "rgba(255,51,102,0.06)" }}>
+              <span style={{ color: "#ff3366" }}>R1</span>
+              <span className="text-white/80">{data.levels.r1.toFixed(0)}</span>
             </div>
-            <div className="flex justify-between bg-blue-900/30 -mx-2 px-2 py-0.5 rounded">
-              <span className="text-blue-400">Pivot:</span>
-              <span className="text-white font-bold">
-                {data.levels.pivot.toFixed(0)}
-              </span>
+            <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.15)" }}>
+              <span style={{ color: "#00ff88" }}>Pivot</span>
+              <span className="font-bold" style={{ color: "#00ff88" }}>{data.levels.pivot.toFixed(0)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-green-400">S1:</span>
-              <span className="text-white">{data.levels.s1.toFixed(0)}</span>
+            <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: "rgba(0,204,255,0.06)" }}>
+              <span style={{ color: "#00ccff" }}>S1</span>
+              <span className="text-white/80">{data.levels.s1.toFixed(0)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-green-400">S2:</span>
-              <span className="text-white">{data.levels.s2.toFixed(0)}</span>
+            <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: "rgba(0,204,255,0.06)" }}>
+              <span style={{ color: "#00ccff" }}>S2</span>
+              <span className="text-white/80">{data.levels.s2.toFixed(0)}</span>
             </div>
           </div>
         </div>
 
-        {/* Target/Stop/R:R */}
-        <div className="bg-gray-800 rounded-lg p-3">
-          <h3 className="text-xs font-medium text-gray-400 mb-2 flex items-center gap-1">
-            <Brain className="w-3 h-3" /> {t("pulseV3.targetStop")}
+        <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+          <h3 className="text-[10px] uppercase tracking-widest font-mono mb-2.5 flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <Brain className="w-3 h-3" style={{ color: "#818cf8" }} /> {t("pulseV3.targetStop")}
           </h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-green-400">{t("pulseV3.target")}</span>
-              <span className="text-white font-bold">
-                {data.levels.target.toFixed(0)}
-              </span>
+          <div className="space-y-1.5 text-sm font-mono">
+            <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: "rgba(0,255,136,0.06)" }}>
+              <span style={{ color: "#00ff88" }}>{t("pulseV3.target")}</span>
+              <span className="font-bold" style={{ color: "#00ff88" }}>{data.levels.target.toFixed(0)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-red-400">{t("pulseV3.stop")}</span>
-              <span className="text-white font-bold">
-                {data.levels.stop.toFixed(0)}
-              </span>
+            <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: "rgba(255,51,102,0.06)" }}>
+              <span style={{ color: "#ff3366" }}>{t("pulseV3.stop")}</span>
+              <span className="font-bold" style={{ color: "#ff3366" }}>{data.levels.stop.toFixed(0)}</span>
             </div>
-            <div
-              className={`flex justify-between p-1.5 rounded ${
-                data.rr_ratio >= 1.5
-                  ? "bg-green-900/30"
-                  : data.rr_ratio >= 1.2
-                    ? "bg-yellow-900/30"
-                    : "bg-red-900/30"
-              }`}
-            >
-              <span className="text-gray-300">R/R:</span>
-              <span
-                className={`font-bold ${
-                  data.rr_ratio >= 1.5
-                    ? "text-green-400"
-                    : data.rr_ratio >= 1.2
-                      ? "text-yellow-400"
-                      : "text-red-400"
-                }`}
-              >
-                {data.rr_ratio.toFixed(2)}
-              </span>
+            <div className="flex justify-between px-2 py-1.5 rounded-lg" style={{
+              background: data.rr_ratio >= 1.5 ? "rgba(0,255,136,0.06)" : data.rr_ratio >= 1.2 ? "rgba(240,180,41,0.06)" : "rgba(255,51,102,0.06)",
+              border: `1px solid ${data.rr_ratio >= 1.5 ? "rgba(0,255,136,0.15)" : data.rr_ratio >= 1.2 ? "rgba(240,180,41,0.15)" : "rgba(255,51,102,0.15)"}`,
+            }}>
+              <span style={{ color: "rgba(255,255,255,0.4)" }}>R/R</span>
+              <span className="font-bold" style={{ color: data.rr_ratio >= 1.5 ? "#00ff88" : data.rr_ratio >= 1.2 ? "#f0b429" : "#ff3366" }}>{data.rr_ratio.toFixed(2)}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* AI Suggestion */}
-      <div className="px-4 pb-4">
-        <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-lg p-3 border border-blue-800">
+      {/* ── AI Suggestion ── */}
+      <div className="px-3 pb-3">
+        <div className="rounded-xl p-3.5" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.12)", boxShadow: "0 0 20px rgba(99,102,241,0.05)" }}>
           <div className="flex items-center gap-2 mb-2">
-            <Brain className="w-4 h-4 text-blue-400" />
-            <span className="font-medium text-white text-sm">{t("pulseV3.analysis")}</span>
+            <Brain className="w-4 h-4" style={{ color: "#818cf8" }} />
+            <span className="font-mono font-bold text-sm" style={{ color: "#818cf8" }}>{t("pulseV3.analysis")}</span>
           </div>
-          <p className="text-gray-300 text-sm">{data.suggestion}</p>
+          <p className="text-sm font-mono leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>{data.suggestion}</p>
         </div>
       </div>
 
-      {/* Entry Zones */}
+      {/* ── Entry Zones ── */}
       {data.entry_zones && data.entry_zones.length > 0 && (
-        <div className="px-4 pb-4">
-          <h4 className="text-xs font-medium text-gray-400 mb-2">
-            {t("pulseV3.entryZones")}
-          </h4>
+        <div className="px-3 pb-3">
+          <h4 className="text-[10px] uppercase tracking-widest font-mono mb-2 px-1" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulseV3.entryZones")}</h4>
           <div className="grid grid-cols-3 gap-2">
             {data.entry_zones.map((zone, idx) => (
-              <div
-                key={idx}
-                className="bg-gray-800 rounded-lg p-2 text-center text-sm"
-              >
-                <p className="text-xs text-gray-500">{zone.label}</p>
-                <p className="text-white font-bold">{zone.price}</p>
-                <p className="text-xs text-blue-400">%{zone.share}</p>
+              <div key={idx} className="rounded-xl p-2.5 text-center font-mono" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                <p className="text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>{zone.label}</p>
+                <p className="text-sm font-bold text-white/80">{zone.price}</p>
+                <p className="text-[10px]" style={{ color: "#00ccff" }}>%{zone.share}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Notes */}
+      {/* ── Notes ── */}
       {data.notes && data.notes.length > 0 && (
-        <div className="px-4 pb-3">
+        <div className="px-3 pb-3 space-y-1">
           {data.notes.map((note, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-1 text-xs text-yellow-400"
-            >
-              <AlertTriangle className="w-3 h-3" />
-              {note}
+            <div key={i} className="flex items-center gap-1.5 text-[10px] font-mono" style={{ color: "#f0b429" }}>
+              <AlertTriangle className="w-3 h-3 shrink-0" /> {note}
             </div>
           ))}
         </div>
       )}
 
-      {/* Footer */}
-      <div className="px-4 py-2 bg-gray-800/50 border-t border-gray-800 text-center">
-        <p className="text-xs text-gray-500">
-          {lastUpdate
-            ? `${t("pulseV3.lastUpdate")} ${lastUpdate.toLocaleTimeString()}`
-            : t("pulseV3.updating")}{" "}
+      {/* ── Footer ── */}
+      <div className="px-4 py-2 text-center" style={{ background: "rgba(0,0,0,0.2)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+        <p className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.2)" }}>
+          {lastUpdate ? `${t("pulseV3.lastUpdate")} ${lastUpdate.toLocaleTimeString()}` : t("pulseV3.updating")}{" "}
           | {t("pulseV3.validity")} {(data.valid_for_seconds / 60).toFixed(0)} {t("pulseV3.min")}
         </p>
       </div>

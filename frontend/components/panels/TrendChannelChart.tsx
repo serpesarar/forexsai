@@ -1,24 +1,25 @@
 "use client";
 
-import { useMemo, useRef, useEffect, useState } from "react";
+import { useMemo, useRef, useEffect, useState, useCallback } from "react";
 
 interface TrendChannelChartProps {
   closes: number[];
   upper: number[];
   lower: number[];
   middle: number[];
-  supportLevels: { price: number; label: string }[];
-  resistanceLevels: { price: number; label: string }[];
+  supportLevels: { price: number; label: string; strength?: string }[];
+  resistanceLevels: { price: number; label: string; strength?: string }[];
   currentPrice: number;
+  decimals: number;
   supportProximity: boolean;
   resistanceProximity: boolean;
   supportIntensity: number;
   resistanceIntensity: number;
 }
 
-const W = 480;
-const H = 200;
-const PAD = { top: 12, right: 50, bottom: 12, left: 8 };
+const BASE_W = 900;
+const BASE_H = 380;
+const PAD = { top: 20, right: 90, bottom: 20, left: 10 };
 
 export default function TrendChannelChart({
   closes,
@@ -28,290 +29,346 @@ export default function TrendChannelChart({
   supportLevels,
   resistanceLevels,
   currentPrice,
+  decimals,
   supportProximity,
   resistanceProximity,
   supportIntensity,
   resistanceIntensity,
 }: TrendChannelChartProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [tick, setTick] = useState(0);
 
-  // Pulse animation tick
+  // Pan & zoom state
+  const [zoom, setZoom] = useState(1);
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    const id = setInterval(() => setTick((t) => t + 1), 1200);
     return () => clearInterval(id);
   }, []);
 
-  const { pricePath, areaPath, upperPath, lowerPath, middlePath, yScale, xScale, minP, maxP } =
-    useMemo(() => {
-      if (!closes.length) return { pricePath: "", areaPath: "", upperPath: "", lowerPath: "", middlePath: "", yScale: () => 0, xScale: () => 0, minP: 0, maxP: 0 };
+  // Mouse handlers for drag-to-pan
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    setIsDragging(true);
+    dragStart.current = { x: e.clientX, y: e.clientY, panX, panY };
+  }, [panX, panY]);
 
-      // Collect all price values to determine y-axis range
-      const allPrices = [
-        ...closes,
-        ...upper,
-        ...lower,
-        ...supportLevels.map((s) => s.price),
-        ...resistanceLevels.map((r) => r.price),
-        currentPrice,
-      ].filter((v) => v > 0);
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    setPanX(dragStart.current.panX + dx / zoom);
+    setPanY(dragStart.current.panY + dy / zoom);
+  }, [isDragging, zoom]);
 
-      const minP = Math.min(...allPrices) * 0.999;
-      const maxP = Math.max(...allPrices) * 1.001;
-      const range = maxP - minP || 1;
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
 
-      const plotW = W - PAD.left - PAD.right;
-      const plotH = H - PAD.top - PAD.bottom;
+  // Scroll-to-zoom
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    setZoom((z) => Math.max(0.5, Math.min(5, z * delta)));
+  }, []);
 
-      const xScale = (i: number) => PAD.left + (i / Math.max(1, closes.length - 1)) * plotW;
-      const yScale = (price: number) => PAD.top + plotH - ((price - minP) / range) * plotH;
+  // Touch handlers for pinch-to-zoom
+  const lastTouchDist = useRef<number | null>(null);
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastTouchDist.current = Math.hypot(dx, dy);
+    } else if (e.touches.length === 1) {
+      setIsDragging(true);
+      dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, panX, panY };
+    }
+  }, [panX, panY]);
 
-      // Price line
-      const pricePts = closes.map((c, i) => `${xScale(i)},${yScale(c)}`);
-      const pricePath = `M${pricePts.join("L")}`;
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2 && lastTouchDist.current !== null) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      const scale = dist / lastTouchDist.current;
+      setZoom((z) => Math.max(0.5, Math.min(5, z * scale)));
+      lastTouchDist.current = dist;
+    } else if (e.touches.length === 1 && isDragging) {
+      const dx = e.touches[0].clientX - dragStart.current.x;
+      const dy = e.touches[0].clientY - dragStart.current.y;
+      setPanX(dragStart.current.panX + dx / zoom);
+      setPanY(dragStart.current.panY + dy / zoom);
+    }
+  }, [isDragging, zoom]);
 
-      // Area fill under price
-      const areaPath = `${pricePath}L${xScale(closes.length - 1)},${yScale(minP)}L${xScale(0)},${yScale(minP)}Z`;
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false);
+    lastTouchDist.current = null;
+  }, []);
 
-      // Channel lines
-      const upperPts = upper.map((v, i) => `${xScale(i)},${yScale(v)}`);
-      const lowerPts = lower.map((v, i) => `${xScale(i)},${yScale(v)}`);
-      const middlePts = middle.map((v, i) => `${xScale(i)},${yScale(v)}`);
+  // Double-click to reset
+  const handleDoubleClick = useCallback(() => {
+    setZoom(1);
+    setPanX(0);
+    setPanY(0);
+  }, []);
 
-      const upperPath = upperPts.length ? `M${upperPts.join("L")}` : "";
-      const lowerPath = lowerPts.length ? `M${lowerPts.join("L")}` : "";
-      const middlePath = middlePts.length ? `M${middlePts.join("L")}` : "";
+  const computed = useMemo(() => {
+    if (!closes.length) return null;
 
-      return { pricePath, areaPath, upperPath, lowerPath, middlePath, yScale, xScale, minP, maxP };
-    }, [closes, upper, lower, middle, supportLevels, resistanceLevels, currentPrice]);
+    const allPrices = [
+      ...closes, ...upper, ...lower,
+      ...supportLevels.map((s) => s.price),
+      ...resistanceLevels.map((r) => r.price),
+      currentPrice,
+    ].filter((v) => v > 0);
 
-  if (!closes.length) return null;
+    const rawMin = Math.min(...allPrices);
+    const rawMax = Math.max(...allPrices);
+    const pad = (rawMax - rawMin) * 0.06;
+    const minP = rawMin - pad;
+    const maxP = rawMax + pad;
+    const range = maxP - minP || 1;
 
-  const pulseScale = 1 + Math.sin(tick * Math.PI) * 0.03;
-  const lastX = PAD.left + ((closes.length - 1) / Math.max(1, closes.length - 1)) * (W - PAD.left - PAD.right);
+    const plotW = BASE_W - PAD.left - PAD.right;
+    const plotH = BASE_H - PAD.top - PAD.bottom;
+
+    const xScale = (i: number) => PAD.left + (i / Math.max(1, closes.length - 1)) * plotW;
+    const yScale = (price: number) => PAD.top + plotH - ((price - minP) / range) * plotH;
+
+    const pricePts = closes.map((c, i) => `${xScale(i)},${yScale(c)}`);
+    const pricePath = `M${pricePts.join("L")}`;
+    const areaPath = `${pricePath}L${xScale(closes.length - 1)},${BASE_H - PAD.bottom}L${xScale(0)},${BASE_H - PAD.bottom}Z`;
+
+    const makePath = (arr: number[]) => {
+      if (!arr.length) return "";
+      return `M${arr.map((v, i) => `${xScale(i)},${yScale(v)}`).join("L")}`;
+    };
+
+    let channelFillPath = "";
+    if (upper.length && lower.length) {
+      const upPts = upper.map((v, i) => `${xScale(i)},${yScale(v)}`).join("L");
+      const downPts = [...lower].reverse().map((v, i) => `${xScale(lower.length - 1 - i)},${yScale(v)}`).join("L");
+      channelFillPath = `M${upPts}L${downPts}Z`;
+    }
+
+    const gridCount = 6;
+    const gridLines: { y: number; price: number }[] = [];
+    for (let i = 0; i <= gridCount; i++) {
+      const price = minP + (range * i) / gridCount;
+      gridLines.push({ y: yScale(price), price });
+    }
+
+    return {
+      pricePath, areaPath,
+      upperPath: makePath(upper),
+      lowerPath: makePath(lower),
+      middlePath: makePath(middle),
+      channelFillPath,
+      yScale, xScale, minP, maxP, gridLines,
+      lastX: xScale(closes.length - 1),
+    };
+  }, [closes, upper, lower, middle, supportLevels, resistanceLevels, currentPrice, decimals]);
+
+  if (!computed) return null;
+
+  const { pricePath, areaPath, upperPath, lowerPath, middlePath, channelFillPath, yScale, lastX, gridLines } = computed;
+  const pulse = Math.sin(tick * Math.PI * 0.8);
+  const srPulse = 0.45 + Math.sin(tick * Math.PI * 0.6) * 0.25;
+
+  // Compute viewBox with pan/zoom
+  const vbW = BASE_W / zoom;
+  const vbH = BASE_H / zoom;
+  const vbX = (BASE_W - vbW) / 2 - panX;
+  const vbY = (BASE_H - vbH) / 2 - panY;
 
   return (
-    <div className="relative w-full overflow-hidden rounded-xl" style={{ aspectRatio: `${W}/${H}` }}>
+    <div
+      ref={containerRef}
+      className="relative w-full overflow-hidden rounded-2xl select-none"
+      style={{ background: "rgba(2,6,23,0.7)", cursor: isDragging ? "grabbing" : "grab" }}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onWheel={handleWheel}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onDoubleClick={handleDoubleClick}
+    >
+      {/* Zoom indicator */}
+      {zoom !== 1 && (
+        <div className="absolute top-2 left-2 z-10 px-2 py-1 rounded-md text-[10px] font-mono" style={{ background: "rgba(0,255,136,0.12)", color: "#00ff88", border: "1px solid rgba(0,255,136,0.25)" }}>
+          {zoom.toFixed(1)}x
+        </div>
+      )}
+
       <svg
         ref={svgRef}
-        viewBox={`0 0 ${W} ${H}`}
-        className="w-full h-full"
-        preserveAspectRatio="none"
+        viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}
+        className="w-full"
+        style={{ height: "100%", minHeight: 280 }}
+        preserveAspectRatio="xMidYMid meet"
       >
         <defs>
-          {/* Horizon fade mask */}
-          <linearGradient id="horizonFade" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="white" />
-            <stop offset="80%" stopColor="white" />
-            <stop offset="100%" stopColor="white" stopOpacity="0" />
-          </linearGradient>
-          <mask id="horizonMask">
-            <rect width={W} height={H} fill="url(#horizonFade)" />
-          </mask>
-
-          {/* Price line glow */}
-          <filter id="priceGlow">
+          <filter id="tcPriceGlow">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <filter id="tcSupportGlow">
+            <feGaussianBlur stdDeviation={4 + supportIntensity * 6} result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <filter id="tcResistGlow">
+            <feGaussianBlur stdDeviation={4 + resistanceIntensity * 6} result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <filter id="tcSRNeonGlow">
             <feGaussianBlur stdDeviation="3" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
-
-          {/* Support glow */}
-          <filter id="supportGlow">
-            <feGaussianBlur stdDeviation={2 + supportIntensity * 4} result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
+          <filter id="tcTagGlow">
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
-
-          {/* Resistance glow */}
-          <filter id="resistanceGlow">
-            <feGaussianBlur stdDeviation={2 + resistanceIntensity * 4} result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-
-          {/* Area gradient */}
-          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#00ff88" stopOpacity="0.15" />
+          <linearGradient id="tcAreaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#00ff88" stopOpacity="0.18" />
             <stop offset="100%" stopColor="#00ff88" stopOpacity="0.01" />
           </linearGradient>
-
-          {/* Channel fill */}
-          <linearGradient id="channelFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#1a1a2e" stopOpacity="0.3" />
-            <stop offset="50%" stopColor="#1a1a2e" stopOpacity="0.05" />
-            <stop offset="100%" stopColor="#1a1a2e" stopOpacity="0.3" />
+          <linearGradient id="tcChannelFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.08" />
+            <stop offset="50%" stopColor="#6366f1" stopOpacity="0.03" />
+            <stop offset="100%" stopColor="#6366f1" stopOpacity="0.08" />
           </linearGradient>
-
-          {/* Current price dot pulse */}
-          <radialGradient id="priceDotGlow">
-            <stop offset="0%" stopColor="#00ff88" stopOpacity="0.8" />
+          <radialGradient id="tcDotGlow">
+            <stop offset="0%" stopColor="#00ff88" stopOpacity="0.9" />
             <stop offset="100%" stopColor="#00ff88" stopOpacity="0" />
           </radialGradient>
         </defs>
 
-        <g mask="url(#horizonMask)">
-          {/* Channel fill area between upper and lower */}
-          {upperPath && lowerPath && (
-            <path
-              d={`${upperPath}L${PAD.left + ((lower.length - 1) / Math.max(1, lower.length - 1)) * (W - PAD.left - PAD.right)},${yScale(lower[lower.length - 1])}${lowerPath.replace("M", "L").split("L").reverse().join("L")}Z`}
-              fill="url(#channelFill)"
-              opacity={0.4}
-            />
-          )}
+        {/* Background grid */}
+        {gridLines.map((g, i) => (
+          <g key={`grid-${i}`}>
+            <line x1={PAD.left} y1={g.y} x2={BASE_W - PAD.right} y2={g.y} stroke="rgba(255,255,255,0.04)" strokeWidth={1} />
+            <text x={BASE_W - PAD.right + 6} y={g.y + 4} fill="rgba(255,255,255,0.18)" fontSize={9} fontFamily="monospace">
+              {g.price.toFixed(decimals)}
+            </text>
+          </g>
+        ))}
 
-          {/* Upper channel line */}
-          <path
-            d={upperPath}
-            fill="none"
-            stroke="#1a1a2e"
-            strokeWidth={1.2}
-            strokeDasharray="none"
-            opacity={0.7}
-          />
+        {/* Channel fill */}
+        {channelFillPath && <path d={channelFillPath} fill="url(#tcChannelFill)" />}
+        {/* Upper channel */}
+        <path d={upperPath} fill="none" stroke="#6366f1" strokeWidth={1.5} opacity={0.5} />
+        {/* Lower channel */}
+        <path d={lowerPath} fill="none" stroke="#6366f1" strokeWidth={1.5} opacity={0.5} />
+        {/* Middle regression */}
+        <path d={middlePath} fill="none" stroke="#6366f1" strokeWidth={1} strokeDasharray="6 4" opacity={0.3} />
 
-          {/* Lower channel line */}
-          <path
-            d={lowerPath}
-            fill="none"
-            stroke="#1a1a2e"
-            strokeWidth={1.2}
-            opacity={0.7}
-          />
+        {/* ══ RESISTANCE LEVELS - always neon glow ══ */}
+        {resistanceLevels.map((r, i) => {
+          const y = yScale(r.price);
+          if (y < PAD.top - 5 || y > BASE_H - PAD.bottom + 5) return null;
+          const isStrong = r.strength === "strong";
+          const proxGlow = resistanceProximity;
+          return (
+            <g key={`rl-${i}`}>
+              {/* Always-on subtle neon glow zone */}
+              <rect
+                x={PAD.left} y={y - 10}
+                width={BASE_W - PAD.left - PAD.right} height={20}
+                fill="#ff3366"
+                opacity={proxGlow ? resistanceIntensity * 0.08 : srPulse * 0.035}
+              />
+              {/* The S/R line with neon glow filter always on */}
+              <line
+                x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
+                stroke="#ff3366"
+                strokeWidth={isStrong ? 2.5 : 1.8}
+                strokeDasharray={isStrong ? "none" : "10 5"}
+                opacity={proxGlow ? 0.95 : 0.5 + srPulse * 0.2}
+                filter={proxGlow ? "url(#tcResistGlow)" : "url(#tcSRNeonGlow)"}
+              />
+              {/* Price tag */}
+              <rect
+                x={BASE_W - PAD.right + 2} y={y - 11}
+                width={84} height={22} rx={4}
+                fill="rgba(255,51,102,0.18)"
+                stroke="#ff3366" strokeWidth={1}
+                filter="url(#tcTagGlow)"
+              />
+              <text
+                x={BASE_W - PAD.right + 8} y={y + 4}
+                fill="#ff3366" fontSize={10.5} fontFamily="monospace" fontWeight="bold"
+              >
+                {r.label} {r.price.toFixed(decimals)}
+              </text>
+            </g>
+          );
+        })}
 
-          {/* Middle regression line */}
-          <path
-            d={middlePath}
-            fill="none"
-            stroke="#2a2a3e"
-            strokeWidth={0.8}
-            strokeDasharray="4 4"
-            opacity={0.5}
-          />
+        {/* ══ SUPPORT LEVELS - always neon glow ══ */}
+        {supportLevels.map((s, i) => {
+          const y = yScale(s.price);
+          if (y < PAD.top - 5 || y > BASE_H - PAD.bottom + 5) return null;
+          const isStrong = s.strength === "strong";
+          const proxGlow = supportProximity;
+          return (
+            <g key={`sl-${i}`}>
+              <rect
+                x={PAD.left} y={y - 10}
+                width={BASE_W - PAD.left - PAD.right} height={20}
+                fill="#00ccff"
+                opacity={proxGlow ? supportIntensity * 0.08 : srPulse * 0.035}
+              />
+              <line
+                x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
+                stroke="#00ccff"
+                strokeWidth={isStrong ? 2.5 : 1.8}
+                strokeDasharray={isStrong ? "none" : "10 5"}
+                opacity={proxGlow ? 0.95 : 0.5 + srPulse * 0.2}
+                filter={proxGlow ? "url(#tcSupportGlow)" : "url(#tcSRNeonGlow)"}
+              />
+              <rect
+                x={BASE_W - PAD.right + 2} y={y - 11}
+                width={84} height={22} rx={4}
+                fill="rgba(0,204,255,0.15)"
+                stroke="#00ccff" strokeWidth={1}
+                filter="url(#tcTagGlow)"
+              />
+              <text
+                x={BASE_W - PAD.right + 8} y={y + 4}
+                fill="#00ccff" fontSize={10.5} fontFamily="monospace" fontWeight="bold"
+              >
+                {s.label} {s.price.toFixed(decimals)}
+              </text>
+            </g>
+          );
+        })}
 
-          {/* Support levels */}
-          {supportLevels.map((s, i) => {
-            const y = yScale(s.price);
-            if (y < PAD.top || y > H - PAD.bottom) return null;
-            return (
-              <g key={`s-${i}`}>
-                <line
-                  x1={PAD.left}
-                  y1={y}
-                  x2={W - PAD.right}
-                  y2={y}
-                  stroke="#00ccff"
-                  strokeWidth={supportProximity ? 1.5 : 0.8}
-                  strokeDasharray="6 3"
-                  opacity={supportProximity ? 0.9 : 0.5}
-                  filter={supportProximity ? "url(#supportGlow)" : undefined}
-                  style={supportProximity ? { transform: `scaleY(${pulseScale})`, transformOrigin: `0 ${y}px` } : undefined}
-                />
-                <text
-                  x={W - PAD.right + 4}
-                  y={y + 3}
-                  fill="#00ccff"
-                  fontSize={8}
-                  fontFamily="monospace"
-                  opacity={0.8}
-                >
-                  {s.label}
-                </text>
-              </g>
-            );
-          })}
+        {/* Price area fill */}
+        <path d={areaPath} fill="url(#tcAreaGrad)" />
 
-          {/* Resistance levels */}
-          {resistanceLevels.map((r, i) => {
-            const y = yScale(r.price);
-            if (y < PAD.top || y > H - PAD.bottom) return null;
-            return (
-              <g key={`r-${i}`}>
-                <line
-                  x1={PAD.left}
-                  y1={y}
-                  x2={W - PAD.right}
-                  y2={y}
-                  stroke="#ff3366"
-                  strokeWidth={resistanceProximity ? 1.5 : 0.8}
-                  strokeDasharray="6 3"
-                  opacity={resistanceProximity ? 0.9 : 0.5}
-                  filter={resistanceProximity ? "url(#resistanceGlow)" : undefined}
-                  style={resistanceProximity ? { transform: `scaleY(${pulseScale})`, transformOrigin: `0 ${y}px` } : undefined}
-                />
-                <text
-                  x={W - PAD.right + 4}
-                  y={y + 3}
-                  fill="#ff3366"
-                  fontSize={8}
-                  fontFamily="monospace"
-                  opacity={0.8}
-                >
-                  {r.label}
-                </text>
-              </g>
-            );
-          })}
+        {/* Price line */}
+        <path d={pricePath} fill="none" stroke="#00ff88" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" filter="url(#tcPriceGlow)" />
 
-          {/* Price area fill */}
-          <path d={areaPath} fill="url(#areaGrad)" />
+        {/* Current price horizontal line */}
+        <line x1={PAD.left} y1={yScale(currentPrice)} x2={BASE_W - PAD.right} y2={yScale(currentPrice)} stroke="#00ff88" strokeWidth={1} strokeDasharray="3 3" opacity={0.4} />
 
-          {/* Price line */}
-          <path
-            d={pricePath}
-            fill="none"
-            stroke="#00ff88"
-            strokeWidth={2.5}
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            filter="url(#priceGlow)"
-          />
+        {/* Current price dot glow */}
+        <circle cx={lastX} cy={yScale(currentPrice)} r={16 + pulse * 4} fill="url(#tcDotGlow)" opacity={0.35 + pulse * 0.15} />
+        <circle cx={lastX} cy={yScale(currentPrice)} r={5} fill="#00ff88" stroke="#020617" strokeWidth={2} />
 
-          {/* Current price dot with pulse */}
-          <circle
-            cx={lastX}
-            cy={yScale(currentPrice)}
-            r={12}
-            fill="url(#priceDotGlow)"
-            opacity={0.4 + Math.sin(tick * Math.PI) * 0.2}
-          />
-          <circle
-            cx={lastX}
-            cy={yScale(currentPrice)}
-            r={4}
-            fill="#00ff88"
-            stroke="#00ff88"
-            strokeWidth={1}
-          />
-
-          {/* Current price horizontal line */}
-          <line
-            x1={lastX}
-            y1={yScale(currentPrice)}
-            x2={W - PAD.right}
-            y2={yScale(currentPrice)}
-            stroke="#00ff88"
-            strokeWidth={0.5}
-            strokeDasharray="2 2"
-            opacity={0.6}
-          />
-          <text
-            x={W - PAD.right + 4}
-            y={yScale(currentPrice) + 3}
-            fill="#00ff88"
-            fontSize={9}
-            fontFamily="monospace"
-            fontWeight="bold"
-          >
-            NOW
-          </text>
-        </g>
+        {/* Current price tag */}
+        <rect x={BASE_W - PAD.right + 2} y={yScale(currentPrice) - 12} width={84} height={24} rx={5} fill="rgba(0,255,136,0.18)" stroke="#00ff88" strokeWidth={1.2} />
+        <text x={BASE_W - PAD.right + 10} y={yScale(currentPrice) + 5} fill="#00ff88" fontSize={11} fontFamily="monospace" fontWeight="bold">
+          {currentPrice.toFixed(decimals)}
+        </text>
       </svg>
     </div>
   );

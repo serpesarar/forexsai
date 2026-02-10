@@ -77,6 +77,7 @@ try:
         emel_pulse,
         admin,
         clear_trend,
+        deepseek_analysis,
     )
     from services.data_fetcher import fetch_latest_price
     from services.ml_service import run_nasdaq_signal, run_xauusd_signal
@@ -110,6 +111,7 @@ try:
     app.include_router(emel_pulse.router)
     app.include_router(admin.router)
     app.include_router(clear_trend.router)
+    app.include_router(deepseek_analysis.router)
     
     ROUTERS_LOADED = True
 except Exception as e:

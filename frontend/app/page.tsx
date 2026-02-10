@@ -53,6 +53,11 @@ const CyberpunkTrendPanel = lazy(() => import("../components/panels/CyberpunkTre
 const LearningDashboardPanel = lazy(() => import("../components/LearningDashboardPanel"));
 const COMEXNewsPanel = lazy(() => import("../components/COMEXNewsPanel"));
 const WhaleTrackerPanel = lazy(() => import("../components/WhaleTrackerPanel"));
+const SMCPanel = lazy(() => import("../components/panels/SMCPanel"));
+const MTFMatrixPanel = lazy(() => import("../components/panels/MTFMatrixPanel"));
+const RiskRewardPanel = lazy(() => import("../components/panels/RiskRewardPanel"));
+const COTWhalePanel = lazy(() => import("../components/panels/COTWhalePanel"));
+const SeasonalityPanel = lazy(() => import("../components/panels/SeasonalityPanel"));
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
 import { useLivePrices } from "../hooks/useLivePrices";
@@ -876,6 +881,16 @@ export default function HomePage() {
         return <LearningDashboardPanel />;
       case "strategy-performance":
         return <StrategyPerformancePanel />;
+      case "smc-panel":
+        return <SMCPanel />;
+      case "mtf-matrix":
+        return <MTFMatrixPanel />;
+      case "risk-reward":
+        return <RiskRewardPanel />;
+      case "cot-whale":
+        return <COTWhalePanel />;
+      case "seasonality":
+        return <SeasonalityPanel />;
       default:
         return null;
     }
@@ -1220,7 +1235,7 @@ export default function HomePage() {
 
   // Render a column with sorted cards (exclude full-width cards - they render below)
   const renderColumn = (column: "left" | "center" | "right") => {
-    const cards = getColumnCards(column).filter(c => c.size !== "full");
+    const cards = getColumnCards(column).filter(c => c.size !== "full" && c.id !== "clear-trend");
     return (
       <div className="flex flex-col gap-6">
         {cards.map((card) => (
@@ -1357,6 +1372,15 @@ export default function HomePage() {
 
       <DraggableDashboard>
         <main className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-4 md:gap-6 md:px-6 md:py-8 md:grid-cols-2 lg:grid-cols-3 pb-20 md:pb-8">
+          {/* ═══ CLEAR TREND - Full Width Hero Panel ═══ */}
+          {getCard("clear-trend")?.visible !== false && (
+            <div className="md:col-span-2 lg:col-span-3">
+              <LazyPanel fallbackHeight={500}>
+                <CyberpunkTrendPanel />
+              </LazyPanel>
+            </div>
+          )}
+
           {/* Dynamic columns based on layout.cards order */}
           {renderColumn("left")}
           {renderColumn("center")}
