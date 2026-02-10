@@ -264,14 +264,21 @@ def _resample(candles: List[Dict], period: int) -> List[Dict]:
 
 
 def _rebuild_derived(symbol: str):
-    """Rebuild 15m, 30m, 4h candles from raw 5m and 1h data."""
+    """Rebuild 15m, 30m, 1h (for 1m-only symbols), 4h candles from raw 5m and 1h data."""
     now = datetime.utcnow().timestamp()
     
-    # 15m = 5m × 3
+    # 15m = 5m × 3, 30m = 5m × 6
     raw_5m = _candles_5m.get(symbol, {}).get("candles", [])
     if raw_5m:
         _candles_15m[symbol] = {"candles": _resample(raw_5m, 3), "timestamp": now}
         _candles_30m[symbol] = {"candles": _resample(raw_5m, 6), "timestamp": now}
+        
+        # For 1m-only symbols (e.g. XAUUSD): derive 1h from 5m × 12
+        if symbol in _1M_ONLY_SYMBOLS:
+            derived_1h = _resample(raw_5m, 12)
+            if derived_1h:
+                _candles_1h[symbol] = {"candles": derived_1h, "timestamp": now}
+                logger.debug(f"[DataHub] {symbol}: derived {len(derived_1h)} 1h candles from 5m")
     
     # 4h = 1h × 4
     raw_1h = _candles_1h.get(symbol, {}).get("candles", [])
@@ -302,6 +309,10 @@ DELTA_LIMIT_EOD = 5       # ~5 days of EOD candles
 FULL_SEED_LIMIT_5M = 500  # Full seed: ~41 hours
 FULL_SEED_LIMIT_1H = 500  # Full seed: ~20 days
 FULL_SEED_LIMIT_EOD = 100 # Full seed: ~100 days
+
+# Symbols where EODHD only supports 1m intraday interval (not 5m/1h)
+# For these: fetch 1m → resample to 5m → derive 15m/30m/1h/4h
+_1M_ONLY_SYMBOLS = {"XAUUSD"}
 
 
 def _persist_async(symbol: str, timeframe: str, candles: List[Dict]):
@@ -355,8 +366,17 @@ async def _pump_cycle():
         # ── 5m candles (every 5min) ──
         if _should_fetch(f"5m:{symbol}", CANDLE_5M_INTERVAL):
             is_seed = not is_seeded
-            fetch_limit = FULL_SEED_LIMIT_5M if is_seed else DELTA_LIMIT_5M
-            candles = await _fetch_candles_from_api(symbol, "5m", limit=fetch_limit)
+            
+            if symbol in _1M_ONLY_SYMBOLS:
+                # XAUUSD.FOREX only supports 1m interval — fetch 1m, resample to 5m
+                raw_limit = (FULL_SEED_LIMIT_5M * 5) if is_seed else (DELTA_LIMIT_5M * 5)
+                raw_1m = await _fetch_candles_from_api(symbol, "1m", limit=raw_limit)
+                candles = _resample(raw_1m, 5) if raw_1m else []
+                logger.info(f"[DataHub] {symbol}: fetched {len(raw_1m)} 1m → resampled to {len(candles)} 5m candles")
+            else:
+                fetch_limit = FULL_SEED_LIMIT_5M if is_seed else DELTA_LIMIT_5M
+                candles = await _fetch_candles_from_api(symbol, "5m", limit=fetch_limit)
+            
             if candles:
                 with _lock:
                     existing = (_candles_5m.get(symbol) or {}).get("candles", [])
@@ -364,22 +384,27 @@ async def _pump_cycle():
                     _candles_5m[symbol] = {"candles": merged, "timestamp": now_ts}
                     _rebuild_derived(symbol)
                 _mark_fetched(f"5m:{symbol}")
-                # On seed: persist full history; on delta: persist only new candles
                 _persist_async(symbol, "5m", merged if is_seed else candles)
         
         # ── 1h candles (every 5min) ──
         if _should_fetch(f"1h:{symbol}", CANDLE_1H_INTERVAL):
             is_seed = not is_seeded
-            fetch_limit = FULL_SEED_LIMIT_1H if is_seed else DELTA_LIMIT_1H
-            candles = await _fetch_candles_from_api(symbol, "1h", limit=fetch_limit)
-            if candles:
-                with _lock:
-                    existing = (_candles_1h.get(symbol) or {}).get("candles", [])
-                    merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_1H)
-                    _candles_1h[symbol] = {"candles": merged, "timestamp": now_ts}
-                    _rebuild_derived(symbol)
+            
+            if symbol in _1M_ONLY_SYMBOLS:
+                # For 1m-only symbols, 1h is derived from 5m in _rebuild_derived
+                # Just mark as fetched so we don't retry every second
                 _mark_fetched(f"1h:{symbol}")
-                _persist_async(symbol, "1h", merged if is_seed else candles)
+            else:
+                fetch_limit = FULL_SEED_LIMIT_1H if is_seed else DELTA_LIMIT_1H
+                candles = await _fetch_candles_from_api(symbol, "1h", limit=fetch_limit)
+                if candles:
+                    with _lock:
+                        existing = (_candles_1h.get(symbol) or {}).get("candles", [])
+                        merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_1H)
+                        _candles_1h[symbol] = {"candles": merged, "timestamp": now_ts}
+                        _rebuild_derived(symbol)
+                    _mark_fetched(f"1h:{symbol}")
+                    _persist_async(symbol, "1h", merged if is_seed else candles)
         
         # ── EOD candles (every 30min) ──
         if _should_fetch(f"eod:{symbol}", CANDLE_EOD_INTERVAL):
