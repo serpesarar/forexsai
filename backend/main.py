@@ -474,6 +474,16 @@ async def datahub_status():
         return {"error": str(e)}
 
 
+@app.post("/api/datahub/reseed")
+async def datahub_reseed():
+    """Force DataHub to do a full re-seed (fetch full candle history instead of delta)."""
+    try:
+        from services.data_hub import force_reseed
+        return force_reseed()
+    except Exception as e:
+        return {"error": str(e)}
+
+
 if __name__ == "__main__":
     import uvicorn
     

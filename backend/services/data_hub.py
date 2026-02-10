@@ -354,7 +354,8 @@ async def _pump_cycle():
         
         # ── 5m candles (every 5min) ──
         if _should_fetch(f"5m:{symbol}", CANDLE_5M_INTERVAL):
-            fetch_limit = FULL_SEED_LIMIT_5M if not is_seeded else DELTA_LIMIT_5M
+            is_seed = not is_seeded
+            fetch_limit = FULL_SEED_LIMIT_5M if is_seed else DELTA_LIMIT_5M
             candles = await _fetch_candles_from_api(symbol, "5m", limit=fetch_limit)
             if candles:
                 with _lock:
@@ -363,11 +364,13 @@ async def _pump_cycle():
                     _candles_5m[symbol] = {"candles": merged, "timestamp": now_ts}
                     _rebuild_derived(symbol)
                 _mark_fetched(f"5m:{symbol}")
-                _persist_async(symbol, "5m", candles)
+                # On seed: persist full history; on delta: persist only new candles
+                _persist_async(symbol, "5m", merged if is_seed else candles)
         
         # ── 1h candles (every 5min) ──
         if _should_fetch(f"1h:{symbol}", CANDLE_1H_INTERVAL):
-            fetch_limit = FULL_SEED_LIMIT_1H if not is_seeded else DELTA_LIMIT_1H
+            is_seed = not is_seeded
+            fetch_limit = FULL_SEED_LIMIT_1H if is_seed else DELTA_LIMIT_1H
             candles = await _fetch_candles_from_api(symbol, "1h", limit=fetch_limit)
             if candles:
                 with _lock:
@@ -376,11 +379,12 @@ async def _pump_cycle():
                     _candles_1h[symbol] = {"candles": merged, "timestamp": now_ts}
                     _rebuild_derived(symbol)
                 _mark_fetched(f"1h:{symbol}")
-                _persist_async(symbol, "1h", candles)
+                _persist_async(symbol, "1h", merged if is_seed else candles)
         
         # ── EOD candles (every 30min) ──
         if _should_fetch(f"eod:{symbol}", CANDLE_EOD_INTERVAL):
-            fetch_limit = FULL_SEED_LIMIT_EOD if not is_seeded else DELTA_LIMIT_EOD
+            is_seed = not is_seeded
+            fetch_limit = FULL_SEED_LIMIT_EOD if is_seed else DELTA_LIMIT_EOD
             candles = await _fetch_eod_from_api(symbol, limit=fetch_limit)
             if candles:
                 with _lock:
@@ -388,7 +392,7 @@ async def _pump_cycle():
                     merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_EOD)
                     _candles_eod[symbol] = {"candles": merged, "timestamp": now_ts}
                 _mark_fetched(f"eod:{symbol}")
-                _persist_async(symbol, "eod", candles)
+                _persist_async(symbol, "eod", merged if is_seed else candles)
         
         # Mark as seeded ONLY if we actually got data (avoid marking on 402/empty)
         if not is_seeded:
@@ -484,6 +488,18 @@ async def start_data_hub():
         except Exception as e:
             logger.error(f"DataHub pump error: {e}")
         await asyncio.sleep(1)  # Check every 1s, but fetches respect their intervals
+
+
+def force_reseed():
+    """Force a full re-seed on next pump cycle by clearing seed flags and fetch timestamps."""
+    global _initial_seed_done
+    _initial_seed_done = {}
+    for symbol in TRACKED_SYMBOLS:
+        _last_fetch[f"5m:{symbol}"] = 0
+        _last_fetch[f"1h:{symbol}"] = 0
+        _last_fetch[f"eod:{symbol}"] = 0
+    logger.info("[DataHub] Force re-seed scheduled — next pump cycle will do full fetch")
+    return {"status": "ok", "message": "Re-seed scheduled for next pump cycle"}
 
 
 def stop_data_hub():
