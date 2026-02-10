@@ -55,6 +55,7 @@ TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD"]
 # ═══════════════════════════════════════════════════════════════
 PRICE_INTERVAL = 30       # Fetch live price every 30 seconds
 CANDLE_5M_INTERVAL = 300  # Fetch 5m candles every 5 minutes
+CANDLE_30M_INTERVAL = 300 # Fetch 30m candles every 5 minutes (XAUUSD only)
 CANDLE_1H_INTERVAL = 300  # Fetch 1h candles every 5 minutes
 CANDLE_EOD_INTERVAL = 1800  # Fetch EOD candles every 30 minutes
 MACRO_INTERVAL = 300      # Fetch macro (DXY, VIX, USDTRY) every 5 minutes
@@ -265,26 +266,37 @@ def _resample(candles: List[Dict], period: int) -> List[Dict]:
 
 
 def _rebuild_derived(symbol: str):
-    """Rebuild 15m, 30m, 1h (for 1m-only symbols), 4h candles from raw 5m and 1h data."""
+    """Rebuild derived timeframes from raw data.
+    
+    NDX.INDX: 5m→15m, 5m→30m, 1h(fetched)→4h
+    XAUUSD:   5m→15m, 30m(fetched)→1h→4h  (30m also from 5m if not fetched)
+    """
     now = datetime.utcnow().timestamp()
     
-    # 15m = 5m × 3, 30m = 5m × 6
     raw_5m = _candles_5m.get(symbol, {}).get("candles", [])
     if raw_5m:
+        # 15m = 5m × 3 (always)
         _candles_15m[symbol] = {"candles": _resample(raw_5m, 3), "timestamp": now}
-        _candles_30m[symbol] = {"candles": _resample(raw_5m, 6), "timestamp": now}
         
-        # For 1m-only symbols (e.g. XAUUSD): derive 1h from 5m × 12
-        if symbol in _1M_ONLY_SYMBOLS:
-            derived_1h = _resample(raw_5m, 12)
+        # 30m: use directly-fetched 30m if available, otherwise derive from 5m
+        if symbol not in _30M_DIRECT_SYMBOLS:
+            _candles_30m[symbol] = {"candles": _resample(raw_5m, 6), "timestamp": now}
+    
+    # For symbols with direct 30m fetch: derive 1h and 4h from 30m
+    if symbol in _30M_DIRECT_SYMBOLS:
+        raw_30m = _candles_30m.get(symbol, {}).get("candles", [])
+        if raw_30m:
+            derived_1h = _resample(raw_30m, 2)  # 1h = 30m × 2
             if derived_1h:
                 _candles_1h[symbol] = {"candles": derived_1h, "timestamp": now}
-                logger.debug(f"[DataHub] {symbol}: derived {len(derived_1h)} 1h candles from 5m")
-    
-    # 4h = 1h × 4
-    raw_1h = _candles_1h.get(symbol, {}).get("candles", [])
-    if raw_1h:
-        _candles_4h[symbol] = {"candles": _resample(raw_1h, 4), "timestamp": now}
+            derived_4h = _resample(raw_30m, 8)  # 4h = 30m × 8
+            if derived_4h:
+                _candles_4h[symbol] = {"candles": derived_4h, "timestamp": now}
+    else:
+        # NDX: 4h = 1h × 4
+        raw_1h = _candles_1h.get(symbol, {}).get("candles", [])
+        if raw_1h:
+            _candles_4h[symbol] = {"candles": _resample(raw_1h, 4), "timestamp": now}
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -305,20 +317,26 @@ _initial_seed_done: Dict[str, bool] = {}
 
 # Delta fetch limits (much smaller than full seed)
 DELTA_LIMIT_5M = 24       # ~2 hours of 5m candles
+DELTA_LIMIT_30M = 12      # ~6 hours of 30m candles
 DELTA_LIMIT_1H = 6        # ~6 hours of 1h candles
 DELTA_LIMIT_EOD = 5       # ~5 days of EOD candles
 
 # Full seed limits — sized so EMA200 works on ALL derived timeframes:
-#   5m:  1500 → 15m=500, 30m=250, 1h=125 (XAUUSD: 1h derived from 5m)
+#   5m:  1500 → 15m=500, 30m=250
+#   30m: 800  → 1h=400, 4h=100 (XAUUSD: 30m fetched directly)
 #   1h:  800  → 4h=200 (NDX: fetched directly)
 #   EOD: 365  → EMA200 with full year of data
 FULL_SEED_LIMIT_5M = 1500   # ~5.2 days of 5m candles
+FULL_SEED_LIMIT_30M = 800   # ~27 days of 30m candles (XAUUSD)
 FULL_SEED_LIMIT_1H = 800    # ~114 days of 1h candles
 FULL_SEED_LIMIT_EOD = 365   # ~1 year of daily candles
 
-# Symbols where EODHD only supports 1m intraday interval (not 5m/1h)
-# For these: fetch 1m → resample to 5m → derive 15m/30m/1h/4h
-_1M_ONLY_SYMBOLS = {"XAUUSD"}
+# EODHD interval support varies by symbol:
+#   XAUUSD.FOREX: supports 1m, 15m, 30m (NOT 5m, 1h)
+#   NDX.INDX:     supports 5m, 1h
+# Strategy for XAUUSD: fetch 1m→5m, fetch 30m directly→1h/4h
+_1M_ONLY_SYMBOLS = {"XAUUSD"}   # 5m = resample from 1m
+_30M_DIRECT_SYMBOLS = {"XAUUSD"}  # 1h/4h = resample from 30m
 
 
 def _persist_async(symbol: str, timeframe: str, candles: List[Dict]):
@@ -392,13 +410,27 @@ async def _pump_cycle():
                 _mark_fetched(f"5m:{symbol}")
                 _persist_async(symbol, "5m", merged if is_seed else candles)
         
+        # ── 30m candles (XAUUSD only — EODHD supports 30m directly) ──
+        if symbol in _30M_DIRECT_SYMBOLS and _should_fetch(f"30m:{symbol}", CANDLE_30M_INTERVAL):
+            is_seed = not is_seeded
+            fetch_limit = FULL_SEED_LIMIT_30M if is_seed else DELTA_LIMIT_30M
+            candles = await _fetch_candles_from_api(symbol, "30m", limit=fetch_limit)
+            if candles:
+                with _lock:
+                    existing = (_candles_30m.get(symbol) or {}).get("candles", [])
+                    merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_30M)
+                    _candles_30m[symbol] = {"candles": merged, "timestamp": now_ts}
+                    _rebuild_derived(symbol)  # This will derive 1h and 4h from 30m
+                _mark_fetched(f"30m:{symbol}")
+                _persist_async(symbol, "30m", merged if is_seed else candles)
+                logger.info(f"[DataHub] {symbol}: fetched {len(candles)} 30m candles → 1h={len(_candles_1h.get(symbol, {}).get('candles', []))}, 4h={len(_candles_4h.get(symbol, {}).get('candles', []))}")
+        
         # ── 1h candles (every 5min) ──
         if _should_fetch(f"1h:{symbol}", CANDLE_1H_INTERVAL):
             is_seed = not is_seeded
             
-            if symbol in _1M_ONLY_SYMBOLS:
-                # For 1m-only symbols, 1h is derived from 5m in _rebuild_derived
-                # Just mark as fetched so we don't retry every second
+            if symbol in _30M_DIRECT_SYMBOLS:
+                # 1h is derived from 30m in _rebuild_derived — just mark as fetched
                 _mark_fetched(f"1h:{symbol}")
             else:
                 fetch_limit = FULL_SEED_LIMIT_1H if is_seed else DELTA_LIMIT_1H
@@ -465,6 +497,15 @@ def _load_from_persistent_cache():
             loaded_any = True
             logger.info(f"[DataHub] Loaded {len(cached_5m)} cached 5m candles for {symbol}")
         
+        # Load 30m candles (XAUUSD: fetched directly from EODHD)
+        cached_30m = load_candles(symbol, "30m", limit=FULL_SEED_LIMIT_30M)
+        if cached_30m:
+            with _lock:
+                _candles_30m[symbol] = {"candles": cached_30m, "timestamp": now_ts}
+                _rebuild_derived(symbol)
+            loaded_any = True
+            logger.info(f"[DataHub] Loaded {len(cached_30m)} cached 30m candles for {symbol}")
+        
         # Load 1h candles
         cached_1h = load_candles(symbol, "1h", limit=FULL_SEED_LIMIT_1H)
         if cached_1h:
@@ -483,7 +524,7 @@ def _load_from_persistent_cache():
             logger.info(f"[DataHub] Loaded {len(cached_eod)} cached EOD candles for {symbol}")
         
         # If we loaded cached data, mark as seeded so pump only fetches delta
-        if cached_5m or cached_1h or cached_eod:
+        if cached_5m or cached_30m or cached_1h or cached_eod:
             _initial_seed_done[symbol] = True
     
     if loaded_any:
@@ -509,6 +550,7 @@ async def start_data_hub():
     for symbol in TRACKED_SYMBOLS:
         _last_fetch[f"price:{symbol}"] = 0
         _last_fetch[f"5m:{symbol}"] = 0
+        _last_fetch[f"30m:{symbol}"] = 0
         _last_fetch[f"1h:{symbol}"] = 0
         _last_fetch[f"eod:{symbol}"] = 0
     _last_fetch["macro"] = 0
@@ -537,6 +579,7 @@ def force_reseed():
             # Reset fetch timestamps to trigger immediate fetch
             _last_fetch[f"price:{symbol}"] = 0
             _last_fetch[f"5m:{symbol}"] = 0
+            _last_fetch[f"30m:{symbol}"] = 0
             _last_fetch[f"1h:{symbol}"] = 0
             _last_fetch[f"eod:{symbol}"] = 0
     _last_fetch["macro"] = 0
