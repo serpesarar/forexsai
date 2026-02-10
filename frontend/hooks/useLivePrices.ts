@@ -30,6 +30,12 @@ const SYMBOLS_CONFIG = [
 
 const previousCloseCache = new Map<string, { previousClose: number; fetchedAt: number }>();
 
+function fetchWithTimeout(url: string, timeoutMs: number = 8000): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { cache: "no-store", signal: controller.signal }).finally(() => clearTimeout(id));
+}
+
 async function fetchPriceData(symbol: string): Promise<{ price: number; previousClose: number } | null> {
   try {
     let currentPrice: number | null = null;
@@ -42,7 +48,7 @@ async function fetchPriceData(symbol: string): Promise<{ price: number; previous
 
     // Try cached endpoint first
     try {
-      const cachedRes = await fetch(`${API_BASE}/api/data/cached/${encodeURIComponent(symbol)}`, { cache: "no-store" });
+      const cachedRes = await fetchWithTimeout(`${API_BASE}/api/data/cached/${encodeURIComponent(symbol)}`);
       if (cachedRes.ok) {
         const cachedData = await cachedRes.json();
         // Handle both response formats
@@ -57,9 +63,8 @@ async function fetchPriceData(symbol: string): Promise<{ price: number; previous
 
     // Fetch OHLCV data for previous close and fallback current price
     try {
-      const ohlcvRes = await fetch(
-        `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=1d&limit=50`,
-        { cache: "no-store" }
+      const ohlcvRes = await fetchWithTimeout(
+        `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=1d&limit=50`
       );
       
       if (ohlcvRes.ok) {
@@ -97,7 +102,7 @@ async function fetchPriceData(symbol: string): Promise<{ price: number; previous
     // Try prediction endpoint as last fallback
     if (currentPrice === null) {
       try {
-        const predRes = await fetch(`${API_BASE}/api/prediction/${encodeURIComponent(symbol)}`, { cache: "no-store" });
+        const predRes = await fetchWithTimeout(`${API_BASE}/api/prediction/${encodeURIComponent(symbol)}`, 5000);
         if (predRes.ok) {
           const predData = await predRes.json();
           currentPrice = predData?.entry_price ?? predData?.current_price ?? null;

@@ -55,7 +55,7 @@ const EMA_CONFIG = {
 // ─── Data fetching ────────────────────────────────────────────────
 async function fetchChartData(symbol: string, timeframe: string): Promise<CandleData[]> {
   const res = await fetch(
-    `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=${timeframe}&limit=500`
+    `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=${timeframe}&limit=300`
   );
   if (!res.ok) throw new Error("Failed to fetch chart data");
   const data = await res.json();

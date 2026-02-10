@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect, Suspense, memo } from "react";
 import { Loader2 } from "lucide-react";
+import { PanelErrorBoundary } from "./ErrorBoundary";
 
 interface LazyPanelProps {
   children: React.ReactNode;
@@ -62,18 +63,20 @@ function LazyPanelInner({ children, fallbackHeight = 200, rootMargin = "600px" }
   return (
     <div ref={ref}>
       {shouldRender ? (
-        <Suspense
-          fallback={
-            <div
-              className="flex items-center justify-center rounded-xl border border-white/5 bg-white/[0.02]"
-              style={{ minHeight: fallbackHeight }}
-            >
-              <Loader2 className="h-6 w-6 animate-spin text-white/20" />
-            </div>
-          }
-        >
-          {children}
-        </Suspense>
+        <PanelErrorBoundary>
+          <Suspense
+            fallback={
+              <div
+                className="flex items-center justify-center rounded-xl border border-white/5 bg-white/[0.02]"
+                style={{ minHeight: fallbackHeight }}
+              >
+                <Loader2 className="h-6 w-6 animate-spin text-white/20" />
+              </div>
+            }
+          >
+            {children}
+          </Suspense>
+        </PanelErrorBoundary>
       ) : (
         <div
           className="rounded-xl border border-white/5 bg-white/[0.02]"

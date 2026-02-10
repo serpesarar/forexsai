@@ -3,15 +3,23 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 export async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options
-  });
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "Request failed");
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      headers: { "Content-Type": "application/json" },
+      ...options,
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || "Request failed");
+    }
+    return response.json() as Promise<T>;
+  } finally {
+    clearTimeout(timeout);
   }
-  return response.json() as Promise<T>;
 }
 
 export function useRunAll() {

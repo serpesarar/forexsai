@@ -204,6 +204,7 @@ export interface SingleTimeframeResult {
   timeframe: Timeframe;
   timestamp: string;
   analysis: TimeframeAnalysis;
+  error?: string;
 }
 
 export function useMTFAnalysis(symbol: string, refreshInterval: number = 30000) {
@@ -256,9 +257,14 @@ export function useSingleTimeframeAnalysis(
 
   const fetchData = useCallback(async () => {
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      
       const response = await fetch(
-        `${API_BASE}/api/mtf/timeframe/${encodeURIComponent(symbol)}/${timeframe}`
+        `${API_BASE}/api/mtf/timeframe/${encodeURIComponent(symbol)}/${timeframe}`,
+        { signal: controller.signal }
       );
+      clearTimeout(timeout);
       
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
@@ -270,10 +276,15 @@ export function useSingleTimeframeAnalysis(
         setData(result.analysis);
         setError(null);
       } else {
-        setError("Failed to fetch timeframe analysis");
+        setError(result.error || "Failed to fetch timeframe analysis");
+        setData(null);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError("Request timed out");
+      } else {
+        setError(err instanceof Error ? err.message : "Unknown error");
+      }
     } finally {
       setIsLoading(false);
     }

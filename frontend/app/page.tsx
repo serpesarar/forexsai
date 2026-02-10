@@ -453,13 +453,19 @@ export default function HomePage() {
   const refreshLive = async () => {
     try {
       const lang = locale;
-      const [nasdaq, xauusd, news, taNasdaq, taXau] = await Promise.all([
+      // Use allSettled so one failing endpoint doesn't block all
+      const results = await Promise.allSettled([
         fetcher<any>("/api/run/nasdaq", { method: "POST", body: "{}" }),
         fetcher<any>("/api/run/xauusd", { method: "POST", body: "{}" }),
         fetcher<any>(`/api/news/feed?lang=${lang}`),
         fetcher<any>("/api/ta/snapshot?symbol=NDX.INDX"),
         fetcher<any>("/api/ta/snapshot?symbol=XAUUSD"),
       ]);
+      const nasdaq = results[0].status === "fulfilled" ? results[0].value : null;
+      const xauusd = results[1].status === "fulfilled" ? results[1].value : null;
+      const news = results[2].status === "fulfilled" ? results[2].value : null;
+      const taNasdaq = results[3].status === "fulfilled" ? results[3].value : null;
+      const taXau = results[4].status === "fulfilled" ? results[4].value : null;
       // Claude sentiment + patterns per asset (live, not mock)
       const settled = await Promise.allSettled([
         fetcher<any>(`/api/claude/analyze-sentiment?symbol=NDX.INDX&lang=${lang}`, { method: "POST", body: "{}" }),
@@ -891,7 +897,8 @@ export default function HomePage() {
   const renderSignalCard = (signal: typeof signalCards[0]) => {
     const isMTFLoading = signal.symbol === "NASDAQ" ? nasdaqMTFLoading : xauusdMTFLoading;
     const mtfData = signal.symbol === "NASDAQ" ? nasdaqMTF : xauusdMTF;
-    const isDataLoading = (!signal.currentPrice || signal.currentPrice === 0 || !hasCachedData) && !mtfData;
+    // Only block on cached data — MTF is an optional enhancement, never block on it
+    const isDataLoading = !hasCachedData && !mtfData && (!signal.currentPrice || signal.currentPrice === 0);
     const tfMultiplier = getTimeframeMultiplier(trendTf);
 
     // Use MTF data if available, otherwise fall back to cached data
