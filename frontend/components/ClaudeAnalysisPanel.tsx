@@ -25,34 +25,36 @@ type Props = {
   symbolLabel: string;
 };
 
-function DirectionBadge({ direction, isClaudeDecision, t }: { direction: string; isClaudeDecision?: boolean; t: (key: string) => string }) {
-  const config = {
-    BUY: { bg: "bg-success/20", text: "text-success", icon: TrendingUp, label: t("directions.buy") },
-    SELL: { bg: "bg-danger/20", text: "text-danger", icon: TrendingDown, label: t("directions.sell") },
-    HOLD: { bg: "bg-white/10", text: "text-textSecondary", icon: Minus, label: t("directions.hold") },
-  }[direction] || { bg: "bg-white/10", text: "text-textSecondary", icon: Minus, label: direction };
+const neonDir: Record<string, { color: string; glow: string }> = {
+  BUY: { color: "#00ff88", glow: "rgba(0,255,136,0.15)" },
+  SELL: { color: "#ff3366", glow: "rgba(255,51,102,0.15)" },
+  HOLD: { color: "#f0b429", glow: "rgba(240,180,41,0.15)" },
+};
 
-  const Icon = config.icon;
+function DirectionBadge({ direction, isClaudeDecision, t }: { direction: string; isClaudeDecision?: boolean; t: (key: string) => string }) {
+  const nd = neonDir[direction] || neonDir.HOLD;
+  const Icon = direction === "BUY" ? TrendingUp : direction === "SELL" ? TrendingDown : Minus;
+  const label = direction === "BUY" ? t("directions.buy") : direction === "SELL" ? t("directions.sell") : t("directions.hold");
 
   return (
-    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${config.bg}`}>
-      {isClaudeDecision && <Brain className="w-4 h-4 text-accent" />}
-      <Icon className={`w-4 h-4 ${config.text}`} />
-      <span className={`text-sm font-semibold ${config.text}`}>{config.label}</span>
+    <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-mono" style={{ background: `${nd.color}12`, border: `1px solid ${nd.color}25` }}>
+      {isClaudeDecision && <Brain className="w-4 h-4" style={{ color: "#818cf8" }} />}
+      <Icon className="w-4 h-4" style={{ color: nd.color, filter: `drop-shadow(0 0 4px ${nd.color})` }} />
+      <span className="text-sm font-bold" style={{ color: nd.color }}>{label}</span>
     </div>
   );
 }
 
 function AgreementBadge({ agreement, t }: { agreement: boolean; t: (key: string) => string }) {
   return agreement ? (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-success/10 text-success">
-      <CheckCircle2 className="w-4 h-4" />
-      <span className="text-xs font-medium">{t("claudeAnalysis.agreed")}</span>
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.15)" }}>
+      <CheckCircle2 className="w-4 h-4" style={{ color: "#00ff88" }} />
+      <span className="text-xs font-mono font-medium" style={{ color: "#00ff88" }}>{t("claudeAnalysis.agreed")}</span>
     </div>
   ) : (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning/10 text-warning">
-      <XCircle className="w-4 h-4" />
-      <span className="text-xs font-medium">{t("claudeAnalysis.different")}</span>
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "rgba(255,51,102,0.08)", border: "1px solid rgba(255,51,102,0.15)" }}>
+      <XCircle className="w-4 h-4" style={{ color: "#ff3366" }} />
+      <span className="text-xs font-mono font-medium" style={{ color: "#ff3366" }}>{t("claudeAnalysis.different")}</span>
     </div>
   );
 }
@@ -84,187 +86,193 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
   };
 
   return (
-    <div className="glass-premium p-8 space-y-6 rounded-2xl">
+    <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 0 40px rgba(129,140,248,0.10), inset 0 1px 0 rgba(255,255,255,0.04)" }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/30 to-pink-500/30">
-            <Sparkles className="h-6 w-6 text-purple-400" />
+      <div className="px-5 py-4 flex items-center justify-between" style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(129,140,248,0.15)", boxShadow: "0 0 16px rgba(129,140,248,0.3)" }}>
+            <Sparkles className="w-5 h-5" style={{ color: "#818cf8" }} />
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("claudeAnalysis.title")}</p>
-            <h3 className="text-xl font-bold">{symbolLabel}</h3>
+            <p className="text-[10px] uppercase tracking-widest font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>{t("claudeAnalysis.title")}</p>
+            <h3 className="text-base font-bold font-mono text-white/90">{symbolLabel}</h3>
           </div>
         </div>
         <button
           onClick={handleAnalyze}
-          className="px-4 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 transition flex items-center gap-2"
+          className="px-4 py-2 rounded-xl flex items-center gap-2 transition-all hover:brightness-125"
+          style={{ background: "rgba(129,140,248,0.12)", border: "1px solid rgba(129,140,248,0.2)" }}
           disabled={isLoading}
         >
-          <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""} text-purple-400`} />
-          <span className="text-sm text-purple-400 font-medium">
+          <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} style={{ color: "#818cf8" }} />
+          <span className="text-sm font-mono font-medium" style={{ color: "#818cf8" }}>
             {isLoading ? t("claudeAnalysis.analyzing") : shouldFetch && data ? t("claudeAnalysis.refresh") : t("claudeAnalysis.analyze")}
           </span>
         </button>
       </div>
 
-      {/* Show last updated time if we have persisted data */}
-      {lastUpdated && data && !isLoading && (
-        <div className="flex items-center gap-2 text-xs text-textSecondary bg-white/5 px-3 py-2 rounded-lg">
-          <Clock className="w-3 h-3" />
-          <span>{t("claudeAnalysis.lastAnalysis")}: {new Date(lastUpdated).toLocaleString(locale === "en" ? "en-US" : "tr-TR")}</span>
-        </div>
-      )}
-
-      {!data && !isLoading ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <Brain className="w-12 h-12 text-purple-400/50 mb-4" />
-          <p className="text-textSecondary text-sm mb-2">{t("claudeAnalysis.ready")}</p>
-          <p className="text-textSecondary/70 text-xs">{t("claudeAnalysis.apiSaving")}</p>
-        </div>
-      ) : isLoading ? (
-        <div className="space-y-3">
-          <div className="skeleton h-12 w-full rounded-xl" />
-          <div className="skeleton h-24 w-full rounded-xl" />
-          <div className="skeleton h-16 w-full rounded-xl" />
-        </div>
-      ) : error ? (
-        <div className="flex items-center gap-3 p-4 bg-danger/10 rounded-xl text-danger">
-          <AlertTriangle className="w-5 h-5" />
-          <span className="text-sm">{t("claudeAnalysis.error")}</span>
-        </div>
-      ) : data ? (
-        <>
-          {/* ML vs Claude Comparison */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white/5 rounded-2xl p-5 text-center border border-white/5">
-              <p className="text-xs uppercase text-textSecondary mb-3 tracking-wider">ML MODEL</p>
-              <DirectionBadge direction={data.ml_prediction.direction} t={t} />
-              <p className="text-sm text-textSecondary mt-3 font-medium">{data.ml_prediction.confidence.toFixed(0)}% {t("mlPrediction.confidence")}</p>
-            </div>
-            
-            <div className="bg-white/5 rounded-2xl p-5 flex flex-col items-center justify-center border border-white/5">
-              <AgreementBadge agreement={data.claude_analysis.agreement} t={t} />
-              <p className="text-xs text-textSecondary mt-3">
-                {data.claude_analysis.agreement ? t("claudeAnalysis.agreement") : t("claudeAnalysis.disagreement")}
-              </p>
-            </div>
-            
-            <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-2xl p-5 text-center border border-purple-500/20">
-              <p className="text-xs uppercase text-purple-400 mb-3 tracking-wider">CLAUDE AI</p>
-              <DirectionBadge direction={data.claude_analysis.claude_direction} isClaudeDecision t={t} />
-              <p className="text-sm text-textSecondary mt-3 font-medium">{data.claude_analysis.claude_confidence.toFixed(0)}% {t("mlPrediction.confidence")}</p>
-            </div>
+      <div className="p-5 space-y-4">
+        {/* Show last updated time if we have persisted data */}
+        {lastUpdated && data && !isLoading && (
+          <div className="flex items-center gap-2 text-[10px] font-mono px-3 py-2 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", color: "rgba(255,255,255,0.3)" }}>
+            <Clock className="w-3 h-3" />
+            <span>{t("claudeAnalysis.lastAnalysis")}: {new Date(lastUpdated).toLocaleString(locale === "en" ? "en-US" : "tr-TR")}</span>
           </div>
+        )}
 
-          {/* Position Recommendation */}
-          <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
-            <div className="flex items-center gap-2">
-              <Scale className="w-4 h-4 text-accent" />
-              <span className="text-sm text-textSecondary">{t("claudeAnalysis.recommendation")}</span>
-            </div>
-            <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
-              data.claude_analysis.position_size_suggestion === "No Trade" 
-                ? "bg-danger/20 text-danger"
-                : data.claude_analysis.position_size_suggestion === "Large"
-                ? "bg-success/20 text-success"
-                : data.claude_analysis.position_size_suggestion === "Medium"
-                ? "bg-accent/20 text-accent"
-                : "bg-warning/20 text-warning"
-            }`}>
-              {data.claude_analysis.position_size_suggestion === "No Trade" ? t("claudeAnalysis.positionSize.noTrade") :
-               data.claude_analysis.position_size_suggestion === "Large" ? t("claudeAnalysis.positionSize.large") :
-               data.claude_analysis.position_size_suggestion === "Medium" ? t("claudeAnalysis.positionSize.medium") : t("claudeAnalysis.positionSize.small")}
-            </span>
+        {!data && !isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Brain className="w-12 h-12 mb-4 opacity-30" style={{ color: "#818cf8" }} />
+            <p className="text-sm font-mono" style={{ color: "rgba(255,255,255,0.4)" }}>{t("claudeAnalysis.ready")}</p>
+            <p className="text-xs font-mono mt-1" style={{ color: "rgba(255,255,255,0.2)" }}>{t("claudeAnalysis.apiSaving")}</p>
           </div>
-
-          {/* Strengths & Weaknesses */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-success/5 rounded-xl p-3 border border-success/10">
-              <div className="flex items-center gap-2 mb-2">
-                <Shield className="w-4 h-4 text-success" />
-                <p className="text-xs font-medium text-success">{t("common.bullish")}</p>
-              </div>
-              <ul className="space-y-1">
-                {data.claude_analysis.strengths.slice(0, 3).map((s, i) => (
-                  <li key={i} className="text-xs text-textSecondary flex gap-1">
-                    <span className="text-success">+</span>
-                    <span className="line-clamp-2">{s}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            <div className="bg-danger/5 rounded-xl p-3 border border-danger/10">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-4 h-4 text-danger" />
-                <p className="text-xs font-medium text-danger">{t("claudeAnalysis.riskAssessment")}</p>
-              </div>
-              <ul className="space-y-1">
-                {data.claude_analysis.weaknesses.slice(0, 3).map((w, i) => (
-                  <li key={i} className="text-xs text-textSecondary flex gap-1">
-                    <span className="text-danger">-</span>
-                    <span className="line-clamp-2">{w}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+        ) : isLoading ? (
+          <div className="space-y-3 animate-pulse">
+            <div className="h-12 w-full rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }} />
+            <div className="h-24 w-full rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }} />
+            <div className="h-16 w-full rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }} />
           </div>
-
-          {/* Price Levels */}
-          <div className="bg-white/5 rounded-xl p-3">
-            <div className="flex items-center gap-2 mb-3">
-              <Target className="w-4 h-4 text-accent" />
-              <p className="text-xs font-medium">{t("claudeAnalysis.recommendation")}</p>
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div>
-                <p className="text-[10px] text-textSecondary">Entry</p>
-                <p className="text-sm font-mono">{data.claude_analysis.recommended_entry.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-success">Take Profit</p>
-                <p className="text-sm font-mono text-success">{data.claude_analysis.recommended_tp.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-danger">Stop Loss</p>
-                <p className="text-sm font-mono text-danger">{data.claude_analysis.recommended_sl.toFixed(2)}</p>
-              </div>
-            </div>
+        ) : error ? (
+          <div className="flex items-center gap-3 p-4 rounded-xl" style={{ background: "rgba(255,51,102,0.08)", border: "1px solid rgba(255,51,102,0.15)" }}>
+            <AlertTriangle className="w-5 h-5" style={{ color: "#ff3366" }} />
+            <span className="text-sm font-mono" style={{ color: "#ff3366" }}>{t("claudeAnalysis.error")}</span>
           </div>
+        ) : data ? (
+          <>
+            {/* ML vs Claude Comparison */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-xl p-4 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                <p className="text-[9px] uppercase tracking-widest font-mono mb-3" style={{ color: "rgba(255,255,255,0.3)" }}>ML MODEL</p>
+                <DirectionBadge direction={data.ml_prediction.direction} t={t} />
+                <p className="text-[10px] font-mono mt-3" style={{ color: "rgba(255,255,255,0.35)" }}>{data.ml_prediction.confidence.toFixed(0)}% {t("mlPrediction.confidence")}</p>
+              </div>
+              
+              <div className="rounded-xl p-4 flex flex-col items-center justify-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                <AgreementBadge agreement={data.claude_analysis.agreement} t={t} />
+                <p className="text-[10px] font-mono mt-3" style={{ color: "rgba(255,255,255,0.3)" }}>
+                  {data.claude_analysis.agreement ? t("claudeAnalysis.agreement") : t("claudeAnalysis.disagreement")}
+                </p>
+              </div>
+              
+              <div className="rounded-xl p-4 text-center" style={{ background: "rgba(129,140,248,0.06)", border: "1px solid rgba(129,140,248,0.12)" }}>
+                <p className="text-[9px] uppercase tracking-widest font-mono mb-3" style={{ color: "#818cf8" }}>CLAUDE AI</p>
+                <DirectionBadge direction={data.claude_analysis.claude_direction} isClaudeDecision t={t} />
+                <p className="text-[10px] font-mono mt-3" style={{ color: "rgba(255,255,255,0.35)" }}>{data.claude_analysis.claude_confidence.toFixed(0)}% {t("mlPrediction.confidence")}</p>
+              </div>
+            </div>
 
-          {/* Expandable Assessment */}
-          <div>
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="w-full text-left p-3 bg-white/5 rounded-xl hover:bg-white/10 transition"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Brain className="w-4 h-4 text-accent" />
-                  <span className="text-xs font-medium">{t("claudeAnalysis.reasoning")}</span>
+            {/* Position Recommendation */}
+            <div className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="flex items-center gap-2">
+                <Scale className="w-4 h-4" style={{ color: "#00ccff" }} />
+                <span className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.4)" }}>{t("claudeAnalysis.recommendation")}</span>
+              </div>
+              <span className="text-xs font-bold font-mono px-3 py-1 rounded-full" style={{
+                background: data.claude_analysis.position_size_suggestion === "No Trade" ? "rgba(255,51,102,0.12)" :
+                  data.claude_analysis.position_size_suggestion === "Large" ? "rgba(0,255,136,0.12)" :
+                  data.claude_analysis.position_size_suggestion === "Medium" ? "rgba(0,204,255,0.12)" : "rgba(240,180,41,0.12)",
+                color: data.claude_analysis.position_size_suggestion === "No Trade" ? "#ff3366" :
+                  data.claude_analysis.position_size_suggestion === "Large" ? "#00ff88" :
+                  data.claude_analysis.position_size_suggestion === "Medium" ? "#00ccff" : "#f0b429",
+                border: `1px solid ${data.claude_analysis.position_size_suggestion === "No Trade" ? "rgba(255,51,102,0.25)" :
+                  data.claude_analysis.position_size_suggestion === "Large" ? "rgba(0,255,136,0.25)" :
+                  data.claude_analysis.position_size_suggestion === "Medium" ? "rgba(0,204,255,0.25)" : "rgba(240,180,41,0.25)"}`,
+              }}>
+                {data.claude_analysis.position_size_suggestion === "No Trade" ? t("claudeAnalysis.positionSize.noTrade") :
+                 data.claude_analysis.position_size_suggestion === "Large" ? t("claudeAnalysis.positionSize.large") :
+                 data.claude_analysis.position_size_suggestion === "Medium" ? t("claudeAnalysis.positionSize.medium") : t("claudeAnalysis.positionSize.small")}
+              </span>
+            </div>
+
+            {/* Strengths & Weaknesses */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl p-3" style={{ background: "rgba(0,255,136,0.04)", border: "1px solid rgba(0,255,136,0.10)" }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className="w-4 h-4" style={{ color: "#00ff88" }} />
+                  <p className="text-xs font-mono font-bold" style={{ color: "#00ff88" }}>{t("common.bullish")}</p>
                 </div>
-                <span className="text-xs text-textSecondary">{expanded ? t("claudeAnalysis.showLess") : t("claudeAnalysis.showMore")}</span>
+                <ul className="space-y-1">
+                  {data.claude_analysis.strengths.slice(0, 3).map((s, i) => (
+                    <li key={i} className="text-[10px] font-mono flex gap-1" style={{ color: "rgba(255,255,255,0.4)" }}>
+                      <span style={{ color: "#00ff88" }}>+</span>
+                      <span className="line-clamp-2">{s}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </button>
-            
-            {expanded && (
-              <div className="mt-2 p-3 bg-white/5 rounded-xl text-xs text-textSecondary leading-relaxed max-h-48 overflow-auto">
-                {data.claude_analysis.general_assessment}
+              
+              <div className="rounded-xl p-3" style={{ background: "rgba(255,51,102,0.04)", border: "1px solid rgba(255,51,102,0.10)" }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="w-4 h-4" style={{ color: "#ff3366" }} />
+                  <p className="text-xs font-mono font-bold" style={{ color: "#ff3366" }}>{t("claudeAnalysis.riskAssessment")}</p>
+                </div>
+                <ul className="space-y-1">
+                  {data.claude_analysis.weaknesses.slice(0, 3).map((w, i) => (
+                    <li key={i} className="text-[10px] font-mono flex gap-1" style={{ color: "rgba(255,255,255,0.4)" }}>
+                      <span style={{ color: "#ff3366" }}>-</span>
+                      <span className="line-clamp-2">{w}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between text-[10px] text-textSecondary pt-2 border-t border-white/5">
-            <span className="flex items-center gap-1">
-              <Brain className="w-3 h-3" />
-              {data.claude_analysis.model_used}
-            </span>
-            <span>{new Date(data.claude_analysis.timestamp).toLocaleTimeString(locale === "en" ? "en-US" : "tr-TR")}</span>
-          </div>
-        </>
-      ) : null}
+            {/* Price Levels */}
+            <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="flex items-center gap-2 mb-3">
+                <Target className="w-4 h-4" style={{ color: "#00ccff" }} />
+                <p className="text-xs font-mono font-bold" style={{ color: "rgba(255,255,255,0.5)" }}>{t("claudeAnalysis.recommendation")}</p>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-lg p-2" style={{ background: "rgba(0,204,255,0.05)" }}>
+                  <p className="text-[9px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>Entry</p>
+                  <p className="text-sm font-mono font-bold text-white/80">{data.claude_analysis.recommended_entry.toFixed(2)}</p>
+                </div>
+                <div className="rounded-lg p-2" style={{ background: "rgba(0,255,136,0.05)" }}>
+                  <p className="text-[9px] font-mono" style={{ color: "#00ff88" }}>Take Profit</p>
+                  <p className="text-sm font-mono font-bold" style={{ color: "#00ff88" }}>{data.claude_analysis.recommended_tp.toFixed(2)}</p>
+                </div>
+                <div className="rounded-lg p-2" style={{ background: "rgba(255,51,102,0.05)" }}>
+                  <p className="text-[9px] font-mono" style={{ color: "#ff3366" }}>Stop Loss</p>
+                  <p className="text-sm font-mono font-bold" style={{ color: "#ff3366" }}>{data.claude_analysis.recommended_sl.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Expandable Assessment */}
+            <div>
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="w-full text-left px-4 py-3 rounded-xl transition-all hover:brightness-125"
+                style={{ background: "rgba(129,140,248,0.06)", border: "1px solid rgba(129,140,248,0.10)" }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Brain className="w-4 h-4" style={{ color: "#818cf8" }} />
+                    <span className="text-xs font-mono font-bold" style={{ color: "#818cf8" }}>{t("claudeAnalysis.reasoning")}</span>
+                  </div>
+                  <span className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>{expanded ? t("claudeAnalysis.showLess") : t("claudeAnalysis.showMore")}</span>
+                </div>
+              </button>
+              
+              {expanded && (
+                <div className="mt-2 p-4 rounded-xl text-[11px] font-mono leading-relaxed max-h-48 overflow-auto" style={{ background: "rgba(0,0,0,0.3)", color: "rgba(255,255,255,0.45)" }}>
+                  {data.claude_analysis.general_assessment}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between text-[10px] font-mono pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.2)" }}>
+              <span className="flex items-center gap-1">
+                <Brain className="w-3 h-3" />
+                {data.claude_analysis.model_used}
+              </span>
+              <span>{new Date(data.claude_analysis.timestamp).toLocaleTimeString(locale === "en" ? "en-US" : "tr-TR")}</span>
+            </div>
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }

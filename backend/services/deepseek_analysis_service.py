@@ -310,14 +310,15 @@ async def analyze_with_deepseek(
         if extra_context:
             data_pack.update(extra_context)
 
+        # DeepSeek-R1 doesn't support system role well - prepend to user message
+        user_content = prompts[analysis_type] + "\n\n--- VERİ PAKETİ ---\n" + json.dumps(data_pack, ensure_ascii=False)
+
         response = client.chat.completions.create(
             model="deepseek-reasoner",
             messages=[
-                {"role": "system", "content": prompts[analysis_type]},
-                {"role": "user", "content": json.dumps(data_pack, ensure_ascii=False)},
+                {"role": "user", "content": user_content},
             ],
             max_tokens=2000,
-            temperature=0.2,
         )
 
         content = response.choices[0].message.content or "{}"
