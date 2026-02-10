@@ -47,9 +47,9 @@ const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const TIMEFRAMES = ["5m", "15m", "1h", "4h", "1d"] as const;
 
 const EMA_CONFIG = {
-  20: { color: "#ec4899", glowColor: "rgba(236,72,153,0.5)", width: 1 as const, label: "EMA20" },
-  50: { color: "#f97316", glowColor: "rgba(249,115,22,0.5)", width: 2 as const, label: "EMA50" },
-  200: { color: "#e2e8f0", glowColor: "rgba(226,232,240,0.4)", width: 3 as const, label: "EMA200" },
+  20: { color: "#ff0080", glowColor: "rgba(255,0,128,0.6)", width: 1 as const, label: "EMA20" },
+  50: { color: "#ffa500", glowColor: "rgba(255,165,0,0.6)", width: 2 as const, label: "EMA50" },
+  200: { color: "#00e0c6", glowColor: "rgba(0,224,198,0.5)", width: 3 as const, label: "EMA200" },
 };
 
 // ─── Data fetching ────────────────────────────────────────────────
@@ -239,49 +239,49 @@ export default function NeonChart({
       height,
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#64748b",
-        fontSize: 11,
+        textColor: "rgba(0, 224, 198, 0.4)",
+        fontSize: 10,
       },
       watermark: { visible: false },
       grid: {
-        vertLines: { color: "rgba(255,255,255,0.025)" },
-        horzLines: { color: "rgba(255,255,255,0.025)" },
+        vertLines: { color: "rgba(0, 224, 198, 0.04)" },
+        horzLines: { color: "rgba(0, 224, 198, 0.04)" },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
         vertLine: {
-          color: "rgba(59,130,246,0.3)",
-          labelBackgroundColor: "#1e293b",
+          color: "rgba(0, 224, 198, 0.25)",
+          labelBackgroundColor: "#0a1628",
           width: 1,
         },
         horzLine: {
-          color: "rgba(59,130,246,0.3)",
-          labelBackgroundColor: "#1e293b",
+          color: "rgba(0, 224, 198, 0.25)",
+          labelBackgroundColor: "#0a1628",
           width: 1,
         },
       },
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
-        borderColor: "rgba(255,255,255,0.06)",
+        borderColor: "rgba(0, 224, 198, 0.08)",
       },
       rightPriceScale: {
-        borderColor: "rgba(255,255,255,0.06)",
+        borderColor: "rgba(0, 224, 198, 0.08)",
       },
     });
 
     // Candlestick series with neon-ish colors
     const candleSeries = chart.addCandlestickSeries({
-      upColor: "#22c55e",
-      downColor: "#ef4444",
+      upColor: "#00ff88",
+      downColor: "#ff3366",
       borderVisible: false,
-      wickUpColor: "rgba(34,197,94,0.7)",
-      wickDownColor: "rgba(239,68,68,0.7)",
+      wickUpColor: "rgba(0,255,136,0.6)",
+      wickDownColor: "rgba(255,51,102,0.6)",
     });
 
     // Volume
     const volumeSeries = chart.addHistogramSeries({
-      color: "rgba(100,100,100,0.3)",
+      color: "rgba(0,224,198,0.15)",
       priceFormat: { type: "volume" },
       priceScaleId: "volume",
     });
@@ -370,7 +370,7 @@ export default function NeonChart({
       const volumes = chartData.map((d) => ({
         time: (d.timestamp / 1000) as Time,
         value: d.volume,
-        color: d.close >= d.open ? "rgba(34,197,94,0.25)" : "rgba(239,68,68,0.25)",
+        color: d.close >= d.open ? "rgba(0,255,136,0.2)" : "rgba(255,51,102,0.2)",
       }));
 
       candleSeries.setData(candles);
