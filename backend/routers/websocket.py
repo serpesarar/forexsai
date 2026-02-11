@@ -133,3 +133,24 @@ async def ws_stats():
         "websocket": manager.get_stats(),
         "redis": get_redis_info(),
     }
+
+
+@router.get("/api/ws/test-panels/{symbol}")
+async def test_panel_compute(symbol: str):
+    """Debug endpoint: test panel data computation for a symbol."""
+    try:
+        from services.background_scheduler import _compute_panel_data
+        panels = await _compute_panel_data(symbol)
+        return {
+            "symbol": symbol,
+            "panels_computed": list(panels.keys()),
+            "panel_count": len(panels),
+            "panel_sizes": {k: len(str(v)) for k, v in panels.items()},
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "symbol": symbol,
+            "error": str(e),
+            "traceback": traceback.format_exc(),
+        }

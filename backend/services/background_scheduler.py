@@ -263,8 +263,10 @@ async def _compute_panel_data(symbol: str) -> Dict[str, Any]:
         pulse = await get_pulse_v3_analysis(symbol)
         if pulse and not pulse.get("error"):
             panels["pulse_v3"] = pulse
+        elif pulse:
+            logger.warning(f"Pulse V3 returned error for {symbol}: {pulse.get('error')}")
     except Exception as e:
-        logger.debug(f"Pulse V3 compute skipped for {symbol}: {e}")
+        logger.warning(f"Pulse V3 compute failed for {symbol}: {e}", exc_info=True)
 
     # EMEL — calls the route handler directly
     try:
@@ -272,8 +274,10 @@ async def _compute_panel_data(symbol: str) -> Dict[str, Any]:
         emel = await get_emel_analysis(symbol, "5m")
         if emel and not emel.get("error"):
             panels["emel"] = emel
+        elif emel:
+            logger.warning(f"EMEL returned error for {symbol}: {emel.get('error')}")
     except Exception as e:
-        logger.debug(f"EMEL compute skipped for {symbol}: {e}")
+        logger.warning(f"EMEL compute failed for {symbol}: {e}", exc_info=True)
 
     # MTF Analysis — calls the service function
     try:
@@ -282,7 +286,7 @@ async def _compute_panel_data(symbol: str) -> Dict[str, Any]:
         if mtf:
             panels["mtf"] = mtf
     except Exception as e:
-        logger.debug(f"MTF compute skipped for {symbol}: {e}")
+        logger.warning(f"MTF compute failed for {symbol}: {e}", exc_info=True)
 
     # ClearTrend — calls the route handler directly
     try:
@@ -290,9 +294,12 @@ async def _compute_panel_data(symbol: str) -> Dict[str, Any]:
         ct = await get_clear_trend(symbol, "5m")
         if ct and not ct.get("error"):
             panels["clear_trend"] = ct
+        elif ct:
+            logger.warning(f"ClearTrend returned error for {symbol}: {ct.get('error')}")
     except Exception as e:
-        logger.debug(f"ClearTrend compute skipped for {symbol}: {e}")
+        logger.warning(f"ClearTrend compute failed for {symbol}: {e}", exc_info=True)
 
+    logger.info(f"Panel data computed for {symbol}: {list(panels.keys())} ({len(panels)} panels)")
     return panels
 
 
