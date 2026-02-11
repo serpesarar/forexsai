@@ -51,7 +51,7 @@ interface DashboardEditContextType {
 const DEFAULT_LAYOUT: DashboardLayout = {
   cards: [
     // ─── LEFT COLUMN ──────────────────────────────────────────────
-    { id: "clear-trend", title: "Clear Trend Analysis", column: "left", order: 0, visible: true, size: "full", collapsed: false },
+    { id: "clear-trend", title: "Clear Trend Analysis", column: "left", order: 0, visible: true, size: "large", collapsed: false },
     { id: "pulse-v3", title: "PULSE 3 - Hybrid Scalp", column: "left", order: 1, visible: true, size: "large", collapsed: false },
     { id: "pulse-ml", title: "PULSE 2 - ML Hybrid", column: "left", order: 2, visible: true, size: "large", collapsed: false },
     { id: "pulse-panel", title: "PULSE 1 - Algoritmik Scalp", column: "left", order: 3, visible: true, size: "large", collapsed: false },
