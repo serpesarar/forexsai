@@ -38,6 +38,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Panel response cache middleware (caches panel API responses for WS broadcast)
+try:
+    from middleware.panel_cache import PanelCacheMiddleware
+    app.add_middleware(PanelCacheMiddleware)
+except Exception as e:
+    print(f"Panel cache middleware skipped: {e}")
+
 # Simple health check first
 @app.get("/api/health")
 async def health_check():

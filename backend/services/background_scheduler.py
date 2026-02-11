@@ -251,55 +251,28 @@ async def check_outcomes_if_needed():
         logger.error(f"Error checking outcomes: {e}")
 
 
-async def _compute_panel_data(symbol: str) -> Dict[str, Any]:
-    """Compute panel-specific data (Pulse, EMEL, MTF, ClearTrend) for broadcast.
-    Each panel's data is computed here so frontend doesn't need to poll individually.
-    All errors are caught per-panel so one failure doesn't block others."""
+def _get_cached_panel_data(symbol: str) -> Dict[str, Any]:
+    """Read cached panel responses from the panel response cache.
+    Panel data is cached by the route handlers when served via HTTP.
+    This avoids re-computing heavy analysis in the scheduler cycle."""
+    from services.redis_client import cache_get
+
     panels = {}
+    panel_keys = {
+        "pulse_v3": f"panel:pulse_v3:{symbol}",
+        "emel": f"panel:emel:{symbol}",
+        "mtf": f"panel:mtf:{symbol}",
+        "clear_trend": f"panel:clear_trend:{symbol}",
+    }
 
-    # Pulse V3 — calls the route handler directly (it returns a dict)
-    try:
-        from routers.emel_pulse import get_pulse_v3_analysis
-        pulse = await get_pulse_v3_analysis(symbol)
-        if pulse and not pulse.get("error"):
-            panels["pulse_v3"] = pulse
-        elif pulse:
-            logger.warning(f"Pulse V3 returned error for {symbol}: {pulse.get('error')}")
-    except Exception as e:
-        logger.warning(f"Pulse V3 compute failed for {symbol}: {e}", exc_info=True)
+    for panel_name, cache_key in panel_keys.items():
+        try:
+            cached = cache_get(cache_key)
+            if cached and not cached.get("error"):
+                panels[panel_name] = cached
+        except Exception:
+            pass
 
-    # EMEL — calls the route handler directly
-    try:
-        from routers.emel_pulse import get_emel_analysis
-        emel = await get_emel_analysis(symbol, "5m")
-        if emel and not emel.get("error"):
-            panels["emel"] = emel
-        elif emel:
-            logger.warning(f"EMEL returned error for {symbol}: {emel.get('error')}")
-    except Exception as e:
-        logger.warning(f"EMEL compute failed for {symbol}: {e}", exc_info=True)
-
-    # MTF Analysis — calls the service function
-    try:
-        from services.mtf_analysis_service import get_mtf_analysis
-        mtf = await get_mtf_analysis(symbol)
-        if mtf:
-            panels["mtf"] = mtf
-    except Exception as e:
-        logger.warning(f"MTF compute failed for {symbol}: {e}", exc_info=True)
-
-    # ClearTrend — calls the route handler directly
-    try:
-        from routers.clear_trend import get_clear_trend
-        ct = await get_clear_trend(symbol, "5m")
-        if ct and not ct.get("error"):
-            panels["clear_trend"] = ct
-        elif ct:
-            logger.warning(f"ClearTrend returned error for {symbol}: {ct.get('error')}")
-    except Exception as e:
-        logger.warning(f"ClearTrend compute failed for {symbol}: {e}", exc_info=True)
-
-    logger.info(f"Panel data computed for {symbol}: {list(panels.keys())} ({len(panels)} panels)")
     return panels
 
 
@@ -318,12 +291,8 @@ async def run_update_cycle():
                 # Save to Supabase cache (legacy)
                 await save_to_cache(symbol, data, news)
 
-                # Compute panel-specific data for broadcast
-                panel_data = {}
-                try:
-                    panel_data = await _compute_panel_data(symbol)
-                except Exception as e:
-                    logger.debug(f"Panel data compute error for {symbol}: {e}")
+                # Read cached panel data for broadcast (panels cache their responses via HTTP)
+                panel_data = _get_cached_panel_data(symbol)
 
                 # Build broadcast payload — includes ALL data panels need
                 broadcast_payload = {

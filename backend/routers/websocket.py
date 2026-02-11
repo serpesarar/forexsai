@@ -136,16 +136,17 @@ async def ws_stats():
 
 
 @router.get("/api/ws/test-panels/{symbol}")
-async def test_panel_compute(symbol: str):
-    """Debug endpoint: test panel data computation for a symbol."""
+async def test_panel_cache(symbol: str):
+    """Debug endpoint: check what panel data is cached for broadcast."""
     try:
-        from services.background_scheduler import _compute_panel_data
-        panels = await _compute_panel_data(symbol)
+        from services.background_scheduler import _get_cached_panel_data
+        panels = _get_cached_panel_data(symbol.upper())
         return {
             "symbol": symbol,
-            "panels_computed": list(panels.keys()),
+            "panels_cached": list(panels.keys()),
             "panel_count": len(panels),
             "panel_sizes": {k: len(str(v)) for k, v in panels.items()},
+            "hint": "Panels get cached when served via HTTP. Call the panel API first to populate cache.",
         }
     except Exception as e:
         import traceback
