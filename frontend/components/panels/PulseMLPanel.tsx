@@ -56,7 +56,6 @@ interface PulseMLData {
 
 interface PulseMLPanelProps {
   symbol?: string;
-  onRefresh?: () => void;
 }
 
 const SYMBOLS = [
@@ -74,7 +73,7 @@ const signalStyles: Record<string, { accent: string; glow: string; bg: string }>
 
 const dirColor: Record<string, string> = { BUY: "#00ff88", SELL: "#ff3366", HOLD: "#818cf8", NEUTRAL: "#f0b429" };
 
-export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX", onRefresh }: PulseMLPanelProps) {
+export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: PulseMLPanelProps) {
   const { t } = useI18nStore();
   const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
   const [timeframe, setTimeframe] = useState("15m");
