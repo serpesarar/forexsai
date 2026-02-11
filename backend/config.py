@@ -1,3 +1,4 @@
+import os
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -20,7 +21,7 @@ class Settings(BaseSettings):
         env="CLAUDE_PATTERNS_PATH",
     )
     anthropic_api_key: str | None = Field(default=None, env="ANTHROPIC_API_KEY")
-    deepseek_api_key: str | None = Field(default=None, env="DEEP_SEEKR1")
+    deepseek_api_key: str | None = Field(default_factory=lambda: os.getenv("DEEP_SEEKR1"))
     eodhd_api_key: str | None = Field(default=None, env="EODHD_API_KEY")
     marketaux_api_key: str | None = Field(default=None, env="MARKETAUX_API_KEY")
     groq_api_key: str | None = Field(default=None, env="GROQ_API_KEY")
