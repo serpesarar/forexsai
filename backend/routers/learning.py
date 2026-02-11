@@ -1128,6 +1128,7 @@ async def get_strategy_performance(
 ):
     """Get performance statistics for each ML strategy."""
     from datetime import datetime, timedelta
+    from database.supabase_client import get_supabase_client
     
     if not is_db_available():
         return {"error": "Database not available"}
