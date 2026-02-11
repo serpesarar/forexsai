@@ -339,7 +339,7 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         # ─────────────────────────────────────────────────────────────────────
         # 7️⃣ HACİM ANALİZİ
         # ─────────────────────────────────────────────────────────────────────
-        if volumes and sum(volumes) > 0:
+        if len(volumes) > 0 and float(np.sum(volumes)) > 0:
             avg_volume = np.mean(volumes[-20:])
             current_volume = volumes[-1]
             volume_ratio = current_volume / avg_volume if avg_volume > 0 else 1
