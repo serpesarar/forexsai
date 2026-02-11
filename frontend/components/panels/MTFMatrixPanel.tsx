@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
   RefreshCw,
   BarChart3,
@@ -80,6 +81,8 @@ export default function MTFMatrixPanel() {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
+  const { data: wsData, wsConnected } = useWSPanelData(symbol, "mtf");
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -96,10 +99,20 @@ export default function MTFMatrixPanel() {
   };
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
-  }, [symbol]);
+    if (wsData) {
+      setData(wsData);
+      setLastUpdate(new Date());
+      setLoading(false);
+    }
+  }, [wsData]);
+
+  useEffect(() => {
+    if (!wsData) fetchData();
+    if (!wsConnected) {
+      const interval = setInterval(fetchData, 120000);
+      return () => clearInterval(interval);
+    }
+  }, [symbol, wsConnected]);
 
   const trendColor = (dir?: string) => {
     if (!dir) return "rgba(255,255,255,0.3)";

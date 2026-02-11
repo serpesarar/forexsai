@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
+import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
   TrendingUp,
   TrendingDown,
@@ -80,6 +81,9 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState("1H");
 
+  // WebSocket data — real-time, no polling needed
+  const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "emel");
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -95,11 +99,22 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
     }
   };
 
+  // Use WS data when available
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 60000);
-    return () => clearInterval(interval);
-  }, [activeSymbol, timeframe]);
+    if (wsData) {
+      setData(wsData);
+      setLoading(false);
+    }
+  }, [wsData]);
+
+  // HTTP fetch on mount + polling only when WS is NOT connected
+  useEffect(() => {
+    if (!wsData) fetchData();
+    if (!wsConnected) {
+      const interval = setInterval(fetchData, 120000);
+      return () => clearInterval(interval);
+    }
+  }, [activeSymbol, timeframe, wsConnected]);
 
   const getColorClass = (color: string) => {
     switch (color) {

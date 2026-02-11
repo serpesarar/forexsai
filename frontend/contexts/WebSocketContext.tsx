@@ -23,6 +23,12 @@ export interface SymbolData {
     volume: any;
     volatility: any;
   };
+  panels?: {
+    pulse_v3?: any;
+    emel?: any;
+    mtf?: any;
+    clear_trend?: any;
+  };
   news?: any;
 }
 
@@ -54,6 +60,15 @@ export function useWSData() {
 export function useWSSymbolData(symbol: string): SymbolData | null {
   const { symbolData } = useContext(WebSocketContext);
   return symbolData[symbol] ?? null;
+}
+
+/** Get specific panel data for a symbol from the WS stream.
+ *  panelKey: "pulse_v3" | "emel" | "mtf" | "clear_trend" */
+export function useWSPanelData(symbol: string, panelKey: string): any | null {
+  const { symbolData, status } = useContext(WebSocketContext);
+  const wsConnected = status === "connected";
+  const data = symbolData[symbol]?.panels?.[panelKey as keyof NonNullable<SymbolData["panels"]>] ?? null;
+  return { data, wsConnected };
 }
 
 // ─── Provider ────────────────────────────────────────────────────────────────

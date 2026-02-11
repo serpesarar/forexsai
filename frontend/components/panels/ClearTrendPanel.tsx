@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
+import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
   TrendingUp,
   TrendingDown,
@@ -82,6 +83,8 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
   const [timeframe, setTimeframe] = useState("1H");
   const [explanationModal, setExplanationModal] = useState<{ title: string; content: string } | null>(null);
 
+  const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "clear_trend");
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -98,10 +101,16 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
   };
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 60000);
-    return () => clearInterval(interval);
-  }, [activeSymbol, timeframe]);
+    if (wsData) { setData(wsData); setLoading(false); }
+  }, [wsData]);
+
+  useEffect(() => {
+    if (!wsData) fetchData();
+    if (!wsConnected) {
+      const interval = setInterval(fetchData, 120000);
+      return () => clearInterval(interval);
+    }
+  }, [activeSymbol, timeframe, wsConnected]);
 
   const openExplanation = (key: string, title: string) => {
     if (data?.explanations?.[key]) {

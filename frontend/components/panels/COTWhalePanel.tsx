@@ -82,7 +82,7 @@ export default function COTWhalePanel() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 60000);
+    const interval = setInterval(fetchData, 300000); // COT updates weekly, no need for frequent polling
     return () => clearInterval(interval);
   }, [symbol]);
 

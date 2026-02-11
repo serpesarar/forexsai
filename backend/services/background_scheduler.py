@@ -251,13 +251,58 @@ async def check_outcomes_if_needed():
         logger.error(f"Error checking outcomes: {e}")
 
 
+async def _compute_panel_data(symbol: str) -> Dict[str, Any]:
+    """Compute panel-specific data (Pulse, EMEL, MTF, ClearTrend) for broadcast.
+    Each panel's data is computed here so frontend doesn't need to poll individually.
+    All errors are caught per-panel so one failure doesn't block others."""
+    panels = {}
+
+    # Pulse V3 — calls the route handler directly (it returns a dict)
+    try:
+        from routers.emel_pulse import get_pulse_v3_analysis
+        pulse = await get_pulse_v3_analysis(symbol)
+        if pulse and not pulse.get("error"):
+            panels["pulse_v3"] = pulse
+    except Exception as e:
+        logger.debug(f"Pulse V3 compute skipped for {symbol}: {e}")
+
+    # EMEL — calls the route handler directly
+    try:
+        from routers.emel_pulse import get_emel_analysis
+        emel = await get_emel_analysis(symbol, "5m")
+        if emel and not emel.get("error"):
+            panels["emel"] = emel
+    except Exception as e:
+        logger.debug(f"EMEL compute skipped for {symbol}: {e}")
+
+    # MTF Analysis — calls the service function
+    try:
+        from services.mtf_analysis_service import get_mtf_analysis
+        mtf = await get_mtf_analysis(symbol)
+        if mtf:
+            panels["mtf"] = mtf
+    except Exception as e:
+        logger.debug(f"MTF compute skipped for {symbol}: {e}")
+
+    # ClearTrend — calls the route handler directly
+    try:
+        from routers.clear_trend import get_clear_trend
+        ct = await get_clear_trend(symbol, "5m")
+        if ct and not ct.get("error"):
+            panels["clear_trend"] = ct
+    except Exception as e:
+        logger.debug(f"ClearTrend compute skipped for {symbol}: {e}")
+
+    return panels
+
+
 async def run_update_cycle():
     """Run one update cycle for all symbols."""
     broadcast_batch = {}
 
     for symbol in TRACKED_SYMBOLS:
         try:
-            # Update market data
+            # Update market data (ML, TA, price, macro)
             data = await update_symbol_data(symbol)
             if data:
                 # Check for news updates
@@ -266,12 +311,20 @@ async def run_update_cycle():
                 # Save to Supabase cache (legacy)
                 await save_to_cache(symbol, data, news)
 
-                # Build broadcast payload
+                # Compute panel-specific data for broadcast
+                panel_data = {}
+                try:
+                    panel_data = await _compute_panel_data(symbol)
+                except Exception as e:
+                    logger.debug(f"Panel data compute error for {symbol}: {e}")
+
+                # Build broadcast payload — includes ALL data panels need
                 broadcast_payload = {
                     "type": "update",
                     "symbol": symbol,
                     "timestamp": data.get("updated_at"),
                     "data": data,
+                    "panels": panel_data,
                 }
                 if news:
                     broadcast_payload["news"] = news
@@ -296,6 +349,7 @@ async def run_update_cycle():
         try:
             from services.ws_manager import manager
             await manager.broadcast_all(broadcast_batch)
+            logger.debug(f"Broadcast sent to {manager.total_clients} clients")
         except Exception as e:
             logger.error(f"WebSocket broadcast error: {e}")
 

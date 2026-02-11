@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
+import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
   TrendingUp,
   TrendingDown,
@@ -79,6 +80,9 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
+  // WebSocket data — real-time, no polling needed
+  const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "pulse_v3");
+
   const fetchData = async () => {
     try {
       setError(null);
@@ -100,12 +104,27 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
     }
   };
 
+  // Use WS data when available
   useEffect(() => {
-    setLoading(true);
-    fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
-  }, [activeSymbol]);
+    if (wsData) {
+      setData(wsData);
+      setLastUpdate(new Date());
+      setLoading(false);
+      setError(null);
+    }
+  }, [wsData]);
+
+  // HTTP fetch on mount + polling only when WS is NOT connected
+  useEffect(() => {
+    if (!wsData) {
+      setLoading(true);
+      fetchData();
+    }
+    if (!wsConnected) {
+      const interval = setInterval(fetchData, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [activeSymbol, wsConnected]);
 
   const getSignalBadge = (type: string) => {
     if (type === "CONFIRM") return { text: t("pulseV3.strongSignal"), icon: CheckCircle };
