@@ -42,12 +42,22 @@ function DirectionBadge({ direction }: { direction: string }) {
   );
 }
 
-function ResultBadge({ correct, hitTarget, hitStop, pending }: { correct?: boolean; hitTarget?: boolean; hitStop?: boolean; pending?: boolean }) {
+function ResultBadge({ correct, hitTarget, hitStop, pending, direction }: { correct?: boolean; hitTarget?: boolean; hitStop?: boolean; pending?: boolean; direction?: string }) {
   if (pending) {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400">
         <Clock className="w-3 h-3" />
         Pending
+      </span>
+    );
+  }
+
+  // HOLD signals are neutral — not directional, don't count as wrong
+  if (direction === "HOLD") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-white/10 text-textSecondary">
+        <Minus className="w-3 h-3" />
+        Neutral
       </span>
     );
   }
@@ -134,26 +144,25 @@ export default function PredictionHistoryTable({ symbol }: PredictionHistoryTabl
   const predictions = data?.predictions || [];
   const summary = data?.summary;
 
-  // Recalculate accurate stats: if hit_target=true, it's correct regardless of ml_correct field
+  // Recalculate stats: exclude HOLD from accuracy, only count directional predictions (BUY/SELL)
   const correctedSummary = summary ? {
     ...summary,
-    // Count predictions where target was hit as correct
-    ml_correct: predictions.filter(p => p.has_outcome && (p.hit_target || p.ml_correct)).length,
-    // Recalculate accuracy: correct predictions / predictions with outcome
+    ml_correct: predictions.filter(p => p.has_outcome && p.ml_direction !== "HOLD" && (p.hit_target || p.ml_correct)).length,
     ml_accuracy: (() => {
-      const withOutcome = predictions.filter(p => p.has_outcome);
-      if (withOutcome.length === 0) return null;
-      const correct = withOutcome.filter(p => p.hit_target || p.ml_correct).length;
-      return Math.round(correct / withOutcome.length * 100);
+      const directionalWithOutcome = predictions.filter(p => p.has_outcome && p.ml_direction !== "HOLD");
+      if (directionalWithOutcome.length === 0) return null;
+      const correct = directionalWithOutcome.filter(p => p.hit_target || p.ml_correct).length;
+      return Math.round(correct / directionalWithOutcome.length * 100);
     })(),
+    with_outcome: predictions.filter(p => p.has_outcome && p.ml_direction !== "HOLD").length,
   } : null;
 
-  // Filter predictions - treat hit_target as correct
+  // Filter predictions - treat hit_target as correct, HOLD as neutral
   const filteredPredictions = predictions.filter((p) => {
     if (filterResult === "all") return true;
     if (filterResult === "pending") return !p.has_outcome;
-    if (filterResult === "correct") return p.hit_target || p.ml_correct === true;
-    if (filterResult === "wrong") return p.has_outcome && !p.hit_target && p.ml_correct === false;
+    if (filterResult === "correct") return p.ml_direction !== "HOLD" && (p.hit_target || p.ml_correct === true);
+    if (filterResult === "wrong") return p.has_outcome && p.ml_direction !== "HOLD" && !p.hit_target && p.ml_correct === false;
     return true;
   });
 
@@ -326,6 +335,7 @@ export default function PredictionHistoryTable({ symbol }: PredictionHistoryTabl
                         hitTarget={pred.hit_target}
                         hitStop={pred.hit_stop}
                         pending={!pred.has_outcome}
+                        direction={pred.ml_direction}
                       />
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-white">

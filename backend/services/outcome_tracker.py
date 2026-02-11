@@ -86,10 +86,10 @@ def _determine_actual_direction(price_change_pct: float) -> str:
     return "FLAT"
 
 
-def _is_prediction_correct(predicted: str, actual: str) -> bool:
-    """Check if prediction was correct."""
+def _is_prediction_correct(predicted: str, actual: str) -> Optional[bool]:
+    """Check if prediction was correct. Returns None for HOLD (not a directional prediction)."""
     if predicted == "HOLD":
-        return actual == "FLAT"
+        return None  # HOLD is neutral - exclude from accuracy calculation
     if predicted == "BUY":
         return actual == "UP"
     if predicted == "SELL":
@@ -224,8 +224,8 @@ async def check_prediction_outcome(
         claude_correct = _is_prediction_correct(claude_direction, actual_direction) if claude_direction else None
         
         # For ml_correct: if target was hit, trade is successful regardless of stop
-        # Because price reached our target = correct prediction
-        if hit_target:
+        # But only for directional predictions (BUY/SELL), not HOLD
+        if hit_target and ml_correct is not None:
             ml_correct = True  # Target hit = correct (even if stop also hit later)
         
         outcome = {

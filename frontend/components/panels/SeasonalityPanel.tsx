@@ -93,7 +93,7 @@ export default function SeasonalityPanel() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 600000);
+    const interval = setInterval(fetchData, 1800000); // 30 min - DeepSeek analysis doesn't change frequently
     return () => clearInterval(interval);
   }, [symbol]);
 

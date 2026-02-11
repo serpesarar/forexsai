@@ -11,15 +11,13 @@ interface LazyPanelProps {
 }
 
 /**
- * LazyPanel - Only renders children when the panel is near the viewport.
- * When scrolled away, it unmounts children to free memory and stop polling.
- * Uses IntersectionObserver with a generous rootMargin so panels pre-load
- * before they're visible (no flash of loading state during normal scroll).
+ * LazyPanel - Only renders children when the panel first enters the viewport.
+ * Once rendered, panels stay mounted PERMANENTLY to avoid expensive re-renders
+ * and data re-fetches on scroll. Uses IntersectionObserver for initial load only.
  */
-function LazyPanelInner({ children, fallbackHeight = 200, rootMargin = "600px" }: LazyPanelProps) {
+function LazyPanelInner({ children, fallbackHeight = 200, rootMargin = "800px" }: LazyPanelProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const [hasBeenVisible, setHasBeenVisible] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -27,9 +25,10 @@ function LazyPanelInner({ children, fallbackHeight = 200, rootMargin = "600px" }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        const nowVisible = entry.isIntersecting;
-        setIsVisible(nowVisible);
-        if (nowVisible) setHasBeenVisible(true);
+        if (entry.isIntersecting) {
+          setShouldRender(true);
+          observer.disconnect(); // Once triggered, never observe again
+        }
       },
       { rootMargin }
     );
@@ -37,28 +36,6 @@ function LazyPanelInner({ children, fallbackHeight = 200, rootMargin = "600px" }
     observer.observe(el);
     return () => observer.disconnect();
   }, [rootMargin]);
-
-  // Keep panel mounted for 30s after scrolling away (avoids re-fetch on quick scroll back)
-  const [shouldRender, setShouldRender] = useState(false);
-  const unmountTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (isVisible) {
-      if (unmountTimer.current) {
-        clearTimeout(unmountTimer.current);
-        unmountTimer.current = null;
-      }
-      setShouldRender(true);
-    } else if (hasBeenVisible) {
-      // Delay unmount by 30s so quick scroll-backs don't cause re-render
-      unmountTimer.current = setTimeout(() => {
-        setShouldRender(false);
-      }, 30000);
-    }
-    return () => {
-      if (unmountTimer.current) clearTimeout(unmountTimer.current);
-    };
-  }, [isVisible, hasBeenVisible]);
 
   return (
     <div ref={ref}>
@@ -80,7 +57,7 @@ function LazyPanelInner({ children, fallbackHeight = 200, rootMargin = "600px" }
       ) : (
         <div
           className="rounded-xl border border-white/5 bg-white/[0.02]"
-          style={{ minHeight: hasBeenVisible ? fallbackHeight : 100 }}
+          style={{ minHeight: 100 }}
         />
       )}
     </div>

@@ -99,7 +99,7 @@ export default function SMCPanel() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 300000);
+    const interval = setInterval(fetchData, 1800000); // 30 min - DeepSeek analysis doesn't change frequently
     return () => clearInterval(interval);
   }, [symbol]);
 

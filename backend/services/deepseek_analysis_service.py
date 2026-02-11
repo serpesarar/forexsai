@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # In-memory cache (TTL = 300s)
 _cache: Dict[str, Any] = {}
 _cache_ts: Dict[str, float] = {}
-CACHE_TTL = 300
+CACHE_TTL = 1800  # 30 minutes - DeepSeek analysis doesn't change frequently
 
 SYSTEM_PROMPT = """Sen bir Institutional Quantitative Analyst'sin. 
 Görevin: Verilen veri paketinden BÜYÜK RESİM analizi yapıp, net bir pozisyon kararı vermek.

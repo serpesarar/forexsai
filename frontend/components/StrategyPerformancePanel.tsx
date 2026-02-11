@@ -89,7 +89,19 @@ const STRATEGY_CONFIG = {
   },
 };
 
-function StrategyCard({
+function AccuracyBar({ value, color }: { value: number | null; color: string }) {
+  if (value === null) return <span className="text-textSecondary">-</span>;
+  return (
+    <div className="flex items-center gap-2 min-w-[120px]">
+      <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${Math.min(value, 100)}%` }} />
+      </div>
+      <span className="text-xs font-mono font-bold w-10 text-right">{value}%</span>
+    </div>
+  );
+}
+
+function StrategyRow({
   strategy,
   data,
   isBest,
@@ -104,72 +116,51 @@ function StrategyCard({
   if (!config) return null;
 
   const Icon = config.icon;
+  const accColor = data.accuracy !== null && data.accuracy >= 60 ? "bg-success" : data.accuracy !== null && data.accuracy >= 50 ? "bg-yellow-400" : "bg-danger";
 
   return (
-    <div
-      className={`relative p-4 rounded-xl border ${config.borderColor} ${config.bgColor} transition-all hover:scale-[1.02]`}
-    >
-      {isBest && (
-        <div className="absolute -top-2 -right-2 bg-yellow-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-          <Trophy className="w-3 h-3" />
-          EN İYİ
+    <tr className={`border-b border-white/5 hover:bg-white/5 transition-colors ${isBest ? "bg-yellow-500/5" : ""}`}>
+      <td className="px-3 py-3">
+        <div className="flex items-center gap-2">
+          <div className={`p-1.5 rounded-lg ${config.bgColor} shrink-0`}>
+            <Icon className={`w-3.5 h-3.5 ${config.color}`} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className={`font-semibold text-sm ${config.color} whitespace-nowrap`}>
+                {locale === "en" ? config.nameEn : config.name}
+              </span>
+              {isBest && (
+                <span className="bg-yellow-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0">
+                  <Trophy className="w-2.5 h-2.5" /> EN İYİ
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] text-textSecondary">{data.total_predictions} tahmin / {data.with_outcome} sonuç</span>
+          </div>
         </div>
-      )}
-
-      <div className="flex items-center gap-2 mb-3">
-        <div className={`p-2 rounded-lg ${config.bgColor}`}>
-          <Icon className={`w-4 h-4 ${config.color}`} />
+      </td>
+      <td className="px-3 py-3">
+        <AccuracyBar value={data.accuracy} color={accColor} />
+      </td>
+      <td className="px-3 py-3">
+        <div className="flex items-center gap-1">
+          <Target className="w-3 h-3 text-success shrink-0" />
+          <span className="text-xs font-mono text-success">{data.target_hit_rate !== null ? `${data.target_hit_rate}%` : "-"}</span>
+          <span className="text-[10px] text-textSecondary">({data.target_hits ?? 0})</span>
         </div>
-        <div>
-          <p className={`font-semibold ${config.color}`}>
-            {locale === "en" ? config.nameEn : config.name}
-          </p>
-          <p className="text-[10px] text-textSecondary">
-            {data.total_predictions} tahmin
-          </p>
+      </td>
+      <td className="px-3 py-3">
+        <div className="flex items-center gap-1">
+          <XCircle className="w-3 h-3 text-danger shrink-0" />
+          <span className="text-xs font-mono text-danger">{data.stop_hit_rate !== null ? `${data.stop_hit_rate}%` : "-"}</span>
+          <span className="text-[10px] text-textSecondary">({data.stop_hits ?? 0})</span>
         </div>
-      </div>
-
-      <div className="space-y-2">
-        {/* Accuracy */}
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-textSecondary">Doğruluk</span>
-          <span className={`text-sm font-bold ${data.accuracy !== null && data.accuracy >= 60 ? "text-success" : data.accuracy !== null && data.accuracy >= 50 ? "text-yellow-400" : "text-danger"}`}>
-            {data.accuracy !== null ? `${data.accuracy}%` : "-"}
-          </span>
-        </div>
-
-        {/* Target Hit Rate */}
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-textSecondary flex items-center gap-1">
-            <Target className="w-3 h-3 text-success" />
-            Hedef
-          </span>
-          <span className="text-xs text-success">
-            {data.target_hit_rate !== null ? `${data.target_hit_rate}%` : "-"}
-            <span className="text-textSecondary ml-1">({data.target_hits})</span>
-          </span>
-        </div>
-
-        {/* Stop Hit Rate */}
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-textSecondary flex items-center gap-1">
-            <XCircle className="w-3 h-3 text-danger" />
-            Stop
-          </span>
-          <span className="text-xs text-danger">
-            {data.stop_hit_rate !== null ? `${data.stop_hit_rate}%` : "-"}
-            <span className="text-textSecondary ml-1">({data.stop_hits})</span>
-          </span>
-        </div>
-
-        {/* Avg Confidence */}
-        <div className="flex justify-between items-center pt-1 border-t border-white/10">
-          <span className="text-xs text-textSecondary">Ort. Güven</span>
-          <span className="text-xs font-mono">{data.avg_confidence}%</span>
-        </div>
-      </div>
-    </div>
+      </td>
+      <td className="px-3 py-3 text-right">
+        <span className="text-xs font-mono">{data.avg_confidence}%</span>
+      </td>
+    </tr>
   );
 }
 
@@ -234,71 +225,61 @@ export default function StrategyPerformancePanel() {
 
       {isLoading ? (
         <div className="space-y-4">
-          <div className="skeleton h-8 w-32 rounded-lg" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="skeleton h-40 rounded-xl" />
-            ))}
-          </div>
+          <div className="skeleton h-8 w-48 rounded-lg" />
+          <div className="skeleton h-48 rounded-xl" />
+          <div className="skeleton h-48 rounded-xl" />
         </div>
       ) : data && !data.error ? (
         <>
-          {/* NASDAQ Section */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
-              <h4 className="font-medium">NASDAQ</h4>
-              {data.best_strategies["NDX.INDX"]?.strategy && (
-                <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full">
-                  En iyi: {STRATEGY_CONFIG[data.best_strategies["NDX.INDX"].strategy as keyof typeof STRATEGY_CONFIG]?.name}
-                  {data.best_strategies["NDX.INDX"].accuracy !== null && ` (${data.best_strategies["NDX.INDX"].accuracy}%)`}
-                </span>
-              )}
+          {/* Symbol Tables */}
+          {[
+            { key: "NDX.INDX", label: "NASDAQ", iconColor: "text-emerald-400" },
+            { key: "XAUUSD", label: "XAU/USD", iconColor: "text-yellow-400" },
+          ].map(({ key: symKey, label, iconColor }) => (
+            <div key={symKey}>
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className={`w-4 h-4 ${iconColor}`} />
+                <h4 className="font-medium">{label}</h4>
+                {data.best_strategies[symKey]?.strategy && (
+                  <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full">
+                    En iyi: {STRATEGY_CONFIG[data.best_strategies[symKey].strategy as keyof typeof STRATEGY_CONFIG]?.name}
+                    {data.best_strategies[symKey].accuracy !== null && ` (${data.best_strategies[symKey].accuracy}%)`}
+                  </span>
+                )}
+              </div>
+              <div className="overflow-x-auto rounded-lg border border-white/10">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-white/5 text-xs text-textSecondary uppercase">
+                      <th className="px-3 py-2 text-left">Strateji</th>
+                      <th className="px-3 py-2 text-left">Doğruluk</th>
+                      <th className="px-3 py-2 text-left">Hedef</th>
+                      <th className="px-3 py-2 text-left">Stop</th>
+                      <th className="px-3 py-2 text-right">Güven</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(data.strategies[symKey] || {}).map(([strategy, strategyData]) => (
+                      <StrategyRow
+                        key={strategy}
+                        strategy={strategy}
+                        data={strategyData}
+                        isBest={data.best_strategies[symKey]?.strategy === strategy}
+                        locale={locale}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {Object.entries(data.strategies["NDX.INDX"] || {}).map(([strategy, strategyData]) => (
-                <StrategyCard
-                  key={strategy}
-                  strategy={strategy}
-                  data={strategyData}
-                  isBest={data.best_strategies["NDX.INDX"]?.strategy === strategy}
-                  locale={locale}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* XAUUSD Section */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="w-4 h-4 text-yellow-400" />
-              <h4 className="font-medium">XAUUSD</h4>
-              {data.best_strategies["XAUUSD"]?.strategy && (
-                <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full">
-                  En iyi: {STRATEGY_CONFIG[data.best_strategies["XAUUSD"].strategy as keyof typeof STRATEGY_CONFIG]?.name}
-                  {data.best_strategies["XAUUSD"].accuracy !== null && ` (${data.best_strategies["XAUUSD"].accuracy}%)`}
-                </span>
-              )}
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {Object.entries(data.strategies["XAUUSD"] || {}).map(([strategy, strategyData]) => (
-                <StrategyCard
-                  key={strategy}
-                  strategy={strategy}
-                  data={strategyData}
-                  isBest={data.best_strategies["XAUUSD"]?.strategy === strategy}
-                  locale={locale}
-                />
-              ))}
-            </div>
-          </div>
+          ))}
 
           {/* Legend */}
-          <div className="pt-4 border-t border-white/10">
-            <p className="text-[10px] text-textSecondary mb-2">STRATEJİ AÇIKLAMALARI</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[10px]">
+          <div className="pt-3 border-t border-white/10">
+            <p className="text-[10px] text-textSecondary mb-2 uppercase tracking-wide">Strateji Açıklamaları</p>
+            <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px]">
               {Object.entries(data.strategy_descriptions || {}).map(([key, desc]) => (
-                <div key={key} className="flex items-center gap-1">
+                <div key={key} className="flex items-center gap-1.5">
                   <span className={STRATEGY_CONFIG[key as keyof typeof STRATEGY_CONFIG]?.color}>●</span>
                   <span className="text-textSecondary">{desc}</span>
                 </div>
