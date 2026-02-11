@@ -49,6 +49,7 @@ const StrategyPerformancePanel = lazy(() => import("../components/StrategyPerfor
 const EmelPanel = lazy(() => import("../components/panels/EmelPanel"));
 const PulsePanel = lazy(() => import("../components/panels/PulsePanel"));
 const PulseV3Panel = lazy(() => import("../components/panels/PulseV3Panel"));
+const PulseMLPanel = lazy(() => import("../components/panels/PulseMLPanel"));
 const ClearTrendPanel = lazy(() => import("../components/panels/ClearTrendPanel"));
 const CyberpunkTrendPanel = lazy(() => import("../components/panels/CyberpunkTrendPanel"));
 const LearningDashboardPanel = lazy(() => import("../components/LearningDashboardPanel"));
@@ -461,6 +462,10 @@ export default function HomePage() {
   const refreshLive = async () => {
     try {
       const lang = locale;
+
+      // Trigger Pulse panel refreshes via custom event
+      window.dispatchEvent(new CustomEvent("pulse-refresh"));
+
       // Use allSettled so one failing endpoint doesn't block all
       const results = await Promise.allSettled([
         fetcher<any>("/api/run/nasdaq", { method: "POST", body: "{}" }),
@@ -879,6 +884,8 @@ export default function HomePage() {
         return <PulsePanel />;
       case "pulse-v3":
         return <PulseV3Panel />;
+      case "pulse-ml":
+        return <PulseMLPanel />;
       case "learning-dashboard":
         return <LearningDashboardPanel />;
       case "strategy-performance":
@@ -1237,9 +1244,9 @@ export default function HomePage() {
 
   // Render a column with sorted cards (exclude full-width cards - they render below)
   const renderColumn = (column: "left" | "center" | "right") => {
-    const cards = getColumnCards(column).filter(c => c.size !== "full" && c.id !== "clear-trend");
+    const cards = getColumnCards(column).filter(c => c.size !== "full");
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 md:gap-6">
         {cards.map((card) => (
           <SortableCard key={card.id} card={card}>
             {alwaysVisibleCards.has(card.id) ? (
@@ -1374,126 +1381,92 @@ export default function HomePage() {
       </div>
 
       <DraggableDashboard>
-        <main className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-4 md:gap-6 md:px-6 md:py-8 md:grid-cols-2 lg:grid-cols-3 pb-20 md:pb-8">
-          {/* ═══ CLEAR TREND - Full Width Hero Panel ═══ */}
-          {getCard("clear-trend")?.visible !== false && (
-            <div className="md:col-span-2 lg:col-span-3">
-              <LazyPanel fallbackHeight={500}>
-                <CyberpunkTrendPanel />
-              </LazyPanel>
-            </div>
-          )}
+        <main className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-20 md:pb-8">
+          {/* ═══ 2-COLUMN RESPONSIVE GRID ═══ */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            {/* Left Column */}
+            {renderColumn("left")}
+            {/* Right Column */}
+            {renderColumn("right")}
+            {/* Center Column (usually hidden cards, available in edit mode) */}
+            {getColumnCards("center").filter(c => c.size !== "full").length > 0 && renderColumn("center")}
+          </div>
 
-          {/* Dynamic columns based on layout.cards order */}
-          {renderColumn("left")}
-          {renderColumn("center")}
-          {renderColumn("right")}
-
-          {/* ML Prediction & Claude AI Section - Full Width Cards */}
-          {getCard("ai-panels")?.visible !== false && (
-            <div className="md:col-span-2 lg:col-span-3">
+          {/* ═══ FULL-WIDTH SECTIONS ═══ */}
+          <div className="mt-6 space-y-6">
+            {/* ML Prediction & Claude AI Section */}
+            {getCard("ai-panels")?.visible !== false && (
               <LazyPanel fallbackHeight={400}>
                 <div className="flex items-center gap-3 mb-4">
                   <Brain className="h-5 w-5 text-accent" />
                   <h2 className="text-lg font-bold">{t("panels.aiPrediction")}</h2>
-                  <Link
-                    href="/trading"
-                    className="ml-auto flex items-center gap-2 text-sm text-accent hover:underline"
-                  >
+                  <Link href="/trading" className="ml-auto flex items-center gap-2 text-sm text-accent hover:underline">
                     <Sparkles className="h-4 w-4" />
                     {t("panels.fullScreenView")} →
                   </Link>
                 </div>
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                  {/* NASDAQ Panels */}
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   <div className="space-y-6">
                     <div className="relative">
                       <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 blur-sm" />
-                      <div className="relative">
-                        <MLPredictionPanel symbol="NDX.INDX" symbolLabel="NASDAQ" />
-                      </div>
+                      <div className="relative"><MLPredictionPanel symbol="NDX.INDX" symbolLabel="NASDAQ" /></div>
                     </div>
                     <div className="relative">
                       <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-sm" />
-                      <div className="relative">
-                        <ClaudeAnalysisPanel symbol="NDX.INDX" symbolLabel="NASDAQ" />
-                      </div>
+                      <div className="relative"><ClaudeAnalysisPanel symbol="NDX.INDX" symbolLabel="NASDAQ" /></div>
                     </div>
                   </div>
-                  {/* XAUUSD Panels */}
                   <div className="space-y-6">
                     <div className="relative">
                       <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 blur-sm" />
-                      <div className="relative">
-                        <MLPredictionPanel symbol="XAUUSD" symbolLabel="XAUUSD" />
-                      </div>
+                      <div className="relative"><MLPredictionPanel symbol="XAUUSD" symbolLabel="XAUUSD" /></div>
                     </div>
                     <div className="relative">
                       <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-sm" />
-                      <div className="relative">
-                        <ClaudeAnalysisPanel symbol="XAUUSD" symbolLabel="XAUUSD" />
-                      </div>
+                      <div className="relative"><ClaudeAnalysisPanel symbol="XAUUSD" symbolLabel="XAUUSD" /></div>
                     </div>
                   </div>
                 </div>
               </LazyPanel>
-            </div>
-          )}
+            )}
 
-          {/* Prediction History - Signal Results */}
-          {getCard("prediction-history")?.visible !== false && (
-            <div className="md:col-span-2 lg:col-span-3">
+            {/* Prediction History */}
+            {getCard("prediction-history")?.visible !== false && (
               <LazyPanel fallbackHeight={300}>
                 <PredictionHistoryTable />
               </LazyPanel>
-            </div>
-          )}
+            )}
 
-          {/* Order Block Section */}
-          {(getCard("order-blocks-nasdaq")?.visible !== false || getCard("order-blocks-xauusd")?.visible !== false) && (
-            <div className="md:col-span-2 lg:col-span-3">
+            {/* Order Blocks */}
+            {(getCard("order-blocks-nasdaq")?.visible !== false || getCard("order-blocks-xauusd")?.visible !== false) && (
               <LazyPanel fallbackHeight={300}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {getCard("order-blocks-nasdaq")?.visible !== false && <OrderBlockPanelSimple symbol="NDX.INDX" symbolLabel="NASDAQ" />}
                   {getCard("order-blocks-xauusd")?.visible !== false && <OrderBlockPanelSimple symbol="XAUUSD" symbolLabel="XAUUSD" />}
                 </div>
               </LazyPanel>
-            </div>
-          )}
+            )}
 
-          {/* Rhythm Detector Section */}
-          {getCard("rhythm-detectors")?.visible !== false && (
-            <div className="md:col-span-2 lg:col-span-3">
+            {/* Rhythm Detectors */}
+            {getCard("rhythm-detectors")?.visible !== false && (
               <LazyPanel fallbackHeight={300}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <RhythmDetectorSimple symbol="NDX.INDX" symbolLabel="NASDAQ" />
                   <RhythmDetectorSimple symbol="XAUUSD" symbolLabel="XAUUSD" />
                 </div>
               </LazyPanel>
-            </div>
-          )}
+            )}
 
-          {/* Charts Section */}
-          {getCard("charts")?.visible !== false && (
-            <div className="md:col-span-2 lg:col-span-3">
+            {/* Charts */}
+            {getCard("charts")?.visible !== false && (
               <LazyPanel fallbackHeight={350}>
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  <TradingChartWrapper
-                    symbol="NDX.INDX"
-                    symbolLabel="NASDAQ"
-                    initialTimeframe="1d"
-                    height={350}
-                  />
-                  <TradingChartWrapper
-                    symbol="XAUUSD"
-                    symbolLabel="XAUUSD"
-                    initialTimeframe="1d"
-                    height={350}
-                  />
+                  <TradingChartWrapper symbol="NDX.INDX" symbolLabel="NASDAQ" initialTimeframe="1d" height={350} />
+                  <TradingChartWrapper symbol="XAUUSD" symbolLabel="XAUUSD" initialTimeframe="1d" height={350} />
                 </div>
               </LazyPanel>
-            </div>
-          )}
+            )}
+          </div>
         </main>
       </DraggableDashboard>
 

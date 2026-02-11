@@ -126,6 +126,13 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
     }
   }, [activeSymbol, wsConnected]);
 
+  // Listen for global refresh event from header button
+  useEffect(() => {
+    const handler = () => fetchData();
+    window.addEventListener("pulse-refresh", handler);
+    return () => window.removeEventListener("pulse-refresh", handler);
+  }, [activeSymbol]);
+
   const getSignalBadge = (type: string) => {
     if (type === "CONFIRM") return { text: t("pulseV3.strongSignal"), icon: CheckCircle };
     if (type === "SCOUT") return { text: t("pulseV3.watchMode"), icon: Eye };

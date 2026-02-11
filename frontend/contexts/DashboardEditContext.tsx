@@ -50,34 +50,35 @@ interface DashboardEditContextType {
 
 const DEFAULT_LAYOUT: DashboardLayout = {
   cards: [
-    // ─── LEFT COLUMN: NASDAQ ─────────────────────────────────────
-    { id: "signal-nasdaq", title: "NASDAQ Trend Analysis", column: "left", order: 0, visible: false, size: "medium", collapsed: false },
-    { id: "advanced-nasdaq", title: "NASDAQ MTF Analysis", column: "left", order: 1, visible: false, size: "medium", collapsed: false },
+    // ─── LEFT COLUMN ──────────────────────────────────────────────
+    { id: "clear-trend", title: "Clear Trend Analysis", column: "left", order: 0, visible: true, size: "full", collapsed: false },
+    { id: "pulse-v3", title: "PULSE 3 - Hybrid Scalp", column: "left", order: 1, visible: true, size: "large", collapsed: false },
+    { id: "pulse-ml", title: "PULSE 2 - ML Hybrid", column: "left", order: 2, visible: true, size: "large", collapsed: false },
+    { id: "pulse-panel", title: "PULSE 1 - Algoritmik Scalp", column: "left", order: 3, visible: true, size: "large", collapsed: false },
+    { id: "emel-panel", title: "EMEL Panel - 9 Checkpoints", column: "left", order: 4, visible: true, size: "large", collapsed: false },
+    { id: "claude-patterns", title: "Claude Patterns", column: "left", order: 5, visible: true, size: "medium", collapsed: false },
+    { id: "news", title: "Market News", column: "left", order: 6, visible: true, size: "medium", collapsed: false },
+    { id: "learning-dashboard", title: "Learning Dashboard", column: "left", order: 7, visible: true, size: "large", collapsed: false },
+    { id: "cot-whale", title: "COT & Whale Intelligence", column: "left", order: 8, visible: true, size: "large", collapsed: false },
 
-    // ─── CENTER COLUMN: COMMON / ANALYSIS ────────────────────────
-    { id: "clear-trend", title: "Clear Trend Analysis", column: "center", order: 0, visible: true, size: "large", collapsed: false },
-    { id: "emel-panel", title: "EMEL Panel - 9 Checkpoints", column: "center", order: 1, visible: false, size: "large", collapsed: false },
-    { id: "pulse-panel", title: "PULSE 1 - Algoritmik Scalp", column: "center", order: 1, visible: true, size: "large", collapsed: false },
-    { id: "pulse-v3", title: "PULSE 3 - Hybrid Scalp", column: "center", order: 2, visible: true, size: "large", collapsed: false },
-    { id: "pattern-engine", title: "Pattern Engine V2", column: "center", order: 3, visible: true, size: "large", collapsed: false },
-    { id: "claude-patterns", title: "Claude Patterns", column: "center", order: 4, visible: true, size: "medium", collapsed: false },
-    { id: "sentiment", title: "AI Sentiment", column: "center", order: 5, visible: true, size: "medium", collapsed: false },
-    { id: "news", title: "Market News", column: "center", order: 6, visible: true, size: "medium", collapsed: false },
-    { id: "comex-news", title: "COMEX News", column: "center", order: 7, visible: true, size: "medium", collapsed: false },
-    { id: "learning-dashboard", title: "Learning Dashboard", column: "center", order: 8, visible: true, size: "large", collapsed: false },
-    { id: "strategy-performance", title: "Strategy Performance", column: "center", order: 9, visible: true, size: "large", collapsed: false },
-    { id: "smc-panel", title: "Smart Money Concepts", column: "center", order: 10, visible: true, size: "large", collapsed: false },
-    { id: "mtf-matrix", title: "MTF Confluence Matrix", column: "center", order: 11, visible: true, size: "large", collapsed: false },
-    { id: "risk-reward", title: "Risk/Reward Optimizer", column: "center", order: 12, visible: true, size: "large", collapsed: false },
-    { id: "cot-whale", title: "COT & Whale Intelligence", column: "center", order: 13, visible: true, size: "large", collapsed: false },
-    { id: "seasonality", title: "Seasonality & Anomaly", column: "center", order: 14, visible: true, size: "large", collapsed: false },
+    // ─── RIGHT COLUMN ─────────────────────────────────────────────
+    { id: "mtf-matrix", title: "MTF Confluence Matrix", column: "right", order: 0, visible: true, size: "large", collapsed: false },
+    { id: "smc-panel", title: "Smart Money Concepts", column: "right", order: 1, visible: true, size: "large", collapsed: false },
+    { id: "risk-reward", title: "Risk/Reward Optimizer", column: "right", order: 2, visible: true, size: "large", collapsed: false },
+    { id: "pattern-engine", title: "Pattern Engine V2", column: "right", order: 3, visible: true, size: "large", collapsed: false },
+    { id: "sentiment", title: "AI Sentiment", column: "right", order: 4, visible: true, size: "medium", collapsed: false },
+    { id: "comex-news", title: "COMEX News", column: "right", order: 5, visible: true, size: "medium", collapsed: false },
+    { id: "whale-tracker", title: "Whale Tracker", column: "right", order: 6, visible: true, size: "medium", collapsed: false },
+    { id: "candlestick-patterns", title: "Candlestick Patterns", column: "right", order: 7, visible: true, size: "medium", collapsed: false },
+    { id: "strategy-performance", title: "Strategy Performance", column: "right", order: 8, visible: true, size: "large", collapsed: false },
+    { id: "seasonality", title: "Seasonality & Anomaly", column: "right", order: 9, visible: true, size: "large", collapsed: false },
 
-    // ─── RIGHT COLUMN: XAUUSD ────────────────────────────────────
-    { id: "signal-xauusd", title: "XAUUSD Trend Analysis", column: "right", order: 0, visible: false, size: "medium", collapsed: false },
-    { id: "advanced-xauusd", title: "XAUUSD MTF Analysis", column: "right", order: 1, visible: false, size: "medium", collapsed: false },
-    { id: "whale-tracker", title: "Whale Tracker", column: "right", order: 2, visible: true, size: "medium", collapsed: false },
-    { id: "institutional-data", title: "Institutional Data", column: "right", order: 3, visible: false, size: "medium", collapsed: false },
-    { id: "candlestick-patterns", title: "Candlestick Patterns", column: "right", order: 4, visible: true, size: "medium", collapsed: false },
+    // ─── CENTER COLUMN (hidden by default, available in edit mode) ─
+    { id: "signal-nasdaq", title: "NASDAQ Trend Analysis", column: "center", order: 0, visible: false, size: "medium", collapsed: false },
+    { id: "signal-xauusd", title: "XAUUSD Trend Analysis", column: "center", order: 1, visible: false, size: "medium", collapsed: false },
+    { id: "advanced-nasdaq", title: "NASDAQ MTF Analysis", column: "center", order: 2, visible: false, size: "medium", collapsed: false },
+    { id: "advanced-xauusd", title: "XAUUSD MTF Analysis", column: "center", order: 3, visible: false, size: "medium", collapsed: false },
+    { id: "institutional-data", title: "Institutional Data", column: "center", order: 4, visible: false, size: "medium", collapsed: false },
 
     // ─── FULL WIDTH SECTIONS (rendered below grid) ───────────────
     { id: "ai-panels", title: "AI Prediction Panels", column: "center", order: 20, visible: true, size: "full", collapsed: false },
@@ -87,7 +88,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "rhythm-detectors", title: "Rhythm Detectors", column: "center", order: 23, visible: true, size: "full", collapsed: false },
     { id: "charts", title: "Trading Charts", column: "center", order: 24, visible: true, size: "full", collapsed: false },
   ],
-  version: 14,
+  version: 16,
 };
 
 const LAYOUT_STORAGE_KEY = "dashboard-layout-v2";
