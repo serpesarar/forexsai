@@ -78,6 +78,7 @@ try:
         admin,
         clear_trend,
         deepseek_analysis,
+        websocket,
     )
     from services.data_fetcher import fetch_latest_price
     from services.ml_service import run_nasdaq_signal, run_xauusd_signal
@@ -112,6 +113,7 @@ try:
     app.include_router(admin.router)
     app.include_router(clear_trend.router)
     app.include_router(deepseek_analysis.router)
+    app.include_router(websocket.router)
     
     ROUTERS_LOADED = True
 except Exception as e:
@@ -434,6 +436,14 @@ async def get_candlestick_patterns(symbol: str):
 # Startup event - start DataHub and background scheduler
 @app.on_event("startup")
 async def startup_event():
+    # Initialize Redis (optional — works without it via memory fallback)
+    try:
+        from services.redis_client import get_redis, is_redis_available
+        get_redis()
+        print(f"Redis: {'connected' if is_redis_available() else 'not available (using memory fallback)'}")
+    except Exception as e:
+        print(f"Redis init skipped: {e}")
+
     # Start DataHub first (centralized data pump)
     try:
         import asyncio
@@ -443,11 +453,11 @@ async def startup_event():
     except Exception as e:
         print(f"Failed to start DataHub: {e}")
     
-    # Then start background scheduler
+    # Then start background scheduler (now also broadcasts via WebSocket)
     try:
         from services.background_scheduler import start_scheduler
         start_scheduler()
-        print("Background scheduler started")
+        print("Background scheduler started (with WebSocket broadcast)")
     except Exception as e:
         print(f"Failed to start scheduler: {e}")
 

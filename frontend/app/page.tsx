@@ -33,6 +33,7 @@ import { NasdaqEarningsPanel } from "../components/EarningsPanel";
 import UserMenu from "../components/UserMenu";
 import { TradingBackground } from "../components/TradingBackground";
 import { LazyPanel } from "../components/LazyPanel";
+import WSStatusBadge from "../components/WSStatusBadge";
 
 // Heavy panels - dynamic imports (code-split into separate chunks)
 const TradingChartWrapper = lazy(() => import("../components/TradingChartWrapper"));
@@ -1323,6 +1324,7 @@ export default function HomePage() {
         rightContent={
           <>
             <div className="hidden lg:flex items-center gap-2 mr-3 pr-3 border-r border-white/10">
+              <WSStatusBadge />
               <label className="flex items-center gap-2 text-xs text-white/50 cursor-pointer hover:text-white/70 transition-colors">
                 <input type="checkbox" checked={autoRefresh} onChange={(e) => toggleAutoRefresh(e.target.checked)} className="h-3.5 w-3.5 accent-accent rounded" />
                 <span className="hidden xl:inline">{t("common.auto30s")}</span>

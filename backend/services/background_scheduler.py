@@ -253,6 +253,8 @@ async def check_outcomes_if_needed():
 
 async def run_update_cycle():
     """Run one update cycle for all symbols."""
+    broadcast_batch = {}
+
     for symbol in TRACKED_SYMBOLS:
         try:
             # Update market data
@@ -261,14 +263,41 @@ async def run_update_cycle():
                 # Check for news updates
                 news = await update_news_if_needed(symbol)
                 
-                # Save to cache
+                # Save to Supabase cache (legacy)
                 await save_to_cache(symbol, data, news)
+
+                # Build broadcast payload
+                broadcast_payload = {
+                    "type": "update",
+                    "symbol": symbol,
+                    "timestamp": data.get("updated_at"),
+                    "data": data,
+                }
+                if news:
+                    broadcast_payload["news"] = news
+
+                broadcast_batch[symbol] = broadcast_payload
+
+                # Cache to Redis for instant delivery to new WS connections
+                try:
+                    from services.redis_client import cache_set
+                    cache_set(f"broadcast:{symbol}", broadcast_payload, ttl=300)
+                except Exception:
+                    pass
                 
         except Exception as e:
             logger.error(f"Error in update cycle for {symbol}: {e}")
         
         # Small delay between symbols
         await asyncio.sleep(0.5)
+
+    # Broadcast to all connected WebSocket clients
+    if broadcast_batch:
+        try:
+            from services.ws_manager import manager
+            await manager.broadcast_all(broadcast_batch)
+        except Exception as e:
+            logger.error(f"WebSocket broadcast error: {e}")
 
 
 async def analyze_errors_if_needed():

@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     rtyhiim_min_period_s: float = Field(default=8.0, env="RTYHIIM_MIN_PERIOD_S")
     rtyhiim_max_period_s: float = Field(default=240.0, env="RTYHIIM_MAX_PERIOD_S")
     
+    # Redis (for WebSocket broadcast cache)
+    redis_url: str | None = Field(default=None, env="REDIS_URL")
+
     # Telegram
     TELEGRAM_BOT_TOKEN: str | None = Field(default=None, env="TELEGRAM_BOT_TOKEN")
     TELEGRAM_CHAT_ID: str | None = Field(default=None, env="TELEGRAM_CHAT_ID")

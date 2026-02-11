@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useWSData, type SymbolData } from "../contexts/WebSocketContext";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
@@ -46,6 +47,23 @@ interface CachedSymbolData {
   current_price?: number;
 }
 
+/** Convert WebSocket SymbolData to CachedSymbolData format */
+function wsDataToCached(ws: SymbolData): CachedSymbolData {
+  const d = ws.data || {} as any;
+  return {
+    symbol: d.symbol || ws.symbol,
+    updated_at: d.updated_at || ws.timestamp,
+    ml_prediction: d.ml_prediction || {},
+    ta_snapshot: d.ta_snapshot || {},
+    macro: d.macro || {},
+    session: d.session || {},
+    volume: d.volume || {},
+    volatility: d.volatility || {},
+    news: ws.news || { headlines: [], count: 0 },
+    current_price: d.current_price,
+  };
+}
+
 async function fetchCachedData(symbol: string): Promise<CachedSymbolData | null> {
   try {
     const res = await fetch(`${API_BASE}/api/data/cached/${encodeURIComponent(symbol)}`);
@@ -75,29 +93,44 @@ async function fetchCachedData(symbol: string): Promise<CachedSymbolData | null>
 }
 
 export function useCachedDashboardData() {
-  // Fetch cached data for both symbols
+  // Try WebSocket data first (real-time, no polling)
+  const { status: wsStatus, symbolData: wsData } = useWSData();
+  const wsConnected = wsStatus === "connected";
+
+  // HTTP polling as fallback — only active when WebSocket is NOT connected
+  // When WS is connected, polling interval is disabled (false)
   const nasdaqQuery = useQuery({
     queryKey: ["cached-dashboard", "NDX.INDX"],
     queryFn: () => fetchCachedData("NDX.INDX"),
-    staleTime: 30000,
-    refetchInterval: 30000, // Backend updates every 60s, 30s is plenty
+    staleTime: 60000,
+    refetchInterval: wsConnected ? false : 30000,
   });
 
   const xauusdQuery = useQuery({
     queryKey: ["cached-dashboard", "XAUUSD"],
     queryFn: () => fetchCachedData("XAUUSD"),
-    staleTime: 30000,
-    refetchInterval: 30000,
+    staleTime: 60000,
+    refetchInterval: wsConnected ? false : 30000,
   });
 
-  const isLoading = nasdaqQuery.isLoading || xauusdQuery.isLoading;
-  const hasData = !!(nasdaqQuery.data || xauusdQuery.data);
+  // Prefer WebSocket data, fall back to HTTP data
+  const nasdaq = wsData["NDX.INDX"]
+    ? wsDataToCached(wsData["NDX.INDX"])
+    : nasdaqQuery.data;
+
+  const xauusd = wsData["XAUUSD"]
+    ? wsDataToCached(wsData["XAUUSD"])
+    : xauusdQuery.data;
+
+  const isLoading = !nasdaq && !xauusd && (nasdaqQuery.isLoading || xauusdQuery.isLoading);
+  const hasData = !!(nasdaq || xauusd);
 
   return {
-    nasdaq: nasdaqQuery.data,
-    xauusd: xauusdQuery.data,
+    nasdaq,
+    xauusd,
     isLoading,
     hasData,
+    wsConnected,
     refetch: () => {
       nasdaqQuery.refetch();
       xauusdQuery.refetch();
