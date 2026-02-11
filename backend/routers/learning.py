@@ -1144,13 +1144,13 @@ async def get_strategy_performance(
         result = client.table("prediction_logs").select(
             "id, symbol, strategy, ml_confidence"
         ).gte("created_at", cutoff_iso).limit(500).execute()
-        predictions = getattr(result, 'data', None) or []
+        predictions = (result.get('data') if isinstance(result, dict) else getattr(result, 'data', None)) or []
         
         # Get outcomes
         outcome_result = client.table("outcome_results").select(
             "prediction_id, ml_correct, hit_target, hit_stop"
         ).eq("check_interval", "24h").limit(1000).execute()
-        outcomes_list = getattr(outcome_result, 'data', None) or []
+        outcomes_list = (outcome_result.get('data') if isinstance(outcome_result, dict) else getattr(outcome_result, 'data', None)) or []
         outcomes_map = {o.get("prediction_id"): o for o in outcomes_list if o.get("prediction_id")}
         
         # Classify by confidence
@@ -1221,9 +1221,17 @@ async def get_strategy_performance(
             "predictions_count": len(predictions),
             "outcomes_count": len(outcomes_map),
             "strategies": result_data,
-            "best_strategies": best
+            "best_strategies": best,
+            "strategy_descriptions": {
+                "ultra_safe": "Güven ≥70%, düşük risk",
+                "balanced": "Güven 60-70%, dengeli",
+                "full_power": "Güven 52-60%, güçlü sinyal",
+                "aggressive": "Güven <52%, agresif"
+            }
         }
     except Exception as e:
+        import traceback
+        logger.error(f"Strategy performance error: {e}\n{traceback.format_exc()}")
         return {"error": str(e)}
 
 
