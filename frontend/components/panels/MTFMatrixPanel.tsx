@@ -16,11 +16,31 @@ import {
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 interface TimeframeData {
-  trend?: { direction?: string; ema_alignment?: string; strength?: number };
-  momentum?: { rsi?: number; macd_histogram?: number; stochastic_k?: number };
-  volatility?: { bb_position?: string; atr?: number };
-  structure?: string;
+  timeframe?: string;
+  current_price?: number;
+  trend?: string;
   signal?: string;
+  confidence?: number;
+  ema?: {
+    ema20?: number;
+    ema50?: number;
+    ema200?: number;
+    price_above_ema20?: boolean;
+    price_above_ema50?: boolean;
+    price_above_ema200?: boolean;
+  };
+  bollinger?: {
+    upper?: number;
+    middle?: number;
+    lower?: number;
+    bandwidth?: number;
+    percent_b?: number;
+    squeeze?: boolean;
+  };
+  atr?: { atr14?: number; atr_percent?: number; volatility_level?: string };
+  volume?: { volume_ratio?: number; volume_trend?: string; volume_confirmation?: boolean };
+  rsi14?: number;
+  macd_signal?: string;
 }
 
 interface MTFData {
@@ -30,6 +50,14 @@ interface MTFData {
   timestamp?: string;
   timeframes?: Record<string, TimeframeData>;
   confluence?: {
+    overall_signal?: string;
+    overall_confidence?: number;
+    bullish_count?: number;
+    bearish_count?: number;
+    neutral_count?: number;
+    alignment_score?: number;
+    recommendation?: string;
+    risk_level?: string;
     score?: number;
     direction?: string;
     strength?: string;
@@ -76,9 +104,25 @@ export default function MTFMatrixPanel() {
   const trendColor = (dir?: string) => {
     if (!dir) return "rgba(255,255,255,0.3)";
     const d = dir.toLowerCase();
-    if (d.includes("bull") || d.includes("up") || d === "long") return "#00ff88";
-    if (d.includes("bear") || d.includes("down") || d === "short") return "#ff3366";
+    if (d.includes("bull") || d.includes("up") || d === "long" || d.includes("buy")) return "#00ff88";
+    if (d.includes("bear") || d.includes("down") || d === "short" || d.includes("sell")) return "#ff3366";
     return "#f0b429";
+  };
+
+  const emaAlignment = (ema?: TimeframeData["ema"]) => {
+    if (!ema) return "mixed";
+    const above = [ema.price_above_ema20, ema.price_above_ema50, ema.price_above_ema200].filter(Boolean).length;
+    if (above === 3) return "bullish";
+    if (above === 0) return "bearish";
+    return "mixed";
+  };
+
+  const bbPosition = (bb?: TimeframeData["bollinger"]) => {
+    if (!bb || bb.percent_b == null) return "—";
+    if (bb.squeeze) return "Squeeze";
+    if (bb.percent_b > 0.8) return "Upper";
+    if (bb.percent_b < 0.2) return "Lower";
+    return "Mid";
   };
 
   const trendIcon = (dir?: string) => {
@@ -106,9 +150,10 @@ export default function MTFMatrixPanel() {
     return { color: "#f0b429", label: "HOLD", icon: Minus };
   };
 
-  const confluenceColor = data?.confluence?.score != null
-    ? data.confluence.score > 60 ? "#00ff88" : data.confluence.score > 30 ? "#f0b429" : "#ff3366"
-    : "#818cf8";
+  const confScore = data?.confluence?.overall_confidence ?? data?.confluence?.score ?? 0;
+  const confDir = data?.confluence?.overall_signal ?? data?.confluence?.direction ?? "NEUTRAL";
+  const confAlign = data?.confluence?.alignment_score ?? data?.confluence?.agreement_pct ?? 0;
+  const confluenceColor = confScore > 60 ? "#00ff88" : confScore > 30 ? "#f0b429" : "#ff3366";
 
   if (loading && !data) {
     return (
@@ -167,19 +212,19 @@ export default function MTFMatrixPanel() {
                   <svg className="w-14 h-14 -rotate-90">
                     <circle cx="28" cy="28" r="24" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4" />
                     <circle cx="28" cy="28" r="24" fill="none" stroke={confluenceColor} strokeWidth="4"
-                      strokeDasharray={`${((data.confluence.score || 0) / 100) * 150.8} 150.8`} strokeLinecap="round"
+                      strokeDasharray={`${(confScore / 100) * 150.8} 150.8`} strokeLinecap="round"
                       style={{ filter: `drop-shadow(0 0 6px ${confluenceColor}60)` }} />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm font-bold font-mono" style={{ color: confluenceColor }}>{data.confluence.score || 0}</span>
+                    <span className="text-sm font-bold font-mono" style={{ color: confluenceColor }}>{Math.round(confScore)}</span>
                   </div>
                 </div>
                 <div>
                   <div className="text-xs font-bold font-mono" style={{ color: confluenceColor }}>
-                    {data.confluence.direction?.toUpperCase() || "NEUTRAL"} CONFLUENCE
+                    {confDir.replace(/_/g, " ")} CONFLUENCE
                   </div>
                   <div className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>
-                    Güç: {data.confluence.strength || "N/A"} • Uyum: {data.confluence.agreement_pct || 0}%
+                    Risk: {data.confluence.risk_level || "N/A"} • Uyum: {confAlign.toFixed(0)}%
                   </div>
                 </div>
               </div>
@@ -209,9 +254,12 @@ export default function MTFMatrixPanel() {
               {TF_ORDER.map((tf) => {
                 const tfData = data.timeframes?.[tf];
                 if (!tfData) return null;
-                const dir = tfData.trend?.direction;
-                const sig = signalBadge(dir);
+                const dir = typeof tfData.trend === "string" ? tfData.trend : "";
+                const emaAlign = emaAlignment(tfData.ema);
+                const sig = signalBadge(tfData.signal || dir);
                 const SigIcon = sig.icon;
+                const rsiVal = tfData.rsi14;
+                const bbPos = bbPosition(tfData.bollinger);
                 return (
                   <div key={tf} className="grid grid-cols-6 gap-1 items-center rounded-lg px-2 py-2" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
                     {/* TF */}
@@ -220,22 +268,22 @@ export default function MTFMatrixPanel() {
                     <div className="flex items-center gap-1">
                       {trendIcon(dir)}
                       <span className="text-[10px] font-mono" style={{ color: trendColor(dir) }}>
-                        {dir?.toUpperCase()?.slice(0, 4) || "—"}
+                        {dir?.slice(0, 5) || "—"}
                       </span>
                     </div>
                     {/* EMA Stack */}
-                    <div className="text-[10px] font-mono" style={{ color: trendColor(tfData.trend?.ema_alignment) }}>
-                      {tfData.trend?.ema_alignment?.replace("_", " ")?.slice(0, 8) || "—"}
+                    <div className="text-[10px] font-mono" style={{ color: trendColor(emaAlign) }}>
+                      {emaAlign.slice(0, 8)}
                     </div>
                     {/* RSI */}
                     <div className="flex items-center gap-1">
-                      <span className="text-[10px] font-bold font-mono" style={{ color: rsiColor(tfData.momentum?.rsi) }}>
-                        {tfData.momentum?.rsi?.toFixed(0) || "—"}
+                      <span className="text-[10px] font-bold font-mono" style={{ color: rsiColor(rsiVal) }}>
+                        {rsiVal != null ? rsiVal.toFixed(0) : "—"}
                       </span>
                     </div>
                     {/* Volatility */}
                     <div className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.4)" }}>
-                      {tfData.volatility?.bb_position?.slice(0, 6) || "—"}
+                      {bbPos}
                     </div>
                     {/* Signal */}
                     <div className="flex justify-center">
@@ -251,7 +299,7 @@ export default function MTFMatrixPanel() {
           </div>
 
           {/* Conflict Warning */}
-          {data.confluence && data.confluence.agreement_pct != null && data.confluence.agreement_pct < 60 && (
+          {data.confluence && confAlign < 60 && (
             <div className="px-4 pb-3">
               <div className="rounded-xl p-2.5 flex items-center gap-2" style={{ background: "rgba(240,180,41,0.06)", border: "1px solid rgba(240,180,41,0.12)" }}>
                 <AlertTriangle className="w-4 h-4 shrink-0" style={{ color: "#f0b429" }} />

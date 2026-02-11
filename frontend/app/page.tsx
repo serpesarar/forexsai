@@ -53,6 +53,7 @@ const CyberpunkTrendPanel = lazy(() => import("../components/panels/CyberpunkTre
 const LearningDashboardPanel = lazy(() => import("../components/LearningDashboardPanel"));
 const COMEXNewsPanel = lazy(() => import("../components/COMEXNewsPanel"));
 const WhaleTrackerPanel = lazy(() => import("../components/WhaleTrackerPanel"));
+const PredictionHistoryTable = lazy(() => import("../components/PredictionHistoryTable"));
 const SMCPanel = lazy(() => import("../components/panels/SMCPanel"));
 const MTFMatrixPanel = lazy(() => import("../components/panels/MTFMatrixPanel"));
 const RiskRewardPanel = lazy(() => import("../components/panels/RiskRewardPanel"));
@@ -1433,6 +1434,15 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
+              </LazyPanel>
+            </div>
+          )}
+
+          {/* Prediction History - Signal Results */}
+          {getCard("prediction-history")?.visible !== false && (
+            <div className="md:col-span-2 lg:col-span-3">
+              <LazyPanel fallbackHeight={300}>
+                <PredictionHistoryTable />
               </LazyPanel>
             </div>
           )}
