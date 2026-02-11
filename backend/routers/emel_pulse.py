@@ -43,7 +43,9 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         ta = _compute_technical_indicators(closes, highs, lows, volumes)
         
         # Get ML prediction for context
-        prediction = await get_ml_prediction(symbol, "balanced")
+        from dataclasses import asdict
+        prediction_raw = await get_ml_prediction(symbol, "balanced")
+        prediction = asdict(prediction_raw) if hasattr(prediction_raw, '__dataclass_fields__') else (prediction_raw if isinstance(prediction_raw, dict) else {})
         
         # Build 9 checkpoints
         checks = []
@@ -945,7 +947,9 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
         current_price = float(closes[-1])
         
         # 2. ML Tahmini Al
-        prediction = await get_ml_prediction(symbol, "aggressive")
+        from dataclasses import asdict
+        prediction_raw = await get_ml_prediction(symbol, "aggressive")
+        prediction = asdict(prediction_raw) if hasattr(prediction_raw, '__dataclass_fields__') else (prediction_raw if isinstance(prediction_raw, dict) else {})
         ml_direction = prediction.get("direction", "HOLD")
         ml_confidence = prediction.get("confidence", 0)
         
