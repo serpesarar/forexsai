@@ -206,7 +206,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
   useEffect(() => {
     if (!wsData) fetchData();
     if (!wsConnected) {
-      const interval = setInterval(fetchData, 30000);
+      const interval = setInterval(fetchData, 15000);
       return () => clearInterval(interval);
     }
   }, [activeSymbol, timeframe, wsConnected]);

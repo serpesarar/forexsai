@@ -768,16 +768,17 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         nearest_level = "s1" if dist_s1 < dist_r1 else "r1"
         nearest_distance = min(dist_s1, dist_r1)
         
-        # Hedef ve Stop
+        # Hedef ve Stop — ATR fallback if pivot levels contradict trend direction
+        atr_14 = ta.get("atr_14", abs(high_20 - low_20) / 20)
         if trend_direction == "up":
-            target = r1
-            stop = s1
+            target = r1 if r1 > current_price else current_price + atr_14 * 1.5
+            stop = s1 if s1 < current_price else current_price - atr_14 * 1.0
         elif trend_direction == "down":
-            target = s1
-            stop = r1
+            target = s1 if s1 < current_price else current_price - atr_14 * 1.5
+            stop = r1 if r1 > current_price else current_price + atr_14 * 1.0
         else:
-            target = r1
-            stop = s1
+            target = r1 if r1 > current_price else current_price + atr_14 * 1.0
+            stop = s1 if s1 < current_price else current_price - atr_14 * 1.0
         
         potential_profit = abs(target - current_price)
         potential_loss = abs(current_price - stop)
@@ -1524,16 +1525,17 @@ async def get_pulse_v3_analysis(symbol: str):
         s1 = 2 * pivot - high_20
         s2 = pivot - (high_20 - low_20)
         
-        # Hedef/Stop
+        # Hedef/Stop — ATR fallback if pivot levels contradict direction
+        atr_val = ta_5m.get("atr_14", abs(high_20 - low_20) / 20)
         if direction == "BUY":
-            target = r1
-            stop = s1
+            target = r1 if r1 > current_price else current_price + atr_val * 1.5
+            stop = s1 if s1 < current_price else current_price - atr_val * 1.0
         elif direction == "SELL":
-            target = s1
-            stop = r1
+            target = s1 if s1 < current_price else current_price - atr_val * 1.5
+            stop = r1 if r1 > current_price else current_price + atr_val * 1.0
         else:
-            target = r1
-            stop = s1
+            target = r1 if r1 > current_price else current_price + atr_val * 1.0
+            stop = s1 if s1 < current_price else current_price - atr_val * 1.0
         
         potential_profit = abs(target - current_price)
         potential_loss = abs(current_price - stop)

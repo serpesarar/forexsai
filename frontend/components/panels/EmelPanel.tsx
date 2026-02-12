@@ -144,103 +144,78 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
 
   if (loading && !data) {
     return (
-      <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 animate-pulse">
-        <div className="h-8 bg-gray-800 rounded w-1/3 mb-6" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="rounded-2xl p-6 animate-pulse" style={{ background: 'rgba(10,15,30,0.5)', backdropFilter: 'blur(20px)', border: '1px solid rgba(0,224,198,0.1)' }}>
+        <div className="h-8 bg-white/5 rounded-xl w-1/3 mb-6" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {[...Array(9)].map((_, i) => (
-            <div key={i} className="h-32 bg-gray-800 rounded-lg" />
+            <div key={i} className="h-28 bg-white/5 rounded-xl" />
           ))}
         </div>
       </div>
     );
   }
 
+  const signalColor = data?.signal === "BUY" ? "#00ff88" : data?.signal === "SELL" ? "#ff3366" : "#fbbf24";
+
   return (
-    <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+    <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(10,15,30,0.5)', backdropFilter: 'blur(24px)', border: '1px solid rgba(0,224,198,0.08)', boxShadow: '0 0 40px rgba(0,224,198,0.03)' }}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-900/50 to-purple-900/50 p-3 border-b border-gray-800">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Brain className="w-5 h-5 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-bold text-white truncate">{t("emel.title")}</h2>
-              <p className="text-xs text-gray-400 truncate">{t("emel.subtitle")}</p>
-            </div>
+      <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.25)' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.2), rgba(0,224,198,0.2))', border: '1px solid rgba(168,85,247,0.3)' }}>
+            <Brain className="w-4 h-4" style={{ color: '#a855f7' }} />
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {/* Symbol Switcher */}
-            <div className="flex rounded-lg overflow-hidden border border-gray-700">
-              {SYMBOLS.map((s) => (
-                <button
-                  key={s.key}
-                  onClick={() => setActiveSymbol(s.key)}
-                  className={`px-2 py-1 text-xs font-bold transition-all ${
-                    activeSymbol === s.key
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-800 text-gray-400 hover:text-white"
-                  }`}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-            <select
-              value={timeframe}
-              onChange={(e) => setTimeframe(e.target.value)}
-              className="bg-gray-800 text-white text-xs px-2 py-1 rounded-lg border border-gray-700"
-            >
-              <option value="15m">15m</option>
-              <option value="1H">1H</option>
-              <option value="4H">4H</option>
-              <option value="1D">1D</option>
-            </select>
-            <button
-              onClick={fetchData}
-              className="p-1.5 bg-gray-800 rounded-lg hover:bg-gray-700"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-gray-400 ${loading ? "animate-spin" : ""}`} />
-            </button>
-            {onSwitchMode && (
-              <button
-                onClick={onSwitchMode}
-                className="flex items-center gap-1 bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded-lg text-xs"
-              >
-                <Zap className="w-3 h-3" />
-                PULSE
+          <div>
+            <h2 className="text-sm font-bold font-mono tracking-wide" style={{ color: '#a855f7', textShadow: '0 0 10px rgba(168,85,247,0.3)' }}>{t("emel.title")}</h2>
+            <p className="text-[9px] uppercase tracking-[0.25em] text-white/25">{t("emel.subtitle")}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+            {SYMBOLS.map((s) => (
+              <button key={s.key} onClick={() => setActiveSymbol(s.key)}
+                className="px-3 py-1.5 text-[10px] font-bold font-mono transition-all"
+                style={{ backgroundColor: activeSymbol === s.key ? 'rgba(168,85,247,0.15)' : 'rgba(255,255,255,0.03)', color: activeSymbol === s.key ? '#a855f7' : 'rgba(255,255,255,0.35)', borderRight: '1px solid rgba(255,255,255,0.05)' }}>
+                {s.label}
               </button>
-            )}
+            ))}
           </div>
+          <select value={timeframe} onChange={(e) => setTimeframe(e.target.value)}
+            className="text-[10px] font-mono font-bold px-2 py-1.5 rounded-lg appearance-none cursor-pointer" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <option value="15m">15m</option><option value="1H">1H</option><option value="4H">4H</option><option value="1D">1D</option>
+          </select>
+          <button onClick={fetchData} className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: 'rgba(255,255,255,0.35)' }} />
+          </button>
+          {onSwitchMode && (
+            <button onClick={onSwitchMode} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold font-mono" style={{ background: 'rgba(251,191,36,0.15)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24' }}>
+              <Zap className="w-3 h-3" /> PULSE
+            </button>
+          )}
         </div>
       </div>
 
       {/* Summary Cards */}
       {data && (
-        <div className="grid grid-cols-4 gap-4 p-4 bg-gray-800/50">
-          <div className="bg-gray-900 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-500 mb-1">{t("emel.signal")}</p>
-            <p className={`text-xl font-bold ${
-              data.signal === "BUY" ? "text-green-400" :
-              data.signal === "SELL" ? "text-red-400" : "text-yellow-400"
-            }`}>
-              {data.signal}
-            </p>
+        <div className="grid grid-cols-4 gap-3 p-4" style={{ background: 'rgba(0,0,0,0.15)' }}>
+          <div className="rounded-xl p-3 text-center" style={{ background: `${signalColor}08`, border: `1px solid ${signalColor}20` }}>
+            <p className="text-[9px] uppercase tracking-widest text-white/30 font-mono mb-1">{t("emel.signal")}</p>
+            <p className="text-xl font-bold font-mono" style={{ color: signalColor, textShadow: `0 0 12px ${signalColor}60` }}>{data.signal}</p>
           </div>
-          <div className="bg-gray-900 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-500 mb-1">{t("emel.confidence")}</p>
-            <p className="text-xl font-bold text-blue-400">%{data.confidence.toFixed(0)}</p>
+          <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.15)' }}>
+            <p className="text-[9px] uppercase tracking-widest text-white/30 font-mono mb-1">{t("emel.confidence")}</p>
+            <p className="text-xl font-bold font-mono" style={{ color: '#a855f7', textShadow: '0 0 10px rgba(168,85,247,0.4)' }}>%{data.confidence.toFixed(0)}</p>
           </div>
-          <div className="bg-gray-900 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-500 mb-1">{t("emel.price")}</p>
-            <p className="text-xl font-bold text-white">{data.price.toFixed(2)}</p>
+          <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <p className="text-[9px] uppercase tracking-widest text-white/30 font-mono mb-1">{t("emel.price")}</p>
+            <p className="text-xl font-bold font-mono text-white">{data.price.toFixed(2)}</p>
           </div>
-          <div className="bg-gray-900 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-500 mb-1">{t("emel.score")}</p>
-            <div className="flex items-center justify-center gap-1">
-              <span className="text-green-400">{data.summary.green_count}🟢</span>
-              <span className="text-yellow-400">{data.summary.yellow_count}🟡</span>
-              <span className="text-red-400">{data.summary.red_count}🔴</span>
+          <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <p className="text-[9px] uppercase tracking-widest text-white/30 font-mono mb-1">{t("emel.score")}</p>
+            <div className="flex items-center justify-center gap-2 text-sm font-bold font-mono">
+              <span style={{ color: '#00ff88' }}>{data.summary.green_count}🟢</span>
+              <span style={{ color: '#fbbf24' }}>{data.summary.yellow_count}🟡</span>
+              <span style={{ color: '#ff3366' }}>{data.summary.red_count}🔴</span>
             </div>
           </div>
         </div>
@@ -248,53 +223,48 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
 
       {/* 9 Checkpoint Cards */}
       <div className="p-4">
-        <h3 className="text-sm font-medium text-gray-400 mb-3 flex items-center gap-2">
+        <h3 className="text-[10px] uppercase tracking-[0.2em] font-mono flex items-center gap-2 mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>
           📋 {t("emel.checkpoints")} ({data?.checks.length || 0}/9 {t("emel.active")})
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {data?.checks.map((check) => {
             const Icon = CHECK_ICONS[check.id] || Activity;
+            const checkColor = check.color === "green" ? "#00ff88" : check.color === "yellow" ? "#fbbf24" : "#ff3366";
             return (
-              <div
-                key={check.id}
-                className={`rounded-lg border p-4 ${getColorClass(check.color)}`}
-              >
+              <div key={check.id} className="rounded-xl p-3.5 transition-all duration-200 hover:scale-[1.01]"
+                style={{ background: `${checkColor}06`, border: `1px solid ${checkColor}20`, boxShadow: `0 0 15px ${checkColor}05` }}>
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      check.color === "green" ? "bg-green-500/30" :
-                      check.color === "yellow" ? "bg-yellow-500/30" : "bg-red-500/30"
-                    }`}>
-                      <Icon className="w-4 h-4" />
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                      style={{ background: `${checkColor}15`, border: `1px solid ${checkColor}25` }}>
+                      <Icon className="w-3.5 h-3.5" style={{ color: checkColor }} />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-white">{check.id}️⃣ {check.name}</p>
-                      <p className="text-xs text-gray-500">{check.subtitle}</p>
+                      <p className="text-xs font-bold font-mono text-white">{check.id}️⃣ {check.name}</p>
+                      <p className="text-[10px] text-white/30">{check.subtitle}</p>
                     </div>
                   </div>
                   {getStatusIcon(check.status)}
                 </div>
                 
-                <div className={`text-sm font-bold mb-2 ${
-                  check.color === "green" ? "text-green-400" :
-                  check.color === "yellow" ? "text-yellow-400" : "text-red-400"
-                }`}>
-                  [{check.color === "green" ? "🟢" : check.color === "yellow" ? "🟡" : "🔴"}] {check.label}
+                <div className="text-xs font-bold font-mono mb-2 px-2 py-1 rounded-md inline-block"
+                  style={{ color: checkColor, background: `${checkColor}10`, textShadow: `0 0 6px ${checkColor}40` }}>
+                  {check.label}
                 </div>
 
                 {/* Details */}
-                <div className="text-xs text-gray-400 space-y-1 mb-2">
+                <div className="text-[10px] font-mono space-y-0.5 mb-2">
                   {Object.entries(check.details).slice(0, 3).map(([key, value]) => (
                     <div key={key} className="flex justify-between">
-                      <span className="capitalize">{key.replace(/_/g, " ")}:</span>
-                      <span className="text-gray-300">
+                      <span className="text-white/25 capitalize">{key.replace(/_/g, " ")}:</span>
+                      <span className="text-white/50">
                         {typeof value === "object" ? JSON.stringify(value) : String(value)}
                       </span>
                     </div>
                   ))}
                 </div>
 
-                <p className="text-xs text-gray-300 italic">📝 {check.comment}</p>
+                <p className="text-[10px] text-white/40 italic leading-relaxed">📝 {check.comment}</p>
               </div>
             );
           })}
@@ -303,23 +273,20 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
 
       {/* Decision Summary */}
       {data && (
-        <div className="p-4 bg-gray-800/50 border-t border-gray-800">
-          <div className={`rounded-lg p-4 border ${
-            data.summary.decision === "BUY" ? "bg-green-900/20 border-green-600" :
-            data.summary.decision === "SELL" ? "bg-red-900/20 border-red-600" :
-            "bg-yellow-900/20 border-yellow-600"
-          }`}>
+        <div className="p-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.15)' }}>
+          <div className="rounded-xl p-4" style={{ background: `${signalColor}06`, border: `1px solid ${signalColor}20` }}>
             <div className="flex items-center gap-2 mb-3">
-              <Brain className="w-5 h-5" />
-              <span className="font-bold text-white">{t("emel.decision")} {data.summary.decision}</span>
+              <Brain className="w-5 h-5" style={{ color: signalColor }} />
+              <span className="font-bold font-mono text-white">{t("emel.decision")}</span>
+              <span className="font-bold font-mono text-sm px-2 py-0.5 rounded" style={{ color: signalColor, background: `${signalColor}15`, textShadow: `0 0 8px ${signalColor}40` }}>{data.summary.decision}</span>
             </div>
 
             {data.summary.rejections.length > 0 && (
               <div className="mb-3">
-                <p className="text-sm text-gray-400 mb-1">{t("emel.why")}</p>
+                <p className="text-[10px] uppercase tracking-widest text-white/30 font-mono mb-1.5">{t("emel.why")}</p>
                 <div className="space-y-1">
                   {data.summary.rejections.map((r, i) => (
-                    <p key={i} className="text-sm text-red-400">{r}</p>
+                    <p key={i} className="text-xs font-mono" style={{ color: '#ff3366' }}>✕ {r}</p>
                   ))}
                 </div>
               </div>
@@ -327,17 +294,17 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
 
             {data.summary.entry_conditions.length > 0 && (
               <div>
-                <p className="text-sm text-gray-400 mb-1">{t("emel.whenToTrade")}</p>
+                <p className="text-[10px] uppercase tracking-widest text-white/30 font-mono mb-1.5">{t("emel.whenToTrade")}</p>
                 <div className="space-y-1">
                   {data.summary.entry_conditions.map((c, i) => (
-                    <p key={i} className="text-sm text-blue-400">→ {c}</p>
+                    <p key={i} className="text-xs font-mono" style={{ color: '#00ccff' }}>→ {c}</p>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="mt-3 pt-3 border-t border-gray-700">
-              <p className="text-xs text-gray-500">
+            <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <p className="text-[10px] text-white/25 font-mono">
                 💡 {t("emel.alternative")}
               </p>
             </div>

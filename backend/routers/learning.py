@@ -1122,6 +1122,53 @@ async def reset_ui_stats(
         return {"error": str(e)}
 
 
+@router.post("/hard-reset")
+async def hard_reset_learning_data(
+    confirm: bool = Query(False, description="Must be true to actually delete data")
+):
+    """
+    Hard reset: delete ALL prediction logs and outcome results.
+    This resets all learning dashboard percentages to 0%.
+    Requires confirm=true to prevent accidental deletion.
+    """
+    if not confirm:
+        return {"error": "Pass confirm=true to actually delete all data", "deleted": False}
+    
+    if not is_db_available():
+        return {"error": "Database not available", "deleted": False}
+    
+    from database.supabase_client import get_supabase_client
+    client = get_supabase_client()
+    if not client:
+        return {"error": "Database client not available", "deleted": False}
+    
+    try:
+        # Delete outcome results first (foreign key dependency)
+        outcome_result = client.table("outcome_results").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+        outcomes_deleted = len(outcome_result.data) if outcome_result.data else 0
+        
+        # Delete multi-target outcomes
+        try:
+            mt_result = client.table("multi_target_outcomes").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+            mt_deleted = len(mt_result.data) if mt_result.data else 0
+        except Exception:
+            mt_deleted = 0
+        
+        # Delete prediction logs
+        pred_result = client.table("prediction_logs").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+        preds_deleted = len(pred_result.data) if pred_result.data else 0
+        
+        return {
+            "deleted": True,
+            "predictions_deleted": preds_deleted,
+            "outcomes_deleted": outcomes_deleted,
+            "multi_target_deleted": mt_deleted,
+            "message": f"All learning data reset. Deleted {preds_deleted} predictions, {outcomes_deleted} outcomes."
+        }
+    except Exception as e:
+        return {"error": str(e), "deleted": False}
+
+
 @router.get("/strategy-performance")
 async def get_strategy_performance(
     days: int = Query(30, ge=1, le=90, description="Number of days to analyze")

@@ -1326,7 +1326,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
         
         # Determine direction with TREND CONFIRMATION
         # Gold needs higher threshold (more volatile), NASDAQ can be lower
-        direction_threshold = 0.55 if is_gold else 0.52
+        direction_threshold = 0.53 if is_gold else 0.52
         
         # Model says BUY
         if prob_up > direction_threshold:
@@ -1601,13 +1601,12 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
         
         if not validity_check['valid']:
             null_sig = validity_check.get('null_signal', {})
-            direction = "HOLD"
-            confidence = min(confidence, 45)
             null_reason = null_sig.get('null_reason', validity_check['reason'])
-            reasoning.append(f"⏳ {null_reason}")
-            if null_sig.get('retry_after_minutes'):
-                reasoning.append(f"🔄 Tekrar kontrol: {null_sig['retry_after_minutes']}dk sonra")
-            logger.info(f"State machine block: {validity_check['reason']}")
+            # Dashboard mode: don't force HOLD, just reduce confidence slightly and warn
+            # State machine is for trade execution, not for display panels
+            confidence = max(confidence * 0.85, 40)
+            reasoning.append(f"⚠️ Trading Engine: {null_reason}")
+            logger.info(f"State machine warning (not blocking): {validity_check['reason']}")
         
         # ═══════════════════════════════════════════════════════════════
         # EKSİK #9: Portfolio Risk Check
@@ -1615,10 +1614,10 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
         if direction != "HOLD":
             portfolio_check = check_portfolio_risk(normalized_symbol, direction)
             if not portfolio_check['can_trade']:
-                direction = "HOLD"
-                confidence = min(confidence, 40)
-                reasoning.append(f"🛡️ Portföy Riski: {portfolio_check['reason']}")
-                logger.warning(f"Portfolio risk block: {portfolio_check['reason']}")
+                # Dashboard mode: warn but don't force HOLD
+                confidence = max(confidence * 0.8, 35)
+                reasoning.append(f"⚠️ Portföy Riski: {portfolio_check['reason']}")
+                logger.info(f"Portfolio risk warning (not blocking): {portfolio_check['reason']}")
             elif portfolio_check['warnings']:
                 for warn in portfolio_check['warnings']:
                     reasoning.append(f"⚠️ {warn}")
@@ -1635,11 +1634,10 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
             regime_check = apply_regime_blocking(direction, regime.regime, regime.confidence)
             
             if regime_check['blocked']:
-                old_dir = direction
-                direction = regime_check['new_direction'] or "HOLD"
-                confidence = min(confidence, 40) * regime_check['confidence_multiplier']
-                reasoning.append(f"🚫 {regime_check['reason']}")
-                logger.warning(f"Regime block: {old_dir} -> {direction} ({regime_check['reason']})")
+                # Dashboard mode: warn but don't force HOLD
+                confidence = max(confidence * regime_check['confidence_multiplier'] * 0.7, 30)
+                reasoning.append(f"⚠️ Rejim Uyarısı: {regime_check['reason']}")
+                logger.info(f"Regime warning (not blocking): {direction} ({regime_check['reason']})")
             else:
                 # Confidence multiplier uygula
                 if regime_check['confidence_multiplier'] < 1.0:
@@ -1675,11 +1673,10 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
                 mtf_check = validate_mtf_consensus(normalized_symbol, direction, mtf_data)
                 
                 if not mtf_check['allowed']:
-                    old_dir = direction
-                    direction = mtf_check['override_signal'] or "HOLD"
-                    confidence = min(confidence, 45)
-                    reasoning.append(f"🔴 {mtf_check['reason']}")
-                    logger.warning(f"MTF veto: {old_dir} -> {direction}")
+                    # Dashboard mode: warn but don't force HOLD
+                    confidence = max(confidence * 0.75, 35)
+                    reasoning.append(f"⚠️ MTF: {mtf_check['reason']}")
+                    logger.info(f"MTF warning (not blocking): {direction}")
                 elif mtf_check['confidence_penalty'] > 0:
                     confidence *= (1 - mtf_check['confidence_penalty'])
                     reasoning.append(f"🟡 {mtf_check['reason']}")
@@ -1698,11 +1695,11 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
             adaptive_min = threshold_info['threshold'] * 100
             
             if confidence < adaptive_min:
-                old_conf = confidence
-                direction = "HOLD"
-                reasoning.append(f"📉 Confidence {old_conf:.0f}% < Adaptif threshold {adaptive_min:.0f}%")
+                # Dashboard mode: warn but don't force HOLD
+                reasoning.append(f"⚠️ Confidence {confidence:.0f}% < Adaptif threshold {adaptive_min:.0f}%")
                 if threshold_info.get('reason'):
                     reasoning.append(f"   ({threshold_info['reason']})")
+                confidence = max(confidence, adaptive_min * 0.8)  # Bump slightly to show signal
         
         # ═══════════════════════════════════════════════════════════════
         # EKSİK #5: Pattern Conflict Resolution (pattern varsa)
@@ -1765,13 +1762,12 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     )
     
     if not allow_change:
-        cached = _get_cached_signal(normalized_symbol)
-        if cached:
-            old_direction = cached["direction"]
-            logger.warning(f"Signal stability: {direction} -> {old_direction} ({stability_reason})")
-            reasoning.append(f"⚡ Sinyal Stabilitesi: {stability_reason}")
-            direction = old_direction
-            confidence = min(confidence, cached["confidence"] + 5)
+        # Dashboard mode: warn but don't force old direction
+        confidence = max(confidence * 0.85, 35)
+        reasoning.append(f"⚠️ Sinyal Stabilitesi: {stability_reason}")
+        logger.info(f"Signal stability warning (not blocking): {direction} ({stability_reason})")
+        # Still update cache with new signal
+        _update_signal_cache(normalized_symbol, direction, confidence, current_price)
     else:
         _update_signal_cache(normalized_symbol, direction, confidence, current_price)
         if stability_reason and stability_reason not in ["İlk sinyal", "Aynı yön", "HOLD geçişi"]:
