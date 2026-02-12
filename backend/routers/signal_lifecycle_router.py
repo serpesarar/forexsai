@@ -121,6 +121,79 @@ async def get_signal_detail_endpoint(signal_id: str):
 
 # ─── Export Failures (for ML retraining) ──────────────────────────────────────
 
+@router.post("/api/signals/backfill")
+async def backfill_existing_records():
+    """One-time backfill: set model_type from strategy, expire old active signals."""
+    from database.supabase_client import get_supabase_client, is_db_available
+    import json
+
+    if not is_db_available():
+        return {"error": "DB not available"}
+
+    client = get_supabase_client()
+    if not client:
+        return {"error": "No DB client"}
+
+    stats = {"model_type_updated": 0, "expired": 0}
+
+    try:
+        # Fetch all records missing model_type
+        result = client.table("prediction_logs").select(
+            "id, strategy, status, created_at, ml_direction, targets, model_type"
+        ).limit(500).execute()
+
+        records = result.get("data") or []
+
+        for rec in records:
+            updates = {}
+            # Backfill model_type
+            if not rec.get("model_type") or rec.get("model_type") == "ml":
+                strat = (rec.get("strategy") or "").upper()
+                if "EMEL" in strat:
+                    updates["model_type"] = "emel"
+                elif "PULSE" in strat:
+                    updates["model_type"] = "pulse"
+                else:
+                    updates["model_type"] = "ml"
+
+            # Backfill targets if empty
+            if not rec.get("targets") or rec.get("targets") in ("{}", "null"):
+                from services.target_config import get_symbol_config
+                # Need symbol — fetch it
+                full = client.table("prediction_logs").select("symbol").eq("id", rec["id"]).execute()
+                sym = (full.get("data") or [{}])[0].get("symbol", "NDX.INDX")
+                cfg = get_symbol_config(sym)
+                targets_dict = {tl.name: tl.pips for tl in cfg.targets}
+                updates["targets"] = json.dumps(targets_dict)
+                updates["stop_loss_pips"] = cfg.stoploss_pips
+                updates["targets_hit"] = json.dumps({tp: False for tp in targets_dict})
+
+            # Expire old active signals (older than 2 hours)
+            if rec.get("status") == "active":
+                from datetime import datetime, timedelta
+                try:
+                    created = rec.get("created_at", "")
+                    if created:
+                        created_dt = datetime.fromisoformat(created.replace("Z", "+00:00"))
+                        if (datetime.now(created_dt.tzinfo) - created_dt).total_seconds() > 7200:
+                            updates["status"] = "expired"
+                            stats["expired"] += 1
+                except Exception:
+                    updates["status"] = "expired"
+                    stats["expired"] += 1
+
+            if updates:
+                client.table("prediction_logs").eq("id", rec["id"]).update(updates)
+                if "model_type" in updates:
+                    stats["model_type_updated"] += 1
+
+        return {"success": True, "total_records": len(records), **stats}
+
+    except Exception as e:
+        logger.error(f"backfill error: {e}")
+        return {"error": str(e)}
+
+
 @router.get("/api/admin/export-failures")
 async def export_failures_endpoint(days: int = 30):
     """Export failure records as JSON for ML retraining dataset."""
