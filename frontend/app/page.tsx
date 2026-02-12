@@ -392,16 +392,29 @@ export default function HomePage() {
   const [trendTf, setTrendTf] = useState<Timeframe>("M15");
 
   // Auth check
+  const [isAuthed, setIsAuthed] = useState(false);
   useEffect(() => {
     const check = async () => {
-      await waitForHydration();
-      const authed = await checkAuth();
-      setIsCheckingAuth(false);
-      if (!authed) {
+      try {
+        await waitForHydration();
+        const authed = await checkAuth();
+        setIsAuthed(authed);
+        setIsCheckingAuth(false);
+        if (!authed) {
+          router.push("/welcome");
+        }
+      } catch (e) {
+        console.error("[Auth] Check failed:", e);
+        setIsCheckingAuth(false);
         router.push("/welcome");
       }
     };
     check();
+    // Safety timeout: if auth check takes >5s, stop loading
+    const timeout = setTimeout(() => {
+      setIsCheckingAuth(false);
+    }, 5000);
+    return () => clearTimeout(timeout);
   }, []);
 
   // Live prices hook - updates every 10 seconds (DataHub updates every 5s)
@@ -1282,7 +1295,7 @@ export default function HomePage() {
   }
 
   // If not authenticated, will redirect (handled in useEffect)
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !isAuthed) {
     return null;
   }
 

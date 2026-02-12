@@ -31,13 +31,23 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const result = await login(email, password);
+      // Add timeout to prevent infinite spinner
+      const loginPromise = login(email, password);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.")), 15000)
+      );
+      
+      const result = await Promise.race([loginPromise, timeoutPromise]);
       if (!result.success) {
         throw new Error(result.error || t("auth.login.failed") || "Login failed");
       }
+      
+      // Small delay to let zustand persist flush to localStorage
+      await new Promise(resolve => setTimeout(resolve, 100));
       router.push("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      console.error("[Login] Error:", err);
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setLoading(false);
     }

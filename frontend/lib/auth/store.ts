@@ -78,12 +78,19 @@ export const useAuthStore = create<AuthState>()(
         
         set({ isLoading: true });
         try {
+          console.log("[Auth] Login request starting...");
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 20000);
+          
           const res = await fetch(`${API_BASE}/api/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password }),
+            signal: controller.signal,
           });
+          clearTimeout(timeoutId);
 
+          console.log("[Auth] Login response:", res.status);
           const data = await res.json();
 
           if (!res.ok) {
@@ -104,10 +111,15 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
           });
 
+          console.log("[Auth] Login success, token set");
           return { success: true };
-        } catch (error) {
+        } catch (error: any) {
+          console.error("[Auth] Login error:", error?.name, error?.message);
           set({ isLoading: false });
-          return { success: false, error: "Bağlantı hatası" };
+          if (error?.name === "AbortError") {
+            return { success: false, error: "Sunucu yanıt vermedi. Lütfen tekrar deneyin." };
+          }
+          return { success: false, error: "Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin." };
         }
       },
 
