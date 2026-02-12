@@ -27,8 +27,10 @@ RETRY_MAX_WAIT = 12.0          # seconds
 RETRIABLE_STATUS_CODES = {408, 429, 500, 502, 503, 504, 520, 522, 524}
 
 
-def _retry_request(fn, label: str = "supabase"):
+def _retry_request(fn, label: str = "supabase", client: "SupabaseRestClient | None" = None):
     """Execute *fn()* with exponential-backoff retry on transient failures."""
+    if client:
+        client.record_request()
     last_exc = None
     for attempt in range(1, MAX_RETRIES + 1):
         try:
@@ -36,6 +38,8 @@ def _retry_request(fn, label: str = "supabase"):
             if resp.status_code in RETRIABLE_STATUS_CODES and attempt < MAX_RETRIES:
                 wait = min(RETRY_BASE_WAIT * (2 ** (attempt - 1)), RETRY_MAX_WAIT)
                 logger.warning(f"[{label}] HTTP {resp.status_code}, retry {attempt}/{MAX_RETRIES} in {wait:.1f}s")
+                if client:
+                    client.record_retry()
                 time.sleep(wait)
                 continue
             resp.raise_for_status()
@@ -43,13 +47,19 @@ def _retry_request(fn, label: str = "supabase"):
         except (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.PoolTimeout,
                 httpx.ConnectError, httpx.RemoteProtocolError) as exc:
             last_exc = exc
+            if client:
+                client.record_retry()
             if attempt < MAX_RETRIES:
                 wait = min(RETRY_BASE_WAIT * (2 ** (attempt - 1)), RETRY_MAX_WAIT)
                 logger.warning(f"[{label}] {type(exc).__name__}, retry {attempt}/{MAX_RETRIES} in {wait:.1f}s")
                 time.sleep(wait)
             else:
+                if client:
+                    client.record_error()
                 raise
         except httpx.HTTPStatusError:
+            if client:
+                client.record_error()
             raise  # 4xx client errors — don't retry
     raise last_exc  # pragma: no cover
 
@@ -73,6 +83,46 @@ class SupabaseRestClient:
             limits=httpx.Limits(max_connections=5, max_keepalive_connections=3, keepalive_expiry=120),
             headers=self.headers,
         )
+        # ── Observability counters ──
+        self._stats = {
+            "total_requests": 0,
+            "total_errors": 0,
+            "total_retries": 0,
+            "created_at": time.time(),
+            "last_request_at": 0.0,
+            "last_error_at": 0.0,
+        }
+
+    def record_request(self):
+        self._stats["total_requests"] += 1
+        self._stats["last_request_at"] = time.time()
+
+    def record_error(self):
+        self._stats["total_errors"] += 1
+        self._stats["last_error_at"] = time.time()
+
+    def record_retry(self):
+        self._stats["total_retries"] += 1
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Return connection pool stats for observability."""
+        uptime = time.time() - self._stats["created_at"]
+        pool = self._http.pool if hasattr(self._http, 'pool') else None
+        return {
+            "uptime_seconds": round(uptime, 1),
+            "total_requests": self._stats["total_requests"],
+            "total_errors": self._stats["total_errors"],
+            "total_retries": self._stats["total_retries"],
+            "error_rate_pct": round(
+                (self._stats["total_errors"] / max(self._stats["total_requests"], 1)) * 100, 2
+            ),
+            "requests_per_minute": round(
+                self._stats["total_requests"] / max(uptime / 60, 1), 1
+            ),
+            "pool_max_connections": 5,
+            "pool_keepalive": 3,
+            "client_closed": self._http.is_closed,
+        }
 
     @property
     def http(self) -> httpx.Client:
@@ -85,6 +135,12 @@ class SupabaseRestClient:
                 headers=self.headers,
             )
         return self._http
+
+    def close(self):
+        """Gracefully close the HTTP client."""
+        if not self._http.is_closed:
+            self._http.close()
+            logger.info("Supabase HTTP client closed gracefully.")
 
     def table(self, table_name: str) -> "TableQuery":
         return TableQuery(self, table_name)
@@ -160,6 +216,7 @@ class TableQuery:
             resp = _retry_request(
                 lambda: self.client.http.get(self._build_url()),
                 label=f"SELECT {self.table_name}",
+                client=self.client,
             )
             return {"data": resp.json(), "error": None}
         except Exception as e:
@@ -172,6 +229,7 @@ class TableQuery:
             resp = _retry_request(
                 lambda: self.client.http.post(url, json=data),
                 label=f"INSERT {self.table_name}",
+                client=self.client,
             )
             return {"data": resp.json(), "error": None}
         except Exception as e:
@@ -189,6 +247,7 @@ class TableQuery:
             resp = _retry_request(
                 lambda: self.client.http.post(url, json=payload, headers=headers),
                 label=f"UPSERT {self.table_name}",
+                client=self.client,
             )
             return {"data": resp.json(), "error": None}
         except Exception as e:
@@ -200,6 +259,7 @@ class TableQuery:
             resp = _retry_request(
                 lambda: self.client.http.patch(self._build_url(), json=data),
                 label=f"UPDATE {self.table_name}",
+                client=self.client,
             )
             return {"data": resp.json(), "error": None}
         except Exception as e:
@@ -211,6 +271,7 @@ class TableQuery:
             resp = _retry_request(
                 lambda: self.client.http.delete(self._build_url()),
                 label=f"DELETE {self.table_name}",
+                client=self.client,
             )
             return {"data": resp.json() if resp.text else [], "error": None}
         except Exception as e:

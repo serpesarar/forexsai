@@ -1,8 +1,11 @@
 from datetime import datetime
+import asyncio
 import time
 import os
 import sys
+import logging
 import traceback
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -23,10 +26,103 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from utils.json_response import NumpySafeJSONResponse, NumpySafeEncoder
 
+logger = logging.getLogger(__name__)
+
+_APP_START_TIME = time.time()
+_conn_logger_task = None
+
+
+async def _connection_stats_logger():
+    """Log Supabase connection pool stats every 60s for observability."""
+    while True:
+        await asyncio.sleep(60)
+        try:
+            from database.supabase_client import get_supabase_client
+            client = get_supabase_client()
+            if client:
+                stats = client.get_stats()
+                logger.info(
+                    f"[ConnPool] reqs={stats['total_requests']} "
+                    f"errs={stats['total_errors']} "
+                    f"retries={stats['total_retries']} "
+                    f"err_rate={stats['error_rate_pct']}% "
+                    f"rpm={stats['requests_per_minute']} "
+                    f"closed={stats['client_closed']}"
+                )
+        except Exception:
+            pass
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """FastAPI lifespan: startup + shutdown in one place."""
+    global _conn_logger_task
+
+    # ── STARTUP (non-blocking, fast) ─────────────────────────────
+    # 1. Redis (optional)
+    try:
+        from services.redis_client import get_redis, is_redis_available
+        get_redis()
+        print(f"Redis: {'connected' if is_redis_available() else 'not available (using memory fallback)'}")
+    except Exception as e:
+        print(f"Redis init skipped: {e}")
+
+    # 2. DataHub (centralized data pump) — runs as background task
+    try:
+        from services.data_hub import start_data_hub
+        asyncio.create_task(start_data_hub())
+        print("DataHub started - centralized market data pump")
+    except Exception as e:
+        print(f"Failed to start DataHub: {e}")
+
+    # 3. Background scheduler (with WebSocket broadcast)
+    try:
+        from services.background_scheduler import start_scheduler
+        start_scheduler()
+        print("Background scheduler started (with WebSocket broadcast)")
+    except Exception as e:
+        print(f"Failed to start scheduler: {e}")
+
+    # 4. Connection stats logger (every 60s)
+    _conn_logger_task = asyncio.create_task(_connection_stats_logger())
+
+    print(f"App ready in {time.time() - _APP_START_TIME:.1f}s")
+
+    yield  # ── APP RUNNING ──
+
+    # ── SHUTDOWN (graceful) ──────────────────────────────────────
+    if _conn_logger_task:
+        _conn_logger_task.cancel()
+
+    try:
+        from services.data_hub import stop_data_hub
+        stop_data_hub()
+        print("DataHub stopped")
+    except Exception as e:
+        print(f"Error stopping DataHub: {e}")
+
+    try:
+        from services.background_scheduler import stop_scheduler
+        stop_scheduler()
+        print("Background scheduler stopped")
+    except Exception as e:
+        print(f"Error stopping scheduler: {e}")
+
+    # Close Supabase HTTP client gracefully
+    try:
+        from database.supabase_client import get_supabase_client
+        client = get_supabase_client()
+        if client:
+            client.close()
+    except Exception:
+        pass
+
+
 app = FastAPI(
     title="AI Trading Dashboard API",
     version="0.1.0",
     default_response_class=NumpySafeJSONResponse,
+    lifespan=lifespan,
 )
 
 # CORS - allow all origins for production
@@ -45,14 +141,70 @@ try:
 except Exception as e:
     print(f"Panel cache middleware skipped: {e}")
 
-# Simple health check first
-@app.get("/api/health")
-async def health_check():
-    return {"ok": True, "status": "running"}
+# ═══════════════════════════════════════════════════════════════════
+# HEALTH & READINESS (enterprise pattern)
+# ═══════════════════════════════════════════════════════════════════
 
 @app.get("/")
 async def root():
     return {"message": "AI Trading Dashboard API", "status": "ok"}
+
+
+@app.get("/api/health")
+async def health_liveness():
+    """Liveness probe — NO DB, NO external calls. Just 'process alive'.
+    Railway/K8s uses this to know the container is running."""
+    return {
+        "ok": True,
+        "status": "alive",
+        "uptime_seconds": round(time.time() - _APP_START_TIME, 1),
+    }
+
+
+@app.get("/api/ready")
+async def health_readiness():
+    """Readiness probe — checks DB connectivity with a 2s timeout.
+    Returns 503 if DB is unreachable so load balancer stops sending traffic."""
+    checks = {"db": False, "db_latency_ms": None}
+
+    try:
+        from database.supabase_client import get_supabase_client
+        client = get_supabase_client()
+        if client:
+            start = time.time()
+            result = client.table("prediction_logs").select("id").limit(1).execute()
+            latency = (time.time() - start) * 1000
+            checks["db"] = result.get("error") is None
+            checks["db_latency_ms"] = round(latency, 1)
+    except Exception as e:
+        checks["db_error"] = str(e)[:100]
+
+    all_ok = checks["db"]
+    status_code = 200 if all_ok else 503
+
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "ok": all_ok,
+            "status": "ready" if all_ok else "not_ready",
+            "checks": checks,
+            "uptime_seconds": round(time.time() - _APP_START_TIME, 1),
+        },
+    )
+
+
+@app.get("/api/stats/connections")
+async def connection_stats():
+    """Supabase connection pool observability endpoint."""
+    try:
+        from database.supabase_client import get_supabase_client
+        client = get_supabase_client()
+        if client:
+            return {"ok": True, "pool": client.get_stats()}
+        return {"ok": False, "error": "No Supabase client"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
 
 ROUTERS_LOADED = False
 IMPORT_ERROR = None
@@ -440,49 +592,8 @@ async def get_candlestick_patterns(symbol: str):
         return {"success": False, "error": str(e)}
 
 
-# Startup event - start DataHub and background scheduler
-@app.on_event("startup")
-async def startup_event():
-    # Initialize Redis (optional — works without it via memory fallback)
-    try:
-        from services.redis_client import get_redis, is_redis_available
-        get_redis()
-        print(f"Redis: {'connected' if is_redis_available() else 'not available (using memory fallback)'}")
-    except Exception as e:
-        print(f"Redis init skipped: {e}")
-
-    # Start DataHub first (centralized data pump)
-    try:
-        import asyncio
-        from services.data_hub import start_data_hub
-        asyncio.create_task(start_data_hub())
-        print("DataHub started - centralized market data pump")
-    except Exception as e:
-        print(f"Failed to start DataHub: {e}")
-    
-    # Then start background scheduler (now also broadcasts via WebSocket)
-    try:
-        from services.background_scheduler import start_scheduler
-        start_scheduler()
-        print("Background scheduler started (with WebSocket broadcast)")
-    except Exception as e:
-        print(f"Failed to start scheduler: {e}")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    try:
-        from services.data_hub import stop_data_hub
-        stop_data_hub()
-        print("DataHub stopped")
-    except Exception as e:
-        print(f"Error stopping DataHub: {e}")
-    try:
-        from services.background_scheduler import stop_scheduler
-        stop_scheduler()
-        print("Background scheduler stopped")
-    except Exception as e:
-        print(f"Error stopping scheduler: {e}")
+# NOTE: Startup/shutdown logic is now in the `lifespan` context manager above.
+# The old @app.on_event("startup") / @app.on_event("shutdown") pattern is removed.
 
 
 @app.get("/api/datahub/status")
