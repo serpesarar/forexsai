@@ -83,10 +83,28 @@ async def ohlcv(
 @router.get("/cached/{symbol}")
 async def get_cached_data_endpoint(symbol: str) -> Dict[str, Any]:
     """
-    Get cached live data from Supabase.
-    This data is updated by the background scheduler every 5 seconds.
+    Get cached live data — reads from DataHub (in-memory, updated every 30s).
+    Falls back to Supabase live_data_cache if DataHub has no data.
     """
     try:
+        # PRIMARY: Read from DataHub (always fresh, updated every 30s)
+        from services.data_hub import get_price, get_hub_status
+        live_price = get_price(symbol)
+        
+        if live_price is not None:
+            ta = await compute_ta_snapshot(symbol)
+            return {
+                "success": True,
+                "cached": False,
+                "data": {
+                    "symbol": symbol,
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                    "ta_snapshot": ta,
+                    "current_price": float(live_price),
+                }
+            }
+        
+        # FALLBACK: Supabase cache (may be stale)
         from services.background_scheduler import get_cached_data
         cached = await get_cached_data(symbol)
         
@@ -96,19 +114,19 @@ async def get_cached_data_endpoint(symbol: str) -> Dict[str, Any]:
                 "cached": True,
                 "data": cached,
             }
-        else:
-            # No cache - fetch fresh data
-            ta = await compute_ta_snapshot(symbol)
-            live = await fetch_latest_price(symbol)
-            return {
-                "success": True,
-                "cached": False,
-                "data": {
-                    "symbol": symbol,
-                    "ta_snapshot": ta,
-                    "current_price": float(live) if live else None,
-                }
+        
+        # LAST RESORT: compute fresh
+        ta = await compute_ta_snapshot(symbol)
+        live = await fetch_latest_price(symbol)
+        return {
+            "success": True,
+            "cached": False,
+            "data": {
+                "symbol": symbol,
+                "ta_snapshot": ta,
+                "current_price": float(live) if live else None,
             }
+        }
     except Exception as e:
         return {
             "success": False,

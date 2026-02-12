@@ -213,11 +213,11 @@ async def save_to_cache(symbol: str, data: Dict[str, Any], news: Optional[Dict[s
         result = client.table("live_data_cache").select("id").eq("symbol", symbol).execute()
         
         if result.get("data") and len(result["data"]) > 0:
-            # Update existing
-            client.table("live_data_cache").eq("symbol", symbol).update(cache_data).execute()
+            # Update existing — .eq() before .update(), no .execute() needed
+            client.table("live_data_cache").eq("symbol", symbol).update(cache_data)
         else:
-            # Insert new
-            client.table("live_data_cache").insert(cache_data).execute()
+            # Insert new — .insert() auto-executes, no .execute() needed
+            client.table("live_data_cache").insert(cache_data)
             
         logger.debug(f"Cache updated for {symbol}")
     except Exception as e:
