@@ -53,6 +53,7 @@ const PulseMLPanel = lazy(() => import("../components/panels/PulseMLPanel"));
 const ClearTrendPanel = lazy(() => import("../components/panels/ClearTrendPanel"));
 const CyberpunkTrendPanel = lazy(() => import("../components/panels/CyberpunkTrendPanel"));
 const LearningDashboardPanel = lazy(() => import("../components/LearningDashboardPanel"));
+const LearningDashboardV2 = lazy(() => import("../components/panels/LearningDashboardV2"));
 const COMEXNewsPanel = lazy(() => import("../components/COMEXNewsPanel"));
 const WhaleTrackerPanel = lazy(() => import("../components/WhaleTrackerPanel"));
 const PredictionHistoryTable = lazy(() => import("../components/PredictionHistoryTable"));
@@ -904,7 +905,7 @@ export default function HomePage() {
       case "pulse-ml":
         return <PulseMLPanel />;
       case "learning-dashboard":
-        return <LearningDashboardPanel />;
+        return <LearningDashboardV2 />;
       case "strategy-performance":
         return <StrategyPerformancePanel />;
       case "smc-panel":

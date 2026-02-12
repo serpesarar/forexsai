@@ -75,7 +75,8 @@ async def log_prediction(
     context: Dict[str, Any],
     analysis: Dict[str, Any],
     timeframe: str = "1d",
-    strategy: Optional[str] = None
+    strategy: Optional[str] = None,
+    model_type: Optional[str] = None,
 ) -> Optional[str]:
     """
     Log a prediction to the database.
@@ -107,10 +108,17 @@ async def log_prediction(
             factors["strategy"] = strategy
             factors["source"] = context.get("source", strategy)
         
+        # Compute lifecycle targets from target_config
+        import json as _json
+        from services.target_config import get_symbol_config
+        cfg = get_symbol_config(symbol)
+        targets_dict = {tl.name: tl.pips for tl in cfg.targets}
+        direction = ml.get("direction", "HOLD")
+
         record = {
             "symbol": symbol,
             "timeframe": timeframe,
-            "ml_direction": ml.get("direction", "HOLD"),
+            "ml_direction": direction,
             "ml_confidence": float(ml.get("confidence", 0.0)),
             "ml_probability_up": ml.get("probability_up"),
             "ml_probability_down": ml.get("probability_down"),
@@ -122,6 +130,14 @@ async def log_prediction(
             "claude_model": analysis.get("model_used"),
             "factors": factors,
             "outcome_checked": False,
+            # Signal Lifecycle columns
+            "status": "active" if direction in ("BUY", "SELL") else "expired",
+            "targets": _json.dumps(targets_dict),
+            "stop_loss_pips": cfg.stoploss_pips,
+            "targets_hit": _json.dumps({tp: False for tp in targets_dict}),
+            "highest_profit_pips": 0,
+            "lowest_drawdown_pips": 0,
+            "model_type": model_type or (strategy.lower() if strategy else "ml"),
         }
         
         # Add strategy column if provided (user has this column in Supabase)

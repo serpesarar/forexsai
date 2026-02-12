@@ -17,6 +17,7 @@ from services.data_fetcher import fetch_eod_candles, fetch_latest_price
 from services.marketaux_service import fetch_marketaux_headlines
 from services.outcome_tracker import check_pending_outcomes, check_multi_target_outcome
 from services.error_analysis_service import check_and_analyze_failed_predictions
+from services.signal_lifecycle import check_lifecycle_if_needed
 
 logger = logging.getLogger(__name__)
 
@@ -406,7 +407,8 @@ async def log_predictions_if_needed():
                 context=context,
                 analysis=analysis,
                 timeframe="1d",
-                strategy="balanced"  # Default strategy for auto-logged predictions
+                strategy="balanced",
+                model_type="ml",
             )
             
             if pred_id:
@@ -432,6 +434,8 @@ async def background_scheduler_loop():
             await run_update_cycle()
             # Check outcomes periodically
             await check_outcomes_if_needed()
+            # Signal lifecycle tracking (every 5 min internally)
+            await check_lifecycle_if_needed()
             # Analyze errors periodically (self-learning)
             await analyze_errors_if_needed()
             # Log predictions periodically for learning

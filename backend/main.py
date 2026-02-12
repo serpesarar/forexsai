@@ -87,6 +87,7 @@ try:
         deepseek_analysis,
         websocket,
     )
+    from routers import signal_lifecycle_router
     from services.data_fetcher import fetch_latest_price
     from services.ml_service import run_nasdaq_signal, run_xauusd_signal
     from services.pattern_engine_runner import run_pattern_engine
@@ -121,6 +122,7 @@ try:
     app.include_router(clear_trend.router)
     app.include_router(deepseek_analysis.router)
     app.include_router(websocket.router)
+    app.include_router(signal_lifecycle_router.router)
     
     ROUTERS_LOADED = True
 except Exception as e:

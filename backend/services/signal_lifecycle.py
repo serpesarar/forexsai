@@ -1,0 +1,847 @@
+"""
+Signal Lifecycle Manager
+─────────────────────────
+Tracks active signals every 5 minutes, captures wicks (session high/low),
+detects target hits and stop losses, performs failure autopsy, and manages
+signal expiration/cleanup.
+
+Tables used:
+  - prediction_logs  (read active, update status/targets_hit/exit)
+  - signal_checks    (insert 5-min snapshots)
+  - signal_failures  (insert failure autopsy on stop)
+"""
+from __future__ import annotations
+
+import asyncio
+import logging
+import json
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+from database.supabase_client import get_supabase_client, is_db_available
+from services.data_fetcher import fetch_latest_price, fetch_intraday_candles
+from services.target_config import (
+    get_symbol_config,
+    calculate_target_prices,
+    calculate_stoploss_price,
+    pips_from_price_change,
+)
+
+logger = logging.getLogger(__name__)
+
+# ─── Configuration ───────────────────────────────────────────────────────────
+LIFECYCLE_CHECK_INTERVAL = 300        # 5 minutes in seconds
+SIGNAL_MAX_AGE_MINUTES = 30           # Expire after 30 min
+MAX_ACTIVE_SIGNALS = 100              # Cap for performance
+ARCHIVE_AFTER_DAYS = 30               # Move to cold storage after 30 days
+
+_last_lifecycle_check: Optional[datetime] = None
+
+
+# ─── Helper: get 5-min candle high/low ───────────────────────────────────────
+
+async def _get_session_high_low(symbol: str, minutes: int = 5) -> Dict[str, Optional[float]]:
+    """Get session high/low from the last N minutes of 5m candles (wick capture)."""
+    try:
+        candles = await fetch_intraday_candles(symbol, interval="5m", limit=2)
+        if candles and len(candles) > 0:
+            last = candles[-1]
+            return {
+                "high": float(last.get("high", 0)),
+                "low": float(last.get("low", 0)),
+                "current": float(last.get("close", 0)),
+            }
+    except Exception as e:
+        logger.warning(f"_get_session_high_low error for {symbol}: {e}")
+
+    # Fallback to spot price
+    try:
+        price = await fetch_latest_price(symbol)
+        if price:
+            return {"high": float(price), "low": float(price), "current": float(price)}
+    except Exception:
+        pass
+    return {"high": None, "low": None, "current": None}
+
+
+# ─── Helper: capture current indicators for failure analysis ─────────────────
+
+async def _capture_indicators(symbol: str) -> Dict[str, Any]:
+    """Capture a snapshot of all technical indicators at this moment."""
+    try:
+        from services.ta_service import compute_ta_snapshot
+        ta = await compute_ta_snapshot(symbol)
+        if ta:
+            return {
+                "rsi_14": ta.get("rsi_14"),
+                "rsi_7": ta.get("rsi_7"),
+                "macd_hist": ta.get("macd_hist"),
+                "macd_line": ta.get("macd_line"),
+                "macd_signal": ta.get("macd_signal"),
+                "ema_20": ta.get("ema_20"),
+                "ema_50": ta.get("ema_50"),
+                "ema_200": ta.get("ema_200"),
+                "adx": ta.get("adx"),
+                "stoch_k": ta.get("stoch_k"),
+                "boll_zscore": ta.get("boll_zscore"),
+                "boll_width": ta.get("boll_width"),
+                "atr_14": ta.get("atr_14"),
+                "atr_pct": ta.get("atr_pct"),
+                "mfi": ta.get("mfi"),
+                "williams_r": ta.get("williams_r"),
+                "close": ta.get("close"),
+            }
+    except Exception as e:
+        logger.warning(f"_capture_indicators error for {symbol}: {e}")
+    return {}
+
+
+# ─── Helper: determine failure type ─────────────────────────────────────────
+
+def _classify_failure(signal: dict, hit_any_target: bool, post_stop_direction: Optional[str] = None) -> str:
+    """Classify why a signal failed."""
+    targets_hit = signal.get("targets_hit") or {}
+    any_target_was_hit = any(targets_hit.values()) if targets_hit else hit_any_target
+
+    if any_target_was_hit:
+        return "volatile_reversal"  # Hit target then reversed to stop
+    if post_stop_direction and post_stop_direction != signal.get("ml_direction"):
+        return "whipsaw"  # Stopped out then went in predicted direction
+    return "hard_stop"
+
+
+# ─── Helper: get market context for failure analysis ─────────────────────────
+
+async def _get_market_context() -> Dict[str, Any]:
+    """Get macro context (VIX, DXY, session) for correlation."""
+    ctx: Dict[str, Any] = {}
+    try:
+        from services.data_hub import get_macro
+        macro = get_macro()
+        if macro:
+            ctx["vix"] = macro.get("vix", {}).get("price")
+            ctx["dxy"] = macro.get("dxy", {}).get("price")
+            ctx["usdtry"] = macro.get("usdtry", {}).get("price")
+    except Exception:
+        pass
+
+    now_utc = datetime.utcnow()
+    hour = now_utc.hour
+    if 0 <= hour < 8:
+        ctx["session"] = "asia"
+    elif 8 <= hour < 13:
+        ctx["session"] = "europe"
+    elif 13 <= hour < 21:
+        ctx["session"] = "us"
+    else:
+        ctx["session"] = "closed"
+    ctx["hour_utc"] = hour
+    return ctx
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  CORE: Process a single active signal
+# ═════════════════════════════════════════════════════════════════════════════
+
+async def _process_signal(client, signal: dict) -> Optional[str]:
+    """
+    Process one active signal:
+      1. Get session high/low (wick capture)
+      2. Calculate profit pips
+      3. Check target hits
+      4. Check stop loss
+      5. Insert signal_check record
+      6. Update prediction_logs
+      7. If stopped → create failure autopsy
+
+    Returns: new status if changed, None otherwise
+    """
+    signal_id = signal["id"]
+    symbol = signal["symbol"]
+    direction = signal.get("ml_direction", "HOLD")
+    entry_price = signal.get("ml_entry_price")
+
+    if not entry_price or direction == "HOLD":
+        # Can't track HOLD signals; mark expired
+        _update_signal_status(client, signal_id, "expired", entry_price)
+        return "expired"
+
+    config = get_symbol_config(symbol)
+
+    # ── 1. Get current prices (wick capture) ──
+    prices = await _get_session_high_low(symbol)
+    current = prices.get("current")
+    session_high = prices.get("high")
+    session_low = prices.get("low")
+
+    if current is None:
+        logger.warning(f"No price for {symbol}, skipping signal {signal_id[:8]}")
+        return None
+
+    # ── 2. Calculate profit/loss in pips ──
+    if direction == "BUY":
+        profit_pips = pips_from_price_change(current - entry_price, symbol)
+        best_pips = pips_from_price_change((session_high or current) - entry_price, symbol)
+        worst_pips = pips_from_price_change((session_low or current) - entry_price, symbol)
+    else:  # SELL
+        profit_pips = pips_from_price_change(entry_price - current, symbol)
+        best_pips = pips_from_price_change(entry_price - (session_low or current), symbol)
+        worst_pips = pips_from_price_change(entry_price - (session_high or current), symbol)
+
+    # ── 3. Update cumulative high/low ──
+    prev_high = signal.get("highest_profit_pips") or 0
+    prev_low = signal.get("lowest_drawdown_pips") or 0
+    new_high = max(prev_high, best_pips)
+    new_low = min(prev_low, worst_pips)
+
+    # ── 4. Check targets ──
+    targets_config = signal.get("targets") or {}
+    # If targets not populated yet, compute them
+    if not targets_config:
+        for tl in config.targets:
+            targets_config[tl.name] = tl.pips
+
+    targets_hit = signal.get("targets_hit") or {}
+    target_prices = calculate_target_prices(entry_price, direction, symbol)
+
+    for tp_name, tp_price in target_prices.items():
+        if targets_hit.get(tp_name):
+            continue  # Already hit
+        if direction == "BUY" and session_high and session_high >= tp_price:
+            targets_hit[tp_name] = True
+            logger.info(f"✅ Signal {signal_id[:8]} {symbol} {direction}: {tp_name} HIT @ high={session_high:.2f} (target={tp_price:.2f})")
+        elif direction == "SELL" and session_low and session_low <= tp_price:
+            targets_hit[tp_name] = True
+            logger.info(f"✅ Signal {signal_id[:8]} {symbol} {direction}: {tp_name} HIT @ low={session_low:.2f} (target={tp_price:.2f})")
+
+    # ── 5. Check stop loss ──
+    sl_pips = signal.get("stop_loss_pips") or config.stoploss_pips
+    sl_price = calculate_stoploss_price(entry_price, direction, symbol)
+    hit_stop = False
+
+    if direction == "BUY" and session_low and session_low <= sl_price:
+        hit_stop = True
+    elif direction == "SELL" and session_high and session_high >= sl_price:
+        hit_stop = True
+
+    # ── 6. Build target_status for this check ──
+    target_status = {}
+    for tp_name in target_prices:
+        target_status[tp_name] = bool(targets_hit.get(tp_name))
+
+    # ── 7. Insert signal_check record ──
+    check_record = {
+        "signal_id": signal_id,
+        "check_time": datetime.utcnow().isoformat() + "Z",
+        "current_price": round(current, 4),
+        "session_high": round(session_high, 4) if session_high else None,
+        "session_low": round(session_low, 4) if session_low else None,
+        "profit_pips": round(profit_pips, 2),
+        "cumulative_high_pips": round(new_high, 2),
+        "cumulative_low_pips": round(new_low, 2),
+        "target_status": json.dumps(target_status),
+    }
+    try:
+        client.table("signal_checks").insert(check_record)
+    except Exception as e:
+        logger.error(f"Failed to insert signal_check for {signal_id[:8]}: {e}")
+
+    # ── 8. Determine new status ──
+    new_status = None
+    exit_price = None
+
+    if hit_stop:
+        new_status = "stopped"
+        exit_price = sl_price
+        logger.info(f"🛑 Signal {signal_id[:8]} {symbol} {direction} STOPPED @ {sl_price:.2f}")
+    elif all(target_status.get(tp) for tp in target_prices):
+        new_status = "completed"
+        exit_price = current
+        logger.info(f"🎯 Signal {signal_id[:8]} {symbol} {direction} ALL TARGETS HIT!")
+    else:
+        # Check age for expiration
+        created_at = signal.get("created_at", "")
+        if isinstance(created_at, str) and created_at:
+            try:
+                created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                age_minutes = (datetime.now(created_dt.tzinfo) - created_dt).total_seconds() / 60
+                if age_minutes >= SIGNAL_MAX_AGE_MINUTES:
+                    any_hit = any(targets_hit.values()) if targets_hit else False
+                    new_status = "completed" if any_hit else "expired"
+                    exit_price = current
+                    logger.info(f"⏰ Signal {signal_id[:8]} aged out ({age_minutes:.0f}m) → {new_status}")
+            except Exception:
+                pass
+
+    # ── 9. Update prediction_logs ──
+    update_data: Dict[str, Any] = {
+        "highest_profit_pips": round(new_high, 2),
+        "lowest_drawdown_pips": round(new_low, 2),
+        "targets_hit": json.dumps(targets_hit),
+        "targets": json.dumps(targets_config),
+    }
+    if new_status:
+        update_data["status"] = new_status
+        update_data["exit_price"] = round(exit_price, 4) if exit_price else None
+        update_data["exit_time"] = datetime.utcnow().isoformat() + "Z"
+
+    try:
+        client.table("prediction_logs").eq("id", signal_id).update(update_data)
+    except Exception as e:
+        logger.error(f"Failed to update signal {signal_id[:8]}: {e}")
+
+    # ── 10. Failure autopsy on stop ──
+    if new_status == "stopped":
+        await _create_failure_autopsy(client, signal, targets_hit, current)
+
+    return new_status
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  Failure Autopsy
+# ═════════════════════════════════════════════════════════════════════════════
+
+async def _create_failure_autopsy(
+    client, signal: dict, targets_hit: dict, current_price: float
+):
+    """Create a detailed failure analysis record."""
+    signal_id = signal["id"]
+    symbol = signal["symbol"]
+
+    try:
+        # Capture indicators at failure moment
+        failure_indicators = await _capture_indicators(symbol)
+
+        # Entry indicators from stored factors
+        entry_indicators = signal.get("factors") or {}
+        if isinstance(entry_indicators, str):
+            try:
+                entry_indicators = json.loads(entry_indicators)
+            except Exception:
+                entry_indicators = {}
+
+        # Get last 5 candles for price action context
+        price_action = []
+        try:
+            candles = await fetch_intraday_candles(symbol, interval="5m", limit=5)
+            if candles:
+                for c in candles[-5:]:
+                    price_action.append({
+                        "open": c.get("open"),
+                        "high": c.get("high"),
+                        "low": c.get("low"),
+                        "close": c.get("close"),
+                        "volume": c.get("volume"),
+                    })
+        except Exception:
+            pass
+
+        # Market context
+        market_ctx = await _get_market_context()
+
+        # Classify failure type
+        hit_any = any(targets_hit.values()) if targets_hit else False
+        failure_type = _classify_failure(signal, hit_any)
+
+        # Confluence score: how many indicators agreed at entry
+        confluence = _calculate_confluence(entry_indicators, signal.get("ml_direction", "HOLD"))
+
+        # Contradiction flags
+        contradictions = _find_contradictions(entry_indicators, signal.get("ml_direction", "HOLD"))
+
+        # Market regime
+        adx = failure_indicators.get("adx", 20)
+        atr_pct = failure_indicators.get("atr_pct", 0)
+        if adx and adx >= 25:
+            regime = "trending"
+        elif atr_pct and atr_pct > 1.5:
+            regime = "volatile"
+        else:
+            regime = "range"
+
+        # Insert failure record
+        failure_record = {
+            "signal_id": signal_id,
+            "failure_type": failure_type,
+            "entry_indicators": json.dumps(entry_indicators),
+            "failure_indicators": json.dumps(failure_indicators),
+            "price_action_context": json.dumps(price_action),
+            "market_regime": regime,
+            "correlation_context": json.dumps(market_ctx),
+            "confluence_score": confluence,
+            "contradiction_flags": json.dumps(contradictions),
+            "retrain_weight": 0.5,
+        }
+
+        client.table("signal_failures").insert(failure_record)
+        logger.info(f"📋 Failure autopsy saved for {signal_id[:8]}: type={failure_type}, regime={regime}, confluence={confluence}")
+
+    except Exception as e:
+        logger.error(f"Failed to create failure autopsy for {signal_id[:8]}: {e}")
+
+
+def _calculate_confluence(indicators: dict, direction: str) -> int:
+    """Count how many indicators agreed with the signal direction at entry."""
+    score = 0
+    if not indicators:
+        return 0
+
+    rsi = indicators.get("rsi_14")
+    macd = indicators.get("macd_histogram") or indicators.get("macd_hist")
+    ema20_dist = indicators.get("ema20_distance_pct") or indicators.get("ema_20")
+    stoch = indicators.get("stoch_k")
+    adx = indicators.get("adx")
+
+    if direction == "BUY":
+        if rsi and rsi > 50: score += 1
+        if macd and macd > 0: score += 1
+        if ema20_dist and ema20_dist > 0: score += 1
+        if stoch and stoch > 50: score += 1
+        if adx and adx > 25: score += 1
+    elif direction == "SELL":
+        if rsi and rsi < 50: score += 1
+        if macd and macd < 0: score += 1
+        if ema20_dist and ema20_dist < 0: score += 1
+        if stoch and stoch < 50: score += 1
+        if adx and adx > 25: score += 1
+
+    return score
+
+
+def _find_contradictions(indicators: dict, direction: str) -> Dict[str, str]:
+    """Find which indicators contradicted the signal at entry."""
+    flags = {}
+    if not indicators:
+        return flags
+
+    rsi = indicators.get("rsi_14")
+    macd = indicators.get("macd_histogram") or indicators.get("macd_hist")
+    stoch = indicators.get("stoch_k")
+    boll_z = indicators.get("boll_zscore")
+
+    if direction == "BUY":
+        if rsi and rsi > 70: flags["rsi_overbought"] = f"RSI={rsi:.0f}"
+        if macd and macd < 0: flags["macd_bearish"] = f"MACD_H={macd:.4f}"
+        if stoch and stoch > 80: flags["stoch_overbought"] = f"Stoch={stoch:.0f}"
+        if boll_z and boll_z > 2: flags["boll_upper"] = f"Z={boll_z:.2f}"
+    elif direction == "SELL":
+        if rsi and rsi < 30: flags["rsi_oversold"] = f"RSI={rsi:.0f}"
+        if macd and macd > 0: flags["macd_bullish"] = f"MACD_H={macd:.4f}"
+        if stoch and stoch < 20: flags["stoch_oversold"] = f"Stoch={stoch:.0f}"
+        if boll_z and boll_z < -2: flags["boll_lower"] = f"Z={boll_z:.2f}"
+
+    return flags
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  MAIN: Run lifecycle check for all active signals
+# ═════════════════════════════════════════════════════════════════════════════
+
+async def run_lifecycle_check() -> Dict[str, Any]:
+    """
+    Main entry point — runs every 5 minutes.
+    1. Fetch all active signals
+    2. Process each one (target/stop check, wick capture)
+    3. Cleanup expired signals
+    4. Return summary
+    """
+    if not is_db_available():
+        return {"error": "DB not available"}
+
+    client = get_supabase_client()
+    if not client:
+        return {"error": "No DB client"}
+
+    summary = {
+        "checked": 0,
+        "completed": 0,
+        "stopped": 0,
+        "expired": 0,
+        "still_active": 0,
+        "target_hits": [],
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+    }
+
+    try:
+        # Fetch active signals (limit to MAX_ACTIVE_SIGNALS)
+        result = client.table("prediction_logs").select("*").eq(
+            "status", "active"
+        ).order("created_at", desc=True).limit(MAX_ACTIVE_SIGNALS).execute()
+
+        signals = result.get("data") or []
+
+        if not signals:
+            logger.debug("No active signals to check")
+            return summary
+
+        logger.info(f"🔄 Lifecycle check: processing {len(signals)} active signals")
+
+        for signal in signals:
+            try:
+                new_status = await _process_signal(client, signal)
+                summary["checked"] += 1
+
+                if new_status == "completed":
+                    summary["completed"] += 1
+                    summary["target_hits"].append({
+                        "signal_id": signal["id"][:8],
+                        "symbol": signal["symbol"],
+                        "direction": signal.get("ml_direction"),
+                    })
+                elif new_status == "stopped":
+                    summary["stopped"] += 1
+                elif new_status == "expired":
+                    summary["expired"] += 1
+                else:
+                    summary["still_active"] += 1
+
+            except Exception as e:
+                logger.error(f"Error processing signal {signal.get('id', '?')[:8]}: {e}")
+
+            # Small delay between signals to avoid overwhelming DataHub
+            await asyncio.sleep(0.2)
+
+        logger.info(
+            f"✅ Lifecycle check complete: {summary['checked']} checked, "
+            f"{summary['completed']} completed, {summary['stopped']} stopped, "
+            f"{summary['expired']} expired, {summary['still_active']} active"
+        )
+
+    except Exception as e:
+        logger.error(f"Lifecycle check error: {e}")
+        summary["error"] = str(e)
+
+    return summary
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  Cleanup: archive old signals, cap active count
+# ═════════════════════════════════════════════════════════════════════════════
+
+async def cleanup_old_signals():
+    """
+    1. Force-expire very old active signals (>2 hours)
+    2. Delete signal_checks older than 30 days
+    """
+    if not is_db_available():
+        return
+
+    client = get_supabase_client()
+    if not client:
+        return
+
+    try:
+        # Force-expire signals older than 2 hours that are still active
+        cutoff = (datetime.utcnow() - timedelta(hours=2)).isoformat() + "Z"
+        result = client.table("prediction_logs").select("id, created_at").eq(
+            "status", "active"
+        ).lt("created_at", cutoff).limit(50).execute()
+
+        stale = result.get("data") or []
+        for s in stale:
+            client.table("prediction_logs").eq("id", s["id"]).update({
+                "status": "expired",
+                "exit_time": datetime.utcnow().isoformat() + "Z",
+            })
+
+        if stale:
+            logger.info(f"🧹 Force-expired {len(stale)} stale signals (>2h old)")
+
+        # Delete signal_checks older than 30 days
+        archive_cutoff = (datetime.utcnow() - timedelta(days=ARCHIVE_AFTER_DAYS)).isoformat() + "Z"
+        client.table("signal_checks").select("id").lt(
+            "created_at", archive_cutoff
+        ).limit(500).execute()
+        # Note: actual deletion would need a delete call; for now just log
+        logger.debug("Cleanup cycle completed")
+
+    except Exception as e:
+        logger.error(f"Cleanup error: {e}")
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  Dashboard Data: aggregated stats per model
+# ═════════════════════════════════════════════════════════════════════════════
+
+async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
+    """
+    Build Learning Dashboard v2 data:
+      - Per model type: total, win rate, avg profit, avg loss, R/R, target rates
+      - Failure patterns breakdown
+      - Cumulative pips over time
+    """
+    if not is_db_available():
+        return {"error": "DB not available"}
+
+    client = get_supabase_client()
+    if not client:
+        return {"error": "No DB client"}
+
+    cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
+
+    try:
+        # All non-active signals in period
+        result = client.table("prediction_logs").select(
+            "id, symbol, ml_direction, ml_confidence, ml_entry_price, "
+            "model_type, status, targets_hit, highest_profit_pips, "
+            "lowest_drawdown_pips, exit_price, exit_time, stop_loss_pips, "
+            "targets, created_at, strategy"
+        ).neq("status", "active").gte("created_at", cutoff).order(
+            "created_at", desc=True
+        ).limit(1000).execute()
+
+        signals = result.get("data") or []
+
+        # Per-model stats
+        models = {}
+        for sig in signals:
+            mt = sig.get("model_type") or sig.get("strategy") or "ml"
+            if mt not in models:
+                models[mt] = {
+                    "total": 0, "completed": 0, "stopped": 0, "expired": 0,
+                    "total_profit_pips": 0, "total_loss_pips": 0,
+                    "profits": [], "losses": [],
+                    "target_hits": {},  # TP1: count, TP2: count, etc.
+                    "symbols": {},
+                }
+
+            m = models[mt]
+            m["total"] += 1
+            status = sig.get("status", "expired")
+            m[status] = m.get(status, 0) + 1
+
+            # Symbol breakdown
+            sym = sig.get("symbol", "?")
+            if sym not in m["symbols"]:
+                m["symbols"][sym] = {"total": 0, "completed": 0, "stopped": 0}
+            m["symbols"][sym]["total"] += 1
+            m["symbols"][sym][status] = m["symbols"][sym].get(status, 0) + 1
+
+            # Profit/loss
+            hp = sig.get("highest_profit_pips") or 0
+            dd = sig.get("lowest_drawdown_pips") or 0
+
+            if status == "completed":
+                m["total_profit_pips"] += hp
+                m["profits"].append(hp)
+            elif status == "stopped":
+                m["total_loss_pips"] += abs(dd)
+                m["losses"].append(abs(dd))
+
+            # Target hit rates
+            th = sig.get("targets_hit")
+            if isinstance(th, str):
+                try:
+                    th = json.loads(th)
+                except Exception:
+                    th = {}
+            if th:
+                for tp_name, hit in th.items():
+                    if tp_name not in m["target_hits"]:
+                        m["target_hits"][tp_name] = {"total": 0, "hit": 0}
+                    m["target_hits"][tp_name]["total"] += 1
+                    if hit:
+                        m["target_hits"][tp_name]["hit"] += 1
+
+        # Build final stats
+        model_stats = {}
+        for mt, m in models.items():
+            total = m["total"] or 1
+            avg_profit = sum(m["profits"]) / len(m["profits"]) if m["profits"] else 0
+            avg_loss = sum(m["losses"]) / len(m["losses"]) if m["losses"] else 0
+
+            target_rates = {}
+            for tp_name, counts in m["target_hits"].items():
+                t = counts["total"] or 1
+                target_rates[tp_name] = round(counts["hit"] / t * 100, 1)
+
+            model_stats[mt] = {
+                "total_signals": m["total"],
+                "completed": m["completed"],
+                "stopped": m["stopped"],
+                "expired": m["expired"],
+                "win_rate": round(m["completed"] / total * 100, 1),
+                "avg_profit_pips": round(avg_profit, 1),
+                "avg_loss_pips": round(avg_loss, 1),
+                "risk_reward": round(avg_profit / avg_loss, 2) if avg_loss > 0 else 0,
+                "total_profit_pips": round(m["total_profit_pips"], 1),
+                "total_loss_pips": round(m["total_loss_pips"], 1),
+                "net_pips": round(m["total_profit_pips"] - m["total_loss_pips"], 1),
+                "target_rates": target_rates,
+                "symbols": m["symbols"],
+            }
+
+        # Failure patterns
+        fail_result = client.table("signal_failures").select(
+            "failure_type, market_regime, confluence_score, signal_id"
+        ).gte("created_at", cutoff).limit(500).execute()
+
+        failures = fail_result.get("data") or []
+        failure_breakdown = {}
+        for f in failures:
+            ft = f.get("failure_type", "unknown")
+            failure_breakdown[ft] = failure_breakdown.get(ft, 0) + 1
+
+        # Active signals count
+        active_result = client.table("prediction_logs").select(
+            "id"
+        ).eq("status", "active").execute()
+        active_count = len(active_result.get("data") or [])
+
+        return {
+            "period_days": days,
+            "model_stats": model_stats,
+            "failure_breakdown": failure_breakdown,
+            "total_failures": len(failures),
+            "active_signals": active_count,
+            "generated_at": datetime.utcnow().isoformat() + "Z",
+        }
+
+    except Exception as e:
+        logger.error(f"Dashboard stats error: {e}")
+        return {"error": str(e)}
+
+
+async def get_signal_detail(signal_id: str) -> Dict[str, Any]:
+    """Get full signal detail with all 5-min checks for the detail modal."""
+    if not is_db_available():
+        return {"error": "DB not available"}
+
+    client = get_supabase_client()
+    if not client:
+        return {"error": "No DB client"}
+
+    try:
+        # Get the signal
+        sig_result = client.table("prediction_logs").select("*").eq(
+            "id", signal_id
+        ).execute()
+        sig_data = sig_result.get("data")
+        if not sig_data:
+            return {"error": "Signal not found"}
+        signal = sig_data[0]
+
+        # Get all checks
+        checks_result = client.table("signal_checks").select("*").eq(
+            "signal_id", signal_id
+        ).order("check_time", desc=False).execute()
+        checks = checks_result.get("data") or []
+
+        # Get failure autopsy if exists
+        fail_result = client.table("signal_failures").select("*").eq(
+            "signal_id", signal_id
+        ).execute()
+        failure = (fail_result.get("data") or [None])[0]
+
+        # Parse JSON fields
+        for field in ["targets", "targets_hit", "factors"]:
+            val = signal.get(field)
+            if isinstance(val, str):
+                try:
+                    signal[field] = json.loads(val)
+                except Exception:
+                    pass
+
+        for check in checks:
+            ts = check.get("target_status")
+            if isinstance(ts, str):
+                try:
+                    check["target_status"] = json.loads(ts)
+                except Exception:
+                    pass
+
+        if failure:
+            for field in ["entry_indicators", "failure_indicators", "price_action_context",
+                          "correlation_context", "contradiction_flags"]:
+                val = failure.get(field)
+                if isinstance(val, str):
+                    try:
+                        failure[field] = json.loads(val)
+                    except Exception:
+                        pass
+
+        return {
+            "signal": signal,
+            "checks": checks,
+            "failure": failure,
+        }
+
+    except Exception as e:
+        logger.error(f"Signal detail error: {e}")
+        return {"error": str(e)}
+
+
+async def export_failures(days: int = 30) -> List[Dict[str, Any]]:
+    """Export failure records for ML retraining dataset."""
+    if not is_db_available():
+        return []
+
+    client = get_supabase_client()
+    if not client:
+        return []
+
+    cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
+
+    try:
+        result = client.table("signal_failures").select("*").gte(
+            "created_at", cutoff
+        ).order("created_at", desc=True).limit(500).execute()
+
+        failures = result.get("data") or []
+
+        # Parse JSON fields
+        for f in failures:
+            for field in ["entry_indicators", "failure_indicators", "price_action_context",
+                          "correlation_context", "contradiction_flags"]:
+                val = f.get(field)
+                if isinstance(val, str):
+                    try:
+                        f[field] = json.loads(val)
+                    except Exception:
+                        pass
+
+        return failures
+
+    except Exception as e:
+        logger.error(f"Export failures error: {e}")
+        return []
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  Scheduler integration
+# ═════════════════════════════════════════════════════════════════════════════
+
+async def check_lifecycle_if_needed():
+    """Called from background_scheduler every 60s; runs lifecycle every 5 min."""
+    global _last_lifecycle_check
+
+    now = datetime.utcnow()
+    if _last_lifecycle_check and (now - _last_lifecycle_check).total_seconds() < LIFECYCLE_CHECK_INTERVAL:
+        return
+
+    _last_lifecycle_check = now
+
+    try:
+        summary = await run_lifecycle_check()
+        logger.info(f"Lifecycle summary: {summary.get('checked', 0)} checked")
+
+        # Broadcast to WebSocket clients
+        try:
+            from services.ws_manager import manager
+            await manager.broadcast_all({
+                "lifecycle": {
+                    "type": "lifecycle_update",
+                    "summary": summary,
+                }
+            })
+        except Exception:
+            pass
+
+    except Exception as e:
+        logger.error(f"Lifecycle check error: {e}")
+
+    # Cleanup less frequently (every 30 min is fine, ~6x per lifecycle interval)
+    try:
+        await cleanup_old_signals()
+    except Exception as e:
+        logger.error(f"Cleanup error: {e}")

@@ -635,3 +635,133 @@ export async function resetUiStats(symbol?: string): Promise<any> {
   }
   return res.json();
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SIGNAL LIFECYCLE v2 API
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface ActiveSignal {
+  id: string;
+  symbol: string;
+  ml_direction: string;
+  ml_confidence: number;
+  ml_entry_price: number;
+  model_type: string;
+  strategy: string;
+  status: string;
+  targets: Record<string, number>;
+  targets_hit: Record<string, boolean>;
+  highest_profit_pips: number;
+  lowest_drawdown_pips: number;
+  stop_loss_pips: number;
+  created_at: string;
+}
+
+export interface ModelStats {
+  total_signals: number;
+  completed: number;
+  stopped: number;
+  expired: number;
+  win_rate: number;
+  avg_profit_pips: number;
+  avg_loss_pips: number;
+  risk_reward: number;
+  total_profit_pips: number;
+  total_loss_pips: number;
+  net_pips: number;
+  target_rates: Record<string, number>;
+  symbols: Record<string, { total: number; completed: number; stopped: number }>;
+}
+
+export interface LifecycleDashboard {
+  period_days: number;
+  model_stats: Record<string, ModelStats>;
+  failure_breakdown: Record<string, number>;
+  total_failures: number;
+  active_signals: number;
+  generated_at: string;
+  error?: string;
+}
+
+export interface SignalCheck {
+  id: string;
+  signal_id: string;
+  check_time: string;
+  current_price: number;
+  session_high: number | null;
+  session_low: number | null;
+  profit_pips: number;
+  cumulative_high_pips: number;
+  cumulative_low_pips: number;
+  target_status: Record<string, boolean>;
+}
+
+export interface SignalDetail {
+  signal: any;
+  checks: SignalCheck[];
+  failure: any | null;
+  error?: string;
+}
+
+export interface LifecycleCheckSummary {
+  checked: number;
+  completed: number;
+  stopped: number;
+  expired: number;
+  still_active: number;
+  target_hits: Array<{ signal_id: string; symbol: string; direction: string }>;
+  timestamp: string;
+}
+
+async function fetchActiveSignals(): Promise<{ signals: ActiveSignal[]; count: number }> {
+  const res = await fetch(`${API_BASE}/api/signals/active`);
+  if (!res.ok) throw new Error("Failed to fetch active signals");
+  return res.json();
+}
+
+async function fetchLifecycleDashboard(days: number = 30): Promise<LifecycleDashboard> {
+  const res = await fetch(`${API_BASE}/api/signals/dashboard?days=${days}`);
+  if (!res.ok) throw new Error("Failed to fetch lifecycle dashboard");
+  return res.json();
+}
+
+async function fetchSignalDetail(signalId: string): Promise<SignalDetail> {
+  const res = await fetch(`${API_BASE}/api/signals/detail/${signalId}`);
+  if (!res.ok) throw new Error("Failed to fetch signal detail");
+  return res.json();
+}
+
+async function triggerLifecycleCheck(): Promise<{ success: boolean; summary: LifecycleCheckSummary }> {
+  const res = await fetch(`${API_BASE}/api/signals/check-now`, { method: "POST" });
+  if (!res.ok) throw new Error("Failed to trigger lifecycle check");
+  return res.json();
+}
+
+export function useActiveSignals() {
+  return useQuery({
+    queryKey: ["signals", "active"],
+    queryFn: fetchActiveSignals,
+    staleTime: 15000,
+    refetchInterval: 30000,
+  });
+}
+
+export function useLifecycleDashboard(days: number = 30) {
+  return useQuery({
+    queryKey: ["signals", "dashboard", days],
+    queryFn: () => fetchLifecycleDashboard(days),
+    staleTime: 30000,
+    refetchInterval: 60000,
+  });
+}
+
+export function useSignalDetail(signalId: string | null) {
+  return useQuery({
+    queryKey: ["signals", "detail", signalId],
+    queryFn: () => fetchSignalDetail(signalId!),
+    enabled: !!signalId,
+    staleTime: 10000,
+  });
+}
+
+export { triggerLifecycleCheck };

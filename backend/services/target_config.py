@@ -22,20 +22,22 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
     "NDX.INDX": SymbolConfig(
         pip_value=1.0,  # 1 index point = 1 pip
         targets=[
-            TargetLevel("TP1", 20),   # 20 pips
-            TargetLevel("TP2", 30),   # 30 pips
-            TargetLevel("TP3", 50),   # 50 pips
+            TargetLevel("TP1", 15),   # 15 pips
+            TargetLevel("TP2", 25),   # 25 pips
+            TargetLevel("TP3", 30),   # 30 pips
+            TargetLevel("TP4", 50),   # 50 pips
         ],
-        stoploss_pips=50,  # 50 pips below entry
+        stoploss_pips=35,  # 35 pips stop loss
     ),
     "XAUUSD": SymbolConfig(
         pip_value=0.1,  # $0.10 = 1 pip for gold
         targets=[
             TargetLevel("TP1", 5),    # 5 pips = $0.50
             TargetLevel("TP2", 10),   # 10 pips = $1.00
-            TargetLevel("TP3", 20),   # 20 pips = $2.00
+            TargetLevel("TP3", 15),   # 15 pips = $1.50
+            TargetLevel("TP4", 20),   # 20 pips = $2.00
         ],
-        stoploss_pips=10,  # 10 pips below entry
+        stoploss_pips=10,  # 10 pips stop loss
     ),
 }
 
