@@ -191,7 +191,7 @@ async def analyze_signal_with_claude(prediction: dict, ta_data: dict) -> ClaudeA
     api_key = settings.deepseek_api_key
     if not api_key:
         logger.warning("DEEP_SEEKR1 not set, using fallback analysis")
-        return _fallback_analysis(prediction)
+        return _fallback_analysis(prediction, ta_data)
     
     prompt = _build_analysis_prompt(prediction, ta_data)
     # Prepend system prompt to user message (R1 doesn't support system role well)
@@ -220,7 +220,7 @@ async def analyze_signal_with_claude(prediction: dict, ta_data: dict) -> ClaudeA
         
     except Exception as e:
         logger.error(f"DeepSeek API error: {e}")
-        return _fallback_analysis(prediction)
+        return _fallback_analysis(prediction, ta_data)
 
 
 def _parse_claude_response(prediction: dict, response: str) -> ClaudeAnalysisResult:
@@ -348,56 +348,177 @@ def _parse_claude_response(prediction: dict, response: str) -> ClaudeAnalysisRes
     )
 
 
-def _fallback_analysis(prediction: dict) -> ClaudeAnalysisResult:
-    """Fallback when Claude API is unavailable."""
+def _fallback_analysis(prediction: dict, ta_data: dict = None) -> ClaudeAnalysisResult:
+    """Independent TA-based analysis when DeepSeek API is unavailable.
+    Uses raw technical indicators to form its OWN opinion, separate from ML."""
     
     symbol = prediction.get('symbol', 'Unknown')
     ml_direction = prediction.get('direction', 'HOLD')
-    confidence = prediction.get('confidence', 50)
+    ta = ta_data or {}
     
-    # Simple rule-based assessment
-    tech_score = prediction.get('technical_score', 50)
-    mom_score = prediction.get('momentum_score', 50)
-    trend_score = prediction.get('trend_score', 50)
+    # ── Independent scoring from raw TA indicators ──
+    buy_score = 0
+    sell_score = 0
+    strengths = []
+    weaknesses = []
+    observations = []
     
-    avg_score = (tech_score + mom_score + trend_score) / 3
+    close = ta.get('close', 0)
+    ema_20 = ta.get('ema_20', close)
+    ema_50 = ta.get('ema_50', close)
+    ema_200 = ta.get('ema_200', close)
+    rsi = ta.get('rsi_14', 50)
+    macd_h = ta.get('macd_hist', 0)
+    stoch_k = ta.get('stoch_k', 50)
+    adx = ta.get('adx', 20)
+    boll_z = ta.get('boll_zscore', 0)
+    atr = ta.get('atr_14', 0)
+    williams = ta.get('williams_r', -50)
+    mfi = ta.get('mfi', 50)
     
-    if avg_score >= 70 and confidence >= 65:
-        assessment = f"ML sinyali güçlü görünüyor. {ml_direction} yönünde yüksek güven."
-        strengths = ["Teknik skorlar pozitif", "Momentum destekliyor", "Trend uyumlu"]
-        weaknesses = ["Claude API bağlantısı yok - detaylı analiz yapılamadı"]
-        claude_direction = ml_direction
-        claude_conf = confidence * 0.9
-    elif avg_score >= 50:
-        assessment = f"ML sinyali orta güçte. {ml_direction} yönünde dikkatli yaklaşım önerilir."
-        strengths = ["Bazı göstergeler destekliyor"]
-        weaknesses = ["Mixed signals", "Claude API bağlantısı yok"]
-        claude_direction = ml_direction
-        claude_conf = confidence * 0.7
+    # 1) EMA Stack Analysis
+    if close > ema_20 > ema_50 > ema_200:
+        buy_score += 3
+        strengths.append("EMA dizilimi tam yükseliş trendi (20>50>200)")
+    elif close < ema_20 < ema_50 < ema_200:
+        sell_score += 3
+        strengths.append("EMA dizilimi tam düşüş trendi (20<50<200)")
     else:
-        assessment = "Sinyal zayıf. İşlem önerilmez."
-        strengths = []
-        weaknesses = ["Düşük skorlar", "Belirsiz yön", "Claude API bağlantısı yok"]
-        claude_direction = "HOLD"
-        claude_conf = 40
+        observations.append("EMA'lar karışık — net trend yok")
+        if close > ema_200:
+            buy_score += 1
+        else:
+            sell_score += 1
+    
+    # 2) RSI Analysis
+    if rsi > 70:
+        sell_score += 2
+        weaknesses.append(f"RSI aşırı alım bölgesinde ({rsi:.0f})")
+    elif rsi < 30:
+        buy_score += 2
+        strengths.append(f"RSI aşırı satım bölgesinde ({rsi:.0f}) — dönüş fırsatı")
+    elif rsi > 55:
+        buy_score += 1
+        observations.append(f"RSI pozitif bölgede ({rsi:.0f})")
+    elif rsi < 45:
+        sell_score += 1
+        observations.append(f"RSI negatif bölgede ({rsi:.0f})")
+    
+    # 3) MACD Histogram
+    if macd_h > 0:
+        buy_score += 1
+        strengths.append("MACD histogram pozitif — momentum yukarı")
+    else:
+        sell_score += 1
+        weaknesses.append("MACD histogram negatif — momentum aşağı")
+    
+    # 4) Stochastic
+    if stoch_k > 80:
+        sell_score += 1
+        weaknesses.append(f"Stochastic aşırı alımda ({stoch_k:.0f})")
+    elif stoch_k < 20:
+        buy_score += 1
+        strengths.append(f"Stochastic aşırı satımda ({stoch_k:.0f})")
+    
+    # 5) ADX Trend Strength
+    if adx >= 25:
+        observations.append(f"ADX güçlü trend gösteriyor ({adx:.0f})")
+    else:
+        weaknesses.append(f"ADX zayıf — trend gücü yetersiz ({adx:.0f})")
+    
+    # 6) Bollinger Z-Score
+    if boll_z > 2:
+        sell_score += 1
+        weaknesses.append("Fiyat Bollinger üst bandına yakın — geri çekilme riski")
+    elif boll_z < -2:
+        buy_score += 1
+        strengths.append("Fiyat Bollinger alt bandında — sıçrama potansiyeli")
+    
+    # 7) Williams %R
+    if williams > -20:
+        sell_score += 1
+    elif williams < -80:
+        buy_score += 1
+    
+    # 8) MFI
+    if mfi > 80:
+        sell_score += 1
+        observations.append("MFI aşırı alım — para akışı tersine dönebilir")
+    elif mfi < 20:
+        buy_score += 1
+        observations.append("MFI aşırı satım — alım fırsatı")
+    
+    # ── Determine independent direction ──
+    total_score = buy_score + sell_score
+    if buy_score >= sell_score + 2:
+        ai_direction = "BUY"
+        ai_confidence = min(85, 50 + (buy_score - sell_score) * 5)
+    elif sell_score >= buy_score + 2:
+        ai_direction = "SELL"
+        ai_confidence = min(85, 50 + (sell_score - buy_score) * 5)
+    else:
+        ai_direction = "HOLD"
+        ai_confidence = 45
+        observations.append("Göstergeler dengeli — net sinyal yok, beklemek mantıklı")
+    
+    agreement = ai_direction == ml_direction
+    
+    # ── Build assessment text ──
+    if agreement:
+        assessment = f"Bağımsız teknik analiz ML modelin {ml_direction} sinyalini DESTEKLIYOR. "
+        assessment += f"Buy skoru: {buy_score}, Sell skoru: {sell_score}. "
+        if ai_direction != "HOLD":
+            assessment += "Göstergeler aynı yönü işaret ediyor — güvenilirlik yüksek."
+        else:
+            assessment += "Her iki sistem de bekle diyor — akıllıca."
+    else:
+        assessment = f"⚠️ Bağımsız teknik analiz ML modelden FARKLI düşünüyor! "
+        assessment += f"ML: {ml_direction}, AI Teknik: {ai_direction}. "
+        assessment += f"Buy skoru: {buy_score}, Sell skoru: {sell_score}. "
+        assessment += "İki sistem uyuşmuyor — dikkatli ol."
+    
+    if not strengths:
+        strengths = ["Analiz tamamlandı"]
+    if not weaknesses:
+        weaknesses = ["Belirgin risk faktörü tespit edilmedi"]
+    
+    # ── Price levels (independent from ML) ──
+    entry = close
+    if atr > 0:
+        if ai_direction == "BUY":
+            sl = close - atr * 1.5
+            tp = close + atr * 2.5
+        elif ai_direction == "SELL":
+            sl = close + atr * 1.5
+            tp = close - atr * 2.5
+        else:
+            sl = close - atr * 1.0
+            tp = close + atr * 1.0
+    else:
+        sl = prediction.get('stop_price', 0)
+        tp = prediction.get('target_price', 0)
+    
+    pos_size = "Medium" if ai_confidence >= 70 else "Small" if ai_confidence >= 55 else "No Trade"
+    if ai_direction == "HOLD":
+        pos_size = "No Trade"
     
     return ClaudeAnalysisResult(
         symbol=symbol,
         ml_direction=ml_direction,
-        claude_direction=claude_direction,
-        claude_confidence=claude_conf,
-        agreement=claude_direction == ml_direction,
+        claude_direction=ai_direction,
+        claude_confidence=ai_confidence,
+        agreement=agreement,
         general_assessment=assessment,
-        strengths=strengths,
-        weaknesses=weaknesses,
-        recommended_entry=prediction.get('entry_price', 0),
-        recommended_sl=prediction.get('stop_price', 0),
-        recommended_tp=prediction.get('target_price', 0),
-        position_size_suggestion="Small" if claude_direction != "HOLD" else "No Trade",
-        key_observations=["Fallback analiz modu - Claude API bağlantısı gerekli"],
-        risk_factors=["API bağlantısı yok", "Tam analiz yapılamadı"],
+        strengths=strengths[:5],
+        weaknesses=weaknesses[:5],
+        recommended_entry=round(entry, 2),
+        recommended_sl=round(sl, 2),
+        recommended_tp=round(tp, 2),
+        position_size_suggestion=pos_size,
+        key_observations=observations[:5] if observations else ["Teknik göstergeler analiz edildi"],
+        risk_factors=weaknesses[:3],
         timestamp=datetime.utcnow().isoformat() + "Z",
-        model_used="fallback"
+        model_used="independent-ta-engine"
     )
 
 
