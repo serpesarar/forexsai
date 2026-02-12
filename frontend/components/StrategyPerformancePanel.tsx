@@ -120,7 +120,7 @@ function StrategyRow({
 
   return (
     <tr className={`border-b border-white/5 hover:bg-white/5 transition-colors ${isBest ? "bg-yellow-500/5" : ""}`}>
-      <td className="px-3 py-3">
+      <td className="px-3 py-3 whitespace-nowrap">
         <div className="flex items-center gap-2">
           <div className={`p-1.5 rounded-lg ${config.bgColor} shrink-0`}>
             <Icon className={`w-3.5 h-3.5 ${config.color}`} />
@@ -136,28 +136,28 @@ function StrategyRow({
                 </span>
               )}
             </div>
-            <span className="text-[10px] text-textSecondary">{data.total_predictions} tahmin / {data.with_outcome} sonuç</span>
+            <span className="text-[10px] text-textSecondary whitespace-nowrap">{data.total_predictions} tahmin / {data.with_outcome} sonuç</span>
           </div>
         </div>
       </td>
       <td className="px-3 py-3">
         <AccuracyBar value={data.accuracy} color={accColor} />
       </td>
-      <td className="px-3 py-3">
+      <td className="px-3 py-3 whitespace-nowrap">
         <div className="flex items-center gap-1">
           <Target className="w-3 h-3 text-success shrink-0" />
           <span className="text-xs font-mono text-success">{data.target_hit_rate !== null ? `${data.target_hit_rate}%` : "-"}</span>
           <span className="text-[10px] text-textSecondary">({data.target_hits ?? 0})</span>
         </div>
       </td>
-      <td className="px-3 py-3">
+      <td className="px-3 py-3 whitespace-nowrap">
         <div className="flex items-center gap-1">
           <XCircle className="w-3 h-3 text-danger shrink-0" />
           <span className="text-xs font-mono text-danger">{data.stop_hit_rate !== null ? `${data.stop_hit_rate}%` : "-"}</span>
           <span className="text-[10px] text-textSecondary">({data.stop_hits ?? 0})</span>
         </div>
       </td>
-      <td className="px-3 py-3 text-right">
+      <td className="px-3 py-3 text-right whitespace-nowrap">
         <span className="text-xs font-mono">{data.avg_confidence}%</span>
       </td>
     </tr>
@@ -247,15 +247,15 @@ export default function StrategyPerformancePanel() {
                   </span>
                 )}
               </div>
-              <div className="overflow-x-auto rounded-lg border border-white/10">
-                <table className="w-full text-sm">
+              <div className="overflow-x-auto rounded-lg border border-white/10 -mx-1">
+                <table className="w-full text-sm" style={{ minWidth: 480 }}>
                   <thead>
                     <tr className="bg-white/5 text-xs text-textSecondary uppercase">
-                      <th className="px-3 py-2 text-left">Strateji</th>
-                      <th className="px-3 py-2 text-left">Doğruluk</th>
-                      <th className="px-3 py-2 text-left">Hedef</th>
-                      <th className="px-3 py-2 text-left">Stop</th>
-                      <th className="px-3 py-2 text-right">Güven</th>
+                      <th className="px-3 py-2 text-left whitespace-nowrap">Strateji</th>
+                      <th className="px-3 py-2 text-left whitespace-nowrap">Doğruluk</th>
+                      <th className="px-3 py-2 text-left whitespace-nowrap">Hedef</th>
+                      <th className="px-3 py-2 text-left whitespace-nowrap">Stop</th>
+                      <th className="px-3 py-2 text-right whitespace-nowrap">Güven</th>
                     </tr>
                   </thead>
                   <tbody>

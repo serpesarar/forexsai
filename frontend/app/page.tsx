@@ -1368,20 +1368,17 @@ export default function HomePage() {
         }
       />
 
-      {/* ML Factor Toggle Panel + Earnings - Stacked Layout (xl+ only) */}
-      <div className="hidden xl:flex fixed top-32 right-4 z-50 flex-col gap-4 w-72">
-        <MLFactorPanel
-          baseConfidence={signalCards[0]?.confidence || 60}
-          applyToSymbols={["NDX.INDX", "XAUUSD"]}
-          locale={locale}
-        />
-
-        {/* NASDAQ Earnings Calendar Panel */}
-        <NasdaqEarningsPanel />
-      </div>
-
       <DraggableDashboard>
-        <main className="w-full px-3 sm:px-4 md:px-6 lg:px-8 xl:pr-80 py-4 md:py-6 pb-20 md:pb-8">
+        <main className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-20 md:pb-8">
+          {/* ML Factor + Earnings - Inline row above grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <MLFactorPanel
+              baseConfidence={signalCards[0]?.confidence || 60}
+              applyToSymbols={["NDX.INDX", "XAUUSD"]}
+              locale={locale}
+            />
+            <NasdaqEarningsPanel />
+          </div>
           {/* ═══ 2-COLUMN RESPONSIVE GRID ═══ */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {/* Left Column */}

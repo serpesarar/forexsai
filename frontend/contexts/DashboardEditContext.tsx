@@ -91,7 +91,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
   version: 16,
 };
 
-const LAYOUT_STORAGE_KEY = "dashboard-layout-v2";
+const LAYOUT_STORAGE_KEY = "dashboard-layout-v3";
 const MAX_HISTORY = 50;
 
 const DashboardEditContext = createContext<DashboardEditContextType | undefined>(undefined);
