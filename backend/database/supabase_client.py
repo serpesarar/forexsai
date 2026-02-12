@@ -242,17 +242,15 @@ def get_supabase_client() -> Optional[SupabaseRestClient]:
 
     try:
         _client = SupabaseRestClient(url, key)
-        # Quick health-check (uses persistent pool, has retry)
-        test_result = _client.table("prediction_logs").select("id").limit(1).execute()
-        if test_result.get("error"):
-            raise Exception(test_result["error"])
-        logger.info("Supabase REST client initialized (pool: max_conn=5, keepalive=3).")
+        # No blocking test query at startup — avoids hanging when pool is
+        # exhausted.  The retry mechanism handles transient failures on
+        # first real use.
+        logger.info("Supabase REST client created (pool: max_conn=5, keepalive=3). No blocking test.")
         _initialized = True
         return _client
     except Exception as e:
-        _init_error = f"Failed to initialize Supabase client: {e}"
+        _init_error = f"Failed to create Supabase client: {e}"
         logger.error(_init_error)
-        # Still mark initialized — don't retry init on every call
         _initialized = True
         return None
 
