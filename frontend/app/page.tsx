@@ -417,8 +417,8 @@ export default function HomePage() {
     return () => clearTimeout(timeout);
   }, []);
 
-  // Live prices hook - updates every 10 seconds (DataHub updates every 5s)
-  const { tickers: liveTickers, isLoading: pricesLoading } = useLivePrices(10000);
+  // Live prices hook - updates every 30 seconds (DataHub updates every 30s)
+  const { tickers: liveTickers, isLoading: pricesLoading } = useLivePrices(30000);
 
   // Cache hook - loads pre-computed data from backend immediately
   const { nasdaq: cachedNasdaq, xauusd: cachedXauusd, hasData: hasCachedData } = useCachedDashboardData();
@@ -691,7 +691,9 @@ export default function HomePage() {
     if (!autoRefresh) return undefined;
     const interval = setInterval(() => {
       fetchAll();
-      refreshLive();
+      // Only dispatch pulse-refresh for lightweight panel updates
+      // Do NOT call refreshLive() here - it fires 9+ heavy API calls (Claude AI etc.)
+      window.dispatchEvent(new CustomEvent("pulse-refresh"));
     }, 30000);
     return () => clearInterval(interval);
   }, [autoRefresh, fetchAll]);
@@ -1390,32 +1392,28 @@ export default function HomePage() {
             />
             <NasdaqEarningsPanel />
           </div>
-          {/* ═══ 2-COLUMN GRID — cards placed individually ═══ */}
+          {/* ═══ 2-COLUMN LAYOUT — separate flex columns ═══ */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 items-start">
-            {(() => {
-              const leftCards = getColumnCards("left").filter(c => c.size !== "full");
-              const rightCards = getColumnCards("right").filter(c => c.size !== "full");
-              const centerCards = getColumnCards("center").filter(c => c.size !== "full");
-              // Interleave left/right for balanced column heights
-              const interleaved: DashboardCard[] = [];
-              const maxLen = Math.max(leftCards.length, rightCards.length);
-              for (let i = 0; i < maxLen; i++) {
-                if (i < leftCards.length) interleaved.push(leftCards[i]);
-                if (i < rightCards.length) interleaved.push(rightCards[i]);
-              }
-              interleaved.push(...centerCards);
-              return interleaved.map((card) => (
+            {/* Left Column */}
+            <div className="flex flex-col gap-4 md:gap-6">
+              {getColumnCards("left").filter(c => c.size !== "full").map((card) => (
                 <SortableCard key={card.id} card={card}>
-                  {alwaysVisibleCards.has(card.id) ? (
-                    renderCardContent(card.id)
-                  ) : (
-                    <LazyPanel fallbackHeight={250}>
-                      {renderCardContent(card.id)}
-                    </LazyPanel>
+                  {alwaysVisibleCards.has(card.id) ? renderCardContent(card.id) : (
+                    <LazyPanel fallbackHeight={250}>{renderCardContent(card.id)}</LazyPanel>
                   )}
                 </SortableCard>
-              ));
-            })()}
+              ))}
+            </div>
+            {/* Right Column */}
+            <div className="flex flex-col gap-4 md:gap-6">
+              {getColumnCards("right").filter(c => c.size !== "full").map((card) => (
+                <SortableCard key={card.id} card={card}>
+                  {alwaysVisibleCards.has(card.id) ? renderCardContent(card.id) : (
+                    <LazyPanel fallbackHeight={250}>{renderCardContent(card.id)}</LazyPanel>
+                  )}
+                </SortableCard>
+              ))}
+            </div>
           </div>
 
           {/* ═══ FULL-WIDTH SECTIONS ═══ */}

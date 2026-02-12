@@ -115,15 +115,15 @@ class SignalStateMachine:
             # Time since last signal
             time_since = (datetime.utcnow() - self.state.last_signal_time).seconds / 60
             
-            # Cooldown period check
-            if time_since < 30:  # 30 dakika minimum
-                if new_confidence < 65:
-                    return False, f"Soğuma süresi ({time_since:.0f}dk < 30dk), güven yetersiz"
+            # Cooldown period check (relaxed for responsive dashboard)
+            if time_since < 15:  # 15 dakika minimum (was 30)
+                if new_confidence < 55:
+                    return False, f"Soğuma süresi ({time_since:.0f}dk < 15dk), güven yetersiz"
             
-            # Price change check
+            # Price change check (relaxed)
             if self.state.last_signal_price:
                 price_change_pct = abs(current_price - self.state.last_signal_price) / self.state.last_signal_price * 100
-                if price_change_pct < 0.3 and new_confidence < 70:
+                if price_change_pct < 0.15 and new_confidence < 60:
                     return False, f"Fiyat değişimi yetersiz ({price_change_pct:.2f}%)"
             
             return True, f"Yön değişikliği onaylandı ({time_since:.0f}dk)"

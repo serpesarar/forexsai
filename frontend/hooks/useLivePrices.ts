@@ -30,13 +30,17 @@ const SYMBOLS_CONFIG = [
 
 const previousCloseCache = new Map<string, { previousClose: number; fetchedAt: number }>();
 
-function fetchWithTimeout(url: string, timeoutMs: number = 8000): Promise<Response> {
+function fetchWithTimeout(url: string, timeoutMs: number = 8000, externalSignal?: AbortSignal): Promise<Response> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
+  // Abort on external signal too (e.g. component unmount)
+  if (externalSignal) {
+    externalSignal.addEventListener('abort', () => controller.abort());
+  }
   return fetch(url, { cache: "no-store", signal: controller.signal }).finally(() => clearTimeout(id));
 }
 
-async function fetchPriceData(symbol: string): Promise<{ price: number; previousClose: number } | null> {
+async function fetchPriceData(symbol: string, signal?: AbortSignal): Promise<{ price: number; previousClose: number } | null> {
   try {
     let currentPrice: number | null = null;
     let previousClose: number = 0;
@@ -46,85 +50,56 @@ async function fetchPriceData(symbol: string): Promise<{ price: number; previous
       previousClose = cachedPrev.previousClose;
     }
 
-    // Try cached endpoint first
+    // Try cached endpoint first (lightweight - reads from DataHub memory)
     try {
-      const cachedRes = await fetchWithTimeout(`${API_BASE}/api/data/cached/${encodeURIComponent(symbol)}`);
+      const cachedRes = await fetchWithTimeout(`${API_BASE}/api/data/cached/${encodeURIComponent(symbol)}`, 8000, signal);
       if (cachedRes.ok) {
         const cachedData = await cachedRes.json();
-        // Handle both response formats
         currentPrice = cachedData?.data?.current_price 
           ?? cachedData?.data?.ta_snapshot?.close 
           ?? cachedData?.current_price 
           ?? null;
       }
-    } catch (e) {
+    } catch (e: any) {
+      if (e?.name === 'AbortError') return null;
       console.warn(`Cached endpoint failed for ${symbol}:`, e);
     }
 
-    // Fetch OHLCV data for previous close and fallback current price
-    try {
-      const ohlcvRes = await fetchWithTimeout(
-        `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=1d&limit=50`
-      );
-      
-      if (ohlcvRes.ok) {
-        const ohlcvData = await ohlcvRes.json();
-        const candles = ohlcvData?.data || [];
-        
-        if (candles.length >= 2) {
-          // Get previous day's close
-          if (!previousClose) {
-            previousClose = candles[candles.length - 2]?.close ?? 0;
-            if (previousClose) {
-              previousCloseCache.set(symbol, { previousClose, fetchedAt: Date.now() });
-            }
-          }
-          // Use latest candle close if no cached price
-          if (currentPrice === null) {
-            currentPrice = candles[candles.length - 1]?.close ?? null;
-          }
-        } else if (candles.length === 1) {
-          if (!previousClose) {
-            previousClose = candles[0]?.open ?? candles[0]?.close ?? 0;
-            if (previousClose) {
-              previousCloseCache.set(symbol, { previousClose, fetchedAt: Date.now() });
-            }
-          }
-          if (currentPrice === null) {
-            currentPrice = candles[0]?.close ?? null;
-          }
-        }
-      }
-    } catch (e) {
-      console.warn(`OHLCV endpoint failed for ${symbol}:`, e);
-    }
-
-    // Try prediction endpoint as last fallback
-    if (currentPrice === null) {
+    // Only fetch OHLCV if we need previousClose (once per 30 min)
+    if (!previousClose) {
       try {
-        const predRes = await fetchWithTimeout(`${API_BASE}/api/prediction/${encodeURIComponent(symbol)}`, 5000);
-        if (predRes.ok) {
-          const predData = await predRes.json();
-          currentPrice = predData?.entry_price ?? predData?.current_price ?? null;
-          if (previousClose === 0 && currentPrice) {
-            previousClose = currentPrice; // No change if we only have one price
+        const ohlcvRes = await fetchWithTimeout(
+          `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=1d&limit=3`,
+          8000, signal
+        );
+        if (ohlcvRes.ok) {
+          const ohlcvData = await ohlcvRes.json();
+          const candles = ohlcvData?.data || [];
+          if (candles.length >= 2) {
+            previousClose = candles[candles.length - 2]?.close ?? 0;
+            if (previousClose) previousCloseCache.set(symbol, { previousClose, fetchedAt: Date.now() });
+            if (currentPrice === null) currentPrice = candles[candles.length - 1]?.close ?? null;
+          } else if (candles.length === 1) {
+            previousClose = candles[0]?.open ?? candles[0]?.close ?? 0;
+            if (previousClose) previousCloseCache.set(symbol, { previousClose, fetchedAt: Date.now() });
+            if (currentPrice === null) currentPrice = candles[0]?.close ?? null;
           }
         }
-      } catch (e) {
-        console.warn(`Prediction endpoint failed for ${symbol}:`, e);
+      } catch (e: any) {
+        if (e?.name === 'AbortError') return null;
       }
     }
 
     if (currentPrice === null) return null;
-
     return { price: currentPrice, previousClose: previousClose || currentPrice };
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.name === 'AbortError') return null;
     console.error(`Failed to fetch price for ${symbol}:`, error);
     return null;
   }
 }
 
-export function useLivePrices(refreshInterval: number = 3000): {
+export function useLivePrices(refreshInterval: number = 30000): {
   prices: Map<string, LivePriceData>;
   tickers: MarketTicker[];
   isLoading: boolean;
@@ -134,13 +109,19 @@ export function useLivePrices(refreshInterval: number = 3000): {
   const [prices, setPrices] = useState<Map<string, LivePriceData>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const refresh = useCallback(async () => {
+    // Cancel any in-flight requests
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     const newPrices = new Map<string, LivePriceData>();
 
     await Promise.all(
       SYMBOLS_CONFIG.map(async ({ symbol, label }) => {
-        const data = await fetchPriceData(symbol);
+        const data = await fetchPriceData(symbol, controller.signal);
         if (data) {
           const change = data.price - data.previousClose;
           const changePercent = data.previousClose > 0 
@@ -161,6 +142,7 @@ export function useLivePrices(refreshInterval: number = 3000): {
       })
     );
 
+    if (controller.signal.aborted) return;
     if (newPrices.size > 0) {
       setPrices(newPrices);
       setLastUpdate(new Date());
@@ -173,6 +155,7 @@ export function useLivePrices(refreshInterval: number = 3000): {
   // Initial fetch
   useEffect(() => {
     refresh();
+    return () => { abortRef.current?.abort(); };
   }, [refresh]);
 
   // Periodic refresh - pauses when tab is hidden

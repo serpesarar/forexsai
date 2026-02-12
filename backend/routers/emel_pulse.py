@@ -37,7 +37,10 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         highs = np.array([c["high"] for c in ohlcv], dtype=np.float64)
         lows = np.array([c["low"] for c in ohlcv], dtype=np.float64)
         volumes = np.array([c.get("volume", 0) for c in ohlcv], dtype=np.float64)
-        current_price = float(closes[-1])
+        # Use live price from DataHub (updated every 30s) instead of stale candle close
+        from services.data_fetcher import fetch_latest_price
+        _live = await fetch_latest_price(symbol)
+        current_price = float(_live) if _live else float(closes[-1])
         
         # Calculate TA with numpy arrays
         ta = _compute_technical_indicators(closes, highs, lows, volumes)
@@ -591,7 +594,10 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         highs = np.array([c["high"] for c in ohlcv], dtype=np.float64)
         lows = np.array([c["low"] for c in ohlcv], dtype=np.float64)
         volumes = np.array([c.get("volume", 0) for c in ohlcv], dtype=np.float64)
-        current_price = float(closes[-1])
+        # Use live price from DataHub (updated every 30s) instead of stale candle close
+        from services.data_fetcher import fetch_latest_price
+        _live = await fetch_latest_price(symbol)
+        current_price = float(_live) if _live else float(closes[-1])
         
         ta = _compute_technical_indicators(closes, highs, lows, volumes)
         
@@ -944,7 +950,10 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
         highs = np.array([c["high"] for c in ohlcv], dtype=np.float64)
         lows = np.array([c["low"] for c in ohlcv], dtype=np.float64)
         volumes = np.array([c.get("volume", 0) for c in ohlcv], dtype=np.float64)
-        current_price = float(closes[-1])
+        # Use live price from DataHub (updated every 30s) instead of stale candle close
+        from services.data_fetcher import fetch_latest_price
+        _live = await fetch_latest_price(symbol)
+        current_price = float(_live) if _live else float(closes[-1])
         
         # 2. ML Tahmini Al
         from dataclasses import asdict
@@ -1447,7 +1456,10 @@ async def get_pulse_v3_analysis(symbol: str):
         h5 = np.array([c["high"] for c in data_5m], dtype=np.float64)
         l5 = np.array([c["low"] for c in data_5m], dtype=np.float64)
         v5 = np.array([c.get("volume", 0) for c in data_5m], dtype=np.float64)
-        current_price = float(c5[-1])
+        # Use live price from DataHub (updated every 30s)
+        from services.data_fetcher import fetch_latest_price
+        _live = await fetch_latest_price(symbol)
+        current_price = float(_live) if _live else float(c5[-1])
         ta_5m = _compute_technical_indicators(c5, h5, l5, v5)
         
         # Convert 1H data

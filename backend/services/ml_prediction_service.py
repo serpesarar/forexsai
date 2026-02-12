@@ -29,9 +29,9 @@ _signal_cache: Dict[str, Dict[str, Any]] = {}  # symbol -> {direction, confidenc
 _signal_lock = Lock()
 
 # Stability parameters
-SIGNAL_COOLDOWN_MINUTES = 30  # Minimum time before direction can change
-MIN_CONFIDENCE_FOR_REVERSAL = 65  # Minimum confidence to override existing signal
-MIN_PRICE_CHANGE_PCT = 0.3  # Minimum price change % to consider new signal
+SIGNAL_COOLDOWN_MINUTES = 15  # Minimum time before direction can change (was 30)
+MIN_CONFIDENCE_FOR_REVERSAL = 55  # Minimum confidence to override existing signal (was 65)
+MIN_PRICE_CHANGE_PCT = 0.15  # Minimum price change % to consider new signal (was 0.3)
 
 def _get_cached_signal(symbol: str) -> Optional[Dict[str, Any]]:
     """Get the last cached signal for a symbol."""
@@ -1325,8 +1325,8 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
         logger.info(f"Trend analysis: score={trend_score:.2f}, bullish={strong_bullish_trend}, bearish={strong_bearish_trend}")
         
         # Determine direction with TREND CONFIRMATION
-        # Higher thresholds + trend must align
-        direction_threshold = 0.55 if is_gold else 0.55
+        # Gold needs higher threshold (more volatile), NASDAQ can be lower
+        direction_threshold = 0.55 if is_gold else 0.52
         
         # Model says BUY
         if prob_up > direction_threshold:
@@ -1337,15 +1337,15 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
                 if strong_bullish_trend:
                     confidence *= 1.1  # Boost for strong trend alignment
             else:
-                # Trend conflicts - reduce confidence or switch to HOLD
-                if trend_score < -0.3:
+                # Trend conflicts - only reject on STRONG bearish trend
+                if trend_score < -0.5:
                     direction = "HOLD"
                     confidence = 50
-                    mtf_adjustments["warnings"].append("⚠️ Model BUY ama trend bearish - bekle")
+                    mtf_adjustments["warnings"].append("⚠️ Model BUY ama trend güçlü bearish - bekle")
                     logger.warning(f"BUY signal rejected: trend_score={trend_score:.2f}")
                 else:
                     direction = "BUY"
-                    confidence = prob_up * 100 * 0.7  # Reduced confidence
+                    confidence = prob_up * 100 * 0.8  # Slightly reduced confidence
                     mtf_adjustments["warnings"].append("⚡ Trend zayıf - dikkatli ol")
         
         # Model says SELL
@@ -1357,15 +1357,15 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
                 if strong_bearish_trend:
                     confidence *= 1.1  # Boost for strong trend alignment
             else:
-                # Trend conflicts - reduce confidence or switch to HOLD
-                if trend_score > 0.3:
+                # Trend conflicts - only reject on STRONG bullish trend
+                if trend_score > 0.5:
                     direction = "HOLD"
                     confidence = 50
-                    mtf_adjustments["warnings"].append("⚠️ Model SELL ama trend bullish - bekle")
+                    mtf_adjustments["warnings"].append("⚠️ Model SELL ama trend güçlü bullish - bekle")
                     logger.warning(f"SELL signal rejected: trend_score={trend_score:.2f}")
                 else:
                     direction = "SELL"
-                    confidence = prob_down * 100 * 0.7  # Reduced confidence
+                    confidence = prob_down * 100 * 0.8  # Slightly reduced confidence
                     mtf_adjustments["warnings"].append("⚡ Trend zayıf - dikkatli ol")
         
         # Model uncertain

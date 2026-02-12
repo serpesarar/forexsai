@@ -91,10 +91,10 @@ CONFLUENCE_WEIGHTS = {
 # EKSİK #3: Minimum Signal Duration (saat)
 # ═══════════════════════════════════════════════════════════════════════════════
 MIN_SIGNAL_DURATION_HOURS = {
-    'ultra_safe': 8,    # 8 saat minimum aynı sinyal
-    'balanced': 4,      # 4 saat
-    'full_power': 2,    # 2 saat
-    'aggressive': 1     # 1 saat
+    'ultra_safe': 4,    # 4 saat minimum aynı sinyal
+    'balanced': 1,      # 1 saat (was 4h - too restrictive for live dashboard)
+    'full_power': 0.5,  # 30 dakika
+    'aggressive': 0.25  # 15 dakika
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
