@@ -183,8 +183,17 @@ async def update_news_if_needed(symbol: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+_cache_last_save: Dict[str, float] = {}  # symbol → last save epoch
+CACHE_SAVE_INTERVAL = 300                # 5 minutes between Supabase cache writes
+
+
 async def save_to_cache(symbol: str, data: Dict[str, Any], news: Optional[Dict[str, Any]] = None):
-    """Save data to Supabase cache."""
+    """Save data to Supabase cache — throttled to every 5 min per symbol."""
+    import time as _time
+    now = _time.time()
+    if now - _cache_last_save.get(symbol, 0) < CACHE_SAVE_INTERVAL:
+        return
+    
     if not is_db_available():
         return
     
@@ -220,6 +229,7 @@ async def save_to_cache(symbol: str, data: Dict[str, Any], news: Optional[Dict[s
             # Insert new — .insert() auto-executes, no .execute() needed
             client.table("live_data_cache").insert(cache_data)
             
+        _cache_last_save[symbol] = now
         logger.debug(f"Cache updated for {symbol}")
     except Exception as e:
         logger.error(f"Error saving cache for {symbol}: {e}")

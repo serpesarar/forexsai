@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from datetime import datetime, timedelta
 from threading import Lock
 from typing import Any, Dict, List, Optional
@@ -339,11 +340,31 @@ _1M_ONLY_SYMBOLS = {"XAUUSD"}   # 5m = resample from 1m
 _30M_DIRECT_SYMBOLS = {"XAUUSD"}  # 1h/4h = resample from 30m
 
 
+_persist_timestamps: Dict[str, float] = {}   # "symbol:tf" → last persist epoch
+_persist_counts: Dict[str, int] = {}         # "symbol:tf" → candle count at last persist
+PERSIST_INTERVAL = 900                       # 15 minutes between Supabase writes
+
+
 def _persist_async(symbol: str, timeframe: str, candles: List[Dict]):
-    """Persist candles to Supabase in background (non-blocking)."""
+    """Persist candles to Supabase — throttled to every 15 min & delta-only."""
+    key = f"{symbol}:{timeframe}"
+    now = time.time()
+
+    # Throttle: skip if last persist was < 15 min ago
+    last_ts = _persist_timestamps.get(key, 0)
+    if now - last_ts < PERSIST_INTERVAL:
+        return
+
+    # Delta check: skip if candle count unchanged (same data)
+    count = len(candles) if candles else 0
+    if count == _persist_counts.get(key, -1) and count > 0:
+        return
+
     try:
         from services.candle_cache_store import persist_candles
-        persist_candles(symbol, timeframe, candles)
+        persisted = persist_candles(symbol, timeframe, candles)
+        _persist_timestamps[key] = now
+        _persist_counts[key] = count
     except Exception as e:
         logger.debug(f"Persist failed for {symbol}/{timeframe}: {e}")
 

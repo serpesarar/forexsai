@@ -1,10 +1,16 @@
-"""
-Supabase REST API client for database operations.
+"""Supabase REST API client for database operations.
 Uses httpx directly instead of supabase-py to avoid dependency conflicts.
+
+Connection-pool-safe:
+  - Single persistent httpx.Client (reuses TCP connections via keepalive)
+  - max_connections=5 so we never exceed Supabase pooler limits (pool_size=20)
+  - Retry with exponential backoff on transient errors
+  - Short read timeout (15s) to free slots quickly
 """
 from __future__ import annotations
 
 import os
+import time
 import logging
 from typing import Optional, Dict, Any, List
 import httpx
@@ -14,10 +20,43 @@ logger = logging.getLogger(__name__)
 _init_error: Optional[str] = None
 _initialized: bool = False
 
+# ── Retry config ──────────────────────────────────────────────────────────────
+MAX_RETRIES = 3
+RETRY_BASE_WAIT = 1.5          # seconds
+RETRY_MAX_WAIT = 12.0          # seconds
+RETRIABLE_STATUS_CODES = {408, 429, 500, 502, 503, 504, 520, 522, 524}
+
+
+def _retry_request(fn, label: str = "supabase"):
+    """Execute *fn()* with exponential-backoff retry on transient failures."""
+    last_exc = None
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            resp = fn()
+            if resp.status_code in RETRIABLE_STATUS_CODES and attempt < MAX_RETRIES:
+                wait = min(RETRY_BASE_WAIT * (2 ** (attempt - 1)), RETRY_MAX_WAIT)
+                logger.warning(f"[{label}] HTTP {resp.status_code}, retry {attempt}/{MAX_RETRIES} in {wait:.1f}s")
+                time.sleep(wait)
+                continue
+            resp.raise_for_status()
+            return resp
+        except (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.PoolTimeout,
+                httpx.ConnectError, httpx.RemoteProtocolError) as exc:
+            last_exc = exc
+            if attempt < MAX_RETRIES:
+                wait = min(RETRY_BASE_WAIT * (2 ** (attempt - 1)), RETRY_MAX_WAIT)
+                logger.warning(f"[{label}] {type(exc).__name__}, retry {attempt}/{MAX_RETRIES} in {wait:.1f}s")
+                time.sleep(wait)
+            else:
+                raise
+        except httpx.HTTPStatusError:
+            raise  # 4xx client errors — don't retry
+    raise last_exc  # pragma: no cover
+
 
 class SupabaseRestClient:
-    """Simple Supabase REST API client using httpx."""
-    
+    """Supabase REST client with persistent connection pool."""
+
     def __init__(self, url: str, key: str):
         self.url = url.rstrip('/')
         self.key = key
@@ -27,62 +66,81 @@ class SupabaseRestClient:
             "Content-Type": "application/json",
             "Prefer": "return=representation"
         }
-    
+        # Persistent client — reuses TCP connections (keepalive)
+        # max_connections=5 keeps us well under the 20-slot Supabase pool
+        self._http = httpx.Client(
+            timeout=httpx.Timeout(connect=8.0, read=15.0, write=15.0, pool=10.0),
+            limits=httpx.Limits(max_connections=5, max_keepalive_connections=3, keepalive_expiry=120),
+            headers=self.headers,
+        )
+
+    @property
+    def http(self) -> httpx.Client:
+        """Return the persistent HTTP client, recreate if closed."""
+        if self._http.is_closed:
+            logger.info("Recreating closed httpx client")
+            self._http = httpx.Client(
+                timeout=httpx.Timeout(connect=8.0, read=15.0, write=15.0, pool=10.0),
+                limits=httpx.Limits(max_connections=5, max_keepalive_connections=3, keepalive_expiry=120),
+                headers=self.headers,
+            )
+        return self._http
+
     def table(self, table_name: str) -> "TableQuery":
         return TableQuery(self, table_name)
 
 
 class TableQuery:
-    """Query builder for Supabase tables."""
-    
+    """Query builder for Supabase tables — uses the shared persistent client."""
+
     def __init__(self, client: SupabaseRestClient, table_name: str):
         self.client = client
         self.table_name = table_name
         self.filters: List[str] = []
         self.order_by: Optional[str] = None
         self.limit_val: Optional[int] = None
-    
+
     def select(self, columns: str = "*") -> "TableQuery":
         self._columns = columns
         return self
-    
+
     def eq(self, column: str, value: Any) -> "TableQuery":
         self.filters.append(f"{column}=eq.{value}")
         return self
-    
+
     def gte(self, column: str, value: Any) -> "TableQuery":
         self.filters.append(f"{column}=gte.{value}")
         return self
-    
+
     def lte(self, column: str, value: Any) -> "TableQuery":
         self.filters.append(f"{column}=lte.{value}")
         return self
-    
+
     def lt(self, column: str, value: Any) -> "TableQuery":
         self.filters.append(f"{column}=lt.{value}")
         return self
-    
+
     def gt(self, column: str, value: Any) -> "TableQuery":
         self.filters.append(f"{column}=gt.{value}")
         return self
-    
+
     def neq(self, column: str, value: Any) -> "TableQuery":
         self.filters.append(f"{column}=neq.{value}")
         return self
-    
+
     def is_(self, column: str, value: Any) -> "TableQuery":
         self.filters.append(f"{column}=is.{value}")
         return self
-    
+
     def order(self, column: str, desc: bool = False) -> "TableQuery":
         direction = "desc" if desc else "asc"
         self.order_by = f"{column}.{direction}"
         return self
-    
+
     def limit(self, count: int) -> "TableQuery":
         self.limit_val = count
         return self
-    
+
     def _build_url(self) -> str:
         url = f"{self.client.url}/rest/v1/{self.table_name}"
         params = []
@@ -96,66 +154,67 @@ class TableQuery:
         if params:
             url += "?" + "&".join(params)
         return url
-    
+
     def execute(self) -> Dict[str, Any]:
         try:
-            with httpx.Client(timeout=30.0) as client:
-                response = client.get(self._build_url(), headers=self.client.headers)
-                response.raise_for_status()
-                return {"data": response.json(), "error": None}
+            resp = _retry_request(
+                lambda: self.client.http.get(self._build_url()),
+                label=f"SELECT {self.table_name}",
+            )
+            return {"data": resp.json(), "error": None}
         except Exception as e:
-            logger.error(f"Supabase query error: {e}")
+            logger.error(f"Supabase query error [{self.table_name}]: {e}")
             return {"data": None, "error": str(e)}
-    
+
     def insert(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        url = f"{self.client.url}/rest/v1/{self.table_name}"
         try:
-            with httpx.Client(timeout=30.0) as client:
-                url = f"{self.client.url}/rest/v1/{self.table_name}"
-                response = client.post(url, json=data, headers=self.client.headers)
-                response.raise_for_status()
-                return {"data": response.json(), "error": None}
+            resp = _retry_request(
+                lambda: self.client.http.post(url, json=data),
+                label=f"INSERT {self.table_name}",
+            )
+            return {"data": resp.json(), "error": None}
         except Exception as e:
-            logger.error(f"Supabase insert error: {e}")
+            logger.error(f"Supabase insert error [{self.table_name}]: {e}")
             return {"data": None, "error": str(e)}
-    
+
     def upsert(self, data, on_conflict: str = "") -> Dict[str, Any]:
         """Insert or update rows. data can be a dict (single) or list of dicts (bulk)."""
+        url = f"{self.client.url}/rest/v1/{self.table_name}"
+        if on_conflict:
+            url += f"?on_conflict={on_conflict}"
+        headers = {"Prefer": "return=representation,resolution=merge-duplicates"}
+        payload = data if isinstance(data, list) else [data]
         try:
-            headers = {**self.client.headers, "Prefer": "return=representation,resolution=merge-duplicates"}
-            if on_conflict:
-                headers["Prefer"] = f"return=representation,resolution=merge-duplicates"
-            with httpx.Client(timeout=60.0) as client:
-                url = f"{self.client.url}/rest/v1/{self.table_name}"
-                if on_conflict:
-                    url += f"?on_conflict={on_conflict}"
-                payload = data if isinstance(data, list) else [data]
-                response = client.post(url, json=payload, headers=headers)
-                response.raise_for_status()
-                return {"data": response.json(), "error": None}
+            resp = _retry_request(
+                lambda: self.client.http.post(url, json=payload, headers=headers),
+                label=f"UPSERT {self.table_name}",
+            )
+            return {"data": resp.json(), "error": None}
         except Exception as e:
-            logger.error(f"Supabase upsert error: {e}")
+            logger.error(f"Supabase upsert error [{self.table_name}]: {e}")
             return {"data": None, "error": str(e)}
 
     def update(self, data: Dict[str, Any]) -> Dict[str, Any]:
         try:
-            with httpx.Client(timeout=30.0) as client:
-                url = self._build_url()
-                response = client.patch(url, json=data, headers=self.client.headers)
-                response.raise_for_status()
-                return {"data": response.json(), "error": None}
+            resp = _retry_request(
+                lambda: self.client.http.patch(self._build_url(), json=data),
+                label=f"UPDATE {self.table_name}",
+            )
+            return {"data": resp.json(), "error": None}
         except Exception as e:
-            logger.error(f"Supabase update error: {e}")
+            logger.error(f"Supabase update error [{self.table_name}]: {e}")
             return {"data": None, "error": str(e)}
 
     def delete(self) -> Dict[str, Any]:
         try:
-            with httpx.Client(timeout=30.0) as client:
-                url = self._build_url()
-                response = client.delete(url, headers=self.client.headers)
-                response.raise_for_status()
-                return {"data": response.json() if response.text else [], "error": None}
+            resp = _retry_request(
+                lambda: self.client.http.delete(self._build_url()),
+                label=f"DELETE {self.table_name}",
+            )
+            return {"data": resp.json() if resp.text else [], "error": None}
         except Exception as e:
-            logger.error(f"Supabase delete error: {e}")
+            logger.error(f"Supabase delete error [{self.table_name}]: {e}")
             return {"data": None, "error": str(e)}
 
 
@@ -168,31 +227,32 @@ def get_supabase_client() -> Optional[SupabaseRestClient]:
     Returns None if credentials are not configured.
     """
     global _client, _init_error, _initialized
-    
+
     if _initialized:
         return _client
-    
+
     url = os.environ.get("SUPABASE_URL")
     key = os.environ.get("SUPABASE_KEY")
-    
+
     if not url or not key:
         _init_error = f"Missing env vars: SUPABASE_URL={'set' if url else 'not set'}, SUPABASE_KEY={'set' if key else 'not set'}"
         logger.warning(_init_error)
         _initialized = True
         return None
-    
+
     try:
         _client = SupabaseRestClient(url, key)
-        # Test connection
+        # Quick health-check (uses persistent pool, has retry)
         test_result = _client.table("prediction_logs").select("id").limit(1).execute()
         if test_result.get("error"):
             raise Exception(test_result["error"])
-        logger.info("Supabase REST client initialized successfully.")
+        logger.info("Supabase REST client initialized (pool: max_conn=5, keepalive=3).")
         _initialized = True
         return _client
     except Exception as e:
         _init_error = f"Failed to initialize Supabase client: {e}"
         logger.error(_init_error)
+        # Still mark initialized — don't retry init on every call
         _initialized = True
         return None
 
