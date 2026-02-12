@@ -1393,9 +1393,9 @@ export default function HomePage() {
             <NasdaqEarningsPanel />
           </div>
           {/* ═══ 2-COLUMN LAYOUT — separate flex columns ═══ */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-start w-full">
             {/* Left Column */}
-            <div className="flex flex-col gap-4 md:gap-6">
+            <div className="flex flex-col gap-4 md:gap-6 w-full min-w-0">
               {getColumnCards("left").filter(c => c.size !== "full").map((card) => (
                 <SortableCard key={card.id} card={card}>
                   {alwaysVisibleCards.has(card.id) ? renderCardContent(card.id) : (
@@ -1405,7 +1405,7 @@ export default function HomePage() {
               ))}
             </div>
             {/* Right Column */}
-            <div className="flex flex-col gap-4 md:gap-6">
+            <div className="flex flex-col gap-4 md:gap-6 w-full min-w-0">
               {getColumnCards("right").filter(c => c.size !== "full").map((card) => (
                 <SortableCard key={card.id} card={card}>
                   {alwaysVisibleCards.has(card.id) ? renderCardContent(card.id) : (
