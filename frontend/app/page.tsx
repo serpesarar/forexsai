@@ -1390,15 +1390,21 @@ export default function HomePage() {
             />
             <NasdaqEarningsPanel />
           </div>
-          {/* ═══ MASONRY-STYLE 2-COLUMN GRID ═══ */}
-          <div className="columns-1 lg:columns-2 gap-4 md:gap-6 [&>*]:mb-4 md:[&>*]:mb-6 [&>*]:break-inside-avoid">
-            {/* Interleave left and right columns for balanced masonry */}
+          {/* ═══ 2-COLUMN GRID — cards placed individually ═══ */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 items-start">
             {(() => {
               const leftCards = getColumnCards("left").filter(c => c.size !== "full");
               const rightCards = getColumnCards("right").filter(c => c.size !== "full");
               const centerCards = getColumnCards("center").filter(c => c.size !== "full");
-              const allCards = [...leftCards, ...rightCards, ...centerCards];
-              return allCards.map((card) => (
+              // Interleave left/right for balanced column heights
+              const interleaved: DashboardCard[] = [];
+              const maxLen = Math.max(leftCards.length, rightCards.length);
+              for (let i = 0; i < maxLen; i++) {
+                if (i < leftCards.length) interleaved.push(leftCards[i]);
+                if (i < rightCards.length) interleaved.push(rightCards[i]);
+              }
+              interleaved.push(...centerCards);
+              return interleaved.map((card) => (
                 <SortableCard key={card.id} card={card}>
                   {alwaysVisibleCards.has(card.id) ? (
                     renderCardContent(card.id)
