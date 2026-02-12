@@ -92,11 +92,11 @@ const STRATEGY_CONFIG = {
 function AccuracyBar({ value, color }: { value: number | null; color: string }) {
   if (value === null) return <span className="text-textSecondary">-</span>;
   return (
-    <div className="flex items-center gap-2 min-w-[120px]">
-      <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+    <div className="flex items-center gap-2 min-w-[100px]">
+      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${Math.min(value, 100)}%` }} />
       </div>
-      <span className="text-xs font-mono font-bold w-10 text-right">{value}%</span>
+      <span className="text-[11px] font-mono font-bold w-10 text-right">{value}%</span>
     </div>
   );
 }
@@ -120,45 +120,45 @@ function StrategyRow({
 
   return (
     <tr className={`border-b border-white/5 hover:bg-white/5 transition-colors ${isBest ? "bg-yellow-500/5" : ""}`}>
-      <td className="px-3 py-3 whitespace-nowrap">
-        <div className="flex items-center gap-2">
-          <div className={`p-1.5 rounded-lg ${config.bgColor} shrink-0`}>
-            <Icon className={`w-3.5 h-3.5 ${config.color}`} />
+      <td className="px-2 py-2 whitespace-nowrap">
+        <div className="flex items-center gap-1.5">
+          <div className={`p-1 rounded-md ${config.bgColor} shrink-0`}>
+            <Icon className={`w-3 h-3 ${config.color}`} />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className={`font-semibold text-sm ${config.color} whitespace-nowrap`}>
+            <div className="flex items-center gap-1">
+              <span className={`font-semibold text-xs ${config.color} whitespace-nowrap`}>
                 {locale === "en" ? config.nameEn : config.name}
               </span>
               {isBest && (
-                <span className="bg-yellow-500 text-black text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0">
-                  <Trophy className="w-2.5 h-2.5" /> EN İYİ
+                <span className="bg-yellow-500 text-black text-[8px] font-bold px-1 py-0.5 rounded-full flex items-center gap-0.5 shrink-0">
+                  <Trophy className="w-2 h-2" /> EN İYİ
                 </span>
               )}
             </div>
-            <span className="text-[10px] text-textSecondary whitespace-nowrap">{data.total_predictions} tahmin / {data.with_outcome} sonuç</span>
+            <span className="text-[9px] text-textSecondary whitespace-nowrap">{data.total_predictions} tahmin / {data.with_outcome} sonuç</span>
           </div>
         </div>
       </td>
-      <td className="px-3 py-3">
+      <td className="px-2 py-2 whitespace-nowrap">
         <AccuracyBar value={data.accuracy} color={accColor} />
       </td>
-      <td className="px-3 py-3 whitespace-nowrap">
+      <td className="px-2 py-2 whitespace-nowrap">
         <div className="flex items-center gap-1">
-          <Target className="w-3 h-3 text-success shrink-0" />
-          <span className="text-xs font-mono text-success">{data.target_hit_rate !== null ? `${data.target_hit_rate}%` : "-"}</span>
-          <span className="text-[10px] text-textSecondary">({data.target_hits ?? 0})</span>
+          <Target className="w-2.5 h-2.5 text-success shrink-0" />
+          <span className="text-[11px] font-mono text-success">{data.target_hit_rate !== null ? `${data.target_hit_rate}%` : "-"}</span>
+          <span className="text-[9px] text-textSecondary">({data.target_hits ?? 0})</span>
         </div>
       </td>
-      <td className="px-3 py-3 whitespace-nowrap">
+      <td className="px-2 py-2 whitespace-nowrap">
         <div className="flex items-center gap-1">
-          <XCircle className="w-3 h-3 text-danger shrink-0" />
-          <span className="text-xs font-mono text-danger">{data.stop_hit_rate !== null ? `${data.stop_hit_rate}%` : "-"}</span>
-          <span className="text-[10px] text-textSecondary">({data.stop_hits ?? 0})</span>
+          <XCircle className="w-2.5 h-2.5 text-danger shrink-0" />
+          <span className="text-[11px] font-mono text-danger">{data.stop_hit_rate !== null ? `${data.stop_hit_rate}%` : "-"}</span>
+          <span className="text-[9px] text-textSecondary">({data.stop_hits ?? 0})</span>
         </div>
       </td>
-      <td className="px-3 py-3 text-right whitespace-nowrap">
-        <span className="text-xs font-mono">{data.avg_confidence}%</span>
+      <td className="px-2 py-2 text-right whitespace-nowrap">
+        <span className="text-[11px] font-mono">{data.avg_confidence}%</span>
       </td>
     </tr>
   );
@@ -248,7 +248,7 @@ export default function StrategyPerformancePanel() {
                 )}
               </div>
               <div className="overflow-x-auto rounded-lg border border-white/10 -mx-1">
-                <table className="w-full text-sm" style={{ minWidth: 480 }}>
+                <table className="w-full text-xs" style={{ minWidth: 600 }}>
                   <thead>
                     <tr className="bg-white/5 text-xs text-textSecondary uppercase">
                       <th className="px-3 py-2 text-left whitespace-nowrap">Strateji</th>

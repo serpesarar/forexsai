@@ -696,8 +696,10 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [autoRefresh, fetchAll]);
 
+  // Defer heavy refreshLive so page renders instantly with cached data
   useEffect(() => {
-    refreshLive();
+    const timer = setTimeout(() => refreshLive(), 3000);
+    return () => clearTimeout(timer);
   }, []);
 
   // When language changes, refetch dynamic content in that language.
@@ -1255,24 +1257,20 @@ export default function HomePage() {
   // Cards that are always visible (top of page) - skip LazyPanel for these
   const alwaysVisibleCards = new Set(["signal-nasdaq", "signal-xauusd"]);
 
-  // Render a column with sorted cards (exclude full-width cards - they render below)
-  const renderColumn = (column: "left" | "center" | "right") => {
+  // Render cards for a column as flat array (no wrapper div — CSS grid handles layout)
+  const renderColumnCards = (column: "left" | "center" | "right") => {
     const cards = getColumnCards(column).filter(c => c.size !== "full");
-    return (
-      <div className="flex flex-col gap-4 md:gap-6">
-        {cards.map((card) => (
-          <SortableCard key={card.id} card={card}>
-            {alwaysVisibleCards.has(card.id) ? (
-              renderCardContent(card.id)
-            ) : (
-              <LazyPanel fallbackHeight={250}>
-                {renderCardContent(card.id)}
-              </LazyPanel>
-            )}
-          </SortableCard>
-        ))}
-      </div>
-    );
+    return cards.map((card) => (
+      <SortableCard key={card.id} card={card}>
+        {alwaysVisibleCards.has(card.id) ? (
+          renderCardContent(card.id)
+        ) : (
+          <LazyPanel fallbackHeight={250}>
+            {renderCardContent(card.id)}
+          </LazyPanel>
+        )}
+      </SortableCard>
+    ));
   };
 
   // Show loading while checking auth
@@ -1392,14 +1390,26 @@ export default function HomePage() {
             />
             <NasdaqEarningsPanel />
           </div>
-          {/* ═══ 2-COLUMN RESPONSIVE GRID ═══ */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-            {/* Left Column */}
-            {renderColumn("left")}
-            {/* Right Column */}
-            {renderColumn("right")}
-            {/* Center Column (usually hidden cards, available in edit mode) */}
-            {getColumnCards("center").filter(c => c.size !== "full").length > 0 && renderColumn("center")}
+          {/* ═══ MASONRY-STYLE 2-COLUMN GRID ═══ */}
+          <div className="columns-1 lg:columns-2 gap-4 md:gap-6 [&>*]:mb-4 md:[&>*]:mb-6 [&>*]:break-inside-avoid">
+            {/* Interleave left and right columns for balanced masonry */}
+            {(() => {
+              const leftCards = getColumnCards("left").filter(c => c.size !== "full");
+              const rightCards = getColumnCards("right").filter(c => c.size !== "full");
+              const centerCards = getColumnCards("center").filter(c => c.size !== "full");
+              const allCards = [...leftCards, ...rightCards, ...centerCards];
+              return allCards.map((card) => (
+                <SortableCard key={card.id} card={card}>
+                  {alwaysVisibleCards.has(card.id) ? (
+                    renderCardContent(card.id)
+                  ) : (
+                    <LazyPanel fallbackHeight={250}>
+                      {renderCardContent(card.id)}
+                    </LazyPanel>
+                  )}
+                </SortableCard>
+              ));
+            })()}
           </div>
 
           {/* ═══ FULL-WIDTH SECTIONS ═══ */}

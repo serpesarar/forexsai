@@ -206,10 +206,17 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
   useEffect(() => {
     if (!wsData) fetchData();
     if (!wsConnected) {
-      const interval = setInterval(fetchData, 120000);
+      const interval = setInterval(fetchData, 30000);
       return () => clearInterval(interval);
     }
   }, [activeSymbol, timeframe, wsConnected]);
+
+  // Listen for global refresh event from header button
+  useEffect(() => {
+    const handler = () => fetchData();
+    window.addEventListener("pulse-refresh", handler);
+    return () => window.removeEventListener("pulse-refresh", handler);
+  }, [activeSymbol, timeframe]);
 
   const openExplanation = (key: string, title: string) => {
     if (data?.explanations?.[key]) setExplanationModal({ title, content: data.explanations[key] });

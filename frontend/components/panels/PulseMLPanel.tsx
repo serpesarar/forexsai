@@ -106,7 +106,7 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   useEffect(() => {
     setLoading(true);
     fetchData();
-    const interval = setInterval(fetchData, 120000);
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, [activeSymbol, timeframe]);
 

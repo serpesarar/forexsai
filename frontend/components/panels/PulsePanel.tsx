@@ -113,7 +113,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
   useEffect(() => {
     setLoading(true);
     fetchData();
-    const interval = setInterval(fetchData, 120000);
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, [activeSymbol, timeframe]);
 
