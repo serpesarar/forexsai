@@ -925,7 +925,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
                     analysis=analysis,
                     timeframe=timeframe,
                     strategy="PULSE",
-                    model_type="pulse",
+                    model_type="pulse1",
                 )
                 logger.info(f"PULSE signal logged: {symbol} {pulse_signal} ({signal_type}) @ {current_price}")
             except Exception as log_err:
@@ -1296,7 +1296,7 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
                     analysis={"final_decision": signal, "confidence": ml_confidence, "model_used": "PULSE-ML-V2"},
                     timeframe=timeframe,
                     strategy="PULSE_ML",
-                    model_type="pulse",
+                    model_type="pulse2",
                 )
             except Exception as log_err:
                 logger.warning(f"Failed to log PULSE-ML prediction: {log_err}")
@@ -1890,7 +1890,7 @@ async def get_pulse_v3_analysis(symbol: str):
                     },
                     timeframe="5m",
                     strategy="PULSE_V3",
-                    model_type="pulse",
+                    model_type="pulse3",
                 )
             except Exception as log_err:
                 logger.warning(f"Failed to log PULSE-V3 prediction: {log_err}")

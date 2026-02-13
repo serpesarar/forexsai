@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
@@ -102,8 +102,9 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   // WebSocket data — real-time, no polling needed
   const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "pulse_v3");
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
+      setLoading(true);
       setError(null);
       const res = await fetch(`${API_BASE}/api/panel/pulse-v3/${activeSymbol}`);
       const json = await res.json();
@@ -121,7 +122,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeSymbol]);
 
   // Use WS data when available
   useEffect(() => {
@@ -136,14 +137,13 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   // HTTP fetch on mount + polling only when WS is NOT connected
   useEffect(() => {
     if (!wsData) {
-      setLoading(true);
       fetchData();
     }
     if (!wsConnected) {
       const interval = setInterval(fetchData, 60000);
       return () => clearInterval(interval);
     }
-  }, [activeSymbol, wsConnected]);
+  }, [fetchData, wsConnected, wsData]);
 
   // Listen for global refresh event from header button
   useEffect(() => {
@@ -154,7 +154,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       window.removeEventListener("pulse-refresh", handler);
       window.removeEventListener("dashboard-refresh", handler);
     };
-  }, [activeSymbol]);
+  }, [fetchData]);
 
   const getSignalBadge = (type: string) => {
     if (type === "CONFIRM") return { text: t("pulseV3.strongSignal"), icon: CheckCircle };

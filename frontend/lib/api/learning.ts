@@ -670,7 +670,7 @@ export interface ModelStats {
   total_loss_pips: number;
   net_pips: number;
   target_rates: Record<string, number>;
-  symbols: Record<string, { total: number; completed: number; stopped: number }>;
+  symbols: Record<string, { total: number; completed: number; stopped: number; expired?: number; win_rate?: number; net_pips?: number; target_rates?: Record<string, number> }>;
 }
 
 export interface LifecycleDashboard {

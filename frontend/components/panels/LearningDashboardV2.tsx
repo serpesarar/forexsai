@@ -25,6 +25,9 @@ const N = {
 const MODEL_THEME: Record<string, { label: string; color: string; bg: string; border: string; Icon: any }> = {
   ml: { label: "ML Model", color: N.blue.c, bg: N.blue.bg, border: N.blue.b, Icon: Zap },
   pulse: { label: "Pulse Engine", color: N.cyan.c, bg: N.cyan.bg, border: N.cyan.b, Icon: Activity },
+  pulse1: { label: "Pulse 1 — Algo", color: N.cyan.c, bg: N.cyan.bg, border: N.cyan.b, Icon: Activity },
+  pulse2: { label: "Pulse 2 — ML Hybrid", color: "#a78bfa", bg: "rgba(167,139,250,0.06)", border: "rgba(167,139,250,0.18)", Icon: Brain },
+  pulse3: { label: "Pulse 3 — MTF Hybrid", color: "#34d399", bg: "rgba(52,211,153,0.06)", border: "rgba(52,211,153,0.18)", Icon: TrendingUp },
   emel: { label: "EMEL 9-Check", color: N.p.c, bg: N.p.bg, border: N.p.b, Icon: Brain },
   hybrid: { label: "Hybrid", color: N.y.c, bg: N.y.bg, border: N.y.b, Icon: Shield },
 };
@@ -134,20 +137,37 @@ function ModelCard({ model, stats }: { model: string; stats: ModelStats }) {
               </div>
             </div>
           )}
-          {/* Per-symbol breakdown */}
+          {/* Per-symbol breakdown with targets */}
           {Object.keys(stats.symbols).length > 0 && (
-            <div>
-              <p className="text-[9px] uppercase tracking-[0.2em] text-white/30 mb-2">Per Symbol</p>
-              <div className="flex gap-2 flex-wrap">
-                {Object.entries(stats.symbols).map(([sym, d]) => (
-                  <div key={sym} className="rounded-md px-2.5 py-1.5 text-[10px] font-mono" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <span className="text-white/70 font-bold">{sym === "NDX.INDX" ? "NASDAQ" : sym}</span>
-                    <span className="text-white/30 ml-2">{d.total}sig</span>
-                    <span className="ml-1.5" style={{ color: N.g.c }}>{d.completed}W</span>
-                    <span className="ml-1" style={{ color: N.r.c }}>{d.stopped}L</span>
+            <div className="space-y-2">
+              <p className="text-[9px] uppercase tracking-[0.2em] text-white/30">Per Symbol</p>
+              {Object.entries(stats.symbols).map(([sym, d]) => {
+                const symName = sym === "NDX.INDX" ? "NASDAQ" : sym;
+                const symNetColor = (d.net_pips ?? 0) >= 0 ? N.g.c : N.r.c;
+                return (
+                  <div key={sym} className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold font-mono text-white/80">{symName}</span>
+                        <span className="text-[9px] text-white/30 font-mono">{d.total} signals</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-[10px] font-mono">
+                        <span style={{ color: N.g.c }}>{d.completed}W</span>
+                        <span style={{ color: N.r.c }}>{d.stopped}L</span>
+                        {d.win_rate !== undefined && <span className="font-bold" style={{ color: d.win_rate >= 50 ? N.g.c : N.r.c }}>{d.win_rate}%</span>}
+                        {d.net_pips !== undefined && <span className="font-bold" style={{ color: symNetColor }}>{(d.net_pips ?? 0) >= 0 ? "+" : ""}{d.net_pips} pips</span>}
+                      </div>
+                    </div>
+                    {d.target_rates && Object.keys(d.target_rates).length > 0 && (
+                      <div className="space-y-1">
+                        {Object.entries(d.target_rates).sort().map(([tp, rate]) => (
+                          <TargetBar key={tp} name={tp} rate={rate as number} />
+                        ))}
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
           )}
         </div>

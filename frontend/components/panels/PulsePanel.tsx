@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
 import {
   TrendingUp,
@@ -89,8 +89,9 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
   const [timeframe, setTimeframe] = useState("5m");
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
+      setLoading(true);
       setError(null);
       const res = await fetch(`${API_BASE}/api/panel/pulse/${activeSymbol}?timeframe=${timeframe}`);
       const json = await res.json();
@@ -108,14 +109,13 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeSymbol, timeframe]);
 
   useEffect(() => {
-    setLoading(true);
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
-  }, [activeSymbol, timeframe]);
+  }, [fetchData]);
 
   // Listen for global refresh event from header button
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
       window.removeEventListener("pulse-refresh", handler);
       window.removeEventListener("dashboard-refresh", handler);
     };
-  }, [activeSymbol, timeframe]);
+  }, [fetchData]);
 
   const nc = data ? neonColors[data.trend.direction] || neonColors.neutral : neonColors.neutral;
 

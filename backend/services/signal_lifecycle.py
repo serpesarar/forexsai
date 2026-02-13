@@ -750,6 +750,15 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
         models = {}
         for sig in signals:
             mt = sig.get("model_type") or sig.get("strategy") or "ml"
+            # Normalize old "pulse" entries based on strategy field
+            if mt == "pulse":
+                strat = (sig.get("strategy") or "").upper()
+                if strat == "PULSE_V3":
+                    mt = "pulse3"
+                elif strat == "PULSE_ML":
+                    mt = "pulse2"
+                else:
+                    mt = "pulse1"
             if mt not in models:
                 models[mt] = {
                     "total": 0, "completed": 0, "stopped": 0, "expired": 0,
@@ -764,10 +773,14 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
             status = sig.get("status", "expired")
             m[status] = m.get(status, 0) + 1
 
-            # Symbol breakdown
+            # Symbol breakdown with per-symbol target tracking
             sym = sig.get("symbol", "?")
             if sym not in m["symbols"]:
-                m["symbols"][sym] = {"total": 0, "completed": 0, "stopped": 0}
+                m["symbols"][sym] = {
+                    "total": 0, "completed": 0, "stopped": 0, "expired": 0,
+                    "total_profit_pips": 0, "total_loss_pips": 0,
+                    "target_hits": {},
+                }
             m["symbols"][sym]["total"] += 1
             m["symbols"][sym][status] = m["symbols"][sym].get(status, 0) + 1
 
@@ -778,19 +791,28 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
             if status == "completed":
                 m["total_profit_pips"] += hp
                 m["profits"].append(hp)
+                m["symbols"][sym]["total_profit_pips"] += hp
             elif status == "stopped":
                 m["total_loss_pips"] += abs(dd)
                 m["losses"].append(abs(dd))
+                m["symbols"][sym]["total_loss_pips"] += abs(dd)
 
-            # Target hit rates
+            # Target hit rates (global + per-symbol)
             th = parse_json_field(sig.get("targets_hit"), {})
             if th:
                 for tp_name, hit in th.items():
+                    # Global
                     if tp_name not in m["target_hits"]:
                         m["target_hits"][tp_name] = {"total": 0, "hit": 0}
                     m["target_hits"][tp_name]["total"] += 1
                     if hit:
                         m["target_hits"][tp_name]["hit"] += 1
+                    # Per-symbol
+                    if tp_name not in m["symbols"][sym]["target_hits"]:
+                        m["symbols"][sym]["target_hits"][tp_name] = {"total": 0, "hit": 0}
+                    m["symbols"][sym]["target_hits"][tp_name]["total"] += 1
+                    if hit:
+                        m["symbols"][sym]["target_hits"][tp_name]["hit"] += 1
 
         # Build final stats
         model_stats = {}
@@ -803,6 +825,24 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
             for tp_name, counts in m["target_hits"].items():
                 t = counts["total"] or 1
                 target_rates[tp_name] = round(counts["hit"] / t * 100, 1)
+
+            # Build per-symbol stats with target rates
+            symbols_out = {}
+            for sym, sd in m["symbols"].items():
+                sym_target_rates = {}
+                for tp_name, counts in sd.get("target_hits", {}).items():
+                    t = counts["total"] or 1
+                    sym_target_rates[tp_name] = round(counts["hit"] / t * 100, 1)
+                sym_total = sd["total"] or 1
+                symbols_out[sym] = {
+                    "total": sd["total"],
+                    "completed": sd.get("completed", 0),
+                    "stopped": sd.get("stopped", 0),
+                    "expired": sd.get("expired", 0),
+                    "win_rate": round(sd.get("completed", 0) / sym_total * 100, 1),
+                    "net_pips": round(sd.get("total_profit_pips", 0) - sd.get("total_loss_pips", 0), 1),
+                    "target_rates": sym_target_rates,
+                }
 
             model_stats[mt] = {
                 "total_signals": m["total"],
@@ -817,7 +857,7 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
                 "total_loss_pips": round(m["total_loss_pips"], 1),
                 "net_pips": round(m["total_profit_pips"] - m["total_loss_pips"], 1),
                 "target_rates": target_rates,
-                "symbols": m["symbols"],
+                "symbols": symbols_out,
             }
 
         # Failure patterns
