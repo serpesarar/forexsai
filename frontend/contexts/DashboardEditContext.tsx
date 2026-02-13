@@ -113,11 +113,20 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
         if (parsed.version >= DEFAULT_LAYOUT.version) {
           setLayout(parsed);
         } else {
-          // Merge: keep user customizations but add new cards from DEFAULT
+          // Merge: keep user visibility/collapse but update order/column from DEFAULT
+          const defaultMap = new Map(DEFAULT_LAYOUT.cards.map(c => [c.id, c]));
+          const mergedCards = parsed.cards.map((c: DashboardCard) => {
+            const def = defaultMap.get(c.id);
+            if (def) {
+              return { ...c, order: def.order, column: def.column };
+            }
+            return c;
+          });
+          // Add any new cards from DEFAULT that don't exist in saved
           const existingIds = new Set(parsed.cards.map((c: DashboardCard) => c.id));
           const newCards = DEFAULT_LAYOUT.cards.filter(c => !existingIds.has(c.id));
           setLayout({
-            cards: [...parsed.cards, ...newCards],
+            cards: [...mergedCards, ...newCards],
             version: DEFAULT_LAYOUT.version,
           });
         }
