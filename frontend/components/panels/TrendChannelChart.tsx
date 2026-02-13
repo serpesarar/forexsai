@@ -39,96 +39,102 @@ export default function TrendChannelChart({
   const svgRef = useRef<SVGSVGElement>(null);
   const [tick, setTick] = useState(0);
 
-  // Pan & zoom state
-  const [zoom, setZoom] = useState(1);
-  const [panX, setPanX] = useState(0);
-  const [panY, setPanY] = useState(0);
+  // Data-window scrolling: offset = how many candles scrolled back from end
+  const VISIBLE_CANDLES = 60;
+  const totalCandles = closes.length;
+  const maxOffset = Math.max(0, totalCandles - VISIBLE_CANDLES);
+  const [scrollOffset, setScrollOffset] = useState(0); // 0 = most recent
   const [isDragging, setIsDragging] = useState(false);
-  const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const dragStart = useRef({ x: 0, offset: 0 });
 
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 1200);
     return () => clearInterval(id);
   }, []);
 
-  // Mouse handlers for drag-to-pan
+  // Mouse handlers for horizontal scroll through data
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     setIsDragging(true);
-    dragStart.current = { x: e.clientX, y: e.clientY, panX, panY };
-  }, [panX, panY]);
+    dragStart.current = { x: e.clientX, offset: scrollOffset };
+  }, [scrollOffset]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging) return;
     const dx = e.clientX - dragStart.current.x;
-    const dy = e.clientY - dragStart.current.y;
-    setPanX(dragStart.current.panX + dx / zoom);
-    setPanY(dragStart.current.panY + dy / zoom);
-  }, [isDragging, zoom]);
+    // Each 8px of drag = 1 candle scroll
+    const candleShift = Math.round(dx / 8);
+    const newOffset = Math.max(0, Math.min(maxOffset, dragStart.current.offset + candleShift));
+    setScrollOffset(newOffset);
+  }, [isDragging, maxOffset]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
   }, []);
 
-  // Scroll-to-zoom
+  // Scroll wheel = horizontal scroll through candles
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    setZoom((z) => Math.max(0.5, Math.min(5, z * delta)));
-  }, []);
+    const delta = e.deltaY > 0 ? -3 : 3; // scroll down = go back, up = go forward
+    setScrollOffset(prev => Math.max(0, Math.min(maxOffset, prev + delta)));
+  }, [maxOffset]);
 
-  // Touch handlers for pinch-to-zoom
-  const lastTouchDist = useRef<number | null>(null);
+  // Touch handlers for mobile swipe
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      lastTouchDist.current = Math.hypot(dx, dy);
-    } else if (e.touches.length === 1) {
+    if (e.touches.length === 1) {
       setIsDragging(true);
-      dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, panX, panY };
+      dragStart.current = { x: e.touches[0].clientX, offset: scrollOffset };
     }
-  }, [panX, panY]);
+  }, [scrollOffset]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 2 && lastTouchDist.current !== null) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      const dist = Math.hypot(dx, dy);
-      const scale = dist / lastTouchDist.current;
-      setZoom((z) => Math.max(0.5, Math.min(5, z * scale)));
-      lastTouchDist.current = dist;
-    } else if (e.touches.length === 1 && isDragging) {
+    if (e.touches.length === 1 && isDragging) {
       const dx = e.touches[0].clientX - dragStart.current.x;
-      const dy = e.touches[0].clientY - dragStart.current.y;
-      setPanX(dragStart.current.panX + dx / zoom);
-      setPanY(dragStart.current.panY + dy / zoom);
+      const candleShift = Math.round(dx / 8);
+      const newOffset = Math.max(0, Math.min(maxOffset, dragStart.current.offset + candleShift));
+      setScrollOffset(newOffset);
     }
-  }, [isDragging, zoom]);
+  }, [isDragging, maxOffset]);
 
   const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
-    lastTouchDist.current = null;
   }, []);
 
-  // Double-click to reset
+  // Double-click to reset to latest
   const handleDoubleClick = useCallback(() => {
-    setZoom(1);
-    setPanX(0);
-    setPanY(0);
+    setScrollOffset(0);
   }, []);
+
+  // Slice visible data window based on scrollOffset
+  const visibleWindow = useMemo(() => {
+    const end = totalCandles - scrollOffset;
+    const start = Math.max(0, end - VISIBLE_CANDLES);
+    return {
+      closes: closes.slice(start, end),
+      upper: upper.slice(start, end),
+      lower: lower.slice(start, end),
+      middle: middle.slice(start, end),
+      start, end,
+      isAtLatest: scrollOffset === 0,
+    };
+  }, [closes, upper, lower, middle, totalCandles, scrollOffset]);
 
   const computed = useMemo(() => {
-    if (!closes.length) return null;
+    const vc = visibleWindow.closes;
+    const vu = visibleWindow.upper;
+    const vl = visibleWindow.lower;
+    const vm = visibleWindow.middle;
+    if (!vc.length) return null;
 
-    const allPrices = [
-      ...closes, ...upper, ...lower,
+    // Y-axis auto-scales to VISIBLE data only
+    const visiblePrices = [
+      ...vc, ...vu, ...vl,
       ...supportLevels.map((s) => s.price),
       ...resistanceLevels.map((r) => r.price),
-      currentPrice,
+      ...(visibleWindow.isAtLatest ? [currentPrice] : []),
     ].filter((v) => v > 0);
 
-    const rawMin = Math.min(...allPrices);
-    const rawMax = Math.max(...allPrices);
+    const rawMin = Math.min(...visiblePrices);
+    const rawMax = Math.max(...visiblePrices);
     const pad = (rawMax - rawMin) * 0.06;
     const minP = rawMin - pad;
     const maxP = rawMax + pad;
@@ -137,13 +143,15 @@ export default function TrendChannelChart({
     const plotW = BASE_W - PAD.left - PAD.right;
     const plotH = BASE_H - PAD.top - PAD.bottom;
 
-    const xScale = (i: number) => PAD.left + (i / Math.max(1, closes.length - 1)) * plotW;
+    const xScale = (i: number) => PAD.left + (i / Math.max(1, vc.length - 1)) * plotW;
     const yScale = (price: number) => PAD.top + plotH - ((price - minP) / range) * plotH;
 
-    const pricePts = closes.map((c, i) => `${xScale(i)},${yScale(c)}`);
-    // Extend line to currentPrice so green line tracks live price
-    const lastIdx = closes.length - 1;
-    const extendedPricePts = [...pricePts, `${xScale(lastIdx)},${yScale(currentPrice)}`];
+    const pricePts = vc.map((c, i) => `${xScale(i)},${yScale(c)}`);
+    // Extend line to currentPrice when viewing latest data
+    const lastIdx = vc.length - 1;
+    const extendedPricePts = visibleWindow.isAtLatest
+      ? [...pricePts, `${xScale(lastIdx)},${yScale(currentPrice)}`]
+      : pricePts;
     const pricePath = `M${extendedPricePts.join("L")}`;
     const areaPath = `${pricePath}L${xScale(lastIdx)},${BASE_H - PAD.bottom}L${xScale(0)},${BASE_H - PAD.bottom}Z`;
 
@@ -153,9 +161,9 @@ export default function TrendChannelChart({
     };
 
     let channelFillPath = "";
-    if (upper.length && lower.length) {
-      const upPts = upper.map((v, i) => `${xScale(i)},${yScale(v)}`).join("L");
-      const downPts = [...lower].reverse().map((v, i) => `${xScale(lower.length - 1 - i)},${yScale(v)}`).join("L");
+    if (vu.length && vl.length) {
+      const upPts = vu.map((v, i) => `${xScale(i)},${yScale(v)}`).join("L");
+      const downPts = [...vl].reverse().map((v, i) => `${xScale(vl.length - 1 - i)},${yScale(v)}`).join("L");
       channelFillPath = `M${upPts}L${downPts}Z`;
     }
 
@@ -168,26 +176,20 @@ export default function TrendChannelChart({
 
     return {
       pricePath, areaPath,
-      upperPath: makePath(upper),
-      lowerPath: makePath(lower),
-      middlePath: makePath(middle),
+      upperPath: makePath(vu),
+      lowerPath: makePath(vl),
+      middlePath: makePath(vm),
       channelFillPath,
       yScale, xScale, minP, maxP, gridLines,
-      lastX: xScale(closes.length - 1),
+      lastX: xScale(vc.length - 1),
     };
-  }, [closes, upper, lower, middle, supportLevels, resistanceLevels, currentPrice, decimals]);
+  }, [visibleWindow, supportLevels, resistanceLevels, currentPrice, decimals]);
 
   if (!computed) return null;
 
   const { pricePath, areaPath, upperPath, lowerPath, middlePath, channelFillPath, yScale, lastX, gridLines } = computed;
   const pulse = Math.sin(tick * Math.PI * 0.8);
   const srPulse = 0.45 + Math.sin(tick * Math.PI * 0.6) * 0.25;
-
-  // Compute viewBox with pan/zoom
-  const vbW = BASE_W / zoom;
-  const vbH = BASE_H / zoom;
-  const vbX = (BASE_W - vbW) / 2 - panX;
-  const vbY = (BASE_H - vbH) / 2 - panY;
 
   return (
     <div
@@ -204,30 +206,37 @@ export default function TrendChannelChart({
       onTouchEnd={handleTouchEnd}
       onDoubleClick={handleDoubleClick}
     >
-      {/* Zoom controls */}
+      {/* Scroll controls */}
       <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
         <button
-          onClick={(e) => { e.stopPropagation(); setZoom(z => Math.min(5, z * 1.25)); }}
+          onClick={(e) => { e.stopPropagation(); setScrollOffset(prev => Math.min(maxOffset, prev + 20)); }}
           className="w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold font-mono transition-all hover:brightness-150"
           style={{ background: "rgba(0,255,136,0.1)", color: "#00ff88", border: "1px solid rgba(0,255,136,0.2)" }}
-        >+</button>
+          title="Scroll back in time"
+        >◀</button>
         <button
-          onClick={(e) => { e.stopPropagation(); setZoom(z => Math.max(0.5, z * 0.8)); }}
+          onClick={(e) => { e.stopPropagation(); setScrollOffset(prev => Math.max(0, prev - 20)); }}
           className="w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold font-mono transition-all hover:brightness-150"
-          style={{ background: "rgba(255,51,102,0.1)", color: "#ff3366", border: "1px solid rgba(255,51,102,0.2)" }}
-        >−</button>
-        {zoom !== 1 && (
+          style={{ background: "rgba(0,255,136,0.1)", color: "#00ff88", border: "1px solid rgba(0,255,136,0.2)" }}
+          title="Scroll forward in time"
+        >▶</button>
+        {scrollOffset > 0 && (
           <button
-            onClick={(e) => { e.stopPropagation(); setZoom(1); setPanX(0); setPanY(0); }}
+            onClick={(e) => { e.stopPropagation(); setScrollOffset(0); }}
             className="h-7 px-2 rounded-md flex items-center justify-center text-[10px] font-bold font-mono transition-all hover:brightness-150"
             style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}
-          >{zoom.toFixed(1)}x ↺</button>
+          >↻ Son</button>
+        )}
+        {scrollOffset > 0 && (
+          <span className="text-[9px] font-mono ml-1" style={{ color: "rgba(255,255,255,0.35)" }}>
+            -{scrollOffset} bar
+          </span>
         )}
       </div>
 
       <svg
         ref={svgRef}
-        viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`}
+        viewBox={`0 0 ${BASE_W} ${BASE_H}`}
         className="w-full"
         style={{ height: "100%", minHeight: 280 }}
         preserveAspectRatio="xMidYMid meet"
@@ -374,18 +383,24 @@ export default function TrendChannelChart({
         {/* Price line */}
         <path d={pricePath} fill="none" stroke="#00ff88" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" filter="url(#tcPriceGlow)" />
 
-        {/* Current price horizontal line */}
-        <line x1={PAD.left} y1={yScale(currentPrice)} x2={BASE_W - PAD.right} y2={yScale(currentPrice)} stroke="#00ff88" strokeWidth={1} strokeDasharray="3 3" opacity={0.4} />
-
-        {/* Current price dot glow */}
-        <circle cx={lastX} cy={yScale(currentPrice)} r={16 + pulse * 4} fill="url(#tcDotGlow)" opacity={0.35 + pulse * 0.15} />
-        <circle cx={lastX} cy={yScale(currentPrice)} r={5} fill="#00ff88" stroke="#020617" strokeWidth={2} />
-
-        {/* Current price tag */}
-        <rect x={BASE_W - PAD.right + 2} y={yScale(currentPrice) - 12} width={84} height={24} rx={5} fill="rgba(0,255,136,0.18)" stroke="#00ff88" strokeWidth={1.2} />
-        <text x={BASE_W - PAD.right + 10} y={yScale(currentPrice) + 5} fill="#00ff88" fontSize={11} fontFamily="monospace" fontWeight="bold">
-          {currentPrice.toFixed(decimals)}
-        </text>
+        {/* Current price horizontal line + dot (only when viewing latest) */}
+        {visibleWindow.isAtLatest && (
+          <>
+            <line x1={PAD.left} y1={yScale(currentPrice)} x2={BASE_W - PAD.right} y2={yScale(currentPrice)} stroke="#00ff88" strokeWidth={1} strokeDasharray="3 3" opacity={0.4} />
+            <circle cx={lastX} cy={yScale(currentPrice)} r={16 + pulse * 4} fill="url(#tcDotGlow)" opacity={0.35 + pulse * 0.15} />
+            <circle cx={lastX} cy={yScale(currentPrice)} r={5} fill="#00ff88" stroke="#020617" strokeWidth={2} />
+            <rect x={BASE_W - PAD.right + 2} y={yScale(currentPrice) - 12} width={84} height={24} rx={5} fill="rgba(0,255,136,0.18)" stroke="#00ff88" strokeWidth={1.2} />
+            <text x={BASE_W - PAD.right + 10} y={yScale(currentPrice) + 5} fill="#00ff88" fontSize={11} fontFamily="monospace" fontWeight="bold">
+              {currentPrice.toFixed(decimals)}
+            </text>
+          </>
+        )}
+        {/* Historical mode indicator */}
+        {!visibleWindow.isAtLatest && (
+          <text x={BASE_W / 2} y={PAD.top + 14} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize={10} fontFamily="monospace">
+            ◀ Geçmiş veri ({scrollOffset} bar geri) — Çift tıkla: en son
+          </text>
+        )}
       </svg>
     </div>
   );

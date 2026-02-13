@@ -421,7 +421,7 @@ def _build_regime_result(
     # ═══ MODEL WEIGHT MATRIX ═══
     # Keys: ml, pulse1, pulse2, pulse3
     if regime == "STRONG_TREND_UP":
-        weights = {"ml": 0.60, "pulse1": 0.00, "pulse2": 0.30, "pulse3": 0.10}
+        weights = {"ml": 0.50, "pulse1": 0.15, "pulse2": 0.25, "pulse3": 0.10}
         rsi_ob = 92.0    # RSI >92 = too extreme even in trend
         rsi_os = 35.0     # RSI <35 in uptrend = buy dip opportunity
         rsi_boost = True   # RSI 70-92 = "strong momentum", not sell
@@ -429,7 +429,7 @@ def _build_regime_result(
         min_rr = 1.5       # higher R/R in trend for pullback entries
 
     elif regime == "STRONG_TREND_DOWN":
-        weights = {"ml": 0.60, "pulse1": 0.00, "pulse2": 0.30, "pulse3": 0.10}
+        weights = {"ml": 0.50, "pulse1": 0.15, "pulse2": 0.25, "pulse3": 0.10}
         rsi_ob = 65.0
         rsi_os = 8.0      # RSI <8 = too extreme
         rsi_boost = True   # RSI <30 = strong bearish momentum
@@ -460,8 +460,8 @@ def _build_regime_result(
 
     # ═══ SESSION ADJUSTMENTS ═══
     if session == "asia":
-        # Low volume in Asia → reduce pulse1 further, increase ML
-        weights["pulse1"] = 0.0
+        # Low volume in Asia → reduce pulse1 but keep active
+        weights["pulse1"] = max(weights["pulse1"], 0.10)
         if regime != "STRONG_TREND_UP" and regime != "STRONG_TREND_DOWN":
             min_rr = max(min_rr, 1.5)  # Higher R/R in Asia (manipulation risk)
     elif session == "overlap_london_ny":
@@ -510,7 +510,7 @@ def _default_regime(symbol: str, live_price) -> RegimeResult:
         current_price=price,
         session=_detect_session(),
         timestamp=datetime.now(timezone.utc).isoformat(),
-        model_weights={"ml": 0.40, "pulse1": 0.00, "pulse2": 0.30, "pulse3": 0.30},
+        model_weights={"ml": 0.35, "pulse1": 0.15, "pulse2": 0.25, "pulse3": 0.25},
         rsi_overbought=75.0,
         rsi_oversold=25.0,
         rsi_trend_boost=False,

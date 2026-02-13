@@ -1207,11 +1207,12 @@ async def get_strategy_performance(
         outcomes_list = (outcome_result.get('data') if isinstance(outcome_result, dict) else getattr(outcome_result, 'data', None)) or []
         outcomes_map = {o.get("prediction_id"): o for o in outcomes_list if o.get("prediction_id")}
         
-        # Classify by confidence
+        # Classify by confidence — thresholds adjusted for realistic ML output
+        # ML typically produces 45-70% confidence range
         def classify(conf):
-            if conf >= 70: return "ultra_safe"
-            if conf >= 60: return "balanced"
-            if conf >= 52: return "full_power"
+            if conf >= 65: return "ultra_safe"
+            if conf >= 55: return "balanced"
+            if conf >= 48: return "full_power"
             return "aggressive"
         
         # Initialize stats with per-target tracking
@@ -1328,10 +1329,10 @@ async def get_strategy_performance(
             "strategies": result_data,
             "best_strategies": best,
             "strategy_descriptions": {
-                "ultra_safe": "Güven ≥70%, düşük risk",
-                "balanced": "Güven 60-70%, dengeli",
-                "full_power": "Güven 52-60%, güçlü sinyal",
-                "aggressive": "Güven <52%, agresif"
+                "ultra_safe": "Güven ≥65%, düşük risk",
+                "balanced": "Güven 55-65%, dengeli",
+                "full_power": "Güven 48-55%, güçlü sinyal",
+                "aggressive": "Güven <48%, agresif"
             }
         }
     except Exception as e:

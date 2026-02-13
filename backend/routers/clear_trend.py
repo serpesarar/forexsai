@@ -409,11 +409,12 @@ async def get_clear_trend(symbol: str, timeframe: str = "1H"):
             price_display = f"{current_price:.1f}"
             price_decimals = 1
         
-        # Build chart data for frontend mini chart
-        recent_closes = [round(float(c), price_decimals) for c in closes[-50:]]
+        # Build chart data for frontend mini chart (200 candles for scrolling)
+        chart_count = min(len(closes), 200)
+        recent_closes = [round(float(c), price_decimals) for c in closes[-chart_count:]]
         
-        # Linear regression trend channel
-        channel_closes = closes[-50:] if len(closes) >= 50 else closes
+        # Linear regression trend channel (over all chart candles)
+        channel_closes = closes[-chart_count:]
         x = np.arange(len(channel_closes), dtype=float)
         try:
             slope, intercept = np.polyfit(x, channel_closes.astype(float), 1)

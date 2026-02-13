@@ -1068,48 +1068,92 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
         signal_type = "HOLD"
         signal = "HOLD"
         
+        # ─── TA-ONLY DIRECTION (fallback when ML is HOLD/low conf) ─────
+        # Derive direction from technical indicators alone
+        ta_direction = "HOLD"
+        ta_votes = 0
+        if current_price > ema_20 > ema_50:
+            ta_direction = "BUY"
+            ta_votes += 2
+        elif current_price < ema_20 < ema_50:
+            ta_direction = "SELL"
+            ta_votes += 2
+        elif current_price > ema_20:
+            ta_direction = "BUY"
+            ta_votes += 1
+        elif current_price < ema_20:
+            ta_direction = "SELL"
+            ta_votes += 1
+        
+        if macd_hist > 0:
+            if ta_direction == "BUY": ta_votes += 1
+            elif ta_direction == "HOLD": ta_direction = "BUY"; ta_votes += 1
+        elif macd_hist < 0:
+            if ta_direction == "SELL": ta_votes += 1
+            elif ta_direction == "HOLD": ta_direction = "SELL"; ta_votes += 1
+        
+        if rsi_14 < 35: 
+            if ta_direction != "SELL": ta_votes += 1
+        elif rsi_14 > 65:
+            if ta_direction != "BUY": ta_votes += 1
+        
+        # Use ML direction if available, else fallback to TA direction
+        active_direction = ml_direction if ml_direction in ("BUY", "SELL") else ta_direction
+        is_ta_fallback = ml_direction == "HOLD" and ta_direction in ("BUY", "SELL")
+        if is_ta_fallback:
+            notes.append(f"ML HOLD → TA analiz yönü: {ta_direction} ({ta_votes} onay)")
+        
         # ─── ML Güven Puanı (40 puan max) ────────────────────────────────
-        # ATH + Trend modunda ML confidence threshold düşer (daha erken gir)
         ml_pts = 0
-        ml_confirm_floor = 55.0  # default
-        ml_scout_floor = 52.0    # default
+        ml_confirm_floor = 55.0
+        ml_scout_floor = 52.0
         
         if regime.regime == "STRONG_TREND_UP" and regime.is_ath_zone:
-            ml_confirm_floor = 48.0  # ATH'de daha erken gir
+            ml_confirm_floor = 48.0
             ml_scout_floor = 42.0
             notes.append("ATH modu: ML threshold düşürüldü")
         elif regime.regime in ["STRONG_TREND_UP", "STRONG_TREND_DOWN"]:
-            ml_confirm_floor = 50.0  # Trend modunda biraz daha esnek
+            ml_confirm_floor = 50.0
             ml_scout_floor = 45.0
         
-        if ml_confidence >= 70:
-            ml_pts = 40
-        elif ml_confidence >= 60:
-            ml_pts = 30
-        elif ml_confidence >= ml_scout_floor:
-            ml_pts = 20  # SCOUT için yeterli
+        if ml_direction in ("BUY", "SELL"):
+            if ml_confidence >= 70:
+                ml_pts = 40
+            elif ml_confidence >= 60:
+                ml_pts = 30
+            elif ml_confidence >= ml_scout_floor:
+                ml_pts = 20
+            else:
+                ml_pts = 10  # ML has a direction but low confidence
+                notes.append(f"ML yön var ({ml_direction}) ama güven düşük ({ml_confidence:.1f}%)")
         else:
-            ml_pts = 0
-            notes.append(f"ML güveni düşük ({ml_confidence:.1f}%)")
+            # ML gave HOLD — give partial credit if TA fallback aligns with regime
+            if is_ta_fallback and ta_votes >= 2:
+                ml_pts = 15  # TA consensus replaces ML
+                notes.append("TA konsensüs ML yerine geçti")
+            elif is_ta_fallback:
+                ml_pts = 8
+            else:
+                ml_pts = 0
+                notes.append(f"ML HOLD, TA belirsiz")
         score += ml_pts
         
         # ─── EMA Trend Onayı (25 puan max) ──────────────────────────────
-        # Trend modunda: EMA20 altına düşüş = dip fırsatı (penalize etme)
         ema_pts = 0
         ema_status = "neutral"
         
-        if ml_direction == "BUY":
+        if active_direction == "BUY":
             if current_price > ema_20 > ema_50:
-                ema_pts = 25  # Mükemmel: Fiyat > EMA20 > EMA50
+                ema_pts = 25
                 ema_status = "strong_confirm"
             elif current_price > ema_20:
-                ema_pts = 15  # İyi: Fiyat EMA20 üstünde
+                ema_pts = 15
                 ema_status = "confirm"
             elif current_price > ema_50:
-                ema_pts = 8   # Zayıf: Fiyat EMA50 üstünde ama EMA20 altında
+                ema_pts = 8
                 ema_status = "weak"
                 if regime.regime == "STRONG_TREND_UP":
-                    ema_pts = 15  # Trendde EMA20 altı = pullback fırsatı
+                    ema_pts = 15
                     ema_status = "pullback_opportunity"
                     notes.append("Trend pullback: EMA20 retest, dip alım fırsatı")
                 else:
@@ -1118,12 +1162,12 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
                 ema_pts = 0
                 ema_status = "against"
                 if regime.regime == "STRONG_TREND_UP":
-                    ema_pts = 5  # Trendde bile EMA50 altı = hâlâ fırsat olabilir
+                    ema_pts = 5
                     ema_status = "deep_pullback"
                     notes.append("Derin pullback: EMA50 altında ama trend yukarı")
                 else:
-                    notes.append("Trend (EMA) ML yönünü desteklemiyor")
-        elif ml_direction == "SELL":
+                    notes.append("Trend (EMA) yönü desteklemiyor")
+        elif active_direction == "SELL":
             if current_price < ema_20 < ema_50:
                 ema_pts = 25
                 ema_status = "strong_confirm"
@@ -1147,29 +1191,28 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
                     ema_status = "deep_pullback"
                     notes.append("Derin pullback: EMA50 üstünde ama trend aşağı")
                 else:
-                    notes.append("Trend (EMA) ML yönünü desteklemiyor")
+                    notes.append("Trend (EMA) yönü desteklemiyor")
         score += ema_pts
         
         # ─── MACD Momentum Onayı (15 puan max) ──────────────────────────
         macd_pts = 0
-        if ml_direction == "BUY" and macd_hist > 0:
+        if active_direction == "BUY" and macd_hist > 0:
             macd_pts = 15
-        elif ml_direction == "SELL" and macd_hist < 0:
+        elif active_direction == "SELL" and macd_hist < 0:
             macd_pts = 15
         elif abs(macd_hist) < 0.01:
-            macd_pts = 5  # Nötr MACD = yöne henüz başlamış olabilir
+            macd_pts = 5
         else:
-            # Trend modunda MACD ters olsa bile tamamen penalize etme
             if regime.regime in ["STRONG_TREND_UP", "STRONG_TREND_DOWN"]:
-                macd_pts = 3  # Trend güçlüyse MACD gecikmeli olabilir
+                macd_pts = 3
                 notes.append("MACD gecikmeli, trend güçlü devam ediyor")
             else:
-                notes.append("MACD ML yönünü onaylamıyor")
+                notes.append("MACD yönü desteklemiyor")
         score += macd_pts
         
         # ─── RSI Filtresi (10 puan max) - REGIME-AWARE ──────────────────
         rsi_pts = 0
-        rsi_interpretation = interpret_rsi(rsi_14, regime, ml_direction)
+        rsi_interpretation = interpret_rsi(rsi_14, regime, active_direction)
         
         if rsi_interpretation["action"] == "boost":
             rsi_pts = 10 + rsi_interpretation["score_adjustment"]
@@ -1178,13 +1221,7 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
             rsi_pts = 0
             notes.append(rsi_interpretation["note"])
         elif rsi_interpretation["action"] == "neutral":
-            # Default range scoring
-            if ml_direction == "BUY":
-                if regime.rsi_oversold < rsi_14 < regime.rsi_overbought:
-                    rsi_pts = 10
-                else:
-                    rsi_pts = 3
-            elif ml_direction == "SELL":
+            if active_direction in ("BUY", "SELL"):
                 if regime.rsi_oversold < rsi_14 < regime.rsi_overbought:
                     rsi_pts = 10
                 else:
@@ -1206,12 +1243,18 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
         score += vol_pts
         
         # ─── SİNYAL BELİRLEME (İki kademe) - REGIME-AWARE ──────────────
-        if score >= 65 and ml_confidence >= ml_confirm_floor:
+        # For TA fallback mode, use lower thresholds (TA has already proven direction)
+        confirm_threshold = 60 if is_ta_fallback else 65
+        scout_threshold = 35 if is_ta_fallback else 40
+        conf_floor = ml_scout_floor if is_ta_fallback else ml_confirm_floor
+        scout_conf_floor = 0 if is_ta_fallback else ml_scout_floor  # No ML floor needed for TA fallback
+        
+        if score >= confirm_threshold and (ml_confidence >= conf_floor or is_ta_fallback):
             signal_type = "CONFIRM"
-            signal = ml_direction
-        elif score >= 40 and ml_confidence >= ml_scout_floor:
+            signal = active_direction
+        elif score >= scout_threshold and (ml_confidence >= scout_conf_floor or is_ta_fallback):
             signal_type = "SCOUT"
-            signal = ml_direction
+            signal = active_direction
         else:
             signal_type = "HOLD"
             signal = "HOLD"
