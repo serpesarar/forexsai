@@ -445,7 +445,7 @@ def _build_regime_result(
         min_rr = 1.2
 
     else:  # TRANSITION
-        weights = {"ml": 0.40, "pulse1": 0.00, "pulse2": 0.30, "pulse3": 0.30}
+        weights = {"ml": 0.40, "pulse1": 0.20, "pulse2": 0.20, "pulse3": 0.20}
         rsi_ob = 75.0
         rsi_os = 25.0
         rsi_boost = False
