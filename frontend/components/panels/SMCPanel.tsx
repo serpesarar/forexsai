@@ -78,6 +78,12 @@ export default function SMCPanel() {
   const [showReasoning, setShowReasoning] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
+  useEffect(() => {
+    const handler = () => fetchData();
+    window.addEventListener("dashboard-refresh", handler);
+    return () => window.removeEventListener("dashboard-refresh", handler);
+  }, [symbol]);
+
   const fetchData = async () => {
     try {
       setLoading(true);

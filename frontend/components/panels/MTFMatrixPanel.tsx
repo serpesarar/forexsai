@@ -83,6 +83,12 @@ export default function MTFMatrixPanel() {
 
   const { data: wsData, wsConnected } = useWSPanelData(symbol, "mtf");
 
+  useEffect(() => {
+    const handler = () => fetchData();
+    window.addEventListener("dashboard-refresh", handler);
+    return () => window.removeEventListener("dashboard-refresh", handler);
+  }, [symbol]);
+
   const fetchData = async () => {
     try {
       setLoading(true);

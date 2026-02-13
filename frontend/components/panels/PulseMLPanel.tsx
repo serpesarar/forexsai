@@ -17,6 +17,8 @@ import {
   CheckCircle,
   AlertTriangle,
   BarChart3,
+  Shield,
+  Mountain,
 } from "lucide-react";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
@@ -52,6 +54,16 @@ interface PulseMLData {
     notes: string[];
   };
   suggestion: string;
+  regime?: {
+    type: string;
+    adx: number;
+    session: string;
+    is_ath: boolean;
+    rsi_mode: string;
+    allowed_directions: string[];
+    min_rr: number;
+    ml_confidence_floor?: { scout: number; confirm: number };
+  };
 }
 
 interface PulseMLPanelProps {
@@ -114,7 +126,11 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   useEffect(() => {
     const handler = () => fetchData();
     window.addEventListener("pulse-refresh", handler);
-    return () => window.removeEventListener("pulse-refresh", handler);
+    window.addEventListener("dashboard-refresh", handler);
+    return () => {
+      window.removeEventListener("pulse-refresh", handler);
+      window.removeEventListener("dashboard-refresh", handler);
+    };
   }, [fetchData]);
 
   const st = signalStyles[data?.signal_type || "HOLD"] || signalStyles.HOLD;
@@ -218,6 +234,37 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
                 </div>
               </div>
             </div>
+
+            {/* Regime Badge */}
+            {data?.regime && (
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold font-mono"
+                  style={{
+                    background: data.regime.type.includes("TREND_UP") ? "rgba(0,255,136,0.12)" :
+                      data.regime.type.includes("TREND_DOWN") ? "rgba(255,51,102,0.12)" :
+                      data.regime.type === "RANGING" ? "rgba(240,180,41,0.12)" : "rgba(129,140,248,0.12)",
+                    color: data.regime.type.includes("TREND_UP") ? "#00ff88" :
+                      data.regime.type.includes("TREND_DOWN") ? "#ff3366" :
+                      data.regime.type === "RANGING" ? "#f0b429" : "#818cf8",
+                    border: `1px solid ${data.regime.type.includes("TREND_UP") ? "rgba(0,255,136,0.25)" :
+                      data.regime.type.includes("TREND_DOWN") ? "rgba(255,51,102,0.25)" :
+                      data.regime.type === "RANGING" ? "rgba(240,180,41,0.25)" : "rgba(129,140,248,0.25)"}`,
+                  }}>
+                  <Shield className="w-3 h-3" />
+                  {data.regime.type.replace(/_/g, " ")}
+                </div>
+                <div className="px-2 py-1 rounded-full text-[10px] font-mono font-bold"
+                  style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  ADX {data.regime.adx} | {data.regime.session}
+                </div>
+                {data.regime.is_ath && (
+                  <div className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-mono font-bold"
+                    style={{ background: "rgba(255,215,0,0.12)", color: "#ffd700", border: "1px solid rgba(255,215,0,0.25)" }}>
+                    <Mountain className="w-3 h-3" /> ATH
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Score Bar */}
             <div className="mt-3 h-2 rounded-full bg-white/5 overflow-hidden">

@@ -1,4 +1,44 @@
-Pulse Modelleri: Kurallar ve Çalışma Mantığı (Güncellenmiş - v2)
+Pulse Modelleri: Kurallar ve Çalışma Mantığı (Güncellenmiş - v3 REGIME-AWARE)
+==============================================================
+
+★ MARKET REGIME DETECTION SYSTEM (YENİ - v3)
+Tüm modellere entegre. Piyasa rejimini algılar, modelleri adapte eder.
+Dosya: backend/services/market_regime_service.py
+Endpoint: GET /api/panel/regime/{symbol}
+
+Rejimler:
+  STRONG_TREND_UP:   ADX>25, bullish swing yapısı → Sadece LONG
+  STRONG_TREND_DOWN: ADX>25, bearish swing yapısı → Sadece SHORT
+  RANGING:           ADX<20, düşük volatilite → Mean reversion
+  TRANSITION:        Diğer → Düşük risk, dikkatli
+
+Algılama Katmanları:
+  1. ADX (Wilder smoothing, 4H veri) → Trend gücü
+  2. ATR Ratio (14-bar / 50-bar) → Volatilite rejimi
+  3. Swing Structure (HH/HL 3-bar pivot) → Trend yönü
+  4. ATH Detection (60-gün zirve, %1.5 eşik) → ATH protokolü
+  5. Session Detection (Asia/London/Overlap/NY) → Seans ağırlığı
+
+Order Block Detection (ICT Simplified):
+  - 4H veriden bullish/bearish OB tespiti
+  - Trend modda OB'ye ulaşan fiyat → SCOUT → CONFIRM upgrade
+  - Giriş bölgeleri OB seviyelerine göre ayarlanır
+
+Fake Signal Timeout:
+  - 24 saat içinde 3+ kayıp → 6 saat timeout
+  - Timeout süresince CONFIRM → SCOUT'a düşürülür
+
+ATH Breakout Protocol:
+  - ATH bölgesinde SELL sinyalleri bloklanır
+  - ML güven eşiği düşürülür (%45→%50)
+  - Hedefler genişletilir (üstte direnç yok)
+
+Session Ağırlıkları:
+  Asia:     Düşük likidite, dar hedefler
+  London:   Normal ağırlık
+  Overlap:  Maximum ağırlık, geniş hedefler
+  New York: Normal ağırlık
+
 ==============================================================
 
 0. EMEL (9 Kontrol Noktası) - Ana Stratejik Model
@@ -11,16 +51,17 @@ En az 6/9 yeşil olmalı sinyal üretmek için.
 
 ==============================================================
 
-1. PULSE 1 (Algoritmik) - GELİŞTİRİLMİŞ Kural Tabanlı Scalp
+1. PULSE 1 (Algoritmik) - REGIME-AWARE Kural Tabanlı Scalp
 Matematiksel kod. YZ kullanmaz. EMEL'in alt versiyonu gibi ama daha esnek.
 Dosya: backend/routers/emel_pulse.py (Satır ~565)
 Endpoint: GET /api/panel/pulse/{symbol}
 
-DEĞİŞİKLİKLER (v2):
-- Son 5 mum → Son 10 mum analizi (daha geniş bakış)
-- Trend gücü 0.6 → 0.4 SCOUT / 0.65 CONFIRM (iki kademe)
-- R/R 1.5 → 1.2 (optimal)
-- Sadece yön → 6 bileşenli puanlama sistemi (100 puan)
+REJİM ENTEGRASYONu (v3):
+- STRONG_TREND modlarında devre dışı (weight=0, HOLD döner)
+- RSI rejim-bazlı yorumlanır (trend modda RSI>70 = momentum)
+- Yön filtreleme (SELL bloklanır uptrend'de)
+- Dinamik R/R (regime.min_rr kullanır)
+- Fake signal timeout kontrolü
 
 Puanlama (0-100):
   1. Son 10 mum yönü: 20 puan
@@ -35,80 +76,79 @@ Sinyal Tipleri:
   SCOUT:   40-64 puan  (izle, hazır ol)
   CONFIRM: 65+ puan    (işlem yap)
 
-Filtreler: R/R min 1.2, RSI aşırı bölge kontrolü
-
 ==============================================================
 
-2. PULSE 2 (ML Tabanlı) - GELİŞTİRİLMİŞ ML + TA Hibrit
+2. PULSE 2 (ML Tabanlı) - REGIME-AWARE ML + TA Hibrit
 ML modeli + Teknik analiz birleşimi. EMEL kadar katı değil.
 Dosya: backend/routers/emel_pulse.py (Satır ~915)
 Endpoint: GET /api/panel/pulse-ml/{symbol}
 
-DEĞİŞİKLİKLER (v2):
-- ML güveni %60 → %52 SCOUT / %55 CONFIRM (iki kademe)
-- EMA50 tek → EMA20 + EMA50 + MACD üçlü onay
-- R/R 1.0 → 1.2 (optimal)
+REJİM ENTEGRASYONU (v3):
+- Adaptif ML güven eşikleri (ATH: %48 SCOUT/%50 CONFIRM, Trend: %50/%52)
+- EMA trend teyidi: Trend modda pullback → fırsat (skor artışı)
+- MACD: Trend modda momentum teyidi bonus puan (+5)
+- RSI: Rejim-aware yorumlama (trend modda RSI>70 = güçlü momentum)
+- Dinamik ATR hedef çarpanı (trend: 3x, ranging: 1.5x)
+- Yön filtreleme + Fake signal timeout
 
 Puanlama (0-100):
-  1. ML Güven puanı: 40 puan max
+  1. ML Güven puanı: 40 puan max (adaptif eşikler)
   2. EMA Trend onayı (EMA20+EMA50): 25 puan max
   3. MACD Momentum onayı: 15 puan max
   4. RSI filtresi: 10 puan max
   5. Hacim onayı: 10 puan max
 
-Sinyal Tipleri:
-  HOLD:    skor <40 veya ML <%52
-  SCOUT:   skor 40-64, ML >=%52
-  CONFIRM: skor 65+, ML >=%55
-
 ==============================================================
 
-3. PULSE 3 (Hybrid Scalp) - YENİ: 3 Zamanlı, 3 Filtreli
+3. PULSE 3 (Hybrid Scalp) - REGIME-AWARE + ORDER BLOCKS
 Hem hızlı, hem güvenilir, hem sık sinyal. Multi-timeframe analiz.
-Dosya: backend/routers/emel_pulse.py (Satır ~1158)
+Dosya: backend/routers/emel_pulse.py (Satır ~1590)
 Endpoint: GET /api/panel/pulse-v3/{symbol}
 
-Konsept: 3 zaman dilimini paralel analiz et, ağırlıklı skor üret.
+REJİM ENTEGRASYONU (v3):
+- Yön belirleme rejim-biased (trend modda 1 oy yeterli)
+- Order Block tespiti (4H veriden ICT simplified)
+- OB'ye ulaşan fiyat → SCOUT → CONFIRM upgrade
+- Giriş bölgeleri OB seviyelerine göre (trend modda)
+- Dinamik ATR çarpanları (trend: target 2.5x, stop 0.8x)
+- R/R minimum rejim-dinamik (regime.min_rr)
+- RSI rejim kontrolü
+- Fake signal timeout
 
 Zaman Dilimleri:
   5m:  Anlık momentum  (%50 ağırlık, 50 puan max, cache 30sn)
   1H:  Kısa trend      (%30 ağırlık, 30 puan max, cache 5dk)
   4H:  Ana trend yönü   (%20 ağırlık, 20 puan max, cache 10dk)
 
-5m Analizi (50 puan):
-  - Son 5 mum yönü: 15 puan
-  - EMA Stack (SMA5>SMA10>EMA20): 20 puan
-  - Hacim artışı: 10 puan
-  - RSI hızlı: 5 puan
-
-1H Analizi (30 puan):
-  - EMA50 pozisyonu: 15 puan
-  - MACD Histogram: 10 puan
-  - Son 20 mum performans: 5 puan
-
-4H Analizi (20 puan):
-  - Son 10 mumun genel yönü: 15 puan
-  - EMA20 ek kontrol: 5 puan
-
 Sinyal Tipleri:
   HOLD:    <40 puan
-  SCOUT:   40-64 (izle, sık olur)
-  CONFIRM: 65+   (işlem, az olur)
-
-R/R: CONFIRM min 1.2, SCOUT min 1.0
-Cache: Paralel veri çekme, in-memory cache
-Giriş Bölgeleri: ATR bazlı 3 kademe (%40+%30+%30)
+  SCOUT:   40-64
+  CONFIRM: 65+
 
 ==============================================================
 
-ÖZET KARŞILAŞTIRMA TABLOSU
+4. ML MODEL - REGIME-AWARE OVERLAY
+LightGBM modeli. Rejim overlay en son uygulanır.
+Dosya: backend/services/ml_prediction_service.py
+Model: lgbm_v2_regime
 
-Özellik         | PULSE 1 (Algo)    | PULSE 2 (ML)      | PULSE 3 (Hybrid)
-----------------|-------------------|--------------------|-------------------
-Karar Verici    | Matematik+Puan    | ML + TA Puan       | 3 TF Puan
-Hız             | Çok Hızlı         | Hızlı              | Çok Hızlı (cache)
-Mum Sayısı      | 10 mum            | ML bağlı           | 5m(50)+1H(60)+4H(30)
-Sinyal Sıklığı  | Orta              | Az-Orta             | Sık(Scout)+Az(Confirm)
-R/R Minimum     | 1.2               | 1.2                | 1.2
-Güvenilirlik    | Orta-Yüksek       | Yüksek             | Yüksek (3 TF onaylı)
-Kullanım        | Saf Scalp         | Akıllı Scalp       | Hybrid (hızlı+güvenli)
+REJİM ENTEGRASYONU (v3):
+- Yön filtresi (SELL bloklanır uptrend'de, BUY bloklanır downtrend'de)
+- RSI yeniden yorumlama (trend modda RSI>70 = momentum)
+- ATH Breakout Protocol (hedef genişletme, min %55 güven)
+- Trend uyumu bonusu (%8 güven artışı, ML + rejim aynı yöndeyse)
+- Trend mod hedef/stop ayarı (target 1.3x, stop 0.85x)
+
+==============================================================
+
+ÖZET KARŞILAŞTIRMA TABLOSU (v3)
+
+Özellik          | PULSE 1 (Algo)    | PULSE 2 (ML)      | PULSE 3 (Hybrid)    | ML Model
+-----------------|-------------------|--------------------|---------------------|-------------------
+Karar Verici     | Matematik+Puan    | ML + TA Puan       | 3 TF Puan           | LightGBM + Overlay
+Rejim Entegre    | ✅ Devre dışı/on  | ✅ Adaptif eşikler | ✅ OB + Dinamik     | ✅ Son katman
+Order Blocks     | ❌                | ❌                 | ✅ 4H OB            | ❌
+ATH Protokol     | ✅ Yön filtre     | ✅ Eşik düşürme    | ✅ Yön filtre       | ✅ Hedef genişletme
+Fake Signal      | ✅                | ✅                 | ✅                  | ❌
+R/R Minimum      | Rejim-dinamik     | Rejim-dinamik      | Rejim-dinamik       | ATR-bazlı
+Güvenilirlik     | Orta-Yüksek       | Yüksek             | Yüksek              | Yüksek

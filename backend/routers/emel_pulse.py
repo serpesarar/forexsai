@@ -581,10 +581,58 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
     """
     PULSE 1 - Geliştirilmiş Algoritmik Scalp Analizi
     İki kademeli sinyal: SCOUT (izle) + CONFIRM (işlem yap)
+    
+    REGIME-AWARE: Güçlü trend modlarında (STRONG_TREND_UP/DOWN) devre dışı kalır.
+    Sadece RANGING ve TRANSITION rejimlerinde aktif çalışır.
     """
     try:
         from services.ml_prediction_service import _compute_technical_indicators
         from services.market_data_service import get_ohlcv_data
+        from services.market_regime_service import detect_regime, filter_signal_by_regime, interpret_rsi, check_fake_signal_timeout
+        
+        # ─── REGIME CHECK: Pulse 1 disabled in strong trends ────────────
+        regime = await detect_regime(symbol)
+        
+        if regime.model_weights.get("pulse1", 0) == 0:
+            return {
+                "symbol": symbol,
+                "timeframe": timeframe,
+                "timestamp": datetime.now().isoformat(),
+                "signal": "HOLD",
+                "signal_type": "REGIME_DISABLED",
+                "pulse_score": 0,
+                "regime": {
+                    "type": regime.regime,
+                    "reason": f"Pulse 1 devre dışı: {regime.regime} rejiminde scalp sinyalleri güvenilir değil",
+                    "adx": regime.adx,
+                    "session": regime.session,
+                    "allowed_models": [k for k, v in regime.model_weights.items() if v > 0],
+                },
+                "trend": {"direction": "neutral", "strength": 0, "label": "REGIME DISABLED", "strength_pct": 0, "last_5_candles": []},
+                "price": {"current": regime.current_price, "change_5": 0},
+                "levels": {},
+                "momentum": {},
+                "volume": {"status": "unknown", "label": "N/A", "ratio": 0, "available": False},
+                "score_breakdown": {},
+                "decision_notes": [f"Pulse 1 kapalı: {regime.regime} rejimi"],
+                "suggestion": {"text": f"⛔ Pulse 1 {regime.regime} rejiminde devre dışı. ML ve Pulse 2/3 kullanın.", "target": 0, "stop": 0, "target_distance": 0, "stop_distance": 0, "rr_ratio": 0, "timeframe_estimate": "N/A"}
+            }
+        
+        # ─── FAKE SIGNAL TIMEOUT CHECK ──────────────────────────────────
+        is_timed_out, timeout_until, timeout_reason = await check_fake_signal_timeout(symbol)
+        if is_timed_out:
+            return {
+                "symbol": symbol, "timeframe": timeframe, "timestamp": datetime.now().isoformat(),
+                "signal": "HOLD", "signal_type": "TIMEOUT",
+                "pulse_score": 0,
+                "regime": {"type": regime.regime, "reason": timeout_reason},
+                "decision_notes": [timeout_reason],
+                "suggestion": {"text": f"⏸️ {timeout_reason}", "target": 0, "stop": 0, "target_distance": 0, "stop_distance": 0, "rr_ratio": 0, "timeframe_estimate": "N/A"},
+                "trend": {"direction": "neutral", "strength": 0, "label": "TIMEOUT", "strength_pct": 0, "last_5_candles": []},
+                "price": {"current": regime.current_price, "change_5": 0},
+                "levels": {}, "momentum": {}, "volume": {"status": "unknown", "label": "N/A", "ratio": 0, "available": False},
+                "score_breakdown": {},
+            }
         
         # Get market data - 100 bar (EMA20 için yeterli)
         ohlcv = await get_ohlcv_data(symbol, timeframe, limit=100)
@@ -785,23 +833,36 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         potential_loss = abs(current_price - stop)
         rr_ratio = potential_profit / potential_loss if potential_loss > 0 else 0
         
-        # ─── FİLTRELER ────────────────────────────────────────────────────
-        # R/R minimum 1.2 (eskiden 1.5 idi - çok katıydı)
-        if pulse_signal in ["BUY", "SELL"] and rr_ratio < 1.2:
-            decision_notes.append(f"R/R low ({rr_ratio:.2f} < 1.2)")
+        # ─── FİLTRELER (REGIME-AWARE) ────────────────────────────────────
+        # R/R minimum from regime (dynamic instead of static 1.2)
+        min_rr = regime.min_rr
+        if pulse_signal in ["BUY", "SELL"] and rr_ratio < min_rr:
+            decision_notes.append(f"R/R low ({rr_ratio:.2f} < {min_rr})")
             if signal_type == "CONFIRM":
                 signal_type = "SCOUT"  # CONFIRM → SCOUT downgrade
             else:
                 pulse_signal = "HOLD"
                 signal_type = "HOLD"
         
-        # RSI aşırı bölge filtresi
-        if pulse_signal == "BUY" and rsi_14 > 78:
-            decision_notes.append(f"Overbought risk (RSI: {rsi_14:.1f})")
-            signal_type = "SCOUT"
-        elif pulse_signal == "SELL" and rsi_14 < 22:
-            decision_notes.append(f"Oversold risk (RSI: {rsi_14:.1f})")
-            signal_type = "SCOUT"
+        # RSI filtresi - REGIME-AWARE (trend modunda RSI>70 = momentum, sat değil)
+        rsi_interpretation = interpret_rsi(rsi_14, regime, pulse_signal)
+        if rsi_interpretation["action"] == "caution":
+            decision_notes.append(rsi_interpretation["note"])
+            if signal_type == "CONFIRM":
+                signal_type = "SCOUT"
+        elif rsi_interpretation["action"] == "block":
+            decision_notes.append(rsi_interpretation["note"])
+            pulse_signal = "HOLD"
+            signal_type = "HOLD"
+        elif rsi_interpretation["action"] == "boost":
+            decision_notes.append(rsi_interpretation["note"])
+            score += rsi_interpretation["score_adjustment"]
+        
+        # Direction filter - enforce regime allowed directions
+        pulse_signal, was_filtered, filter_reason = filter_signal_by_regime(pulse_signal, regime)
+        if was_filtered:
+            signal_type = "HOLD"
+            decision_notes.append(filter_reason)
         
         # Hacim notu (iptal değil, bilgi)
         if pulse_signal in ["BUY", "SELL"] and volume_status == "low":
@@ -831,7 +892,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
             suggestion_text += f" | Notes: {', '.join(decision_notes)}"
         
         # ─── LEARNING ENTEGRASYONU ────────────────────────────────────────
-        if pulse_signal in ["BUY", "SELL"] and signal_type == "CONFIRM":
+        if pulse_signal in ["BUY", "SELL"] and signal_type in ("CONFIRM", "SCOUT"):
             try:
                 from services.prediction_logger import log_prediction
                 context = {
@@ -908,6 +969,15 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
             },
             "score_breakdown": score_details,
             "decision_notes": decision_notes,
+            "regime": {
+                "type": regime.regime,
+                "adx": regime.adx,
+                "session": regime.session,
+                "is_ath": regime.is_ath_zone,
+                "rsi_mode": "trend_momentum" if regime.rsi_trend_boost else "classic",
+                "allowed_directions": regime.allowed_directions,
+                "min_rr": regime.min_rr,
+            },
             "suggestion": {
                 "text": suggestion_text,
                 "target": round(target, 2),
@@ -936,13 +1006,26 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
 @router.get("/pulse-ml/{symbol}")
 async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
     """
-    PULSE 2 - Geliştirilmiş ML + TA Hibrit Scalp
+    PULSE 2 - Geliştirilmiş ML + TA Hibrit Scalp (REGIME-AWARE)
     ML modelini kullanır, EMA20+EMA50+MACD ile trend onayı yapar.
     İki kademeli: SCOUT (izle) + CONFIRM (işlem)
+    
+    REGIME-AWARE:
+    - Trend modunda RSI>70 = momentum sinyali (sat değil)
+    - ATH'de SELL bloklanır, ML confidence threshold düşer
+    - Session bazlı R/R ayarı
+    - Fake signal timeout koruması
     """
     try:
         from services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
         from services.market_data_service import get_ohlcv_data
+        from services.market_regime_service import detect_regime, filter_signal_by_regime, interpret_rsi, check_fake_signal_timeout
+        
+        # ─── REGIME DETECTION ───────────────────────────────────────────
+        regime = await detect_regime(symbol)
+        
+        # ─── FAKE SIGNAL TIMEOUT CHECK ──────────────────────────────────
+        is_timed_out, timeout_until, timeout_reason = await check_fake_signal_timeout(symbol)
         
         # 1. Market Data
         ohlcv = await get_ohlcv_data(symbol, timeframe, limit=200)
@@ -974,26 +1057,39 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
         stoch_k = ta.get("stoch_k", 50)
         atr_val = ta.get("atr_14", current_price * 0.002)
         
-        # 4. PUANLAMA SİSTEMİ (ML + TA hybrid skor)
+        # 4. PUANLAMA SİSTEMİ (ML + TA hybrid skor) - REGIME-AWARE
         score = 0.0
         notes = []
         signal_type = "HOLD"
         signal = "HOLD"
         
         # ─── ML Güven Puanı (40 puan max) ────────────────────────────────
+        # ATH + Trend modunda ML confidence threshold düşer (daha erken gir)
         ml_pts = 0
+        ml_confirm_floor = 55.0  # default
+        ml_scout_floor = 52.0    # default
+        
+        if regime.regime == "STRONG_TREND_UP" and regime.is_ath_zone:
+            ml_confirm_floor = 48.0  # ATH'de daha erken gir
+            ml_scout_floor = 42.0
+            notes.append("ATH modu: ML threshold düşürüldü")
+        elif regime.regime in ["STRONG_TREND_UP", "STRONG_TREND_DOWN"]:
+            ml_confirm_floor = 50.0  # Trend modunda biraz daha esnek
+            ml_scout_floor = 45.0
+        
         if ml_confidence >= 70:
             ml_pts = 40
         elif ml_confidence >= 60:
             ml_pts = 30
-        elif ml_confidence >= 52:
-            ml_pts = 20  # SCOUT için yeterli (52%+)
+        elif ml_confidence >= ml_scout_floor:
+            ml_pts = 20  # SCOUT için yeterli
         else:
             ml_pts = 0
             notes.append(f"ML güveni düşük ({ml_confidence:.1f}%)")
         score += ml_pts
         
-        # ─── EMA Trend Onayı (25 puan max) - Eskiden sadece EMA50 ────────
+        # ─── EMA Trend Onayı (25 puan max) ──────────────────────────────
+        # Trend modunda: EMA20 altına düşüş = dip fırsatı (penalize etme)
         ema_pts = 0
         ema_status = "neutral"
         
@@ -1007,11 +1103,21 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
             elif current_price > ema_50:
                 ema_pts = 8   # Zayıf: Fiyat EMA50 üstünde ama EMA20 altında
                 ema_status = "weak"
-                notes.append("Fiyat EMA20 altında, temkinli ol")
+                if regime.regime == "STRONG_TREND_UP":
+                    ema_pts = 15  # Trendde EMA20 altı = pullback fırsatı
+                    ema_status = "pullback_opportunity"
+                    notes.append("Trend pullback: EMA20 retest, dip alım fırsatı")
+                else:
+                    notes.append("Fiyat EMA20 altında, temkinli ol")
             else:
                 ema_pts = 0
                 ema_status = "against"
-                notes.append("Trend (EMA) ML yönünü desteklemiyor")
+                if regime.regime == "STRONG_TREND_UP":
+                    ema_pts = 5  # Trendde bile EMA50 altı = hâlâ fırsat olabilir
+                    ema_status = "deep_pullback"
+                    notes.append("Derin pullback: EMA50 altında ama trend yukarı")
+                else:
+                    notes.append("Trend (EMA) ML yönünü desteklemiyor")
         elif ml_direction == "SELL":
             if current_price < ema_20 < ema_50:
                 ema_pts = 25
@@ -1022,14 +1128,24 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
             elif current_price < ema_50:
                 ema_pts = 8
                 ema_status = "weak"
-                notes.append("Fiyat EMA20 üstünde, temkinli ol")
+                if regime.regime == "STRONG_TREND_DOWN":
+                    ema_pts = 15
+                    ema_status = "pullback_opportunity"
+                    notes.append("Trend pullback: EMA20 retest, ralli satış fırsatı")
+                else:
+                    notes.append("Fiyat EMA20 üstünde, temkinli ol")
             else:
                 ema_pts = 0
                 ema_status = "against"
-                notes.append("Trend (EMA) ML yönünü desteklemiyor")
+                if regime.regime == "STRONG_TREND_DOWN":
+                    ema_pts = 5
+                    ema_status = "deep_pullback"
+                    notes.append("Derin pullback: EMA50 üstünde ama trend aşağı")
+                else:
+                    notes.append("Trend (EMA) ML yönünü desteklemiyor")
         score += ema_pts
         
-        # ─── MACD Momentum Onayı (15 puan max) - YENİ ────────────────────
+        # ─── MACD Momentum Onayı (15 puan max) ──────────────────────────
         macd_pts = 0
         if ml_direction == "BUY" and macd_hist > 0:
             macd_pts = 15
@@ -1038,26 +1154,37 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
         elif abs(macd_hist) < 0.01:
             macd_pts = 5  # Nötr MACD = yöne henüz başlamış olabilir
         else:
-            notes.append("MACD ML yönünü onaylamıyor")
+            # Trend modunda MACD ters olsa bile tamamen penalize etme
+            if regime.regime in ["STRONG_TREND_UP", "STRONG_TREND_DOWN"]:
+                macd_pts = 3  # Trend güçlüyse MACD gecikmeli olabilir
+                notes.append("MACD gecikmeli, trend güçlü devam ediyor")
+            else:
+                notes.append("MACD ML yönünü onaylamıyor")
         score += macd_pts
         
-        # ─── RSI Filtresi (10 puan max) ──────────────────────────────────
+        # ─── RSI Filtresi (10 puan max) - REGIME-AWARE ──────────────────
         rsi_pts = 0
-        if ml_direction == "BUY":
-            if rsi_14 < 78 and rsi_14 > 35:
-                rsi_pts = 10
-            elif rsi_14 >= 78:
-                notes.append(f"Aşırı alım riski (RSI: {rsi_14:.1f})")
-            else:
-                rsi_pts = 5  # Oversold = dipten dönüş fırsatı
-        elif ml_direction == "SELL":
-            if rsi_14 > 22 and rsi_14 < 65:
-                rsi_pts = 10
-            elif rsi_14 <= 22:
-                notes.append(f"Aşırı satım riski (RSI: {rsi_14:.1f})")
-            else:
-                rsi_pts = 5
-        score += rsi_pts
+        rsi_interpretation = interpret_rsi(rsi_14, regime, ml_direction)
+        
+        if rsi_interpretation["action"] == "boost":
+            rsi_pts = 10 + rsi_interpretation["score_adjustment"]
+            notes.append(rsi_interpretation["note"])
+        elif rsi_interpretation["action"] == "caution":
+            rsi_pts = 0
+            notes.append(rsi_interpretation["note"])
+        elif rsi_interpretation["action"] == "neutral":
+            # Default range scoring
+            if ml_direction == "BUY":
+                if regime.rsi_oversold < rsi_14 < regime.rsi_overbought:
+                    rsi_pts = 10
+                else:
+                    rsi_pts = 3
+            elif ml_direction == "SELL":
+                if regime.rsi_oversold < rsi_14 < regime.rsi_overbought:
+                    rsi_pts = 10
+                else:
+                    rsi_pts = 3
+        score += max(0, rsi_pts)
         
         # ─── Hacim Onayı (10 puan max) ───────────────────────────────────
         vol_pts = 0
@@ -1073,63 +1200,94 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
                 notes.append("Düşük hacim")
         score += vol_pts
         
-        # ─── SİNYAL BELİRLEME (İki kademe) ──────────────────────────────
-        if score >= 65 and ml_confidence >= 55:
+        # ─── SİNYAL BELİRLEME (İki kademe) - REGIME-AWARE ──────────────
+        if score >= 65 and ml_confidence >= ml_confirm_floor:
             signal_type = "CONFIRM"
             signal = ml_direction
-        elif score >= 40 and ml_confidence >= 52:
+        elif score >= 40 and ml_confidence >= ml_scout_floor:
             signal_type = "SCOUT"
             signal = ml_direction
         else:
             signal_type = "HOLD"
             signal = "HOLD"
+        
+        # ─── DIRECTION FILTER (enforce regime rules) ────────────────────
+        signal, was_filtered, filter_reason = filter_signal_by_regime(signal, regime)
+        if was_filtered:
+            signal_type = "HOLD"
+            notes.append(filter_reason)
             
-        # ─── Hedef / Stop (ATR bazlı geliştirilmiş) ──────────────────────
+        # ─── Hedef / Stop (ATR bazlı - trend modunda daha geniş target) ─
         target = prediction.get("target_price")
         stop = prediction.get("stop_price")
         
+        # Trend modunda hedef genişlet (trendde küçük risk, büyük kâr)
+        atr_target_mult = 2.0
+        atr_stop_mult = 1.5
+        if regime.regime in ["STRONG_TREND_UP", "STRONG_TREND_DOWN"]:
+            atr_target_mult = 3.0  # Trendde 3x ATR hedef
+            atr_stop_mult = 1.2    # Trendde daha dar stop (trailing)
+        
         if not target or not stop:
             if signal == "BUY":
-                stop = current_price - (atr_val * 1.5)
-                target = current_price + (atr_val * 2.0)
+                stop = current_price - (atr_val * atr_stop_mult)
+                target = current_price + (atr_val * atr_target_mult)
             elif signal == "SELL":
-                stop = current_price + (atr_val * 1.5)
-                target = current_price - (atr_val * 2.0)
+                stop = current_price + (atr_val * atr_stop_mult)
+                target = current_price - (atr_val * atr_target_mult)
             else:
                 target = current_price
                 stop = current_price
         
-        # ─── R/R Kontrolü (minimum 1.2 - eskiden 1.0'dı) ────────────────
+        # ─── R/R Kontrolü (regime-dynamic minimum) ──────────────────────
+        min_rr = regime.min_rr
         rr_ratio = 0
         if signal != "HOLD" and target and stop:
             profit = abs(target - current_price)
             risk = abs(current_price - stop)
             rr_ratio = profit / risk if risk > 0 else 0
             
-            if rr_ratio < 1.2:
+            if rr_ratio < min_rr:
                 if signal_type == "CONFIRM":
                     signal_type = "SCOUT"
-                    notes.append(f"R/R low ({rr_ratio:.2f}), downgraded to SCOUT")
+                    notes.append(f"R/R low ({rr_ratio:.2f} < {min_rr}), downgraded to SCOUT")
                 else:
                     signal = "HOLD"
                     signal_type = "HOLD"
-                    notes.append(f"R/R too low ({rr_ratio:.2f})")
+                    notes.append(f"R/R too low ({rr_ratio:.2f} < {min_rr})")
+        
+        # ─── FAKE SIGNAL TIMEOUT (reduce to SCOUT if in timeout) ────────
+        if is_timed_out and signal_type == "CONFIRM" and ml_confidence < 75:
+            signal_type = "SCOUT"
+            notes.append(f"Timeout aktif: CONFIRM→SCOUT (ML<75%)")
             
         # ─── SUGGESTION ──────────────────────────────────────────────────
+        regime_tag = f" [{regime.regime}]" if regime.regime != "TRANSITION" else ""
         if signal_type == "CONFIRM":
-            suggestion = f"🟢 ML confirmed {'BUY' if signal == 'BUY' else 'SELL'} signal (score: {score:.0f}, ML: {ml_confidence:.0f}%)"
+            suggestion = f"🟢 ML confirmed {'BUY' if signal == 'BUY' else 'SELL'} signal{regime_tag} (score: {score:.0f}, ML: {ml_confidence:.0f}%)"
         elif signal_type == "SCOUT":
-            suggestion = f"👀 ML watch mode (score: {score:.0f}). Consider if strengthens."
+            suggestion = f"👀 ML watch mode{regime_tag} (score: {score:.0f}). Consider if strengthens."
         else:
-            suggestion = f"⏱️ Hold. ML score: {score:.0f}/100"
+            suggestion = f"⏱️ Hold{regime_tag}. ML score: {score:.0f}/100"
         
-        # Loglama (sadece CONFIRM)
-        if signal in ["BUY", "SELL"] and signal_type == "CONFIRM":
+        # Loglama (CONFIRM + SCOUT)
+        if signal in ["BUY", "SELL"] and signal_type in ("CONFIRM", "SCOUT"):
             try:
                 from services.prediction_logger import log_prediction
                 await log_prediction(
                     symbol=symbol,
-                    context={"source": "PULSE_ML", "ta": ta, "ml": prediction, "score": score},
+                    context={
+                        "source": "PULSE_ML",
+                        "ta": ta,
+                        "score": score,
+                        "ml_prediction": {
+                            "direction": signal,
+                            "confidence": ml_confidence,
+                            "entry_price": current_price,
+                            "target_price": target,
+                            "stop_price": stop,
+                        }
+                    },
                     analysis={"final_decision": signal, "confidence": ml_confidence, "model_used": "PULSE-ML-V2"},
                     timeframe=timeframe,
                     strategy="PULSE_ML",
@@ -1165,6 +1323,17 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
                 "rsi_14": round(rsi_14, 1),
                 "macd_hist": round(macd_hist, 4),
                 "notes": notes
+            },
+            "regime": {
+                "type": regime.regime,
+                "adx": regime.adx,
+                "session": regime.session,
+                "is_ath": regime.is_ath_zone,
+                "rsi_mode": "trend_momentum" if regime.rsi_trend_boost else "classic",
+                "allowed_directions": regime.allowed_directions,
+                "min_rr": regime.min_rr,
+                "ml_confirm_floor": ml_confirm_floor,
+                "ml_scout_floor": ml_scout_floor,
             },
             "suggestion": suggestion
         }
@@ -1434,16 +1603,29 @@ def _analyze_4h(closes, ta) -> Dict:
 @router.get("/pulse-v3/{symbol}")
 async def get_pulse_v3_analysis(symbol: str):
     """
-    PULSE 3 - Hybrid Scalp: 3 Zamanlı, 3 Filtreli, Hızlı Karar
+    PULSE 3 - Hybrid Scalp: 3 Zamanlı, 3 Filtreli, Hızlı Karar (REGIME-AWARE)
     
     Zaman Dilimleri: 5m(%50) + 1H(%30) + 4H(%20)
     Sinyal Tipleri: SCOUT (40-65) / CONFIRM (65+) / HOLD (<40)
-    R/R Minimum: 1.2
+    R/R Minimum: Regime-dynamic (1.2-1.5)
     Cache: 5m=30sn, 1H=5dk, 4H=10dk
+    
+    REGIME-AWARE:
+    - Order Block detection (ICT simplified) replaces basic S/R in trend
+    - Direction filtering (no SELL in STRONG_TREND_UP)
+    - Dynamic R/R based on regime
+    - Entry zones adjusted for trend pullbacks
     """
     try:
         from services.ml_prediction_service import _compute_technical_indicators
+        from services.market_regime_service import detect_regime, filter_signal_by_regime, interpret_rsi, check_fake_signal_timeout, detect_order_blocks
         import asyncio
+        
+        # ─── REGIME DETECTION ───────────────────────────────────────────
+        regime = await detect_regime(symbol)
+        
+        # ─── FAKE SIGNAL TIMEOUT CHECK ──────────────────────────────────
+        is_timed_out, timeout_until, timeout_reason = await check_fake_signal_timeout(symbol)
         
         # ─── PARALEL VERİ ÇEKME (Cache'li) ───────────────────────────────
         data_5m, data_1h, data_4h = await asyncio.gather(
@@ -1497,11 +1679,16 @@ async def get_pulse_v3_analysis(symbol: str):
         total_score = result_5m["score"] + result_1h["score"] + result_4h["score"]
         # Max: 50 + 30 + 20 = 100
         
-        # ─── YÖN BELİRLEME ──────────────────────────────────────────────
+        # ─── YÖN BELİRLEME (regime-biased) ──────────────────────────────
         up_votes = sum(1 for r in [result_5m, result_1h, result_4h] if r["trend"] == "up")
         down_votes = sum(1 for r in [result_5m, result_1h, result_4h] if r["trend"] == "down")
         
-        if up_votes >= 2:
+        # Regime bias: in strong trend, bias toward trend direction
+        if regime.regime == "STRONG_TREND_UP" and up_votes >= 1:
+            direction = "BUY"  # 1 vote enough in strong uptrend
+        elif regime.regime == "STRONG_TREND_DOWN" and down_votes >= 1:
+            direction = "SELL"
+        elif up_votes >= 2:
             direction = "BUY"
         elif down_votes >= 2:
             direction = "SELL"
@@ -1519,6 +1706,47 @@ async def get_pulse_v3_analysis(symbol: str):
             signal_type = "HOLD"
             direction = "NEUTRAL"
         
+        # ─── DIRECTION FILTER (enforce regime rules) ────────────────────
+        direction, was_filtered, filter_reason = filter_signal_by_regime(direction, regime)
+        notes = []
+        if was_filtered:
+            signal_type = "HOLD"
+            notes.append(filter_reason)
+        
+        # ─── ORDER BLOCK DETECTION (4H) ─────────────────────────────────
+        order_blocks_data = []
+        ob_entry_zone = None
+        if data_4h and len(data_4h) >= 20:
+            o4h = np.array([c["open"] for c in data_4h], dtype=np.float64)
+            h4h_arr = np.array([c["high"] for c in data_4h], dtype=np.float64)
+            l4h_arr = np.array([c["low"] for c in data_4h], dtype=np.float64)
+            c4h_arr = np.array([c["close"] for c in data_4h], dtype=np.float64)
+            v4h_arr = np.array([c.get("volume", 0) for c in data_4h], dtype=np.float64)
+            
+            obs = detect_order_blocks(o4h, h4h_arr, l4h_arr, c4h_arr, v4h_arr, lookback=20)
+            
+            for ob in obs:
+                ob_dict = {
+                    "type": ob.type, "low": round(ob.low, 2), "high": round(ob.high, 2),
+                    "strength": ob.strength,
+                    "is_nearby": abs(current_price - (ob.low + ob.high) / 2) / current_price < 0.02
+                }
+                order_blocks_data.append(ob_dict)
+                
+                # In trend mode, if price is at a bullish OB = strong buy zone
+                if regime.regime == "STRONG_TREND_UP" and ob.type == "bullish" and ob_dict["is_nearby"]:
+                    if current_price >= ob.low and current_price <= ob.high * 1.005:
+                        ob_entry_zone = ob
+                        if signal_type == "SCOUT":
+                            signal_type = "CONFIRM"
+                            notes.append(f"Order Block onayı: Fiyat bullish OB'de ({ob.low:.0f}-{ob.high:.0f})")
+                elif regime.regime == "STRONG_TREND_DOWN" and ob.type == "bearish" and ob_dict["is_nearby"]:
+                    if current_price <= ob.high and current_price >= ob.low * 0.995:
+                        ob_entry_zone = ob
+                        if signal_type == "SCOUT":
+                            signal_type = "CONFIRM"
+                            notes.append(f"Order Block onayı: Fiyat bearish OB'de ({ob.low:.0f}-{ob.high:.0f})")
+        
         # ─── SEVİYELER (5m verilerinden) ─────────────────────────────────
         high_20 = float(np.max(h5[-20:])) if len(h5) >= 20 else float(np.max(h5))
         low_20 = float(np.min(l5[-20:])) if len(l5) >= 20 else float(np.min(l5))
@@ -1528,14 +1756,20 @@ async def get_pulse_v3_analysis(symbol: str):
         s1 = 2 * pivot - high_20
         s2 = pivot - (high_20 - low_20)
         
-        # Hedef/Stop — ATR fallback if pivot levels contradict direction
+        # Hedef/Stop — regime-aware ATR multipliers
         atr_val = ta_5m.get("atr_14", abs(high_20 - low_20) / 20)
+        atr_target_mult = 1.5
+        atr_stop_mult = 1.0
+        if regime.regime in ["STRONG_TREND_UP", "STRONG_TREND_DOWN"]:
+            atr_target_mult = 2.5  # Trend: wider target (küçük risk, büyük kâr)
+            atr_stop_mult = 0.8    # Trend: tighter stop (trailing)
+        
         if direction == "BUY":
-            target = r1 if r1 > current_price else current_price + atr_val * 1.5
-            stop = s1 if s1 < current_price else current_price - atr_val * 1.0
+            target = r1 if r1 > current_price else current_price + atr_val * atr_target_mult
+            stop = s1 if s1 < current_price else current_price - atr_val * atr_stop_mult
         elif direction == "SELL":
-            target = s1 if s1 < current_price else current_price - atr_val * 1.5
-            stop = r1 if r1 > current_price else current_price + atr_val * 1.0
+            target = s1 if s1 < current_price else current_price - atr_val * atr_target_mult
+            stop = r1 if r1 > current_price else current_price + atr_val * atr_stop_mult
         else:
             target = r1 if r1 > current_price else current_price + atr_val * 1.0
             stop = s1 if s1 < current_price else current_price - atr_val * 1.0
@@ -1544,11 +1778,11 @@ async def get_pulse_v3_analysis(symbol: str):
         potential_loss = abs(current_price - stop)
         rr_ratio = potential_profit / potential_loss if potential_loss > 0 else 0
         
-        # ─── R/R FİLTRE ─────────────────────────────────────────────────
-        notes = []
-        if signal_type == "CONFIRM" and rr_ratio < 1.2:
+        # ─── R/R FİLTRE (regime-dynamic) ─────────────────────────────────
+        min_rr = regime.min_rr
+        if signal_type == "CONFIRM" and rr_ratio < min_rr:
             signal_type = "SCOUT"
-            notes.append(f"R/R low ({rr_ratio:.2f}), downgraded to SCOUT")
+            notes.append(f"R/R low ({rr_ratio:.2f} < {min_rr}), downgraded to SCOUT")
         elif signal_type == "SCOUT" and rr_ratio < 1.0:
             signal_type = "HOLD"
             direction = "NEUTRAL"
@@ -1558,43 +1792,74 @@ async def get_pulse_v3_analysis(symbol: str):
         if up_votes == 1 and down_votes == 1:
             notes.append("Timeframes conflicting")
         
+        # ─── FAKE SIGNAL TIMEOUT ────────────────────────────────────────
+        if is_timed_out and signal_type == "CONFIRM":
+            signal_type = "SCOUT"
+            notes.append(f"Timeout aktif: {timeout_reason}")
+        
+        # ─── RSI REGIME CHECK ───────────────────────────────────────────
+        rsi_5m = ta_5m.get("rsi_14", 50)
+        rsi_check = interpret_rsi(rsi_5m, regime, direction)
+        if rsi_check["action"] == "boost":
+            total_score += rsi_check["score_adjustment"]
+            notes.append(rsi_check["note"])
+        elif rsi_check["action"] == "caution" and signal_type == "CONFIRM":
+            signal_type = "SCOUT"
+            notes.append(rsi_check["note"])
+        
         # ─── SUGGESTION ──────────────────────────────────────────────────
+        regime_tag = f" [{regime.regime}]" if regime.regime != "TRANSITION" else ""
         if signal_type == "CONFIRM":
             if direction == "BUY":
-                suggestion = f"🚀 Strong BUY signal (score: {total_score:.0f}). 3 TF aligned. Target: {target:.0f}, Stop: {stop:.0f}"
+                suggestion = f"🚀 Strong BUY{regime_tag} (score: {total_score:.0f}). 3 TF aligned. Target: {target:.0f}, Stop: {stop:.0f}"
             else:
-                suggestion = f"🔻 Strong SELL signal (score: {total_score:.0f}). 3 TF aligned. Target: {target:.0f}, Stop: {stop:.0f}"
+                suggestion = f"🔻 Strong SELL{regime_tag} (score: {total_score:.0f}). 3 TF aligned. Target: {target:.0f}, Stop: {stop:.0f}"
         elif signal_type == "SCOUT":
             if direction == "BUY":
-                suggestion = f"👀 Bullish momentum building (score: {total_score:.0f}). Consider if holds above {s1:.0f} support."
+                suggestion = f"👀 Bullish momentum{regime_tag} (score: {total_score:.0f}). Hold above {s1:.0f}."
             elif direction == "SELL":
-                suggestion = f"👀 Bearish momentum building (score: {total_score:.0f}). Consider if stays below {r1:.0f} resistance."
+                suggestion = f"👀 Bearish momentum{regime_tag} (score: {total_score:.0f}). Hold below {r1:.0f}."
             else:
-                suggestion = f"👀 Watch mode (score: {total_score:.0f}). Direction unclear."
+                suggestion = f"👀 Watch mode{regime_tag} (score: {total_score:.0f}). Direction unclear."
         else:
-            suggestion = f"⏱️ Hold mode (score: {total_score:.0f}). No strong trend. Watch 4H trend."
+            suggestion = f"⏱️ Hold{regime_tag} (score: {total_score:.0f}). No strong trend."
         
         if notes:
             suggestion += f" | {', '.join(notes)}"
         
-        # ─── GİRİŞ BÖLGELERİ ────────────────────────────────────────────
+        # ─── GİRİŞ BÖLGELERİ (regime-aware) ────────────────────────────
         atr = ta_5m.get("atr_14", current_price * 0.002)
         entry_zones = []
         if direction == "BUY":
-            entry_zones = [
-                {"price": round(current_price, 2), "share": 40, "label": "Instant"},
-                {"price": round(current_price - atr * 0.5, 2), "share": 30, "label": "On Dip"},
-                {"price": round(current_price - atr, 2), "share": 30, "label": "Support"},
-            ]
+            if regime.regime == "STRONG_TREND_UP" and ob_entry_zone:
+                # Use Order Block as entry zone in trend
+                entry_zones = [
+                    {"price": round(current_price, 2), "share": 30, "label": "Instant"},
+                    {"price": round(ob_entry_zone.high, 2), "share": 40, "label": "Order Block Top"},
+                    {"price": round(ob_entry_zone.low, 2), "share": 30, "label": "Order Block Bottom"},
+                ]
+            else:
+                entry_zones = [
+                    {"price": round(current_price, 2), "share": 40, "label": "Instant"},
+                    {"price": round(current_price - atr * 0.5, 2), "share": 30, "label": "On Dip"},
+                    {"price": round(current_price - atr, 2), "share": 30, "label": "Support"},
+                ]
         elif direction == "SELL":
-            entry_zones = [
-                {"price": round(current_price, 2), "share": 40, "label": "Instant"},
-                {"price": round(current_price + atr * 0.5, 2), "share": 30, "label": "On Rise"},
-                {"price": round(current_price + atr, 2), "share": 30, "label": "Resistance"},
-            ]
+            if regime.regime == "STRONG_TREND_DOWN" and ob_entry_zone:
+                entry_zones = [
+                    {"price": round(current_price, 2), "share": 30, "label": "Instant"},
+                    {"price": round(ob_entry_zone.low, 2), "share": 40, "label": "Order Block Bottom"},
+                    {"price": round(ob_entry_zone.high, 2), "share": 30, "label": "Order Block Top"},
+                ]
+            else:
+                entry_zones = [
+                    {"price": round(current_price, 2), "share": 40, "label": "Instant"},
+                    {"price": round(current_price + atr * 0.5, 2), "share": 30, "label": "On Rise"},
+                    {"price": round(current_price + atr, 2), "share": 30, "label": "Resistance"},
+                ]
         
         # ─── LEARNING ENTEGRASYONU ────────────────────────────────────────
-        if direction in ["BUY", "SELL"] and signal_type == "CONFIRM":
+        if direction in ["BUY", "SELL"] and signal_type in ("CONFIRM", "SCOUT"):
             try:
                 from services.prediction_logger import log_prediction
                 await log_prediction(
@@ -1603,6 +1868,7 @@ async def get_pulse_v3_analysis(symbol: str):
                         "source": "PULSE_V3",
                         "total_score": total_score,
                         "signal_type": signal_type,
+                        "regime": regime.regime,
                         "tf_scores": {"5m": result_5m["score"], "1h": result_1h["score"], "4h": result_4h["score"]},
                         "ml_prediction": {
                             "direction": direction,
@@ -1615,7 +1881,7 @@ async def get_pulse_v3_analysis(symbol: str):
                     analysis={
                         "final_decision": direction,
                         "confidence": round(total_score),
-                        "model_used": "PULSE-V3-Hybrid"
+                        "model_used": "PULSE-V3-Hybrid-Regime"
                     },
                     timeframe="5m",
                     strategy="PULSE_V3",
@@ -1647,6 +1913,16 @@ async def get_pulse_v3_analysis(symbol: str):
                 "target": round(target, 2),
                 "stop": round(stop, 2)
             },
+            "regime": {
+                "type": regime.regime,
+                "adx": regime.adx,
+                "session": regime.session,
+                "is_ath": regime.is_ath_zone,
+                "rsi_mode": "trend_momentum" if regime.rsi_trend_boost else "classic",
+                "allowed_directions": regime.allowed_directions,
+                "min_rr": regime.min_rr,
+            },
+            "order_blocks": order_blocks_data[:4],
             "rr_ratio": round(rr_ratio, 2),
             "suggestion": suggestion,
             "entry_zones": entry_zones,
@@ -1658,6 +1934,44 @@ async def get_pulse_v3_analysis(symbol: str):
         logger.error(f"PULSE V3 analysis error: {e}")
         import traceback
         return {"error": str(e), "traceback": traceback.format_exc()}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MARKET REGIME ENDPOINT - Piyasa Rejimi Algılama
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/regime/{symbol}")
+async def get_market_regime(symbol: str, force_refresh: bool = False):
+    """
+    Market Regime Detection - Piyasa Rejimi
+    
+    Regimes:
+    - STRONG_TREND_UP: ADX>25, bullish structure → only LONG
+    - STRONG_TREND_DOWN: ADX>25, bearish structure → only SHORT
+    - RANGING: ADX<20, low volatility → mean reversion
+    - TRANSITION: everything else → low risk
+    
+    Returns regime info, model weights, RSI thresholds, ATH status, session.
+    Cached for 30 minutes (use force_refresh=true to override).
+    """
+    try:
+        from services.market_regime_service import get_regime_info, check_fake_signal_timeout
+        
+        regime_info = await get_regime_info(symbol)
+        
+        # Add fake signal timeout status
+        is_timed_out, timeout_until, timeout_reason = await check_fake_signal_timeout(symbol)
+        regime_info["fake_signal_timeout"] = {
+            "active": is_timed_out,
+            "until": timeout_until,
+            "reason": timeout_reason,
+        }
+        
+        return regime_info
+        
+    except Exception as e:
+        logger.error(f"Regime detection error: {e}")
+        return {"error": str(e)}
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

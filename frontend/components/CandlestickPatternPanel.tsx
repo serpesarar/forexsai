@@ -73,6 +73,12 @@ export default function CandlestickPatternPanel({
   const [expandedPattern, setExpandedPattern] = useState<string | null>(null);
   const [activeSymbol, setActiveSymbol] = useState(symbol);
 
+  useEffect(() => {
+    const handler = () => fetchData();
+    window.addEventListener("dashboard-refresh", handler);
+    return () => window.removeEventListener("dashboard-refresh", handler);
+  }, [activeSymbol]);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {

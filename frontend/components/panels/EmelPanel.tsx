@@ -93,6 +93,12 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
   const [timeframe, setTimeframe] = useState("1H");
   const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "emel");
 
+  useEffect(() => {
+    const handler = () => fetchData();
+    window.addEventListener("dashboard-refresh", handler);
+    return () => window.removeEventListener("dashboard-refresh", handler);
+  }, [activeSymbol, timeframe]);
+
   const fetchData = async () => {
     setLoading(true);
     try {

@@ -121,7 +121,11 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
   useEffect(() => {
     const handler = () => fetchData();
     window.addEventListener("pulse-refresh", handler);
-    return () => window.removeEventListener("pulse-refresh", handler);
+    window.addEventListener("dashboard-refresh", handler);
+    return () => {
+      window.removeEventListener("pulse-refresh", handler);
+      window.removeEventListener("dashboard-refresh", handler);
+    };
   }, [activeSymbol, timeframe]);
 
   const nc = data ? neonColors[data.trend.direction] || neonColors.neutral : neonColors.neutral;

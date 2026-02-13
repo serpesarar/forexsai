@@ -31,7 +31,7 @@ MACRO_UPDATE_INTERVAL = 300  # Update macro data (DXY, VIX, USDTRY) every 5 minu
 NEWS_UPDATE_INTERVAL = 600   # Update news every 10 minutes
 OUTCOME_CHECK_INTERVAL = 600  # Check outcomes every 10 minutes
 ERROR_ANALYSIS_INTERVAL = 3600  # Analyze errors every hour
-PREDICTION_LOG_INTERVAL = 3600  # Log predictions every hour
+PREDICTION_LOG_INTERVAL = 1800  # Log predictions every 30 minutes
 
 # Last update timestamps
 _last_news_update: Dict[str, datetime] = {}
@@ -39,6 +39,8 @@ _last_news_hash: Dict[str, str] = {}
 _last_outcome_check: Optional[datetime] = None
 _last_error_analysis: Optional[datetime] = None
 _last_prediction_log: Dict[str, datetime] = {}  # Per symbol
+_last_pulse_log: Dict[str, datetime] = {}  # Per symbol, for Pulse signal logging
+PULSE_LOG_INTERVAL = 1800  # Log Pulse signals every 30 minutes
 _last_macro_update: Optional[datetime] = None
 _cached_macro: Dict[str, Any] = {}  # Cached macro data
 
@@ -428,6 +430,79 @@ async def log_predictions_if_needed():
             logger.error(f"Error auto-logging prediction for {symbol}: {e}")
 
 
+async def log_pulse_signals_if_needed():
+    """Run Pulse analysis and log BUY/SELL signals to prediction_logs.
+    Deduplication in log_prediction() prevents duplicate active signals."""
+    global _last_pulse_log
+
+    now = datetime.utcnow()
+
+    for symbol in TRACKED_SYMBOLS:
+        last_log = _last_pulse_log.get(symbol)
+        if last_log and (now - last_log).total_seconds() < PULSE_LOG_INTERVAL:
+            continue
+
+        _last_pulse_log[symbol] = now
+
+        if not is_db_available():
+            continue
+
+        # --- Pulse V3 (Hybrid Scalp) ---
+        try:
+            from routers.emel_pulse import get_pulse_v3_analysis
+            v3 = await get_pulse_v3_analysis(symbol)
+            if isinstance(v3, dict) and not v3.get("error"):
+                sig = v3.get("direction", "HOLD")
+                st = v3.get("signal_type", "HOLD")
+                if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
+                    logger.info(f"Scheduler: Pulse V3 {symbol} {sig} ({st})")
+        except Exception as e:
+            logger.debug(f"Pulse V3 log error {symbol}: {e}")
+
+        await asyncio.sleep(0.3)
+
+        # --- Pulse ML (V2) ---
+        try:
+            from routers.emel_pulse import get_pulse_ml_analysis
+            v2 = await get_pulse_ml_analysis(symbol)
+            if isinstance(v2, dict) and not v2.get("error"):
+                sig = v2.get("signal", "HOLD")
+                st = v2.get("signal_type", "HOLD")
+                if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
+                    logger.info(f"Scheduler: Pulse ML {symbol} {sig} ({st})")
+        except Exception as e:
+            logger.debug(f"Pulse ML log error {symbol}: {e}")
+
+        await asyncio.sleep(0.3)
+
+        # --- Pulse V1 ---
+        try:
+            from routers.emel_pulse import get_pulse_analysis
+            v1 = await get_pulse_analysis(symbol)
+            if isinstance(v1, dict) and not v1.get("error"):
+                sig = v1.get("signal", "HOLD")
+                st = v1.get("signal_type", "HOLD")
+                if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
+                    logger.info(f"Scheduler: Pulse V1 {symbol} {sig} ({st})")
+        except Exception as e:
+            logger.debug(f"Pulse V1 log error {symbol}: {e}")
+
+        await asyncio.sleep(0.3)
+
+        # --- EMEL ---
+        try:
+            from routers.emel_pulse import get_emel_analysis
+            emel = await get_emel_analysis(symbol)
+            if isinstance(emel, dict) and not emel.get("error"):
+                sig = emel.get("signal", "HOLD")
+                if sig in ("BUY", "SELL"):
+                    logger.info(f"Scheduler: EMEL {symbol} {sig}")
+        except Exception as e:
+            logger.debug(f"EMEL log error {symbol}: {e}")
+
+        await asyncio.sleep(0.3)
+
+
 async def background_scheduler_loop():
     """Main background scheduler loop."""
     global _scheduler_running
@@ -450,6 +525,8 @@ async def background_scheduler_loop():
             await analyze_errors_if_needed()
             # Log predictions periodically for learning
             await log_predictions_if_needed()
+            # Log Pulse/EMEL signals periodically (every 30 min)
+            await log_pulse_signals_if_needed()
         except Exception as e:
             logger.error(f"Scheduler error: {e}")
         

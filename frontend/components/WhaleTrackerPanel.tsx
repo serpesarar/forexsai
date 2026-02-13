@@ -350,6 +350,12 @@ export default function WhaleTrackerPanel({ className = "" }: WhaleTrackerPanelP
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
+  useEffect(() => {
+    const handler = () => fetchData();
+    window.addEventListener("dashboard-refresh", handler);
+    return () => window.removeEventListener("dashboard-refresh", handler);
+  }, []);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);

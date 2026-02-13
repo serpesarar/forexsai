@@ -63,6 +63,12 @@ export default function COTWhalePanel() {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
+  useEffect(() => {
+    const handler = () => fetchData();
+    window.addEventListener("dashboard-refresh", handler);
+    return () => window.removeEventListener("dashboard-refresh", handler);
+  }, []);
+
   const fetchData = async () => {
     try {
       setLoading(true);

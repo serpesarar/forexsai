@@ -479,6 +479,8 @@ export default function HomePage() {
 
       // Trigger Pulse panel refreshes via custom event
       window.dispatchEvent(new CustomEvent("pulse-refresh"));
+      // Trigger ALL dashboard panels refresh
+      window.dispatchEvent(new CustomEvent("dashboard-refresh"));
 
       // Use allSettled so one failing endpoint doesn't block all
       const results = await Promise.allSettled([
@@ -695,6 +697,7 @@ export default function HomePage() {
       // Only dispatch pulse-refresh for lightweight panel updates
       // Do NOT call refreshLive() here - it fires 9+ heavy API calls (Claude AI etc.)
       window.dispatchEvent(new CustomEvent("pulse-refresh"));
+      window.dispatchEvent(new CustomEvent("dashboard-refresh"));
     }, 30000);
     return () => clearInterval(interval);
   }, [autoRefresh, fetchAll]);

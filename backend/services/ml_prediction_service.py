@@ -1774,6 +1774,73 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
             reasoning.append(f"✅ {stability_reason}")
             logger.info(f"Signal updated: {direction} @ {confidence:.1f}% ({stability_reason})")
     
+    # ═══════════════════════════════════════════════════════════════════
+    # MARKET REGIME OVERLAY - Adaptive system for XAUUSD trend modes
+    # Applied LAST so it overrides mean-reversion biases from above
+    # ═══════════════════════════════════════════════════════════════════
+    try:
+        from services.market_regime_service import detect_regime, filter_signal_by_regime, interpret_rsi as regime_interpret_rsi
+
+        market_regime = await detect_regime(normalized_symbol)
+        reasoning.insert(0, f"🎯 Rejim: {market_regime.regime} | ADX={market_regime.adx} | Session={market_regime.session}")
+
+        if market_regime.is_ath_zone:
+            reasoning.insert(1, f"🏔️ ATH Bölgesi: Fiyat tarihi zirve yakınında ({market_regime.ath_price:.2f})")
+
+        # 1. Direction filter: block SELL in STRONG_TREND_UP, block BUY in STRONG_TREND_DOWN
+        filtered_dir, was_filtered, filter_reason = filter_signal_by_regime(direction, market_regime)
+        if was_filtered:
+            old_dir = direction
+            direction = filtered_dir
+            reasoning.append(f"⛔ Rejim filtresi: {old_dir} → {direction} ({filter_reason})")
+            logger.info(f"ML regime filter: {old_dir} -> {direction} ({filter_reason})")
+
+        # 2. RSI reinterpretation: in trend mode, RSI>70 is momentum not overbought
+        rsi_regime_check = regime_interpret_rsi(ta.get("rsi_14", 50), market_regime, direction)
+        if rsi_regime_check["action"] == "boost":
+            confidence = min(95, confidence + rsi_regime_check["score_adjustment"])
+            reasoning.append(f"📈 RSI Rejim: {rsi_regime_check['note']}")
+        elif rsi_regime_check["action"] == "caution":
+            confidence = max(30, confidence - 5)
+            reasoning.append(f"⚠️ RSI Rejim: {rsi_regime_check['note']}")
+
+        # 3. ATH Breakout Protocol: lower ML threshold, widen targets
+        if market_regime.is_ath_zone and market_regime.regime == "STRONG_TREND_UP":
+            if direction == "BUY" and confidence >= 45:
+                # At ATH in uptrend: be more aggressive with entries
+                confidence = max(confidence, 55)  # minimum 55% at ATH
+                # Widen target in ATH (no resistance above)
+                target_price = current_price + target_distance * 1.5
+                target_pips = abs(target_price - current_price) / pip_value
+                risk_reward = target_pips / stop_pips if stop_pips > 0 else 0
+                reasoning.append("🚀 ATH Protokol: Hedef genişletildi, minimum güven %55")
+
+        # 4. Trend mode confidence boost: if ML agrees with regime direction
+        if market_regime.regime == "STRONG_TREND_UP" and direction == "BUY":
+            confidence = min(95, confidence * 1.08)  # 8% boost
+            reasoning.append("✅ ML + Rejim uyumu: Güçlü yükseliş trendi onaylandı")
+        elif market_regime.regime == "STRONG_TREND_DOWN" and direction == "SELL":
+            confidence = min(95, confidence * 1.08)
+            reasoning.append("✅ ML + Rejim uyumu: Güçlü düşüş trendi onaylandı")
+
+        # 5. Trend mode target/stop adjustment
+        if market_regime.regime in ["STRONG_TREND_UP", "STRONG_TREND_DOWN"]:
+            # In trend: wider targets, tighter stops (trend continuation expected)
+            if direction == "BUY":
+                target_price = current_price + target_distance * 1.3
+                stop_price = current_price - stop_distance * 0.85
+            elif direction == "SELL":
+                target_price = current_price - target_distance * 1.3
+                stop_price = current_price + stop_distance * 0.85
+            target_pips = abs(target_price - current_price) / pip_value
+            stop_pips = abs(stop_price - current_price) / pip_value
+            risk_reward = target_pips / stop_pips if stop_pips > 0 else 0
+
+        confidence = max(30, min(95, confidence))
+
+    except Exception as regime_err:
+        logger.debug(f"Market regime overlay skipped: {regime_err}")
+
     return PredictionResult(
         symbol=normalized_symbol,
         direction=direction,
@@ -1793,7 +1860,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
         reasoning=reasoning,
         key_levels=key_levels,
         timestamp=datetime.utcnow().isoformat() + "Z",
-        model_version="lgbm_v2"
+        model_version="lgbm_v2_regime"
     )
 
 

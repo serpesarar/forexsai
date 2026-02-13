@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
@@ -174,6 +174,13 @@ export default function StrategyPerformancePanel() {
     staleTime: 60000,
     refetchInterval: 300000,
   });
+
+  const handleRefresh = useCallback(() => { refetch(); }, [refetch]);
+
+  useEffect(() => {
+    window.addEventListener("dashboard-refresh", handleRefresh);
+    return () => window.removeEventListener("dashboard-refresh", handleRefresh);
+  }, [handleRefresh]);
 
   if (error) {
     return (

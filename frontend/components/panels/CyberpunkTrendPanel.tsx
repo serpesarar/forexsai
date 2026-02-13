@@ -173,6 +173,12 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
 
   const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "clear_trend");
 
+  useEffect(() => {
+    const handler = () => fetchData();
+    window.addEventListener("dashboard-refresh", handler);
+    return () => window.removeEventListener("dashboard-refresh", handler);
+  }, [activeSymbol, timeframe]);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {

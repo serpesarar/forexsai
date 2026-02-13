@@ -17,6 +17,9 @@ import {
   Eye,
   CheckCircle,
   AlertTriangle,
+  Shield,
+  Mountain,
+  Crosshair,
 } from "lucide-react";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
@@ -52,6 +55,22 @@ interface PulseV3Data {
   entry_zones: Array<{ price: number; share: number; label: string }>;
   notes: string[];
   valid_for_seconds: number;
+  regime?: {
+    type: string;
+    adx: number;
+    session: string;
+    is_ath: boolean;
+    rsi_mode: string;
+    allowed_directions: string[];
+    min_rr: number;
+  };
+  order_blocks?: Array<{
+    type: string;
+    low: number;
+    high: number;
+    strength: number;
+    is_nearby: boolean;
+  }>;
 }
 
 interface PulseV3PanelProps {
@@ -130,7 +149,11 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   useEffect(() => {
     const handler = () => fetchData();
     window.addEventListener("pulse-refresh", handler);
-    return () => window.removeEventListener("pulse-refresh", handler);
+    window.addEventListener("dashboard-refresh", handler);
+    return () => {
+      window.removeEventListener("pulse-refresh", handler);
+      window.removeEventListener("dashboard-refresh", handler);
+    };
   }, [activeSymbol]);
 
   const getSignalBadge = (type: string) => {
@@ -257,6 +280,45 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         <p className="text-sm font-mono mt-1.5" style={{ color: "rgba(255,255,255,0.35)" }}>
           {t("pulseV3.priceLabel")} <span className="font-bold text-white/80">{data.price}</span>
         </p>
+
+        {/* ── Regime Badge ── */}
+        {data.regime && (
+          <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
+            {/* Regime Type */}
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold font-mono"
+              style={{
+                background: data.regime.type.includes("TREND_UP") ? "rgba(0,255,136,0.12)" :
+                  data.regime.type.includes("TREND_DOWN") ? "rgba(255,51,102,0.12)" :
+                  data.regime.type === "RANGING" ? "rgba(240,180,41,0.12)" : "rgba(129,140,248,0.12)",
+                color: data.regime.type.includes("TREND_UP") ? "#00ff88" :
+                  data.regime.type.includes("TREND_DOWN") ? "#ff3366" :
+                  data.regime.type === "RANGING" ? "#f0b429" : "#818cf8",
+                border: `1px solid ${data.regime.type.includes("TREND_UP") ? "rgba(0,255,136,0.25)" :
+                  data.regime.type.includes("TREND_DOWN") ? "rgba(255,51,102,0.25)" :
+                  data.regime.type === "RANGING" ? "rgba(240,180,41,0.25)" : "rgba(129,140,248,0.25)"}`,
+              }}>
+              <Shield className="w-3 h-3" />
+              {data.regime.type.replace(/_/g, " ")}
+            </div>
+            {/* ADX */}
+            <div className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold"
+              style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              ADX {data.regime.adx}
+            </div>
+            {/* Session */}
+            <div className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold"
+              style={{ background: "rgba(0,204,255,0.08)", color: "#00ccff", border: "1px solid rgba(0,204,255,0.15)" }}>
+              {data.regime.session}
+            </div>
+            {/* ATH */}
+            {data.regime.is_ath && (
+              <div className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold"
+                style={{ background: "rgba(255,215,0,0.12)", color: "#ffd700", border: "1px solid rgba(255,215,0,0.25)" }}>
+                <Mountain className="w-3 h-3" /> ATH
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── 3 Timeframe Scores ── */}
@@ -361,6 +423,30 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
                 <p className="text-[10px]" style={{ color: "#00ccff" }}>%{zone.share}</p>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Order Blocks ── */}
+      {data.order_blocks && data.order_blocks.length > 0 && (
+        <div className="px-3 pb-3">
+          <h4 className="text-[10px] uppercase tracking-widest font-mono mb-2 px-1 flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <Crosshair className="w-3 h-3" style={{ color: "#c084fc" }} /> Order Blocks (4H)
+          </h4>
+          <div className="flex gap-2 flex-wrap">
+            {data.order_blocks.filter(ob => ob.is_nearby).map((ob, idx) => (
+              <div key={idx} className="rounded-lg px-3 py-1.5 font-mono text-[10px]" style={{
+                background: ob.type === "bullish" ? "rgba(0,255,136,0.06)" : "rgba(255,51,102,0.06)",
+                border: `1px solid ${ob.type === "bullish" ? "rgba(0,255,136,0.15)" : "rgba(255,51,102,0.15)"}`,
+                color: ob.type === "bullish" ? "#00ff88" : "#ff3366",
+              }}>
+                <span className="font-bold">{ob.type === "bullish" ? "▲" : "▼"} {ob.low.toFixed(0)}–{ob.high.toFixed(0)}</span>
+                <span className="ml-2 opacity-60">str: {(ob.strength * 100).toFixed(0)}%</span>
+              </div>
+            ))}
+            {data.order_blocks.filter(ob => ob.is_nearby).length === 0 && (
+              <span className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.2)" }}>No nearby OBs</span>
+            )}
           </div>
         </div>
       )}

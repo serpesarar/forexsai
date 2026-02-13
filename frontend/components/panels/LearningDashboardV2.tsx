@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Brain, Target, TrendingUp, TrendingDown, RefreshCw, AlertTriangle,
   CheckCircle, XCircle, Activity, BarChart3, Zap, Shield, ChevronDown,
@@ -353,6 +353,13 @@ export default function LearningDashboardV2() {
 
   const { data: dashboard, isLoading, refetch } = useLifecycleDashboard(days);
   const { data: activeData, refetch: refetchActive } = useActiveSignals();
+
+  const handleGlobalRefresh = useCallback(() => { refetch(); refetchActive(); }, [refetch, refetchActive]);
+
+  useEffect(() => {
+    window.addEventListener("dashboard-refresh", handleGlobalRefresh);
+    return () => window.removeEventListener("dashboard-refresh", handleGlobalRefresh);
+  }, [handleGlobalRefresh]);
 
   const handleCheck = async () => {
     setChecking(true);

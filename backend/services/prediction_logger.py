@@ -99,6 +99,20 @@ async def log_prediction(
         return None
     
     try:
+        # ── Deduplication: skip if there's already an active signal for symbol+model_type ──
+        effective_model_type = model_type or (strategy.lower() if strategy else "ml")
+        try:
+            existing = client.table("prediction_logs").select("id").eq(
+                "symbol", symbol
+            ).eq("status", "active").eq(
+                "model_type", effective_model_type
+            ).limit(1).execute()
+            if existing.get("data") and len(existing["data"]) > 0:
+                logger.debug(f"Skipping duplicate: active {effective_model_type} signal exists for {symbol}")
+                return existing["data"][0]["id"]
+        except Exception as dedup_err:
+            logger.warning(f"Dedup check failed (proceeding): {dedup_err}")
+
         ml = context.get("ml_prediction", {}) or {}
         
         factors = _extract_factors(context, analysis)
