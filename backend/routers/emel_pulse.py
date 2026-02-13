@@ -477,11 +477,14 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         confidence = prediction.get("confidence", 50)
         
         # Determine final decision
+        # 5+ green = strong signal, 4 green + ML agrees = cautious signal
         if red_count >= 3:
             decision = "HOLD"
             decision_reason = "Çok fazla risk faktörü var"
-        elif green_count >= 6:
+        elif green_count >= 5:
             decision = signal if signal != "HOLD" else "BUY" if trend_direction == "up" else "SELL"
+        elif green_count >= 4 and signal in ("BUY", "SELL") and red_count <= 1:
+            decision = signal
         else:
             decision = "HOLD"
             decision_reason = "Yeterli onay yok"

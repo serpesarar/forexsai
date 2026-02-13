@@ -13,7 +13,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional, Literal, Dict, Any
@@ -346,6 +346,10 @@ class PredictionResult:
     
     timestamp: str
     model_version: str
+
+    # Pattern & MTF data (for EMEL panel)
+    active_patterns: List[dict] = field(default_factory=list)
+    mtf_data: Dict[str, Any] = field(default_factory=dict)
 
 
 def _load_model(symbol: str):
@@ -1841,6 +1845,29 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     except Exception as regime_err:
         logger.debug(f"Market regime overlay skipped: {regime_err}")
 
+    # Build active_patterns list from pattern_data for EMEL panel
+    _active_patterns = []
+    try:
+        if pattern_data and isinstance(pattern_data, dict):
+            for p in pattern_data.get("patterns", []):
+                if isinstance(p, dict):
+                    _active_patterns.append(p)
+        # Also include candlestick patterns
+        if candlestick_data and isinstance(candlestick_data, dict):
+            for p in candlestick_data.get("patterns", []):
+                if isinstance(p, dict):
+                    _active_patterns.append(p)
+    except Exception:
+        pass
+
+    # Build mtf_data for EMEL panel
+    _mtf_for_emel = {}
+    try:
+        if mtf_data and isinstance(mtf_data, dict):
+            _mtf_for_emel = mtf_data
+    except Exception:
+        pass
+
     return PredictionResult(
         symbol=normalized_symbol,
         direction=direction,
@@ -1860,7 +1887,9 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
         reasoning=reasoning,
         key_levels=key_levels,
         timestamp=datetime.utcnow().isoformat() + "Z",
-        model_version="lgbm_v2_regime"
+        model_version="lgbm_v2_regime",
+        active_patterns=_active_patterns,
+        mtf_data=_mtf_for_emel,
     )
 
 
