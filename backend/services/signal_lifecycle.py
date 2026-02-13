@@ -517,7 +517,11 @@ async def run_lifecycle_check() -> Dict[str, Any]:
                     summary["still_active"] += 1
 
             except Exception as e:
-                logger.error(f"Error processing signal {signal.get('id', '?')[:8]}: {e}")
+                logger.error(f"Error processing signal {signal.get('id', '?')[:8]}: {e}", exc_info=True)
+                summary.setdefault("_errors", []).append({
+                    "signal_id": signal.get("id", "?")[:8],
+                    "error": str(e),
+                })
 
             # Small delay between signals to avoid overwhelming DataHub
             await asyncio.sleep(0.2)
