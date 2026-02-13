@@ -479,10 +479,20 @@ async def run_lifecycle_check() -> Dict[str, Any]:
             "status", "active"
         ).order("created_at", desc=True).limit(MAX_ACTIVE_SIGNALS).execute()
 
-        signals = result.get("data") or []
+        raw_data = result.get("data")
+        query_error = result.get("error")
+        signals = raw_data if isinstance(raw_data, list) else []
+
+        # Debug info for diagnosis
+        summary["_debug"] = {
+            "result_type": str(type(result)),
+            "data_type": str(type(raw_data)),
+            "data_len": len(signals),
+            "query_error": query_error,
+        }
 
         if not signals:
-            logger.info(f"Lifecycle check: no active signals found (result keys={list(result.keys()) if isinstance(result, dict) else 'not_dict'}, data_len={len(result.get('data') or []) if isinstance(result, dict) else '?'})")
+            logger.info(f"Lifecycle check: no active signals (data_type={type(raw_data)}, error={query_error})")
             return summary
 
         logger.info(f"🔄 Lifecycle check: processing {len(signals)} active signals")
