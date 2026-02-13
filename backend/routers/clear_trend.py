@@ -282,7 +282,7 @@ async def get_clear_trend(symbol: str, timeframe: str = "1H"):
             fetch_symbol = symbol
         
         # Get data
-        candles = await fetch_ohlc_data(fetch_symbol, timeframe, limit=100)
+        candles = await fetch_ohlc_data(fetch_symbol, timeframe, limit=300)
         current_price = await fetch_latest_price(fetch_symbol)
         
         if not candles or len(candles) < 50:
