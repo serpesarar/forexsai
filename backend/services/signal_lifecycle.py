@@ -488,20 +488,9 @@ async def run_lifecycle_check() -> Dict[str, Any]:
             "status", "active"
         ).order("created_at", desc=True).limit(MAX_ACTIVE_SIGNALS).execute()
 
-        raw_data = result.get("data")
-        query_error = result.get("error")
-        signals = raw_data if isinstance(raw_data, list) else []
-
-        # Debug info for diagnosis
-        summary["_debug"] = {
-            "result_type": str(type(result)),
-            "data_type": str(type(raw_data)),
-            "data_len": len(signals),
-            "query_error": query_error,
-        }
+        signals = result.get("data") or []
 
         if not signals:
-            logger.info(f"Lifecycle check: no active signals (data_type={type(raw_data)}, error={query_error})")
             return summary
 
         logger.info(f"🔄 Lifecycle check: processing {len(signals)} active signals")
@@ -527,10 +516,6 @@ async def run_lifecycle_check() -> Dict[str, Any]:
 
             except Exception as e:
                 logger.error(f"Error processing signal {signal.get('id', '?')[:8]}: {e}", exc_info=True)
-                summary.setdefault("_errors", []).append({
-                    "signal_id": signal.get("id", "?")[:8],
-                    "error": str(e),
-                })
 
             # Small delay between signals to avoid overwhelming DataHub
             await asyncio.sleep(0.2)
