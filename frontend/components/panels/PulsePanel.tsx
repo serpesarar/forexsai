@@ -13,6 +13,8 @@ import {
   ArrowUp,
   ArrowDown,
   Clock,
+  Info,
+  X,
 } from "lucide-react";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
@@ -88,6 +90,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
   const [error, setError] = useState<string | null>(null);
   const [timeframe, setTimeframe] = useState("5m");
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [showInfo, setShowInfo] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -178,6 +181,9 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
           <button onClick={fetchData} className="p-1.5 rounded-lg transition-all hover:brightness-150" style={{ background: "rgba(255,255,255,0.05)" }}>
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: "rgba(255,255,255,0.35)" }} />
           </button>
+          <button onClick={() => setShowInfo(!showInfo)} className="p-1.5 rounded-lg transition-all hover:brightness-150" style={{ background: showInfo ? "rgba(0,255,136,0.15)" : "rgba(255,255,255,0.05)" }}>
+            <Info className="w-3.5 h-3.5" style={{ color: showInfo ? "#00ff88" : "rgba(255,255,255,0.35)" }} />
+          </button>
           {onSwitchMode && (
             <button onClick={onSwitchMode} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold font-mono"
               style={{ background: "rgba(99,102,241,0.2)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.3)" }}>
@@ -186,6 +192,17 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
           )}
         </div>
       </div>
+
+      {/* ── Info Box ── */}
+      {showInfo && (
+        <div className="mx-4 mt-3 p-3 rounded-xl relative" style={{ background: "rgba(0,255,136,0.06)", border: "1px solid rgba(0,255,136,0.15)" }}>
+          <button onClick={() => setShowInfo(false)} className="absolute top-2 right-2 text-white/30 hover:text-white/60"><X className="w-3.5 h-3.5" /></button>
+          <p className="text-[11px] font-bold font-mono mb-1" style={{ color: "#00ff88" }}>PULSE 1 — Algoritmik Analiz</p>
+          <p className="text-[10px] text-white/50 leading-relaxed">
+            Tamamen teknik göstergelere dayalı saf algoritmik model. 6 bileşenli puanlama sistemi (100 puan): EMA Stack, RSI, MACD, Hacim, Stokastik ve 10-mum analizi. ML veya yapay zeka kullanmaz — sadece matematiksel kurallar. En hızlı sinyal üretir ama en az filtreleme yapar.
+          </p>
+        </div>
+      )}
 
       {/* ── Error ── */}
       {error && !data && !loading && (

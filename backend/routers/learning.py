@@ -1267,16 +1267,24 @@ async def get_strategy_performance(
                 outcome = outcomes_map.get(p.get("id"))
                 if outcome:
                     has_outcome = True
-                    hit_target = outcome.get("hit_target", False)
-                    hit_stop = outcome.get("hit_stop", False)
+                    ot = outcome.get("hit_target", False)
+                    os_ = outcome.get("hit_stop", False)
+                    # If both hit_target and hit_stop are true, 
+                    # the signal ultimately lost — prioritize stop
+                    if os_:
+                        hit_stop = True
+                        hit_target = False
+                    elif ot:
+                        hit_target = True
             
             if has_outcome:
                 outcomes_found += 1
                 stats[sym][strat]["with_outcome"] += 1
-                if hit_target:
+                # A signal is either correct OR stopped, never both
+                if hit_target and not hit_stop:
                     stats[sym][strat]["correct"] += 1
                     stats[sym][strat]["target_hits"] += 1
-                if hit_stop:
+                elif hit_stop:
                     stats[sym][strat]["stop_hits"] += 1
         
         # Build result

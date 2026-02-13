@@ -438,9 +438,14 @@ export default function LearningDashboardV2() {
           {/* ── MODEL PERFORMANCE CARDS ── */}
           {Object.keys(models).length > 0 ? (
             <div className="space-y-3">
-              {Object.entries(models).map(([model, stats]) => (
-                <ModelCard key={model} model={model} stats={stats} />
-              ))}
+              {Object.entries(models)
+                .sort(([a], [b]) => {
+                  const order: Record<string, number> = { ml: 0, pulse1: 1, pulse2: 2, pulse3: 3, pulse: 3.5, emel: 4, hybrid: 5 };
+                  return (order[a] ?? 99) - (order[b] ?? 99);
+                })
+                .map(([model, stats]) => (
+                  <ModelCard key={model} model={model} stats={stats} />
+                ))}
             </div>
           ) : (
             <div className="text-center py-8">

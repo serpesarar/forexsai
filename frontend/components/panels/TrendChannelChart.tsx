@@ -141,8 +141,11 @@ export default function TrendChannelChart({
     const yScale = (price: number) => PAD.top + plotH - ((price - minP) / range) * plotH;
 
     const pricePts = closes.map((c, i) => `${xScale(i)},${yScale(c)}`);
-    const pricePath = `M${pricePts.join("L")}`;
-    const areaPath = `${pricePath}L${xScale(closes.length - 1)},${BASE_H - PAD.bottom}L${xScale(0)},${BASE_H - PAD.bottom}Z`;
+    // Extend line to currentPrice so green line tracks live price
+    const lastIdx = closes.length - 1;
+    const extendedPricePts = [...pricePts, `${xScale(lastIdx)},${yScale(currentPrice)}`];
+    const pricePath = `M${extendedPricePts.join("L")}`;
+    const areaPath = `${pricePath}L${xScale(lastIdx)},${BASE_H - PAD.bottom}L${xScale(0)},${BASE_H - PAD.bottom}Z`;
 
     const makePath = (arr: number[]) => {
       if (!arr.length) return "";
@@ -201,12 +204,26 @@ export default function TrendChannelChart({
       onTouchEnd={handleTouchEnd}
       onDoubleClick={handleDoubleClick}
     >
-      {/* Zoom indicator */}
-      {zoom !== 1 && (
-        <div className="absolute top-2 left-2 z-10 px-2 py-1 rounded-md text-[10px] font-mono" style={{ background: "rgba(0,255,136,0.12)", color: "#00ff88", border: "1px solid rgba(0,255,136,0.25)" }}>
-          {zoom.toFixed(1)}x
-        </div>
-      )}
+      {/* Zoom controls */}
+      <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
+        <button
+          onClick={(e) => { e.stopPropagation(); setZoom(z => Math.min(5, z * 1.25)); }}
+          className="w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold font-mono transition-all hover:brightness-150"
+          style={{ background: "rgba(0,255,136,0.1)", color: "#00ff88", border: "1px solid rgba(0,255,136,0.2)" }}
+        >+</button>
+        <button
+          onClick={(e) => { e.stopPropagation(); setZoom(z => Math.max(0.5, z * 0.8)); }}
+          className="w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold font-mono transition-all hover:brightness-150"
+          style={{ background: "rgba(255,51,102,0.1)", color: "#ff3366", border: "1px solid rgba(255,51,102,0.2)" }}
+        >−</button>
+        {zoom !== 1 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setZoom(1); setPanX(0); setPanY(0); }}
+            className="h-7 px-2 rounded-md flex items-center justify-center text-[10px] font-bold font-mono transition-all hover:brightness-150"
+            style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}
+          >{zoom.toFixed(1)}x ↺</button>
+        )}
+      </div>
 
       <svg
         ref={svgRef}
