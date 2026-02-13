@@ -139,6 +139,17 @@ async def _get_market_context() -> Dict[str, Any]:
     return ctx
 
 
+def _update_signal_status(client, signal_id: str, status: str, exit_price=None):
+    """Helper to update a signal's status in prediction_logs."""
+    update_data = {"status": status, "exit_time": datetime.utcnow().isoformat() + "Z"}
+    if exit_price is not None:
+        update_data["exit_price"] = round(float(exit_price), 4)
+    try:
+        client.table("prediction_logs").eq("id", signal_id).update(update_data)
+    except Exception as e:
+        logger.error(f"Failed to update signal status {signal_id[:8]}: {e}")
+
+
 # ═════════════════════════════════════════════════════════════════════════════
 #  CORE: Process a single active signal
 # ═════════════════════════════════════════════════════════════════════════════
@@ -471,7 +482,7 @@ async def run_lifecycle_check() -> Dict[str, Any]:
         signals = result.get("data") or []
 
         if not signals:
-            logger.debug("No active signals to check")
+            logger.info(f"Lifecycle check: no active signals found (result keys={list(result.keys()) if isinstance(result, dict) else 'not_dict'}, data_len={len(result.get('data') or []) if isinstance(result, dict) else '?'})")
             return summary
 
         logger.info(f"🔄 Lifecycle check: processing {len(signals)} active signals")
