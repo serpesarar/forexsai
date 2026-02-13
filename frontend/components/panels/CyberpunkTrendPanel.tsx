@@ -67,6 +67,7 @@ interface ClearTrendData {
   pip_value: number;
   chart_data?: {
     closes: number[];
+    dates: string[];
     trend_channel: { upper: number[]; lower: number[]; middle: number[] };
   };
   explanations: Record<string, string>;
@@ -254,6 +255,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
   const trendLabel = data.trend.direction === "UP" ? "BULLISH" : data.trend.direction === "DOWN" ? "BEARISH" : "NEUTRAL";
 
   const chartCloses = data.chart_data?.closes ?? [];
+  const chartDates = data.chart_data?.dates ?? [];
   const chartUpper = data.chart_data?.trend_channel?.upper ?? [];
   const chartLower = data.chart_data?.trend_channel?.lower ?? [];
   const chartMiddle = data.chart_data?.trend_channel?.middle ?? [];
@@ -387,6 +389,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
             <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.04)" }}>
               <TrendChannelChart
                 closes={chartCloses}
+                dates={chartDates}
                 upper={chartUpper}
                 lower={chartLower}
                 middle={chartMiddle}

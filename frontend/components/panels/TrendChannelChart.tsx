@@ -4,6 +4,7 @@ import { useMemo, useRef, useEffect, useState, useCallback } from "react";
 
 interface TrendChannelChartProps {
   closes: number[];
+  dates?: string[];
   upper: number[];
   lower: number[];
   middle: number[];
@@ -19,10 +20,11 @@ interface TrendChannelChartProps {
 
 const BASE_W = 900;
 const BASE_H = 380;
-const PAD = { top: 20, right: 90, bottom: 20, left: 10 };
+const PAD = { top: 20, right: 90, bottom: 40, left: 10 };
 
 export default function TrendChannelChart({
   closes,
+  dates,
   upper,
   lower,
   middle,
@@ -110,16 +112,18 @@ export default function TrendChannelChart({
     const start = Math.max(0, end - VISIBLE_CANDLES);
     return {
       closes: closes.slice(start, end),
+      dates: dates ? dates.slice(start, end) : [],
       upper: upper.slice(start, end),
       lower: lower.slice(start, end),
       middle: middle.slice(start, end),
       start, end,
       isAtLatest: scrollOffset === 0,
     };
-  }, [closes, upper, lower, middle, totalCandles, scrollOffset]);
+  }, [closes, dates, upper, lower, middle, totalCandles, scrollOffset]);
 
   const computed = useMemo(() => {
     const vc = visibleWindow.closes;
+    const vd = visibleWindow.dates;
     const vu = visibleWindow.upper;
     const vl = visibleWindow.lower;
     const vm = visibleWindow.middle;
@@ -174,20 +178,35 @@ export default function TrendChannelChart({
       gridLines.push({ y: yScale(price), price });
     }
 
+    // Compute X-axis labels (dates) - pick ~6 evenly spaced
+    const xLabels: { x: number; label: string }[] = [];
+    if (vd.length > 0) {
+      const step = Math.max(1, Math.floor(vd.length / 6));
+      for (let i = 0; i < vd.length; i += step) {
+        if (i < vd.length) {
+          xLabels.push({ x: xScale(i), label: vd[i] });
+        }
+      }
+      // Ensure last one is included if space permits
+      if (vd.length > 0 && xLabels[xLabels.length - 1].label !== vd[vd.length - 1]) {
+        xLabels.push({ x: xScale(vd.length - 1), label: vd[vd.length - 1] });
+      }
+    }
+
     return {
       pricePath, areaPath,
       upperPath: makePath(vu),
       lowerPath: makePath(vl),
       middlePath: makePath(vm),
       channelFillPath,
-      yScale, xScale, minP, maxP, gridLines,
+      yScale, xScale, minP, maxP, gridLines, xLabels,
       lastX: xScale(vc.length - 1),
     };
   }, [visibleWindow, supportLevels, resistanceLevels, currentPrice, decimals]);
 
   if (!computed) return null;
 
-  const { pricePath, areaPath, upperPath, lowerPath, middlePath, channelFillPath, yScale, lastX, gridLines } = computed;
+  const { pricePath, areaPath, upperPath, lowerPath, middlePath, channelFillPath, yScale, lastX, gridLines, xLabels } = computed;
   const pulse = Math.sin(tick * Math.PI * 0.8);
   const srPulse = 0.45 + Math.sin(tick * Math.PI * 0.6) * 0.25;
 
@@ -285,6 +304,21 @@ export default function TrendChannelChart({
               {g.price.toFixed(decimals)}
             </text>
           </g>
+        ))}
+
+        {/* X-axis date labels */}
+        {xLabels.map((l, i) => (
+          <text
+            key={`xl-${i}`}
+            x={l.x}
+            y={BASE_H - 10}
+            textAnchor="middle"
+            fill="rgba(255,255,255,0.4)"
+            fontSize={10}
+            fontFamily="monospace"
+          >
+            {l.label}
+          </text>
         ))}
 
         {/* Channel fill */}

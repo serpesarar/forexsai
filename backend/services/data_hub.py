@@ -544,9 +544,21 @@ def _load_from_persistent_cache():
             loaded_any = True
             logger.info(f"[DataHub] Loaded {len(cached_eod)} cached EOD candles for {symbol}")
         
-        # If we loaded cached data, mark as seeded so pump only fetches delta
-        if cached_5m or cached_30m or cached_1h or cached_eod:
+        # If we loaded cached data, check if we have ENOUGH data to skip full seed
+        # Fix for user issue: "only 166 candles" -> force full seed if cache is thin
+        has_enough_5m = bool(cached_5m and len(cached_5m) >= FULL_SEED_LIMIT_5M * 0.5)
+        has_enough_30m = bool(cached_30m and len(cached_30m) >= FULL_SEED_LIMIT_30M * 0.5)
+        has_enough_1h = bool(cached_1h and len(cached_1h) >= FULL_SEED_LIMIT_1H * 0.5)
+        
+        # XAUUSD relies on 30m, NDX on 5m/1h
+        is_enough = has_enough_5m or has_enough_30m or has_enough_1h
+        
+        if is_enough:
             _initial_seed_done[symbol] = True
+            logger.info(f"[DataHub] Cache sufficient for {symbol} (skipping full seed)")
+        else:
+            _initial_seed_done[symbol] = False
+            logger.info(f"[DataHub] Cache INSUFFICIENT for {symbol} (forcing full seed on next pump)")
     
     if loaded_any:
         logger.info("[DataHub] Persistent cache loaded — will only fetch delta from EODHD")

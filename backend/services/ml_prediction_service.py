@@ -556,8 +556,37 @@ def _compute_technical_indicators(closes: np.ndarray, highs: np.ndarray, lows: n
     }
 
 
-def _build_feature_vector(symbol: str, ta: dict, candles: list) -> Optional[np.ndarray]:
-    """Build feature vector for model prediction."""
+def _compute_tf_indicators(candles: list, current_price: float, fallback_ta: dict = None) -> dict:
+    """Compute technical indicators for a specific timeframe's candles.
+    
+    If candles are insufficient (< 30), returns fallback_ta or empty defaults.
+    This enables real multi-timeframe feature computation.
+    """
+    if not candles or len(candles) < 30:
+        return fallback_ta or {}
+    
+    try:
+        closes = np.array([c["close"] for c in candles], dtype=float)
+        highs = np.array([c["high"] for c in candles], dtype=float)
+        lows = np.array([c["low"] for c in candles], dtype=float)
+        volumes = np.array([c.get("volume", 0) for c in candles], dtype=float)
+        
+        result = _compute_technical_indicators(closes, highs, lows, volumes)
+        result["close"] = current_price
+        return result
+    except Exception as e:
+        logger.debug(f"Multi-TF indicator computation failed: {e}")
+        return fallback_ta or {}
+
+
+def _build_feature_vector(symbol: str, ta: dict, candles: list, ta_1h: dict = None, ta_4h: dict = None) -> Optional[np.ndarray]:
+    """Build feature vector for model prediction.
+    
+    Args:
+        ta: Technical indicators from primary timeframe (M30)
+        ta_1h: Technical indicators from 1H timeframe (optional, falls back to ta)
+        ta_4h: Technical indicators from 4H timeframe (optional, falls back to ta)
+    """
     
     model = _load_model(symbol)
     if model is None:
@@ -570,40 +599,51 @@ def _build_feature_vector(symbol: str, ta: dict, candles: list) -> Optional[np.n
     # Create feature dict with defaults
     feature_dict = {}
     
+    # Use real per-TF indicators when available, fallback to primary TF (ta)
+    h1 = ta_1h if ta_1h else ta
+    h4 = ta_4h if ta_4h else ta
+    
     # Map computed indicators to feature names
+    # M30 = primary timeframe (ta), H1 = ta_1h or fallback, H4 = ta_4h or fallback
     indicator_map = {
+        # === Base (M30) indicators ===
         "rsi_14": ta["rsi_14"],
         "rsi_7": ta["rsi_7"],
         "rsi_14_M30": ta["rsi_14"],
         "rsi_7_M30": ta["rsi_7"],
-        "rsi_14_H1": ta["rsi_14"],
-        "rsi_7_H1": ta["rsi_7"],
-        "rsi_14_H4": ta["rsi_14"],
-        "rsi_7_H4": ta["rsi_7"],
+        # === H1 indicators (real 1H data when available) ===
+        "rsi_14_H1": h1.get("rsi_14", ta["rsi_14"]),
+        "rsi_7_H1": h1.get("rsi_7", ta["rsi_7"]),
+        # === H4 indicators (real 4H data when available) ===
+        "rsi_14_H4": h4.get("rsi_14", ta["rsi_14"]),
+        "rsi_7_H4": h4.get("rsi_7", ta["rsi_7"]),
+        # === EMA ===
         "ema_20": ta["ema_20"],
         "ema_50": ta["ema_50"],
         "ema_200": ta["ema_200"],
         "ema_20_M30": ta["ema_20"],
         "ema_50_M30": ta["ema_50"],
         "ema_200_M30": ta["ema_200"],
-        "ema_20_H1": ta["ema_20"],
-        "ema_50_H1": ta["ema_50"],
-        "ema_200_H1": ta["ema_200"],
-        "ema_20_H4": ta["ema_20"],
-        "ema_50_H4": ta["ema_50"],
-        "ema_200_H4": ta["ema_200"],
+        "ema_20_H1": h1.get("ema_20", ta["ema_20"]),
+        "ema_50_H1": h1.get("ema_50", ta["ema_50"]),
+        "ema_200_H1": h1.get("ema_200", ta["ema_200"]),
+        "ema_20_H4": h4.get("ema_20", ta["ema_20"]),
+        "ema_50_H4": h4.get("ema_50", ta["ema_50"]),
+        "ema_200_H4": h4.get("ema_200", ta["ema_200"]),
+        # === SMA ===
         "sma_20": ta["sma_20"],
         "sma_50": ta["sma_50"],
         "sma_200": ta["sma_200"],
         "sma_20_M30": ta["sma_20"],
         "sma_50_M30": ta["sma_50"],
         "sma_200_M30": ta["sma_200"],
-        "sma_20_H1": ta["sma_20"],
-        "sma_50_H1": ta["sma_50"],
-        "sma_200_H1": ta["sma_200"],
-        "sma_20_H4": ta["sma_20"],
-        "sma_50_H4": ta["sma_50"],
-        "sma_200_H4": ta["sma_200"],
+        "sma_20_H1": h1.get("sma_20", ta["sma_20"]),
+        "sma_50_H1": h1.get("sma_50", ta["sma_50"]),
+        "sma_200_H1": h1.get("sma_200", ta["sma_200"]),
+        "sma_20_H4": h4.get("sma_20", ta["sma_20"]),
+        "sma_50_H4": h4.get("sma_50", ta["sma_50"]),
+        "sma_200_H4": h4.get("sma_200", ta["sma_200"]),
+        # === MACD ===
         "macd_line": ta["macd_line"],
         "macd_signal": ta["macd_signal"],
         "macd_hist": ta["macd_hist"],
@@ -612,22 +652,24 @@ def _build_feature_vector(symbol: str, ta: dict, candles: list) -> Optional[np.n
         "macd_signal_M30": ta["macd_signal"],
         "macd_hist_M30": ta["macd_hist"],
         "macd_hist_diff_M30": ta["macd_hist_diff"],
-        "macd_line_H1": ta["macd_line"],
-        "macd_signal_H1": ta["macd_signal"],
-        "macd_hist_H1": ta["macd_hist"],
-        "macd_hist_diff_H1": ta["macd_hist_diff"],
-        "macd_line_H4": ta["macd_line"],
-        "macd_signal_H4": ta["macd_signal"],
-        "macd_hist_H4": ta["macd_hist"],
-        "macd_hist_diff_H4": ta["macd_hist_diff"],
+        "macd_line_H1": h1.get("macd_line", ta["macd_line"]),
+        "macd_signal_H1": h1.get("macd_signal", ta["macd_signal"]),
+        "macd_hist_H1": h1.get("macd_hist", ta["macd_hist"]),
+        "macd_hist_diff_H1": h1.get("macd_hist_diff", ta["macd_hist_diff"]),
+        "macd_line_H4": h4.get("macd_line", ta["macd_line"]),
+        "macd_signal_H4": h4.get("macd_signal", ta["macd_signal"]),
+        "macd_hist_H4": h4.get("macd_hist", ta["macd_hist"]),
+        "macd_hist_diff_H4": h4.get("macd_hist_diff", ta["macd_hist_diff"]),
+        # === Stochastic ===
         "stoch_k": ta["stoch_k"],
         "stoch_d": ta["stoch_d"],
         "stoch_k_M30": ta["stoch_k"],
         "stoch_d_M30": ta["stoch_d"],
-        "stoch_k_H1": ta["stoch_k"],
-        "stoch_d_H1": ta["stoch_d"],
-        "stoch_k_H4": ta["stoch_k"],
-        "stoch_d_H4": ta["stoch_d"],
+        "stoch_k_H1": h1.get("stoch_k", ta["stoch_k"]),
+        "stoch_d_H1": h1.get("stoch_d", ta["stoch_d"]),
+        "stoch_k_H4": h4.get("stoch_k", ta["stoch_k"]),
+        "stoch_d_H4": h4.get("stoch_d", ta["stoch_d"]),
+        # === Bollinger ===
         "boll_upper": ta["boll_upper"],
         "boll_lower": ta["boll_lower"],
         "boll_middle": ta["boll_middle"],
@@ -638,40 +680,46 @@ def _build_feature_vector(symbol: str, ta: dict, candles: list) -> Optional[np.n
         "boll_middle_M30": ta["boll_middle"],
         "boll_width_M30": ta["boll_width"],
         "boll_zscore_M30": ta["boll_zscore"],
-        "boll_upper_H1": ta["boll_upper"],
-        "boll_lower_H1": ta["boll_lower"],
-        "boll_middle_H1": ta["boll_middle"],
-        "boll_width_H1": ta["boll_width"],
-        "boll_zscore_H1": ta["boll_zscore"],
-        "boll_upper_H4": ta["boll_upper"],
-        "boll_lower_H4": ta["boll_lower"],
-        "boll_middle_H4": ta["boll_middle"],
-        "boll_width_H4": ta["boll_width"],
-        "boll_zscore_H4": ta["boll_zscore"],
+        "boll_upper_H1": h1.get("boll_upper", ta["boll_upper"]),
+        "boll_lower_H1": h1.get("boll_lower", ta["boll_lower"]),
+        "boll_middle_H1": h1.get("boll_middle", ta["boll_middle"]),
+        "boll_width_H1": h1.get("boll_width", ta["boll_width"]),
+        "boll_zscore_H1": h1.get("boll_zscore", ta["boll_zscore"]),
+        "boll_upper_H4": h4.get("boll_upper", ta["boll_upper"]),
+        "boll_lower_H4": h4.get("boll_lower", ta["boll_lower"]),
+        "boll_middle_H4": h4.get("boll_middle", ta["boll_middle"]),
+        "boll_width_H4": h4.get("boll_width", ta["boll_width"]),
+        "boll_zscore_H4": h4.get("boll_zscore", ta["boll_zscore"]),
+        # === ATR ===
         "atr_14": ta["atr_14"],
         "atr_pct": ta["atr_pct"],
         "atr_14_M30": ta["atr_14"],
         "atr_pct_M30": ta["atr_pct"],
-        "atr_14_H1": ta["atr_14"],
-        "atr_pct_H1": ta["atr_pct"],
-        "atr_14_H4": ta["atr_14"],
-        "atr_pct_H4": ta["atr_pct"],
+        "atr_14_H1": h1.get("atr_14", ta["atr_14"]),
+        "atr_pct_H1": h1.get("atr_pct", ta["atr_pct"]),
+        "atr_14_H4": h4.get("atr_14", ta["atr_14"]),
+        "atr_pct_H4": h4.get("atr_pct", ta["atr_pct"]),
+        # === Williams %R ===
         "williams_r": ta["williams_r"],
         "williams_r_M30": ta["williams_r"],
-        "williams_r_H1": ta["williams_r"],
-        "williams_r_H4": ta["williams_r"],
+        "williams_r_H1": h1.get("williams_r", ta["williams_r"]),
+        "williams_r_H4": h4.get("williams_r", ta["williams_r"]),
+        # === MFI ===
         "mfi": ta["mfi"],
         "mfi_M30": ta["mfi"],
-        "mfi_H1": ta["mfi"],
-        "mfi_H4": ta["mfi"],
+        "mfi_H1": h1.get("mfi", ta["mfi"]),
+        "mfi_H4": h4.get("mfi", ta["mfi"]),
+        # === ADX ===
         "adx": ta["adx"],
         "adx_M30": ta["adx"],
-        "adx_H1": ta["adx"],
-        "adx_H4": ta["adx"],
+        "adx_H1": h1.get("adx", ta["adx"]),
+        "adx_H4": h4.get("adx", ta["adx"]),
+        # === Volatility ===
         "volatility": ta["volatility"],
         "volatility_M30": ta["volatility"],
-        "volatility_H1": ta["volatility"],
-        "volatility_H4": ta["volatility"],
+        "volatility_H1": h1.get("volatility", ta["volatility"]),
+        "volatility_H4": h4.get("volatility", ta["volatility"]),
+        # === Momentum & Trend ===
         "momentum_3_M30": ta["momentum_3"],
         "momentum_10_M30": ta["momentum_10"],
         "trend_direction": ta["trend_direction"],
@@ -914,6 +962,11 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     candles_30m = await fetch_30m_candles(normalized_symbol, limit=300)
     live_price = await fetch_latest_price(normalized_symbol)
     
+    # Multi-TF: Fetch 1H and 4H candles for real multi-timeframe features (0 API calls - DataHub cache)
+    from services.data_fetcher import fetch_intraday_candles
+    candles_1h = await fetch_intraday_candles(normalized_symbol, "1h", limit=300)
+    candles_4h = await fetch_intraday_candles(normalized_symbol, "4h", limit=300)
+    
     # Primary: Use 30-minute candles (model trained on M30)
     if candles_30m and len(candles_30m) >= 50:
         candles = candles_30m
@@ -935,12 +988,17 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     
     current_price = float(live_price) if live_price else float(closes[-1])
     
-    # Compute technical indicators
+    # Compute technical indicators for primary timeframe (M30)
     ta = _compute_technical_indicators(closes, highs, lows, volumes)
     ta["close"] = current_price
     
-    # Build feature vector
-    feature_df = _build_feature_vector(normalized_symbol, ta, candles)
+    # Compute real multi-timeframe indicators (falls back to ta if data unavailable)
+    ta_1h = _compute_tf_indicators(candles_1h, current_price, fallback_ta=ta)
+    ta_4h = _compute_tf_indicators(candles_4h, current_price, fallback_ta=ta)
+    logger.info(f"Multi-TF indicators: H1={len(candles_1h) if candles_1h else 0} candles (real={ta_1h is not ta}), H4={len(candles_4h) if candles_4h else 0} candles (real={ta_4h is not ta})")
+    
+    # Build feature vector with real multi-TF data
+    feature_df = _build_feature_vector(normalized_symbol, ta, candles, ta_1h=ta_1h, ta_4h=ta_4h)
     
     # Load model and predict
     model = _load_model(normalized_symbol)

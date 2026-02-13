@@ -347,6 +347,28 @@ async def get_clear_trend(symbol: str, timeframe: str = "1H"):
             
             price_decimals = 1 if "NDX" in symbol else 2
             
+            # Generate mock chart data
+            from datetime import timedelta
+            mock_count = 50
+            mock_dates = [(datetime.now() - timedelta(minutes=i*15)).strftime("%H:%M") for i in range(mock_count)][::-1]
+            # Simple random walk for closes
+            mock_closes = [mock_price]
+            import random
+            for _ in range(mock_count - 1):
+                change = random.uniform(-0.001, 0.001) * mock_price
+                mock_closes.append(mock_closes[-1] + change)
+            mock_closes = [round(c, price_decimals) for c in mock_closes]
+            
+            mock_chart_data = {
+                "closes": mock_closes,
+                "dates": mock_dates,
+                "trend_channel": {
+                    "upper": [round(c * 1.002, price_decimals) for c in mock_closes],
+                    "lower": [round(c * 0.998, price_decimals) for c in mock_closes],
+                    "middle": mock_closes
+                }
+            }
+            
             return {
                 "symbol": symbol,
                 "timeframe": timeframe,
@@ -360,6 +382,7 @@ async def get_clear_trend(symbol: str, timeframe: str = "1H"):
                 "levels": mock_levels,
                 "trade_zones": mock_trade_zones,
                 "pip_value": pip_value,
+                "chart_data": mock_chart_data,
                 "explanations": {
                     "trend": "Trend direction based on EMA20 and EMA50 positioning",
                     "strength": "How strong the trend is (0-100). Above 70 is strong, below 30 is weak",
@@ -413,6 +436,29 @@ async def get_clear_trend(symbol: str, timeframe: str = "1H"):
         chart_count = min(len(closes), 200)
         recent_closes = [round(float(c), price_decimals) for c in closes[-chart_count:]]
         
+        # Extract dates for X-axis
+        # Format: "HH:mm" for intraday, "MM-DD" for daily
+        recent_dates = []
+        raw_candles = candles[-chart_count:]
+        for c in raw_candles:
+            ts = c.get("timestamp")
+            dt_str = c.get("date", "")
+            if ts:
+                dt = datetime.fromtimestamp(ts)
+            elif dt_str:
+                try:
+                    dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
+                except:
+                    dt = datetime.now() # Fallback
+            else:
+                dt = datetime.now()
+            
+            if timeframe in ["1D", "D", "d", "daily", "eod"]:
+                recent_dates.append(dt.strftime("%m-%d"))
+            else:
+                # Intraday
+                recent_dates.append(dt.strftime("%H:%M"))
+
         # Linear regression trend channel (over all chart candles)
         channel_closes = closes[-chart_count:]
         x = np.arange(len(channel_closes), dtype=float)
@@ -444,6 +490,7 @@ async def get_clear_trend(symbol: str, timeframe: str = "1H"):
             "pip_value": pip_value,
             "chart_data": {
                 "closes": recent_closes,
+                "dates": recent_dates,
                 "trend_channel": {
                     "upper": upper_band,
                     "lower": lower_band,
