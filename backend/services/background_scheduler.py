@@ -503,6 +503,38 @@ async def log_pulse_signals_if_needed():
         await asyncio.sleep(0.3)
 
 
+async def _check_and_catchup():
+    """On startup, check scheduler_state for stale jobs. If lifecycle_check
+    hasn't run in >10 min, force an immediate lifecycle pass. Non-blocking."""
+    if not is_db_available():
+        return
+    client = get_supabase_client()
+    if not client:
+        return
+    try:
+        result = client.table("scheduler_state").select(
+            "job_name, last_run_at"
+        ).eq("job_name", "lifecycle_check").limit(1).execute()
+        rows = result.get("data") or []
+        if not rows:
+            return
+        last_run = rows[0].get("last_run_at")
+        if last_run:
+            from datetime import datetime, timezone
+            last_dt = datetime.fromisoformat(last_run.replace("Z", "+00:00"))
+            age_s = (datetime.now(timezone.utc) - last_dt).total_seconds()
+            if age_s > 600:  # >10 min stale
+                logger.info(f"scheduler.catchup | lifecycle_check stale ({age_s:.0f}s ago), running immediate pass")
+                await check_lifecycle_if_needed()
+            else:
+                logger.info(f"scheduler.catchup | lifecycle_check fresh ({age_s:.0f}s ago), no catch-up needed")
+        else:
+            logger.info("scheduler.catchup | lifecycle_check never ran, running immediate pass")
+            await check_lifecycle_if_needed()
+    except Exception as e:
+        logger.debug(f"scheduler.catchup error: {e}")
+
+
 async def background_scheduler_loop():
     """Main background scheduler loop."""
     global _scheduler_running
@@ -513,6 +545,12 @@ async def background_scheduler_loop():
     
     _scheduler_running = True
     logger.info("Background scheduler started")
+
+    # Non-blocking catch-up: check if jobs are stale from previous crash/restart
+    try:
+        await _check_and_catchup()
+    except Exception as e:
+        logger.debug(f"Catch-up error (non-fatal): {e}")
     
     while _scheduler_running:
         try:

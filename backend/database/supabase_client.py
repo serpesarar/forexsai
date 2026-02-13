@@ -136,6 +136,21 @@ class SupabaseRestClient:
             )
         return self._http
 
+    def rpc(self, function_name: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Call a PostgreSQL function via Supabase RPC endpoint."""
+        url = f"{self.url}/rest/v1/rpc/{function_name}"
+        body = params or {}
+        try:
+            resp = _retry_request(
+                lambda: self.http.post(url, json=body),
+                label=f"RPC {function_name}",
+                client=self,
+            )
+            return {"data": resp.json(), "error": None}
+        except Exception as e:
+            logger.error(f"Supabase RPC error [{function_name}]: {e}")
+            return {"data": None, "error": str(e)}
+
     def close(self):
         """Gracefully close the HTTP client."""
         if not self._http.is_closed:
@@ -235,6 +250,25 @@ class TableQuery:
         except Exception as e:
             logger.error(f"Supabase insert error [{self.table_name}]: {e}")
             return {"data": None, "error": str(e)}
+
+    def insert_ignore(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Insert a row, returning {\"data\":None,\"duplicate\":True} on unique-constraint violation instead of raising."""
+        url = f"{self.client.url}/rest/v1/{self.table_name}"
+        headers = {"Prefer": "return=representation"}
+        try:
+            resp = self.client.http.post(url, json=data, headers=headers)
+            if resp.status_code == 409 or (resp.status_code == 400 and "23505" in resp.text):
+                logger.debug(f"insert_ignore: duplicate detected in {self.table_name}")
+                return {"data": None, "error": None, "duplicate": True}
+            resp.raise_for_status()
+            return {"data": resp.json(), "error": None, "duplicate": False}
+        except Exception as e:
+            err_text = str(e)
+            if "23505" in err_text or "duplicate" in err_text.lower():
+                logger.debug(f"insert_ignore: duplicate constraint in {self.table_name}")
+                return {"data": None, "error": None, "duplicate": True}
+            logger.error(f"Supabase insert_ignore error [{self.table_name}]: {e}")
+            return {"data": None, "error": str(e), "duplicate": False}
 
     def upsert(self, data, on_conflict: str = "") -> Dict[str, Any]:
         """Insert or update rows. data can be a dict (single) or list of dicts (bulk)."""

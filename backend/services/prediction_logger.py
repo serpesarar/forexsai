@@ -158,11 +158,16 @@ async def log_prediction(
         if strategy:
             record["strategy"] = strategy
         
-        result = client.table("prediction_logs").insert(record).execute()
+        result = client.table("prediction_logs").insert_ignore(record)
         
+        # DB-level dedup: unique index on (symbol, model_type, ml_direction) WHERE status='active'
+        if result.get("duplicate"):
+            logger.debug(f"DB dedup: active {effective_model_type} {direction} signal already exists for {symbol}")
+            return None
+
         if result.get("data") and len(result["data"]) > 0:
             prediction_id = result["data"][0].get("id")
-            logger.info(f"Logged prediction {prediction_id} for {symbol}")
+            logger.info(f"prediction_logger.logged | id={prediction_id[:8] if prediction_id else '?'} symbol={symbol} model={effective_model_type} dir={direction}")
             
             # Save candle snapshot for later error analysis (self-learning)
             try:

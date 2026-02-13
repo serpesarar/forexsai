@@ -15,6 +15,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import json
+import time
+import traceback
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -26,8 +28,57 @@ from services.target_config import (
     calculate_stoploss_price,
     pips_from_price_change,
 )
+from utils.json_helpers import parse_json_field, parse_json_fields
 
 logger = logging.getLogger(__name__)
+
+
+# ─── Observability: lightweight metrics ──────────────────────────────────────
+
+class LifecycleMetrics:
+    """In-process counters for lifecycle observability. Thread-safe not needed (single asyncio loop)."""
+
+    def __init__(self):
+        self.total_checks = 0
+        self.total_signals_processed = 0
+        self.total_errors = 0
+        self.total_completed = 0
+        self.total_stopped = 0
+        self.total_expired = 0
+        self.last_check_duration_ms: float = 0
+        self.last_check_time: Optional[str] = None
+        self.consecutive_failures = 0
+
+    def record_check(self, duration_ms: float, processed: int, errors: int,
+                     completed: int, stopped: int, expired: int):
+        self.total_checks += 1
+        self.total_signals_processed += processed
+        self.total_errors += errors
+        self.total_completed += completed
+        self.total_stopped += stopped
+        self.total_expired += expired
+        self.last_check_duration_ms = round(duration_ms, 1)
+        self.last_check_time = datetime.utcnow().isoformat() + "Z"
+        if errors == 0:
+            self.consecutive_failures = 0
+        else:
+            self.consecutive_failures += errors
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "total_checks": self.total_checks,
+            "total_signals_processed": self.total_signals_processed,
+            "total_errors": self.total_errors,
+            "total_completed": self.total_completed,
+            "total_stopped": self.total_stopped,
+            "total_expired": self.total_expired,
+            "last_check_duration_ms": self.last_check_duration_ms,
+            "last_check_time": self.last_check_time,
+            "consecutive_failures": self.consecutive_failures,
+        }
+
+
+metrics = LifecycleMetrics()
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 LIFECYCLE_CHECK_INTERVAL = 300        # 5 minutes in seconds
@@ -36,31 +87,52 @@ MAX_ACTIVE_SIGNALS = 100              # Cap for performance
 ARCHIVE_AFTER_DAYS = 30               # Move to cold storage after 30 days
 
 _last_lifecycle_check: Optional[datetime] = None
+_lifecycle_lock = asyncio.Lock()  # Prevents concurrent lifecycle checks in same process
 
 
-# ─── Helper: get 5-min candle high/low ───────────────────────────────────────
+# ─── Circuit breaker for DataHub price fetching ──────────────────────────────
+_price_fetch_failures: Dict[str, int] = {}
+PRICE_CIRCUIT_BREAKER_THRESHOLD = 5  # Skip after N consecutive failures
+PRICE_CIRCUIT_BREAKER_RESET = 60     # Reset after N seconds
+
 
 async def _get_session_high_low(symbol: str, minutes: int = 5) -> Dict[str, Optional[float]]:
-    """Get session high/low from the last N minutes of 5m candles (wick capture)."""
+    """Get session high/low from the last N minutes of 5m candles (wick capture).
+    Has a circuit breaker: after 5 consecutive failures per symbol, returns None
+    to avoid cascading timeouts."""
+    global _price_fetch_failures
+
+    fail_count = _price_fetch_failures.get(symbol, 0)
+    if fail_count >= PRICE_CIRCUIT_BREAKER_THRESHOLD:
+        logger.warning(f"lifecycle.price_circuit_open | symbol={symbol} failures={fail_count}")
+        # Reset after some cycles so it retries eventually
+        _price_fetch_failures[symbol] = fail_count - 1
+        return {"high": None, "low": None, "current": None}
+
     try:
         candles = await fetch_intraday_candles(symbol, interval="5m", limit=2)
         if candles and len(candles) > 0:
             last = candles[-1]
+            _price_fetch_failures[symbol] = 0  # Reset on success
             return {
                 "high": float(last.get("high", 0)),
                 "low": float(last.get("low", 0)),
                 "current": float(last.get("close", 0)),
             }
     except Exception as e:
-        logger.warning(f"_get_session_high_low error for {symbol}: {e}")
+        _price_fetch_failures[symbol] = fail_count + 1
+        logger.warning(f"lifecycle.price_candle_error | symbol={symbol} failures={fail_count+1} error={e}")
 
     # Fallback to spot price
     try:
         price = await fetch_latest_price(symbol)
         if price:
+            _price_fetch_failures[symbol] = 0  # Reset on success
             return {"high": float(price), "low": float(price), "current": float(price)}
-    except Exception:
-        pass
+    except Exception as e:
+        _price_fetch_failures[symbol] = fail_count + 1
+        logger.warning(f"lifecycle.price_spot_error | symbol={symbol} error={e}")
+
     return {"high": None, "low": None, "current": None}
 
 
@@ -100,7 +172,7 @@ async def _capture_indicators(symbol: str) -> Dict[str, Any]:
 
 def _classify_failure(signal: dict, hit_any_target: bool, post_stop_direction: Optional[str] = None) -> str:
     """Classify why a signal failed."""
-    targets_hit = signal.get("targets_hit") or {}
+    targets_hit = parse_json_field(signal.get("targets_hit"), {})
     any_target_was_hit = any(targets_hit.values()) if targets_hit else hit_any_target
 
     if any_target_was_hit:
@@ -172,14 +244,8 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     direction = signal.get("ml_direction", "HOLD")
     entry_price = signal.get("ml_entry_price")
 
-    # Parse JSON string fields from DB
-    for jfield in ("targets", "targets_hit", "factors"):
-        val = signal.get(jfield)
-        if isinstance(val, str):
-            try:
-                signal[jfield] = json.loads(val)
-            except Exception:
-                signal[jfield] = {}
+    # Parse JSON string fields from DB (safe normalization)
+    parse_json_fields(signal, ["targets", "targets_hit", "factors"])
 
     if not entry_price or direction == "HOLD":
         # Can't track HOLD signals; mark expired
@@ -333,12 +399,7 @@ async def _create_failure_autopsy(
         failure_indicators = await _capture_indicators(symbol)
 
         # Entry indicators from stored factors
-        entry_indicators = signal.get("factors") or {}
-        if isinstance(entry_indicators, str):
-            try:
-                entry_indicators = json.loads(entry_indicators)
-            except Exception:
-                entry_indicators = {}
+        entry_indicators = parse_json_field(signal.get("factors"), {})
 
         # Get last 5 candles for price action context
         price_action = []
@@ -463,8 +524,21 @@ async def run_lifecycle_check() -> Dict[str, Any]:
     1. Fetch all active signals
     2. Process each one (target/stop check, wick capture)
     3. Cleanup expired signals
-    4. Return summary
+    4. Return summary with metrics
     """
+    # Prevent concurrent lifecycle checks within same process
+    if _lifecycle_lock.locked():
+        logger.info("lifecycle.skip | reason=already_running")
+        return {"skipped": True, "reason": "already_running"}
+
+    async with _lifecycle_lock:
+        return await _run_lifecycle_check_inner()
+
+
+async def _run_lifecycle_check_inner() -> Dict[str, Any]:
+    """Inner implementation — always called under _lifecycle_lock."""
+    t_start = time.monotonic()
+
     if not is_db_available():
         return {"error": "DB not available"}
 
@@ -478,24 +552,43 @@ async def run_lifecycle_check() -> Dict[str, Any]:
         "stopped": 0,
         "expired": 0,
         "still_active": 0,
+        "errors": 0,
         "target_hits": [],
         "timestamp": datetime.utcnow().isoformat() + "Z",
     }
 
     try:
-        # Fetch active signals (limit to MAX_ACTIVE_SIGNALS)
-        result = client.table("prediction_logs").select("*").eq(
-            "status", "active"
-        ).order("created_at", desc=True).limit(MAX_ACTIVE_SIGNALS).execute()
+        # Try RPC-based claim (row-level locking for multi-instance safety)
+        signals = None
+        try:
+            rpc_result = client.rpc("claim_active_signals", {"p_limit": MAX_ACTIVE_SIGNALS})
+            if rpc_result.get("data") and isinstance(rpc_result["data"], list):
+                signals = rpc_result["data"]
+                logger.debug(f"lifecycle.claim_rpc | claimed={len(signals)}")
+        except Exception as rpc_err:
+            logger.debug(f"lifecycle.claim_rpc_fallback | error={rpc_err}")
 
-        signals = result.get("data") or []
+        # Fallback to REST query if RPC unavailable
+        if signals is None:
+            result = client.table("prediction_logs").select("*").eq(
+                "status", "active"
+            ).order("created_at", desc=True).limit(MAX_ACTIVE_SIGNALS).execute()
+            signals = result.get("data") or []
 
         if not signals:
+            duration_ms = (time.monotonic() - t_start) * 1000
+            metrics.record_check(duration_ms, 0, 0, 0, 0, 0)
+            summary["duration_ms"] = round(duration_ms, 1)
             return summary
 
-        logger.info(f"🔄 Lifecycle check: processing {len(signals)} active signals")
+        logger.info(f"lifecycle.check_start | signals={len(signals)}")
 
         for signal in signals:
+            sig_id = signal.get("id", "?")[:8]
+            sig_symbol = signal.get("symbol", "?")
+            sig_model = signal.get("model_type", "?")
+            sig_dir = signal.get("ml_direction", "?")
+
             try:
                 new_status = await _process_signal(client, signal)
                 summary["checked"] += 1
@@ -503,9 +596,9 @@ async def run_lifecycle_check() -> Dict[str, Any]:
                 if new_status == "completed":
                     summary["completed"] += 1
                     summary["target_hits"].append({
-                        "signal_id": signal["id"][:8],
-                        "symbol": signal["symbol"],
-                        "direction": signal.get("ml_direction"),
+                        "signal_id": sig_id,
+                        "symbol": sig_symbol,
+                        "direction": sig_dir,
                     })
                 elif new_status == "stopped":
                     summary["stopped"] += 1
@@ -515,22 +608,64 @@ async def run_lifecycle_check() -> Dict[str, Any]:
                     summary["still_active"] += 1
 
             except Exception as e:
-                logger.error(f"Error processing signal {signal.get('id', '?')[:8]}: {e}", exc_info=True)
+                summary["errors"] += 1
+                # Structured error log with full signal context
+                logger.error(
+                    f"lifecycle.process_error | signal={sig_id} symbol={sig_symbol} "
+                    f"model={sig_model} direction={sig_dir} "
+                    f"error_type={type(e).__name__} error={e}"
+                )
+                logger.debug(f"lifecycle.process_traceback | signal={sig_id}\n{traceback.format_exc()}")
+                # TODO: Sentry hook — sentry_sdk.capture_exception(e, tags={...})
 
             # Small delay between signals to avoid overwhelming DataHub
             await asyncio.sleep(0.2)
 
+        duration_ms = (time.monotonic() - t_start) * 1000
+        summary["duration_ms"] = round(duration_ms, 1)
+
+        # Record metrics
+        metrics.record_check(
+            duration_ms,
+            processed=summary["checked"],
+            errors=summary["errors"],
+            completed=summary["completed"],
+            stopped=summary["stopped"],
+            expired=summary["expired"],
+        )
+
         logger.info(
-            f"✅ Lifecycle check complete: {summary['checked']} checked, "
-            f"{summary['completed']} completed, {summary['stopped']} stopped, "
-            f"{summary['expired']} expired, {summary['still_active']} active"
+            f"lifecycle.check_done | checked={summary['checked']} "
+            f"completed={summary['completed']} stopped={summary['stopped']} "
+            f"expired={summary['expired']} active={summary['still_active']} "
+            f"errors={summary['errors']} duration_ms={summary['duration_ms']}"
         )
 
     except Exception as e:
-        logger.error(f"Lifecycle check error: {e}")
+        logger.error(f"lifecycle.check_fatal | error_type={type(e).__name__} error={e}\n{traceback.format_exc()}")
         summary["error"] = str(e)
 
+    # Record job state for scheduler resilience
+    _record_job_state(client, "lifecycle_check", summary)
+
     return summary
+
+
+def _record_job_state(client, job_name: str, summary: Dict[str, Any]):
+    """Persist job run metadata to scheduler_state table for observability & catch-up."""
+    if not client:
+        return
+    try:
+        client.table("scheduler_state").eq("job_name", job_name).update({
+            "last_run_at": datetime.utcnow().isoformat() + "Z",
+            "last_duration_ms": summary.get("duration_ms", 0),
+            "last_status": "error" if summary.get("error") else "ok",
+            "last_error": summary.get("error"),
+            "run_count": 1,  # Will use raw SQL increment later if needed
+            "updated_at": datetime.utcnow().isoformat() + "Z",
+        })
+    except Exception as e:
+        logger.debug(f"_record_job_state({job_name}): {e}")
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -648,12 +783,7 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
                 m["losses"].append(abs(dd))
 
             # Target hit rates
-            th = sig.get("targets_hit")
-            if isinstance(th, str):
-                try:
-                    th = json.loads(th)
-                except Exception:
-                    th = {}
+            th = parse_json_field(sig.get("targets_hit"), {})
             if th:
                 for tp_name, hit in th.items():
                     if tp_name not in m["target_hits"]:
@@ -753,31 +883,16 @@ async def get_signal_detail(signal_id: str) -> Dict[str, Any]:
         failure = (fail_result.get("data") or [None])[0]
 
         # Parse JSON fields
-        for field in ["targets", "targets_hit", "factors"]:
-            val = signal.get(field)
-            if isinstance(val, str):
-                try:
-                    signal[field] = json.loads(val)
-                except Exception:
-                    pass
+        parse_json_fields(signal, ["targets", "targets_hit", "factors"])
 
         for check in checks:
-            ts = check.get("target_status")
-            if isinstance(ts, str):
-                try:
-                    check["target_status"] = json.loads(ts)
-                except Exception:
-                    pass
+            parse_json_fields(check, ["target_status"])
 
         if failure:
-            for field in ["entry_indicators", "failure_indicators", "price_action_context",
-                          "correlation_context", "contradiction_flags"]:
-                val = failure.get(field)
-                if isinstance(val, str):
-                    try:
-                        failure[field] = json.loads(val)
-                    except Exception:
-                        pass
+            parse_json_fields(failure, [
+                "entry_indicators", "failure_indicators", "price_action_context",
+                "correlation_context", "contradiction_flags",
+            ])
 
         return {
             "signal": signal,
@@ -810,14 +925,10 @@ async def export_failures(days: int = 30) -> List[Dict[str, Any]]:
 
         # Parse JSON fields
         for f in failures:
-            for field in ["entry_indicators", "failure_indicators", "price_action_context",
-                          "correlation_context", "contradiction_flags"]:
-                val = f.get(field)
-                if isinstance(val, str):
-                    try:
-                        f[field] = json.loads(val)
-                    except Exception:
-                        pass
+            parse_json_fields(f, [
+                "entry_indicators", "failure_indicators", "price_action_context",
+                "correlation_context", "contradiction_flags",
+            ])
 
         return failures
 
