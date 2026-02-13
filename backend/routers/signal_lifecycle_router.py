@@ -194,6 +194,41 @@ async def backfill_existing_records():
         return {"error": str(e)}
 
 
+@router.get("/api/signals/debug-lifecycle")
+async def debug_lifecycle():
+    """Debug endpoint: manually replicate what run_lifecycle_check does to find the issue."""
+    from database.supabase_client import get_supabase_client, is_db_available
+
+    debug = {"db_available": is_db_available()}
+    client = get_supabase_client()
+    debug["client_ok"] = client is not None
+
+    if not client:
+        return debug
+
+    try:
+        result = client.table("prediction_logs").select("*").eq(
+            "status", "active"
+        ).order("created_at", desc=True).limit(100).execute()
+
+        debug["raw_result_type"] = str(type(result))
+        debug["raw_result_keys"] = list(result.keys()) if isinstance(result, dict) else "not_dict"
+        debug["data_type"] = str(type(result.get("data"))) if isinstance(result, dict) else None
+        data = result.get("data") or []
+        debug["signal_count"] = len(data) if isinstance(data, list) else "not_list"
+        if data and isinstance(data, list) and len(data) > 0:
+            debug["first_signal_keys"] = list(data[0].keys()) if isinstance(data[0], dict) else str(type(data[0]))
+            debug["first_signal_id"] = data[0].get("id", "?") if isinstance(data[0], dict) else None
+            debug["first_signal_status"] = data[0].get("status", "?") if isinstance(data[0], dict) else None
+        debug["error"] = result.get("error")
+    except Exception as e:
+        debug["exception"] = str(e)
+        import traceback
+        debug["traceback"] = traceback.format_exc()
+
+    return debug
+
+
 @router.get("/api/admin/export-failures")
 async def export_failures_endpoint(days: int = 30):
     """Export failure records as JSON for ML retraining dataset."""
