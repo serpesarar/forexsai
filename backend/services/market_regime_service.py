@@ -103,12 +103,12 @@ def _calculate_adx(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, peri
         if down > up and down > 0:
             minus_dm[i] = down
 
-    # Wilder smoothing
+    # Wilder smoothing (proper: seed = MEAN of first N values, not SUM)
     def wilder_smooth(values, period):
         result = np.zeros(len(values))
-        result[period - 1] = np.sum(values[:period])
+        result[period - 1] = np.mean(values[:period])  # SMA seed
         for i in range(period, len(values)):
-            result[i] = result[i - 1] - (result[i - 1] / period) + values[i]
+            result[i] = result[i - 1] - (result[i - 1] / period) + values[i] / period
         return result
 
     atr_smooth = wilder_smooth(tr, period)

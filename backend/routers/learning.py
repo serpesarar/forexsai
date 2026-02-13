@@ -1173,9 +1173,15 @@ async def hard_reset_learning_data(
 async def get_strategy_performance(
     days: int = Query(30, ge=1, le=90, description="Number of days to analyze")
 ):
-    """Get performance statistics for each ML strategy."""
+    """Get performance statistics for each ML strategy.
+    
+    Uses TWO data sources for outcomes:
+    1. prediction_logs lifecycle data (status=completed/stopped, targets_hit)
+    2. outcome_results table (any check_interval)
+    """
     from datetime import datetime, timedelta
     from database.supabase_client import get_supabase_client
+    from utils.json_helpers import parse_json_field
     
     if not is_db_available():
         return {"error": "Database not available"}
@@ -1188,16 +1194,16 @@ async def get_strategy_performance(
         cutoff = datetime.utcnow() - timedelta(days=days)
         cutoff_iso = cutoff.isoformat() + "Z"
         
-        # Get predictions
+        # Get predictions with lifecycle fields
         result = client.table("prediction_logs").select(
-            "id, symbol, strategy, ml_confidence"
+            "id, symbol, strategy, ml_confidence, status, targets_hit, model_type"
         ).gte("created_at", cutoff_iso).limit(500).execute()
         predictions = (result.get('data') if isinstance(result, dict) else getattr(result, 'data', None)) or []
         
-        # Get outcomes
+        # Get outcomes from outcome_results (ANY check_interval, not just 24h)
         outcome_result = client.table("outcome_results").select(
             "prediction_id, ml_correct, hit_target, hit_stop"
-        ).eq("check_interval", "24h").limit(1000).execute()
+        ).limit(1000).execute()
         outcomes_list = (outcome_result.get('data') if isinstance(outcome_result, dict) else getattr(outcome_result, 'data', None)) or []
         outcomes_map = {o.get("prediction_id"): o for o in outcomes_list if o.get("prediction_id")}
         
@@ -1208,10 +1214,15 @@ async def get_strategy_performance(
             if conf >= 52: return "full_power"
             return "aggressive"
         
-        # Initialize stats
-        stats = {sym: {s: {"total": 0, "with_outcome": 0, "correct": 0, "target_hits": 0, "stop_hits": 0, "conf_sum": 0} 
-                       for s in ["ultra_safe", "balanced", "full_power", "aggressive"]} 
+        # Initialize stats with per-target tracking
+        stats = {sym: {s: {
+            "total": 0, "with_outcome": 0, "correct": 0,
+            "target_hits": 0, "stop_hits": 0, "conf_sum": 0,
+            "tp1_hits": 0, "tp2_hits": 0, "tp3_hits": 0, "tp4_hits": 0,
+        } for s in ["ultra_safe", "balanced", "full_power", "aggressive"]} 
                  for sym in ["NDX.INDX", "XAUUSD"]}
+        
+        outcomes_found = 0
         
         # Process
         for p in predictions:
@@ -1229,14 +1240,43 @@ async def get_strategy_performance(
             stats[sym][strat]["total"] += 1
             stats[sym][strat]["conf_sum"] += conf
             
-            outcome = outcomes_map.get(p.get("id"))
-            if outcome:
+            # Check for outcome from EITHER source
+            has_outcome = False
+            hit_target = False
+            hit_stop = False
+            
+            # Source 1: prediction_logs lifecycle status (primary — more reliable)
+            p_status = p.get("status")
+            if p_status in ("completed", "stopped"):
+                has_outcome = True
+                if p_status == "completed":
+                    hit_target = True
+                elif p_status == "stopped":
+                    hit_stop = True
+                
+                # Parse targets_hit for per-TP tracking
+                targets_hit = parse_json_field(p.get("targets_hit"), {})
+                if targets_hit:
+                    if targets_hit.get("TP1"): stats[sym][strat]["tp1_hits"] += 1
+                    if targets_hit.get("TP2"): stats[sym][strat]["tp2_hits"] += 1
+                    if targets_hit.get("TP3"): stats[sym][strat]["tp3_hits"] += 1
+                    if targets_hit.get("TP4"): stats[sym][strat]["tp4_hits"] += 1
+            
+            # Source 2: outcome_results table (fallback)
+            if not has_outcome:
+                outcome = outcomes_map.get(p.get("id"))
+                if outcome:
+                    has_outcome = True
+                    hit_target = outcome.get("hit_target", False)
+                    hit_stop = outcome.get("hit_stop", False)
+            
+            if has_outcome:
+                outcomes_found += 1
                 stats[sym][strat]["with_outcome"] += 1
-                if outcome.get("ml_correct") or outcome.get("hit_target"):
+                if hit_target:
                     stats[sym][strat]["correct"] += 1
-                if outcome.get("hit_target"):
                     stats[sym][strat]["target_hits"] += 1
-                if outcome.get("hit_stop"):
+                if hit_stop:
                     stats[sym][strat]["stop_hits"] += 1
         
         # Build result
@@ -1245,14 +1285,23 @@ async def get_strategy_performance(
             result_data[sym] = {}
             for strat, s in sym_stats.items():
                 wo = s["with_outcome"]
+                total = s["total"]
                 result_data[sym][strat] = {
-                    "total_predictions": s["total"],
+                    "total_predictions": total,
                     "with_outcome": wo,
                     "correct": s["correct"],
                     "accuracy": round(s["correct"] / wo * 100, 1) if wo > 0 else None,
                     "target_hit_rate": round(s["target_hits"] / wo * 100, 1) if wo > 0 else None,
                     "stop_hit_rate": round(s["stop_hits"] / wo * 100, 1) if wo > 0 else None,
-                    "avg_confidence": round(s["conf_sum"] / s["total"], 1) if s["total"] > 0 else 0,
+                    "avg_confidence": round(s["conf_sum"] / total, 1) if total > 0 else 0,
+                    "target_hits": s["target_hits"],
+                    "stop_hits": s["stop_hits"],
+                    "tp_breakdown": {
+                        "TP1": s["tp1_hits"],
+                        "TP2": s["tp2_hits"],
+                        "TP3": s["tp3_hits"],
+                        "TP4": s["tp4_hits"],
+                    } if wo > 0 else None,
                 }
         
         # Best strategy
@@ -1267,7 +1316,7 @@ async def get_strategy_performance(
         return {
             "period_days": days,
             "predictions_count": len(predictions),
-            "outcomes_count": len(outcomes_map),
+            "outcomes_count": outcomes_found,
             "strategies": result_data,
             "best_strategies": best,
             "strategy_descriptions": {

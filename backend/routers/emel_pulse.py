@@ -609,13 +609,13 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
                     "allowed_models": [k for k, v in regime.model_weights.items() if v > 0],
                 },
                 "trend": {"direction": "neutral", "strength": 0, "label": "REGIME DISABLED", "strength_pct": 0, "last_5_candles": []},
-                "price": {"current": regime.current_price, "change_5": 0},
-                "levels": {},
-                "momentum": {},
+                "price": {"current": regime.current_price or 0, "change_5": 0},
+                "levels": {"r2": 0, "r1": 0, "pivot": 0, "s1": {"price": 0, "distance": 0, "alert": False}, "s2": 0, "nearest": "none", "nearest_distance": 0},
+                "momentum": {"rsi": {"value": 50, "trend": "neutral"}, "macd": {"value": 0, "trend": "neutral"}, "stochastic": {"value": 50, "trend": "neutral"}},
                 "volume": {"status": "unknown", "label": "N/A", "ratio": 0, "available": False},
                 "score_breakdown": {},
                 "decision_notes": [f"Pulse 1 kapalı: {regime.regime} rejimi"],
-                "suggestion": {"text": f"⛔ Pulse 1 {regime.regime} rejiminde devre dışı. ML ve Pulse 2/3 kullanın.", "target": 0, "stop": 0, "target_distance": 0, "stop_distance": 0, "rr_ratio": 0, "timeframe_estimate": "N/A"}
+                "suggestion": {"text": f"⛔ Pulse 1 {regime.regime} rejiminde devre dışı. ML ve Pulse 2/3 kullanın.", "target": regime.current_price or 0, "stop": regime.current_price or 0, "target_distance": 0, "stop_distance": 0, "rr_ratio": 0, "timeframe_estimate": "N/A"}
             }
         
         # ─── FAKE SIGNAL TIMEOUT CHECK ──────────────────────────────────
@@ -629,8 +629,10 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
                 "decision_notes": [timeout_reason],
                 "suggestion": {"text": f"⏸️ {timeout_reason}", "target": 0, "stop": 0, "target_distance": 0, "stop_distance": 0, "rr_ratio": 0, "timeframe_estimate": "N/A"},
                 "trend": {"direction": "neutral", "strength": 0, "label": "TIMEOUT", "strength_pct": 0, "last_5_candles": []},
-                "price": {"current": regime.current_price, "change_5": 0},
-                "levels": {}, "momentum": {}, "volume": {"status": "unknown", "label": "N/A", "ratio": 0, "available": False},
+                "price": {"current": regime.current_price or 0, "change_5": 0},
+                "levels": {"r2": 0, "r1": 0, "pivot": 0, "s1": {"price": 0, "distance": 0, "alert": False}, "s2": 0, "nearest": "none", "nearest_distance": 0},
+                "momentum": {"rsi": {"value": 50, "trend": "neutral"}, "macd": {"value": 0, "trend": "neutral"}, "stochastic": {"value": 50, "trend": "neutral"}},
+                "volume": {"status": "unknown", "label": "N/A", "ratio": 0, "available": False},
                 "score_breakdown": {},
             }
         
