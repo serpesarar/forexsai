@@ -172,6 +172,15 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     direction = signal.get("ml_direction", "HOLD")
     entry_price = signal.get("ml_entry_price")
 
+    # Parse JSON string fields from DB
+    for jfield in ("targets", "targets_hit", "factors"):
+        val = signal.get(jfield)
+        if isinstance(val, str):
+            try:
+                signal[jfield] = json.loads(val)
+            except Exception:
+                signal[jfield] = {}
+
     if not entry_price or direction == "HOLD":
         # Can't track HOLD signals; mark expired
         _update_signal_status(client, signal_id, "expired", entry_price)
