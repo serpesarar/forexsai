@@ -3,7 +3,5 @@
   publish = ".next"
 
 [build.environment]
+  NEXT_USE_NETLIFY_EDGE = "true"
   NEXT_PUBLIC_API_URL = "https://upbeat-flow-production.up.railway.app"
-
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
