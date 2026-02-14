@@ -20,7 +20,7 @@ interface TrendChannelChartProps {
 
 const BASE_W = 900;
 const BASE_H = 380;
-const PAD = { top: 20, right: 90, bottom: 40, left: 10 };
+const PAD = { top: 20, right: 90, bottom: 50, left: 10 };
 
 export default function TrendChannelChart({
   closes,
@@ -208,7 +208,8 @@ export default function TrendChannelChart({
 
   const { pricePath, areaPath, upperPath, lowerPath, middlePath, channelFillPath, yScale, lastX, gridLines, xLabels } = computed;
   const pulse = Math.sin(tick * Math.PI * 0.8);
-  const srPulse = 0.45 + Math.sin(tick * Math.PI * 0.6) * 0.25;
+  // Make pulse stronger and faster for S/R lines as requested
+  const srPulse = 0.5 + Math.sin(tick * Math.PI * 1.5) * 0.4;
 
   return (
     <div
@@ -306,16 +307,18 @@ export default function TrendChannelChart({
           </g>
         ))}
 
-        {/* X-axis date labels */}
+        {/* X-axis date labels - Brighter and larger */}
         {xLabels.map((l, i) => (
           <text
             key={`xl-${i}`}
             x={l.x}
-            y={BASE_H - 10}
+            y={BASE_H - 15}
             textAnchor="middle"
-            fill="rgba(255,255,255,0.4)"
-            fontSize={10}
+            fill="rgba(255,255,255,0.9)"
+            fontSize={11}
+            fontWeight="bold"
             fontFamily="monospace"
+            style={{ textShadow: "0 0 4px rgba(0,0,0,0.8)" }}
           >
             {l.label}
           </text>
@@ -345,13 +348,13 @@ export default function TrendChannelChart({
                 fill="#ff3366"
                 opacity={proxGlow ? resistanceIntensity * 0.08 : srPulse * 0.035}
               />
-              {/* The S/R line with neon glow filter always on */}
+              {/* The S/R line with neon glow filter always on - BRIGHTER & THICKER */}
               <line
                 x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
                 stroke="#ff3366"
-                strokeWidth={isStrong ? 2.5 : 1.8}
+                strokeWidth={isStrong ? 3 : 2}
                 strokeDasharray={isStrong ? "none" : "10 5"}
-                opacity={proxGlow ? 0.95 : 0.5 + srPulse * 0.2}
+                opacity={proxGlow ? 1.0 : 0.7 + srPulse * 0.3}
                 filter={proxGlow ? "url(#tcResistGlow)" : "url(#tcSRNeonGlow)"}
               />
               {/* Price tag */}
@@ -389,9 +392,9 @@ export default function TrendChannelChart({
               <line
                 x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
                 stroke="#00ccff"
-                strokeWidth={isStrong ? 2.5 : 1.8}
+                strokeWidth={isStrong ? 3 : 2}
                 strokeDasharray={isStrong ? "none" : "10 5"}
-                opacity={proxGlow ? 0.95 : 0.5 + srPulse * 0.2}
+                opacity={proxGlow ? 1.0 : 0.7 + srPulse * 0.3}
                 filter={proxGlow ? "url(#tcSupportGlow)" : "url(#tcSRNeonGlow)"}
               />
               <rect
