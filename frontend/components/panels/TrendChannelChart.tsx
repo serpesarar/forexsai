@@ -296,7 +296,11 @@ export default function TrendChannelChart({
           0% { transform: scale(1); opacity: 0.8; stroke-width: 2px; }
           100% { transform: scale(3); opacity: 0; stroke-width: 0px; }
         }
-        .neon-pulse { animation: neonPulse 1.5s ease-in-out infinite; }
+        .neon-pulse-glow { animation: neonPulseGlow 2s ease-in-out infinite; }
+        @keyframes neonPulseGlow {
+          0%, 100% { opacity: 0.4; stroke-width: 4px; }
+          50% { opacity: 0.8; stroke-width: 6px; }
+        }
         .ripple-effect { animation: ripple 1.5s ease-out infinite; transform-origin: center; transform-box: fill-box; }
       `}</style>
       {/* Scroll controls */}
@@ -484,7 +488,7 @@ export default function TrendChannelChart({
           const isStrong = r.strength === "strong";
           const proxGlow = resistanceProximity;
           return (
-            <g key={`rl-${i}`} className="neon-pulse">
+            <g key={`rl-${i}`}>
               {/* Always-on subtle neon glow zone */}
               <rect
                 x={PAD.left} y={y - 12}
@@ -492,13 +496,19 @@ export default function TrendChannelChart({
                 fill={NEON_RED}
                 opacity={proxGlow ? resistanceIntensity * 0.1 : srPulse * 0.05}
               />
-              {/* Main Line with Strong Sharp Glow */}
+              {/* Glow Layer - Pulsing */}
+              <line
+                x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
+                stroke={NEON_RED}
+                className="neon-pulse-glow"
+                filter="url(#tcResistGlow)"
+              />
+              {/* Core Line - SOLID 100% OPACITY - NO FILTER */}
               <line
                 x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
                 stroke={NEON_RED}
                 strokeWidth={2}
                 opacity={1}
-                filter="url(#tcResistGlow)"
               />
               {/* Price tag */}
               <rect
@@ -525,20 +535,26 @@ export default function TrendChannelChart({
           const isStrong = s.strength === "strong";
           const proxGlow = supportProximity;
           return (
-            <g key={`sl-${i}`} className="neon-pulse">
+            <g key={`sl-${i}`}>
               <rect
                 x={PAD.left} y={y - 12}
                 width={BASE_W - PAD.left - PAD.right} height={24}
                 fill={NEON_CYAN}
                 opacity={proxGlow ? supportIntensity * 0.1 : srPulse * 0.05}
               />
-              {/* Main Line with Strong Sharp Glow */}
+              {/* Glow Layer - Pulsing */}
+              <line
+                x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
+                stroke={NEON_CYAN}
+                className="neon-pulse-glow"
+                filter="url(#tcSupportGlow)"
+              />
+              {/* Core Line - SOLID 100% OPACITY - NO FILTER */}
               <line
                 x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
                 stroke={NEON_CYAN}
                 strokeWidth={2}
                 opacity={1}
-                filter="url(#tcSupportGlow)"
               />
               <rect
                 x={BASE_W - PAD.right + 2} y={y - 11}
