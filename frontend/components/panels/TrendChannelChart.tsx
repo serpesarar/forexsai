@@ -314,15 +314,15 @@ export default function TrendChannelChart({
             <line
               x1={l.x} y1={PAD.top}
               x2={l.x} y2={BASE_H - PAD.bottom}
-              stroke="rgba(100,200,255,0.12)"
-              strokeWidth={0.7}
-              strokeDasharray="4 6"
+              stroke="#38bdf8"
+              strokeWidth={1}
+              strokeDasharray="3 5"
             >
               <animate
                 attributeName="opacity"
-                values="0.08;0.28;0.08"
-                dur="2.5s"
-                begin={`${i * 0.3}s`}
+                values="0.15;0.45;0.15"
+                dur="2s"
+                begin={`${i * 0.25}s`}
                 repeatCount="indefinite"
               />
             </line>
@@ -333,8 +333,8 @@ export default function TrendChannelChart({
         <line
           x1={PAD.left} y1={BASE_H - PAD.bottom}
           x2={BASE_W - PAD.right} y2={BASE_H - PAD.bottom}
-          stroke="rgba(255,255,255,0.12)"
-          strokeWidth={1}
+          stroke="rgba(56,189,248,0.3)"
+          strokeWidth={1.5}
         />
 
         {/* ══ X-AXIS DATE LABELS with tick marks ══ */}
@@ -343,20 +343,20 @@ export default function TrendChannelChart({
             {/* Tick mark down from separator */}
             <line
               x1={l.x} y1={BASE_H - PAD.bottom}
-              x2={l.x} y2={BASE_H - PAD.bottom + 8}
-              stroke="rgba(255,255,255,0.25)"
-              strokeWidth={1}
+              x2={l.x} y2={BASE_H - PAD.bottom + 10}
+              stroke="rgba(56,189,248,0.5)"
+              strokeWidth={1.5}
             />
             {/* Date label */}
             <text
               x={l.x}
-              y={BASE_H - PAD.bottom + 22}
+              y={BASE_H - PAD.bottom + 26}
               textAnchor="middle"
-              fill="rgba(255,255,255,0.7)"
-              fontSize={10}
-              fontWeight="600"
+              fill="rgba(255,255,255,0.95)"
+              fontSize={11.5}
+              fontWeight="700"
               fontFamily="monospace"
-              style={{ textShadow: "0 0 6px rgba(0,0,0,0.9)" }}
+              style={{ textShadow: "0 0 8px rgba(56,189,248,0.4), 0 0 3px rgba(0,0,0,1)" }}
             >
               {l.label}
             </text>
