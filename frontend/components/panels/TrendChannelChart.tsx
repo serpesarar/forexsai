@@ -289,14 +289,14 @@ export default function TrendChannelChart({
       {/* Global styles for animations */}
       <style jsx>{`
         @keyframes neonPulse {
-          0%, 100% { opacity: 0.8; filter: brightness(1); }
-          50% { opacity: 1; filter: brightness(1.3); }
+          0%, 100% { opacity: 0.7; filter: brightness(1) drop-shadow(0 0 2px rgba(0,0,0,0.5)); }
+          50% { opacity: 1; filter: brightness(1.2) drop-shadow(0 0 5px rgba(0,0,0,0.5)); }
         }
         @keyframes ripple {
-          0% { transform: scale(1); opacity: 0.6; stroke-width: 2px; }
+          0% { transform: scale(1); opacity: 0.8; stroke-width: 2px; }
           100% { transform: scale(3); opacity: 0; stroke-width: 0px; }
         }
-        .neon-pulse { animation: neonPulse 2s ease-in-out infinite; }
+        .neon-pulse { animation: neonPulse 1.5s ease-in-out infinite; }
         .ripple-effect { animation: ripple 1.5s ease-out infinite; transform-origin: center; transform-box: fill-box; }
       `}</style>
       {/* Scroll controls */}
@@ -340,16 +340,24 @@ export default function TrendChannelChart({
             <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
           <filter id="tcSupportGlow">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feComposite in="blur" in2="SourceGraphic" operator="over" />
-            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#00f0ff" floodOpacity="0.8" />
-            <feDropShadow dx="0" dy="0" stdDeviation="8" floodColor="#00f0ff" floodOpacity="0.4" />
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feFlood floodColor="#00f0ff" floodOpacity="0.6" result="color" />
+            <feComposite in="color" in2="blur" operator="in" result="glow" />
+            <feMerge>
+              <feMergeNode in="glow" />
+              <feMergeNode in="glow" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
           </filter>
           <filter id="tcResistGlow">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feComposite in="blur" in2="SourceGraphic" operator="over" />
-            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#ff0040" floodOpacity="0.8" />
-            <feDropShadow dx="0" dy="0" stdDeviation="8" floodColor="#ff0040" floodOpacity="0.4" />
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feFlood floodColor="#ff0040" floodOpacity="0.6" result="color" />
+            <feComposite in="color" in2="blur" operator="in" result="glow" />
+            <feMerge>
+              <feMergeNode in="glow" />
+              <feMergeNode in="glow" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
           </filter>
           <filter id="tcSRNeonGlow">
             <feGaussianBlur stdDeviation="3" result="blur" />
@@ -484,12 +492,12 @@ export default function TrendChannelChart({
                 fill={NEON_RED}
                 opacity={proxGlow ? resistanceIntensity * 0.1 : srPulse * 0.05}
               />
-              {/* Main Line with Strong Glow */}
+              {/* Main Line with Strong Sharp Glow */}
               <line
                 x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
                 stroke={NEON_RED}
-                strokeWidth={isStrong ? 2.5 : 2}
-                opacity={0.8}
+                strokeWidth={2}
+                opacity={1}
                 filter="url(#tcResistGlow)"
               />
               {/* Price tag */}
@@ -524,12 +532,12 @@ export default function TrendChannelChart({
                 fill={NEON_CYAN}
                 opacity={proxGlow ? supportIntensity * 0.1 : srPulse * 0.05}
               />
-              {/* Main Line with Strong Glow */}
+              {/* Main Line with Strong Sharp Glow */}
               <line
                 x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
                 stroke={NEON_CYAN}
-                strokeWidth={isStrong ? 2.5 : 2}
-                opacity={0.8}
+                strokeWidth={2}
+                opacity={1}
                 filter="url(#tcSupportGlow)"
               />
               <rect
