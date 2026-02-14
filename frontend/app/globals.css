@@ -18,7 +18,7 @@
   --neon-orange: #ffa500;
 }
 
-[data-theme="dawn"] {
+[data-theme="morning"] {
   color-scheme: light;
   --bg-primary: #f0f7f6;
   --bg-card: rgba(255, 255, 255, 0.82);
@@ -763,13 +763,13 @@ body {
    DAWN (LIGHT) - GALAXY PREMIUM THEME
    ============================================ */
 
-[data-theme="dawn"] body {
+[data-theme="morning"] body {
   background: radial-gradient(circle at 50% 0%, #f0fdfa 0%, #f0f7f6 100%);
   color: #0c3933;
 }
 
 /* Glass Card - Galaxy White */
-[data-theme="dawn"] .glass-card {
+[data-theme="morning"] .glass-card {
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(14, 168, 150, 0.2);
@@ -779,7 +779,7 @@ body {
 }
 
 /* Glass Premium - Neon Gradient Border */
-[data-theme="dawn"] .glass-premium {
+[data-theme="morning"] .glass-premium {
   background:
     linear-gradient(#ffffffeb, #f0fdfaeb) padding-box,
     linear-gradient(135deg, #0ea896 0%, #10b981 100%) border-box;
@@ -790,7 +790,7 @@ body {
   backdrop-filter: blur(20px);
 }
 
-[data-theme="dawn"] .glass-premium:hover {
+[data-theme="morning"] .glass-premium:hover {
   transform: translateY(-2px);
   box-shadow:
     0 12px 40px rgba(14, 168, 150, 0.18),
@@ -798,26 +798,26 @@ body {
 }
 
 /* Signal Card - Clean Tech */
-[data-theme="dawn"] .signal-card-premium {
+[data-theme="morning"] .signal-card-premium {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 253, 250, 0.95) 100%);
   border: 1px solid rgba(14, 168, 150, 0.2);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
-[data-theme="dawn"] .signal-card-premium:hover {
+[data-theme="morning"] .signal-card-premium:hover {
   border-color: #0ea896;
   box-shadow: 0 8px 24px rgba(14, 168, 150, 0.15);
 }
 
 /* Header - Crystal Clear */
-[data-theme="dawn"] .header-premium {
+[data-theme="morning"] .header-premium {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(14, 168, 150, 0.15);
 }
 
 /* Mesh Background - Galaxy Light */
-[data-theme="dawn"] .mesh-bg {
+[data-theme="morning"] .mesh-bg {
   background-image:
     radial-gradient(at 40% 20%, rgba(14, 168, 150, 0.12) 0px, transparent 50%),
     radial-gradient(at 80% 0%, rgba(16, 185, 129, 0.1) 0px, transparent 50%),
@@ -827,66 +827,66 @@ body {
 /* ─── CRITICAL OVERRIDES FOR COMPONENTS ─── */
 
 /* Fix bg-gray-900 / bg-zinc-900 to be Light Galaxy */
-[data-theme="dawn"] .bg-gray-900,
-[data-theme="dawn"] .bg-zinc-900,
-[data-theme="dawn"] .bg-slate-900,
-[data-theme="dawn"] .bg-black\/20,
-[data-theme="dawn"] .bg-black\/30 {
+[data-theme="morning"] .bg-gray-900,
+[data-theme="morning"] .bg-zinc-900,
+[data-theme="morning"] .bg-slate-900,
+[data-theme="morning"] .bg-black\/20,
+[data-theme="morning"] .bg-black\/30 {
   background-color: rgba(236, 253, 251, 0.8) !important;
 }
 
 /* Fix bg-white/5 to be visible on white (Darker Tint) */
-[data-theme="dawn"] .bg-white\/5,
-[data-theme="dawn"] .bg-white\/10 {
+[data-theme="morning"] .bg-white\/5,
+[data-theme="morning"] .bg-white\/10 {
   background-color: rgba(14, 168, 150, 0.08) !important;
   border: 1px solid rgba(14, 168, 150, 0.1);
 }
 
-[data-theme="dawn"] .hover\:bg-white\/10:hover {
+[data-theme="morning"] .hover\:bg-white\/10:hover {
   background-color: rgba(14, 168, 150, 0.15) !important;
 }
 
 /* Fix text-white/40 etc to be dark text */
-[data-theme="dawn"] .text-white\/40,
-[data-theme="dawn"] .text-white\/30,
-[data-theme="dawn"] .text-white\/20,
-[data-theme="dawn"] .text-white\/60 {
+[data-theme="morning"] .text-white\/40,
+[data-theme="morning"] .text-white\/30,
+[data-theme="morning"] .text-white\/20,
+[data-theme="morning"] .text-white\/60 {
   color: rgba(12, 57, 51, 0.6) !important;
 }
 
-[data-theme="dawn"] .text-white\/90,
-[data-theme="dawn"] .text-white {
+[data-theme="morning"] .text-white\/90,
+[data-theme="morning"] .text-white {
   color: #0c3933 !important;
 }
 
 /* Fix border-white/5 to be Teal Border */
-[data-theme="dawn"] .border-white\/5,
-[data-theme="dawn"] .border-white\/10 {
+[data-theme="morning"] .border-white\/5,
+[data-theme="morning"] .border-white\/10 {
   border-color: rgba(14, 168, 150, 0.2) !important;
 }
 
 /* Scrollbar */
-[data-theme="dawn"] ::-webkit-scrollbar-thumb {
+[data-theme="morning"] ::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #0ea896 0%, #10b981 100%);
 }
 
-[data-theme="dawn"] ::-webkit-scrollbar-track {
+[data-theme="morning"] ::-webkit-scrollbar-track {
   background: rgba(14, 168, 150, 0.05);
 }
 
 /* Shimmer */
-[data-theme="dawn"] .shimmer-effect::after {
+[data-theme="morning"] .shimmer-effect::after {
   background: linear-gradient(90deg, transparent, rgba(14, 168, 150, 0.2), transparent);
 }
 
 /* Buttons */
-[data-theme="dawn"] .btn-premium {
+[data-theme="morning"] .btn-premium {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(240, 253, 250, 0.9));
   border: 1px solid #14b8a6;
   color: #0f766e;
 }
 
-[data-theme="dawn"] .btn-premium:hover {
+[data-theme="morning"] .btn-premium:hover {
   background: linear-gradient(135deg, #14b8a6, #0d9488);
   color: white;
 }

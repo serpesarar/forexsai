@@ -715,7 +715,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (theme === "morning") {
-      document.documentElement.setAttribute("data-theme", "dawn");
+      document.documentElement.setAttribute("data-theme", "morning");
     } else {
       document.documentElement.removeAttribute("data-theme");
     }
