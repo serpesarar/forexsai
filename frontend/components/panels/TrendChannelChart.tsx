@@ -46,6 +46,10 @@ export default function TrendChannelChart({
   const [showSR, setShowSR] = useState(true);
   const [showGrid, setShowGrid] = useState(true);
 
+  // Constants for Neon Colors
+  const NEON_RED = "#ff0040";
+  const NEON_CYAN = "#00f0ff";
+
   // Data-window scrolling: offset = how many candles scrolled back from end
   const VISIBLE_CANDLES = 60;
   const totalCandles = closes.length;
@@ -209,6 +213,57 @@ export default function TrendChannelChart({
     };
   }, [visibleWindow, supportLevels, resistanceLevels, currentPrice, decimals]);
 
+  // Calculate Touch Points (Where price touched S/R levels)
+  // Note: Using 'closes' as proxy for High/Low since full OHLC is not available in props
+  const touchPoints = useMemo(() => {
+    if (!closes || closes.length === 0) return [];
+
+    // Helper to check touch
+    const isTouch = (price: number, level: number) => Math.abs(price - level) / level <= 0.001; // 0.1% tolerance
+
+    const points: { x: number; y: number; color: string; key: string }[] = [];
+    // Only check visible window + some buffer for context, or just full visible window
+    // User asked for "historical touch points", let's show them on the visible portion
+    const startIdx = visibleWindow.start;
+    const endIdx = visibleWindow.end;
+    const windowCloses = visibleWindow.closes;
+
+    // We need to map visible index to x-coordinate
+    // visibleWindow.closes[0] corresponds to index 0 in the current view
+
+    if (!computed) return [];
+
+    const { xScale, yScale } = computed;
+
+    // Support touches
+    supportLevels.forEach((s, lvlIdx) => {
+      windowCloses.forEach((price, i) => {
+        if (isTouch(price, s.price)) {
+          const x = xScale(i);
+          const y = yScale(s.price);
+          if (x >= 0 && x <= BASE_W) {
+            points.push({ x, y, color: NEON_CYAN, key: `s-${lvlIdx}-${i}` });
+          }
+        }
+      });
+    });
+
+    // Resistance touches
+    resistanceLevels.forEach((r, lvlIdx) => {
+      windowCloses.forEach((price, i) => {
+        if (isTouch(price, r.price)) {
+          const x = xScale(i);
+          const y = yScale(r.price);
+          if (x >= 0 && x <= BASE_W) {
+            points.push({ x, y, color: NEON_RED, key: `r-${lvlIdx}-${i}` });
+          }
+        }
+      });
+    });
+
+    return points;
+  }, [visibleWindow, supportLevels, resistanceLevels, computed]); // Depend on computed for scales
+
   if (!computed) return null;
 
   const { pricePath, areaPath, upperPath, lowerPath, middlePath, channelFillPath, yScale, lastX, gridLines, xLabels } = computed;
@@ -231,6 +286,19 @@ export default function TrendChannelChart({
       onTouchEnd={handleTouchEnd}
       onDoubleClick={handleDoubleClick}
     >
+      {/* Global styles for animations */}
+      <style jsx>{`
+        @keyframes neonPulse {
+          0%, 100% { opacity: 0.8; filter: brightness(1); }
+          50% { opacity: 1; filter: brightness(1.3); }
+        }
+        @keyframes ripple {
+          0% { transform: scale(1); opacity: 0.6; stroke-width: 2px; }
+          100% { transform: scale(3); opacity: 0; stroke-width: 0px; }
+        }
+        .neon-pulse { animation: neonPulse 2s ease-in-out infinite; }
+        .ripple-effect { animation: ripple 1.5s ease-out infinite; transform-origin: center; transform-box: fill-box; }
+      `}</style>
       {/* Scroll controls */}
       <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
         <button
@@ -272,12 +340,16 @@ export default function TrendChannelChart({
             <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
           <filter id="tcSupportGlow">
-            <feGaussianBlur stdDeviation={4 + supportIntensity * 6} result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feComposite in="blur" in2="SourceGraphic" operator="over" />
+            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#00f0ff" floodOpacity="0.8" />
+            <feDropShadow dx="0" dy="0" stdDeviation="8" floodColor="#00f0ff" floodOpacity="0.4" />
           </filter>
           <filter id="tcResistGlow">
-            <feGaussianBlur stdDeviation={4 + resistanceIntensity * 6} result="blur" />
-            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feComposite in="blur" in2="SourceGraphic" operator="over" />
+            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#ff0040" floodOpacity="0.8" />
+            <feDropShadow dx="0" dy="0" stdDeviation="8" floodColor="#ff0040" floodOpacity="0.4" />
           </filter>
           <filter id="tcSRNeonGlow">
             <feGaussianBlur stdDeviation="3" result="blur" />
@@ -397,51 +469,40 @@ export default function TrendChannelChart({
         {/* Middle regression */}
         <path d={middlePath} fill="none" stroke="#6366f1" strokeWidth={1} strokeDasharray="6 4" opacity={0.3} />
 
-        {/* ══ RESISTANCE LEVELS - softer breathing neon glow ══ */}
+        {/* ══ RESISTANCE LEVELS - Neon Red Pulse ══ */}
         {showSR && resistanceLevels.map((r, i) => {
           const y = yScale(r.price);
           if (y < PAD.top - 5 || y > BASE_H - PAD.bottom + 5) return null;
           const isStrong = r.strength === "strong";
           const proxGlow = resistanceProximity;
           return (
-            <g key={`rl-${i}`}>
+            <g key={`rl-${i}`} className="neon-pulse">
               {/* Always-on subtle neon glow zone */}
               <rect
                 x={PAD.left} y={y - 12}
                 width={BASE_W - PAD.left - PAD.right} height={24}
-                fill="#ff3366"
+                fill={NEON_RED}
                 opacity={proxGlow ? resistanceIntensity * 0.1 : srPulse * 0.05}
               />
-              {/* Glow Layer - Thick colored - breathing animation */}
+              {/* Main Line with Strong Glow */}
               <line
                 x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
-                stroke="#ff3366"
-                strokeWidth={isStrong ? 4 : 3}
-                strokeDasharray="none"
-                opacity={proxGlow ? 0.8 : 0.6}
+                stroke={NEON_RED}
+                strokeWidth={isStrong ? 2.5 : 2}
+                opacity={0.8}
                 filter="url(#tcResistGlow)"
-              >
-                {!proxGlow && <animate attributeName="opacity" values="0.4;0.7;0.4" dur="3s" repeatCount="indefinite" />}
-              </line>
-              {/* Core Layer - Thin bright/white */}
-              <line
-                x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
-                stroke="#fff1f2"
-                strokeWidth={isStrong ? 1.5 : 1}
-                strokeDasharray="none"
-                opacity={0.9}
               />
               {/* Price tag */}
               <rect
                 x={BASE_W - PAD.right + 2} y={y - 11}
                 width={84} height={22} rx={4}
-                fill="rgba(255,51,102,0.18)"
-                stroke="#ff3366" strokeWidth={1}
+                fill="rgba(255,0,64,0.15)"
+                stroke={NEON_RED} strokeWidth={1}
                 filter="url(#tcTagGlow)"
               />
               <text
                 x={BASE_W - PAD.right + 8} y={y + 4}
-                fill="#ff3366" fontSize={10.5} fontFamily="monospace" fontWeight="bold"
+                fill={NEON_RED} fontSize={10.5} fontFamily="monospace" fontWeight="bold"
               >
                 {r.label} {r.price.toFixed(decimals)}
               </text>
@@ -449,55 +510,59 @@ export default function TrendChannelChart({
           );
         })}
 
-        {/* ══ SUPPORT LEVELS - softer breathing neon glow ══ */}
+        {/* ══ SUPPORT LEVELS - Neon Cyan Pulse ══ */}
         {showSR && supportLevels.map((s, i) => {
           const y = yScale(s.price);
           if (y < PAD.top - 5 || y > BASE_H - PAD.bottom + 5) return null;
           const isStrong = s.strength === "strong";
           const proxGlow = supportProximity;
           return (
-            <g key={`sl-${i}`}>
+            <g key={`sl-${i}`} className="neon-pulse">
               <rect
                 x={PAD.left} y={y - 12}
                 width={BASE_W - PAD.left - PAD.right} height={24}
-                fill="#00ccff"
+                fill={NEON_CYAN}
                 opacity={proxGlow ? supportIntensity * 0.1 : srPulse * 0.05}
               />
-              {/* Glow Layer - Thick colored - breathing animation */}
+              {/* Main Line with Strong Glow */}
               <line
                 x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
-                stroke="#00ccff"
-                strokeWidth={isStrong ? 4 : 3}
-                strokeDasharray="none"
-                opacity={proxGlow ? 0.8 : 0.6}
-                filter={proxGlow ? "url(#tcSupportGlow)" : "url(#tcSupportGlow)"}
-              >
-                {!proxGlow && <animate attributeName="opacity" values="0.4;0.7;0.4" dur="3s" repeatCount="indefinite" />}
-              </line>
-              {/* Core Layer - Thin bright/white */}
-              <line
-                x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
-                stroke="#ecfeff"
-                strokeWidth={isStrong ? 1.5 : 1}
-                strokeDasharray="none"
-                opacity={0.9}
+                stroke={NEON_CYAN}
+                strokeWidth={isStrong ? 2.5 : 2}
+                opacity={0.8}
+                filter="url(#tcSupportGlow)"
               />
               <rect
                 x={BASE_W - PAD.right + 2} y={y - 11}
                 width={84} height={22} rx={4}
-                fill="rgba(0,204,255,0.15)"
-                stroke="#00ccff" strokeWidth={1}
+                fill="rgba(0,240,255,0.15)"
+                stroke={NEON_CYAN} strokeWidth={1}
                 filter="url(#tcTagGlow)"
               />
               <text
                 x={BASE_W - PAD.right + 8} y={y + 4}
-                fill="#00ccff" fontSize={10.5} fontFamily="monospace" fontWeight="bold"
+                fill={NEON_CYAN} fontSize={10.5} fontFamily="monospace" fontWeight="bold"
               >
                 {s.label} {s.price.toFixed(decimals)}
               </text>
             </g>
           );
         })}
+
+        {/* ══ HISTORICAL TOUCH RIPPLES ══ */}
+        {showSR && touchPoints.map((tp) => (
+          <circle
+            key={tp.key}
+            cx={tp.x}
+            cy={tp.y}
+            r={4}
+            fill="none"
+            stroke={tp.color}
+            strokeWidth={2}
+            opacity={0.6}
+            className="ripple-effect"
+          />
+        ))}
 
         {/* Price area fill */}
         <path d={areaPath} fill="url(#tcAreaGrad)" />
