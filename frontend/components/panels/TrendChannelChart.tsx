@@ -282,6 +282,10 @@ export default function TrendChannelChart({
             <feGaussianBlur stdDeviation="2" result="blur" />
             <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
+          <filter id="tcBeamGlow">
+            <feGaussianBlur stdDeviation="3.5" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
           <linearGradient id="tcAreaGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#00ff88" stopOpacity="0.18" />
             <stop offset="100%" stopColor="#00ff88" stopOpacity="0.01" />
@@ -307,22 +311,37 @@ export default function TrendChannelChart({
           </g>
         ))}
 
-        {/* ══ VERTICAL GRID LINES at date positions - thin pulsing ══ */}
+        {/* ══ VERTICAL BEAM LINES at date positions - bright pulsing rays ══ */}
         {xLabels.map((l, i) => (
           <g key={`vgl-${i}`}>
-            {/* Thin vertical line from chart top to separator */}
+            {/* Wide neon glow behind the beam */}
             <line
               x1={l.x} y1={PAD.top}
               x2={l.x} y2={BASE_H - PAD.bottom}
-              stroke="#38bdf8"
-              strokeWidth={1}
-              strokeDasharray="3 5"
+              stroke="#22d3ee"
+              strokeWidth={5}
+              filter="url(#tcBeamGlow)"
             >
               <animate
                 attributeName="opacity"
-                values="0.15;0.45;0.15"
+                values="0.2;0.5;0.2"
                 dur="2s"
-                begin={`${i * 0.25}s`}
+                begin={`${i * 0.3}s`}
+                repeatCount="indefinite"
+              />
+            </line>
+            {/* Core bright beam line */}
+            <line
+              x1={l.x} y1={PAD.top}
+              x2={l.x} y2={BASE_H - PAD.bottom}
+              stroke="#67e8f9"
+              strokeWidth={1.5}
+            >
+              <animate
+                attributeName="opacity"
+                values="0.5;0.85;0.5"
+                dur="2s"
+                begin={`${i * 0.3}s`}
                 repeatCount="indefinite"
               />
             </line>
