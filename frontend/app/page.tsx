@@ -1308,37 +1308,41 @@ export default function HomePage() {
       {/* Animated Background with Star Particles */}
       <TradingBackground />
 
-      {/* PREMIUM HEADER - Shared component */}
+      {/* MODERN HEADER - Redesigned */}
       <SharedNavHeader
         activePage="dashboard"
         centerContent={
-          <div className="hidden xl:flex items-center gap-2">
+          <div className="hidden xl:flex items-center gap-4">
             {marketTickers.map((ticker) => {
               const isLoadingPrice = pricesLoading || ticker.price === "--" || ticker.price === "-";
               const isUp = ticker.trend === "up";
               return (
                 <div key={ticker.label} className="group relative">
-                  <div className={`absolute -inset-1 rounded-xl opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500 ${isUp ? "bg-success/20" : "bg-danger/20"}`} />
-                  <div className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all duration-300 ${isUp ? "bg-success/[0.08] border-success/20 hover:border-success/40" : "bg-danger/[0.08] border-danger/20 hover:border-danger/40"}`}>
-                    {isLoadingPrice ? (
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-lg bg-white/10 animate-pulse flex items-center justify-center"><Loader2 className="h-4 w-4 animate-spin text-white/30" /></div>
-                        <div><span className="text-[10px] font-bold uppercase tracking-wider text-white/50">{ticker.label}</span><div className="font-mono text-sm text-white/30">Loading...</div></div>
+                  {/* Glass Card Background */}
+                  <div className="relative flex items-center gap-3 px-4 py-2 rounded-lg bg-slate-900/50 backdrop-blur-md border border-white/5 group-hover:border-white/20 transition-all duration-300 shadow-lg group-hover:shadow-blue-900/10">
+
+                    {/* Status Indicator Dot */}
+                    <div className={`w-1.5 h-1.5 rounded-full ${isUp ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]"}`} />
+
+                    {/* Content */}
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider group-hover:text-slate-300 transition-colors">{ticker.label}</span>
                       </div>
-                    ) : (
-                      <>
-                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${isUp ? "bg-success/20" : "bg-danger/20"}`}>
-                          {isUp ? <ArrowUpRight className="h-4 w-4 text-success" /> : <ArrowDownRight className="h-4 w-4 text-danger" />}
-                        </div>
-                        <div>
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-white/50">{ticker.label}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-lg font-bold text-white">${ticker.price}</span>
-                            <span className={`font-mono text-xs font-bold px-1.5 py-0.5 rounded ${isUp ? "bg-success/20 text-success" : "bg-danger/20 text-danger"}`}>{ticker.change}</span>
-                          </div>
-                        </div>
-                      </>
-                    )}
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm font-bold text-white leading-none">
+                          {isLoadingPrice ? "---" : `$${ticker.price}`}
+                        </span>
+                        {!isLoadingPrice && (
+                          <span className={`text-[9px] font-bold ${isUp ? "text-emerald-400" : "text-rose-400"}`}>
+                            {ticker.change}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Mini Sparkline Effect (Top Border) */}
+                    <div className={`absolute top-0 left-2 right-2 h-[1px] bg-gradient-to-r ${isUp ? "from-emerald-500/50 via-emerald-400 to-transparent" : "from-rose-500/50 via-rose-400 to-transparent"} opacity-0 group-hover:opacity-100 transition-opacity`} />
                   </div>
                 </div>
               );
@@ -1347,40 +1351,46 @@ export default function HomePage() {
         }
         rightContent={
           <>
-            <div className="hidden lg:flex items-center gap-2 mr-3 pr-3 border-r border-white/10">
+            <div className="hidden lg:flex items-center gap-2 mr-4 pr-4 border-r border-white/5">
               <WSStatusBadge />
-              <label className="flex items-center gap-2 text-xs text-white/50 cursor-pointer hover:text-white/70 transition-colors">
-                <input type="checkbox" checked={autoRefresh} onChange={(e) => toggleAutoRefresh(e.target.checked)} className="h-3.5 w-3.5 accent-accent rounded" />
-                <span className="hidden xl:inline">{t("common.auto30s")}</span>
+              <label className="group flex items-center gap-2 cursor-pointer">
+                <div className="relative flex items-center">
+                  <input type="checkbox" checked={autoRefresh} onChange={(e) => toggleAutoRefresh(e.target.checked)} className="peer sr-only" />
+                  <div className="w-9 h-5 bg-slate-800 rounded-full border border-white/10 peer-checked:bg-blue-600 peer-checked:border-blue-500 transition-all shadow-inner"></div>
+                  <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-4 shadow-sm"></div>
+                </div>
+                <span className="hidden xl:inline text-xs font-medium text-slate-400 group-hover:text-blue-300 transition-colors">{t("common.auto30s")}</span>
               </label>
             </div>
-            <button onClick={() => setTheme(theme === "evening" ? "morning" : "evening")} className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/50 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all">
+
+            <button
+              onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/5 bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all hover:scale-105 active:scale-95"
+            >
               {theme === "evening" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
+
             <EditModeButton />
-            <div className="hidden md:block ml-2 pl-2 border-l border-white/10"><UserMenu /></div>
+
+            <div className="hidden md:block ml-2 pl-2 border-l border-white/5">
+              <UserMenu />
+            </div>
           </>
         }
         bottomRightContent={
           <button
             onClick={fetchAll}
             disabled={isLoading}
-            className="group relative overflow-hidden flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-bold text-white transition-all duration-300 disabled:opacity-70"
+            className="group relative overflow-hidden flex items-center gap-2 px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-sm font-bold text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all duration-300 disabled:opacity-50 disabled:shadow-none"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 bg-[length:200%_100%] group-hover:bg-[position:100%_0] transition-all duration-500" />
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700" />
-            </div>
-            <div className="absolute -inset-1 bg-emerald-500/30 rounded-lg blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <span className="relative flex items-center gap-1.5 md:gap-2">
-              {isLoading ? (
-                <Loader2 className="h-3.5 w-3.5 md:h-4 md:w-4 animate-spin" />
-              ) : (
-                <PlayCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />
-              )}
-              <span className="uppercase tracking-wider hidden sm:inline">{isLoading ? t("common.running") : t("common.runAnalysis")}</span>
-              <span className="uppercase tracking-wider sm:hidden">RUN</span>
-            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <PlayCircle className="h-4 w-4" />
+            )}
+            <span className="tracking-wider">{isLoading ? t("common.running") : "RUN AI"}</span>
           </button>
         }
       />
