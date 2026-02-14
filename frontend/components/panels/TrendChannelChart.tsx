@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useEffect, useState, useCallback } from "react";
+import { Eye, EyeOff, Grid3X3, Layers } from "lucide-react";
 
 interface TrendChannelChartProps {
   closes: number[];
@@ -40,6 +41,10 @@ export default function TrendChannelChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [tick, setTick] = useState(0);
+
+  // Visibility Toggles
+  const [showSR, setShowSR] = useState(true);
+  const [showGrid, setShowGrid] = useState(true);
 
   // Data-window scrolling: offset = how many candles scrolled back from end
   const VISIBLE_CANDLES = 60;
@@ -312,9 +317,9 @@ export default function TrendChannelChart({
         ))}
 
         {/* ══ VERTICAL BEAM LINES at date positions - bright pulsing rays ══ */}
-        {xLabels.map((l, i) => (
+        {showGrid && xLabels.map((l, i) => (
           <g key={`vgl-${i}`}>
-            {/* Wide neon glow behind the beam - thicker but softer */}
+            {/* Wide neon glow behind the beam - softer breathing pulse */}
             <line
               x1={l.x} y1={PAD.top}
               x2={l.x} y2={BASE_H - PAD.bottom}
@@ -326,8 +331,8 @@ export default function TrendChannelChart({
               <animate
                 attributeName="opacity"
                 values="0.3;0.6;0.3"
-                dur="2s"
-                begin={`${i * 0.3}s`}
+                dur="4s"
+                begin={`${i * 0.5}s`}
                 repeatCount="indefinite"
               />
             </line>
@@ -340,9 +345,9 @@ export default function TrendChannelChart({
             >
               <animate
                 attributeName="opacity"
-                values="0.7;1;0.7"
-                dur="2s"
-                begin={`${i * 0.3}s`}
+                values="0.6;0.9;0.6"
+                dur="4s"
+                begin={`${i * 0.5}s`}
                 repeatCount="indefinite"
               />
             </line>
@@ -392,8 +397,8 @@ export default function TrendChannelChart({
         {/* Middle regression */}
         <path d={middlePath} fill="none" stroke="#6366f1" strokeWidth={1} strokeDasharray="6 4" opacity={0.3} />
 
-        {/* ══ RESISTANCE LEVELS - always neon glow ══ */}
-        {resistanceLevels.map((r, i) => {
+        {/* ══ RESISTANCE LEVELS - softer breathing neon glow ══ */}
+        {showSR && resistanceLevels.map((r, i) => {
           const y = yScale(r.price);
           if (y < PAD.top - 5 || y > BASE_H - PAD.bottom + 5) return null;
           const isStrong = r.strength === "strong";
@@ -407,7 +412,7 @@ export default function TrendChannelChart({
                 fill="#ff3366"
                 opacity={proxGlow ? resistanceIntensity * 0.1 : srPulse * 0.05}
               />
-              {/* Glow Layer - Thick colored */}
+              {/* Glow Layer - Thick colored - breathing animation */}
               <line
                 x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
                 stroke="#ff3366"
@@ -415,7 +420,9 @@ export default function TrendChannelChart({
                 strokeDasharray="none"
                 opacity={proxGlow ? 0.8 : 0.6}
                 filter="url(#tcResistGlow)"
-              />
+              >
+                {!proxGlow && <animate attributeName="opacity" values="0.4;0.7;0.4" dur="3s" repeatCount="indefinite" />}
+              </line>
               {/* Core Layer - Thin bright/white */}
               <line
                 x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
@@ -442,8 +449,8 @@ export default function TrendChannelChart({
           );
         })}
 
-        {/* ══ SUPPORT LEVELS - always neon glow ══ */}
-        {supportLevels.map((s, i) => {
+        {/* ══ SUPPORT LEVELS - softer breathing neon glow ══ */}
+        {showSR && supportLevels.map((s, i) => {
           const y = yScale(s.price);
           if (y < PAD.top - 5 || y > BASE_H - PAD.bottom + 5) return null;
           const isStrong = s.strength === "strong";
@@ -456,7 +463,7 @@ export default function TrendChannelChart({
                 fill="#00ccff"
                 opacity={proxGlow ? supportIntensity * 0.1 : srPulse * 0.05}
               />
-              {/* Glow Layer - Thick colored */}
+              {/* Glow Layer - Thick colored - breathing animation */}
               <line
                 x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
                 stroke="#00ccff"
@@ -464,7 +471,9 @@ export default function TrendChannelChart({
                 strokeDasharray="none"
                 opacity={proxGlow ? 0.8 : 0.6}
                 filter={proxGlow ? "url(#tcSupportGlow)" : "url(#tcSupportGlow)"}
-              />
+              >
+                {!proxGlow && <animate attributeName="opacity" values="0.4;0.7;0.4" dur="3s" repeatCount="indefinite" />}
+              </line>
               {/* Core Layer - Thin bright/white */}
               <line
                 x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
@@ -515,6 +524,39 @@ export default function TrendChannelChart({
           </text>
         )}
       </svg>
+
+      {/* ══ CONTROL TOGGLES ══ */}
+      <div className="flex items-center justify-center gap-4 mt-2 mb-1">
+        <button
+          onClick={() => setShowSR(!showSR)}
+          className={`
+            px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all duration-300
+            ${showSR
+              ? "bg-slate-800 text-cyan-400 border border-cyan-500/30 shadow-[0_0_10px_rgba(34,211,238,0.15)]"
+              : "bg-slate-900/50 text-slate-500 border border-transparent hover:bg-slate-800"
+            }
+          `}
+        >
+          {showSR ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+          <span>S/R Seviyeleri</span>
+        </button>
+
+        <div className="w-px h-4 bg-slate-800" />
+
+        <button
+          onClick={() => setShowGrid(!showGrid)}
+          className={`
+            px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all duration-300
+            ${showGrid
+              ? "bg-slate-800 text-cyan-400 border border-cyan-500/30 shadow-[0_0_10px_rgba(34,211,238,0.15)]"
+              : "bg-slate-900/50 text-slate-500 border border-transparent hover:bg-slate-800"
+            }
+          `}
+        >
+          <Grid3X3 className="w-3.5 h-3.5" />
+          <span>Izgara / Işınlar</span>
+        </button>
+      </div>
     </div>
   );
 }
