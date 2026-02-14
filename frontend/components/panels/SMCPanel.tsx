@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { PanelInfoButton } from "../PanelInfoButton";
 import {
   RefreshCw,
   Shield,
@@ -159,6 +160,7 @@ export default function SMCPanel() {
           <button onClick={fetchData} className="p-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.05)" }}>
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: "rgba(255,255,255,0.35)" }} />
           </button>
+          <PanelInfoButton panelId="smc-panel" />
         </div>
       </div>
 
@@ -176,8 +178,8 @@ export default function SMCPanel() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${accent}15`, border: `1px solid ${accent}30` }}>
                   {bias.direction === "bullish" ? <TrendingUp className="w-5 h-5" style={{ color: accent }} /> :
-                   bias.direction === "bearish" ? <TrendingDown className="w-5 h-5" style={{ color: accent }} /> :
-                   <Activity className="w-5 h-5" style={{ color: accent }} />}
+                    bias.direction === "bearish" ? <TrendingDown className="w-5 h-5" style={{ color: accent }} /> :
+                      <Activity className="w-5 h-5" style={{ color: accent }} />}
                 </div>
                 <div>
                   <div className="text-sm font-bold font-mono uppercase" style={{ color: accent, textShadow: `0 0 12px ${accent}40` }}>

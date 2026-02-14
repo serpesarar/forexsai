@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { PanelInfoButton } from "./PanelInfoButton";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertTriangle,
@@ -113,7 +114,7 @@ export default function COMEXNewsPanel() {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    
+
     if (diffMins < 1) return "Just now";
     if (diffMins < 60) return `${diffMins}m ago`;
     const diffHours = Math.floor(diffMins / 60);
@@ -143,14 +144,17 @@ export default function COMEXNewsPanel() {
             </p>
           </div>
         </div>
-        <button
-          onClick={fetchCOMEXNews}
-          disabled={isLoading}
-          className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50"
-          aria-label="Refresh COMEX news"
-        >
-          <RefreshCw className={`w-4 h-4 text-gray-400 ${isLoading ? "animate-spin" : ""}`} />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={fetchCOMEXNews}
+            disabled={isLoading}
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors disabled:opacity-50"
+            aria-label="Refresh COMEX news"
+          >
+            <RefreshCw className={`w-4 h-4 text-gray-400 ${isLoading ? "animate-spin" : ""}`} />
+          </button>
+          <PanelInfoButton panelId="comex-news" />
+        </div>
       </div>
 
       {/* Trading Block Alert */}
@@ -183,17 +187,16 @@ export default function COMEXNewsPanel() {
               </span>
             </div>
           </div>
-          
+
           {/* Impact Bar */}
           <div className="relative h-2 bg-gray-700/50 rounded-full overflow-hidden mb-3">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.abs(data.overall_impact) * 50 + 50}%` }}
-              className={`absolute h-full rounded-full ${
-                data.overall_impact > 0
+              className={`absolute h-full rounded-full ${data.overall_impact > 0
                   ? "bg-gradient-to-r from-gray-500 to-emerald-500"
                   : "bg-gradient-to-r from-red-500 to-gray-500"
-              }`}
+                }`}
             />
             <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/30" />
           </div>

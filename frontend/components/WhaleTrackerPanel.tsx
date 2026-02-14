@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { PanelInfoButton } from "./PanelInfoButton";
 import {
   RefreshCw,
   TrendingUp,
@@ -294,10 +295,9 @@ function SymbolCard({ snap }: { snap: SymbolSnapshot }) {
                 {snap.smart_money_direction === "buying" && <ArrowUpRight className="w-3.5 h-3.5 text-green-400" />}
                 {snap.smart_money_direction === "selling" && <ArrowDownRight className="w-3.5 h-3.5 text-red-400" />}
                 {snap.smart_money_direction === "neutral" && <Activity className="w-3.5 h-3.5 text-gray-400" />}
-                <span className={`text-xs font-bold capitalize ${
-                  snap.smart_money_direction === "buying" ? "text-green-400" :
-                  snap.smart_money_direction === "selling" ? "text-red-400" : "text-gray-400"
-                }`}>
+                <span className={`text-xs font-bold capitalize ${snap.smart_money_direction === "buying" ? "text-green-400" :
+                    snap.smart_money_direction === "selling" ? "text-red-400" : "text-gray-400"
+                  }`}>
                   {snap.smart_money_direction}
                 </span>
               </div>
@@ -422,13 +422,16 @@ export default function WhaleTrackerPanel({ className = "" }: WhaleTrackerPanelP
               </div>
             </div>
           </div>
-          <button
-            onClick={fetchData}
-            className="p-1.5 hover:bg-gray-700/50 rounded-lg transition-colors"
-            disabled={loading}
-          >
-            <RefreshCw className={`w-4 h-4 text-gray-400 ${loading ? "animate-spin" : ""}`} />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={fetchData}
+              className="p-1.5 hover:bg-gray-700/50 rounded-lg transition-colors"
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 text-gray-400 ${loading ? "animate-spin" : ""}`} />
+            </button>
+            <PanelInfoButton panelId="whale-tracker" />
+          </div>
         </div>
       </div>
 
@@ -446,9 +449,8 @@ export default function WhaleTrackerPanel({ className = "" }: WhaleTrackerPanelP
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[10px] font-bold text-white">{alert.symbol}</span>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                      alert.direction === "bullish" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-                    }`}>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${alert.direction === "bullish" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
+                      }`}>
                       {alert.direction.toUpperCase()}
                     </span>
                   </div>

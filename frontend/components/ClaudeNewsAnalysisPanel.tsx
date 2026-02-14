@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { PanelInfoButton } from "./PanelInfoButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -166,6 +167,7 @@ export function ClaudeNewsAnalysisPanel() {
               <option value="XAUUSD">🥇 XAUUSD</option>
               <option value="NDX.INDX">📈 NASDAQ</option>
             </select>
+            <PanelInfoButton panelId="news" />
           </div>
         </div>
       </CardHeader>
@@ -305,8 +307,8 @@ export function ClaudeNewsAnalysisPanel() {
             {/* Override Signal */}
             {analysis.has_override && (
               <div className={`rounded-lg border p-3 ${analysis.override_signal === "FORCE_BUY"
-                  ? "bg-green-500/20 border-green-500"
-                  : "bg-red-500/20 border-red-500"
+                ? "bg-green-500/20 border-green-500"
+                : "bg-red-500/20 border-red-500"
                 }`}>
                 <div className="flex items-center gap-2">
                   <Zap className="h-5 w-5" />

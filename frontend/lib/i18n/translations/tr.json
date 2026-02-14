@@ -737,6 +737,174 @@
     "autoSave": "Otomatik kayıt",
     "liveData": "Canlı veri",
     "footer": "Grafikler TradingView tarafından sağlanmaktadır. Gerçek zamanlı veriler için TradingView hesabınızla giriş yapabilirsiniz."
+  },
+  "panelInfo": {
+    "sections": {
+      "description": "Bu Panel Nedir?",
+      "dataPoints": "Veriler & Metrikler",
+      "usage": "Nasıl Kullanılır",
+      "tips": "Pro İpuçları"
+    },
+    "closeHint": "Dışına tıklayarak veya ESC ile kapatın",
+    "importance": {
+      "critical": "KRİTİK",
+      "high": "YÜKSEK",
+      "medium": "ORTA",
+      "low": "DÜŞÜK"
+    },
+    "clearTrend": {
+      "title": "Cyberpunk Trend Analizi",
+      "description": "EMA kesişimleri, kanal pozisyonları ve destek/direnç seviyelerini birleştiren gerçek zamanlı trend analiz paneli. Hem NASDAQ hem XAU/USD için görsel güven göstergeleriyle net yönsel eğilim sunar.",
+      "dataPoints": "EMA 20/50/200 uzaklıkları, trend kanalı üst/alt bantları, destek/direnç yakınlığı, RSI, trend gücü yüzdesi ve genel yönsel sinyal (AL/SAT/BEKLE).",
+      "usage": "İşleme girmeden önce ana sinyal yönünü ve güven seviyesini kontrol edin. EMA uzaklıklarını fiyatın ortalamadan ne kadar uzaklaştığını ölçmek için kullanın. Fiyat kanal sınırlarına yakınsa geri dönüş bekleyin.",
+      "tips": "Tüm EMA'lar hizalandığında (20>50>200 veya 20<50<200) %80+ güvenle sinyal en güçlüdür. Her zaman kurumsal onay için SMC paneli ile çapraz kontrol yapın."
+    },
+    "pulse": {
+      "title": "Pulse 1 - Algoritmik Scalp",
+      "description": "Hızlı scalping kararları için 6 bileşenli puanlama sistemi. Gerçek zamanlı fiyat güncellemeleriyle kısa vadeli işlem sinyalleri üretmek için SCOUT (ilk tespit) ve CONFIRM (doğrulama) aşamalarını kullanır.",
+      "dataPoints": "5 dakikada fiyat değişimi, destek/direnç seviyeleri, momentum skoru, hacim analizi, AI tarafından üretilen hedef/stop seviyeleriyle anlık yorum ve genel sinyal gücü.",
+      "usage": "Önce SCOUT sinyallerini izleyin — potansiyel kurulumları gösterir. Sinyal CONFIRM'e geçtiğinde giriş yapmayı düşünün. AI yorumu belirli hedef ve stop seviyeleri sağlar.",
+      "tips": "En iyi yüksek hacimli piyasa saatlerinde (ABD açılış, Londra açılış) kullanılır. Düşük hacimli dönemlerde sinyalleri dikkate almayın. Momentum ve hacim uyuşmazsa hizalanmayı bekleyin."
+    },
+    "pulseV3": {
+      "title": "Pulse 3 - Hibrit Scalp",
+      "description": "Daha güvenilir sinyaller için 3 farklı zaman dilimini birleştiren çok zaman dilimli hibrit scalping sistemi. Her 30 saniyede giriş bölgeleri, hedefler ve stop seviyeleriyle güncellenir.",
+      "dataPoints": "3 zaman dilimi analizi, yönsel sinyal (AL/SAT/NÖTR), giriş bölgeleri, hedef/stop seviyeleri, sinyal geçerlilik süresi, sinyal gücü (GÜÇLÜ/İZLE/BEKLE).",
+      "usage": "Giriş yapmadan önce GÜÇLÜ SİNYAL durumunu bekleyin. Optimal pozisyonlama için giriş bölgelerini kontrol edin. Geçerlilik zamanlayıcısı sinyalin ne kadar süre işlem yapılabilir olduğunu gösterir — süresi dolduktan sonra girmeyin.",
+      "tips": "Pulse V3, sinyali Pulse 1 ile örtüştüğünde en iyi çalışır. Her ikisi de güçlü güvenle aynı yönde anlaştığında, işlem en yüksek başarı olasılığına sahiptir."
+    },
+    "pulseMl": {
+      "title": "Pulse ML - Makine Öğrenimi",
+      "description": "Eğitilmiş bir model aracılığıyla birden fazla teknik göstergeyi analiz eden makine öğrenimi destekli tahmin paneli. Güven skorları ve detaylı gerekçelerle yönsel tahminler sunar.",
+      "dataPoints": "ML tahmin yönü, güven yüzdesi, giriş/hedef/stop seviyeleri, model skorları (teknik, momentum, trend), gerekçe dağılımı (RSI, MACD, Bollinger, hacim koşulları).",
+      "usage": "Güven yüzdesine odaklanın — %75 üzeri yüksek olasılıklı kurulumları gösterir. Modelin tahminini NEDEN yaptığını anlamak için gerekçe bölümünü okuyun. Pozisyon yönetimi için sağlanan giriş/hedef/stop'u kullanın.",
+      "tips": "Model skor bileşenleri (teknik, momentum, trend) hepsi aynı fikirde olduğunda ML tahminleri en güvenilirdir. Çelişirlerse tahmin daha az güvenilir olabilir — pozisyon boyutunu azaltın."
+    },
+    "emel": {
+      "title": "EMEL Analiz Modu",
+      "description": "Kontrollü, metodik işlem kararları için tasarlanmış stratejik 9 checkpoint analiz sistemi. Geçerli bir sinyal için her checkpoint geçmelidir, bu da sahte girişleri önemli ölçüde azaltır.",
+      "dataPoints": "Sinyal yönü, güven seviyesi, fiyat, genel skor, 9 bireysel checkpoint sonucu (her biri geçti/kaldı durumuyla), karar gerekçesi ve zamanlama rehberliği.",
+      "usage": "İşlem düşünmeden önce 9 checkpoint'in tümünü inceleyin. Panel NE ZAMAN işlem yapacağınızı (zamanlama) ve NEDEN (gerekçe) söyler. 7'den az checkpoint geçerse beklemeyi veya daha hızlı fırsatlar için Pulse modunu kullanmayı düşünün.",
+      "tips": "EMEL en muhafazakâr sinyalinizdir. 8-9 checkpoint geçerek güçlü sinyal verdiğinde genellikle yüksek kaliteli bir kurulumdur. Swing işlemleri ve büyük pozisyonlar için kullanın."
+    },
+    "patternEngine": {
+      "title": "Formasyon Motoru V2",
+      "description": "Çoklu zaman dilimlerinde tamamlanma takibiyle 15+ klasik formasyonu (çift tepe, omuz baş omuz, üçgenler, bayraklar vb.) tanımlayan gelişmiş grafik formasyon tespit motoru.",
+      "dataPoints": "Formasyon adı, tipi (yükseliş/düşüş/nötr), tamamlanma yüzdesi, başarı oranı, risk/ödül oranı, giriş/hedef/stop bölgeleri, tespit tarihi ve mevcut aşama.",
+      "usage": "%60+ tamamlanma ve %65 üzeri tarihsel başarı oranına sahip formasyonlara odaklanın. Aşama göstergesi formasyonun yaşam döngüsünde nerede olduğunu gösterir. Giriş yapmadan önce 'Onaylandı' aşamasını bekleyin.",
+      "tips": "En iyi girişler için formasyon sinyallerini SMC bölgeleriyle birleştirin. Yükseliş order block'u yakınında tamamlanan bir yükseliş formasyonu yüksek güvenli bir işlemdir."
+    },
+    "claudePatterns": {
+      "title": "Claude AI Formasyon Analizi",
+      "description": "Claude kullanarak AI destekli çok zaman dilimli formasyon analizi. Algoritmik tespitin ötesinde bağlamsal piyasa analizi ile grafik formasyonlarına daha derin içgörü sağlar.",
+      "dataPoints": "AI tarafından tanımlanan formasyonlar, çok zaman dilimli analiz, formasyon bağlamı, piyasa yapısı değerlendirmesi.",
+      "usage": "Mevcut piyasa yapısı hakkında ikinci bir görüş istediğinizde analiz çalıştırın. Claude, teknik formasyonların ötesinde daha geniş piyasa bağlamını dikkate alan nüanslı analiz sağlar.",
+      "tips": "En iyi Formasyon Motoru V2'yi kontrol ettikten sonra kullanılır — Claude algoritmik bulguları doğrulayabilir veya sorgulayabilir. Her ikisi de aynı fikirde olursa formasyon daha güvenilirdir."
+    },
+    "sentiment": {
+      "title": "Piyasa Duyarlılığı",
+      "description": "Haber akışı, volatilite metrikleri ve makro göstergeleri birleştiren gerçek zamanlı piyasa duyarlılığı analizi. Claude AI yönsel eğilimi ölçmenize yardımcı olmak için genel piyasa ortamını yorumlar.",
+      "dataPoints": "Duyarlılık yönü (yükseliş/düşüş/nötr), haber akışı özeti, volatilite değerlendirmesi, makro ekonomik bağlam.",
+      "usage": "Onay aracı olarak kullanın — yalnızca duyarlılığa göre işlem yapmayın. Duyarlılık teknik analizinizle örtüştüğünde güven ekler. Çeliştiğinde dikkatli olun ve boyut küçültün.",
+      "tips": "Aşırı duyarlılık okumaları genellikle dönüşlerden önce gelir. Herkes yükseliş yönündeyken düşüş uyumsuzlukları arayın. Herkes düşüş yönündeyken yükseliş kurulumları arayın."
+    },
+    "news": {
+      "title": "MarketAux Canlı Haberler",
+      "description": "MarketAux'dan duyarlılık sınıflandırmasıyla gerçek zamanlı piyasa başlıkları sunan canlı haber akışı. Her başlık hızlı tarama için yükseliş, düşüş veya nötr olarak etiketlenir.",
+      "dataPoints": "Haber başlıkları, kaynak, yayın zamanı, duyarlılık etiketi (yükseliş/düşüş/nötr).",
+      "usage": "İşlem seansları öncesinde ve sırasında başlıkları tarayın. İşlem yaptığınız araçları (NASDAQ, XAU/USD) doğrudan etkileyen haberlere odaklanın. Hızlı değerlendirme için duyarlılık etiketlerini kullanın.",
+      "tips": "Büyük haberlerden hemen sonra işlem yapma konusunda dikkatli olun — ilk volatilitenin yatışmasını bekleyin. Haberler fırsatlar yaratır ama dürtüsel tüccarlar için tuzaklar da oluşturur."
+    },
+    "comexNews": {
+      "title": "COMEX & Altın Haberleri",
+      "description": "COMEX verileri ve altına özel haberlere odaklanan uzmanlaşmış haber paneli. Kurumsal değişiklikleri, COT veri etkilerini ve fiziksel altın piyasası gelişmelerini takip eder.",
+      "dataPoints": "COMEX'e özel başlıklar, altın teslimatları, kurumsal pozisyon değişiklikleri, COT rapor etkileri.",
+      "usage": "XAU/USD işlemleri için zorunludur. Altın işlemlerinden önce kurumsal düzeyde değişiklikler için kontrol edin. COMEX teslimat verileri potansiyel arz/talep kaymalarını işaret edebilir.",
+      "tips": "COMEX envanterlerindeki büyük değişiklikler genellikle önemli altın fiyat hareketlerinden önce gelir. Teslimat anomalilerine ve pozisyon yoğunlaşma değişikliklerine dikkat edin."
+    },
+    "whaleTracker": {
+      "title": "Balina Takibi",
+      "description": "Büyük kurumsal pozisyonları ve alışılmadık piyasa faaliyetlerini takip eder. Fiyat yönünü önemli ölçüde etkileyebilecek potansiyel 'balina' hareketlerini tanımlar.",
+      "dataPoints": "Aktif balina uyarıları, kurumsal pozisyon değişiklikleri, büyük emir akışı tespiti, baskı okuması (-1.0 ile +1.0 ölçeği).",
+      "usage": "Baskı okumasını kontrol edin: pozitif değerler alış baskısını (yükseliş), negatif değerler satış baskısını (düşüş) gösterir. Aktif uyarılar son kurumsal faaliyeti vurgular.",
+      "tips": "COT verileriyle her Cuma güncellenir. Balina hareketleri genellikle büyük fiyat hareketlerini 1-3 gün önceden haber verir. Balina baskısı teknik sinyallerle örtüştüğünde daha güçlü hareketler bekleyin."
+    },
+    "institutional": {
+      "title": "Kurumsal Veri Paneli",
+      "description": "Büyük piyasa katılımcılarının (hedge fonlar, bankalar, ticari tüccarlar) anahtar piyasalardaki pozisyonlarını gösteren kapsamlı kurumsal pozisyon verileri.",
+      "dataPoints": "Tüccar tipine göre net pozisyonlar, zaman içinde pozisyon değişiklikleri, long/short oranları, tarihsel pozisyonlanma trendleri.",
+      "usage": "Akıllı parayı takip edin — kurumsal tüccarlar long pozisyonları önemli ölçüde artırdığında bu yükseliş sinyalidir. Aşırı pozisyonlanma genellikle dönüşlerden önce gelir.",
+      "tips": "Kurumsal akışa karşı durmayın. Kurumlar net long ve ekliyorsa en az dirençli yol yukarıdır. Aşırı okumaları karşıt göstergeler olarak kullanın."
+    },
+    "candlestick": {
+      "title": "Mum Formasyon Analizi",
+      "description": "ML ayarlı güven seviyeleri ve eyleme dönüştürülebilir açıklamalarla klasik formasyonları (doji, çekiç, yutan vb.) tanımlayan gerçek zamanlı mum formasyon tespiti.",
+      "dataPoints": "Formasyon adı, yönü (yükseliş/düşüş/nötr), sinyal gücü, ML güven ayarı, formasyon açıklaması ve önerilen eylem.",
+      "usage": "İlgili formasyonlara odaklanmak için yöne göre (yükseliş/düşüş) filtreleyin. ML güven ayarını kontrol edin — ML modelinin geleneksel yorumla ne kadar hemfikir olduğunu gösterir.",
+      "tips": "Tek mum formasyonları çoklu mum formasyonlarından daha az güvenilirdir. Anahtar destek/direnç seviyesindeki bir yutan formasyon, aralığın ortasındakinden çok daha anlamlıdır."
+    },
+    "advancedAnalysis": {
+      "title": "Gelişmiş Detaylı Analiz",
+      "description": "Claude AI ve ML tahminlerini detaylı risk yönetimi rehberliğiyle birleştiren kapsamlı teknik analiz paneli. Tez gerekçesiyle giriş/hedef/stop seviyeleri sağlar.",
+      "dataPoints": "Teknik göstergeler, piyasa yapısı, hacim analizi, EMA uzaklıkları, destek/direnç seviyeleri, Claude/ML güveni ve yönü, risk yönetimi (pozisyon boyutu, R:R), boğa/ayı tezi.",
+      "usage": "Bu en detaylı panelinizdir — önemli bir işlem yapmadan önce inceleyin. Tez özeti gerekçeyi açıklar. Fiyat hareketlerini doğrulamak için hacim teyidini kontrol edin.",
+      "tips": "Hacim uyarı göstergesine özellikle dikkat edin. Düşük hacimli fiyat hareketleri genellikle tuzaktır. Hem Claude hem ML güçlü güvenle aynı fikirde olduğunda yüksek güvenli kurulumdur."
+    },
+    "strategyPerformance": {
+      "title": "Strateji Performansı",
+      "description": "Tüm işlem stratejileri için geçmiş performans takibi. Farklı zaman dilimleri ve modellerde doğruluk, kazanma oranları ve kâr/zarar izler.",
+      "dataPoints": "Strateji kazanma oranı, doğruluk yüzdesi, toplam işlem, kâr/zarar, ML ve Claude modelleri arasında performans karşılaştırması.",
+      "usage": "Mevcut piyasa koşullarında hangi stratejilerin en iyi performans gösterdiğini anlamak için haftalık inceleyin. İşleminizi son zamanlardaki doğruluğu daha yüksek olan stratejileri tercih edecek şekilde ayarlayın.",
+      "tips": "Geçen ay doğru olan bir strateji bu ay doğru olmayabilir. Piyasalar değişir — bu verilere dayanarak yaklaşımınızı düzenli olarak gözden geçirin ve uyarlayın."
+    },
+    "smc": {
+      "title": "Smart Money Concepts (SMC)",
+      "description": "Order block'lar, fiyat boşlukları (FVG), karakter değişikliği (CHoCH) ve yapı kırılımı (BOS) dahil olmak üzere Smart Money Concepts kullanan kurumsal düzey analiz. Her bölgeyi 0-100 puanlar.",
+      "dataPoints": "Skorlu yükseliş/düşüş order block'ları, FVG bölgeleri, CHoCH/BOS yapı sinyalleri, birleşik SMC sinyali, giriş güveni, destek/direnç bölgeleri.",
+      "usage": "Mevcut fiyata yakın yüksek skorlu (70+) order block'ları arayın. Fiyat FVG örtüşmesiyle order block'a döndüğünde yüksek olasılıklı giriş bölgesidir. CHoCH sinyalleri potansiyel trend değişikliklerini gösterir.",
+      "tips": "En iyi SMC girişleri birleştirir: order block'ta fiyat + FVG mevcut + CHoCH/BOS teyidi. 3 teyidin tümüne sahip 80+ skor bölgeleri kurumsal kalitede kurulumlardır."
+    },
+    "mtfMatrix": {
+      "title": "Çok Zaman Dilimi Matrisi",
+      "description": "Birden fazla zaman diliminde trend hizalanmasını gösteren görsel matris. Tüm zaman dilimleri yön üzerinde anlaştığında, sinyal gücü daha yüksek olasılıklı işlemler için maksimize edilir.",
+      "dataPoints": "Zaman dilimine göre yön (5dk, 15dk, 1S, 4S, Günlük), hizalanma yüzdesi, genel eğilim, bireysel zaman dilimi gücü.",
+      "usage": "Çoğunluk hizalanma yönünde işlem yapın. 4+ zaman dilimi aynı fikirde olduğunda güçlü sinyaldir. Zaman dilimleri çeliştiğinde genellikle beklemeniz veya pozisyon boyutunu azaltmanız en iyisidir.",
+      "tips": "4S ve Günlük zaman dilimleri daha fazla ağırlık taşır. Düşük zaman dilimleriyle uyuşmazlarsa swing işlemler için yüksek zaman dilimlerine güvenin. Scalp'lar için 5dk ve 15dk hizalanmasına odaklanın."
+    },
+    "riskReward": {
+      "title": "Risk/Ödül Hesaplayıcı",
+      "description": "Mevcut teknik seviyelere ve hesap parametrelerine dayalı optimal pozisyon boyutlandırma, risk yüzdesi ve beklenen getiriyi hesaplayan dinamik risk/ödül analiz paneli.",
+      "dataPoints": "Giriş fiyatı, hedef(ler), zarar durdur, risk/ödül oranı, pozisyon boyutu önerisi, hesabın risk yüzdesi, dolar cinsinden beklenen kâr/zarar.",
+      "usage": "Asla 1.5:1 altında R:R ile işlem yapmayın. Pozisyonunuzu risk toleransınıza göre boyutlandırmak için hesaplayıcıyı kullanın. Önerilen stop seviyeleri mevcut teknik analize dayanır.",
+      "tips": "Profesyonel tüccarlar işlem başına hesaplarının en fazla %1-2'sini riske atar. %40 kazanma oranıyla bile 3:1 R:R oranı uzun vadede kârlı olacaktır."
+    },
+    "cotWhale": {
+      "title": "COT Balina Analizi",
+      "description": "Ticari hedger'ların, büyük spekülatörlerin ve küçük tüccarların nasıl konumlandığını gösteren Tüccar Taahhüt (COT) rapor analizi. Potansiyel pozisyonlanma aşırılıklarını tanımlar.",
+      "dataPoints": "Kategoriye göre net pozisyonlar, haftalık değişiklikler, tarihsel aşırılıklar, pozisyonlanma yüzdelik dilimi, açık pozisyon değişiklikleri.",
+      "usage": "Ticari tüccarlar genellikle 'akıllı para'dır — uzun vadeli işlemler için pozisyonlanmalarını takip edin. Spekülatörlerin aşırı pozisyonlanması genellikle potansiyel bir dönüş sinyali verir.",
+      "tips": "COT verileri her Cuma Salı günü itibarıyla pozisyonlar için yayınlanır. 3 günlük gecikme vardır — haftalık/swing işlem planlaması için kullanın, gün içi kararlar için değil."
+    },
+    "seasonality": {
+      "title": "Mevsimsellik Analizi",
+      "description": "Varlıkların belirli aylarda, haftalarda veya zaman dilimlerinde tipik olarak nasıl performans gösterdiğini gösteren tarihsel mevsimsel desen analizi. Çok yıllık tarihsel verilere dayanır.",
+      "dataPoints": "Aylık/mevsimsel desenler, dönem başına tarihsel kazanma oranları, ortalama getiriler, mevsimsel güç göstergeleri.",
+      "usage": "Teknik analizinizle örtüştüğünde arka plan filtresi olarak kullanın — mevsimsel eğilimler yönünde işlem yapın. İyi bir neden olmadan güçlü mevsimsel desenlere karşı işlem yapmayın.",
+      "tips": "Mevsimsel desenler kurumsal akışlar nedeniyle çalışır (çeyrek sonu yeniden dengeleme, vergi kaybı satışı, tatil etkileri). NASDAQ ve Altın gibi olgun, likit piyasalarda en güvenilirdirler."
+    },
+    "learningDashboard": {
+      "title": "Öğrenme Paneli",
+      "description": "Zaman içinde tahmin doğruluğunu takip eden AI öğrenme ve kendini geliştirme paneli. ML ve Claude modellerinin nasıl performans gösterdiğini, nerede anlaştıklarını ve hangi tahminlerin hedefleri tuttuğunu gösterir.",
+      "dataPoints": "Toplam tahminler, doğruluk yüzdeleri, ML vs Claude karşılaştırması, konsensüs anlaşma oranı, zaman dilimine göre hedef seviye tutma oranları, son tahmin sonuçları.",
+      "usage": "Model güvenilirliğini anlamak için düzenli olarak inceleyin. Bir modelin doğruluğu %50'nin altına düşerse diğer modele daha fazla ağırlık vermeyi düşünün. Hangi zaman dilimlerinin en iyi tahminleri ürettiğini takip edin.",
+      "tips": "Öğrenme sistemi daha fazla veri biriktikçe zaman içinde gelişir. Anlaşan modeller daha doğru olma eğilimindedir. Belirli bir varlık için doğruluk sürekli düşerse piyasa rejimi değişmiş olabilir."
+    },
+    "signalCard": {
+      "title": "Canlı Sinyal Kartı",
+      "description": "Anahtar teknik seviyeleri ve yönsel eğilimi bir bakışta gösteren gerçek zamanlı sinyal özet kartı. EMA uzaklıkları, destek/direnç ve kanal pozisyonlarına anında erişim sağlar.",
+      "dataPoints": "Güncel fiyat, trend yönü, en yakın destek/direnç, EMA 20/50/200 uzaklıkları, kanal üst/alt bantları, D/D eğilimi.",
+      "usage": "Hızlı piyasa değerlendirmesi için birincil panonuz olarak kullanın. Yeşil metrikler yükseliş koşullarını, kırmızı düşüş koşullarını gösterir. Fiyat EMA'lardan ne kadar uzaksa hareket o kadar genişlemiştir.",
+      "tips": "Destek ve direnç birbirine çok yakın olduğunda (dar aralık) yakında bir kırılma bekleyin. Yön hacim ve momentum tarafından belirlenecektir — onay için Pulse panellerini izleyin."
+    }
   }
 }
-

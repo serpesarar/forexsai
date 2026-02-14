@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { PanelInfoButton } from "./PanelInfoButton";
 import { useClaudeSentiment } from "../lib/api";
 
 export default function SentimentPanel() {
@@ -11,9 +12,12 @@ export default function SentimentPanel() {
 
   return (
     <div className="glass-premium p-6 space-y-4">
-      <div>
-        <p className="text-sm text-textSecondary">Market Sentiment Analysis</p>
-        <h3 className="text-lg font-semibold">Macro Intelligence</h3>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-textSecondary">Market Sentiment Analysis</p>
+          <h3 className="text-lg font-semibold">Macro Intelligence</h3>
+        </div>
+        <PanelInfoButton panelId="sentiment" />
       </div>
       {isLoading ? (
         <div className="space-y-3">

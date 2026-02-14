@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
+import { PanelInfoButton } from "../PanelInfoButton";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
   TrendingUp, Activity, BarChart3, Target, Layers, Gauge, Volume2, Brain, Shield,
@@ -165,6 +166,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
           <button onClick={fetchData} className="p-1.5 rounded-lg" style={{ backgroundColor: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.15)' }}>
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: 'rgba(192,132,252,0.5)' }} />
           </button>
+          <PanelInfoButton panelId="emel-panel" />
           {onSwitchMode && (
             <button onClick={onSwitchMode} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold font-mono" style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.25)', color: '#fbbf24' }}>
               <Zap className="w-3 h-3" /> PULSE
@@ -192,9 +194,9 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
           <div className="flex-1 min-w-[120px]">
             <p className="text-[8px] uppercase tracking-[0.3em] mb-1.5" style={{ color: 'rgba(255,255,255,0.25)' }}>Checkpoint Score</p>
             <div className="flex gap-0.5 h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
-              <div className="rounded-full" style={{ width: `${(gc/tot)*100}%`, background: N.g.c, boxShadow: `0 0 6px ${N.g.gw}` }} />
-              <div className="rounded-full" style={{ width: `${(yc/tot)*100}%`, background: N.y.c, boxShadow: `0 0 6px ${N.y.gw}` }} />
-              <div className="rounded-full" style={{ width: `${(rc/tot)*100}%`, background: N.r.c, boxShadow: `0 0 6px ${N.r.gw}` }} />
+              <div className="rounded-full" style={{ width: `${(gc / tot) * 100}%`, background: N.g.c, boxShadow: `0 0 6px ${N.g.gw}` }} />
+              <div className="rounded-full" style={{ width: `${(yc / tot) * 100}%`, background: N.y.c, boxShadow: `0 0 6px ${N.y.gw}` }} />
+              <div className="rounded-full" style={{ width: `${(rc / tot) * 100}%`, background: N.r.c, boxShadow: `0 0 6px ${N.r.gw}` }} />
             </div>
             <div className="flex gap-3 mt-1.5">
               <span className="text-[10px] font-mono font-bold" style={{ color: N.g.c }}>{gc} Pass</span>

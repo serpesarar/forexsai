@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { PanelInfoButton } from "./PanelInfoButton";
 import {
   Users,
   TrendingUp,
@@ -52,27 +53,27 @@ export default function InstitutionalDataPanel({ className = "" }: Institutional
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Fetch COT and Slippage data in parallel
       const [cotRes, slippageRes] = await Promise.all([
         fetch(`${API_BASE}/api/cot/summary`),
         fetch(`${API_BASE}/api/slippage/stats`),
       ]);
-      
+
       if (cotRes.ok) {
         const cotJson = await cotRes.json();
         if (cotJson.success) {
           setCotData(cotJson.data);
         }
       }
-      
+
       if (slippageRes.ok) {
         const slippageJson = await slippageRes.json();
         if (slippageJson.success) {
           setSlippageData(slippageJson.data);
         }
       }
-      
+
       setLastUpdate(new Date());
       setError(null);
     } catch (err) {
@@ -132,13 +133,14 @@ export default function InstitutionalDataPanel({ className = "" }: Institutional
                 {lastUpdate.toLocaleTimeString()}
               </span>
             )}
-            <button 
+            <button
               onClick={fetchData}
               className="p-1 hover:bg-gray-700/50 rounded"
               disabled={loading}
             >
               <RefreshCw className={`w-4 h-4 text-gray-400 ${loading ? 'animate-spin' : ''}`} />
             </button>
+            <PanelInfoButton panelId="institutional-data" />
           </div>
         </div>
       </div>
@@ -157,7 +159,7 @@ export default function InstitutionalDataPanel({ className = "" }: Institutional
                 </span>
               )}
             </div>
-            
+
             <div className="grid grid-cols-3 gap-3 text-center">
               <InfoClickable infoKey="slippage">
                 <div>
@@ -180,7 +182,7 @@ export default function InstitutionalDataPanel({ className = "" }: Institutional
                 <div className="text-xs text-gray-500">Trades</div>
               </div>
             </div>
-            
+
             {slippageData.total_trades > 0 && (
               <div className="mt-2 flex items-center justify-center gap-4 text-xs">
                 <span className="text-green-400">
@@ -209,7 +211,7 @@ export default function InstitutionalDataPanel({ className = "" }: Institutional
                 </span>
               </InfoClickable>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-3 mb-2">
               <InfoClickable infoKey="cot_commercials">
                 <div className="text-center cursor-help hover:bg-gray-700/30 rounded p-1">
@@ -234,14 +236,14 @@ export default function InstitutionalDataPanel({ className = "" }: Institutional
                 </div>
               </InfoClickable>
             </div>
-            
+
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-500">Spec Long: {cotData.XAUUSD.spec_long_percent.toFixed(0)}%</span>
               <span className={cotData.XAUUSD.confidence_adjustment > 0 ? 'text-green-400' : cotData.XAUUSD.confidence_adjustment < 0 ? 'text-red-400' : 'text-gray-400'}>
                 Adj: {cotData.XAUUSD.confidence_adjustment > 0 ? '+' : ''}{(cotData.XAUUSD.confidence_adjustment * 100).toFixed(0)}%
               </span>
             </div>
-            
+
             {cotData.XAUUSD.signal === "TREND_EXHAUSTION" && (
               <div className="mt-2 flex items-center gap-2 text-xs text-orange-400">
                 <AlertTriangle className="w-3 h-3" />
@@ -263,7 +265,7 @@ export default function InstitutionalDataPanel({ className = "" }: Institutional
                 {cotData.NASDAQ.signal}
               </span>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-3 mb-2">
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1">
@@ -284,7 +286,7 @@ export default function InstitutionalDataPanel({ className = "" }: Institutional
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-500">Spec Long: {cotData.NASDAQ.spec_long_percent.toFixed(0)}%</span>
               <span className={cotData.NASDAQ.confidence_adjustment > 0 ? 'text-green-400' : cotData.NASDAQ.confidence_adjustment < 0 ? 'text-red-400' : 'text-gray-400'}>

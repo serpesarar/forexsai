@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { PanelInfoButton } from "./PanelInfoButton";
 import {
   CandlestickChart,
   TrendingUp,
@@ -60,9 +61,9 @@ const TIMEFRAME_LABELS: Record<string, string> = {
   "4h": "H4",
 };
 
-export default function CandlestickPatternPanel({ 
-  symbol = "XAUUSD", 
-  className = "" 
+export default function CandlestickPatternPanel({
+  symbol = "XAUUSD",
+  className = ""
 }: CandlestickPatternPanelProps) {
   const { t, locale } = useI18nStore();
   const [data, setData] = useState<CandlestickData | null>(null);
@@ -84,7 +85,7 @@ export default function CandlestickPatternPanel({
     try {
       const response = await fetch(`${API_BASE}/api/candlestick-patterns/${activeSymbol}`);
       const result = await response.json();
-      
+
       if (result.success) {
         setData(result.data);
         setError(null);
@@ -135,9 +136,8 @@ export default function CandlestickPatternPanel({
     return Array.from({ length: 3 }, (_, i) => (
       <div
         key={i}
-        className={`w-1.5 h-3 rounded-sm ${
-          i < strength ? "bg-current" : "bg-gray-600"
-        }`}
+        className={`w-1.5 h-3 rounded-sm ${i < strength ? "bg-current" : "bg-gray-600"
+          }`}
       />
     ));
   };
@@ -188,6 +188,7 @@ export default function CandlestickPatternPanel({
             >
               <RefreshCw className={`w-4 h-4 text-gray-400 ${loading ? "animate-spin" : ""}`} />
             </button>
+            <PanelInfoButton panelId="candlestick-patterns" />
           </div>
         </div>
       </div>
@@ -225,13 +226,11 @@ export default function CandlestickPatternPanel({
 
             {/* ML Adjustment Indicator */}
             {data.ml_adjustment !== 0 && (
-              <div className={`rounded-lg p-2 flex items-center justify-between ${
-                data.ml_adjustment > 0 ? "bg-green-900/20" : "bg-red-900/20"
-              }`}>
-                <span className="text-xs text-gray-400">{t("candlestickPanel.mlConfidence")}:</span>
-                <span className={`text-sm font-bold ${
-                  data.ml_adjustment > 0 ? "text-green-400" : "text-red-400"
+              <div className={`rounded-lg p-2 flex items-center justify-between ${data.ml_adjustment > 0 ? "bg-green-900/20" : "bg-red-900/20"
                 }`}>
+                <span className="text-xs text-gray-400">{t("candlestickPanel.mlConfidence")}:</span>
+                <span className={`text-sm font-bold ${data.ml_adjustment > 0 ? "text-green-400" : "text-red-400"
+                  }`}>
                   {data.ml_adjustment > 0 ? "+" : ""}{(data.ml_adjustment * 100).toFixed(0)}%
                 </span>
               </div>
@@ -241,11 +240,10 @@ export default function CandlestickPatternPanel({
             <div className="flex gap-1">
               <button
                 onClick={() => setSelectedTimeframe("all")}
-                className={`px-3 py-1 text-xs rounded ${
-                  selectedTimeframe === "all"
+                className={`px-3 py-1 text-xs rounded ${selectedTimeframe === "all"
                     ? "bg-amber-500/30 text-amber-400"
                     : "bg-gray-800/50 text-gray-400 hover:bg-gray-700/50"
-                }`}
+                  }`}
               >
                 {t("candlestickPanel.all")}
               </button>
@@ -253,11 +251,10 @@ export default function CandlestickPatternPanel({
                 <button
                   key={key}
                   onClick={() => setSelectedTimeframe(key)}
-                  className={`px-3 py-1 text-xs rounded ${
-                    selectedTimeframe === key
+                  className={`px-3 py-1 text-xs rounded ${selectedTimeframe === key
                       ? "bg-amber-500/30 text-amber-400"
                       : "bg-gray-800/50 text-gray-400 hover:bg-gray-700/50"
-                  }`}
+                    }`}
                 >
                   {label}
                   {data.timeframes[key]?.count > 0 && (
@@ -334,13 +331,12 @@ export default function CandlestickPatternPanel({
                             </div>
                             <p className="text-sm text-gray-300">{locale === "tr" ? pattern.description_tr : (pattern.description || pattern.description_tr)}</p>
                           </div>
-                          <div className={`rounded p-2 ${
-                            pattern.signal === "bullish" 
-                              ? "bg-green-900/30" 
+                          <div className={`rounded p-2 ${pattern.signal === "bullish"
+                              ? "bg-green-900/30"
                               : pattern.signal === "bearish"
                                 ? "bg-red-900/30"
                                 : "bg-yellow-900/30"
-                          }`}>
+                            }`}>
                             <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
                               {pattern.signal === "bullish" ? (
                                 <TrendingUp className="w-3 h-3 text-green-400" />

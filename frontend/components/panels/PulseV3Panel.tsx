@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
+import { PanelInfoButton } from "../PanelInfoButton";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
   TrendingUp,
@@ -20,8 +21,7 @@ import {
   Shield,
   Mountain,
   Crosshair,
-  Info,
-  X,
+
 } from "lucide-react";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
@@ -87,8 +87,8 @@ const SYMBOLS = [
 /* ── Neon helpers ── */
 const signalNeon: Record<string, { accent: string; glow: string; bg: string }> = {
   CONFIRM: { accent: "#00ff88", glow: "rgba(0,255,136,0.15)", bg: "rgba(0,255,136,0.06)" },
-  SCOUT:   { accent: "#f0b429", glow: "rgba(240,180,41,0.15)", bg: "rgba(240,180,41,0.06)" },
-  HOLD:    { accent: "#818cf8", glow: "rgba(129,140,248,0.15)", bg: "rgba(129,140,248,0.06)" },
+  SCOUT: { accent: "#f0b429", glow: "rgba(240,180,41,0.15)", bg: "rgba(240,180,41,0.06)" },
+  HOLD: { accent: "#818cf8", glow: "rgba(129,140,248,0.15)", bg: "rgba(129,140,248,0.06)" },
 };
 
 const dirNeon: Record<string, string> = { BUY: "#00ff88", SELL: "#ff3366", NEUTRAL: "#f0b429" };
@@ -100,7 +100,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [showInfo, setShowInfo] = useState(false);
+
 
   // WebSocket data — real-time, no polling needed
   const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "pulse_v3");
@@ -240,22 +240,11 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
           <button onClick={fetchData} className="p-1.5 rounded-lg transition-all hover:brightness-150" style={{ background: "rgba(255,255,255,0.05)" }}>
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: "rgba(255,255,255,0.35)" }} />
           </button>
-          <button onClick={() => setShowInfo(!showInfo)} className="p-1.5 rounded-lg transition-all hover:brightness-150" style={{ background: showInfo ? "rgba(52,211,153,0.15)" : "rgba(255,255,255,0.05)" }}>
-            <Info className="w-3.5 h-3.5" style={{ color: showInfo ? "#34d399" : "rgba(255,255,255,0.35)" }} />
-          </button>
+          <PanelInfoButton panelId="pulse-v3" />
         </div>
       </div>
 
-      {/* ── Info Box ── */}
-      {showInfo && (
-        <div className="mx-4 mt-3 p-3 rounded-xl relative" style={{ background: "rgba(52,211,153,0.06)", border: "1px solid rgba(52,211,153,0.15)" }}>
-          <button onClick={() => setShowInfo(false)} className="absolute top-2 right-2 text-white/30 hover:text-white/60"><X className="w-3.5 h-3.5" /></button>
-          <p className="text-[11px] font-bold font-mono mb-1" style={{ color: "#34d399" }}>PULSE 3 — Multi-Timeframe Hybrid</p>
-          <p className="text-[10px] text-white/50 leading-relaxed">
-            Çoklu zaman dilimi analizi: 5dk (%50) + 1sa (%30) + 4sa (%20) birleşik skor. Farkı: Diğer Pulse modelleri tek timeframe&apos;e bakarken, Pulse 3 üç farklı zaman diliminden gelen sinyalleri ağırlıklı olarak birleştirir. Order Block tespiti, giriş bölgeleri ve rejim bazlı yön filtresi uygular. En kapsamlı ve en güvenilir Pulse modelidir.
-          </p>
-        </div>
-      )}
+
 
       {/* ── Main Score + Signal ── */}
       <div className="p-6 text-center" style={{ background: nc.bg }}>
@@ -306,13 +295,13 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
               style={{
                 background: data.regime.type.includes("TREND_UP") ? "rgba(0,255,136,0.12)" :
                   data.regime.type.includes("TREND_DOWN") ? "rgba(255,51,102,0.12)" :
-                  data.regime.type === "RANGING" ? "rgba(240,180,41,0.12)" : "rgba(129,140,248,0.12)",
+                    data.regime.type === "RANGING" ? "rgba(240,180,41,0.12)" : "rgba(129,140,248,0.12)",
                 color: data.regime.type.includes("TREND_UP") ? "#00ff88" :
                   data.regime.type.includes("TREND_DOWN") ? "#ff3366" :
-                  data.regime.type === "RANGING" ? "#f0b429" : "#818cf8",
+                    data.regime.type === "RANGING" ? "#f0b429" : "#818cf8",
                 border: `1px solid ${data.regime.type.includes("TREND_UP") ? "rgba(0,255,136,0.25)" :
                   data.regime.type.includes("TREND_DOWN") ? "rgba(255,51,102,0.25)" :
-                  data.regime.type === "RANGING" ? "rgba(240,180,41,0.25)" : "rgba(129,140,248,0.25)"}`,
+                    data.regime.type === "RANGING" ? "rgba(240,180,41,0.25)" : "rgba(129,140,248,0.25)"}`,
               }}>
               <Shield className="w-3 h-3" />
               {data.regime.type.replace(/_/g, " ")}
@@ -348,7 +337,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
               <div className="flex items-center justify-center gap-1 mb-1">
                 {info.trend === "up" ? <ArrowUp className="w-3.5 h-3.5" style={{ color: trendC }} /> :
                   info.trend === "down" ? <ArrowDown className="w-3.5 h-3.5" style={{ color: trendC }} /> :
-                  <Activity className="w-3.5 h-3.5" style={{ color: trendC }} />}
+                    <Activity className="w-3.5 h-3.5" style={{ color: trendC }} />}
                 <span className="text-lg font-bold font-mono text-white/90">{info.raw_score}</span>
                 <span className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.25)" }}>/{info.max}</span>
               </div>

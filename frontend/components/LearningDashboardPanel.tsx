@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { PanelInfoButton } from "./PanelInfoButton";
 import {
   Brain,
   TrendingUp,
@@ -45,7 +46,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
   // Auto-check outcomes on mount and every 5 minutes
   useEffect(() => {
     if (!health?.db_available) return;
-    
+
     const checkOutcomes = async () => {
       try {
         await trigger1hOutcomeCheck();
@@ -55,10 +56,10 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
         console.error("Auto outcome check failed:", e);
       }
     };
-    
+
     // Check on mount
     checkOutcomes();
-    
+
     // Check every 5 minutes
     const interval = setInterval(checkOutcomes, 5 * 60 * 1000);
     return () => clearInterval(interval);
@@ -141,6 +142,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
           >
             <RefreshCw className={`w-4 h-4 ${isCheckingOutcomes ? "animate-spin" : ""}`} />
           </button>
+          <PanelInfoButton panelId="learning-dashboard" />
         </div>
       </div>
 
@@ -410,8 +412,8 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
 
               {/* Config Info */}
               <div className="text-xs text-zinc-500 mb-3">
-                {symbol === "NDX.INDX" ? "NASDAQ" : symbol === "XAUUSD" ? "XAUUSD" : symbol}: 
-                {t("learningDashboard.targets")} {multiTarget.config.targets.map(tgt => `${tgt.name}: ${tgt.pips} pips`).join(", ")} | 
+                {symbol === "NDX.INDX" ? "NASDAQ" : symbol === "XAUUSD" ? "XAUUSD" : symbol}:
+                {t("learningDashboard.targets")} {multiTarget.config.targets.map(tgt => `${tgt.name}: ${tgt.pips} pips`).join(", ")} |
                 SL: {multiTarget.config.stoploss_pips} pips
               </div>
 
@@ -419,7 +421,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
               {(() => {
                 const accuracy = checkInterval === "1h" ? multiTarget.accuracy_1h : multiTarget.accuracy_24h;
                 if (!accuracy || !accuracy.target_accuracy) return null;
-                
+
                 return (
                   <div className="space-y-3">
                     {Object.entries(accuracy.target_accuracy).map(([name, data]) => (
@@ -432,9 +434,8 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
                         </div>
                         <div className="h-2 bg-zinc-700 rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              data.hit_rate >= 0.5 ? "bg-green-500" : data.hit_rate >= 0.3 ? "bg-amber-500" : "bg-red-500"
-                            }`}
+                            className={`h-full rounded-full transition-all duration-500 ${data.hit_rate >= 0.5 ? "bg-green-500" : data.hit_rate >= 0.3 ? "bg-amber-500" : "bg-red-500"
+                              }`}
                             style={{ width: `${Math.min(data.hit_rate * 100, 100)}%` }}
                           />
                         </div>
@@ -496,13 +497,12 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
                 {dashboard.active_insights.slice(0, 3).map((insight: any, idx: number) => (
                   <div
                     key={idx}
-                    className={`text-xs p-2 rounded ${
-                      insight.data?.severity === "high"
+                    className={`text-xs p-2 rounded ${insight.data?.severity === "high"
                         ? "bg-red-500/10 text-red-400 border border-red-500/20"
                         : insight.data?.severity === "positive"
-                        ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                        : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                    }`}
+                          ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                          : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                      }`}
                   >
                     {insight.data?.recommendation || JSON.stringify(insight.data)}
                   </div>

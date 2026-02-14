@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { PanelInfoButton } from "./PanelInfoButton";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
@@ -227,6 +228,7 @@ export default function StrategyPerformancePanel() {
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
           </button>
+          <PanelInfoButton panelId="strategy-performance" />
         </div>
       </div>
 

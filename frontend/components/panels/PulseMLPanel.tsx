@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
+import { PanelInfoButton } from "../PanelInfoButton";
 import {
   Brain,
   TrendingUp,
@@ -19,8 +20,7 @@ import {
   BarChart3,
   Shield,
   Mountain,
-  Info,
-  X,
+
 } from "lucide-react";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
@@ -81,8 +81,8 @@ const TIMEFRAMES = ["5m", "15m", "30m", "1H", "4H"];
 
 const signalStyles: Record<string, { accent: string; glow: string; bg: string }> = {
   CONFIRM: { accent: "#00ff88", glow: "rgba(0,255,136,0.15)", bg: "rgba(0,255,136,0.06)" },
-  SCOUT:   { accent: "#f0b429", glow: "rgba(240,180,41,0.15)", bg: "rgba(240,180,41,0.06)" },
-  HOLD:    { accent: "#818cf8", glow: "rgba(129,140,248,0.15)", bg: "rgba(129,140,248,0.06)" },
+  SCOUT: { accent: "#f0b429", glow: "rgba(240,180,41,0.15)", bg: "rgba(240,180,41,0.06)" },
+  HOLD: { accent: "#818cf8", glow: "rgba(129,140,248,0.15)", bg: "rgba(129,140,248,0.06)" },
 };
 
 const dirColor: Record<string, string> = { BUY: "#00ff88", SELL: "#ff3366", HOLD: "#818cf8", NEUTRAL: "#f0b429" };
@@ -95,7 +95,7 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [showInfo, setShowInfo] = useState(false);
+
 
   const fetchData = useCallback(async () => {
     try {
@@ -186,21 +186,9 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
           <button onClick={() => { setLoading(true); fetchData(); }} className="p-1.5 rounded-lg hover:bg-white/10 transition">
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} style={{ color: "rgba(255,255,255,0.4)" }} />
           </button>
-          <button onClick={() => setShowInfo(!showInfo)} className="p-1.5 rounded-lg hover:bg-white/10 transition" style={{ background: showInfo ? "rgba(167,139,250,0.15)" : "transparent" }}>
-            <Info className="w-4 h-4" style={{ color: showInfo ? "#a78bfa" : "rgba(255,255,255,0.4)" }} />
-          </button>
+          <PanelInfoButton panelId="pulse-ml" />
         </div>
       </div>
-
-      {showInfo && (
-        <div className="mx-5 mb-3 p-3 rounded-xl relative" style={{ background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.15)" }}>
-          <button onClick={() => setShowInfo(false)} className="absolute top-2 right-2 text-white/30 hover:text-white/60"><X className="w-3.5 h-3.5" /></button>
-          <p className="text-[11px] font-bold font-mono mb-1" style={{ color: "#a78bfa" }}>PULSE 2 — ML Hybrid Analiz</p>
-          <p className="text-[10px] text-white/50 leading-relaxed">
-            ML (makine öğrenimi) tahminini teknik analiz ile birleştirir. ML güven skoru + EMA20/EMA50/MACD üçlü onay sistemi. Pulse 1&apos;den farkı: Yapay zeka tahmini ile teknik sinyalleri çapraz doğrular. Daha az sinyal üretir ama daha yüksek doğruluk oranı hedefler. Rejim bazlı adaptif güven eşiği uygular.
-          </p>
-        </div>
-      )}
 
       <div className="px-5 pb-5">
         {/* Symbol + Timeframe Tabs */}
@@ -258,13 +246,13 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
                   style={{
                     background: data.regime.type.includes("TREND_UP") ? "rgba(0,255,136,0.12)" :
                       data.regime.type.includes("TREND_DOWN") ? "rgba(255,51,102,0.12)" :
-                      data.regime.type === "RANGING" ? "rgba(240,180,41,0.12)" : "rgba(129,140,248,0.12)",
+                        data.regime.type === "RANGING" ? "rgba(240,180,41,0.12)" : "rgba(129,140,248,0.12)",
                     color: data.regime.type.includes("TREND_UP") ? "#00ff88" :
                       data.regime.type.includes("TREND_DOWN") ? "#ff3366" :
-                      data.regime.type === "RANGING" ? "#f0b429" : "#818cf8",
+                        data.regime.type === "RANGING" ? "#f0b429" : "#818cf8",
                     border: `1px solid ${data.regime.type.includes("TREND_UP") ? "rgba(0,255,136,0.25)" :
                       data.regime.type.includes("TREND_DOWN") ? "rgba(255,51,102,0.25)" :
-                      data.regime.type === "RANGING" ? "rgba(240,180,41,0.25)" : "rgba(129,140,248,0.25)"}`,
+                        data.regime.type === "RANGING" ? "rgba(240,180,41,0.25)" : "rgba(129,140,248,0.25)"}`,
                   }}>
                   <Shield className="w-3 h-3" />
                   {data.regime.type.replace(/_/g, " ")}

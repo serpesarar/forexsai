@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { Download } from "lucide-react";
+import { PanelInfoButton } from "./PanelInfoButton";
 import { usePatternEngine } from "../lib/api";
 
 export default function PatternEnginePanel() {
@@ -28,9 +29,12 @@ export default function PatternEnginePanel() {
           <p className="text-sm text-textSecondary">Pattern Engine - Top Candidates</p>
           <h3 className="text-lg font-semibold">Top 30% Filter</h3>
         </div>
-        <button className="flex items-center gap-2 text-sm px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 transition">
-          <Download className="w-4 h-4" /> Export CSV
-        </button>
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-2 text-sm px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 transition">
+            <Download className="w-4 h-4" /> Export CSV
+          </button>
+          <PanelInfoButton panelId="pattern-engine" />
+        </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
         <label className="space-y-2">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { PanelInfoButton } from "../PanelInfoButton";
 import {
   RefreshCw,
   Shield,
@@ -152,6 +153,7 @@ export default function RiskRewardPanel() {
           <button onClick={fetchData} className="p-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.05)" }}>
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: "rgba(255,255,255,0.35)" }} />
           </button>
+          <PanelInfoButton panelId="risk-reward" />
         </div>
       </div>
 

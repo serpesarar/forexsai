@@ -745,5 +745,174 @@
     "autoSave": "Auto save",
     "liveData": "Live data",
     "footer": "Charts are provided by TradingView. You can log in with your TradingView account for real-time data."
+  },
+  "panelInfo": {
+    "sections": {
+      "description": "What Is This Panel?",
+      "dataPoints": "Data & Metrics",
+      "usage": "How to Use",
+      "tips": "Pro Tips"
+    },
+    "closeHint": "Click outside or press ESC to close",
+    "importance": {
+      "critical": "CRITICAL",
+      "high": "HIGH",
+      "medium": "MEDIUM",
+      "low": "LOW"
+    },
+    "clearTrend": {
+      "title": "Cyberpunk Trend Analysis",
+      "description": "Real-time trend analysis panel combining EMA crossovers, channel positions, and support/resistance levels. Provides a clear directional bias for both NASDAQ and XAU/USD with visual confidence indicators.",
+      "dataPoints": "EMA 20/50/200 distances, trend channel upper/lower bands, support/resistance proximity, RSI, trend strength percentage, and overall directional signal (BUY/SELL/HOLD).",
+      "usage": "Check the main signal direction and confidence level before entering a trade. Use the EMA distances to gauge how extended price is from the mean. If price is near channel boundaries, expect reversals.",
+      "tips": "When all EMAs align (20>50>200 or 20<50<200) with 80%+ confidence, the signal is strongest. Always cross-check with the SMC panel for institutional confirmation."
+    },
+    "pulse": {
+      "title": "Pulse 1 - Algorithmic Scalp",
+      "description": "6-component scoring system for fast scalping decisions. Uses SCOUT (initial detection) and CONFIRM (validation) phases to generate short-term trading signals with real-time price updates.",
+      "dataPoints": "Price change over 5 minutes, support/resistance levels, momentum score, volume analysis, AI-generated instant comment with target/stop levels, and overall signal strength.",
+      "usage": "Watch for SCOUT signals first — they indicate potential setups. When a signal transitions to CONFIRM, it's time to consider entry. The AI comment provides specific target and stop levels.",
+      "tips": "Best used during high-volume market hours (US open, London open). Ignore signals during low-volume periods. If momentum and volume disagree, wait for alignment."
+    },
+    "pulseV3": {
+      "title": "Pulse 3 - Hybrid Scalp",
+      "description": "Multi-timeframe hybrid scalping system that combines 3 different timeframes for more reliable signals. Updates every 30 seconds with entry zones, targets, and stop levels.",
+      "dataPoints": "3-timeframe analysis, directional signal (BUY/SELL/NEUTRAL), entry zones, target/stop levels, signal validity period, signal strength (STRONG/WATCH/WAIT).",
+      "usage": "Wait for STRONG SIGNAL status before entering. Check entry zones for optimal positioning. The validity timer shows how long the signal remains actionable — don't enter after it expires.",
+      "tips": "Pulse V3 works best when its signal aligns with Pulse 1. When both agree on direction with strong confidence, the trade has the highest probability of success."
+    },
+    "pulseMl": {
+      "title": "Pulse ML - Machine Learning",
+      "description": "Machine learning-powered prediction panel that analyzes multiple technical indicators through a trained model. Provides directional predictions with confidence scores and detailed reasoning.",
+      "dataPoints": "ML prediction direction, confidence percentage, entry/target/stop levels, model scores (technical, momentum, trend), reasoning breakdown (RSI, MACD, Bollinger, volume conditions).",
+      "usage": "Focus on the confidence percentage — above 75% indicates high-probability setups. Read the reasoning section to understand WHY the model is making its prediction. Use provided entry/target/stop for position management.",
+      "tips": "ML predictions are most reliable when the model score components (technical, momentum, trend) all agree. If they conflict, the prediction may be less reliable — reduce position size."
+    },
+    "emel": {
+      "title": "EMEL Analysis Mode",
+      "description": "Strategic 9-checkpoint analysis system designed for controlled, methodical trading decisions. Each checkpoint must pass for a valid signal, reducing false entries significantly.",
+      "dataPoints": "Signal direction, confidence level, price, overall score, 9 individual checkpoint results (each with pass/fail status), decision reasoning, and timing guidance.",
+      "usage": "Review all 9 checkpoints before considering a trade. The panel tells you WHEN to trade (timing) and WHY (reasoning). If fewer than 7 checkpoints pass, consider waiting or using Pulse mode for faster opportunities.",
+      "tips": "EMEL is your most conservative signal. When EMEL gives a strong signal with 8-9 checkpoints passing, it's usually a high-quality setup. Use for swing trades and larger positions."
+    },
+    "patternEngine": {
+      "title": "Pattern Engine V2",
+      "description": "Advanced chart pattern detection engine that identifies 15+ classical patterns (double tops, head & shoulders, triangles, flags, etc.) across multiple timeframes with completion tracking.",
+      "dataPoints": "Pattern name, type (bullish/bearish/neutral), completion percentage, success rate, risk/reward ratio, entry/target/stop zones, detection date, and current stage.",
+      "usage": "Focus on patterns with 60%+ completion and historical success rates above 65%. The stage indicator shows where the pattern is in its lifecycle. Wait for 'Confirmed' stage before entering.",
+      "tips": "Combine pattern signals with SMC zones for the best entries. A bullish pattern completing near a bullish order block is a high-conviction trade."
+    },
+    "claudePatterns": {
+      "title": "Claude AI Pattern Analysis",
+      "description": "AI-powered multi-timeframe pattern analysis using Claude. Provides deeper insight into chart formations with contextual market analysis that goes beyond algorithmic detection.",
+      "dataPoints": "AI-identified patterns, multi-timeframe analysis, pattern context, market structure assessment.",
+      "usage": "Run analysis when you want a second opinion on current market structure. Claude provides nuanced analysis that considers broader market context beyond just technical patterns.",
+      "tips": "Best used after checking Pattern Engine V2 — Claude can validate or challenge the algorithmic findings. If both agree, the pattern is more reliable."
+    },
+    "sentiment": {
+      "title": "Market Sentiment",
+      "description": "Real-time market sentiment analysis combining news flow, volatility metrics, and macro indicators. Claude AI interprets the overall market mood to help gauge directional bias.",
+      "dataPoints": "Sentiment direction (bullish/bearish/neutral), news flow summary, volatility assessment, macro economic context.",
+      "usage": "Use as a confirmation tool — don't trade solely on sentiment. When sentiment aligns with your technical analysis, it adds confidence. When it contradicts, be cautious and reduce size.",
+      "tips": "Extreme sentiment readings often precede reversals. When everyone is bullish, look for bearish divergences. When everyone is bearish, look for bullish setups."
+    },
+    "news": {
+      "title": "MarketAux Live News",
+      "description": "Live news feed from MarketAux delivering real-time market headlines with sentiment classification. Each headline is tagged as bullish, bearish, or neutral for quick scanning.",
+      "dataPoints": "News headlines, source, publication time, sentiment tag (bullish/bearish/neutral).",
+      "usage": "Scan headlines before and during trading sessions. Focus on news that directly affects your trading instruments (NASDAQ, XAU/USD). Use sentiment tags for quick assessment.",
+      "tips": "Be cautious of trading immediately after major news — wait for the initial volatility to settle. News creates opportunities but also traps for impulsive traders."
+    },
+    "comexNews": {
+      "title": "COMEX & Gold News",
+      "description": "Specialized news panel focusing on COMEX data and gold-specific news. Tracks institutional changes, COT data impacts, and physical gold market developments.",
+      "dataPoints": "COMEX-specific headlines, gold deliveries, institutional positioning changes, COT report impacts.",
+      "usage": "Essential for XAU/USD trading. Check before gold trades for any institutional-level changes. COMEX delivery data can signal potential supply/demand shifts.",
+      "tips": "Large changes in COMEX inventories often precede significant gold price moves. Watch for delivery anomalies and position concentration changes."
+    },
+    "whaleTracker": {
+      "title": "Whale Tracker",
+      "description": "Tracks large institutional positions and unusual market activity. Identifies potential 'whale' movements that can significantly impact price direction.",
+      "dataPoints": "Active whale alerts, institutional position changes, large order flow detection, pressure reading (-1.0 to +1.0 scale).",
+      "usage": "Check the pressure reading: positive values indicate buying pressure (bullish), negative values indicate selling pressure (bearish). Active alerts highlight recent institutional activity.",
+      "tips": "Updates every Friday with COT data. Whale movements often front-run major price moves by 1-3 days. When whale pressure aligns with technical signals, expect stronger moves."
+    },
+    "institutional": {
+      "title": "Institutional Data Panel",
+      "description": "Comprehensive institutional positioning data showing how large market participants (hedge funds, banks, commercial traders) are positioned across key markets.",
+      "dataPoints": "Net positions by trader type, position changes over time, long/short ratios, historical positioning trends.",
+      "usage": "Follow the smart money — when institutional traders increase long positions significantly, it's a bullish signal. Extreme positioning often precedes reversals.",
+      "tips": "Don't fight institutional flow. If institutions are net long and adding, the path of least resistance is up. Use extreme readings as contrarian indicators."
+    },
+    "candlestick": {
+      "title": "Candlestick Pattern Analysis",
+      "description": "Real-time candlestick pattern detection identifying classical formations (doji, hammer, engulfing, etc.) with ML-adjusted confidence levels and actionable descriptions.",
+      "dataPoints": "Pattern name, direction (bullish/bearish/neutral), signal strength, ML confidence adjustment, pattern description, and recommended action.",
+      "usage": "Filter by direction (bullish/bearish) to focus on relevant patterns. Check ML confidence adjustment — it shows how much the ML model agrees with the traditional interpretation.",
+      "tips": "Single candlestick patterns are less reliable than multi-candle patterns. An engulfing pattern at a key support/resistance level is much more significant than one in the middle of a range."
+    },
+    "advancedAnalysis": {
+      "title": "Advanced Detailed Analysis",
+      "description": "Comprehensive technical analysis panel combining Claude AI and ML predictions with detailed risk management guidance. Provides entry/target/stop levels with thesis reasoning.",
+      "dataPoints": "Technical indicators, market structure, volume analysis, EMA distances, support/resistance levels, Claude/ML confidence and direction, risk management (position size, R:R), bull/bear thesis.",
+      "usage": "This is your most detailed panel — review it before taking any significant trade. The thesis summary explains the reasoning. Check volume confirmation to validate price movements.",
+      "tips": "Pay special attention to the volume warning indicator. Low-volume price moves are often traps. When both Claude and ML agree with strong confidence, it's a high-conviction setup."
+    },
+    "strategyPerformance": {
+      "title": "Strategy Performance",
+      "description": "Historical performance tracking for all trading strategies. Monitors accuracy, win rates, and profit/loss across different timeframes and models.",
+      "dataPoints": "Strategy win rate, accuracy percentage, total trades, profit/loss, performance comparison between ML and Claude models.",
+      "usage": "Review weekly to understand which strategies are performing best in current market conditions. Adjust your trading to favor strategies with higher recent accuracy.",
+      "tips": "A strategy that was accurate last month may not be accurate this month. Markets change — regularly review and adapt your approach based on this data."
+    },
+    "smc": {
+      "title": "Smart Money Concepts (SMC)",
+      "description": "Institutional-grade analysis using Smart Money Concepts including order blocks, fair value gaps (FVG), change of character (CHoCH), and break of structure (BOS). Scores each zone 0-100.",
+      "dataPoints": "Bullish/bearish order blocks with scores, FVG zones, CHoCH/BOS structure signals, combined SMC signal, entry confidence, support/resistance zones.",
+      "usage": "Look for high-scoring order blocks (70+) near current price. When price returns to an order block with FVG overlap, it's a high-probability entry zone. CHoCH signals indicate potential trend changes.",
+      "tips": "The best SMC entries combine: price at order block + FVG present + CHoCH/BOS confirmation. Score 80+ zones with all 3 confirmations are institutional-quality setups."
+    },
+    "mtfMatrix": {
+      "title": "Multi-Timeframe Matrix",
+      "description": "Visual matrix showing trend alignment across multiple timeframes. When all timeframes agree on direction, the signal strength is maximized for higher-probability trades.",
+      "dataPoints": "Direction per timeframe (5m, 15m, 1H, 4H, Daily), alignment percentage, overall bias, individual timeframe strength.",
+      "usage": "Trade in the direction of the majority alignment. When 4+ timeframes agree, it's a strong signal. When timeframes conflict, it's usually best to wait or reduce position size.",
+      "tips": "The 4H and Daily timeframes carry more weight. If they disagree with lower timeframes, trust the higher timeframes for swing trades. For scalps, focus on 5m and 15m alignment."
+    },
+    "riskReward": {
+      "title": "Risk/Reward Calculator",
+      "description": "Dynamic risk/reward analysis panel that calculates optimal position sizing, risk percentage, and expected return based on current technical levels and account parameters.",
+      "dataPoints": "Entry price, target(s), stop loss, risk/reward ratio, position size recommendation, risk percentage of account, expected profit/loss in dollar terms.",
+      "usage": "Never take a trade with R:R below 1.5:1. Use the calculator to size your position according to your risk tolerance. The recommended stop levels are based on current technical analysis.",
+      "tips": "Professional traders risk 1-2% of their account per trade maximum. Even with a 40% win rate, a 3:1 R:R ratio will be profitable long-term."
+    },
+    "cotWhale": {
+      "title": "COT Whale Analysis",
+      "description": "Commitment of Traders (COT) report analysis showing how commercial hedgers, large speculators, and small traders are positioned. Identifies potential positioning extremes.",
+      "dataPoints": "Net positions by category, weekly changes, historical extremes, positioning percentile, open interest changes.",
+      "usage": "Commercial traders are typically the 'smart money' — follow their positioning for longer-term trades. Extreme positioning by speculators often signals a potential reversal.",
+      "tips": "COT data is released every Friday for positions as of Tuesday. There's a 3-day lag — use it for weekly/swing trade planning, not intraday decisions."
+    },
+    "seasonality": {
+      "title": "Seasonality Analysis",
+      "description": "Historical seasonal pattern analysis showing how assets typically perform during specific months, weeks, or time periods. Based on multi-year historical data.",
+      "dataPoints": "Monthly/seasonal patterns, historical win rates per period, average returns, seasonal strength indicators.",
+      "usage": "Use as a background filter — trade in the direction of seasonal tendencies when they align with your technical analysis. Don't trade against strong seasonal patterns without good reason.",
+      "tips": "Seasonal patterns work because of institutional flows (quarter-end rebalancing, tax-loss selling, holiday effects). They're most reliable in mature, liquid markets like NASDAQ and Gold."
+    },
+    "learningDashboard": {
+      "title": "Learning Dashboard",
+      "description": "AI learning and self-improvement panel that tracks prediction accuracy over time. Shows how the ML and Claude models are performing, where they agree, and which predictions hit targets.",
+      "dataPoints": "Total predictions, accuracy percentages, ML vs Claude comparison, consensus agreement rate, target level hit rates by timeframe, recent prediction results.",
+      "usage": "Review regularly to understand model reliability. If a model's accuracy drops below 50%, consider giving more weight to the other model. Track which timeframes produce the best predictions.",
+      "tips": "The learning system improves over time as more data accumulates. Models that agree tend to be more accurate. If accuracy for a specific asset consistently drops, the market regime may have changed."
+    },
+    "signalCard": {
+      "title": "Live Signal Card",
+      "description": "Real-time signal overview card showing key technical levels and directional bias at a glance. Provides instant access to EMA distances, support/resistance, and channel positions.",
+      "dataPoints": "Current price, trend direction, nearest support/resistance, EMA 20/50/200 distances, channel upper/lower bands, S/R bias.",
+      "usage": "Use as your primary dashboard for quick market assessment. Green metrics indicate bullish conditions, red indicates bearish. The further price is from EMAs, the more extended the move.",
+      "tips": "When support and resistance are very close together (narrow range), expect a breakout soon. The direction will be determined by volume and momentum — watch the Pulse panels for confirmation."
+    }
   }
 }

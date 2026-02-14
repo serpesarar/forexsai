@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useProximityAnimation } from "../../hooks/useProximityAnimation";
+import { PanelInfoButton } from "../PanelInfoButton";
 import TrendChannelChart from "./TrendChannelChart";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
@@ -335,6 +336,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
           <button onClick={fetchData} className="p-1.5 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: "rgba(255,255,255,0.35)" }} />
           </button>
+          <PanelInfoButton panelId="clear-trend" />
         </div>
       </div>
 

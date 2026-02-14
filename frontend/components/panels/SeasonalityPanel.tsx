@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { PanelInfoButton } from "../PanelInfoButton";
 import {
   RefreshCw,
   Calendar,
@@ -175,6 +176,7 @@ export default function SeasonalityPanel() {
           <button onClick={fetchData} className="p-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.05)" }}>
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: "rgba(255,255,255,0.35)" }} />
           </button>
+          <PanelInfoButton panelId="seasonality" />
         </div>
       </div>
 
@@ -192,8 +194,8 @@ export default function SeasonalityPanel() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${edgeColor}15`, border: `1px solid ${edgeColor}30` }}>
                   {edge.direction === "bullish" ? <TrendingUp className="w-5 h-5" style={{ color: edgeColor }} /> :
-                   edge.direction === "bearish" ? <TrendingDown className="w-5 h-5" style={{ color: edgeColor }} /> :
-                   <Activity className="w-5 h-5" style={{ color: edgeColor }} />}
+                    edge.direction === "bearish" ? <TrendingDown className="w-5 h-5" style={{ color: edgeColor }} /> :
+                      <Activity className="w-5 h-5" style={{ color: edgeColor }} />}
                 </div>
                 <div>
                   <div className="text-sm font-bold font-mono" style={{ color: edgeColor, textShadow: `0 0 10px ${edgeColor}40` }}>
