@@ -1,11 +1,10 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Activity,
   BarChart3,
-  PlayCircle,
   RefreshCw,
   Sun,
   Moon,
@@ -13,7 +12,11 @@ import {
   TrendingUp,
   TrendingDown,
   Zap,
-  Sparkles,
+  Menu,
+  Bell,
+  Search,
+  User,
+  ChevronDown,
 } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
@@ -45,254 +48,155 @@ export default function PremiumHeader({
   fetchAll,
   t,
 }: PremiumHeaderProps) {
-  const headerRef = useRef<HTMLDivElement>(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isHovering, setIsHovering] = useState(false);
-  const [glowIntensity, setGlowIntensity] = useState(0);
   const [time, setTime] = useState<Date | null>(null);
-
-  // Mouse tracking for spotlight effect
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!headerRef.current) return;
-    const rect = headerRef.current.getBoundingClientRect();
-    setMousePosition({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-  }, []);
-
-  // Pulse glow animation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setGlowIntensity((prev) => (prev + 0.02) % 1);
-    }, 50);
-    return () => clearInterval(interval);
-  }, []);
+  const [scrolled, setScrolled] = useState(false);
 
   // Live clock
   useEffect(() => {
     setTime(new Date());
     const interval = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(interval);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
-  const pulseGlow = 0.3 + Math.sin(glowIntensity * Math.PI * 2) * 0.2;
-
   return (
-    <header
-      ref={headerRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
-      className="relative overflow-hidden border-b border-white/10 bg-slate-950"
-      style={{
-        background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(192, 192, 192, ${isHovering ? 0.08 : 0}), transparent 40%), linear-gradient(180deg, rgba(15, 15, 25, 0.95) 0%, rgba(10, 10, 18, 0.98) 100%)`,
-      }}
-    >
-      {/* Animated gradient border top */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden">
-        <div
-          className="absolute inset-0 animate-gradient-x"
-          style={{
-            background: `linear-gradient(90deg, transparent 0%, rgba(192, 192, 192, ${pulseGlow}) 25%, rgba(147, 112, 219, ${pulseGlow}) 50%, rgba(192, 192, 192, ${pulseGlow}) 75%, transparent 100%)`,
-            backgroundSize: "200% 100%",
-          }}
-        />
-      </div>
-
-      {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(6)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 rounded-full bg-white/20 animate-float"
-            style={{
-              left: `${15 + i * 15}%`,
-              animationDelay: `${i * 0.5}s`,
-              animationDuration: `${3 + i * 0.5}s`,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Main content */}
-      <div className="relative mx-auto flex h-[72px] max-w-7xl items-center justify-between px-6">
-        {/* Logo & Title - Premium style */}
-        <div className="flex items-center gap-4 group">
-          <div className="relative">
-            {/* Outer glow ring */}
-            <div
-              className="absolute -inset-1 rounded-xl opacity-75 blur-sm transition-all duration-500 group-hover:opacity-100 group-hover:blur-md"
-              style={{
-                background: `linear-gradient(135deg, rgba(192,192,192,${pulseGlow * 0.5}) 0%, rgba(147,112,219,${pulseGlow * 0.5}) 100%)`,
-              }}
-            />
-            {/* Icon container */}
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 shadow-lg transition-transform duration-300 group-hover:scale-110">
-              <Activity className="h-5 w-5 text-silver animate-pulse" style={{ color: '#C0C0C0' }} />
-            </div>
+    <>
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? "h-[70px] bg-slate-950/80 backdrop-blur-xl border-b border-white/5" : "h-[80px] bg-transparent border-b border-transparent"
+          }`}
+      >
+        {/* Background Gradient Mesh (Subtle) */}
+        {!scrolled && (
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-[-50%] left-[20%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px]" />
+            <div className="absolute top-[-50%] right-[20%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[100px]" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold tracking-tight bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
-                {t("header.title")}
-              </h1>
-              <Sparkles className="h-3.5 w-3.5 text-purple-400 animate-pulse" />
-            </div>
-            <p className="text-[10px] uppercase tracking-[0.4em] text-gray-500 font-medium">
-              {t("header.subtitle")}
-            </p>
-          </div>
-        </div>
+        )}
 
-        {/* Market Tickers - Animated cards */}
-        <div className="hidden lg:flex items-center gap-4">
-          {marketTickers.map((ticker, index) => (
-            <div
-              key={ticker.label}
-              className="group relative"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              {/* Hover glow */}
-              <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-white/5 to-purple-500/5 opacity-0 group-hover:opacity-100 blur transition-all duration-300" />
-              
-              <div className="relative flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-2 backdrop-blur-sm transition-all duration-300 group-hover:border-white/20 group-hover:bg-white/[0.05]">
-                {/* Mini trend indicator */}
-                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                  ticker.trend === "up" 
-                    ? "bg-emerald-500/10 text-emerald-400" 
-                    : "bg-red-500/10 text-red-400"
-                }`}>
-                  {ticker.trend === "up" ? (
-                    <TrendingUp className="h-4 w-4" />
-                  ) : (
-                    <TrendingDown className="h-4 w-4" />
-                  )}
-                </div>
-                
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">
-                    {ticker.label}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-semibold text-white">
-                      ${ticker.price}
-                    </span>
-                    <span
-                      className={`font-mono text-xs font-bold px-1.5 py-0.5 rounded ${
-                        ticker.trend === "up"
-                          ? "bg-emerald-500/20 text-emerald-400"
-                          : "bg-red-500/20 text-red-400"
-                      }`}
-                    >
+        <div className="relative mx-auto flex h-full max-w-[1920px] items-center justify-between px-6 lg:px-8">
+
+          {/* LEFT: Logo & Brand */}
+          <div className="flex items-center gap-8">
+            <Link href="/" className="group flex items-center gap-3 relative">
+              {/* Logo Icon */}
+              <div className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 shadow-[0_0_20px_rgba(37,99,235,0.3)] group-hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all duration-300 transform group-hover:scale-105">
+                <Activity className="text-white w-6 h-6" />
+                <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              {/* Brand Text */}
+              <div className="flex flex-col justify-center">
+                <h1 className="text-xl font-black tracking-tight text-white leading-none font-sans">
+                  FOREXS<span className="text-blue-500">AI</span>
+                </h1>
+                <p className="text-[10px] font-medium text-slate-400 tracking-[0.2em] uppercase leading-none mt-1 group-hover:text-blue-400 transition-colors">
+                  Intelligence
+                </p>
+              </div>
+            </Link>
+
+            {/* Quick Stats / Tickers (Desktop) */}
+            <div className="hidden xl:flex items-center gap-3">
+              <div className="h-8 w-px bg-white/10 mx-2" />
+              {marketTickers.slice(0, 3).map((ticker, i) => (
+                <div key={i} className="group relative flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-900/50 border border-white/5 hover:border-blue-500/30 hover:bg-slate-800/80 transition-all duration-300">
+                  <div className={`p-1.5 rounded-lg ${ticker.trend === 'up' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                    {ticker.trend === 'up' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                  </div>
+                  <div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xs font-bold text-slate-300">{ticker.label}</span>
+                      <span className="text-xs font-mono text-white">{ticker.price}</span>
+                    </div>
+                    <span className={`text-[10px] font-bold ${ticker.trend === 'up' ? 'text-emerald-500' : 'text-red-500'}`}>
                       {ticker.change}
                     </span>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Actions - Premium buttons */}
-        <div className="flex items-center gap-3">
-          {/* AI Trading Panel - Premium Link */}
-          <Link
-            href="/trading"
-            className="group relative overflow-hidden rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-300"
-          >
-            {/* Animated gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-500/20 to-purple-600/20 animate-gradient-x" />
-            <div className="absolute inset-0 border border-purple-500/30 rounded-xl group-hover:border-purple-400/50 transition-colors" />
-            {/* Shine effect on hover */}
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-              <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-            </div>
-            <span className="relative flex items-center gap-2 text-purple-300 group-hover:text-purple-200">
-              <BarChart3 className="h-4 w-4" />
-              AI Trading Panel
-            </span>
-          </Link>
-
-          {/* Run Analysis - Premium Button */}
-          <button
-            onClick={fetchAll}
-            disabled={isLoading}
-            className="group relative overflow-hidden rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all duration-300"
-          >
-            {/* Glowing background */}
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600 animate-gradient-x" />
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-            {/* Inner glow */}
-            <div className="absolute inset-[1px] rounded-[10px] bg-gradient-to-b from-white/20 to-transparent opacity-50" />
-            {/* Pulse ring */}
-            <div className="absolute -inset-1 rounded-xl bg-emerald-500/30 blur-md opacity-0 group-hover:opacity-100 animate-pulse transition-opacity" />
-            
-            <span className="relative flex items-center gap-2 text-white">
-              {isLoading ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : (
-                <Zap className="h-4 w-4" />
-              )}
-              {isLoading ? t("common.running") : t("common.runAnalysis")}
-            </span>
-          </button>
-
-          {/* Theme Toggle - Minimal */}
-          <button
-            onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.02] text-gray-400 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.05] hover:text-white"
-          >
-            {theme === "evening" ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
-          </button>
-
-          {/* Language Switcher */}
-          <LanguageSwitcher />
-
-          {/* Auto Refresh & Live Status */}
-          <div className="hidden md:flex items-center gap-4 pl-3 border-l border-white/10">
-            <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer group">
-              <div className="relative">
-                <input
-                  type="checkbox"
-                  checked={autoRefresh}
-                  onChange={(e) => toggleAutoRefresh(e.target.checked)}
-                  className="peer sr-only"
-                />
-                <div className="h-5 w-9 rounded-full bg-gray-700 peer-checked:bg-emerald-600 transition-colors" />
-                <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-4" />
-              </div>
-              <span className="group-hover:text-gray-300 transition-colors">
-                {t("common.auto30s")}
-              </span>
-            </label>
-
-            {/* Live indicator */}
-            <div className="flex items-center gap-2 text-xs">
-              <div className="relative">
-                <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                <div className="absolute inset-0 h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-              </div>
-              <span className="text-emerald-400 font-medium">{t("common.live")}</span>
-            </div>
-
-            {/* Clock */}
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 font-mono">
-              <Clock className="h-3.5 w-3.5" />
-              <span suppressHydrationWarning>
-                {time ? time.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) : "--:--"}
-              </span>
+              ))}
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Bottom accent line */}
-      <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-    </header>
+          {/* CENTER: Search Bar (Optional/Fake) or Navigation */}
+          <div className="hidden md:flex items-center absolute left-1/2 transform -translate-x-1/2">
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full opacity-20 group-hover:opacity-50 blur transition duration-500" />
+              <div className="relative flex items-center bg-slate-900 border border-white/10 rounded-full px-4 py-2 w-[300px] focus-within:w-[400px] focus-within:border-blue-500/50 transition-all duration-300">
+                <Search className="w-4 h-4 text-slate-500 mr-2" />
+                <input
+                  type="text"
+                  placeholder="Sembol, Parite veya Haber Ara..."
+                  className="bg-transparent border-none outline-none text-sm text-white w-full placeholder:text-slate-600"
+                />
+                <div className="text-[10px] font-mono text-slate-600 border border-slate-700 rounded px-1.5 py-0.5">⌘K</div>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: Actions */}
+          <div className="flex items-center gap-4">
+
+            {/* RUN ANALYSIS BUTTON - HERO */}
+            <button
+              onClick={fetchAll}
+              disabled={isLoading}
+              className="group relative flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-sm shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:pointer-events-none overflow-hidden"
+            >
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-[200%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg] translate-x-[-150%] group-hover:animate-shine" />
+              </div>
+              {isLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 fill-white" />}
+              <span>{isLoading ? "ANALİZ YAPILIYOR..." : "YAPAY ZEKA ANALİZİ"}</span>
+            </button>
+
+            <div className="h-6 w-px bg-white/10 mx-1" />
+
+            {/* Theme & Notifications */}
+            <button onClick={() => setTheme(theme === 'evening' ? 'morning' : 'evening')} className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+              {theme === 'evening' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <button className="relative p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+              <Bell size={20} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-slate-950" />
+            </button>
+
+            {/* User Profile */}
+            <div className="flex items-center gap-3 pl-2 cursor-pointer group">
+              <div className="text-right hidden sm:block">
+                <div className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">Demo Trader</div>
+                <div className="text-[10px] text-emerald-400 font-medium bg-emerald-500/10 px-1.5 rounded inline-block">PRO PLAN</div>
+              </div>
+              <div className="relative w-10 h-10 rounded-full bg-gradient-to-b from-slate-700 to-slate-800 border border-white/10 flex items-center justify-center overflow-hidden">
+                <User className="text-slate-300 w-5 h-5" />
+                <div className="absolute inset-0 border-2 border-transparent group-hover:border-blue-500/50 rounded-full transition-colors" />
+              </div>
+              <ChevronDown size={14} className="text-slate-500 group-hover:text-white transition-colors" />
+            </div>
+
+            <LanguageSwitcher />
+
+          </div>
+        </div>
+
+        {/* Decorative Bottom Line */}
+        <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent opacity-50" />
+      </header>
+
+      {/* Spacer for fixed header */}
+      <div className="h-[90px]" />
+
+      <style jsx global>{`
+      @keyframes shine {
+        0% { transform: translateX(-150%) skewX(-20deg); }
+        100% { transform: translateX(150%) skewX(-20deg); }
+      }
+      .animate-shine {
+        animation: shine 1.5s ease-in-out infinite;
+      }
+    `}</style>
+    </>
   );
 }
