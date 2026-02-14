@@ -444,7 +444,15 @@ async def get_clear_trend(symbol: str, timeframe: str = "1H"):
             ts = c.get("timestamp")
             dt_str = c.get("date", "")
             if ts:
-                dt = datetime.fromtimestamp(ts)
+                try:
+                    # Fix for crash: timestamps from DataHub are in milliseconds (e.g. 1700000000000)
+                    # fromtimestamp expects seconds. If ts > 30000000000 (year 2920), assume ms.
+                    if ts > 30000000000:
+                        ts = ts / 1000.0
+                    dt = datetime.fromtimestamp(ts)
+                except Exception:
+                    # Fallback if conversion fails
+                    dt = datetime.now()
             elif dt_str:
                 try:
                     dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
