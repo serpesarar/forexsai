@@ -314,32 +314,33 @@ export default function TrendChannelChart({
         {/* ══ VERTICAL BEAM LINES at date positions - bright pulsing rays ══ */}
         {xLabels.map((l, i) => (
           <g key={`vgl-${i}`}>
-            {/* Wide neon glow behind the beam */}
+            {/* Wide neon glow behind the beam - thicker but softer */}
             <line
               x1={l.x} y1={PAD.top}
               x2={l.x} y2={BASE_H - PAD.bottom}
               stroke="#22d3ee"
-              strokeWidth={5}
+              strokeWidth={4}
               filter="url(#tcBeamGlow)"
+              opacity={0.6}
             >
               <animate
                 attributeName="opacity"
-                values="0.2;0.5;0.2"
+                values="0.3;0.6;0.3"
                 dur="2s"
                 begin={`${i * 0.3}s`}
                 repeatCount="indefinite"
               />
             </line>
-            {/* Core bright beam line */}
+            {/* Core bright beam line - very thin but pure white/cyan mix */}
             <line
               x1={l.x} y1={PAD.top}
               x2={l.x} y2={BASE_H - PAD.bottom}
-              stroke="#67e8f9"
-              strokeWidth={1.5}
+              stroke="#ccfbf1"
+              strokeWidth={1}
             >
               <animate
                 attributeName="opacity"
-                values="0.5;0.85;0.5"
+                values="0.7;1;0.7"
                 dur="2s"
                 begin={`${i * 0.3}s`}
                 repeatCount="indefinite"
@@ -401,19 +402,27 @@ export default function TrendChannelChart({
             <g key={`rl-${i}`}>
               {/* Always-on subtle neon glow zone */}
               <rect
-                x={PAD.left} y={y - 10}
-                width={BASE_W - PAD.left - PAD.right} height={20}
+                x={PAD.left} y={y - 12}
+                width={BASE_W - PAD.left - PAD.right} height={24}
                 fill="#ff3366"
-                opacity={proxGlow ? resistanceIntensity * 0.08 : srPulse * 0.035}
+                opacity={proxGlow ? resistanceIntensity * 0.1 : srPulse * 0.05}
               />
-              {/* The S/R line with neon glow filter always on - BRIGHTER & THICKER */}
+              {/* Glow Layer - Thick colored */}
               <line
                 x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
                 stroke="#ff3366"
-                strokeWidth={isStrong ? 3 : 2}
-                strokeDasharray={isStrong ? "none" : "10 5"}
-                opacity={proxGlow ? 1.0 : 0.7 + srPulse * 0.3}
-                filter={proxGlow ? "url(#tcResistGlow)" : "url(#tcSRNeonGlow)"}
+                strokeWidth={isStrong ? 4 : 3}
+                strokeDasharray="none"
+                opacity={proxGlow ? 0.8 : 0.6}
+                filter="url(#tcResistGlow)"
+              />
+              {/* Core Layer - Thin bright/white */}
+              <line
+                x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
+                stroke="#fff1f2"
+                strokeWidth={isStrong ? 1.5 : 1}
+                strokeDasharray="none"
+                opacity={0.9}
               />
               {/* Price tag */}
               <rect
@@ -442,18 +451,27 @@ export default function TrendChannelChart({
           return (
             <g key={`sl-${i}`}>
               <rect
-                x={PAD.left} y={y - 10}
-                width={BASE_W - PAD.left - PAD.right} height={20}
+                x={PAD.left} y={y - 12}
+                width={BASE_W - PAD.left - PAD.right} height={24}
                 fill="#00ccff"
-                opacity={proxGlow ? supportIntensity * 0.08 : srPulse * 0.035}
+                opacity={proxGlow ? supportIntensity * 0.1 : srPulse * 0.05}
               />
+              {/* Glow Layer - Thick colored */}
               <line
                 x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
                 stroke="#00ccff"
-                strokeWidth={isStrong ? 3 : 2}
-                strokeDasharray={isStrong ? "none" : "10 5"}
-                opacity={proxGlow ? 1.0 : 0.7 + srPulse * 0.3}
-                filter={proxGlow ? "url(#tcSupportGlow)" : "url(#tcSRNeonGlow)"}
+                strokeWidth={isStrong ? 4 : 3}
+                strokeDasharray="none"
+                opacity={proxGlow ? 0.8 : 0.6}
+                filter={proxGlow ? "url(#tcSupportGlow)" : "url(#tcSupportGlow)"}
+              />
+              {/* Core Layer - Thin bright/white */}
+              <line
+                x1={PAD.left} y1={y} x2={BASE_W - PAD.right} y2={y}
+                stroke="#ecfeff"
+                strokeWidth={isStrong ? 1.5 : 1}
+                strokeDasharray="none"
+                opacity={0.9}
               />
               <rect
                 x={BASE_W - PAD.right + 2} y={y - 11}
