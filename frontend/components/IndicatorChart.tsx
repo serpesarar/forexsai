@@ -51,7 +51,7 @@ export default function IndicatorChart({ candles, rsi, macd }: IndicatorChartPro
 
   return (
     <div className="space-y-6">
-      <div className="h-48 bg-[#0a0e27] rounded-xl border border-white/10 p-4">
+      <div className="h-48 glass-premium rounded-xl p-4">
         <div className="flex items-center justify-between text-xs text-textSecondary mb-2">
           <span>RSI (14)</span>
           <span>{rsi[rsi.length - 1] ? rsi[rsi.length - 1]?.toFixed(1) : "--"}</span>
@@ -86,7 +86,7 @@ export default function IndicatorChart({ candles, rsi, macd }: IndicatorChartPro
         </ResponsiveContainer>
       </div>
 
-      <div className="h-52 bg-[#0a0e27] rounded-xl border border-white/10 p-4">
+      <div className="h-52 glass-premium rounded-xl p-4">
         <div className="flex items-center justify-between text-xs text-textSecondary mb-2">
           <span>MACD (12,26,9)</span>
           <span>{macd.macdLine[macd.macdLine.length - 1]?.toFixed(2) ?? "--"}</span>
