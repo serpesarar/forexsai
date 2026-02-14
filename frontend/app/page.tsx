@@ -50,7 +50,7 @@ const EmelPanel = lazy(() => import("../components/panels/EmelPanel"));
 const PulsePanel = lazy(() => import("../components/panels/PulsePanel"));
 const PulseV3Panel = lazy(() => import("../components/panels/PulseV3Panel"));
 const PulseMLPanel = lazy(() => import("../components/panels/PulseMLPanel"));
-const ClearTrendPanel = lazy(() => import("../components/panels/ClearTrendPanel"));
+const ClearTrendPanel = lazy(() => import("../components/panels/ClearTrendPanelV3"));
 const CyberpunkTrendPanel = lazy(() => import("../components/panels/CyberpunkTrendPanel"));
 const LearningDashboardPanel = lazy(() => import("../components/LearningDashboardPanel"));
 const LearningDashboardV2 = lazy(() => import("../components/panels/LearningDashboardV2"));
