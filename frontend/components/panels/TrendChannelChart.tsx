@@ -19,8 +19,8 @@ interface TrendChannelChartProps {
 }
 
 const BASE_W = 900;
-const BASE_H = 380;
-const PAD = { top: 20, right: 90, bottom: 50, left: 10 };
+const BASE_H = 420;
+const PAD = { top: 20, right: 90, bottom: 75, left: 10 };
 
 export default function TrendChannelChart({
   closes,
@@ -307,21 +307,60 @@ export default function TrendChannelChart({
           </g>
         ))}
 
-        {/* X-axis date labels - Brighter and larger */}
+        {/* ══ VERTICAL GRID LINES at date positions - thin pulsing ══ */}
         {xLabels.map((l, i) => (
-          <text
-            key={`xl-${i}`}
-            x={l.x}
-            y={BASE_H - 15}
-            textAnchor="middle"
-            fill="rgba(255,255,255,0.9)"
-            fontSize={11}
-            fontWeight="bold"
-            fontFamily="monospace"
-            style={{ textShadow: "0 0 4px rgba(0,0,0,0.8)" }}
-          >
-            {l.label}
-          </text>
+          <g key={`vgl-${i}`}>
+            {/* Thin vertical line from chart top to separator */}
+            <line
+              x1={l.x} y1={PAD.top}
+              x2={l.x} y2={BASE_H - PAD.bottom}
+              stroke="rgba(100,200,255,0.12)"
+              strokeWidth={0.7}
+              strokeDasharray="4 6"
+            >
+              <animate
+                attributeName="opacity"
+                values="0.08;0.28;0.08"
+                dur="2.5s"
+                begin={`${i * 0.3}s`}
+                repeatCount="indefinite"
+              />
+            </line>
+          </g>
+        ))}
+
+        {/* ══ DATE AXIS SEPARATOR LINE ══ */}
+        <line
+          x1={PAD.left} y1={BASE_H - PAD.bottom}
+          x2={BASE_W - PAD.right} y2={BASE_H - PAD.bottom}
+          stroke="rgba(255,255,255,0.12)"
+          strokeWidth={1}
+        />
+
+        {/* ══ X-AXIS DATE LABELS with tick marks ══ */}
+        {xLabels.map((l, i) => (
+          <g key={`xl-${i}`}>
+            {/* Tick mark down from separator */}
+            <line
+              x1={l.x} y1={BASE_H - PAD.bottom}
+              x2={l.x} y2={BASE_H - PAD.bottom + 8}
+              stroke="rgba(255,255,255,0.25)"
+              strokeWidth={1}
+            />
+            {/* Date label */}
+            <text
+              x={l.x}
+              y={BASE_H - PAD.bottom + 22}
+              textAnchor="middle"
+              fill="rgba(255,255,255,0.7)"
+              fontSize={10}
+              fontWeight="600"
+              fontFamily="monospace"
+              style={{ textShadow: "0 0 6px rgba(0,0,0,0.9)" }}
+            >
+              {l.label}
+            </text>
+          </g>
         ))}
 
         {/* Channel fill */}
