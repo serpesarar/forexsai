@@ -5,6 +5,14 @@ import { useRouter } from "next/navigation";
 import { useAuthStore, useIsAuthenticated } from "../lib/auth/store";
 import { Activity, Loader2 } from "lucide-react";
 
+// Demo mode: only on localhost + env flag
+const isDemoMode = (): boolean => {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  const isLocalhost = host === "localhost" || host === "127.0.0.1";
+  return isLocalhost && process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+};
+
 const waitForHydration = (): Promise<void> => {
   return new Promise((resolve) => {
     const check = () => {
@@ -27,6 +35,32 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const check = async () => {
       await waitForHydration();
+
+      // Demo mode bypass for localhost agent testing
+      if (isDemoMode()) {
+        const { isAuthenticated, setUser, setToken } = useAuthStore.getState();
+        if (!isAuthenticated) {
+          console.log("%c🟢 DEMO MODE ACTIVE", "color: #00ff88; font-size: 16px; font-weight: bold;");
+          // Inject demo user into zustand store
+          const demoUser = {
+            id: "999",
+            email: "demo@forexsai.com",
+            full_name: "Demo Trader",
+            membership_tier: "pro" as const,
+            tier_expires_at: null,
+            referral_code: "DEMO999",
+            referral_count: 0,
+            email_verified: true,
+            is_pro: true,
+            can_use_claude: true,
+          };
+          setUser(demoUser);
+          setToken("demo-token-localhost-only");
+        }
+        setIsChecking(false);
+        return;
+      }
+
       const authed = await checkAuth();
       setIsChecking(false);
       if (!authed) {

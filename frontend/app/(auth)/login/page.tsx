@@ -36,12 +36,12 @@ export default function LoginPage() {
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.")), 15000)
       );
-      
+
       const result = await Promise.race([loginPromise, timeoutPromise]);
       if (!result.success) {
         throw new Error(result.error || t("auth.login.failed") || "Login failed");
       }
-      
+
       // Small delay to let zustand persist flush to localStorage
       await new Promise(resolve => setTimeout(resolve, 100));
       router.push("/");
@@ -229,6 +229,46 @@ export default function LoginPage() {
                 <span className="px-4 bg-[#0B1220] text-[#E5E7EB]/40 text-sm">or</span>
               </div>
             </div>
+
+            {/* Demo Mode Button - only visible on localhost in dev */}
+            {process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                onClick={async () => {
+                  setLoading(true);
+                  const { setUser, setToken } = useAuthStore.getState();
+                  const demoUser = {
+                    id: "999",
+                    email: "demo@forexsai.com",
+                    full_name: "Demo Trader",
+                    membership_tier: "pro" as const,
+                    tier_expires_at: null,
+                    referral_code: "DEMO999",
+                    referral_count: 0,
+                    email_verified: true,
+                    is_pro: true,
+                    can_use_claude: true,
+                  };
+                  setUser(demoUser);
+                  setToken("demo-token-localhost-only");
+                  console.log("%c🟢 DEMO MODE LOGIN", "color: #00ff88; font-size: 16px; font-weight: bold;");
+                  await new Promise(resolve => setTimeout(resolve, 200));
+                  router.push("/");
+                }}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-yellow-500/80 to-orange-500/80 hover:from-yellow-500 hover:to-orange-500 text-[#0B1220] font-semibold flex items-center justify-center gap-2 transition-all duration-300 mb-4 shadow-lg shadow-yellow-500/10"
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    🧪 Demo Modunda Devam Et
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </motion.button>
+            )}
 
             <p className="text-center text-[#E5E7EB]/60">
               {t("auth.signup.dontHaveAccount") || "Don't have an account?"}{" "}
