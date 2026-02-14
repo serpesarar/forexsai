@@ -299,7 +299,10 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
             <Activity className="w-4 h-4" style={{ color: "#00ff88" }} />
           </div>
           <div>
-            <h2 className="text-sm font-bold tracking-wide font-mono" style={{ color: "#00ff88", textShadow: "0 0 10px rgba(0,255,136,0.3)" }}>CLEAR TREND</h2>
+            <h2 className="text-sm font-bold tracking-wide font-mono" style={{ color: "#00ff88", textShadow: "0 0 10px rgba(0,255,136,0.3)" }}>
+              CLEAR TREND <span className="text-xs text-white bg-red-600 px-1 rounded ml-2">v2.2</span>
+              <span className="text-[9px] ml-2 text-gray-500">C:{chartCloses.length} D:{chartDates.length}</span>
+            </h2>
             <p className="text-[9px] uppercase tracking-[0.25em] text-white/25">Neon Trend Analysis</p>
           </div>
         </div>
