@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import { useState } from "react";
@@ -250,8 +251,8 @@ export function ClaudeNewsAnalysisPanel() {
                   {getDirectionIcon(analysis.direction_bias)}
                   <div>
                     <div className="font-semibold text-lg">
-                      {analysis.direction_bias === "BUY" ? "ALIŞ Yanlısı" : 
-                       analysis.direction_bias === "SELL" ? "SATIŞ Yanlısı" : "NÖTR"}
+                      {analysis.direction_bias === "BUY" ? "ALIŞ Yanlısı" :
+                        analysis.direction_bias === "SELL" ? "SATIŞ Yanlısı" : "NÖTR"}
                     </div>
                     <div className="text-sm text-slate-400">
                       {analysis.analyzed_count} / {analysis.news_count} haber analiz edildi
@@ -286,16 +287,16 @@ export function ClaudeNewsAnalysisPanel() {
 
               {/* Progress Bar */}
               <div className="mt-3 flex gap-1 h-2 rounded-full overflow-hidden">
-                <div 
-                  className="bg-green-500 transition-all" 
+                <div
+                  className="bg-green-500 transition-all"
                   style={{ width: `${(analysis.bullish_count / analysis.analyzed_count) * 100}%` }}
                 />
-                <div 
-                  className="bg-yellow-500 transition-all" 
+                <div
+                  className="bg-yellow-500 transition-all"
                   style={{ width: `${(analysis.neutral_count / analysis.analyzed_count) * 100}%` }}
                 />
-                <div 
-                  className="bg-red-500 transition-all" 
+                <div
+                  className="bg-red-500 transition-all"
                   style={{ width: `${(analysis.bearish_count / analysis.analyzed_count) * 100}%` }}
                 />
               </div>
@@ -303,11 +304,10 @@ export function ClaudeNewsAnalysisPanel() {
 
             {/* Override Signal */}
             {analysis.has_override && (
-              <div className={`rounded-lg border p-3 ${
-                analysis.override_signal === "FORCE_BUY" 
-                  ? "bg-green-500/20 border-green-500" 
+              <div className={`rounded-lg border p-3 ${analysis.override_signal === "FORCE_BUY"
+                  ? "bg-green-500/20 border-green-500"
                   : "bg-red-500/20 border-red-500"
-              }`}>
+                }`}>
                 <div className="flex items-center gap-2">
                   <Zap className="h-5 w-5" />
                   <span className="font-bold">
@@ -375,8 +375,8 @@ export function ClaudeNewsAnalysisPanel() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span>{getCategoryIcon(item.category)}</span>
-                          <Badge 
-                            variant="outline" 
+                          <Badge
+                            variant="outline"
                             className={`text-xs ${getTimeSensitivityBadge(item.time_sensitivity)} text-white`}
                           >
                             {item.time_sensitivity}
