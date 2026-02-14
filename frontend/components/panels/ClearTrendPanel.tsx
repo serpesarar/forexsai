@@ -14,6 +14,7 @@ import {
   X,
   RefreshCw,
 } from "lucide-react";
+import TrendChannelChart from "./TrendChannelChart";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
@@ -63,6 +64,15 @@ interface ClearTrendData {
     stop?: number;
   };
   pip_value: number;
+  chart_data?: {
+    closes: number[];
+    dates?: string[];
+    trend_channel: {
+      upper: number[];
+      lower: number[];
+      middle: number[];
+    };
+  };
   explanations: Record<string, string>;
 }
 
@@ -176,11 +186,10 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
                 <button
                   key={s.key}
                   onClick={() => setActiveSymbol(s.key)}
-                  className={`px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 ${
-                    activeSymbol === s.key
+                  className={`px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 ${activeSymbol === s.key
                       ? "bg-blue-600 text-white"
                       : "bg-gray-800 text-gray-400 hover:text-white"
-                  }`}
+                    }`}
                 >
                   <span>{s.icon}</span>
                   {s.label}
@@ -225,13 +234,12 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
                 <span className="text-xs text-gray-400">Güç:</span>
                 <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
                   <div
-                    className={`h-full ${
-                      data.trend.direction === "UP"
+                    className={`h-full ${data.trend.direction === "UP"
                         ? "bg-green-500"
                         : data.trend.direction === "DOWN"
-                        ? "bg-red-500"
-                        : "bg-yellow-500"
-                    }`}
+                          ? "bg-red-500"
+                          : "bg-yellow-500"
+                      }`}
                     style={{ width: `${data.trend.strength_percent}%` }}
                   />
                 </div>
@@ -239,6 +247,31 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
               </div>
             </div>
           </div>
+
+          {/* CHART AREA - Added for visual clarity */}
+          {data.chart_data && data.chart_data.closes.length > 5 && (
+            <div className="border-b border-gray-800 bg-gray-900/50 p-2">
+              <TrendChannelChart
+                closes={data.chart_data.closes}
+                dates={data.chart_data.dates || []}
+                upper={data.chart_data.trend_channel.upper}
+                lower={data.chart_data.trend_channel.lower}
+                middle={data.chart_data.trend_channel.middle}
+                supportLevels={data.levels.all_levels
+                  .filter(l => l.type === 'support')
+                  .map(l => ({ price: l.price, label: l.name.split(' ')[0], strength: l.strength }))}
+                resistanceLevels={data.levels.all_levels
+                  .filter(l => l.type === 'resistance')
+                  .map(l => ({ price: l.price, label: l.name.split(' ')[0], strength: l.strength }))}
+                currentPrice={data.price.current}
+                decimals={data.price.decimals}
+                supportProximity={!!data.levels.nearest_support && parseFloat(data.levels.nearest_support.distance_display) < 20}
+                resistanceProximity={!!data.levels.nearest_resistance && parseFloat(data.levels.nearest_resistance.distance_display) < 20}
+                supportIntensity={data.trend.direction === 'DOWN' ? 1 : 0.5}
+                resistanceIntensity={data.trend.direction === 'UP' ? 1 : 0.5}
+              />
+            </div>
+          )}
 
           {/* Support/Resistance Levels */}
           <div className="p-4">
@@ -260,7 +293,7 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
                 const isCurrent = level.type === "current";
                 const isResistance = level.type === "resistance";
                 const isSupport = level.type === "support";
-                
+
                 return (
                   <div
                     key={index}
@@ -269,30 +302,27 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
                       else if (isSupport) openExplanation("s1_s2", "Support Levels");
                       else openExplanation("pivot", "Pivot Point");
                     }}
-                    className={`relative flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all hover:opacity-80 ${
-                      isCurrent
+                    className={`relative flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isCurrent
                         ? "bg-blue-600/30 border-2 border-blue-500"
                         : isResistance
-                        ? "bg-red-500/20 border border-red-500/50"
-                        : "bg-green-500/20 border border-green-500/50"
-                    }`}
+                          ? "bg-red-500/20 border border-red-500/50"
+                          : "bg-green-500/20 border border-green-500/50"
+                      }`}
                   >
                     {/* Level Indicator */}
-                    <div className={`w-12 h-8 rounded flex items-center justify-center text-xs font-bold ${
-                      isCurrent
+                    <div className={`w-12 h-8 rounded flex items-center justify-center text-xs font-bold ${isCurrent
                         ? "bg-blue-600 text-white"
                         : isResistance
-                        ? "bg-red-500/50 text-red-200"
-                        : "bg-green-500/50 text-green-200"
-                    }`}>
+                          ? "bg-red-500/50 text-red-200"
+                          : "bg-green-500/50 text-green-200"
+                      }`}>
                       {isCurrent ? "NOW" : level.name.split(" ")[0]}
                     </div>
 
                     {/* Price */}
                     <div className="flex-1">
-                      <div className={`text-lg font-bold ${
-                        isCurrent ? "text-white" : isResistance ? "text-red-300" : "text-green-300"
-                      }`}>
+                      <div className={`text-lg font-bold ${isCurrent ? "text-white" : isResistance ? "text-red-300" : "text-green-300"
+                        }`}>
                         {level.price.toFixed(data.price.decimals)}
                       </div>
                       {level.name && !isCurrent && (
@@ -303,9 +333,8 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
                     </div>
 
                     {/* Distance */}
-                    <div className={`text-right ${
-                      isCurrent ? "text-blue-300" : isResistance ? "text-red-300" : "text-green-300"
-                    }`}>
+                    <div className={`text-right ${isCurrent ? "text-blue-300" : isResistance ? "text-red-300" : "text-green-300"
+                      }`}>
                       <div className="text-sm font-bold">
                         {level.distance_display}
                       </div>
@@ -328,7 +357,7 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-3 mt-4">
               {data.levels.nearest_resistance && (
-                <div 
+                <div
                   onClick={() => openExplanation("resistance", "Nearest Resistance")}
                   className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 cursor-pointer hover:bg-red-500/20 transition-colors"
                 >
@@ -342,7 +371,7 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
                 </div>
               )}
               {data.levels.nearest_support && (
-                <div 
+                <div
                   onClick={() => openExplanation("support", "Nearest Support")}
                   className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 cursor-pointer hover:bg-green-500/20 transition-colors"
                 >
@@ -371,16 +400,15 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
                 <Info className="w-4 h-4" />
               </button>
             </div>
-            
-            <div className={`rounded-lg p-4 border ${
-              data.trend.direction === "UP"
+
+            <div className={`rounded-lg p-4 border ${data.trend.direction === "UP"
                 ? "bg-green-900/20 border-green-600"
                 : data.trend.direction === "DOWN"
-                ? "bg-red-900/20 border-red-600"
-                : "bg-yellow-900/20 border-yellow-600"
-            }`}>
+                  ? "bg-red-900/20 border-red-600"
+                  : "bg-yellow-900/20 border-yellow-600"
+              }`}>
               <p className="text-sm text-white mb-3">{data.trade_zones.suggestion}</p>
-              
+
               {data.trade_zones.target && data.trade_zones.stop && (
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
