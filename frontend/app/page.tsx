@@ -392,6 +392,15 @@ export default function HomePage() {
   const [theme, setTheme] = useState<"evening" | "morning">("evening");
   const [trendTf, setTrendTf] = useState<Timeframe>("M15");
 
+  // Read theme from URL query parameter on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlTheme = params.get("theme");
+    if (urlTheme === "morning") {
+      setTheme("morning");
+    }
+  }, []);
+
   // Auth check
   const [isAuthed, setIsAuthed] = useState(false);
   useEffect(() => {
