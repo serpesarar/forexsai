@@ -1054,3 +1054,247 @@ body {
 [data-theme="morning"] .text-textSecondary {
   color: #4a7c72 !important;
 }
+
+/* ══════════════════════════════════════════════════
+   PANEL-WIDE MORNING THEME OVERRIDES
+   Covers: All 42 panel components
+   Pattern: bg-gray-*, bg-slate-*, text-gray-*, 
+            border-gray-*, gradient headers, neon accents
+   ══════════════════════════════════════════════════ */
+
+/* ─── GRAY BACKGROUNDS → Galaxy White ─── */
+[data-theme="morning"] .bg-gray-900,
+[data-theme="morning"] .bg-gray-900\/80 {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(12px);
+}
+
+[data-theme="morning"] .bg-gray-900\/50 {
+  background-color: rgba(240, 253, 250, 0.7) !important;
+}
+
+[data-theme="morning"] .bg-gray-900\/95 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(16px);
+}
+
+[data-theme="morning"] .bg-gray-800,
+[data-theme="morning"] .bg-gray-800\/50 {
+  background-color: rgba(236, 253, 251, 0.7) !important;
+}
+
+[data-theme="morning"] .bg-gray-700 {
+  background-color: rgba(209, 250, 243, 0.6) !important;
+}
+
+/* ─── SLATE BACKGROUNDS → Galaxy White ─── */
+[data-theme="morning"] .bg-slate-800\/50 {
+  background-color: rgba(236, 253, 251, 0.6) !important;
+}
+
+[data-theme="morning"] .bg-slate-700 {
+  background-color: rgba(209, 250, 243, 0.5) !important;
+}
+
+/* ─── GRADIENT HEADERS → Galaxy Teal ─── */
+[data-theme="morning"] .bg-gradient-to-r.from-blue-900\/50,
+[data-theme="morning"] [class*="from-blue-900"],
+[data-theme="morning"] [class*="from-indigo-900"],
+[data-theme="morning"] [class*="from-amber-900"],
+[data-theme="morning"] [class*="from-purple-900"],
+[data-theme="morning"] [class*="from-cyan-900"],
+[data-theme="morning"] [class*="from-green-900"],
+[data-theme="morning"] [class*="from-red-900"],
+[data-theme="morning"] [class*="from-orange-900"],
+[data-theme="morning"] [class*="from-pink-900"],
+[data-theme="morning"] [class*="from-violet-900"],
+[data-theme="morning"] [class*="from-emerald-900"],
+[data-theme="morning"] [class*="from-teal-900"] {
+  background-image: linear-gradient(to right, rgba(14, 168, 150, 0.1), rgba(16, 185, 129, 0.08)) !important;
+}
+
+/* ─── GRAY TEXT → Dark Teal Readable ─── */
+[data-theme="morning"] .text-gray-200 {
+  color: #1a4038 !important;
+}
+
+[data-theme="morning"] .text-gray-300 {
+  color: #2d5a50 !important;
+}
+
+[data-theme="morning"] .text-gray-400 {
+  color: #4a7c72 !important;
+}
+
+[data-theme="morning"] .text-gray-500 {
+  color: #5a8f83 !important;
+}
+
+[data-theme="morning"] .text-gray-600 {
+  color: #6b9b90 !important;
+}
+
+/* ─── BORDER COLORS → Soft Teal ─── */
+[data-theme="morning"] .border-gray-700,
+[data-theme="morning"] .border-gray-700\/50,
+[data-theme="morning"] .border-gray-700\/30 {
+  border-color: rgba(14, 168, 150, 0.2) !important;
+}
+
+[data-theme="morning"] .border-gray-800 {
+  border-color: rgba(14, 168, 150, 0.15) !important;
+}
+
+[data-theme="morning"] .border-gray-600,
+[data-theme="morning"] .border-gray-600\/30 {
+  border-color: rgba(14, 168, 150, 0.25) !important;
+}
+
+/* ─── HOVER BACKGROUNDS → Galaxy Teal ─── */
+[data-theme="morning"] .hover\:bg-gray-800:hover,
+[data-theme="morning"] .hover\:bg-gray-800\/50:hover,
+[data-theme="morning"] .hover\:bg-gray-700:hover {
+  background-color: rgba(14, 168, 150, 0.12) !important;
+}
+
+[data-theme="morning"] .hover\:text-white:hover,
+[data-theme="morning"] .hover\:text-gray-200:hover {
+  color: #0c3933 !important;
+}
+
+/* ─── EMERALD / GREEN (keep visible on light) ─── */
+[data-theme="morning"] .text-emerald-400 {
+  color: #059669 !important;
+}
+
+[data-theme="morning"] .text-emerald-500 {
+  color: #047857 !important;
+}
+
+[data-theme="morning"] .bg-emerald-500\/10,
+[data-theme="morning"] .bg-emerald-500\/20 {
+  background-color: rgba(5, 150, 105, 0.12) !important;
+}
+
+/* ─── ROSE / RED (keep visible on light) ─── */
+[data-theme="morning"] .text-rose-400 {
+  color: #e11d48 !important;
+}
+
+[data-theme="morning"] .text-rose-500 {
+  color: #be123c !important;
+}
+
+[data-theme="morning"] .bg-rose-500\/10,
+[data-theme="morning"] .bg-rose-500\/20 {
+  background-color: rgba(225, 29, 72, 0.1) !important;
+}
+
+/* ─── PURPLE (keep visible on light) ─── */
+[data-theme="morning"] .text-purple-400 {
+  color: #7c3aed !important;
+}
+
+/* ─── NEON GLOW SHADOWS → Teal Glow ─── */
+[data-theme="morning"] [class*="shadow-blue"],
+[data-theme="morning"] [class*="shadow-emerald"],
+[data-theme="morning"] [class*="shadow-purple"] {
+  --tw-shadow-color: rgba(14, 168, 150, 0.2) !important;
+}
+
+/* ─── SELECT / INPUT ELEMENTS ─── */
+[data-theme="morning"] select,
+[data-theme="morning"] input[type="text"],
+[data-theme="morning"] input[type="number"] {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: #0c3933 !important;
+  border-color: rgba(14, 168, 150, 0.25) !important;
+}
+
+/* ─── LOADING SKELETON → Light shimmer ─── */
+[data-theme="morning"] .animate-pulse {
+  background-color: rgba(14, 168, 150, 0.06) !important;
+}
+
+[data-theme="morning"] .animate-pulse>div {
+  background-color: rgba(14, 168, 150, 0.1) !important;
+}
+
+/* ─── RED/GREEN STATUS BADGES (keep contrast) ─── */
+[data-theme="morning"] .bg-red-900\/20,
+[data-theme="morning"] .bg-red-500\/10 {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+[data-theme="morning"] .bg-green-900\/20,
+[data-theme="morning"] .bg-green-500\/10 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+/* ─── MODAL / OVERLAY ─── */
+[data-theme="morning"] .bg-black\/50,
+[data-theme="morning"] .bg-black\/60,
+[data-theme="morning"] .bg-black\/70 {
+  background-color: rgba(12, 57, 51, 0.4) !important;
+}
+
+/* ─── TABLE HEADERS & BORDERS ─── */
+[data-theme="morning"] .border-b.border-gray-800,
+[data-theme="morning"] .border-t.border-gray-800 {
+  border-color: rgba(14, 168, 150, 0.12) !important;
+}
+
+/* ─── INLINE STYLE OVERRIDE (for panels using style attribute) ─── */
+/* These use !important to override inline styles where possible */
+[data-theme="morning"] [style*="background: rgba(0,"] {
+  background: rgba(14, 168, 150, 0.08) !important;
+}
+
+/* ─── CHART AREA DARK BACKGROUNDS ─── */
+[data-theme="morning"] .recharts-wrapper,
+[data-theme="morning"] .recharts-surface {
+  background: transparent !important;
+}
+
+[data-theme="morning"] .recharts-cartesian-grid line {
+  stroke: rgba(14, 168, 150, 0.15) !important;
+}
+
+[data-theme="morning"] .recharts-text {
+  fill: #4a7c72 !important;
+}
+
+/* ─── TABS / SEGMENTED CONTROLS ─── */
+[data-theme="morning"] .bg-blue-600\/20,
+[data-theme="morning"] .bg-blue-500\/20 {
+  background-color: rgba(14, 168, 150, 0.15) !important;
+}
+
+/* ─── FOCUS RINGS ─── */
+[data-theme="morning"] .ring-white\/10,
+[data-theme="morning"] .ring-white\/20 {
+  --tw-ring-color: rgba(14, 168, 150, 0.2) !important;
+}
+
+/* ─── BACKDROP BLUR containers ─── */
+[data-theme="morning"] .backdrop-blur-xl,
+[data-theme="morning"] .backdrop-blur-md {
+  --tw-backdrop-blur: blur(16px);
+}
+
+/* ─── GRADIENT TO DARK → Galaxy Light ─── */
+[data-theme="morning"] [class*="to-purple-900"],
+[data-theme="morning"] [class*="to-blue-900"],
+[data-theme="morning"] [class*="to-indigo-900"],
+[data-theme="morning"] [class*="to-orange-900"] {
+  --tw-gradient-to: rgba(16, 185, 129, 0.05) !important;
+}
+
+/* ─── BRAND COLORS FOR LIGHT MODE ─── */
+[data-theme="morning"] .from-blue-600 {
+  --tw-gradient-from: #0ea896 !important;
+}
+
+[data-theme="morning"] .to-indigo-600 {
+  --tw-gradient-to: #0d9488 !important;
+}
