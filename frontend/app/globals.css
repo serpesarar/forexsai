@@ -764,7 +764,15 @@ body {
    ============================================ */
 
 [data-theme="morning"] body {
-  background: radial-gradient(circle at 50% 0%, #f0fdfa 0%, #f0f7f6 100%);
+  /* Galaxy White Mesh Gradient Background */
+  background:
+    radial-gradient(at 0% 0%, rgba(14, 168, 150, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.15) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(240, 253, 250, 1) 0px, transparent 100%),
+    radial-gradient(at 0% 100%, rgba(139, 92, 246, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(14, 168, 150, 0.1) 0px, transparent 50%),
+    #f8fafc;
+  background-attachment: fixed;
   color: #0c3933;
 }
 
@@ -778,35 +786,52 @@ body {
     inset 0 0 0 1px rgba(255, 255, 255, 0.5);
 }
 
-/* Glass Premium - Neon Gradient Border */
+/* Glass Premium - Neon Gradient Border Check */
 [data-theme="morning"] .glass-premium {
   background:
     linear-gradient(#ffffffeb, #f0fdfaeb) padding-box,
-    linear-gradient(135deg, #0ea896 0%, #10b981 100%) border-box;
+    linear-gradient(135deg, #0ea896 0%, #10b981 50%, #0ea896 100%) border-box;
+  background-size: 200% 200%;
+  animation: gradient-xy 15s ease infinite;
   border: 1px solid transparent;
   box-shadow:
     0 8px 32px rgba(14, 168, 150, 0.12),
-    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset,
+    0 0 20px rgba(14, 168, 150, 0.1);
+  /* Subtle Glow */
   backdrop-filter: blur(20px);
 }
 
 [data-theme="morning"] .glass-premium:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 12px 40px rgba(14, 168, 150, 0.18),
-    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+    0 12px 40px rgba(14, 168, 150, 0.25),
+    /* Stronger Glow */
+    0 0 0 1px rgba(255, 255, 255, 0.8) inset,
+    0 0 30px rgba(16, 185, 129, 0.2);
 }
 
 /* Signal Card - Clean Tech */
+/* Signal Card - Galaxy Light Premium */
 [data-theme="morning"] .signal-card-premium {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 253, 250, 0.95) 100%);
-  border: 1px solid rgba(14, 168, 150, 0.2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 253, 250, 0.85) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid transparent;
+  background-clip: padding-box, border-box;
+  background-origin: padding-box, border-box;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.9), rgba(240, 253, 250, 0.85)),
+    linear-gradient(135deg, rgba(14, 168, 150, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%);
+  box-shadow:
+    0 4px 12px rgba(14, 168, 150, 0.05),
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
 }
 
 [data-theme="morning"] .signal-card-premium:hover {
-  border-color: #0ea896;
-  box-shadow: 0 8px 24px rgba(14, 168, 150, 0.15);
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 30px rgba(14, 168, 150, 0.15),
+    0 0 20px rgba(14, 168, 150, 0.1);
 }
 
 /* Header - Crystal Clear */
