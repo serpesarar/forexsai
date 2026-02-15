@@ -1298,3 +1298,209 @@ body {
 [data-theme="morning"] .to-indigo-600 {
   --tw-gradient-to: #0d9488 !important;
 }
+
+/* ═══════════════════════════════════════════════════════
+   INLINE STYLE OVERRIDES — Nuclear Fix for ALL Panels
+   Uses CSS [style*="..."] attribute selectors to override
+   inline style={{ background: "rgba(dark)" }} patterns.
+   !important in CSS ALWAYS beats inline styles.
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── DARK PANEL WRAPPER BACKGROUNDS ─── */
+/* rgba(2,6,23,...) - used by PulsePanel, MTFMatrix, PulseV3, PulseML, EmelPanel */
+[data-theme="morning"] [style*="rgba(2,6,23"] {
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(16px) !important;
+  border-color: rgba(14, 168, 150, 0.15) !important;
+}
+
+/* rgba(10,15,30,...) - used by CyberpunkTrendPanel */
+[data-theme="morning"] [style*="rgba(10,15,30"] {
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(16px) !important;
+  border-color: rgba(14, 168, 150, 0.15) !important;
+}
+
+/* rgba(15,23,42,...) - loading skeletons, modals */
+[data-theme="morning"] [style*="rgba(15,23,42"] {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(16px) !important;
+  border-color: rgba(14, 168, 150, 0.15) !important;
+}
+
+/* rgba(8,10,25,...) - EmelPanel, LearningDashboardV2 */
+[data-theme="morning"] [style*="rgba(8,10,25"] {
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(16px) !important;
+  border-color: rgba(168, 85, 247, 0.12) !important;
+}
+
+/* ─── PANEL INNER HEADERS/FOOTERS (semi-black overlays) ─── */
+[data-theme="morning"] [style*="rgba(0,0,0,0.25)"] {
+  background: rgba(14, 168, 150, 0.04) !important;
+}
+
+[data-theme="morning"] [style*="rgba(0,0,0,0.3)"] {
+  background: rgba(14, 168, 150, 0.05) !important;
+}
+
+[data-theme="morning"] [style*="rgba(0,0,0,0.2)"] {
+  background: rgba(14, 168, 150, 0.03) !important;
+}
+
+[data-theme="morning"] [style*="rgba(0,0,0,0.15)"] {
+  background: rgba(14, 168, 150, 0.02) !important;
+}
+
+[data-theme="morning"] [style*="rgba(0,0,0,0.7)"] {
+  background-color: rgba(12, 57, 51, 0.5) !important;
+}
+
+/* ─── VERY DARK BLUE BACKGROUNDS ─── */
+/* rgba(2,6,23,... in chart fallbacks */
+[data-theme="morning"] [style*="background: rgba(2,6,23"] {
+  background: rgba(240, 253, 250, 0.7) !important;
+}
+
+/* ─── SUBTLE WHITE BACKGROUNDS (transparent white on dark → tinted on light) ─── */
+[data-theme="morning"] [style*="rgba(255,255,255,0.02)"],
+[data-theme="morning"] [style*="rgba(255,255,255,0.03)"],
+[data-theme="morning"] [style*="rgba(255,255,255,0.04)"],
+[data-theme="morning"] [style*="rgba(255,255,255,0.05)"] {
+  background: rgba(14, 168, 150, 0.04) !important;
+}
+
+/* ─── WHITE TEXT ON DARK → DARK TEXT ON LIGHT ─── */
+[data-theme="morning"] [style*="color: rgba(255,255,255,0.2"] {
+  color: #6b9b90 !important;
+}
+
+[data-theme="morning"] [style*="color: rgba(255,255,255,0.25)"] {
+  color: #5a8f83 !important;
+}
+
+[data-theme="morning"] [style*="color: rgba(255,255,255,0.3)"] {
+  color: #4a7c72 !important;
+}
+
+[data-theme="morning"] [style*="color: rgba(255,255,255,0.35)"] {
+  color: #3d6b62 !important;
+}
+
+[data-theme="morning"] [style*="color: rgba(255,255,255,0.4)"] {
+  color: #3d6b62 !important;
+}
+
+[data-theme="morning"] [style*="color: rgba(255,255,255,0.5)"] {
+  color: #2d5a50 !important;
+}
+
+[data-theme="morning"] [style*="color: rgba(255,255,255,0.55)"] {
+  color: #2d5a50 !important;
+}
+
+[data-theme="morning"] [style*="color: rgba(255,255,255,0.6)"] {
+  color: #2d5a50 !important;
+}
+
+/* ─── BORDER COLORS (white on dark → teal on light) ─── */
+[data-theme="morning"] [style*="borderColor: \"rgba(255,255,255,0.0"],
+[data-theme="morning"] [style*="border: \"1px solid rgba(255,255,255,0.0"],
+[data-theme="morning"] [style*="borderBottom: \"1px solid rgba(255,255,255"],
+[data-theme="morning"] [style*="borderTop: \"1px solid rgba(255,255,255"] {
+  border-color: rgba(14, 168, 150, 0.15) !important;
+}
+
+/* More general inline border overrides */
+[data-theme="morning"] [style*="1px solid rgba(255,255,255,0.0"] {
+  border-color: rgba(14, 168, 150, 0.12) !important;
+}
+
+[data-theme="morning"] [style*="1px solid rgba(255,255,255,0.1"] {
+  border-color: rgba(14, 168, 150, 0.18) !important;
+}
+
+/* ─── DARK COLORED BG ACCENTS → Adjust for light ─── */
+/* Keep neon colors but reduce opacity on white bg for readability */
+
+/* Green neon badges/pills - keep them but soften */
+[data-theme="morning"] [style*="rgba(0,255,136,0.06)"],
+[data-theme="morning"] [style*="rgba(0,255,136,0.08)"] {
+  background: rgba(5, 150, 105, 0.08) !important;
+}
+
+[data-theme="morning"] [style*="rgba(0,255,136,0.1)"],
+[data-theme="morning"] [style*="rgba(0,255,136,0.15)"] {
+  background: rgba(5, 150, 105, 0.12) !important;
+}
+
+/* Red neon badges/pills */
+[data-theme="morning"] [style*="rgba(255,51,102,0.06)"] {
+  background: rgba(225, 29, 72, 0.06) !important;
+}
+
+[data-theme="morning"] [style*="rgba(255,51,102,0.1)"],
+[data-theme="morning"] [style*="rgba(255,51,102,0.15)"] {
+  background: rgba(225, 29, 72, 0.1) !important;
+}
+
+/* Cyan neon badges/pills */
+[data-theme="morning"] [style*="rgba(0,204,255,0.06)"] {
+  background: rgba(14, 168, 150, 0.06) !important;
+}
+
+[data-theme="morning"] [style*="rgba(0,204,255,0.2)"] {
+  background: rgba(14, 168, 150, 0.15) !important;
+}
+
+/* Indigo badges */
+[data-theme="morning"] [style*="rgba(99,102,241,0.06)"] {
+  background: rgba(99, 102, 241, 0.05) !important;
+}
+
+[data-theme="morning"] [style*="rgba(99,102,241,0.12)"] {
+  border-color: rgba(99, 102, 241, 0.15) !important;
+}
+
+/* Yellow/Amber badges */
+[data-theme="morning"] [style*="rgba(240,180,41,0.06)"] {
+  background: rgba(217, 152, 11, 0.06) !important;
+}
+
+/* ─── TEXT-WHITE CLASSES (on dark they're white, on light they should be dark) ─── */
+[data-theme="morning"] .text-white\/80,
+[data-theme="morning"] .text-white\/70 {
+  color: #1a4038 !important;
+}
+
+[data-theme="morning"] .text-white\/50 {
+  color: #2d5a50 !important;
+}
+
+[data-theme="morning"] .text-white\/25,
+[data-theme="morning"] .text-white\/20 {
+  color: #6b9b90 !important;
+}
+
+/* ─── BOX-SHADOW NEON GLOWS → soften for light mode ─── */
+[data-theme="morning"] [style*="boxShadow"] {
+  box-shadow: 0 4px 20px rgba(14, 168, 150, 0.08) !important;
+}
+
+/* ─── SELECT DROPDOWN in dark panels ─── */
+[data-theme="morning"] select[style] {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: #2d5a50 !important;
+  border-color: rgba(14, 168, 150, 0.2) !important;
+}
+
+/* ─── CHART CONTAINER (TrendChannelChart canvas wrapper) ─── */
+[data-theme="morning"] [style*="border: \"1px solid rgba(255,255,255,0.04)\""] {
+  border-color: rgba(14, 168, 150, 0.1) !important;
+}
+
+/* ─── LOADING STATE with dark backgrounds ─── */
+[data-theme="morning"] .animate-pulse[style] {
+  background: rgba(240, 253, 250, 0.6) !important;
+  border-color: rgba(14, 168, 150, 0.1) !important;
+}
