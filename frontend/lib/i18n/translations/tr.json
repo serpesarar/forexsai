@@ -907,5 +907,15 @@
       "usage": "Hızlı piyasa değerlendirmesi için birincil panonuz olarak kullanın. Yeşil metrikler yükseliş koşullarını, kırmızı düşüş koşullarını gösterir. Fiyat EMA'lardan ne kadar uzaksa hareket o kadar genişlemiştir.",
       "tips": "Destek ve direnç birbirine çok yakın olduğunda (dar aralık) yakında bir kırılma bekleyin. Yön hacim ve momentum tarafından belirlenecektir — onay için Pulse panellerini izleyin."
     }
+  },
+  "harmonicVisualizer": {
+    "title": "HARMONİK GÖRSELLEŞTİRİCİ",
+    "activePatterns": "Aktif Formasyonlar",
+    "noPatterns": "Bu zaman diliminde formasyon bulunamadı",
+    "bullish": "YÜKSELİŞ",
+    "bearish": "DÜŞÜŞ",
+    "confidence": "Güven",
+    "loadingChart": "Grafik verileri yükleniyor...",
+    "noChartData": "Bu sembol için veri yok"
   }
 }

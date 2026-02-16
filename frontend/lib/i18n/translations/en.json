@@ -915,5 +915,15 @@
       "usage": "Use as your primary dashboard for quick market assessment. Green metrics indicate bullish conditions, red indicates bearish. The further price is from EMAs, the more extended the move.",
       "tips": "When support and resistance are very close together (narrow range), expect a breakout soon. The direction will be determined by volume and momentum — watch the Pulse panels for confirmation."
     }
+  },
+  "harmonicVisualizer": {
+    "title": "HARMONIC VISUALIZER",
+    "activePatterns": "Active Patterns",
+    "noPatterns": "No patterns detected in current timeframe",
+    "bullish": "BULLISH",
+    "bearish": "BEARISH",
+    "confidence": "Confidence",
+    "loadingChart": "Loading chart data...",
+    "noChartData": "No data available for this symbol"
   }
 }

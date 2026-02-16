@@ -62,6 +62,7 @@ const MTFMatrixPanel = lazy(() => import("../components/panels/MTFMatrixPanel"))
 const RiskRewardPanel = lazy(() => import("../components/panels/RiskRewardPanel"));
 const COTWhalePanel = lazy(() => import("../components/panels/COTWhalePanel"));
 const SeasonalityPanel = lazy(() => import("../components/panels/SeasonalityPanel"));
+const HarmonicVisualizerPanel = lazy(() => import("../components/panels/HarmonicVisualizerPanel"));
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
 import { useLivePrices } from "../hooks/useLivePrices";
@@ -932,6 +933,8 @@ export default function HomePage() {
         return <COTWhalePanel />;
       case "seasonality":
         return <SeasonalityPanel />;
+      case "harmonic-visualizer":
+        return <HarmonicVisualizerPanel />;
       default:
         return null;
     }

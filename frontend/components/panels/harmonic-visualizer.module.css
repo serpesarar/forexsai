@@ -1,0 +1,379 @@
+/* Harmonic Visualizer Panel — Neon/Galaxy Theme */
+
+.container {
+    position: relative;
+    background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0d1229 100%);
+    border: 1px solid rgba(0, 217, 255, 0.15);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow:
+        0 0 40px rgba(0, 217, 255, 0.08),
+        inset 0 0 80px rgba(0, 0, 0, 0.4);
+}
+
+/* Galaxy background effect */
+.container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(0, 217, 255, 0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    position: relative;
+    z-index: 1;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.iconWrapper {
+    display: flex;
+    width: 42px;
+    height: 42px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255, 0, 255, 0.25), rgba(0, 217, 255, 0.25));
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.15);
+}
+
+.title {
+    font-size: 16px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #00d9ff, #ff00ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.5px;
+}
+
+.subtitle {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.45);
+    margin-top: 2px;
+}
+
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Symbol selector */
+.symbolSelector {
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.symbolBtn {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.symbolBtn:hover {
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.symbolBtnActive {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, rgba(0, 217, 255, 0.3), rgba(255, 0, 255, 0.2));
+    color: #fff;
+    box-shadow: 0 0 12px rgba(0, 217, 255, 0.2);
+}
+
+/* Timeframe tabs */
+.timeframeTabs {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.tfBtn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.tfBtn:hover {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.tfBtnActive {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    background: rgba(0, 217, 255, 0.2);
+    color: #00d9ff;
+    box-shadow: 0 0 8px rgba(0, 217, 255, 0.15);
+}
+
+/* Refresh button */
+.refreshBtn {
+    padding: 7px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.refreshBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #00d9ff;
+}
+
+/* Chart area */
+.chartArea {
+    position: relative;
+    z-index: 1;
+    padding: 8px;
+}
+
+.chartContainer {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Loading overlay */
+.loadingOverlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 14, 39, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 5;
+}
+
+.loadingText {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 13px;
+    margin-top: 12px;
+}
+
+/* Pattern overlay */
+.patternOverlay {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+    background: rgba(10, 14, 39, 0.88);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 217, 255, 0.15);
+    border-radius: 12px;
+    padding: 14px;
+    max-width: 260px;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 0 25px rgba(0, 217, 255, 0.1);
+}
+
+.overlayTitle {
+    font-size: 11px;
+    font-weight: 700;
+    color: #00d9ff;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.patternItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid;
+    transition: all 0.2s ease;
+}
+
+.patternItem:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.patternName {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.patternMeta {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 2px;
+}
+
+.emptyPatterns {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 11px;
+    font-style: italic;
+}
+
+/* Confidence badge */
+.confidenceBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: var(--font-jetbrains-mono), monospace;
+}
+
+.confidenceHigh {
+    background: rgba(0, 255, 136, 0.15);
+    color: #00ff88;
+}
+
+.confidenceMedium {
+    background: rgba(255, 165, 0, 0.15);
+    color: #ffa500;
+}
+
+.confidenceLow {
+    background: rgba(255, 51, 102, 0.15);
+    color: #ff3366;
+}
+
+/* Direction badge */
+.directionBullish {
+    color: #00ff88;
+}
+
+.directionBearish {
+    color: #ff3366;
+}
+
+/* Footer legend */
+.footer {
+    display: flex;
+    gap: 12px;
+    padding: 10px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.legendDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    box-shadow: 0 0 6px currentColor;
+}
+
+/* Pulse animation for active patterns */
+@keyframes patternPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        box-shadow: 0 0 8px currentColor;
+    }
+
+    50% {
+        opacity: 0.7;
+        box-shadow: 0 0 20px currentColor;
+    }
+}
+
+.patternActive {
+    animation: patternPulse 2s ease-in-out infinite;
+}
+
+/* Custom scrollbar */
+.patternOverlay::-webkit-scrollbar {
+    width: 4px;
+}
+
+.patternOverlay::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.patternOverlay::-webkit-scrollbar-thumb {
+    background: rgba(0, 217, 255, 0.3);
+    border-radius: 4px;
+}
+
+/* Pattern count badge */
+.patternCount {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(0, 217, 255, 0.3), rgba(255, 0, 255, 0.3));
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+}

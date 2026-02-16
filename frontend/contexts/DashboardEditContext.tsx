@@ -66,6 +66,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "smc-panel", title: "Smart Money Concepts", column: "right", order: 1, visible: true, size: "large", collapsed: false },
     { id: "risk-reward", title: "Risk/Reward Optimizer", column: "right", order: 2, visible: true, size: "large", collapsed: false },
     { id: "pattern-engine", title: "Pattern Engine V2", column: "right", order: 3, visible: true, size: "large", collapsed: false },
+    { id: "harmonic-visualizer", title: "Harmonic Visualizer", column: "right", order: 3.5, visible: true, size: "large", collapsed: false },
     { id: "sentiment", title: "AI Sentiment", column: "right", order: 4, visible: true, size: "medium", collapsed: false },
     { id: "comex-news", title: "COMEX News", column: "right", order: 5, visible: true, size: "medium", collapsed: false },
     { id: "whale-tracker", title: "Whale Tracker", column: "right", order: 6, visible: true, size: "medium", collapsed: false },
@@ -88,7 +89,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "rhythm-detectors", title: "Rhythm Detectors", column: "center", order: 23, visible: true, size: "full", collapsed: false },
     { id: "charts", title: "Trading Charts", column: "center", order: 24, visible: true, size: "full", collapsed: false },
   ],
-  version: 21,
+  version: 22,
 };
 
 const LAYOUT_STORAGE_KEY = "dashboard-layout-v7";
@@ -144,7 +145,7 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
     }
     // Only track when in edit mode
     if (!isEditMode) return;
-    
+
     setHistory((prev) => ({
       past: [...prev.past.slice(-MAX_HISTORY), layout],
       future: [],
@@ -240,17 +241,17 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
       // Swap column and order
       const card1 = { ...cards[idx1] };
       const card2 = { ...cards[idx2] };
-      
+
       console.log("[swapCards] Before swap - Card1:", card1.column, card1.order, "Card2:", card2.column, card2.order);
-      
+
       const tempColumn = card1.column;
       const tempOrder = card1.order;
-      
+
       card1.column = card2.column;
       card1.order = card2.order;
       card2.column = tempColumn;
       card2.order = tempOrder;
-      
+
       cards[idx1] = card1;
       cards[idx2] = card2;
 
@@ -286,10 +287,10 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
       const newPast = [...prev.past];
       const current = newPast.pop()!;
       const previous = newPast[newPast.length - 1];
-      
+
       isUndoRedo.current = true;
       setLayout(previous);
-      
+
       return {
         past: newPast,
         future: [current, ...prev.future],
@@ -301,10 +302,10 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
     setHistory((prev) => {
       if (prev.future.length === 0) return prev;
       const [next, ...newFuture] = prev.future;
-      
+
       isUndoRedo.current = true;
       setLayout(next);
-      
+
       return {
         past: [...prev.past, next],
         future: newFuture,
