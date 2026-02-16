@@ -47,48 +47,65 @@ async function fetchPriceData(symbol: string, signal?: AbortSignal): Promise<{ p
     let currentPrice: number | null = null;
     let previousClose: number = 0;
 
-    const cachedPrev = previousCloseCache.get(symbol);
-    if (cachedPrev && Date.now() - cachedPrev.fetchedAt < 30 * 60 * 1000) {
-      previousClose = cachedPrev.previousClose;
-    }
-
     // Try cached endpoint first (lightweight - reads from DataHub memory)
+    // The backend ta_snapshot already includes prev_close and change_pct
     try {
       const cachedRes = await fetchWithTimeout(`${API_BASE}/api/data/cached/${encodeURIComponent(symbol)}`, 8000, signal);
       if (cachedRes.ok) {
         const cachedData = await cachedRes.json();
-        currentPrice = cachedData?.data?.current_price
-          ?? cachedData?.data?.ta_snapshot?.close
+        const ta = cachedData?.data?.ta_snapshot;
+
+        // Extract current price from multiple possible fields
+        currentPrice = ta?.current_price
+          ?? ta?.close
+          ?? cachedData?.data?.current_price
           ?? cachedData?.current_price
           ?? null;
+
+        // Extract previousClose from ta_snapshot (backend already computes this)
+        if (ta?.prev_close && ta.prev_close > 0) {
+          previousClose = ta.prev_close;
+        } else if (ta?.last_close && ta.last_close > 0 && ta.last_close !== currentPrice) {
+          previousClose = ta.last_close;
+        }
+
+        // Skip symbols with price = 0 (market closed / no data)
+        if (currentPrice !== null && currentPrice <= 0) {
+          currentPrice = null;
+        }
       }
     } catch (e: any) {
       if (e?.name === 'AbortError') return null;
       console.warn(`Cached endpoint failed for ${symbol}:`, e);
     }
 
-    // Only fetch OHLCV if we need previousClose (once per 30 min)
-    if (!previousClose) {
-      try {
-        const ohlcvRes = await fetchWithTimeout(
-          `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=1d&limit=3`,
-          8000, signal
-        );
-        if (ohlcvRes.ok) {
-          const ohlcvData = await ohlcvRes.json();
-          const candles = ohlcvData?.data || [];
-          if (candles.length >= 2) {
-            previousClose = candles[candles.length - 2]?.close ?? 0;
-            if (previousClose) previousCloseCache.set(symbol, { previousClose, fetchedAt: Date.now() });
-            if (currentPrice === null) currentPrice = candles[candles.length - 1]?.close ?? null;
-          } else if (candles.length === 1) {
-            previousClose = candles[0]?.open ?? candles[0]?.close ?? 0;
-            if (previousClose) previousCloseCache.set(symbol, { previousClose, fetchedAt: Date.now() });
-            if (currentPrice === null) currentPrice = candles[0]?.close ?? null;
+    // Fallback: fetch OHLCV only if we still need previousClose
+    if (!previousClose && currentPrice !== null) {
+      const cachedPrev = previousCloseCache.get(symbol);
+      if (cachedPrev && Date.now() - cachedPrev.fetchedAt < 30 * 60 * 1000) {
+        previousClose = cachedPrev.previousClose;
+      } else {
+        try {
+          const ohlcvRes = await fetchWithTimeout(
+            `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=1d&limit=50`,
+            8000, signal
+          );
+          if (ohlcvRes.ok) {
+            const ohlcvData = await ohlcvRes.json();
+            const candles = ohlcvData?.data || [];
+            if (candles.length >= 2) {
+              previousClose = candles[candles.length - 2]?.close ?? 0;
+              if (previousClose) previousCloseCache.set(symbol, { previousClose, fetchedAt: Date.now() });
+              if (currentPrice === null) currentPrice = candles[candles.length - 1]?.close ?? null;
+            } else if (candles.length === 1) {
+              previousClose = candles[0]?.open ?? candles[0]?.close ?? 0;
+              if (previousClose) previousCloseCache.set(symbol, { previousClose, fetchedAt: Date.now() });
+              if (currentPrice === null) currentPrice = candles[0]?.close ?? null;
+            }
           }
+        } catch (e: any) {
+          if (e?.name === 'AbortError') return null;
         }
-      } catch (e: any) {
-        if (e?.name === 'AbortError') return null;
       }
     }
 
