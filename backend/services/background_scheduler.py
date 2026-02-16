@@ -29,9 +29,9 @@ TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"]
 DATA_UPDATE_INTERVAL = 60   # Update price/TA data every 60 seconds (was 5s!)
 MACRO_UPDATE_INTERVAL = 300  # Update macro data (DXY, VIX, USDTRY) every 5 minutes
 NEWS_UPDATE_INTERVAL = 600   # Update news every 10 minutes
-OUTCOME_CHECK_INTERVAL = 600  # Check outcomes every 10 minutes
+OUTCOME_CHECK_INTERVAL = 120  # Check outcomes every 2 minutes
 ERROR_ANALYSIS_INTERVAL = 3600  # Analyze errors every hour
-PREDICTION_LOG_INTERVAL = 1800  # Log predictions every 30 minutes
+PREDICTION_LOG_INTERVAL = 120  # Log predictions every 2 minutes
 
 # Last update timestamps
 _last_news_update: Dict[str, datetime] = {}
@@ -40,7 +40,7 @@ _last_outcome_check: Optional[datetime] = None
 _last_error_analysis: Optional[datetime] = None
 _last_prediction_log: Dict[str, datetime] = {}  # Per symbol
 _last_pulse_log: Dict[str, datetime] = {}  # Per symbol, for Pulse signal logging
-PULSE_LOG_INTERVAL = 1800  # Log Pulse signals every 30 minutes
+PULSE_LOG_INTERVAL = 120  # Log Pulse signals every 2 minutes
 _last_macro_update: Optional[datetime] = None
 _cached_macro: Dict[str, Any] = {}  # Cached macro data
 

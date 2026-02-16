@@ -71,6 +71,8 @@ import { useSingleTimeframeAnalysis, type Timeframe, type TimeframeAnalysis } fr
 const initialMarketTickers = [
   { label: "NASDAQ", price: "--", change: "--%", trend: "up" as const },
   { label: "XAU/USD", price: "--", change: "--%", trend: "up" as const },
+  { label: "DAX", price: "--", change: "--%", trend: "up" as const },
+  { label: "US OIL", price: "--", change: "--%", trend: "up" as const },
 ];
 
 // Placeholder shown only while cache is loading
@@ -427,8 +429,8 @@ export default function HomePage() {
     return () => clearTimeout(timeout);
   }, []);
 
-  // Live prices hook - updates every 30 seconds (DataHub updates every 30s)
-  const { tickers: liveTickers, isLoading: pricesLoading } = useLivePrices(30000);
+  // Live prices hook - updates every 15 seconds
+  const { tickers: liveTickers, isLoading: pricesLoading } = useLivePrices(15000);
 
   // Cache hook - loads pre-computed data from backend immediately
   const { nasdaq: cachedNasdaq, xauusd: cachedXauusd, hasData: hasCachedData } = useCachedDashboardData();
@@ -1325,33 +1327,56 @@ export default function HomePage() {
             {marketTickers.map((ticker) => {
               const isLoadingPrice = pricesLoading || ticker.price === "--" || ticker.price === "-";
               const isUp = ticker.trend === "up";
+              // Per-asset accent colors
+              const accent = ticker.label === "NASDAQ"
+                ? { from: "#3b82f6", to: "#60a5fa", glow: "rgba(59,130,246,0.3)", bg: "rgba(59,130,246,0.06)" }
+                : ticker.label === "XAU/USD"
+                  ? { from: "#f59e0b", to: "#fbbf24", glow: "rgba(245,158,11,0.3)", bg: "rgba(245,158,11,0.06)" }
+                  : ticker.label === "DAX"
+                    ? { from: "#8b5cf6", to: "#a78bfa", glow: "rgba(139,92,246,0.3)", bg: "rgba(139,92,246,0.06)" }
+                    : { from: "#ef4444", to: "#f87171", glow: "rgba(239,68,68,0.3)", bg: "rgba(239,68,68,0.06)" };
+              const icon = ticker.label === "NASDAQ" ? "📊" : ticker.label === "XAU/USD" ? "🥇" : ticker.label === "DAX" ? "🇩🇪" : "🛢️";
+
               return (
                 <div key={ticker.label} className="group relative">
-                  {/* Glass Card Background */}
-                  <div className="relative flex items-center gap-3 px-4 py-2 rounded-lg bg-slate-900/50 backdrop-blur-md border border-white/5 group-hover:border-white/20 transition-all duration-300 shadow-lg group-hover:shadow-blue-900/10">
+                  <div
+                    className="relative flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-300 group-hover:scale-[1.03]"
+                    style={{
+                      background: `linear-gradient(135deg, ${accent.bg}, rgba(15,23,42,0.7))`,
+                      border: `1px solid ${accent.from}20`,
+                      boxShadow: `0 2px 12px ${accent.glow}`,
+                    }}
+                  >
+                    {/* Asset Icon */}
+                    <span className="text-base leading-none">{icon}</span>
 
-                    {/* Status Indicator Dot */}
-                    <div className={`w-1.5 h-1.5 rounded-full ${isUp ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]"}`} />
-
-                    {/* Content */}
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider group-hover:text-slate-300 transition-colors">{ticker.label}</span>
+                    {/* Price Info */}
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-extrabold uppercase tracking-[0.15em] leading-none" style={{ color: accent.from }}>{ticker.label}</span>
+                        {/* Live pulse dot */}
+                        <span className="relative flex h-1.5 w-1.5">
+                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-60 ${isUp ? "bg-emerald-400" : "bg-rose-400"}`}></span>
+                          <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${isUp ? "bg-emerald-400" : "bg-rose-400"}`}></span>
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm font-bold text-white leading-none">
+                      <div className="flex items-baseline gap-1.5 mt-0.5">
+                        <span className="font-mono text-[13px] font-black text-white leading-none tracking-tight">
                           {isLoadingPrice ? "---" : `$${ticker.price}`}
                         </span>
                         {!isLoadingPrice && (
-                          <span className={`text-[9px] font-bold ${isUp ? "text-emerald-400" : "text-rose-400"}`}>
-                            {ticker.change}
+                          <span className={`text-[9px] font-bold px-1 py-[1px] rounded-md ${isUp ? "text-emerald-300 bg-emerald-500/15" : "text-rose-300 bg-rose-500/15"}`}>
+                            {isUp ? "▲" : "▼"} {ticker.change}
                           </span>
                         )}
                       </div>
                     </div>
 
-                    {/* Mini Sparkline Effect (Top Border) */}
-                    <div className={`absolute top-0 left-2 right-2 h-[1px] bg-gradient-to-r ${isUp ? "from-emerald-500/50 via-emerald-400 to-transparent" : "from-rose-500/50 via-rose-400 to-transparent"} opacity-0 group-hover:opacity-100 transition-opacity`} />
+                    {/* Top Gradient Line */}
+                    <div
+                      className="absolute top-0 left-3 right-3 h-[2px] rounded-full opacity-40 group-hover:opacity-80 transition-opacity"
+                      style={{ background: `linear-gradient(90deg, ${accent.from}, ${accent.to}, transparent)` }}
+                    />
                   </div>
                 </div>
               );

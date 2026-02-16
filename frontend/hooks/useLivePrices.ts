@@ -26,6 +26,8 @@ const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const SYMBOLS_CONFIG = [
   { symbol: "NDX.INDX", label: "NASDAQ" },
   { symbol: "XAUUSD", label: "XAU/USD" },
+  { symbol: "GDAXI.INDX", label: "DAX" },
+  { symbol: "CL.COMM", label: "US OIL" },
 ];
 
 const previousCloseCache = new Map<string, { previousClose: number; fetchedAt: number }>();
@@ -55,9 +57,9 @@ async function fetchPriceData(symbol: string, signal?: AbortSignal): Promise<{ p
       const cachedRes = await fetchWithTimeout(`${API_BASE}/api/data/cached/${encodeURIComponent(symbol)}`, 8000, signal);
       if (cachedRes.ok) {
         const cachedData = await cachedRes.json();
-        currentPrice = cachedData?.data?.current_price 
-          ?? cachedData?.data?.ta_snapshot?.close 
-          ?? cachedData?.current_price 
+        currentPrice = cachedData?.data?.current_price
+          ?? cachedData?.data?.ta_snapshot?.close
+          ?? cachedData?.current_price
           ?? null;
       }
     } catch (e: any) {
@@ -124,8 +126,8 @@ export function useLivePrices(refreshInterval: number = 30000): {
         const data = await fetchPriceData(symbol, controller.signal);
         if (data) {
           const change = data.price - data.previousClose;
-          const changePercent = data.previousClose > 0 
-            ? (change / data.previousClose) * 100 
+          const changePercent = data.previousClose > 0
+            ? (change / data.previousClose) * 100
             : 0;
 
           newPrices.set(symbol, {
@@ -179,9 +181,9 @@ export function useLivePrices(refreshInterval: number = 30000): {
 
     return {
       label,
-      price: data.price.toLocaleString("en-US", { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
+      price: data.price.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
       }),
       change: `${data.changePercent >= 0 ? "+" : ""}${data.changePercent.toFixed(2)}%`,
       trend: data.trend,
