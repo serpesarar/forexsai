@@ -205,7 +205,7 @@ async def _fetch_candles_from_api(symbol: str, interval: str, limit: int = 500) 
                     "volume": float(row.get("volume") or 0.0),
                 })
             logger.info(f"[DataHub] Fetched {len(cleaned)} {interval} candles for {symbol} (requested {limit}, from {calendar_days}d ago)")
-            return cleaned[-limit:]
+            return cleaned  # Return ALL candles — _merge_candles handles dedup & limit
     except Exception as e:
         logger.debug(f"Candle fetch failed for {symbol} {interval}: {e}")
     return []
