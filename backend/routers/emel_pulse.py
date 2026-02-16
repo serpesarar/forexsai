@@ -897,7 +897,9 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
             suggestion_text += f" | Notes: {', '.join(decision_notes)}"
         
         # ─── LEARNING ENTEGRASYONU ────────────────────────────────────────
-        if pulse_signal in ["BUY", "SELL"] and signal_type in ("CONFIRM", "SCOUT"):
+        # Log ALL BUY/SELL signals regardless of signal_type (CONFIRM/SCOUT/HOLD)
+        # so Signal Performance panel tracks every directional signal from Pulse 1
+        if pulse_signal in ["BUY", "SELL"]:
             try:
                 from services.prediction_logger import log_prediction
                 context = {
@@ -906,6 +908,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
                     "score": score,
                     "signal_type": signal_type,
                     "score_details": score_details,
+                    "decision_notes": decision_notes,
                     "ml_prediction": {
                         "direction": pulse_signal,
                         "confidence": round(score),
@@ -1318,8 +1321,8 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
         else:
             suggestion = f"⏱️ Hold{regime_tag}. ML score: {score:.0f}/100"
         
-        # Loglama (CONFIRM + SCOUT)
-        if signal in ["BUY", "SELL"] and signal_type in ("CONFIRM", "SCOUT"):
+        # Loglama — ALL BUY/SELL signals (not just CONFIRM/SCOUT)
+        if signal in ["BUY", "SELL"]:
             try:
                 from services.prediction_logger import log_prediction
                 await log_prediction(
@@ -1328,6 +1331,7 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
                         "source": "PULSE_ML",
                         "ta": ta,
                         "score": score,
+                        "signal_type": signal_type,
                         "ml_prediction": {
                             "direction": signal,
                             "confidence": ml_confidence,
@@ -1341,6 +1345,7 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
                     strategy="PULSE_ML",
                     model_type="pulse2",
                 )
+                logger.info(f"PULSE-ML signal logged: {symbol} {signal} ({signal_type}) @ {current_price}")
             except Exception as log_err:
                 logger.warning(f"Failed to log PULSE-ML prediction: {log_err}")
 
@@ -1907,7 +1912,8 @@ async def get_pulse_v3_analysis(symbol: str):
                 ]
         
         # ─── LEARNING ENTEGRASYONU ────────────────────────────────────────
-        if direction in ["BUY", "SELL"] and signal_type in ("CONFIRM", "SCOUT"):
+        # Log ALL BUY/SELL signals (not just CONFIRM/SCOUT)
+        if direction in ["BUY", "SELL"]:
             try:
                 from services.prediction_logger import log_prediction
                 await log_prediction(
@@ -1935,6 +1941,7 @@ async def get_pulse_v3_analysis(symbol: str):
                     strategy="PULSE_V3",
                     model_type="pulse3",
                 )
+                logger.info(f"PULSE-V3 signal logged: {symbol} {direction} ({signal_type}) @ {current_price}")
             except Exception as log_err:
                 logger.warning(f"Failed to log PULSE-V3 prediction: {log_err}")
         
