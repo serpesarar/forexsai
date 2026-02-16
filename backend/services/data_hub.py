@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 # ═══════════════════════════════════════════════════════════════
 # TRACKED SYMBOLS
 # ═══════════════════════════════════════════════════════════════
-TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX"]
+TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"]
 
 # ═══════════════════════════════════════════════════════════════
 # FETCH INTERVALS (seconds)

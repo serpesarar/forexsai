@@ -244,6 +244,8 @@ export default function StrategyPerformancePanel() {
           {[
             { key: "NDX.INDX", label: "NASDAQ", iconColor: "text-emerald-400" },
             { key: "XAUUSD", label: "XAU/USD", iconColor: "text-yellow-400" },
+            { key: "GDAXI.INDX", label: "DAX", iconColor: "text-blue-400" },
+            { key: "CL.COMM", label: "US Oil", iconColor: "text-orange-400" },
           ].map(({ key: symKey, label, iconColor }) => (
             <div key={symKey}>
               <div className="flex items-center gap-2 mb-2">
