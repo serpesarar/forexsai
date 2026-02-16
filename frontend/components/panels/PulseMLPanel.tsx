@@ -75,6 +75,8 @@ interface PulseMLPanelProps {
 const SYMBOLS = [
   { key: "NDX.INDX", label: "NASDAQ" },
   { key: "XAUUSD", label: "XAUUSD" },
+  { key: "GDAXI.INDX", label: "DAX" },
+  { key: "CL.COMM", label: "US Oil" },
 ];
 
 const TIMEFRAMES = ["5m", "15m", "30m", "1H", "4H"];

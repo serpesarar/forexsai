@@ -20,13 +20,14 @@ Derived (computed, 0 API calls):
   - 4h candles: resampled from 1h (4x)
 
 Daily API budget (after first seed):
-  Price: 2 symbols × 1 call × 2/min × 60min × 24h = 5,760 calls
-  5m:    2 symbols × 1 call × 12/hour × 24h = 576 calls (delta=24 candles)
-  1h:    2 symbols × 1 call × 12/hour × 24h = 576 calls (delta=6 candles)
-  EOD:   2 symbols × 1 call × 2/hour × 24h = 96 calls (delta=5 candles)
-  TOTAL: ~7,000 / 100,000 limit (7% usage)
+  Price: 3 symbols × 1 call × 2/min × 60min × 24h = 8,640 calls
+  5m:    3 symbols × 1 call × 12/hour × 24h = 864 calls (delta=24 candles)
+  1h:    3 symbols × 1 call × 12/hour × 24h = 864 calls (delta=6 candles)
+  EOD:   3 symbols × 1 call × 2/hour × 24h = 144 calls (delta=5 candles)
+  Macro: 5 symbols × 1 call × 12/hour × 24h = 1,440 calls
+  TOTAL: ~11,950 / 100,000 limit (~12% usage)
 
-  First-time seed (one-time): ~20 extra calls for full history
+  First-time seed (one-time): ~30 extra calls for full history
   Subsequent days: only delta → 93% reduction vs original design
 """
 
@@ -49,7 +50,7 @@ logger = logging.getLogger(__name__)
 # ═══════════════════════════════════════════════════════════════
 # TRACKED SYMBOLS
 # ═══════════════════════════════════════════════════════════════
-TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD"]
+TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX"]
 
 # ═══════════════════════════════════════════════════════════════
 # FETCH INTERVALS (seconds)
@@ -66,6 +67,8 @@ MACRO_SYMBOLS = {
     "dxy": "DXY.INDX",
     "vix": "VIX.INDX",
     "usdtry": "USDTRY",
+    "eurusd": "EURUSD.FOREX",
+    "vdax": "V1X.INDX",
 }
 
 # ═══════════════════════════════════════════════════════════════
@@ -101,6 +104,13 @@ def _normalize_symbol(symbol: str) -> str:
     s = (symbol or "").strip()
     if not s:
         return s
+    # Explicit commodity mappings
+    if s.upper() in ("USOIL", "WTI"):
+        return "CL.COMM"
+    if s.upper() == "BRENT":
+        return "BZ.COMM"
+    if s.upper() == "DXY":
+        return "DX-Y.NYB"
     if "." in s:
         return s
     if s.upper() == "XAUUSD":
@@ -335,7 +345,9 @@ FULL_SEED_LIMIT_EOD = 365   # ~1 year of daily candles
 # EODHD interval support varies by symbol:
 #   XAUUSD.FOREX: supports 1m, 15m, 30m (NOT 5m, 1h)
 #   NDX.INDX:     supports 5m, 1h
+#   GDAXI.INDX:   supports 5m, 1h (same as NDX)
 # Strategy for XAUUSD: fetch 1m→5m, fetch 30m directly→1h/4h
+# Strategy for DAX: same as NDX (5m fetched, 1h fetched, derive 15m/30m/4h)
 _1M_ONLY_SYMBOLS = {"XAUUSD"}   # 5m = resample from 1m
 _30M_DIRECT_SYMBOLS = {"XAUUSD"}  # 1h/4h = resample from 30m
 

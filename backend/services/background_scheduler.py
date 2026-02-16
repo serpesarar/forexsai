@@ -22,7 +22,7 @@ from services.signal_lifecycle import check_lifecycle_if_needed
 logger = logging.getLogger(__name__)
 
 # Symbols to track
-TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD"]
+TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"]
 
 # Update intervals (seconds) - OPTIMIZED for 100K daily API call limit
 # Each EODHD intraday/real-time request = 5 API calls
@@ -65,7 +65,7 @@ async def _get_macro_data() -> Dict[str, Any]:
         return _cached_macro
     
     macro = {}
-    for key, sym in [("dxy", "DXY.INDX"), ("vix", "VIX.INDX"), ("usdtry", "USDTRY")]:
+    for key, sym in [("dxy", "DXY.INDX"), ("vix", "VIX.INDX"), ("vdax", "V1X.INDX"), ("eurusd", "EURUSD"), ("usdtry", "USDTRY")]:
         try:
             price = await fetch_latest_price(sym)
             macro[key] = {"symbol": sym, "price": float(price) if price else None}
@@ -113,10 +113,19 @@ async def update_symbol_data(symbol: str) -> Optional[Dict[str, Any]]:
         session = "closed"
         if 13 <= hour_utc < 21:
             session = "us_open"
-        elif 8 <= hour_utc < 16:
-            session = "europe_open"
+        elif 7 <= hour_utc < 16:
+            session = "europe_open"  # XETRA: 07:00-15:30 UTC
         elif 0 <= hour_utc < 8:
             session = "asia_open"
+        
+        # DAX-specific: mark XETRA session precisely
+        if symbol == "GDAXI.INDX":
+            if 7 <= hour_utc < 15 or (hour_utc == 15 and now_utc.minute <= 30):
+                session = "xetra_open"
+            elif 15 < hour_utc < 21:
+                session = "us_overlap"  # DAX afterhours but US still open
+            elif hour_utc >= 21 or hour_utc < 7:
+                session = "closed"
         
         # Volume (simplified)
         volume_data = {
@@ -125,12 +134,57 @@ async def update_symbol_data(symbol: str) -> Optional[Dict[str, Any]]:
         }
         
         # Volatility assessment
-        vix_price = macro.get("vix", {}).get("price")
-        volatility_level = "NORMAL"
-        if vix_price and vix_price > 20:
-            volatility_level = "HIGH"
-        elif vix_price and vix_price < 15:
-            volatility_level = "LOW"
+        # Use VDAX for DAX, VIX for everything else
+        if symbol == "GDAXI.INDX":
+            vol_price = macro.get("vdax", {}).get("price")
+            vol_index_name = "VDAX"
+        else:
+            vol_price = macro.get("vix", {}).get("price")
+            vol_index_name = "VIX"
+        
+        # DAX-specific volatility thresholds (VDAX is structurally lower than VIX)
+        if symbol == "GDAXI.INDX":
+            if vol_price and vol_price > 25:
+                volatility_level = "EXTREME"
+            elif vol_price and vol_price > 18:
+                volatility_level = "HIGH"
+            elif vol_price and vol_price < 12:
+                volatility_level = "LOW"
+            else:
+                volatility_level = "NORMAL"
+        else:
+            if vol_price and vol_price > 30:
+                volatility_level = "EXTREME"
+            elif vol_price and vol_price > 20:
+                volatility_level = "HIGH"
+            elif vol_price and vol_price < 15:
+                volatility_level = "LOW"
+            else:
+                volatility_level = "NORMAL"
+        
+        # Correlation matrix (DAX-specific)
+        correlation = {}
+        if symbol == "GDAXI.INDX":
+            eurusd_price = macro.get("eurusd", {}).get("price")
+            vdax_price = macro.get("vdax", {}).get("price")
+            dxy_price = macro.get("dxy", {}).get("price")
+            correlation = {
+                "eurusd": {
+                    "price": eurusd_price,
+                    "direction": "negative",
+                    "note": "Strong EUR = weaker DAX exports"
+                },
+                "vdax": {
+                    "price": vdax_price,
+                    "risk_level": "extreme" if vdax_price and vdax_price > 25 else "high" if vdax_price and vdax_price > 18 else "normal",
+                    "note": "VDAX >18 = elevated risk, >25 = danger zone"
+                },
+                "dxy": {
+                    "price": dxy_price,
+                    "direction": "inverse",
+                    "note": "Strong USD = pressure on European equities"
+                },
+            }
         
         return {
             "symbol": symbol,
@@ -141,7 +195,8 @@ async def update_symbol_data(symbol: str) -> Optional[Dict[str, Any]]:
             "macro": macro,
             "session": {"current": session, "hour_utc": hour_utc},
             "volume": volume_data,
-            "volatility": {"level": volatility_level, "vix": vix_price},
+            "volatility": {"level": volatility_level, "index_price": vol_price, "index_name": vol_index_name},
+            "correlation": correlation,
         }
     except Exception as e:
         logger.error(f"Error updating data for {symbol}: {e}")
@@ -161,7 +216,12 @@ async def update_news_if_needed(symbol: str) -> Optional[Dict[str, Any]]:
     
     try:
         # Fetch news
-        news_symbols = ["XAUUSD", "GOLD", "DXY", "USD"] if "XAU" in symbol else ["NDX", "NASDAQ", "VIX", "DXY"]
+        if "XAU" in symbol:
+            news_symbols = ["XAUUSD", "GOLD", "DXY", "USD"]
+        elif "GDAXI" in symbol:
+            news_symbols = ["DAX", "GER40", "GDAXI", "EURUSD", "ECB", "SAP", "Siemens", "Allianz", "BASF", "Deutsche Bank", "German IFO", "ZEW", "Bundesbank", "German GDP"]
+        else:
+            news_symbols = ["NDX", "NASDAQ", "VIX", "DXY"]
         headlines = await fetch_marketaux_headlines(news_symbols)
         
         # Create hash to detect changes
@@ -451,13 +511,20 @@ async def log_pulse_signals_if_needed():
         try:
             from routers.emel_pulse import get_pulse_v3_analysis
             v3 = await get_pulse_v3_analysis(symbol)
-            if isinstance(v3, dict) and not v3.get("error"):
-                sig = v3.get("direction", "HOLD")
-                st = v3.get("signal_type", "HOLD")
-                if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
-                    logger.info(f"Scheduler: Pulse V3 {symbol} {sig} ({st})")
+            if isinstance(v3, dict):
+                if v3.get("error"):
+                    logger.warning(f"Scheduler: Pulse V3 {symbol} returned error: {v3['error']}")
+                else:
+                    sig = v3.get("direction", "HOLD")
+                    st = v3.get("signal_type", "HOLD")
+                    if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
+                        logger.info(f"Scheduler: Pulse V3 {symbol} {sig} ({st})")
+                    else:
+                        logger.debug(f"Scheduler: Pulse V3 {symbol} → {sig} ({st}) — no signal logged")
+            else:
+                logger.warning(f"Scheduler: Pulse V3 {symbol} returned non-dict: {type(v3)}")
         except Exception as e:
-            logger.debug(f"Pulse V3 log error {symbol}: {e}")
+            logger.warning(f"Pulse V3 log error {symbol}: {e}")
 
         await asyncio.sleep(0.3)
 
@@ -465,13 +532,20 @@ async def log_pulse_signals_if_needed():
         try:
             from routers.emel_pulse import get_pulse_ml_analysis
             v2 = await get_pulse_ml_analysis(symbol)
-            if isinstance(v2, dict) and not v2.get("error"):
-                sig = v2.get("signal", "HOLD")
-                st = v2.get("signal_type", "HOLD")
-                if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
-                    logger.info(f"Scheduler: Pulse ML {symbol} {sig} ({st})")
+            if isinstance(v2, dict):
+                if v2.get("error"):
+                    logger.warning(f"Scheduler: Pulse ML {symbol} returned error: {v2['error']}")
+                else:
+                    sig = v2.get("signal", "HOLD")
+                    st = v2.get("signal_type", "HOLD")
+                    if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
+                        logger.info(f"Scheduler: Pulse ML {symbol} {sig} ({st})")
+                    else:
+                        logger.debug(f"Scheduler: Pulse ML {symbol} → {sig} ({st}) — no signal logged")
+            else:
+                logger.warning(f"Scheduler: Pulse ML {symbol} returned non-dict: {type(v2)}")
         except Exception as e:
-            logger.debug(f"Pulse ML log error {symbol}: {e}")
+            logger.warning(f"Pulse ML (V2) log error {symbol}: {e}")
 
         await asyncio.sleep(0.3)
 
@@ -479,13 +553,20 @@ async def log_pulse_signals_if_needed():
         try:
             from routers.emel_pulse import get_pulse_analysis
             v1 = await get_pulse_analysis(symbol)
-            if isinstance(v1, dict) and not v1.get("error"):
-                sig = v1.get("signal", "HOLD")
-                st = v1.get("signal_type", "HOLD")
-                if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
-                    logger.info(f"Scheduler: Pulse V1 {symbol} {sig} ({st})")
+            if isinstance(v1, dict):
+                if v1.get("error"):
+                    logger.warning(f"Scheduler: Pulse V1 {symbol} returned error: {v1['error']}")
+                else:
+                    sig = v1.get("signal", "HOLD")
+                    st = v1.get("signal_type", "HOLD")
+                    if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
+                        logger.info(f"Scheduler: Pulse V1 {symbol} {sig} ({st})")
+                    else:
+                        logger.debug(f"Scheduler: Pulse V1 {symbol} → {sig} ({st}) — no signal logged")
+            else:
+                logger.warning(f"Scheduler: Pulse V1 {symbol} returned non-dict: {type(v1)}")
         except Exception as e:
-            logger.debug(f"Pulse V1 log error {symbol}: {e}")
+            logger.warning(f"Pulse V1 log error {symbol}: {e}")
 
         await asyncio.sleep(0.3)
 
@@ -493,12 +574,19 @@ async def log_pulse_signals_if_needed():
         try:
             from routers.emel_pulse import get_emel_analysis
             emel = await get_emel_analysis(symbol)
-            if isinstance(emel, dict) and not emel.get("error"):
-                sig = emel.get("signal", "HOLD")
-                if sig in ("BUY", "SELL"):
-                    logger.info(f"Scheduler: EMEL {symbol} {sig}")
+            if isinstance(emel, dict):
+                if emel.get("error"):
+                    logger.warning(f"Scheduler: EMEL {symbol} returned error: {emel['error']}")
+                else:
+                    sig = emel.get("signal", "HOLD")
+                    if sig in ("BUY", "SELL"):
+                        logger.info(f"Scheduler: EMEL {symbol} {sig}")
+                    else:
+                        logger.debug(f"Scheduler: EMEL {symbol} → {sig} — no signal logged")
+            else:
+                logger.warning(f"Scheduler: EMEL {symbol} returned non-dict: {type(emel)}")
         except Exception as e:
-            logger.debug(f"EMEL log error {symbol}: {e}")
+            logger.warning(f"EMEL log error {symbol}: {e}")
 
         await asyncio.sleep(0.3)
 

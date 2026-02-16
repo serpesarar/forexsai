@@ -92,7 +92,17 @@ EVENT_MULTIPLIERS = {
     'jobs_report': 1.4,
     'geopolitical': 1.6,
     'market_crash': 2.0,
+    'eia_report': 1.8,
+    'opec_decision': 2.0,
     'default': 1.0,
+}
+
+# Symbol → EODHD news search symbols mapping
+SYMBOL_NEWS_MAP = {
+    'XAUUSD': 'GOLD,GC.CMX,DXY.INDX,SPY.US',
+    'NDX.INDX': 'NDX.INDX,SPY.US,QQQ.US,AAPL.US',
+    'GDAXI.INDX': 'GDAXI.INDX,DAX,SPY.US',
+    'CL.COMM': 'CL.CMX,BZ.CMX,OIL,DXY.INDX',
 }
 
 
@@ -128,8 +138,8 @@ class UnifiedNewsAnalyzer:
         
         try:
             async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
-                # Gold için en iyi semboller
-                symbols = "GOLD,GC.CMX,DXY.INDX,SPY.US"
+                # Symbol-specific news search
+                symbols = SYMBOL_NEWS_MAP.get(symbol, "GOLD,GC.CMX,DXY.INDX,SPY.US")
                 
                 response = await client.get(
                     "https://eodhistoricaldata.com/api/news",
@@ -181,6 +191,29 @@ class UnifiedNewsAnalyzer:
             'gold fall', 'gold drop', 'risk on', 'dollar strong',
             'rate hike', 'inflation cool', 'deal', 'peace', 'growth'
         ]
+        
+        # Oil-specific keywords (active when oil news is fetched)
+        oil_bullish_keywords = [
+            'oil supply cut', 'opec cut', 'crude draw', 'oil surge',
+            'tanker attack', 'hormuz', 'oil embargo', 'pipeline attack',
+            'refinery outage', 'crude rally', 'oil demand', 'driving season',
+            'iran sanction', 'russia oil ban', 'houthi', 'red sea'
+        ]
+        
+        oil_bearish_keywords = [
+            'oil glut', 'opec increase', 'crude build', 'oil slump',
+            'oil demand weak', 'shale boom', 'strategic reserve release',
+            'oil surplus', 'crude oversupply', 'recession fear'
+        ]
+        
+        # Merge oil keywords if oil-related news detected
+        has_oil_context = any('oil' in (a.get('title') or '').lower() or
+                             'crude' in (a.get('title') or '').lower() or
+                             'opec' in (a.get('title') or '').lower()
+                             for a in news[:5])
+        if has_oil_context:
+            bullish_keywords.extend(oil_bullish_keywords)
+            bearish_keywords.extend(oil_bearish_keywords)
         
         for article in news[:20]:  # Son 20 haber
             title = (article.get('title') or '').lower()
@@ -346,8 +379,18 @@ class UnifiedNewsAnalyzer:
         """
         
         # Paralel olarak tüm kaynakları çek
+        # Map symbol to EODHD news search term
+        if "XAU" in symbol:
+            news_symbol = "XAUUSD"
+        elif symbol == "CL.COMM":
+            news_symbol = "CL.COMM"
+        elif symbol == "GDAXI.INDX":
+            news_symbol = "GDAXI.INDX"
+        else:
+            news_symbol = "NDX.INDX"
+        
         eodhd_news, live_tv_result, twitter_result = await asyncio.gather(
-            self._fetch_eodhd_news("GOLD" if "XAU" in symbol else "SPY"),
+            self._fetch_eodhd_news(news_symbol),
             self._get_live_tv_sentiment(),
             self._get_twitter_sentiment(),
             return_exceptions=True

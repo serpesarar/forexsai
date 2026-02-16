@@ -83,6 +83,8 @@ interface ClearTrendPanelProps {
 const SYMBOLS = [
   { key: "NDX.INDX", label: "NASDAQ", icon: "📊" },
   { key: "XAUUSD", label: "XAUUSD", icon: "🥇" },
+  { key: "GDAXI.INDX", label: "DAX", icon: "🇩🇪" },
+  { key: "CL.COMM", label: "US Oil", icon: "🛢️" },
 ];
 
 export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }: ClearTrendPanelProps) {

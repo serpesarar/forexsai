@@ -1938,6 +1938,47 @@ async def get_pulse_v3_analysis(symbol: str):
             except Exception as log_err:
                 logger.warning(f"Failed to log PULSE-V3 prediction: {log_err}")
         
+        # ─── OIL ANALYSIS (CL.COMM only) ─────────────────────────────────
+        oil_analysis = None
+        if symbol == "CL.COMM":
+            try:
+                from services.oil_analysis_service import generate_oil_analysis
+                from services.market_data_service import get_ohlcv_data as get_ohlcv
+
+                # Fetch DXY and S&P500 data for correlation
+                dxy_data, spx_data = None, None
+                try:
+                    dxy_candles = await get_ohlcv("DX-Y.NYB", "5m", limit=50)
+                    if dxy_candles:
+                        dxy_data = dxy_candles
+                except Exception:
+                    pass
+                try:
+                    spx_candles = await get_ohlcv("GSPC.INDX", "5m", limit=50)
+                    if spx_candles:
+                        spx_data = spx_candles
+                except Exception:
+                    pass
+
+                oil_analysis = await generate_oil_analysis(
+                    wti_candles=data_5m,
+                    session=regime.session,
+                    dxy_candles=dxy_data,
+                    spx_candles=spx_data,
+                )
+
+                # Blend oil composite score into total (20% weight)
+                oil_score_adjust = oil_analysis.get("composite_score", 0) * 0.2
+                total_score = total_score * 0.8 + oil_score_adjust
+
+                # Add oil-specific notes
+                for r in oil_analysis.get("risks", []):
+                    notes.append(r)
+                for m in oil_analysis.get("modifiers", []):
+                    notes.append(m)
+            except Exception as oil_err:
+                logger.warning(f"Oil analysis error for CL.COMM: {oil_err}")
+
         return {
             "symbol": symbol,
             "timestamp": datetime.now().isoformat(),
@@ -1975,7 +2016,17 @@ async def get_pulse_v3_analysis(symbol: str):
             "suggestion": suggestion,
             "entry_zones": entry_zones,
             "notes": notes,
-            "valid_for_seconds": 300
+            "valid_for_seconds": 300,
+            # Oil-specific analysis (only for CL.COMM)
+            **({"oil_analysis": {
+                "composite_score": oil_analysis["composite_score"],
+                "label": oil_analysis["label"],
+                "confidence": oil_analysis["confidence"],
+                "layers": oil_analysis["layers"],
+                "key_levels": oil_analysis["key_levels"],
+                "reasons": oil_analysis["reasons"],
+                "risks": oil_analysis["risks"],
+            }} if oil_analysis else {}),
         }
         
     except Exception as e:

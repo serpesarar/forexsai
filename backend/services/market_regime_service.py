@@ -204,18 +204,56 @@ def _detect_ath_zone(highs: np.ndarray, current_price: float, lookback_days: int
 # CORE: SESSION DETECTION
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _detect_session() -> str:
+def _detect_session(symbol: str = "") -> str:
     """
     Detect current trading session based on UTC time.
+    For DAX (GDAXI.INDX): uses XETRA hours.
     Asia: 00:00 - 07:00 UTC
     London: 07:00 - 13:00 UTC
     London/NY Overlap: 13:00 - 16:00 UTC (highest volume)
     New York: 16:00 - 21:00 UTC
     After Hours: 21:00 - 00:00 UTC (treated as asia-like)
+    
+    XETRA (DAX):
+    Pre-market: 07:00 UTC (08:00 CET)
+    Main session: 08:00 - 15:30 UTC (09:00-16:30 CET)
+    Closing auction: 15:30 UTC (16:30 CET)
+    US overlap: 13:30 - 15:30 UTC (highest DAX volatility)
     """
     now = datetime.now(timezone.utc)
     hour = now.hour
+    minute = now.minute
 
+    # DAX-specific XETRA session detection
+    if symbol == "GDAXI.INDX":
+        if 8 <= hour < 13:
+            return "xetra"  # XETRA main session (09:00-14:00 CET)
+        elif 13 <= hour < 15 or (hour == 15 and minute <= 30):
+            return "xetra_us_overlap"  # XETRA + US open (highest volatility)
+        elif (hour == 7 and minute >= 0) or (hour == 15 and minute > 30) or (15 < hour < 21):
+            return "newyork"  # XETRA closed but US still active
+        else:
+            return "asia"  # off-hours
+
+    # WTI Crude Oil — NYMEX session detection
+    # NYMEX main: 14:30–21:00 UTC (09:30–16:00 EST)
+    # EIA release: Wednesday 15:30 UTC (10:30 EST)
+    # London oil: 08:00–14:30 UTC (03:00–09:30 EST)
+    if symbol == "CL.COMM":
+        is_wednesday = now.weekday() == 2
+        # EIA window: Wednesday 15:15–15:45 UTC (10:15–10:45 EST)
+        if is_wednesday and hour == 15 and 15 <= minute <= 45:
+            return "nymex_eia_window"
+        if 14 <= hour < 15 or (hour == 14 and minute >= 30):
+            return "nymex"  # NYMEX opening (highest volatility)
+        elif 15 <= hour < 21:
+            return "nymex"  # NYMEX main session
+        elif 8 <= hour < 14:
+            return "london_oil"  # London/European oil trading
+        else:
+            return "asia"  # off-hours (low volume)
+
+    # Default session detection for other symbols
     if 0 <= hour < 7:
         return "asia"
     elif 7 <= hour < 13:
@@ -370,8 +408,8 @@ async def detect_regime(symbol: str, force_refresh: bool = False) -> RegimeResul
         eod_highs = np.array([c["high"] for c in eod_data], dtype=np.float64)
         is_ath, ath_price = _detect_ath_zone(eod_highs, current_price, lookback_days=60)
 
-    # 5. Session
-    session = _detect_session()
+    # 5. Session (symbol-aware for XETRA)
+    session = _detect_session(symbol)
 
     # ═══ REGIME DECISION ═══
     regime: RegimeType = "TRANSITION"
@@ -470,6 +508,29 @@ def _build_regime_result(
     elif session == "newyork":
         if regime in ["STRONG_TREND_UP", "STRONG_TREND_DOWN"]:
             min_rr = 1.3  # NY can have volatile reversals
+    
+    # ═══ XETRA SESSION ADJUSTMENTS (DAX) ═══
+    if session == "xetra":
+        # XETRA main session = best liquidity for DAX
+        pass  # keep defaults — optimal trading window
+    elif session == "xetra_us_overlap":
+        # US open creates highest DAX volatility — widen R/R
+        min_rr = max(min_rr, 1.5)
+        # Pulse1 gets more weight during volatile US overlap
+        weights["pulse1"] = max(weights["pulse1"], 0.25)
+
+    # ═══ NYMEX SESSION ADJUSTMENTS (WTI Crude Oil) ═══
+    if session == "nymex_eia_window":
+        # EIA release window (Wed 10:30 EST) — extreme volatility, reduce confidence
+        min_rr = max(min_rr, 2.0)  # Very high R/R during EIA
+        weights["pulse1"] = 0.05   # Scalping dangerous during EIA
+        weights["pulse3"] = 0.35   # Hybrid model best for EIA volatility
+    elif session == "nymex":
+        # NYMEX main session = best liquidity for WTI
+        weights["pulse1"] = max(weights["pulse1"], 0.20)  # Scalping OK in NYMEX
+    elif session == "london_oil":
+        # London pre-market for oil — moderate liquidity
+        min_rr = max(min_rr, 1.4)
 
     return RegimeResult(
         regime=regime,
@@ -508,7 +569,7 @@ def _default_regime(symbol: str, live_price) -> RegimeResult:
         is_ath_zone=False,
         ath_price=price,
         current_price=price,
-        session=_detect_session(),
+        session=_detect_session(symbol),
         timestamp=datetime.now(timezone.utc).isoformat(),
         model_weights={"ml": 0.35, "pulse1": 0.15, "pulse2": 0.25, "pulse3": 0.25},
         rsi_overbought=75.0,

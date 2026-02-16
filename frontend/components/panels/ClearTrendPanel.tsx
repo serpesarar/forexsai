@@ -83,6 +83,8 @@ interface ClearTrendPanelProps {
 const SYMBOLS = [
   { key: "NDX.INDX", label: "NASDAQ", icon: "📊" },
   { key: "XAUUSD", label: "XAUUSD", icon: "🥇" },
+  { key: "GDAXI.INDX", label: "DAX", icon: "🇩🇪" },
+  { key: "CL.COMM", label: "US Oil", icon: "🛢️" },
 ];
 
 export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: ClearTrendPanelProps) {
@@ -187,8 +189,8 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
                   key={s.key}
                   onClick={() => setActiveSymbol(s.key)}
                   className={`px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 ${activeSymbol === s.key
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-800 text-gray-400 hover:text-white"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-800 text-gray-400 hover:text-white"
                     }`}
                 >
                   <span>{s.icon}</span>
@@ -235,10 +237,10 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
                 <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
                   <div
                     className={`h-full ${data.trend.direction === "UP"
-                        ? "bg-green-500"
-                        : data.trend.direction === "DOWN"
-                          ? "bg-red-500"
-                          : "bg-yellow-500"
+                      ? "bg-green-500"
+                      : data.trend.direction === "DOWN"
+                        ? "bg-red-500"
+                        : "bg-yellow-500"
                       }`}
                     style={{ width: `${data.trend.strength_percent}%` }}
                   />
@@ -303,18 +305,18 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
                       else openExplanation("pivot", "Pivot Point");
                     }}
                     className={`relative flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isCurrent
-                        ? "bg-blue-600/30 border-2 border-blue-500"
-                        : isResistance
-                          ? "bg-red-500/20 border border-red-500/50"
-                          : "bg-green-500/20 border border-green-500/50"
+                      ? "bg-blue-600/30 border-2 border-blue-500"
+                      : isResistance
+                        ? "bg-red-500/20 border border-red-500/50"
+                        : "bg-green-500/20 border border-green-500/50"
                       }`}
                   >
                     {/* Level Indicator */}
                     <div className={`w-12 h-8 rounded flex items-center justify-center text-xs font-bold ${isCurrent
-                        ? "bg-blue-600 text-white"
-                        : isResistance
-                          ? "bg-red-500/50 text-red-200"
-                          : "bg-green-500/50 text-green-200"
+                      ? "bg-blue-600 text-white"
+                      : isResistance
+                        ? "bg-red-500/50 text-red-200"
+                        : "bg-green-500/50 text-green-200"
                       }`}>
                       {isCurrent ? "NOW" : level.name.split(" ")[0]}
                     </div>
@@ -402,10 +404,10 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
             </div>
 
             <div className={`rounded-lg p-4 border ${data.trend.direction === "UP"
-                ? "bg-green-900/20 border-green-600"
-                : data.trend.direction === "DOWN"
-                  ? "bg-red-900/20 border-red-600"
-                  : "bg-yellow-900/20 border-yellow-600"
+              ? "bg-green-900/20 border-green-600"
+              : data.trend.direction === "DOWN"
+                ? "bg-red-900/20 border-red-600"
+                : "bg-yellow-900/20 border-yellow-600"
               }`}>
               <p className="text-sm text-white mb-3">{data.trade_zones.suggestion}</p>
 

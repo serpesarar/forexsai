@@ -71,6 +71,8 @@ interface MTFData {
 const SYMBOLS = [
   { key: "XAUUSD", label: "XAUUSD" },
   { key: "NDX.INDX", label: "NASDAQ" },
+  { key: "GDAXI.INDX", label: "DAX" },
+  { key: "CL.COMM", label: "US Oil" },
 ];
 
 const TF_ORDER = ["M5", "M15", "M30", "H1", "H4", "D1"];

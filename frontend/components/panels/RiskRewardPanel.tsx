@@ -61,6 +61,8 @@ interface RiskData {
 const SYMBOLS = [
   { key: "XAUUSD", label: "XAUUSD" },
   { key: "NDX.INDX", label: "NASDAQ" },
+  { key: "GDAXI.INDX", label: "DAX" },
+  { key: "CL.COMM", label: "US Oil" },
 ];
 
 export default function RiskRewardPanel() {

@@ -79,6 +79,8 @@ interface ClearTrendData {
 const SYMBOLS = [
   { key: "NDX.INDX", label: "NASDAQ", icon: "📊" },
   { key: "XAUUSD", label: "XAUUSD", icon: "🥇" },
+  { key: "GDAXI.INDX", label: "DAX", icon: "🇩🇪" },
+  { key: "CL.COMM", label: "US Oil", icon: "🛢️" },
 ];
 
 /* ──────────────────── Sub-Components ──────────────────── */

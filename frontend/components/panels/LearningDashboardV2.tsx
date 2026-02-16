@@ -142,7 +142,7 @@ function ModelCard({ model, stats }: { model: string; stats: ModelStats }) {
             <div className="space-y-2">
               <p className="text-[9px] uppercase tracking-[0.2em] text-white/30">Per Symbol</p>
               {Object.entries(stats.symbols).map(([sym, d]) => {
-                const symName = sym === "NDX.INDX" ? "NASDAQ" : sym;
+                const symName = sym === "NDX.INDX" ? "NASDAQ" : sym === "GDAXI.INDX" ? "DAX" : sym === "CL.COMM" ? "US Oil" : sym;
                 const symNetColor = (d.net_pips ?? 0) >= 0 ? N.g.c : N.r.c;
                 return (
                   <div key={sym} className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
@@ -199,7 +199,7 @@ function ActiveSignalRow({ signal, onSelect }: { signal: ActiveSignal; onSelect:
         </div>
         <div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-bold font-mono text-white/80">{signal.symbol === "NDX.INDX" ? "NASDAQ" : signal.symbol}</span>
+            <span className="text-[11px] font-bold font-mono text-white/80">{signal.symbol === "NDX.INDX" ? "NASDAQ" : signal.symbol === "GDAXI.INDX" ? "DAX" : signal.symbol === "CL.COMM" ? "US Oil" : signal.symbol}</span>
             <span className="text-[10px] font-bold font-mono" style={{ color: dirColor.c }}>{signal.ml_direction}</span>
             <span className="text-[9px] px-1.5 py-0 rounded" style={{ color: theme.color, background: `${theme.color}12` }}>{signal.model_type}</span>
           </div>
@@ -256,7 +256,7 @@ function SignalDetailModal({ signalId, onClose }: { signalId: string; onClose: (
               {sig.ml_direction === "BUY" ? <ArrowUpRight className="w-5 h-5" style={{ color: dirColor.c }} /> : <ArrowDownRight className="w-5 h-5" style={{ color: dirColor.c }} />}
             </div>
             <div>
-              <p className="text-sm font-bold font-mono text-white">{sig.symbol === "NDX.INDX" ? "NASDAQ" : sig.symbol} {sig.ml_direction}</p>
+              <p className="text-sm font-bold font-mono text-white">{sig.symbol === "NDX.INDX" ? "NASDAQ" : sig.symbol === "GDAXI.INDX" ? "DAX" : sig.symbol === "CL.COMM" ? "US Oil" : sig.symbol} {sig.ml_direction}</p>
               <p className="text-[10px] text-white/30 font-mono">
                 {sig.model_type} · {sig.status} · {new Date(sig.created_at).toLocaleString()}
               </p>

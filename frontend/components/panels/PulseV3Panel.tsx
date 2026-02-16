@@ -82,6 +82,8 @@ interface PulseV3PanelProps {
 const SYMBOLS = [
   { key: "NDX.INDX", label: "NASDAQ" },
   { key: "XAUUSD", label: "XAUUSD" },
+  { key: "GDAXI.INDX", label: "DAX" },
+  { key: "CL.COMM", label: "US Oil" },
 ];
 
 /* ── Neon helpers ── */
