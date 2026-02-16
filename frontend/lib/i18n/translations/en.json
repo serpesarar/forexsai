@@ -110,7 +110,7 @@
   },
   "header": {
     "title": "AI Trading Dashboard",
-    "subtitle": "NASDAQ + XAUUSD"
+    "subtitle": "NASDAQ + XAUUSD + DAX"
   },
   "signal": {
     "nearestSupport": "Nearest Support",
@@ -128,6 +128,7 @@
     "subtitle": "Active Formations",
     "nasdaqPatterns": "NASDAQ Patterns",
     "xauusdPatterns": "XAU/USD Patterns",
+    "daxPatterns": "DAX Patterns",
     "activePatterns": "Active Patterns",
     "noPatterns": "No active patterns detected",
     "completion": "Completion",
@@ -298,7 +299,7 @@
   },
   "customAnalysis": {
     "title": "Custom Analysis (Last 100 candles)",
-    "summary": "NASDAQ momentum accelerating while XAUUSD remains range-bound.",
+    "summary": "NASDAQ momentum accelerating while XAUUSD remains range-bound. DAX following European session dynamics.",
     "insight1": "15m structure shows bullish continuation patterns on NDX.",
     "insight2": "1h gold structure lacks follow-through; consider mean reversion.",
     "insight3": "Cross-asset correlation indicates risk-on sentiment."
@@ -762,7 +763,7 @@
     },
     "clearTrend": {
       "title": "Cyberpunk Trend Analysis",
-      "description": "Real-time trend analysis panel combining EMA crossovers, channel positions, and support/resistance levels. Provides a clear directional bias for both NASDAQ and XAU/USD with visual confidence indicators.",
+      "description": "Real-time trend analysis panel combining EMA crossovers, channel positions, and support/resistance levels. Provides a clear directional bias for NASDAQ, XAU/USD and DAX with visual confidence indicators.",
       "dataPoints": "EMA 20/50/200 distances, trend channel upper/lower bands, support/resistance proximity, RSI, trend strength percentage, and overall directional signal (BUY/SELL/HOLD).",
       "usage": "Check the main signal direction and confidence level before entering a trade. Use the EMA distances to gauge how extended price is from the mean. If price is near channel boundaries, expect reversals.",
       "tips": "When all EMAs align (20>50>200 or 20<50<200) with 80%+ confidence, the signal is strongest. Always cross-check with the SMC panel for institutional confirmation."
@@ -820,7 +821,7 @@
       "title": "MarketAux Live News",
       "description": "Live news feed from MarketAux delivering real-time market headlines with sentiment classification. Each headline is tagged as bullish, bearish, or neutral for quick scanning.",
       "dataPoints": "News headlines, source, publication time, sentiment tag (bullish/bearish/neutral).",
-      "usage": "Scan headlines before and during trading sessions. Focus on news that directly affects your trading instruments (NASDAQ, XAU/USD). Use sentiment tags for quick assessment.",
+      "usage": "Scan headlines before and during trading sessions. Focus on news that directly affects your trading instruments (NASDAQ, XAU/USD, DAX). Use sentiment tags for quick assessment.",
       "tips": "Be cautious of trading immediately after major news — wait for the initial volatility to settle. News creates opportunities but also traps for impulsive traders."
     },
     "comexNews": {
@@ -898,7 +899,7 @@
       "description": "Historical seasonal pattern analysis showing how assets typically perform during specific months, weeks, or time periods. Based on multi-year historical data.",
       "dataPoints": "Monthly/seasonal patterns, historical win rates per period, average returns, seasonal strength indicators.",
       "usage": "Use as a background filter — trade in the direction of seasonal tendencies when they align with your technical analysis. Don't trade against strong seasonal patterns without good reason.",
-      "tips": "Seasonal patterns work because of institutional flows (quarter-end rebalancing, tax-loss selling, holiday effects). They're most reliable in mature, liquid markets like NASDAQ and Gold."
+      "tips": "Seasonal patterns work because of institutional flows (quarter-end rebalancing, tax-loss selling, holiday effects). They're most reliable in mature, liquid markets like NASDAQ, Gold, and DAX."
     },
     "learningDashboard": {
       "title": "Learning Dashboard",

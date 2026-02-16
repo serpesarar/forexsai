@@ -814,6 +814,18 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
                     if hit:
                         m["symbols"][sym]["target_hits"][tp_name]["hit"] += 1
 
+        # Ensure all known model types exist in response (even with 0 signals)
+        KNOWN_MODELS = ["ml", "pulse1", "pulse2", "pulse3", "emel"]
+        for km in KNOWN_MODELS:
+            if km not in models:
+                models[km] = {
+                    "total": 0, "completed": 0, "stopped": 0, "expired": 0,
+                    "total_profit_pips": 0, "total_loss_pips": 0,
+                    "profits": [], "losses": [],
+                    "target_hits": {},
+                    "symbols": {},
+                }
+
         # Build final stats
         model_stats = {}
         for mt, m in models.items():

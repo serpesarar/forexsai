@@ -110,7 +110,7 @@
   },
   "header": {
     "title": "AI Trading Dashboard",
-    "subtitle": "NASDAQ + XAUUSD"
+    "subtitle": "NASDAQ + XAUUSD + DAX"
   },
   "signal": {
     "nearestSupport": "En Yakın Destek",
@@ -128,6 +128,7 @@
     "subtitle": "Aktif Formasyonlar",
     "nasdaqPatterns": "NASDAQ Formasyonları",
     "xauusdPatterns": "XAU/USD Formasyonları",
+    "daxPatterns": "DAX Formasyonları",
     "activePatterns": "Aktif Formasyonlar",
     "noPatterns": "Aktif formasyon tespit edilmedi",
     "completion": "Tamamlanma",
@@ -298,7 +299,7 @@
   },
   "customAnalysis": {
     "title": "Özel Analiz (Son 100 mum)",
-    "summary": "NASDAQ momentumu hızlanırken XAUUSD aralıkta kalıyor.",
+    "summary": "NASDAQ momentumu hızlanırken XAUUSD aralıkta kalıyor. DAX Avrupa seansı dinamiklerini takip ediyor.",
     "insight1": "15m yapısı NDX'te yükseliş devam desenleri gösteriyor.",
     "insight2": "1h altın yapısı takip eksikliği gösteriyor; ortalama geri dönüşü düşünün.",
     "insight3": "Varlık arası korelasyon risk alma duygusunu gösteriyor."
@@ -754,7 +755,7 @@
     },
     "clearTrend": {
       "title": "Cyberpunk Trend Analizi",
-      "description": "EMA kesişimleri, kanal pozisyonları ve destek/direnç seviyelerini birleştiren gerçek zamanlı trend analiz paneli. Hem NASDAQ hem XAU/USD için görsel güven göstergeleriyle net yönsel eğilim sunar.",
+      "description": "EMA kesişimleri, kanal pozisyonları ve destek/direnç seviyelerini birleştiren gerçek zamanlı trend analiz paneli. NASDAQ, XAU/USD ve DAX için görsel güven göstergeleriyle net yönsel eğilim sunar.",
       "dataPoints": "EMA 20/50/200 uzaklıkları, trend kanalı üst/alt bantları, destek/direnç yakınlığı, RSI, trend gücü yüzdesi ve genel yönsel sinyal (AL/SAT/BEKLE).",
       "usage": "İşleme girmeden önce ana sinyal yönünü ve güven seviyesini kontrol edin. EMA uzaklıklarını fiyatın ortalamadan ne kadar uzaklaştığını ölçmek için kullanın. Fiyat kanal sınırlarına yakınsa geri dönüş bekleyin.",
       "tips": "Tüm EMA'lar hizalandığında (20>50>200 veya 20<50<200) %80+ güvenle sinyal en güçlüdür. Her zaman kurumsal onay için SMC paneli ile çapraz kontrol yapın."
@@ -812,7 +813,7 @@
       "title": "MarketAux Canlı Haberler",
       "description": "MarketAux'dan duyarlılık sınıflandırmasıyla gerçek zamanlı piyasa başlıkları sunan canlı haber akışı. Her başlık hızlı tarama için yükseliş, düşüş veya nötr olarak etiketlenir.",
       "dataPoints": "Haber başlıkları, kaynak, yayın zamanı, duyarlılık etiketi (yükseliş/düşüş/nötr).",
-      "usage": "İşlem seansları öncesinde ve sırasında başlıkları tarayın. İşlem yaptığınız araçları (NASDAQ, XAU/USD) doğrudan etkileyen haberlere odaklanın. Hızlı değerlendirme için duyarlılık etiketlerini kullanın.",
+      "usage": "İşlem seansları öncesinde ve sırasında başlıkları tarayın. İşlem yaptığınız araçları (NASDAQ, XAU/USD, DAX) doğrudan etkileyen haberlere odaklanın. Hızlı değerlendirme için duyarlılık etiketlerini kullanın.",
       "tips": "Büyük haberlerden hemen sonra işlem yapma konusunda dikkatli olun — ilk volatilitenin yatışmasını bekleyin. Haberler fırsatlar yaratır ama dürtüsel tüccarlar için tuzaklar da oluşturur."
     },
     "comexNews": {
@@ -890,7 +891,7 @@
       "description": "Varlıkların belirli aylarda, haftalarda veya zaman dilimlerinde tipik olarak nasıl performans gösterdiğini gösteren tarihsel mevsimsel desen analizi. Çok yıllık tarihsel verilere dayanır.",
       "dataPoints": "Aylık/mevsimsel desenler, dönem başına tarihsel kazanma oranları, ortalama getiriler, mevsimsel güç göstergeleri.",
       "usage": "Teknik analizinizle örtüştüğünde arka plan filtresi olarak kullanın — mevsimsel eğilimler yönünde işlem yapın. İyi bir neden olmadan güçlü mevsimsel desenlere karşı işlem yapmayın.",
-      "tips": "Mevsimsel desenler kurumsal akışlar nedeniyle çalışır (çeyrek sonu yeniden dengeleme, vergi kaybı satışı, tatil etkileri). NASDAQ ve Altın gibi olgun, likit piyasalarda en güvenilirdirler."
+      "tips": "Mevsimsel desenler kurumsal akışlar nedeniyle çalışır (çeyrek sonu yeniden dengeleme, vergi kaybı satışı, tatil etkileri). NASDAQ, Altın ve DAX gibi olgun, likit piyasalarda en güvenilirdirler."
     },
     "learningDashboard": {
       "title": "Öğrenme Paneli",
