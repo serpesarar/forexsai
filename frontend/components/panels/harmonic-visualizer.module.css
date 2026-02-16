@@ -1,379 +1,674 @@
-/* Harmonic Visualizer Panel — Neon/Galaxy Theme */
+/* ──────────────────────────────────────────────────
+   Harmonic Visualizer Panel — Galaxy Glow Theme
+   ────────────────────────────────────────────────── */
 
-.container {
-    position: relative;
-    background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0d1229 100%);
-    border: 1px solid rgba(0, 217, 255, 0.15);
+/* ─── PANEL LAYOUT ──────────────────────────────── */
+
+.panel {
+    background: linear-gradient(135deg, #0a0e27 0%, #0d1135 50%, #0a0e27 100%);
+    border: 1px solid rgba(255, 140, 0, 0.15);
     border-radius: 16px;
     overflow: hidden;
-    box-shadow:
-        0 0 40px rgba(0, 217, 255, 0.08),
-        inset 0 0 80px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
-/* Galaxy background effect */
-.container::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image:
-        radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.08) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.06) 0%, transparent 50%),
-        radial-gradient(circle at 40% 20%, rgba(0, 217, 255, 0.04) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 0;
-}
+/* ─── HEADER ─────────────────────────────────────── */
 
 .header {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    position: relative;
-    z-index: 1;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 140, 0, 0.12);
+    background: rgba(255, 140, 0, 0.04);
 }
 
 .headerLeft {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
-.iconWrapper {
-    display: flex;
-    width: 42px;
-    height: 42px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    background: linear-gradient(135deg, rgba(255, 0, 255, 0.25), rgba(0, 217, 255, 0.25));
-    box-shadow: 0 0 20px rgba(0, 217, 255, 0.15);
+.iconGlow {
+    color: #FF8C00;
+    filter: drop-shadow(0 0 6px rgba(255, 140, 0, 0.6));
 }
 
 .title {
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 700;
-    background: linear-gradient(90deg, #00d9ff, #ff00ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: 0.5px;
+    color: #FF8C00;
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 8px rgba(255, 140, 0, 0.4);
+    margin: 0;
 }
 
-.subtitle {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.45);
-    margin-top: 2px;
-}
-
-.headerRight {
+.headerControls {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-/* Symbol selector */
-.symbolSelector {
-    display: flex;
-    gap: 4px;
-    padding: 3px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-}
-
-.symbolBtn {
-    padding: 5px 12px;
-    border: none;
+.select {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
+    color: #d1d4dc;
+    padding: 4px 8px;
     font-size: 11px;
-    font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    background: transparent;
-    color: rgba(255, 255, 255, 0.4);
+    outline: none;
 }
 
-.symbolBtn:hover {
-    color: rgba(255, 255, 255, 0.7);
-    background: rgba(255, 255, 255, 0.05);
+.select:focus {
+    border-color: #FF8C00;
 }
 
-.symbolBtnActive {
-    padding: 5px 12px;
-    border: none;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    background: linear-gradient(135deg, rgba(0, 217, 255, 0.3), rgba(255, 0, 255, 0.2));
-    color: #fff;
-    box-shadow: 0 0 12px rgba(0, 217, 255, 0.2);
-}
-
-/* Timeframe tabs */
-.timeframeTabs {
+.timeframeGroup {
     display: flex;
     gap: 2px;
-    padding: 3px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 6px;
+    padding: 2px;
 }
 
 .tfBtn {
-    padding: 5px 10px;
-    border: none;
-    border-radius: 6px;
-    font-size: 10px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-transform: uppercase;
     background: transparent;
-    color: rgba(255, 255, 255, 0.35);
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .tfBtn:hover {
-    color: rgba(255, 255, 255, 0.6);
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .tfBtnActive {
-    padding: 5px 10px;
-    border: none;
-    border-radius: 6px;
-    font-size: 10px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-transform: uppercase;
-    background: rgba(0, 217, 255, 0.2);
-    color: #00d9ff;
-    box-shadow: 0 0 8px rgba(0, 217, 255, 0.15);
+    color: #FF8C00;
+    background: rgba(255, 140, 0, 0.15);
+    box-shadow: 0 0 8px rgba(255, 140, 0, 0.2);
 }
 
-/* Refresh button */
 .refreshBtn {
-    padding: 7px;
-    border: none;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: #d1d4dc;
+    padding: 5px 7px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
-    justify-content: center;
 }
 
 .refreshBtn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #00d9ff;
+    border-color: #FF8C00;
+    color: #FF8C00;
 }
 
-/* Chart area */
-.chartArea {
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ─── CHART AREA ─────────────────────────────────── */
+
+.chartWrapper {
     position: relative;
-    z-index: 1;
-    padding: 8px;
+    flex: 1;
+    min-height: 350px;
 }
 
 .chartContainer {
     width: 100%;
-    border-radius: 8px;
-    overflow: hidden;
+    height: 100%;
+    min-height: 350px;
 }
 
-/* Loading overlay */
-.loadingOverlay {
+.loadingOverlay,
+.errorOverlay {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: rgba(10, 14, 39, 0.7);
-    backdrop-filter: blur(4px);
+    gap: 10px;
+    background: rgba(10, 14, 39, 0.85);
+    color: #d1d4dc;
+    font-size: 13px;
     z-index: 5;
 }
 
-.loadingText {
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 13px;
-    margin-top: 12px;
-}
+/* ─── SVG OVERLAY ────────────────────────────────── */
 
-/* Pattern overlay */
-.patternOverlay {
+.svgOverlay {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    z-index: 10;
-    background: rgba(10, 14, 39, 0.88);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(0, 217, 255, 0.15);
-    border-radius: 12px;
-    padding: 14px;
-    max-width: 260px;
-    max-height: 300px;
-    overflow-y: auto;
-    box-shadow: 0 0 25px rgba(0, 217, 255, 0.1);
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 4;
+    overflow: visible;
 }
 
-.overlayTitle {
-    font-size: 11px;
-    font-weight: 700;
-    color: #00d9ff;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
+/* ─── FORMATION GLOW — BIG (Harmonic) ─────────── */
 
-.patternItem {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    margin-bottom: 6px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.03);
-    border-left: 3px solid;
-    transition: all 0.2s ease;
-}
-
-.patternItem:hover {
-    background: rgba(255, 255, 255, 0.06);
-}
-
-.patternName {
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.patternMeta {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.4);
-    margin-top: 2px;
-}
-
-.emptyPatterns {
-    color: rgba(255, 255, 255, 0.3);
-    font-size: 11px;
-    font-style: italic;
-}
-
-/* Confidence badge */
-.confidenceBadge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 9px;
-    font-weight: 700;
-    font-family: var(--font-jetbrains-mono), monospace;
-}
-
-.confidenceHigh {
-    background: rgba(0, 255, 136, 0.15);
-    color: #00ff88;
-}
-
-.confidenceMedium {
-    background: rgba(255, 165, 0, 0.15);
-    color: #ffa500;
-}
-
-.confidenceLow {
-    background: rgba(255, 51, 102, 0.15);
-    color: #ff3366;
-}
-
-/* Direction badge */
-.directionBullish {
-    color: #00ff88;
-}
-
-.directionBearish {
-    color: #ff3366;
-}
-
-/* Footer legend */
-.footer {
-    display: flex;
-    gap: 12px;
-    padding: 10px 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    position: relative;
-    z-index: 1;
-    flex-wrap: wrap;
-}
-
-.legendItem {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.4);
-}
-
-.legendDot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    box-shadow: 0 0 6px currentColor;
-}
-
-/* Pulse animation for active patterns */
-@keyframes patternPulse {
+@keyframes pulseOrange {
 
     0%,
     100% {
         opacity: 1;
-        box-shadow: 0 0 8px currentColor;
+        filter: drop-shadow(0 0 6px #FF8C00) drop-shadow(0 0 14px rgba(255, 140, 0, 0.4));
     }
 
     50% {
-        opacity: 0.7;
-        box-shadow: 0 0 20px currentColor;
+        opacity: 0.75;
+        filter: drop-shadow(0 0 14px #FF8C00) drop-shadow(0 0 28px rgba(255, 140, 0, 0.7));
     }
 }
 
-.patternActive {
-    animation: patternPulse 2s ease-in-out infinite;
+.formationGlowBig {
+    animation: pulseOrange 2s ease-in-out infinite;
 }
 
-/* Custom scrollbar */
-.patternOverlay::-webkit-scrollbar {
-    width: 4px;
+.formationGlowBig polyline {
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
-.patternOverlay::-webkit-scrollbar-track {
-    background: transparent;
+/* ─── FORMATION GLOW — SMALL (Classic) ─────────── */
+
+.formationGlowSmall {
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
 }
 
-.patternOverlay::-webkit-scrollbar-thumb {
-    background: rgba(0, 217, 255, 0.3);
+.formationGlowSmall:hover {
+    opacity: 1;
+}
+
+.formationGlowSmall polyline {
+    stroke-linecap: round;
+    transition: stroke-width 0.2s ease;
+}
+
+.formationGlowSmall:hover polyline {
+    stroke-width: 3;
+}
+
+/* ─── POINT MARKERS ──────────────────────────────── */
+
+.pointMarker {
+    pointer-events: all;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.pointMarker:hover circle {
+    r: 7;
+}
+
+.glowRing {
+    animation: ringPulse 2s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+
+    0%,
+    100% {
+        r: 10;
+        opacity: 0.4;
+    }
+
+    50% {
+        r: 14;
+        opacity: 0.15;
+    }
+}
+
+.formationLabel {
+    pointer-events: all;
+    cursor: pointer;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.formationLabel:hover {
+    text-decoration: underline;
+}
+
+/* ─── PATTERN LIST ───────────────────────────────── */
+
+.patternList {
+    border-top: 1px solid rgba(255, 140, 0, 0.1);
+    padding: 10px 14px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.patternListHeader {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.clickHint {
+    margin-left: auto;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 10px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.noPatterns {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 12px;
+    padding: 16px 0;
+}
+
+.patternCards {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.patternCard {
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.patternCard:hover {
+    transform: translateX(2px);
+}
+
+/* Big formation card (orange border) */
+.patternCardBig {
+    background: rgba(255, 140, 0, 0.06);
+    border: 1px solid rgba(255, 140, 0, 0.2);
+}
+
+.patternCardBig:hover {
+    background: rgba(255, 140, 0, 0.12);
+    border-color: rgba(255, 140, 0, 0.4);
+    box-shadow: 0 0 12px rgba(255, 140, 0, 0.15);
+}
+
+/* Small formation card (blue border) */
+.patternCardSmall {
+    background: rgba(0, 191, 255, 0.04);
+    border: 1px solid rgba(0, 191, 255, 0.15);
+}
+
+.patternCardSmall:hover {
+    background: rgba(0, 191, 255, 0.1);
+    border-color: rgba(0, 191, 255, 0.35);
+    box-shadow: 0 0 12px rgba(0, 191, 255, 0.12);
+}
+
+.patternCardTop {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.patternEmoji {
+    font-size: 14px;
+}
+
+.patternName {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.dirBadge {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
     border-radius: 4px;
 }
 
-/* Pattern count badge */
-.patternCount {
-    display: inline-flex;
+.bullish {
+    color: #00ff88;
+    background: rgba(0, 255, 136, 0.1);
+}
+
+.bearish {
+    color: #ff4444;
+    background: rgba(255, 68, 68, 0.1);
+}
+
+.patternCardBottom {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.confBadge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+}
+
+.confidenceHigh {
+    color: #00ff88;
+    background: rgba(0, 255, 136, 0.12);
+}
+
+.confidenceMedium {
+    color: #ffc107;
+    background: rgba(255, 193, 7, 0.12);
+}
+
+.confidenceLow {
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.12);
+}
+
+.statusBadge {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.tpBadge {
+    font-size: 10px;
+    color: #00ff88;
+    font-weight: 600;
+}
+
+/* ─── DETAIL MODAL ───────────────────────────────── */
+
+.modalBackdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+    display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, rgba(0, 217, 255, 0.3), rgba(255, 0, 255, 0.3));
-    font-size: 10px;
-    font-weight: 700;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modalContent {
+    background: linear-gradient(135deg, #1a1f3a 0%, #0d1135 50%, #0a0e27 100%);
+    border-radius: 14px;
+    padding: 0;
+    min-width: 340px;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
     color: #fff;
+    position: relative;
+    overflow: hidden;
+    animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modalClose {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 2;
+}
+
+.modalClose:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.modalHeader {
+    padding: 18px 20px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.modalHeaderBig {
+    background: linear-gradient(90deg, rgba(255, 140, 0, 0.12) 0%, transparent 100%);
+    border-bottom-color: rgba(255, 140, 0, 0.15);
+}
+
+.modalHeaderSmall {
+    background: linear-gradient(90deg, rgba(0, 191, 255, 0.08) 0%, transparent 100%);
+    border-bottom-color: rgba(0, 191, 255, 0.12);
+}
+
+.modalEmoji {
+    font-size: 24px;
+}
+
+.modalHeader h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+    flex: 1;
+}
+
+.modalDir {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 5px;
+}
+
+.modalBody {
+    padding: 14px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.detailRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.detailRow span {
+    color: rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.detailRow strong {
+    font-weight: 700;
+}
+
+/* Points grid (XABCD) */
+.pointsGrid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.pointItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+}
+
+.pointKey {
+    font-size: 11px;
+    font-weight: 800;
+    color: #FF8C00;
+}
+
+.pointPrice {
+    font-size: 10px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.pointTime {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+/* Fibonacci section */
+.fibSection {
+    margin-top: 4px;
+    padding: 8px 10px;
+    background: rgba(255, 140, 0, 0.04);
+    border: 1px solid rgba(255, 140, 0, 0.08);
+    border-radius: 6px;
+}
+
+.fibTitle {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.fibValues {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #FF8C00;
+    font-weight: 600;
+}
+
+/* Modal Footer */
+.modalFooter {
+    padding: 12px 20px 16px;
+    display: flex;
+    gap: 8px;
+}
+
+.alarmBtn {
+    flex: 1;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, #FF8C00, #FF6B35);
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.alarmBtn:hover {
+    box-shadow: 0 0 16px rgba(255, 140, 0, 0.5);
+    transform: translateY(-1px);
+}
+
+.closeBtn {
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.closeBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+/* ─── SCROLLBAR ──────────────────────────────────── */
+
+.patternList::-webkit-scrollbar {
+    width: 4px;
+}
+
+.patternList::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.patternList::-webkit-scrollbar-thumb {
+    background: rgba(255, 140, 0, 0.3);
+    border-radius: 4px;
 }

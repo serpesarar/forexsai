@@ -13,6 +13,7 @@ import {
     DetectedPattern,
     DetectionOptions,
     CandleData,
+    PatternStatus,
     HARMONIC_PATTERNS,
     CLASSIC_PATTERNS,
     DEFAULT_DETECTION_OPTIONS,
@@ -196,6 +197,15 @@ export function detectHarmonicPatterns(
 
                 // Only include patterns with reasonable confidence
                 if (confidence >= 30) {
+                    const direction: 'BULLISH' | 'BEARISH' = D.price < A.price ? 'BULLISH' : 'BEARISH';
+                    // Target: 61.8% retracement of CD leg from D
+                    const cdLeg = Math.abs(D.price - C.price);
+                    const target_price = direction === 'BULLISH'
+                        ? D.price + cdLeg * 0.618
+                        : D.price - cdLeg * 0.618;
+                    // Stop loss: X point (invalidates the pattern)
+                    const stop_loss = X.price;
+
                     patterns.push({
                         type: key,
                         name: config.name,
@@ -207,8 +217,11 @@ export function detectHarmonicPatterns(
                             cd: Math.round(cdRatio * 1000) / 1000,
                             xd: Math.round(xdRatio * 1000) / 1000,
                         },
-                        direction: D.price < A.price ? 'BULLISH' : 'BEARISH',
+                        direction,
                         confidence,
+                        target_price: Math.round(target_price * 100) / 100,
+                        stop_loss: Math.round(stop_loss * 100) / 100,
+                        status: 'COMPLETED' as PatternStatus,
                     });
                 }
             }
@@ -283,6 +296,9 @@ export function detectClassicPatterns(
                 ...recent.slice(last2[0].index - (candles.length - lookback), last2[1].index - (candles.length - lookback))
                     .map(c => c.low)
             );
+            const topAvg = (last2[0].price + last2[1].price) / 2;
+            const necklineVal = isFinite(neckline) ? neckline : topAvg * 0.98;
+            const height = topAvg - necklineVal;
             patterns.push({
                 type: 'DOUBLE_TOP',
                 name: CLASSIC_PATTERNS.DOUBLE_TOP.name,
@@ -291,6 +307,9 @@ export function detectClassicPatterns(
                 direction: 'BEARISH',
                 neckline: isFinite(neckline) ? neckline : undefined,
                 confidence: Math.round((1 - priceDiff / 0.02) * 80 + 20),
+                target_price: Math.round((necklineVal - height) * 100) / 100,
+                stop_loss: Math.round(topAvg * 100) / 100,
+                status: 'COMPLETED' as PatternStatus,
             });
         }
     }
@@ -306,6 +325,9 @@ export function detectClassicPatterns(
                     last2[1].index - (candles.length - lookback)
                 ).map(c => c.high)
             );
+            const bottomAvg = (last2[0].price + last2[1].price) / 2;
+            const necklineValB = isFinite(neckline) ? neckline : bottomAvg * 1.02;
+            const heightB = necklineValB - bottomAvg;
             patterns.push({
                 type: 'DOUBLE_BOTTOM',
                 name: CLASSIC_PATTERNS.DOUBLE_BOTTOM.name,
@@ -314,6 +336,9 @@ export function detectClassicPatterns(
                 direction: 'BULLISH',
                 neckline: isFinite(neckline) ? neckline : undefined,
                 confidence: Math.round((1 - priceDiff / 0.02) * 80 + 20),
+                target_price: Math.round((necklineValB + heightB) * 100) / 100,
+                stop_loss: Math.round(bottomAvg * 100) / 100,
+                status: 'COMPLETED' as PatternStatus,
             });
         }
     }
@@ -326,6 +351,8 @@ export function detectClassicPatterns(
         const isHead = head.price > leftShoulder.price && head.price > rightShoulder.price;
 
         if (isHead && shoulderDiff < 0.03) {
+            const shoulderAvg = (leftShoulder.price + rightShoulder.price) / 2;
+            const headHeight = head.price - shoulderAvg;
             patterns.push({
                 type: 'HEAD_SHOULDERS',
                 name: CLASSIC_PATTERNS.HEAD_SHOULDERS.name,
@@ -333,6 +360,9 @@ export function detectClassicPatterns(
                 color: CLASSIC_PATTERNS.HEAD_SHOULDERS.color,
                 direction: 'BEARISH',
                 confidence: Math.round((1 - shoulderDiff / 0.03) * 70 + 30),
+                target_price: Math.round((shoulderAvg - headHeight) * 100) / 100,
+                stop_loss: Math.round(head.price * 100) / 100,
+                status: 'COMPLETED' as PatternStatus,
             });
         }
     }
@@ -348,6 +378,9 @@ export function detectClassicPatterns(
             bottomPrices[bottomPrices.length - 1] > bottomPrices[bottomPrices.length - 2];
 
         if (topFlat && bottomRising) {
+            const resistance = topPrices[topPrices.length - 1];
+            const support = bottomPrices[bottomPrices.length - 1];
+            const triHeight = resistance - support;
             patterns.push({
                 type: 'ASCENDING_TRIANGLE',
                 name: CLASSIC_PATTERNS.ASCENDING_TRIANGLE.name,
@@ -355,6 +388,9 @@ export function detectClassicPatterns(
                 color: CLASSIC_PATTERNS.ASCENDING_TRIANGLE.color,
                 direction: 'BULLISH',
                 confidence: 65,
+                target_price: Math.round((resistance + triHeight) * 100) / 100,
+                stop_loss: Math.round(support * 100) / 100,
+                status: 'COMPLETED' as PatternStatus,
             });
         }
     }
@@ -370,6 +406,9 @@ export function detectClassicPatterns(
             topPrices[topPrices.length - 1] < topPrices[topPrices.length - 2];
 
         if (bottomFlat && topFalling) {
+            const resistanceD = topPrices[topPrices.length - 1];
+            const supportD = bottomPrices[bottomPrices.length - 1];
+            const triHeightD = resistanceD - supportD;
             patterns.push({
                 type: 'DESCENDING_TRIANGLE',
                 name: CLASSIC_PATTERNS.DESCENDING_TRIANGLE.name,
@@ -377,6 +416,9 @@ export function detectClassicPatterns(
                 color: CLASSIC_PATTERNS.DESCENDING_TRIANGLE.color,
                 direction: 'BEARISH',
                 confidence: 65,
+                target_price: Math.round((supportD - triHeightD) * 100) / 100,
+                stop_loss: Math.round(resistanceD * 100) / 100,
+                status: 'COMPLETED' as PatternStatus,
             });
         }
     }

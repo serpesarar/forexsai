@@ -23,6 +23,8 @@ export interface PatternConfig {
     emoji: string;
 }
 
+export type PatternStatus = 'COMPLETED' | 'FORMING';
+
 export interface HarmonicPattern {
     type: string;
     name: string;
@@ -43,6 +45,9 @@ export interface HarmonicPattern {
     direction: 'BULLISH' | 'BEARISH';
     confidence: number;  // 0-100
     isProjected?: boolean;
+    target_price?: number;
+    stop_loss?: number;
+    status: PatternStatus;
 }
 
 export interface ClassicPattern {
@@ -53,6 +58,9 @@ export interface ClassicPattern {
     direction: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
     neckline?: number;
     confidence: number;
+    target_price?: number;
+    stop_loss?: number;
+    status: PatternStatus;
 }
 
 export type DetectedPattern = HarmonicPattern | ClassicPattern;
@@ -73,41 +81,53 @@ export interface CandleData {
     volume?: number;
 }
 
-// Pattern type constants
+// ─── COLOR CONSTANTS ─────────────────────────────────────────────────
+// Big formations (Harmonic) → Galaxy orange family
+export const HARMONIC_COLOR = '#FF8C00';
+export const HARMONIC_COLOR_DARK = '#FF6B35';
+export const HARMONIC_FILL = 'rgba(255, 140, 0, 0.10)';
+export const HARMONIC_GLOW = 'rgba(255, 140, 0, 0.5)';
+
+// Small formations (Classic) → Ice blue family
+export const CLASSIC_COLOR = '#00BFFF';
+export const CLASSIC_COLOR_DARK = '#87CEEB';
+export const CLASSIC_FILL = 'rgba(0, 191, 255, 0.05)';
+
+// Pattern type constants — all harmonics use orange, all classics use blue
 export const HARMONIC_PATTERNS: Record<string, PatternConfig> = {
     BUTTERFLY: {
         name: 'Butterfly',
         nameTr: 'Kelebek',
         fibs: { B: 0.786, C: 0.886, D: 1.618 },
-        color: '#FF00FF',  // Neon Magenta
+        color: HARMONIC_COLOR,
         emoji: '🦋',
     },
     BAT: {
         name: 'Bat',
         nameTr: 'Yarasa',
         fibs: { B: 0.5, C: 0.886, D: 1.618 },
-        color: '#00FFFF',  // Neon Cyan
+        color: HARMONIC_COLOR,
         emoji: '🦇',
     },
     GARTLEY: {
         name: 'Gartley',
         nameTr: 'Gartley',
         fibs: { B: 0.618, C: 0.786, D: 1.272 },
-        color: '#FFD700',  // Neon Gold
+        color: HARMONIC_COLOR,
         emoji: '⭐',
     },
     CRAB: {
         name: 'Crab',
         nameTr: 'Yengeç',
         fibs: { B: 0.618, C: 0.786, D: 1.618 },
-        color: '#FF4500',  // Neon Orange
+        color: HARMONIC_COLOR,
         emoji: '🦀',
     },
     SHARK: {
         name: 'Shark',
         nameTr: 'Köpekbalığı',
         fibs: { B: 0.886, C: 1.13, D: 1.618 },
-        color: '#00FF00',  // Neon Green
+        color: HARMONIC_COLOR,
         emoji: '🦈',
     },
 };
@@ -116,31 +136,31 @@ export const CLASSIC_PATTERNS: Record<string, { name: string; nameTr: string; co
     DOUBLE_TOP: {
         name: 'Double Top',
         nameTr: 'Çift Tepe',
-        color: '#DC143C',
+        color: CLASSIC_COLOR,
         emoji: '🔻',
     },
     DOUBLE_BOTTOM: {
         name: 'Double Bottom',
         nameTr: 'Çift Dip',
-        color: '#32CD32',
+        color: CLASSIC_COLOR,
         emoji: '🔺',
     },
     ASCENDING_TRIANGLE: {
         name: 'Ascending Triangle',
         nameTr: 'Yükselen Üçgen',
-        color: '#FFD700',
+        color: CLASSIC_COLOR,
         emoji: '△',
     },
     DESCENDING_TRIANGLE: {
         name: 'Descending Triangle',
         nameTr: 'Alçalan Üçgen',
-        color: '#FF6347',
+        color: CLASSIC_COLOR,
         emoji: '▽',
     },
     HEAD_SHOULDERS: {
         name: 'Head & Shoulders',
         nameTr: 'Omuz Baş Omuz',
-        color: '#FF1493',
+        color: CLASSIC_COLOR,
         emoji: '👤',
     },
 };
