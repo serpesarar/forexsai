@@ -114,6 +114,72 @@
     color: #FF8C00;
 }
 
+/* ─── HEADER BADGES ─────────────────────────────── */
+
+.headerBadges {
+    display: flex;
+    gap: 6px;
+    margin-left: 8px;
+}
+
+.badgeOrange {
+    font-size: 10px;
+    font-weight: 700;
+    color: #FF8C00;
+    background: rgba(255, 140, 0, 0.15);
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 140, 0, 0.3);
+}
+
+.badgeBlue {
+    font-size: 10px;
+    font-weight: 700;
+    color: #4DC9F6;
+    background: rgba(0, 191, 255, 0.12);
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 191, 255, 0.25);
+}
+
+/* ─── COLOR LEGEND ──────────────────────────────── */
+
+.legend {
+    display: flex;
+    gap: 16px;
+    padding: 6px 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.legendDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    animation: legendPulse 1.5s ease-in-out infinite;
+}
+
+.legendDotDashed {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    border: 2px dashed;
+    background: transparent;
+}
+
+@keyframes legendPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
 .spin {
     animation: spin 1s linear infinite;
 }
@@ -213,6 +279,26 @@
 
 .formationGlowSmall:hover polyline {
     stroke-width: 3;
+}
+
+/* ─── PROJECTED ZONE ────────────────────────────── */
+
+.projectedZone {
+    animation: zonePulse 2s ease-in-out infinite;
+}
+
+@keyframes zonePulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.3; }
+}
+
+.projectionArrow {
+    animation: arrowPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes arrowPulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 0.4; }
 }
 
 /* ─── POINT MARKERS ──────────────────────────────── */
@@ -333,6 +419,16 @@
     box-shadow: 0 0 12px rgba(0, 191, 255, 0.12);
 }
 
+/* Forming pattern card pulsing border */
+.patternCardForming {
+    animation: formingPulse 2s ease-in-out infinite;
+}
+
+@keyframes formingPulse {
+    0%, 100% { border-style: solid; }
+    50% { border-style: dashed; }
+}
+
 .patternCardTop {
     display: flex;
     align-items: center;
@@ -408,6 +504,18 @@
     font-size: 10px;
     color: #00ff88;
     font-weight: 600;
+}
+
+.projBadge {
+    font-size: 10px;
+    color: #FF8C00;
+    font-weight: 600;
+}
+
+.statusForming {
+    color: #FF8C00 !important;
+    background: rgba(255, 140, 0, 0.12) !important;
+    border: 1px dashed rgba(255, 140, 0, 0.4);
 }
 
 /* ─── DETAIL MODAL ───────────────────────────────── */
@@ -586,6 +694,11 @@
 .pointTime {
     font-size: 9px;
     color: rgba(255, 255, 255, 0.35);
+}
+
+.pointItemProjected {
+    border: 1px dashed rgba(255, 140, 0, 0.4);
+    background: rgba(255, 140, 0, 0.06) !important;
 }
 
 /* Fibonacci section */

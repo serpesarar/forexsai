@@ -20,10 +20,14 @@ import {
     CLASSIC_PATTERNS,
     CandleData,
     HARMONIC_COLOR,
+    HARMONIC_COLOR_CANDLE,
+    HARMONIC_COLOR_WICK,
     HARMONIC_COLOR_DARK,
     HARMONIC_FILL,
     HARMONIC_GLOW,
     CLASSIC_COLOR,
+    CLASSIC_COLOR_CANDLE,
+    CLASSIC_COLOR_WICK,
     CLASSIC_FILL,
 } from "../../types/harmonicPatterns";
 import {
@@ -44,6 +48,16 @@ const SYMBOLS = [
 const TIMEFRAMES = ["5m", "15m", "1h", "4h"] as const;
 type TimeframeType = (typeof TIMEFRAMES)[number];
 
+// Pulse colors for candle blinking effect
+const PULSE_COLORS_HARMONIC = [
+    { body: '#FF9D2F', wick: '#CC7000' },
+    { body: '#FFB347', wick: '#E08A00' },
+];
+const PULSE_COLORS_CLASSIC = [
+    { body: '#4DC9F6', wick: '#0090CC' },
+    { body: '#7DD8F8', wick: '#40B0E0' },
+];
+
 // ─── DATA FETCHING ───────────────────────────────────────────────────
 
 async function fetchOHLCV(
@@ -53,7 +67,7 @@ async function fetchOHLCV(
     const res = await fetch(
         `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(
             symbol
-        )}&timeframe=${timeframe}&limit=200`
+        )}&timeframe=${timeframe}&limit=300`
     );
     if (!res.ok) throw new Error("Failed to fetch OHLCV data");
     const data = await res.json();
@@ -101,7 +115,6 @@ function getConfidenceClass(confidence: number): string {
     return styles.confidenceLow;
 }
 
-/** Throttle helper to limit resize calls */
 function throttle<T extends (...args: any[]) => void>(fn: T, delay: number): T {
     let lastCall = 0;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -120,7 +133,6 @@ function throttle<T extends (...args: any[]) => void>(fn: T, delay: number): T {
     }) as T;
 }
 
-/** Format Unix timestamp to readable date string */
 function formatTime(time: number): string {
     const d = new Date(time * 1000);
     return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -150,15 +162,17 @@ export default function HarmonicVisualizerPanel() {
 
     // ── State
     const [symbol, setSymbol] = useState<string>(SYMBOLS[0].value);
-    const [timeframe, setTimeframe] = useState<TimeframeType>("15m");
+    const [timeframe, setTimeframe] = useState<TimeframeType>("4h");
     const [selectedPattern, setSelectedPattern] = useState<DetectedPattern | null>(null);
     const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
-    const [overlayVersion, setOverlayVersion] = useState(0); // Forces SVG re-render
+    const [overlayVersion, setOverlayVersion] = useState(0);
+    const [pulsePhase, setPulsePhase] = useState(0); // 0 or 1 for candle pulsing
 
     // ── Refs
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
     const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+    const pulseIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // ── Data fetch
     const {
@@ -181,6 +195,23 @@ export default function HarmonicVisualizerPanel() {
         return [...harmonic, ...classic];
     }, [candles]);
 
+    // ── Build candle color map from patterns
+    const candleColorMap = useMemo(() => {
+        const map = new Map<number, 'harmonic' | 'classic'>();
+        for (const pattern of patterns) {
+            const isBig = isHarmonicPattern(pattern);
+            const type = isBig ? 'harmonic' : 'classic';
+            const indices = 'candleIndices' in pattern ? (pattern as any).candleIndices as number[] : [];
+            for (const idx of indices) {
+                // Harmonic (big) takes priority over classic
+                if (!map.has(idx) || type === 'harmonic') {
+                    map.set(idx, type);
+                }
+            }
+        }
+        return map;
+    }, [patterns]);
+
     // ── Chart initialization
     useEffect(() => {
         if (!chartContainerRef.current) return;
@@ -192,12 +223,12 @@ export default function HarmonicVisualizerPanel() {
                 textColor: "#d1d4dc",
             },
             grid: {
-                vertLines: { color: "rgba(42,46,57,0.5)" },
-                horzLines: { color: "rgba(42,46,57,0.5)" },
+                vertLines: { color: "rgba(42,46,57,0.4)" },
+                horzLines: { color: "rgba(42,46,57,0.4)" },
             },
             crosshair: { mode: CrosshairMode.Normal },
             width: container.clientWidth,
-            height: container.clientHeight || 450,
+            height: container.clientHeight || 500,
             timeScale: {
                 timeVisible: true,
                 secondsVisible: false,
@@ -211,19 +242,20 @@ export default function HarmonicVisualizerPanel() {
         const candleSeries = chart.addCandlestickSeries({
             upColor: "#26a69a",
             downColor: "#ef5350",
-            borderVisible: false,
+            borderVisible: true,
             wickUpColor: "#26a69a",
             wickDownColor: "#ef5350",
+            borderUpColor: "#26a69a",
+            borderDownColor: "#ef5350",
         });
 
         chartRef.current = chart;
         candleSeriesRef.current = candleSeries;
 
-        // Throttled resize handler
         const handleResize = throttle(() => {
             if (!container) return;
             const w = container.clientWidth;
-            const h = container.clientHeight || 450;
+            const h = container.clientHeight || 500;
             chart.applyOptions({ width: w, height: h });
             setChartSize({ width: w, height: h });
             setOverlayVersion(v => v + 1);
@@ -233,7 +265,6 @@ export default function HarmonicVisualizerPanel() {
         observer.observe(container);
         handleResize();
 
-        // Update overlay when chart scrolls/zooms
         const onVisibleRangeChange = () => setOverlayVersion(v => v + 1);
         chart.timeScale().subscribeVisibleLogicalRangeChange(onVisibleRangeChange);
 
@@ -246,31 +277,83 @@ export default function HarmonicVisualizerPanel() {
         };
     }, []);
 
-    // ── Update chart data
+    // ── Pulse timer for candle blinking
+    useEffect(() => {
+        if (candleColorMap.size === 0) {
+            if (pulseIntervalRef.current) {
+                clearInterval(pulseIntervalRef.current);
+                pulseIntervalRef.current = null;
+            }
+            return;
+        }
+        pulseIntervalRef.current = setInterval(() => {
+            setPulsePhase(prev => (prev === 0 ? 1 : 0));
+        }, 800); // Toggle every 800ms for pulsing effect
+        return () => {
+            if (pulseIntervalRef.current) {
+                clearInterval(pulseIntervalRef.current);
+                pulseIntervalRef.current = null;
+            }
+        };
+    }, [candleColorMap.size]);
+
+    // ── Update chart data with per-candle coloring
     useEffect(() => {
         if (!candleSeriesRef.current || !candles || candles.length === 0) return;
-        const chartData = candles.map((c) => ({
-            time: c.time as Time,
-            open: c.open,
-            high: c.high,
-            low: c.low,
-            close: c.close,
-        }));
-        candleSeriesRef.current.setData(chartData);
-        chartRef.current?.timeScale().fitContent();
-        // Force overlay recalc after data load
-        setTimeout(() => setOverlayVersion(v => v + 1), 100);
-    }, [candles]);
 
-    // ── Calculate SVG overlay data (with viewport filtering & null checks)
+        const chartData = candles.map((c, idx) => {
+            const colorType = candleColorMap.get(idx);
+            if (colorType === 'harmonic') {
+                const pulse = PULSE_COLORS_HARMONIC[pulsePhase];
+                return {
+                    time: c.time as Time,
+                    open: c.open,
+                    high: c.high,
+                    low: c.low,
+                    close: c.close,
+                    color: pulse.body,
+                    wickColor: pulse.wick,
+                    borderColor: pulse.body,
+                };
+            } else if (colorType === 'classic') {
+                const pulse = PULSE_COLORS_CLASSIC[pulsePhase];
+                return {
+                    time: c.time as Time,
+                    open: c.open,
+                    high: c.high,
+                    low: c.low,
+                    close: c.close,
+                    color: pulse.body,
+                    wickColor: pulse.wick,
+                    borderColor: pulse.body,
+                };
+            }
+            return {
+                time: c.time as Time,
+                open: c.open,
+                high: c.high,
+                low: c.low,
+                close: c.close,
+            };
+        });
+
+        candleSeriesRef.current.setData(chartData);
+
+        // Only fit content on first load, not on pulse updates
+        if (pulsePhase === 0) {
+            chartRef.current?.timeScale().fitContent();
+        }
+
+        setTimeout(() => setOverlayVersion(v => v + 1), 50);
+    }, [candles, candleColorMap, pulsePhase]);
+
+    // ── Calculate SVG overlay data
     const overlayData = useMemo<FormationOverlayData[]>(() => {
         const chart = chartRef.current;
         const series = candleSeriesRef.current;
         if (!chart || !series || patterns.length === 0) return [];
 
         const timeScale = chart.timeScale();
-
-        // Get visible range for viewport filtering
         const visibleRange = timeScale.getVisibleRange();
 
         const result: FormationOverlayData[] = [];
@@ -279,8 +362,7 @@ export default function HarmonicVisualizerPanel() {
             const isBig = isHarmonicPattern(pattern);
             const color = isBig ? HARMONIC_COLOR : CLASSIC_COLOR;
 
-            // Get points based on pattern type
-            let rawPoints: { label: string; time: number; price: number }[];
+            let rawPoints: { label: string; time: number; price: number; isProjected?: boolean }[];
             if (isBig) {
                 const hp = pattern as HarmonicPattern;
                 rawPoints = [
@@ -288,7 +370,7 @@ export default function HarmonicVisualizerPanel() {
                     { label: "A", time: hp.points.A.time, price: hp.points.A.price },
                     { label: "B", time: hp.points.B.time, price: hp.points.B.price },
                     { label: "C", time: hp.points.C.time, price: hp.points.C.price },
-                    { label: "D", time: hp.points.D.time, price: hp.points.D.price },
+                    { label: "D", time: hp.points.D.time, price: hp.points.D.price, isProjected: hp.isProjected },
                 ];
             } else {
                 const cp = pattern as ClassicPattern;
@@ -299,18 +381,15 @@ export default function HarmonicVisualizerPanel() {
                 }));
             }
 
-            // Viewport filter: skip if pattern is entirely outside visible range
             if (visibleRange) {
                 const from = visibleRange.from as number;
                 const to = visibleRange.to as number;
                 const patternTimes = rawPoints.map(p => p.time);
                 const patternMin = Math.min(...patternTimes);
                 const patternMax = Math.max(...patternTimes);
-                // Skip if pattern is completely outside viewport
                 if (patternMax < from || patternMin > to) continue;
             }
 
-            // Convert to pixel coordinates (with null safety)
             const pixelPoints: PixelPoint[] = [];
             let valid = true;
             for (const pt of rawPoints) {
@@ -337,94 +416,172 @@ export default function HarmonicVisualizerPanel() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [patterns, overlayVersion, chartSize.width, chartSize.height]);
 
-    // ── Render SVG overlay elements (memoized)
+    // ── Render SVG overlay elements
     const svgElements = useMemo(() => {
         return overlayData.map((data, idx) => {
             const { pixelPoints, isBig, color, pattern } = data;
+            const isForming = pattern.status === "FORMING";
+            const hp = isBig ? (pattern as HarmonicPattern) : null;
 
-            // Build polyline points string
-            const pointsStr = pixelPoints.map(p => `${p.x},${p.y}`).join(" ");
+            // Separate completed and projected points
+            const completedPoints = isForming && hp
+                ? pixelPoints.slice(0, -1) // All except D
+                : pixelPoints;
+            const projectedPoint = isForming && hp ? pixelPoints[pixelPoints.length - 1] : null;
 
-            // Build polygon fill path for big formations
-            const polygonPoints = isBig ? pointsStr : undefined;
+            const completedStr = completedPoints.map(p => `${p.x},${p.y}`).join(" ");
+            const fullStr = pixelPoints.map(p => `${p.x},${p.y}`).join(" ");
+            const polygonPoints = isBig ? fullStr : undefined;
 
             return (
                 <g key={`formation-${idx}`} className={isBig ? styles.formationGlowBig : styles.formationGlowSmall}>
-                    {/* Filled region (transparent) */}
+                    {/* Filled region */}
                     {isBig && polygonPoints && (
                         <polygon
                             points={polygonPoints}
-                            fill={HARMONIC_FILL}
+                            fill={isForming ? 'rgba(255, 140, 0, 0.05)' : HARMONIC_FILL}
                             stroke="none"
                         />
                     )}
 
-                    {/* Main formation line */}
+                    {/* Completed formation line */}
                     <polyline
-                        points={pointsStr}
+                        points={completedStr}
                         fill="none"
                         stroke={color}
-                        strokeWidth={isBig ? 3 : 2}
+                        strokeWidth={isBig ? 2.5 : 2}
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeDasharray={pattern.status === "FORMING" ? "8,4" : undefined}
                         style={{
-                            filter: isBig ? `drop-shadow(0 0 8px ${color}) drop-shadow(0 0 16px ${HARMONIC_GLOW})` : "none",
+                            filter: isBig ? `drop-shadow(0 0 6px ${color}) drop-shadow(0 0 12px ${HARMONIC_GLOW})` : `drop-shadow(0 0 4px ${color})`,
                         }}
                     />
 
+                    {/* Projected D line (dashed) */}
+                    {isForming && projectedPoint && completedPoints.length > 0 && (
+                        <>
+                            <line
+                                x1={completedPoints[completedPoints.length - 1].x}
+                                y1={completedPoints[completedPoints.length - 1].y}
+                                x2={projectedPoint.x}
+                                y2={projectedPoint.y}
+                                stroke={color}
+                                strokeWidth={2}
+                                strokeDasharray="8,5"
+                                opacity={0.7}
+                                style={{ filter: `drop-shadow(0 0 6px ${color})` }}
+                            />
+                            {/* D zone rectangle (price range) */}
+                            {hp?.projectedD && (() => {
+                                const chart = chartRef.current;
+                                const series = candleSeriesRef.current;
+                                if (!chart || !series) return null;
+                                const yMin = series.priceToCoordinate(hp.projectedD.priceMax);
+                                const yMax = series.priceToCoordinate(hp.projectedD.priceMin);
+                                if (yMin === null || yMax === null) return null;
+                                return (
+                                    <rect
+                                        x={projectedPoint.x - 15}
+                                        y={Math.min(yMin as number, yMax as number)}
+                                        width={30}
+                                        height={Math.abs((yMax as number) - (yMin as number))}
+                                        fill={`${color}20`}
+                                        stroke={color}
+                                        strokeWidth={1}
+                                        strokeDasharray="4,3"
+                                        rx={4}
+                                        className={styles.projectedZone}
+                                    />
+                                );
+                            })()}
+                            {/* Arrow after D showing expected direction */}
+                            {(() => {
+                                const dir = pattern.direction;
+                                const arrowLen = 30;
+                                const arrowY = dir === 'BULLISH'
+                                    ? projectedPoint.y - arrowLen
+                                    : projectedPoint.y + arrowLen;
+                                return (
+                                    <g className={styles.projectionArrow}>
+                                        <line
+                                            x1={projectedPoint.x}
+                                            y1={projectedPoint.y}
+                                            x2={projectedPoint.x}
+                                            y2={arrowY}
+                                            stroke={dir === 'BULLISH' ? '#00ff88' : '#ff4444'}
+                                            strokeWidth={2.5}
+                                            strokeDasharray="4,3"
+                                            opacity={0.8}
+                                        />
+                                        <polygon
+                                            points={dir === 'BULLISH'
+                                                ? `${projectedPoint.x - 6},${arrowY + 8} ${projectedPoint.x},${arrowY} ${projectedPoint.x + 6},${arrowY + 8}`
+                                                : `${projectedPoint.x - 6},${arrowY - 8} ${projectedPoint.x},${arrowY} ${projectedPoint.x + 6},${arrowY - 8}`}
+                                            fill={dir === 'BULLISH' ? '#00ff88' : '#ff4444'}
+                                            opacity={0.8}
+                                        />
+                                    </g>
+                                );
+                            })()}
+                        </>
+                    )}
+
                     {/* Point markers + labels */}
-                    {pixelPoints.map((pt, ptIdx) => (
-                        <g
-                            key={`pt-${ptIdx}`}
-                            className={styles.pointMarker}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedPattern(pattern);
-                            }}
-                        >
-                            {/* Glow ring for big formations */}
-                            {isBig && (
+                    {pixelPoints.map((pt, ptIdx) => {
+                        const isProjectedPt = isForming && ptIdx === pixelPoints.length - 1;
+                        return (
+                            <g
+                                key={`pt-${ptIdx}`}
+                                className={styles.pointMarker}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedPattern(pattern);
+                                }}
+                            >
+                                {isBig && !isProjectedPt && (
+                                    <circle
+                                        cx={pt.x}
+                                        cy={pt.y}
+                                        r={10}
+                                        fill="none"
+                                        stroke={color}
+                                        strokeWidth={1}
+                                        opacity={0.4}
+                                        className={styles.glowRing}
+                                    />
+                                )}
                                 <circle
                                     cx={pt.x}
                                     cy={pt.y}
-                                    r={10}
-                                    fill="none"
-                                    stroke={color}
-                                    strokeWidth={1}
-                                    opacity={0.4}
-                                    className={styles.glowRing}
+                                    r={isBig ? 5 : 3.5}
+                                    fill={isProjectedPt ? 'transparent' : color}
+                                    stroke={isProjectedPt ? color : "#fff"}
+                                    strokeWidth={isProjectedPt ? 2 : 1.5}
+                                    strokeDasharray={isProjectedPt ? "3,2" : undefined}
                                 />
-                            )}
-                            {/* Point dot */}
-                            <circle
-                                cx={pt.x}
-                                cy={pt.y}
-                                r={isBig ? 5 : 3.5}
-                                fill={color}
-                                stroke="#fff"
-                                strokeWidth={1.5}
-                            />
-                            {/* Label */}
-                            <text
-                                x={pt.x + (ptIdx % 2 === 0 ? 10 : -10)}
-                                y={pt.y - 10}
-                                fill="#fff"
-                                fontSize="11"
-                                fontWeight="bold"
-                                textAnchor={ptIdx % 2 === 0 ? "start" : "end"}
-                                style={{ textShadow: `0 0 6px ${color}` }}
-                            >
-                                {pt.label}
-                            </text>
-                        </g>
-                    ))}
+                                <text
+                                    x={pt.x + (ptIdx % 2 === 0 ? 10 : -10)}
+                                    y={pt.y - 10}
+                                    fill={isProjectedPt ? color : "#fff"}
+                                    fontSize="11"
+                                    fontWeight="bold"
+                                    textAnchor={ptIdx % 2 === 0 ? "start" : "end"}
+                                    style={{
+                                        textShadow: `0 0 6px ${color}`,
+                                        opacity: isProjectedPt ? 0.7 : 1,
+                                    }}
+                                >
+                                    {pt.label}{isProjectedPt ? "?" : ""}
+                                </text>
+                            </g>
+                        );
+                    })}
 
-                    {/* Formation name near last point */}
-                    {pixelPoints.length > 0 && (
+                    {/* Formation name near last completed point */}
+                    {completedPoints.length > 0 && (
                         <text
-                            x={pixelPoints[pixelPoints.length - 1].x + 15}
-                            y={pixelPoints[pixelPoints.length - 1].y + 4}
+                            x={completedPoints[completedPoints.length - 1].x + 15}
+                            y={completedPoints[completedPoints.length - 1].y + 4}
                             fill={color}
                             fontSize="10"
                             fontWeight="bold"
@@ -437,6 +594,7 @@ export default function HarmonicVisualizerPanel() {
                         >
                             {getPatternEmoji(pattern)} {getPatternDisplayName(pattern, locale)}
                             {pattern.direction === "BULLISH" ? " ↑" : " ↓"}
+                            {isForming ? " (FORMING)" : ""}
                         </text>
                     )}
                 </g>
@@ -452,9 +610,23 @@ export default function HarmonicVisualizerPanel() {
                 <div className={styles.headerLeft}>
                     <Hexagon size={18} className={styles.iconGlow} />
                     <h2 className={styles.title}>{t("harmonicVisualizer.title")}</h2>
+                    {/* Pattern count badges */}
+                    {patterns.length > 0 && (
+                        <div className={styles.headerBadges}>
+                            {patterns.filter(p => isHarmonicPattern(p)).length > 0 && (
+                                <span className={styles.badgeOrange}>
+                                    {patterns.filter(p => isHarmonicPattern(p)).length} Harmonic
+                                </span>
+                            )}
+                            {patterns.filter(p => !isHarmonicPattern(p)).length > 0 && (
+                                <span className={styles.badgeBlue}>
+                                    {patterns.filter(p => !isHarmonicPattern(p)).length} Classic
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
                 <div className={styles.headerControls}>
-                    {/* Symbol selector */}
                     <select
                         value={symbol}
                         onChange={(e) => setSymbol(e.target.value)}
@@ -466,7 +638,6 @@ export default function HarmonicVisualizerPanel() {
                             </option>
                         ))}
                     </select>
-                    {/* Timeframe selector */}
                     <div className={styles.timeframeGroup}>
                         {TIMEFRAMES.map((tf) => (
                             <button
@@ -478,7 +649,6 @@ export default function HarmonicVisualizerPanel() {
                             </button>
                         ))}
                     </div>
-                    {/* Refresh */}
                     <button
                         onClick={() => refetch()}
                         className={styles.refreshBtn}
@@ -486,6 +656,22 @@ export default function HarmonicVisualizerPanel() {
                     >
                         <RefreshCw size={14} className={isLoading ? styles.spin : ""} />
                     </button>
+                </div>
+            </div>
+
+            {/* Color legend */}
+            <div className={styles.legend}>
+                <div className={styles.legendItem}>
+                    <span className={styles.legendDot} style={{ background: HARMONIC_COLOR_CANDLE }} />
+                    <span>Harmonic (XABCD)</span>
+                </div>
+                <div className={styles.legendItem}>
+                    <span className={styles.legendDot} style={{ background: CLASSIC_COLOR_CANDLE }} />
+                    <span>Classic Patterns</span>
+                </div>
+                <div className={styles.legendItem}>
+                    <span className={styles.legendDotDashed} style={{ borderColor: HARMONIC_COLOR }} />
+                    <span>Projected (Forming)</span>
                 </div>
             </div>
 
@@ -536,7 +722,7 @@ export default function HarmonicVisualizerPanel() {
                             return (
                                 <div
                                     key={idx}
-                                    className={`${styles.patternCard} ${big ? styles.patternCardBig : styles.patternCardSmall}`}
+                                    className={`${styles.patternCard} ${big ? styles.patternCardBig : styles.patternCardSmall} ${p.status === 'FORMING' ? styles.patternCardForming : ''}`}
                                     onClick={() => setSelectedPattern(p)}
                                 >
                                     <div className={styles.patternCardTop}>
@@ -562,12 +748,17 @@ export default function HarmonicVisualizerPanel() {
                                         <span className={`${styles.confBadge} ${getConfidenceClass(p.confidence)}`}>
                                             {t("harmonicVisualizer.confidence")}: {p.confidence}%
                                         </span>
-                                        <span className={styles.statusBadge}>
+                                        <span className={`${styles.statusBadge} ${p.status === 'FORMING' ? styles.statusForming : ''}`}>
                                             {p.status === "COMPLETED" ? t("harmonicVisualizer.completed") : t("harmonicVisualizer.forming")}
                                         </span>
                                         {p.target_price && (
                                             <span className={styles.tpBadge}>
                                                 TP: {p.target_price.toFixed(2)}
+                                            </span>
+                                        )}
+                                        {isHarmonicPattern(p) && p.projectedD && (
+                                            <span className={styles.projBadge}>
+                                                D: {p.projectedD.priceMin.toFixed(0)}-{p.projectedD.priceMax.toFixed(0)}
                                             </span>
                                         )}
                                     </div>
@@ -586,7 +777,6 @@ export default function HarmonicVisualizerPanel() {
                             <XIcon size={18} />
                         </button>
 
-                        {/* Modal Header */}
                         <div className={`${styles.modalHeader} ${isHarmonicPattern(selectedPattern) ? styles.modalHeaderBig : styles.modalHeaderSmall}`}>
                             <span className={styles.modalEmoji}>{getPatternEmoji(selectedPattern)}</span>
                             <h3>{getPatternDisplayName(selectedPattern, locale)} {t("harmonicVisualizer.formation")}</h3>
@@ -596,9 +786,7 @@ export default function HarmonicVisualizerPanel() {
                             </span>
                         </div>
 
-                        {/* Modal Body */}
                         <div className={styles.modalBody}>
-                            {/* Confidence */}
                             <div className={styles.detailRow}>
                                 <span>{t("harmonicVisualizer.confidence")}</span>
                                 <strong className={getConfidenceClass(selectedPattern.confidence)}>
@@ -606,13 +794,11 @@ export default function HarmonicVisualizerPanel() {
                                 </strong>
                             </div>
 
-                            {/* Status */}
                             <div className={styles.detailRow}>
                                 <span>{t("harmonicVisualizer.status")}</span>
                                 <strong>{selectedPattern.status === "COMPLETED" ? t("harmonicVisualizer.completed") : t("harmonicVisualizer.forming")}</strong>
                             </div>
 
-                            {/* Direction */}
                             <div className={styles.detailRow}>
                                 <span>{t("harmonicVisualizer.expectedMove")}</span>
                                 <strong style={{ color: selectedPattern.direction === "BULLISH" ? "#00ff88" : "#ff4444" }}>
@@ -620,7 +806,6 @@ export default function HarmonicVisualizerPanel() {
                                 </strong>
                             </div>
 
-                            {/* Target Price */}
                             {selectedPattern.target_price && (
                                 <div className={styles.detailRow}>
                                     <span><Target size={14} /> {t("harmonicVisualizer.targetPrice")}</span>
@@ -630,7 +815,6 @@ export default function HarmonicVisualizerPanel() {
                                 </div>
                             )}
 
-                            {/* Stop Loss */}
                             {selectedPattern.stop_loss && (
                                 <div className={styles.detailRow}>
                                     <span><ShieldAlert size={14} /> {t("harmonicVisualizer.stopLossLabel")}</span>
@@ -640,36 +824,44 @@ export default function HarmonicVisualizerPanel() {
                                 </div>
                             )}
 
-                            {/* Points (XABCD) for harmonic patterns */}
+                            {/* Projected D zone for forming patterns */}
+                            {isHarmonicPattern(selectedPattern) && selectedPattern.projectedD && (
+                                <div className={styles.detailRow}>
+                                    <span>D Zone</span>
+                                    <strong style={{ color: HARMONIC_COLOR }}>
+                                        {selectedPattern.projectedD.priceMin.toFixed(2)} - {selectedPattern.projectedD.priceMax.toFixed(2)}
+                                    </strong>
+                                </div>
+                            )}
+
                             {isHarmonicPattern(selectedPattern) && (
                                 <div className={styles.pointsGrid}>
                                     {(["X", "A", "B", "C", "D"] as const).map((key) => {
                                         const pt = selectedPattern.points[key];
+                                        const isProj = key === "D" && selectedPattern.isProjected;
                                         return (
-                                            <div key={key} className={styles.pointItem}>
-                                                <span className={styles.pointKey}>{key}</span>
+                                            <div key={key} className={`${styles.pointItem} ${isProj ? styles.pointItemProjected : ''}`}>
+                                                <span className={styles.pointKey}>{key}{isProj ? "?" : ""}</span>
                                                 <span className={styles.pointPrice}>{pt.price.toFixed(2)}</span>
-                                                <span className={styles.pointTime}>{formatTime(pt.time)}</span>
+                                                <span className={styles.pointTime}>{isProj ? "Projected" : formatTime(pt.time)}</span>
                                             </div>
                                         );
                                     })}
                                 </div>
                             )}
 
-                            {/* Fib Ratios for harmonic patterns */}
                             {isHarmonicPattern(selectedPattern) && (
                                 <div className={styles.fibSection}>
                                     <span className={styles.fibTitle}>{t("harmonicVisualizer.fibRatios")}</span>
                                     <div className={styles.fibValues}>
-                                        <span>AB: {selectedPattern.fibRatios.ab}</span>
-                                        <span>BC: {selectedPattern.fibRatios.bc}</span>
-                                        <span>CD: {selectedPattern.fibRatios.cd}</span>
-                                        <span>XD: {selectedPattern.fibRatios.xd}</span>
+                                        <span>AB/XA: {selectedPattern.fibRatios.ab}</span>
+                                        <span>BC/AB: {selectedPattern.fibRatios.bc}</span>
+                                        {selectedPattern.fibRatios.cd > 0 && <span>CD/BC: {selectedPattern.fibRatios.cd}</span>}
+                                        <span>AD/XA: {selectedPattern.fibRatios.xd}</span>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Classic pattern points */}
                             {!isHarmonicPattern(selectedPattern) && (
                                 <div className={styles.pointsGrid}>
                                     {(selectedPattern as ClassicPattern).points.map((pt, idx) => (
@@ -683,14 +875,10 @@ export default function HarmonicVisualizerPanel() {
                             )}
                         </div>
 
-                        {/* Modal Footer */}
                         <div className={styles.modalFooter}>
                             <button
                                 className={styles.alarmBtn}
-                                onClick={() => {
-                                    // Placeholder for alarm functionality
-                                    setSelectedPattern(null);
-                                }}
+                                onClick={() => setSelectedPattern(null)}
                             >
                                 🔔 {t("harmonicVisualizer.setAlarm")}
                             </button>

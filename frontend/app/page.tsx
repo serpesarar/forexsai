@@ -1450,6 +1450,15 @@ export default function HomePage() {
             </div>
           )}
 
+          {/* ═══ HARMONIC VISUALIZER — Full-width panel ═══ */}
+          {getCard("harmonic-visualizer")?.visible !== false && (
+            <div className="mb-6 w-full">
+              <Suspense fallback={<div className="h-[500px] bg-[#0a0e27] rounded-xl animate-pulse" />}>
+                <HarmonicVisualizerPanel />
+              </Suspense>
+            </div>
+          )}
+
           {/* ═══ 2-COLUMN LAYOUT — separate flex columns ═══ */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-start w-full">
             {/* Left Column */}

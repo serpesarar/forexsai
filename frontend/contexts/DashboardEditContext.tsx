@@ -66,7 +66,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "smc-panel", title: "Smart Money Concepts", column: "right", order: 1, visible: true, size: "large", collapsed: false },
     { id: "risk-reward", title: "Risk/Reward Optimizer", column: "right", order: 2, visible: true, size: "large", collapsed: false },
     { id: "pattern-engine", title: "Pattern Engine V2", column: "right", order: 3, visible: true, size: "large", collapsed: false },
-    { id: "harmonic-visualizer", title: "Harmonic Visualizer", column: "right", order: 3.5, visible: true, size: "large", collapsed: false },
+    { id: "harmonic-visualizer", title: "Harmonic Visualizer", column: "center", order: -0.5, visible: true, size: "full", collapsed: false },
     { id: "sentiment", title: "AI Sentiment", column: "right", order: 4, visible: true, size: "medium", collapsed: false },
     { id: "comex-news", title: "COMEX News", column: "right", order: 5, visible: true, size: "medium", collapsed: false },
     { id: "whale-tracker", title: "Whale Tracker", column: "right", order: 6, visible: true, size: "medium", collapsed: false },
@@ -89,7 +89,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "rhythm-detectors", title: "Rhythm Detectors", column: "center", order: 23, visible: true, size: "full", collapsed: false },
     { id: "charts", title: "Trading Charts", column: "center", order: 24, visible: true, size: "full", collapsed: false },
   ],
-  version: 22,
+  version: 23,
 };
 
 const LAYOUT_STORAGE_KEY = "dashboard-layout-v7";
