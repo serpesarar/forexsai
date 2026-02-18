@@ -81,8 +81,8 @@ class LifecycleMetrics:
 metrics = LifecycleMetrics()
 
 # ─── Configuration ───────────────────────────────────────────────────────────
-LIFECYCLE_CHECK_INTERVAL = 120        # 2 minutes in seconds
-SIGNAL_MAX_AGE_MINUTES = 30           # Expire after 30 min
+LIFECYCLE_CHECK_INTERVAL = 180        # 3 minutes — price check every 3 min
+SIGNAL_MAX_AGE_MINUTES = 15           # Expire after 15 min
 MAX_ACTIVE_SIGNALS = 100              # Cap for performance
 ARCHIVE_AFTER_DAYS = 30               # Move to cold storage after 30 days
 
@@ -383,16 +383,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     except Exception as e:
         logger.error(f"Failed to update signal {signal_id[:8]}: {e}")
 
-    # ── 10. Record cooldown to prevent rapid signal churn ──
-    if new_status in ("completed", "stopped", "expired"):
-        try:
-            from services.prediction_logger import record_signal_cooldown
-            model_type = signal.get("model_type", "ml")
-            record_signal_cooldown(symbol, model_type)
-        except Exception:
-            pass
-
-    # ── 11. Failure autopsy on stop ──
+    # ── 10. Failure autopsy on stop ──
     if new_status == "stopped":
         await _create_failure_autopsy(client, signal, targets_hit, current)
 

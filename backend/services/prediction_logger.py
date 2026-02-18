@@ -14,74 +14,26 @@ from services.error_analysis_service import save_candle_snapshot
 
 logger = logging.getLogger(__name__)
 
-# ─── Signal Lifecycle: Sadece aktif sinyal varsa bekle ──────────────────────────
-# Sinyal kapandıktan sonra (completed/stopped/expired) hemen yeni sinyal açılabilir
-# Sadece aynı sembol+model'de "active" sinyal varsa bekle
-SIGNAL_LIFETIME_MINUTES = 15  # Sinyal 15 dakika açık kalacak
+# ─── Uses target_config.py as single source of truth for TP/SL levels ──────────
 
 
-def calculate_targets(symbol: str, entry_price: float, direction: str):
-    """Sembol bazlı TP/SL hesaplama"""
-    if not entry_price or entry_price <= 0:
-        return None
-        
-    multipliers = 1 if direction == "BUY" else -1
-    
-    if symbol in ["NDX.INDX", "GDAXI.INDX"]:
-        # NASDAQ/DAX: 1 pip = 0.01
-        pip_size = 0.01
-        targets = {
-            "TP1": round(entry_price + (15 * pip_size * multipliers), 2),
-            "TP2": round(entry_price + (25 * pip_size * multipliers), 2),
-            "TP3": round(entry_price + (35 * pip_size * multipliers), 2),
-            "TP4": round(entry_price + (50 * pip_size * multipliers), 2),
-            "SL": round(entry_price - (50 * pip_size * multipliers), 2)
-        }
-    elif symbol == "XAUUSD":
-        # XAUUSD: 1 pip = 0.01 ($0.01)
-        pip_size = 0.01
-        targets = {
-            "TP1": round(entry_price + (7 * pip_size * multipliers), 2),
-            "TP2": round(entry_price + (12 * pip_size * multipliers), 2),
-            "TP3": round(entry_price + (20 * pip_size * multipliers), 2),
-            "TP4": round(entry_price + (30 * pip_size * multipliers), 2),
-            "SL": round(entry_price - (10 * pip_size * multipliers), 2)
-        }
-    elif symbol == "CL.COMM":
-        # US OIL: Yüzde bazlı
-        targets = {
-            "TP1": round(entry_price * (1 + 0.0002 * multipliers), 3),
-            "TP2": round(entry_price * (1 + 0.0004 * multipliers), 3),
-            "TP3": round(entry_price * (1 + 0.0006 * multipliers), 3),
-            "TP4": round(entry_price * (1 + 0.0010 * multipliers), 3),
-            "SL": round(entry_price * (1 - 0.0005 * multipliers), 3)
-        }
-    else:
-        return None
-    
-    return targets
-
-
-def _has_active_signal(symbol: str, model_type: str) -> bool:
-    """Aynı sembolde aktif (açık) sinyal var mı? Kapandıktan sonra yeni sinyal açılabilir."""
+def _has_active_signal(client, symbol: str, model_type: str) -> bool:
+    """Check if there's already an active signal for this symbol+model.
+    Once signal closes (completed/stopped/expired), a new one can open immediately."""
     try:
-        client = get_supabase_client()
-        if client is None:
-            return False
-            
         result = client.table("prediction_logs").select("id").eq(
             "symbol", symbol
         ).eq("model_type", model_type
-        ).eq("status", "active"  # Sadece açık olanları kontrol et
+        ).eq("status", "active"
         ).limit(1).execute()
         
         has_active = result.get("data") and len(result["data"]) > 0
         if has_active:
-            logger.debug(f"⏸️ {symbol} {model_type} için zaten aktif sinyal var")
+            logger.debug(f"Active signal exists: {symbol} {model_type}")
         return has_active
     except Exception as e:
-        logger.error(f"Aktif sinyal kontrolü hatası: {e}")
-        return False  # Hata varsa yeni sinyal aç (güvenlik için)
+        logger.error(f"Active signal check error: {e}")
+        return False
 
 
 def _extract_factors(context: Dict[str, Any], analysis: Dict[str, Any]) -> Dict[str, Any]:
@@ -178,49 +130,26 @@ async def log_prediction(
         
         effective_model_type = model_type or (strategy.lower() if strategy else "ml")
         
-        # ── Aktif sinyal kontrolü: Aynı sembol+model'de açık sinyal varsa bekle ──
-        if _has_active_signal(symbol, effective_model_type):
-            logger.info(f"⏸️ {symbol} {effective_model_type} için zaten aktif sinyal var, yeni açılmıyor")
+        # ── Active signal check: block if same symbol+model already has active signal ──
+        if _has_active_signal(client, symbol, effective_model_type):
             return None
+
+        # ── Build targets from target_config (single source of truth) ──
+        import json as _json
+        from services.target_config import get_symbol_config, calculate_target_prices, calculate_stoploss_price
+        cfg = get_symbol_config(symbol)
         
-        # ── Deduplication: Son 30dk içinde aynı symbol+model sinyali var mı? ──
-        try:
-            cutoff_time = (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat()
-            
-            # Hem model_type hem strategy kontrolü yap
-            existing = client.table("prediction_logs").select("id, created_at").eq(
-                "symbol", symbol
-            ).or_("model_type.eq.{},strategy.eq.{}".format(
-                effective_model_type, 
-                strategy or effective_model_type
-            )).gt("created_at", cutoff_time
-            ).limit(1).execute()
-            
-            if existing.get("data") and len(existing["data"]) > 0:
-                logger.info(f"🚫 DUPLICATE BLOCKED: {symbol} {effective_model_type} son 30dk içinde mevcut")
-                return existing["data"][0]["id"]
-        except Exception as dedup_err:
-            logger.warning(f"Dedup check failed (proceeding): {dedup_err}")
+        entry_price = ml.get("entry_price") or 0
         
-        # ── Calculate targets ──
-        ml_entry_price = ml.get("entry_price")
-        targets_data = calculate_targets(symbol, ml_entry_price, direction)
-        if targets_data:
-            # Update targets dict with calculated prices
-            targets_dict = {
-                "TP1": {"price": targets_data["TP1"], "hit": False},
-                "TP2": {"price": targets_data["TP2"], "hit": False},
-                "TP3": {"price": targets_data["TP3"], "hit": False},
-                "TP4": {"price": targets_data["TP4"], "hit": False},
-                "SL": {"price": targets_data["SL"], "hit": False}
-            }
-            # Add to record as JSON string
-            import json as _json
-            targets_json = _json.dumps(targets_data)
+        # Calculate actual price targets for DB storage
+        if entry_price and entry_price > 0:
+            target_prices = calculate_target_prices(entry_price, direction, symbol)
+            sl_price = calculate_stoploss_price(entry_price, direction, symbol)
+            # Store as {TP1: price, TP2: price, ...}
+            targets_dict = target_prices
+            targets_dict["SL"] = round(sl_price, 4)
         else:
-            targets_dict = {tl.name: {"price": None, "hit": False} for tl in cfg.targets}
-            import json as _json
-            targets_json = _json.dumps({tl.name: None for tl in cfg.targets})
+            targets_dict = {tl.name: tl.pips for tl in cfg.targets}
 
         factors = _extract_factors(context, analysis)
         
@@ -228,12 +157,6 @@ async def log_prediction(
         if strategy:
             factors["strategy"] = strategy
             factors["source"] = context.get("source", strategy)
-        
-        # Compute lifecycle targets from target_config
-        import json as _json
-        from services.target_config import get_symbol_config
-        cfg = get_symbol_config(symbol)
-        targets_dict = {tl.name: tl.pips for tl in cfg.targets}
 
         record = {
             "symbol": symbol,
@@ -252,9 +175,9 @@ async def log_prediction(
             "outcome_checked": False,
             # Signal Lifecycle columns
             "status": "active" if direction in ("BUY", "SELL") else "expired",
-            "targets": targets_json,
+            "targets": _json.dumps(targets_dict),
             "stop_loss_pips": cfg.stoploss_pips,
-            "targets_hit": _json.dumps({tp: False for tp in targets_dict}),
+            "targets_hit": _json.dumps({tp: False for tp in targets_dict if tp != "SL"}),
             "highest_profit_pips": 0,
             "lowest_drawdown_pips": 0,
             "model_type": model_type or (strategy.lower() if strategy else "ml"),

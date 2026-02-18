@@ -31,9 +31,7 @@ MACRO_UPDATE_INTERVAL = 300  # Update macro data (DXY, VIX, USDTRY) every 5 minu
 NEWS_UPDATE_INTERVAL = 600   # Update news every 10 minutes
 OUTCOME_CHECK_INTERVAL = 120  # Check outcomes every 2 minutes
 ERROR_ANALYSIS_INTERVAL = 3600  # Analyze errors every hour
-PREDICTION_LOG_INTERVAL = 1800  # Log predictions every 30 minutes (matches signal cooldown)
-LIFECYCLE_CHECK_INTERVAL = 120  # 2 dakika (saniye cinsinden)
-_last_lifecycle_check: Optional[datetime] = None
+PREDICTION_LOG_INTERVAL = 900  # Log ML predictions every 15 minutes
 
 # Last update timestamps
 _last_news_update: Dict[str, datetime] = {}
@@ -42,7 +40,7 @@ _last_outcome_check: Optional[datetime] = None
 _last_error_analysis: Optional[datetime] = None
 _last_prediction_log: Dict[str, datetime] = {}  # Per symbol
 _last_pulse_log: Dict[str, datetime] = {}  # Per symbol, for Pulse signal logging
-PULSE_LOG_INTERVAL = 900  # 15 minutes (1800 yerine düşürüldü)
+PULSE_LOG_INTERVAL = 900  # Log Pulse/EMEL signals every 15 minutes
 _last_macro_update: Optional[datetime] = None
 _cached_macro: Dict[str, Any] = {}  # Cached macro data
 
@@ -547,89 +545,63 @@ async def _log_pulse_signal(symbol: str, direction: str, confidence: float,
 
 
 async def log_pulse_signals_if_needed():
-    """Sürekli çalışan loop - 15dk'da bir kontrol et (sinyal ömrü 15dk).
-    Sadece aktif sinyal yoksa yeni sinyal açar."""
-    while True:
-        try:
-            if not is_db_available():
-                await asyncio.sleep(60)
-                continue
-                
-            client = get_supabase_client()
-            if not client:
-                await asyncio.sleep(60)
-                continue
-            
-            for symbol in TRACKED_SYMBOLS:
-                # 1. Aktif sinyal var mı kontrol et (varsa atla)
-                for model_type in ["pulse3", "pulse2", "pulse1", "emel"]:
-                    try:
-                        existing = client.table("prediction_logs").select("id").eq(
-                            "symbol", symbol
-                        ).eq("model_type", model_type
-                        ).eq("status", "active"
-                        ).limit(1).execute()
-                        
-                        if existing.get("data") and len(existing["data"]) > 0:
-                            logger.debug(f"⏸️ {symbol} için aktif {model_type} var, atlanıyor")
-                            continue  # Bu sembol+model'de zaten açık sinyal var
-                        
-                        # 2. Yeni sinyal üret
-                        await _check_and_log_pulse(symbol, model_type, client)
-                        await asyncio.sleep(0.3)
-                    except Exception as e:
-                        logger.error(f"{model_type} kontrol hatası {symbol}: {e}")
-                        
-        except Exception as e:
-            logger.error(f"Pulse loop hatası: {e}")
-        
-        # 15 dakika bekle (sinyal ömrü kadar)
-        await asyncio.sleep(900)  # 15 dakika
+    """Check all Pulse/EMEL models for all symbols and log BUY/SELL signals.
+    Runs every PULSE_LOG_INTERVAL. Dedup handled by prediction_logger (active signal check)."""
+    global _last_pulse_log
+
+    now = datetime.utcnow()
+
+    for symbol in TRACKED_SYMBOLS:
+        last_log = _last_pulse_log.get(symbol)
+        if last_log and (now - last_log).total_seconds() < PULSE_LOG_INTERVAL:
+            continue
+
+        _last_pulse_log[symbol] = now
+
+        if not is_db_available():
+            continue
+
+        for model_type in ["pulse3", "pulse2", "pulse1", "emel"]:
+            try:
+                await _check_and_log_pulse(symbol, model_type, None)
+                await asyncio.sleep(0.3)
+            except Exception as e:
+                logger.error(f"{model_type} log error {symbol}: {e}")
 
 
 async def _check_and_log_pulse(symbol: str, model_type: str, client):
-    """Tek bir model için sinyal kontrolü ve kaydı"""
+    """Run one model's analysis for one symbol and log if BUY/SELL."""
     try:
         from routers.emel_pulse import get_pulse_v3_analysis, get_pulse_ml_analysis, get_pulse_analysis, get_emel_analysis
-        
-        # Model tipine göre analiz fonksiyonu seç
+
         if model_type == "pulse3":
             result = await get_pulse_v3_analysis(symbol)
-            strategy = "PULSE_V3"
-            sig_key = "direction"
+            strategy, sig_key = "PULSE_V3", "direction"
         elif model_type == "pulse2":
             result = await get_pulse_ml_analysis(symbol)
-            strategy = "PULSE_ML"
-            sig_key = "signal"
+            strategy, sig_key = "PULSE_ML", "signal"
         elif model_type == "pulse1":
             result = await get_pulse_analysis(symbol)
-            strategy = "PULSE_V1"
-            sig_key = "signal"
+            strategy, sig_key = "PULSE_V1", "signal"
         elif model_type == "emel":
             result = await get_emel_analysis(symbol)
-            strategy = "EMEL"
-            sig_key = "signal"
+            strategy, sig_key = "EMEL", "signal"
         else:
             return
-        
+
         if not isinstance(result, dict) or result.get("error"):
             return
-        
+
         sig = result.get(sig_key, "HOLD")
-        
-        # HOLD ise kaydetme
         if sig not in ("BUY", "SELL"):
             return
-        
-        # Kaydet
+
         entry = result.get("entry_price") or result.get("price", 0)
         conf = result.get("confidence", 50)
-        
         await _log_pulse_signal(symbol, sig, conf, entry, model_type, strategy)
-        logger.info(f"✅ {symbol} {model_type} {sig} sinyali kaydedildi")
-        
+
     except Exception as e:
-        logger.error(f"{model_type} kontrol hatası {symbol}: {e}")
+        logger.error(f"{model_type} log error {symbol}: {e}")
 
 
 async def _check_and_catchup():
@@ -686,13 +658,13 @@ async def background_scheduler_loop():
             await run_update_cycle()
             # Check outcomes periodically
             await check_outcomes_if_needed()
-            # Signal lifecycle tracking (every 5 min internally)
+            # Signal lifecycle: price check every 3 min (internally gated)
             await check_lifecycle_if_needed()
             # Analyze errors periodically (self-learning)
             await analyze_errors_if_needed()
-            # Log predictions periodically for learning
+            # Log ML predictions every 15 min
             await log_predictions_if_needed()
-            # Log Pulse/EMEL signals periodically (every 30 min)
+            # Log Pulse/EMEL signals every 15 min
             await log_pulse_signals_if_needed()
         except Exception as e:
             logger.error(f"Scheduler error: {e}")
