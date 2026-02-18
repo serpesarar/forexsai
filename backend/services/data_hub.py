@@ -147,7 +147,9 @@ async def _fetch_price_from_api(symbol: str) -> Optional[float]:
             if isinstance(data, list) and data:
                 data = data[0]
             if isinstance(data, dict):
-                for key in ("close", "price", "last", "value", "previousClose"):
+                # Prioritize real-time keys over 'close' which may be stale after-hours
+                # 'last' and 'price' are more likely to be actual current quotes
+                for key in ("last", "price", "close", "value", "previousClose"):
                     if key in data and data[key] is not None:
                         try:
                             return float(data[key])
