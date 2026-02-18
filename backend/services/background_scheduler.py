@@ -490,6 +490,50 @@ async def log_predictions_if_needed():
             logger.error(f"Error auto-logging prediction for {symbol}: {e}")
 
 
+async def _log_pulse_signal(symbol: str, direction: str, confidence: float,
+                           entry_price: float, model_type: str, strategy: str,
+                           ta: dict = None, extra: dict = None):
+    """Helper: log a Pulse/EMEL signal to prediction_logs via log_prediction()."""
+    from services.prediction_logger import log_prediction
+
+    context = {
+        "symbol": symbol,
+        "ta": ta or {},
+        "source": strategy,
+        "ml_prediction": {
+            "direction": direction,
+            "confidence": confidence,
+            "entry_price": entry_price,
+            "target_price": None,
+            "stop_price": None,
+        },
+        "distances": {},
+        "volume": {},
+        "trend_channel": {},
+        "macro": {},
+        "news": {},
+    }
+    if extra:
+        context.update(extra)
+
+    analysis = {
+        "final_decision": direction,
+        "confidence": confidence,
+        "model_used": strategy,
+    }
+
+    pred_id = await log_prediction(
+        symbol=symbol,
+        context=context,
+        analysis=analysis,
+        timeframe="5m",
+        strategy=strategy,
+        model_type=model_type,
+    )
+    if pred_id:
+        logger.info(f"Scheduler: logged {model_type} signal {pred_id[:8]} | {symbol} {direction} conf={confidence}")
+
+
 async def log_pulse_signals_if_needed():
     """Run Pulse analysis and log BUY/SELL signals to prediction_logs.
     Deduplication in log_prediction() prevents duplicate active signals."""
@@ -511,18 +555,15 @@ async def log_pulse_signals_if_needed():
         try:
             from routers.emel_pulse import get_pulse_v3_analysis
             v3 = await get_pulse_v3_analysis(symbol)
-            if isinstance(v3, dict):
-                if v3.get("error"):
-                    logger.warning(f"Scheduler: Pulse V3 {symbol} returned error: {v3['error']}")
+            if isinstance(v3, dict) and not v3.get("error"):
+                sig = v3.get("direction", "HOLD")
+                st = v3.get("signal_type", "HOLD")
+                if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
+                    entry = v3.get("entry_price") or v3.get("price", 0)
+                    conf = v3.get("confidence", 50)
+                    await _log_pulse_signal(symbol, sig, conf, entry, "pulse3", "PULSE_V3")
                 else:
-                    sig = v3.get("direction", "HOLD")
-                    st = v3.get("signal_type", "HOLD")
-                    if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
-                        logger.info(f"Scheduler: Pulse V3 {symbol} {sig} ({st})")
-                    else:
-                        logger.debug(f"Scheduler: Pulse V3 {symbol} → {sig} ({st}) — no signal logged")
-            else:
-                logger.warning(f"Scheduler: Pulse V3 {symbol} returned non-dict: {type(v3)}")
+                    logger.debug(f"Scheduler: Pulse V3 {symbol} → {sig} ({st}) — no signal")
         except Exception as e:
             logger.warning(f"Pulse V3 log error {symbol}: {e}")
 
@@ -532,18 +573,15 @@ async def log_pulse_signals_if_needed():
         try:
             from routers.emel_pulse import get_pulse_ml_analysis
             v2 = await get_pulse_ml_analysis(symbol)
-            if isinstance(v2, dict):
-                if v2.get("error"):
-                    logger.warning(f"Scheduler: Pulse ML {symbol} returned error: {v2['error']}")
+            if isinstance(v2, dict) and not v2.get("error"):
+                sig = v2.get("signal", "HOLD")
+                st = v2.get("signal_type", "HOLD")
+                if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
+                    entry = v2.get("entry_price") or v2.get("price", 0)
+                    conf = v2.get("confidence", 50)
+                    await _log_pulse_signal(symbol, sig, conf, entry, "pulse2", "PULSE_ML")
                 else:
-                    sig = v2.get("signal", "HOLD")
-                    st = v2.get("signal_type", "HOLD")
-                    if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
-                        logger.info(f"Scheduler: Pulse ML {symbol} {sig} ({st})")
-                    else:
-                        logger.debug(f"Scheduler: Pulse ML {symbol} → {sig} ({st}) — no signal logged")
-            else:
-                logger.warning(f"Scheduler: Pulse ML {symbol} returned non-dict: {type(v2)}")
+                    logger.debug(f"Scheduler: Pulse ML {symbol} → {sig} ({st}) — no signal")
         except Exception as e:
             logger.warning(f"Pulse ML (V2) log error {symbol}: {e}")
 
@@ -553,18 +591,15 @@ async def log_pulse_signals_if_needed():
         try:
             from routers.emel_pulse import get_pulse_analysis
             v1 = await get_pulse_analysis(symbol)
-            if isinstance(v1, dict):
-                if v1.get("error"):
-                    logger.warning(f"Scheduler: Pulse V1 {symbol} returned error: {v1['error']}")
+            if isinstance(v1, dict) and not v1.get("error"):
+                sig = v1.get("signal", "HOLD")
+                st = v1.get("signal_type", "HOLD")
+                if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
+                    entry = v1.get("entry_price") or v1.get("price", 0)
+                    conf = v1.get("confidence", 50)
+                    await _log_pulse_signal(symbol, sig, conf, entry, "pulse1", "PULSE_V1")
                 else:
-                    sig = v1.get("signal", "HOLD")
-                    st = v1.get("signal_type", "HOLD")
-                    if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
-                        logger.info(f"Scheduler: Pulse V1 {symbol} {sig} ({st})")
-                    else:
-                        logger.debug(f"Scheduler: Pulse V1 {symbol} → {sig} ({st}) — no signal logged")
-            else:
-                logger.warning(f"Scheduler: Pulse V1 {symbol} returned non-dict: {type(v1)}")
+                    logger.debug(f"Scheduler: Pulse V1 {symbol} → {sig} ({st}) — no signal")
         except Exception as e:
             logger.warning(f"Pulse V1 log error {symbol}: {e}")
 
@@ -574,17 +609,14 @@ async def log_pulse_signals_if_needed():
         try:
             from routers.emel_pulse import get_emel_analysis
             emel = await get_emel_analysis(symbol)
-            if isinstance(emel, dict):
-                if emel.get("error"):
-                    logger.warning(f"Scheduler: EMEL {symbol} returned error: {emel['error']}")
+            if isinstance(emel, dict) and not emel.get("error"):
+                sig = emel.get("signal", "HOLD")
+                if sig in ("BUY", "SELL"):
+                    entry = emel.get("entry_price") or emel.get("price", 0)
+                    conf = emel.get("confidence", 50)
+                    await _log_pulse_signal(symbol, sig, conf, entry, "emel", "EMEL")
                 else:
-                    sig = emel.get("signal", "HOLD")
-                    if sig in ("BUY", "SELL"):
-                        logger.info(f"Scheduler: EMEL {symbol} {sig}")
-                    else:
-                        logger.debug(f"Scheduler: EMEL {symbol} → {sig} — no signal logged")
-            else:
-                logger.warning(f"Scheduler: EMEL {symbol} returned non-dict: {type(emel)}")
+                    logger.debug(f"Scheduler: EMEL {symbol} → {sig} — no signal")
         except Exception as e:
             logger.warning(f"EMEL log error {symbol}: {e}")
 

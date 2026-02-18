@@ -53,4 +53,16 @@ async def fetch_marketaux_headlines(symbols: List[str]) -> List[Dict[str, str]]:
     except Exception:
         return []
 
-    return [{"title": item.get("title", "") or "", "source": item.get("source", "") or ""} for item in data]
+    results = []
+    for item in data:
+        results.append({
+            "title": item.get("title", "") or "",
+            "source": item.get("source", "") or "",
+            "published_at": item.get("published_at", "") or "",
+            "description": (item.get("description", "") or "")[:300],
+            "url": item.get("url", "") or "",
+            "image_url": item.get("image_url", "") or "",
+            "snippet": (item.get("snippet", "") or "")[:200],
+            "entities": [e.get("symbol", "") for e in (item.get("entities", []) or []) if e.get("symbol")],
+        })
+    return results

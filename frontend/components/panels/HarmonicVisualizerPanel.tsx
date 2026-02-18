@@ -9,7 +9,7 @@ import {
     ISeriesApi,
     Time,
 } from "lightweight-charts";
-import { Activity, RefreshCw, Hexagon, X as XIcon, Target, ShieldAlert, TrendingUp, TrendingDown } from "lucide-react";
+import { Activity, RefreshCw, Hexagon, X as XIcon, Target, ShieldAlert, TrendingUp, TrendingDown, Maximize2, Minimize2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useI18nStore } from "../../lib/i18n/store";
 import {
@@ -34,6 +34,7 @@ import {
     detectHarmonicPatterns,
     detectClassicPatterns,
 } from "../../utils/harmonicPatternDetector";
+import { useFullscreen } from "../../hooks/useFullscreen";
 import styles from "./harmonic-visualizer.module.css";
 
 // ─── CONFIG ──────────────────────────────────────────────────────────
@@ -43,6 +44,8 @@ const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const SYMBOLS = [
     { value: "NDX.INDX", label: "NASDAQ" },
     { value: "XAUUSD", label: "XAU/USD" },
+    { value: "GDAXI.INDX", label: "DAX" },
+    { value: "CL.COMM", label: "US OIL" },
 ] as const;
 
 const TIMEFRAMES = ["5m", "15m", "1h", "4h"] as const;
@@ -167,6 +170,7 @@ export default function HarmonicVisualizerPanel() {
     const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
     const [overlayVersion, setOverlayVersion] = useState(0);
     const [pulsePhase, setPulsePhase] = useState(0); // 0 or 1 for candle pulsing
+    const { isFullscreen, toggleFullscreen } = useFullscreen();
 
     // ── Refs
     const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -604,7 +608,7 @@ export default function HarmonicVisualizerPanel() {
 
     // ── Render
     return (
-        <div className={styles.panel}>
+        <div className={`${styles.panel} ${isFullscreen ? styles.panelFullscreen : ''}`}>
             {/* Header */}
             <div className={styles.header}>
                 <div className={styles.headerLeft}>
@@ -655,6 +659,13 @@ export default function HarmonicVisualizerPanel() {
                         title="Refresh"
                     >
                         <RefreshCw size={14} className={isLoading ? styles.spin : ""} />
+                    </button>
+                    <button
+                        onClick={toggleFullscreen}
+                        className={styles.refreshBtn}
+                        title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                    >
+                        {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
                     </button>
                 </div>
             </div>

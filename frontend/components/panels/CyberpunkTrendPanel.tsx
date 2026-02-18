@@ -17,11 +17,14 @@ import {
   Shield,
   Crosshair,
   Activity,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useProximityAnimation } from "../../hooks/useProximityAnimation";
 import { PanelInfoButton } from "../PanelInfoButton";
 import TrendChannelChart from "./TrendChannelChart";
+import { useFullscreen } from "../../hooks/useFullscreen";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
@@ -174,6 +177,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
   const [timeframe, setTimeframe] = useState("1H");
   const [explanationModal, setExplanationModal] = useState<{ title: string; content: string } | null>(null);
   const [priceFlash, setPriceFlash] = useState(false);
+  const { isFullscreen, toggleFullscreen } = useFullscreen();
 
   const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "clear_trend");
 
@@ -279,11 +283,11 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="relative rounded-3xl overflow-hidden"
+      className={`relative rounded-3xl overflow-hidden ${isFullscreen ? 'fixed inset-0 z-[9999] !rounded-none flex flex-col' : ''}`}
       style={{
         background: "rgba(10,15,30,0.5)",
         backdropFilter: "blur(24px)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        border: isFullscreen ? "none" : "1px solid rgba(255,255,255,0.06)",
         boxShadow: `0 0 60px rgba(0,255,136,0.04), 0 4px 80px rgba(0,0,0,0.5)`,
       }}
     >
@@ -337,6 +341,9 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
           </select>
           <button onClick={fetchData} className="p-1.5 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: "rgba(255,255,255,0.35)" }} />
+          </button>
+          <button onClick={toggleFullscreen} className="p-1.5 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }} title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" style={{ color: "rgba(255,255,255,0.35)" }} /> : <Maximize2 className="w-3.5 h-3.5" style={{ color: "rgba(255,255,255,0.35)" }} />}
           </button>
           <PanelInfoButton panelId="clear-trend" />
         </div>

@@ -126,8 +126,8 @@ async def news_feed(
     _ = impact
     _ = category
 
-    # Marketaux symbols can be picky; service will return [] if key missing.
-    headlines = await fetch_marketaux_headlines(["NDX", "XAUUSD"])
+    # Marketaux symbols — include all tracked instruments
+    headlines = await fetch_marketaux_headlines(["NDX", "XAUUSD", "GDAXI", "CL"])
     titles = [(h.get("title") or "").strip() for h in headlines]
     translated_titles = await translate_texts(titles, target_lang=lang)
     news = []
@@ -136,15 +136,20 @@ async def news_feed(
         source = (item.get("source") or "").strip() or "marketaux"
         if not title:
             continue
+        published = (item.get("published_at") or "").strip()
+        timestamp = published if published else datetime.utcnow().isoformat() + "Z"
+        content = (item.get("description") or item.get("snippet") or "").strip()
+        link = (item.get("url") or "").strip()
         stable_id = hashlib.md5(f"{title}|{source}".encode("utf-8")).hexdigest()
         news.append(
             {
                 "type": "market_news",
                 "id": stable_id,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": timestamp,
                 "title": title,
-                "content": "",
-                "link": "",
+                "content": content[:300] if content else "",
+                "link": link,
+                "source": source,
                 "category": "market_news",
             }
         )

@@ -16,17 +16,20 @@ interface StrategyPerformanceDashboardProps {
   symbol?: string;
 }
 
-const STRATEGIES = ["ultra_safe", "balanced", "full_power", "aggressive"];
+const STRATEGIES = ["ultra_safe", "balanced", "full_power", "aggressive", "nasdaq_precision"];
 const STRATEGY_LABELS: Record<string, string> = {
   ultra_safe: "Ultra Safe",
   balanced: "Balanced",
   full_power: "Full Power",
   aggressive: "Aggressive",
+  nasdaq_precision: "NASDAQ Precision",
 };
 
 const SYMBOL_TARGETS: Record<string, Record<string, number>> = {
-  "NDX.INDX": { TP1: 15, TP2: 25, TP3: 45, TP4: 80, SL: 35 },
-  XAUUSD: { TP1: 5, TP2: 10, TP3: 25, TP4: 30, TP5: 50, SL: 8 },
+  "NDX.INDX": { TP1: 15, TP2: 25, TP3: 35, TP4: 50, SL: 50 },
+  XAUUSD: { TP1: 7, TP2: 12, TP3: 20, TP4: 30, SL: 10 },
+  "GDAXI.INDX": { TP1: 15, TP2: 25, TP3: 35, TP4: 50, SL: 50 },
+  "CL.COMM": { TP1: 0.02, TP2: 0.04, TP3: 0.06, TP4: 0.10, SL: 0.05 },
 };
 
 export default function StrategyPerformanceDashboard({ symbol = "XAUUSD" }: StrategyPerformanceDashboardProps) {
@@ -94,6 +97,8 @@ export default function StrategyPerformanceDashboard({ symbol = "XAUUSD" }: Stra
           >
             <option value="XAUUSD">XAUUSD</option>
             <option value="NDX.INDX">NASDAQ</option>
+            <option value="GDAXI.INDX">DAX</option>
+            <option value="CL.COMM">US Oil</option>
           </select>
           
           <select

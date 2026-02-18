@@ -156,6 +156,13 @@ STRATEGY_PRESETS = {
         "enabled_layers": ["critical"],
         "threshold": 0.50,
         "floor_ratio": 0.4
+    },
+    "nasdaq_precision": {
+        "name": "NASDAQ Precision",
+        "description": "NASDAQ-optimized: trend+regime+S/R, higher threshold, pattern-focused",
+        "enabled_layers": ["critical", "technical"],
+        "threshold": 0.60,
+        "floor_ratio": 0.65
     }
 }
 

@@ -81,7 +81,7 @@ class LifecycleMetrics:
 metrics = LifecycleMetrics()
 
 # ─── Configuration ───────────────────────────────────────────────────────────
-LIFECYCLE_CHECK_INTERVAL = 300        # 5 minutes in seconds
+LIFECYCLE_CHECK_INTERVAL = 120        # 2 minutes in seconds
 SIGNAL_MAX_AGE_MINUTES = 30           # Expire after 30 min
 MAX_ACTIVE_SIGNALS = 100              # Cap for performance
 ARCHIVE_AFTER_DAYS = 30               # Move to cold storage after 30 days
@@ -335,27 +335,34 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     # ── 8. Determine new status ──
     new_status = None
     exit_price = None
+    any_target_hit = any(targets_hit.values()) if targets_hit else False
 
-    if hit_stop:
-        new_status = "stopped"
-        exit_price = sl_price
-        logger.info(f"🛑 Signal {signal_id[:8]} {symbol} {direction} STOPPED @ {sl_price:.2f}")
-    elif all(target_status.get(tp) for tp in target_prices):
+    if all(target_status.get(tp) for tp in target_prices):
+        # All targets hit → completed
         new_status = "completed"
         exit_price = current
         logger.info(f"🎯 Signal {signal_id[:8]} {symbol} {direction} ALL TARGETS HIT!")
+    elif hit_stop and any_target_hit:
+        # CRITICAL: If ANY target was hit before stop → signal is SUCCESSFUL
+        new_status = "completed"
+        exit_price = current
+        logger.info(f"✅ Signal {signal_id[:8]} {symbol} {direction} TP hit then SL → completed (TP takes priority)")
+    elif hit_stop:
+        # Pure stop loss, no target ever hit → stopped
+        new_status = "stopped"
+        exit_price = sl_price
+        logger.info(f"🛑 Signal {signal_id[:8]} {symbol} {direction} STOPPED @ {sl_price:.2f}")
     else:
-        # Check age for expiration
+        # Check age for expiration (30 min timeout)
         created_at = signal.get("created_at", "")
         if isinstance(created_at, str) and created_at:
             try:
                 created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                 age_minutes = (datetime.now(created_dt.tzinfo) - created_dt).total_seconds() / 60
                 if age_minutes >= SIGNAL_MAX_AGE_MINUTES:
-                    any_hit = any(targets_hit.values()) if targets_hit else False
-                    new_status = "completed" if any_hit else "expired"
+                    new_status = "completed" if any_target_hit else "expired"
                     exit_price = current
-                    logger.info(f"⏰ Signal {signal_id[:8]} aged out ({age_minutes:.0f}m) → {new_status}")
+                    logger.info(f"⏰ Signal {signal_id[:8]} aged out ({age_minutes:.0f}m) → {new_status} (any_tp={any_target_hit})")
             except Exception:
                 pass
 

@@ -14,6 +14,7 @@ import {
   Flame,
   TrendingUp,
   AlertTriangle,
+  Crosshair,
 } from "lucide-react";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
@@ -87,6 +88,14 @@ const STRATEGY_CONFIG = {
     color: "text-red-400",
     bgColor: "bg-red-500/20",
     borderColor: "border-red-500/30",
+  },
+  nasdaq_precision: {
+    name: "NASDAQ Precision",
+    nameEn: "NASDAQ Precision",
+    icon: Crosshair,
+    color: "text-cyan-400",
+    bgColor: "bg-cyan-500/20",
+    borderColor: "border-cyan-500/30",
   },
 };
 
