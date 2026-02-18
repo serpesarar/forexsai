@@ -275,12 +275,58 @@ async def test_pulse_log(symbol: str = "GDAXI.INDX", model_type: str = "pulse2")
         conf = result.get("confidence", 50) or 50
         steps.append({"step": "confidence", "conf": conf})
 
-        # Step 3: Try logging
-        from services.background_scheduler import _log_pulse_signal
-        pred_id = await _log_pulse_signal(symbol, sig, conf, entry, model_type, f"TEST_{model_type.upper()}")
-        steps.append({"step": "log_result", "pred_id": pred_id})
+        # Step 3: Try log_prediction directly (inline for debugging)
+        from database.supabase_client import get_supabase_client, is_db_available
+        from services.prediction_logger import _has_active_signal
+        import json as _json
 
-        return {"success": bool(pred_id), "pred_id": pred_id, "steps": steps}
+        client = get_supabase_client()
+        if not client:
+            steps.append({"step": "error", "error": "No DB client"})
+            return {"error": "No DB client", "steps": steps}
+
+        has_active = _has_active_signal(client, symbol, model_type)
+        steps.append({"step": "active_check", "has_active": has_active, "model_type": model_type})
+        if has_active:
+            return {"blocked": "Active signal exists", "steps": steps}
+
+        from services.target_config import get_symbol_config, calculate_target_prices, calculate_stoploss_price
+        cfg = get_symbol_config(symbol)
+        target_prices = calculate_target_prices(entry, sig, symbol)
+        sl_price = calculate_stoploss_price(entry, sig, symbol)
+        targets_dict = target_prices
+        targets_dict["SL"] = round(sl_price, 4)
+        steps.append({"step": "targets", "targets": targets_dict, "sl_pips": cfg.stoploss_pips})
+
+        record = {
+            "symbol": symbol,
+            "timeframe": "5m",
+            "ml_direction": sig,
+            "ml_confidence": float(conf),
+            "ml_entry_price": entry,
+            "status": "active",
+            "targets": _json.dumps(targets_dict),
+            "stop_loss_pips": cfg.stoploss_pips,
+            "targets_hit": _json.dumps({tp: False for tp in targets_dict if tp != "SL"}),
+            "highest_profit_pips": 0,
+            "lowest_drawdown_pips": 0,
+            "model_type": model_type,
+            "strategy": f"TEST_{model_type.upper()}",
+            "factors": {},
+        }
+        steps.append({"step": "record_built", "record_keys": list(record.keys())})
+
+        try:
+            insert_result = client.table("prediction_logs").insert_ignore(record)
+            steps.append({"step": "insert_result", "result_type": str(type(insert_result)), "has_data": bool(insert_result and insert_result.get("data")), "raw": str(insert_result)[:300]})
+            if insert_result and insert_result.get("data"):
+                new_id = insert_result["data"][0].get("id", "")
+                return {"success": True, "pred_id": new_id, "steps": steps}
+            else:
+                return {"success": False, "error": "insert returned no data", "steps": steps}
+        except Exception as insert_err:
+            steps.append({"step": "insert_error", "error": str(insert_err), "traceback": traceback.format_exc()})
+            return {"error": str(insert_err), "steps": steps}
 
     except Exception as e:
         steps.append({"step": "error", "error": str(e), "traceback": traceback.format_exc()})
