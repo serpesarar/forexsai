@@ -254,25 +254,29 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
 
     config = get_symbol_config(symbol)
 
-    # ── 1. Get current prices (wick capture) ──
-    prices = await _get_session_high_low(symbol)
-    current = prices.get("current")
-    session_high = prices.get("high")
-    session_low = prices.get("low")
+    # ── 1. Get current spot price (same source as entry price) ──
+    current = None
+    try:
+        price_val = await fetch_latest_price(symbol)
+        if price_val:
+            current = float(price_val)
+    except Exception as e:
+        logger.warning(f"lifecycle.price_error | symbol={symbol} error={e}")
 
-    if current is None:
+    if current is None or current <= 0:
         logger.warning(f"No price for {symbol}, skipping signal {signal_id[:8]}")
         return None
 
-    # ── 2. Calculate profit/loss in pips ──
+    # ── 2. Calculate profit/loss in pips using spot price ──
     if direction == "BUY":
         profit_pips = pips_from_price_change(current - entry_price, symbol)
-        best_pips = pips_from_price_change((session_high or current) - entry_price, symbol)
-        worst_pips = pips_from_price_change((session_low or current) - entry_price, symbol)
     else:  # SELL
         profit_pips = pips_from_price_change(entry_price - current, symbol)
-        best_pips = pips_from_price_change(entry_price - (session_low or current), symbol)
-        worst_pips = pips_from_price_change(entry_price - (session_high or current), symbol)
+    best_pips = max(profit_pips, 0)
+    worst_pips = min(profit_pips, 0)
+    # Use current as both high and low (spot price check, no wick capture)
+    session_high = current
+    session_low = current
 
     # ── 3. Update cumulative high/low ──
     prev_high = signal.get("highest_profit_pips") or 0

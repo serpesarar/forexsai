@@ -596,8 +596,18 @@ async def _check_and_log_pulse(symbol: str, model_type: str, client):
         if sig not in ("BUY", "SELL"):
             return
 
-        entry = result.get("entry_price") or result.get("price", 0)
-        conf = result.get("confidence", 50)
+        # Extract entry price — handle dict format from Pulse 1 ({"current": 24898.87})
+        entry = result.get("entry_price")
+        if not entry:
+            price_field = result.get("price", 0)
+            if isinstance(price_field, dict):
+                entry = price_field.get("current", 0)
+            else:
+                entry = price_field
+        if not entry or not isinstance(entry, (int, float)) or entry <= 0:
+            logger.debug(f"{model_type} {symbol}: no valid entry price, skipping")
+            return
+        conf = result.get("confidence", 50) or 50
         await _log_pulse_signal(symbol, sig, conf, entry, model_type, strategy)
 
     except Exception as e:
