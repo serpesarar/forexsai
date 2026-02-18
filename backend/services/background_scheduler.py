@@ -547,89 +547,89 @@ async def _log_pulse_signal(symbol: str, direction: str, confidence: float,
 
 
 async def log_pulse_signals_if_needed():
-    """Run Pulse analysis and log BUY/SELL signals to prediction_logs.
-    Deduplication in log_prediction() prevents duplicate active signals."""
-    global _last_pulse_log
-
-    now = datetime.utcnow()
-
-    for symbol in TRACKED_SYMBOLS:
-        last_log = _last_pulse_log.get(symbol)
-        if last_log and (now - last_log).total_seconds() < PULSE_LOG_INTERVAL:
-            continue
-
-        _last_pulse_log[symbol] = now
-
-        if not is_db_available():
-            continue
-
-        # --- Pulse V3 (Hybrid Scalp) ---
+    """Sürekli çalışan loop - 15dk'da bir kontrol et (sinyal ömrü 15dk).
+    Sadece aktif sinyal yoksa yeni sinyal açar."""
+    while True:
         try:
-            from routers.emel_pulse import get_pulse_v3_analysis
-            v3 = await get_pulse_v3_analysis(symbol)
-            if isinstance(v3, dict) and not v3.get("error"):
-                sig = v3.get("direction", "HOLD")
-                if sig in ("BUY", "SELL"):
-                    entry = v3.get("entry_price") or v3.get("price", 0)
-                    conf = v3.get("confidence", 50)
-                    await _log_pulse_signal(symbol, sig, conf, entry, "pulse3", "PULSE_V3")
-                else:
-                    logger.debug(f"Scheduler: Pulse V3 {symbol} → {sig} — no signal")
+            if not is_db_available():
+                await asyncio.sleep(60)
+                continue
+                
+            client = get_supabase_client()
+            if not client:
+                await asyncio.sleep(60)
+                continue
+            
+            for symbol in TRACKED_SYMBOLS:
+                # 1. Aktif sinyal var mı kontrol et (varsa atla)
+                for model_type in ["pulse3", "pulse2", "pulse1", "emel"]:
+                    try:
+                        existing = client.table("prediction_logs").select("id").eq(
+                            "symbol", symbol
+                        ).eq("model_type", model_type
+                        ).eq("status", "active"
+                        ).limit(1).execute()
+                        
+                        if existing.get("data") and len(existing["data"]) > 0:
+                            logger.debug(f"⏸️ {symbol} için aktif {model_type} var, atlanıyor")
+                            continue  # Bu sembol+model'de zaten açık sinyal var
+                        
+                        # 2. Yeni sinyal üret
+                        await _check_and_log_pulse(symbol, model_type, client)
+                        await asyncio.sleep(0.3)
+                    except Exception as e:
+                        logger.error(f"{model_type} kontrol hatası {symbol}: {e}")
+                        
         except Exception as e:
-            logger.warning(f"Pulse V3 log error {symbol}: {e}")
+            logger.error(f"Pulse loop hatası: {e}")
+        
+        # 15 dakika bekle (sinyal ömrü kadar)
+        await asyncio.sleep(900)  # 15 dakika
 
-        await asyncio.sleep(0.3)
 
-        # --- Pulse ML (V2) ---
-        try:
-            from routers.emel_pulse import get_pulse_ml_analysis
-            v2 = await get_pulse_ml_analysis(symbol)
-            if isinstance(v2, dict) and not v2.get("error"):
-                sig = v2.get("signal", "HOLD")
-                if sig in ("BUY", "SELL"):
-                    entry = v2.get("entry_price") or v2.get("price", 0)
-                    conf = v2.get("confidence", 50)
-                    await _log_pulse_signal(symbol, sig, conf, entry, "pulse2", "PULSE_ML")
-                else:
-                    logger.debug(f"Scheduler: Pulse ML {symbol} → {sig} — no signal")
-        except Exception as e:
-            logger.warning(f"Pulse ML (V2) log error {symbol}: {e}")
-
-        await asyncio.sleep(0.3)
-
-        # --- Pulse V1 ---
-        try:
-            from routers.emel_pulse import get_pulse_analysis
-            v1 = await get_pulse_analysis(symbol)
-            if isinstance(v1, dict) and not v1.get("error"):
-                sig = v1.get("signal", "HOLD")
-                if sig in ("BUY", "SELL"):
-                    entry = v1.get("entry_price") or v1.get("price", 0)
-                    conf = v1.get("confidence", 50)
-                    await _log_pulse_signal(symbol, sig, conf, entry, "pulse1", "PULSE_V1")
-                else:
-                    logger.debug(f"Scheduler: Pulse V1 {symbol} → {sig} — no signal")
-        except Exception as e:
-            logger.warning(f"Pulse V1 log error {symbol}: {e}")
-
-        await asyncio.sleep(0.3)
-
-        # --- EMEL ---
-        try:
-            from routers.emel_pulse import get_emel_analysis
-            emel = await get_emel_analysis(symbol)
-            if isinstance(emel, dict) and not emel.get("error"):
-                sig = emel.get("signal", "HOLD")
-                if sig in ("BUY", "SELL"):
-                    entry = emel.get("entry_price") or emel.get("price", 0)
-                    conf = emel.get("confidence", 50)
-                    await _log_pulse_signal(symbol, sig, conf, entry, "emel", "EMEL")
-                else:
-                    logger.debug(f"Scheduler: EMEL {symbol} → {sig} — no signal")
-        except Exception as e:
-            logger.warning(f"EMEL log error {symbol}: {e}")
-
-        await asyncio.sleep(0.3)
+async def _check_and_log_pulse(symbol: str, model_type: str, client):
+    """Tek bir model için sinyal kontrolü ve kaydı"""
+    try:
+        from routers.emel_pulse import get_pulse_v3_analysis, get_pulse_ml_analysis, get_pulse_analysis, get_emel_analysis
+        
+        # Model tipine göre analiz fonksiyonu seç
+        if model_type == "pulse3":
+            result = await get_pulse_v3_analysis(symbol)
+            strategy = "PULSE_V3"
+            sig_key = "direction"
+        elif model_type == "pulse2":
+            result = await get_pulse_ml_analysis(symbol)
+            strategy = "PULSE_ML"
+            sig_key = "signal"
+        elif model_type == "pulse1":
+            result = await get_pulse_analysis(symbol)
+            strategy = "PULSE_V1"
+            sig_key = "signal"
+        elif model_type == "emel":
+            result = await get_emel_analysis(symbol)
+            strategy = "EMEL"
+            sig_key = "signal"
+        else:
+            return
+        
+        if not isinstance(result, dict) or result.get("error"):
+            return
+        
+        sig = result.get(sig_key, "HOLD")
+        
+        # HOLD ise kaydetme
+        if sig not in ("BUY", "SELL"):
+            return
+        
+        # Kaydet
+        entry = result.get("entry_price") or result.get("price", 0)
+        conf = result.get("confidence", 50)
+        
+        await _log_pulse_signal(symbol, sig, conf, entry, model_type, strategy)
+        logger.info(f"✅ {symbol} {model_type} {sig} sinyali kaydedildi")
+        
+    except Exception as e:
+        logger.error(f"{model_type} kontrol hatası {symbol}: {e}")
 
 
 async def _check_and_catchup():

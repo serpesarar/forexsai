@@ -75,7 +75,33 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Failed to start DataHub: {e}")
 
-    # 3. Background scheduler (with WebSocket broadcast)
+    # 3. PULSE + EMEL SCHEDULER (Doğrudan Başlat - 15dk'da bir)
+    try:
+        from services.background_scheduler import log_pulse_signals_if_needed
+        # Pulse'ı hemen başlat ve arka planda çalıştır
+        asyncio.create_task(log_pulse_signals_if_needed())
+        print("✅ Pulse/EMEL scheduler başlatıldı (her 15dk'da kontrol)")
+    except Exception as e:
+        print(f"❌ Pulse scheduler hatası: {e}")
+
+    # 4. LIFECYCLE CHECKER (Her 2 dakikada TP/SL kontrolü)
+    try:
+        from services.signal_lifecycle import check_lifecycle_if_needed
+        async def lifecycle_loop():
+            while True:
+                try:
+                    await check_lifecycle_if_needed()
+                    logger.info("♻️ Lifecycle check tamamlandı")
+                except Exception as e:
+                    logger.error(f"Lifecycle hatası: {e}")
+                await asyncio.sleep(120)  # 2 dakika bekle
+        
+        asyncio.create_task(lifecycle_loop())
+        print("✅ Lifecycle checker başlatıldı (her 2dk'da)")
+    except Exception as e:
+        print(f"❌ Lifecycle hatası: {e}")
+
+    # 5. Background scheduler (diğer görevler için)
     try:
         from services.background_scheduler import start_scheduler
         start_scheduler()
@@ -83,7 +109,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Failed to start scheduler: {e}")
 
-    # 4. Connection stats logger (every 60s)
+    # 6. Connection stats logger (every 60s)
     _conn_logger_task = asyncio.create_task(_connection_stats_logger())
 
     print(f"App ready in {time.time() - _APP_START_TIME:.1f}s")

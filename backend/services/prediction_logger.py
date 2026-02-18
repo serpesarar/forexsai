@@ -14,12 +14,10 @@ from services.error_analysis_service import save_candle_snapshot
 
 logger = logging.getLogger(__name__)
 
-# ─── Cooldown tracking: prevent rapid signal churn ──────────────────────────
-# After a signal completes/stops/expires, block new signals for same symbol+model
-# for SIGNAL_COOLDOWN_SECONDS. This prevents the churn cycle:
-#   create → complete/stop in 2min → create → repeat
-SIGNAL_COOLDOWN_SECONDS = 900  # 15 minutes (30'dan düşürüldü)
-_signal_cooldowns: Dict[str, datetime] = {}  # key = "symbol:model_type"
+# ─── Signal Lifecycle: Sadece aktif sinyal varsa bekle ──────────────────────────
+# Sinyal kapandıktan sonra (completed/stopped/expired) hemen yeni sinyal açılabilir
+# Sadece aynı sembol+model'de "active" sinyal varsa bekle
+SIGNAL_LIFETIME_MINUTES = 15  # Sinyal 15 dakika açık kalacak
 
 
 def calculate_targets(symbol: str, entry_price: float, direction: str):
@@ -64,40 +62,26 @@ def calculate_targets(symbol: str, entry_price: float, direction: str):
     return targets
 
 
-def _is_on_cooldown(symbol: str, model_type: str) -> bool:
-    """DB-based cooldown check: Son sinyalden bu yana 15 dk geçti mi?"""
+def _has_active_signal(symbol: str, model_type: str) -> bool:
+    """Aynı sembolde aktif (açık) sinyal var mı? Kapandıktan sonra yeni sinyal açılabilir."""
     try:
         client = get_supabase_client()
         if client is None:
             return False
             
-        result = client.table("prediction_logs").select("created_at").eq(
+        result = client.table("prediction_logs").select("id").eq(
             "symbol", symbol
         ).eq("model_type", model_type
-        ).order("created_at", desc=True
+        ).eq("status", "active"  # Sadece açık olanları kontrol et
         ).limit(1).execute()
         
-        if result.get("data") and len(result["data"]) > 0:
-            last_time_str = result["data"][0]["created_at"]
-            # ISO format parsing (with or without Z)
-            if last_time_str.endswith("Z"):
-                last_time_str = last_time_str[:-1] + "+00:00"
-            last_time = datetime.fromisoformat(last_time_str)
-            
-            # Ensure last_time has timezone info
-            if last_time.tzinfo is None:
-                last_time = last_time.replace(tzinfo=timezone.utc)
-            
-            elapsed = (datetime.now(timezone.utc) - last_time).total_seconds()
-            
-            if elapsed < SIGNAL_COOLDOWN_SECONDS:
-                remaining = int(SIGNAL_COOLDOWN_SECONDS - elapsed)
-                logger.info(f"⏱️ COOLDOWN: {symbol} {model_type} için {int(elapsed)}sn geçti, {remaining}sn kaldı")
-                return True
+        has_active = result.get("data") and len(result["data"]) > 0
+        if has_active:
+            logger.debug(f"⏸️ {symbol} {model_type} için zaten aktif sinyal var")
+        return has_active
     except Exception as e:
-        logger.error(f"Cooldown check hatası: {e}")
-    
-    return False
+        logger.error(f"Aktif sinyal kontrolü hatası: {e}")
+        return False  # Hata varsa yeni sinyal aç (güvenlik için)
 
 
 def _extract_factors(context: Dict[str, Any], analysis: Dict[str, Any]) -> Dict[str, Any]:
@@ -194,9 +178,9 @@ async def log_prediction(
         
         effective_model_type = model_type or (strategy.lower() if strategy else "ml")
         
-        # ── Cooldown check: prevent rapid signal churn ──
-        if _is_on_cooldown(symbol, effective_model_type):
-            logger.info(f"🚫 COOLDOWN ENGELLENDİ: {symbol} {effective_model_type}")
+        # ── Aktif sinyal kontrolü: Aynı sembol+model'de açık sinyal varsa bekle ──
+        if _has_active_signal(symbol, effective_model_type):
+            logger.info(f"⏸️ {symbol} {effective_model_type} için zaten aktif sinyal var, yeni açılmıyor")
             return None
         
         # ── Deduplication: Son 30dk içinde aynı symbol+model sinyali var mı? ──
