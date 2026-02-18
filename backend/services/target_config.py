@@ -51,14 +51,14 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
         is_percentage=False,
     ),
     "XAUUSD": SymbolConfig(
-        pip_value=0.1,  # $0.10 = 1 pip
+        pip_value=0.01,  # 1 pip = $0.01 (1 cent) - DÜZELTİLDİ
         targets=[
-            TargetLevel("TP1", 30),   # 30 pips = $3.00
-            TargetLevel("TP2", 60),   # 60 pips = $6.00
-            TargetLevel("TP3", 100),  # 100 pips = $10.00
-            TargetLevel("TP4", 150),  # 150 pips = $15.00
+            TargetLevel("TP1", 300),   # 300 pips = $3.00
+            TargetLevel("TP2", 600),   # 600 pips = $6.00
+            TargetLevel("TP3", 1000),  # 1000 pips = $10.00
+            TargetLevel("TP4", 1500),  # 1500 pips = $15.00
         ],
-        stoploss_pips=50,  # 50 pips = $5.00
+        stoploss_pips=500,  # 500 pips = $5.00
         is_percentage=False,
     ),
     "CL.COMM": SymbolConfig(

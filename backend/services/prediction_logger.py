@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # After a signal completes/stops/expires, block new signals for same symbol+model
 # for SIGNAL_COOLDOWN_SECONDS. This prevents the churn cycle:
 #   create → complete/stop in 2min → create → repeat
-SIGNAL_COOLDOWN_SECONDS = 1800  # 30 minutes
+SIGNAL_COOLDOWN_SECONDS = 900  # 15 minutes (30'dan düşürüldü)
 _signal_cooldowns: Dict[str, datetime] = {}  # key = "symbol:model_type"
 
 
@@ -31,14 +31,17 @@ def record_signal_cooldown(symbol: str, model_type: str):
 
 
 def _is_on_cooldown(symbol: str, model_type: str) -> bool:
-    """Check if a signal creation is blocked by cooldown."""
+    """Check if a signal creation is blocked by cooldown.
+    
+    DB-based cooldown: Son sinyalden bu yana yeterli süre geçti mi?
+    """
     key = f"{symbol}:{model_type}"
     last = _signal_cooldowns.get(key)
     if not last:
         return False
     elapsed = (datetime.utcnow() - last).total_seconds()
     if elapsed < SIGNAL_COOLDOWN_SECONDS:
-        logger.debug(f"Cooldown active: {key} ({elapsed:.0f}s / {SIGNAL_COOLDOWN_SECONDS}s)")
+        logger.info(f"⏱️ COOLDOWN: {key} için {int(elapsed)}sn geçti, {int(SIGNAL_COOLDOWN_SECONDS - elapsed)}sn kaldı")
         return True
     # Cooldown expired, clean up
     _signal_cooldowns.pop(key, None)
@@ -141,17 +144,25 @@ async def log_prediction(
         
         # ── Cooldown check: prevent rapid signal churn ──
         if _is_on_cooldown(symbol, effective_model_type):
+            logger.info(f"🚫 COOLDOWN ENGELLENDİ: {symbol} {effective_model_type}")
             return None
         
-        # ── Deduplication: skip if there's already an active signal for symbol+model_type ──
+        # ── Deduplication: Son 30dk içinde aynı symbol+model sinyali var mı? ──
         try:
-            existing = client.table("prediction_logs").select("id").eq(
+            from datetime import timezone
+            cutoff_time = (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat()
+            
+            # Hem model_type hem strategy kontrolü yap
+            existing = client.table("prediction_logs").select("id, created_at").eq(
                 "symbol", symbol
-            ).eq("status", "active").eq(
-                "model_type", effective_model_type
+            ).or_("model_type.eq.{},strategy.eq.{}".format(
+                effective_model_type, 
+                strategy or effective_model_type
+            )).gt("created_at", cutoff_time
             ).limit(1).execute()
+            
             if existing.get("data") and len(existing["data"]) > 0:
-                logger.debug(f"Skipping duplicate: active {effective_model_type} signal exists for {symbol}")
+                logger.info(f"🚫 DUPLICATE BLOCKED: {symbol} {effective_model_type} son 30dk içinde mevcut")
                 return existing["data"][0]["id"]
         except Exception as dedup_err:
             logger.warning(f"Dedup check failed (proceeding): {dedup_err}")

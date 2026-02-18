@@ -40,7 +40,7 @@ _last_outcome_check: Optional[datetime] = None
 _last_error_analysis: Optional[datetime] = None
 _last_prediction_log: Dict[str, datetime] = {}  # Per symbol
 _last_pulse_log: Dict[str, datetime] = {}  # Per symbol, for Pulse signal logging
-PULSE_LOG_INTERVAL = 1800  # Log Pulse signals every 30 minutes (matches signal cooldown)
+PULSE_LOG_INTERVAL = 900  # 15 minutes (1800 yerine düşürüldü)
 _last_macro_update: Optional[datetime] = None
 _cached_macro: Dict[str, Any] = {}  # Cached macro data
 
@@ -496,42 +496,52 @@ async def _log_pulse_signal(symbol: str, direction: str, confidence: float,
     """Helper: log a Pulse/EMEL signal to prediction_logs via log_prediction()."""
     from services.prediction_logger import log_prediction
 
-    context = {
-        "symbol": symbol,
-        "ta": ta or {},
-        "source": strategy,
-        "ml_prediction": {
-            "direction": direction,
+    try:
+        context = {
+            "symbol": symbol,
+            "ta": ta or {},
+            "source": strategy,
+            "ml_prediction": {
+                "direction": direction,
+                "confidence": confidence,
+                "entry_price": entry_price,
+                "target_price": None,
+                "stop_price": None,
+            },
+            "distances": {},
+            "volume": {},
+            "trend_channel": {},
+            "macro": {},
+            "news": {},
+        }
+        if extra:
+            context.update(extra)
+
+        analysis = {
+            "final_decision": direction,
             "confidence": confidence,
-            "entry_price": entry_price,
-            "target_price": None,
-            "stop_price": None,
-        },
-        "distances": {},
-        "volume": {},
-        "trend_channel": {},
-        "macro": {},
-        "news": {},
-    }
-    if extra:
-        context.update(extra)
+            "model_used": strategy,
+        }
 
-    analysis = {
-        "final_decision": direction,
-        "confidence": confidence,
-        "model_used": strategy,
-    }
-
-    pred_id = await log_prediction(
-        symbol=symbol,
-        context=context,
-        analysis=analysis,
-        timeframe="5m",
-        strategy=strategy,
-        model_type=model_type,
-    )
-    if pred_id:
-        logger.info(f"Scheduler: logged {model_type} signal {pred_id[:8]} | {symbol} {direction} conf={confidence}")
+        pred_id = await log_prediction(
+            symbol=symbol,
+            context=context,
+            analysis=analysis,
+            timeframe="5m",
+            strategy=strategy,
+            model_type=model_type,
+        )
+        if pred_id:
+            logger.info(f"✅ {symbol} {model_type} sinyali kaydedildi: {direction} (id={pred_id[:8]})")
+            return pred_id
+        else:
+            logger.debug(f"⏭️ {symbol} {model_type} sinyeli atlandı (duplicate veya cooldown)")
+            return None
+    except Exception as e:
+        logger.error(f"❌ {symbol} {model_type} kayıt hatası: {e}")
+        import traceback
+        logger.debug(f"Traceback: {traceback.format_exc()}")
+        return None
 
 
 async def log_pulse_signals_if_needed():
