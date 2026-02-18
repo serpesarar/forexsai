@@ -5,7 +5,7 @@ Logs every ML + Claude prediction to database for future learning.
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 from uuid import UUID
 
@@ -13,6 +13,36 @@ from database.supabase_client import get_supabase_client, is_db_available
 from services.error_analysis_service import save_candle_snapshot
 
 logger = logging.getLogger(__name__)
+
+# ─── Cooldown tracking: prevent rapid signal churn ──────────────────────────
+# After a signal completes/stops/expires, block new signals for same symbol+model
+# for SIGNAL_COOLDOWN_SECONDS. This prevents the churn cycle:
+#   create → complete/stop in 2min → create → repeat
+SIGNAL_COOLDOWN_SECONDS = 1800  # 30 minutes
+_signal_cooldowns: Dict[str, datetime] = {}  # key = "symbol:model_type"
+
+
+def record_signal_cooldown(symbol: str, model_type: str):
+    """Called when a signal is resolved (completed/stopped/expired).
+    Blocks new signals for the same symbol+model for SIGNAL_COOLDOWN_SECONDS."""
+    key = f"{symbol}:{model_type}"
+    _signal_cooldowns[key] = datetime.utcnow()
+    logger.debug(f"Cooldown set: {key} for {SIGNAL_COOLDOWN_SECONDS}s")
+
+
+def _is_on_cooldown(symbol: str, model_type: str) -> bool:
+    """Check if a signal creation is blocked by cooldown."""
+    key = f"{symbol}:{model_type}"
+    last = _signal_cooldowns.get(key)
+    if not last:
+        return False
+    elapsed = (datetime.utcnow() - last).total_seconds()
+    if elapsed < SIGNAL_COOLDOWN_SECONDS:
+        logger.debug(f"Cooldown active: {key} ({elapsed:.0f}s / {SIGNAL_COOLDOWN_SECONDS}s)")
+        return True
+    # Cooldown expired, clean up
+    _signal_cooldowns.pop(key, None)
+    return False
 
 
 def _extract_factors(context: Dict[str, Any], analysis: Dict[str, Any]) -> Dict[str, Any]:
@@ -99,8 +129,21 @@ async def log_prediction(
         return None
     
     try:
-        # ── Deduplication: skip if there's already an active signal for symbol+model_type ──
+        ml = context.get("ml_prediction", {}) or {}
+        direction = ml.get("direction", "HOLD")
+        
+        # ── Skip HOLD signals entirely — they create expired spam in DB ──
+        if direction not in ("BUY", "SELL"):
+            logger.debug(f"Skipping HOLD signal for {symbol} (model={model_type or strategy})")
+            return None
+        
         effective_model_type = model_type or (strategy.lower() if strategy else "ml")
+        
+        # ── Cooldown check: prevent rapid signal churn ──
+        if _is_on_cooldown(symbol, effective_model_type):
+            return None
+        
+        # ── Deduplication: skip if there's already an active signal for symbol+model_type ──
         try:
             existing = client.table("prediction_logs").select("id").eq(
                 "symbol", symbol
@@ -113,8 +156,6 @@ async def log_prediction(
         except Exception as dedup_err:
             logger.warning(f"Dedup check failed (proceeding): {dedup_err}")
 
-        ml = context.get("ml_prediction", {}) or {}
-        
         factors = _extract_factors(context, analysis)
         
         # Store strategy in both the column and factors JSONB
@@ -127,7 +168,6 @@ async def log_prediction(
         from services.target_config import get_symbol_config
         cfg = get_symbol_config(symbol)
         targets_dict = {tl.name: tl.pips for tl in cfg.targets}
-        direction = ml.get("direction", "HOLD")
 
         record = {
             "symbol": symbol,

@@ -383,7 +383,16 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     except Exception as e:
         logger.error(f"Failed to update signal {signal_id[:8]}: {e}")
 
-    # ── 10. Failure autopsy on stop ──
+    # ── 10. Record cooldown to prevent rapid signal churn ──
+    if new_status in ("completed", "stopped", "expired"):
+        try:
+            from services.prediction_logger import record_signal_cooldown
+            model_type = signal.get("model_type", "ml")
+            record_signal_cooldown(symbol, model_type)
+        except Exception:
+            pass
+
+    # ── 11. Failure autopsy on stop ──
     if new_status == "stopped":
         await _create_failure_autopsy(client, signal, targets_hit, current)
 
@@ -791,18 +800,30 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
             m["symbols"][sym]["total"] += 1
             m["symbols"][sym][status] = m["symbols"][sym].get(status, 0) + 1
 
-            # Profit/loss
-            hp = sig.get("highest_profit_pips") or 0
-            dd = sig.get("lowest_drawdown_pips") or 0
+            # Profit/loss — use ACTUAL entry→exit P/L, not peak drawdown
+            entry_price = sig.get("ml_entry_price") or 0
+            exit_price_val = sig.get("exit_price") or 0
+            direction = sig.get("ml_direction", "HOLD")
+            sl_pips = sig.get("stop_loss_pips") or 0
 
-            if status == "completed":
-                m["total_profit_pips"] += hp
-                m["profits"].append(hp)
-                m["symbols"][sym]["total_profit_pips"] += hp
+            if status == "completed" and entry_price and exit_price_val:
+                # Actual profit at exit
+                if direction == "BUY":
+                    actual_profit = pips_from_price_change(exit_price_val - entry_price, sym)
+                elif direction == "SELL":
+                    actual_profit = pips_from_price_change(entry_price - exit_price_val, sym)
+                else:
+                    actual_profit = 0
+                actual_profit = max(actual_profit, 0)  # Completed signals should be positive
+                m["total_profit_pips"] += actual_profit
+                m["profits"].append(actual_profit)
+                m["symbols"][sym]["total_profit_pips"] += actual_profit
             elif status == "stopped":
-                m["total_loss_pips"] += abs(dd)
-                m["losses"].append(abs(dd))
-                m["symbols"][sym]["total_loss_pips"] += abs(dd)
+                # Use stop_loss_pips as the loss (this is the actual exit cost)
+                loss = abs(sl_pips) if sl_pips else abs(sig.get("lowest_drawdown_pips") or 0)
+                m["total_loss_pips"] += loss
+                m["losses"].append(loss)
+                m["symbols"][sym]["total_loss_pips"] += loss
 
             # Target hit rates (global + per-symbol)
             th = parse_json_field(sig.get("targets_hit"), {})

@@ -31,7 +31,7 @@ MACRO_UPDATE_INTERVAL = 300  # Update macro data (DXY, VIX, USDTRY) every 5 minu
 NEWS_UPDATE_INTERVAL = 600   # Update news every 10 minutes
 OUTCOME_CHECK_INTERVAL = 120  # Check outcomes every 2 minutes
 ERROR_ANALYSIS_INTERVAL = 3600  # Analyze errors every hour
-PREDICTION_LOG_INTERVAL = 120  # Log predictions every 2 minutes
+PREDICTION_LOG_INTERVAL = 1800  # Log predictions every 30 minutes (matches signal cooldown)
 
 # Last update timestamps
 _last_news_update: Dict[str, datetime] = {}
@@ -40,7 +40,7 @@ _last_outcome_check: Optional[datetime] = None
 _last_error_analysis: Optional[datetime] = None
 _last_prediction_log: Dict[str, datetime] = {}  # Per symbol
 _last_pulse_log: Dict[str, datetime] = {}  # Per symbol, for Pulse signal logging
-PULSE_LOG_INTERVAL = 120  # Log Pulse signals every 2 minutes
+PULSE_LOG_INTERVAL = 1800  # Log Pulse signals every 30 minutes (matches signal cooldown)
 _last_macro_update: Optional[datetime] = None
 _cached_macro: Dict[str, Any] = {}  # Cached macro data
 
@@ -557,13 +557,12 @@ async def log_pulse_signals_if_needed():
             v3 = await get_pulse_v3_analysis(symbol)
             if isinstance(v3, dict) and not v3.get("error"):
                 sig = v3.get("direction", "HOLD")
-                st = v3.get("signal_type", "HOLD")
-                if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
+                if sig in ("BUY", "SELL"):
                     entry = v3.get("entry_price") or v3.get("price", 0)
                     conf = v3.get("confidence", 50)
                     await _log_pulse_signal(symbol, sig, conf, entry, "pulse3", "PULSE_V3")
                 else:
-                    logger.debug(f"Scheduler: Pulse V3 {symbol} → {sig} ({st}) — no signal")
+                    logger.debug(f"Scheduler: Pulse V3 {symbol} → {sig} — no signal")
         except Exception as e:
             logger.warning(f"Pulse V3 log error {symbol}: {e}")
 
@@ -575,13 +574,12 @@ async def log_pulse_signals_if_needed():
             v2 = await get_pulse_ml_analysis(symbol)
             if isinstance(v2, dict) and not v2.get("error"):
                 sig = v2.get("signal", "HOLD")
-                st = v2.get("signal_type", "HOLD")
-                if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
+                if sig in ("BUY", "SELL"):
                     entry = v2.get("entry_price") or v2.get("price", 0)
                     conf = v2.get("confidence", 50)
                     await _log_pulse_signal(symbol, sig, conf, entry, "pulse2", "PULSE_ML")
                 else:
-                    logger.debug(f"Scheduler: Pulse ML {symbol} → {sig} ({st}) — no signal")
+                    logger.debug(f"Scheduler: Pulse ML {symbol} → {sig} — no signal")
         except Exception as e:
             logger.warning(f"Pulse ML (V2) log error {symbol}: {e}")
 
@@ -593,13 +591,12 @@ async def log_pulse_signals_if_needed():
             v1 = await get_pulse_analysis(symbol)
             if isinstance(v1, dict) and not v1.get("error"):
                 sig = v1.get("signal", "HOLD")
-                st = v1.get("signal_type", "HOLD")
-                if sig in ("BUY", "SELL") and st in ("CONFIRM", "SCOUT"):
+                if sig in ("BUY", "SELL"):
                     entry = v1.get("entry_price") or v1.get("price", 0)
                     conf = v1.get("confidence", 50)
                     await _log_pulse_signal(symbol, sig, conf, entry, "pulse1", "PULSE_V1")
                 else:
-                    logger.debug(f"Scheduler: Pulse V1 {symbol} → {sig} ({st}) — no signal")
+                    logger.debug(f"Scheduler: Pulse V1 {symbol} → {sig} — no signal")
         except Exception as e:
             logger.warning(f"Pulse V1 log error {symbol}: {e}")
 
