@@ -104,14 +104,20 @@ def _normalize_symbol(symbol: str) -> str:
     s = (symbol or "").strip()
     if not s:
         return s
-    # Explicit commodity mappings
-    if s.upper() in ("USOIL", "WTI"):
-        return "CL.COMM"
+    # Explicit commodity mappings - EODHD uses specific formats
+    if s.upper() in ("USOIL", "WTI", "CL.COMM", "CL"):
+        # EODHD uses "CL" for WTI Crude Oil (NYMEX)
+        return "CL"
     if s.upper() == "BRENT":
-        return "BZ.COMM"
+        return "BZ"
     if s.upper() == "DXY":
         return "DX-Y.NYB"
     if "." in s:
+        # Keep existing dotted symbols but handle special cases
+        if s.upper() == "CL.COMM":
+            return "CL"
+        if s.upper() == "BZ.COMM":
+            return "BZ"
         return s
     if s.upper() == "XAUUSD":
         return "XAUUSD.FOREX"
