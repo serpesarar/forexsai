@@ -224,6 +224,69 @@ async def get_lifecycle_metrics():
     return result
 
 
+@router.get("/api/signals/test-pulse-log")
+async def test_pulse_log(symbol: str = "GDAXI.INDX", model_type: str = "pulse2"):
+    """Diagnostic: manually attempt to create a pulse signal and return detailed result."""
+    import traceback
+    steps = []
+    try:
+        from routers.emel_pulse import get_pulse_v3_analysis, get_pulse_ml_analysis, get_pulse_analysis, get_emel_analysis
+
+        # Step 1: Get analysis
+        if model_type == "pulse3":
+            result = await get_pulse_v3_analysis(symbol)
+            sig_key = "direction"
+        elif model_type == "pulse2":
+            result = await get_pulse_ml_analysis(symbol)
+            sig_key = "signal"
+        elif model_type == "pulse1":
+            result = await get_pulse_analysis(symbol)
+            sig_key = "signal"
+        elif model_type == "emel":
+            result = await get_emel_analysis(symbol)
+            sig_key = "signal"
+        else:
+            return {"error": f"Unknown model_type: {model_type}"}
+
+        steps.append({"step": "analysis", "result_keys": list(result.keys()) if isinstance(result, dict) else str(type(result))})
+
+        if not isinstance(result, dict):
+            return {"error": "Result not dict", "steps": steps, "result_type": str(type(result))}
+
+        sig = result.get(sig_key, "HOLD")
+        steps.append({"step": "signal", "sig_key": sig_key, "sig": sig})
+
+        if sig not in ("BUY", "SELL"):
+            return {"skipped": f"Signal is {sig}, not BUY/SELL", "steps": steps}
+
+        # Step 2: Extract price
+        entry = result.get("entry_price")
+        price_field = result.get("price")
+        if not entry:
+            if isinstance(price_field, dict):
+                entry = price_field.get("current", 0)
+            else:
+                entry = price_field
+        steps.append({"step": "price", "entry": entry, "price_field_type": str(type(price_field)), "entry_type": str(type(entry))})
+
+        if not entry or not isinstance(entry, (int, float)) or entry <= 0:
+            return {"error": "No valid entry price", "steps": steps}
+
+        conf = result.get("confidence", 50) or 50
+        steps.append({"step": "confidence", "conf": conf})
+
+        # Step 3: Try logging
+        from services.background_scheduler import _log_pulse_signal
+        pred_id = await _log_pulse_signal(symbol, sig, conf, entry, model_type, f"TEST_{model_type.upper()}")
+        steps.append({"step": "log_result", "pred_id": pred_id})
+
+        return {"success": bool(pred_id), "pred_id": pred_id, "steps": steps}
+
+    except Exception as e:
+        steps.append({"step": "error", "error": str(e), "traceback": traceback.format_exc()})
+        return {"error": str(e), "steps": steps}
+
+
 @router.get("/api/admin/export-failures")
 async def export_failures_endpoint(days: int = 30):
     """Export failure records as JSON for ML retraining dataset."""
