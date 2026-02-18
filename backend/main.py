@@ -215,6 +215,8 @@ try:
     from routers import (
         nasdaq,
         xauusd,
+        usoil,
+        dax,
         pattern_engine,
         claude_patterns,
         claude_sentiment,
@@ -252,6 +254,8 @@ try:
 
     app.include_router(nasdaq.router)
     app.include_router(xauusd.router)
+    app.include_router(usoil.router)
+    app.include_router(dax.router)
     app.include_router(pattern_engine.router)
     app.include_router(claude_patterns.router)
     app.include_router(claude_sentiment.router)

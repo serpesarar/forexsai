@@ -204,3 +204,141 @@ def run_xauusd_signal(current_price: float | None = None) -> SignalResult:
         timestamp=datetime.utcnow().isoformat() + "Z",
         model_status="Use async version",
     )
+
+
+async def run_usoil_signal_async(current_price: float | None = None, timeframe: str = "1h") -> SignalResult:
+    """
+    Run US OIL (CL.COMM) trend analysis using the new trend_analyzer.
+    Returns SignalResult for backward compatibility.
+    """
+    from services.trend_analyzer import run_trend_analysis
+    
+    try:
+        analysis = await run_trend_analysis("CL.COMM", include_hourly=False, timeframe=timeframe)
+        
+        # Map trend to signal
+        if analysis.trend == "BULLISH" and analysis.confidence > 60:
+            signal = "BUY"
+        elif analysis.trend == "BEARISH" and analysis.confidence > 60:
+            signal = "SELL"
+        else:
+            signal = "HOLD"
+        
+        # Build reasoning
+        reasoning = []
+        if analysis.ema20.has_data:
+            reasoning.append(f"EMA(20): {analysis.ema20.value:.2f} (mesafe: {analysis.ema20.distance_pct:.2f}%)")
+        if analysis.rsi_14:
+            rsi_zone = "aşırı alım" if analysis.rsi_14 > 70 else "aşırı satım" if analysis.rsi_14 < 30 else "nötr"
+            reasoning.append(f"RSI: {analysis.rsi_14:.0f} ({rsi_zone})")
+        reasoning.append(f"Trend: {analysis.trend} (güç: {analysis.trend_strength}%)")
+        reasoning.append(f"Destek: {analysis.nearest_support.price:.2f} (güç: {analysis.nearest_support.strength:.1f})")
+        if analysis.conflict and analysis.conflict.has_conflict:
+            reasoning.append(f"⚠️ {analysis.conflict.description}")
+        reasoning.append(f"Canlı fiyat: {analysis.current_price:.2f}")
+        
+        metrics = {
+            "distance_to_ema": analysis.ema20.distance if analysis.ema20.has_data else 0,
+            "distance_to_support": analysis.nearest_support.distance,
+            "support_strength": analysis.nearest_support.strength,
+            "rsi": analysis.rsi_14 or 50,
+            "trend": analysis.trend,
+            "current_price": analysis.current_price,
+            "trend_strength": analysis.trend_strength,
+            "volatility": analysis.volatility_level,
+            "volume_confirmed": analysis.volume_confirmed,
+        }
+        
+        return SignalResult(
+            signal=signal,
+            confidence=analysis.confidence / 100,
+            reasoning=reasoning,
+            metrics=metrics,
+            timestamp=analysis.timestamp,
+            model_status=None,
+        )
+    except Exception as e:
+        return SignalResult(
+            signal="HOLD",
+            confidence=0.5,
+            reasoning=[f"Analiz hatası: {str(e)}", "Varsayılan değerler kullanılıyor"],
+            metrics={
+                "distance_to_ema": 0,
+                "distance_to_support": 0,
+                "support_strength": 0.5,
+                "rsi": 50,
+                "trend": "NEUTRAL",
+                "current_price": current_price,
+            },
+            timestamp=datetime.utcnow().isoformat() + "Z",
+            model_status=f"Error: {str(e)}",
+        )
+
+
+async def run_dax_signal_async(current_price: float | None = None, timeframe: str = "1h") -> SignalResult:
+    """
+    Run DAX (GDAXI.INDX) trend analysis using the new trend_analyzer.
+    Returns SignalResult for backward compatibility.
+    """
+    from services.trend_analyzer import run_trend_analysis
+    
+    try:
+        analysis = await run_trend_analysis("GDAXI.INDX", include_hourly=False, timeframe=timeframe)
+        
+        # Map trend to signal
+        if analysis.trend == "BULLISH" and analysis.confidence > 60:
+            signal = "BUY"
+        elif analysis.trend == "BEARISH" and analysis.confidence > 60:
+            signal = "SELL"
+        else:
+            signal = "HOLD"
+        
+        # Build reasoning
+        reasoning = []
+        if analysis.ema20.has_data:
+            reasoning.append(f"EMA(20): {analysis.ema20.value:.2f} (mesafe: {analysis.ema20.distance_pct:.2f}%)")
+        if analysis.rsi_14:
+            rsi_zone = "aşırı alım" if analysis.rsi_14 > 70 else "aşırı satım" if analysis.rsi_14 < 30 else "nötr"
+            reasoning.append(f"RSI: {analysis.rsi_14:.0f} ({rsi_zone})")
+        reasoning.append(f"Trend: {analysis.trend} (güç: {analysis.trend_strength}%)")
+        reasoning.append(f"Destek: {analysis.nearest_support.price:.2f} (güç: {analysis.nearest_support.strength:.1f})")
+        if analysis.conflict and analysis.conflict.has_conflict:
+            reasoning.append(f"⚠️ {analysis.conflict.description}")
+        reasoning.append(f"Canlı fiyat: {analysis.current_price:.2f}")
+        
+        metrics = {
+            "distance_to_ema": analysis.ema20.distance if analysis.ema20.has_data else 0,
+            "distance_to_support": analysis.nearest_support.distance,
+            "support_strength": analysis.nearest_support.strength,
+            "rsi": analysis.rsi_14 or 50,
+            "trend": analysis.trend,
+            "current_price": analysis.current_price,
+            "trend_strength": analysis.trend_strength,
+            "volatility": analysis.volatility_level,
+            "volume_confirmed": analysis.volume_confirmed,
+        }
+        
+        return SignalResult(
+            signal=signal,
+            confidence=analysis.confidence / 100,
+            reasoning=reasoning,
+            metrics=metrics,
+            timestamp=analysis.timestamp,
+            model_status=None,
+        )
+    except Exception as e:
+        return SignalResult(
+            signal="HOLD",
+            confidence=0.5,
+            reasoning=[f"Analiz hatası: {str(e)}", "Varsayılan değerler kullanılıyor"],
+            metrics={
+                "distance_to_ema": 0,
+                "distance_to_support": 0,
+                "support_strength": 0.5,
+                "rsi": 50,
+                "trend": "NEUTRAL",
+                "current_price": current_price,
+            },
+            timestamp=datetime.utcnow().isoformat() + "Z",
+            model_status=f"Error: {str(e)}",
+        )

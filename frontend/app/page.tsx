@@ -499,15 +499,23 @@ export default function HomePage() {
       const results = await Promise.allSettled([
         fetcher<any>("/api/run/nasdaq", { method: "POST", body: "{}" }),
         fetcher<any>("/api/run/xauusd", { method: "POST", body: "{}" }),
+        fetcher<any>("/api/run/usoil", { method: "POST", body: "{}" }),
+        fetcher<any>("/api/run/dax", { method: "POST", body: "{}" }),
         fetcher<any>(`/api/news/feed?lang=${lang}`),
         fetcher<any>("/api/ta/snapshot?symbol=NDX.INDX"),
         fetcher<any>("/api/ta/snapshot?symbol=XAUUSD"),
+        fetcher<any>("/api/ta/snapshot?symbol=CL.COMM"),
+        fetcher<any>("/api/ta/snapshot?symbol=GDAXI.INDX"),
       ]);
       const nasdaq = results[0].status === "fulfilled" ? results[0].value : null;
       const xauusd = results[1].status === "fulfilled" ? results[1].value : null;
-      const news = results[2].status === "fulfilled" ? results[2].value : null;
-      const taNasdaq = results[3].status === "fulfilled" ? results[3].value : null;
-      const taXau = results[4].status === "fulfilled" ? results[4].value : null;
+      const usoil = results[2].status === "fulfilled" ? results[2].value : null;
+      const dax = results[3].status === "fulfilled" ? results[3].value : null;
+      const news = results[4].status === "fulfilled" ? results[4].value : null;
+      const taNasdaq = results[5].status === "fulfilled" ? results[5].value : null;
+      const taXau = results[6].status === "fulfilled" ? results[6].value : null;
+      const taUsOil = results[7].status === "fulfilled" ? results[7].value : null;
+      const taDax = results[8].status === "fulfilled" ? results[8].value : null;
       // Claude sentiment + patterns per asset (live, not mock)
       const settled = await Promise.allSettled([
         fetcher<any>(`/api/claude/analyze-sentiment?symbol=NDX.INDX&lang=${lang}`, { method: "POST", body: "{}" }),
@@ -536,6 +544,8 @@ export default function HomePage() {
         prev.map((t) => {
           if (t.label === "NASDAQ") return { ...t, price: formatPrice(nasdaq?.metrics?.current_price) };
           if (t.label === "XAU/USD") return { ...t, price: formatPrice(xauusd?.metrics?.current_price) };
+          if (t.label === "US OIL") return { ...t, price: formatPrice(usoil?.metrics?.current_price) };
+          if (t.label === "DAX") return { ...t, price: formatPrice(dax?.metrics?.current_price) };
           return t;
         })
       );
@@ -1450,6 +1460,15 @@ export default function HomePage() {
           {getCard("clear-trend")?.visible !== false && (
             <div className="mb-6 w-full">
               <CyberpunkTrendPanel />
+            </div>
+          )}
+
+          {/* ═══ STRATEGY OPTIMIZER — Full-width risk panel ═══ */}
+          {getCard("strategy-optimizer")?.visible !== false && (
+            <div className="mb-6 w-full">
+              <Suspense fallback={<div className="h-[200px] bg-[#0a0e27] rounded-xl animate-pulse" />}>
+                <StrategyOptimizerPanel />
+              </Suspense>
             </div>
           )}
 
