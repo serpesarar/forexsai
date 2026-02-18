@@ -317,13 +317,21 @@ async def test_pulse_log(symbol: str = "GDAXI.INDX", model_type: str = "pulse2")
         steps.append({"step": "record_built", "record_keys": list(record.keys())})
 
         try:
-            insert_result = client.table("prediction_logs").insert_ignore(record)
-            steps.append({"step": "insert_result", "result_type": str(type(insert_result)), "has_data": bool(insert_result and insert_result.get("data")), "raw": str(insert_result)[:300]})
-            if insert_result and insert_result.get("data"):
-                new_id = insert_result["data"][0].get("id", "")
+            # Direct HTTP to capture full Supabase error
+            url = f"{client.url}/rest/v1/prediction_logs"
+            headers = {"Prefer": "return=representation"}
+            resp = client.http.post(url, json=record, headers=headers)
+            steps.append({
+                "step": "raw_response",
+                "status_code": resp.status_code,
+                "body": resp.text[:500],
+            })
+            if resp.status_code in (200, 201):
+                data = resp.json()
+                new_id = data[0].get("id", "") if isinstance(data, list) and data else ""
                 return {"success": True, "pred_id": new_id, "steps": steps}
             else:
-                return {"success": False, "error": "insert returned no data", "steps": steps}
+                return {"success": False, "error": f"HTTP {resp.status_code}", "steps": steps}
         except Exception as insert_err:
             steps.append({"step": "insert_error", "error": str(insert_err), "traceback": traceback.format_exc()})
             return {"error": str(insert_err), "steps": steps}
