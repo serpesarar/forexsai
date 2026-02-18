@@ -5,7 +5,7 @@ Logs every ML + Claude prediction to database for future learning.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 from uuid import UUID
 
@@ -22,29 +22,81 @@ SIGNAL_COOLDOWN_SECONDS = 900  # 15 minutes (30'dan düşürüldü)
 _signal_cooldowns: Dict[str, datetime] = {}  # key = "symbol:model_type"
 
 
-def record_signal_cooldown(symbol: str, model_type: str):
-    """Called when a signal is resolved (completed/stopped/expired).
-    Blocks new signals for the same symbol+model for SIGNAL_COOLDOWN_SECONDS."""
-    key = f"{symbol}:{model_type}"
-    _signal_cooldowns[key] = datetime.utcnow()
-    logger.debug(f"Cooldown set: {key} for {SIGNAL_COOLDOWN_SECONDS}s")
+def calculate_targets(symbol: str, entry_price: float, direction: str):
+    """Sembol bazlı TP/SL hesaplama"""
+    if not entry_price or entry_price <= 0:
+        return None
+        
+    multipliers = 1 if direction == "BUY" else -1
+    
+    if symbol in ["NDX.INDX", "GDAXI.INDX"]:
+        # NASDAQ/DAX: 1 pip = 0.01
+        pip_size = 0.01
+        targets = {
+            "TP1": round(entry_price + (15 * pip_size * multipliers), 2),
+            "TP2": round(entry_price + (25 * pip_size * multipliers), 2),
+            "TP3": round(entry_price + (35 * pip_size * multipliers), 2),
+            "TP4": round(entry_price + (50 * pip_size * multipliers), 2),
+            "SL": round(entry_price - (50 * pip_size * multipliers), 2)
+        }
+    elif symbol == "XAUUSD":
+        # XAUUSD: 1 pip = 0.01 ($0.01)
+        pip_size = 0.01
+        targets = {
+            "TP1": round(entry_price + (7 * pip_size * multipliers), 2),
+            "TP2": round(entry_price + (12 * pip_size * multipliers), 2),
+            "TP3": round(entry_price + (20 * pip_size * multipliers), 2),
+            "TP4": round(entry_price + (30 * pip_size * multipliers), 2),
+            "SL": round(entry_price - (10 * pip_size * multipliers), 2)
+        }
+    elif symbol == "CL.COMM":
+        # US OIL: Yüzde bazlı
+        targets = {
+            "TP1": round(entry_price * (1 + 0.0002 * multipliers), 3),
+            "TP2": round(entry_price * (1 + 0.0004 * multipliers), 3),
+            "TP3": round(entry_price * (1 + 0.0006 * multipliers), 3),
+            "TP4": round(entry_price * (1 + 0.0010 * multipliers), 3),
+            "SL": round(entry_price * (1 - 0.0005 * multipliers), 3)
+        }
+    else:
+        return None
+    
+    return targets
 
 
 def _is_on_cooldown(symbol: str, model_type: str) -> bool:
-    """Check if a signal creation is blocked by cooldown.
+    """DB-based cooldown check: Son sinyalden bu yana 15 dk geçti mi?"""
+    try:
+        client = get_supabase_client()
+        if client is None:
+            return False
+            
+        result = client.table("prediction_logs").select("created_at").eq(
+            "symbol", symbol
+        ).eq("model_type", model_type
+        ).order("created_at", desc=True
+        ).limit(1).execute()
+        
+        if result.get("data") and len(result["data"]) > 0:
+            last_time_str = result["data"][0]["created_at"]
+            # ISO format parsing (with or without Z)
+            if last_time_str.endswith("Z"):
+                last_time_str = last_time_str[:-1] + "+00:00"
+            last_time = datetime.fromisoformat(last_time_str)
+            
+            # Ensure last_time has timezone info
+            if last_time.tzinfo is None:
+                last_time = last_time.replace(tzinfo=timezone.utc)
+            
+            elapsed = (datetime.now(timezone.utc) - last_time).total_seconds()
+            
+            if elapsed < SIGNAL_COOLDOWN_SECONDS:
+                remaining = int(SIGNAL_COOLDOWN_SECONDS - elapsed)
+                logger.info(f"⏱️ COOLDOWN: {symbol} {model_type} için {int(elapsed)}sn geçti, {remaining}sn kaldı")
+                return True
+    except Exception as e:
+        logger.error(f"Cooldown check hatası: {e}")
     
-    DB-based cooldown: Son sinyalden bu yana yeterli süre geçti mi?
-    """
-    key = f"{symbol}:{model_type}"
-    last = _signal_cooldowns.get(key)
-    if not last:
-        return False
-    elapsed = (datetime.utcnow() - last).total_seconds()
-    if elapsed < SIGNAL_COOLDOWN_SECONDS:
-        logger.info(f"⏱️ COOLDOWN: {key} için {int(elapsed)}sn geçti, {int(SIGNAL_COOLDOWN_SECONDS - elapsed)}sn kaldı")
-        return True
-    # Cooldown expired, clean up
-    _signal_cooldowns.pop(key, None)
     return False
 
 
@@ -149,7 +201,6 @@ async def log_prediction(
         
         # ── Deduplication: Son 30dk içinde aynı symbol+model sinyali var mı? ──
         try:
-            from datetime import timezone
             cutoff_time = (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat()
             
             # Hem model_type hem strategy kontrolü yap
@@ -166,6 +217,26 @@ async def log_prediction(
                 return existing["data"][0]["id"]
         except Exception as dedup_err:
             logger.warning(f"Dedup check failed (proceeding): {dedup_err}")
+        
+        # ── Calculate targets ──
+        ml_entry_price = ml.get("entry_price")
+        targets_data = calculate_targets(symbol, ml_entry_price, direction)
+        if targets_data:
+            # Update targets dict with calculated prices
+            targets_dict = {
+                "TP1": {"price": targets_data["TP1"], "hit": False},
+                "TP2": {"price": targets_data["TP2"], "hit": False},
+                "TP3": {"price": targets_data["TP3"], "hit": False},
+                "TP4": {"price": targets_data["TP4"], "hit": False},
+                "SL": {"price": targets_data["SL"], "hit": False}
+            }
+            # Add to record as JSON string
+            import json as _json
+            targets_json = _json.dumps(targets_data)
+        else:
+            targets_dict = {tl.name: {"price": None, "hit": False} for tl in cfg.targets}
+            import json as _json
+            targets_json = _json.dumps({tl.name: None for tl in cfg.targets})
 
         factors = _extract_factors(context, analysis)
         
@@ -197,7 +268,7 @@ async def log_prediction(
             "outcome_checked": False,
             # Signal Lifecycle columns
             "status": "active" if direction in ("BUY", "SELL") else "expired",
-            "targets": _json.dumps(targets_dict),
+            "targets": targets_json,
             "stop_loss_pips": cfg.stoploss_pips,
             "targets_hit": _json.dumps({tp: False for tp in targets_dict}),
             "highest_profit_pips": 0,

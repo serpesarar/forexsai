@@ -32,6 +32,8 @@ NEWS_UPDATE_INTERVAL = 600   # Update news every 10 minutes
 OUTCOME_CHECK_INTERVAL = 120  # Check outcomes every 2 minutes
 ERROR_ANALYSIS_INTERVAL = 3600  # Analyze errors every hour
 PREDICTION_LOG_INTERVAL = 1800  # Log predictions every 30 minutes (matches signal cooldown)
+LIFECYCLE_CHECK_INTERVAL = 120  # 2 dakika (saniye cinsinden)
+_last_lifecycle_check: Optional[datetime] = None
 
 # Last update timestamps
 _last_news_update: Dict[str, datetime] = {}
@@ -494,9 +496,9 @@ async def _log_pulse_signal(symbol: str, direction: str, confidence: float,
                            entry_price: float, model_type: str, strategy: str,
                            ta: dict = None, extra: dict = None):
     """Helper: log a Pulse/EMEL signal to prediction_logs via log_prediction()."""
-    from services.prediction_logger import log_prediction
-
     try:
+        from services.prediction_logger import log_prediction
+
         context = {
             "symbol": symbol,
             "ta": ta or {},
@@ -540,7 +542,7 @@ async def _log_pulse_signal(symbol: str, direction: str, confidence: float,
     except Exception as e:
         logger.error(f"❌ {symbol} {model_type} kayıt hatası: {e}")
         import traceback
-        logger.debug(f"Traceback: {traceback.format_exc()}")
+        logger.error(traceback.format_exc())
         return None
 
 

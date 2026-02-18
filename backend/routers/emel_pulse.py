@@ -798,10 +798,10 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         pulse_signal = "HOLD"
         decision_notes = []
         
-        if score >= 65:
+        if score >= 56:  # 56'ya düşürüldü (threshold: 56)
             signal_type = "CONFIRM"
             pulse_signal = "BUY" if trend_direction == "up" else "SELL" if trend_direction == "down" else "HOLD"
-        elif score >= 40:
+        elif score >= 35:  # Scout threshold da düşürüldü (40'tan)
             signal_type = "SCOUT"
             pulse_signal = "BUY" if trend_direction == "up" else "SELL" if trend_direction == "down" else "HOLD"
         else:
@@ -1108,16 +1108,16 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
         
         # ─── ML Güven Puanı (40 puan max) ────────────────────────────────
         ml_pts = 0
-        ml_confirm_floor = 55.0
-        ml_scout_floor = 52.0
+        ml_confirm_floor = 50.0  # 55'ten 50'ye düşürüldü
+        ml_scout_floor = 45.0    # 52'den 45'e düşürüldü
         
         if regime.regime == "STRONG_TREND_UP" and regime.is_ath_zone:
-            ml_confirm_floor = 48.0
-            ml_scout_floor = 42.0
+            ml_confirm_floor = 42.0  # 48'den düşürüldü
+            ml_scout_floor = 38.0    # 42'den düşürüldü
             notes.append("ATH modu: ML threshold düşürüldü")
         elif regime.regime in ["STRONG_TREND_UP", "STRONG_TREND_DOWN"]:
-            ml_confirm_floor = 50.0
-            ml_scout_floor = 45.0
+            ml_confirm_floor = 45.0  # 50'den düşürüldü
+            ml_scout_floor = 40.0    # 45'ten düşürüldü
         
         if ml_direction in ("BUY", "SELL"):
             if ml_confidence >= 70:
@@ -1247,8 +1247,8 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
         
         # ─── SİNYAL BELİRLEME (İki kademe) - REGIME-AWARE ──────────────
         # For TA fallback mode, use lower thresholds (TA has already proven direction)
-        confirm_threshold = 60 if is_ta_fallback else 65
-        scout_threshold = 35 if is_ta_fallback else 40
+        confirm_threshold = 56 if is_ta_fallback else 56  # 56'ya düşürüldü
+        scout_threshold = 35 if is_ta_fallback else 35    # 40'tan 35'e düşürüldü
         conf_floor = ml_scout_floor if is_ta_fallback else ml_confirm_floor
         scout_conf_floor = 0 if is_ta_fallback else ml_scout_floor  # No ML floor needed for TA fallback
         
@@ -1751,9 +1751,9 @@ async def get_pulse_v3_analysis(symbol: str):
             direction = "NEUTRAL"
         
         # ─── SİNYAL TİPİ ────────────────────────────────────────────────
-        if total_score >= 65:
+        if total_score >= 56:  # 56'ya düşürüldü
             signal_type = "CONFIRM"
-        elif total_score >= 40:
+        elif total_score >= 35:  # 40'tan 35'e
             signal_type = "SCOUT"
         else:
             signal_type = "HOLD"
