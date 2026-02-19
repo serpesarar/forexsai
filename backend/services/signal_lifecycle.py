@@ -103,11 +103,22 @@ async def _fetch_realtime_price(symbol: str) -> Optional[float]:
     """Fetch real-time price directly from EODHD API (bypass DataHub cache).
     Critical for accurate TP/SL detection in signal lifecycle."""
     if not settings.eodhd_api_key:
+        logger.error("❌ EODHD API key missing!")
         return None
+    
+    # Symbol mapping for EODHD (correct format)
+    symbol_map = {
+        "XAUUSD": "XAUUSD.FOREX",
+        "CL.COMM": "CL.COMM",
+        "NDX.INDX": "NDX.INDX",
+        "GDAXI.INDX": "GDAXI.INDX",
+    }
     
     # Normalize symbol for EODHD
     s = symbol.strip().upper()
-    if "." in s:
+    if s in symbol_map:
+        eod_symbol = symbol_map[s]
+    elif "." in s:
         parts = s.split(".")
         if parts[1] == "INDX":
             eod_symbol = f"^{parts[0]}"
@@ -120,28 +131,51 @@ async def _fetch_realtime_price(symbol: str) -> Optional[float]:
     else:
         eod_symbol = s
     
+    logger.info(f"📡 Fetching price for {symbol} → {eod_symbol}")
+    
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(
                 f"https://eodhistoricaldata.com/api/real-time/{eod_symbol}",
                 params={"api_token": settings.eodhd_api_key, "fmt": "json"},
             )
+            
+            logger.info(f"📡 {symbol} API status: {resp.status_code}")
+            
             if resp.status_code == 402:
-                return None  # Quota exceeded
-            resp.raise_for_status()
+                logger.error(f"❌ {symbol} API quota exceeded (402)")
+                return None
+            elif resp.status_code != 200:
+                logger.error(f"❌ {symbol} API error: {resp.status_code} - {resp.text[:200]}")
+                return None
+                
             data = resp.json()
+            logger.info(f"📡 {symbol} API response: {data}")
+            
             if isinstance(data, list) and data:
                 data = data[0]
+            
             if isinstance(data, dict):
-                # Prioritize real-time keys
+                # Try all possible price keys
                 for key in ("last", "price", "close", "value", "previousClose"):
                     if key in data and data[key] is not None:
                         try:
-                            return float(data[key])
+                            price = float(data[key])
+                            if price > 0:
+                                logger.info(f"✅ {symbol} price found [{key}]: {price}")
+                                return price
                         except (TypeError, ValueError):
                             continue
+                
+                logger.error(f"❌ {symbol} No valid price in response: {data}")
+            else:
+                logger.error(f"❌ {symbol} Invalid response type: {type(data)}")
+                
     except Exception as e:
-        logger.debug(f"Real-time price fetch failed for {symbol}: {e}")
+        logger.error(f"❌ {symbol} Exception in price fetch: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        
     return None
 
 
@@ -309,13 +343,17 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         price_val = await _fetch_realtime_price(symbol)
         if price_val:
             current = float(price_val)
-            logger.debug(f"lifecycle.price_fetched | symbol={symbol} price={current} signal={signal_id[:8]}")
     except Exception as e:
-        logger.warning(f"lifecycle.price_error | symbol={symbol} error={e}")
+        logger.error(f"❌ lifecycle.price_error | symbol={symbol} error={e}")
 
     if current is None or current <= 0:
-        logger.warning(f"No price for {symbol}, skipping signal {signal_id[:8]}")
+        logger.error(f"❌ No price for {symbol}, skipping signal {signal_id[:8]}")
         return None
+    
+    # 🔍 KRİTİK LOG: Fiyat karşılaştırması
+    diff = abs(current - entry_price)
+    diff_percent = (diff / entry_price) * 100 if entry_price else 0
+    logger.info(f"💰 {symbol} | Signal:{signal_id[:8]} | Entry:{entry_price} | Current:{current} | Diff:{diff:.4f} ({diff_percent:.3f}%) | Direction:{direction}")
 
     # ── 2. Calculate profit/loss in pips using spot price ──
     if direction == "BUY":
