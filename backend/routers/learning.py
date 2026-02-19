@@ -1169,6 +1169,129 @@ async def hard_reset_learning_data(
         return {"error": str(e), "deleted": False}
 
 
+@router.post("/strategy-performance/reset")
+async def reset_strategy_performance(
+    confirm: bool = Query(False, description="Must be true to actually delete data"),
+    symbol: Optional[str] = Query(None, description="Optional: specific symbol to reset (NDX.INDX, XAUUSD, GDAXI.INDX, CL.COMM)")
+):
+    """
+    Reset strategy performance data for ML model analysis.
+    Deletes prediction_logs and outcome_results for the specified symbols,
+    then recalculates statistics for all 4 strategy modes.
+    
+    This allows recalculating accuracy from scratch for:
+    - Ultra Safe (≥65% confidence)
+    - Balanced (55-65% confidence)  
+    - Full Power (48-55% confidence)
+    - Aggressive (<48% confidence)
+    
+    Requires confirm=true to prevent accidental deletion.
+    """
+    if not confirm:
+        return {
+            "error": "Pass confirm=true to reset strategy performance data",
+            "message": "This will delete prediction_logs and outcome_results for ML model analysis",
+            "symbols_affected": ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"] if not symbol else [symbol],
+            "deleted": False
+        }
+    
+    if not is_db_available():
+        return {"error": "Database not available", "deleted": False}
+    
+    client = get_supabase_client()
+    if not client:
+        return {"error": "Database client not available", "deleted": False}
+    
+    try:
+        # Target symbols for strategy performance analysis
+        target_symbols = [symbol] if symbol else ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"]
+        
+        # First, get prediction IDs for these symbols
+        pred_result = client.table("prediction_logs").select("id").in_("symbol", target_symbols).execute()
+        predictions = pred_result.data if pred_result.data else []
+        pred_ids = [p["id"] for p in predictions]
+        
+        deleted_count = {
+            "predictions": 0,
+            "outcomes": 0,
+            "multi_target": 0,
+            "signal_checks": 0,
+            "signal_failures": 0
+        }
+        
+        # Delete related outcome_results first (foreign key safety)
+        if pred_ids:
+            try:
+                for pid in pred_ids:
+                    outcome_result = client.table("outcome_results").delete().eq("prediction_id", pid).execute()
+                    if outcome_result.data:
+                        deleted_count["outcomes"] += len(outcome_result.data)
+            except Exception as e:
+                logger.warning(f"Error deleting outcome_results: {e}")
+            
+            # Delete multi_target_outcomes
+            try:
+                for pid in pred_ids:
+                    mt_result = client.table("multi_target_outcomes").delete().eq("prediction_id", pid).execute()
+                    if mt_result.data:
+                        deleted_count["multi_target"] += len(mt_result.data)
+            except Exception as e:
+                logger.warning(f"Error deleting multi_target_outcomes: {e}")
+            
+            # Delete signal_checks
+            try:
+                for pid in pred_ids:
+                    check_result = client.table("signal_checks").delete().eq("signal_id", pid).execute()
+                    if check_result.data:
+                        deleted_count["signal_checks"] += len(check_result.data)
+            except Exception as e:
+                logger.warning(f"Error deleting signal_checks: {e}")
+            
+            # Delete signal_failures
+            try:
+                for pid in pred_ids:
+                    fail_result = client.table("signal_failures").delete().eq("signal_id", pid).execute()
+                    if fail_result.data:
+                        deleted_count["signal_failures"] += len(fail_result.data)
+            except Exception as e:
+                logger.warning(f"Error deleting signal_failures: {e}")
+        
+        # Delete prediction_logs for target symbols
+        for sym in target_symbols:
+            try:
+                result = client.table("prediction_logs").delete().eq("symbol", sym).execute()
+                if result.data:
+                    deleted_count["predictions"] += len(result.data)
+            except Exception as e:
+                logger.warning(f"Error deleting predictions for {sym}: {e}")
+        
+        # Return fresh stats after reset
+        fresh_stats = {
+            "symbols_reset": target_symbols,
+            "deleted_counts": deleted_count,
+            "message": f"Strategy performance data reset for {', '.join(target_symbols)}. All 4 modes (Ultra Safe, Balanced, Full Power, Aggressive) will recalculate from new signals.",
+            "next_steps": [
+                "New ML signals will be categorized by confidence:",
+                "- Ultra Safe: ≥65% confidence", 
+                "- Balanced: 55-65% confidence",
+                "- Full Power: 48-55% confidence", 
+                "- Aggressive: <48% confidence",
+                "Signals will be tracked with lifecycle (completed/stopped/expired)",
+                "TP/SL logic matches Signal Performance panel"
+            ]
+        }
+        
+        return {
+            "deleted": True,
+            "reset_timestamp": datetime.utcnow().isoformat() + "Z",
+            **fresh_stats
+        }
+        
+    except Exception as e:
+        logger.error(f"Strategy performance reset error: {e}")
+        return {"error": str(e), "deleted": False}
+
+
 @router.get("/strategy-performance")
 async def get_strategy_performance(
     days: int = Query(30, ge=1, le=90, description="Number of days to analyze")
@@ -1215,13 +1338,13 @@ async def get_strategy_performance(
             if conf >= 48: return "full_power"
             return "aggressive"
         
-        # Initialize stats with per-target tracking
+        # Initialize stats with per-target tracking - ALL 4 symbols
         stats = {sym: {s: {
             "total": 0, "with_outcome": 0, "correct": 0,
             "target_hits": 0, "stop_hits": 0, "conf_sum": 0,
             "tp1_hits": 0, "tp2_hits": 0, "tp3_hits": 0, "tp4_hits": 0,
         } for s in ["ultra_safe", "balanced", "full_power", "aggressive"]} 
-                 for sym in ["NDX.INDX", "XAUUSD"]}
+                 for sym in ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"]}
         
         outcomes_found = 0
         
