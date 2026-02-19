@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from database.supabase_client import get_supabase_client, is_db_available
-from services.data_fetcher import fetch_latest_price, fetch_intraday_candles
+from services.data_fetcher import fetch_intraday_candles
 from services.target_config import (
     get_symbol_config,
     calculate_target_prices,
@@ -29,6 +29,8 @@ from services.target_config import (
     pips_from_price_change,
 )
 from utils.json_helpers import parse_json_field, parse_json_fields
+from config import settings
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +98,53 @@ PRICE_CIRCUIT_BREAKER_THRESHOLD = 5  # Skip after N consecutive failures
 PRICE_CIRCUIT_BREAKER_RESET = 60     # Reset after N seconds
 
 
+# ─── Real-time price fetcher (direct EODHD API call) ──────────────────────────
+async def _fetch_realtime_price(symbol: str) -> Optional[float]:
+    """Fetch real-time price directly from EODHD API (bypass DataHub cache).
+    Critical for accurate TP/SL detection in signal lifecycle."""
+    if not settings.eodhd_api_key:
+        return None
+    
+    # Normalize symbol for EODHD
+    s = symbol.strip().upper()
+    if "." in s:
+        parts = s.split(".")
+        if parts[1] == "INDX":
+            eod_symbol = f"^{parts[0]}"
+        elif parts[1] == "COMM":
+            eod_symbol = parts[0]
+        elif parts[1] == "FOREX":
+            eod_symbol = parts[0]
+        else:
+            eod_symbol = s
+    else:
+        eod_symbol = s
+    
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                f"https://eodhistoricaldata.com/api/real-time/{eod_symbol}",
+                params={"api_token": settings.eodhd_api_key, "fmt": "json"},
+            )
+            if resp.status_code == 402:
+                return None  # Quota exceeded
+            resp.raise_for_status()
+            data = resp.json()
+            if isinstance(data, list) and data:
+                data = data[0]
+            if isinstance(data, dict):
+                # Prioritize real-time keys
+                for key in ("last", "price", "close", "value", "previousClose"):
+                    if key in data and data[key] is not None:
+                        try:
+                            return float(data[key])
+                        except (TypeError, ValueError):
+                            continue
+    except Exception as e:
+        logger.debug(f"Real-time price fetch failed for {symbol}: {e}")
+    return None
+
+
 async def _get_session_high_low(symbol: str, minutes: int = 5) -> Dict[str, Optional[float]]:
     """Get session high/low from the last N minutes of 5m candles (wick capture).
     Has a circuit breaker: after 5 consecutive failures per symbol, returns None
@@ -123,9 +172,9 @@ async def _get_session_high_low(symbol: str, minutes: int = 5) -> Dict[str, Opti
         _price_fetch_failures[symbol] = fail_count + 1
         logger.warning(f"lifecycle.price_candle_error | symbol={symbol} failures={fail_count+1} error={e}")
 
-    # Fallback to spot price
+    # Fallback to real-time spot price (direct API call)
     try:
-        price = await fetch_latest_price(symbol)
+        price = await _fetch_realtime_price(symbol)
         if price:
             _price_fetch_failures[symbol] = 0  # Reset on success
             return {"high": float(price), "low": float(price), "current": float(price)}
@@ -254,12 +303,13 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
 
     config = get_symbol_config(symbol)
 
-    # ── 1. Get current spot price (same source as entry price) ──
+    # ── 1. Get current spot price (REAL-TIME from EODHD API, not cache) ──
     current = None
     try:
-        price_val = await fetch_latest_price(symbol)
+        price_val = await _fetch_realtime_price(symbol)
         if price_val:
             current = float(price_val)
+            logger.debug(f"lifecycle.price_fetched | symbol={symbol} price={current} signal={signal_id[:8]}")
     except Exception as e:
         logger.warning(f"lifecycle.price_error | symbol={symbol} error={e}")
 
