@@ -264,6 +264,22 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         logger.warning(f"lifecycle.price_error | symbol={symbol} error={e}")
 
     if current is None or current <= 0:
+        # Even if price is unavailable, enforce max-age timeout so signals don't stay active forever.
+        created_at = signal.get("created_at", "")
+        try:
+            if isinstance(created_at, str) and created_at:
+                created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                age_minutes = (datetime.now(created_dt.tzinfo) - created_dt).total_seconds() / 60
+                if age_minutes >= SIGNAL_MAX_AGE_MINUTES:
+                    _update_signal_status(client, signal_id, "expired", entry_price)
+                    logger.info(
+                        f"⏰ Signal {signal_id[:8]} {symbol} expired without price update "
+                        f"(age={age_minutes:.0f}m)"
+                    )
+                    return "expired"
+        except Exception:
+            pass
+
         logger.warning(f"No price for {symbol}, skipping signal {signal_id[:8]}")
         return None
 
