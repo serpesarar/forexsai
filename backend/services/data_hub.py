@@ -714,10 +714,44 @@ def get_macro() -> Dict[str, Any]:
 def get_hub_status() -> Dict[str, Any]:
     """Get DataHub status for debugging."""
     with _lock:
+        # Get latest candle timestamps for each symbol to detect stale data
+        price_staleness = {}
+        for s in TRACKED_SYMBOLS:
+            latest_ts = None
+            # Try to get most recent timestamp from available candles
+            for store in [_candles_5m, _candles_1h, _candles_30m, _candles_eod]:
+                candles = store.get(s, {}).get("candles", [])
+                if candles:
+                    last_candle = candles[-1]
+                    candle_ts = last_candle.get("timestamp") or last_candle.get("date")
+                    if candle_ts:
+                        latest_ts = candle_ts
+                        break
+            
+            # Calculate staleness
+            if latest_ts:
+                if isinstance(latest_ts, (int, float)):
+                    # Unix timestamp in milliseconds
+                    hours_old = (datetime.utcnow().timestamp() - latest_ts/1000) / 3600
+                else:
+                    # ISO date string
+                    try:
+                        dt = datetime.fromisoformat(str(latest_ts).replace('Z', '+00:00'))
+                        hours_old = (datetime.utcnow() - dt.replace(tzinfo=None)).total_seconds() / 3600
+                    except:
+                        hours_old = None
+                
+                price_staleness[s] = {
+                    "latest_candle": latest_ts,
+                    "hours_old": round(hours_old, 1) if hours_old else None,
+                    "stale": hours_old > 2 if hours_old else True
+                }
+        
         status = {
             "running": _hub_running,
             "symbols": TRACKED_SYMBOLS,
             "prices": {s: _prices.get(s, {}).get("price") for s in TRACKED_SYMBOLS},
+            "price_staleness": price_staleness,
             "candles_5m": {s: len(_candles_5m.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
             "candles_15m": {s: len(_candles_15m.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
             "candles_30m": {s: len(_candles_30m.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
