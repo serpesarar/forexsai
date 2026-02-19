@@ -869,6 +869,11 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
         model_stats = {}
         for mt, m in models.items():
             total = m["total"] or 1
+            # Exclude expired from win_rate calculation (only completed + stopped count)
+            total_with_outcome = m["completed"] + m["stopped"]
+            if total_with_outcome == 0:
+                total_with_outcome = 1  # Prevent div by zero
+            
             avg_profit = sum(m["profits"]) / len(m["profits"]) if m["profits"] else 0
             avg_loss = sum(m["losses"]) / len(m["losses"]) if m["losses"] else 0
 
@@ -884,13 +889,15 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
                 for tp_name, counts in sd.get("target_hits", {}).items():
                     t = counts["total"] or 1
                     sym_target_rates[tp_name] = round(counts["hit"] / t * 100, 1)
-                sym_total = sd["total"] or 1
+                sym_total_with_outcome = sd.get("completed", 0) + sd.get("stopped", 0)
+                if sym_total_with_outcome == 0:
+                    sym_total_with_outcome = 1
                 symbols_out[sym] = {
                     "total": sd["total"],
                     "completed": sd.get("completed", 0),
                     "stopped": sd.get("stopped", 0),
                     "expired": sd.get("expired", 0),
-                    "win_rate": round(sd.get("completed", 0) / sym_total * 100, 1),
+                    "win_rate": round(sd.get("completed", 0) / sym_total_with_outcome * 100, 1),
                     "net_pips": round(sd.get("total_profit_pips", 0) - sd.get("total_loss_pips", 0), 1),
                     "target_rates": sym_target_rates,
                 }
@@ -900,7 +907,7 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
                 "completed": m["completed"],
                 "stopped": m["stopped"],
                 "expired": m["expired"],
-                "win_rate": round(m["completed"] / total * 100, 1),
+                "win_rate": round(m["completed"] / total_with_outcome * 100, 1),
                 "avg_profit_pips": round(avg_profit, 1),
                 "avg_loss_pips": round(avg_loss, 1),
                 "risk_reward": round(avg_profit / avg_loss, 2) if avg_loss > 0 else 0,

@@ -238,3 +238,80 @@ async def export_failures_endpoint(days: int = 30):
     except Exception as e:
         logger.error(f"export_failures error: {e}")
         return {"error": str(e)}
+
+
+@router.post("/api/signals/reset-dashboard")
+async def reset_dashboard(confirm: bool = False):
+    """
+    Reset Signal Performance Dashboard - deletes all prediction_logs and outcome_results.
+    This clears all signal history and resets win rates to 0%.
+    Requires confirm=true to prevent accidental deletion.
+    """
+    from database.supabase_client import get_supabase_client, is_db_available
+    
+    if not confirm:
+        return {
+            "error": "Pass confirm=true to actually reset dashboard",
+            "warning": "This will delete ALL signal history and outcomes!",
+            "note": "Active signals will remain. Only completed/stopped/expired signals are deleted.",
+            "reset": False
+        }
+    
+    if not is_db_available():
+        return {"error": "Database not available", "reset": False}
+    
+    client = get_supabase_client()
+    if not client:
+        return {"error": "Database client not available", "reset": False}
+    
+    try:
+        # Delete non-active prediction logs first (keep active signals)
+        # We use a filter to exclude active signals
+        from datetime import datetime, timedelta
+        
+        # Get counts before deletion for reporting
+        all_result = client.table("prediction_logs").select("status", count="exact").execute()
+        total_count = all_result.count if hasattr(all_result, 'count') else len(all_result.get("data") or [])
+        
+        active_result = client.table("prediction_logs").select("id", count="exact").eq("status", "active").execute()
+        active_count = active_result.count if hasattr(active_result, 'count') else len(active_result.get("data") or [])
+        
+        # Delete outcome_results first (no foreign key issues with this approach)
+        outcome_result = client.table("outcome_results").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+        outcomes_deleted = len(outcome_result.get("data") or [])
+        
+        # Delete signal_checks
+        checks_result = client.table("signal_checks").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+        checks_deleted = len(checks_result.get("data") or [])
+        
+        # Delete signal_failures
+        failures_result = client.table("signal_failures").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+        failures_deleted = len(failures_result.get("data") or [])
+        
+        # Delete non-active prediction logs (keep active signals running)
+        # Note: Supabase delete with .neq() doesn't work well with status filter
+        # So we delete by selecting non-active first, then deleting by ID
+        non_active_result = client.table("prediction_logs").select("id").neq("status", "active").limit(1000).execute()
+        non_active_ids = [r["id"] for r in (non_active_result.get("data") or [])]
+        
+        predictions_deleted = 0
+        for pid in non_active_ids:
+            try:
+                client.table("prediction_logs").eq("id", pid).delete().execute()
+                predictions_deleted += 1
+            except Exception:
+                pass
+        
+        return {
+            "reset": True,
+            "predictions_deleted": predictions_deleted,
+            "active_signals_preserved": active_count,
+            "outcomes_deleted": outcomes_deleted,
+            "checks_deleted": checks_deleted,
+            "failures_deleted": failures_deleted,
+            "message": f"Dashboard reset complete. Deleted {predictions_deleted} signals, preserved {active_count} active signals."
+        }
+        
+    except Exception as e:
+        logger.error(f"Dashboard reset error: {e}")
+        return {"error": str(e), "reset": False}
