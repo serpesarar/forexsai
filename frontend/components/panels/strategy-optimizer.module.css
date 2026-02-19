@@ -1,446 +1,809 @@
-/* ──────────────────────────────────────────────────
-   Strategy Auto-Optimization Loop — Galaxy Theme
-   ────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════════
+   STRATEGY AUTO-OPTIMIZATION LOOP — Fear & Greed Index Style
+   Technological, Neon-Glow, High-Tech Dashboard Theme
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ─── BASE PANEL ─────────────────────────────────────────────────────────────── */
 
 .panel {
-    background: linear-gradient(135deg, #0a0e27 0%, #0d1135 50%, #0a0e27 100%);
-    border: 1px solid rgba(0, 255, 136, 0.12);
-    border-radius: 16px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+  background: linear-gradient(180deg, #0a0f1a 0%, #0d1424 50%, #0a0f1a 100%);
+  border: 1px solid rgba(0, 255, 136, 0.15);
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(0, 255, 136, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .panelFullscreen {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    z-index: 9999;
-    border-radius: 0;
-    border: none;
-    overflow-y: auto;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  border-radius: 0;
+  border: none;
+  overflow-y: auto;
 }
 
-/* ─── HEADER ─────────────────────────────────────── */
+/* ─── HEADER ─────────────────────────────────────────────────────────────────── */
 
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(0, 255, 136, 0.1);
-    background: rgba(0, 255, 136, 0.03);
-    flex-shrink: 0;
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  background: linear-gradient(180deg, rgba(0,255,136,0.03) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+  flex-shrink: 0;
 }
 
-.headerLeft {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.headerMain {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.iconGlow {
-    color: #00ff88;
-    filter: drop-shadow(0 0 6px rgba(0, 255, 136, 0.6));
+.headerIcon {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00ff88;
+  background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,255,136,0.05));
+  border-radius: 12px;
+  border: 1px solid rgba(0,255,136,0.25);
+  box-shadow: 0 0 20px rgba(0,255,136,0.15);
 }
 
-.title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #00ff88;
-    letter-spacing: 1.2px;
-    text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
-    margin: 0;
-    text-transform: uppercase;
+.iconPulse {
+  position: absolute;
+  inset: -2px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  background: linear-gradient(135deg, #00ff88, transparent, #00ff88) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: borderPulse 2s ease-in-out infinite;
 }
 
-.subtitle {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.4);
-    letter-spacing: 0.5px;
+@keyframes borderPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+.panelTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: #00ff88;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin: 0;
+  text-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+  background: linear-gradient(90deg, #00ff88, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.panelSubtitle {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.5px;
+  margin: 4px 0 0;
 }
 
 .headerControls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.refreshBtn {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    color: #d1d4dc;
-    padding: 5px 7px;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
+.updateTimer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.refreshBtn:hover {
-    border-color: #00ff88;
-    color: #00ff88;
+.daysSelect {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #d1d4dc;
+  padding: 6px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
 }
 
-.spin {
-    animation: spin 1s linear infinite;
+.daysSelect:hover, .daysSelect:focus {
+  border-color: #00ff88;
+  background: rgba(0, 255, 136, 0.08);
 }
 
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+.controlBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #d1d4dc;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* ─── GLOBAL RISK BAR ────────────────────────────── */
-
-.globalBar {
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    background: rgba(0, 0, 0, 0.15);
-    flex-shrink: 0;
+.controlBtn:hover {
+  border-color: #00ff88;
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.1);
+  transform: translateY(-1px);
 }
 
-.globalLabel {
-    font-size: 10px;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.5);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    white-space: nowrap;
-    min-width: 80px;
+/* ─── GAUGE SECTION ──────────────────────────────────────────────────────────── */
+
+.gaugeSection {
+  padding: 24px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-.globalTrack {
-    flex: 1;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 4px;
-    overflow: hidden;
-    position: relative;
+.gaugeHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.globalFill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
+.gaugeTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.globalFill::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 20px;
-    background: inherit;
-    filter: blur(6px);
-    opacity: 0.6;
+.vixChip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: rgba(34, 211, 238, 0.1);
+  color: #22d3ee;
+  border: 1px solid rgba(34, 211, 238, 0.25);
 }
 
-.globalScore {
-    font-size: 18px;
-    font-weight: 800;
-    font-family: 'JetBrains Mono', monospace;
-    min-width: 45px;
-    text-align: right;
+.marketClosedChip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  animation: pulseRed 2s ease-in-out infinite;
 }
 
-.globalLevel {
-    font-size: 10px;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    white-space: nowrap;
+@keyframes pulseRed {
+  0%, 100% { box-shadow: 0 0 5px rgba(239,68,68,0.3); }
+  50% { box-shadow: 0 0 20px rgba(239,68,68,0.5); }
 }
 
-/* ─── VIX BADGE ──────────────────────────────────── */
+/* ─── FEAR & GREED GAUGE ─────────────────────────────────────────────────────── */
 
-.vixBadge {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 10px;
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 6px;
-    white-space: nowrap;
+.fearGreedGauge {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-/* ─── SYMBOL GRID ────────────────────────────────── */
+.gaugeBarContainer {
+  position: relative;
+  height: 80px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+}
 
-.symbolGrid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    background: rgba(255, 255, 255, 0.03);
-    flex: 1;
+.gaugeZones {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+
+.gaugeZone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 10px 4px;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.gaugeZone:hover {
+  filter: brightness(1.2);
+}
+
+.zoneLabel {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-align: center;
+  white-space: nowrap;
+  margin-bottom: 4px;
+}
+
+.zoneDesc {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+}
+
+.gaugeIndicator {
+  position: absolute;
+  top: -8px;
+  bottom: -8px;
+  width: 4px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 2px;
+  transform: translateX(-50%);
+  transition: left 1s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+}
+
+.gaugeIndicatorValue {
+  position: absolute;
+  top: -35px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 44px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 900;
+  color: #000;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-3px); }
+}
+
+.gaugeGrid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.gaugeGridLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.gaugeGridLabel {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.3);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.gaugeScoreDisplay {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+}
+
+.gaugeScoreMain {
+  font-size: 64px;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1;
+  text-shadow: 0 0 40px currentColor;
+  animation: scoreGlow 3s ease-in-out infinite;
+}
+
+@keyframes scoreGlow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.3); }
+}
+
+.gaugeScoreLabel {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* ─── MINI GAUGE (for symbol cards) ──────────────────────────────────────────── */
+
+.miniGauge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.miniGaugeTrack {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.miniGaugeFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px currentColor;
+}
+
+.miniGaugeValue {
+  font-size: 16px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  min-width: 28px;
+  text-align: right;
+}
+
+/* ─── GLOBAL STATS ───────────────────────────────────────────────────────────── */
+
+.globalStats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.statBox {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all 0.3s;
+  border-top: 2px solid transparent;
+}
+
+.statBox:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-2px);
+}
+
+.statLabel {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.statValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* ─── SYMBOLS SECTION ─────────────────────────────────────────────────────────── */
+
+.symbolsSection {
+  padding: 20px 24px;
+  flex: 1;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+}
+
+.riskCardsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
 }
 
 @media (max-width: 900px) {
-    .symbolGrid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+  .riskCardsGrid {
+    grid-template-columns: 1fr;
+  }
+  .globalStats {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-@media (max-width: 500px) {
-    .symbolGrid {
-        grid-template-columns: 1fr;
-    }
+/* ─── RISK CARD ──────────────────────────────────────────────────────────────── */
+
+.riskCard {
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
 }
 
-.symbolCard {
-    padding: 14px 16px;
-    background: rgba(10, 14, 39, 0.8);
-    display: flex;
+.riskCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  opacity: 0.5;
+}
+
+.riskCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.riskCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.symbolIdentity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.symbolEmojiLarge {
+  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.symbolInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.symbolLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.symbolSession {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.symbolScoreBadge {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 2px solid;
+  background: rgba(0,0,0,0.2);
+}
+
+.scoreNumber {
+  font-size: 24px;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1;
+}
+
+.scoreMax {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+}
+
+/* ─── STATUS ROW ─────────────────────────────────────────────────────────────── */
+
+.statusRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.statusBadge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border: 1px solid;
+}
+
+.trendBadge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  letter-spacing: 0.5px;
+}
+
+.regimeBadge {
+  font-size: 9px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ─── COMPONENTS GRID ─────────────────────────────────────────────────────────── */
+
+.componentsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.noComponents {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.componentCard {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.componentHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.componentNameSmall {
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex: 1;
+}
+
+.componentScoreSmall {
+  font-size: 13px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.componentBar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.componentBarFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+.componentLabelSmall {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ─── STRATEGY RECOMMENDATION ─────────────────────────────────────────────────── */
+
+.strategyRec {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 14px;
+  background: rgba(0, 255, 136, 0.03);
+  border: 1px solid rgba(0, 255, 136, 0.1);
+  border-radius: 12px;
+}
+
+.recSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recLabelSmall {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.recValue {
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.recDesc {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.signalCount {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-left: 4px;
+  font-weight: 500;
+}
+
+/* ─── NOTES SECTION ──────────────────────────────────────────────────────────── */
+
+.notesSection {
+  padding: 16px 24px;
+  background: rgba(234, 179, 8, 0.05);
+  border-top: 1px solid rgba(234, 179, 8, 0.1);
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.noteItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(234, 179, 8, 0.9);
+  padding: 6px 12px;
+  background: rgba(234, 179, 8, 0.08);
+  border-radius: 6px;
+  border: 1px solid rgba(234, 179, 8, 0.15);
+}
+
+/* ─── LOADING & ERROR STATES ─────────────────────────────────────────────────── */
+
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  gap: 16px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+}
+
+.loadingSpinner {
+  color: #00ff88;
+  filter: drop-shadow(0 0 10px rgba(0,255,136,0.5));
+}
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  gap: 12px;
+  color: #ef4444;
+  font-size: 13px;
+}
+
+.retryBtn {
+  margin-top: 8px;
+  padding: 8px 20px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  color: #ef4444;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.retryBtn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}
+
+/* ─── ANIMATIONS ─────────────────────────────────────────────────────────────── */
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ─── RESPONSIVE ──────────────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .panelHeader {
     flex-direction: column;
-    gap: 10px;
-    transition: background 0.3s;
-    position: relative;
-    overflow: hidden;
-}
-
-.symbolCard:hover {
-    background: rgba(15, 20, 45, 0.9);
-}
-
-/* Ambient glow based on risk level */
-.symbolCard::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    border-radius: 0 0 4px 4px;
-}
-
-.symbolCardHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.symbolName {
-    font-size: 13px;
-    font-weight: 700;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.symbolEmoji {
-    font-size: 14px;
-}
-
-.symbolScore {
-    font-size: 22px;
-    font-weight: 800;
-    font-family: 'JetBrains Mono', monospace;
-}
-
-.levelBadge {
-    font-size: 9px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* ─── RISK BAR (per symbol) ──────────────────────── */
-
-.riskBarContainer {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.riskBarTrack {
-    height: 6px;
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 3px;
-    overflow: hidden;
-    position: relative;
-}
-
-.riskBarFill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.riskBarLabels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 9px;
-    color: rgba(255, 255, 255, 0.35);
-}
-
-/* ─── COMPONENTS BREAKDOWN ───────────────────────── */
-
-.components {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.componentRow {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 10px;
-}
-
-.componentIcon {
-    width: 14px;
-    height: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: rgba(255, 255, 255, 0.4);
-    flex-shrink: 0;
-}
-
-.componentName {
-    color: rgba(255, 255, 255, 0.5);
-    min-width: 55px;
-    font-weight: 500;
-}
-
-.componentTrack {
-    flex: 1;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.componentFill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.6s ease;
-}
-
-.componentScore {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 600;
-    font-size: 10px;
-    min-width: 24px;
-    text-align: right;
-}
-
-.componentLabel {
-    font-size: 9px;
-    color: rgba(255, 255, 255, 0.3);
-    min-width: 60px;
-    text-align: right;
-}
-
-/* ─── RECOMMENDATION FOOTER ──────────────────────── */
-
-.recommendation {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 10px;
-    background: rgba(0, 255, 136, 0.04);
-    border: 1px solid rgba(0, 255, 136, 0.08);
-    border-radius: 8px;
-    margin-top: 2px;
-}
-
-.recLabel {
-    font-size: 9px;
-    color: rgba(255, 255, 255, 0.4);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.recStrategy {
-    font-size: 11px;
-    font-weight: 700;
-    color: #00ff88;
-}
-
-.recPosition {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.06);
-}
-
-/* ─── TREND / SESSION TAGS ───────────────────────── */
-
-.tags {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-}
-
-.tag {
-    font-size: 9px;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-/* ─── NOTES ──────────────────────────────────────── */
-
-.notes {
-    padding: 8px 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.04);
-    display: flex;
     gap: 12px;
-    flex-wrap: wrap;
-    flex-shrink: 0;
-}
-
-.note {
-    font-size: 10px;
-    color: rgba(255, 193, 7, 0.8);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-/* ─── LOADING ────────────────────────────────────── */
-
-.loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    gap: 10px;
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 12px;
-}
-
-.error {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    gap: 8px;
-    color: #ff4444;
-    font-size: 12px;
-}
-
-/* ─── PULSE ANIMATION ────────────────────────────── */
-
-@keyframes riskPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
-.pulseDanger {
-    animation: riskPulse 1.5s ease-in-out infinite;
+    padding: 16px;
+  }
+  
+  .gaugeScoreMain {
+    font-size: 48px;
+  }
+  
+  .globalStats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .componentsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .strategyRec {
+    grid-template-columns: 1fr;
+  }
 }

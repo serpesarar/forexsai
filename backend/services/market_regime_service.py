@@ -349,7 +349,7 @@ def detect_order_blocks(
 async def detect_regime(symbol: str, force_refresh: bool = False) -> RegimeResult:
     """
     Main entry point. Detects market regime for a symbol.
-    Uses 4H data for structure, 1H for ATR ratio, EOD for ATH.
+    Uses 1H data for structure (more reliable), 1H for ATR ratio, EOD for ATH.
     Cached for 30 minutes.
     """
     # Check cache
@@ -361,34 +361,42 @@ async def detect_regime(symbol: str, force_refresh: bool = False) -> RegimeResul
 
     from services.market_data_service import get_ohlcv_data
     from services.data_fetcher import fetch_latest_price, fetch_eod_candles
+    from services.data_hub import get_candles
 
-    # Fetch data: 4H for structure + ADX, 1H for ATR, EOD for ATH
-    data_4h = await get_ohlcv_data(symbol, "4H", limit=60)
-    data_1h = await get_ohlcv_data(symbol, "1H", limit=60)
+    # Fetch data: 1H for structure + ADX (more reliable than 4H derived), EOD for ATH
+    # Use DataHub directly to get 1H candles (fetched directly from API)
+    data_1h = await get_ohlcv_data(symbol, "1H", limit=100)
+    
+    # Fallback: try DataHub direct if market_data_service returns empty
+    if not data_1h or len(data_1h) < 30:
+        data_1h = get_candles(symbol, "1h", limit=100)
+        if data_1h:
+            # Convert DataHub format to standard OHLCV format
+            data_1h = [{"timestamp": c.get("timestamp"), "open": c["open"], 
+                       "high": c["high"], "low": c["low"], "close": c["close"], 
+                       "volume": c.get("volume", 0)} for c in data_1h]
+    
     eod_data = await fetch_eod_candles(symbol, limit=120)
     live_price = await fetch_latest_price(symbol)
 
     # Defaults if data is missing
-    if not data_4h or len(data_4h) < 20:
-        logger.warning(f"Insufficient 4H data for {symbol}, defaulting to TRANSITION")
+    if not data_1h or len(data_1h) < 30:
+        logger.warning(f"Insufficient 1H data for {symbol}, defaulting to TRANSITION")
         return _default_regime(symbol, live_price)
 
-    # Extract arrays from 4H
-    h4_closes = np.array([c["close"] for c in data_4h], dtype=np.float64)
-    h4_highs = np.array([c["high"] for c in data_4h], dtype=np.float64)
-    h4_lows = np.array([c["low"] for c in data_4h], dtype=np.float64)
+    # Extract arrays from 1H (we use 1H directly instead of 4H for better reliability)
+    h1_closes = np.array([c["close"] for c in data_1h], dtype=np.float64)
+    h1_highs = np.array([c["high"] for c in data_1h], dtype=np.float64)
+    h1_lows = np.array([c["low"] for c in data_1h], dtype=np.float64)
 
-    current_price = float(live_price) if live_price else float(h4_closes[-1])
+    current_price = float(live_price) if live_price else float(h1_closes[-1])
 
-    # 1. ADX (4H)
-    adx = _calculate_adx(h4_highs, h4_lows, h4_closes, period=14)
+    # 1. ADX (1H with period 14 - we have more data points)
+    adx = _calculate_adx(h1_highs, h1_lows, h1_closes, period=14)
 
     # 2. ATR ratio (1H) — current ATR vs 20-period average ATR
     atr_ratio = 1.0
-    if data_1h and len(data_1h) >= 25:
-        h1_highs = np.array([c["high"] for c in data_1h], dtype=np.float64)
-        h1_lows = np.array([c["low"] for c in data_1h], dtype=np.float64)
-        h1_closes = np.array([c["close"] for c in data_1h], dtype=np.float64)
+    if len(data_1h) >= 25:
         tr = np.maximum(
             h1_highs[1:] - h1_lows[1:],
             np.maximum(np.abs(h1_highs[1:] - h1_closes[:-1]), np.abs(h1_lows[1:] - h1_closes[:-1]))
@@ -398,8 +406,8 @@ async def detect_regime(symbol: str, force_refresh: bool = False) -> RegimeResul
             avg_atr = float(np.mean(tr[-20:]))
             atr_ratio = current_atr / avg_atr if avg_atr > 0 else 1.0
 
-    # 3. Swing structure (4H)
-    structure = _detect_swing_structure(h4_highs, h4_lows, lookback=30)
+    # 3. Swing structure (1H - more granular, still reliable)
+    structure = _detect_swing_structure(h1_highs, h1_lows, lookback=30)
 
     # 4. ATH detection (EOD)
     is_ath = False

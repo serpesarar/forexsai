@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Cpu,
@@ -21,13 +21,21 @@ import {
   Target,
   Flame,
   Crosshair,
+  Brain,
+  Signal,
+  Sparkles,
+  ArrowRight,
+  ChevronRight,
+  Info,
 } from "lucide-react";
 import { useFullscreen } from "../../hooks/useFullscreen";
 import styles from "./strategy-optimizer.module.css";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
-// ─── Types ───────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════════════════════
 
 interface RiskComponent {
   name: string;
@@ -77,7 +85,9 @@ interface OptimizerResponse {
   error?: string;
 }
 
-// ─── Constants ───────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 const SYMBOL_EMOJI: Record<string, string> = {
   "NDX.INDX": "🇺🇸",
@@ -86,12 +96,12 @@ const SYMBOL_EMOJI: Record<string, string> = {
   "CL.COMM": "🛢️",
 };
 
-const STRATEGY_LABELS: Record<string, { name: string; icon: typeof Shield; color: string }> = {
-  ultra_safe: { name: "Ultra Safe", icon: Shield, color: "#10b981" },
-  balanced: { name: "Balanced", icon: Target, color: "#3b82f6" },
-  full_power: { name: "Full Power", icon: Zap, color: "#eab308" },
-  aggressive: { name: "Aggressive", icon: Flame, color: "#ef4444" },
-  nasdaq_precision: { name: "NASDAQ Precision", icon: Crosshair, color: "#06b6d4" },
+const STRATEGY_LABELS: Record<string, { name: string; icon: typeof Shield; color: string; desc: string }> = {
+  ultra_safe: { name: "Ultra Safe", icon: Shield, color: "#10b981", desc: "Minimal risk" },
+  balanced: { name: "Balanced", icon: Target, color: "#3b82f6", desc: "Steady growth" },
+  full_power: { name: "Full Power", icon: Zap, color: "#eab308", desc: "Max potential" },
+  aggressive: { name: "Aggressive", icon: Flame, color: "#ef4444", desc: "High risk/reward" },
+  nasdaq_precision: { name: "NASDAQ Precision", icon: Crosshair, color: "#06b6d4", desc: "Index optimized" },
 };
 
 const COMPONENT_ICONS: Record<string, typeof Activity> = {
@@ -103,57 +113,52 @@ const COMPONENT_ICONS: Record<string, typeof Activity> = {
   news: Newspaper,
 };
 
-// ─── Utility Functions ───────────────────────────────────────
+const RISK_ZONES = [
+  { min: 0, max: 25, label: "EXTREME FEAR", color: "#ef4444", bg: "#7f1d1d", desc: "Avoid trading" },
+  { min: 25, max: 45, label: "FEAR", color: "#f97316", bg: "#7c2d12", desc: "High caution" },
+  { min: 45, max: 55, label: "NEUTRAL", color: "#eab308", bg: "#713f12", desc: "Mixed signals" },
+  { min: 55, max: 75, label: "OPTIMAL", color: "#22c55e", bg: "#14532d", desc: "Good conditions" },
+  { min: 75, max: 100, label: "EXTREME OPTIMAL", color: "#00ff88", bg: "#064e3b", desc: "Perfect setup" },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// UTILITY FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function getRiskZone(score: number) {
+  return RISK_ZONES.find((z) => score >= z.min && score < z.max) || RISK_ZONES[2];
+}
 
 function getRiskColor(score: number): string {
   if (score >= 75) return "#00ff88";
-  if (score >= 60) return "#22d3ee";
-  if (score >= 42) return "#eab308";
+  if (score >= 55) return "#22c55e";
+  if (score >= 45) return "#eab308";
   if (score >= 25) return "#f97316";
   return "#ef4444";
 }
 
 function getRiskGradient(score: number): string {
-  if (score >= 75) return "linear-gradient(90deg, #00ff88, #10b981)";
-  if (score >= 60) return "linear-gradient(90deg, #22d3ee, #06b6d4)";
-  if (score >= 42) return "linear-gradient(90deg, #eab308, #f59e0b)";
-  if (score >= 25) return "linear-gradient(90deg, #f97316, #ea580c)";
-  return "linear-gradient(90deg, #ef4444, #dc2626)";
+  if (score >= 75) return "linear-gradient(135deg, #00ff88, #10b981)";
+  if (score >= 55) return "linear-gradient(135deg, #22c55e, #16a34a)";
+  if (score >= 45) return "linear-gradient(135deg, #eab308, #ca8a04)";
+  if (score >= 25) return "linear-gradient(135deg, #f97316, #ea580c)";
+  return "linear-gradient(135deg, #ef4444, #dc2626)";
 }
 
-function getLevelStyle(level: string): { bg: string; color: string; border: string } {
+function getLevelStyle(level: string): { bg: string; color: string; border: string; glow: string } {
   switch (level) {
     case "OPTIMAL":
-      return { bg: "rgba(0,255,136,0.12)", color: "#00ff88", border: "rgba(0,255,136,0.3)" };
+      return { bg: "rgba(0,255,136,0.15)", color: "#00ff88", border: "rgba(0,255,136,0.4)", glow: "0 0 20px rgba(0,255,136,0.3)" };
     case "FAVORABLE":
-      return { bg: "rgba(34,211,238,0.12)", color: "#22d3ee", border: "rgba(34,211,238,0.3)" };
+      return { bg: "rgba(34,197,94,0.12)", color: "#22c55e", border: "rgba(34,197,94,0.35)", glow: "0 0 15px rgba(34,197,94,0.2)" };
     case "MODERATE":
-      return { bg: "rgba(234,179,8,0.12)", color: "#eab308", border: "rgba(234,179,8,0.3)" };
+      return { bg: "rgba(234,179,8,0.12)", color: "#eab308", border: "rgba(234,179,8,0.35)", glow: "0 0 15px rgba(234,179,8,0.2)" };
     case "HIGH_RISK":
-      return { bg: "rgba(249,115,22,0.12)", color: "#f97316", border: "rgba(249,115,22,0.3)" };
+      return { bg: "rgba(249,115,22,0.12)", color: "#f97316", border: "rgba(249,115,22,0.35)", glow: "0 0 15px rgba(249,115,22,0.2)" };
     case "DANGER":
-      return { bg: "rgba(239,68,68,0.15)", color: "#ef4444", border: "rgba(239,68,68,0.35)" };
+      return { bg: "rgba(239,68,68,0.2)", color: "#ef4444", border: "rgba(239,68,68,0.5)", glow: "0 0 25px rgba(239,68,68,0.4)" };
     default:
-      return { bg: "rgba(255,255,255,0.06)", color: "#888", border: "rgba(255,255,255,0.1)" };
-  }
-}
-
-function getVixStyle(regime: string): { bg: string; color: string } {
-  switch (regime) {
-    case "LOW":
-    case "EXTREME_LOW":
-      return { bg: "rgba(0,255,136,0.1)", color: "#00ff88" };
-    case "NORMAL":
-      return { bg: "rgba(34,211,238,0.1)", color: "#22d3ee" };
-    case "ELEVATED":
-      return { bg: "rgba(234,179,8,0.1)", color: "#eab308" };
-    case "HIGH":
-    case "VERY_HIGH":
-      return { bg: "rgba(249,115,22,0.12)", color: "#f97316" };
-    case "EXTREME":
-      return { bg: "rgba(239,68,68,0.15)", color: "#ef4444" };
-    default:
-      return { bg: "rgba(255,255,255,0.06)", color: "#888" };
+      return { bg: "rgba(255,255,255,0.06)", color: "#888", border: "rgba(255,255,255,0.1)", glow: "none" };
   }
 }
 
@@ -161,13 +166,13 @@ function formatSession(session: string): string {
   const map: Record<string, string> = {
     asia: "Asia",
     london: "London",
-    overlap_london_ny: "LON/NY Overlap",
+    overlap_london_ny: "LON/NY",
     newyork: "New York",
     xetra: "XETRA",
     xetra_us_overlap: "XETRA/US",
     nymex: "NYMEX",
     london_oil: "London Oil",
-    nymex_eia_window: "EIA Window",
+    nymex_eia_window: "EIA",
     closed: "Closed",
   };
   return map[session] || session;
@@ -175,160 +180,233 @@ function formatSession(session: string): string {
 
 function formatPositionSize(pct: number): string {
   if (pct <= 0) return "NO TRADE";
-  if (pct < 0.5) return `${Math.round(pct * 100)}% (Mini)`;
-  if (pct < 0.8) return `${Math.round(pct * 100)}% (Reduced)`;
-  if (pct <= 1.1) return `${Math.round(pct * 100)}% (Normal)`;
-  return `${Math.round(pct * 100)}% (Increased)`;
+  if (pct < 0.5) return `${Math.round(pct * 100)}% Mini`;
+  if (pct < 0.8) return `${Math.round(pct * 100)}% Reduced`;
+  if (pct <= 1.1) return `${Math.round(pct * 100)}% Normal`;
+  return `${Math.round(pct * 100)}% Increased`;
 }
 
-// ─── Component: Risk Bar ─────────────────────────────────────
+function useCountdown(targetMinutes: number = 5) {
+  const [seconds, setSeconds] = useState(targetMinutes * 60);
 
-function RiskBar({ score, height = 6 }: { score: number; height?: number }) {
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSeconds((s) => (s > 0 ? s - 1 : targetMinutes * 60));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [targetMinutes]);
+
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function FearGreedGauge({ score, size = "large" }: { score: number; size?: "small" | "large" }) {
+  const zone = getRiskZone(score);
+  const percentage = Math.min(Math.max(score, 0), 100);
+
+  if (size === "small") {
+    return (
+      <div className={styles.miniGauge}>
+        <div className={styles.miniGaugeTrack}>
+          <div
+            className={styles.miniGaugeFill}
+            style={{
+              width: `${percentage}%`,
+              background: getRiskGradient(score),
+            }}
+          />
+        </div>
+        <span className={styles.miniGaugeValue} style={{ color: zone.color }}>
+          {Math.round(score)}
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.riskBarTrack} style={{ height }}>
-      <div
-        className={styles.riskBarFill}
-        style={{
-          width: `${Math.min(score, 100)}%`,
-          background: getRiskGradient(score),
-          boxShadow: `0 0 8px ${getRiskColor(score)}40`,
-        }}
-      />
+    <div className={styles.fearGreedGauge}>
+      <div className={styles.gaugeBarContainer}>
+        <div className={styles.gaugeZones}>
+          {RISK_ZONES.map((z, i) => (
+            <div
+              key={z.label}
+              className={styles.gaugeZone}
+              style={{
+                flex: z.max - z.min,
+                background: `linear-gradient(180deg, ${z.bg}40, ${z.bg}20)`,
+                borderTop: `2px solid ${z.color}`,
+              }}
+            >
+              <span className={styles.zoneLabel} style={{ color: z.color }}>
+                {z.label}
+              </span>
+              <span className={styles.zoneDesc}>{z.desc}</span>
+            </div>
+          ))}
+        </div>
+
+        <div
+          className={styles.gaugeIndicator}
+          style={{
+            left: `${percentage}%`,
+            borderColor: zone.color,
+            boxShadow: `0 0 20px ${zone.color}, 0 0 40px ${zone.color}60`,
+          }}
+        >
+          <div className={styles.gaugeIndicatorValue} style={{ background: zone.color }}>
+            {Math.round(score)}
+          </div>
+        </div>
+
+        <div className={styles.gaugeGrid}>
+          {[0, 25, 50, 75, 100].map((mark) => (
+            <div key={mark} className={styles.gaugeGridLine} style={{ left: `${mark}%` }}>
+              <span className={styles.gaugeGridLabel}>{mark}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.gaugeScoreDisplay}>
+        <div className={styles.gaugeScoreMain} style={{ color: zone.color, textShadow: `0 0 30px ${zone.color}50` }}>
+          {Math.round(score)}
+        </div>
+        <div className={styles.gaugeScoreLabel} style={{ color: zone.color }}>
+          {zone.label}
+        </div>
+      </div>
     </div>
   );
 }
 
-// ─── Component: Symbol Card ──────────────────────────────────
+function ComponentBreakdown({ components }: { components: RiskComponent[] }) {
+  if (!components || components.length === 0) {
+    return (
+      <div className={styles.noComponents}>
+        <Info size={12} />
+        <span>Risk components loading...</span>
+      </div>
+    );
+  }
 
-function SymbolCard({ data, strategyScores }: { data: SymbolData; strategyScores?: StrategyScoreData[] }) {
+  return (
+    <div className={styles.componentsGrid}>
+      {components.map((comp) => {
+        const CompIcon = COMPONENT_ICONS[comp.name] || Activity;
+        const zone = getRiskZone(comp.score);
+        return (
+          <div key={comp.name} className={styles.componentCard}>
+            <div className={styles.componentHeader}>
+              <CompIcon size={12} style={{ color: zone.color }} />
+              <span className={styles.componentNameSmall}>
+                {comp.name === "vix" ? "VIX" : comp.name === "choppiness" ? "CHOP" : comp.name.toUpperCase()}
+              </span>
+              <span className={styles.componentScoreSmall} style={{ color: zone.color }}>
+                {Math.round(comp.score)}
+              </span>
+            </div>
+            <div className={styles.componentBar}>
+              <div
+                className={styles.componentBarFill}
+                style={{
+                  width: `${Math.min(comp.score, 100)}%`,
+                  background: getRiskGradient(comp.score),
+                }}
+              />
+            </div>
+            <span className={styles.componentLabelSmall}>{comp.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function SymbolRiskCard({ data, strategyScores }: { data: SymbolData; strategyScores?: StrategyScoreData[] }) {
   const levelStyle = getLevelStyle(data.risk_level);
   const stratConfig = STRATEGY_LABELS[data.recommended_strategy];
   const StratIcon = stratConfig?.icon || Target;
   const recommended = strategyScores?.find((s) => s.is_recommended);
+  const zone = getRiskZone(data.overall_score);
 
   return (
-    <div className={styles.symbolCard}>
-      {/* Top color strip */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 2,
-          background: getRiskGradient(data.overall_score),
-        }}
-      />
-
-      {/* Header: Symbol name + Score */}
-      <div className={styles.symbolCardHeader}>
-        <div className={styles.symbolName}>
-          <span className={styles.symbolEmoji}>{SYMBOL_EMOJI[data.symbol] || "📊"}</span>
-          {data.label}
-        </div>
-        <div className={styles.symbolScore} style={{ color: getRiskColor(data.overall_score) }}>
-          {Math.round(data.overall_score)}
-        </div>
-      </div>
-
-      {/* Risk bar */}
-      <div className={styles.riskBarContainer}>
-        <RiskBar score={data.overall_score} />
-        <div className={styles.riskBarLabels}>
-          <span>DANGER</span>
-          <span
-            className={styles.levelBadge}
-            style={{
-              background: levelStyle.bg,
-              color: levelStyle.color,
-              border: `1px solid ${levelStyle.border}`,
-            }}
-          >
-            {data.risk_level.replace("_", " ")}
-          </span>
-          <span>OPTIMAL</span>
-        </div>
-      </div>
-
-      {/* Component breakdown */}
-      <div className={styles.components}>
-        {data.components.map((comp) => {
-          const CompIcon = COMPONENT_ICONS[comp.name] || Activity;
-          return (
-            <div key={comp.name} className={styles.componentRow}>
-              <div className={styles.componentIcon}>
-                <CompIcon size={10} />
-              </div>
-              <span className={styles.componentName}>
-                {comp.name === "vix" ? "VIX" : comp.name === "choppiness" ? "Chop" : comp.name.charAt(0).toUpperCase() + comp.name.slice(1)}
-              </span>
-              <div className={styles.componentTrack}>
-                <div
-                  className={styles.componentFill}
-                  style={{
-                    width: `${Math.min(comp.score, 100)}%`,
-                    background: getRiskGradient(comp.score),
-                  }}
-                />
-              </div>
-              <span className={styles.componentScore} style={{ color: getRiskColor(comp.score) }}>
-                {Math.round(comp.score)}
-              </span>
-              <span className={styles.componentLabel}>{comp.label}</span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Tags: regime, session, trend */}
-      <div className={styles.tags}>
-        <span
-          className={styles.tag}
-          style={{
-            color: data.trend_direction === "BULLISH" ? "#00ff88" : data.trend_direction === "BEARISH" ? "#ef4444" : "#888",
-            borderColor:
-              data.trend_direction === "BULLISH"
-                ? "rgba(0,255,136,0.2)"
-                : data.trend_direction === "BEARISH"
-                ? "rgba(239,68,68,0.2)"
-                : "rgba(255,255,255,0.06)",
-          }}
-        >
-          {data.trend_direction === "BULLISH" ? "▲" : data.trend_direction === "BEARISH" ? "▼" : "◆"} {data.trend_direction}
-        </span>
-        <span className={styles.tag}>{data.regime.replace(/_/g, " ")}</span>
-        <span className={styles.tag}>
-          <Clock size={8} style={{ display: "inline", marginRight: 2 }} />
-          {formatSession(data.session)}
-        </span>
-      </div>
-
-      {/* Recommendation */}
-      <div className={styles.recommendation}>
-        <div>
-          <div className={styles.recLabel}>Best Strategy</div>
-          <div className={styles.recStrategy} style={{ color: stratConfig?.color || "#00ff88" }}>
-            <StratIcon size={11} style={{ display: "inline", marginRight: 4, verticalAlign: "middle" }} />
-            {stratConfig?.name || data.recommended_strategy}
+    <div className={styles.riskCard} style={{ boxShadow: levelStyle.glow }}>
+      <div className={styles.riskCardHeader}>
+        <div className={styles.symbolIdentity}>
+          <span className={styles.symbolEmojiLarge}>{SYMBOL_EMOJI[data.symbol] || "📊"}</span>
+          <div className={styles.symbolInfo}>
+            <span className={styles.symbolLabel}>{data.label}</span>
+            <span className={styles.symbolSession}>{formatSession(data.session)}</span>
           </div>
         </div>
-        <div style={{ textAlign: "right" }}>
-          <div className={styles.recLabel}>Position</div>
+        <div className={styles.symbolScoreBadge} style={{ borderColor: zone.color }}>
+          <span className={styles.scoreNumber} style={{ color: zone.color }}>
+            {Math.round(data.overall_score)}
+          </span>
+          <span className={styles.scoreMax}>/100</span>
+        </div>
+      </div>
+
+      <FearGreedGauge score={data.overall_score} size="small" />
+
+      <div className={styles.statusRow}>
+        <span
+          className={styles.statusBadge}
+          style={{
+            background: levelStyle.bg,
+            color: levelStyle.color,
+            borderColor: levelStyle.border,
+          }}
+        >
+          {data.risk_level.replace("_", " ")}
+        </span>
+        <span
+          className={styles.trendBadge}
+          style={{
+            color: data.trend_direction === "BULLISH" ? "#00ff88" : data.trend_direction === "BEARISH" ? "#ef4444" : "#888",
+          }}
+        >
+          {data.trend_direction === "BULLISH" ? "▲ BULLISH" : data.trend_direction === "BEARISH" ? "▼ BEARISH" : "◆ NEUTRAL"}
+        </span>
+        <span className={styles.regimeBadge}>{data.regime.replace(/_/g, " ")}</span>
+      </div>
+
+      <ComponentBreakdown components={data.components} />
+
+      <div className={styles.strategyRec}>
+        <div className={styles.recSection}>
+          <span className={styles.recLabelSmall}>Best Strategy</span>
+          <div className={styles.recValue} style={{ color: stratConfig?.color || "#00ff88" }}>
+            <StratIcon size={14} />
+            {stratConfig?.name || data.recommended_strategy}
+          </div>
+          {stratConfig?.desc && <span className={styles.recDesc}>{stratConfig.desc}</span>}
+        </div>
+        <div className={styles.recSection}>
+          <span className={styles.recLabelSmall}>Position</span>
           <div
-            className={styles.recPosition}
+            className={styles.recValue}
             style={{
-              color: data.recommended_position_pct <= 0 ? "#ef4444" : data.recommended_position_pct < 0.7 ? "#f97316" : getRiskColor(data.overall_score),
+              color: data.recommended_position_pct <= 0 ? "#ef4444" : data.recommended_position_pct < 0.7 ? "#f97316" : zone.color,
             }}
           >
             {formatPositionSize(data.recommended_position_pct)}
           </div>
         </div>
         {recommended && recommended.total_signals > 0 && (
-          <div style={{ textAlign: "right" }}>
-            <div className={styles.recLabel}>Win Rate</div>
-            <div className={styles.recPosition} style={{ color: recommended.win_rate >= 55 ? "#00ff88" : recommended.win_rate >= 45 ? "#eab308" : "#ef4444" }}>
+          <div className={styles.recSection}>
+            <span className={styles.recLabelSmall}>Win Rate</span>
+            <div
+              className={styles.recValue}
+              style={{ color: recommended.win_rate >= 55 ? "#00ff88" : recommended.win_rate >= 45 ? "#eab308" : "#ef4444" }}
+            >
               {recommended.win_rate.toFixed(1)}%
-              <span style={{ fontSize: 8, color: "rgba(255,255,255,0.3)", marginLeft: 3 }}>({recommended.total_signals})</span>
+              <span className={styles.signalCount}>({recommended.total_signals})</span>
             </div>
           </div>
         )}
@@ -337,7 +415,9 @@ function SymbolCard({ data, strategyScores }: { data: SymbolData; strategyScores
   );
 }
 
-// ─── Main Panel ──────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN PANEL
+// ═══════════════════════════════════════════════════════════════════════════════
 
 async function fetchOptimizer(days: number): Promise<OptimizerResponse> {
   const res = await fetch(`${API_BASE}/api/optimizer/run?days=${days}`);
@@ -348,6 +428,7 @@ async function fetchOptimizer(days: number): Promise<OptimizerResponse> {
 export default function StrategyOptimizerPanel() {
   const [days, setDays] = useState(14);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
+  const countdown = useCountdown(5);
 
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["strategy-optimizer", days],
@@ -363,153 +444,150 @@ export default function StrategyOptimizerPanel() {
     return () => window.removeEventListener("dashboard-refresh", handler);
   }, [refetch]);
 
-  const globalScore = data?.global_risk_score ?? 0;
-  const globalLevel = data?.global_risk_level ?? "MODERATE";
-  const globalLevelStyle = getLevelStyle(globalLevel);
-  const vixStyle = getVixStyle(data?.vix_regime ?? "UNKNOWN");
+  const globalScore = data?.global_risk_score ?? 50;
+  const globalZone = getRiskZone(globalScore);
+  const globalLevelStyle = getLevelStyle(data?.global_risk_level ?? "MODERATE");
 
   return (
     <div className={`${styles.panel} ${isFullscreen ? styles.panelFullscreen : ""}`}>
-      {/* ═══ HEADER ═══ */}
-      <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          <Cpu size={18} className={styles.iconGlow} />
-          <div>
-            <h3 className={styles.title}>Strategy Auto-Optimization Loop</h3>
-            <p className={styles.subtitle}>
-              Real-time risk scoring & strategy selection • {data?.symbols?.length || 4} symbols
+      {/* Header */}
+      <div className={styles.panelHeader}>
+        <div className={styles.headerMain}>
+          <div className={styles.headerIcon}>
+            <Brain size={24} />
+            <div className={styles.iconPulse} />
+          </div>
+          <div className={styles.headerText}>
+            <h3 className={styles.panelTitle}>Strategy Auto-Optimization Loop</h3>
+            <p className={styles.panelSubtitle}>
+              Real-time risk scoring & strategy selection via Bayesian optimization
             </p>
           </div>
         </div>
 
         <div className={styles.headerControls}>
+          <div className={styles.updateTimer}>
+            <Clock size={12} />
+            <span>Update in {countdown}</span>
+          </div>
           <select
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
-            style={{
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 6,
-              color: "#d1d4dc",
-              padding: "4px 8px",
-              fontSize: 11,
-              cursor: "pointer",
-              outline: "none",
-            }}
+            className={styles.daysSelect}
           >
             <option value={7}>7 days</option>
             <option value={14}>14 days</option>
             <option value={30}>30 days</option>
           </select>
-
-          <button onClick={() => refetch()} className={styles.refreshBtn} title="Refresh">
+          <button onClick={() => refetch()} className={styles.controlBtn} title="Refresh">
             <RefreshCw size={14} className={isFetching ? styles.spin : ""} />
           </button>
-          <button onClick={toggleFullscreen} className={styles.refreshBtn} title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
+          <button onClick={toggleFullscreen} className={styles.controlBtn}>
             {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
         </div>
       </div>
 
-      {/* ═══ GLOBAL RISK BAR ═══ */}
+      {/* Fear & Greed Gauge */}
       {data && !data.error && (
-        <div className={styles.globalBar}>
-          <span className={styles.globalLabel}>
-            <Gauge size={12} style={{ display: "inline", marginRight: 4, verticalAlign: "middle" }} />
-            Market Risk
-          </span>
-
-          <div className={styles.globalTrack}>
-            <div
-              className={styles.globalFill}
-              style={{
-                width: `${Math.min(globalScore, 100)}%`,
-                background: getRiskGradient(globalScore),
-                boxShadow: `0 0 12px ${getRiskColor(globalScore)}50`,
-              }}
-            />
+        <div className={styles.gaugeSection}>
+          <div className={styles.gaugeHeader}>
+            <div className={styles.gaugeTitle}>
+              <Gauge size={16} />
+              <span>Market Risk Index</span>
+            </div>
+            {data.vix_price != null && (
+              <div className={styles.vixChip}>
+                <Eye size={12} />
+                VIX {data.vix_price.toFixed(2)}
+              </div>
+            )}
+            {!data.market_open && (
+              <div className={styles.marketClosedChip}>
+                <AlertTriangle size={12} />
+                MARKET CLOSED
+              </div>
+            )}
           </div>
 
-          <span className={styles.globalScore} style={{ color: getRiskColor(globalScore) }}>
-            {Math.round(globalScore)}
-          </span>
+          <FearGreedGauge score={globalScore} size="large" />
 
-          <span
-            className={`${styles.globalLevel} ${globalLevel === "DANGER" ? styles.pulseDanger : ""}`}
-            style={{
-              background: globalLevelStyle.bg,
-              color: globalLevelStyle.color,
-              border: `1px solid ${globalLevelStyle.border}`,
-            }}
-          >
-            {globalLevel.replace("_", " ")}
-          </span>
-
-          {/* VIX badge */}
-          {data.vix_price != null && (
-            <span
-              className={styles.vixBadge}
-              style={{
-                background: vixStyle.bg,
-                color: vixStyle.color,
-                border: `1px solid ${vixStyle.color}30`,
-              }}
-            >
-              <Eye size={10} />
-              VIX {data.vix_price.toFixed(1)} ({data.vix_regime})
-            </span>
-          )}
-
-          {!data.market_open && (
-            <span
-              className={styles.vixBadge}
-              style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}
-            >
-              MARKET CLOSED
-            </span>
-          )}
+          <div className={styles.globalStats}>
+            <div className={styles.statBox} style={{ borderColor: globalZone.color }}>
+              <span className={styles.statLabel}>Risk Level</span>
+              <span className={styles.statValue} style={{ color: globalZone.color }}>
+                {data.global_risk_level.replace("_", " ")}
+              </span>
+            </div>
+            <div className={styles.statBox}>
+              <span className={styles.statLabel}>VIX Regime</span>
+              <span className={styles.statValue}>{data.vix_regime}</span>
+            </div>
+            <div className={styles.statBox}>
+              <span className={styles.statLabel}>Symbols</span>
+              <span className={styles.statValue}>{data.symbols?.length || 0}</span>
+            </div>
+            <div className={styles.statBox}>
+              <span className={styles.statLabel}>Last Update</span>
+              <span className={styles.statValue}>
+                {new Date(data.timestamp).toLocaleTimeString()}
+              </span>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* ═══ CONTENT ═══ */}
+      {/* Content */}
       {isLoading ? (
-        <div className={styles.loading}>
-          <RefreshCw size={16} className={styles.spin} />
-          Calculating risk scores & optimizing strategies...
+        <div className={styles.loadingState}>
+          <div className={styles.loadingSpinner}>
+            <Cpu size={32} className={styles.spin} />
+          </div>
+          <span>Calculating risk scores & optimizing strategies...</span>
         </div>
       ) : error ? (
-        <div className={styles.error}>
-          <AlertTriangle size={16} />
-          Failed to load optimizer data
-          <button onClick={() => refetch()} style={{ color: "#22d3ee", background: "none", border: "none", cursor: "pointer", fontSize: 11 }}>
+        <div className={styles.errorState}>
+          <AlertTriangle size={24} />
+          <span>Failed to load optimizer data</span>
+          <button onClick={() => refetch()} className={styles.retryBtn}>
             Retry
           </button>
         </div>
       ) : data && !data.error ? (
         <>
-          {/* ═══ SYMBOL GRID ═══ */}
-          <div className={styles.symbolGrid}>
-            {data.symbols.map((sym) => (
-              <SymbolCard key={sym.symbol} data={sym} strategyScores={data.strategy_scores[sym.symbol]} />
-            ))}
+          {/* Symbol Cards Grid */}
+          <div className={styles.symbolsSection}>
+            <div className={styles.sectionHeader}>
+              <Signal size={14} />
+              <span>Per-Symbol Risk Analysis</span>
+            </div>
+            <div className={styles.riskCardsGrid}>
+              {data.symbols.map((sym) => (
+                <SymbolRiskCard
+                  key={sym.symbol}
+                  data={sym}
+                  strategyScores={data.strategy_scores[sym.symbol]}
+                />
+              ))}
+            </div>
           </div>
 
-          {/* ═══ NOTES ═══ */}
+          {/* Notes */}
           {data.optimization_notes.length > 0 && (
-            <div className={styles.notes}>
+            <div className={styles.notesSection}>
               {data.optimization_notes.map((note, i) => (
-                <span key={i} className={styles.note}>
-                  <AlertTriangle size={10} />
-                  {note}
-                </span>
+                <div key={i} className={styles.noteItem}>
+                  <Sparkles size={12} />
+                  <span>{note}</span>
+                </div>
               ))}
             </div>
           )}
         </>
       ) : (
-        <div className={styles.error}>
-          <AlertTriangle size={16} />
-          {data?.error || "Unknown error"}
+        <div className={styles.errorState}>
+          <AlertTriangle size={24} />
+          <span>{data?.error || "Unknown error"}</span>
         </div>
       )}
     </div>
