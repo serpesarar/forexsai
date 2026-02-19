@@ -109,9 +109,9 @@ async def _fetch_realtime_price(symbol: str) -> Optional[float]:
     # Symbol mapping for EODHD (correct format)
     symbol_map = {
         "XAUUSD": "XAUUSD.FOREX",
-        "CL.COMM": "CL.COMM",
-        "NDX.INDX": "NDX.INDX",
-        "GDAXI.INDX": "GDAXI.INDX",
+        "CL.COMM": "CL",  # EODHD uses CL not CL.COMM
+        "NDX.INDX": "^NDX",  # EODHD index format with ^ prefix
+        "GDAXI.INDX": "^GDAXI",  # EODHD index format with ^ prefix
     }
     
     # Normalize symbol for EODHD
