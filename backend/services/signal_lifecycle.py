@@ -95,6 +95,39 @@ _price_fetch_failures: Dict[str, int] = {}
 PRICE_CIRCUIT_BREAKER_THRESHOLD = 5  # Skip after N consecutive failures
 PRICE_CIRCUIT_BREAKER_RESET = 60     # Reset after N seconds
 
+# Track last known price per symbol for staleness detection
+_price_last_seen: Dict[str, float] = {}  # symbol -> price
+_price_last_seen_time: Dict[str, datetime] = {}  # symbol -> timestamp
+PRICE_STALENESS_THRESHOLD_MINUTES = 120  # 2 hours - consider price stale after this
+
+
+def _is_price_stale(symbol: str, current_price: float) -> bool:
+    """
+    Check if price is stale (hasn't changed in a long time).
+    This detects when market is closed or EODHD is returning old data.
+    """
+    global _price_last_seen, _price_last_seen_time
+    
+    now = datetime.utcnow()
+    last_price = _price_last_seen.get(symbol)
+    last_time = _price_last_seen_time.get(symbol)
+    
+    # Update tracking
+    _price_last_seen[symbol] = current_price
+    _price_last_seen_time[symbol] = now
+    
+    # If no previous price, not stale yet
+    if last_price is None or last_time is None:
+        return False
+    
+    # If price changed, reset staleness
+    if abs(current_price - last_price) > 0.001:  # Small tolerance for floating point
+        return False
+    
+    # Price is same as before - check how long
+    minutes_unchanged = (now - last_time).total_seconds() / 60
+    return minutes_unchanged >= PRICE_STALENESS_THRESHOLD_MINUTES
+
 
 async def _get_session_high_low(symbol: str, minutes: int = 5) -> Dict[str, Optional[float]]:
     """Get session high/low from the last N minutes of 5m candles (wick capture).
@@ -283,6 +316,19 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         logger.warning(f"No price for {symbol}, skipping signal {signal_id[:8]}")
         return None
 
+    # ── 1b. Check if price is stale (market closed or EODHD returning old data)
+    is_stale = _is_price_stale(symbol, current)
+    if is_stale:
+        # Price hasn't changed in >2 hours - market likely closed
+        # Extend signal lifetime to prevent premature expiration
+        effective_max_age = SIGNAL_MAX_AGE_MINUTES * 4  # 60 min instead of 15 min
+        logger.info(
+            f"lifecycle.price_stale | signal={signal_id[:8]} symbol={symbol} "
+            f"price={current:.2f} unchanged for 2h+ - extending lifetime to {effective_max_age}m"
+        )
+    else:
+        effective_max_age = SIGNAL_MAX_AGE_MINUTES  # Normal 15 min timeout
+
     # ── 2. Calculate profit/loss in pips using spot price ──
     if direction == "BUY":
         profit_pips = pips_from_price_change(current - entry_price, symbol)
@@ -373,16 +419,16 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         exit_price = sl_price
         logger.info(f"🛑 Signal {signal_id[:8]} {symbol} {direction} STOPPED @ {sl_price:.2f}")
     else:
-        # Check age for expiration (30 min timeout)
+        # Check age for expiration (respect effective_max_age for stale prices)
         created_at = signal.get("created_at", "")
         if isinstance(created_at, str) and created_at:
             try:
                 created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                 age_minutes = (datetime.now(created_dt.tzinfo) - created_dt).total_seconds() / 60
-                if age_minutes >= SIGNAL_MAX_AGE_MINUTES:
+                if age_minutes >= effective_max_age:  # Use extended timeout for stale prices
                     new_status = "completed" if any_target_hit else "expired"
                     exit_price = current
-                    logger.info(f"⏰ Signal {signal_id[:8]} aged out ({age_minutes:.0f}m) → {new_status} (any_tp={any_target_hit})")
+                    logger.info(f"⏰ Signal {signal_id[:8]} aged out ({age_minutes:.0f}m, max={effective_max_age}m) → {new_status} (any_tp={any_target_hit}, stale={is_stale})")
             except Exception:
                 pass
 
