@@ -650,6 +650,85 @@ async def datahub_reseed():
         return {"error": str(e)}
 
 
+@app.get("/api/market/status")
+async def market_status():
+    """
+    Get market open/closed status for all tracked symbols.
+    Shows when each market opens/closes and when prices will update.
+    """
+    from datetime import datetime, timezone
+    
+    now_utc = datetime.now(timezone.utc)
+    hour_utc = now_utc.hour
+    minute_utc = now_utc.minute
+    current_time = f"{hour_utc:02d}:{minute_utc:02d} UTC"
+    
+    # Market hours (UTC)
+    # NDX.INDX (NASDAQ): 09:30 - 16:00 UTC (Mon-Fri)
+    # GDAXI.INDX (DAX): 07:00 - 15:30 UTC (Mon-Fri)  
+    # XAUUSD (Forex): 22:00 Sun - 22:00 Fri UTC (5-day, 24h except weekend)
+    # CL.COMM (Oil): 01:00 - 23:00 UTC (Mon-Fri)
+    
+    markets = {
+        "NDX.INDX": {
+            "name": "NASDAQ-100",
+            "open_utc": "09:30",
+            "close_utc": "16:00",
+            "timezone": "America/New_York",
+            "days": "Mon-Fri",
+        },
+        "GDAXI.INDX": {
+            "name": "DAX-40",
+            "open_utc": "07:00",
+            "close_utc": "15:30",
+            "timezone": "Europe/Berlin",
+            "days": "Mon-Fri",
+        },
+        "XAUUSD": {
+            "name": "Gold/USD (Forex)",
+            "open_utc": "22:00 (Sun)",
+            "close_utc": "22:00 (Fri)",
+            "timezone": "UTC",
+            "days": "Sun-Fri (5-day 24h)",
+        },
+        "CL.COMM": {
+            "name": "WTI Crude Oil",
+            "open_utc": "01:00",
+            "close_utc": "23:00",
+            "timezone": "America/New_York",
+            "days": "Mon-Fri",
+        },
+    }
+    
+    # Calculate status for each market
+    for symbol, info in markets.items():
+        open_h, open_m = map(int, info["open_utc"].split(":")[0:2])
+        close_h, close_m = map(int, info["close_utc"].split(":")[0:2])
+        
+        current_minutes = hour_utc * 60 + minute_utc
+        open_minutes = open_h * 60 + open_m
+        close_minutes = close_h * 60 + close_m
+        
+        if open_minutes <= current_minutes < close_minutes:
+            status = "OPEN"
+            next_event = f"Closes at {info['close_utc']} UTC"
+        else:
+            status = "CLOSED"
+            if current_minutes < open_minutes:
+                next_event = f"Opens at {info['open_utc']} UTC"
+            else:
+                next_event = f"Opens tomorrow at {info['open_utc']} UTC"
+        
+        info["status"] = status
+        info["next_event"] = next_event
+    
+    return {
+        "current_time_utc": current_time,
+        "note": "Prices only update during market hours. EODHD API returns last close when market is closed.",
+        "markets": markets,
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
     
