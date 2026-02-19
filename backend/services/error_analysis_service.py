@@ -90,11 +90,14 @@ async def save_candle_snapshot(
             "candle_count": len(candle_data)
         }
         
-        result = client.table("candle_snapshots").insert(snapshot).execute()
+        result = client.table("candle_snapshots").insert(snapshot)
         
-        if result.get("data"):
+        if isinstance(result, dict) and result.get("data"):
             logger.info(f"Saved candle snapshot for prediction {prediction_id}: {snapshot_type}")
-            return result["data"][0].get("id")
+            return result["data"][0].get("id") if result["data"] else None
+        elif hasattr(result, 'data') and result.data:
+            logger.info(f"Saved candle snapshot for prediction {prediction_id}: {snapshot_type}")
+            return result.data[0].get("id") if result.data else None
         
         return None
         
