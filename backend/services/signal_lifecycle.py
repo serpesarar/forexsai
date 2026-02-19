@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from database.supabase_client import get_supabase_client, is_db_available
-from services.data_fetcher import fetch_intraday_candles
+from services.data_fetcher import fetch_intraday_candles, fetch_latest_price
 from services.target_config import (
     get_symbol_config,
     calculate_target_prices,
@@ -29,8 +29,6 @@ from services.target_config import (
     pips_from_price_change,
 )
 from utils.json_helpers import parse_json_field, parse_json_fields
-from config import settings
-import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -98,87 +96,6 @@ PRICE_CIRCUIT_BREAKER_THRESHOLD = 5  # Skip after N consecutive failures
 PRICE_CIRCUIT_BREAKER_RESET = 60     # Reset after N seconds
 
 
-# ─── Real-time price fetcher (direct EODHD API call) ──────────────────────────
-async def _fetch_realtime_price(symbol: str) -> Optional[float]:
-    """Fetch real-time price directly from EODHD API (bypass DataHub cache).
-    Critical for accurate TP/SL detection in signal lifecycle."""
-    if not settings.eodhd_api_key:
-        logger.error("❌ EODHD API key missing!")
-        return None
-    
-    # Symbol mapping for EODHD (correct format)
-    symbol_map = {
-        "XAUUSD": "XAUUSD.FOREX",
-        "CL.COMM": "CL",  # EODHD uses CL not CL.COMM
-        "NDX.INDX": "^NDX",  # EODHD index format with ^ prefix
-        "GDAXI.INDX": "^GDAXI",  # EODHD index format with ^ prefix
-    }
-    
-    # Normalize symbol for EODHD
-    s = symbol.strip().upper()
-    if s in symbol_map:
-        eod_symbol = symbol_map[s]
-    elif "." in s:
-        parts = s.split(".")
-        if parts[1] == "INDX":
-            eod_symbol = f"^{parts[0]}"
-        elif parts[1] == "COMM":
-            eod_symbol = parts[0]
-        elif parts[1] == "FOREX":
-            eod_symbol = parts[0]
-        else:
-            eod_symbol = s
-    else:
-        eod_symbol = s
-    
-    logger.info(f"📡 Fetching price for {symbol} → {eod_symbol}")
-    
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(
-                f"https://eodhistoricaldata.com/api/real-time/{eod_symbol}",
-                params={"api_token": settings.eodhd_api_key, "fmt": "json"},
-            )
-            
-            logger.info(f"📡 {symbol} API status: {resp.status_code}")
-            
-            if resp.status_code == 402:
-                logger.error(f"❌ {symbol} API quota exceeded (402)")
-                return None
-            elif resp.status_code != 200:
-                logger.error(f"❌ {symbol} API error: {resp.status_code} - {resp.text[:200]}")
-                return None
-                
-            data = resp.json()
-            logger.info(f"📡 {symbol} API response: {data}")
-            
-            if isinstance(data, list) and data:
-                data = data[0]
-            
-            if isinstance(data, dict):
-                # Try all possible price keys
-                for key in ("last", "price", "close", "value", "previousClose"):
-                    if key in data and data[key] is not None:
-                        try:
-                            price = float(data[key])
-                            if price > 0:
-                                logger.info(f"✅ {symbol} price found [{key}]: {price}")
-                                return price
-                        except (TypeError, ValueError):
-                            continue
-                
-                logger.error(f"❌ {symbol} No valid price in response: {data}")
-            else:
-                logger.error(f"❌ {symbol} Invalid response type: {type(data)}")
-                
-    except Exception as e:
-        logger.error(f"❌ {symbol} Exception in price fetch: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
-        
-    return None
-
-
 async def _get_session_high_low(symbol: str, minutes: int = 5) -> Dict[str, Optional[float]]:
     """Get session high/low from the last N minutes of 5m candles (wick capture).
     Has a circuit breaker: after 5 consecutive failures per symbol, returns None
@@ -206,9 +123,9 @@ async def _get_session_high_low(symbol: str, minutes: int = 5) -> Dict[str, Opti
         _price_fetch_failures[symbol] = fail_count + 1
         logger.warning(f"lifecycle.price_candle_error | symbol={symbol} failures={fail_count+1} error={e}")
 
-    # Fallback to real-time spot price (direct API call)
+    # Fallback to spot price from DataHub-backed fetcher
     try:
-        price = await _fetch_realtime_price(symbol)
+        price = await fetch_latest_price(symbol)
         if price:
             _price_fetch_failures[symbol] = 0  # Reset on success
             return {"high": float(price), "low": float(price), "current": float(price)}
@@ -337,23 +254,18 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
 
     config = get_symbol_config(symbol)
 
-    # ── 1. Get current spot price (REAL-TIME from EODHD API, not cache) ──
+    # ── 1. Get current spot price (DataHub-backed canonical source) ──
     current = None
     try:
-        price_val = await _fetch_realtime_price(symbol)
+        price_val = await fetch_latest_price(symbol)
         if price_val:
             current = float(price_val)
     except Exception as e:
-        logger.error(f"❌ lifecycle.price_error | symbol={symbol} error={e}")
+        logger.warning(f"lifecycle.price_error | symbol={symbol} error={e}")
 
     if current is None or current <= 0:
-        logger.error(f"❌ No price for {symbol}, skipping signal {signal_id[:8]}")
+        logger.warning(f"No price for {symbol}, skipping signal {signal_id[:8]}")
         return None
-    
-    # 🔍 KRİTİK LOG: Fiyat karşılaştırması
-    diff = abs(current - entry_price)
-    diff_percent = (diff / entry_price) * 100 if entry_price else 0
-    logger.info(f"💰 {symbol} | Signal:{signal_id[:8]} | Entry:{entry_price} | Current:{current} | Diff:{diff:.4f} ({diff_percent:.3f}%) | Direction:{direction}")
 
     # ── 2. Calculate profit/loss in pips using spot price ──
     if direction == "BUY":
