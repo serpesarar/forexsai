@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["websocket"])
 
-VALID_SYMBOLS = {"NDX.INDX", "XAUUSD"}
+VALID_SYMBOLS = {"NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"}
 
 
 @router.websocket("/ws/{symbol}")
