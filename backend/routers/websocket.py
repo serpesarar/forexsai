@@ -72,6 +72,12 @@ async def websocket_symbol(websocket: WebSocket, symbol: str):
     then receives broadcasts every time the scheduler computes new data.
     """
     symbol = symbol.upper()
+    
+    # Reject 'ALL' - client should use /ws/all endpoint instead
+    if symbol == "ALL":
+        logger.warning("Client tried to connect to /ws/ALL - directing to use /ws/all endpoint")
+        await websocket.close(code=4001, reason="Use /ws/all endpoint for all symbols")
+        return
 
     # Normalize common aliases
     if symbol in ("NASDAQ", "NDX"):
