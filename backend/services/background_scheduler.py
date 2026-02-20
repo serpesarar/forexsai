@@ -26,7 +26,7 @@ TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"]
 
 # Update intervals (seconds) - OPTIMIZED for 100K daily API call limit
 # Each EODHD intraday/real-time request = 5 API calls
-DATA_UPDATE_INTERVAL = 60   # Update price/TA data every 60 seconds (was 5s!)
+DATA_UPDATE_INTERVAL = 10    # Update price/TA data every 10 seconds for live prices
 MACRO_UPDATE_INTERVAL = 300  # Update macro data (DXY, VIX, USDTRY) every 5 minutes
 NEWS_UPDATE_INTERVAL = 600   # Update news every 10 minutes
 OUTCOME_CHECK_INTERVAL = 120  # Check outcomes every 2 minutes
