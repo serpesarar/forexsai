@@ -915,8 +915,8 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
         model_stats = {}
         for mt, m in models.items():
             total = m["total"] or 1
-            # Exclude expired from win_rate calculation (only completed + stopped count)
-            total_with_outcome = m["completed"] + m["stopped"]
+            # Include expired with outcome in win_rate calculation if they hit targets
+            total_with_outcome = m["completed"] + m["stopped"] + m["expired"]
             if total_with_outcome == 0:
                 total_with_outcome = 1  # Prevent div by zero
             
