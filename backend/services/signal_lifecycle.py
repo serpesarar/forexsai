@@ -98,7 +98,7 @@ PRICE_CIRCUIT_BREAKER_RESET = 60     # Reset after N seconds
 # Track last known price per symbol for staleness detection
 _price_last_seen: Dict[str, float] = {}  # symbol -> price
 _price_last_seen_time: Dict[str, datetime] = {}  # symbol -> timestamp
-PRICE_STALENESS_THRESHOLD_MINUTES = 120  # 2 hours - consider price stale after this
+PRICE_STALENESS_THRESHOLD_MINUTES = 1  # 1 minute - if price unchanged for 1min, consider market closed
 
 
 def _is_price_stale(symbol: str, current_price: float) -> bool:
@@ -319,12 +319,12 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     # ── 1b. Check if price is stale (market closed or EODHD returning old data)
     is_stale = _is_price_stale(symbol, current)
     if is_stale:
-        # Price hasn't changed in >2 hours - market likely closed
-        # Extend signal lifetime to prevent premature expiration
-        effective_max_age = SIGNAL_MAX_AGE_MINUTES * 4  # 60 min instead of 15 min
+        # Price hasn't changed in >1 minute - market likely closed
+        # PAUSE signal lifetime - set very long timeout (24 hours)
+        effective_max_age = 1440  # 24 hours - effectively paused until market opens
         logger.info(
             f"lifecycle.price_stale | signal={signal_id[:8]} symbol={symbol} "
-            f"price={current:.2f} unchanged for 2h+ - extending lifetime to {effective_max_age}m"
+            f"price={current:.2f} unchanged for 1min+ - PAUSING lifetime (24h max)"
         )
     else:
         effective_max_age = SIGNAL_MAX_AGE_MINUTES  # Normal 15 min timeout
@@ -915,8 +915,8 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
         model_stats = {}
         for mt, m in models.items():
             total = m["total"] or 1
-            # Include expired with outcome in win_rate calculation if they hit targets
-            total_with_outcome = m["completed"] + m["stopped"] + m["expired"]
+            # Exclude expired from win_rate calculation (only completed + stopped count)
+            total_with_outcome = m["completed"] + m["stopped"]
             if total_with_outcome == 0:
                 total_with_outcome = 1  # Prevent div by zero
             
