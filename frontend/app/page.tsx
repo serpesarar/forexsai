@@ -714,15 +714,20 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    // DISABLED: Auto-refresh removed - WebSocket handles real-time updates now
+    // The fetchAll() call was causing full page re-renders every 30 seconds
+    // which broke the smooth live price experience and clock ticking
+    return undefined;
+    
+    /* OLD CODE - REMOVED:
     if (!autoRefresh) return undefined;
     const interval = setInterval(() => {
       fetchAll();
-      // Only dispatch pulse-refresh for lightweight panel updates
-      // Do NOT call refreshLive() here - it fires 9+ heavy API calls (Claude AI etc.)
       window.dispatchEvent(new CustomEvent("pulse-refresh"));
       window.dispatchEvent(new CustomEvent("dashboard-refresh"));
     }, 30000);
     return () => clearInterval(interval);
+    */
   }, [autoRefresh, fetchAll]);
 
   // Defer heavy refreshLive so page renders instantly with cached data
