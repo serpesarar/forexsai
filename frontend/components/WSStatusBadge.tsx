@@ -2,9 +2,17 @@
 
 import { useWSData } from "../contexts/WebSocketContext";
 import { Wifi, WifiOff } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function WSStatusBadge() {
   const { status, lastUpdate } = useWSData();
+  const [now, setNow] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setNow(new Date());
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const config = {
     connected: { color: "bg-success", text: "Live", icon: Wifi },
@@ -20,9 +28,9 @@ export default function WSStatusBadge() {
       <span className={`w-1.5 h-1.5 rounded-full ${config.color} ${status === "connected" ? "animate-pulse" : ""}`} />
       <Icon className="w-3 h-3 text-textSecondary" />
       <span className="text-textSecondary font-mono">{config.text}</span>
-      {lastUpdate && status === "connected" && (
+      {lastUpdate && status === "connected" && now && (
         <span className="text-textSecondary/50 ml-0.5">
-          {lastUpdate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+          {now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
         </span>
       )}
     </div>

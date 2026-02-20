@@ -427,6 +427,16 @@ async def _pump_cycle():
                 with _lock:
                     _prices[symbol] = {"price": price, "timestamp": now_ts}
                 _mark_fetched(f"price:{symbol}")
+                try:
+                    from services.ws_manager import manager
+                    await manager.broadcast(symbol, {
+                        "type": "price_update",
+                        "symbol": symbol,
+                        "price": price,
+                        "timestamp": now_ts
+                    })
+                except Exception as e:
+                    logger.debug(f"[DataHub] Instant price broadcast failed for {symbol}: {e}")
         
         # ── 5m candles (every 5min) ──
         if _should_fetch(f"5m:{symbol}", CANDLE_5M_INTERVAL):

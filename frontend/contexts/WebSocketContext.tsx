@@ -49,7 +49,7 @@ const WebSocketContext = createContext<WebSocketContextValue>({
   status: "disconnected",
   symbolData: {},
   lastUpdate: null,
-  reconnect: () => {},
+  reconnect: () => { },
 });
 
 export function useWSData() {
@@ -134,7 +134,34 @@ export function WebSocketProvider({ children }: Props) {
           }
           if (msg.type === "pong") return;
 
-          // Update message — contains symbol data
+          // Partial update message for instant real-time ticks
+          if (msg.type === "price_update" && msg.symbol && msg.price !== undefined) {
+            setSymbolData((prev) => {
+              const existing = prev[msg.symbol];
+              if (!existing || !existing.data) return prev; // Do not create a shell if no full data yet
+
+              return {
+                ...prev,
+                [msg.symbol]: {
+                  ...existing,
+                  data: {
+                    ...existing.data,
+                    current_price: msg.price,
+                    ...(existing.data.ta_snapshot ? {
+                      ta_snapshot: {
+                        ...existing.data.ta_snapshot,
+                        current_price: msg.price
+                      }
+                    } : {})
+                  }
+                },
+              };
+            });
+            setLastUpdate(new Date());
+            return;
+          }
+
+          // Update message — contains full symbol data
           if (msg.type === "update" && msg.symbol) {
             setSymbolData((prev) => ({
               ...prev,
