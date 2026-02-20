@@ -40,9 +40,16 @@ export function useLivePrices(_refreshInterval?: number): {
 } {
   const { symbolData, lastUpdate, status } = useWSData();
 
+  // DEBUG: Log symbolData to see what's available
+  console.log("[useLivePrices] symbolData keys:", Object.keys(symbolData));
+  console.log("[useLivePrices] Full symbolData:", symbolData);
+
   const tickers: MarketTicker[] = useMemo(() => {
     return SYMBOLS_CONFIG.map(({ symbol, label }) => {
       const wsData = symbolData[symbol];
+      
+      // DEBUG: Log each symbol's data
+      console.log(`[useLivePrices] Processing ${symbol}:`, wsData);
       
       if (!wsData?.data?.ta_snapshot) {
         return { label, price: "--", change: "--%", trend: "up" as const };

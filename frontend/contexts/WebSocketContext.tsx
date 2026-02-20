@@ -126,6 +126,7 @@ export function WebSocketProvider({ children }: Props) {
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
+          console.log("[WS] Raw message received:", msg);
 
           // Keepalive
           if (msg.type === "ping") {
@@ -136,6 +137,7 @@ export function WebSocketProvider({ children }: Props) {
 
           // Update message — contains symbol data
           if (msg.type === "update" && msg.symbol) {
+            console.log("[WS] Update for symbol:", msg.symbol, "data:", msg.data);
             setSymbolData((prev) => ({
               ...prev,
               [msg.symbol]: msg as SymbolData,
