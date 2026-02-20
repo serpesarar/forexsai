@@ -48,18 +48,24 @@ export function useLivePrices(_refreshInterval?: number): {
     return SYMBOLS_CONFIG.map(({ symbol, label }) => {
       const wsData = symbolData[symbol];
       
-      // DEBUG: Log each symbol's data
-      console.log(`[useLivePrices] Processing ${symbol}:`, wsData);
+      // DEBUG: Detailed logging for each symbol
+      console.log(`[useLivePrices] ${symbol} wsData:`, wsData);
+      console.log(`[useLivePrices] ${symbol} wsData?.data:`, wsData?.data);
+      console.log(`[useLivePrices] ${symbol} ta_snapshot:`, wsData?.data?.ta_snapshot);
       
       if (!wsData?.data?.ta_snapshot) {
+        console.log(`[useLivePrices] ${symbol} NO ta_snapshot, returning --`);
         return { label, price: "--", change: "--%", trend: "up" as const };
       }
 
       const ta = wsData.data.ta_snapshot;
       const currentPrice = ta.current_price ?? wsData.data.current_price ?? null;
       const prevClose = ta.prev_close ?? ta.last_close ?? null;
+      
+      console.log(`[useLivePrices] ${symbol} currentPrice=${currentPrice}, prevClose=${prevClose}`);
 
       if (!currentPrice || !prevClose || currentPrice <= 0 || prevClose <= 0) {
+        console.log(`[useLivePrices] ${symbol} INVALID prices, returning --`);
         return { label, price: "--", change: "--%", trend: "up" as const };
       }
 
