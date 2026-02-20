@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useWSData } from "../contexts/WebSocketContext";
 
 interface LivePriceData {
@@ -29,105 +29,46 @@ const SYMBOLS_CONFIG = [
 ];
 
 /**
- * useLivePrices - Real-time price ticker using WebSocket
- * 
- * Uses WebSocket data from backend instead of HTTP polling.
- * Backend broadcasts every 60 seconds via /ws/all endpoint.
- * 
- * % Change calculation: (current_price - previous_close) / previous_close * 100
- * This matches TradingView's real-time intraday change formula.
+ * useLivePrices - Header price ticker using WebSocket only
+ * Reads real-time data from WebSocketContext. No HTTP polling.
  */
-
 export function useLivePrices(_refreshInterval?: number): {
-  prices: Map<string, LivePriceData>;
   tickers: MarketTicker[];
   isLoading: boolean;
   lastUpdate: Date | null;
   refresh: () => void;
 } {
-  const { symbolData, lastUpdate: wsLastUpdate } = useWSData();
-  const [isLoading, setIsLoading] = useState(true);
+  const { symbolData, lastUpdate, status } = useWSData();
 
-  // Process WebSocket data into price map
-  const prices = useMemo(() => {
-    const priceMap = new Map<string, LivePriceData>();
-
-    for (const { symbol, label } of SYMBOLS_CONFIG) {
+  const tickers: MarketTicker[] = useMemo(() => {
+    return SYMBOLS_CONFIG.map(({ symbol, label }) => {
       const wsData = symbolData[symbol];
-      if (!wsData?.data) continue;
+      
+      if (!wsData?.data?.ta_snapshot) {
+        return { label, price: "--", change: "--%", trend: "up" as const };
+      }
 
       const ta = wsData.data.ta_snapshot;
-      if (!ta) continue;
-
-      // Extract current price - prefer live current_price, fallback to ta data
       const currentPrice = ta.current_price ?? wsData.data.current_price ?? null;
-      if (!currentPrice || currentPrice <= 0) continue;
-
-      // Get previous close for % change calculation
       const prevClose = ta.prev_close ?? ta.last_close ?? null;
-      if (!prevClose || prevClose <= 0) continue;
 
-      // Calculate change (TradingView formula: current vs previous close)
+      if (!currentPrice || !prevClose || currentPrice <= 0 || prevClose <= 0) {
+        return { label, price: "--", change: "--%", trend: "up" as const };
+      }
+
       const change = currentPrice - prevClose;
       const changePercent = (change / prevClose) * 100;
 
-      priceMap.set(symbol, {
-        symbol,
-        label,
-        price: currentPrice,
-        previousClose: prevClose,
-        change,
-        changePercent,
-        trend: change >= 0 ? "up" : "down",
-        lastUpdate: wsLastUpdate ? new Date(wsLastUpdate) : new Date(),
-      });
-    }
-
-    return priceMap;
-  }, [symbolData, wsLastUpdate]);
-
-  // Loading state - false once we have at least one price
-  useEffect(() => {
-    if (prices.size > 0) {
-      setIsLoading(false);
-    }
-  }, [prices]);
-
-  // Convert to MarketTicker format for header display
-  const tickers: MarketTicker[] = useMemo(() => {
-    return SYMBOLS_CONFIG.map(({ symbol, label }) => {
-      const data = prices.get(symbol);
-      if (!data) {
-        return {
-          label,
-          price: "--",
-          change: "--%",
-          trend: "up" as const,
-        };
-      }
-
       return {
         label,
-        price: data.price.toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }),
-        change: `${data.changePercent >= 0 ? "+" : ""}${data.changePercent.toFixed(2)}%`,
-        trend: data.trend,
+        price: currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        change: `${changePercent >= 0 ? "+" : ""}${changePercent.toFixed(2)}%`,
+        trend: change >= 0 ? "up" : "down",
       };
     });
-  }, [prices]);
+  }, [symbolData]);
 
-  // Refresh is no-op for WebSocket - data flows automatically
-  const refresh = () => {
-    // WebSocket data flows automatically from backend
-  };
+  const isLoading = status !== "connected" || !lastUpdate;
 
-  return {
-    prices,
-    tickers,
-    isLoading,
-    lastUpdate: wsLastUpdate,
-    refresh,
-  };
+  return { tickers, isLoading, lastUpdate, refresh: () => {} };
 }
