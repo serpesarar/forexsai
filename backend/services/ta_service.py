@@ -116,9 +116,12 @@ async def compute_ta_snapshot(symbol: str, limit: int = 220) -> dict:
 
     prev_close = float(closes[-2]) if len(closes) >= 2 else None
     last_close = float(closes[-1]) if len(closes) else None
+    
+    # TradingView-style % change: (current_price - previous_close) / previous_close * 100
+    # This gives the real-time intraday change, not just yesterday's close vs day before
     change_pct = None
-    if prev_close and last_close:
-        change_pct = float(((last_close - prev_close) / prev_close) * 100.0)
+    if prev_close and current_price:
+        change_pct = float(((current_price - prev_close) / prev_close) * 100.0)
 
     return {
         "symbol": symbol,

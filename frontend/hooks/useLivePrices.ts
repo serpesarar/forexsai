@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { usePageVisibility } from "./usePageVisibility";
+import { useState, useEffect, useMemo } from "react";
+import { useWSData } from "../contexts/WebSocketContext";
 
 interface LivePriceData {
   symbol: string;
@@ -21,8 +21,6 @@ interface MarketTicker {
   trend: "up" | "down";
 }
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
-
 const SYMBOLS_CONFIG = [
   { symbol: "NDX.INDX", label: "NASDAQ" },
   { symbol: "XAUUSD", label: "XAU/USD" },
@@ -30,182 +28,106 @@ const SYMBOLS_CONFIG = [
   { symbol: "CL.COMM", label: "US OIL" },
 ];
 
-const previousCloseCache = new Map<string, { previousClose: number; fetchedAt: number }>();
+/**
+ * useLivePrices - Real-time price ticker using WebSocket
+ * 
+ * Uses WebSocket data from backend instead of HTTP polling.
+ * Backend broadcasts every 60 seconds via /ws/all endpoint.
+ * 
+ * % Change calculation: (current_price - previous_close) / previous_close * 100
+ * This matches TradingView's real-time intraday change formula.
+ */
 
-function fetchWithTimeout(url: string, timeoutMs: number = 8000, externalSignal?: AbortSignal): Promise<Response> {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
-  // Abort on external signal too (e.g. component unmount)
-  if (externalSignal) {
-    externalSignal.addEventListener('abort', () => controller.abort());
-  }
-  return fetch(url, { cache: "no-store", signal: controller.signal }).finally(() => clearTimeout(id));
-}
-
-async function fetchPriceData(symbol: string, signal?: AbortSignal): Promise<{ price: number; previousClose: number } | null> {
-  try {
-    let currentPrice: number | null = null;
-    let previousClose: number = 0;
-
-    // Try cached endpoint first (lightweight - reads from DataHub memory)
-    // The backend ta_snapshot already includes prev_close and change_pct
-    try {
-      const cachedRes = await fetchWithTimeout(`${API_BASE}/api/data/cached/${encodeURIComponent(symbol)}`, 8000, signal);
-      if (cachedRes.ok) {
-        const cachedData = await cachedRes.json();
-        const ta = cachedData?.data?.ta_snapshot;
-
-        // Extract current price from multiple possible fields
-        currentPrice = ta?.current_price
-          ?? ta?.close
-          ?? cachedData?.data?.current_price
-          ?? cachedData?.current_price
-          ?? null;
-
-        // Extract previousClose from ta_snapshot (backend already computes this)
-        if (ta?.prev_close && ta.prev_close > 0) {
-          previousClose = ta.prev_close;
-        } else if (ta?.last_close && ta.last_close > 0 && ta.last_close !== currentPrice) {
-          previousClose = ta.last_close;
-        }
-
-        // Skip symbols with price = 0 (market closed / no data)
-        if (currentPrice !== null && currentPrice <= 0) {
-          currentPrice = null;
-        }
-      }
-    } catch (e: any) {
-      if (e?.name === 'AbortError') return null;
-      console.warn(`Cached endpoint failed for ${symbol}:`, e);
-    }
-
-    // Fallback: fetch OHLCV only if we still need previousClose
-    if (!previousClose && currentPrice !== null) {
-      const cachedPrev = previousCloseCache.get(symbol);
-      if (cachedPrev && Date.now() - cachedPrev.fetchedAt < 30 * 60 * 1000) {
-        previousClose = cachedPrev.previousClose;
-      } else {
-        try {
-          const ohlcvRes = await fetchWithTimeout(
-            `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=1d&limit=50`,
-            8000, signal
-          );
-          if (ohlcvRes.ok) {
-            const ohlcvData = await ohlcvRes.json();
-            const candles = ohlcvData?.data || [];
-            if (candles.length >= 2) {
-              previousClose = candles[candles.length - 2]?.close ?? 0;
-              if (previousClose) previousCloseCache.set(symbol, { previousClose, fetchedAt: Date.now() });
-              if (currentPrice === null) currentPrice = candles[candles.length - 1]?.close ?? null;
-            } else if (candles.length === 1) {
-              previousClose = candles[0]?.open ?? candles[0]?.close ?? 0;
-              if (previousClose) previousCloseCache.set(symbol, { previousClose, fetchedAt: Date.now() });
-              if (currentPrice === null) currentPrice = candles[0]?.close ?? null;
-            }
-          }
-        } catch (e: any) {
-          if (e?.name === 'AbortError') return null;
-        }
-      }
-    }
-
-    if (currentPrice === null) return null;
-    return { price: currentPrice, previousClose: previousClose || currentPrice };
-  } catch (error: any) {
-    if (error?.name === 'AbortError') return null;
-    console.error(`Failed to fetch price for ${symbol}:`, error);
-    return null;
-  }
-}
-
-export function useLivePrices(refreshInterval: number = 30000): {
+export function useLivePrices(_refreshInterval?: number): {
   prices: Map<string, LivePriceData>;
   tickers: MarketTicker[];
   isLoading: boolean;
   lastUpdate: Date | null;
-  refresh: () => Promise<void>;
+  refresh: () => void;
 } {
-  const [prices, setPrices] = useState<Map<string, LivePriceData>>(new Map());
+  const { symbolData, lastUpdate: wsLastUpdate } = useWSData();
   const [isLoading, setIsLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
 
-  const refresh = useCallback(async () => {
-    // Cancel any in-flight requests
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
+  // Process WebSocket data into price map
+  const prices = useMemo(() => {
+    const priceMap = new Map<string, LivePriceData>();
 
-    const newPrices = new Map<string, LivePriceData>();
+    for (const { symbol, label } of SYMBOLS_CONFIG) {
+      const wsData = symbolData[symbol];
+      if (!wsData?.data) continue;
 
-    await Promise.all(
-      SYMBOLS_CONFIG.map(async ({ symbol, label }) => {
-        const data = await fetchPriceData(symbol, controller.signal);
-        if (data) {
-          const change = data.price - data.previousClose;
-          const changePercent = data.previousClose > 0
-            ? (change / data.previousClose) * 100
-            : 0;
+      const ta = wsData.data.ta_snapshot;
+      if (!ta) continue;
 
-          newPrices.set(symbol, {
-            symbol,
-            label,
-            price: data.price,
-            previousClose: data.previousClose,
-            change,
-            changePercent,
-            trend: change >= 0 ? "up" : "down",
-            lastUpdate: new Date(),
-          });
-        }
-      })
-    );
+      // Extract current price - prefer live current_price, fallback to ta data
+      const currentPrice = ta.current_price ?? wsData.data.current_price ?? null;
+      if (!currentPrice || currentPrice <= 0) continue;
 
-    if (controller.signal.aborted) return;
-    if (newPrices.size > 0) {
-      setPrices(newPrices);
-      setLastUpdate(new Date());
+      // Get previous close for % change calculation
+      const prevClose = ta.prev_close ?? ta.last_close ?? null;
+      if (!prevClose || prevClose <= 0) continue;
+
+      // Calculate change (TradingView formula: current vs previous close)
+      const change = currentPrice - prevClose;
+      const changePercent = (change / prevClose) * 100;
+
+      priceMap.set(symbol, {
+        symbol,
+        label,
+        price: currentPrice,
+        previousClose: prevClose,
+        change,
+        changePercent,
+        trend: change >= 0 ? "up" : "down",
+        lastUpdate: wsLastUpdate ? new Date(wsLastUpdate) : new Date(),
+      });
     }
-    setIsLoading(false);
-  }, []);
 
-  const isTabVisible = usePageVisibility();
+    return priceMap;
+  }, [symbolData, wsLastUpdate]);
 
-  // Initial fetch
+  // Loading state - false once we have at least one price
   useEffect(() => {
-    refresh();
-    return () => { abortRef.current?.abort(); };
-  }, [refresh]);
+    if (prices.size > 0) {
+      setIsLoading(false);
+    }
+  }, [prices]);
 
-  // Periodic refresh - pauses when tab is hidden
-  useEffect(() => {
-    if (!isTabVisible) return;
-    const interval = setInterval(refresh, refreshInterval);
-    return () => clearInterval(interval);
-  }, [refresh, refreshInterval, isTabVisible]);
+  // Convert to MarketTicker format for header display
+  const tickers: MarketTicker[] = useMemo(() => {
+    return SYMBOLS_CONFIG.map(({ symbol, label }) => {
+      const data = prices.get(symbol);
+      if (!data) {
+        return {
+          label,
+          price: "--",
+          change: "--%",
+          trend: "up" as const,
+        };
+      }
 
-  // Convert to MarketTicker format for header
-  const tickers: MarketTicker[] = SYMBOLS_CONFIG.map(({ symbol, label }) => {
-    const data = prices.get(symbol);
-    if (!data) {
       return {
         label,
-        price: "--",
-        change: "--%",
-        trend: "up" as const,
+        price: data.price.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
+        change: `${data.changePercent >= 0 ? "+" : ""}${data.changePercent.toFixed(2)}%`,
+        trend: data.trend,
       };
-    }
+    });
+  }, [prices]);
 
-    return {
-      label,
-      price: data.price.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }),
-      change: `${data.changePercent >= 0 ? "+" : ""}${data.changePercent.toFixed(2)}%`,
-      trend: data.trend,
-    };
-  });
+  // Refresh is no-op for WebSocket - data flows automatically
+  const refresh = () => {
+    // WebSocket data flows automatically from backend
+  };
 
-  return { prices, tickers, isLoading, lastUpdate, refresh };
+  return {
+    prices,
+    tickers,
+    isLoading,
+    lastUpdate: wsLastUpdate,
+    refresh,
+  };
 }
