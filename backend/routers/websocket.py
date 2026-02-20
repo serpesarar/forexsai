@@ -26,6 +26,43 @@ router = APIRouter(tags=["websocket"])
 VALID_SYMBOLS = {"NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"}
 
 
+@router.websocket("/ws/all")
+async def websocket_all(websocket: WebSocket):
+    """Subscribe to updates for ALL tracked symbols."""
+    symbols_subscribed = list(VALID_SYMBOLS)
+
+    # Connect to all channels
+    for sym in symbols_subscribed:
+        if sym == symbols_subscribed[0]:
+            await manager.connect(websocket, sym)
+        else:
+            # Don't re-accept, just add to channel
+            manager._connections[sym].add(websocket)
+
+    try:
+        while True:
+            try:
+                raw = await asyncio.wait_for(websocket.receive_text(), timeout=60)
+                try:
+                    msg = json.loads(raw)
+                    if msg.get("type") == "ping":
+                        await websocket.send_text(json.dumps({"type": "pong"}))
+                except (json.JSONDecodeError, KeyError):
+                    pass
+            except asyncio.TimeoutError:
+                try:
+                    await websocket.send_text(json.dumps({"type": "ping"}))
+                except Exception:
+                    break
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        logger.debug(f"WS /all error: {e}")
+    finally:
+        for sym in symbols_subscribed:
+            manager.disconnect(websocket, sym)
+
+
 @router.websocket("/ws/{symbol}")
 async def websocket_symbol(websocket: WebSocket, symbol: str):
     """
@@ -85,43 +122,6 @@ async def websocket_symbol(websocket: WebSocket, symbol: str):
         logger.debug(f"WS error for {symbol}: {e}")
     finally:
         manager.disconnect(websocket, symbol)
-
-
-@router.websocket("/ws/all")
-async def websocket_all(websocket: WebSocket):
-    """Subscribe to updates for ALL tracked symbols."""
-    symbols_subscribed = list(VALID_SYMBOLS)
-
-    # Connect to all channels
-    for sym in symbols_subscribed:
-        if sym == symbols_subscribed[0]:
-            await manager.connect(websocket, sym)
-        else:
-            # Don't re-accept, just add to channel
-            manager._connections[sym].add(websocket)
-
-    try:
-        while True:
-            try:
-                raw = await asyncio.wait_for(websocket.receive_text(), timeout=60)
-                try:
-                    msg = json.loads(raw)
-                    if msg.get("type") == "ping":
-                        await websocket.send_text(json.dumps({"type": "pong"}))
-                except (json.JSONDecodeError, KeyError):
-                    pass
-            except asyncio.TimeoutError:
-                try:
-                    await websocket.send_text(json.dumps({"type": "ping"}))
-                except Exception:
-                    break
-    except WebSocketDisconnect:
-        pass
-    except Exception as e:
-        logger.debug(f"WS /all error: {e}")
-    finally:
-        for sym in symbols_subscribed:
-            manager.disconnect(websocket, sym)
 
 
 @router.get("/api/ws/stats")
