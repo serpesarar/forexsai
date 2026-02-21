@@ -138,7 +138,7 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
 
   if (loading && !data) {
     return (
-      <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 animate-pulse">
+      <div className="bg-transparent p-2 animate-pulse">
         <div className="h-8 bg-gray-800 rounded w-1/3 mb-6" />
         <div className="h-40 bg-gray-800 rounded-lg mb-4" />
         <div className="h-32 bg-gray-800 rounded-lg" />
@@ -168,9 +168,9 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
   };
 
   return (
-    <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+    <div className="bg-transparent overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-900/50 to-purple-900/50 p-3 border-b border-gray-800">
+      <div className="bg-transparent p-2">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -256,7 +256,7 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
 
           {/* CHART AREA - Added for visual clarity */}
           {data.chart_data && data.chart_data.closes.length > 5 && (
-            <div className="border-b border-gray-800 bg-gray-900/50 p-2">
+            <div className="bg-transparent p-2">
               <TrendChannelChart
                 closes={data.chart_data.closes}
                 dates={data.chart_data.dates || []}
@@ -280,7 +280,7 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
           )}
 
           {/* Support/Resistance Levels */}
-          <div className="p-4">
+          <div className="p-2">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
                 🎯 Support & Resistance Levels
@@ -394,7 +394,7 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
           </div>
 
           {/* Trade Suggestion */}
-          <div className="p-4 bg-gray-800/50 border-t border-gray-800">
+          <div className="p-2 bg-transparent">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-gray-400 flex items-center gap-2">
                 💡 Trading Suggestion

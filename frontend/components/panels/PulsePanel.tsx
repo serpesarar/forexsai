@@ -137,8 +137,8 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
 
   if (loading && !data) {
     return (
-      <div className="rounded-2xl p-6 animate-pulse" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)" }}>
-        <div className="h-40 rounded-xl mb-4" style={{ background: "rgba(255,255,255,0.04)" }} />
+      <div className="p-2 animate-pulse bg-transparent">
+        <div className="h-40 mb-4" style={{ background: "rgba(255,255,255,0.04)" }} />
         <div className="grid grid-cols-3 gap-4">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="h-24 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }} />
@@ -149,10 +149,10 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
   }
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)", boxShadow: `0 0 40px ${nc.glow}, inset 0 1px 0 rgba(255,255,255,0.04)` }}>
+    <div className="overflow-hidden bg-transparent border-0 shadow-none">
 
       {/* ── Header ── */}
-      <div className="px-4 py-3 flex items-center justify-between flex-wrap gap-2" style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      <div className="px-2 py-2 flex items-center justify-between flex-wrap gap-2 bg-transparent">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${nc.accent}20`, boxShadow: `0 0 12px ${nc.accent}40` }}>
             <Zap className="w-4 h-4" style={{ color: nc.accent }} />
@@ -207,7 +207,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
       {data && (
         <>
           {/* ── Main Trend Gauge ── */}
-          <div className="p-6 text-center" style={{ background: nc.bg }}>
+          <div className="p-2 text-center bg-transparent">
             <div className="flex items-center justify-center gap-2 mb-2">
               {data.trend.direction === "up" ? (
                 <ArrowUp className="w-7 h-7" style={{ color: nc.accent, filter: `drop-shadow(0 0 6px ${nc.accent})` }} />
@@ -244,7 +244,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
           </div>
 
           {/* ── Price & Time Bar ── */}
-          <div className="flex items-center justify-center gap-6 sm:gap-10 px-4 py-3 flex-wrap" style={{ background: "rgba(0,0,0,0.2)", borderTop: "1px solid rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+          <div className="flex items-center justify-center gap-6 sm:gap-10 px-2 py-2 flex-wrap bg-transparent">
             <div className="text-center">
               <span className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulse.price")}</span>
               <p className="text-lg font-bold font-mono text-white">{data.price.current.toFixed(2)}</p>

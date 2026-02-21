@@ -118,7 +118,7 @@ export default function SMCPanel() {
 
   if (loading && !data) {
     return (
-      <div className="rounded-2xl p-6 animate-pulse" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="p-2 animate-pulse bg-transparent">
         <div className="h-8 rounded w-1/2 mb-4" style={{ background: "rgba(255,255,255,0.04)" }} />
         <div className="space-y-3">
           {[...Array(4)].map((_, i) => (
@@ -133,10 +133,10 @@ export default function SMCPanel() {
   const accent = trendColor(bias?.direction || "neutral");
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)", boxShadow: `0 0 40px rgba(129,140,248,0.12), inset 0 1px 0 rgba(255,255,255,0.04)` }}>
+    <div className="overflow-hidden bg-transparent shadow-none border-0">
 
       {/* Header */}
-      <div className="px-4 py-3 flex items-center justify-between" style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      <div className="px-2 py-2 flex items-center justify-between bg-transparent">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(129,140,248,0.2)", boxShadow: "0 0 12px rgba(129,140,248,0.3)" }}>
             <Shield className="w-4 h-4" style={{ color: "#818cf8" }} />
@@ -201,7 +201,7 @@ export default function SMCPanel() {
 
           {/* Market Structure */}
           {data?.market_structure && (
-            <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+            <div className="px-2 py-2 border-0">
               <h3 className="text-[10px] uppercase tracking-widest font-mono mb-2" style={{ color: "rgba(255,255,255,0.3)" }}>
                 <Layers className="w-3 h-3 inline mr-1" style={{ color: "#818cf8" }} /> Market Structure
               </h3>
@@ -241,7 +241,7 @@ export default function SMCPanel() {
 
           {/* Order Blocks */}
           {data?.order_blocks && data.order_blocks.length > 0 && (
-            <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+            <div className="px-2 py-2 border-0">
               <h3 className="text-[10px] uppercase tracking-widest font-mono mb-2" style={{ color: "rgba(255,255,255,0.3)" }}>
                 <Target className="w-3 h-3 inline mr-1" style={{ color: "#00ccff" }} /> Order Blocks
               </h3>
@@ -275,7 +275,7 @@ export default function SMCPanel() {
 
           {/* Fair Value Gaps */}
           {data?.fair_value_gaps && data.fair_value_gaps.length > 0 && (
-            <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+            <div className="px-2 py-2 border-0">
               <h3 className="text-[10px] uppercase tracking-widest font-mono mb-2" style={{ color: "rgba(255,255,255,0.3)" }}>
                 <Zap className="w-3 h-3 inline mr-1" style={{ color: "#f0b429" }} /> Fair Value Gaps
               </h3>
@@ -305,7 +305,7 @@ export default function SMCPanel() {
 
           {/* Liquidity Pools */}
           {data?.liquidity_pools && data.liquidity_pools.length > 0 && (
-            <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+            <div className="px-2 py-2 border-0">
               <h3 className="text-[10px] uppercase tracking-widest font-mono mb-2" style={{ color: "rgba(255,255,255,0.3)" }}>
                 Liquidity Pools
               </h3>
@@ -327,7 +327,7 @@ export default function SMCPanel() {
 
           {/* Narrative */}
           {bias?.narrative && (
-            <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+            <div className="px-2 py-2 border-0">
               <div className="rounded-xl p-3" style={{ background: "rgba(129,140,248,0.06)", border: "1px solid rgba(129,140,248,0.12)" }}>
                 <p className="text-sm font-mono leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>{bias.narrative}</p>
               </div>
@@ -336,7 +336,7 @@ export default function SMCPanel() {
 
           {/* AI Reasoning (collapsible) */}
           {data?._reasoning && (
-            <div className="px-4 py-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+            <div className="px-2 py-2 border-0">
               <button onClick={() => setShowReasoning(!showReasoning)} className="flex items-center gap-1.5 text-[10px] font-mono w-full" style={{ color: "rgba(255,255,255,0.3)" }}>
                 {showReasoning ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 AI Reasoning
@@ -352,7 +352,7 @@ export default function SMCPanel() {
       )}
 
       {/* Footer */}
-      <div className="px-4 py-2 text-center" style={{ background: "rgba(0,0,0,0.2)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <div className="px-2 py-2 text-center bg-transparent">
         <p className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.2)" }}>
           {lastUpdate ? `Son güncelleme: ${lastUpdate.toLocaleTimeString()}` : "Yükleniyor..."} | DeepSeek-R1
         </p>

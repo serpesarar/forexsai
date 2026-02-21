@@ -150,7 +150,7 @@ export default function RiskRewardPanel() {
 
   if (loading && !data) {
     return (
-      <div className="rounded-2xl p-6 animate-pulse" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="p-2 animate-pulse bg-transparent">
         <div className="h-8 rounded w-1/2 mb-4" style={{ background: "rgba(255,255,255,0.04)" }} />
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
@@ -164,10 +164,10 @@ export default function RiskRewardPanel() {
   const scoreColor = riskScoreColor(data?.risk_score?.overall);
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)", boxShadow: `0 0 40px rgba(0,255,136,0.10), inset 0 1px 0 rgba(255,255,255,0.04)` }}>
+    <div className="overflow-hidden bg-transparent border-0 shadow-none">
 
       {/* Header */}
-      <div className="px-4 py-3 flex items-center justify-between" style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      <div className="px-2 py-2 flex items-center justify-between bg-transparent">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(0,255,136,0.2)", boxShadow: "0 0 12px rgba(0,255,136,0.3)" }}>
             <Shield className="w-4 h-4" style={{ color: "#00ff88" }} />
@@ -395,7 +395,7 @@ export default function RiskRewardPanel() {
       )}
 
       {/* Footer */}
-      <div className="px-4 py-2 text-center" style={{ background: "rgba(0,0,0,0.2)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <div className="px-2 py-2 text-center bg-transparent">
         <p className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.2)" }}>
           {lastUpdate ? `Son güncelleme: ${lastUpdate.toLocaleTimeString()}` : "Yükleniyor..."} | DeepSeek-R1
         </p>

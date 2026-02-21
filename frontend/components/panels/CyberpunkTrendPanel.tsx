@@ -283,12 +283,12 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className={`relative rounded-3xl overflow-hidden ${isFullscreen ? 'fixed inset-0 z-[9999] !rounded-none flex flex-col' : ''}`}
+      className={`relative rounded-none overflow-hidden ${isFullscreen ? 'fixed inset-0 z-[9999] flex flex-col bg-[#060a1f]' : ''}`}
       style={{
-        background: "rgba(10,15,30,0.5)",
-        backdropFilter: "blur(24px)",
-        border: isFullscreen ? "none" : "1px solid rgba(255,255,255,0.06)",
-        boxShadow: `0 0 60px rgba(0,255,136,0.04), 0 4px 80px rgba(0,0,0,0.5)`,
+        background: isFullscreen ? "#060a1f" : "transparent",
+        backdropFilter: isFullscreen ? "none" : "blur(24px)",
+        border: "none",
+        boxShadow: "none",
       }}
     >
       {/* Ambient proximity glow */}
@@ -300,7 +300,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
       )}
 
       {/* ═══ HEADER BAR ═══ */}
-      <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: "rgba(255,255,255,0.05)", background: "rgba(0,0,0,0.25)" }}>
+      <div className="flex items-center justify-between px-2 py-2 bg-transparent">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,204,255,0.15))", border: "1px solid rgba(0,255,136,0.2)" }}>
             <Activity className="w-4 h-4" style={{ color: "#00ff88" }} />
@@ -400,7 +400,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
 
           {/* CHART */}
           {chartCloses.length > 5 ? (
-            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.04)" }}>
+            <div className="overflow-hidden">
               <TrendChannelChart
                 closes={chartCloses}
                 dates={chartDates}
@@ -434,7 +434,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
         </div>
 
         {/* ── RIGHT: DATA SIDEBAR ── */}
-        <div className="flex-1 min-w-[280px] max-w-[360px] border-l flex flex-col" style={{ borderColor: "rgba(255,255,255,0.05)", background: "rgba(0,0,0,0.15)" }}>
+        <div className="flex-1 min-w-[280px] max-w-[360px] flex flex-col bg-transparent">
 
           {/* S/R Section Header */}
           <div className="flex items-center justify-between px-4 pt-4 pb-2">

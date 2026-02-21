@@ -150,13 +150,13 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
     targetSymbols.forEach((sym) => {
       queryClient.invalidateQueries({ queryKey: ["prediction", sym] });
     });
-    
+
     setSelectedStrategy(strategyId);
     setLayers(prev => prev.map(layer => ({
       ...layer,
       enabled: strategy.enabledLayers.includes(layer.id)
     })));
-    
+
     // Immediately fetch new prediction with selected strategy
     setIsLoading(true);
     try {
@@ -227,9 +227,9 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
       {/* Toggle Button - now inside fixed container */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-center gap-2 px-5 py-4 rounded-xl 
-          ${isOpen ? "bg-accent text-white" : "bg-gradient-to-r from-accent/80 to-blue-500/80 text-white hover:from-accent hover:to-blue-500"} 
-          transition-all duration-200 shadow-xl backdrop-blur-sm border border-white/20`}
+        className={`w-full flex items-center justify-center gap-2 px-2 py-2 rounded-none 
+          bg-transparent text-white hover:text-accent
+          transition-all duration-200 border-0 shadow-none`}
       >
         <Settings2 className="w-6 h-6" />
         <span className="text-base font-semibold">{t("mlStrategy.title")}</span>
@@ -292,20 +292,18 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
               <span className={`text-xs ${confidenceChange >= 0 ? "text-success" : "text-danger"}`}>
                 {confidenceChange >= 0 ? "+" : ""}{confidenceChange.toFixed(1)}%
               </span>
-              <span className={`font-mono text-lg font-bold ${
-                liveConfidence >= 70 ? "text-success" : 
-                liveConfidence >= 55 ? "text-yellow-400" : "text-danger"
-              }`}>
+              <span className={`font-mono text-lg font-bold ${liveConfidence >= 70 ? "text-success" :
+                  liveConfidence >= 55 ? "text-yellow-400" : "text-danger"
+                }`}>
                 {liveConfidence.toFixed(1)}%
               </span>
             </div>
           </div>
           <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all duration-300 ${
-                liveConfidence >= 70 ? "bg-success" : 
-                liveConfidence >= 55 ? "bg-yellow-400" : "bg-danger"
-              }`}
+              className={`h-full rounded-full transition-all duration-300 ${liveConfidence >= 70 ? "bg-success" :
+                  liveConfidence >= 55 ? "bg-yellow-400" : "bg-danger"
+                }`}
               style={{ width: `${liveConfidence}%` }}
             />
           </div>
@@ -325,12 +323,12 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
                 whileTap={{ scale: 0.97 }}
                 onClick={() => selectStrategy(strategy.id)}
                 className={`flex items-center gap-2 p-2.5 rounded-lg transition-colors text-left
-                  ${selectedStrategy === strategy.id 
-                    ? `${strategy.color} text-white shadow-lg shadow-${strategy.color.replace('bg-', '')}/30` 
+                  ${selectedStrategy === strategy.id
+                    ? `${strategy.color} text-white shadow-lg shadow-${strategy.color.replace('bg-', '')}/30`
                     : "bg-white/5 hover:bg-white/10 border border-white/10"
                   }`}
               >
-                <motion.div 
+                <motion.div
                   className={`p-1 rounded ${selectedStrategy === strategy.id ? "bg-white/20" : "bg-white/10"}`}
                   animate={{ rotate: selectedStrategy === strategy.id ? [0, -10, 10, 0] : 0 }}
                   transition={{ duration: 0.5 }}
@@ -358,8 +356,8 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
               whileHover={{ scale: 1.02, x: 4 }}
               onClick={() => toggleLayer(layer.id)}
               className={`p-3 rounded-xl mb-2 cursor-pointer transition-colors border
-                ${layer.enabled 
-                  ? "bg-gradient-to-r " + layer.color + " bg-opacity-20 border-white/20" 
+                ${layer.enabled
+                  ? "bg-gradient-to-r " + layer.color + " bg-opacity-20 border-white/20"
                   : "bg-white/5 border-transparent hover:bg-white/10"
                 }`}
             >

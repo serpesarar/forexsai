@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Calendar, 
-  TrendingUp, 
-  TrendingDown, 
-  AlertTriangle, 
+import {
+  Calendar,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
   ChevronRight,
   RefreshCw,
   X,
@@ -123,9 +123,9 @@ export default function NasdaqEarningsPanel() {
       {/* Toggle Button - now inside fixed container */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-center gap-2 px-5 py-4 rounded-xl 
-          ${isOpen ? "bg-purple-500 text-white" : "bg-gradient-to-r from-purple-500/80 to-pink-500/80 text-white hover:from-purple-500 hover:to-pink-500"} 
-          transition-all duration-200 shadow-xl backdrop-blur-sm border border-white/20`}
+        className={`w-full flex items-center justify-center gap-2 px-2 py-2 rounded-none 
+          bg-transparent text-white hover:text-purple-400
+          transition-all duration-200 border-0 shadow-none`}
       >
         <Calendar className="w-6 h-6" />
         <span className="text-base font-semibold">{t("earnings.title")}</span>
@@ -188,17 +188,16 @@ export default function NasdaqEarningsPanel() {
             {getNext7Days().map((date) => {
               const dayEvents = eventsByDate[date] || [];
               const hasCritical = dayEvents.some(e => e.importance === "CRITICAL");
-              
+
               return (
                 <div
                   key={date}
-                  className={`p-2 rounded-lg text-center transition-all ${
-                    dayEvents.length > 0
+                  className={`p-2 rounded-lg text-center transition-all ${dayEvents.length > 0
                       ? hasCritical
                         ? "bg-red-500/10 border border-red-500/30"
                         : "bg-purple-500/10 border border-purple-500/20"
                       : "bg-white/5"
-                  }`}
+                    }`}
                 >
                   <div className="text-[10px] text-gray-500">{formatWeekday(date, locale)}</div>
                   <div className="text-xs font-bold text-white">{formatDate(date, locale)}</div>
@@ -228,7 +227,7 @@ export default function NasdaqEarningsPanel() {
         {/* Events List */}
         <div className="overflow-y-auto h-[calc(100%-280px)] p-3">
           <p className="text-xs text-gray-400 mb-2 font-medium">{t("earnings.thisWeek")}</p>
-          
+
           {events.length === 0 && !isLoading && (
             <div className="text-center text-gray-500 py-8">
               <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -262,9 +261,9 @@ export default function NasdaqEarningsPanel() {
                   {formatDate(event.date, locale)} {event.time}
                 </div>
               </div>
-              
+
               <p className="text-sm text-white mt-1 truncate">{event.company_name}</p>
-              
+
               <div className="flex items-center gap-3 mt-2 text-xs">
                 {event.expected_eps && (
                   <div className="flex items-center gap-1">
@@ -310,7 +309,7 @@ export default function NasdaqEarningsPanel() {
                   <div
                     key={i}
                     className="p-3 rounded-lg border"
-                    style={{ 
+                    style={{
                       borderColor: scenario.color + "40",
                       backgroundColor: scenario.color + "10"
                     }}
@@ -346,10 +345,9 @@ export default function NasdaqEarningsPanel() {
                       </div>
                       <div>
                         <span className="text-gray-500">Risk</span>
-                        <p className={`font-bold ${
-                          scenario.risk_level === "HIGH" ? "text-red-400" :
-                          scenario.risk_level === "MEDIUM" ? "text-yellow-400" : "text-green-400"
-                        }`}>
+                        <p className={`font-bold ${scenario.risk_level === "HIGH" ? "text-red-400" :
+                            scenario.risk_level === "MEDIUM" ? "text-yellow-400" : "text-green-400"
+                          }`}>
                           {scenario.risk_level}
                         </p>
                       </div>

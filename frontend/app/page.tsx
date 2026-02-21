@@ -1355,9 +1355,9 @@ export default function HomePage() {
         <TradingBackground />
 
         {/* ─── FLOATING PRICE STICKERS ─── */}
-        <div className="sticky top-0 z-40 py-4 px-4 md:px-6 pointer-events-none">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3 overflow-x-auto scrollbar-none pb-2 pointer-events-auto w-full md:w-auto">
+        <div className="sticky top-0 z-40 py-2 px-4 md:px-6 pointer-events-none">
+          <div className="flex items-center justify-center relative">
+            <div className="flex items-center gap-6 overflow-x-auto scrollbar-none pointer-events-auto">
               {marketTickers.map((ticker) => {
                 const isLoadingPrice = pricesLoading || ticker.price === "--" || ticker.price === "-";
                 const isUp = ticker.trend === "up";
@@ -1370,13 +1370,7 @@ export default function HomePage() {
                       : { from: "#ef4444", glow: "rgba(239,68,68,0.25)" };
                 const icon = ticker.label === "NASDAQ" ? "📊" : ticker.label === "XAU/USD" ? "🥇" : ticker.label === "DAX" ? "🇩🇪" : "🛢️";
                 return (
-                  <div key={ticker.label} className="flex items-center gap-2.5 px-3 py-2 rounded-xl flex-shrink-0 transition-transform hover:-translate-y-1 hover:scale-105"
-                    style={{
-                      background: `linear-gradient(135deg, rgba(8,13,26,0.9) 0%, rgba(12,18,36,0.8) 100%)`,
-                      backdropFilter: 'blur(16px)',
-                      border: `1px solid ${accent.from}40`,
-                      boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 2px 10px ${accent.glow}, inset 0 1px 0 rgba(255,255,255,0.1)`
-                    }}>
+                  <div key={ticker.label} className="flex items-center gap-2 px-2 py-1 flex-shrink-0 bg-transparent border-0 shadow-none rounded-none">
                     <span className="text-base leading-none drop-shadow-md">{icon}</span>
                     <div className="flex flex-col">
                       <span className="text-[10px] font-black uppercase tracking-[0.15em] opacity-90" style={{ color: accent.from }}>{ticker.label}</span>
@@ -1394,19 +1388,12 @@ export default function HomePage() {
               })}
             </div>
 
-            {/* Top Right Controls (also floating) */}
-            <div className="flex items-center gap-2.5 flex-shrink-0 pointer-events-auto bg-black/40 backdrop-blur-md px-2.5 py-2 rounded-xl border border-white/5 shadow-xl">
+            {/* Top Right Controls (Theme Toggle & WS Status) */}
+            <div className="absolute right-0 flex items-center gap-3 pointer-events-auto">
               <WSStatusBadge />
-              <div className="h-4 w-px bg-white/10" />
               <button onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+                className="flex h-8 w-8 items-center justify-center text-slate-400 hover:text-white transition-all bg-transparent border-0">
                 {theme === "evening" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </button>
-              <button onClick={fetchAll} disabled={isLoading}
-                className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold text-white transition-all transform hover:scale-105 active:scale-95 shadow-lg"
-                style={{ background: 'linear-gradient(135deg, #00e0c6, #3b82f6)', boxShadow: '0 0 20px rgba(0,224,198,0.4)' }}>
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
-                <span className="tracking-wider">RUN AI</span>
               </button>
             </div>
           </div>

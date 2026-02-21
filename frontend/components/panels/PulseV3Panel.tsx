@@ -169,7 +169,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
 
   if (loading && !data) {
     return (
-      <div className="rounded-2xl p-6 animate-pulse" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="p-2 animate-pulse bg-transparent">
         <div className="h-10 rounded w-2/3 mb-4" style={{ background: "rgba(255,255,255,0.04)" }} />
         <div className="h-32 rounded-xl mb-4" style={{ background: "rgba(255,255,255,0.04)" }} />
         <div className="grid grid-cols-3 gap-3">
@@ -183,8 +183,8 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
 
   if (error && !data && !loading) {
     return (
-      <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)" }}>
-        <div className="px-4 py-3 flex items-center gap-2.5" style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      <div className="overflow-hidden bg-transparent">
+        <div className="px-2 py-2 flex items-center gap-2.5 bg-transparent">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(240,180,41,0.2)", boxShadow: "0 0 12px rgba(240,180,41,0.3)" }}>
             <Zap className="w-4 h-4" style={{ color: "#f0b429" }} />
           </div>
@@ -213,10 +213,10 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const scorePct = (data.pulse_score / 100) * 301.6;
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)", boxShadow: `0 0 40px ${nc.glow}, inset 0 1px 0 rgba(255,255,255,0.04)` }}>
+    <div className="overflow-hidden bg-transparent shadow-none border-0">
 
       {/* ── Header ── */}
-      <div className="px-4 py-3 flex items-center justify-between flex-wrap gap-2" style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      <div className="px-2 py-2 flex items-center justify-between flex-wrap gap-2 bg-transparent">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${nc.accent}20`, boxShadow: `0 0 12px ${nc.accent}40` }}>
             <Zap className="w-4 h-4" style={{ color: nc.accent }} />
@@ -249,7 +249,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
 
 
       {/* ── Main Score + Signal ── */}
-      <div className="p-6 text-center" style={{ background: nc.bg }}>
+      <div className="p-2 text-center bg-transparent">
         {/* Score Circle */}
         <div className="relative inline-flex items-center justify-center w-28 h-28 mb-3">
           <svg className="w-28 h-28 -rotate-90">
@@ -471,7 +471,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       )}
 
       {/* ── Footer ── */}
-      <div className="px-4 py-2 text-center" style={{ background: "rgba(0,0,0,0.2)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      <div className="px-2 py-2 text-center bg-transparent">
         <p className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.2)" }}>
           {lastUpdate ? `${t("pulseV3.lastUpdate")} ${lastUpdate.toLocaleTimeString()}` : t("pulseV3.updating")}{" "}
           | {t("pulseV3.validity")} {(data.valid_for_seconds / 60).toFixed(0)} {t("pulseV3.min")}
