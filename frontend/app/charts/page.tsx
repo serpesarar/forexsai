@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAuthStore, useIsAuthenticated, useUser } from "../../lib/auth/store";
 import SharedNavHeader from "../../components/SharedNavHeader";
+import Sidebar from "../../components/Sidebar";
 import { useI18nStore } from "../../lib/i18n/store";
 import AuthGuard from "../../components/AuthGuard";
 import { NeonChart } from "../../components/NeonChart";
@@ -242,74 +243,77 @@ function ChartsPageContent() {
 
   return (
     <div className="min-h-screen bg-background text-white">
-      {/* Shared Premium Header */}
-      <SharedNavHeader activePage="charts" />
+      <Sidebar />
+      <div style={{ marginLeft: 72 }}>
+        {/* Shared Premium Header */}
+        <SharedNavHeader activePage="charts" />
 
-      <div className="max-w-[1600px] mx-auto p-3 md:p-6 space-y-4 md:space-y-6">
-        {/* TradingView Login Info Banner */}
-        <div className="glass-premium p-4 md:p-5 rounded-xl md:rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-500/10 to-purple-500/10">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-xl bg-blue-500/20 flex-shrink-0">
-                <TrendingUp className="w-5 h-5 text-blue-400" />
+        <div className="max-w-[1600px] mx-auto p-3 md:p-6 space-y-4 md:space-y-6">
+          {/* TradingView Login Info Banner */}
+          <div className="glass-premium p-4 md:p-5 rounded-xl md:rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-500/10 to-purple-500/10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-xl bg-blue-500/20 flex-shrink-0">
+                  <TrendingUp className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white mb-1">{t("chartsPage.tradingViewTitle")}</h3>
+                  <p className="text-sm text-textSecondary">
+                    {t("chartsPage.tradingViewDesc")}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">{t("chartsPage.tradingViewTitle")}</h3>
-                <p className="text-sm text-textSecondary">
-                  {t("chartsPage.tradingViewDesc")}
-                </p>
-              </div>
+              <a
+                href="https://www.tradingview.com/accounts/signin/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold transition whitespace-nowrap"
+              >
+                <ExternalLink className="w-4 h-4" />
+                {t("chartsPage.goToTradingView")}
+              </a>
             </div>
-            <a
-              href="https://www.tradingview.com/accounts/signin/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold transition whitespace-nowrap"
-            >
-              <ExternalLink className="w-4 h-4" />
-              {t("chartsPage.goToTradingView")}
-            </a>
+            <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap gap-4 text-xs text-textSecondary">
+              <span className="flex items-center gap-1">✏️ {t("chartsPage.drawingTools")}</span>
+              <span className="flex items-center gap-1">📊 {t("chartsPage.indicators")}</span>
+              <span className="flex items-center gap-1">💾 {t("chartsPage.autoSave")}</span>
+              <span className="flex items-center gap-1">🔄 {t("chartsPage.liveData")}</span>
+            </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap gap-4 text-xs text-textSecondary">
-            <span className="flex items-center gap-1">✏️ {t("chartsPage.drawingTools")}</span>
-            <span className="flex items-center gap-1">📊 {t("chartsPage.indicators")}</span>
-            <span className="flex items-center gap-1">💾 {t("chartsPage.autoSave")}</span>
-            <span className="flex items-center gap-1">🔄 {t("chartsPage.liveData")}</span>
-          </div>
-        </div>
 
-        {/* Neon EMA Charts */}
-        <div className="space-y-6">
-          <NeonChart
-            symbol="NDX.INDX"
-            symbolLabel="NASDAQ-100"
-            initialTimeframe="1h"
-            height={480}
-          />
-          <NeonChart
-            symbol="XAUUSD.FOREX"
-            symbolLabel="XAUUSD"
-            initialTimeframe="1h"
-            height={480}
-          />
-        </div>
-
-        {/* TradingView Charts */}
-        <div className="space-y-6">
-          {CHART_SYMBOLS.map((symbol) => (
-            <ChartPanel
-              key={symbol.id}
-              symbol={symbol}
-              onFullscreen={handleFullscreen}
+          {/* Neon EMA Charts */}
+          <div className="space-y-6">
+            <NeonChart
+              symbol="NDX.INDX"
+              symbolLabel="NASDAQ-100"
+              initialTimeframe="1h"
+              height={480}
             />
-          ))}
-        </div>
+            <NeonChart
+              symbol="XAUUSD.FOREX"
+              symbolLabel="XAUUSD"
+              initialTimeframe="1h"
+              height={480}
+            />
+          </div>
 
-        {/* Footer Info */}
-        <div className="text-center text-xs text-textSecondary py-4">
-          {t("chartsPage.footer")}
+          {/* TradingView Charts */}
+          <div className="space-y-6">
+            {CHART_SYMBOLS.map((symbol) => (
+              <ChartPanel
+                key={symbol.id}
+                symbol={symbol}
+                onFullscreen={handleFullscreen}
+              />
+            ))}
+          </div>
+
+          {/* Footer Info */}
+          <div className="text-center text-xs text-textSecondary py-4">
+            {t("chartsPage.footer")}
+          </div>
         </div>
-      </div>
+      </div>{/* end sidebar content wrapper */}
     </div>
   );
 }

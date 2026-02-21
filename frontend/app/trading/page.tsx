@@ -6,6 +6,7 @@ import Image from "next/image";
 import { TradingBackground } from "../../components/TradingBackground";
 import Link from "next/link";
 import SharedNavHeader from "../../components/SharedNavHeader";
+import Sidebar from "../../components/Sidebar";
 import MLPredictionPanel from "../../components/MLPredictionPanel";
 import ClaudeAnalysisPanel from "../../components/ClaudeAnalysisPanel";
 import DetailedAnalysisPanel from "../../components/DetailedAnalysisPanel";
@@ -83,9 +84,8 @@ function TradingDashboardContent() {
                 <button
                   key={key}
                   onClick={() => { setSelectedSymbol(key); setDropdownOpen(false); }}
-                  className={`flex w-full items-center gap-3 px-4 py-3 transition-all duration-200 ${
-                    isSelected ? `bg-gradient-to-r ${sym.color} border-l-4 ${sym.border}` : "hover:bg-white/5 border-l-4 border-transparent"
-                  }`}
+                  className={`flex w-full items-center gap-3 px-4 py-3 transition-all duration-200 ${isSelected ? `bg-gradient-to-r ${sym.color} border-l-4 ${sym.border}` : "hover:bg-white/5 border-l-4 border-transparent"
+                    }`}
                 >
                   <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${isSelected ? "bg-white/20" : "bg-white/10"}`}>
                     <Icon className={`h-4 w-4 ${sym.accent}`} />
@@ -106,156 +106,159 @@ function TradingDashboardContent() {
 
   return (
     <div className="min-h-screen bg-background relative">
-      {/* Animated Background */}
-      <TradingBackground />
-      {/* Shared Premium Header */}
-      <SharedNavHeader activePage="trading" rightContent={symbolSelector} />
+      <Sidebar />
+      <div className="transition-all duration-300" style={{ marginLeft: 72 }}>
+        {/* Animated Background */}
+        <TradingBackground />
+        {/* Shared Premium Header */}
+        <SharedNavHeader activePage="trading" rightContent={symbolSelector} />
 
-      {/* Main Content - Golden Ratio Layout */}
-      <main className="relative z-10 mx-auto max-w-[1600px] p-3 md:p-6">
-        {/* 
+        {/* Main Content - Golden Ratio Layout */}
+        <main className="relative z-10 mx-auto max-w-[1600px] p-3 md:p-6">
+          {/* 
           Golden Ratio Grid Layout:
           - Main prediction area: 61.8% width (φ / (1 + φ))
           - Side panels: 38.2% width (1 / (1 + φ))
           - Vertical sections follow same ratio
           - Mobile: Single column
         */}
-        
-        <div
-          className="grid gap-4 md:gap-6 items-start grid-cols-1 lg:grid-cols-[1.618fr_1fr]" 
-        >
-          {/* LEFT COLUMN - Primary Analysis (61.8%) */}
-          <div className="space-y-6 self-start">
-            {/* Row 1: ML Prediction - Large Primary Panel */}
-            <section>
-              <div className="mb-3 flex items-center gap-2">
-                <Brain className="h-5 w-5 text-accent" />
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
-                  {t("tradingPage.mlModelPrediction")}
-                </h2>
-              </div>
-              <div className="transform-gpu transition-all duration-300">
-                <MLPredictionPanelLarge symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
-              </div>
-            </section>
 
-            {/* Row 2: Claude AI Analysis - Large */}
-            <section>
-              <div className="mb-3 flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-purple-400" />
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
-                  {t("tradingPage.claudeAIAnalysis")}
-                </h2>
-              </div>
-              <div className="transform-gpu transition-all duration-300">
-                <ClaudeAnalysisPanelLarge symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
-              </div>
-            </section>
+          <div
+            className="grid gap-4 md:gap-6 items-start grid-cols-1 lg:grid-cols-[1.618fr_1fr]"
+          >
+            {/* LEFT COLUMN - Primary Analysis (61.8%) */}
+            <div className="space-y-6 self-start">
+              {/* Row 1: ML Prediction - Large Primary Panel */}
+              <section>
+                <div className="mb-3 flex items-center gap-2">
+                  <Brain className="h-5 w-5 text-accent" />
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
+                    {t("tradingPage.mlModelPrediction")}
+                  </h2>
+                </div>
+                <div className="transform-gpu transition-all duration-300">
+                  <MLPredictionPanelLarge symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                </div>
+              </section>
 
+              {/* Row 2: Claude AI Analysis - Large */}
+              <section>
+                <div className="mb-3 flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-purple-400" />
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
+                    {t("tradingPage.claudeAIAnalysis")}
+                  </h2>
+                </div>
+                <div className="transform-gpu transition-all duration-300">
+                  <ClaudeAnalysisPanelLarge symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                </div>
+              </section>
+
+            </div>
+
+            {/* RIGHT COLUMN - Secondary Analysis (38.2%) */}
+            <div className="space-y-4 md:space-y-6 self-start min-w-0 overflow-hidden">
+              {/* Detailed Analysis */}
+              <section>
+                <div className="mb-3 flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-sky-400" />
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
+                    {t("tradingPage.detailedAnalysis")}
+                  </h2>
+                </div>
+                <div className="transform-gpu transition-all duration-300">
+                  <DetailedAnalysisPanel symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                </div>
+              </section>
+
+              {/* Smart Money Zones */}
+              <section>
+                <div className="mb-3 flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-cyan-400" />
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
+                    Smart Money Zones
+                  </h2>
+                </div>
+                <div className="transform-gpu transition-all duration-300">
+                  <OrderBlockPanelSimple symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                </div>
+              </section>
+
+              {/* Rhythm Detector */}
+              <section>
+                <div className="mb-3 flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-pink-400" />
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
+                    {t("tradingPage.rhythmDetector")}
+                  </h2>
+                </div>
+                <div className="transform-gpu transition-all duration-300">
+                  <RhythmDetectorSimple symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                </div>
+              </section>
+
+              {/* Learning Dashboard */}
+              <section>
+                <div className="mb-3 flex items-center gap-2">
+                  <Brain className="h-5 w-5 text-purple-400" />
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
+                    {t("tradingPage.learningSystem")}
+                  </h2>
+                </div>
+                <div className="transform-gpu transition-all duration-300">
+                  <LearningDashboardPanel symbol={selectedSymbol} />
+                </div>
+              </section>
+
+              {/* Prediction History */}
+              <section>
+                <div className="mb-3 flex items-center gap-2">
+                  <LineChart className="h-5 w-5 text-indigo-400" />
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
+                    {t("tradingPage.predictionHistory")}
+                  </h2>
+                </div>
+                <div className="transform-gpu transition-all duration-300">
+                  <PredictionHistoryTable symbol={selectedSymbol} />
+                </div>
+              </section>
+            </div>
           </div>
 
-          {/* RIGHT COLUMN - Secondary Analysis (38.2%) */}
-          <div className="space-y-4 md:space-y-6 self-start min-w-0 overflow-hidden">
-            {/* Detailed Analysis */}
-            <section>
-              <div className="mb-3 flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-sky-400" />
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
-                  {t("tradingPage.detailedAnalysis")}
-                </h2>
-              </div>
-              <div className="transform-gpu transition-all duration-300">
-                <DetailedAnalysisPanel symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
-              </div>
-            </section>
-
-            {/* Smart Money Zones */}
-            <section>
-              <div className="mb-3 flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-cyan-400" />
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
-                  Smart Money Zones
-                </h2>
-              </div>
-              <div className="transform-gpu transition-all duration-300">
-                <OrderBlockPanelSimple symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
-              </div>
-            </section>
-
-            {/* Rhythm Detector */}
-            <section>
-              <div className="mb-3 flex items-center gap-2">
-                <Activity className="h-5 w-5 text-pink-400" />
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
-                  {t("tradingPage.rhythmDetector")}
-                </h2>
-              </div>
-              <div className="transform-gpu transition-all duration-300">
-                <RhythmDetectorSimple symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
-              </div>
-            </section>
-
-            {/* Learning Dashboard */}
-            <section>
-              <div className="mb-3 flex items-center gap-2">
-                <Brain className="h-5 w-5 text-purple-400" />
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
-                  {t("tradingPage.learningSystem")}
-                </h2>
-              </div>
-              <div className="transform-gpu transition-all duration-300">
-                <LearningDashboardPanel symbol={selectedSymbol} />
-              </div>
-            </section>
-
-            {/* Prediction History */}
-            <section>
-              <div className="mb-3 flex items-center gap-2">
-                <LineChart className="h-5 w-5 text-indigo-400" />
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
-                  {t("tradingPage.predictionHistory")}
-                </h2>
-              </div>
-              <div className="transform-gpu transition-all duration-300">
-                <PredictionHistoryTable symbol={selectedSymbol} />
-              </div>
-            </section>
-          </div>
-        </div>
-
-        {/* Full-Width Charts Section */}
-        <section className="mt-6 md:mt-8">
-          <div className="mb-3 md:mb-4 flex items-center gap-2">
-            <LineChart className="h-5 w-5 md:h-6 md:w-6 text-blue-400" />
-            <h2 className="text-base md:text-lg font-bold uppercase tracking-wider">
-              {t("tradingPage.livePriceCharts")}
-            </h2>
-            <span className="ml-2 flex items-center gap-1 text-xs text-success">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+          {/* Full-Width Charts Section */}
+          <section className="mt-6 md:mt-8">
+            <div className="mb-3 md:mb-4 flex items-center gap-2">
+              <LineChart className="h-5 w-5 md:h-6 md:w-6 text-blue-400" />
+              <h2 className="text-base md:text-lg font-bold uppercase tracking-wider">
+                {t("tradingPage.livePriceCharts")}
+              </h2>
+              <span className="ml-2 flex items-center gap-1 text-xs text-success">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+                </span>
+                {t("tradingPage.live")}
               </span>
-              {t("tradingPage.live")}
-            </span>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-6">
-            {/* NASDAQ Chart */}
-            <LiveChartPanel 
-              symbol="NDX.INDX" 
-              symbolLabel="NASDAQ-100" 
-              height={300} 
-            />
-            
-            {/* XAUUSD Chart */}
-            <LiveChartPanel 
-              symbol="XAUUSD" 
-              symbolLabel="Gold (XAU/USD)" 
-              height={300} 
-            />
-          </div>
-        </section>
-      </main>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6">
+              {/* NASDAQ Chart */}
+              <LiveChartPanel
+                symbol="NDX.INDX"
+                symbolLabel="NASDAQ-100"
+                height={300}
+              />
+
+              {/* XAUUSD Chart */}
+              <LiveChartPanel
+                symbol="XAUUSD"
+                symbolLabel="Gold (XAU/USD)"
+                height={300}
+              />
+            </div>
+          </section>
+        </main>
+      </div>{/* end sidebar content wrapper */}
     </div>
   );
 }

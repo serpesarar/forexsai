@@ -27,6 +27,7 @@ import { fetcher } from "../lib/api";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { useI18nStore } from "../lib/i18n/store";
 import SharedNavHeader from "../components/SharedNavHeader";
+import Sidebar from "../components/Sidebar";
 // Critical / lightweight - static imports
 import MLFactorPanel from "../components/MLFactorPanel";
 import { NasdaqEarningsPanel } from "../components/EarningsPanel";
@@ -1337,292 +1338,192 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen text-textPrimary relative">
-      {/* Animated Background with Star Particles */}
-      <TradingBackground />
+      {/* Sidebar Navigation */}
+      <Sidebar />
 
-      {/* MODERN HEADER - Redesigned */}
-      <SharedNavHeader
-        activePage="dashboard"
-        centerContent={
-          <div className="hidden xl:flex items-center gap-4">
-            {marketTickers.map((ticker) => {
-              const isLoadingPrice = pricesLoading || ticker.price === "--" || ticker.price === "-";
-              const isUp = ticker.trend === "up";
-              // Per-asset accent colors
-              const accent = ticker.label === "NASDAQ"
-                ? { from: "#3b82f6", to: "#60a5fa", glow: "rgba(59,130,246,0.3)", bg: "rgba(59,130,246,0.06)" }
-                : ticker.label === "XAU/USD"
-                  ? { from: "#f59e0b", to: "#fbbf24", glow: "rgba(245,158,11,0.3)", bg: "rgba(245,158,11,0.06)" }
-                  : ticker.label === "DAX"
-                    ? { from: "#8b5cf6", to: "#a78bfa", glow: "rgba(139,92,246,0.3)", bg: "rgba(139,92,246,0.06)" }
-                    : { from: "#ef4444", to: "#f87171", glow: "rgba(239,68,68,0.3)", bg: "rgba(239,68,68,0.06)" };
-              const icon = ticker.label === "NASDAQ" ? "📊" : ticker.label === "XAU/USD" ? "🥇" : ticker.label === "DAX" ? "🇩🇪" : "🛢️";
+      {/* Main Content - offset by sidebar width */}
+      <div className="transition-all duration-300" style={{ marginLeft: 72 }}>
+        {/* Animated Background with Star Particles */}
+        <TradingBackground />
 
-              return (
-                <div key={ticker.label} className="group relative">
-                  <div
-                    className="relative flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-300 group-hover:scale-[1.03]"
-                    style={{
-                      background: `linear-gradient(135deg, ${accent.bg}, rgba(15,23,42,0.7))`,
-                      border: `1px solid ${accent.from}20`,
-                      boxShadow: `0 2px 12px ${accent.glow}`,
-                    }}
-                  >
-                    {/* Asset Icon */}
-                    <span className="text-base leading-none">{icon}</span>
+        {/* MODERN HEADER - Redesigned */}
+        <SharedNavHeader
+          activePage="dashboard"
+          centerContent={
+            <div className="hidden xl:flex items-center gap-4">
+              {marketTickers.map((ticker) => {
+                const isLoadingPrice = pricesLoading || ticker.price === "--" || ticker.price === "-";
+                const isUp = ticker.trend === "up";
+                // Per-asset accent colors
+                const accent = ticker.label === "NASDAQ"
+                  ? { from: "#3b82f6", to: "#60a5fa", glow: "rgba(59,130,246,0.3)", bg: "rgba(59,130,246,0.06)" }
+                  : ticker.label === "XAU/USD"
+                    ? { from: "#f59e0b", to: "#fbbf24", glow: "rgba(245,158,11,0.3)", bg: "rgba(245,158,11,0.06)" }
+                    : ticker.label === "DAX"
+                      ? { from: "#8b5cf6", to: "#a78bfa", glow: "rgba(139,92,246,0.3)", bg: "rgba(139,92,246,0.06)" }
+                      : { from: "#ef4444", to: "#f87171", glow: "rgba(239,68,68,0.3)", bg: "rgba(239,68,68,0.06)" };
+                const icon = ticker.label === "NASDAQ" ? "📊" : ticker.label === "XAU/USD" ? "🥇" : ticker.label === "DAX" ? "🇩🇪" : "🛢️";
 
-                    {/* Price Info */}
-                    <div className="flex flex-col min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[9px] font-extrabold uppercase tracking-[0.15em] leading-none" style={{ color: accent.from }}>{ticker.label}</span>
-                        {/* Live pulse dot */}
-                        <span className="relative flex h-1.5 w-1.5">
-                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-60 ${isUp ? "bg-emerald-400" : "bg-rose-400"}`}></span>
-                          <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${isUp ? "bg-emerald-400" : "bg-rose-400"}`}></span>
-                        </span>
-                      </div>
-                      <div className="flex items-baseline gap-1.5 mt-0.5">
-                        <span className="font-mono text-[13px] font-black text-white leading-none tracking-tight">
-                          {isLoadingPrice ? "---" : `$${ticker.price}`}
-                        </span>
-                        {!isLoadingPrice && (
-                          <span className={`text-[9px] font-bold px-1 py-[1px] rounded-md ${isUp ? "text-emerald-300 bg-emerald-500/15" : "text-rose-300 bg-rose-500/15"}`}>
-                            {isUp ? "▲" : "▼"} {ticker.change}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Top Gradient Line */}
+                return (
+                  <div key={ticker.label} className="group relative">
                     <div
-                      className="absolute top-0 left-3 right-3 h-[2px] rounded-full opacity-40 group-hover:opacity-80 transition-opacity"
-                      style={{ background: `linear-gradient(90deg, ${accent.from}, ${accent.to}, transparent)` }}
-                    />
+                      className="relative flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-300 group-hover:scale-[1.03]"
+                      style={{
+                        background: `linear-gradient(135deg, ${accent.bg}, rgba(15,23,42,0.7))`,
+                        border: `1px solid ${accent.from}20`,
+                        boxShadow: `0 2px 12px ${accent.glow}`,
+                      }}
+                    >
+                      {/* Asset Icon */}
+                      <span className="text-base leading-none">{icon}</span>
+
+                      {/* Price Info */}
+                      <div className="flex flex-col min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-extrabold uppercase tracking-[0.15em] leading-none" style={{ color: accent.from }}>{ticker.label}</span>
+                          {/* Live pulse dot */}
+                          <span className="relative flex h-1.5 w-1.5">
+                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-60 ${isUp ? "bg-emerald-400" : "bg-rose-400"}`}></span>
+                            <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${isUp ? "bg-emerald-400" : "bg-rose-400"}`}></span>
+                          </span>
+                        </div>
+                        <div className="flex items-baseline gap-1.5 mt-0.5">
+                          <span className="font-mono text-[13px] font-black text-white leading-none tracking-tight">
+                            {isLoadingPrice ? "---" : `$${ticker.price}`}
+                          </span>
+                          {!isLoadingPrice && (
+                            <span className={`text-[9px] font-bold px-1 py-[1px] rounded-md ${isUp ? "text-emerald-300 bg-emerald-500/15" : "text-rose-300 bg-rose-500/15"}`}>
+                              {isUp ? "▲" : "▼"} {ticker.change}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Top Gradient Line */}
+                      <div
+                        className="absolute top-0 left-3 right-3 h-[2px] rounded-full opacity-40 group-hover:opacity-80 transition-opacity"
+                        style={{ background: `linear-gradient(90deg, ${accent.from}, ${accent.to}, transparent)` }}
+                      />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        }
-        rightContent={
-          <>
-            <div className="hidden lg:flex items-center gap-2 mr-4 pr-4 border-r border-white/5">
-              <WSStatusBadge />
-              <label className="group flex items-center gap-2 cursor-pointer">
-                <div className="relative flex items-center">
-                  <input type="checkbox" checked={autoRefresh} onChange={(e) => toggleAutoRefresh(e.target.checked)} className="peer sr-only" />
-                  <div className="w-9 h-5 bg-slate-800 rounded-full border border-white/10 peer-checked:bg-blue-600 peer-checked:border-blue-500 transition-all shadow-inner"></div>
-                  <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-4 shadow-sm"></div>
-                </div>
-                <span className="hidden xl:inline text-xs font-medium text-slate-400 group-hover:text-blue-300 transition-colors">{t("common.auto30s")}</span>
-              </label>
+                );
+              })}
             </div>
+          }
+          rightContent={
+            <>
+              <div className="hidden lg:flex items-center gap-2 mr-4 pr-4 border-r border-white/5">
+                <WSStatusBadge />
+                <label className="group flex items-center gap-2 cursor-pointer">
+                  <div className="relative flex items-center">
+                    <input type="checkbox" checked={autoRefresh} onChange={(e) => toggleAutoRefresh(e.target.checked)} className="peer sr-only" />
+                    <div className="w-9 h-5 bg-slate-800 rounded-full border border-white/10 peer-checked:bg-blue-600 peer-checked:border-blue-500 transition-all shadow-inner"></div>
+                    <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-4 shadow-sm"></div>
+                  </div>
+                  <span className="hidden xl:inline text-xs font-medium text-slate-400 group-hover:text-blue-300 transition-colors">{t("common.auto30s")}</span>
+                </label>
+              </div>
 
+              <button
+                onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/5 bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all hover:scale-105 active:scale-95"
+              >
+                {theme === "evening" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
+
+              <EditModeButton />
+
+              <div className="hidden md:block ml-2 pl-2 border-l border-white/5">
+                <UserMenu />
+              </div>
+            </>
+          }
+          bottomRightContent={
             <button
-              onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/5 bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all hover:scale-105 active:scale-95"
+              onClick={fetchAll}
+              disabled={isLoading}
+              className="group relative overflow-hidden flex items-center gap-2 px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-sm font-bold text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all duration-300 disabled:opacity-50 disabled:shadow-none"
             >
-              {theme === "evening" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <PlayCircle className="h-4 w-4" />
+              )}
+              <span className="tracking-wider">{isLoading ? t("common.running") : "RUN AI"}</span>
             </button>
+          }
+        />
 
-            <EditModeButton />
-
-            <div className="hidden md:block ml-2 pl-2 border-l border-white/5">
-              <UserMenu />
+        <DraggableDashboard>
+          <main className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-20 md:pb-8">
+            {/* ML Factor + Earnings - Inline row above grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <MLFactorPanel
+                baseConfidence={signalCards[0]?.confidence || 60}
+                applyToSymbols={["NDX.INDX", "XAUUSD"]}
+                locale={locale}
+              />
+              <NasdaqEarningsPanel />
             </div>
-          </>
-        }
-        bottomRightContent={
+            {/* ═══ CLEAR TREND — Full-width hero panel ═══ */}
+            {getCard("clear-trend")?.visible !== false && (
+              <div className="mb-6 w-full">
+                <LazyPanel fallbackHeight={300}>
+                  <CyberpunkTrendPanel />
+                </LazyPanel>
+              </div>
+            )}
+
+            {/* ═══ RISK-REWARD — Full-width panel under CyberpunkTrend ═══ */}
+            {getCard("risk-reward")?.visible !== false && (
+              <div className="mb-6 w-full">
+                <LazyPanel fallbackHeight={300}>
+                  <RiskRewardPanel />
+                </LazyPanel>
+              </div>
+            )}
+
+
+
+          </main>
+        </DraggableDashboard>
+
+        <DetailPanel
+          isOpen={isOpen}
+          onClose={close}
+          title={title}
+          symbol={symbol ?? "NASDAQ"}
+          type={type}
+          data={data}
+        />
+
+        {/* Edit Mode Floating Controls - Enhanced */}
+        <EditModeControls />
+
+        {/* Mobile Bottom Navigation */}
+        <nav className="mobile-nav md:hidden flex items-center justify-around">
           <button
             onClick={fetchAll}
-            disabled={isLoading}
-            className="group relative overflow-hidden flex items-center gap-2 px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-sm font-bold text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all duration-300 disabled:opacity-50 disabled:shadow-none"
+            className={`mobile-nav-item ${isLoading ? 'text-accent' : ''}`}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <PlayCircle className="h-4 w-4" />
-            )}
-            <span className="tracking-wider">{isLoading ? t("common.running") : "RUN AI"}</span>
+            <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="text-[10px] mt-1">{isLoading ? t("common.running") : t("common.runAnalysis")}</span>
           </button>
-        }
-      />
-
-      <DraggableDashboard>
-        <main className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-20 md:pb-8">
-          {/* ML Factor + Earnings - Inline row above grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <MLFactorPanel
-              baseConfidence={signalCards[0]?.confidence || 60}
-              applyToSymbols={["NDX.INDX", "XAUUSD"]}
-              locale={locale}
-            />
-            <NasdaqEarningsPanel />
-          </div>
-          {/* ═══ CLEAR TREND — Full-width hero panel ═══ */}
-          {getCard("clear-trend")?.visible !== false && (
-            <div className="mb-6 w-full">
-              <LazyPanel fallbackHeight={300}>
-                <CyberpunkTrendPanel />
-              </LazyPanel>
-            </div>
-          )}
-
-          {/* ═══ STRATEGY OPTIMIZER — Full-width risk panel ═══ */}
-          {getCard("strategy-optimizer")?.visible !== false && (
-            <div className="mb-6 w-full">
-              <LazyPanel fallbackHeight={200}>
-                <StrategyOptimizerPanel />
-              </LazyPanel>
-            </div>
-          )}
-
-          {/* ═══ HARMONIC VISUALIZER — Full-width panel ═══ */}
-          {getCard("harmonic-visualizer")?.visible !== false && (
-            <div className="mb-6 w-full">
-              <LazyPanel fallbackHeight={500}>
-                <HarmonicVisualizerPanel />
-              </LazyPanel>
-            </div>
-          )}
-
-          {/* ═══ 2-COLUMN LAYOUT — separate flex columns ═══ */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-start w-full">
-            {/* Left Column */}
-            <div className="flex flex-col gap-4 md:gap-6 w-full min-w-0">
-              {getColumnCards("left").filter(c => c.size !== "full").map((card) => (
-                <SortableCard key={card.id} card={card}>
-                  {alwaysVisibleCards.has(card.id) ? renderCardContent(card.id) : (
-                    <LazyPanel fallbackHeight={250}>{renderCardContent(card.id)}</LazyPanel>
-                  )}
-                </SortableCard>
-              ))}
-            </div>
-            {/* Right Column */}
-            <div className="flex flex-col gap-4 md:gap-6 w-full min-w-0">
-              {getColumnCards("right").filter(c => c.size !== "full").map((card) => (
-                <SortableCard key={card.id} card={card}>
-                  {alwaysVisibleCards.has(card.id) ? renderCardContent(card.id) : (
-                    <LazyPanel fallbackHeight={250}>{renderCardContent(card.id)}</LazyPanel>
-                  )}
-                </SortableCard>
-              ))}
-            </div>
-          </div>
-
-          {/* ═══ FULL-WIDTH SECTIONS ═══ */}
-          <div className="mt-6 space-y-6">
-            {/* ML Prediction & Claude AI Section */}
-            {getCard("ai-panels")?.visible !== false && (
-              <LazyPanel fallbackHeight={400}>
-                <div className="flex items-center gap-3 mb-4">
-                  <Brain className="h-5 w-5 text-accent" />
-                  <h2 className="text-lg font-bold">{t("panels.aiPrediction")}</h2>
-                  <Link href="/trading" className="ml-auto flex items-center gap-2 text-sm text-accent hover:underline">
-                    <Sparkles className="h-4 w-4" />
-                    {t("panels.fullScreenView")} →
-                  </Link>
-                </div>
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  <div className="space-y-6">
-                    <div className="relative">
-                      <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 blur-sm" />
-                      <div className="relative"><MLPredictionPanel symbol="NDX.INDX" symbolLabel="NASDAQ" /></div>
-                    </div>
-                    <div className="relative">
-                      <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-sm" />
-                      <div className="relative"><ClaudeAnalysisPanel symbol="NDX.INDX" symbolLabel="NASDAQ" /></div>
-                    </div>
-                  </div>
-                  <div className="space-y-6">
-                    <div className="relative">
-                      <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 blur-sm" />
-                      <div className="relative"><MLPredictionPanel symbol="XAUUSD" symbolLabel="XAUUSD" /></div>
-                    </div>
-                    <div className="relative">
-                      <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-sm" />
-                      <div className="relative"><ClaudeAnalysisPanel symbol="XAUUSD" symbolLabel="XAUUSD" /></div>
-                    </div>
-                  </div>
-                </div>
-              </LazyPanel>
-            )}
-
-            {/* Prediction History */}
-            {getCard("prediction-history")?.visible !== false && (
-              <LazyPanel fallbackHeight={300}>
-                <PredictionHistoryTable />
-              </LazyPanel>
-            )}
-
-            {/* Order Blocks */}
-            {(getCard("order-blocks-nasdaq")?.visible !== false || getCard("order-blocks-xauusd")?.visible !== false) && (
-              <LazyPanel fallbackHeight={300}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {getCard("order-blocks-nasdaq")?.visible !== false && <OrderBlockPanelSimple symbol="NDX.INDX" symbolLabel="NASDAQ" />}
-                  {getCard("order-blocks-xauusd")?.visible !== false && <OrderBlockPanelSimple symbol="XAUUSD" symbolLabel="XAUUSD" />}
-                </div>
-              </LazyPanel>
-            )}
-
-            {/* Rhythm Detectors */}
-            {getCard("rhythm-detectors")?.visible !== false && (
-              <LazyPanel fallbackHeight={300}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <RhythmDetectorSimple symbol="NDX.INDX" symbolLabel="NASDAQ" />
-                  <RhythmDetectorSimple symbol="XAUUSD" symbolLabel="XAUUSD" />
-                </div>
-              </LazyPanel>
-            )}
-
-            {/* Charts */}
-            {getCard("charts")?.visible !== false && (
-              <LazyPanel fallbackHeight={350}>
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  <TradingChartWrapper symbol="NDX.INDX" symbolLabel="NASDAQ" initialTimeframe="1d" height={350} />
-                  <TradingChartWrapper symbol="XAUUSD" symbolLabel="XAUUSD" initialTimeframe="1d" height={350} />
-                </div>
-              </LazyPanel>
-            )}
-          </div>
-        </main>
-      </DraggableDashboard>
-
-      <DetailPanel
-        isOpen={isOpen}
-        onClose={close}
-        title={title}
-        symbol={symbol ?? "NASDAQ"}
-        type={type}
-        data={data}
-      />
-
-      {/* Edit Mode Floating Controls - Enhanced */}
-      <EditModeControls />
-
-      {/* Mobile Bottom Navigation */}
-      <nav className="mobile-nav md:hidden flex items-center justify-around">
-        <button
-          onClick={fetchAll}
-          className={`mobile-nav-item ${isLoading ? 'text-accent' : ''}`}
-        >
-          <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
-          <span className="text-[10px] mt-1">{isLoading ? t("common.running") : t("common.runAnalysis")}</span>
-        </button>
-        <Link href="/trading" className="mobile-nav-item">
-          <BarChart3 className="h-5 w-5" />
-          <span className="text-[10px] mt-1">Trading</span>
-        </Link>
-        <button className="mobile-nav-item active">
-          <Activity className="h-5 w-5" />
-          <span className="text-[10px] mt-1">Dashboard</span>
-        </button>
-        <Link href="/account" className="mobile-nav-item">
-          <UserMenu />
-        </Link>
-      </nav>
+          <Link href="/trading" className="mobile-nav-item">
+            <BarChart3 className="h-5 w-5" />
+            <span className="text-[10px] mt-1">Trading</span>
+          </Link>
+          <button className="mobile-nav-item active">
+            <Activity className="h-5 w-5" />
+            <span className="text-[10px] mt-1">Dashboard</span>
+          </button>
+          <Link href="/account" className="mobile-nav-item">
+            <UserMenu />
+          </Link>
+        </nav>
+      </div>{/* end sidebar content wrapper */}
     </div>
   );
 }

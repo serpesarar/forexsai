@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Brain, LineChart, BarChart3, Activity } from "lucide-react";
+import { Brain, LineChart, BarChart3, Activity, Zap } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useI18nStore } from "../lib/i18n/store";
 
 interface SharedNavHeaderProps {
-  activePage: "dashboard" | "charts" | "trading";
+  activePage: "dashboard" | "charts" | "trading" | "analysis" | "signals";
   /** Content rendered in center of top row (e.g. market tickers) */
   centerContent?: React.ReactNode;
   /** Content rendered on right side of top row (e.g. theme toggle, auto-refresh, user menu) */
@@ -22,6 +22,8 @@ export default function SharedNavHeader({ activePage, centerContent, rightConten
     { href: "/", key: "dashboard" as const, label: "Dashboard", icon: Brain, iconColor: "text-blue-400" },
     { href: "/charts", key: "charts" as const, label: t("nav.charts"), icon: LineChart, iconColor: "text-emerald-400" },
     { href: "/trading", key: "trading" as const, label: "AI Trading", icon: BarChart3, iconColor: "text-purple-400" },
+    { href: "/analysis", key: "analysis" as const, label: "Analysis", icon: Brain, iconColor: "text-amber-400" },
+    { href: "/signals", key: "signals" as const, label: "Detailed Signals", icon: Zap, iconColor: "text-red-400" },
   ];
 
   return (
@@ -90,8 +92,8 @@ export default function SharedNavHeader({ activePage, centerContent, rightConten
                     key={item.key}
                     href={item.href}
                     className={`relative flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 group overflow-hidden ${isActive
-                        ? "text-white bg-white/10 shadow-[0_0_10px_rgba(255,255,255,0.05)]"
-                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                      ? "text-white bg-white/10 shadow-[0_0_10px_rgba(255,255,255,0.05)]"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
                       }`}
                   >
                     <Icon className={`w-4 h-4 ${isActive ? item.iconColor : "text-slate-500 group-hover:text-slate-300"}`} />
