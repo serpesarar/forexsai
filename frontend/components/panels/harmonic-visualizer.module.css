@@ -198,8 +198,15 @@
 }
 
 @keyframes legendPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
 }
 
 .spin {
@@ -255,7 +262,7 @@
     left: 0;
     pointer-events: none;
     z-index: 4;
-    overflow: visible;
+    overflow: hidden;
 }
 
 /* ─── FORMATION GLOW — BIG (Harmonic) ─────────── */
@@ -310,8 +317,15 @@
 }
 
 @keyframes zonePulse {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 0.3; }
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
 }
 
 .projectionArrow {
@@ -319,8 +333,15 @@
 }
 
 @keyframes arrowPulse {
-    0%, 100% { opacity: 0.8; }
-    50% { opacity: 0.4; }
+
+    0%,
+    100% {
+        opacity: 0.8;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
 }
 
 /* ─── POINT MARKERS ──────────────────────────────── */
@@ -447,8 +468,15 @@
 }
 
 @keyframes formingPulse {
-    0%, 100% { border-style: solid; }
-    50% { border-style: dashed; }
+
+    0%,
+    100% {
+        border-style: solid;
+    }
+
+    50% {
+        border-style: dashed;
+    }
 }
 
 .patternCardTop {
