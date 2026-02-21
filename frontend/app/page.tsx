@@ -71,6 +71,13 @@ import { useLivePrices } from "../hooks/useLivePrices";
 import { useCachedDashboardData, cachedToSignalCard } from "../hooks/useCachedDashboardData";
 import { useSingleTimeframeAnalysis, type Timeframe, type TimeframeAnalysis } from "../hooks/useMTFAnalysis";
 
+// Import Navigation and Views
+import { useNavigationStore } from "../lib/store/navigation";
+import ChartsView from "../components/views/ChartsView";
+import TradingView from "../components/views/TradingView";
+import AnalysisView from "../components/views/AnalysisView";
+import SignalsView from "../components/views/SignalsView";
+
 const initialMarketTickers = [
   { label: "NASDAQ", price: "--", change: "--%", trend: "up" as const },
   { label: "XAU/USD", price: "--", change: "--%", trend: "up" as const },
@@ -1336,6 +1343,8 @@ export default function HomePage() {
     return null;
   }
 
+  const { activeView } = useNavigationStore();
+
   return (
     <div className="min-h-screen text-textPrimary relative">
       {/* Sidebar Navigation */}
@@ -1346,10 +1355,10 @@ export default function HomePage() {
         {/* Animated Background with Star Particles */}
         <TradingBackground />
 
-        {/* ─── STICKY PRICE TICKER STRIP ─── */}
-        <div className="sticky top-0 z-40 py-2 px-2" style={{ background: 'linear-gradient(180deg, rgba(8,13,26,0.95) 0%, rgba(8,13,26,0.85) 100%)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(0,224,198,0.06)' }}>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 flex-1 overflow-x-auto scrollbar-none">
+        {/* ─── FLOATING PRICE STICKERS ─── */}
+        <div className="sticky top-0 z-40 py-4 px-4 md:px-6 pointer-events-none">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3 overflow-x-auto scrollbar-none pb-2 pointer-events-auto w-full md:w-auto">
               {marketTickers.map((ticker) => {
                 const isLoadingPrice = pricesLoading || ticker.price === "--" || ticker.price === "-";
                 const isUp = ticker.trend === "up";
@@ -1358,95 +1367,110 @@ export default function HomePage() {
                   : ticker.label === "XAU/USD"
                     ? { from: "#f59e0b", glow: "rgba(245,158,11,0.25)" }
                     : ticker.label === "DAX"
-                      ? { from: "#8b5cf6", glow: "rgba(139,92,246,0.25)" }
+                      ? { from: "#10b981", glow: "rgba(16,185,129,0.25)" }
                       : { from: "#ef4444", glow: "rgba(239,68,68,0.25)" };
                 const icon = ticker.label === "NASDAQ" ? "📊" : ticker.label === "XAU/USD" ? "🥇" : ticker.label === "DAX" ? "🇩🇪" : "🛢️";
                 return (
-                  <div key={ticker.label} className="flex items-center gap-2 px-3 py-1.5 rounded-lg flex-shrink-0"
-                    style={{ background: `rgba(255,255,255,0.03)`, border: `1px solid ${accent.from}15`, boxShadow: `0 1px 8px ${accent.glow}` }}>
-                    <span className="text-sm leading-none">{icon}</span>
+                  <div key={ticker.label} className="flex items-center gap-2.5 px-3 py-2 rounded-xl flex-shrink-0 transition-transform hover:-translate-y-1 hover:scale-105"
+                    style={{
+                      background: `linear-gradient(135deg, rgba(8,13,26,0.9) 0%, rgba(12,18,36,0.8) 100%)`,
+                      backdropFilter: 'blur(16px)',
+                      border: `1px solid ${accent.from}40`,
+                      boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 2px 10px ${accent.glow}, inset 0 1px 0 rgba(255,255,255,0.1)`
+                    }}>
+                    <span className="text-base leading-none drop-shadow-md">{icon}</span>
                     <div className="flex flex-col">
-                      <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: accent.from }}>{ticker.label}</span>
-                      <div className="flex items-baseline gap-1">
-                        <span className="font-mono text-[13px] font-black text-white">{isLoadingPrice ? "---" : `$${ticker.price}`}</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.15em] opacity-90" style={{ color: accent.from }}>{ticker.label}</span>
+                      <div className="flex items-baseline gap-1.5 mt-0.5">
+                        <span className="font-mono text-sm font-black text-white">{isLoadingPrice ? "---" : `$${ticker.price}`}</span>
                         {!isLoadingPrice && (
-                          <span className={`text-[9px] font-bold ${isUp ? "text-emerald-400" : "text-rose-400"}`}>
+                          <span className={`text-[10px] font-black tracking-tighter ${isUp ? "text-emerald-400" : "text-rose-400"}`} style={{ textShadow: `0 0 10px ${isUp ? 'rgba(52,211,153,0.5)' : 'rgba(251,113,133,0.5)'}` }}>
                             {isUp ? "▲" : "▼"} {ticker.change}
                           </span>
                         )}
                       </div>
                     </div>
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-60 ${isUp ? "bg-emerald-400" : "bg-rose-400"}`}></span>
-                      <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${isUp ? "bg-emerald-400" : "bg-rose-400"}`}></span>
-                    </span>
                   </div>
                 );
               })}
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+
+            {/* Top Right Controls (also floating) */}
+            <div className="flex items-center gap-2.5 flex-shrink-0 pointer-events-auto bg-black/40 backdrop-blur-md px-2.5 py-2 rounded-xl border border-white/5 shadow-xl">
               <WSStatusBadge />
+              <div className="h-4 w-px bg-white/10" />
               <button onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/5 bg-white/5 text-slate-400 hover:text-white transition-all">
-                {theme === "evening" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+                {theme === "evening" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </button>
               <button onClick={fetchAll} disabled={isLoading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all"
-                style={{ background: 'linear-gradient(135deg, #2563eb, #4f46e5)', boxShadow: '0 0 12px rgba(37,99,235,0.3)' }}>
-                {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PlayCircle className="h-3.5 w-3.5" />}
-                <span>RUN AI</span>
+                className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold text-white transition-all transform hover:scale-105 active:scale-95 shadow-lg"
+                style={{ background: 'linear-gradient(135deg, #00e0c6, #3b82f6)', boxShadow: '0 0 20px rgba(0,224,198,0.4)' }}>
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+                <span className="tracking-wider">RUN AI</span>
               </button>
             </div>
           </div>
         </div>
 
-        <DraggableDashboard>
-          <main className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-20 md:pb-8">
-            {/* ML Factor + Earnings - Inline row above grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              <MLFactorPanel
-                baseConfidence={signalCards[0]?.confidence || 60}
-                applyToSymbols={["NDX.INDX", "XAUUSD"]}
-                locale={locale}
-              />
-              <NasdaqEarningsPanel />
+        {/* ─── DYNAMIC VIEW RENDERING ─── */}
+        <div className="w-full relative min-h-screen pointer-events-auto">
+          {activeView === "dashboard" && (
+            <div className="animate-in fade-in duration-300">
+              <DraggableDashboard>
+                <main className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-20 md:pb-8">
+                  {/* ML Factor + Earnings - Inline row above grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <MLFactorPanel
+                      baseConfidence={signalCards[0]?.confidence || 60}
+                      applyToSymbols={["NDX.INDX", "XAUUSD"]}
+                      locale={locale}
+                    />
+                    <NasdaqEarningsPanel />
+                  </div>
+                  {/* ═══ CLEAR TREND — Full-width hero panel ═══ */}
+                  {getCard("clear-trend")?.visible !== false && (
+                    <div className="mb-6 w-full">
+                      <LazyPanel fallbackHeight={300}>
+                        <CyberpunkTrendPanel />
+                      </LazyPanel>
+                    </div>
+                  )}
+
+                  {/* ═══ RISK-REWARD — Full-width panel under CyberpunkTrend ═══ */}
+                  {getCard("risk-reward")?.visible !== false && (
+                    <div className="mb-6 w-full">
+                      <LazyPanel fallbackHeight={300}>
+                        <RiskRewardPanel />
+                      </LazyPanel>
+                    </div>
+                  )}
+
+                  {/* ═══ PULSE PANELS ═══ */}
+                  {getCard("pulse-panel")?.visible !== false && (
+                    <div className="mb-6 w-full">
+                      <LazyPanel fallbackHeight={300}>
+                        <PulsePanel />
+                      </LazyPanel>
+                    </div>
+                  )}
+                  {getCard("pulse-v3")?.visible !== false && (
+                    <div className="mb-6 w-full">
+                      <LazyPanel fallbackHeight={300}>
+                        <PulseV3Panel />
+                      </LazyPanel>
+                    </div>
+                  )}
+
+                </main>
+              </DraggableDashboard>
             </div>
-            {/* ═══ CLEAR TREND — Full-width hero panel ═══ */}
-            {getCard("clear-trend")?.visible !== false && (
-              <div className="mb-6 w-full">
-                <LazyPanel fallbackHeight={300}>
-                  <CyberpunkTrendPanel />
-                </LazyPanel>
-              </div>
-            )}
-
-            {/* ═══ RISK-REWARD — Full-width panel under CyberpunkTrend ═══ */}
-            {getCard("risk-reward")?.visible !== false && (
-              <div className="mb-6 w-full">
-                <LazyPanel fallbackHeight={300}>
-                  <RiskRewardPanel />
-                </LazyPanel>
-              </div>
-            )}
-
-            {/* ═══ PULSE PANELS ═══ */}
-            {getCard("pulse-panel")?.visible !== false && (
-              <div className="mb-6 w-full">
-                <LazyPanel fallbackHeight={300}>
-                  <PulsePanel />
-                </LazyPanel>
-              </div>
-            )}
-            {getCard("pulse-v3")?.visible !== false && (
-              <div className="mb-6 w-full">
-                <LazyPanel fallbackHeight={300}>
-                  <PulseV3Panel />
-                </LazyPanel>
-              </div>
-            )}
-
-          </main>
-        </DraggableDashboard>
+          )}
+          {activeView === "charts" && <ChartsView />}
+          {activeView === "trading" && <TradingView />}
+          {activeView === "analysis" && <AnalysisView />}
+          {activeView === "signals" && <SignalsView />}
+        </div>
 
         <DetailPanel
           isOpen={isOpen}
@@ -1458,7 +1482,7 @@ export default function HomePage() {
         />
 
         {/* Edit Mode Floating Controls - Enhanced */}
-        <EditModeControls />
+        {activeView === "dashboard" && <EditModeControls />}
 
         {/* Mobile Bottom Navigation */}
         <nav className="mobile-nav md:hidden flex items-center justify-around">

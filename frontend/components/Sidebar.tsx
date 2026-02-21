@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useNavigationStore } from "../lib/store/navigation";
 import {
     LayoutDashboard,
     LineChart,
@@ -48,7 +48,7 @@ const LEGAL_LINKS = [
 ];
 
 export default function Sidebar() {
-    const pathname = usePathname();
+    const { activeView, setActiveView } = useNavigationStore();
     const user = useUser();
     const { logout } = useAuthStore();
 
@@ -69,13 +69,6 @@ export default function Sidebar() {
         if (next) setLegalOpen(false);
     };
 
-    const getActiveKey = () => {
-        if (pathname === "/") return "dashboard";
-        const segment = pathname.split("/")[1];
-        return segment || "dashboard";
-    };
-
-    const activeKey = getActiveKey();
     const firstName = user?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "Trader";
 
     if (!mounted) return null;
@@ -134,12 +127,12 @@ export default function Sidebar() {
             {/* ── Nav Items ── */}
             <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto">
                 {NAV_ITEMS.map((item) => {
-                    const isActive = item.key === activeKey;
+                    const isActive = item.key === activeView;
                     const Icon = item.icon;
 
                     return (
-                        <Link key={item.key} href={item.href}
-                            className={`group relative flex items-center gap-2.5 rounded-lg transition-all duration-200 ${collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2"}`}
+                        <button key={item.key} onClick={() => setActiveView(item.key as any)}
+                            className={`w-full group relative flex items-center gap-2.5 rounded-lg transition-all duration-200 ${collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2"}`}
                             style={{
                                 color: isActive ? item.accentColor : "rgba(255,255,255,0.4)",
                                 background: isActive ? `${item.accentColor}0a` : "transparent",
@@ -158,11 +151,11 @@ export default function Sidebar() {
                                 style={isActive ? { filter: `drop-shadow(${item.glowColor})` } : undefined} />
 
                             {!collapsed && (
-                                <span className={`text-[13px] truncate sidebar-fade-in ${isActive ? "font-semibold" : "font-medium"}`}>
+                                <span className={`text-[13px] truncate whitespace-nowrap sidebar-fade-in ${isActive ? "font-semibold" : "font-medium"}`}>
                                     {item.label}
                                 </span>
                             )}
-                        </Link>
+                        </button>
                     );
                 })}
             </nav>
