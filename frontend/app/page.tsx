@@ -399,6 +399,7 @@ export default function HomePage() {
   const isAuthenticated = useIsAuthenticated();
   const { checkAuth } = useAuthStore();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const { activeView } = useNavigationStore();
 
   const [activeTf, setActiveTf] = useState<(typeof timeframes)[number]>("15m");
   const [theme, setTheme] = useState<"evening" | "morning">("evening");
@@ -1342,8 +1343,6 @@ export default function HomePage() {
   if (!isAuthenticated && !isAuthed) {
     return null;
   }
-
-  const { activeView } = useNavigationStore();
 
   return (
     <div className="min-h-screen text-textPrimary relative">
