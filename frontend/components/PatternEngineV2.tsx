@@ -54,11 +54,11 @@ interface Pattern {
 // Pattern generator with live prices
 const generatePatternsWithPrices = (nasdaqPrice: number, xauusdPrice: number): Pattern[] => {
   const now = new Date();
-  
+
   // Use live prices, with fallback to reasonable defaults
   const nasdaq = nasdaqPrice || 21500;
   const gold = xauusdPrice || 2800;
-  
+
   return [
     {
       id: "p1",
@@ -503,7 +503,7 @@ function FullscreenPatternModal({
         {/* Stats Sidebar */}
         <div className="w-72 flex-shrink-0 border-r border-white/10 bg-slate-900/50 p-4 space-y-4">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t("patternEngine.overview")}</h3>
-          
+
           {/* Signal Distribution */}
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
             <p className="text-xs text-gray-500 uppercase mb-3">{t("patternEngine.signalDistribution")}</p>
@@ -569,7 +569,7 @@ function FullscreenPatternModal({
               <button onClick={() => setSelectedPattern(null)} className="mb-4 flex items-center gap-2 text-sm text-gray-400 hover:text-white">
                 <ChevronRight className="h-4 w-4 rotate-180" /> {t("patternEngine.backToList")}
               </button>
-              
+
               <div className="grid gap-6 lg:grid-cols-2">
                 {/* Left Column */}
                 <div className="space-y-4">
@@ -740,11 +740,12 @@ export default function PatternEngineV2() {
   const [selectedSymbol, setSelectedSymbol] = useState<"ALL" | "NASDAQ" | "XAUUSD">("ALL");
   const [selectedPattern, setSelectedPattern] = useState<Pattern | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  
+
   // Get live prices for realistic pattern targets
-  const { prices } = useLivePrices(10000);
-  const nasdaqPrice = prices.get("NDX.INDX")?.price || 0;
-  const xauusdPrice = prices.get("XAUUSD")?.price || 0;
+  const { tickers } = useLivePrices();
+  const parsePrice = (val: string) => parseFloat(val.replace(/,/g, '')) || 0;
+  const nasdaqPrice = parsePrice(tickers.find(t => t.label === "NASDAQ")?.price || "0");
+  const xauusdPrice = parsePrice(tickers.find(t => t.label === "XAU/USD")?.price || "0");
 
   const patterns = useMemo(() => generatePatternsWithPrices(nasdaqPrice, xauusdPrice), [nasdaqPrice, xauusdPrice]);
 
@@ -764,7 +765,7 @@ export default function PatternEngineV2() {
           <p className="text-[10px] uppercase tracking-[0.2em] text-textSecondary">{t("patternEngine.title")}</p>
           <h3 className="mt-1 text-sm font-semibold truncate">{t("patternEngine.subtitle")}</h3>
         </div>
-        
+
         <div className="flex items-center gap-2">
           {/* Filter Tabs */}
           <div className="flex rounded-lg border border-white/10 bg-white/5 p-0.5">
@@ -772,15 +773,14 @@ export default function PatternEngineV2() {
               <button
                 key={sym}
                 onClick={() => setSelectedSymbol(sym)}
-                className={`rounded px-2 py-1 text-[10px] font-medium transition-all ${
-                  selectedSymbol === sym ? "bg-accent text-white" : "text-gray-400 hover:text-white"
-                }`}
+                className={`rounded px-2 py-1 text-[10px] font-medium transition-all ${selectedSymbol === sym ? "bg-accent text-white" : "text-gray-400 hover:text-white"
+                  }`}
               >
                 {sym}
               </button>
             ))}
           </div>
-          
+
           {/* Fullscreen Button */}
           <button
             onClick={() => setIsFullscreen(true)}

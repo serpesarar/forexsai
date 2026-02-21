@@ -169,14 +169,12 @@ export default function HarmonicVisualizerPanel() {
     const [selectedPattern, setSelectedPattern] = useState<DetectedPattern | null>(null);
     const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
     const [overlayVersion, setOverlayVersion] = useState(0);
-    const [pulsePhase, setPulsePhase] = useState(0); // 0 or 1 for candle pulsing
     const { isFullscreen, toggleFullscreen } = useFullscreen();
 
     // ── Refs
     const chartContainerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<IChartApi | null>(null);
     const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-    const pulseIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // ── Data fetch
     const {
@@ -281,55 +279,35 @@ export default function HarmonicVisualizerPanel() {
         };
     }, []);
 
-    // ── Pulse timer for candle blinking
-    useEffect(() => {
-        if (candleColorMap.size === 0) {
-            if (pulseIntervalRef.current) {
-                clearInterval(pulseIntervalRef.current);
-                pulseIntervalRef.current = null;
-            }
-            return;
-        }
-        pulseIntervalRef.current = setInterval(() => {
-            setPulsePhase(prev => (prev === 0 ? 1 : 0));
-        }, 800); // Toggle every 800ms for pulsing effect
-        return () => {
-            if (pulseIntervalRef.current) {
-                clearInterval(pulseIntervalRef.current);
-                pulseIntervalRef.current = null;
-            }
-        };
-    }, [candleColorMap.size]);
-
-    // ── Update chart data with per-candle coloring
+    // ── Update chart data with per-candle coloring (static, removed polling memory leak)
     useEffect(() => {
         if (!candleSeriesRef.current || !candles || candles.length === 0) return;
 
         const chartData = candles.map((c, idx) => {
             const colorType = candleColorMap.get(idx);
             if (colorType === 'harmonic') {
-                const pulse = PULSE_COLORS_HARMONIC[pulsePhase];
+                const colors = PULSE_COLORS_HARMONIC[0];
                 return {
                     time: c.time as Time,
                     open: c.open,
                     high: c.high,
                     low: c.low,
                     close: c.close,
-                    color: pulse.body,
-                    wickColor: pulse.wick,
-                    borderColor: pulse.body,
+                    color: colors.body,
+                    wickColor: colors.wick,
+                    borderColor: colors.body,
                 };
             } else if (colorType === 'classic') {
-                const pulse = PULSE_COLORS_CLASSIC[pulsePhase];
+                const colors = PULSE_COLORS_CLASSIC[0];
                 return {
                     time: c.time as Time,
                     open: c.open,
                     high: c.high,
                     low: c.low,
                     close: c.close,
-                    color: pulse.body,
-                    wickColor: pulse.wick,
-                    borderColor: pulse.body,
+                    color: colors.body,
+                    wickColor: colors.wick,
+                    borderColor: colors.body,
                 };
             }
             return {
@@ -342,14 +320,11 @@ export default function HarmonicVisualizerPanel() {
         });
 
         candleSeriesRef.current.setData(chartData);
+        chartRef.current?.timeScale().fitContent();
 
-        // Only fit content on first load, not on pulse updates
-        if (pulsePhase === 0) {
-            chartRef.current?.timeScale().fitContent();
-        }
-
-        setTimeout(() => setOverlayVersion(v => v + 1), 50);
-    }, [candles, candleColorMap, pulsePhase]);
+        const timer = setTimeout(() => setOverlayVersion(v => v + 1), 50);
+        return () => clearTimeout(timer);
+    }, [candles, candleColorMap]);
 
     // ── Calculate SVG overlay data
     const overlayData = useMemo<FormationOverlayData[]>(() => {
