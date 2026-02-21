@@ -78,20 +78,58 @@ export default function RiskRewardPanel() {
     return () => window.removeEventListener("dashboard-refresh", handler);
   }, [symbol]);
 
+  const generateFallbackData = (sym: string): RiskData => {
+    // Static fallback data for when DeepSeek API is unavailable
+    const isGold = sym === "XAUUSD";
+    const isNasdaq = sym.includes("NDX") || sym.includes("NASDAQ");
+    const baseRisk = isGold ? 45 : isNasdaq ? 55 : 50;
+    return {
+      position_sizing: {
+        kelly_fraction: 0.12,
+        adjusted_size: 0.08,
+        reason: `DeepSeek offline — using conservative ${isGold ? 'gold' : isNasdaq ? 'equity' : 'commodity'} defaults`,
+        max_risk_pct: isGold ? 1.5 : 2.0,
+      },
+      risk_score: {
+        overall: baseRisk,
+        factors: [
+          "DeepSeek API unavailable — static risk estimate",
+          isGold ? "Gold: moderate volatility environment assumed" : "Equity: standard market conditions assumed",
+        ],
+        recommendation: "Use conservative position sizing until live analysis resumes",
+      },
+      portfolio_heat: {
+        current_exposure_pct: 0,
+        max_allowed_pct: 6,
+        correlation_adjustment: 1.0,
+        final_heat_pct: 0,
+      },
+    };
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
       const res = await fetch(`${API_BASE}/api/deepseek/risk/${symbol}`);
       const json = await res.json();
       if (json.success && json.data) {
-        setData(json.data);
+        // Check if API returned an error in data
+        if (json.data.error && !json.data.risk_score) {
+          // API call failed (e.g., 402 Insufficient Balance) — use fallback
+          console.warn("RiskReward API error, using fallback:", json.data.error);
+          setData(generateFallbackData(symbol));
+        } else {
+          setData(json.data);
+        }
         setLastUpdate(new Date());
       } else {
-        setData({ error: json.error || "No data" });
+        setData(generateFallbackData(symbol));
+        setLastUpdate(new Date());
       }
     } catch (e) {
       console.error("Risk fetch error:", e);
-      setData({ error: "Connection failed" });
+      setData(generateFallbackData(symbol));
+      setLastUpdate(new Date());
     } finally {
       setLoading(false);
     }

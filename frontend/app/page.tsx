@@ -1346,115 +1346,59 @@ export default function HomePage() {
         {/* Animated Background with Star Particles */}
         <TradingBackground />
 
-        {/* MODERN HEADER - Redesigned */}
-        <SharedNavHeader
-          activePage="dashboard"
-          centerContent={
-            <div className="hidden xl:flex items-center gap-4">
+        {/* ─── STICKY PRICE TICKER STRIP ─── */}
+        <div className="sticky top-0 z-40 py-2 px-2" style={{ background: 'linear-gradient(180deg, rgba(8,13,26,0.95) 0%, rgba(8,13,26,0.85) 100%)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(0,224,198,0.06)' }}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-1 overflow-x-auto scrollbar-none">
               {marketTickers.map((ticker) => {
                 const isLoadingPrice = pricesLoading || ticker.price === "--" || ticker.price === "-";
                 const isUp = ticker.trend === "up";
-                // Per-asset accent colors
                 const accent = ticker.label === "NASDAQ"
-                  ? { from: "#3b82f6", to: "#60a5fa", glow: "rgba(59,130,246,0.3)", bg: "rgba(59,130,246,0.06)" }
+                  ? { from: "#3b82f6", glow: "rgba(59,130,246,0.25)" }
                   : ticker.label === "XAU/USD"
-                    ? { from: "#f59e0b", to: "#fbbf24", glow: "rgba(245,158,11,0.3)", bg: "rgba(245,158,11,0.06)" }
+                    ? { from: "#f59e0b", glow: "rgba(245,158,11,0.25)" }
                     : ticker.label === "DAX"
-                      ? { from: "#8b5cf6", to: "#a78bfa", glow: "rgba(139,92,246,0.3)", bg: "rgba(139,92,246,0.06)" }
-                      : { from: "#ef4444", to: "#f87171", glow: "rgba(239,68,68,0.3)", bg: "rgba(239,68,68,0.06)" };
+                      ? { from: "#8b5cf6", glow: "rgba(139,92,246,0.25)" }
+                      : { from: "#ef4444", glow: "rgba(239,68,68,0.25)" };
                 const icon = ticker.label === "NASDAQ" ? "📊" : ticker.label === "XAU/USD" ? "🥇" : ticker.label === "DAX" ? "🇩🇪" : "🛢️";
-
                 return (
-                  <div key={ticker.label} className="group relative">
-                    <div
-                      className="relative flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-300 group-hover:scale-[1.03]"
-                      style={{
-                        background: `linear-gradient(135deg, ${accent.bg}, rgba(15,23,42,0.7))`,
-                        border: `1px solid ${accent.from}20`,
-                        boxShadow: `0 2px 12px ${accent.glow}`,
-                      }}
-                    >
-                      {/* Asset Icon */}
-                      <span className="text-base leading-none">{icon}</span>
-
-                      {/* Price Info */}
-                      <div className="flex flex-col min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] font-extrabold uppercase tracking-[0.15em] leading-none" style={{ color: accent.from }}>{ticker.label}</span>
-                          {/* Live pulse dot */}
-                          <span className="relative flex h-1.5 w-1.5">
-                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-60 ${isUp ? "bg-emerald-400" : "bg-rose-400"}`}></span>
-                            <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${isUp ? "bg-emerald-400" : "bg-rose-400"}`}></span>
+                  <div key={ticker.label} className="flex items-center gap-2 px-3 py-1.5 rounded-lg flex-shrink-0"
+                    style={{ background: `rgba(255,255,255,0.03)`, border: `1px solid ${accent.from}15`, boxShadow: `0 1px 8px ${accent.glow}` }}>
+                    <span className="text-sm leading-none">{icon}</span>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: accent.from }}>{ticker.label}</span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="font-mono text-[13px] font-black text-white">{isLoadingPrice ? "---" : `$${ticker.price}`}</span>
+                        {!isLoadingPrice && (
+                          <span className={`text-[9px] font-bold ${isUp ? "text-emerald-400" : "text-rose-400"}`}>
+                            {isUp ? "▲" : "▼"} {ticker.change}
                           </span>
-                        </div>
-                        <div className="flex items-baseline gap-1.5 mt-0.5">
-                          <span className="font-mono text-[13px] font-black text-white leading-none tracking-tight">
-                            {isLoadingPrice ? "---" : `$${ticker.price}`}
-                          </span>
-                          {!isLoadingPrice && (
-                            <span className={`text-[9px] font-bold px-1 py-[1px] rounded-md ${isUp ? "text-emerald-300 bg-emerald-500/15" : "text-rose-300 bg-rose-500/15"}`}>
-                              {isUp ? "▲" : "▼"} {ticker.change}
-                            </span>
-                          )}
-                        </div>
+                        )}
                       </div>
-
-                      {/* Top Gradient Line */}
-                      <div
-                        className="absolute top-0 left-3 right-3 h-[2px] rounded-full opacity-40 group-hover:opacity-80 transition-opacity"
-                        style={{ background: `linear-gradient(90deg, ${accent.from}, ${accent.to}, transparent)` }}
-                      />
                     </div>
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-60 ${isUp ? "bg-emerald-400" : "bg-rose-400"}`}></span>
+                      <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${isUp ? "bg-emerald-400" : "bg-rose-400"}`}></span>
+                    </span>
                   </div>
                 );
               })}
             </div>
-          }
-          rightContent={
-            <>
-              <div className="hidden lg:flex items-center gap-2 mr-4 pr-4 border-r border-white/5">
-                <WSStatusBadge />
-                <label className="group flex items-center gap-2 cursor-pointer">
-                  <div className="relative flex items-center">
-                    <input type="checkbox" checked={autoRefresh} onChange={(e) => toggleAutoRefresh(e.target.checked)} className="peer sr-only" />
-                    <div className="w-9 h-5 bg-slate-800 rounded-full border border-white/10 peer-checked:bg-blue-600 peer-checked:border-blue-500 transition-all shadow-inner"></div>
-                    <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-4 shadow-sm"></div>
-                  </div>
-                  <span className="hidden xl:inline text-xs font-medium text-slate-400 group-hover:text-blue-300 transition-colors">{t("common.auto30s")}</span>
-                </label>
-              </div>
-
-              <button
-                onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/5 bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all hover:scale-105 active:scale-95"
-              >
-                {theme === "evening" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <WSStatusBadge />
+              <button onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/5 bg-white/5 text-slate-400 hover:text-white transition-all">
+                {theme === "evening" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
               </button>
-
-              <EditModeButton />
-
-              <div className="hidden md:block ml-2 pl-2 border-l border-white/5">
-                <UserMenu />
-              </div>
-            </>
-          }
-          bottomRightContent={
-            <button
-              onClick={fetchAll}
-              disabled={isLoading}
-              className="group relative overflow-hidden flex items-center gap-2 px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-sm font-bold text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all duration-300 disabled:opacity-50 disabled:shadow-none"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <PlayCircle className="h-4 w-4" />
-              )}
-              <span className="tracking-wider">{isLoading ? t("common.running") : "RUN AI"}</span>
-            </button>
-          }
-        />
+              <button onClick={fetchAll} disabled={isLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all"
+                style={{ background: 'linear-gradient(135deg, #2563eb, #4f46e5)', boxShadow: '0 0 12px rgba(37,99,235,0.3)' }}>
+                {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PlayCircle className="h-3.5 w-3.5" />}
+                <span>RUN AI</span>
+              </button>
+            </div>
+          </div>
+        </div>
 
         <DraggableDashboard>
           <main className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-20 md:pb-8">
@@ -1485,7 +1429,21 @@ export default function HomePage() {
               </div>
             )}
 
-
+            {/* ═══ PULSE PANELS ═══ */}
+            {getCard("pulse-panel")?.visible !== false && (
+              <div className="mb-6 w-full">
+                <LazyPanel fallbackHeight={300}>
+                  <PulsePanel />
+                </LazyPanel>
+              </div>
+            )}
+            {getCard("pulse-v3")?.visible !== false && (
+              <div className="mb-6 w-full">
+                <LazyPanel fallbackHeight={300}>
+                  <PulseV3Panel />
+                </LazyPanel>
+              </div>
+            )}
 
           </main>
         </DraggableDashboard>
