@@ -98,8 +98,8 @@ export default function LiveChartPanel({
   const { data: chartData, isLoading, refetch } = useQuery({
     queryKey: ["live-chart", symbol, timeframe],
     queryFn: () => fetchChartData(symbol, timeframe),
-    refetchInterval: 10000, // Refresh every 10 seconds
-    staleTime: 5000,
+    refetchInterval: 60000,
+    staleTime: 30000,
   });
 
   // Fetch live price every 2 seconds
@@ -111,7 +111,7 @@ export default function LiveChartPanel({
         setLastUpdate(new Date());
       }
     };
-    
+
     fetchPrice();
     const interval = setInterval(fetchPrice, 5000);
     return () => clearInterval(interval);
@@ -270,11 +270,10 @@ export default function LiveChartPanel({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-            symbol.includes("XAU") 
-              ? "bg-gradient-to-br from-amber-500/30 to-yellow-500/30" 
+          <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${symbol.includes("XAU")
+              ? "bg-gradient-to-br from-amber-500/30 to-yellow-500/30"
               : "bg-gradient-to-br from-emerald-500/30 to-teal-500/30"
-          }`}>
+            }`}>
             <Activity className={`h-5 w-5 ${symbol.includes("XAU") ? "text-amber-400" : "text-emerald-400"}`} />
           </div>
           <div>
@@ -283,9 +282,8 @@ export default function LiveChartPanel({
               <span className="font-mono text-lg font-semibold">
                 {displayPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
-              <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded ${
-                isPositive ? "bg-success/20 text-success" : "bg-danger/20 text-danger"
-              }`}>
+              <span className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded ${isPositive ? "bg-success/20 text-success" : "bg-danger/20 text-danger"
+                }`}>
                 {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                 {isPositive ? "+" : ""}{priceChangePercent.toFixed(2)}%
               </span>
@@ -311,11 +309,10 @@ export default function LiveChartPanel({
               <button
                 key={tf}
                 onClick={() => setTimeframe(tf)}
-                className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase transition ${
-                  timeframe === tf 
-                    ? "bg-accent text-white" 
+                className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase transition ${timeframe === tf
+                    ? "bg-accent text-white"
                     : "text-textSecondary hover:text-white hover:bg-white/10"
-                }`}
+                  }`}
               >
                 {tf}
               </button>

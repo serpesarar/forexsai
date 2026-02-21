@@ -718,7 +718,7 @@ export default function HomePage() {
     // The fetchAll() call was causing full page re-renders every 30 seconds
     // which broke the smooth live price experience and clock ticking
     return undefined;
-    
+
     /* OLD CODE - REMOVED:
     if (!autoRefresh) return undefined;
     const interval = setInterval(() => {
@@ -1464,25 +1464,27 @@ export default function HomePage() {
           {/* ═══ CLEAR TREND — Full-width hero panel ═══ */}
           {getCard("clear-trend")?.visible !== false && (
             <div className="mb-6 w-full">
-              <CyberpunkTrendPanel />
+              <LazyPanel fallbackHeight={300}>
+                <CyberpunkTrendPanel />
+              </LazyPanel>
             </div>
           )}
 
           {/* ═══ STRATEGY OPTIMIZER — Full-width risk panel ═══ */}
           {getCard("strategy-optimizer")?.visible !== false && (
             <div className="mb-6 w-full">
-              <Suspense fallback={<div className="h-[200px] bg-[#0a0e27] rounded-xl animate-pulse" />}>
+              <LazyPanel fallbackHeight={200}>
                 <StrategyOptimizerPanel />
-              </Suspense>
+              </LazyPanel>
             </div>
           )}
 
           {/* ═══ HARMONIC VISUALIZER — Full-width panel ═══ */}
           {getCard("harmonic-visualizer")?.visible !== false && (
             <div className="mb-6 w-full">
-              <Suspense fallback={<div className="h-[500px] bg-[#0a0e27] rounded-xl animate-pulse" />}>
+              <LazyPanel fallbackHeight={500}>
                 <HarmonicVisualizerPanel />
-              </Suspense>
+              </LazyPanel>
             </div>
           )}
 

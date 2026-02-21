@@ -18,8 +18,8 @@ export function useRtyhiimDetect(symbol: string = "NDX.INDX") {
   return useQuery({
     queryKey: ["rtyhiim", symbol],
     queryFn: () => fetcher(`/api/rtyhiim/detect?symbol=${encodeURIComponent(symbol)}`, { method: "POST", body: "{}" }),
-    refetchInterval: 30000, // Auto-refresh every 30 seconds
-    staleTime: 15000
+    refetchInterval: 120000,
+    staleTime: 60000
   });
 }
 
@@ -51,7 +51,7 @@ export function useConsolidation(symbol: string = "NDX.INDX", lookback: number =
   return useQuery<ConsolidationData>({
     queryKey: ["consolidation", symbol, lookback, interval],
     queryFn: () => fetcher(`/api/rtyhiim/consolidation?symbol=${encodeURIComponent(symbol)}&lookback=${lookback}&interval=${interval}`),
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 60000,
+    refetchInterval: 120000,
   });
 }

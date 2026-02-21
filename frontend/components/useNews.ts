@@ -35,7 +35,7 @@ export function useNews() {
   return useQuery({
     queryKey: ["news-feed", impactFilter, categoryFilter],
     queryFn: () => fetcher<NewsFeedResponse>(endpoint),
-    refetchInterval: 60000,
-    refetchIntervalInBackground: true
+    refetchInterval: 120000,
+    refetchIntervalInBackground: false
   });
 }

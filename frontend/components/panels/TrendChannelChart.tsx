@@ -40,7 +40,7 @@ export default function TrendChannelChart({
 }: TrendChannelChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const [tick, setTick] = useState(0);
+
 
   // Visibility Toggles
   const [showSR, setShowSR] = useState(true);
@@ -58,10 +58,7 @@ export default function TrendChannelChart({
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, offset: 0 });
 
-  useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 1200);
-    return () => clearInterval(id);
-  }, []);
+
 
   // Mouse handlers for horizontal scroll through data
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -267,9 +264,8 @@ export default function TrendChannelChart({
   if (!computed) return null;
 
   const { pricePath, areaPath, upperPath, lowerPath, middlePath, channelFillPath, yScale, lastX, gridLines, xLabels } = computed;
-  const pulse = Math.sin(tick * Math.PI * 0.8);
-  // Make pulse stronger and faster for S/R lines as requested
-  const srPulse = 0.5 + Math.sin(tick * Math.PI * 1.5) * 0.4;
+  // Static values — animation handled by CSS @keyframes (no JS re-renders)
+  const srPulse = 0.5;
 
   return (
     <div
@@ -302,6 +298,11 @@ export default function TrendChannelChart({
           50% { opacity: 0.8; stroke-width: 6px; }
         }
         .ripple-effect { animation: ripple 1.5s ease-out infinite; transform-origin: center; transform-box: fill-box; }
+        .price-dot-glow { animation: priceDotGlow 2.4s ease-in-out infinite; }
+        @keyframes priceDotGlow {
+          0%, 100% { r: 16; opacity: 0.35; }
+          50% { r: 20; opacity: 0.5; }
+        }
       `}</style>
       {/* Scroll controls */}
       <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
@@ -598,7 +599,7 @@ export default function TrendChannelChart({
         {visibleWindow.isAtLatest && (
           <>
             <line x1={PAD.left} y1={yScale(currentPrice)} x2={BASE_W - PAD.right} y2={yScale(currentPrice)} stroke="#00ff88" strokeWidth={1} strokeDasharray="3 3" opacity={0.4} />
-            <circle cx={lastX} cy={yScale(currentPrice)} r={16 + pulse * 4} fill="url(#tcDotGlow)" opacity={0.35 + pulse * 0.15} />
+            <circle cx={lastX} cy={yScale(currentPrice)} r={16} fill="url(#tcDotGlow)" opacity={0.4} className="price-dot-glow" />
             <circle cx={lastX} cy={yScale(currentPrice)} r={5} fill="#00ff88" stroke="#020617" strokeWidth={2} />
             <rect x={BASE_W - PAD.right + 2} y={yScale(currentPrice) - 12} width={84} height={24} rx={5} fill="rgba(0,255,136,0.18)" stroke="#00ff88" strokeWidth={1.2} />
             <text x={BASE_W - PAD.right + 10} y={yScale(currentPrice) + 5} fill="#00ff88" fontSize={11} fontFamily="monospace" fontWeight="bold">

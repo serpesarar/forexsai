@@ -145,8 +145,8 @@ export function useChartData(symbol: string, timeframe: ChartTimeframe) {
         `/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=${timeframe}&limit=500`
       ),
     // IMPORTANT: avoid burning through EODHD quotas; charts don't need 5s polling.
-    refetchInterval: 60000,
-    refetchIntervalInBackground: true
+    refetchInterval: 120000,
+    refetchIntervalInBackground: false
   });
 
   const orderBlocksQuery = useQuery({
@@ -156,8 +156,8 @@ export function useChartData(symbol: string, timeframe: ChartTimeframe) {
         method: "POST",
         body: JSON.stringify({ symbol, timeframe, limit: 500 })
       }),
-    refetchInterval: 15000,
-    refetchIntervalInBackground: true
+    refetchInterval: 120000,
+    refetchIntervalInBackground: false
   });
 
   const claudePatternsQuery = useQuery({
@@ -167,8 +167,8 @@ export function useChartData(symbol: string, timeframe: ChartTimeframe) {
         method: "POST",
         body: JSON.stringify({ symbol, timeframes: [timeframe] })
       }),
-    refetchInterval: 60000,
-    refetchIntervalInBackground: true
+    refetchInterval: 120000,
+    refetchIntervalInBackground: false
   });
 
   const indicatorData = useMemo(() => {

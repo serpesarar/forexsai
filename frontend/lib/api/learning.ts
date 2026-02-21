@@ -77,7 +77,7 @@ async function fetchLearningDashboard(symbol?: string, days: number = 7): Promis
   const params = new URLSearchParams();
   if (symbol) params.append("symbol", symbol);
   params.append("days", days.toString());
-  
+
   const res = await fetch(`${API_BASE}/api/learning/dashboard?${params}`);
   if (!res.ok) throw new Error("Failed to fetch learning dashboard");
   return res.json();
@@ -87,7 +87,7 @@ async function fetchAccuracy(symbol?: string, days: number = 7): Promise<Accurac
   const params = new URLSearchParams();
   if (symbol) params.append("symbol", symbol);
   params.append("days", days.toString());
-  
+
   const res = await fetch(`${API_BASE}/api/learning/accuracy?${params}`);
   if (!res.ok) throw new Error("Failed to fetch accuracy");
   return res.json();
@@ -97,7 +97,7 @@ async function fetchPredictions(symbol?: string, limit: number = 20): Promise<Pr
   const params = new URLSearchParams();
   if (symbol) params.append("symbol", symbol);
   params.append("limit", limit.toString());
-  
+
   const res = await fetch(`${API_BASE}/api/learning/predictions?${params}`);
   if (!res.ok) throw new Error("Failed to fetch predictions");
   return res.json();
@@ -107,7 +107,7 @@ async function fetchFactorAnalysis(symbol?: string, days: number = 30): Promise<
   const params = new URLSearchParams();
   if (symbol) params.append("symbol", symbol);
   params.append("days", days.toString());
-  
+
   const res = await fetch(`${API_BASE}/api/learning/factor-analysis?${params}`);
   if (!res.ok) throw new Error("Failed to fetch factor analysis");
   return res.json();
@@ -160,7 +160,7 @@ async function fetchAccuracyByModel(symbol?: string, days: number = 30, checkInt
   if (symbol) params.append("symbol", symbol);
   params.append("days", days.toString());
   params.append("check_interval", checkInterval);
-  
+
   const res = await fetch(`${API_BASE}/api/learning/accuracy-by-model?${params}`);
   if (!res.ok) throw new Error("Failed to fetch accuracy by model");
   return res.json();
@@ -205,7 +205,7 @@ export function usePredictions(symbol?: string, limit: number = 20) {
     queryKey: ["learning", "predictions", symbol, limit],
     queryFn: () => fetchPredictions(symbol, limit),
     staleTime: 10000,
-    refetchInterval: 30000,
+    refetchInterval: 120000,
   });
 }
 
@@ -269,7 +269,7 @@ async function fetchMultiTargetDashboard(symbol?: string, days: number = 7): Pro
   const params = new URLSearchParams();
   if (symbol) params.append("symbol", symbol);
   params.append("days", days.toString());
-  
+
   const res = await fetch(`${API_BASE}/api/learning/multi-target-dashboard?${params}`);
   if (!res.ok) throw new Error("Failed to fetch multi-target dashboard");
   return res.json();
@@ -528,7 +528,7 @@ export function useCachedNews(symbol: string) {
 
 export function useRefreshNewsCache() {
   return useMutation({
-    mutationFn: ({ symbol, limit }: { symbol: string; limit?: number }) => 
+    mutationFn: ({ symbol, limit }: { symbol: string; limit?: number }) =>
       refreshNewsCache(symbol, limit),
   });
 }
@@ -594,7 +594,7 @@ async function fetchPredictionHistory(
   if (symbol) params.append("symbol", symbol);
   params.append("days", days.toString());
   params.append("limit", limit.toString());
-  
+
   const res = await fetch(`${API_BASE}/api/learning/prediction-history?${params}`);
   if (!res.ok) throw new Error("Failed to fetch prediction history");
   return res.json();
@@ -625,7 +625,7 @@ export async function fixMlCorrectInDatabase(): Promise<{ success: boolean; upda
 export async function resetUiStats(symbol?: string): Promise<any> {
   const params = new URLSearchParams();
   if (symbol) params.append("symbol", symbol);
-  
+
   const res = await fetch(`${API_BASE}/api/learning/reset-ui-stats?${params}`, {
     method: "POST",
   });
@@ -742,7 +742,7 @@ export function useActiveSignals() {
     queryKey: ["signals", "active"],
     queryFn: fetchActiveSignals,
     staleTime: 15000,
-    refetchInterval: 30000,
+    refetchInterval: 120000,
   });
 }
 
