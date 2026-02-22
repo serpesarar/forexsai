@@ -82,7 +82,7 @@ metrics = LifecycleMetrics()
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 LIFECYCLE_CHECK_INTERVAL = 180        # 3 minutes — price check every 3 min
-SIGNAL_MAX_AGE_MINUTES = 15           # Expire after 15 min
+SIGNAL_MAX_AGE_MINUTES = 30            # Expire after 30 min
 MAX_ACTIVE_SIGNALS = 100              # Cap for performance
 ARCHIVE_AFTER_DAYS = 30               # Move to cold storage after 30 days
 

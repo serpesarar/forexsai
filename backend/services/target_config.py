@@ -4,7 +4,7 @@ Symbol-specific pip targets and stoploss levels.
 
 Target definitions (user-specified):
   NASDAQ / DAX:  TP1=15, TP2=25, TP3=35, TP4=50 pips, SL=50 pips
-  XAUUSD:        TP1=7,  TP2=12, TP3=20, TP4=30 pips, SL=10 pips
+  XAUUSD:        TP1=4,  TP2=7,  TP3=10, TP4=17 pips, SL=8 pips  (1 pip = $1.00)
   US OIL:        TP1=0.02%, TP2=0.04%, TP3=0.06%, TP4=0.1%, SL=0.05% (percentage-based)
 """
 from typing import Dict, List, NamedTuple
@@ -24,7 +24,7 @@ class SymbolConfig(NamedTuple):
 # ─── Symbol configs ───────────────────────────────────────────────────────────
 # NASDAQ-100: 1 pip = 1 index point
 # DAX:        1 pip = 1 index point
-# XAUUSD:     1 pip = $0.10 (gold trades in $0.01 steps → 1 pip = 10 ticks)
+# XAUUSD:     1 pip = $1.00 (4711 → 4710 = 1 pip)
 # US OIL:     percentage-based targets (pip_value=1.0, pips = % of entry)
 
 SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
@@ -51,14 +51,14 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
         is_percentage=False,
     ),
     "XAUUSD": SymbolConfig(
-        pip_value=0.01,  # 1 pip = $0.01 (1 cent) - DÜZELTİLDİ
+        pip_value=1.0,  # 1 pip = $1.00 (4711→4710 = 1 pip)
         targets=[
-            TargetLevel("TP1", 300),   # 300 pips = $3.00
-            TargetLevel("TP2", 600),   # 600 pips = $6.00
-            TargetLevel("TP3", 1000),  # 1000 pips = $10.00
-            TargetLevel("TP4", 1500),  # 1500 pips = $15.00
+            TargetLevel("TP1", 4),    # 4 pips = $4.00
+            TargetLevel("TP2", 7),    # 7 pips = $7.00
+            TargetLevel("TP3", 10),   # 10 pips = $10.00
+            TargetLevel("TP4", 17),   # 17 pips = $17.00
         ],
-        stoploss_pips=500,  # 500 pips = $5.00
+        stoploss_pips=8,  # 8 pips = $8.00
         is_percentage=False,
     ),
     "CL.COMM": SymbolConfig(

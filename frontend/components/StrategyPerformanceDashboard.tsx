@@ -27,7 +27,7 @@ const STRATEGY_LABELS: Record<string, string> = {
 
 const SYMBOL_TARGETS: Record<string, Record<string, number>> = {
   "NDX.INDX": { TP1: 15, TP2: 25, TP3: 35, TP4: 50, SL: 50 },
-  XAUUSD: { TP1: 7, TP2: 12, TP3: 20, TP4: 30, SL: 10 },
+  XAUUSD: { TP1: 4, TP2: 7, TP3: 10, TP4: 17, SL: 8 },
   "GDAXI.INDX": { TP1: 15, TP2: 25, TP3: 35, TP4: 50, SL: 50 },
   "CL.COMM": { TP1: 0.02, TP2: 0.04, TP3: 0.06, TP4: 0.10, SL: 0.05 },
 };
@@ -88,7 +88,7 @@ export default function StrategyPerformanceDashboard({ symbol = "XAUUSD" }: Stra
           <BarChart3 className="w-5 h-5 text-blue-400" />
           <h2 className="text-lg font-semibold text-white">Strategy Performance</h2>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <select
             value={selectedSymbol}
@@ -100,7 +100,7 @@ export default function StrategyPerformanceDashboard({ symbol = "XAUUSD" }: Stra
             <option value="GDAXI.INDX">DAX</option>
             <option value="CL.COMM">US Oil</option>
           </select>
-          
+
           <select
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
@@ -110,7 +110,7 @@ export default function StrategyPerformanceDashboard({ symbol = "XAUUSD" }: Stra
             <option value={30}>30 Days</option>
             <option value={90}>90 Days</option>
           </select>
-          
+
           <button
             onClick={fetchData}
             disabled={loading}
@@ -136,15 +136,14 @@ export default function StrategyPerformanceDashboard({ symbol = "XAUUSD" }: Stra
           <button
             key={dir}
             onClick={() => setSelectedDirection(dir)}
-            className={`px-3 py-1 rounded text-sm ${
-              selectedDirection === dir
+            className={`px-3 py-1 rounded text-sm ${selectedDirection === dir
                 ? dir === "BUY"
                   ? "bg-green-600 text-white"
                   : dir === "SELL"
-                  ? "bg-red-600 text-white"
-                  : "bg-blue-600 text-white"
+                    ? "bg-red-600 text-white"
+                    : "bg-blue-600 text-white"
                 : "bg-gray-800 text-gray-400"
-            }`}
+              }`}
           >
             {dir === "BUY" ? <TrendingUp className="w-4 h-4 inline mr-1" /> : null}
             {dir === "SELL" ? <TrendingDown className="w-4 h-4 inline mr-1" /> : null}

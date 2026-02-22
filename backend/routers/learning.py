@@ -1320,15 +1320,8 @@ async def get_strategy_performance(
         # Get predictions with lifecycle fields
         result = client.table("prediction_logs").select(
             "id, symbol, strategy, ml_confidence, status, targets_hit, model_type"
-        ).gte("created_at", cutoff_iso).limit(500).execute()
+        ).gte("created_at", cutoff_iso).limit(1000).execute()
         predictions = (result.get('data') if isinstance(result, dict) else getattr(result, 'data', None)) or []
-        
-        # Get outcomes from outcome_results (ANY check_interval, not just 24h)
-        outcome_result = client.table("outcome_results").select(
-            "prediction_id, ml_correct, hit_target, hit_stop"
-        ).limit(1000).execute()
-        outcomes_list = (outcome_result.get('data') if isinstance(outcome_result, dict) else getattr(outcome_result, 'data', None)) or []
-        outcomes_map = {o.get("prediction_id"): o for o in outcomes_list if o.get("prediction_id")}
         
         # Classify by confidence — thresholds adjusted for realistic ML output
         # ML typically produces 45-70% confidence range
@@ -1348,7 +1341,7 @@ async def get_strategy_performance(
         
         outcomes_found = 0
         
-        # Process
+        # Process — use ONLY lifecycle status as single source of truth
         for p in predictions:
             sym = p.get("symbol")
             if sym not in stats:
@@ -1357,26 +1350,24 @@ async def get_strategy_performance(
                 conf = float(p.get("ml_confidence", 50) or 50)
             except:
                 conf = 50
-            strat = p.get("strategy") or classify(conf)
-            if strat not in stats[sym]:
-                strat = classify(conf)
+            # Always use confidence-based classification (ignore stored strategy field
+            # which may contain model type names like "PULSE", "EMEL", etc.)
+            strat = classify(conf)
             
             stats[sym][strat]["total"] += 1
             stats[sym][strat]["conf_sum"] += conf
             
-            # Check for outcome from EITHER source
-            has_outcome = False
-            hit_target = False
-            hit_stop = False
-            
-            # Source 1: prediction_logs lifecycle status (primary — more reliable)
+            # Use ONLY lifecycle status for outcomes (single source of truth)
             p_status = p.get("status")
             if p_status in ("completed", "stopped"):
-                has_outcome = True
+                outcomes_found += 1
+                stats[sym][strat]["with_outcome"] += 1
+                
                 if p_status == "completed":
-                    hit_target = True
+                    stats[sym][strat]["correct"] += 1
+                    stats[sym][strat]["target_hits"] += 1
                 elif p_status == "stopped":
-                    hit_stop = True
+                    stats[sym][strat]["stop_hits"] += 1
                 
                 # Parse targets_hit for per-TP tracking
                 targets_hit = parse_json_field(p.get("targets_hit"), {})
@@ -1385,31 +1376,6 @@ async def get_strategy_performance(
                     if targets_hit.get("TP2"): stats[sym][strat]["tp2_hits"] += 1
                     if targets_hit.get("TP3"): stats[sym][strat]["tp3_hits"] += 1
                     if targets_hit.get("TP4"): stats[sym][strat]["tp4_hits"] += 1
-            
-            # Source 2: outcome_results table (fallback)
-            if not has_outcome:
-                outcome = outcomes_map.get(p.get("id"))
-                if outcome:
-                    has_outcome = True
-                    ot = outcome.get("hit_target", False)
-                    os_ = outcome.get("hit_stop", False)
-                    # If both hit_target and hit_stop are true, 
-                    # the signal ultimately lost — prioritize stop
-                    if os_:
-                        hit_stop = True
-                        hit_target = False
-                    elif ot:
-                        hit_target = True
-            
-            if has_outcome:
-                outcomes_found += 1
-                stats[sym][strat]["with_outcome"] += 1
-                # A signal is either correct OR stopped, never both
-                if hit_target and not hit_stop:
-                    stats[sym][strat]["correct"] += 1
-                    stats[sym][strat]["target_hits"] += 1
-                elif hit_stop:
-                    stats[sym][strat]["stop_hits"] += 1
         
         # Build result
         result_data = {}
