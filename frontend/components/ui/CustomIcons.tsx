@@ -13,28 +13,28 @@ interface IconProps {
  */
 export function DashboardIcon({ className, size = 18, style }: IconProps) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            style={style}
-        >
-            {/* Top‑left block */}
-            <rect x="2" y="2" width="8" height="7" rx="1.5" />
-            {/* Top‑right block */}
-            <rect x="14" y="2" width="8" height="7" rx="1.5" />
-            {/* Bottom‑left small block */}
-            <rect x="2" y="13" width="8" height="9" rx="1.5" />
-            {/* Bottom‑right sparkline area */}
-            <rect x="14" y="13" width="8" height="9" rx="1.5" />
-            {/* Mini sparkline inside bottom‑right */}
-            <polyline points="15.5,19 17,16 18.5,18 20.5,15" strokeWidth="1.2" />
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+            <defs>
+                <linearGradient id="dash-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#00E0C6" />
+                    <stop offset="100%" stopColor="#0077ff" />
+                </linearGradient>
+                <filter id="dash-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+            {/* Holographic backdrop lines */}
+            <line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" strokeWidth="0.5" opacity="0.1" strokeDasharray="1 2" />
+            {/* Left large block */}
+            <rect x="3" y="3" width="8" height="18" rx="2" stroke="url(#dash-grad)" strokeWidth="1.5" fill="rgba(0,224,198,0.1)" filter="url(#dash-glow)" />
+            {/* Top right block */}
+            <rect x="14" y="3" width="7" height="8" rx="2" stroke="#0077ff" strokeWidth="1.5" fill="rgba(0,119,255,0.1)" filter="url(#dash-glow)" />
+            {/* Bottom right block with graph */}
+            <rect x="14" y="14" width="7" height="7" rx="2" stroke="#00E0C6" strokeWidth="1" opacity="0.7" />
+            <path d="M 15 18 L 17 16 L 18 17 L 20 15" stroke="#00E0C6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="7" cy="7" r="1.5" fill="#00E0C6" filter="url(#dash-glow)" />
+            <circle cx="7" cy="17" r="1.5" fill="#0077ff" filter="url(#dash-glow)" />
         </svg>
     );
 }
@@ -44,35 +44,38 @@ export function DashboardIcon({ className, size = 18, style }: IconProps) {
  */
 export function ChartsIcon({ className, size = 18, style }: IconProps) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            style={style}
-        >
-            {/* Candle 1 (bullish) */}
-            <line x1="6" y1="2" x2="6" y2="5" />
-            <rect x="4.5" y="5" width="3" height="9" rx="0.5" strokeWidth="1.5" />
-            <line x1="6" y1="14" x2="6" y2="17" />
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+            <defs>
+                <linearGradient id="chart-bull" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#00ff88" />
+                    <stop offset="100%" stopColor="#00ccff" />
+                </linearGradient>
+                <linearGradient id="chart-bear" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#ff3366" />
+                    <stop offset="100%" stopColor="#aa00ff" />
+                </linearGradient>
+                <filter id="chart-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+            {/* Holographic grid */}
+            <line x1="2" y1="20" x2="22" y2="20" stroke="currentColor" strokeWidth="1" opacity="0.3" strokeDasharray="2 3" />
+            <line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" strokeWidth="0.5" opacity="0.1" />
 
-            {/* Candle 2 (bearish, taller) */}
-            <line x1="12" y1="3" x2="12" y2="6" />
-            <rect x="10.5" y="6" width="3" height="11" rx="0.5" strokeWidth="1.5" fill="currentColor" fillOpacity="0.15" />
-            <line x1="12" y1="17" x2="12" y2="20" />
+            {/* Bull candle */}
+            <line x1="6" y1="5" x2="6" y2="18" stroke="#00ff88" strokeWidth="1.5" filter="url(#chart-glow)" />
+            <rect x="4" y="9" width="4" height="6" rx="1" fill="url(#chart-bull)" filter="url(#chart-glow)" />
 
-            {/* Candle 3 (bullish, short) */}
-            <line x1="18" y1="5" x2="18" y2="8" />
-            <rect x="16.5" y="8" width="3" height="7" rx="0.5" strokeWidth="1.5" />
-            <line x1="18" y1="15" x2="18" y2="19" />
+            {/* Bear candle (tall) */}
+            <line x1="12" y1="3" x2="12" y2="22" stroke="#ff3366" strokeWidth="1.5" filter="url(#chart-glow)" />
+            <rect x="10" y="5" width="4" height="12" rx="1" fill="url(#chart-bear)" filter="url(#chart-glow)" />
 
-            {/* Baseline */}
-            <line x1="2" y1="22" x2="22" y2="22" strokeWidth="1" opacity="0.4" />
+            {/* Bull candle 2 */}
+            <line x1="18" y1="8" x2="18" y2="16" stroke="#00ccff" strokeWidth="1.5" filter="url(#chart-glow)" />
+            <rect x="16" y="10" width="4" height="4" rx="1" fill="url(#chart-bull)" filter="url(#chart-glow)" />
+            {/* Dynamic trend line overlay */}
+            <path d="M 3 14 L 10 6 L 15 10 L 22 4" stroke="#ffffff" strokeWidth="1" opacity="0.8" strokeLinecap="round" strokeDasharray="3 3" />
         </svg>
     );
 }
@@ -82,35 +85,31 @@ export function ChartsIcon({ className, size = 18, style }: IconProps) {
  */
 export function TradingIcon({ className, size = 18, style }: IconProps) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            style={style}
-        >
-            {/* Input nodes */}
-            <circle cx="4" cy="7" r="2" />
-            <circle cx="4" cy="17" r="2" />
-            {/* Hidden node */}
-            <circle cx="12" cy="12" r="2.5" />
-            {/* Output node */}
-            <circle cx="20" cy="12" r="2" />
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+            <defs>
+                <linearGradient id="trade-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#f0f" />
+                    <stop offset="100%" stopColor="#00E0C6" />
+                </linearGradient>
+                <filter id="trade-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="2" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+            {/* Grid structure */}
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="0.5" strokeDasharray="1 3" opacity="0.2" />
+            {/* Exchange arrows complex */}
+            <path d="M 14 5 L 19 10 L 14 15" stroke="url(#trade-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="rgba(255,0,255,0.1)" filter="url(#trade-glow)" />
+            <path d="M 19 10 L 4 10" stroke="#f0f" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="3 3" filter="url(#trade-glow)" />
 
-            {/* Connections input→hidden */}
-            <line x1="6" y1="7" x2="9.5" y2="11" />
-            <line x1="6" y1="17" x2="9.5" y2="13" />
+            <path d="M 10 19 L 5 14 L 10 9" stroke="url(#trade-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="rgba(0,224,198,0.1)" filter="url(#trade-glow)" />
+            <path d="M 5 14 L 20 14" stroke="#00E0C6" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="3 3" filter="url(#trade-glow)" />
 
-            {/* Connections hidden→output */}
-            <line x1="14.5" y1="12" x2="18" y2="12" />
-
-            {/* Signal pulse on output */}
-            <path d="M20 8 Q21.5 8 22 10" strokeWidth="1.2" opacity="0.6" />
+            {/* Central glowing node */}
+            <circle cx="12" cy="12" r="3" fill="url(#trade-grad)" filter="url(#trade-glow)" />
+            <circle cx="12" cy="12" r="1" fill="#fff" />
+            <circle cx="4" cy="10" r="1.5" fill="#f0f" filter="url(#trade-glow)" />
+            <circle cx="20" cy="14" r="1.5" fill="#00E0C6" filter="url(#trade-glow)" />
         </svg>
     );
 }
@@ -120,26 +119,32 @@ export function TradingIcon({ className, size = 18, style }: IconProps) {
  */
 export function AnalysisIcon({ className, size = 18, style }: IconProps) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            style={style}
-        >
-            {/* Magnifier circle */}
-            <circle cx="10.5" cy="10.5" r="7" />
-            {/* Handle */}
-            <line x1="15.8" y1="15.8" x2="21" y2="21" strokeWidth="2" />
-            {/* Micro trend line inside lens */}
-            <polyline points="6.5,12.5 8.5,9.5 10.5,11 12.5,7.5" strokeWidth="1.3" />
-            {/* Small dot at end = current price */}
-            <circle cx="12.5" cy="7.5" r="0.8" fill="currentColor" strokeWidth="0" />
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+            <defs>
+                <linearGradient id="ai-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ffff00" />
+                    <stop offset="100%" stopColor="#ff00ff" />
+                </linearGradient>
+                <filter id="ai-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+            {/* Lens scope backdrop */}
+            <path d="M 2 10 L 4 10 M 10 2 L 10 4 M 16 10 L 18 10 M 10 16 L 10 18" stroke="currentColor" strokeWidth="0.5" opacity="0.4" />
+            {/* Cyber eye / Magnifier */}
+            <circle cx="10" cy="10" r="7" stroke="url(#ai-grad)" strokeWidth="1.5" fill="rgba(255,0,255,0.1)" filter="url(#ai-glow)" />
+            {/* Lens flare / inner targeting */}
+            <circle cx="10" cy="10" r="3" stroke="#ffff00" strokeWidth="1" strokeDasharray="1 2" opacity="0.5" filter="url(#ai-glow)" />
+            <path d="M 10 10 L 10 6" stroke="#ffff00" strokeWidth="1" filter="url(#ai-glow)" />
+            <path d="M 10 10 L 13 10" stroke="#ff00ff" strokeWidth="1" filter="url(#ai-glow)" />
+            {/* Handle as a circuit trace */}
+            <path d="M 15 15 L 18 18 L 18 22 M 18 18 L 22 18" stroke="url(#ai-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" filter="url(#ai-glow)" />
+            <circle cx="22" cy="18" r="1.5" fill="#ff00ff" />
+            <circle cx="18" cy="22" r="1.5" fill="#ffff00" />
+            {/* Sine wave traversing eye */}
+            <path d="M 5 12 Q 7 7 10 10 T 15 8" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
+            <circle cx="15" cy="8" r="1" fill="#fff" filter="url(#ai-glow)" />
         </svg>
     );
 }
@@ -149,28 +154,35 @@ export function AnalysisIcon({ className, size = 18, style }: IconProps) {
  */
 export function SignalsIcon({ className, size = 18, style }: IconProps) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            style={style}
-        >
-            {/* Inner arc */}
-            <path d="M8.5 18 A6 6 0 0 1 8.5 6" />
-            <path d="M15.5 6 A6 6 0 0 1 15.5 18" />
-            {/* Middle arc */}
-            <path d="M5.5 21 A9.5 9.5 0 0 1 5.5 3" />
-            <path d="M18.5 3 A9.5 9.5 0 0 1 18.5 21" />
-            {/* Center dot = signal origin */}
-            <circle cx="12" cy="12" r="1.5" fill="currentColor" strokeWidth="0" />
-            {/* Vertical line below */}
-            <line x1="12" y1="13.5" x2="12" y2="20" />
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+            <defs>
+                <linearGradient id="sig-grad" x1="50%" y1="100%" x2="50%" y2="0%">
+                    <stop offset="0%" stopColor="#00ff88" />
+                    <stop offset="50%" stopColor="#00ccff" />
+                    <stop offset="100%" stopColor="#b900ff" />
+                </linearGradient>
+                <filter id="sig-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="2" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+            {/* Radar base sweep */}
+            <path d="M 2 22 L 22 22 L 12 12 Z" fill="url(#sig-grad)" opacity="0.15" />
+            <line x1="12" y1="22" x2="12" y2="12" stroke="#ffffff" strokeWidth="1" strokeDasharray="1 2" opacity="0.4" />
+            <line x1="2" y1="22" x2="22" y2="22" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.2" />
+
+            {/* Broadcasting arcs */}
+            <path d="M 5 15 Q 12 8 19 15" stroke="url(#sig-grad)" strokeWidth="1.5" strokeLinecap="round" filter="url(#sig-glow)" />
+            <path d="M 8 18 Q 12 14 16 18" stroke="#00ccff" strokeWidth="2" strokeLinecap="round" filter="url(#sig-glow)" />
+            <path d="M 2 12 Q 12 2 22 12" stroke="#b900ff" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="4 2" filter="url(#sig-glow)" />
+
+            {/* Epicenters */}
+            <circle cx="12" cy="22" r="3" fill="#00ff88" filter="url(#sig-glow)" />
+            <circle cx="12" cy="22" r="1.5" fill="#fff" />
+
+            {/* Satellite nodes */}
+            <circle cx="5" cy="15" r="1.5" fill="#00ccff" filter="url(#sig-glow)" />
+            <circle cx="19" cy="15" r="1.5" fill="#00ccff" filter="url(#sig-glow)" />
         </svg>
     );
 }
@@ -182,22 +194,29 @@ export function SignalsIcon({ className, size = 18, style }: IconProps) {
  */
 export function PulseIcon({ className, size = 18, style }: IconProps) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            style={style}
-        >
-            {/* ECG pulse line */}
-            <polyline points="2,12 5,12 7,6 9,18 11,9 13,15 15,12 22,12" />
-            {/* Signal dot */}
-            <circle cx="22" cy="12" r="1.5" fill="currentColor" strokeWidth="0" />
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+            <defs>
+                <linearGradient id="pulse-grad" x1="0%" y1="50%" x2="100%" y2="50%">
+                    <stop offset="0%" stopColor="#00E0C6" stopOpacity="0" />
+                    <stop offset="30%" stopColor="#00E0C6" />
+                    <stop offset="70%" stopColor="#7000FF" />
+                    <stop offset="100%" stopColor="#FF00FF" stopOpacity="0" />
+                </linearGradient>
+                <filter id="pulse-glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="1.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+            {/* Grid bg */}
+            <path d="M 2 12 L 22 12 M 12 2 L 12 22" stroke="currentColor" strokeWidth="0.5" strokeDasharray="1 3" opacity="0.2" />
+
+            {/* Signal wave */}
+            <path d="M 1 12 L 5 12 L 8 5 L 12 19 L 16 9 L 19 12 L 23 12" stroke="url(#pulse-grad)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" filter="url(#pulse-glow)" />
+
+            {/* Nodes */}
+            <circle cx="8" cy="5" r="2" fill="#00E0C6" filter="url(#pulse-glow)" />
+            <circle cx="12" cy="19" r="2" fill="#7000FF" filter="url(#pulse-glow)" />
+            <circle cx="16" cy="9" r="2" fill="#FF00FF" filter="url(#pulse-glow)" />
         </svg>
     );
 }
@@ -207,30 +226,29 @@ export function PulseIcon({ className, size = 18, style }: IconProps) {
  */
 export function EmelIcon({ className, size = 18, style }: IconProps) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            style={style}
-        >
-            {/* 3×3 dot grid */}
-            <circle cx="5" cy="5" r="1.5" fill="currentColor" strokeWidth="0" />
-            <circle cx="12" cy="5" r="1.5" fill="currentColor" strokeWidth="0" />
-            <circle cx="19" cy="5" r="1.5" fill="currentColor" strokeWidth="0" />
-            <circle cx="5" cy="12" r="1.5" fill="currentColor" strokeWidth="0" />
-            <circle cx="12" cy="12" r="2.2" />
-            <circle cx="19" cy="12" r="1.5" fill="currentColor" strokeWidth="0" />
-            <circle cx="5" cy="19" r="1.5" fill="currentColor" strokeWidth="0" />
-            <circle cx="12" cy="19" r="1.5" fill="currentColor" strokeWidth="0" />
-            <circle cx="19" cy="19" r="1.5" fill="currentColor" strokeWidth="0" />
-            {/* Checkpoint path connecting them */}
-            <path d="M5,5 L12,12 L19,5 M5,19 L12,12 L19,19" strokeWidth="0.8" opacity="0.4" />
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+            <defs>
+                <linearGradient id="emel-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ff00cc" />
+                    <stop offset="100%" stopColor="#333399" />
+                </linearGradient>
+                <filter id="emel-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="2" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+            {/* Neural Net connections */}
+            <path d="M 4 4 L 20 20 M 20 4 L 4 20 M 12 2 L 12 22 M 2 12 L 22 12" stroke="currentColor" strokeWidth="0.5" opacity="0.2" />
+            {/* Sub glow lines */}
+            <path d="M 6 12 L 12 6 L 18 12 L 12 18 Z" stroke="url(#emel-grad)" strokeWidth="1" strokeDasharray="2 2" filter="url(#emel-glow)" opacity="0.6" />
+            {/* Core brain/grid */}
+            <rect x="7" y="7" width="10" height="10" rx="3" stroke="url(#emel-grad)" strokeWidth="2" filter="url(#emel-glow)" />
+            <circle cx="12" cy="12" r="2.5" fill="#ff00cc" filter="url(#emel-glow)" />
+            {/* Floating nodes */}
+            <circle cx="6" cy="6" r="2" fill="#333399" filter="url(#emel-glow)" />
+            <circle cx="18" cy="6" r="2" fill="#333399" filter="url(#emel-glow)" />
+            <circle cx="6" cy="18" r="2" fill="#333399" filter="url(#emel-glow)" />
+            <circle cx="18" cy="18" r="2" fill="#333399" filter="url(#emel-glow)" />
         </svg>
     );
 }
@@ -240,26 +258,25 @@ export function EmelIcon({ className, size = 18, style }: IconProps) {
  */
 export function SMCIcon({ className, size = 18, style }: IconProps) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            style={style}
-        >
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+            <defs>
+                <linearGradient id="smc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#00ff88" />
+                    <stop offset="100%" stopColor="#ffff00" />
+                </linearGradient>
+                <filter id="smc-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
             {/* Order block rectangles */}
-            <rect x="2" y="14" width="9" height="4" rx="1" />
-            <rect x="2" y="9" width="9" height="4" rx="1" />
+            <rect x="2" y="14" width="9" height="5" rx="1.5" stroke="url(#smc-grad)" strokeWidth="1.5" fill="rgba(0,255,136,0.15)" filter="url(#smc-glow)" />
+            <rect x="2" y="8" width="8" height="3" rx="1" stroke="#ffff00" strokeWidth="1" opacity="0.6" />
             {/* Flow arrow to right */}
-            <path d="M13 12 L19 12" />
-            <path d="M16 8 L20 12 L16 16" />
+            <path d="M13 12 L19 12" stroke="url(#smc-grad)" strokeWidth="2" strokeLinecap="round" filter="url(#smc-glow)" />
+            <path d="M16 8 L20 12 L16 16" stroke="url(#smc-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" filter="url(#smc-glow)" />
             {/* Target circle */}
-            <circle cx="20" cy="12" r="1.5" fill="currentColor" strokeWidth="0" />
+            <circle cx="20" cy="12" r="2" fill="#ffff00" filter="url(#smc-glow)" />
         </svg>
     );
 }
@@ -269,28 +286,28 @@ export function SMCIcon({ className, size = 18, style }: IconProps) {
  */
 export function MTFIcon({ className, size = 18, style }: IconProps) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            style={style}
-        >
-            {/* Layer 1 — M5 (narrowest) */}
-            <rect x="2" y="19" width="20" height="2.5" rx="0.8" />
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+            <defs>
+                <linearGradient id="mtf-grad" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#00ccff" />
+                    <stop offset="100%" stopColor="#00ff88" />
+                </linearGradient>
+                <filter id="mtf-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+            {/* Layer 1 — M5 */}
+            <rect x="2" y="19" width="20" height="3" rx="1" stroke="currentColor" strokeWidth="0.5" fill="rgba(0,204,255,0.1)" />
             {/* Layer 2 — H1 */}
-            <rect x="3" y="15" width="18" height="2.5" rx="0.8" opacity="0.8" />
+            <rect x="3" y="14" width="18" height="3" rx="1" stroke="currentColor" strokeWidth="0.5" fill="rgba(0,255,136,0.1)" />
             {/* Layer 3 — H4 */}
-            <rect x="5" y="11" width="14" height="2.5" rx="0.8" opacity="0.6" />
-            {/* Layer 4 — D1 (top, narrowest) */}
-            <rect x="8" y="7" width="8" height="2.5" rx="0.8" opacity="0.4" />
+            <rect x="5" y="9" width="14" height="3" rx="1" stroke="currentColor" strokeWidth="0.5" fill="rgba(0,204,255,0.2)" />
+            {/* Layer 4 — D1 */}
+            <rect x="8" y="4" width="8" height="3" rx="1" stroke="currentColor" strokeWidth="0.5" fill="rgba(0,255,136,0.2)" />
             {/* Signal line crossing all layers */}
-            <polyline points="7,22 10,16 14,12 12,8" strokeWidth="1.2" strokeDasharray="2 1.5" />
+            <polyline points="7,22 10,15 14,10 12,5" stroke="url(#mtf-grad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" filter="url(#mtf-glow)" />
+            <circle cx="12" cy="5" r="2.5" fill="#00ff88" filter="url(#mtf-glow)" />
         </svg>
     );
 }
@@ -300,31 +317,36 @@ export function MTFIcon({ className, size = 18, style }: IconProps) {
  */
 export function RiskIcon({ className, size = 18, style }: IconProps) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            style={style}
-        >
-            {/* Center pole */}
-            <line x1="12" y1="3" x2="12" y2="21" />
-            {/* Base */}
-            <line x1="7" y1="21" x2="17" y2="21" />
-            {/* Cross bar */}
-            <line x1="4" y1="9" x2="20" y2="9" />
-            {/* Left pan (slightly low = risk) */}
-            <path d="M4 9 Q2 13 4 15 Q6 17 8 15 Q10 13 8 9" />
-            {/* Right pan (high = reward) */}
-            <path d="M16 9 Q14 11 16 13 Q18 15 20 13 Q22 11 20 9" />
-            {/* R/R ratio marks */}
-            <line x1="12" y1="7" x2="12" y2="5" strokeWidth="1" />
-            <circle cx="12" cy="5" r="1" fill="currentColor" strokeWidth="0" />
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+            <defs>
+                <linearGradient id="risk-up" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#00ff88" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="#00ff88" />
+                </linearGradient>
+                <linearGradient id="risk-down" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#ff3366" stopOpacity="0.5" />
+                    <stop offset="100%" stopColor="#ff3366" />
+                </linearGradient>
+                <filter id="risk-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+            {/* Center Fulcrum */}
+            <path d="M12 21 L 10 23 L 14 23 Z" fill="currentColor" opacity="0.3" />
+            <line x1="12" y1="21" x2="12" y2="12" stroke="currentColor" strokeWidth="1.5" opacity="0.5" />
+
+            {/* Beam (slanted to right) */}
+            <line x1="4" y1="14" x2="20" y2="10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+
+            {/* Left Pan (Reward) */}
+            <polyline points="3,14.5 5,19 7,14" stroke="#00ff88" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M3 19 Q5 20 7 19 Z" fill="url(#risk-up)" filter="url(#risk-glow)" />
+
+            {/* Right Pan (Risk) */}
+            <polyline points="17,10.5 19,15 21,10" stroke="#ff3366" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M17 15 Q19 16 21 15 Z" fill="url(#risk-down)" filter="url(#risk-glow)" />
+            <circle cx="19" cy="13" r="1.5" fill="#ff3366" filter="url(#risk-glow)" />
         </svg>
     );
 }
@@ -334,30 +356,27 @@ export function RiskIcon({ className, size = 18, style }: IconProps) {
  */
 export function PatternIcon({ className, size = 18, style }: IconProps) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            style={style}
-        >
-            {/* Rising lower trendline */}
-            <polyline points="2,20 8,16 14,13 20,10" />
-            {/* Flat upper resistance */}
-            <line x1="2" y1="10" x2="22" y2="10" />
-            {/* Breakout arrow */}
-            <polyline points="18,10 22,6 22,10" />
-            {/* Converging wedge lines */}
-            <line x1="2" y1="20" x2="22" y2="10" strokeDasharray="1.5 2" opacity="0.3" />
-            {/* Candle bodies inside pattern */}
-            <rect x="5" y="15" width="2" height="4" rx="0.4" opacity="0.5" />
-            <rect x="10" y="12" width="2" height="3" rx="0.4" opacity="0.5" />
-            <rect x="15" y="10.5" width="2" height="2.5" rx="0.4" opacity="0.5" />
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+            <defs>
+                <linearGradient id="pat-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#ff00cc" />
+                    <stop offset="100%" stopColor="#00ccff" />
+                </linearGradient>
+                <filter id="pat-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+            {/* Grid structure */}
+            <path d="M 2 20 L 22 20 M 2 10 L 22 10" stroke="currentColor" strokeWidth="0.5" strokeDasharray="1 3" opacity="0.3" />
+            {/* Ascending Wedge */}
+            <path d="M 4 20 L 18 10 Z" stroke="#00ccff" strokeWidth="1.5" strokeLinecap="round" filter="url(#pat-glow)" />
+            <path d="M 2 10 L 18 10 Z" stroke="#ff00cc" strokeWidth="1.5" strokeLinecap="round" filter="url(#pat-glow)" />
+            {/* Breakout Arrow */}
+            <path d="M 18 10 L 22 5" stroke="url(#pat-grad)" strokeWidth="2.5" strokeLinecap="round" filter="url(#pat-glow)" />
+            <polyline points="18,5 22,5 22,9" stroke="url(#pat-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" filter="url(#pat-glow)" />
+            {/* Convergence Node */}
+            <circle cx="18" cy="10" r="2.5" fill="#00ccff" filter="url(#pat-glow)" />
         </svg>
     );
 }
@@ -529,25 +548,25 @@ export function LearningIcon({ className, size = 18, style }: IconProps) {
  */
 export function StrategyIcon({ className, size = 18, style }: IconProps) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            style={style}
-        >
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+            <defs>
+                <linearGradient id="strat-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ff00ff" />
+                    <stop offset="100%" stopColor="#00E0C6" />
+                </linearGradient>
+                <filter id="strat-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
             {/* Circular arrow loop */}
-            <path d="M12 3 A9 9 0 1 1 4.2 17.5" />
+            <path d="M12 3 A9 9 0 1 1 4.2 17.5" stroke="url(#strat-grad)" strokeWidth="2" strokeLinecap="round" filter="url(#strat-glow)" />
             {/* Arrow tip */}
-            <polyline points="2,14 4.2,17.5 7.5,16" />
+            <polyline points="2,14 4.2,17.5 7.5,16" stroke="url(#strat-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" filter="url(#strat-glow)" />
             {/* Center target: concentric rings */}
-            <circle cx="12" cy="12" r="4" />
-            <circle cx="12" cy="12" r="1.5" fill="currentColor" strokeWidth="0" />
+            <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1" opacity="0.5" strokeDasharray="2 2" />
+            <circle cx="12" cy="12" r="1.5" fill="#00E0C6" filter="url(#strat-glow)" />
+            <circle cx="12" cy="12" r="7" stroke="#ff00ff" strokeWidth="0.5" opacity="0.3" />
         </svg>
     );
 }
@@ -729,28 +748,27 @@ export function InstitutionalIcon({ className, size = 18, style }: IconProps) {
  */
 export function HistoryIcon({ className, size = 18, style }: IconProps) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            style={style}
-        >
-            {/* Clock circle */}
-            <circle cx="11" cy="12" r="8" />
-            {/* Clock hands */}
-            <polyline points="11,7 11,12 14,15" />
-            {/* Rewind arrow */}
-            <path d="M3 7 Q2 3 6 2" />
-            <polyline points="3,7 7,5 5,9" />
-            {/* Small checkmark badge */}
-            <circle cx="19" cy="19" r="3.5" strokeWidth="1" />
-            <polyline points="17.5,19.5 18.5,20.5 21,17.5" strokeWidth="1.2" />
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+            <defs>
+                <linearGradient id="hist-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#00ccff" />
+                    <stop offset="100%" stopColor="#ff00ff" />
+                </linearGradient>
+                <filter id="hist-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+            {/* Clock outline */}
+            <circle cx="12" cy="12" r="8" stroke="url(#hist-grad)" strokeWidth="1.5" strokeDasharray="4 2" filter="url(#hist-glow)" />
+            <circle cx="12" cy="12" r="6" stroke="#00ccff" strokeWidth="0.5" opacity="0.5" />
+            {/* Hands */}
+            <polyline points="12,7 12,12 15,15" stroke="url(#hist-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" filter="url(#hist-glow)" />
+            {/* Rewind motion */}
+            <path d="M 4 8 C 2 5 6 3 9 3" stroke="#00ccff" strokeWidth="1.5" strokeLinecap="round" filter="url(#hist-glow)" />
+            <polyline points="4,8 8,6 6,10" stroke="#00ccff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" filter="url(#hist-glow)" />
+            {/* Data point success */}
+            <circle cx="12" cy="12" r="1.5" fill="#fff" />
         </svg>
     );
 }
@@ -760,32 +778,33 @@ export function HistoryIcon({ className, size = 18, style }: IconProps) {
  */
 export function OrderBlockIcon({ className, size = 18, style }: IconProps) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            style={style}
-        >
-            {/* Supply zone block (top) */}
-            <rect x="3" y="4" width="18" height="4.5" rx="1" fill="currentColor" fillOpacity="0.08" />
-            <line x1="3" y1="8.5" x2="21" y2="8.5" strokeWidth="1" />
-            {/* Label marker */}
-            <line x1="2" y1="4" x2="2" y2="8.5" strokeWidth="2.5" />
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+            <defs>
+                <linearGradient id="ob-up" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#00ff88" />
+                    <stop offset="100%" stopColor="#00ccff" />
+                </linearGradient>
+                <linearGradient id="ob-down" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#ff3366" />
+                    <stop offset="100%" stopColor="#ff00ff" />
+                </linearGradient>
+                <filter id="ob-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+            {/* Supply Zone (Top) */}
+            <rect x="3" y="3" width="18" height="5" rx="1" stroke="url(#ob-down)" strokeWidth="1.5" fill="rgba(255,51,102,0.15)" filter="url(#ob-glow)" />
+            <line x1="2" y1="8" x2="22" y2="8" stroke="#ff3366" strokeWidth="1" strokeDasharray="2 3" opacity="0.8" />
 
-            {/* Price wandering line */}
-            <polyline points="3,14 7,12 12,16 17,11 21,13" strokeWidth="1.3" />
+            {/* Demand Zone (Bottom) */}
+            <rect x="3" y="16" width="18" height="5" rx="1" stroke="url(#ob-up)" strokeWidth="1.5" fill="rgba(0,255,136,0.15)" filter="url(#ob-glow)" />
+            <line x1="2" y1="16" x2="22" y2="16" stroke="#00ff88" strokeWidth="1" strokeDasharray="2 3" opacity="0.8" />
 
-            {/* Demand zone block (bottom) */}
-            <rect x="3" y="17.5" width="18" height="4.5" rx="1" fill="currentColor" fillOpacity="0.08" />
-            <line x1="3" y1="17.5" x2="21" y2="17.5" strokeWidth="1" />
-            {/* Label marker */}
-            <line x1="2" y1="17.5" x2="2" y2="22" strokeWidth="2.5" />
+            {/* Price wandering line interacting with blocks */}
+            <path d="M 6 12 L 8 5 L 12 19 L 16 12 L 18 10" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
+            <circle cx="8" cy="5" r="2" fill="#ff3366" filter="url(#ob-glow)" />
+            <circle cx="12" cy="19" r="2" fill="#00ff88" filter="url(#ob-glow)" />
         </svg>
     );
 }
@@ -795,29 +814,28 @@ export function OrderBlockIcon({ className, size = 18, style }: IconProps) {
  */
 export function RhythmIcon({ className, size = 18, style }: IconProps) {
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-            style={style}
-        >
-            {/* Sine wave upper */}
-            <path d="M2 9 Q5 4 8 9 Q11 14 14 9 Q17 4 20 9 Q21.5 11.5 22 9" />
-            {/* Sine wave lower (mirrored, phase shifted) */}
-            <path d="M2 15 Q5 20 8 15 Q11 10 14 15 Q17 20 20 15 Q21.5 12.5 22 15" opacity="0.5" />
-            {/* Rhythm dots */}
-            <circle cx="8" cy="9" r="1.5" fill="currentColor" strokeWidth="0" />
-            <circle cx="14" cy="9" r="1.5" fill="currentColor" strokeWidth="0" />
-            <circle cx="20" cy="9" r="1.5" fill="currentColor" strokeWidth="0" />
-            <circle cx="5" cy="12" r="0.8" fill="currentColor" strokeWidth="0" opacity="0.5" />
-            <circle cx="11" cy="12" r="0.8" fill="currentColor" strokeWidth="0" opacity="0.5" />
-            <circle cx="17" cy="12" r="0.8" fill="currentColor" strokeWidth="0" opacity="0.5" />
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+            <defs>
+                <linearGradient id="rhythm-grad" x1="0%" y1="50%" x2="100%" y2="50%">
+                    <stop offset="0%" stopColor="#00ccff" />
+                    <stop offset="50%" stopColor="#b900ff" />
+                    <stop offset="100%" stopColor="#ff00cc" />
+                </linearGradient>
+                <filter id="rhythm-glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="1.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+            {/* Frequency mesh */}
+            <line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" strokeWidth="0.5" opacity="0.3" strokeDasharray="1 2" />
+            {/* Double helix sine wave pattern */}
+            <path d="M 2 12 C 5 2 9 2 12 12 C 15 22 19 22 22 12" stroke="url(#rhythm-grad)" strokeWidth="2" strokeLinecap="round" filter="url(#rhythm-glow)" />
+            <path d="M 2 12 C 5 22 9 22 12 12 C 15 2 19 2 22 12" stroke="#00ccff" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" filter="url(#rhythm-glow)" />
+
+            {/* Intersection nodes */}
+            <circle cx="12" cy="12" r="2.5" fill="#ff00cc" filter="url(#rhythm-glow)" />
+            <circle cx="2" cy="12" r="1.5" fill="#00ccff" filter="url(#rhythm-glow)" />
+            <circle cx="22" cy="12" r="1.5" fill="#ff00cc" filter="url(#rhythm-glow)" />
         </svg>
     );
 }
@@ -876,33 +894,94 @@ export function AdvancedAnalysisIcon({ className, size = 18, style }: IconProps)
 }
 
 export const NasdaqIcon = ({ size = 24, className = "", style = {} }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
-        <path d="M3 3v18h18" />
-        <path d="M18 7l-5 5-3-3-4 4" />
-        <path d="M13 7h5v5" />
-        <rect x="2" y="2" width="20" height="20" rx="2" strokeOpacity={0.2} />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+        <defs>
+            <linearGradient id="ndx-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#00ff88" />
+                <stop offset="100%" stopColor="#00ccff" />
+            </linearGradient>
+            <filter id="ndx-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="1.5" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+        </defs>
+        {/* Background circuit */}
+        <rect x="2" y="2" width="20" height="20" rx="4" stroke="currentColor" strokeWidth="1" opacity="0.15" strokeDasharray="3 3" />
+        <path d="M 6 22 L 6 18 M 10 22 L 10 16 M 14 22 L 14 14 M 18 22 L 18 10" stroke="currentColor" strokeWidth="1.5" opacity="0.2" strokeLinecap="round" />
+        {/* Main trend line */}
+        <path d="M 4 16 L 9 10 L 14 13 L 20 4" stroke="url(#ndx-grad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" filter="url(#ndx-glow)" />
+        {/* Highlight points */}
+        <circle cx="20" cy="4" r="3" fill="#00ccff" filter="url(#ndx-glow)" />
+        <circle cx="9" cy="10" r="2" fill="#00ff88" filter="url(#ndx-glow)" />
+        <path d="M 20 4 L 20 1" stroke="#00ccff" strokeWidth="1.5" filter="url(#ndx-glow)" strokeLinecap="round" />
     </svg>
 );
 
 export const GoldIcon = ({ size = 24, className = "", style = {} }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
-        <path d="M12 2l3 6 6 1-4.5 4.5L18 20l-6-3-6 3 1.5-6.5L3 9l6-1 3-6z" />
-        <path d="M12 7l1.5 3 3 0.5-2.25 2.25 0.75 3.25-3-1.5-3 1.5 0.75-3.25-2.25-2.25 3-0.5L12 7z" strokeOpacity={0.5} strokeWidth={1} />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+        <defs>
+            <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFD700" />
+                <stop offset="50%" stopColor="#FFA500" />
+                <stop offset="100%" stopColor="#FF8C00" />
+            </linearGradient>
+            <filter id="gold-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+        </defs>
+        <path d="M12 2 L16.5 7 L22 8 L17.5 12.5 L19 18.5 L12 15 L5 18.5 L6.5 12.5 L2 8 L7.5 7 Z" stroke="url(#gold-grad)" strokeWidth="1.5" fill="rgba(255,215,0,0.15)" strokeLinecap="round" strokeLinejoin="round" filter="url(#gold-glow)" />
+        <circle cx="12" cy="11.5" r="2.5" fill="#FFD700" filter="url(#gold-glow)" />
+        {/* Tech orbits */}
+        <circle cx="12" cy="11.5" r="7" stroke="#FFA500" strokeWidth="1" opacity="0.6" strokeDasharray="2 3" />
+        <circle cx="12" cy="11.5" r="11" stroke="#FF8C00" strokeWidth="0.5" opacity="0.4" strokeDasharray="4 4" />
     </svg>
 );
 
 export const OilIcon = ({ size = 24, className = "", style = {} }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
-        <path d="M12 22s-8-6.5-8-12a8 8 0 1 1 16 0c0 5.5-8 12-8 12z" />
-        <path d="M12 10l-2 2h4l-2 2" strokeOpacity={0.8} />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+        <defs>
+            <linearGradient id="oil-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ff4b2b" />
+                <stop offset="100%" stopColor="#ff416c" />
+            </linearGradient>
+            <filter id="oil-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+        </defs>
+        {/* 3D Drop */}
+        <path d="M12 2 C 12 2 4 10 4 16 C 4 20.418 7.582 24 12 24 C 16.418 24 20 20.418 20 16 C 20 10 12 2 12 2 Z" stroke="url(#oil-grad)" strokeWidth="1.5" fill="rgba(255,65,108,0.15)" strokeLinecap="round" strokeLinejoin="round" filter="url(#oil-glow)" />
+        <path d="M12 11 L 12 19" stroke="#ff416c" strokeWidth="2.5" strokeLinecap="round" filter="url(#oil-glow)" />
+        <circle cx="12" cy="15" r="2.5" fill="#ff4b2b" filter="url(#oil-glow)" />
+        {/* Cyber highlights */}
+        <path d="M 6 16 Q 6 13 12 8" stroke="#ff4b2b" strokeWidth="1.5" opacity="0.8" strokeLinecap="round" strokeDasharray="1 3" />
     </svg>
 );
 
 export const DaxIcon = ({ size = 24, className = "", style = {} }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
-        <path d="M2 5h20M2 12h20M2 19h20" strokeOpacity={0.3} />
-        <circle cx="12" cy="12" r="10" />
-        <path d="M9 12l2 2 4-4" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ ...style, overflow: 'visible' }}>
+        <defs>
+            <linearGradient id="dax-grad" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#00d2ff" />
+                <stop offset="100%" stopColor="#3a7bd5" />
+            </linearGradient>
+            <filter id="dax-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+        </defs>
+        {/* High-tech European core */}
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1" opacity="0.25" strokeDasharray="2 3" />
+        <circle cx="12" cy="12" r="7" stroke="url(#dax-grad)" strokeWidth="2" filter="url(#dax-glow)" />
+        <circle cx="12" cy="12" r="4" fill="rgba(0,210,255,0.2)" />
+        {/* Nodes on outer ring */}
+        <circle cx="12" cy="2" r="2" fill="#00d2ff" filter="url(#dax-glow)" />
+        <circle cx="2" cy="12" r="2" fill="#3a7bd5" filter="url(#dax-glow)" />
+        <circle cx="22" cy="12" r="2" fill="#00d2ff" filter="url(#dax-glow)" />
+        <circle cx="12" cy="22" r="2" fill="#3a7bd5" filter="url(#dax-glow)" />
+        {/* Inner intersecting shapes */}
+        <path d="M 8 12 L 12 8 L 16 12 L 12 16 Z" stroke="#3a7bd5" strokeWidth="1.5" fill="#00d2ff" fillOpacity="0.4" filter="url(#dax-glow)" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
 );
 
@@ -996,10 +1075,20 @@ export const NeutralIcon = ({ size = 24, className = "" }: IconProps) => (
 );
 
 export const TargetIcon = ({ size = 24, className = "" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <circle cx="12" cy="12" r="10" />
-        <circle cx="12" cy="12" r="6" />
-        <circle cx="12" cy="12" r="2" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ overflow: 'visible' }}>
+        <defs>
+            <filter id="target-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="1.5" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+        </defs>
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 4" opacity="0.5" />
+        <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="2" />
+        <circle cx="12" cy="12" r="2.5" fill="currentColor" filter="url(#target-glow)" />
+        <line x1="12" y1="2" x2="12" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="2" y1="12" x2="6" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="18" y1="12" x2="22" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
 );
 
@@ -1019,8 +1108,18 @@ export const CloseIcon = ({ size = 24, className = "" }: IconProps) => (
 );
 
 export const ZapIcon = ({ size = 24, className = "" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ overflow: 'visible' }}>
+        <defs>
+            <linearGradient id="zap-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ffff00" />
+                <stop offset="100%" stopColor="#ff9900" />
+            </linearGradient>
+            <filter id="zap-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="1.5" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+        </defs>
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="url(#zap-grad)" stroke="#ffff00" strokeWidth="1" strokeLinejoin="round" filter="url(#zap-glow)" />
     </svg>
 );
 
@@ -1043,9 +1142,16 @@ export const ShrinkIcon = ({ size = 24, className = "" }: IconProps) => (
 );
 
 export const SettingsIcon = ({ size = 24, className = "" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-        <circle cx="12" cy="12" r="3" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ overflow: 'visible' }}>
+        <defs>
+            <filter id="set-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="1" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+        </defs>
+        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" stroke="currentColor" strokeWidth="1.5" opacity="0.7" />
+        <circle cx="12" cy="12" r="4" stroke="#00ccff" strokeWidth="2" filter="url(#set-glow)" />
+        <circle cx="12" cy="12" r="1.5" fill="#00ff88" filter="url(#set-glow)" />
     </svg>
 );
 
