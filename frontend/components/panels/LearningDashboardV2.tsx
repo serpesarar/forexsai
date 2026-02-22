@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  Brain, Target, TrendingUp, TrendingDown, RefreshCw, AlertTriangle,
-  CheckCircle, XCircle, Activity, BarChart3, Zap, Shield, ChevronDown,
+  Target, TrendingUp, TrendingDown, RefreshCw, AlertTriangle,
+  CheckCircle, XCircle, Activity, BarChart3, Shield, ChevronDown,
   ChevronUp, Eye, ArrowUpRight, ArrowDownRight, Minus, Clock,
 } from "lucide-react";
+import { EmelIcon, PulseIcon, LearningIcon, SignalsIcon } from "../ui/CustomIcons";
 import {
   useLifecycleDashboard, useActiveSignals, useSignalDetail,
   triggerLifecycleCheck, type ModelStats, type ActiveSignal, type SignalCheck,
@@ -23,12 +24,12 @@ const N = {
 };
 
 const MODEL_THEME: Record<string, { label: string; color: string; bg: string; border: string; Icon: any }> = {
-  ml: { label: "ML Model", color: N.blue.c, bg: N.blue.bg, border: N.blue.b, Icon: Zap },
-  pulse: { label: "Pulse Engine", color: N.cyan.c, bg: N.cyan.bg, border: N.cyan.b, Icon: Activity },
-  pulse1: { label: "Pulse 1 — Algo", color: N.cyan.c, bg: N.cyan.bg, border: N.cyan.b, Icon: Activity },
-  pulse2: { label: "Pulse 2 — ML Hybrid", color: "#a78bfa", bg: "rgba(167,139,250,0.06)", border: "rgba(167,139,250,0.18)", Icon: Brain },
+  ml: { label: "ML Model", color: N.blue.c, bg: N.blue.bg, border: N.blue.b, Icon: SignalsIcon },
+  pulse: { label: "Pulse Engine", color: N.cyan.c, bg: N.cyan.bg, border: N.cyan.b, Icon: PulseIcon },
+  pulse1: { label: "Pulse 1 — Algo", color: N.cyan.c, bg: N.cyan.bg, border: N.cyan.b, Icon: PulseIcon },
+  pulse2: { label: "Pulse 2 — ML Hybrid", color: "#a78bfa", bg: "rgba(167,139,250,0.06)", border: "rgba(167,139,250,0.18)", Icon: SignalsIcon },
   pulse3: { label: "Pulse 3 — MTF Hybrid", color: "#34d399", bg: "rgba(52,211,153,0.06)", border: "rgba(52,211,153,0.18)", Icon: TrendingUp },
-  emel: { label: "EMEL 9-Check", color: N.p.c, bg: N.p.bg, border: N.p.b, Icon: Brain },
+  emel: { label: "EMEL 9-Check", color: N.p.c, bg: N.p.bg, border: N.p.b, Icon: EmelIcon },
   hybrid: { label: "Hybrid", color: N.y.c, bg: N.y.bg, border: N.y.b, Icon: Shield },
 };
 
@@ -402,7 +403,7 @@ export default function LearningDashboardV2() {
       <div className="flex items-center justify-between px-5 py-3" style={{ background: "linear-gradient(180deg, rgba(168,85,247,0.07) 0%, transparent 100%)", borderBottom: "1px solid rgba(168,85,247,0.08)" }}>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(0,255,136,0.2), rgba(168,85,247,0.2))", border: "1px solid rgba(168,85,247,0.35)" }}>
-            <BarChart3 className="w-5 h-5" style={{ color: N.p.c }} />
+            <LearningIcon size={20} style={{ color: N.p.c }} />
           </div>
           <div>
             <h2 className="text-[13px] font-extrabold font-mono tracking-wider" style={{ color: N.p.c }}>SIGNAL PERFORMANCE</h2>
@@ -449,7 +450,7 @@ export default function LearningDashboardV2() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <Brain className="w-10 h-10 mx-auto mb-3" style={{ color: "rgba(255,255,255,0.1)" }} />
+              <EmelIcon size={40} style={{ color: "rgba(255,255,255,0.1)" }} />
               <p className="text-white/30 text-sm">No signal data yet for this period.</p>
               <p className="text-white/15 text-[10px] mt-1">Signals will appear as EMEL, Pulse, and ML panels generate BUY/SELL signals.</p>
             </div>

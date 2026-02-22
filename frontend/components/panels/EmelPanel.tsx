@@ -5,9 +5,10 @@ import { useI18nStore } from "../../lib/i18n/store";
 import { PanelInfoButton } from "../PanelInfoButton";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
-  TrendingUp, Activity, BarChart3, Target, Layers, Gauge, Volume2, Brain, Shield,
-  RefreshCw, AlertTriangle, CheckCircle, XCircle, Zap, ArrowUpRight, ArrowDownRight, Minus,
+  TrendingUp, Activity, BarChart3, Target, Layers, Gauge, Volume2, Shield,
+  RefreshCw, AlertTriangle, CheckCircle, XCircle, ArrowUpRight, ArrowDownRight, Minus,
 } from "lucide-react";
+import { EmelIcon, PulseIcon, SignalsIcon } from "../ui/CustomIcons";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
@@ -29,7 +30,7 @@ interface EmelPanelProps { symbol?: string; onSwitchMode?: () => void; }
 const SYMBOLS = [{ key: "NDX.INDX", label: "NASDAQ" }, { key: "XAUUSD", label: "XAUUSD" }, { key: "GDAXI.INDX", label: "DAX" }, { key: "CL.COMM", label: "US Oil" }];
 
 const CHECK_ICONS: Record<number, any> = {
-  1: TrendingUp, 2: Activity, 3: Layers, 4: Target, 5: BarChart3, 6: Gauge, 7: Volume2, 8: Brain, 9: Shield,
+  1: TrendingUp, 2: Activity, 3: Layers, 4: Target, 5: BarChart3, 6: Gauge, 7: Volume2, 8: SignalsIcon, 9: Shield,
 };
 
 const N = {
@@ -141,7 +142,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(0,224,198,0.15))', border: '1px solid rgba(168,85,247,0.35)', boxShadow: '0 0 20px rgba(168,85,247,0.15)' }}>
-              <Brain className="w-5 h-5" style={{ color: N.p.c }} />
+              <EmelIcon size={20} style={{ color: N.p.c }} />
             </div>
             <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: sig.c, boxShadow: `0 0 8px ${sig.c}` }} />
           </div>
@@ -169,7 +170,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
           <PanelInfoButton panelId="emel-panel" />
           {onSwitchMode && (
             <button onClick={onSwitchMode} className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold font-mono" style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.25)', color: '#fbbf24' }}>
-              <Zap className="w-3 h-3" /> PULSE
+              <PulseIcon size={12} style={{ color: '#fbbf24' }} /> PULSE
             </button>
           )}
         </div>
@@ -254,7 +255,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
         <div className="px-4 pb-4">
           <div className="rounded-xl p-4" style={{ background: `${sig.c}06`, border: `1px solid ${sig.b}`, boxShadow: `0 0 30px ${sig.gw}` }}>
             <div className="flex items-center gap-2.5 mb-3">
-              <Brain className="w-5 h-5" style={{ color: sig.c }} />
+              <EmelIcon size={20} style={{ color: sig.c }} />
               <span className="font-bold font-mono text-white/80 text-sm">{t("emel.decision")}</span>
               <span className="font-black font-mono text-sm px-3 py-0.5 rounded-md" style={{ color: sig.c, background: `${sig.c}15`, border: `1px solid ${sig.c}25`, textShadow: `0 0 8px ${sig.gw}` }}>
                 {data.summary.decision}

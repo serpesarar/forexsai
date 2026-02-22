@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Brain, LineChart, BarChart3, Activity, Zap } from "lucide-react";
+import { Activity } from "lucide-react";
+import { DashboardIcon, ChartsIcon, TradingIcon, AnalysisIcon, SignalsIcon, ForexsAILogoIcon } from "./ui/CustomIcons";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useI18nStore } from "../lib/i18n/store";
 
@@ -19,11 +20,11 @@ export default function SharedNavHeader({ activePage, centerContent, rightConten
   const { t } = useI18nStore();
 
   const navItems = [
-    { href: "/", key: "dashboard" as const, label: "Dashboard", icon: Brain, iconColor: "text-blue-400" },
-    { href: "/charts", key: "charts" as const, label: t("nav.charts"), icon: LineChart, iconColor: "text-emerald-400" },
-    { href: "/trading", key: "trading" as const, label: "AI Trading", icon: BarChart3, iconColor: "text-purple-400" },
-    { href: "/analysis", key: "analysis" as const, label: "Analysis", icon: Brain, iconColor: "text-amber-400" },
-    { href: "/signals", key: "signals" as const, label: "Detailed Signals", icon: Zap, iconColor: "text-red-400" },
+    { href: "/", key: "dashboard" as const, label: "Dashboard", icon: DashboardIcon, iconColor: "text-blue-400" },
+    { href: "/charts", key: "charts" as const, label: t("nav.charts"), icon: ChartsIcon, iconColor: "text-emerald-400" },
+    { href: "/trading", key: "trading" as const, label: "AI Trading", icon: TradingIcon, iconColor: "text-purple-400" },
+    { href: "/analysis", key: "analysis" as const, label: "Analysis", icon: AnalysisIcon, iconColor: "text-amber-400" },
+    { href: "/signals", key: "signals" as const, label: "Detailed Signals", icon: SignalsIcon, iconColor: "text-red-400" },
   ];
 
   return (
@@ -49,7 +50,7 @@ export default function SharedNavHeader({ activePage, centerContent, rightConten
             <div className="flex items-center gap-4 min-w-[240px]">
               <Link href="/" className="group flex items-center gap-3 relative">
                 <div className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 shadow-[0_0_15px_rgba(37,99,235,0.4)] group-hover:shadow-[0_0_25px_rgba(37,99,235,0.6)] transition-all duration-300 transform group-hover:scale-105">
-                  <Activity className="text-white w-6 h-6 relative z-10" />
+                  <ForexsAILogoIcon className="text-white" size={22} />
                   <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
                 <div className="flex flex-col justify-center">

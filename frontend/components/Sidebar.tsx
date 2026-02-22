@@ -4,11 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useNavigationStore } from "../lib/store/navigation";
 import {
-    LayoutDashboard,
-    LineChart,
-    Brain,
-    BarChart3,
-    Activity,
     ChevronLeft,
     ChevronRight,
     Mail,
@@ -18,8 +13,15 @@ import {
     FileText,
     LogOut,
     User as UserIcon,
-    Zap,
 } from "lucide-react";
+import {
+    DashboardIcon,
+    ChartsIcon,
+    TradingIcon,
+    AnalysisIcon,
+    SignalsIcon,
+    ForexsAILogoIcon,
+} from "./ui/CustomIcons";
 import { useUser, useAuthStore } from "../lib/auth/store";
 import { useI18nStore } from "../lib/i18n/store";
 
@@ -33,11 +35,11 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-    { href: "/", key: "dashboard", label: "Dashboard", icon: LayoutDashboard, accentColor: "#00e0c6", glowColor: "0 0 12px rgba(0,224,198,0.5)" },
-    { href: "/charts", key: "charts", label: "Charts", icon: LineChart, accentColor: "#3b82f6", glowColor: "0 0 12px rgba(59,130,246,0.5)" },
-    { href: "/trading", key: "trading", label: "AI Trading", icon: Brain, accentColor: "#8b5cf6", glowColor: "0 0 12px rgba(139,92,246,0.5)" },
-    { href: "/analysis", key: "analysis", label: "Analysis", icon: BarChart3, accentColor: "#f59e0b", glowColor: "0 0 12px rgba(245,158,11,0.5)" },
-    { href: "/signals", key: "signals", label: "Detailed Signals", icon: Zap, accentColor: "#ef4444", glowColor: "0 0 12px rgba(239,68,68,0.5)" },
+    { href: "/", key: "dashboard", label: "Dashboard", icon: DashboardIcon, accentColor: "#00e0c6", glowColor: "0 0 12px rgba(0,224,198,0.5)" },
+    { href: "/charts", key: "charts", label: "Charts", icon: ChartsIcon, accentColor: "#3b82f6", glowColor: "0 0 12px rgba(59,130,246,0.5)" },
+    { href: "/trading", key: "trading", label: "AI Trading", icon: TradingIcon, accentColor: "#8b5cf6", glowColor: "0 0 12px rgba(139,92,246,0.5)" },
+    { href: "/analysis", key: "analysis", label: "Analysis", icon: AnalysisIcon, accentColor: "#f59e0b", glowColor: "0 0 12px rgba(245,158,11,0.5)" },
+    { href: "/signals", key: "signals", label: "Detailed Signals", icon: SignalsIcon, accentColor: "#ef4444", glowColor: "0 0 12px rgba(239,68,68,0.5)" },
 ];
 
 const LEGAL_LINKS = [
@@ -96,7 +98,7 @@ export default function Sidebar() {
                                 background: "linear-gradient(135deg, #00e0c6 0%, #3b82f6 100%)",
                                 boxShadow: "0 0 20px rgba(0,224,198,0.35), inset 0 1px 0 rgba(255,255,255,0.15)",
                             }}>
-                            <Activity className="text-white w-[18px] h-[18px]" />
+                            <ForexsAILogoIcon className="text-white" size={18} />
                         </div>
                         {!collapsed && (
                             <div className="min-w-0 sidebar-fade-in">

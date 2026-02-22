@@ -9,13 +9,11 @@ import {
   Activity,
   Target,
   RefreshCw,
-  Brain,
-  Zap,
   ArrowUp,
   ArrowDown,
   Clock,
-
 } from "lucide-react";
+import { PulseIcon, EmelIcon, SignalsIcon } from "../ui/CustomIcons";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
@@ -155,7 +153,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
       <div className="px-2 py-2 flex items-center justify-between flex-wrap gap-2 bg-transparent">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${nc.accent}20`, boxShadow: `0 0 12px ${nc.accent}40` }}>
-            <Zap className="w-4 h-4" style={{ color: nc.accent }} />
+            <PulseIcon size={16} style={{ color: nc.accent }} />
           </div>
           <div className="min-w-0">
             <h2 className="text-sm font-bold text-white/90 truncate font-mono">{t("pulse.title")}</h2>
@@ -187,7 +185,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
           {onSwitchMode && (
             <button onClick={onSwitchMode} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold font-mono"
               style={{ background: "rgba(99,102,241,0.2)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.3)" }}>
-              <Brain className="w-3 h-3" /> EMEL
+              <EmelIcon size={12} style={{ color: "#818cf8" }} /> EMEL
             </button>
           )}
         </div>
@@ -324,7 +322,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
             {/* Volume */}
             <div className="rounded-xl p-3.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
               <h3 className="text-[10px] uppercase tracking-widest font-mono mb-3 flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
-                <Zap className="w-3 h-3" style={{ color: "#f0b429" }} /> {t("pulse.volume")}
+                <PulseIcon size={12} style={{ color: "#f0b429" }} /> {t("pulse.volume")}
               </h3>
               <div className="text-center py-3">
                 <p className="text-xl font-bold font-mono" style={{
@@ -349,7 +347,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
           <div className="px-3 pb-3">
             <div className="rounded-xl p-4" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.12)", boxShadow: "0 0 20px rgba(99,102,241,0.05)" }}>
               <div className="flex items-center gap-2 mb-2.5">
-                <Brain className="w-4 h-4" style={{ color: "#818cf8" }} />
+                <SignalsIcon size={16} style={{ color: "#818cf8" }} />
                 <span className="font-mono font-bold text-sm" style={{ color: "#818cf8" }}>{t("pulse.aiComment")}</span>
               </div>
               <p className="text-sm font-mono leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>{data.suggestion.text}</p>
