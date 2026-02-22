@@ -2,22 +2,12 @@
 
 import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
+import { GripVertical } from "lucide-react";
 import {
-  Activity,
-  ArrowDownRight,
-  ArrowUpRight,
-  Brain,
-  Clock,
-  Loader2,
-  Moon,
-  PlayCircle,
-  RefreshCw,
-  Sun,
-  Sparkles,
-  BarChart3,
-  GripVertical,
-  LineChart,
-} from "lucide-react";
+  EmelIcon, PulseIcon, SignalsIcon, LoadingIcon,
+  ThemeSunIcon, ThemeMoonIcon, NasdaqIcon, GoldIcon,
+  OilIcon, DaxIcon, ArrowUpIcon, ArrowDownIcon
+} from "../components/ui/CustomIcons";
 import Link from "next/link";
 import { useAuthStore, useIsAuthenticated, waitForHydration } from "../lib/auth/store";
 import CircularProgress from "../components/CircularProgress";
@@ -788,7 +778,7 @@ export default function HomePage() {
           <CircularProgress
             value={confidencePct}
             label={formatSentimentLabel(d?.sentiment)}
-            sublabel={d?.sentiment === "BULLISH" ? "🐂" : d?.sentiment === "BEARISH" ? "🐻" : "—"}
+            sublabel={d?.sentiment === "BULLISH" ? <ArrowUpIcon size={20} className="text-success" /> : d?.sentiment === "BEARISH" ? <ArrowDownIcon size={20} className="text-danger" /> : "—"}
             isInteractive
             onClick={() =>
               open(
@@ -1002,7 +992,7 @@ export default function HomePage() {
           </div>
           {isDataLoading || isMTFLoading ? (
             <span className="rounded-full px-3 py-1 text-xs font-semibold bg-white/10 text-textSecondary flex items-center gap-1">
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <LoadingIcon size={12} className="animate-spin" />
               Loading...
             </span>
           ) : (
@@ -1043,7 +1033,7 @@ export default function HomePage() {
           {isDataLoading || isMTFLoading ? (
             <div className="flex items-center justify-center w-[100px] h-[100px]">
               <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin text-accent mx-auto" />
+                <LoadingIcon size={32} className="animate-spin text-accent mx-auto" />
                 <p className="mt-2 text-[10px] text-textSecondary">Calculating...</p>
               </div>
             </div>
@@ -1110,7 +1100,7 @@ export default function HomePage() {
             if (isDataLoading) {
               return ["EMA 20", "EMA 50", "EMA 200", "Channel U", "Channel L", "S/R Bias"].map((label, index) => (
                 <div key={`${signal.symbol}-${label}-loading-${index}`} className="rounded-lg border border-white/5 bg-white/5 p-3 flex flex-col items-center justify-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-textSecondary" />
+                  <LoadingIcon size={24} className="animate-spin text-textSecondary" />
                   <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-textSecondary">{label}</p>
                 </div>
               ));
@@ -1230,7 +1220,7 @@ export default function HomePage() {
           <h3 className="mt-2 text-lg font-semibold">{t("claudePatterns.subtitle")}</h3>
         </div>
         <button onClick={runClaudePatterns} className="flex items-center gap-2 rounded-full border border-accent/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-accent">
-          <Brain className="h-4 w-4" />
+          <EmelIcon size={16} />
           {claudePatternsLoading ? t("claudePatterns.analyzing") : t("claudePatterns.analyzeCustom")}
         </button>
       </div>
@@ -1327,11 +1317,11 @@ export default function HomePage() {
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent via-purple-500 to-cyan-500 flex items-center justify-center animate-pulse">
-              <Activity className="w-8 h-8 text-white" />
+              <LoadingIcon size={32} className="text-white" />
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Loader2 className="w-5 h-5 animate-spin text-accent" />
+            <LoadingIcon size={20} className="animate-spin text-accent" />
             <span className="text-textSecondary">Yükleniyor...</span>
           </div>
         </div>
@@ -1368,17 +1358,17 @@ export default function HomePage() {
                     : ticker.label === "DAX"
                       ? { from: "#10b981", glow: "rgba(16,185,129,0.25)" }
                       : { from: "#ef4444", glow: "rgba(239,68,68,0.25)" };
-                const icon = ticker.label === "NASDAQ" ? "📊" : ticker.label === "XAU/USD" ? "🥇" : ticker.label === "DAX" ? "🇩🇪" : "🛢️";
+                const IconComponent = ticker.label === "NASDAQ" ? NasdaqIcon : ticker.label === "XAU/USD" ? GoldIcon : ticker.label === "DAX" ? DaxIcon : OilIcon;
                 return (
                   <div key={ticker.label} className="flex items-center gap-2 px-2 py-1 flex-shrink-0 bg-transparent border-0 shadow-none rounded-none">
-                    <span className="text-base leading-none drop-shadow-md">{icon}</span>
+                    <IconComponent size={20} style={{ color: accent.from }} />
                     <div className="flex flex-col">
                       <span className="text-[10px] font-black uppercase tracking-[0.15em] opacity-90" style={{ color: accent.from }}>{ticker.label}</span>
                       <div className="flex items-baseline gap-1.5 mt-0.5">
                         <span className="font-mono text-sm font-black text-white">{isLoadingPrice ? "---" : `$${ticker.price}`}</span>
                         {!isLoadingPrice && (
-                          <span className={`text-[10px] font-black tracking-tighter ${isUp ? "text-emerald-400" : "text-rose-400"}`} style={{ textShadow: `0 0 10px ${isUp ? 'rgba(52,211,153,0.5)' : 'rgba(251,113,133,0.5)'}` }}>
-                            {isUp ? "▲" : "▼"} {ticker.change}
+                          <span className={`text-[10px] font-black tracking-tighter flex items-center gap-0.5 ${isUp ? "text-emerald-400" : "text-rose-400"}`} style={{ textShadow: `0 0 10px ${isUp ? 'rgba(52,211,153,0.5)' : 'rgba(251,113,133,0.5)'}` }}>
+                            {isUp ? <ArrowUpIcon size={10} /> : <ArrowDownIcon size={10} />} {ticker.change}
                           </span>
                         )}
                       </div>
@@ -1393,7 +1383,7 @@ export default function HomePage() {
               <WSStatusBadge />
               <button onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
                 className="flex h-8 w-8 items-center justify-center text-slate-400 hover:text-white transition-all bg-transparent border-0">
-                {theme === "evening" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {theme === "evening" ? <ThemeSunIcon size={18} /> : <ThemeMoonIcon size={18} />}
               </button>
             </div>
           </div>
@@ -1476,15 +1466,15 @@ export default function HomePage() {
             onClick={fetchAll}
             className={`mobile-nav-item ${isLoading ? 'text-accent' : ''}`}
           >
-            <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
+            <LoadingIcon size={20} className={isLoading ? 'animate-spin' : ''} />
             <span className="text-[10px] mt-1">{isLoading ? t("common.running") : t("common.runAnalysis")}</span>
           </button>
           <Link href="/trading" className="mobile-nav-item">
-            <BarChart3 className="h-5 w-5" />
+            <SignalsIcon size={20} />
             <span className="text-[10px] mt-1">Trading</span>
           </Link>
           <button className="mobile-nav-item active">
-            <Activity className="h-5 w-5" />
+            <PulseIcon size={20} />
             <span className="text-[10px] mt-1">Dashboard</span>
           </button>
           <Link href="/account" className="mobile-nav-item">

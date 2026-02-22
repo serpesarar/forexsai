@@ -4,23 +4,19 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useNavigationStore } from "../lib/store/navigation";
 import {
-    ChevronLeft,
-    ChevronRight,
-    Mail,
-    ChevronDown,
-    Globe,
-    Shield,
-    FileText,
-    LogOut,
-    User as UserIcon,
-} from "lucide-react";
-import {
     DashboardIcon,
     ChartsIcon,
     TradingIcon,
     AnalysisIcon,
     SignalsIcon,
     ForexsAILogoIcon,
+    ChevronIcon,
+    SupportMailIcon,
+    WebsiteIcon,
+    SecurityShieldIcon,
+    TermsIcon,
+    LogoutIcon,
+    UserProfileIcon,
 } from "./ui/CustomIcons";
 import { useUser, useAuthStore } from "../lib/auth/store";
 import { useI18nStore } from "../lib/i18n/store";
@@ -43,10 +39,10 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const LEGAL_LINKS = [
-    { href: "https://www.forexsai.com", label: "Website", icon: Globe },
-    { href: "/risk", label: "Disclaimer", icon: Shield },
-    { href: "/privacy", label: "Privacy", icon: FileText },
-    { href: "/terms", label: "Terms", icon: FileText },
+    { href: "https://www.forexsai.com", label: "Website", icon: WebsiteIcon },
+    { href: "/risk", label: "Disclaimer", icon: SecurityShieldIcon },
+    { href: "/privacy", label: "Privacy", icon: TermsIcon },
+    { href: "/terms", label: "Terms", icon: TermsIcon },
 ];
 
 export default function Sidebar() {
@@ -114,7 +110,7 @@ export default function Sidebar() {
                     <button onClick={toggleCollapse}
                         className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md transition-all duration-200 hover:scale-110"
                         style={{ background: "rgba(0,224,198,0.06)", color: "rgba(0,224,198,0.6)" }}>
-                        {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+                        <ChevronIcon size={14} style={{ transform: collapsed ? "rotate(0deg)" : "rotate(180deg)" }} />
                     </button>
                 </div>
 
@@ -172,7 +168,7 @@ export default function Sidebar() {
                     onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}
                     title={collapsed ? "Support" : undefined}
                 >
-                    <Mail className="w-4 h-4 flex-shrink-0" />
+                    <SupportMailIcon size={16} className="flex-shrink-0" />
                     {!collapsed && <span className="text-[11px] font-medium sidebar-fade-in">Support / İletişim</span>}
                 </Link>
 
@@ -185,11 +181,11 @@ export default function Sidebar() {
                         onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}
                         title={collapsed ? "Legal / Website" : undefined}
                     >
-                        <Globe className="w-4 h-4 flex-shrink-0" />
+                        <WebsiteIcon size={16} className="flex-shrink-0" />
                         {!collapsed && (
                             <>
                                 <span className="text-[11px] font-medium flex-1 text-left sidebar-fade-in">Legal / Website</span>
-                                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${legalOpen ? "rotate-180" : ""}`} />
+                                <ChevronIcon size={12} style={{ transform: legalOpen ? "rotate(-90deg)" : "rotate(90deg)" }} className="transition-transform duration-200" />
                             </>
                         )}
                     </button>
@@ -229,7 +225,7 @@ export default function Sidebar() {
                 >
                     <div className="w-6 h-6 flex-shrink-0 rounded-full flex items-center justify-center"
                         style={{ background: "linear-gradient(135deg, rgba(0,224,198,0.15), rgba(59,130,246,0.15))", border: "1px solid rgba(255,255,255,0.06)" }}>
-                        <UserIcon className="w-3 h-3" />
+                        <UserProfileIcon size={12} />
                     </div>
                     {!collapsed && (
                         <div className="min-w-0 sidebar-fade-in">
@@ -247,7 +243,7 @@ export default function Sidebar() {
                     onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.2)"; }}
                     title={collapsed ? "Logout" : undefined}
                 >
-                    <LogOut className="w-4 h-4 flex-shrink-0" />
+                    <LogoutIcon size={16} className="flex-shrink-0" />
                     {!collapsed && <span className="text-[11px] font-medium sidebar-fade-in">Logout</span>}
                 </button>
             </div>

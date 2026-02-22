@@ -4,22 +4,24 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Target,
-  ArrowUp,
-  ArrowDown,
-  Info,
-  X,
-  RefreshCw,
-  Zap,
-  Shield,
-  Crosshair,
-  Activity,
-  Maximize2,
-  Minimize2,
-} from "lucide-react";
+  LoadingIcon,
+  PulseIcon,
+  SignalsIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  NeutralIcon,
+  TargetIcon,
+  InfoIcon,
+  CloseIcon,
+  ZapIcon,
+  SecurityShieldIcon,
+  ExpandIcon,
+  ShrinkIcon,
+  NasdaqIcon,
+  GoldIcon,
+  DaxIcon,
+  OilIcon,
+} from "../ui/CustomIcons";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useProximityAnimation } from "../../hooks/useProximityAnimation";
 import { PanelInfoButton } from "../PanelInfoButton";
@@ -80,10 +82,10 @@ interface ClearTrendData {
 /* ──────────────────── Constants ──────────────────── */
 
 const SYMBOLS = [
-  { key: "NDX.INDX", label: "NASDAQ", icon: "📊" },
-  { key: "XAUUSD", label: "XAUUSD", icon: "🥇" },
-  { key: "GDAXI.INDX", label: "DAX", icon: "🇩🇪" },
-  { key: "CL.COMM", label: "US Oil", icon: "🛢️" },
+  { key: "NDX.INDX", label: "NASDAQ", icon: NasdaqIcon },
+  { key: "XAUUSD", label: "XAUUSD", icon: GoldIcon },
+  { key: "GDAXI.INDX", label: "DAX", icon: DaxIcon },
+  { key: "CL.COMM", label: "US Oil", icon: OilIcon },
 ];
 
 /* ──────────────────── Sub-Components ──────────────────── */
@@ -132,7 +134,7 @@ function EmaPill({ label, value, currentPrice, color, isProximate, decimals }: {
     >
       <span style={{ color }} className="font-bold text-[9px]">{label}</span>
       <span className="text-white/70">{value.toFixed(decimals)}</span>
-      {isAbove ? <ArrowUp className="w-2.5 h-2.5" style={{ color: "#00ff88" }} /> : <ArrowDown className="w-2.5 h-2.5" style={{ color: "#ff3366" }} />}
+      {isAbove ? <ArrowUpIcon size={10} style={{ color: "#00ff88" }} /> : <ArrowDownIcon size={10} style={{ color: "#ff3366" }} />}
     </motion.div>
   );
 }
@@ -162,7 +164,7 @@ function CompactLevelRow({ level, decimals }: { level: LevelData; decimals: numb
       <span className="text-[11px] font-mono" style={{ color: `${color}99` }}>
         {level.distance_display}
       </span>
-      {level.is_next && <Zap className="w-3 h-3 shrink-0" style={{ color }} />}
+      {level.is_next && <ZapIcon size={12} style={{ color }} />}
     </div>
   );
 }
@@ -303,7 +305,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
       <div className="flex items-center justify-between px-2 py-2 bg-transparent">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,204,255,0.15))", border: "1px solid rgba(0,255,136,0.2)" }}>
-            <Activity className="w-4 h-4" style={{ color: "#00ff88" }} />
+            <PulseIcon size={16} style={{ color: "#00ff88" }} />
           </div>
           <div>
             <h2 className="text-sm font-bold tracking-wide font-mono" style={{ color: "#00ff88", textShadow: "0 0 10px rgba(0,255,136,0.3)" }}>
@@ -326,7 +328,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
                   borderRight: "1px solid rgba(255,255,255,0.05)",
                 }}
               >
-                <span>{s.icon}</span>{s.label}
+                <s.icon size={12} />{s.label}
               </button>
             ))}
           </div>
@@ -340,10 +342,10 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
             <option value="1D">1D</option>
           </select>
           <button onClick={fetchData} className="p-1.5 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: "rgba(255,255,255,0.35)" }} />
+            <LoadingIcon size={14} className={loading ? "animate-spin" : ""} style={{ color: "rgba(255,255,255,0.35)" }} />
           </button>
           <button onClick={toggleFullscreen} className="p-1.5 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }} title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
-            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" style={{ color: "rgba(255,255,255,0.35)" }} /> : <Maximize2 className="w-3.5 h-3.5" style={{ color: "rgba(255,255,255,0.35)" }} />}
+            {isFullscreen ? <ShrinkIcon size={14} style={{ color: "rgba(255,255,255,0.35)" }} /> : <ExpandIcon size={14} style={{ color: "rgba(255,255,255,0.35)" }} />}
           </button>
           <PanelInfoButton panelId="clear-trend" />
         </div>
@@ -358,11 +360,11 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {data.trend.direction === "UP" ? (
-                <TrendingUp className="w-6 h-6" style={{ color: trendColor, filter: `drop-shadow(0 0 6px ${trendColor}60)` }} />
+                <ArrowUpIcon size={24} style={{ color: trendColor, filter: `drop-shadow(0 0 6px ${trendColor}60)` }} />
               ) : data.trend.direction === "DOWN" ? (
-                <TrendingDown className="w-6 h-6" style={{ color: trendColor, filter: `drop-shadow(0 0 6px ${trendColor}60)` }} />
+                <ArrowDownIcon size={24} style={{ color: trendColor, filter: `drop-shadow(0 0 6px ${trendColor}60)` }} />
               ) : (
-                <Minus className="w-6 h-6" style={{ color: trendColor }} />
+                <NeutralIcon size={24} style={{ color: trendColor }} />
               )}
               <motion.span
                 className="text-3xl font-bold font-mono relative"
@@ -439,11 +441,11 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
           {/* S/R Section Header */}
           <div className="flex items-center justify-between px-4 pt-4 pb-2">
             <h3 className="text-[10px] uppercase tracking-[0.2em] font-mono flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.35)" }}>
-              <Shield className="w-3.5 h-3.5" style={{ color: "#00ccff" }} />
+              <SecurityShieldIcon size={14} style={{ color: "#00ccff" }} />
               Support & Resistance
             </h3>
             <button onClick={() => openExplanation("support", "Support & Resistance")} className="text-white/20 hover:text-white/40 transition-colors">
-              <Info className="w-3 h-3" />
+              <InfoIcon size={12} />
             </button>
           </div>
 
@@ -507,7 +509,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
           {/* Trading Suggestion */}
           <div className="px-4 py-3 flex-1">
             <div className="flex items-center gap-1.5 mb-2">
-              <Target className="w-3.5 h-3.5" style={{ color: trendColor }} />
+              <TargetIcon size={14} style={{ color: trendColor }} />
               <span className="text-[10px] uppercase tracking-[0.2em] font-mono" style={{ color: "rgba(255,255,255,0.35)" }}>Trade Setup</span>
             </div>
             <p className="text-[11px] text-white/50 mb-3 font-mono leading-relaxed">{data.trade_zones.suggestion}</p>
@@ -516,7 +518,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
               <div className="grid grid-cols-2 gap-2">
                 <div className="text-center rounded-lg py-2" style={{ backgroundColor: "rgba(0,255,136,0.06)", border: "1px solid rgba(0,255,136,0.15)" }}>
                   <div className="text-[8px] text-white/25 font-mono uppercase tracking-wider mb-0.5">
-                    <Crosshair className="w-2.5 h-2.5 inline mr-0.5" style={{ color: "#00ff88" }} />Target
+                    <TargetIcon size={10} className="inline mr-0.5" style={{ color: "#00ff88" }} />Target
                   </div>
                   <div className="text-base font-bold font-mono" style={{ color: "#00ff88", textShadow: "0 0 6px rgba(0,255,136,0.3)" }}>
                     {data.trade_zones.target.toFixed(data.price.decimals)}
@@ -524,7 +526,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
                 </div>
                 <div className="text-center rounded-lg py-2" style={{ backgroundColor: "rgba(255,51,102,0.06)", border: "1px solid rgba(255,51,102,0.15)" }}>
                   <div className="text-[8px] text-white/25 font-mono uppercase tracking-wider mb-0.5">
-                    <Shield className="w-2.5 h-2.5 inline mr-0.5" style={{ color: "#ff3366" }} />Stop
+                    <SecurityShieldIcon size={10} className="inline mr-0.5" style={{ color: "#ff3366" }} />Stop
                   </div>
                   <div className="text-base font-bold font-mono" style={{ color: "#ff3366", textShadow: "0 0 6px rgba(255,51,102,0.3)" }}>
                     {data.trade_zones.stop.toFixed(data.price.decimals)}
@@ -553,7 +555,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-bold font-mono" style={{ color: "#00ff88" }}>{explanationModal.title}</h3>
-                <button onClick={() => setExplanationModal(null)} className="text-white/40 hover:text-white"><X className="w-5 h-5" /></button>
+                <button onClick={() => setExplanationModal(null)} className="text-white/40 hover:text-white"><CloseIcon size={20} /></button>
               </div>
               <p className="text-sm text-white/60 leading-relaxed">{explanationModal.content}</p>
               <button onClick={() => setExplanationModal(null)} className="mt-5 w-full py-2 rounded-xl text-sm font-bold font-mono"

@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronDown, TrendingUp, Activity, BarChart3, Brain, Sparkles, LineChart, Home, Zap } from "lucide-react";
+import { ChevronDown, Moon } from "lucide-react";
+import {
+  EmelIcon, PulseIcon, SignalsIcon, LearningIcon,
+  ChartsIcon, TradingIcon, NasdaqIcon, GoldIcon,
+  ArrowUpIcon, ArrowDownIcon, AdvancedAnalysisIcon
+} from "../ui/CustomIcons";
 import Image from "next/image";
 import MLPredictionPanel from "../../components/MLPredictionPanel";
 import ClaudeAnalysisPanel from "../../components/ClaudeAnalysisPanel";
@@ -22,7 +27,7 @@ const SYMBOLS = {
   "NDX.INDX": {
     label: "NASDAQ-100",
     shortLabel: "NASDAQ",
-    icon: TrendingUp,
+    icon: NasdaqIcon,
     color: "from-emerald-500/20 to-teal-500/20",
     accent: "text-emerald-400",
     border: "border-emerald-500/30",
@@ -30,7 +35,7 @@ const SYMBOLS = {
   "XAUUSD": {
     label: "Gold (XAU/USD)",
     shortLabel: "XAUUSD",
-    icon: Activity,
+    icon: GoldIcon,
     color: "from-amber-500/20 to-yellow-500/20",
     accent: "text-amber-400",
     border: "border-amber-500/30",
@@ -102,7 +107,10 @@ export default function TradingView() {
   return (
     <div className="w-full text-white animate-in fade-in duration-300">
       <div className="flex justify-between items-center px-4 md:px-6 pt-4 mb-2">
-        <h1 className="text-xl font-bold">AI Trading</h1>
+        <div className="flex items-center gap-3">
+          <TradingIcon size={24} className="text-accent" />
+          <h1 className="text-xl font-bold">AI Trading</h1>
+        </div>
         {symbolSelector}
       </div>
       {/* Main Content - Golden Ratio Layout */}
@@ -123,7 +131,7 @@ export default function TradingView() {
             {/* Row 1: ML Prediction - Large Primary Panel */}
             <section>
               <div className="mb-3 flex items-center gap-2">
-                <Brain className="h-5 w-5 text-accent" />
+                <EmelIcon size={20} className="text-accent" />
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
                   {t("tradingPage.mlModelPrediction")}
                 </h2>
@@ -136,7 +144,7 @@ export default function TradingView() {
             {/* Row 2: Claude AI Analysis - Large */}
             <section>
               <div className="mb-3 flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-purple-400" />
+                <PulseIcon size={20} className="text-purple-400" />
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
                   {t("tradingPage.claudeAIAnalysis")}
                 </h2>
@@ -153,7 +161,7 @@ export default function TradingView() {
             {/* Detailed Analysis */}
             <section>
               <div className="mb-3 flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-sky-400" />
+                <AdvancedAnalysisIcon size={20} className="text-sky-400" />
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
                   {t("tradingPage.detailedAnalysis")}
                 </h2>
@@ -166,7 +174,7 @@ export default function TradingView() {
             {/* Smart Money Zones */}
             <section>
               <div className="mb-3 flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-cyan-400" />
+                <SignalsIcon size={20} className="text-cyan-400" />
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
                   Smart Money Zones
                 </h2>
@@ -179,7 +187,7 @@ export default function TradingView() {
             {/* Rhythm Detector */}
             <section>
               <div className="mb-3 flex items-center gap-2">
-                <Activity className="h-5 w-5 text-pink-400" />
+                <PulseIcon size={20} className="text-pink-400" />
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
                   {t("tradingPage.rhythmDetector")}
                 </h2>
@@ -192,7 +200,7 @@ export default function TradingView() {
             {/* Learning Dashboard */}
             <section>
               <div className="mb-3 flex items-center gap-2">
-                <Brain className="h-5 w-5 text-purple-400" />
+                <LearningIcon size={20} className="text-purple-400" />
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
                   {t("tradingPage.learningSystem")}
                 </h2>
@@ -205,7 +213,7 @@ export default function TradingView() {
             {/* Prediction History */}
             <section>
               <div className="mb-3 flex items-center gap-2">
-                <LineChart className="h-5 w-5 text-indigo-400" />
+                <ChartsIcon size={20} className="text-indigo-400" />
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
                   {t("tradingPage.predictionHistory")}
                 </h2>
@@ -220,7 +228,7 @@ export default function TradingView() {
         {/* Full-Width Charts Section */}
         <section className="mt-6 md:mt-8">
           <div className="mb-3 md:mb-4 flex items-center gap-2">
-            <LineChart className="h-5 w-5 md:h-6 md:w-6 text-blue-400" />
+            <ChartsIcon size={24} className="text-blue-400" />
             <h2 className="text-base md:text-lg font-bold uppercase tracking-wider">
               {t("tradingPage.livePriceCharts")}
             </h2>

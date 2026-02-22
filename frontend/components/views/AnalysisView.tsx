@@ -1,7 +1,8 @@
 "use client";
 
 import { lazy, Suspense } from "react";
-import { Loader2, BarChart3, TrendingUp, Layers, Globe2, CalendarDays, Waves } from "lucide-react";
+import { TrendingUp, Layers, Globe2, CalendarDays, Waves } from "lucide-react";
+import { LoadingIcon, SignalsIcon, AdvancedAnalysisIcon, EmelIcon } from "../ui/CustomIcons";
 import AuthGuard from "../../components/AuthGuard";
 import { LazyPanel } from "../../components/LazyPanel";
 import { useI18nStore } from "../../lib/i18n/store";
@@ -17,7 +18,7 @@ const AdvancedAnalysisPanel = lazy(() => import("../../components/AdvancedAnalys
 
 const PanelLoader = () => (
     <div className="flex items-center justify-center rounded-xl border border-white/5 bg-white/[0.02] min-h-[200px]">
-        <Loader2 className="h-6 w-6 animate-spin text-white/20" />
+        <LoadingIcon size={24} className="animate-spin text-white/20" />
     </div>
 );
 
@@ -30,7 +31,7 @@ export default function AnalysisView() {
                 {/* Page Header */}
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/30 to-orange-500/30">
-                        <BarChart3 className="h-5 w-5 text-amber-400" />
+                        <SignalsIcon size={20} className="text-amber-400" />
                     </div>
                     <div>
                         <h1 className="text-xl font-bold">Analysis</h1>

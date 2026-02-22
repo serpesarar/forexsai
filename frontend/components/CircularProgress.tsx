@@ -8,7 +8,7 @@ interface CircularProgressProps {
   strokeWidth?: number;
   colorClassName?: string;
   label?: string;
-  sublabel?: string;
+  sublabel?: React.ReactNode;
   animated?: boolean;
   onClick?: () => void;
   isInteractive?: boolean;
@@ -31,8 +31,9 @@ export default function CircularProgress({
   const circumference = 2 * Math.PI * radius;
   const clampedValue = Math.min(100, Math.max(0, value));
   const offset = circumference - (clampedValue / 100) * circumference;
+  const isText = (val: any): val is string | number => typeof val === "string" || typeof val === "number";
   const displayText = sublabel ?? `${Math.round(clampedValue)}%`;
-  const displayLen = String(displayText).length;
+  const displayLen = isText(displayText) ? String(displayText).length : 5;
   const baseFontPx = Math.min(22, Math.max(11, Math.round(size * 0.18)));
   const fontPx = Math.max(10, baseFontPx - (displayLen >= 7 ? 2 : displayLen >= 9 ? 3 : 0));
 

@@ -1,7 +1,8 @@
 "use client";
 
 import { lazy, Suspense } from "react";
-import { Loader2, Activity, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
+import { LoadingIcon, PulseIcon } from "../ui/CustomIcons";
 import AuthGuard from "../../components/AuthGuard";
 import { LazyPanel } from "../../components/LazyPanel";
 import { useI18nStore } from "../../lib/i18n/store";
@@ -15,7 +16,7 @@ const LearningDashboardV2 = lazy(() => import("../../components/panels/LearningD
 
 const PanelLoader = () => (
     <div className="flex items-center justify-center rounded-xl border border-white/5 bg-white/[0.02] min-h-[200px]">
-        <Loader2 className="h-6 w-6 animate-spin text-white/20" />
+        <LoadingIcon size={24} className="animate-spin text-white/20" />
     </div>
 );
 
@@ -28,7 +29,7 @@ export default function SignalsView() {
                 {/* Page Header */}
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-red-500/30 to-rose-500/30">
-                        <Activity className="h-5 w-5 text-red-400" />
+                        <PulseIcon size={20} className="text-red-400" />
                     </div>
                     <div>
                         <h1 className="text-xl font-bold">Detailed Signals</h1>

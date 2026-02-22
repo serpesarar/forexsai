@@ -7,13 +7,11 @@ import {
   ArrowLeft,
   Maximize2,
   Minimize2,
-  RefreshCw,
-  TrendingUp,
-  BarChart3,
   LogIn,
   User,
   ExternalLink
 } from "lucide-react";
+import { ChartsIcon, LoadingIcon, SignalsIcon, DashboardIcon } from "../ui/CustomIcons";
 import { useI18nStore } from "../../lib/i18n/store";
 import { NeonChart } from "../../components/NeonChart";
 
@@ -151,7 +149,7 @@ function ChartPanel({
       <div className="flex items-center justify-between p-3 md:p-4 border-b border-white/10">
         <div className="flex items-center gap-2 md:gap-3">
           <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg md:rounded-xl bg-gradient-to-br from-accent/30 to-blue-500/30">
-            <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-accent" />
+            <ChartsIcon size={20} className="text-accent" />
           </div>
           <div>
             <h3 className="font-bold text-base md:text-lg">{symbol.label}</h3>
@@ -171,7 +169,7 @@ function ChartPanel({
       <div className="relative">
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
-            <RefreshCw className="w-6 h-6 md:w-8 md:h-8 animate-spin text-accent" />
+            <LoadingIcon size={32} className="animate-spin text-accent" />
           </div>
         )}
         <TradingViewChart
@@ -203,7 +201,7 @@ export default function ChartsView() {
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent/30 to-blue-500/30">
-              <TrendingUp className="h-5 w-5 text-accent" />
+              <ChartsIcon size={24} className="text-accent" />
             </div>
             <div>
               <h2 className="font-bold text-xl">{fullscreenSymbol.label}</h2>
@@ -235,7 +233,7 @@ export default function ChartsView() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className="p-2 rounded-xl bg-blue-500/20 flex-shrink-0">
-                <TrendingUp className="w-5 h-5 text-blue-400" />
+                <SignalsIcon size={20} className="text-blue-400" />
               </div>
               <div>
                 <h3 className="font-semibold text-white mb-1">{t("chartsPage.tradingViewTitle")}</h3>

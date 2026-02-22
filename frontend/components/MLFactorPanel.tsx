@@ -2,7 +2,17 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Settings2, X, ChevronRight, RotateCcw, RefreshCw, Loader2, Shield, Zap, Target, Flame } from "lucide-react";
+import {
+  SettingsIcon,
+  CloseIcon,
+  ChevronIcon,
+  RotateIcon,
+  LoadingIcon,
+  SecurityShieldIcon,
+  ZapIcon,
+  TargetIcon,
+  AggressiveIcon,
+} from "./ui/CustomIcons";
 import { fetchPredictionWithStrategy } from "../lib/api/prediction";
 import { useI18nStore } from "../lib/i18n/store";
 import { useMLStrategyStore } from "../lib/store";
@@ -75,7 +85,7 @@ const STRATEGIES: Strategy[] = [
     name: "Ultra Güvenli",
     nameEn: "Ultra Safe",
     description: "Yüksek win rate, az trade",
-    icon: <Shield className="w-4 h-4" />,
+    icon: <SecurityShieldIcon size={16} />,
     enabledLayers: ["critical", "technical"],
     threshold: 0.58,
     color: "bg-emerald-500"
@@ -85,7 +95,7 @@ const STRATEGIES: Strategy[] = [
     name: "Dengeli",
     nameEn: "Balanced",
     description: "Optimal win rate/trade",
-    icon: <Target className="w-4 h-4" />,
+    icon: <TargetIcon size={16} />,
     enabledLayers: ["critical", "technical", "context"],
     threshold: 0.55,
     color: "bg-blue-500"
@@ -95,7 +105,7 @@ const STRATEGIES: Strategy[] = [
     name: "Full Power",
     nameEn: "Full Power",
     description: "Tüm faktörler aktif",
-    icon: <Zap className="w-4 h-4" />,
+    icon: <ZapIcon size={16} />,
     enabledLayers: ["critical", "technical", "context"],
     threshold: 0.52,
     color: "bg-yellow-500"
@@ -105,7 +115,7 @@ const STRATEGIES: Strategy[] = [
     name: "Agresif",
     nameEn: "Aggressive",
     description: "Çok trade, düşük filtre",
-    icon: <Flame className="w-4 h-4" />,
+    icon: <AggressiveIcon size={16} />,
     enabledLayers: ["critical"],
     threshold: 0.50,
     color: "bg-red-500"
@@ -231,10 +241,10 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
           bg-transparent text-white hover:text-accent
           transition-all duration-200 border-0 shadow-none`}
       >
-        <Settings2 className="w-6 h-6" />
+        <SettingsIcon size={24} />
         <span className="text-base font-semibold">{t("mlStrategy.title")}</span>
         <span className="text-xs bg-white/30 px-2 py-0.5 rounded-full font-bold">{activeLayerCount}/3</span>
-        <ChevronRight className={`w-5 h-5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronIcon size={20} style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }} className="transition-transform" />
       </button>
 
       {/* Sliding Panel */}
@@ -259,9 +269,9 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
               title={t("mlStrategy.updateFromBackend")}
             >
               {isLoading ? (
-                <Loader2 className="w-4 h-4 text-accent animate-spin" />
+                <LoadingIcon size={16} className="text-accent animate-spin" />
               ) : (
-                <RefreshCw className="w-4 h-4 text-accent" />
+                <LoadingIcon size={16} className="text-accent" />
               )}
             </button>
             <button
@@ -269,13 +279,13 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
               className="p-1.5 hover:bg-white/10 rounded-lg transition"
               title={t("mlStrategy.resetToBalanced")}
             >
-              <RotateCcw className="w-4 h-4 text-textSecondary" />
+              <RotateIcon size={16} className="text-textSecondary" />
             </button>
             <button
               onClick={() => setIsOpen(false)}
               className="p-1.5 hover:bg-white/10 rounded-lg transition"
             >
-              <X className="w-4 h-4" />
+              <CloseIcon size={16} />
             </button>
           </div>
         </div>
@@ -293,7 +303,7 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
                 {confidenceChange >= 0 ? "+" : ""}{confidenceChange.toFixed(1)}%
               </span>
               <span className={`font-mono text-lg font-bold ${liveConfidence >= 70 ? "text-success" :
-                  liveConfidence >= 55 ? "text-yellow-400" : "text-danger"
+                liveConfidence >= 55 ? "text-yellow-400" : "text-danger"
                 }`}>
                 {liveConfidence.toFixed(1)}%
               </span>
@@ -302,7 +312,7 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
           <div className="mt-2 h-2 bg-white/10 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-300 ${liveConfidence >= 70 ? "bg-success" :
-                  liveConfidence >= 55 ? "bg-yellow-400" : "bg-danger"
+                liveConfidence >= 55 ? "bg-yellow-400" : "bg-danger"
                 }`}
               style={{ width: `${liveConfidence}%` }}
             />

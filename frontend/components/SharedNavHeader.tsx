@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Activity } from "lucide-react";
+
 import { DashboardIcon, ChartsIcon, TradingIcon, AnalysisIcon, SignalsIcon, ForexsAILogoIcon } from "./ui/CustomIcons";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useI18nStore } from "../lib/i18n/store";
