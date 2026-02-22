@@ -5,24 +5,23 @@ import { useI18nStore } from "../../lib/i18n/store";
 import { PanelInfoButton } from "../PanelInfoButton";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  Target,
-  RefreshCw,
-  Brain,
-  Zap,
-  ArrowUp,
-  ArrowDown,
-  Clock,
-  Eye,
-  CheckCircle,
-  AlertTriangle,
-  Shield,
-  Mountain,
-  Crosshair,
-
-} from "lucide-react";
+  ArrowUpIcon as TrendingUp,
+  ArrowDownIcon as TrendingDown,
+  ActivityIcon as Activity,
+  TargetIcon as Target,
+  RotateIcon as RefreshCw,
+  BrainIcon as Brain,
+  ZapIcon as Zap,
+  ArrowUpIcon as ArrowUp,
+  ArrowDownIcon as ArrowDown,
+  ClockIcon as Clock,
+  EyeIcon as Eye,
+  CheckCircleIcon as CheckCircle,
+  AlertIcon as AlertTriangle,
+  SecurityShieldIcon as Shield,
+  MountainIcon as Mountain,
+  TargetIcon as Crosshair,
+} from "../ui/CustomIcons";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 

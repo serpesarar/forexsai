@@ -2,10 +2,24 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  Target, TrendingUp, TrendingDown, RefreshCw, AlertTriangle,
-  CheckCircle, XCircle, Activity, BarChart3, Shield, ChevronDown,
-  ChevronUp, Eye, ArrowUpRight, ArrowDownRight, Minus, Clock,
-} from "lucide-react";
+  TargetIcon as Target,
+  ArrowUpIcon as TrendingUp,
+  ArrowDownIcon as TrendingDown,
+  RotateIcon as RefreshCw,
+  AlertIcon as AlertTriangle,
+  CheckCircleIcon as CheckCircle,
+  CloseIcon as XCircle,
+  ActivityIcon as Activity,
+  ChartsIcon as BarChart3,
+  SecurityShieldIcon as Shield,
+  ChevronDownIcon as ChevronDown,
+  ChevronUpIcon as ChevronUp,
+  EyeIcon as Eye,
+  ArrowUpRightIcon as ArrowUpRight,
+  ArrowDownRightIcon as ArrowDownRight,
+  MinusIcon as Minus,
+  ClockIcon as Clock,
+} from "../ui/CustomIcons";
 import { EmelIcon, PulseIcon, LearningIcon, SignalsIcon } from "../ui/CustomIcons";
 import {
   useLifecycleDashboard, useActiveSignals, useSignalDetail,

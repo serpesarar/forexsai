@@ -4,18 +4,18 @@ import { useState, useEffect, useCallback } from "react";
 import { PanelInfoButton } from "./PanelInfoButton";
 import { useQuery } from "@tanstack/react-query";
 import {
-  BarChart3,
-  RefreshCw,
-  Trophy,
-  Target,
-  XCircle,
-  Shield,
-  Zap,
-  Flame,
-  TrendingUp,
-  AlertTriangle,
-  Crosshair,
-} from "lucide-react";
+  ChartsIcon as BarChart3,
+  RotateIcon as RefreshCw,
+  TrophyIcon as Trophy,
+  TargetIcon as Target,
+  CloseIcon as XCircle,
+  SecurityShieldIcon as Shield,
+  ZapIcon as Zap,
+  AggressiveIcon as Flame,
+  ArrowUpIcon as TrendingUp,
+  AlertIcon as AlertTriangle,
+  TargetIcon as Crosshair,
+} from "./ui/CustomIcons";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 

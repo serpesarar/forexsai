@@ -4,24 +4,23 @@ import { useState, useEffect, useCallback } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
 import { PanelInfoButton } from "../PanelInfoButton";
 import {
-  Brain,
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  Target,
-  RefreshCw,
-  Zap,
-  ArrowUp,
-  ArrowDown,
-  Clock,
-  Eye,
-  CheckCircle,
-  AlertTriangle,
-  BarChart3,
-  Shield,
-  Mountain,
-
-} from "lucide-react";
+  BrainIcon as Brain,
+  ArrowUpIcon as TrendingUp,
+  ArrowDownIcon as TrendingDown,
+  ActivityIcon as Activity,
+  TargetIcon as Target,
+  RotateIcon as RefreshCw,
+  ZapIcon as Zap,
+  ArrowUpIcon as ArrowUp,
+  ArrowDownIcon as ArrowDown,
+  ClockIcon as Clock,
+  EyeIcon as Eye,
+  CheckCircleIcon as CheckCircle,
+  AlertIcon as AlertTriangle,
+  ChartsIcon as BarChart3,
+  SecurityShieldIcon as Shield,
+  MountainIcon as Mountain,
+} from "../ui/CustomIcons";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 

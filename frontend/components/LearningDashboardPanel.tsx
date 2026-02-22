@@ -3,19 +3,19 @@
 import { useState, useEffect } from "react";
 import { PanelInfoButton } from "./PanelInfoButton";
 import {
-  Brain,
-  TrendingUp,
-  TrendingDown,
-  Target,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  RefreshCw,
-  Database,
-  BarChart3,
-  Activity,
-  Zap,
-} from "lucide-react";
+  BrainIcon as Brain,
+  ArrowUpIcon as TrendingUp,
+  ArrowDownIcon as TrendingDown,
+  TargetIcon as Target,
+  AlertIcon as AlertTriangle,
+  CheckCircleIcon as CheckCircle,
+  CloseIcon as XCircle,
+  RotateIcon as RefreshCw,
+  DatabaseIcon as Database,
+  ChartsIcon as BarChart3,
+  ActivityIcon as Activity,
+  ZapIcon as Zap,
+} from "./ui/CustomIcons";
 import {
   useLearningHealth,
   useLearningDashboard,
@@ -498,10 +498,10 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
                   <div
                     key={idx}
                     className={`text-xs p-2 rounded ${insight.data?.severity === "high"
-                        ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                        : insight.data?.severity === "positive"
-                          ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                          : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                      ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                      : insight.data?.severity === "positive"
+                        ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                        : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                       }`}
                   >
                     {insight.data?.recommendation || JSON.stringify(insight.data)}
