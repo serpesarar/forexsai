@@ -43,32 +43,49 @@ export function useLivePrices(_refreshInterval?: number): {
   const tickers: MarketTicker[] = useMemo(() => {
     return SYMBOLS_CONFIG.map(({ symbol, label }) => {
       const wsData = symbolData[symbol];
-      
-      if (!wsData?.data?.ta_snapshot) {
+
+      const ta = wsData?.data?.ta_snapshot;
+      // Get current price from TA snapshot or directly from base data
+      const currentPrice = ta?.current_price ?? wsData?.data?.current_price ?? null;
+
+      // If we don't even have a current price, return placeholder
+      if (!currentPrice || currentPrice <= 0) {
         return { label, price: "--", change: "--%", trend: "up" as const };
       }
 
-      const ta = wsData.data.ta_snapshot;
-      const currentPrice = ta.current_price ?? wsData.data.current_price ?? null;
-      const prevClose = ta.prev_close ?? ta.last_close ?? null;
+      // Try to get change from TA snapshot FIRST (most reliable)
+      const prevClose = ta?.prev_close ?? ta?.last_close ?? null;
+      const changePctBackend = ta?.change_pct ?? null;
 
-      if (!currentPrice || !prevClose || currentPrice <= 0 || prevClose <= 0) {
-        return { label, price: "--", change: "--%", trend: "up" as const };
+      let changeValue = 0;
+      let changePercent = 0;
+
+      if (changePctBackend !== null) {
+        changePercent = changePctBackend;
+        changeValue = currentPrice * (changePercent / 100);
+      } else if (prevClose && prevClose > 0) {
+        changeValue = currentPrice - prevClose;
+        changePercent = (changeValue / prevClose) * 100;
+      } else {
+        // We have price but no history: display price with 0% change
+        return {
+          label,
+          price: currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          change: "0.00%",
+          trend: "up" as const,
+        };
       }
-
-      const change = currentPrice - prevClose;
-      const changePercent = (change / prevClose) * 100;
 
       return {
         label,
         price: currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
         change: `${changePercent >= 0 ? "+" : ""}${changePercent.toFixed(2)}%`,
-        trend: change >= 0 ? "up" : "down",
+        trend: changePercent >= 0 ? "up" : "down",
       };
     });
   }, [symbolData]);
 
   const isLoading = status !== "connected" || !lastUpdate;
 
-  return { tickers, isLoading, lastUpdate, refresh: () => {} };
+  return { tickers, isLoading, lastUpdate, refresh: () => { } };
 }
