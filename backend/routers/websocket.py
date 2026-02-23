@@ -31,13 +31,19 @@ async def websocket_all(websocket: WebSocket):
     """Subscribe to updates for ALL tracked symbols."""
     symbols_subscribed = list(VALID_SYMBOLS)
 
-    # Connect to all channels
+    await websocket.accept()
+
+    # Connect to all channels and send cached data immediately
     for sym in symbols_subscribed:
-        if sym == symbols_subscribed[0]:
-            await manager.connect(websocket, sym)
-        else:
-            # Don't re-accept, just add to channel
-            manager._connections[sym].add(websocket)
+        manager._connections[sym].add(websocket)
+        manager._total_connections += 1
+        
+        # Immediately send last known data so client doesn't wait for next cycle
+        if sym in manager._last_payload:
+            try:
+                await websocket.send_text(manager._last_payload[sym])
+            except Exception:
+                pass
 
     try:
         while True:

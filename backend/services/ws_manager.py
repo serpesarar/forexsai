@@ -63,23 +63,31 @@ class ConnectionManager:
 
     async def broadcast(self, symbol: str, data: Dict[str, Any]):
         """Broadcast data to all clients subscribed to a symbol."""
-        if symbol not in self._connections or not self._connections[symbol]:
-            # Still cache the payload for future connections
-            try:
-                payload = json.dumps(data, default=str, ensure_ascii=False)
-                self._last_payload[symbol] = payload
-            except Exception:
-                pass
-            return
-
         try:
             payload = json.dumps(data, default=str, ensure_ascii=False)
         except (TypeError, ValueError) as e:
             logger.error(f"WS broadcast serialize error for {symbol}: {e}")
             return
 
-        self._last_payload[symbol] = payload
+        msg_type = data.get("type")
+        if msg_type == "update":
+            self._last_payload[symbol] = payload
+        elif msg_type == "price_update":
+            if symbol in self._last_payload:
+                try:
+                    cached_data = json.loads(self._last_payload[symbol])
+                    if "data" in cached_data:
+                        cached_data["data"]["current_price"] = data.get("price")
+                        if "ta_snapshot" in cached_data["data"] and isinstance(cached_data["data"]["ta_snapshot"], dict):
+                            cached_data["data"]["ta_snapshot"]["current_price"] = data.get("price")
+                        self._last_payload[symbol] = json.dumps(cached_data, default=str, ensure_ascii=False)
+                except Exception as e:
+                    logger.debug(f"Failed to patch cached WS payload for {symbol}: {e}")
+
         self._total_broadcasts += 1
+
+        if symbol not in self._connections or not self._connections[symbol]:
+            return
 
         # Send to all connected clients, remove dead connections
         dead: list[WebSocket] = []
