@@ -1317,9 +1317,9 @@ async def get_strategy_performance(
         cutoff = datetime.utcnow() - timedelta(days=days)
         cutoff_iso = cutoff.isoformat() + "Z"
         
-        # Get predictions with lifecycle fields
+        # Get predictions with lifecycle fields + outcome_results fallback
         result = client.table("prediction_logs").select(
-            "id, symbol, strategy, ml_confidence, status, targets_hit, model_type"
+            "id, symbol, strategy, ml_confidence, status, targets_hit, model_type, outcome_results(hit_target, hit_stop, ml_correct, check_interval)"
         ).gte("created_at", cutoff_iso).limit(1000).execute()
         predictions = (result.get('data') if isinstance(result, dict) else getattr(result, 'data', None)) or []
         
@@ -1357,7 +1357,7 @@ async def get_strategy_performance(
             stats[sym][strat]["total"] += 1
             stats[sym][strat]["conf_sum"] += conf
             
-            # Use ONLY lifecycle status for outcomes (single source of truth)
+            # PRIMARY: lifecycle status (completed/stopped)
             p_status = p.get("status")
             if p_status in ("completed", "stopped"):
                 outcomes_found += 1
@@ -1376,6 +1376,26 @@ async def get_strategy_performance(
                     if targets_hit.get("TP2"): stats[sym][strat]["tp2_hits"] += 1
                     if targets_hit.get("TP3"): stats[sym][strat]["tp3_hits"] += 1
                     if targets_hit.get("TP4"): stats[sym][strat]["tp4_hits"] += 1
+            else:
+                # FALLBACK: use outcome_results for signals without lifecycle resolution
+                # This covers XAUUSD and other symbols where lifecycle can't track properly
+                outcome_list = p.get("outcome_results") or []
+                primary_outcome = None
+                for o in outcome_list:
+                    if o.get("check_interval") == "1h":
+                        primary_outcome = o
+                        break
+                if not primary_outcome and outcome_list:
+                    primary_outcome = outcome_list[0]
+                
+                if primary_outcome:
+                    outcomes_found += 1
+                    stats[sym][strat]["with_outcome"] += 1
+                    if primary_outcome.get("hit_target") or primary_outcome.get("ml_correct"):
+                        stats[sym][strat]["correct"] += 1
+                        stats[sym][strat]["target_hits"] += 1
+                    elif primary_outcome.get("hit_stop"):
+                        stats[sym][strat]["stop_hits"] += 1
         
         # Build result
         result_data = {}
