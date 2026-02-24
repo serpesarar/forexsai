@@ -14,6 +14,7 @@ import {
     SupportMailIcon,
     WebsiteIcon,
     SecurityShieldIcon,
+    GlobeIcon,
     TermsIcon,
     LogoutIcon,
     UserProfileIcon,
@@ -47,6 +48,7 @@ const LEGAL_LINKS = [
 
 export default function Sidebar() {
     const { activeView, setActiveView } = useNavigationStore();
+    const { locale, setLocale } = useI18nStore();
     const user = useUser();
     const { logout } = useAuthStore();
 
@@ -73,7 +75,7 @@ export default function Sidebar() {
 
     return (
         <aside
-            className={`fixed left-0 top-0 h-screen z-[60] flex flex-col transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${collapsed ? "w-[72px]" : "w-[240px]"}`}
+            className={`fixed left-0 top-0 h-screen z-[999] pointer-events-auto flex flex-col transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${collapsed ? "w-[72px]" : "w-[240px]"}`}
             style={{
                 background: "linear-gradient(180deg, #080d1a 0%, #060a14 50%, #0a0f1e 100%)",
                 borderRight: "1px solid rgba(0,224,198,0.08)",
@@ -171,6 +173,22 @@ export default function Sidebar() {
                     <SupportMailIcon size={16} className="flex-shrink-0" />
                     {!collapsed && <span className="text-[11px] font-medium sidebar-fade-in">Support / İletişim</span>}
                 </Link>
+
+                {/* Language (Globe) */}
+                <button
+                    onClick={() => {
+                        const nextLang = locale === "tr" ? "en" : "tr";
+                        setLocale(nextLang);
+                    }}
+                    className={`group flex items-center gap-2.5 rounded-lg transition-all duration-200 ${collapsed ? "justify-center px-0 py-2" : "px-3 py-1.5"}`}
+                    style={{ color: "rgba(255,255,255,0.3)" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "#00e0c6"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}
+                    title={collapsed ? "Language" : undefined}
+                >
+                    <GlobeIcon size={16} className="flex-shrink-0" />
+                    {!collapsed && <span className="text-[11px] font-medium sidebar-fade-in">{locale === 'tr' ? 'Türkçe' : 'English'}</span>}
+                </button>
 
                 {/* Legal */}
                 <div>

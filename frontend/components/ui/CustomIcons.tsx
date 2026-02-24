@@ -509,6 +509,35 @@ export function SeasonalityIcon({ className, size = 18, style }: IconProps) {
     );
 }
 
+import {
+    LogOut,
+    Settings,
+    ShieldAlert,
+    HelpCircle,
+    ExternalLink,
+    Crown,
+    Sparkles,
+    Zap,
+    CheckCircle2,
+    AlertTriangle,
+    Info,
+    ChevronDown,
+    LayoutDashboard,
+    LineChart,
+    Activity,
+    BarChart3,
+    ListRestart,
+    Mail,
+    Earth,
+    Shield,
+    FileText,
+    User,
+    PanelLeftClose,
+    PanelLeftOpen,
+    Orbit,
+    Globe
+} from 'lucide-react';
+
 /**
  * LearningIcon — Kitap + üzerinde sinyal büyümesi
  */
@@ -1031,13 +1060,8 @@ export const SupportMailIcon = ({ size = 24, className = "" }: IconProps) => (
     </svg>
 );
 
-export const WebsiteIcon = ({ size = 24, className = "" }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-        <path d="M3.6 9H20.4M3.6 15H20.4M12 3V21M12 3C10 3 8 7 8 12C8 17 10 21 12 21M12 3C14 3 16 7 16 12C16 17 14 21 12 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-);
-
+export const WebsiteIcon = (props: any) => <Earth {...props} />;
+export const GlobeIcon = (props: any) => <Globe {...props} />;
 export const SecurityShieldIcon = ({ size = 24, className = "" }: IconProps) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
         <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

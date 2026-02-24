@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import SplineScene from "../../../components/SplineScene";
+
 
 export default function WelcomePage() {
   const t = useTranslations("landing");
@@ -10,9 +10,11 @@ export default function WelcomePage() {
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black text-white font-sans">
 
-      {/* 3D Spline Arka Plan */}
-      <div className="absolute inset-0 z-0">
-        <SplineScene />
+      {/* 3D Spline Arka Plan - Web Component */}
+      <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.60/build/spline-viewer.js" async></script>
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        {/* @ts-ignore */}
+        <spline-viewer url="https://prod.spline.design/qwXYdfDuVtIZ2NZZ/scene.splinecode"></spline-viewer>
       </div>
 
       {/* Video Overlay - Orijinal Mavi Renk */}

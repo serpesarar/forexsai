@@ -1337,7 +1337,9 @@ export default function HomePage() {
   return (
     <div className="min-h-screen text-textPrimary relative">
       {/* Sidebar Navigation */}
-      <Sidebar />
+      <div className="relative z-[999]">
+        <Sidebar />
+      </div>
 
       {/* Main Content - offset by sidebar width */}
       <div className="transition-all duration-300" style={{ marginLeft: 72 }}>
