@@ -34,8 +34,8 @@ export default function SplineViewerClient() {
         }
 
         // 2. ANİMASYON - Kamera etrafında dönme
-        let angle = 0;
-        const radius = 1200; // Kameranın uzaklığı (büyük = uzak, küçük = yakın)
+        let angle = 1;
+        const radius = 900; // Kameranın uzaklığı (büyük = uzak, küçük = yakın)
 
         const animate = () => {
             if (cameraRef.current) {
