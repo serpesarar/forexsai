@@ -771,7 +771,7 @@
     },
     "signup": {
       "dontHaveAccount": "Don't have an account?",
-      "loginLink": "Sign In",
+      "loginLink": "Login",
       "title": "Professional Trader Account",
       "subtitle": "Create a free account to access AI-powered analytics.",
       "emailLabel": "Email Address",
@@ -804,8 +804,35 @@
       "yourReferral": "Your exclusive invite code:",
       "shareWhatsApp": "Share on WhatsApp",
       "copyLink": "Copy Link",
-      "loginLink": "Login",
       "haveAccount": "Already have an account?"
+    }
+  },
+  "landing": {
+    "nav": {
+      "markets": "MARKETS",
+      "analysis": "ANALYSIS",
+      "about": "ABOUT",
+      "login": "LOGIN"
+    },
+    "hero": {
+      "title": "FOREXS",
+      "subtitle": "AI",
+      "description": "Advanced algorithmic trading powered by neural networks",
+      "cta": "START TRADING"
+    },
+    "cards": {
+      "liveMarkets": {
+        "title": "Live Markets",
+        "desc": "Real-time AI analysis"
+      },
+      "aiAnalysis": {
+        "title": "AI Analysis",
+        "desc": "Deep pattern recognition"
+      },
+      "portfolio": {
+        "title": "Portfolio",
+        "desc": "Intelligent risk management"
+      }
     }
   }
 }

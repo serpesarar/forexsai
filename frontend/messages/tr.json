@@ -804,8 +804,35 @@
       "yourReferral": "Size özel davet kodunuz:",
       "shareWhatsApp": "WhatsApp'ta Paylaş",
       "copyLink": "Linki Kopyala",
-      "loginLink": "Giriş Yap",
       "haveAccount": "Zaten hesabınız var mı?"
+    }
+  },
+  "landing": {
+    "nav": {
+      "markets": "PİYASALAR",
+      "analysis": "ANALİZ",
+      "about": "HAKKIMIZDA",
+      "login": "GİRİŞ YAP"
+    },
+    "hero": {
+      "title": "FOREXS",
+      "subtitle": "AI",
+      "description": "Sinir ağları ile desteklenen gelişmiş algoritmik ticaret",
+      "cta": "TİCARETE BAŞLA"
+    },
+    "cards": {
+      "liveMarkets": {
+        "title": "Canlı Piyasalar",
+        "desc": "Gerçek zamanlı AI analizi"
+      },
+      "aiAnalysis": {
+        "title": "AI Analiz",
+        "desc": "Derin formasyon tespiti"
+      },
+      "portfolio": {
+        "title": "Portföy",
+        "desc": "Akıllı risk yönetimi"
+      }
     }
   }
 }
