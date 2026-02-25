@@ -1,54 +1,35 @@
 "use client";
 
-import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, useScroll } from "framer-motion";
 import { useI18n } from "@/lib/i18n";
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
-import { Menu, X, ArrowRight, MessageSquareWarning } from "lucide-react";
+import { Menu, X, MessageSquareWarning, ArrowRight } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { usePathname } from "next/navigation";
 import { FeedbackModal } from "@/components/FeedbackModal";
-
-// Animated shine component for the AI text
-function AIText({ prefersReducedMotion }: { prefersReducedMotion: boolean }) {
-  // ... (unchanged)
-  return (
-    <span className="relative inline-flex items-center">
-      {/* ... (unchanged) */}
-    </span>
-  );
-}
 
 export function TopNav() {
   const { t, locale, setLocale } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [feedbackOpen, setFeedbackOpen] = useState(false); // New state
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const pathname = usePathname();
-  const prefersReducedMotion = useReducedMotion();
-
-  const { scrollY } = useScroll();
-  const navOpacity = useTransform(scrollY, [0, 100], [0.55, 0.85]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 30);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 30);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const navLinks = [
-    { href: "#features", label: t("nav.features") },
-    { href: "#how-it-works", label: t("nav.howItWorks") },
-    { href: "/pricing", label: t("nav.pricing") },
+    { href: "/features", label: t("nav.features") || "Features" },
+    { href: "/about", label: t("nav.howItWorks") || "About" },
+    { href: "/pricing", label: t("nav.pricing") || "Pricing" },
   ];
 
-  const isActive = (href: string) => {
-    if (href.startsWith("#")) return pathname.includes(href);
-    return pathname === href;
-  };
+  const isActive = (href: string) => pathname === href;
 
   return (
     <>
@@ -61,46 +42,20 @@ export function TopNav() {
         className="fixed top-0 left-0 right-0 z-50"
       >
         <div className="mx-4 mt-4">
-          <motion.nav
-            style={{
-              backgroundColor: scrolled
-                ? "rgba(11, 18, 32, 0.85)"
-                : "rgba(11, 18, 32, 0.55)",
-            }}
-            className={`max-w-7xl mx-auto px-6 h-[72px] md:h-[76px] rounded-2xl backdrop-blur-lg border border-white/[0.10] flex items-center transition-shadow duration-300 ${scrolled ? "shadow-2xl shadow-black/30" : "shadow-lg shadow-black/20"
+          <nav
+            className={`max-w-7xl mx-auto px-6 h-[68px] rounded-xl border border-white/[0.08] flex items-center transition-all duration-300 ${scrolled
+                ? "bg-black/90 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.5)]"
+                : "bg-black/60 backdrop-blur-lg shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
               }`}
           >
             <div className="flex items-center justify-between w-full">
               {/* Logo */}
-              <Link
-                href="/welcome"
-                aria-label="ForexsAi home"
-                className="flex items-center gap-2.5 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00E0C6]/50 rounded-xl p-1 -ml-1"
-              >
-                {/* ... Logo Content ... */}
-                <motion.div
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                  className="relative w-8 h-8 md:w-9 md:h-9 group-hover:drop-shadow-[0_0_8px_rgba(0,224,198,0.4)]"
-                >
-                  <Image
-                    src="/logo.png"
-                    alt="ForexsAi logo"
-                    width={36}
-                    height={36}
-                    className="w-full h-full object-contain"
-                    priority
-                  />
+              <Link href="/welcome" aria-label="ForexsAi home" className="flex items-center gap-2 group">
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="relative w-8 h-8">
+                  <Image src="/logo.png" alt="ForexsAi logo" width={32} height={32} className="w-full h-full object-contain" priority />
                 </motion.div>
-                <motion.span
-                  className="text-xl md:text-2xl font-bold tracking-tight"
-                  whileHover={{ y: -1 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-                  <span className="text-white">Forexs</span>
-                  <AIText prefersReducedMotion={prefersReducedMotion ?? false} />
-                </motion.span>
+                <span className="text-lg font-bold tracking-[0.1em] bg-gradient-to-br from-gray-100 to-gray-400 bg-clip-text text-transparent">FOREXS</span>
+                <span className="text-lg font-light tracking-[0.08em] text-white/70 -ml-1">AI</span>
               </Link>
 
               {/* Desktop Nav */}
@@ -109,177 +64,119 @@ export function TopNav() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="relative px-4 py-2.5 text-base text-[#E5E7EB]/70 hover:text-white transition-colors duration-200 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00E0C6]/50 rounded-xl"
+                    className={`relative px-4 py-2 text-xs uppercase tracking-[0.2em] font-light transition-colors duration-200 rounded-lg ${isActive(link.href) ? "text-white bg-white/[0.06] border border-white/8" : "text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]"
+                      }`}
                   >
-                    <span className="relative z-10 font-medium">{link.label}</span>
-                    <motion.div
-                      className="absolute inset-0 rounded-xl bg-white/[0.06] opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                      layoutId="navHover"
-                    />
-                    {isActive(link.href) && (
-                      <motion.div
-                        layoutId="activeNavUnderline"
-                        className="absolute -bottom-0.5 left-3 right-3 h-[2px] rounded-full"
-                        style={{
-                          background: "linear-gradient(90deg, #00E0C6, #3B82F6, #00E0C6)",
-                          backgroundSize: "200% 100%",
-                        }}
-                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                      />
-                    )}
+                    {link.label}
                   </Link>
                 ))}
               </div>
 
               {/* Right Section */}
               <div className="hidden md:flex items-center gap-3">
-
-                {/* Bug Report Button */}
                 <button
                   onClick={() => setFeedbackOpen(true)}
-                  className="p-2.5 text-[#E5E7EB]/70 hover:text-white hover:bg-white/10 rounded-xl transition-all focus:outline-none flex items-center gap-2 group"
-                  title="Sorun Bildir / Report Bug"
+                  className="p-2 text-gray-600 hover:text-gray-300 hover:bg-white/5 rounded-lg transition-all flex items-center gap-2"
+                  title="Report Issue"
                 >
-                  <MessageSquareWarning className="w-5 h-5 group-hover:text-[#F59E0B] transition-colors" />
-                  <span className="text-sm font-medium hidden lg:block">Sorun Bildir</span>
+                  <MessageSquareWarning className="w-4 h-4" />
+                  <span className="text-xs font-light tracking-widest uppercase hidden lg:block">Report</span>
                 </button>
 
-                <div className="w-px h-6 bg-white/10 mx-1" />
+                <div className="w-px h-5 bg-white/8" />
+                <div className="hidden md:block"><LanguageSwitcher /></div>
 
-                {/* Language Selector */}
-                <div className="hidden md:block">
-                  <LanguageSwitcher />
-                </div>
-
-                {/* Login */}
-                <Link
-                  href="/login"
-                  className="px-4 py-2 text-base text-[#E5E7EB]/60 hover:text-white transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00E0C6]/50 rounded-xl font-medium"
-                >
-                  {t("nav.login")}
+                <Link href="/login" className="px-4 py-2 text-xs text-gray-500 hover:text-white transition-colors font-light tracking-widest uppercase">
+                  {t("nav.login") || "Login"}
                 </Link>
 
-                {/* Primary CTA */}
-                <motion.div
-                  whileHover={{ y: -2, scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="relative"
-                >
-                  <motion.div
-                    className="absolute -inset-[2px] rounded-full bg-gradient-to-r from-[#00E0C6] to-[#3B82F6] opacity-0 blur-md"
-                    whileHover={{ opacity: 0.6 }}
-                    transition={{ duration: 0.2 }}
-                  />
+                {/* CTA — Dark Metalic */}
+                <motion.div whileHover={{ y: -1, scale: 1.02 }} whileTap={{ scale: 0.97 }}>
                   <Link
                     href="/signup"
-                    className="relative group flex items-center gap-2 px-5 py-2.5 text-base font-semibold text-[#0B1220] bg-gradient-to-r from-[#00E0C6] to-[#3B82F6] rounded-full hover:shadow-xl hover:shadow-[#00E0C6]/30 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00E0C6]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B1220]"
+                    className="group flex items-center gap-2 px-5 py-2 text-xs font-light text-white bg-gradient-to-r from-gray-700 via-gray-500 to-gray-700 border border-gray-500/40 rounded-sm hover:shadow-[0_0_20px_rgba(200,200,200,0.15)] hover:from-gray-600 hover:via-gray-400 hover:to-gray-600 transition-all duration-300 uppercase tracking-widest"
                   >
-                    {t("nav.startFree")}
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                    {t("nav.startFree") || "Start Free"}
+                    <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                   </Link>
                 </motion.div>
               </div>
 
               {/* Mobile Menu Button */}
               <button
-                className="md:hidden p-2.5 text-white rounded-xl hover:bg-white/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00E0C6]/50"
+                className="md:hidden p-2 text-white rounded-lg hover:bg-white/5 transition-colors"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-                aria-expanded={mobileMenuOpen}
               >
-                <motion.div
-                  animate={{ rotate: mobileMenuOpen ? 180 : 0 }}
-                  transition={{ duration: 0.25 }}
-                >
-                  {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                <motion.div animate={{ rotate: mobileMenuOpen ? 180 : 0 }} transition={{ duration: 0.25 }}>
+                  {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </motion.div>
               </button>
             </div>
-          </motion.nav>
+          </nav>
 
           {/* Mobile Menu */}
           <motion.div
             initial={false}
-            animate={{
-              height: mobileMenuOpen ? "auto" : 0,
-              opacity: mobileMenuOpen ? 1 : 0,
-            }}
+            animate={{ height: mobileMenuOpen ? "auto" : 0, opacity: mobileMenuOpen ? 1 : 0 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="md:hidden overflow-hidden mt-3"
           >
-            <div className="max-w-7xl mx-auto rounded-2xl backdrop-blur-xl bg-[#0B1220]/95 border border-white/10 p-4 space-y-1">
-
-              {/* Mobile Bug Report */}
+            <div className="max-w-7xl mx-auto rounded-xl bg-black/95 backdrop-blur-xl border border-white/8 p-4 space-y-1">
               <button
                 onClick={() => { setFeedbackOpen(true); setMobileMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-[#E5E7EB]/80 hover:text-white hover:bg-white/5 rounded-xl transition-colors font-medium border border-red-500/20 bg-red-500/5 mb-2"
+                className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors font-light border border-red-500/10 bg-red-500/3 mb-2"
               >
-                <MessageSquareWarning className="w-5 h-5 text-red-400" />
-                Sorun/Hata Bildir
+                <MessageSquareWarning className="w-4 h-4 text-red-400/60" />
+                <span className="uppercase tracking-widest text-xs">Report Issue</span>
               </button>
 
               {navLinks.map((link, i) => (
                 <motion.div
                   key={link.href}
                   initial={{ opacity: 0, x: -10 }}
-                  animate={{
-                    opacity: mobileMenuOpen ? 1 : 0,
-                    x: mobileMenuOpen ? 0 : -10,
-                  }}
+                  animate={{ opacity: mobileMenuOpen ? 1 : 0, x: mobileMenuOpen ? 0 : -10 }}
                   transition={{ delay: i * 0.05 }}
                 >
                   <Link
                     href={link.href}
-                    className="block px-4 py-3 text-[#E5E7EB]/80 hover:text-white hover:bg-white/5 rounded-xl transition-colors font-medium"
+                    className="block px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors font-light text-xs uppercase tracking-widest"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.label}
                   </Link>
                 </motion.div>
               ))}
-              <div className="pt-3 mt-3 border-t border-white/10 flex items-center justify-between">
-                {/* Mobile Language Toggle */}
-                <div className="flex items-center p-1 rounded-full bg-white/[0.06]">
-                  {["en", "tr"].map((lang) => (
+
+              <div className="pt-3 mt-3 border-t border-white/5 flex items-center justify-between">
+                <div className="flex items-center p-1 rounded-full bg-white/[0.04] border border-white/6">
+                  {(["en", "tr"] as const).map((lang) => (
                     <button
                       key={lang}
-                      onClick={() => setLocale(lang as "en" | "tr")}
-                      className={`relative px-4 py-1.5 text-sm font-medium rounded-full transition-all ${locale === lang ? "text-[#0B1220]" : "text-[#E5E7EB]/60"
+                      onClick={() => setLocale(lang)}
+                      className={`px-3 py-1 text-xs font-light rounded-full transition-all uppercase tracking-wider ${locale === lang ? "text-white bg-white/10" : "text-gray-600"
                         }`}
                     >
-                      {locale === lang && (
-                        <motion.div
-                          layoutId="mobileLangPill"
-                          className="absolute inset-0 bg-gradient-to-r from-[#00E0C6] to-[#3B82F6] rounded-full"
-                        />
-                      )}
-                      <span className="relative z-10 uppercase">{lang}</span>
+                      {lang}
                     </button>
                   ))}
                 </div>
-                <Link
-                  href="/login"
-                  className="px-4 py-2 text-sm text-[#E5E7EB]/60 hover:text-white font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
+                <Link href="/login" className="px-4 py-2 text-xs text-gray-500 hover:text-white font-light uppercase tracking-widest" onClick={() => setMobileMenuOpen(false)}>
                   {t("nav.login")}
                 </Link>
               </div>
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
-                animate={{
-                  opacity: mobileMenuOpen ? 1 : 0,
-                  y: mobileMenuOpen ? 0 : 10,
-                }}
+                animate={{ opacity: mobileMenuOpen ? 1 : 0, y: mobileMenuOpen ? 0 : 10 }}
                 transition={{ delay: 0.15 }}
                 className="pt-2"
               >
                 <Link
                   href="/signup"
-                  className="block w-full px-4 py-3.5 text-center font-semibold text-[#0B1220] bg-gradient-to-r from-[#00E0C6] to-[#3B82F6] rounded-xl"
+                  className="block w-full px-4 py-3 text-center font-light text-white bg-gradient-to-r from-gray-700 via-gray-500 to-gray-700 border border-gray-500/30 rounded-sm uppercase tracking-widest text-xs"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  {t("nav.startFree")}
+                  {t("nav.startFree") || "Start Free"}
                 </Link>
               </motion.div>
             </div>

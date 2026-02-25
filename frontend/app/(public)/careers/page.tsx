@@ -2,209 +2,169 @@
 
 export const dynamic = 'force-dynamic';
 
+import { motion } from "framer-motion";
 import { useI18n } from "@/lib/i18n";
-import { AnimatedBackground } from "@/components/welcome/AnimatedBackground";
 import { TopNav } from "@/components/welcome/TopNav";
 import { Footer } from "@/components/welcome/Footer";
-import { Users, MapPin, Briefcase, Code, Brain, BarChart3, Rocket, Heart, Coffee, Zap, Globe, Clock } from "lucide-react";
 
 const benefits = [
-    { icon: Globe, title: "Uzaktan Çalışma", description: "Dünyanın her yerinden çalışabilirsiniz" },
-    { icon: Clock, title: "Esnek Saatler", description: "Kendi çalışma saatlerinizi belirleyin" },
-    { icon: Rocket, title: "Hızlı Büyüme", description: "Startup dinamizmi ile kariyer gelişimi" },
-    { icon: Brain, title: "Sürekli Öğrenme", description: "AI ve fintech alanında gelişim fırsatları" },
-    { icon: Heart, title: "Sağlık Sigortası", description: "Kapsamlı özel sağlık sigortası" },
-    { icon: Coffee, title: "Ekipman Desteği", description: "Çalışma ekipmanı ve home office desteği" },
+    { icon: "🌍", title: "Remote First", description: "Work from anywhere in the world, on your own schedule." },
+    { icon: "⚡", title: "Fast Growth", description: "Startup pace with real impact on the product." },
+    { icon: "🧠", title: "Deep Learning", description: "Constant exposure to AI, ML and fintech innovation." },
+    { icon: "🏥", title: "Health Cover", description: "Full private health insurance included." },
+    { icon: "💻", title: "Equipment", description: "Home office setup and hardware budget provided." },
+    { icon: "📈", title: "Equity", description: "Early team members get meaningful ownership." },
 ];
 
-const openPositions = [
+const positions = [
     {
-        title: "Senior Full-Stack Developer",
-        department: "Engineering",
-        location: "Remote (Turkey)",
+        title: "Senior Full-Stack Engineer",
+        dept: "Engineering",
+        location: "Remote",
         type: "Full-time",
-        icon: Code,
-        color: "cyan",
-        description: "Next.js, Python ve AI entegrasyonları konusunda deneyimli full-stack geliştirici arıyoruz.",
-        requirements: [
-            "5+ yıl full-stack geliştirme deneyimi",
-            "React/Next.js ve Python (FastAPI) uzmanlığı",
-            "PostgreSQL ve NoSQL veritabanları deneyimi",
-            "CI/CD ve cloud platformları (AWS/GCP) bilgisi"
-        ]
+        color: "text-cyan-400 border-cyan-500/20",
+        desc: "Build and scale the core platform using Next.js, FastAPI, and PostgreSQL.",
+        req: ["5+ years full-stack experience", "Next.js / FastAPI expertise", "PostgreSQL & Redis", "CI/CD & cloud (AWS/GCP)"],
     },
     {
         title: "Machine Learning Engineer",
-        department: "AI & Data",
-        location: "Remote (Turkey)",
+        dept: "AI & Data",
+        location: "Remote",
         type: "Full-time",
-        icon: Brain,
-        color: "purple",
-        description: "Finansal tahmin modelleri geliştirmek için ML mühendisi arıyoruz.",
-        requirements: [
-            "3+ yıl ML/DL deneyimi",
-            "Python, TensorFlow/PyTorch uzmanlığı",
-            "Zaman serisi analizi ve tahmin modelleri",
-            "Finans/trading bilgisi tercih sebebi"
-        ]
+        color: "text-purple-400 border-purple-500/20",
+        desc: "Develop and improve financial prediction models trained on market time-series data.",
+        req: ["3+ years ML/DL experience", "Python, LightGBM, PyTorch", "Time-series forecasting", "Finance background preferred"],
     },
     {
         title: "Quantitative Analyst",
-        department: "Research",
-        location: "Remote (Turkey)",
+        dept: "Research",
+        location: "Remote",
         type: "Full-time",
-        icon: BarChart3,
-        color: "emerald",
-        description: "Trading stratejileri geliştirmek ve backtest yapmak için quant analist arıyoruz.",
-        requirements: [
-            "Finans, Matematik veya ilgili alanda lisans",
-            "Python ile istatistiksel analiz deneyimi",
-            "Teknik analiz ve algoritmik trading bilgisi",
-            "Finansal piyasalara güçlü ilgi"
-        ]
-    }
+        color: "text-amber-400 border-amber-500/20",
+        desc: "Design, backtest, and optimize algorithmic trading strategies.",
+        req: ["Finance or Math degree", "Statistical analysis in Python", "Algorithmic trading knowledge", "Strong market understanding"],
+    },
 ];
-
-const colorClasses = {
-    cyan: {
-        bg: "from-cyan-500/20 to-blue-500/20",
-        border: "border-cyan-500/30",
-        text: "text-cyan-400",
-        badge: "bg-cyan-500/20 text-cyan-400"
-    },
-    purple: {
-        bg: "from-purple-500/20 to-indigo-500/20",
-        border: "border-purple-500/30",
-        text: "text-purple-400",
-        badge: "bg-purple-500/20 text-purple-400"
-    },
-    emerald: {
-        bg: "from-emerald-500/20 to-teal-500/20",
-        border: "border-emerald-500/30",
-        text: "text-emerald-400",
-        badge: "bg-emerald-500/20 text-emerald-400"
-    }
-};
 
 export default function CareersPage() {
     const { t } = useI18n();
 
     return (
-        <main className="min-h-screen bg-[#0B1220] text-[#E5E7EB] font-sans">
+        <main className="min-h-screen bg-black text-white font-sans">
             <TopNav />
-            <AnimatedBackground />
 
-            <div className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto z-10">
-                {/* Header */}
-                <div className="text-center mb-16">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 mb-6">
-                        <Users className="w-10 h-10 text-emerald-400" />
-                    </div>
-                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{t("careers.title")}</h1>
-                    <p className="text-lg text-[#E5E7EB]/60 max-w-2xl mx-auto">
-                        {t("careers.subtitle")}
-                    </p>
-                </div>
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-500/3 blur-3xl rounded-full" />
+            </div>
 
-                {/* Mission Statement */}
-                <div className="glass-premium p-8 rounded-3xl mb-16 text-center">
-                    <h2 className="text-2xl font-bold text-white mb-4">{t("careers.mission.title")}</h2>
-                    <p className="text-lg text-[#E5E7EB]/70 max-w-3xl mx-auto leading-relaxed">
-                        {t("careers.mission.text")}
+            <div className="relative pt-36 pb-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+                {/* Hero */}
+                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-center mb-24">
+                    <p className="text-xs uppercase tracking-[0.4em] text-gray-600 mb-4">Join the team</p>
+                    <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-none">
+                        <span className="bg-gradient-to-br from-gray-100 via-gray-300 to-gray-500 bg-clip-text text-transparent tracking-[0.1em]">
+                            {t("careers.title") || "CAREERS"}
+                        </span>
+                    </h1>
+                    <p className="text-gray-500 font-light text-lg max-w-xl mx-auto leading-relaxed border-l-2 border-white/10 pl-5 text-left mx-auto">
+                        {t("careers.subtitle") || "We're building the future of algorithmic trading analysis. If you love markets, AI, and building things that matter — let's talk."}
                     </p>
-                </div>
+                </motion.div>
+
+                {/* Mission */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                    className="bg-white/[0.02] border border-white/6 rounded-2xl p-10 mb-20 text-center"
+                >
+                    <p className="text-xs uppercase tracking-[0.3em] text-gray-600 mb-4">Mission</p>
+                    <p className="text-xl font-light text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                        {t("careers.mission.text") || "To democratize institutional-grade trading intelligence for independent traders worldwide. Every line of code makes markets more fair."}
+                    </p>
+                </motion.div>
 
                 {/* Benefits */}
-                <div className="mb-16">
-                    <h2 className="text-2xl font-bold text-white text-center mb-8">{t("careers.whyUs")}</h2>
+                <div className="mb-20">
+                    <p className="text-xs uppercase tracking-[0.3em] text-gray-600 mb-3 text-center">Why us</p>
+                    <h2 className="text-2xl font-light text-white text-center mb-12">{t("careers.whyUs") || "What you get"}</h2>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {benefits.map((benefit, idx) => (
-                            <div key={idx} className="glass-premium p-6 rounded-2xl flex items-start gap-4">
-                                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 flex-shrink-0">
-                                    <benefit.icon className="w-6 h-6 text-indigo-400" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-semibold text-white mb-1">{benefit.title}</h3>
-                                    <p className="text-sm text-[#E5E7EB]/60">{benefit.description}</p>
-                                </div>
-                            </div>
+                        {benefits.map((b, i) => (
+                            <motion.div
+                                key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }} transition={{ delay: i * 0.08 }}
+                                className="bg-white/[0.03] border border-white/6 rounded-xl p-6 hover:border-white/12 transition-colors"
+                            >
+                                <span className="text-2xl mb-4 block">{b.icon}</span>
+                                <h3 className="text-sm uppercase tracking-[0.2em] text-white mb-2 font-light">{b.title}</h3>
+                                <p className="text-xs text-gray-600 font-light leading-relaxed">{b.description}</p>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
 
-                {/* Open Positions */}
-                <div className="mb-16">
-                    <h2 className="text-2xl font-bold text-white text-center mb-8">{t("careers.openPositions")}</h2>
-                    <div className="space-y-6">
-                        {openPositions.map((position, idx) => {
-                            const colors = colorClasses[position.color as keyof typeof colorClasses];
-                            return (
-                                <div key={idx} className="glass-premium p-8 rounded-3xl hover:border-white/20 transition-all">
-                                    <div className="flex flex-col lg:flex-row lg:items-start gap-6">
-                                        <div className={`flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${colors.bg} border ${colors.border} flex-shrink-0`}>
-                                            <position.icon className={`w-8 h-8 ${colors.text}`} />
+                {/* Positions */}
+                <div className="mb-20">
+                    <p className="text-xs uppercase tracking-[0.3em] text-gray-600 mb-3 text-center">Open roles</p>
+                    <h2 className="text-2xl font-light text-white text-center mb-12">{t("careers.openPositions") || "Open Positions"}</h2>
+                    <div className="space-y-4">
+                        {positions.map((p, i) => (
+                            <motion.div
+                                key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                                className={`bg-white/[0.03] border rounded-xl p-8 hover:bg-white/[0.05] transition-all ${p.color.split(" ")[1]}`}
+                            >
+                                <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+                                    <div className="flex-1">
+                                        <div className="flex flex-wrap items-center gap-4 mb-3">
+                                            <h3 className="text-lg font-light text-white">{p.title}</h3>
+                                            <span className={`text-xs uppercase tracking-widest ${p.color.split(" ")[0]}`}>{p.dept}</span>
                                         </div>
-                                        <div className="flex-1">
-                                            <div className="flex flex-wrap items-center gap-3 mb-3">
-                                                <h3 className="text-xl font-bold text-white">{position.title}</h3>
-                                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${colors.badge}`}>
-                                                    {position.department}
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-wrap items-center gap-4 text-sm text-[#E5E7EB]/60 mb-4">
-                                                <span className="flex items-center gap-1">
-                                                    <MapPin className="w-4 h-4" />
-                                                    {position.location}
-                                                </span>
-                                                <span className="flex items-center gap-1">
-                                                    <Briefcase className="w-4 h-4" />
-                                                    {position.type}
-                                                </span>
-                                            </div>
-                                            <p className="text-[#E5E7EB]/70 mb-4">{position.description}</p>
-                                            <div className="space-y-2">
-                                                <p className="text-sm font-semibold text-white">{t("careers.requirements")}</p>
-                                                <ul className="grid md:grid-cols-2 gap-2">
-                                                    {position.requirements.map((req, reqIdx) => (
-                                                        <li key={reqIdx} className="flex items-start gap-2 text-sm text-[#E5E7EB]/60">
-                                                            <Zap className={`w-4 h-4 ${colors.text} flex-shrink-0 mt-0.5`} />
-                                                            {req}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
+                                        <div className="flex gap-4 text-xs text-gray-600 uppercase tracking-wider mb-4">
+                                            <span>◆ {p.location}</span>
+                                            <span>◆ {p.type}</span>
                                         </div>
-                                        <div className="lg:flex-shrink-0">
-                                            <a
-                                                href="mailto:careers@forexsai.com"
-                                                className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r ${colors.bg} border ${colors.border} ${colors.text} font-semibold hover:opacity-80 transition-opacity`}
-                                            >
-                                                {t("careers.apply")}
-                                            </a>
+                                        <p className="text-sm text-gray-500 font-light mb-5 leading-relaxed border-l border-white/8 pl-4">{p.desc}</p>
+                                        <div className="grid md:grid-cols-2 gap-2">
+                                            {p.req.map((r, j) => (
+                                                <div key={j} className="flex items-center gap-2 text-xs text-gray-600">
+                                                    <span className={`text-[8px] ${p.color.split(" ")[0]}`}>◆</span>
+                                                    {r}
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
+                                    <div className="shrink-0">
+                                        <a
+                                            href="mailto:careers@forexsai.com"
+                                            className="inline-flex items-center gap-2 px-6 py-3 rounded-sm bg-white/[0.04] border border-white/8 hover:bg-white/[0.08] hover:border-white/16 text-gray-400 hover:text-white transition-all text-xs uppercase tracking-widest"
+                                        >
+                                            Apply →
+                                        </a>
+                                    </div>
                                 </div>
-                            );
-                        })}
+                            </motion.div>
+                        ))}
                     </div>
                 </div>
 
-                {/* No Matching Position */}
-                <div className="glass-premium p-8 rounded-3xl text-center">
-                    <h2 className="text-2xl font-bold text-white mb-3">{t("careers.noPosition.title")}</h2>
-                    <p className="text-[#E5E7EB]/60 mb-6 max-w-lg mx-auto">
-                        {t("careers.noPosition.text")}
+                {/* Open application */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                    className="text-center border border-white/6 rounded-2xl p-12 bg-white/[0.02]"
+                >
+                    <p className="text-xs uppercase tracking-[0.3em] text-gray-600 mb-3">Don&apos;t see your role?</p>
+                    <h2 className="text-2xl font-light text-white mb-4">{t("careers.noPosition.title") || "Open Application"}</h2>
+                    <p className="text-gray-600 font-light mb-8 max-w-md mx-auto text-sm leading-relaxed">
+                        {t("careers.noPosition.text") || "If you're passionate about markets, AI, and building great products — we want to hear from you."}
                     </p>
                     <a
                         href="mailto:careers@forexsai.com"
-                        className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold hover:opacity-90 transition-opacity"
+                        className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-gray-700 via-gray-500 to-gray-700 border border-gray-500/40 rounded-sm text-white text-xs uppercase tracking-widest hover:shadow-[0_0_20px_rgba(200,200,200,0.15)] transition-all"
                     >
-                        <Briefcase className="w-5 h-5" />
-                        {t("careers.noPosition.button")}
+                        careers@forexsai.com
                     </a>
-                    <p className="text-sm text-[#E5E7EB]/40 mt-4">careers@forexsai.com</p>
-                </div>
+                </motion.div>
             </div>
+
             <Footer />
         </main>
     );

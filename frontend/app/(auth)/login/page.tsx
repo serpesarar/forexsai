@@ -3,14 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { useAuthStore } from "@/lib/auth/store";
-import {
-  Eye, EyeOff, Mail, Lock, ArrowRight,
-  TrendingUp, Shield, Zap, AlertCircle, Loader2,
-  BarChart3, Brain, ArrowLeft
-} from "lucide-react";
-import { AnimatedBackground } from "@/components/welcome/AnimatedBackground";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
@@ -31,22 +24,17 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // Add timeout to prevent infinite spinner
       const loginPromise = login(email, password);
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.")), 15000)
       );
-
       const result = await Promise.race([loginPromise, timeoutPromise]);
       if (!result.success) {
         throw new Error(result.error || t("auth.login.failed") || "Login failed");
       }
-
-      // Small delay to let zustand persist flush to localStorage
       await new Promise(resolve => setTimeout(resolve, 100));
       router.push("/");
     } catch (err) {
-      console.error("[Login] Error:", err);
       setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setLoading(false);
@@ -54,237 +42,229 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B1220] text-[#E5E7EB] flex relative overflow-hidden font-sans">
-      <div className="absolute inset-0 z-0">
-        <AnimatedBackground />
-      </div>
-
-      {/* Language Switcher - Top Right */}
-      <div className="absolute top-4 right-4 z-50">
+    <div className="min-h-screen flex relative">
+      {/* Language & Back */}
+      <div className="absolute top-6 right-6 z-50">
         <LanguageSwitcher />
       </div>
-
-      {/* Go Back Home - Top Left (Mobile only mostly or desktop too) */}
-      <div className="absolute top-4 left-4 z-50">
-        <Link href="/welcome" className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors border border-white/5 backdrop-blur-md">
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm font-medium">{t("ui.back") || "Geri"}</span>
+      <div className="absolute top-6 left-6 z-50">
+        <Link
+          href="/welcome"
+          className="flex items-center gap-2 text-xs uppercase tracking-widest text-gray-500 hover:text-white transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
+          Back
         </Link>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, x: -30 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6 }}
-        className="hidden lg:flex lg:w-1/2 flex-col justify-center px-12 xl:px-24 relative z-10"
-      >
-        <div className="max-w-lg">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#00E0C6] to-[#3B82F6] flex items-center justify-center shadow-lg shadow-[#00E0C6]/20">
-              <TrendingUp className="w-7 h-7 text-[#0B1220]" />
-            </div>
-            <span className="text-2xl font-bold text-white">ForexsAi</span>
+      {/* LEFT PANEL — Branding */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-16 xl:px-24 relative border-r border-white/5">
+        {/* Ambient glow */}
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cyan-500/5 blur-3xl rounded-full pointer-events-none" />
+
+        <div className="relative max-w-md">
+          {/* Logo */}
+          <div className="flex items-center gap-1 mb-16">
+            <span className="text-2xl font-bold tracking-[0.15em] bg-gradient-to-br from-gray-100 to-gray-400 bg-clip-text text-transparent">
+              FOREXS
+            </span>
+            <span className="text-2xl font-light tracking-[0.15em] text-white/90">AI</span>
           </div>
 
-          <h1 className="text-4xl xl:text-5xl font-bold text-white mb-6 leading-tight">
-            AI-Powered
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E0C6] to-[#3B82F6]">
-              {" "}Market Analysis
+          <h1 className="text-5xl xl:text-6xl font-sans leading-tight mb-6">
+            <span className="font-bold tracking-[0.1em] bg-gradient-to-br from-gray-100 via-gray-300 to-gray-500 bg-clip-text text-transparent block">
+              ADVANCED
+            </span>
+            <span className="font-light tracking-[0.1em] text-white/70 block mt-1">
+              TRADING INTELLIGENCE
             </span>
           </h1>
 
-          <p className="text-lg text-[#E5E7EB]/60 mb-10 leading-relaxed">
-            30M+ data-trained ML model, 350+ pattern recognition, and
-            real-time market analysis to optimize your trading decisions.
+          <p className="text-gray-500 font-light text-base leading-relaxed mb-12 border-l-2 border-cyan-500/40 pl-4">
+            Neural network-powered market analysis for NASDAQ, XAUUSD, DAX and US OIL.
           </p>
 
-          <div className="space-y-4">
+          {/* Feature list */}
+          <div className="space-y-5">
             {[
-              { icon: Brain, text: "Claude AI News & Sentiment Analysis" },
-              { icon: BarChart3, text: "350+ Technical Pattern Recognition" },
-              { icon: Zap, text: "Real-time Signal Generation" },
-            ].map((feature, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
-                className="flex items-center gap-3 text-[#E5E7EB]/80"
-              >
-                <div className="w-10 h-10 rounded-lg bg-[#00E0C6]/10 border border-[#00E0C6]/20 flex items-center justify-center">
-                  <feature.icon className="w-5 h-5 text-[#00E0C6]" />
-                </div>
-                <span>{feature.text}</span>
-              </motion.div>
+              { icon: "◆", label: "30M+ data-trained ML models" },
+              { icon: "◆", label: "350+ technical pattern recognition" },
+              { icon: "◆", label: "Real-time signal generation" },
+              { icon: "◆", label: "Claude AI news & sentiment" },
+            ].map((f) => (
+              <div key={f.label} className="flex items-center gap-4">
+                <span className="text-cyan-500/60 text-[8px]">{f.icon}</span>
+                <span className="text-gray-400 text-sm font-light tracking-wide">{f.label}</span>
+              </div>
             ))}
           </div>
-        </div>
-      </motion.div>
 
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md"
-        >
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00E0C6] to-[#3B82F6] flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-[#0B1220]" />
-            </div>
-            <span className="text-xl font-bold text-white">ForexsAi</span>
+          {/* Sub tagline */}
+          <div className="mt-16 pt-8 border-t border-white/5">
+            <p className="text-xs uppercase tracking-[0.3em] text-gray-600">
+              Algorithmic · Neural · Autonomous
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT PANEL — Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="lg:hidden flex items-center gap-1 justify-center mb-10">
+            <span className="text-2xl font-bold tracking-[0.15em] bg-gradient-to-br from-gray-100 to-gray-400 bg-clip-text text-transparent">
+              FOREXS
+            </span>
+            <span className="text-2xl font-light tracking-[0.15em] text-white/90">AI</span>
           </div>
 
-          <div className="bg-[#0B1220]/80 backdrop-blur-xl rounded-2xl border border-white/10 p-8 shadow-2xl shadow-black/50">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-lg bg-[#00E0C6]/10 flex items-center justify-center">
-                <Shield className="w-4 h-4 text-[#00E0C6]" />
-              </div>
-              <h2 className="text-2xl font-bold text-white">{t("nav.login") || "Welcome Back"}</h2>
+          {/* Card */}
+          <div className="bg-white/[0.03] backdrop-blur-2xl rounded-2xl border border-white/8 p-8 shadow-2xl">
+            <div className="mb-8">
+              <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-2">Welcome back</p>
+              <h2 className="text-2xl font-light text-white tracking-wide">
+                {t("nav.login") || "Sign In"}
+              </h2>
             </div>
-            <p className="text-[#E5E7EB]/50 mb-8">{t("auth.signup.subtitle") || "Sign in to your account"}</p>
 
+            {/* Error */}
             {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center gap-3"
-              >
-                <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-                <span className="text-red-400 text-sm">{error}</span>
-              </motion.div>
+              <div className="mb-6 p-4 rounded-xl bg-red-500/8 border border-red-500/20 flex items-center gap-3">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                <span className="text-red-400 text-sm font-light">{error}</span>
+              </div>
             )}
 
             <form onSubmit={handleLogin} className="space-y-5">
+              {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-[#E5E7EB]/80 mb-2">
-                  {t("auth.signup.emailLabel") || "Email Address"}
+                <label className="block text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">
+                  {t("auth.signup.emailLabel") || "Email"}
                 </label>
-                <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#E5E7EB]/40 group-focus-within:text-[#00E0C6] transition-colors" />
+                <div className="relative">
+                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={t("auth.signup.emailPlaceholder") || "you@example.com"}
                     required
-                    className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-[#E5E7EB]/30 focus:outline-none focus:border-[#00E0C6]/50 focus:ring-1 focus:ring-[#00E0C6]/50 transition-all font-medium"
+                    className="w-full pl-11 pr-4 py-3.5 rounded-lg bg-white/[0.04] border border-white/8 text-white placeholder-gray-600 text-sm font-light focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all"
                   />
                 </div>
               </div>
 
+              {/* Password */}
               <div>
-                <label className="block text-sm font-medium text-[#E5E7EB]/80 mb-2">
+                <label className="block text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">
                   {t("auth.signup.passwordLabel") || "Password"}
                 </label>
-                <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#E5E7EB]/40 group-focus-within:text-[#00E0C6] transition-colors" />
+                <div className="relative">
+                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="w-full pl-12 pr-12 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-[#E5E7EB]/30 focus:outline-none focus:border-[#00E0C6]/50 focus:ring-1 focus:ring-[#00E0C6]/50 transition-all font-medium"
+                    className="w-full pl-11 pr-12 py-3.5 rounded-lg bg-white/[0.04] border border-white/8 text-white placeholder-gray-600 text-sm font-light focus:outline-none focus:border-white/20 focus:bg-white/[0.06] transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#E5E7EB]/40 hover:text-[#E5E7EB]/70 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400 transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                    ) : (
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                    )}
                   </button>
                 </div>
               </div>
 
               <div className="flex justify-end">
-                <Link href="/forgot-password" className="text-sm text-[#00E0C6] hover:text-[#00E0C6]/80 transition-colors">
+                <Link href="/forgot-password" className="text-xs text-gray-500 hover:text-cyan-400 transition-colors tracking-wide">
                   {t("auth.login.forgotPassword") || "Forgot Password?"}
                 </Link>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              {/* Submit */}
+              <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#00E0C6] to-[#3B82F6] hover:from-[#00E0C6]/90 hover:to-[#3B82F6]/90 text-[#0B1220] font-semibold flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group shadow-lg shadow-[#00E0C6]/20"
+                className="w-full py-3.5 rounded-sm bg-gradient-to-r from-gray-700 via-gray-400 to-gray-700 border border-gray-500/50 shadow-[0_0_15px_rgba(192,192,192,0.1)] hover:shadow-[0_0_25px_rgba(192,192,192,0.25)] transition-all duration-300 text-white uppercase tracking-widest text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
                 ) : (
-                  <>
-                    {t("auth.signup.loginLink") || "Sign In"}
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </>
+                  t("auth.signup.loginLink") || "Sign In"
                 )}
-              </motion.button>
+              </button>
             </form>
 
-            <div className="relative my-8">
+            {/* Demo Mode - only in dev */}
+            {process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
+              <>
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-white/5" />
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="px-4 bg-transparent text-gray-600 text-xs uppercase tracking-widest">or</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setLoading(true);
+                    const { setUser, setToken } = useAuthStore.getState();
+                    const demoUser = {
+                      id: "999",
+                      email: "demo@forexsai.com",
+                      full_name: "Demo Trader",
+                      membership_tier: "pro" as const,
+                      tier_expires_at: null,
+                      referral_code: "DEMO999",
+                      referral_count: 0,
+                      email_verified: true,
+                      is_pro: true,
+                      can_use_claude: true,
+                    };
+                    setUser(demoUser);
+                    setToken("demo-token-localhost-only");
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    router.push("/");
+                  }}
+                  className="w-full py-3 rounded-lg bg-white/5 border border-white/8 hover:bg-white/8 transition-all text-amber-400/70 text-xs uppercase tracking-widest font-light"
+                >
+                  🧪 Demo Mode
+                </button>
+              </>
+            )}
+
+            <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/10" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="px-4 bg-[#0B1220] text-[#E5E7EB]/40 text-sm">or</span>
+                <div className="w-full border-t border-white/5" />
               </div>
             </div>
 
-            {/* Demo Mode Button - only visible on localhost in dev */}
-            {process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                type="button"
-                onClick={async () => {
-                  setLoading(true);
-                  const { setUser, setToken } = useAuthStore.getState();
-                  const demoUser = {
-                    id: "999",
-                    email: "demo@forexsai.com",
-                    full_name: "Demo Trader",
-                    membership_tier: "pro" as const,
-                    tier_expires_at: null,
-                    referral_code: "DEMO999",
-                    referral_count: 0,
-                    email_verified: true,
-                    is_pro: true,
-                    can_use_claude: true,
-                  };
-                  setUser(demoUser);
-                  setToken("demo-token-localhost-only");
-                  console.log("%c🟢 DEMO MODE LOGIN", "color: #00ff88; font-size: 16px; font-weight: bold;");
-                  await new Promise(resolve => setTimeout(resolve, 200));
-                  router.push("/");
-                }}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-yellow-500/80 to-orange-500/80 hover:from-yellow-500 hover:to-orange-500 text-[#0B1220] font-semibold flex items-center justify-center gap-2 transition-all duration-300 mb-4 shadow-lg shadow-yellow-500/10"
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    🧪 Demo Modunda Devam Et
-                    <ArrowRight className="w-5 h-5" />
-                  </>
-                )}
-              </motion.button>
-            )}
-
-            <p className="text-center text-[#E5E7EB]/60">
-              {t("auth.signup.dontHaveAccount") || "Don't have an account?"}{" "}
-              <Link href="/signup" className="text-[#00E0C6] hover:text-[#00E0C6]/80 font-medium transition-colors">
-                {t("nav.startFree") || "Create Free Account"}
+            <p className="text-center text-xs text-gray-600 tracking-wide">
+              {t("auth.signup.dontHaveAccount") || "No account?"}{" "}
+              <Link href="/signup" className="text-gray-400 hover:text-white transition-colors">
+                {t("nav.startFree") || "Create Account"}
               </Link>
             </p>
           </div>
 
-          <p className="text-center text-[#E5E7EB]/30 text-sm mt-8">
+          <p className="text-center text-gray-700 text-xs mt-6 tracking-wide">
             By signing in, you agree to our{" "}
-            <Link href="/terms" className="text-[#E5E7EB]/50 hover:text-[#E5E7EB]/70">Terms of Service</Link>
+            <Link href="/terms" className="hover:text-gray-500 transition-colors">Terms</Link>
             {" "}and{" "}
-            <Link href="/privacy" className="text-[#E5E7EB]/50 hover:text-[#E5E7EB]/70">Privacy Policy</Link>
+            <Link href="/privacy" className="hover:text-gray-500 transition-colors">Privacy Policy</Link>
           </p>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
