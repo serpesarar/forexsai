@@ -345,9 +345,33 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         from services.data_hub import get_candles
         recent_candles = get_candles(symbol, "5m", limit=2)  # last 2 candles
         if recent_candles:
-            session_high = max(c.get("high", current) for c in recent_candles)
-            session_low = min(c.get("low", current) for c in recent_candles)
-    except Exception:
+            # Filter out candles that occurred before the signal was created
+            created_at_str = signal.get("created_at")
+            if created_at_str:
+                created_dt = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                # Allow a 5-minute buffer so we don't accidentally ignore the entry candle completely
+                cutoff_ts = (created_dt - timedelta(minutes=5)).timestamp() * 1000
+                valid_candles = []
+                for c in recent_candles:
+                    c_ts = c.get("timestamp")
+                    if not c_ts and "date" in c:
+                        try:
+                            c_dt = datetime.fromisoformat(str(c["date"]).replace("Z", "+00:00"))
+                            c_ts = c_dt.timestamp() * 1000
+                        except Exception:
+                            pass
+                    
+                    if c_ts and c_ts >= cutoff_ts:
+                        valid_candles.append(c)
+                
+                if valid_candles:
+                    session_high = max(c.get("high", current) for c in valid_candles)
+                    session_low = min(c.get("low", current) for c in valid_candles)
+            else:
+                session_high = max(c.get("high", current) for c in recent_candles)
+                session_low = min(c.get("low", current) for c in recent_candles)
+    except Exception as e:
+        logger.warning(f"Failed to use candle wicks for {symbol}, falling back to spot: {e}")
         pass  # Fallback to spot price if candle data unavailable
 
 
