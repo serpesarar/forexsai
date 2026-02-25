@@ -336,9 +336,20 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         profit_pips = pips_from_price_change(entry_price - current, symbol)
     best_pips = max(profit_pips, 0)
     worst_pips = min(profit_pips, 0)
-    # Use current as both high and low (spot price check, no wick capture)
+
+    # Use last 5m candle high/low for wick capture (better than spot-only check)
+    # This catches targets hit intra-candle that spot price misses at 3-min intervals
     session_high = current
     session_low = current
+    try:
+        from services.data_hub import get_candles
+        recent_candles = get_candles(symbol, "5m", limit=2)  # last 2 candles
+        if recent_candles:
+            session_high = max(c.get("high", current) for c in recent_candles)
+            session_low = min(c.get("low", current) for c in recent_candles)
+    except Exception:
+        pass  # Fallback to spot price if candle data unavailable
+
 
     # ── 3. Update cumulative high/low ──
     prev_high = signal.get("highest_profit_pips") or 0
