@@ -270,11 +270,11 @@ async def reset_dashboard(confirm: bool = False):
         from datetime import datetime, timedelta
         
         # Get counts before deletion for reporting
-        all_result = client.table("prediction_logs").select("status", count="exact").execute()
-        total_count = all_result.count if hasattr(all_result, 'count') else len(all_result.get("data") or [])
+        all_result = client.table("prediction_logs").select("id").execute()
+        total_count = len(all_result.get("data") or [])
         
-        active_result = client.table("prediction_logs").select("id", count="exact").eq("status", "active").execute()
-        active_count = active_result.count if hasattr(active_result, 'count') else len(active_result.get("data") or [])
+        active_result = client.table("prediction_logs").select("id").eq("status", "active").execute()
+        active_count = len(active_result.get("data") or [])
         
         # Delete outcome_results first (no foreign key issues with this approach)
         outcome_result = client.table("outcome_results").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
