@@ -1,6 +1,10 @@
 "use client";
-// Font: Inter (UI-optimized), fallback Arial/Verdana
-const PANEL_FONT = "'Inter', 'Arial', 'Verdana', sans-serif";
+/**
+ * SIGNAL PERFORMANCE — Premium Institutional Fintech Dashboard
+ * Bloomberg Terminal meets modern AI startup aesthetic.
+ * Design: #0B0F17 dark base, #141C2B cards, #4F8CFF AI accent
+ */
+const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
@@ -23,25 +27,31 @@ import {
   triggerLifecycleCheck, type ModelStats, type ActiveSignal, type SignalCheck,
 } from "../../lib/api/learning";
 
-// ── Colors ──────────────────────────────────────────────────────────────────
-const C = {
-  g: "#00ff88",
-  r: "#ff3366",
-  y: "#fbbf24",
-  p: "#c084fc",
-  cyan: "#22d3ee",
-  blue: "#60a5fa",
-  orange: "#fb923c",
+// ── Institutional Color Palette ─────────────────────────────────────────────
+const P = {
+  bg: "#0B0F17",
+  card: "#141C2B",
+  surface: "#111827",
+  border: "rgba(255,255,255,0.06)",
+  text: "#E6EDF3",
+  textSec: "#9AA4B2",
+  muted: "#6B7280",
+  green: "#16C784",
+  red: "#EA3943",
+  warn: "#F5A623",
+  accent: "#4F8CFF",
+  emerald: "#34D399",
+  purple: "#A78BFA",
 };
 
 const MODEL_THEME: Record<string, { label: string; color: string; Icon: any }> = {
-  ml: { label: "ML Model", color: C.blue, Icon: SignalsIcon },
-  pulse: { label: "Pulse Engine", color: C.cyan, Icon: PulseIcon },
-  pulse1: { label: "Pulse 1 — Algo", color: C.cyan, Icon: PulseIcon },
-  pulse2: { label: "Pulse 2 — ML", color: "#a78bfa", Icon: SignalsIcon },
-  pulse3: { label: "Pulse 3 — MTF", color: "#34d399", Icon: PulseIcon },
-  emel: { label: "EMEL 9-Check", color: C.p, Icon: EmelIcon },
-  hybrid: { label: "Hybrid", color: C.y, Icon: LearningIcon },
+  ml: { label: "ML_Model", color: P.accent, Icon: SignalsIcon },
+  pulse1: { label: "Pulse 1 — Algo", color: "#22D3EE", Icon: PulseIcon },
+  pulse2: { label: "Pulse 2 — ML", color: P.purple, Icon: SignalsIcon },
+  pulse3: { label: "Pulse 3 — MTF", color: P.emerald, Icon: PulseIcon },
+  pulse: { label: "Pulse Engine", color: "#22D3EE", Icon: PulseIcon },
+  emel: { label: "EMEL 9-Check", color: "#C084FC", Icon: EmelIcon },
+  hybrid: { label: "Hybrid", color: P.warn, Icon: LearningIcon },
 };
 
 function getTheme(model: string) {
@@ -51,111 +61,138 @@ function getTheme(model: string) {
 function symLabel(sym: string) {
   if (sym === "NDX.INDX") return "NASDAQ";
   if (sym === "GDAXI.INDX") return "DAX";
-  if (sym === "CL.COMM") return "US Oil";
+  if (sym === "CL.COMM") return "US OIL";
   if (sym === "XAUUSD") return "XAUUSD";
   return sym;
 }
 
-function symColor(sym: string): string {
-  if (sym === "NDX.INDX") return C.blue;
-  if (sym === "GDAXI.INDX") return C.orange;
-  if (sym === "CL.COMM") return C.y;
-  if (sym === "XAUUSD") return "#fde68a";
-  return C.p;
+function symIcon(sym: string): string {
+  if (sym === "NDX.INDX") return "📈";
+  if (sym === "GDAXI.INDX") return "🏛";
+  if (sym === "CL.COMM") return "🛢";
+  if (sym === "XAUUSD") return "⭐";
+  return "📊";
 }
 
-// ── SVG Donut Gauge ──────────────────────────────────────────────────────────
-function DonutGauge({ rate, color, size = 80 }: { rate: number; color: string; size?: number }) {
+// ── Confidence Ring (Subtle, No Glow) ────────────────────────────────────────
+function ConfidenceRing({ rate, color, size = 56 }: { rate: number; color: string; size?: number }) {
   const r = size * 0.38;
   const circ = 2 * Math.PI * r;
   const dash = (rate / 100) * circ;
   const cx = size / 2;
   return (
     <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-      <circle cx={cx} cy={cx} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={size * 0.09} />
+      <circle cx={cx} cy={cx} r={r} fill="none" stroke={P.border} strokeWidth={size * 0.07} />
       <circle
         cx={cx} cy={cx} r={r} fill="none"
-        stroke={color} strokeWidth={size * 0.09}
+        stroke={color} strokeWidth={size * 0.07}
         strokeDasharray={`${dash} ${circ - dash}`}
         strokeLinecap="round"
-        style={{ filter: `drop-shadow(0 0 4px ${color}60)`, transition: "stroke-dasharray 1s ease" }}
+        style={{ transition: "stroke-dasharray 0.8s ease-out" }}
       />
     </svg>
   );
 }
 
-// ── Slim Progress Bar ─────────────────────────────────────────────────────────
-function TpBar({ name, rate, color }: { name: string; rate: number; color: string }) {
-  const c = rate >= 55 ? C.g : rate >= 30 ? C.y : C.r;
+// ── Premium Progress Bar (6px, Rounded, Desaturated) ─────────────────────────
+function TpBar({ name, rate }: { name: string; rate: number }) {
+  const c = rate >= 50 ? P.green : rate >= 25 ? P.warn : P.red;
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2.5">
       <span
-        className="w-6 shrink-0 font-bold"
-        style={{ fontFamily: PANEL_FONT, fontSize: 10, letterSpacing: "0.03em", color: "rgba(232,234,246,0.85)" }}
+        className="w-7 shrink-0"
+        style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.textSec, letterSpacing: "0.02em" }}
       >{name}</span>
-      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+      <div className="flex-1 rounded-full overflow-hidden" style={{ height: 6, background: "rgba(255,255,255,0.06)" }}>
         <div
           className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${Math.min(rate, 100)}%`, background: c, boxShadow: `0 0 4px ${c}50` }}
+          style={{ width: `${Math.min(rate, 100)}%`, background: c, opacity: 0.85 }}
         />
       </div>
-      <span className="w-8 text-right font-bold" style={{ fontFamily: PANEL_FONT, fontSize: 10, color: c }}>{rate.toFixed(0)}%</span>
+      <span
+        className="w-10 text-right"
+        style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: c }}
+      >{rate.toFixed(0)}%</span>
     </div>
   );
 }
 
-// ── Symbol Stat Card (inside ModelCard) ──────────────────────────────────────
-function SymbolCard({ sym, d, modelColor }: { sym: string; d: any; modelColor: string }) {
+// ── Mini Sparkline (Institutional: subtle, calm) ─────────────────────────────
+function MiniSparkLine({ positive }: { positive: boolean }) {
+  // Simple decorative sparkline using random-ish path
+  const color = positive ? P.green : P.red;
+  const d = positive
+    ? "M2 18 L6 14 L10 16 L14 10 L18 12 L22 6 L26 8 L30 4 L34 6 L38 2"
+    : "M2 2 L6 6 L10 4 L14 10 L18 8 L22 14 L26 12 L30 16 L34 14 L38 18";
+  return (
+    <svg width={40} height={20} viewBox="0 0 40 20" fill="none" style={{ opacity: 0.5 }}>
+      <path d={d} stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// ── Premium Asset Card (Reference Design Match) ─────────────────────────────
+function SymbolCard({ sym, d }: { sym: string; d: any }) {
   const name = symLabel(sym);
-  const sc = symColor(sym);
+  const icon = symIcon(sym);
   const wr = d.win_rate ?? 0;
-  const wrColor = wr >= 55 ? C.g : wr >= 40 ? C.y : C.r;
-  const netPos = (d.net_pips ?? 0) >= 0;
+  const netPips = d.net_pips ?? 0;
+  const netPos = netPips >= 0;
+  const conf = wr; // use win_rate as proxy for confidence display
 
   return (
     <div
-      className="rounded-xl p-3 flex flex-col gap-2"
-      style={{ background: `${sc}06`, border: `1px solid ${sc}18` }}
+      className="rounded-xl flex flex-col gap-3 transition-all duration-200 hover:translate-y-[-1px]"
+      style={{
+        background: P.card,
+        border: `1px solid ${P.border}`,
+        padding: "20px",
+      }}
     >
-      {/* Symbol Header */}
+      {/* Header: Icon + Name + Confidence */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full" style={{ background: sc, boxShadow: `0 0 6px ${sc}` }} />
-          <span className="text-[12px] font-black font-mono" style={{ color: sc }}>{name}</span>
-          <span className="text-[9px] text-white/25 font-mono">{d.total}sig</span>
+          <span style={{ fontSize: 16 }}>{icon}</span>
+          <span style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: P.text, letterSpacing: "-0.01em" }}>{name}</span>
         </div>
-        {/* Mini donut */}
-        <div className="relative">
-          <DonutGauge rate={wr} color={wrColor} size={44} />
-          <div className="absolute inset-0 flex items-center justify-center" style={{ transform: "rotate(0deg)" }}>
-            <span className="text-[9px] font-black font-mono" style={{ color: wrColor }}>{wr}%</span>
-          </div>
-        </div>
+        <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.muted }}>
+          ~ {conf.toFixed(0)}% confidence
+        </span>
       </div>
 
-      {/* W / L pills (Exp kaldırıldı) */}
-      <div className="flex gap-1.5 flex-wrap">
-        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold inline-flex items-center gap-1"
-          style={{ fontFamily: PANEL_FONT, background: `${C.g}12`, border: `1px solid ${C.g}25`, color: C.g }}>
-          ✓ {d.completed}W
+      {/* Main PnL Number + Sparkline */}
+      <div className="flex items-end justify-between">
+        <span style={{
+          fontFamily: FONT,
+          fontSize: 32,
+          fontWeight: 700,
+          letterSpacing: "-0.5px",
+          lineHeight: 1,
+          color: netPos ? P.green : P.red,
+        }}>
+          {netPos ? "+" : ""}{netPips.toFixed(1)}p
         </span>
-        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold inline-flex items-center gap-1"
-          style={{ fontFamily: PANEL_FONT, background: `${C.r}12`, border: `1px solid ${C.r}25`, color: C.r }}>
-          ✗ {d.stopped}L
-        </span>
-        {d.net_pips !== undefined && (
-          <span className="px-2 py-0.5 rounded-md text-[9px] font-bold ml-auto"
-            style={{ fontFamily: PANEL_FONT, color: netPos ? C.g : C.r, background: netPos ? `${C.g}10` : `${C.r}10`, border: `1px solid ${netPos ? C.g : C.r}20` }}>
-            {netPos ? "+" : ""}{d.net_pips}p
-          </span>
-        )}
+        <MiniSparkLine positive={netPos} />
       </div>
 
-      {/* Target bars */}
+      {/* W / L row */}
+      <div className="flex items-center gap-3" style={{ paddingTop: 4, borderTop: `1px solid ${P.border}` }}>
+        <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.green }}>
+          {d.completed ?? 0}W
+        </span>
+        <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.red }}>
+          {d.stopped ?? 0}L
+        </span>
+        <span style={{ fontFamily: FONT, fontSize: 11, color: P.muted, marginLeft: "auto" }}>
+          {d.total ?? 0} signals
+        </span>
+      </div>
+
+      {/* Target Bars (TP1-TP4) */}
       {d.target_rates && Object.keys(d.target_rates).length > 0 && (
-        <div className="space-y-1 pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+        <div className="flex flex-col gap-2" style={{ paddingTop: 8, borderTop: `1px solid ${P.border}` }}>
           {Object.entries(d.target_rates).sort().map(([tp, rate]) => (
-            <TpBar key={tp} name={tp} rate={rate as number} color={sc} />
+            <TpBar key={tp} name={tp} rate={rate as number} />
           ))}
         </div>
       )}
@@ -163,94 +200,118 @@ function SymbolCard({ sym, d, modelColor }: { sym: string; d: any; modelColor: s
   );
 }
 
-// ── Model Performance Card (collapsible) ─────────────────────────────────────
+// ── Model Performance Header (Institutional KPI Strip) ───────────────────────
 function ModelCard({ model, stats }: { model: string; stats: ModelStats }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const theme = getTheme(model);
   const Icon = theme.Icon;
   const wr = stats.win_rate;
-  const wrColor = wr >= 55 ? C.g : wr >= 40 ? C.y : C.r;
+  const wrColor = wr >= 55 ? P.green : wr >= 40 ? P.warn : P.red;
   const netPos = stats.net_pips >= 0;
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.02)", border: `1px solid ${theme.color}18` }}>
-      {/* Header row — always visible */}
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{ background: P.card, border: `1px solid ${P.border}` }}
+    >
+      {/* ── Model Header ── */}
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.015] transition-colors"
+        className="w-full flex items-center gap-4 px-5 py-4 transition-colors"
+        style={{ borderBottom: open ? `1px solid ${P.border}` : "none" }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.015)")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
-        {/* Model icon + name */}
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-          style={{ background: `${theme.color}15`, border: `1px solid ${theme.color}30` }}>
-          <Icon className="w-4.5 h-4.5" style={{ color: theme.color, width: 18, height: 18 }} />
+        {/* Icon + Label */}
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+          style={{ background: `${theme.color}12`, border: `1px solid ${theme.color}20` }}>
+          <Icon className="w-5 h-5" style={{ color: theme.color, width: 20, height: 20 }} />
         </div>
         <div className="text-left flex-1 min-w-0">
-          <p className="text-[12px] font-extrabold font-mono" style={{ color: theme.color, fontFamily: PANEL_FONT }}>{theme.label}</p>
-          <p className="text-[9px] text-white/25 font-mono" style={{ fontFamily: PANEL_FONT }}>{stats.total_signals} signals · {stats.completed}W {stats.stopped}L</p>
+          <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: P.text, letterSpacing: "-0.01em" }}>{theme.label}</p>
+          <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 400, color: P.muted }}>
+            {stats.total_signals} signals · All sessions rsct
+          </p>
         </div>
 
-        {/* Win Rate donut */}
+        {/* Win Rate Ring */}
         <div className="relative shrink-0">
-          <DonutGauge rate={wr} color={wrColor} size={52} />
+          <ConfidenceRing rate={wr} color={wrColor} size={48} />
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[10px] font-black font-mono" style={{ color: wrColor }}>{wr}%</span>
+            <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: wrColor }}>{wr}%</span>
           </div>
         </div>
 
-        {/* Net Pips */}
-        <div className="text-right shrink-0 hidden sm:block">
-          <p className="text-[8px] uppercase tracking-widest text-white/25 mb-0.5">Net Pips</p>
-          <p className="text-[14px] font-black font-mono" style={{ color: netPos ? C.g : C.r }}>
-            {netPos ? "+" : ""}{stats.net_pips}
-          </p>
+        {/* KPI: Total Net */}
+        <div className="text-right shrink-0 hidden sm:flex flex-col items-end">
+          <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.muted, letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
+            TOTAL NET
+          </span>
+          <span style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: netPos ? P.green : P.red, letterSpacing: "-0.5px" }}>
+            {netPos ? "+" : ""}{stats.net_pips.toFixed(1)}p
+          </span>
         </div>
 
-        {/* R/R */}
-        <div className="text-right shrink-0 hidden md:block">
-          <p className="text-[8px] uppercase tracking-widest text-white/25 mb-0.5">R/R</p>
-          <p className="text-[14px] font-black font-mono" style={{ color: stats.risk_reward >= 1.5 ? C.g : C.y }}>
-            {stats.risk_reward.toFixed(1)}
-          </p>
+        {/* KPI: R/R */}
+        <div className="text-right shrink-0 hidden md:flex flex-col items-end">
+          <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.muted, letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
+            R/R
+          </span>
+          <span style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: stats.risk_reward >= 1.5 ? P.green : P.warn, letterSpacing: "-0.3px" }}>
+            {stats.risk_reward.toFixed(2)}
+          </span>
         </div>
 
-        {open ? <ChevronUp className="w-4 h-4 text-white/25 shrink-0" /> : <ChevronDown className="w-4 h-4 text-white/25 shrink-0" />}
+        {open ? <ChevronUp className="w-4 h-4 shrink-0" style={{ color: P.muted }} /> : <ChevronDown className="w-4 h-4 shrink-0" style={{ color: P.muted }} />}
       </button>
 
-      {/* Expanded: global target rates + per-symbol cards */}
+      {/* ── Expanded Content ── */}
       {open && (
-        <div className="px-4 pb-4 space-y-4" style={{ borderTop: `1px solid ${theme.color}12` }}>
+        <div className="p-5 space-y-5">
 
-          {/* Global P/L strip */}
-          <div className="grid grid-cols-3 gap-2 pt-3">
+          {/* KPI Strip: Total Profit / Total Loss / Best Signal */}
+          <div className="grid grid-cols-3 gap-3">
             {[
-              { label: "Avg Profit", val: `+${stats.avg_profit_pips}p`, color: C.g },
-              { label: "Avg Loss", val: `-${stats.avg_loss_pips}p`, color: C.r },
-              { label: "Total Net", val: `${netPos ? "+" : ""}${stats.net_pips}p`, color: netPos ? C.g : C.r },
+              { label: "TOTAL PROFIT", val: `+${stats.total_profit_pips ?? stats.avg_profit_pips}p`, color: P.green },
+              { label: "TOTAL LOSS", val: `-${stats.total_loss_pips ?? stats.avg_loss_pips}p`, color: P.red },
+              { label: "AVG PROFIT", val: `+${stats.avg_profit_pips}p`, color: P.green },
             ].map(s => (
-              <div key={s.label} className="rounded-xl p-2.5 text-center" style={{ background: `${s.color}08`, border: `1px solid ${s.color}15` }}>
-                <p className="text-[7px] uppercase tracking-widest text-white/25 mb-0.5">{s.label}</p>
-                <p className="text-[13px] font-black font-mono" style={{ color: s.color }}>{s.val}</p>
+              <div key={s.label} className="rounded-lg text-center" style={{ background: P.surface, padding: "14px 12px", border: `1px solid ${P.border}` }}>
+                <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 6 }}>
+                  {s.label}
+                </p>
+                <p style={{ fontFamily: FONT, fontSize: 20, fontWeight: 700, color: s.color, letterSpacing: "-0.5px" }}>
+                  {s.val}
+                </p>
               </div>
             ))}
           </div>
 
-          {/* Global target bars */}
+          {/* Overall Target Rates */}
           {Object.keys(stats.target_rates).length > 0 && (
-            <div className="space-y-1.5">
-              <p className="text-[8px] uppercase tracking-widest text-white/25">Overall Target Hit Rates</p>
-              {Object.entries(stats.target_rates).sort().map(([tp, rate]) => (
-                <TpBar key={tp} name={tp} rate={rate} color={theme.color} />
-              ))}
+            <div className="space-y-2.5">
+              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" as const }}>
+                Overall Target Hit Rates
+              </p>
+              <div className="rounded-lg" style={{ background: P.surface, padding: 16, border: `1px solid ${P.border}` }}>
+                <div className="flex flex-col gap-3">
+                  {Object.entries(stats.target_rates).sort().map(([tp, rate]) => (
+                    <TpBar key={tp} name={tp} rate={rate} />
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Per-symbol grid */}
+          {/* Per-Symbol Asset Cards (Grid - Reference Design) */}
           {Object.keys(stats.symbols).length > 0 && (
             <div>
-              <p className="text-[8px] uppercase tracking-widest text-white/25 mb-2">Per Symbol</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>
+                Per Asset Performance
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {Object.entries(stats.symbols).map(([sym, d]) => (
-                  <SymbolCard key={sym} sym={sym} d={d} modelColor={theme.color} />
+                  <SymbolCard key={sym} sym={sym} d={d} />
                 ))}
               </div>
             </div>
@@ -261,12 +322,11 @@ function ModelCard({ model, stats }: { model: string; stats: ModelStats }) {
   );
 }
 
-// ── Active Signal Card ────────────────────────────────────────────────────────
+// ── Active Signal Card (Premium, Calm) ──────────────────────────────────────
 function ActiveSignalCard({ signal, onSelect }: { signal: ActiveSignal; onSelect: (id: string) => void }) {
   const isBuy = signal.ml_direction === "BUY";
   const isSell = signal.ml_direction === "SELL";
-  const dirColor = isBuy ? C.g : isSell ? C.r : C.y;
-  const sc = symColor(signal.symbol);
+  const dirColor = isBuy ? P.green : isSell ? P.red : P.warn;
   const theme = getTheme(signal.model_type || "ml");
 
   const age = Math.round((Date.now() - new Date(signal.created_at).getTime()) / 60000);
@@ -277,76 +337,76 @@ function ActiveSignalCard({ signal, onSelect }: { signal: ActiveSignal; onSelect
   return (
     <button
       onClick={() => onSelect(signal.id)}
-      className="w-full text-left rounded-2xl overflow-hidden transition-all duration-200 hover:scale-[1.01] hover:brightness-110 active:scale-[0.99]"
+      className="w-full text-left rounded-xl overflow-hidden transition-all duration-200"
       style={{
-        background: `linear-gradient(135deg, ${sc}0A 0%, rgba(8,10,25,0.9) 100%)`,
-        border: `1px solid ${sc}25`,
-        boxShadow: `0 4px 24px ${sc}08`,
+        background: P.card,
+        border: `1px solid ${P.border}`,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+        e.currentTarget.style.transform = "translateY(-1px)";
+        e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.3)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = P.border;
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "none";
       }}
     >
-      <div className="flex items-stretch gap-0">
-        {/* Left accent bar — mavi/cyan tonları, kırmızıdan uzak */}
-        <div className="w-1 rounded-l-2xl shrink-0 self-stretch" style={{ background: isBuy ? `linear-gradient(180deg, #22d3ee, #3b82f6)` : `linear-gradient(180deg, #818cf8, #6366f1)` }} />
+      <div className="flex items-center gap-0">
+        {/* Direction accent bar */}
+        <div className="w-1 self-stretch shrink-0 rounded-l-xl" style={{ background: dirColor, opacity: 0.7 }} />
 
-        <div className="flex-1 p-3 flex items-center gap-3">
-          {/* Live pulse dot */}
-          <div className="relative shrink-0">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-              style={{ background: `${dirColor}15`, border: `1px solid ${dirColor}30` }}>
-              {isBuy ? <ArrowUpRight className="w-4 h-4" style={{ color: dirColor }} />
-                : isSell ? <ArrowDownRight className="w-4 h-4" style={{ color: dirColor }} />
-                  : <Minus className="w-4 h-4" style={{ color: dirColor }} />}
-            </div>
-            {/* Pulsing dot */}
-            <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60"
-                style={{ background: dirColor }} />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5"
-                style={{ background: dirColor }} />
-            </span>
+        <div className="flex-1 px-4 py-3 flex items-center gap-3">
+          {/* Direction icon */}
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: `${dirColor}10`, border: `1px solid ${dirColor}18` }}>
+            {isBuy ? <ArrowUpRight className="w-4 h-4" style={{ color: dirColor }} />
+              : isSell ? <ArrowDownRight className="w-4 h-4" style={{ color: dirColor }} />
+                : <Minus className="w-4 h-4" style={{ color: dirColor }} />}
           </div>
 
-          {/* Symbol + info */}
+          {/* Info */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[14px] font-black font-mono" style={{ color: sc }}>{symLabel(signal.symbol)}</span>
-              <span className="text-[11px] font-extrabold font-mono px-2 py-0.5 rounded-lg"
-                style={{ color: dirColor, background: `${dirColor}15`, border: `1px solid ${dirColor}30` }}>
-                {signal.ml_direction}
-              </span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded-md font-mono"
-                style={{ color: theme.color, background: `${theme.color}12`, border: `1px solid ${theme.color}20` }}>
-                {signal.model_type}
-              </span>
+            <div className="flex items-center gap-2">
+              <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: P.text }}>{symLabel(signal.symbol)}</span>
+              <span
+                className="px-2 py-0.5 rounded"
+                style={{ fontFamily: FONT, fontSize: 11, fontWeight: 600, color: dirColor, background: `${dirColor}10`, border: `1px solid ${dirColor}18` }}
+              >{signal.ml_direction}</span>
+              <span
+                className="px-1.5 py-0.5 rounded"
+                style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: theme.color, background: `${theme.color}10` }}
+              >{signal.model_type}</span>
             </div>
-            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              <span className="text-[9px] font-mono text-white/30">{age}m ago</span>
-              <span className="text-[9px] font-mono text-white/20">·</span>
-              <span className="text-[9px] font-mono text-white/30">Entry {signal.ml_entry_price?.toFixed(2)}</span>
-              <span className="text-[9px] font-mono text-white/20">·</span>
-              <span className="text-[9px] font-mono" style={{ color: signal.ml_confidence >= 60 ? C.g : C.y }}>
+            <div className="flex items-center gap-2 mt-1">
+              <span style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>{age}m ago</span>
+              <span style={{ color: P.muted }}>·</span>
+              <span style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>Entry {signal.ml_entry_price?.toFixed(2)}</span>
+              <span style={{ color: P.muted }}>·</span>
+              <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: (signal.ml_confidence ?? 0) >= 60 ? P.green : P.warn }}>
                 {signal.ml_confidence?.toFixed(0)}% conf
               </span>
             </div>
           </div>
 
-          {/* Right stats */}
-          <div className="shrink-0 flex flex-col items-end gap-1">
-            {/* Max profit */}
-            <span className="text-[13px] font-black font-mono" style={{ color: profitPos ? C.g : "rgba(255,255,255,0.3)" }}>
+          {/* Right: Profit + Targets */}
+          <div className="shrink-0 flex flex-col items-end gap-1.5">
+            <span style={{
+              fontFamily: FONT, fontSize: 16, fontWeight: 700,
+              color: profitPos ? P.green : P.muted,
+              letterSpacing: "-0.3px"
+            }}>
               {profitPos ? "+" : ""}{(signal.highest_profit_pips ?? 0).toFixed(1)}p
             </span>
-            {/* Targets */}
             <div className="flex items-center gap-1">
               {Array.from({ length: totalTargets }).map((_, i) => (
-                <div key={i} className="w-3 h-3 rounded-sm"
-                  style={{
-                    background: i < targetsHit ? C.g : "rgba(255,255,255,0.08)",
-                    border: i < targetsHit ? `1px solid ${C.g}50` : "1px solid rgba(255,255,255,0.1)",
-                    boxShadow: i < targetsHit ? `0 0 4px ${C.g}60` : "none",
-                  }} />
+                <div key={i} className="rounded-sm" style={{
+                  width: 10, height: 10,
+                  background: i < targetsHit ? P.green : "rgba(255,255,255,0.06)",
+                  border: i < targetsHit ? `1px solid ${P.green}50` : `1px solid ${P.border}`,
+                }} />
               ))}
-              {totalTargets === 0 && <span className="text-[9px] text-white/20 font-mono">—</span>}
             </div>
           </div>
         </div>
@@ -355,278 +415,175 @@ function ActiveSignalCard({ signal, onSelect }: { signal: ActiveSignal; onSelect
   );
 }
 
-// ── Sparkline SVG (for modal fiyat çizelgesi) ────────────────────────────────
+// ── Sparkline SVG (for modal) ────────────────────────────────────────────────
 function SparkLine({ checks, direction }: { checks: SignalCheck[]; direction: string }) {
-  if (checks.length < 2) return null;
-  const profits = checks.map(c => c.profit_pips ?? 0);
-  const min = Math.min(...profits, 0);
-  const max = Math.max(...profits, 0);
-  const range = max - min || 1;
-  const W = 320, H = 60;
-  const pts = profits.map((v, i) => {
-    const x = (i / (profits.length - 1)) * W;
-    const y = H - ((v - min) / range) * H;
+  if (!checks || checks.length < 2) return null;
+  const values = checks.map(c => c.profit_pips || 0);
+  const minVal = Math.min(...values);
+  const maxVal = Math.max(...values);
+  const range = maxVal - minVal || 1;
+  const w = 280; const h = 60; const pad = 4;
+  const pts = values.map((v, i) => {
+    const x = pad + ((w - 2 * pad) * i) / (values.length - 1);
+    const y = h - pad - ((v - minVal) / range) * (h - 2 * pad);
     return `${x},${y}`;
-  }).join(" ");
-
-  const zeroY = H - ((0 - min) / range) * H;
-  const strokeColor = direction === "BUY" ? "#00ff88" : "#ff3366";
-  const fillId = `spark-fill-${direction}`;
-
+  });
+  const last = values[values.length - 1];
+  const positive = last >= 0;
+  const lineColor = positive ? P.green : P.red;
   return (
-    <svg width="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ height: 60 }}>
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
       <defs>
-        <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={strokeColor} stopOpacity="0.25" />
-          <stop offset="100%" stopColor={strokeColor} stopOpacity="0.01" />
+        <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={lineColor} stopOpacity="0.15" />
+          <stop offset="100%" stopColor={lineColor} stopOpacity="0" />
         </linearGradient>
       </defs>
-      {/* Zero line */}
-      <line x1="0" y1={zeroY} x2={W} y2={zeroY} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
-      {/* Fill area */}
-      <polyline
-        points={[`0,${zeroY}`, ...pts.split(" ").map(p => p), `${W},${zeroY}`].join(" ")}
-        fill={`url(#${fillId})`}
-        stroke="none"
-      />
-      {/* Price line */}
-      <polyline points={pts} fill="none" stroke={strokeColor} strokeWidth="2"
-        strokeLinecap="round" strokeLinejoin="round"
-        style={{ filter: `drop-shadow(0 0 3px ${strokeColor}60)` }} />
+      <path d={`M${pts[0]} ${pts.slice(1).map(p => `L${p}`).join(" ")} L${w - pad},${h - pad} L${pad},${h - pad} Z`}
+        fill="url(#sparkGrad)" />
+      <polyline points={pts.join(" ")} fill="none" stroke={lineColor} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <line x1={pad} y1={h / 2} x2={w - pad} y2={h / 2}
+        stroke="rgba(255,255,255,0.05)" strokeWidth={0.5} strokeDasharray="4 2" />
     </svg>
   );
 }
 
-// ── Arc Target Indicator ──────────────────────────────────────────────────────
+// ── Arc Target Indicator ─────────────────────────────────────────────────────
 function ArcTarget({ name, hit, pips }: { name: string; hit: boolean; pips: any }) {
+  const color = hit ? P.green : P.muted;
   return (
-    <div className="flex flex-col items-center gap-1 relative">
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300"
-        style={{
-          background: hit ? `${C.g}15` : "rgba(255,255,255,0.03)",
-          border: `2px solid ${hit ? C.g : "rgba(255,255,255,0.08)"}`,
-          boxShadow: hit ? `0 0 12px ${C.g}40, inset 0 0 8px ${C.g}15` : "none",
-        }}>
+    <div className="flex flex-col items-center gap-1.5"
+      style={{ opacity: hit ? 1 : 0.5 }}>
+      <div className="rounded-lg flex items-center justify-center" style={{
+        width: 36, height: 36,
+        background: hit ? `${P.green}12` : "rgba(255,255,255,0.03)",
+        border: `1px solid ${hit ? `${P.green}30` : P.border}`,
+      }}>
         {hit
-          ? <CheckCircle className="w-5 h-5" style={{ color: C.g }} />
-          : <XCircle className="w-5 h-5" style={{ color: "rgba(255,255,255,0.2)" }} />}
+          ? <CheckCircle className="w-4 h-4" style={{ color: P.green }} />
+          : <Target className="w-4 h-4" style={{ color: P.muted }} />}
       </div>
-      <p className="text-[8px] font-bold font-mono" style={{ color: hit ? C.g : "rgba(255,255,255,0.25)" }}>{name}</p>
-      {pips && <p className="text-[7px] font-mono text-white/20">{pips}p</p>}
+      <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color }}>{name}</span>
+      <span style={{ fontFamily: FONT, fontSize: 9, color: P.muted }}>{pips}p</span>
     </div>
   );
 }
 
-// ── Signal Detail Modal (Sinematik) ───────────────────────────────────────────
+// ── Signal Detail Modal (Premium) ────────────────────────────────────────────
 function SignalDetailModal({ signalId, onClose }: { signalId: string; onClose: () => void }) {
-  const { data, isLoading } = useSignalDetail(signalId);
   const overlayRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  if (isLoading) return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }}>
-      <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(8,10,25,0.9)", border: "1px solid rgba(192,132,252,0.2)" }}>
-        <RefreshCw className="w-6 h-6 animate-spin" style={{ color: C.p }} />
-      </div>
+  const { data, isLoading } = useSignalDetail(signalId);
+
+  if (isLoading || !data) return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
+      <RefreshCw className="w-6 h-6 animate-spin" style={{ color: P.accent }} />
     </div>
   );
 
-  if (!data || data.error) return null;
-
   const sig = data.signal;
-  const checks: SignalCheck[] = data.checks || [];
-  const failure = data.failure;
+  if (!sig) return null;
   const isBuy = sig.ml_direction === "BUY";
-  const dirColor = isBuy ? C.g : C.r;
-  const sc = symColor(sig.symbol);
-  const netProfit = checks.length > 0 ? checks[checks.length - 1].profit_pips : sig.highest_profit_pips;
-  const profitPos = (netProfit ?? 0) >= 0;
+  const dirColor = isBuy ? P.green : P.red;
+  const theme = getTheme(sig.model_type || "ml");
+  const checks = data.checks || [];
+  const failure = data.failure;
+
+  const targetsConfig = sig.targets || {};
+  const targetsHit = sig.targets_hit || {};
 
   return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-      style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(12px)" }}
-      onClick={onClose}
-    >
-      <div
-        className="w-full sm:max-w-xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl"
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "linear-gradient(180deg, rgba(12,14,35,0.99) 0%, rgba(8,10,25,0.99) 100%)",
-          border: `1px solid ${sc}20`,
-          boxShadow: `0 -8px 60px ${sc}10, 0 0 120px rgba(0,0,0,0.5)`,
-        }}
-      >
-        {/* ── CINEMATIC HEADER ── */}
-        <div className="relative px-5 py-4 overflow-hidden" style={{
-          background: `linear-gradient(135deg, ${sc}12 0%, ${dirColor}08 100%)`,
-          borderBottom: `1px solid rgba(255,255,255,0.05)`,
-        }}>
-          {/* BG accent blobs */}
-          <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full pointer-events-none"
-            style={{ background: `radial-gradient(circle, ${sc}20, transparent 70%)` }} />
-          <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full pointer-events-none"
-            style={{ background: `radial-gradient(circle, ${dirColor}15, transparent 70%)` }} />
+    <div ref={overlayRef} className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+      onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}>
+      <div className="w-full max-w-lg rounded-xl overflow-hidden"
+        style={{ background: P.card, border: `1px solid ${P.border}`, maxHeight: "85vh", overflowY: "auto" }}>
 
-          <div className="relative flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                style={{ background: `${dirColor}18`, border: `2px solid ${dirColor}35`, boxShadow: `0 0 16px ${dirColor}25` }}>
-                {isBuy
-                  ? <ArrowUpRight className="w-6 h-6" style={{ color: dirColor }} />
-                  : <ArrowDownRight className="w-6 h-6" style={{ color: dirColor }} />}
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-[18px] font-black font-mono" style={{ color: sc }}>{symLabel(sig.symbol)}</h2>
-                  <span className="text-[13px] font-extrabold font-mono px-2.5 py-0.5 rounded-xl"
-                    style={{ color: dirColor, background: `${dirColor}18`, border: `1px solid ${dirColor}35` }}>
-                    {sig.ml_direction}
-                  </span>
-                </div>
-                <p className="text-[10px] font-mono text-white/30 mt-0.5">
-                  {sig.model_type} · {sig.status} · {new Date(sig.created_at).toLocaleString()}
-                </p>
-              </div>
+        {/* Modal Header */}
+        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${P.border}` }}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center"
+              style={{ background: `${dirColor}10`, border: `1px solid ${dirColor}20` }}>
+              {isBuy
+                ? <ArrowUpRight className="w-5 h-5" style={{ color: dirColor }} />
+                : <ArrowDownRight className="w-5 h-5" style={{ color: dirColor }} />}
             </div>
-            {/* Entry price */}
-            <div className="text-right shrink-0">
-              <p className="text-[8px] uppercase tracking-widest text-white/25 mb-0.5">Entry</p>
-              <p className="text-[16px] font-black font-mono text-white">{sig.ml_entry_price?.toFixed(2)}</p>
+            <div>
+              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: P.text }}>
+                {symLabel(sig.symbol)} · {sig.ml_direction}
+              </p>
+              <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>
+                {sig.model_type} · {sig.ml_confidence?.toFixed(0)}% confidence
+              </p>
             </div>
           </div>
-        </div>
-
-        {/* ── STATS ROW ── */}
-        <div className="px-5 py-3 grid grid-cols-4 divide-x divide-white/5" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-          {[
-            { label: "Max Profit", val: `+${(sig.highest_profit_pips || 0).toFixed(1)}p`, color: C.g },
-            { label: "Max DD", val: `${(sig.lowest_drawdown_pips || 0).toFixed(1)}p`, color: C.r },
-            { label: "Confidence", val: `${(sig.ml_confidence || 0).toFixed(0)}%`, color: C.p },
-            { label: "Status", val: sig.status, color: sig.status === "completed" ? C.g : sig.status === "stopped" ? C.r : C.y },
-          ].map(s => (
-            <div key={s.label} className="text-center px-2 py-2 first:pl-0 last:pr-0">
-              <p className="text-[7px] uppercase tracking-widest mb-0.5" style={{ color: "rgba(255,255,255,0.25)" }}>{s.label}</p>
-              <p className="text-[13px] font-black font-mono" style={{ color: s.color }}>{s.val}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* ── TARGET ARC INDICATORS ── */}
-        {sig.targets_hit && (
-          <div className="px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-            <p className="text-[8px] uppercase tracking-widest text-white/25 mb-3">Target Levels</p>
-            <div className="flex gap-4 justify-center flex-wrap">
-              {Object.entries(sig.targets_hit).map(([tp, hit]) => (
-                <ArcTarget key={tp} name={tp} hit={hit as boolean} pips={sig.targets?.[tp]} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── SPARKLINE CHART ── */}
-        {checks.length >= 2 && (
-          <div className="px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[8px] uppercase tracking-widest text-white/25">P/L Timeline</p>
-              <span className="text-[12px] font-black font-mono" style={{ color: profitPos ? C.g : C.r }}>
-                {profitPos ? "+" : ""}{(netProfit ?? 0).toFixed(1)} pips
-              </span>
-            </div>
-            <div className="rounded-xl overflow-hidden" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.04)" }}>
-              <div className="px-3 pt-3 pb-1">
-                <SparkLine checks={checks} direction={sig.ml_direction} />
-              </div>
-              {/* Time axis */}
-              <div className="flex justify-between px-3 pb-2">
-                <span className="text-[8px] font-mono text-white/20">
-                  {new Date(checks[0].check_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </span>
-                <span className="text-[8px] font-mono text-white/20">
-                  {new Date(checks[checks.length - 1].check_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── PRICE ACTION TABLE (last 6 checks) ── */}
-        {checks.length > 0 && (
-          <div className="px-5 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-            <p className="text-[8px] uppercase tracking-widest text-white/25 mb-2">Price Action (5-min checks)</p>
-            <div className="max-h-40 overflow-y-auto rounded-xl" style={{ background: "rgba(0,0,0,0.2)" }}>
-              <table className="w-full text-[9px] font-mono">
-                <thead>
-                  <tr className="text-white/20 sticky top-0" style={{ background: "rgba(8,10,25,0.9)" }}>
-                    <th className="text-left py-1.5 px-2">Time</th>
-                    <th className="text-right py-1.5 px-2">Price</th>
-                    <th className="text-right py-1.5 px-2 hidden sm:table-cell">High</th>
-                    <th className="text-right py-1.5 px-2 hidden sm:table-cell">Low</th>
-                    <th className="text-right py-1.5 px-2">P/L</th>
-                    <th className="text-right py-1.5 px-2">TP</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {checks.slice().reverse().map((ch: SignalCheck, i: number) => {
-                    const plColor = ch.profit_pips >= 0 ? C.g : C.r;
-                    const hitCount = ch.target_status ? Object.values(ch.target_status).filter(Boolean).length : 0;
-                    return (
-                      <tr key={ch.id || i} style={{ borderTop: "1px solid rgba(255,255,255,0.03)" }}>
-                        <td className="py-1.5 px-2 text-white/35">{new Date(ch.check_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
-                        <td className="py-1.5 px-2 text-right text-white/50">{ch.current_price?.toFixed(2)}</td>
-                        <td className="py-1.5 px-2 text-right hidden sm:table-cell" style={{ color: `${C.g}70` }}>{ch.session_high?.toFixed(2) || "—"}</td>
-                        <td className="py-1.5 px-2 text-right hidden sm:table-cell" style={{ color: `${C.r}70` }}>{ch.session_low?.toFixed(2) || "—"}</td>
-                        <td className="py-1.5 px-2 text-right font-bold" style={{ color: plColor }}>
-                          {ch.profit_pips >= 0 ? "+" : ""}{ch.profit_pips?.toFixed(1)}
-                        </td>
-                        <td className="py-1.5 px-2 text-right" style={{ color: hitCount > 0 ? C.g : "rgba(255,255,255,0.15)" }}>
-                          {hitCount > 0 ? `${hitCount}✓` : "—"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* ── FAILURE AUTOPSY ── */}
-        {failure && (
-          <div className="px-5 py-3" style={{ background: `${C.r}05`, borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-            <p className="text-[8px] uppercase tracking-widest mb-2.5 flex items-center gap-1" style={{ color: `${C.r}80` }}>
-              <AlertTriangle className="w-3 h-3" style={{ color: C.r }} /> Failure Autopsy
-            </p>
-            <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
-              {[
-                { k: "Type", v: failure.failure_type },
-                { k: "Market Regime", v: failure.market_regime },
-                { k: "Confluence", v: `${failure.confluence_score}/5` },
-              ].map(row => (
-                <div key={row.k} className="flex justify-between gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.02)" }}>
-                  <span className="text-white/25">{row.k}</span>
-                  <span className="text-white/70 font-bold">{row.v}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── CLOSE ── */}
-        <div className="px-5 pb-6 pt-4 flex justify-center">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 rounded-full text-[11px] font-bold font-mono transition-all hover:scale-105 active:scale-95"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)" }}
-          >
-            Close
+          <button onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+            style={{ background: "rgba(255,255,255,0.03)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}>
+            <XCircle className="w-4 h-4" style={{ color: P.muted }} />
           </button>
+        </div>
+
+        <div className="p-5 space-y-5">
+          {/* Entry + Status */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-lg" style={{ background: P.surface, padding: "12px", border: `1px solid ${P.border}` }}>
+              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 4 }}>Entry</p>
+              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: P.text }}>{sig.ml_entry_price?.toFixed(2)}</p>
+            </div>
+            <div className="rounded-lg" style={{ background: P.surface, padding: "12px", border: `1px solid ${P.border}` }}>
+              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 4 }}>Best P/L</p>
+              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: (sig.highest_profit_pips ?? 0) > 0 ? P.green : P.muted }}>
+                {(sig.highest_profit_pips ?? 0) > 0 ? "+" : ""}{(sig.highest_profit_pips ?? 0).toFixed(1)}p
+              </p>
+            </div>
+            <div className="rounded-lg" style={{ background: P.surface, padding: "12px", border: `1px solid ${P.border}` }}>
+              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 4 }}>Status</p>
+              <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: sig.status === "completed" ? P.green : sig.status === "stopped" ? P.red : P.warn, textTransform: "capitalize" as const }}>
+                {sig.status}
+              </p>
+            </div>
+          </div>
+
+          {/* Target Arc */}
+          <div className="flex items-center justify-center gap-6 py-2">
+            {Object.entries(targetsConfig).sort().map(([tp, pips]) => (
+              <ArcTarget key={tp} name={tp} hit={!!targetsHit[tp]} pips={pips} />
+            ))}
+          </div>
+
+          {/* Sparkline */}
+          {checks.length >= 2 && (
+            <div className="rounded-lg" style={{ background: P.surface, padding: 16, border: `1px solid ${P.border}` }}>
+              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 8 }}>P/L Timeline</p>
+              <SparkLine checks={checks} direction={sig.ml_direction} />
+            </div>
+          )}
+
+          {/* Failure Autopsy */}
+          {failure && (
+            <div className="rounded-lg" style={{ background: `${P.red}06`, padding: 14, border: `1px solid ${P.red}15` }}>
+              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.red, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 6 }}>
+                Failure Autopsy
+              </p>
+              <p style={{ fontFamily: FONT, fontSize: 12, color: P.textSec, lineHeight: 1.5 }}>
+                {failure.reason || "Market moved against signal direction."}
+              </p>
+              {failure.max_adverse_pips !== undefined && (
+                <p style={{ fontFamily: FONT, fontSize: 11, color: P.red, marginTop: 4 }}>
+                  Max adverse: -{Math.abs(failure.max_adverse_pips).toFixed(1)}p
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -634,7 +591,7 @@ function SignalDetailModal({ signalId, onClose }: { signalId: string; onClose: (
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// MAIN COMPONENT
+// MAIN COMPONENT — SIGNAL PERFORMANCE DASHBOARD
 // ════════════════════════════════════════════════════════════════════════════
 export default function LearningDashboardV2() {
   const [days, setDays] = useState(30);
@@ -664,68 +621,71 @@ export default function LearningDashboardV2() {
 
   return (
     <div
-      className="rounded-2xl overflow-hidden"
+      className="rounded-xl overflow-hidden"
       style={{
-        background: "rgba(8,10,25,0.88)",
-        backdropFilter: "blur(24px)",
-        border: "1px solid rgba(168,85,247,0.1)",
-        boxShadow: "0 0 60px rgba(168,85,247,0.04)",
+        fontFamily: FONT,
+        background: P.bg,
+        border: `1px solid ${P.border}`,
       }}
     >
       {/* ── HEADER ── */}
-      <div className="flex items-center justify-between px-5 py-3.5" style={{
-        background: "linear-gradient(180deg, rgba(168,85,247,0.08) 0%, transparent 100%)",
-        borderBottom: "1px solid rgba(168,85,247,0.08)",
+      <div className="flex items-center justify-between px-5 py-4" style={{
+        background: P.surface,
+        borderBottom: `1px solid ${P.border}`,
       }}>
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, rgba(0,255,136,0.2), rgba(168,85,247,0.2))", border: "1px solid rgba(168,85,247,0.35)" }}>
-            <LearningIcon size={20} style={{ color: C.p }} />
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{ background: `${P.accent}12`, border: `1px solid ${P.accent}20` }}>
+            <LearningIcon size={18} style={{ color: P.accent }} />
           </div>
           <div>
-            <h2 className="text-[13px] font-extrabold font-mono tracking-wider" style={{ color: C.p }}>SIGNAL PERFORMANCE</h2>
-            <p className="text-[8px] uppercase tracking-[0.3em]" style={{ color: "rgba(192,132,252,0.35)" }}>
-              LEARNING ENGINE · LIFECYCLE TRACKER
+            <h2 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text, letterSpacing: "-0.01em" }}>
+              Signal Performance
+            </h2>
+            <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 400, color: P.muted }}>
+              Learning Engine · Lifecycle Tracker
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {dashboard?.active_signals !== undefined && (
-            <span className="text-[10px] font-bold font-mono px-2 py-1 rounded-lg inline-flex items-center gap-1.5"
-              style={{ color: C.g, background: `${C.g}10`, border: `1px solid ${C.g}25` }}>
-              <Activity className="w-3 h-3" style={{ color: C.g }} />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
+              style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.green, background: `${P.green}08`, border: `1px solid ${P.green}15` }}>
+              <Activity className="w-3 h-3" style={{ color: P.green }} />
               {dashboard.active_signals} active
             </span>
           )}
           <select value={days} onChange={(e) => setDays(Number(e.target.value))}
-            className="text-[10px] font-mono font-bold px-2 py-1.5 rounded-lg appearance-none cursor-pointer"
-            style={{ backgroundColor: "rgba(168,85,247,0.08)", color: "rgba(192,132,252,0.6)", border: "1px solid rgba(168,85,247,0.15)" }}>
+            className="rounded-lg appearance-none cursor-pointer"
+            style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, padding: "6px 10px", backgroundColor: P.surface, color: P.textSec, border: `1px solid ${P.border}` }}>
             <option value={7}>7 days</option>
             <option value={14}>14 days</option>
             <option value={30}>30 days</option>
           </select>
           <button onClick={handleCheck}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold font-mono transition-all hover:scale-105 active:scale-95"
-            style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.2)", color: C.g }}>
-            <RefreshCw className={`w-3 h-3 ${checking ? "animate-spin" : ""}`} />
-            Check Now
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-150"
+            style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, background: `${P.accent}10`, border: `1px solid ${P.accent}20`, color: P.accent }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = `${P.accent}18`)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = `${P.accent}10`)}>
+            <RefreshCw className={`w-3.5 h-3.5 ${checking ? "animate-spin" : ""}`} />
+            Check
           </button>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="p-12 flex items-center justify-center">
-          <RefreshCw className="w-6 h-6 animate-spin" style={{ color: C.p }} />
+        <div className="p-16 flex items-center justify-center" style={{ background: P.bg }}>
+          <RefreshCw className="w-5 h-5 animate-spin" style={{ color: P.accent }} />
         </div>
       ) : (
-        <div className="p-4 space-y-5">
+        <div className="p-5 space-y-5" style={{ background: P.bg }}>
 
-          {/* ── ACTIVE SIGNALS SECTION ── */}
+          {/* ── ACTIVE SIGNALS ── */}
           {activeSignals.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: C.g, boxShadow: `0 0 6px ${C.g}` }} />
-                <p className="text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: "rgba(0,255,136,0.6)" }}>
+                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: P.green }} />
+                <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" as const }}>
                   Active Signals ({activeSignals.length})
                 </p>
               </div>
@@ -737,11 +697,13 @@ export default function LearningDashboardV2() {
             </div>
           )}
 
-          {/* ── MODEL PERFORMANCE SECTION ── */}
+          {/* ── MODEL PERFORMANCE ── */}
           {Object.keys(models).length > 0 ? (
             <div>
-              <p className="text-[9px] uppercase tracking-[0.25em] text-white/25 mb-3 ml-1">Strategy Performance</p>
-              <div className="space-y-2">
+              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>
+                Model Performance
+              </p>
+              <div className="space-y-3">
                 {Object.entries(models)
                   .sort(([a], [b]) => {
                     const order: Record<string, number> = { ml: 0, pulse1: 1, pulse2: 2, pulse3: 3, pulse: 3.5, emel: 4, hybrid: 5 };
@@ -753,27 +715,28 @@ export default function LearningDashboardV2() {
               </div>
             </div>
           ) : (
-            <div className="text-center py-10">
-              <EmelIcon size={40} style={{ color: "rgba(255,255,255,0.08)" }} />
-              <p className="text-white/25 text-sm mt-3">No signal data yet for this period.</p>
-              <p className="text-white/15 text-[10px] mt-1">Signals will appear as EMEL, Pulse, and ML panels generate BUY/SELL signals.</p>
+            <div className="text-center py-12">
+              <EmelIcon size={36} style={{ color: "rgba(255,255,255,0.06)" }} />
+              <p style={{ fontFamily: FONT, fontSize: 14, color: P.muted, marginTop: 12 }}>No signal data for this period.</p>
+              <p style={{ fontFamily: FONT, fontSize: 12, color: P.muted, opacity: 0.5, marginTop: 4 }}>
+                Signals appear as panels generate BUY/SELL decisions.
+              </p>
             </div>
           )}
 
-          {/* ── FAILURE PATTERNS ── */}
+          {/* ── FAILURE BREAKDOWN ── */}
           {Object.keys(failBreak).length > 0 && (
-            <div className="rounded-xl p-3.5" style={{ background: `${C.r}06`, border: `1px solid ${C.r}18` }}>
-              <p className="text-[8px] uppercase tracking-[0.2em] mb-2.5 flex items-center gap-1.5"
-                style={{ color: `${C.r}70` }}>
-                <AlertTriangle className="w-3 h-3" style={{ color: C.r }} />
-                Failure Pattern Breakdown
+            <div className="rounded-lg" style={{ background: `${P.red}05`, padding: 16, border: `1px solid ${P.red}10` }}>
+              <p className="flex items-center gap-1.5" style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: `${P.red}90`, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 }}>
+                <AlertTriangle className="w-3.5 h-3.5" style={{ color: P.red }} />
+                Failure Breakdown
               </p>
               <div className="flex gap-2 flex-wrap">
                 {Object.entries(failBreak).map(([type, count]) => (
-                  <div key={type} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-mono"
-                    style={{ background: "rgba(255,51,102,0.08)", border: "1px solid rgba(255,51,102,0.15)" }}>
-                    <span className="text-white/50">{type.replace(/_/g, " ")}</span>
-                    <span className="font-bold ml-0.5" style={{ color: C.r }}>{count}</span>
+                  <div key={type} className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+                    style={{ background: `${P.red}08`, border: `1px solid ${P.red}12` }}>
+                    <span style={{ fontFamily: FONT, fontSize: 11, color: P.textSec }}>{type.replace(/_/g, " ")}</span>
+                    <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.red }}>{count}</span>
                   </div>
                 ))}
               </div>

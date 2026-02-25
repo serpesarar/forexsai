@@ -1,4 +1,9 @@
 "use client";
+/**
+ * STRATEGY PERFORMANCE ANALYSIS — Premium Institutional Fintech Panel
+ * Bloomberg Terminal meets modern AI startup aesthetic.
+ * Design: #0B0F17 dark base, #141C2B cards, #4F8CFF AI accent
+ */
 
 import { useState, useEffect, useCallback } from "react";
 import { PanelInfoButton } from "./PanelInfoButton";
@@ -18,6 +23,22 @@ import {
 } from "./ui/CustomIcons";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+
+// ── Institutional Color Palette ─────────────────────────────────────────────
+const P = {
+  bg: "#0B0F17",
+  card: "#141C2B",
+  surface: "#111827",
+  border: "rgba(255,255,255,0.06)",
+  text: "#E6EDF3",
+  textSec: "#9AA4B2",
+  muted: "#6B7280",
+  green: "#16C784",
+  red: "#EA3943",
+  warn: "#F5A623",
+  accent: "#4F8CFF",
+};
 
 interface StrategyData {
   total_predictions: number;
@@ -56,61 +77,30 @@ async function fetchStrategyPerformance(days: number): Promise<StrategyPerforman
   return res.json();
 }
 
-const STRATEGY_CONFIG = {
-  ultra_safe: {
-    name: "Ultra Güvenli",
-    nameEn: "Ultra Safe",
-    icon: Shield,
-    color: "text-emerald-400",
-    bgColor: "bg-emerald-500/20",
-    borderColor: "border-emerald-500/30",
-  },
-  balanced: {
-    name: "Dengeli",
-    nameEn: "Balanced",
-    icon: Target,
-    color: "text-blue-400",
-    bgColor: "bg-blue-500/20",
-    borderColor: "border-blue-500/30",
-  },
-  full_power: {
-    name: "Full Power",
-    nameEn: "Full Power",
-    icon: Zap,
-    color: "text-yellow-400",
-    bgColor: "bg-yellow-500/20",
-    borderColor: "border-yellow-500/30",
-  },
-  aggressive: {
-    name: "Agresif",
-    nameEn: "Aggressive",
-    icon: Flame,
-    color: "text-red-400",
-    bgColor: "bg-red-500/20",
-    borderColor: "border-red-500/30",
-  },
-  nasdaq_precision: {
-    name: "NASDAQ Precision",
-    nameEn: "NASDAQ Precision",
-    icon: Crosshair,
-    color: "text-cyan-400",
-    bgColor: "bg-cyan-500/20",
-    borderColor: "border-cyan-500/30",
-  },
+const STRATEGY_CONFIG: Record<string, {
+  name: string; nameEn: string; icon: any; color: string;
+}> = {
+  ultra_safe: { name: "Ultra Güvenli", nameEn: "Ultra Safe", icon: Shield, color: P.green },
+  balanced: { name: "Dengeli", nameEn: "Balanced", icon: Target, color: P.accent },
+  full_power: { name: "Full Power", nameEn: "Full Power", icon: Zap, color: P.warn },
+  aggressive: { name: "Agresif", nameEn: "Aggressive", icon: Flame, color: P.red },
+  nasdaq_precision: { name: "NASDAQ Precision", nameEn: "NASDAQ Precision", icon: Crosshair, color: "#22D3EE" },
 };
 
+// ── Premium Progress Bar (6px, Rounded) ─────────────────────────────────────
 function AccuracyBar({ value, color }: { value: number | null; color: string }) {
-  if (value === null) return <span className="text-textSecondary">-</span>;
+  if (value === null) return <span style={{ fontFamily: FONT, fontSize: 12, color: P.muted }}>—</span>;
   return (
-    <div className="flex items-center gap-2 min-w-[100px]">
-      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${Math.min(value, 100)}%` }} />
+    <div className="flex items-center gap-2.5" style={{ minWidth: 120 }}>
+      <div className="flex-1 rounded-full overflow-hidden" style={{ height: 6, background: "rgba(255,255,255,0.06)" }}>
+        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(value, 100)}%`, background: color, opacity: 0.85 }} />
       </div>
-      <span className="text-[11px] font-mono font-bold w-10 text-right">{value}%</span>
+      <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color, width: 40, textAlign: "right" as const }}>{value}%</span>
     </div>
   );
 }
 
+// ── Strategy Row (Institutional Table) ──────────────────────────────────────
 function StrategyRow({
   strategy,
   data,
@@ -122,58 +112,81 @@ function StrategyRow({
   isBest: boolean;
   locale: string;
 }) {
-  const config = STRATEGY_CONFIG[strategy as keyof typeof STRATEGY_CONFIG];
+  const config = STRATEGY_CONFIG[strategy];
   if (!config) return null;
 
   const Icon = config.icon;
-  const accColor = data.accuracy !== null && data.accuracy >= 60 ? "bg-success" : data.accuracy !== null && data.accuracy >= 50 ? "bg-yellow-400" : "bg-danger";
+  const accColor = data.accuracy !== null && data.accuracy >= 60 ? P.green : data.accuracy !== null && data.accuracy >= 50 ? P.warn : P.red;
 
   return (
-    <tr className={`border-b border-white/5 hover:bg-white/5 transition-colors ${isBest ? "bg-yellow-500/5" : ""}`}>
-      <td className="px-2 py-2 whitespace-nowrap">
-        <div className="flex items-center gap-1.5">
-          <div className={`p-1 rounded-md ${config.bgColor} shrink-0`}>
-            <Icon className={`w-3 h-3 ${config.color}`} />
+    <tr
+      style={{
+        borderBottom: `1px solid ${P.border}`,
+        background: isBest ? `${P.warn}04` : "transparent",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = isBest ? `${P.warn}06` : "rgba(255,255,255,0.015)")}
+      onMouseLeave={(e) => (e.currentTarget.style.background = isBest ? `${P.warn}04` : "transparent")}
+    >
+      <td style={{ padding: "10px 14px", whiteSpace: "nowrap" as const }}>
+        <div className="flex items-center gap-2.5">
+          <div className="rounded-md flex items-center justify-center shrink-0"
+            style={{ width: 28, height: 28, background: `${config.color}10`, border: `1px solid ${config.color}18` }}>
+            <Icon className="w-3.5 h-3.5" style={{ color: config.color }} />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-1">
-              <span className={`font-semibold text-xs ${config.color} whitespace-nowrap`}>
+            <div className="flex items-center gap-1.5">
+              <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.text }}>
                 {locale === "en" ? config.nameEn : config.name}
               </span>
               {isBest && (
-                <span className="bg-yellow-500 text-black text-[8px] font-bold px-1 py-0.5 rounded-full flex items-center gap-0.5 shrink-0">
-                  <Trophy className="w-2 h-2" /> EN İYİ
+                <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5"
+                  style={{ background: `${P.warn}15`, border: `1px solid ${P.warn}25` }}>
+                  <Trophy className="w-2.5 h-2.5" style={{ color: P.warn }} />
+                  <span style={{ fontFamily: FONT, fontSize: 9, fontWeight: 700, color: P.warn }}>BEST</span>
                 </span>
               )}
             </div>
-            <span className="text-[9px] text-textSecondary whitespace-nowrap">{data.total_predictions} tahmin / {data.with_outcome} sonuç</span>
+            <span style={{ fontFamily: FONT, fontSize: 10, color: P.muted }}>
+              {data.total_predictions} predictions · {data.with_outcome} outcomes
+            </span>
           </div>
         </div>
       </td>
-      <td className="px-2 py-2 whitespace-nowrap">
+      <td style={{ padding: "10px 14px", whiteSpace: "nowrap" as const }}>
         <AccuracyBar value={data.accuracy} color={accColor} />
       </td>
-      <td className="px-2 py-2 whitespace-nowrap">
-        <div className="flex items-center gap-1">
-          <Target className="w-2.5 h-2.5 text-success shrink-0" />
-          <span className="text-[11px] font-mono text-success">{data.target_hit_rate !== null ? `${data.target_hit_rate}%` : "-"}</span>
-          <span className="text-[9px] text-textSecondary">({data.target_hits ?? 0})</span>
+      <td style={{ padding: "10px 14px", whiteSpace: "nowrap" as const }}>
+        <div className="flex items-center gap-1.5">
+          <Target className="w-3 h-3 shrink-0" style={{ color: P.green }} />
+          <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.green }}>{data.target_hit_rate !== null ? `${data.target_hit_rate}%` : "—"}</span>
+          <span style={{ fontFamily: FONT, fontSize: 10, color: P.muted }}>({data.target_hits ?? 0})</span>
         </div>
       </td>
-      <td className="px-2 py-2 whitespace-nowrap">
-        <div className="flex items-center gap-1">
-          <XCircle className="w-2.5 h-2.5 text-danger shrink-0" />
-          <span className="text-[11px] font-mono text-danger">{data.stop_hit_rate !== null ? `${data.stop_hit_rate}%` : "-"}</span>
-          <span className="text-[9px] text-textSecondary">({data.stop_hits ?? 0})</span>
+      <td style={{ padding: "10px 14px", whiteSpace: "nowrap" as const }}>
+        <div className="flex items-center gap-1.5">
+          <XCircle className="w-3 h-3 shrink-0" style={{ color: P.red }} />
+          <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.red }}>{data.stop_hit_rate !== null ? `${data.stop_hit_rate}%` : "—"}</span>
+          <span style={{ fontFamily: FONT, fontSize: 10, color: P.muted }}>({data.stop_hits ?? 0})</span>
         </div>
       </td>
-      <td className="px-2 py-2 text-right whitespace-nowrap">
-        <span className="text-[11px] font-mono">{data.avg_confidence}%</span>
+      <td style={{ padding: "10px 14px", textAlign: "right" as const, whiteSpace: "nowrap" as const }}>
+        <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.textSec }}>{data.avg_confidence}%</span>
       </td>
     </tr>
   );
 }
 
+// ── Symbol Section Config ───────────────────────────────────────────────────
+const SYMBOL_META = [
+  { key: "NDX.INDX", label: "NASDAQ", icon: "📈", color: P.green },
+  { key: "XAUUSD", label: "XAU/USD", icon: "⭐", color: P.warn },
+  { key: "GDAXI.INDX", label: "DAX", icon: "🏛", color: P.accent },
+  { key: "CL.COMM", label: "US Oil", icon: "🛢", color: "#FB923C" },
+];
+
+// ════════════════════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ════════════════════════════════════════════════════════════════════════════
 export default function StrategyPerformancePanel() {
   const [days, setDays] = useState(30);
   const locale = "tr";
@@ -194,27 +207,34 @@ export default function StrategyPerformancePanel() {
 
   if (error) {
     return (
-      <div className="glass-premium p-6 rounded-2xl">
-        <div className="flex items-center gap-3 text-danger">
+      <div className="rounded-xl" style={{ background: P.card, border: `1px solid ${P.border}`, padding: 24 }}>
+        <div className="flex items-center gap-3" style={{ color: P.red }}>
           <AlertTriangle className="w-5 h-5" />
-          <span>Strateji verileri yüklenemedi</span>
+          <span style={{ fontFamily: FONT, fontSize: 14, color: P.red }}>Strategy data unavailable</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="glass-premium p-6 rounded-2xl space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{ fontFamily: FONT, background: P.bg, border: `1px solid ${P.border}` }}
+    >
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between px-5 py-4"
+        style={{ background: P.surface, borderBottom: `1px solid ${P.border}` }}>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/30 to-pink-500/30">
-            <BarChart3 className="w-5 h-5 text-purple-400" />
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{ background: `${P.accent}12`, border: `1px solid ${P.accent}20` }}>
+            <BarChart3 className="w-4.5 h-4.5" style={{ color: P.accent, width: 18, height: 18 }} />
           </div>
           <div>
-            <h3 className="font-semibold">Strateji Performans Analizi</h3>
-            <p className="text-xs text-textSecondary">
-              Hangi filtre kombinasyonu daha başarılı?
+            <h3 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text, letterSpacing: "-0.01em" }}>
+              Strategy Performance Analysis
+            </h3>
+            <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>
+              Which filter combination performs best?
             </p>
           </div>
         </div>
@@ -223,59 +243,68 @@ export default function StrategyPerformancePanel() {
           <select
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
-            className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs"
+            className="rounded-lg appearance-none cursor-pointer"
+            style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, padding: "6px 10px", background: P.surface, color: P.textSec, border: `1px solid ${P.border}` }}
           >
-            <option value={7}>7 gün</option>
-            <option value={14}>14 gün</option>
-            <option value={30}>30 gün</option>
-            <option value={60}>60 gün</option>
+            <option value={7}>7 days</option>
+            <option value={14}>14 days</option>
+            <option value={30}>30 days</option>
+            <option value={60}>60 days</option>
           </select>
 
           <button
             onClick={() => refetch()}
-            className="p-2 hover:bg-white/10 rounded-lg transition"
+            className="rounded-lg flex items-center justify-center transition-all duration-150"
+            style={{ width: 32, height: 32, background: `${P.accent}08`, border: `1px solid ${P.accent}15` }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = `${P.accent}15`)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = `${P.accent}08`)}
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} style={{ color: P.accent }} />
           </button>
           <PanelInfoButton panelId="strategy-performance" />
         </div>
       </div>
 
+      {/* ── Content ── */}
       {isLoading ? (
-        <div className="space-y-4">
-          <div className="skeleton h-8 w-48 rounded-lg" />
-          <div className="skeleton h-48 rounded-xl" />
-          <div className="skeleton h-48 rounded-xl" />
+        <div className="p-16 flex items-center justify-center" style={{ background: P.bg }}>
+          <RefreshCw className="w-5 h-5 animate-spin" style={{ color: P.accent }} />
         </div>
       ) : data && !data.error ? (
-        <>
-          {/* Symbol Tables */}
-          {[
-            { key: "NDX.INDX", label: "NASDAQ", iconColor: "text-emerald-400" },
-            { key: "XAUUSD", label: "XAU/USD", iconColor: "text-yellow-400" },
-            { key: "GDAXI.INDX", label: "DAX", iconColor: "text-blue-400" },
-            { key: "CL.COMM", label: "US Oil", iconColor: "text-orange-400" },
-          ].map(({ key: symKey, label, iconColor }) => (
+        <div className="p-5 space-y-6" style={{ background: P.bg }}>
+          {/* Symbol Sections */}
+          {SYMBOL_META.map(({ key: symKey, label, icon, color }) => (
             <div key={symKey}>
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className={`w-4 h-4 ${iconColor}`} />
-                <h4 className="font-medium">{label}</h4>
+              {/* Symbol Header */}
+              <div className="flex items-center gap-2.5 mb-3">
+                <span style={{ fontSize: 16 }}>{icon}</span>
+                <h4 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text }}>{label}</h4>
                 {data.best_strategies[symKey]?.strategy && (
-                  <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full">
-                    En iyi: {STRATEGY_CONFIG[data.best_strategies[symKey].strategy as keyof typeof STRATEGY_CONFIG]?.name}
-                    {data.best_strategies[symKey].accuracy !== null && ` (${data.best_strategies[symKey].accuracy}%)`}
+                  <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 ml-2"
+                    style={{ background: `${P.warn}10`, border: `1px solid ${P.warn}18` }}>
+                    <Trophy className="w-3 h-3" style={{ color: P.warn }} />
+                    <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color: P.warn }}>
+                      Best: {STRATEGY_CONFIG[data.best_strategies[symKey].strategy as keyof typeof STRATEGY_CONFIG]?.nameEn ?? data.best_strategies[symKey].strategy}
+                      {data.best_strategies[symKey].accuracy !== null && ` (${data.best_strategies[symKey].accuracy}%)`}
+                    </span>
                   </span>
                 )}
               </div>
-              <div className="overflow-x-auto rounded-lg border border-white/10 -mx-1">
-                <table className="w-full text-xs" style={{ minWidth: 600 }}>
+
+              {/* Table */}
+              <div className="overflow-x-auto rounded-lg" style={{ border: `1px solid ${P.border}` }}>
+                <table className="w-full" style={{ minWidth: 640 }}>
                   <thead>
-                    <tr className="bg-white/5 text-xs text-textSecondary uppercase">
-                      <th className="px-3 py-2 text-left whitespace-nowrap">Strateji</th>
-                      <th className="px-3 py-2 text-left whitespace-nowrap">Doğruluk</th>
-                      <th className="px-3 py-2 text-left whitespace-nowrap">Hedef</th>
-                      <th className="px-3 py-2 text-left whitespace-nowrap">Stop</th>
-                      <th className="px-3 py-2 text-right whitespace-nowrap">Güven</th>
+                    <tr style={{ background: P.surface }}>
+                      {["Strategy", "Accuracy", "Target Hit", "Stop Hit", "Confidence"].map((h, i) => (
+                        <th key={h} style={{
+                          padding: "10px 14px",
+                          textAlign: i === 4 ? "right" as const : "left" as const,
+                          fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted,
+                          letterSpacing: "0.08em", textTransform: "uppercase" as const,
+                          borderBottom: `1px solid ${P.border}`,
+                        }}>{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
@@ -294,22 +323,27 @@ export default function StrategyPerformancePanel() {
             </div>
           ))}
 
-          {/* Legend */}
-          <div className="pt-3 border-t border-white/10">
-            <p className="text-[10px] text-textSecondary mb-2 uppercase tracking-wide">Strateji Açıklamaları</p>
-            <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px]">
-              {Object.entries(data.strategy_descriptions || {}).map(([key, desc]) => (
-                <div key={key} className="flex items-center gap-1.5">
-                  <span className={STRATEGY_CONFIG[key as keyof typeof STRATEGY_CONFIG]?.color}>●</span>
-                  <span className="text-textSecondary">{desc}</span>
-                </div>
-              ))}
+          {/* Strategy Descriptions */}
+          <div style={{ paddingTop: 12, borderTop: `1px solid ${P.border}` }}>
+            <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 8 }}>
+              Strategy Descriptions
+            </p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              {Object.entries(data.strategy_descriptions || {}).map(([key, desc]) => {
+                const config = STRATEGY_CONFIG[key];
+                return (
+                  <div key={key} className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full" style={{ background: config?.color || P.muted }} />
+                    <span style={{ fontFamily: FONT, fontSize: 11, color: P.textSec }}>{desc}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </>
+        </div>
       ) : (
-        <div className="text-center py-8 text-textSecondary">
-          Veri bulunamadı
+        <div className="text-center py-12" style={{ background: P.bg }}>
+          <p style={{ fontFamily: FONT, fontSize: 14, color: P.muted }}>No data available</p>
         </div>
       )}
     </div>
