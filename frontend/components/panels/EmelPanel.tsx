@@ -5,9 +5,22 @@ import { useI18nStore } from "../../lib/i18n/store";
 import { PanelInfoButton } from "../PanelInfoButton";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
-  TrendingUp, Activity, BarChart3, Target, Layers, Gauge, Volume2, Shield,
-  RefreshCw, AlertTriangle, CheckCircle, XCircle, ArrowUpRight, ArrowDownRight, Minus,
-} from "lucide-react";
+  ArrowUpRightIcon as TrendingUp,
+  ActivityIcon as Activity,
+  ChartsIcon as BarChart3,
+  TargetIcon as Target,
+  AnalysisIcon as Layers,
+  ChartsIcon as Gauge,
+  SignalsIcon as Volume2,
+  SecurityShieldIcon as Shield,
+  RotateIcon as RefreshCw,
+  AlertIcon as AlertTriangle,
+  CheckCircleIcon as CheckCircle,
+  CloseIcon as XCircle,
+  ArrowUpRightIcon as ArrowUpRight,
+  ArrowDownRightIcon as ArrowDownRight,
+  MinusIcon as Minus,
+} from "../ui/CustomIcons";
 import { EmelIcon, PulseIcon, SignalsIcon } from "../ui/CustomIcons";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
@@ -33,11 +46,12 @@ const CHECK_ICONS: Record<number, any> = {
   1: TrendingUp, 2: Activity, 3: Layers, 4: Target, 5: BarChart3, 6: Gauge, 7: Volume2, 8: SignalsIcon, 9: Shield,
 };
 
+const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 const N = {
-  g: { c: "#00ff88", bg: "rgba(0,255,136,0.06)", b: "rgba(0,255,136,0.18)", gw: "rgba(0,255,136,0.12)" },
-  y: { c: "#fbbf24", bg: "rgba(251,191,36,0.06)", b: "rgba(251,191,36,0.18)", gw: "rgba(251,191,36,0.12)" },
-  r: { c: "#ff3366", bg: "rgba(255,51,102,0.06)", b: "rgba(255,51,102,0.18)", gw: "rgba(255,51,102,0.12)" },
-  p: { c: "#c084fc", bg: "rgba(168,85,247,0.06)", b: "rgba(168,85,247,0.18)", gw: "rgba(168,85,247,0.12)" },
+  g: { c: "#16C784", bg: "rgba(22,199,132,0.05)", b: "rgba(22,199,132,0.15)", gw: "rgba(22,199,132,0.06)" },
+  y: { c: "#F5A623", bg: "rgba(245,166,35,0.05)", b: "rgba(245,166,35,0.15)", gw: "rgba(245,166,35,0.06)" },
+  r: { c: "#EA3943", bg: "rgba(234,57,67,0.05)", b: "rgba(234,57,67,0.15)", gw: "rgba(234,57,67,0.06)" },
+  p: { c: "#4F8CFF", bg: "rgba(79,140,255,0.05)", b: "rgba(79,140,255,0.15)", gw: "rgba(79,140,255,0.06)" },
 };
 
 function cn(color: string) { return color === "green" ? N.g : color === "red" ? N.r : N.y; }
@@ -119,8 +133,8 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
 
   if (loading && !data) {
     return (
-      <div className="rounded-2xl p-6 animate-pulse" style={{ background: 'rgba(8,10,25,0.85)', border: '1px solid rgba(168,85,247,0.08)' }}>
-        <div className="h-8 rounded-xl w-1/3 mb-6" style={{ background: 'rgba(168,85,247,0.06)' }} />
+      <div className="rounded-2xl p-6 animate-pulse" style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="h-8 rounded-xl w-1/3 mb-6" style={{ background: 'rgba(255,255,255,0.04)' }} />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {[...Array(9)].map((_, i) => <div key={i} className="h-32 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)' }} />)}
         </div>
@@ -135,20 +149,20 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
   const tot = gc + yc + rc || 1;
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(8,10,25,0.88)', backdropFilter: 'blur(24px)', border: '1px solid rgba(168,85,247,0.1)', boxShadow: '0 0 60px rgba(168,85,247,0.04), inset 0 1px 0 rgba(255,255,255,0.03)' }}>
+    <div className="rounded-2xl overflow-hidden" style={{ background: '#0B0F17', border: '1px solid rgba(255,255,255,0.06)' }}>
 
       {/* ── HEADER ── */}
-      <div className="flex items-center justify-between px-5 py-3" style={{ background: 'linear-gradient(180deg, rgba(168,85,247,0.07) 0%, transparent 100%)', borderBottom: '1px solid rgba(168,85,247,0.08)' }}>
+      <div className="flex items-center justify-between px-5 py-3" style={{ background: '#111827', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(0,224,198,0.15))', border: '1px solid rgba(168,85,247,0.35)', boxShadow: '0 0 20px rgba(168,85,247,0.15)' }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(79,140,255,0.12)', border: '1px solid rgba(79,140,255,0.25)' }}>
               <EmelIcon size={20} style={{ color: N.p.c }} />
             </div>
-            <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: sig.c, boxShadow: `0 0 8px ${sig.c}` }} />
+            <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full" style={{ background: sig.c }} />
           </div>
           <div>
-            <h2 className="text-[13px] font-extrabold font-mono tracking-wider" style={{ color: N.p.c, textShadow: '0 0 12px rgba(168,85,247,0.4)' }}>{t("emel.title")}</h2>
-            <p className="text-[8px] uppercase tracking-[0.3em]" style={{ color: 'rgba(192,132,252,0.35)' }}>STRATEGIC CONTROL &middot; 9 CHECKPOINTS</p>
+            <h2 style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: N.p.c }}>{t("emel.title")}</h2>
+            <p style={{ fontFamily: FONT, fontSize: 10, color: 'rgba(155,170,195,0.6)', letterSpacing: '0.1em', textTransform: 'uppercase' as const }}>STRATEGIC CONTROL · 9 CHECKPOINTS</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -179,13 +193,13 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
       {/* ── HERO SIGNAL STRIP ── */}
       {data && (
         <div className="px-5 py-4 flex items-center gap-5 flex-wrap" style={{ background: 'rgba(0,0,0,0.2)' }}>
-          <div className="rounded-xl px-5 py-2.5 text-center" style={{ background: `${sig.c}08`, border: `1px solid ${sig.b}`, boxShadow: `0 0 25px ${sig.gw}` }}>
-            <p className="text-[8px] uppercase tracking-[0.3em] mb-0.5" style={{ color: `${sig.c}70` }}>Signal</p>
-            <p className="text-2xl font-black font-mono" style={{ color: sig.c, textShadow: `0 0 18px ${sig.gw}` }}>{data.signal}</p>
+          <div className="rounded-xl px-5 py-2.5 text-center" style={{ background: `${sig.c}08`, border: `1px solid ${sig.b}` }}>
+            <p style={{ fontFamily: FONT, fontSize: 9, color: `${sig.c}70`, letterSpacing: '0.2em', textTransform: 'uppercase' as const, marginBottom: 4 }}>Signal</p>
+            <p style={{ fontFamily: FONT, fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px', color: sig.c }}>{data.signal}</p>
           </div>
           <div className="text-center">
-            <p className="text-[8px] uppercase tracking-[0.3em] mb-0.5" style={{ color: 'rgba(192,132,252,0.4)' }}>Confidence</p>
-            <p className="text-2xl font-black font-mono" style={{ color: N.p.c }}>%{data.confidence.toFixed(0)}</p>
+            <p style={{ fontFamily: FONT, fontSize: 9, color: 'rgba(155,170,195,0.5)', letterSpacing: '0.2em', textTransform: 'uppercase' as const, marginBottom: 4 }}>Confidence</p>
+            <p style={{ fontFamily: FONT, fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px', color: N.p.c }}>%{data.confidence.toFixed(0)}</p>
           </div>
           <div className="text-center">
             <p className="text-[8px] uppercase tracking-[0.3em] mb-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>Price</p>
@@ -194,10 +208,10 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
           {/* Score bar */}
           <div className="flex-1 min-w-[120px]">
             <p className="text-[8px] uppercase tracking-[0.3em] mb-1.5" style={{ color: 'rgba(255,255,255,0.25)' }}>Checkpoint Score</p>
-            <div className="flex gap-0.5 h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
-              <div className="rounded-full" style={{ width: `${(gc / tot) * 100}%`, background: N.g.c, boxShadow: `0 0 6px ${N.g.gw}` }} />
-              <div className="rounded-full" style={{ width: `${(yc / tot) * 100}%`, background: N.y.c, boxShadow: `0 0 6px ${N.y.gw}` }} />
-              <div className="rounded-full" style={{ width: `${(rc / tot) * 100}%`, background: N.r.c, boxShadow: `0 0 6px ${N.r.gw}` }} />
+            <div className="flex gap-0.5 rounded-full overflow-hidden" style={{ height: 6, background: 'rgba(255,255,255,0.04)' }}>
+              <div className="rounded-full" style={{ width: `${(gc / tot) * 100}%`, background: N.g.c }} />
+              <div className="rounded-full" style={{ width: `${(yc / tot) * 100}%`, background: N.y.c }} />
+              <div className="rounded-full" style={{ width: `${(rc / tot) * 100}%`, background: N.r.c }} />
             </div>
             <div className="flex gap-3 mt-1.5">
               <span className="text-[10px] font-mono font-bold" style={{ color: N.g.c }}>{gc} Pass</span>
@@ -216,7 +230,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
             const cc = cn(check.color);
             return (
               <div key={check.id} className="rounded-xl p-3.5 transition-all duration-200 hover:translate-y-[-1px]"
-                style={{ background: cc.bg, border: `1px solid ${cc.b}`, boxShadow: `0 0 20px ${cc.gw}` }}>
+                style={{ background: cc.bg, border: `1px solid ${cc.b}` }}>
                 {/* Card header */}
                 <div className="flex items-start justify-between mb-2.5">
                   <div className="flex items-center gap-2.5">
@@ -230,7 +244,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
                 </div>
                 {/* Status label */}
                 <div className="text-[11px] font-bold font-mono mb-2.5 px-2.5 py-1 rounded-md inline-flex items-center gap-1.5"
-                  style={{ color: cc.c, background: `${cc.c}12`, border: `1px solid ${cc.c}20`, textShadow: `0 0 6px ${cc.c}40` }}>
+                  style={{ fontFamily: FONT, color: cc.c, background: `${cc.c}10`, border: `1px solid ${cc.c}18` }}>
                   <Icon className="w-3 h-3" style={{ color: cc.c }} />
                   {check.label}
                 </div>
@@ -253,11 +267,11 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
       {/* ── DECISION SUMMARY ── */}
       {data && (
         <div className="px-4 pb-4">
-          <div className="rounded-xl p-4" style={{ background: `${sig.c}06`, border: `1px solid ${sig.b}`, boxShadow: `0 0 30px ${sig.gw}` }}>
+          <div className="rounded-xl p-4" style={{ background: `${sig.c}05`, border: `1px solid ${sig.b}` }}>
             <div className="flex items-center gap-2.5 mb-3">
               <EmelIcon size={20} style={{ color: sig.c }} />
               <span className="font-bold font-mono text-white/80 text-sm">{t("emel.decision")}</span>
-              <span className="font-black font-mono text-sm px-3 py-0.5 rounded-md" style={{ color: sig.c, background: `${sig.c}15`, border: `1px solid ${sig.c}25`, textShadow: `0 0 8px ${sig.gw}` }}>
+              <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: sig.c, background: `${sig.c}12`, border: `1px solid ${sig.c}20` }} className="px-3 py-0.5 rounded-md">
                 {data.summary.decision}
               </span>
             </div>

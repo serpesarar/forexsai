@@ -4,19 +4,21 @@ import { useState, useEffect } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Target,
-  ArrowUp,
-  ArrowDown,
-  Info,
-  X,
-  RefreshCw,
-} from "lucide-react";
+  ArrowUpIcon as TrendingUp,
+  ArrowDownIcon as TrendingDown,
+  MinusIcon as Minus,
+  TargetIcon as Target,
+  ArrowUpIcon as ArrowUp,
+  ArrowDownIcon as ArrowDown,
+  InfoIcon as Info,
+  CloseIcon as X,
+  RotateIcon as RefreshCw,
+} from "../ui/CustomIcons";
 import TrendChannelChart from "./TrendChannelChart";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+const P = { bg: "#0B0F17", card: "#141C2B", surface: "#111827", border: "rgba(255,255,255,0.06)", text: "#E6EDF3", muted: "#6B7280", green: "#16C784", red: "#EA3943", warn: "#F5A623", accent: "#4F8CFF", blue: "#4F8CFF" };
 
 interface LevelData {
   type: "resistance" | "current" | "support";
@@ -146,25 +148,25 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
     );
   }
 
-  const getTrendIcon = () => {
-    if (!data) return <Minus className="w-8 h-8 text-gray-400" />;
-    if (data.trend.direction === "UP") return <TrendingUp className="w-8 h-8 text-green-400" />;
-    if (data.trend.direction === "DOWN") return <TrendingDown className="w-8 h-8 text-red-400" />;
-    return <Minus className="w-8 h-8 text-yellow-400" />;
-  };
-
   const getTrendColor = () => {
-    if (!data) return "text-gray-400";
-    if (data.trend.direction === "UP") return "text-green-400";
-    if (data.trend.direction === "DOWN") return "text-red-400";
-    return "text-yellow-400";
+    if (!data) return P.muted;
+    if (data.trend.direction === "UP") return P.green;
+    if (data.trend.direction === "DOWN") return P.red;
+    return P.warn;
   };
 
   const getTrendBg = () => {
-    if (!data) return "from-gray-800 to-gray-900";
-    if (data.trend.direction === "UP") return "from-green-900/40 to-green-800/20";
-    if (data.trend.direction === "DOWN") return "from-red-900/40 to-red-800/20";
-    return "from-yellow-900/40 to-yellow-800/20";
+    if (!data) return "rgba(255,255,255,0.02)";
+    if (data.trend.direction === "UP") return `${P.green}06`;
+    if (data.trend.direction === "DOWN") return `${P.red}06`;
+    return `${P.warn}06`;
+  };
+
+  const getTrendBorder = () => {
+    if (!data) return P.border;
+    if (data.trend.direction === "UP") return `${P.green}20`;
+    if (data.trend.direction === "DOWN") return `${P.red}20`;
+    return `${P.warn}20`;
   };
 
   return (
@@ -173,31 +175,36 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
       <div className="bg-transparent p-2">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Target className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${P.blue}15`, border: `1px solid ${P.blue}25` }}>
+              <Target className="w-5 h-5" style={{ color: P.blue }} />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm font-bold text-white truncate">
-                CLEAR TREND <span className="bg-red-600 px-1 text-[10px] rounded animate-pulse">V3.0 NUCLEAR</span>
+              <h2 style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: P.text }}>
+                CLEAR TREND
               </h2>
-              <p className="text-xs text-gray-400 truncate">
-                Stats: C:{data?.chart_data?.closes?.length ?? 0}
+              <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>
+                Closes: {data?.chart_data?.closes?.length ?? 0}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
             {/* Symbol Switcher */}
-            <div className="flex rounded-lg overflow-hidden border border-gray-700">
+            <div className="flex rounded-lg overflow-hidden" style={{ border: `1px solid ${P.border}` }}>
               {SYMBOLS.map((s) => (
                 <button
                   key={s.key}
                   onClick={() => setActiveSymbol(s.key)}
-                  className={`px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 ${activeSymbol === s.key
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-800 text-gray-400 hover:text-white"
-                    }`}
+                  style={{
+                    padding: "6px 10px",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    fontFamily: FONT,
+                    background: activeSymbol === s.key ? `${P.accent}20` : "rgba(255,255,255,0.03)",
+                    color: activeSymbol === s.key ? P.accent : P.muted,
+                    borderRight: `1px solid ${P.border}`,
+                    transition: "all 0.15s ease",
+                  }}
                 >
-                  <span>{s.icon}</span>
                   {s.label}
                 </button>
               ))}
@@ -205,7 +212,7 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
             <select
               value={timeframe}
               onChange={(e) => setTimeframe(e.target.value)}
-              className="bg-gray-800 text-white text-xs px-2 py-1.5 rounded-lg border border-gray-700"
+              style={{ fontFamily: FONT, fontSize: 11, padding: "6px 8px", borderRadius: 8, border: `1px solid ${P.border}`, background: P.surface, color: P.text }}
             >
               <option value="15m">15m</option>
               <option value="1H">1H</option>
@@ -214,9 +221,10 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
             </select>
             <button
               onClick={fetchData}
-              className="p-1.5 bg-gray-800 rounded-lg hover:bg-gray-700"
+              className="p-1.5 rounded-lg transition-all"
+              style={{ background: "rgba(255,255,255,0.05)" }}
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-gray-400 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: P.muted }} />
             </button>
           </div>
         </div>
@@ -225,31 +233,35 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
       {data && (
         <>
           {/* Main Price Display */}
-          <div className={`p-6 bg-gradient-to-b ${getTrendBg()} text-center`}>
+          <div className="rounded-xl p-4 text-center" style={{ background: getTrendBg(), border: `1px solid ${getTrendBorder()}` }}>
             <div className="flex items-center justify-center gap-3 mb-2">
-              {getTrendIcon()}
-              <span className={`text-4xl font-bold ${getTrendColor()}`}>
+              {data.trend.direction === "UP" ? (
+                <TrendingUp className="w-8 h-8" style={{ color: P.green }} />
+              ) : data.trend.direction === "DOWN" ? (
+                <TrendingDown className="w-8 h-8" style={{ color: P.red }} />
+              ) : (
+                <Minus className="w-8 h-8" style={{ color: P.warn }} />
+              )}
+              <span style={{ fontFamily: FONT, fontSize: 36, fontWeight: 700, letterSpacing: "-0.5px", color: getTrendColor() }}>
                 {data.price.display}
               </span>
             </div>
-            <p className={`text-sm ${getTrendColor()} mb-1`}>
+            <p style={{ fontFamily: FONT, fontSize: 14, color: getTrendColor(), marginBottom: 8 }}>
               {data.trend.description}
             </p>
             <div className="flex items-center justify-center gap-2">
               <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-400">Güç:</span>
-                <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
+                <span style={{ fontFamily: FONT, fontSize: 12, color: P.muted }}>Güç:</span>
+                <div className="rounded-full overflow-hidden" style={{ width: 80, height: 6, background: P.border }}>
                   <div
-                    className={`h-full ${data.trend.direction === "UP"
-                      ? "bg-green-500"
-                      : data.trend.direction === "DOWN"
-                        ? "bg-red-500"
-                        : "bg-yellow-500"
-                      }`}
-                    style={{ width: `${data.trend.strength_percent}%` }}
+                    style={{
+                      width: `${data.trend.strength_percent}%`, height: "100%", borderRadius: 999,
+                      background: data.trend.direction === "UP" ? P.green : data.trend.direction === "DOWN" ? P.red : P.warn,
+                      opacity: 0.85,
+                    }}
                   />
                 </div>
-                <span className="text-xs text-white">{data.trend.strength_percent}%</span>
+                <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.text }}>{data.trend.strength_percent}%</span>
               </div>
             </div>
           </div>
@@ -308,27 +320,24 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
                       else if (isSupport) openExplanation("s1_s2", "Support Levels");
                       else openExplanation("pivot", "Pivot Point");
                     }}
-                    className={`relative flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all hover:opacity-80 ${isCurrent
-                      ? "bg-blue-600/30 border-2 border-blue-500"
-                      : isResistance
-                        ? "bg-red-500/20 border border-red-500/50"
-                        : "bg-green-500/20 border border-green-500/50"
-                      }`}
+                    className="relative flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all hover:opacity-90"
+                    style={{
+                      background: isCurrent ? `${P.accent}15` : isResistance ? `${P.red}10` : `${P.green}10`,
+                      border: `1px solid ${isCurrent ? `${P.accent}30` : isResistance ? `${P.red}25` : `${P.green}25`}`,
+                    }}
                   >
                     {/* Level Indicator */}
-                    <div className={`w-12 h-8 rounded flex items-center justify-center text-xs font-bold ${isCurrent
-                      ? "bg-blue-600 text-white"
-                      : isResistance
-                        ? "bg-red-500/50 text-red-200"
-                        : "bg-green-500/50 text-green-200"
-                      }`}>
+                    <div className="flex items-center justify-center text-xs font-bold rounded" style={{
+                      width: 48, height: 32,
+                      background: isCurrent ? `${P.accent}25` : isResistance ? `${P.red}25` : `${P.green}25`,
+                      color: isCurrent ? P.accent : isResistance ? P.red : P.green,
+                    }}>
                       {isCurrent ? "NOW" : level.name.split(" ")[0]}
                     </div>
 
                     {/* Price */}
                     <div className="flex-1">
-                      <div className={`text-lg font-bold ${isCurrent ? "text-white" : isResistance ? "text-red-300" : "text-green-300"
-                        }`}>
+                      <div style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: isCurrent ? P.text : isResistance ? P.red : P.green }}>
                         {level.price.toFixed(data.price.decimals)}
                       </div>
                       {level.name && !isCurrent && (
@@ -365,13 +374,14 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
               {data.levels.nearest_resistance && (
                 <div
                   onClick={() => openExplanation("resistance", "Nearest Resistance")}
-                  className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 cursor-pointer hover:bg-red-500/20 transition-colors"
+                  className="rounded-lg p-3 cursor-pointer"
+                  style={{ background: `${P.red}08`, border: `1px solid ${P.red}20` }}
                 >
-                  <div className="text-xs text-red-400 mb-1">📈 Nearest Resistance</div>
-                  <div className="text-lg font-bold text-red-300">
+                  <div style={{ fontFamily: FONT, fontSize: 11, color: P.red, marginBottom: 4 }}>↑ Nearest Resistance</div>
+                  <div style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: P.red }}>
                     {data.levels.nearest_resistance.price.toFixed(data.price.decimals)}
                   </div>
-                  <div className="text-xs text-red-400">
+                  <div style={{ fontFamily: FONT, fontSize: 11, color: P.red, opacity: 0.75 }}>
                     {data.levels.nearest_resistance.distance_display} above
                   </div>
                 </div>
@@ -379,13 +389,14 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
               {data.levels.nearest_support && (
                 <div
                   onClick={() => openExplanation("support", "Nearest Support")}
-                  className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 cursor-pointer hover:bg-green-500/20 transition-colors"
+                  className="rounded-lg p-3 cursor-pointer"
+                  style={{ background: `${P.green}08`, border: `1px solid ${P.green}20` }}
                 >
-                  <div className="text-xs text-green-400 mb-1">📉 Nearest Support</div>
-                  <div className="text-lg font-bold text-green-300">
+                  <div style={{ fontFamily: FONT, fontSize: 11, color: P.green, marginBottom: 4 }}>↓ Nearest Support</div>
+                  <div style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: P.green }}>
                     {data.levels.nearest_support.price.toFixed(data.price.decimals)}
                   </div>
-                  <div className="text-xs text-green-400">
+                  <div style={{ fontFamily: FONT, fontSize: 11, color: P.green, opacity: 0.75 }}>
                     {data.levels.nearest_support.distance_display} below
                   </div>
                 </div>
@@ -407,12 +418,10 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
               </button>
             </div>
 
-            <div className={`rounded-lg p-4 border ${data.trend.direction === "UP"
-              ? "bg-green-900/20 border-green-600"
-              : data.trend.direction === "DOWN"
-                ? "bg-red-900/20 border-red-600"
-                : "bg-yellow-900/20 border-yellow-600"
-              }`}>
+            <div className="rounded-xl p-4" style={{
+              background: data.trend.direction === "UP" ? `${P.green}08` : data.trend.direction === "DOWN" ? `${P.red}08` : `${P.warn}08`,
+              border: `1px solid ${data.trend.direction === "UP" ? `${P.green}20` : data.trend.direction === "DOWN" ? `${P.red}20` : `${P.warn}20`}`,
+            }}>
               <p className="text-sm text-white mb-3">{data.trade_zones.suggestion}</p>
 
               {data.trade_zones.target && data.trade_zones.stop && (
@@ -450,10 +459,14 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
 
       {/* Explanation Modal */}
       {explanationModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-xl border border-gray-700 max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setExplanationModal(null)}>
+          <div
+            className="rounded-xl max-w-md w-full p-6"
+            style={{ background: P.surface, border: `1px solid ${P.border}`, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">{explanationModal.title}</h3>
+              <h3 style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: P.text }}>{explanationModal.title}</h3>
               <button
                 onClick={() => setExplanationModal(null)}
                 className="text-gray-400 hover:text-white"

@@ -4,18 +4,18 @@ import { useState, useEffect, useCallback } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
 import { PanelInfoButton } from "../PanelInfoButton";
 import {
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  Target,
-  RefreshCw,
-  ArrowUp,
-  ArrowDown,
-  Clock,
-} from "lucide-react";
+  ArrowUpIcon as ArrowUp,
+  ArrowDownIcon as ArrowDown,
+  ActivityIcon as Activity,
+  TargetIcon as Target,
+  RotateIcon as RefreshCw,
+  ArrowUpRightIcon as TrendingUp,
+  ArrowDownRightIcon as TrendingDown,
+} from "../ui/CustomIcons";
 import { PulseIcon, EmelIcon, SignalsIcon } from "../ui/CustomIcons";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 
 interface PulseData {
   symbol: string;
@@ -75,11 +75,12 @@ const SYMBOLS = [
   { key: "CL.COMM", label: "US Oil" },
 ];
 
-/* ── Neon helpers ── */
+/* ── Institutional Color Palette ── */
+const P = { bg: "#0B0F17", card: "#141C2B", surface: "#111827", border: "rgba(255,255,255,0.06)", text: "#E6EDF3", muted: "#6B7280", green: "#16C784", red: "#EA3943", warn: "#F5A623", accent: "#4F8CFF" };
 const neonColors: Record<string, { accent: string; glow: string; bg: string }> = {
-  up: { accent: "#00ff88", glow: "rgba(0,255,136,0.15)", bg: "rgba(0,255,136,0.06)" },
-  down: { accent: "#ff3366", glow: "rgba(255,51,102,0.15)", bg: "rgba(255,51,102,0.06)" },
-  neutral: { accent: "#f0b429", glow: "rgba(240,180,41,0.15)", bg: "rgba(240,180,41,0.06)" },
+  up: { accent: P.green, glow: "rgba(22,199,132,0.08)", bg: "rgba(22,199,132,0.05)" },
+  down: { accent: P.red, glow: "rgba(234,57,67,0.08)", bg: "rgba(234,57,67,0.05)" },
+  neutral: { accent: P.warn, glow: "rgba(245,166,35,0.08)", bg: "rgba(245,166,35,0.05)" },
 };
 
 export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitchMode }: PulsePanelProps) {
@@ -152,12 +153,12 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
       {/* ── Header ── */}
       <div className="px-2 py-2 flex items-center justify-between flex-wrap gap-2 bg-transparent">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${nc.accent}20`, boxShadow: `0 0 12px ${nc.accent}40` }}>
-            <PulseIcon size={16} style={{ color: nc.accent }} />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${P.accent}12`, border: `1px solid ${P.accent}20` }}>
+            <PulseIcon size={16} style={{ color: P.accent }} />
           </div>
           <div className="min-w-0">
-            <h2 className="text-sm font-bold text-white/90 truncate font-mono">{t("pulse.title")}</h2>
-            <p className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulse.subtitle")}</p>
+            <h2 style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: P.text }}>{t("pulse.title")}</h2>
+            <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>{t("pulse.subtitle")}</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -208,33 +209,33 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
           <div className="p-2 text-center bg-transparent">
             <div className="flex items-center justify-center gap-2 mb-2">
               {data.trend.direction === "up" ? (
-                <ArrowUp className="w-7 h-7" style={{ color: nc.accent, filter: `drop-shadow(0 0 6px ${nc.accent})` }} />
+                <ArrowUp className="w-7 h-7" style={{ color: nc.accent }} />
               ) : data.trend.direction === "down" ? (
-                <ArrowDown className="w-7 h-7" style={{ color: nc.accent, filter: `drop-shadow(0 0 6px ${nc.accent})` }} />
+                <ArrowDown className="w-7 h-7" style={{ color: nc.accent }} />
               ) : (
-                <Activity className="w-7 h-7" style={{ color: nc.accent, filter: `drop-shadow(0 0 6px ${nc.accent})` }} />
+                <Activity className="w-7 h-7" style={{ color: nc.accent }} />
               )}
-              <span className="text-2xl font-bold font-mono" style={{ color: nc.accent, textShadow: `0 0 20px ${nc.glow}` }}>
+              <span style={{ fontFamily: FONT, fontSize: 28, fontWeight: 700, color: nc.accent, letterSpacing: "-0.5px" }}>
                 {data.trend.label}
               </span>
             </div>
-            <p className="text-lg font-mono" style={{ color: nc.accent, opacity: 0.8 }}>
+            <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 500, color: nc.accent, opacity: 0.8 }}>
               {data.trend.strength_pct}% {t("pulse.strong")}
             </p>
 
             {/* Strength Bar */}
             <div className="w-full max-w-xs mx-auto mt-4">
-              <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${data.trend.strength_pct}%`, background: `linear-gradient(90deg, ${nc.accent}80, ${nc.accent})`, boxShadow: `0 0 12px ${nc.accent}60` }} />
+              <div className="rounded-full overflow-hidden" style={{ height: 6, background: P.border }}>
+                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${data.trend.strength_pct}%`, background: nc.accent, opacity: 0.85 }} />
               </div>
-              <p className="text-[10px] font-mono mt-1.5" style={{ color: "rgba(255,255,255,0.25)" }}>({data.trend.strength.toFixed(2)}/1.0)</p>
+              <p style={{ fontFamily: FONT, fontSize: 10, color: P.muted, marginTop: 6 }}>({data.trend.strength.toFixed(2)}/1.0)</p>
             </div>
 
             {/* Last 5 Candles */}
             <div className="flex items-center justify-center gap-1.5 mt-4">
               <span className="text-[10px] font-mono mr-2" style={{ color: "rgba(255,255,255,0.25)" }}>{t("pulse.last5min")}</span>
               {data.trend.last_5_candles.map((candle, i) => (
-                <span key={i} className="text-base" style={{ color: candle === "up" ? "#00ff88" : candle === "down" ? "#ff3366" : "rgba(255,255,255,0.3)", filter: `drop-shadow(0 0 4px ${candle === "up" ? "#00ff8860" : candle === "down" ? "#ff336660" : "transparent"})` }}>
+                <span key={i} style={{ fontSize: 16, color: candle === "up" ? P.green : candle === "down" ? P.red : P.muted }}>
                   {candle === "up" ? "▲" : candle === "down" ? "▼" : "●"}
                 </span>
               ))}
@@ -244,12 +245,12 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
           {/* ── Price & Time Bar ── */}
           <div className="flex items-center justify-center gap-6 sm:gap-10 px-2 py-2 flex-wrap bg-transparent">
             <div className="text-center">
-              <span className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulse.price")}</span>
-              <p className="text-lg font-bold font-mono text-white">{data.price.current.toFixed(2)}</p>
+              <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.06em", textTransform: "uppercase" as const }}>{t("pulse.price")}</span>
+              <p style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: P.text, letterSpacing: "-0.3px" }}>{data.price.current.toFixed(2)}</p>
             </div>
             <div className="text-center">
-              <span className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulse.change5m")}</span>
-              <p className="text-lg font-bold font-mono" style={{ color: data.price.change_5 >= 0 ? "#00ff88" : "#ff3366" }}>
+              <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.06em", textTransform: "uppercase" as const }}>{t("pulse.change5m")}</span>
+              <p style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: data.price.change_5 >= 0 ? P.green : P.red, letterSpacing: "-0.3px" }}>
                 {data.price.change_5 >= 0 ? "+" : ""}{data.price.change_5.toFixed(2)}%
               </p>
             </div>
@@ -267,25 +268,25 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
                 <Target className="w-3 h-3" style={{ color: "#00ccff" }} /> {t("pulse.levels")}
               </h3>
               <div className="space-y-1.5 text-sm font-mono">
-                <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: "rgba(255,51,102,0.06)" }}>
-                  <span style={{ color: "#ff3366" }}>R2</span>
-                  <span className="text-white/80">{data.levels.r2.toFixed(0)}</span>
+                <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: `${P.red}06` }}>
+                  <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.red }}>R2</span>
+                  <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.r2.toFixed(0)}</span>
                 </div>
-                <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: "rgba(255,51,102,0.06)" }}>
-                  <span style={{ color: "#ff3366" }}>R1</span>
-                  <span className="text-white/80">{data.levels.r1.toFixed(0)}</span>
+                <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: `${P.red}06` }}>
+                  <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.red }}>R1</span>
+                  <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.r1.toFixed(0)}</span>
                 </div>
-                <div className="flex justify-between px-2 py-1.5 rounded-lg" style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.15)" }}>
-                  <span style={{ color: "#00ff88" }}>{t("pulse.priceLabel")}</span>
-                  <span className="font-bold" style={{ color: "#00ff88" }}>{data.price.current.toFixed(0)}</span>
+                <div className="flex justify-between px-2 py-1.5 rounded-lg" style={{ background: `${P.green}08`, border: `1px solid ${P.green}20` }}>
+                  <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.green }}>{t("pulse.priceLabel")}</span>
+                  <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.green }}>{data.price.current.toFixed(0)}</span>
                 </div>
-                <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: "rgba(0,204,255,0.06)" }}>
-                  <span style={{ color: "#00ccff" }}>S1</span>
-                  <span className="text-white/80">{data.levels.s1.price.toFixed(0)}{data.levels.s1.alert && " ⚡"}</span>
+                <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: `${P.accent}06` }}>
+                  <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.accent }}>S1</span>
+                  <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.s1.price.toFixed(0)}{data.levels.s1.alert && " ⚡"}</span>
                 </div>
-                <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: "rgba(0,204,255,0.06)" }}>
-                  <span style={{ color: "#00ccff" }}>S2</span>
-                  <span className="text-white/80">{data.levels.s2.toFixed(0)}</span>
+                <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: `${P.accent}06` }}>
+                  <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.accent }}>S2</span>
+                  <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.s2.toFixed(0)}</span>
                 </div>
               </div>
               {data.levels.s1.alert && (
@@ -309,8 +310,8 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
                   <div key={m.label} className="flex justify-between items-center px-2 py-1.5 rounded-lg font-mono text-sm" style={{ background: "rgba(255,255,255,0.02)" }}>
                     <span style={{ color: "rgba(255,255,255,0.4)" }}>{m.label}</span>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-white/80">{m.value}</span>
-                      <span style={{ color: m.trend === "up" ? "#00ff88" : "#ff3366", filter: `drop-shadow(0 0 4px ${m.trend === "up" ? "#00ff8860" : "#ff336660"})` }}>
+                      <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{m.value}</span>
+                      <span style={{ color: m.trend === "up" ? P.green : P.red }}>
                         {m.trend === "up" ? "▲" : "▼"}
                       </span>
                     </div>
@@ -325,10 +326,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
                 <PulseIcon size={12} style={{ color: "#f0b429" }} /> {t("pulse.volume")}
               </h3>
               <div className="text-center py-3">
-                <p className="text-xl font-bold font-mono" style={{
-                  color: data.volume.status === "high" ? "#00ff88" : data.volume.status === "low" ? "#ff3366" : data.volume.status === "normal" ? "#f0b429" : "rgba(255,255,255,0.3)",
-                  textShadow: `0 0 12px ${data.volume.status === "high" ? "rgba(0,255,136,0.3)" : data.volume.status === "low" ? "rgba(255,51,102,0.3)" : "transparent"}`,
-                }}>
+                <p style={{ fontFamily: FONT, fontSize: 20, fontWeight: 700, color: data.volume.status === "high" ? P.green : data.volume.status === "low" ? P.red : data.volume.status === "normal" ? P.warn : P.muted }}>
                   {data.volume.label}
                 </p>
                 {data.volume.available && data.volume.ratio != null && (
@@ -345,30 +343,30 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
 
           {/* ── AI Suggestion ── */}
           <div className="px-3 pb-3">
-            <div className="rounded-xl p-4" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.12)", boxShadow: "0 0 20px rgba(99,102,241,0.05)" }}>
+            <div className="rounded-xl p-4" style={{ background: `${P.accent}06`, border: `1px solid ${P.accent}12` }}>
               <div className="flex items-center gap-2 mb-2.5">
-                <SignalsIcon size={16} style={{ color: "#818cf8" }} />
-                <span className="font-mono font-bold text-sm" style={{ color: "#818cf8" }}>{t("pulse.aiComment")}</span>
+                <SignalsIcon size={16} style={{ color: P.accent }} />
+                <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.accent }}>{t("pulse.aiComment")}</span>
               </div>
-              <p className="text-sm font-mono leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>{data.suggestion.text}</p>
+              <p style={{ fontFamily: FONT, fontSize: 12, lineHeight: 1.6, color: "rgba(230,237,243,0.65)" }}>{data.suggestion.text}</p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-3 text-center">
-                <div className="rounded-lg py-2" style={{ background: "rgba(0,255,136,0.05)", border: "1px solid rgba(0,255,136,0.1)" }}>
-                  <p className="text-[9px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulse.target")}</p>
-                  <p className="font-bold font-mono" style={{ color: "#00ff88" }}>{data.suggestion.target.toFixed(0)}</p>
-                  <p className="text-[9px] font-mono" style={{ color: "rgba(255,255,255,0.2)" }}>+{data.suggestion.target_distance.toFixed(0)} pts</p>
+                <div className="rounded-lg py-2" style={{ background: `${P.green}06`, border: `1px solid ${P.green}15` }}>
+                  <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.05em" }}>{t("pulse.target")}</p>
+                  <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: P.green }}>{data.suggestion.target.toFixed(0)}</p>
+                  <p style={{ fontFamily: FONT, fontSize: 9, color: P.muted }}>+{data.suggestion.target_distance.toFixed(0)} pts</p>
                 </div>
-                <div className="rounded-lg py-2" style={{ background: "rgba(255,51,102,0.05)", border: "1px solid rgba(255,51,102,0.1)" }}>
-                  <p className="text-[9px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulse.stop")}</p>
-                  <p className="font-bold font-mono" style={{ color: "#ff3366" }}>{data.suggestion.stop.toFixed(0)}</p>
-                  <p className="text-[9px] font-mono" style={{ color: "rgba(255,255,255,0.2)" }}>-{data.suggestion.stop_distance.toFixed(0)} pts</p>
+                <div className="rounded-lg py-2" style={{ background: `${P.red}06`, border: `1px solid ${P.red}15` }}>
+                  <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.05em" }}>{t("pulse.stop")}</p>
+                  <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: P.red }}>{data.suggestion.stop.toFixed(0)}</p>
+                  <p style={{ fontFamily: FONT, fontSize: 9, color: P.muted }}>-{data.suggestion.stop_distance.toFixed(0)} pts</p>
                 </div>
-                <div className="rounded-lg py-2" style={{ background: "rgba(0,204,255,0.05)", border: "1px solid rgba(0,204,255,0.1)" }}>
-                  <p className="text-[9px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>R/R</p>
-                  <p className="font-bold font-mono" style={{ color: "#00ccff" }}>{data.suggestion.rr_ratio.toFixed(2)}</p>
+                <div className="rounded-lg py-2" style={{ background: `${P.accent}06`, border: `1px solid ${P.accent}15` }}>
+                  <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.05em" }}>R/R</p>
+                  <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: P.accent }}>{data.suggestion.rr_ratio.toFixed(2)}</p>
                 </div>
-                <div className="rounded-lg py-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <p className="text-[9px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulse.expectation")}</p>
-                  <p className="font-bold font-mono text-white/70">{data.suggestion.timeframe_estimate}</p>
+                <div className="rounded-lg py-2" style={{ background: P.surface, border: `1px solid ${P.border}` }}>
+                  <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.05em" }}>{t("pulse.expectation")}</p>
+                  <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: "rgba(230,237,243,0.7)" }}>{data.suggestion.timeframe_estimate}</p>
                 </div>
               </div>
             </div>
@@ -376,16 +374,20 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
 
           {/* ── Action Buttons ── */}
           <div className="px-3 pb-3 flex gap-2 flex-wrap">
-            <button className="flex-1 min-w-[90px] py-2 rounded-xl font-mono font-bold text-xs flex items-center justify-center gap-1.5 transition-all hover:brightness-125"
-              style={{ background: "rgba(0,255,136,0.1)", color: "#00ff88", border: "1px solid rgba(0,255,136,0.2)", boxShadow: "0 0 12px rgba(0,255,136,0.08)" }}>
+            <button className="flex-1 min-w-[90px] py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all duration-150"
+              style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, background: `${P.green}08`, color: P.green, border: `1px solid ${P.green}18` }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = `${P.green}15`)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = `${P.green}08`)}>
               <TrendingUp className="w-3.5 h-3.5" /> {t("pulse.watchUp")}
             </button>
-            <button className="flex-1 min-w-[90px] py-2 rounded-xl font-mono font-bold text-xs flex items-center justify-center gap-1.5 transition-all hover:brightness-125"
-              style={{ background: "rgba(255,51,102,0.1)", color: "#ff3366", border: "1px solid rgba(255,51,102,0.2)", boxShadow: "0 0 12px rgba(255,51,102,0.08)" }}>
+            <button className="flex-1 min-w-[90px] py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all duration-150"
+              style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, background: `${P.red}08`, color: P.red, border: `1px solid ${P.red}18` }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = `${P.red}15`)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = `${P.red}08`)}>
               <TrendingDown className="w-3.5 h-3.5" /> {t("pulse.watchDown")}
             </button>
-            <button className="flex-1 min-w-[90px] py-2 rounded-xl font-mono font-bold text-xs flex items-center justify-center gap-1.5 transition-all hover:brightness-125"
-              style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <button className="flex-1 min-w-[90px] py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all duration-150"
+              style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, background: P.surface, color: P.muted, border: `1px solid ${P.border}` }}>
               <Activity className="w-3.5 h-3.5" /> {t("pulse.detailedChart")}
             </button>
           </div>

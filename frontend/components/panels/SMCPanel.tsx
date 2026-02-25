@@ -3,23 +3,25 @@
 import { useState, useEffect } from "react";
 import { PanelInfoButton } from "../PanelInfoButton";
 import {
-  RefreshCw,
-  Shield,
-  Layers,
-  Target,
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  AlertTriangle,
-  Zap,
-  ArrowUpRight,
-  ArrowDownRight,
-  Minus,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+  RotateIcon as RefreshCw,
+  SecurityShieldIcon as Shield,
+  AnalysisIcon as Layers,
+  TargetIcon as Target,
+  ArrowUpIcon as TrendingUp,
+  ArrowDownIcon as TrendingDown,
+  ActivityIcon as Activity,
+  AlertIcon as AlertTriangle,
+  ZapIcon as Zap,
+  ArrowUpRightIcon as ArrowUpRight,
+  ArrowDownRightIcon as ArrowDownRight,
+  MinusIcon as Minus,
+  ChevronDownIcon as ChevronDown,
+  ChevronUpIcon as ChevronUp,
+} from "../ui/CustomIcons";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+const P = { bg: "#0B0F17", card: "#141C2B", surface: "#111827", border: "rgba(255,255,255,0.06)", text: "#E6EDF3", muted: "#6B7280", green: "#16C784", red: "#EA3943", warn: "#F5A623", accent: "#4F8CFF" };
 
 interface SMCData {
   market_structure?: {
@@ -113,7 +115,7 @@ export default function SMCPanel() {
   }, [symbol]);
 
   const trendColor = (t: string) =>
-    t?.includes("bullish") || t === "up" ? "#00ff88" : t?.includes("bearish") || t === "down" ? "#ff3366" : "#f0b429";
+    t?.includes("bullish") || t === "up" ? P.green : t?.includes("bearish") || t === "down" ? P.red : P.warn;
   const strengthBar = (s: number) => Math.min(100, (s / 10) * 100);
 
   if (loading && !data) {
@@ -138,12 +140,12 @@ export default function SMCPanel() {
       {/* Header */}
       <div className="px-2 py-2 flex items-center justify-between bg-transparent">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(129,140,248,0.2)", boxShadow: "0 0 12px rgba(129,140,248,0.3)" }}>
-            <Shield className="w-4 h-4" style={{ color: "#818cf8" }} />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${P.accent}12`, border: `1px solid ${P.accent}20` }}>
+            <Shield className="w-4 h-4" style={{ color: P.accent }} />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-white/90 font-mono">Smart Money Concepts</h2>
-            <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>Order Blocks • FVG • Liquidity</p>
+            <h2 style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: P.text }}>Smart Money Concepts</h2>
+            <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>Order Blocks • FVG • Liquidity</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
@@ -152,8 +154,8 @@ export default function SMCPanel() {
               <button key={s.key} onClick={() => setSymbol(s.key)}
                 className="px-2.5 py-1 text-[10px] font-bold font-mono transition-all"
                 style={{
-                  background: symbol === s.key ? "rgba(129,140,248,0.2)" : "rgba(255,255,255,0.03)",
-                  color: symbol === s.key ? "#818cf8" : "rgba(255,255,255,0.4)",
+                  background: symbol === s.key ? `${P.accent}15` : "rgba(255,255,255,0.03)",
+                  color: symbol === s.key ? P.accent : "rgba(255,255,255,0.4)",
                 }}>
                 {s.label}
               </button>
@@ -184,17 +186,17 @@ export default function SMCPanel() {
                       <Activity className="w-5 h-5" style={{ color: accent }} />}
                 </div>
                 <div>
-                  <div className="text-sm font-bold font-mono uppercase" style={{ color: accent, textShadow: `0 0 12px ${accent}40` }}>
+                  <div className="text-sm font-bold font-mono uppercase" style={{ fontFamily: FONT, color: accent }}>
                     {bias.direction} BIAS
                   </div>
-                  <div className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted }}>
                     Güven: {bias.confidence}% • İzle: {bias.key_level_to_watch?.toFixed(0)}
                   </div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>İnvalidasyon</div>
-                <div className="text-sm font-bold font-mono" style={{ color: "#ff3366" }}>{bias.invalidation?.toFixed(0)}</div>
+                <div style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>İnvalidasyon</div>
+                <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: P.red }}>{bias.invalidation?.toFixed(0)}</div>
               </div>
             </div>
           )}
@@ -224,14 +226,14 @@ export default function SMCPanel() {
               {/* BOS / CHoCH */}
               <div className="flex gap-2 mt-2">
                 {data.market_structure.last_bos && (
-                  <div className="flex-1 rounded-lg px-2.5 py-1.5 flex items-center justify-between" style={{ background: "rgba(0,255,136,0.06)", border: "1px solid rgba(0,255,136,0.12)" }}>
-                    <span className="text-[10px] font-mono" style={{ color: "#00ff88" }}>BOS</span>
+                  <div className="flex-1 rounded-lg px-2.5 py-1.5 flex items-center justify-between" style={{ background: `${P.green}06`, border: `1px solid ${P.green}15` }}>
+                    <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color: P.green }}>BOS</span>
                     <span className="text-[10px] font-mono text-white/70">{data.market_structure.last_bos.direction} @ {data.market_structure.last_bos.price?.toFixed(0)}</span>
                   </div>
                 )}
                 {data.market_structure.last_choch && (
-                  <div className="flex-1 rounded-lg px-2.5 py-1.5 flex items-center justify-between" style={{ background: "rgba(255,51,102,0.06)", border: "1px solid rgba(255,51,102,0.12)" }}>
-                    <span className="text-[10px] font-mono" style={{ color: "#ff3366" }}>CHoCH</span>
+                  <div className="flex-1 rounded-lg px-2.5 py-1.5 flex items-center justify-between" style={{ background: `${P.red}06`, border: `1px solid ${P.red}15` }}>
+                    <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color: P.red }}>CHoCH</span>
                     <span className="text-[10px] font-mono text-white/70">{data.market_structure.last_choch.direction} @ {data.market_structure.last_choch.price?.toFixed(0)}</span>
                   </div>
                 )}
@@ -247,11 +249,11 @@ export default function SMCPanel() {
               </h3>
               <div className="space-y-1.5">
                 {data.order_blocks.slice(0, 4).map((ob, i) => {
-                  const c = ob.type === "bullish" ? "#00ff88" : "#ff3366";
+                  const c = ob.type === "bullish" ? P.green : P.red;
                   return (
                     <div key={i} className="rounded-lg px-3 py-2 flex items-center justify-between" style={{ background: `${c}06`, border: `1px solid ${c}12` }}>
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-6 rounded-full" style={{ background: c, boxShadow: `0 0 8px ${c}50` }} />
+                        <div className="w-2 h-6 rounded-full" style={{ background: c }} />
                         <div>
                           <div className="text-[10px] font-bold font-mono" style={{ color: c }}>{ob.type.toUpperCase()} OB</div>
                           <div className="text-[9px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>{ob.price_low?.toFixed(0)} - {ob.price_high?.toFixed(0)}</div>
@@ -259,8 +261,8 @@ export default function SMCPanel() {
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="w-16">
-                          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                            <div className="h-full rounded-full" style={{ width: `${strengthBar(ob.strength)}%`, background: c, boxShadow: `0 0 4px ${c}` }} />
+                          <div className="rounded-full overflow-hidden" style={{ height: 4, background: P.border }}>
+                            <div className="h-full rounded-full" style={{ width: `${strengthBar(ob.strength)}%`, background: c, opacity: 0.85 }} />
                           </div>
                           <div className="text-[8px] font-mono text-center mt-0.5" style={{ color: "rgba(255,255,255,0.25)" }}>{ob.strength}/10</div>
                         </div>
@@ -281,19 +283,19 @@ export default function SMCPanel() {
               </h3>
               <div className="grid grid-cols-2 gap-2">
                 {data.fair_value_gaps.slice(0, 4).map((fvg, i) => {
-                  const c = fvg.direction === "bullish" ? "#00ff88" : "#ff3366";
+                  const c = fvg.direction === "bullish" ? P.green : P.red;
                   return (
                     <div key={i} className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[9px] font-bold font-mono" style={{ color: c }}>{fvg.direction.toUpperCase()}</span>
                         <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{
-                          background: fvg.status === "open" ? "rgba(0,255,136,0.1)" : "rgba(255,255,255,0.05)",
-                          color: fvg.status === "open" ? "#00ff88" : "rgba(255,255,255,0.3)",
+                          background: fvg.status === "open" ? `${P.green}10` : "rgba(255,255,255,0.05)",
+                          color: fvg.status === "open" ? P.green : "rgba(255,255,255,0.3)",
                         }}>{fvg.status}</span>
                       </div>
                       <div className="text-[10px] font-mono text-white/60">{fvg.low?.toFixed(0)} - {fvg.high?.toFixed(0)}</div>
-                      <div className="h-1 rounded-full mt-1.5 overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                        <div className="h-full rounded-full" style={{ width: `${fvg.fill_pct || 0}%`, background: "#f0b429" }} />
+                      <div className="rounded-full mt-1.5 overflow-hidden" style={{ height: 4, background: P.border }}>
+                        <div className="h-full rounded-full" style={{ width: `${fvg.fill_pct || 0}%`, background: P.warn, opacity: 0.85 }} />
                       </div>
                       <div className="text-[8px] font-mono mt-0.5" style={{ color: "rgba(255,255,255,0.2)" }}>Fill: {fvg.fill_pct || 0}%</div>
                     </div>
@@ -311,13 +313,13 @@ export default function SMCPanel() {
               </h3>
               <div className="flex flex-wrap gap-2">
                 {data.liquidity_pools.map((lp, i) => {
-                  const c = lp.type === "buy_side" ? "#00ff88" : "#ff3366";
+                  const c = lp.type === "buy_side" ? P.green : P.red;
                   return (
                     <div key={i} className="rounded-lg px-3 py-1.5 flex items-center gap-2" style={{ background: `${c}06`, border: `1px solid ${c}12` }}>
                       {lp.type === "buy_side" ? <ArrowUpRight className="w-3 h-3" style={{ color: c }} /> : <ArrowDownRight className="w-3 h-3" style={{ color: c }} />}
                       <span className="text-[10px] font-mono font-bold" style={{ color: c }}>{lp.price?.toFixed(0)}</span>
                       <span className="text-[8px] font-mono" style={{ color: "rgba(255,255,255,0.25)" }}>{lp.strength}</span>
-                      {lp.swept && <span className="text-[8px] font-mono px-1 rounded" style={{ background: "rgba(255,51,102,0.15)", color: "#ff3366" }}>SWEPT</span>}
+                      {lp.swept && <span className="text-[8px] font-mono px-1 rounded" style={{ background: `${P.red}15`, color: P.red }}>SWEPT</span>}
                     </div>
                   );
                 })}
@@ -328,8 +330,8 @@ export default function SMCPanel() {
           {/* Narrative */}
           {bias?.narrative && (
             <div className="px-2 py-2 border-0">
-              <div className="rounded-xl p-3" style={{ background: "rgba(129,140,248,0.06)", border: "1px solid rgba(129,140,248,0.12)" }}>
-                <p className="text-sm font-mono leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>{bias.narrative}</p>
+              <div className="rounded-xl p-3" style={{ background: `${P.accent}05`, border: `1px solid ${P.accent}12` }}>
+                <p style={{ fontFamily: FONT, fontSize: 12, lineHeight: 1.6, color: "rgba(230,237,243,0.65)" }}>{bias.narrative}</p>
               </div>
             </div>
           )}

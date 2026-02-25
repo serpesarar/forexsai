@@ -24,6 +24,8 @@ import {
 } from "../ui/CustomIcons";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+const P = { bg: "#0B0F17", card: "#141C2B", surface: "#111827", border: "rgba(255,255,255,0.06)", text: "#E6EDF3", muted: "#6B7280", green: "#16C784", red: "#EA3943", warn: "#F5A623", accent: "#4F8CFF" };
 
 interface PulseV3Data {
   symbol: string;
@@ -85,14 +87,14 @@ const SYMBOLS = [
   { key: "CL.COMM", label: "US Oil" },
 ];
 
-/* ── Neon helpers ── */
+/* ── Institutional Color Palette ── */
 const signalNeon: Record<string, { accent: string; glow: string; bg: string }> = {
-  CONFIRM: { accent: "#00ff88", glow: "rgba(0,255,136,0.15)", bg: "rgba(0,255,136,0.06)" },
-  SCOUT: { accent: "#f0b429", glow: "rgba(240,180,41,0.15)", bg: "rgba(240,180,41,0.06)" },
-  HOLD: { accent: "#818cf8", glow: "rgba(129,140,248,0.15)", bg: "rgba(129,140,248,0.06)" },
+  CONFIRM: { accent: P.green, glow: "rgba(22,199,132,0.06)", bg: "rgba(22,199,132,0.04)" },
+  SCOUT: { accent: P.warn, glow: "rgba(245,166,35,0.06)", bg: "rgba(245,166,35,0.04)" },
+  HOLD: { accent: P.accent, glow: "rgba(79,140,255,0.06)", bg: "rgba(79,140,255,0.04)" },
 };
 
-const dirNeon: Record<string, string> = { BUY: "#00ff88", SELL: "#ff3366", NEUTRAL: "#f0b429" };
+const dirNeon: Record<string, string> = { BUY: P.green, SELL: P.red, NEUTRAL: P.warn };
 
 export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: PulseV3PanelProps) {
   const { t } = useI18nStore();
@@ -217,12 +219,12 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       {/* ── Header ── */}
       <div className="px-2 py-2 flex items-center justify-between flex-wrap gap-2 bg-transparent">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${nc.accent}20`, boxShadow: `0 0 12px ${nc.accent}40` }}>
-            <Zap className="w-4 h-4" style={{ color: nc.accent }} />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${P.accent}12`, border: `1px solid ${P.accent}20` }}>
+            <Zap className="w-4 h-4" style={{ color: P.accent }} />
           </div>
           <div className="min-w-0">
-            <h2 className="text-sm font-bold text-white/90 truncate font-mono">{t("pulseV3.title")}</h2>
-            <p className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulseV3.subtitle")}</p>
+            <h2 style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: P.text }}>{t("pulseV3.title")}</h2>
+            <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>{t("pulseV3.subtitle")}</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -252,14 +254,13 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         {/* Score Circle */}
         <div className="relative inline-flex items-center justify-center w-28 h-28 mb-3">
           <svg className="w-28 h-28 -rotate-90">
-            <circle cx="56" cy="56" r="48" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
-            <circle cx="56" cy="56" r="48" fill="none" stroke={scoreStroke} strokeWidth="8"
-              strokeDasharray={`${scorePct} 301.6`} strokeLinecap="round"
-              style={{ filter: `drop-shadow(0 0 8px ${nc.accent}60)` }} />
+            <circle cx="56" cy="56" r="48" fill="none" stroke={P.border} strokeWidth="6" />
+            <circle cx="56" cy="56" r="48" fill="none" stroke={scoreStroke} strokeWidth="6"
+              strokeDasharray={`${scorePct} 301.6`} strokeLinecap="round" />
           </svg>
           <div className="absolute text-center">
-            <span className="text-2xl font-bold font-mono" style={{ color: nc.accent, textShadow: `0 0 12px ${nc.glow}` }}>{data.pulse_score}</span>
-            <span className="text-[10px] font-mono block" style={{ color: "rgba(255,255,255,0.25)" }}>/100</span>
+            <span style={{ fontFamily: FONT, fontSize: 28, fontWeight: 700, letterSpacing: "-0.5px", color: nc.accent }}>{data.pulse_score}</span>
+            <span style={{ fontFamily: FONT, fontSize: 10, display: "block", color: P.muted }}>/100</span>
           </div>
         </div>
 
@@ -273,13 +274,13 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         {/* Direction */}
         <div className="mt-3 flex items-center justify-center gap-2">
           {data.direction === "BUY" ? (
-            <TrendingUp className="w-5 h-5" style={{ color: dc, filter: `drop-shadow(0 0 6px ${dc})` }} />
+            <TrendingUp className="w-5 h-5" style={{ color: dc }} />
           ) : data.direction === "SELL" ? (
-            <TrendingDown className="w-5 h-5" style={{ color: dc, filter: `drop-shadow(0 0 6px ${dc})` }} />
+            <TrendingDown className="w-5 h-5" style={{ color: dc }} />
           ) : (
-            <Activity className="w-5 h-5" style={{ color: dc, filter: `drop-shadow(0 0 6px ${dc})` }} />
+            <Activity className="w-5 h-5" style={{ color: dc }} />
           )}
-          <span className="text-lg font-bold font-mono" style={{ color: dc, textShadow: `0 0 12px ${dc}40` }}>
+          <span style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: dc }}>
             {data.direction === "BUY" ? t("pulseV3.buy") : data.direction === "SELL" ? t("pulseV3.sell") : t("pulseV3.neutral")}
           </span>
         </div>
@@ -294,15 +295,15 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
             {/* Regime Type */}
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold font-mono"
               style={{
-                background: data.regime.type.includes("TREND_UP") ? "rgba(0,255,136,0.12)" :
-                  data.regime.type.includes("TREND_DOWN") ? "rgba(255,51,102,0.12)" :
-                    data.regime.type === "RANGING" ? "rgba(240,180,41,0.12)" : "rgba(129,140,248,0.12)",
-                color: data.regime.type.includes("TREND_UP") ? "#00ff88" :
-                  data.regime.type.includes("TREND_DOWN") ? "#ff3366" :
-                    data.regime.type === "RANGING" ? "#f0b429" : "#818cf8",
-                border: `1px solid ${data.regime.type.includes("TREND_UP") ? "rgba(0,255,136,0.25)" :
-                  data.regime.type.includes("TREND_DOWN") ? "rgba(255,51,102,0.25)" :
-                    data.regime.type === "RANGING" ? "rgba(240,180,41,0.25)" : "rgba(129,140,248,0.25)"}`,
+                background: data.regime.type.includes("TREND_UP") ? `${P.green}10` :
+                  data.regime.type.includes("TREND_DOWN") ? `${P.red}10` :
+                    data.regime.type === "RANGING" ? `${P.warn}10` : `${P.accent}10`,
+                color: data.regime.type.includes("TREND_UP") ? P.green :
+                  data.regime.type.includes("TREND_DOWN") ? P.red :
+                    data.regime.type === "RANGING" ? P.warn : P.accent,
+                border: `1px solid ${data.regime.type.includes("TREND_UP") ? `${P.green}20` :
+                  data.regime.type.includes("TREND_DOWN") ? `${P.red}20` :
+                    data.regime.type === "RANGING" ? `${P.warn}20` : `${P.accent}20`}`,
               }}>
               <Shield className="w-3 h-3" />
               {data.regime.type.replace(/_/g, " ")}
@@ -331,7 +332,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       {/* ── 3 Timeframe Scores ── */}
       <div className="grid grid-cols-3 gap-2.5 p-3">
         {Object.entries(data.timeframes).map(([tf, info]) => {
-          const trendC = info.trend === "up" ? "#00ff88" : info.trend === "down" ? "#ff3366" : "#f0b429";
+          const trendC = info.trend === "up" ? P.green : info.trend === "down" ? P.red : P.warn;
           return (
             <div key={tf} className="rounded-xl p-3 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
               <div className="text-[10px] uppercase tracking-widest font-mono mb-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>{tf}</div>
@@ -345,8 +346,8 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
               <div className="text-[10px] font-mono" style={{ color: trendC }}>
                 {info.trend === "up" ? t("pulseV3.up") : info.trend === "down" ? t("pulseV3.down") : t("pulseV3.neutral")}
               </div>
-              <div className="h-1.5 rounded-full mt-2 overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${(info.raw_score / info.max) * 100}%`, background: `linear-gradient(90deg, ${trendC}80, ${trendC})`, boxShadow: `0 0 8px ${trendC}50` }} />
+              <div className="rounded-full mt-2 overflow-hidden" style={{ height: 4, background: P.border }}>
+                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${(info.raw_score / info.max) * 100}%`, background: trendC, opacity: 0.85 }} />
               </div>
             </div>
           );
@@ -360,25 +361,25 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
             <Target className="w-3 h-3" style={{ color: "#00ccff" }} /> {t("pulseV3.levels")}
           </h3>
           <div className="space-y-1.5 text-sm font-mono">
-            <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: "rgba(255,51,102,0.06)" }}>
-              <span style={{ color: "#ff3366" }}>R2</span>
-              <span className="text-white/80">{data.levels.r2.toFixed(0)}</span>
+            <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: `${P.red}06` }}>
+              <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.red }}>R2</span>
+              <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.r2.toFixed(0)}</span>
             </div>
-            <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: "rgba(255,51,102,0.06)" }}>
-              <span style={{ color: "#ff3366" }}>R1</span>
-              <span className="text-white/80">{data.levels.r1.toFixed(0)}</span>
+            <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: `${P.red}06` }}>
+              <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.red }}>R1</span>
+              <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.r1.toFixed(0)}</span>
             </div>
-            <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.15)" }}>
-              <span style={{ color: "#00ff88" }}>Pivot</span>
-              <span className="font-bold" style={{ color: "#00ff88" }}>{data.levels.pivot.toFixed(0)}</span>
+            <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: `${P.green}08`, border: `1px solid ${P.green}20` }}>
+              <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.green }}>Pivot</span>
+              <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.green }}>{data.levels.pivot.toFixed(0)}</span>
             </div>
-            <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: "rgba(0,204,255,0.06)" }}>
-              <span style={{ color: "#00ccff" }}>S1</span>
-              <span className="text-white/80">{data.levels.s1.toFixed(0)}</span>
+            <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: `${P.accent}06` }}>
+              <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.accent }}>S1</span>
+              <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.s1.toFixed(0)}</span>
             </div>
-            <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: "rgba(0,204,255,0.06)" }}>
-              <span style={{ color: "#00ccff" }}>S2</span>
-              <span className="text-white/80">{data.levels.s2.toFixed(0)}</span>
+            <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: `${P.accent}06` }}>
+              <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.accent }}>S2</span>
+              <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.s2.toFixed(0)}</span>
             </div>
           </div>
         </div>
@@ -409,12 +410,12 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
 
       {/* ── AI Suggestion ── */}
       <div className="px-3 pb-3">
-        <div className="rounded-xl p-3.5" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.12)", boxShadow: "0 0 20px rgba(99,102,241,0.05)" }}>
+        <div className="rounded-xl p-3.5" style={{ background: `${P.accent}05`, border: `1px solid ${P.accent}12` }}>
           <div className="flex items-center gap-2 mb-2">
-            <Brain className="w-4 h-4" style={{ color: "#818cf8" }} />
-            <span className="font-mono font-bold text-sm" style={{ color: "#818cf8" }}>{t("pulseV3.analysis")}</span>
+            <Brain className="w-4 h-4" style={{ color: P.accent }} />
+            <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.accent }}>{t("pulseV3.analysis")}</span>
           </div>
-          <p className="text-sm font-mono leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>{data.suggestion}</p>
+          <p style={{ fontFamily: FONT, fontSize: 12, lineHeight: 1.6, color: "rgba(230,237,243,0.65)" }}>{data.suggestion}</p>
         </div>
       </div>
 
@@ -443,9 +444,9 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
           <div className="flex gap-2 flex-wrap">
             {data.order_blocks.filter(ob => ob.is_nearby).map((ob, idx) => (
               <div key={idx} className="rounded-lg px-3 py-1.5 font-mono text-[10px]" style={{
-                background: ob.type === "bullish" ? "rgba(0,255,136,0.06)" : "rgba(255,51,102,0.06)",
-                border: `1px solid ${ob.type === "bullish" ? "rgba(0,255,136,0.15)" : "rgba(255,51,102,0.15)"}`,
-                color: ob.type === "bullish" ? "#00ff88" : "#ff3366",
+                background: ob.type === "bullish" ? `${P.green}06` : `${P.red}06`,
+                border: `1px solid ${ob.type === "bullish" ? `${P.green}15` : `${P.red}15`}`,
+                color: ob.type === "bullish" ? P.green : P.red,
               }}>
                 <span className="font-bold">{ob.type === "bullish" ? "▲" : "▼"} {ob.low.toFixed(0)}–{ob.high.toFixed(0)}</span>
                 <span className="ml-2 opacity-60">str: {(ob.strength * 100).toFixed(0)}%</span>

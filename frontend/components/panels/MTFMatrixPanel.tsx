@@ -4,18 +4,20 @@ import { useState, useEffect } from "react";
 import { PanelInfoButton } from "../PanelInfoButton";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
-  RefreshCw,
-  BarChart3,
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  Minus,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
+  RotateIcon as RefreshCw,
+  ChartsIcon as BarChart3,
+  ArrowUpIcon as TrendingUp,
+  ArrowDownIcon as TrendingDown,
+  ActivityIcon as Activity,
+  MinusIcon as Minus,
+  AlertIcon as AlertTriangle,
+  CheckCircleIcon as CheckCircle,
+  CloseIcon as XCircle,
+} from "../ui/CustomIcons";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+const P = { bg: "#0B0F17", card: "#141C2B", surface: "#111827", border: "rgba(255,255,255,0.06)", text: "#E6EDF3", muted: "#6B7280", green: "#16C784", red: "#EA3943", warn: "#F5A623", accent: "#4F8CFF" };
 
 interface TimeframeData {
   timeframe?: string;
@@ -124,11 +126,11 @@ export default function MTFMatrixPanel() {
   }, [symbol, wsConnected]);
 
   const trendColor = (dir?: string) => {
-    if (!dir) return "rgba(255,255,255,0.3)";
+    if (!dir) return P.muted;
     const d = dir.toLowerCase();
-    if (d.includes("bull") || d.includes("up") || d === "long" || d.includes("buy")) return "#00ff88";
-    if (d.includes("bear") || d.includes("down") || d === "short" || d.includes("sell")) return "#ff3366";
-    return "#f0b429";
+    if (d.includes("bull") || d.includes("up") || d === "long" || d.includes("buy")) return P.green;
+    if (d.includes("bear") || d.includes("down") || d === "short" || d.includes("sell")) return P.red;
+    return P.warn;
   };
 
   const emaAlignment = (ema?: TimeframeData["ema"]) => {
@@ -148,38 +150,38 @@ export default function MTFMatrixPanel() {
   };
 
   const trendIcon = (dir?: string) => {
-    if (!dir) return <Minus className="w-3.5 h-3.5" style={{ color: "#f0b429" }} />;
+    if (!dir) return <Minus className="w-3.5 h-3.5" style={{ color: P.warn }} />;
     const d = dir.toLowerCase();
-    if (d.includes("bull") || d.includes("up")) return <TrendingUp className="w-3.5 h-3.5" style={{ color: "#00ff88" }} />;
-    if (d.includes("bear") || d.includes("down")) return <TrendingDown className="w-3.5 h-3.5" style={{ color: "#ff3366" }} />;
-    return <Activity className="w-3.5 h-3.5" style={{ color: "#f0b429" }} />;
+    if (d.includes("bull") || d.includes("up")) return <TrendingUp className="w-3.5 h-3.5" style={{ color: P.green }} />;
+    if (d.includes("bear") || d.includes("down")) return <TrendingDown className="w-3.5 h-3.5" style={{ color: P.red }} />;
+    return <Activity className="w-3.5 h-3.5" style={{ color: P.warn }} />;
   };
 
   const rsiColor = (rsi?: number) => {
-    if (!rsi) return "rgba(255,255,255,0.4)";
-    if (rsi > 70) return "#ff3366";
-    if (rsi < 30) return "#00ff88";
-    if (rsi > 60) return "#f0b429";
-    if (rsi < 40) return "#00ccff";
+    if (!rsi) return P.muted;
+    if (rsi > 70) return P.red;
+    if (rsi < 30) return P.green;
+    if (rsi > 60) return P.warn;
+    if (rsi < 40) return P.accent;
     return "rgba(255,255,255,0.6)";
   };
 
   const signalBadge = (dir?: string) => {
-    if (!dir) return { color: "#f0b429", label: "HOLD", icon: Minus };
+    if (!dir) return { color: P.warn, label: "HOLD", icon: Minus };
     const d = dir.toLowerCase();
-    if (d.includes("buy") || d.includes("bull") || d.includes("long")) return { color: "#00ff88", label: "BUY", icon: CheckCircle };
-    if (d.includes("sell") || d.includes("bear") || d.includes("short")) return { color: "#ff3366", label: "SELL", icon: XCircle };
-    return { color: "#f0b429", label: "HOLD", icon: Minus };
+    if (d.includes("buy") || d.includes("bull") || d.includes("long")) return { color: P.green, label: "BUY", icon: CheckCircle };
+    if (d.includes("sell") || d.includes("bear") || d.includes("short")) return { color: P.red, label: "SELL", icon: XCircle };
+    return { color: P.warn, label: "HOLD", icon: Minus };
   };
 
   const confScore = data?.confluence?.overall_confidence ?? data?.confluence?.score ?? 0;
   const confDir = data?.confluence?.overall_signal ?? data?.confluence?.direction ?? "NEUTRAL";
   const confAlign = data?.confluence?.alignment_score ?? data?.confluence?.agreement_pct ?? 0;
-  const confluenceColor = confScore > 60 ? "#00ff88" : confScore > 30 ? "#f0b429" : "#ff3366";
+  const confluenceColor = confScore > 60 ? P.green : confScore > 30 ? P.warn : P.red;
 
   if (loading && !data) {
     return (
-      <div className="rounded-2xl p-6 animate-pulse" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="rounded-2xl p-6 animate-pulse" style={{ background: P.bg, border: `1px solid ${P.border}` }}>
         <div className="h-8 rounded w-1/2 mb-4" style={{ background: "rgba(255,255,255,0.04)" }} />
         <div className="h-48 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }} />
       </div>
@@ -187,17 +189,16 @@ export default function MTFMatrixPanel() {
   }
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)", boxShadow: `0 0 40px rgba(0,204,255,0.10), inset 0 1px 0 rgba(255,255,255,0.04)` }}>
+    <div className="rounded-2xl overflow-hidden" style={{ background: P.bg, border: `1px solid ${P.border}`, boxShadow: `0 0 40px rgba(0,204,255,0.10), inset 0 1px 0 rgba(255,255,255,0.04)` }}>
 
-      {/* Header */}
-      <div className="px-4 py-3 flex items-center justify-between" style={{ background: "rgba(0,0,0,0.3)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      <div className="px-4 py-3 flex items-center justify-between" style={{ background: P.surface, borderBottom: `1px solid ${P.border}` }}>
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(0,204,255,0.2)", boxShadow: "0 0 12px rgba(0,204,255,0.3)" }}>
-            <BarChart3 className="w-4 h-4" style={{ color: "#00ccff" }} />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${P.accent}12`, border: `1px solid ${P.accent}20` }}>
+            <BarChart3 className="w-4 h-4" style={{ color: P.accent }} />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-white/90 font-mono">MTF Confluence Matrix</h2>
-            <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>Multi-Timeframe Analiz</p>
+            <h2 style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: P.text }}>MTF Confluence Matrix</h2>
+            <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>Multi-Timeframe Analiz</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
@@ -233,13 +234,12 @@ export default function MTFMatrixPanel() {
               <div className="flex items-center gap-3">
                 <div className="relative w-14 h-14">
                   <svg className="w-14 h-14 -rotate-90">
-                    <circle cx="28" cy="28" r="24" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4" />
-                    <circle cx="28" cy="28" r="24" fill="none" stroke={confluenceColor} strokeWidth="4"
-                      strokeDasharray={`${(confScore / 100) * 150.8} 150.8`} strokeLinecap="round"
-                      style={{ filter: `drop-shadow(0 0 6px ${confluenceColor}60)` }} />
+                    <circle cx="28" cy="28" r="24" fill="none" stroke={P.border} strokeWidth="3" />
+                    <circle cx="28" cy="28" r="24" fill="none" stroke={confluenceColor} strokeWidth="3"
+                      strokeDasharray={`${(confScore / 100) * 150.8} 150.8`} strokeLinecap="round" />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm font-bold font-mono" style={{ color: confluenceColor }}>{Math.round(confScore)}</span>
+                    <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: confluenceColor }}>{Math.round(confScore)}</span>
                   </div>
                 </div>
                 <div>

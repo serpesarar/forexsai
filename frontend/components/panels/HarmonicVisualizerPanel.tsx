@@ -9,7 +9,7 @@ import {
     ISeriesApi,
     Time,
 } from "lightweight-charts";
-import { Activity, RefreshCw, Hexagon, X as XIcon, Target, ShieldAlert, TrendingUp, TrendingDown, Maximize2, Minimize2 } from "lucide-react";
+import { ActivityIcon as Activity, RotateIcon as RefreshCw, HarmonicIcon as Hexagon, CloseIcon as XIcon, TargetIcon as Target, AlertIcon as ShieldAlert, ArrowUpIcon as TrendingUp, ArrowDownIcon as TrendingDown, ExpandIcon as Maximize2, ExpandIcon as Minimize2 } from "../ui/CustomIcons";
 import { useQuery } from "@tanstack/react-query";
 import { useI18nStore } from "../../lib/i18n/store";
 import {
@@ -487,7 +487,7 @@ export default function HarmonicVisualizerPanel() {
                                             y1={projectedPoint.y}
                                             x2={projectedPoint.x}
                                             y2={arrowY}
-                                            stroke={dir === 'BULLISH' ? '#00ff88' : '#ff4444'}
+                                            stroke={dir === 'BULLISH' ? '#16C784' : '#EA3943'}
                                             strokeWidth={2.5}
                                             strokeDasharray="4,3"
                                             opacity={0.8}
@@ -496,7 +496,7 @@ export default function HarmonicVisualizerPanel() {
                                             points={dir === 'BULLISH'
                                                 ? `${projectedPoint.x - 6},${arrowY + 8} ${projectedPoint.x},${arrowY} ${projectedPoint.x + 6},${arrowY + 8}`
                                                 : `${projectedPoint.x - 6},${arrowY - 8} ${projectedPoint.x},${arrowY} ${projectedPoint.x + 6},${arrowY - 8}`}
-                                            fill={dir === 'BULLISH' ? '#00ff88' : '#ff4444'}
+                                            fill={dir === 'BULLISH' ? '#16C784' : '#EA3943'}
                                             opacity={0.8}
                                         />
                                     </g>
@@ -787,7 +787,7 @@ export default function HarmonicVisualizerPanel() {
 
                             <div className={styles.detailRow}>
                                 <span>{t("harmonicVisualizer.expectedMove")}</span>
-                                <strong style={{ color: selectedPattern.direction === "BULLISH" ? "#00ff88" : "#ff4444" }}>
+                                <strong style={{ color: selectedPattern.direction === "BULLISH" ? "#16C784" : "#EA3943" }}>
                                     {selectedPattern.direction === "BULLISH" ? `${t("harmonicVisualizer.upward")} ↑` : `${t("harmonicVisualizer.downward")} ↓`}
                                 </strong>
                             </div>

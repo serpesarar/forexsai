@@ -23,6 +23,8 @@ import {
 } from "../ui/CustomIcons";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+const P = { bg: "#0B0F17", card: "#141C2B", surface: "#111827", border: "rgba(255,255,255,0.06)", text: "#E6EDF3", muted: "#6B7280", green: "#16C784", red: "#EA3943", warn: "#F5A623", accent: "#4F8CFF", purple: "#A78BFA" };
 
 interface ScoreBreakdown {
   ml: { pts: number; confidence: number; direction: string };
@@ -81,12 +83,12 @@ const SYMBOLS = [
 const TIMEFRAMES = ["5m", "15m", "30m", "1H", "4H"];
 
 const signalStyles: Record<string, { accent: string; glow: string; bg: string }> = {
-  CONFIRM: { accent: "#00ff88", glow: "rgba(0,255,136,0.15)", bg: "rgba(0,255,136,0.06)" },
-  SCOUT: { accent: "#f0b429", glow: "rgba(240,180,41,0.15)", bg: "rgba(240,180,41,0.06)" },
-  HOLD: { accent: "#818cf8", glow: "rgba(129,140,248,0.15)", bg: "rgba(129,140,248,0.06)" },
+  CONFIRM: { accent: P.green, glow: "rgba(22,199,132,0.06)", bg: "rgba(22,199,132,0.04)" },
+  SCOUT: { accent: P.warn, glow: "rgba(245,166,35,0.06)", bg: "rgba(245,166,35,0.04)" },
+  HOLD: { accent: P.accent, glow: "rgba(79,140,255,0.06)", bg: "rgba(79,140,255,0.04)" },
 };
 
-const dirColor: Record<string, string> = { BUY: "#00ff88", SELL: "#ff3366", HOLD: "#818cf8", NEUTRAL: "#f0b429" };
+const dirColor: Record<string, string> = { BUY: P.green, SELL: P.red, HOLD: P.accent, NEUTRAL: P.warn };
 
 export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: PulseMLPanelProps) {
   const { t } = useI18nStore();
@@ -219,7 +221,7 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
             <div className="mt-4 flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-3xl font-black" style={{ color: dirColor[data.signal] || "#fff" }}>
+                  <span style={{ fontFamily: FONT, fontSize: 32, fontWeight: 700, letterSpacing: "-0.5px", color: dirColor[data.signal] || P.text }}>
                     {data.signal}
                   </span>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: st.accent + "20", color: st.accent }}>
@@ -245,15 +247,15 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
               <div className="mt-3 flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold font-mono"
                   style={{
-                    background: data.regime.type.includes("TREND_UP") ? "rgba(0,255,136,0.12)" :
-                      data.regime.type.includes("TREND_DOWN") ? "rgba(255,51,102,0.12)" :
-                        data.regime.type === "RANGING" ? "rgba(240,180,41,0.12)" : "rgba(129,140,248,0.12)",
-                    color: data.regime.type.includes("TREND_UP") ? "#00ff88" :
-                      data.regime.type.includes("TREND_DOWN") ? "#ff3366" :
-                        data.regime.type === "RANGING" ? "#f0b429" : "#818cf8",
-                    border: `1px solid ${data.regime.type.includes("TREND_UP") ? "rgba(0,255,136,0.25)" :
-                      data.regime.type.includes("TREND_DOWN") ? "rgba(255,51,102,0.25)" :
-                        data.regime.type === "RANGING" ? "rgba(240,180,41,0.25)" : "rgba(129,140,248,0.25)"}`,
+                    background: data.regime.type.includes("TREND_UP") ? `${P.green}10` :
+                      data.regime.type.includes("TREND_DOWN") ? `${P.red}10` :
+                        data.regime.type === "RANGING" ? `${P.warn}10` : `${P.accent}10`,
+                    color: data.regime.type.includes("TREND_UP") ? P.green :
+                      data.regime.type.includes("TREND_DOWN") ? P.red :
+                        data.regime.type === "RANGING" ? P.warn : P.accent,
+                    border: `1px solid ${data.regime.type.includes("TREND_UP") ? `${P.green}20` :
+                      data.regime.type.includes("TREND_DOWN") ? `${P.red}20` :
+                        data.regime.type === "RANGING" ? `${P.warn}20` : `${P.accent}20`}`,
                   }}>
                   <Shield className="w-3 h-3" />
                   {data.regime.type.replace(/_/g, " ")}
@@ -272,8 +274,8 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
             )}
 
             {/* Score Bar */}
-            <div className="mt-3 h-2 rounded-full bg-white/5 overflow-hidden">
-              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${scorePct}%`, background: `linear-gradient(90deg, ${st.accent}40, ${st.accent})` }} />
+            <div className="mt-3 rounded-full overflow-hidden" style={{ height: 6, background: P.border }}>
+              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${scorePct}%`, background: st.accent, opacity: 0.85 }} />
             </div>
 
             {/* Score Breakdown */}
@@ -293,8 +295,8 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
                       <Icon className="w-3.5 h-3.5 mx-auto mb-1" style={{ color: st.accent }} />
                       <div className="text-[10px] font-bold text-white/60">{item.label}</div>
                       <div className="text-xs font-mono font-bold text-white mt-0.5">{item.pts}</div>
-                      <div className="mt-1 h-1 rounded-full bg-white/5 overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${Math.min(100, pct)}%`, background: st.accent }} />
+                      <div className="mt-1 rounded-full overflow-hidden" style={{ height: 4, background: P.border }}>
+                        <div className="h-full rounded-full" style={{ width: `${Math.min(100, pct)}%`, background: st.accent, opacity: 0.85 }} />
                       </div>
                       <div className="text-[9px] text-white/30 mt-0.5 truncate">{item.detail}</div>
                     </div>
@@ -305,20 +307,20 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
 
             {/* Target / Stop / R:R */}
             <div className="mt-4 grid grid-cols-3 gap-2">
-              <div className="rounded-xl p-3 text-center" style={{ background: "rgba(0,255,136,0.04)", border: "1px solid rgba(0,255,136,0.1)" }}>
-                <Target className="w-3.5 h-3.5 mx-auto mb-1 text-green-400" />
-                <div className="text-[10px] text-white/40">TARGET</div>
-                <div className="text-sm font-mono font-bold text-green-400">${data.target.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+              <div className="rounded-xl p-3 text-center" style={{ background: `${P.green}05`, border: `1px solid ${P.green}12` }}>
+                <Target className="w-3.5 h-3.5 mx-auto mb-1" style={{ color: P.green }} />
+                <div style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.05em" }}>TARGET</div>
+                <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: P.green }}>${data.target.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
               </div>
-              <div className="rounded-xl p-3 text-center" style={{ background: "rgba(255,51,102,0.04)", border: "1px solid rgba(255,51,102,0.1)" }}>
-                <AlertTriangle className="w-3.5 h-3.5 mx-auto mb-1 text-red-400" />
-                <div className="text-[10px] text-white/40">STOP</div>
-                <div className="text-sm font-mono font-bold text-red-400">${data.stop.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+              <div className="rounded-xl p-3 text-center" style={{ background: `${P.red}05`, border: `1px solid ${P.red}12` }}>
+                <AlertTriangle className="w-3.5 h-3.5 mx-auto mb-1" style={{ color: P.red }} />
+                <div style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.05em" }}>STOP</div>
+                <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: P.red }}>${data.stop.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
               </div>
-              <div className="rounded-xl p-3 text-center" style={{ background: "rgba(129,140,248,0.04)", border: "1px solid rgba(129,140,248,0.1)" }}>
-                <Zap className="w-3.5 h-3.5 mx-auto mb-1 text-indigo-400" />
-                <div className="text-[10px] text-white/40">R:R</div>
-                <div className="text-sm font-mono font-bold text-indigo-400">{data.rr_ratio}x</div>
+              <div className="rounded-xl p-3 text-center" style={{ background: `${P.accent}05`, border: `1px solid ${P.accent}12` }}>
+                <Zap className="w-3.5 h-3.5 mx-auto mb-1" style={{ color: P.accent }} />
+                <div style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.05em" }}>R:R</div>
+                <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: P.accent }}>{data.rr_ratio}x</div>
               </div>
             </div>
 
