@@ -1,8 +1,12 @@
 import { ReactNode } from "react";
+import { StarfieldBackground } from "@/components/welcome/StarfieldBackground";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden font-sans">
+      {/* Yıldız Arkaplanı */}
+      <StarfieldBackground />
+
       {/* Subtle Vignette */}
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_transparent_0%,_black_100%)] opacity-60" />
 
@@ -23,7 +27,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       <div className="pointer-events-none absolute -top-32 -right-32 w-[500px] h-[500px] z-0 rounded-full bg-cyan-500/5 blur-3xl" />
 
       {/* Content */}
-      <div className="relative z-10">
+      <div className="relative z-10 w-full">
         {children}
       </div>
     </div>
