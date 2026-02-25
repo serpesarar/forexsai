@@ -78,7 +78,7 @@ export default function TermsPage() {
     const { t } = useI18n();
 
     return (
-        <main className="min-h-screen bg-black text-white font-sans">
+        <main className="min-h-screen bg-transparent text-white font-sans">
             <TopNav />
 
             <div className="relative pt-36 pb-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">

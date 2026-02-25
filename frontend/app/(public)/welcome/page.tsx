@@ -251,7 +251,7 @@ function PricingSection() {
 // ─────────────────────────────────────────────────────────────────────────
 export default function WelcomePage() {
   return (
-    <div className="bg-black text-white font-sans">
+    <div className="bg-transparent text-white font-sans">
 
       {/* ── HERO SCREEN (full viewport) ─────────────────────────────── */}
       <div className="relative w-full h-screen overflow-hidden">
@@ -341,22 +341,22 @@ export default function WelcomePage() {
       </div>
 
       {/* About */}
-      <div id="about" className="bg-black border-t border-white/[0.04]">
+      <div id="about" className="bg-transparent border-t border-white/[0.04]">
         <AboutSection />
       </div>
 
       {/* Features */}
-      <div id="features" className="bg-black border-t border-white/[0.04]">
+      <div id="features" className="bg-transparent border-t border-white/[0.04]">
         <FeaturesSection />
       </div>
 
       {/* Pricing */}
-      <div id="pricing" className="bg-black border-t border-white/[0.04]">
+      <div id="pricing" className="bg-transparent border-t border-white/[0.04]">
         <PricingSection />
       </div>
 
       {/* Footer CTA */}
-      <div className="border-t border-white/[0.04] py-20 text-center px-8 bg-black">
+      <div className="border-t border-white/[0.04] py-20 text-center px-8 bg-transparent">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

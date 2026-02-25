@@ -50,7 +50,7 @@ export default function CareersPage() {
     const { t } = useI18n();
 
     return (
-        <main className="min-h-screen bg-black text-white font-sans">
+        <main className="min-h-screen bg-transparent text-white font-sans">
             <TopNav />
 
             <div className="fixed inset-0 pointer-events-none">

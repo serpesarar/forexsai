@@ -47,7 +47,7 @@ const markets = [
 
 export default function DemoPage() {
     return (
-        <main className="min-h-screen bg-black text-white font-sans">
+        <main className="min-h-screen bg-transparent text-white font-sans">
             <TopNav />
 
             {/* Fixed bg */}

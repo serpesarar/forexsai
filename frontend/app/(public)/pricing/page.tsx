@@ -21,8 +21,8 @@ function PriceCard({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay }}
             className={`relative p-8 rounded-2xl border flex flex-col h-full ${highlight
-                    ? "bg-white/[0.05] border-white/15 shadow-[0_0_40px_rgba(6,182,212,0.06)]"
-                    : "bg-white/[0.02] border-white/6"
+                ? "bg-white/[0.05] border-white/15 shadow-[0_0_40px_rgba(6,182,212,0.06)]"
+                : "bg-white/[0.02] border-white/6"
                 }`}
         >
             {highlight && (
@@ -52,8 +52,8 @@ function PriceCard({
 
             <Link href={href}>
                 <button className={`w-full py-3.5 rounded-sm transition-all duration-300 uppercase tracking-widest text-xs font-medium ${highlight
-                        ? "bg-gradient-to-r from-gray-700 via-gray-400 to-gray-700 border border-gray-500/50 text-white shadow-[0_0_15px_rgba(192,192,192,0.2)] hover:shadow-[0_0_25px_rgba(192,192,192,0.4)]"
-                        : "bg-white/[0.03] border border-white/8 text-gray-400 hover:bg-white/[0.06] hover:text-white"
+                    ? "bg-gradient-to-r from-gray-700 via-gray-400 to-gray-700 border border-gray-500/50 text-white shadow-[0_0_15px_rgba(192,192,192,0.2)] hover:shadow-[0_0_25px_rgba(192,192,192,0.4)]"
+                    : "bg-white/[0.03] border border-white/8 text-gray-400 hover:bg-white/[0.06] hover:text-white"
                     }`}>
                     {cta}
                 </button>
@@ -66,7 +66,7 @@ export default function PricingPage() {
     const { t } = useI18n();
 
     return (
-        <main className="min-h-screen bg-black text-white font-sans">
+        <main className="min-h-screen bg-transparent text-white font-sans">
             <TopNav />
 
             <div className="fixed inset-0 pointer-events-none">
