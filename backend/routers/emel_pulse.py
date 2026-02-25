@@ -27,10 +27,19 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         from services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
         from services.market_data_service import get_ohlcv_data
         
-        # Get market data
+        # Get market data — for XAUUSD, 1H is derived from 30m by DataHub.
+        # If 30m not seeded yet, fall back to 5m or 30m to avoid "Insufficient data".
         ohlcv = await get_ohlcv_data(symbol, timeframe, limit=250)
         if not ohlcv or len(ohlcv) < 50:
+            # Fallback: try 5m (always fetched for XAUUSD via 1m→5m resample)
+            ohlcv = await get_ohlcv_data(symbol, "5M", limit=250)
+        if not ohlcv or len(ohlcv) < 50:
+            # Fallback: try 30m (XAUUSD directly fetched)
+            ohlcv = await get_ohlcv_data(symbol, "30M", limit=250)
+        if not ohlcv or len(ohlcv) < 20:
+            logger.warning(f"EMEL: Insufficient candle data for {symbol} (tried 1H/5m/30m)")
             return {"error": "Insufficient data"}
+
         
         # Convert to numpy arrays - CRITICAL for correct EMA calculation
         closes = np.array([c["close"] for c in ohlcv], dtype=np.float64)
@@ -640,7 +649,12 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
             }
         
         # Get market data - 100 bar (EMA20 için yeterli)
+        # XAUUSD: 1H derives from 30m in DataHub — fallback to 5m if insufficient
         ohlcv = await get_ohlcv_data(symbol, timeframe, limit=100)
+        if not ohlcv or len(ohlcv) < 20:
+            ohlcv = await get_ohlcv_data(symbol, "5M", limit=100)
+        if not ohlcv or len(ohlcv) < 20:
+            ohlcv = await get_ohlcv_data(symbol, "30M", limit=100)
         if not ohlcv or len(ohlcv) < 20:
             return {"error": "Insufficient data"}
         
@@ -1035,9 +1049,13 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
         # ─── FAKE SIGNAL TIMEOUT CHECK ──────────────────────────────────
         is_timed_out, timeout_until, timeout_reason = await check_fake_signal_timeout(symbol)
         
-        # 1. Market Data
+        # 1. Market Data — XAUUSD fallback to 5m/30m if 1h not seeded yet
         ohlcv = await get_ohlcv_data(symbol, timeframe, limit=200)
         if not ohlcv or len(ohlcv) < 50:
+            ohlcv = await get_ohlcv_data(symbol, "5M", limit=200)
+        if not ohlcv or len(ohlcv) < 50:
+            ohlcv = await get_ohlcv_data(symbol, "30M", limit=200)
+        if not ohlcv or len(ohlcv) < 20:
             return {"error": "Insufficient data"}
             
         closes = np.array([c["close"] for c in ohlcv], dtype=np.float64)

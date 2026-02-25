@@ -1,4 +1,6 @@
 "use client";
+// Font: Inter (UI-optimized), fallback Arial/Verdana
+const PANEL_FONT = "'Inter', 'Arial', 'Verdana', sans-serif";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
@@ -87,14 +89,17 @@ function TpBar({ name, rate, color }: { name: string; rate: number; color: strin
   const c = rate >= 55 ? C.g : rate >= 30 ? C.y : C.r;
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[9px] font-mono w-6 shrink-0" style={{ color: "rgba(255,255,255,0.35)" }}>{name}</span>
+      <span
+        className="w-6 shrink-0 font-bold"
+        style={{ fontFamily: PANEL_FONT, fontSize: 10, letterSpacing: "0.03em", color: "rgba(232,234,246,0.85)" }}
+      >{name}</span>
       <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{ width: `${Math.min(rate, 100)}%`, background: c, boxShadow: `0 0 4px ${c}50` }}
         />
       </div>
-      <span className="text-[9px] font-mono w-8 text-right font-bold" style={{ color: c }}>{rate.toFixed(0)}%</span>
+      <span className="w-8 text-right font-bold" style={{ fontFamily: PANEL_FONT, fontSize: 10, color: c }}>{rate.toFixed(0)}%</span>
     </div>
   );
 }
@@ -128,25 +133,19 @@ function SymbolCard({ sym, d, modelColor }: { sym: string; d: any; modelColor: s
         </div>
       </div>
 
-      {/* W / L / Exp pills */}
+      {/* W / L pills (Exp kaldırıldı) */}
       <div className="flex gap-1.5 flex-wrap">
-        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold font-mono inline-flex items-center gap-1"
-          style={{ background: `${C.g}12`, border: `1px solid ${C.g}25`, color: C.g }}>
+        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold inline-flex items-center gap-1"
+          style={{ fontFamily: PANEL_FONT, background: `${C.g}12`, border: `1px solid ${C.g}25`, color: C.g }}>
           ✓ {d.completed}W
         </span>
-        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold font-mono inline-flex items-center gap-1"
-          style={{ background: `${C.r}12`, border: `1px solid ${C.r}25`, color: C.r }}>
+        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold inline-flex items-center gap-1"
+          style={{ fontFamily: PANEL_FONT, background: `${C.r}12`, border: `1px solid ${C.r}25`, color: C.r }}>
           ✗ {d.stopped}L
         </span>
-        {d.expired !== undefined && d.expired > 0 && (
-          <span className="px-2 py-0.5 rounded-md text-[9px] font-bold font-mono inline-flex items-center gap-1"
-            style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.2)", color: C.y }}>
-            ⌛ {d.expired}Exp
-          </span>
-        )}
         {d.net_pips !== undefined && (
-          <span className="px-2 py-0.5 rounded-md text-[9px] font-bold font-mono ml-auto"
-            style={{ color: netPos ? C.g : C.r, background: netPos ? `${C.g}10` : `${C.r}10`, border: `1px solid ${netPos ? C.g : C.r}20` }}>
+          <span className="px-2 py-0.5 rounded-md text-[9px] font-bold ml-auto"
+            style={{ fontFamily: PANEL_FONT, color: netPos ? C.g : C.r, background: netPos ? `${C.g}10` : `${C.r}10`, border: `1px solid ${netPos ? C.g : C.r}20` }}>
             {netPos ? "+" : ""}{d.net_pips}p
           </span>
         )}
@@ -186,8 +185,8 @@ function ModelCard({ model, stats }: { model: string; stats: ModelStats }) {
           <Icon className="w-4.5 h-4.5" style={{ color: theme.color, width: 18, height: 18 }} />
         </div>
         <div className="text-left flex-1 min-w-0">
-          <p className="text-[12px] font-extrabold font-mono" style={{ color: theme.color }}>{theme.label}</p>
-          <p className="text-[9px] text-white/25 font-mono">{stats.total_signals} signals · {stats.completed}W {stats.stopped}L {stats.expired}Exp</p>
+          <p className="text-[12px] font-extrabold font-mono" style={{ color: theme.color, fontFamily: PANEL_FONT }}>{theme.label}</p>
+          <p className="text-[9px] text-white/25 font-mono" style={{ fontFamily: PANEL_FONT }}>{stats.total_signals} signals · {stats.completed}W {stats.stopped}L</p>
         </div>
 
         {/* Win Rate donut */}
@@ -286,8 +285,8 @@ function ActiveSignalCard({ signal, onSelect }: { signal: ActiveSignal; onSelect
       }}
     >
       <div className="flex items-stretch gap-0">
-        {/* Left accent bar */}
-        <div className="w-1 rounded-l-2xl shrink-0 self-stretch" style={{ background: `linear-gradient(180deg, ${dirColor}, ${sc})` }} />
+        {/* Left accent bar — mavi/cyan tonları, kırmızıdan uzak */}
+        <div className="w-1 rounded-l-2xl shrink-0 self-stretch" style={{ background: isBuy ? `linear-gradient(180deg, #22d3ee, #3b82f6)` : `linear-gradient(180deg, #818cf8, #6366f1)` }} />
 
         <div className="flex-1 p-3 flex items-center gap-3">
           {/* Live pulse dot */}
