@@ -9,7 +9,8 @@ import {
     ISeriesApi,
     Time,
 } from "lightweight-charts";
-import { ActivityIcon as Activity, HarmonicIcon as Hexagon, CloseIcon as XIcon, TargetIcon as Target, AlertIcon as ShieldAlert, ArrowUpIcon as TrendingUp, ArrowDownIcon as TrendingDown, ExpandIcon as Maximize2, ExpandIcon as Minimize2 } from "../ui/CustomIcons";
+import { ActivityIcon as Activity, HarmonicIcon as Hexagon, CloseIcon as XIcon, TargetIcon as Target, AlertIcon as ShieldAlert, ArrowUpIcon as TrendingUp, ArrowDownIcon as TrendingDown } from "../ui/CustomIcons";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { PanelHeader } from "../PanelHeader";
 import { useQuery } from "@tanstack/react-query";
 import { useI18nStore } from "../../lib/i18n/store";
