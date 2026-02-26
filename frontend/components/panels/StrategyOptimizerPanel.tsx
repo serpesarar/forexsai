@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Cpu,
-  RefreshCw,
   Shield,
   TrendingUp,
   TrendingDown,
@@ -29,9 +28,25 @@ import {
   Info,
 } from "lucide-react";
 import { useFullscreen } from "../../hooks/useFullscreen";
+import { PanelHeaderCompact } from "../PanelHeader";
 import styles from "./strategy-optimizer.module.css";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
+
+// ── Theme-aware Color Palette (CSS Variables) ───────────────────────────────
+const P = {
+  bg: "var(--bg-primary)",
+  card: "var(--bg-card)",
+  surface: "var(--bg-surface)",
+  border: "var(--border-subtle)",
+  text: "var(--text-primary)",
+  muted: "var(--text-muted)",
+  green: "var(--accent-positive)",
+  red: "var(--accent-negative)",
+  warn: "var(--accent-warning)",
+  accent: "var(--accent-info)",
+  purple: "var(--accent-purple)",
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -118,7 +133,7 @@ const RISK_ZONES = [
   { min: 25, max: 45, label: "FEAR", color: "#f97316", bg: "#7c2d12", desc: "High caution" },
   { min: 45, max: 55, label: "NEUTRAL", color: "#eab308", bg: "#713f12", desc: "Mixed signals" },
   { min: 55, max: 75, label: "OPTIMAL", color: "#22c55e", bg: "#14532d", desc: "Good conditions" },
-  { min: 75, max: 100, label: "EXTREME OPTIMAL", color: "#00ff88", bg: "#064e3b", desc: "Perfect setup" },
+  { min: 75, max: 100, label: "EXTREME OPTIMAL", color: "var(--accent-positive)", bg: "var(--accent-positive-20)", desc: "Perfect setup" },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -129,36 +144,34 @@ function getRiskZone(score: number) {
   return RISK_ZONES.find((z) => score >= z.min && score < z.max) || RISK_ZONES[2];
 }
 
-function getRiskColor(score: number): string {
-  if (score >= 75) return "#00ff88";
-  if (score >= 55) return "#22c55e";
-  if (score >= 45) return "#eab308";
-  if (score >= 25) return "#f97316";
-  return "#ef4444";
+function getScoreColor(score: number) {
+  if (score >= 80) return P.green;
+  if (score >= 60) return P.warn;
+  return P.red;
 }
 
 function getRiskGradient(score: number): string {
-  if (score >= 75) return "linear-gradient(135deg, #00ff88, #10b981)";
-  if (score >= 55) return "linear-gradient(135deg, #22c55e, #16a34a)";
-  if (score >= 45) return "linear-gradient(135deg, #eab308, #ca8a04)";
-  if (score >= 25) return "linear-gradient(135deg, #f97316, #ea580c)";
-  return "linear-gradient(135deg, #ef4444, #dc2626)";
+  if (score >= 75) return "linear-gradient(135deg, var(--accent-positive), var(--accent-positive-50))";
+  if (score >= 55) return "linear-gradient(135deg, var(--accent-green), var(--accent-green-50))";
+  if (score >= 45) return "linear-gradient(135deg, var(--accent-orange), var(--accent-orange-50))";
+  if (score >= 25) return "linear-gradient(135deg, var(--accent-yellow), var(--accent-yellow-50))";
+  return "linear-gradient(135deg, var(--accent-red), var(--accent-red-50))";
 }
 
 function getLevelStyle(level: string): { bg: string; color: string; border: string; glow: string } {
   switch (level) {
     case "OPTIMAL":
-      return { bg: "rgba(0,255,136,0.15)", color: "#00ff88", border: "rgba(0,255,136,0.4)", glow: "0 0 20px rgba(0,255,136,0.3)" };
+      return { bg: "var(--bg-green-10)", color: P.green, border: "var(--border-green)", glow: "0 0 20px var(--accent-green-20)" };
     case "FAVORABLE":
-      return { bg: "rgba(34,197,94,0.12)", color: "#22c55e", border: "rgba(34,197,94,0.35)", glow: "0 0 15px rgba(34,197,94,0.2)" };
+      return { bg: "var(--bg-orange-10)", color: P.warn, border: "var(--border-orange)", glow: "0 0 15px var(--accent-orange-20)" };
     case "MODERATE":
-      return { bg: "rgba(234,179,8,0.12)", color: "#eab308", border: "rgba(234,179,8,0.35)", glow: "0 0 15px rgba(234,179,8,0.2)" };
+      return { bg: "var(--bg-yellow-10)", color: P.muted, border: "var(--border-yellow)", glow: "0 0 15px var(--accent-yellow-20)" };
     case "HIGH_RISK":
-      return { bg: "rgba(249,115,22,0.12)", color: "#f97316", border: "rgba(249,115,22,0.35)", glow: "0 0 15px rgba(249,115,22,0.2)" };
+      return { bg: "var(--bg-red-10)", color: P.red, border: "var(--border-red)", glow: "0 0 15px var(--accent-red-20)" };
     case "DANGER":
-      return { bg: "rgba(239,68,68,0.2)", color: "#ef4444", border: "rgba(239,68,68,0.5)", glow: "0 0 25px rgba(239,68,68,0.4)" };
+      return { bg: "var(--bg-red-20)", color: P.red, border: "var(--border-red)", glow: "0 0 25px var(--accent-red-30)" };
     default:
-      return { bg: "rgba(255,255,255,0.06)", color: "#888", border: "rgba(255,255,255,0.1)", glow: "none" };
+      return { bg: "var(--bg-gray-10)", color: P.muted, border: "var(--border-gray)", glow: "none" };
   }
 }
 
@@ -221,7 +234,7 @@ function FearGreedGauge({ score, size = "large" }: { score: number; size?: "smal
             }}
           />
         </div>
-        <span className={styles.miniGaugeValue} style={{ color: zone.color }}>
+        <span className={styles.miniGaugeValue} style={{ color: P.purple }}>
           {Math.round(score)}
         </span>
       </div>
@@ -242,7 +255,7 @@ function FearGreedGauge({ score, size = "large" }: { score: number; size?: "smal
                 borderTop: `2px solid ${z.color}`,
               }}
             >
-              <span className={styles.zoneLabel} style={{ color: z.color }}>
+              <span className={styles.zoneLabel} style={{ color: P.green }}>
                 {z.label}
               </span>
               <span className={styles.zoneDesc}>{z.desc}</span>
@@ -276,7 +289,7 @@ function FearGreedGauge({ score, size = "large" }: { score: number; size?: "smal
         <div className={styles.gaugeScoreMain} style={{ color: zone.color, textShadow: `0 0 30px ${zone.color}50` }}>
           {Math.round(score)}
         </div>
-        <div className={styles.gaugeScoreLabel} style={{ color: zone.color }}>
+        <div className={styles.gaugeScoreLabel} style={{ color: P.purple }}>
           {zone.label}
         </div>
       </div>
@@ -302,11 +315,11 @@ function ComponentBreakdown({ components }: { components: RiskComponent[] }) {
         return (
           <div key={comp.name} className={styles.componentCard}>
             <div className={styles.componentHeader}>
-              <CompIcon size={12} style={{ color: zone.color }} />
+              <CompIcon size={12} style={{ color: P.purple }} />
               <span className={styles.componentNameSmall}>
                 {comp.name === "vix" ? "VIX" : comp.name === "choppiness" ? "CHOP" : comp.name.toUpperCase()}
               </span>
-              <span className={styles.componentScoreSmall} style={{ color: zone.color }}>
+              <span className={styles.componentScoreSmall} style={{ color: P.purple }}>
                 {Math.round(comp.score)}
               </span>
             </div>
@@ -345,7 +358,7 @@ function SymbolRiskCard({ data, strategyScores }: { data: SymbolData; strategySc
           </div>
         </div>
         <div className={styles.symbolScoreBadge} style={{ borderColor: zone.color }}>
-          <span className={styles.scoreNumber} style={{ color: zone.color }}>
+          <span className={styles.scoreNumber} style={{ color: P.purple }}>
             {Math.round(data.overall_score)}
           </span>
           <span className={styles.scoreMax}>/100</span>
@@ -368,7 +381,7 @@ function SymbolRiskCard({ data, strategyScores }: { data: SymbolData; strategySc
         <span
           className={styles.trendBadge}
           style={{
-            color: data.trend_direction === "BULLISH" ? "#00ff88" : data.trend_direction === "BEARISH" ? "#ef4444" : "#888",
+            color: data.trend_direction === "BULLISH" ? P.green : data.trend_direction === "BEARISH" ? P.red : P.muted,
           }}
         >
           {data.trend_direction === "BULLISH" ? "▲ BULLISH" : data.trend_direction === "BEARISH" ? "▼ BEARISH" : "◆ NEUTRAL"}
@@ -381,7 +394,7 @@ function SymbolRiskCard({ data, strategyScores }: { data: SymbolData; strategySc
       <div className={styles.strategyRec}>
         <div className={styles.recSection}>
           <span className={styles.recLabelSmall}>Best Strategy</span>
-          <div className={styles.recValue} style={{ color: stratConfig?.color || "#00ff88" }}>
+          <div className={styles.recValue} style={{ color: stratConfig?.color || P.green }}>
             <StratIcon size={14} />
             {stratConfig?.name || data.recommended_strategy}
           </div>
@@ -403,7 +416,7 @@ function SymbolRiskCard({ data, strategyScores }: { data: SymbolData; strategySc
             <span className={styles.recLabelSmall}>Win Rate</span>
             <div
               className={styles.recValue}
-              style={{ color: recommended.win_rate >= 55 ? "#00ff88" : recommended.win_rate >= 45 ? "#eab308" : "#ef4444" }}
+              style={{ color: recommended.win_rate >= 55 ? P.green : recommended.win_rate >= 45 ? P.warn : P.red }}
             >
               {recommended.win_rate.toFixed(1)}%
               <span className={styles.signalCount}>({recommended.total_signals})</span>
@@ -451,42 +464,30 @@ export default function StrategyOptimizerPanel() {
   return (
     <div className={`${styles.panel} ${isFullscreen ? styles.panelFullscreen : ""}`}>
       {/* Header */}
-      <div className={styles.panelHeader}>
-        <div className={styles.headerMain}>
-          <div className={styles.headerIcon}>
-            <Brain size={24} />
-            <div className={styles.iconPulse} />
-          </div>
-          <div className={styles.headerText}>
-            <h3 className={styles.panelTitle}>Strategy Auto-Optimization Loop</h3>
-            <p className={styles.panelSubtitle}>
-              Real-time risk scoring & strategy selection via Bayesian optimization
-            </p>
-          </div>
-        </div>
-
-        <div className={styles.headerControls}>
-          <div className={styles.updateTimer}>
-            <Clock size={12} />
-            <span>Update in {countdown}</span>
-          </div>
-          <select
-            value={days}
-            onChange={(e) => setDays(Number(e.target.value))}
-            className={styles.daysSelect}
-          >
-            <option value={7}>7 days</option>
-            <option value={14}>14 days</option>
-            <option value={30}>30 days</option>
-          </select>
-          <button onClick={() => refetch()} className={styles.controlBtn} title="Refresh">
-            <RefreshCw size={14} className={isFetching ? styles.spin : ""} />
-          </button>
-          <button onClick={toggleFullscreen} className={styles.controlBtn}>
-            {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-          </button>
-        </div>
-      </div>
+      <PanelHeaderCompact
+        title="STRATEGY OPTIMIZER"
+        subtitle="PORTFOLIO INTELLIGENCE"
+        icon={<Brain size={22} />}
+        iconColor="var(--accent-cyan)"
+        onRefresh={() => refetch()}
+        loading={isFetching}
+        panelId="strategy-optimizer"
+      >
+        <button 
+          onClick={toggleFullscreen} 
+          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-white/5"
+          style={{ 
+            border: "1px solid var(--border-subtle)", 
+            background: "var(--bg-input)",
+          }}
+        >
+          {isFullscreen ? (
+            <Minimize2 size={14} style={{ color: "var(--text-muted)" }} />
+          ) : (
+            <Maximize2 size={14} style={{ color: "var(--text-muted)" }} />
+          )}
+        </button>
+      </PanelHeaderCompact>
 
       {/* Fear & Greed Gauge */}
       {data && !data.error && (
@@ -515,7 +516,7 @@ export default function StrategyOptimizerPanel() {
           <div className={styles.globalStats}>
             <div className={styles.statBox} style={{ borderColor: globalZone.color }}>
               <span className={styles.statLabel}>Risk Level</span>
-              <span className={styles.statValue} style={{ color: globalZone.color }}>
+              <span className={styles.statValue} style={{ color: P.muted }}>
                 {data.global_risk_level.replace("_", " ")}
               </span>
             </div>

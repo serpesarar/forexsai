@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import "./theme.tokens.css";
 import "./globals.css";
 import Providers from "./providers";
 
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetBrainsMono.variable}`}>
+    <html lang="en" data-theme="premium" className={`${inter.variable} ${jetBrainsMono.variable}`}>
       <body>
         <Providers>{children}</Providers>
       </body>

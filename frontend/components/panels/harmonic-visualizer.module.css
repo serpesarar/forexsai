@@ -1,5 +1,6 @@
 /* ──────────────────────────────────────────────────
-   Harmonic Visualizer Panel — Galaxy Glow Theme
+   Harmonic Visualizer Panel — Premium Fintech Theme
+   Centralized Token-Based Design System
    ────────────────────────────────────────────────── */
 
 /* ─── PANEL LAYOUT ──────────────────────────────── */
@@ -54,16 +55,16 @@
 }
 
 .iconGlow {
-    color: #FF8C00;
-    filter: drop-shadow(0 0 6px rgba(255, 140, 0, 0.6));
+    color: var(--accent-warning);
+    filter: drop-shadow(0 0 6px var(--accent-warning-35));
 }
 
 .title {
     font-size: 13px;
     font-weight: 700;
-    color: #FF8C00;
+    color: var(--accent-warning);
     letter-spacing: 1.5px;
-    text-shadow: 0 0 8px rgba(255, 140, 0, 0.4);
+    text-shadow: 0 0 8px var(--accent-warning-20);
     margin: 0;
 }
 
@@ -77,7 +78,7 @@
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
-    color: #d1d4dc;
+    color: var(--text-secondary);
     padding: 4px 8px;
     font-size: 11px;
     cursor: pointer;
@@ -85,7 +86,7 @@
 }
 
 .select:focus {
-    border-color: #FF8C00;
+    border-color: var(--accent-warning);
 }
 
 .timeframeGroup {
@@ -109,21 +110,21 @@
 }
 
 .tfBtn:hover {
-    color: #fff;
+    color: var(--text-primary);
     background: rgba(255, 255, 255, 0.08);
 }
 
 .tfBtnActive {
-    color: #FF8C00;
-    background: rgba(255, 140, 0, 0.15);
-    box-shadow: 0 0 8px rgba(255, 140, 0, 0.2);
+    color: var(--accent-warning);
+    background: var(--accent-warning-15);
+    box-shadow: 0 0 8px var(--accent-warning-20);
 }
 
 .refreshBtn {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
-    color: #d1d4dc;
+    color: var(--text-secondary);
     padding: 5px 7px;
     cursor: pointer;
     transition: all 0.2s;
@@ -132,8 +133,8 @@
 }
 
 .refreshBtn:hover {
-    border-color: #FF8C00;
-    color: #FF8C00;
+    border-color: var(--accent-warning);
+    color: var(--accent-warning);
 }
 
 /* ─── HEADER BADGES ─────────────────────────────── */
@@ -147,21 +148,21 @@
 .badgeOrange {
     font-size: 10px;
     font-weight: 700;
-    color: #FF8C00;
-    background: rgba(255, 140, 0, 0.15);
+    color: var(--accent-warning);
+    background: var(--accent-warning-15);
     padding: 2px 8px;
     border-radius: 10px;
-    border: 1px solid rgba(255, 140, 0, 0.3);
+    border: 1px solid var(--accent-warning-35);
 }
 
 .badgeBlue {
     font-size: 10px;
     font-weight: 700;
-    color: #4DC9F6;
-    background: rgba(0, 191, 255, 0.12);
+    color: var(--accent-info);
+    background: var(--accent-info-12);
     padding: 2px 8px;
     border-radius: 10px;
-    border: 1px solid rgba(0, 191, 255, 0.25);
+    border: 1px solid var(--accent-info-20);
 }
 
 /* ─── COLOR LEGEND ──────────────────────────────── */
@@ -248,8 +249,8 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    background: rgba(10, 14, 39, 0.85);
-    color: #d1d4dc;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
     font-size: 13px;
     z-index: 5;
 }
@@ -272,12 +273,12 @@
     0%,
     100% {
         opacity: 1;
-        filter: drop-shadow(0 0 6px #FF8C00) drop-shadow(0 0 14px rgba(255, 140, 0, 0.4));
+        filter: drop-shadow(0 0 6px var(--accent-warning)) drop-shadow(0 0 14px var(--accent-warning-20));
     }
 
     50% {
         opacity: 0.75;
-        filter: drop-shadow(0 0 14px #FF8C00) drop-shadow(0 0 28px rgba(255, 140, 0, 0.7));
+        filter: drop-shadow(0 0 14px var(--accent-warning)) drop-shadow(0 0 28px var(--accent-warning-35));
     }
 }
 
@@ -387,7 +388,7 @@
 /* ─── PATTERN LIST ───────────────────────────────── */
 
 .patternList {
-    border-top: 1px solid rgba(255, 140, 0, 0.1);
+    border-top: 1px solid var(--accent-warning-12);
     padding: 10px 14px;
     max-height: 200px;
     overflow-y: auto;
@@ -440,26 +441,26 @@
 
 /* Big formation card (orange border) */
 .patternCardBig {
-    background: rgba(255, 140, 0, 0.06);
-    border: 1px solid rgba(255, 140, 0, 0.2);
+    background: var(--accent-warning-08);
+    border: 1px solid var(--accent-warning-20);
 }
 
 .patternCardBig:hover {
-    background: rgba(255, 140, 0, 0.12);
-    border-color: rgba(255, 140, 0, 0.4);
-    box-shadow: 0 0 12px rgba(255, 140, 0, 0.15);
+    background: var(--accent-warning-12);
+    border-color: var(--accent-warning-35);
+    box-shadow: 0 0 12px var(--accent-warning-15);
 }
 
 /* Small formation card (blue border) */
 .patternCardSmall {
-    background: rgba(0, 191, 255, 0.04);
-    border: 1px solid rgba(0, 191, 255, 0.15);
+    background: var(--accent-info-08);
+    border: 1px solid var(--accent-info-15);
 }
 
 .patternCardSmall:hover {
-    background: rgba(0, 191, 255, 0.1);
-    border-color: rgba(0, 191, 255, 0.35);
-    box-shadow: 0 0 12px rgba(0, 191, 255, 0.12);
+    background: var(--accent-info-12);
+    border-color: var(--accent-info-35);
+    box-shadow: 0 0 12px var(--accent-info-12);
 }
 
 /* Forming pattern card pulsing border */
@@ -491,7 +492,7 @@
 }
 
 .patternName {
-    color: #fff;
+    color: var(--text-primary);
     font-size: 12px;
     font-weight: 600;
 }
@@ -505,13 +506,13 @@
 }
 
 .bullish {
-    color: #00ff88;
-    background: rgba(0, 255, 136, 0.1);
+    color: var(--accent-positive);
+    background: var(--accent-positive-12);
 }
 
 .bearish {
-    color: #ff4444;
-    background: rgba(255, 68, 68, 0.1);
+    color: var(--accent-negative);
+    background: var(--accent-negative-12);
 }
 
 .patternCardBottom {
@@ -528,18 +529,18 @@
 }
 
 .confidenceHigh {
-    color: #00ff88;
-    background: rgba(0, 255, 136, 0.12);
+    color: var(--accent-positive);
+    background: var(--accent-positive-12);
 }
 
 .confidenceMedium {
-    color: #ffc107;
-    background: rgba(255, 193, 7, 0.12);
+    color: var(--accent-warning);
+    background: var(--accent-warning-12);
 }
 
 .confidenceLow {
-    color: #ff6b6b;
-    background: rgba(255, 107, 107, 0.12);
+    color: var(--accent-negative);
+    background: var(--accent-negative-12);
 }
 
 .statusBadge {
@@ -552,20 +553,20 @@
 
 .tpBadge {
     font-size: 10px;
-    color: #00ff88;
+    color: var(--accent-positive);
     font-weight: 600;
 }
 
 .projBadge {
     font-size: 10px;
-    color: #FF8C00;
+    color: var(--accent-warning);
     font-weight: 600;
 }
 
 .statusForming {
-    color: #FF8C00 !important;
-    background: rgba(255, 140, 0, 0.12) !important;
-    border: 1px dashed rgba(255, 140, 0, 0.4);
+    color: var(--accent-warning) !important;
+    background: var(--accent-warning-12) !important;
+    border: 1px dashed var(--accent-warning-35);
 }
 
 /* ─── DETAIL MODAL ───────────────────────────────── */
@@ -596,14 +597,14 @@
 }
 
 .modalContent {
-    background: linear-gradient(135deg, #1a1f3a 0%, #0d1135 50%, #0a0e27 100%);
+    background: linear-gradient(135deg, var(--bg-panel) 0%, var(--bg-primary) 50%, var(--bg-primary) 100%);
     border-radius: 14px;
     padding: 0;
     min-width: 340px;
     max-width: 420px;
     width: 90%;
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
-    color: #fff;
+    color: var(--text-primary);
     position: relative;
     overflow: hidden;
     animation: slideUp 0.25s ease;
@@ -641,7 +642,7 @@
 
 .modalClose:hover {
     background: rgba(255, 255, 255, 0.15);
-    color: #fff;
+    color: var(--text-primary);
 }
 
 .modalHeader {
@@ -653,13 +654,13 @@
 }
 
 .modalHeaderBig {
-    background: linear-gradient(90deg, rgba(255, 140, 0, 0.12) 0%, transparent 100%);
-    border-bottom-color: rgba(255, 140, 0, 0.15);
+    background: linear-gradient(90deg, var(--accent-warning-12) 0%, transparent 100%);
+    border-bottom-color: var(--accent-warning-15);
 }
 
 .modalHeaderSmall {
-    background: linear-gradient(90deg, rgba(0, 191, 255, 0.08) 0%, transparent 100%);
-    border-bottom-color: rgba(0, 191, 255, 0.12);
+    background: linear-gradient(90deg, var(--accent-info-08) 0%, transparent 100%);
+    border-bottom-color: var(--accent-info-12);
 }
 
 .modalEmoji {
@@ -732,12 +733,12 @@
 .pointKey {
     font-size: 11px;
     font-weight: 800;
-    color: #FF8C00;
+    color: var(--accent-warning);
 }
 
 .pointPrice {
     font-size: 10px;
-    color: #fff;
+    color: var(--text-primary);
     font-weight: 600;
 }
 
@@ -747,16 +748,16 @@
 }
 
 .pointItemProjected {
-    border: 1px dashed rgba(255, 140, 0, 0.4);
-    background: rgba(255, 140, 0, 0.06) !important;
+    border: 1px dashed var(--accent-warning-35);
+    background: var(--accent-warning-08) !important;
 }
 
 /* Fibonacci section */
 .fibSection {
     margin-top: 4px;
     padding: 8px 10px;
-    background: rgba(255, 140, 0, 0.04);
-    border: 1px solid rgba(255, 140, 0, 0.08);
+    background: var(--accent-warning-08);
+    border: 1px solid var(--accent-warning-12);
     border-radius: 6px;
 }
 
@@ -773,7 +774,7 @@
     gap: 12px;
     margin-top: 4px;
     font-size: 11px;
-    color: #FF8C00;
+    color: var(--accent-warning);
     font-weight: 600;
 }
 
@@ -787,10 +788,10 @@
 .alarmBtn {
     flex: 1;
     padding: 10px 14px;
-    background: linear-gradient(135deg, #FF8C00, #FF6B35);
+    background: linear-gradient(135deg, var(--accent-warning), #FF6B35);
     border: none;
     border-radius: 8px;
-    color: #000;
+    color: var(--bg-primary);
     font-weight: 700;
     font-size: 12px;
     cursor: pointer;
@@ -800,7 +801,7 @@
 }
 
 .alarmBtn:hover {
-    box-shadow: 0 0 16px rgba(255, 140, 0, 0.5);
+    box-shadow: 0 0 16px var(--accent-warning-35);
     transform: translateY(-1px);
 }
 
@@ -818,7 +819,7 @@
 
 .closeBtn:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    color: var(--text-primary);
 }
 
 /* ─── SCROLLBAR ──────────────────────────────────── */
@@ -828,10 +829,10 @@
 }
 
 .patternList::-webkit-scrollbar-track {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .patternList::-webkit-scrollbar-thumb {
-    background: rgba(255, 140, 0, 0.3);
+    background: var(--accent-info-35);
     border-radius: 4px;
 }

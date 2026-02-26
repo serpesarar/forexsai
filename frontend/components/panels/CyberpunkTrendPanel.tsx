@@ -24,11 +24,30 @@ import {
 } from "../ui/CustomIcons";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useProximityAnimation } from "../../hooks/useProximityAnimation";
-import { PanelInfoButton } from "../PanelInfoButton";
+import { PanelHeader } from "../PanelHeader";
 import TrendChannelChart from "./TrendChannelChart";
 import { useFullscreen } from "../../hooks/useFullscreen";
+import { Cpu } from "lucide-react";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
+
+// ── Theme-aware Color Palette (CSS Variables) ───────────────────────────────
+const P = {
+  bg: "var(--bg-primary)",
+  card: "var(--bg-card)",
+  surface: "var(--bg-surface)",
+  border: "var(--border-subtle)",
+  text: "var(--text-primary)",
+  muted: "var(--text-muted)",
+  green: "var(--accent-positive)",
+  red: "var(--accent-negative)",
+  warn: "var(--accent-warning)",
+  accent: "var(--accent-info)",
+  cyan: "var(--accent-cyan)",
+  purple: "var(--accent-purple)",
+  pink: "var(--accent-pink)",
+  orange: "var(--accent-orange)",
+};
 
 /* ──────────────────── Types ──────────────────── */
 
@@ -82,17 +101,19 @@ interface ClearTrendData {
 /* ──────────────────── Constants ──────────────────── */
 
 const SYMBOLS = [
-  { key: "NDX.INDX", label: "NASDAQ", icon: NasdaqIcon },
-  { key: "XAUUSD", label: "XAUUSD", icon: GoldIcon },
-  { key: "GDAXI.INDX", label: "DAX", icon: DaxIcon },
-  { key: "CL.COMM", label: "US Oil", icon: OilIcon },
+  { key: "NDX.INDX", label: "NASDAQ" },
+  { key: "XAUUSD", label: "XAUUSD" },
+  { key: "GDAXI.INDX", label: "DAX" },
+  { key: "CL.COMM", label: "US Oil" },
 ];
+
+const TIMEFRAMES = ["15m", "1H", "4H", "1D"];
 
 /* ──────────────────── Sub-Components ──────────────────── */
 
 function HorizontalStrengthBar({ percent, direction }: { percent: number; direction: string }) {
   const clamped = Math.min(100, Math.max(0, percent));
-  const color = direction === "UP" ? "#00ff88" : direction === "DOWN" ? "#ff3366" : "#fbbf24";
+  const color = direction === "UP" ? P.green : direction === "DOWN" ? P.red : P.warn;
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-1">
@@ -134,7 +155,7 @@ function EmaPill({ label, value, currentPrice, color, isProximate, decimals }: {
     >
       <span style={{ color }} className="font-bold text-[9px]">{label}</span>
       <span className="text-white/70">{value.toFixed(decimals)}</span>
-      {isAbove ? <ArrowUpIcon size={10} style={{ color: "#00ff88" }} /> : <ArrowDownIcon size={10} style={{ color: "#ff3366" }} />}
+      {isAbove ? <ArrowUpIcon size={10} style={{ color: P.green }} /> : <ArrowDownIcon size={10} style={{ color: P.red }} />}
     </motion.div>
   );
 }
@@ -142,7 +163,7 @@ function EmaPill({ label, value, currentPrice, color, isProximate, decimals }: {
 function CompactLevelRow({ level, decimals }: { level: LevelData; decimals: number }) {
   const isCurrent = level.type === "current";
   const isRes = level.type === "resistance";
-  const color = isCurrent ? "#00ff88" : isRes ? "#ff3366" : "#00ccff";
+  const color = isCurrent ? P.green : isRes ? P.red : P.accent;
 
   return (
     <div
@@ -260,7 +281,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
 
   if (!data) return null;
 
-  const trendColor = data.trend.direction === "UP" ? "#00ff88" : data.trend.direction === "DOWN" ? "#ff3366" : "#fbbf24";
+  const trendColor = data.trend.direction === "UP" ? P.green : data.trend.direction === "DOWN" ? P.red : P.warn;
   const trendLabel = data.trend.direction === "UP" ? "BULLISH" : data.trend.direction === "DOWN" ? "BEARISH" : "NEUTRAL";
 
   const chartCloses = data.chart_data?.closes ?? [];
@@ -301,55 +322,24 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
         <div className="absolute inset-0 pointer-events-none rounded-3xl" style={{ boxShadow: `inset 0 0 80px rgba(0,204,255,${proximity.supportIntensity * 0.06})` }} />
       )}
 
-      {/* ═══ HEADER BAR ═══ */}
-      <div className="flex items-center justify-between px-2 py-2 bg-transparent">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,204,255,0.15))", border: "1px solid rgba(0,255,136,0.2)" }}>
-            <PulseIcon size={16} style={{ color: "#00ff88" }} />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold tracking-wide font-mono" style={{ color: "#00ff88", textShadow: "0 0 10px rgba(0,255,136,0.3)" }}>
-              CLEAR TREND <span className="text-xs text-white bg-red-600 px-1 rounded ml-2">v2.2</span>
-              <span className="text-[9px] ml-2 text-gray-500">C:{chartCloses.length} D:{chartDates.length}</span>
-            </h2>
-            <p className="text-[9px] uppercase tracking-[0.25em] text-white/25">Neon Trend Analysis</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Symbol Switcher */}
-          <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
-            {SYMBOLS.map((s) => (
-              <button key={s.key} onClick={() => setActiveSymbol(s.key)}
-                className="px-3 py-1.5 text-[10px] font-bold font-mono transition-all flex items-center gap-1"
-                style={{
-                  backgroundColor: activeSymbol === s.key ? "rgba(0,255,136,0.15)" : "rgba(255,255,255,0.03)",
-                  color: activeSymbol === s.key ? "#00ff88" : "rgba(255,255,255,0.35)",
-                  borderRight: "1px solid rgba(255,255,255,0.05)",
-                }}
-              >
-                <s.icon size={12} />{s.label}
-              </button>
-            ))}
-          </div>
-          <select value={timeframe} onChange={(e) => setTimeframe(e.target.value)}
-            className="text-[10px] font-mono font-bold px-2 py-1.5 rounded-lg appearance-none cursor-pointer"
-            style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}
-          >
-            <option value="15m">15m</option>
-            <option value="1H">1H</option>
-            <option value="4H">4H</option>
-            <option value="1D">1D</option>
-          </select>
-          <button onClick={fetchData} className="p-1.5 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <LoadingIcon size={14} className={loading ? "animate-spin" : ""} style={{ color: "rgba(255,255,255,0.35)" }} />
-          </button>
-          <button onClick={toggleFullscreen} className="p-1.5 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }} title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
-            {isFullscreen ? <ShrinkIcon size={14} style={{ color: "rgba(255,255,255,0.35)" }} /> : <ExpandIcon size={14} style={{ color: "rgba(255,255,255,0.35)" }} />}
-          </button>
-          <PanelInfoButton panelId="clear-trend" />
-        </div>
-      </div>
+      {/* ═══ HEADER BAR (PanelHeader) ═══ */}
+      <PanelHeader
+        title="CYBER TREND"
+        subtitle="AI-POWERED ANALYSIS"
+        icon={<Cpu size={22} />}
+        iconColor="var(--accent-cyan)"
+        iconBg="var(--accent-cyan-08)"
+        iconBorder="var(--accent-cyan-15)"
+        symbols={SYMBOLS}
+        activeSymbol={activeSymbol}
+        onSymbolChange={setActiveSymbol}
+        onRefresh={fetchData}
+        loading={loading}
+        panelId="cyber-trend"
+        timeframe={timeframe}
+        onTimeframeChange={setTimeframe}
+        timeframes={TIMEFRAMES}
+      />
 
       {/* ═══ MAIN CONTENT: Chart (left) + Sidebar (right) ═══ */}
       <div className="flex flex-col lg:flex-row">
@@ -389,10 +379,10 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
 
             {/* EMA Pills */}
             <div className="hidden md:flex items-center gap-1.5">
-              <EmaPill label="EMA20" value={data.trend.ema_20} currentPrice={data.price.current} color="#ec4899" isProximate={proximity.ema20Proximity} decimals={data.price.decimals} />
-              <EmaPill label="EMA50" value={data.trend.ema_50} currentPrice={data.price.current} color="#f97316" isProximate={false} decimals={data.price.decimals} />
+              <EmaPill label="EMA20" value={data.trend.ema_20} currentPrice={data.price.current} color={P.pink} isProximate={proximity.ema20Proximity} decimals={data.price.decimals} />
+              <EmaPill label="EMA50" value={data.trend.ema_50} currentPrice={data.price.current} color={P.orange} isProximate={false} decimals={data.price.decimals} />
               {data.trend.ema_200 != null && data.trend.ema_200 > 0 && (
-                <EmaPill label="EMA200" value={data.trend.ema_200} currentPrice={data.price.current} color="#e2e8f0" isProximate={false} decimals={data.price.decimals} />
+                <EmaPill label="EMA200" value={data.trend.ema_200} currentPrice={data.price.current} color={P.text} isProximate={false} decimals={data.price.decimals} />
               )}
             </div>
           </div>
@@ -420,17 +410,17 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
               />
             </div>
           ) : (
-            <div className="h-64 rounded-2xl flex items-center justify-center" style={{ background: "rgba(2,6,23,0.5)", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <div className="h-64 rounded-2xl flex items-center justify-center" style={{ background: P.border }}>
               <p className="text-white/20 text-sm font-mono">Loading chart data...</p>
             </div>
           )}
 
           {/* Mobile-only EMA pills */}
           <div className="flex md:hidden flex-wrap gap-1.5">
-            <EmaPill label="EMA20" value={data.trend.ema_20} currentPrice={data.price.current} color="#ec4899" isProximate={proximity.ema20Proximity} decimals={data.price.decimals} />
-            <EmaPill label="EMA50" value={data.trend.ema_50} currentPrice={data.price.current} color="#f97316" isProximate={false} decimals={data.price.decimals} />
+            <EmaPill label="EMA20" value={data.trend.ema_20} currentPrice={data.price.current} color={P.pink} isProximate={proximity.ema20Proximity} decimals={data.price.decimals} />
+            <EmaPill label="EMA50" value={data.trend.ema_50} currentPrice={data.price.current} color={P.orange} isProximate={false} decimals={data.price.decimals} />
             {data.trend.ema_200 != null && data.trend.ema_200 > 0 && (
-              <EmaPill label="EMA200" value={data.trend.ema_200} currentPrice={data.price.current} color="#e2e8f0" isProximate={false} decimals={data.price.decimals} />
+              <EmaPill label="EMA200" value={data.trend.ema_200} currentPrice={data.price.current} color={P.text} isProximate={false} decimals={data.price.decimals} />
             )}
           </div>
         </div>
@@ -441,7 +431,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
           {/* S/R Section Header */}
           <div className="flex items-center justify-between px-4 pt-4 pb-2">
             <h3 className="text-[10px] uppercase tracking-[0.2em] font-mono flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.35)" }}>
-              <SecurityShieldIcon size={14} style={{ color: "#00ccff" }} />
+              <SecurityShieldIcon size={14} style={{ color: P.accent }} />
               Support & Resistance
             </h3>
             <button onClick={() => openExplanation("support", "Support & Resistance")} className="text-white/20 hover:text-white/40 transition-colors">
@@ -461,16 +451,16 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
             <div className="px-3 py-1.5">
               <motion.div
                 className="flex items-center gap-2 px-3 py-2 rounded-lg relative overflow-hidden"
-                style={{ backgroundColor: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.25)", boxShadow: "0 0 20px rgba(0,255,136,0.08)" }}
+                style={{ color: P.green, backgroundColor: `${P.green}15`, border: `1px solid ${P.green}25`, boxShadow: `0 0 20px ${P.green}08` }}
               >
-                <motion.div className="absolute left-0 top-0 bottom-0 w-1 rounded-r" style={{ backgroundColor: "#00ff88" }}
+                <motion.div className="absolute left-0 top-0 bottom-0 w-1 rounded-r" style={{ backgroundColor: P.green }}
                   animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }}
                 />
-                <span className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded" style={{ color: "#00ff88", backgroundColor: "rgba(0,255,136,0.15)" }}>NOW</span>
-                <span className="font-mono text-sm font-bold flex-1" style={{ color: "#00ff88", textShadow: "0 0 10px rgba(0,255,136,0.4)" }}>
+                <span className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded" style={{ color: P.green, backgroundColor: `${P.green}15` }}>NOW</span>
+                <span className="font-mono text-sm font-bold flex-1" style={{ color: P.green, textShadow: `0 0 10px ${P.green}80` }}>
                   {currentLevel.price.toFixed(data.price.decimals)}
                 </span>
-                <span className="text-[10px] font-mono" style={{ color: "#00ff8880" }}>HERE</span>
+                <span className="text-[10px] font-mono" style={{ color: `${P.green}80` }}>HERE</span>
               </motion.div>
             </div>
           )}
@@ -483,28 +473,28 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
           </div>
 
           {/* Divider */}
-          <div className="mx-4 border-t" style={{ borderColor: "rgba(255,255,255,0.05)" }} />
+          <div className="mx-4 border-t" style={{ borderColor: P.border }} />
 
           {/* Nearest Levels Summary */}
           <div className="px-4 py-3 grid grid-cols-2 gap-2">
             {data.levels.nearest_resistance && (
-              <div className="rounded-lg p-2.5" style={{ backgroundColor: "rgba(255,51,102,0.06)", border: "1px solid rgba(255,51,102,0.15)" }}>
-                <div className="text-[8px] font-mono uppercase tracking-wider mb-1" style={{ color: "#ff336680" }}>Nearest Resistance</div>
-                <div className="text-sm font-bold font-mono" style={{ color: "#ff3366" }}>{data.levels.nearest_resistance.price.toFixed(data.price.decimals)}</div>
-                <div className="text-[9px] font-mono" style={{ color: "#ff336660" }}>{data.levels.nearest_resistance.distance_display}</div>
+              <div className="rounded-lg p-2.5" style={{ backgroundColor: `${P.red}06`, border: `1px solid ${P.red}15` }}>
+                <div className="text-[8px] font-mono uppercase tracking-wider mb-1" style={{ color: `${P.red}80` }}>Nearest Resistance</div>
+                <div className="text-sm font-bold font-mono" style={{ color: P.red }}>{data.levels.nearest_resistance.price.toFixed(data.price.decimals)}</div>
+                <div className="text-[9px] font-mono" style={{ color: `${P.red}60` }}>{data.levels.nearest_resistance.distance_display}</div>
               </div>
             )}
             {data.levels.nearest_support && (
-              <div className="rounded-lg p-2.5" style={{ backgroundColor: "rgba(0,204,255,0.06)", border: "1px solid rgba(0,204,255,0.15)" }}>
-                <div className="text-[8px] font-mono uppercase tracking-wider mb-1" style={{ color: "#00ccff80" }}>Nearest Support</div>
-                <div className="text-sm font-bold font-mono" style={{ color: "#00ccff" }}>{data.levels.nearest_support.price.toFixed(data.price.decimals)}</div>
-                <div className="text-[9px] font-mono" style={{ color: "#00ccff60" }}>{data.levels.nearest_support.distance_display}</div>
+              <div className="rounded-lg p-2.5" style={{ backgroundColor: `${P.accent}06`, border: `1px solid ${P.accent}15` }}>
+                <div className="text-[8px] font-mono uppercase tracking-wider mb-1" style={{ color: `${P.accent}80` }}>Nearest Support</div>
+                <div className="text-sm font-bold font-mono" style={{ color: P.accent }}>{data.levels.nearest_support.price.toFixed(data.price.decimals)}</div>
+                <div className="text-[9px] font-mono" style={{ color: `${P.accent}60` }}>{data.levels.nearest_support.distance_display}</div>
               </div>
             )}
           </div>
 
           {/* Divider */}
-          <div className="mx-4 border-t" style={{ borderColor: "rgba(255,255,255,0.05)" }} />
+          <div className="mx-4 border-t" style={{ borderColor: P.border }} />
 
           {/* Trading Suggestion */}
           <div className="px-4 py-3 flex-1">
@@ -516,19 +506,19 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
 
             {data.trade_zones.target != null && data.trade_zones.stop != null && (
               <div className="grid grid-cols-2 gap-2">
-                <div className="text-center rounded-lg py-2" style={{ backgroundColor: "rgba(0,255,136,0.06)", border: "1px solid rgba(0,255,136,0.15)" }}>
+                <div className="text-center rounded-lg py-2" style={{ background: `${P.green}05`, border: `1px solid ${P.green}10` }}>
                   <div className="text-[8px] text-white/25 font-mono uppercase tracking-wider mb-0.5">
-                    <TargetIcon size={10} className="inline mr-0.5" style={{ color: "#00ff88" }} />Target
+                    <TargetIcon size={10} className="inline mr-0.5" style={{ color: P.green }} />Target
                   </div>
-                  <div className="text-base font-bold font-mono" style={{ color: "#00ff88", textShadow: "0 0 6px rgba(0,255,136,0.3)" }}>
+                  <div className="text-base font-bold font-mono" style={{ color: P.green, textShadow: `0 0 6px ${P.green}30` }}>
                     {data.trade_zones.target.toFixed(data.price.decimals)}
                   </div>
                 </div>
-                <div className="text-center rounded-lg py-2" style={{ backgroundColor: "rgba(255,51,102,0.06)", border: "1px solid rgba(255,51,102,0.15)" }}>
+                <div className="text-center rounded-lg py-2" style={{ background: `${P.red}05`, border: `1px solid ${P.red}10` }}>
                   <div className="text-[8px] text-white/25 font-mono uppercase tracking-wider mb-0.5">
-                    <SecurityShieldIcon size={10} className="inline mr-0.5" style={{ color: "#ff3366" }} />Stop
+                    <SecurityShieldIcon size={10} className="inline mr-0.5" style={{ color: P.red }} />Stop
                   </div>
-                  <div className="text-base font-bold font-mono" style={{ color: "#ff3366", textShadow: "0 0 6px rgba(255,51,102,0.3)" }}>
+                  <div className="text-base font-bold font-mono" style={{ color: P.red, textShadow: `0 0 6px ${P.red}30` }}>
                     {data.trade_zones.stop.toFixed(data.price.decimals)}
                   </div>
                 </div>
@@ -543,23 +533,23 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
         {explanationModal && (
           <motion.div
             className="fixed inset-0 flex items-center justify-center z-50 p-4"
-            style={{ backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+            style={{ background: P.surface, backdropFilter: "blur(8px)" }}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setExplanationModal(null)}
           >
             <motion.div
               className="max-w-md w-full p-6 rounded-2xl"
-              style={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(0,255,136,0.15)", boxShadow: "0 0 40px rgba(0,255,136,0.1)" }}
+              style={{ background: P.surface, border: `1px solid ${P.green}15`, boxShadow: `0 0 40px ${P.green}10` }}
               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-bold font-mono" style={{ color: "#00ff88" }}>{explanationModal.title}</h3>
+                <h3 className="text-base font-bold font-mono" style={{ color: P.green }}>{explanationModal.title}</h3>
                 <button onClick={() => setExplanationModal(null)} className="text-white/40 hover:text-white"><CloseIcon size={20} /></button>
               </div>
               <p className="text-sm text-white/60 leading-relaxed">{explanationModal.content}</p>
               <button onClick={() => setExplanationModal(null)} className="mt-5 w-full py-2 rounded-xl text-sm font-bold font-mono"
-                style={{ background: "rgba(0,255,136,0.1)", border: "1px solid rgba(0,255,136,0.25)", color: "#00ff88" }}>
+                style={{ background: `${P.green}10`, border: `1px solid ${P.green}25`, color: P.green }}>
                 Got it
               </button>
             </motion.div>

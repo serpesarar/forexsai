@@ -25,19 +25,21 @@ import {
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
-// ── Institutional Color Palette ─────────────────────────────────────────────
+// ── Theme-aware Color Palette (CSS Variables) ───────────────────────────────
+// All colors now use CSS variables from theme.tokens.css
+
 const P = {
-  bg: "#0B0F17",
-  card: "#141C2B",
-  surface: "#111827",
-  border: "rgba(255,255,255,0.06)",
-  text: "#E6EDF3",
-  textSec: "#9AA4B2",
-  muted: "#6B7280",
-  green: "#16C784",
-  red: "#EA3943",
-  warn: "#F5A623",
-  accent: "#4F8CFF",
+  bg: "var(--bg-primary)",
+  card: "var(--bg-card)",
+  surface: "var(--bg-surface)",
+  border: "var(--border-subtle)",
+  text: "var(--text-primary)",
+  textSec: "var(--text-secondary)",
+  muted: "var(--text-muted)",
+  green: "var(--accent-positive)",
+  red: "var(--accent-negative)",
+  warn: "var(--accent-warning)",
+  accent: "var(--accent-info)",
 };
 
 interface StrategyData {

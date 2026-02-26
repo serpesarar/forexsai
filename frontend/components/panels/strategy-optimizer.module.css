@@ -1,13 +1,13 @@
 /* ═══════════════════════════════════════════════════════════════════════════════
-   STRATEGY AUTO-OPTIMIZATION LOOP — Fear & Greed Index Style
-   Technological, Neon-Glow, High-Tech Dashboard Theme
+   STRATEGY AUTO-OPTIMIZATION LOOP — Premium Fintech Theme
+   Centralized Token-Based Design System
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 /* ─── BASE PANEL ─────────────────────────────────────────────────────────────── */
 
 .panel {
-  background: linear-gradient(180deg, #0a0f1a 0%, #0d1424 50%, #0a0f1a 100%);
-  border: 1px solid rgba(0, 255, 136, 0.15);
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-panel) 50%, var(--bg-primary) 100%);
+  border: 1px solid var(--accent-positive-15);
   border-radius: 20px;
   overflow: hidden;
   display: flex;
@@ -15,7 +15,7 @@
   min-height: 400px;
   box-shadow: 
     0 25px 50px -12px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(0, 255, 136, 0.05),
+    0 0 0 1px var(--accent-positive-08),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
@@ -35,8 +35,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 18px 24px;
-  background: linear-gradient(180deg, rgba(0,255,136,0.03) 0%, transparent 100%);
-  border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+  background: linear-gradient(180deg, var(--accent-positive-08) 0%, transparent 100%);
+  border-bottom: 1px solid var(--accent-positive-12);
   flex-shrink: 0;
 }
 
@@ -53,11 +53,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #00ff88;
-  background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,255,136,0.05));
+  color: var(--accent-positive);
+  background: linear-gradient(135deg, var(--accent-positive-15), var(--accent-positive-08));
   border-radius: 12px;
-  border: 1px solid rgba(0,255,136,0.25);
-  box-shadow: 0 0 20px rgba(0,255,136,0.15);
+  border: 1px solid var(--accent-positive-20);
+  box-shadow: 0 0 20px var(--accent-positive-15);
 }
 
 .iconPulse {
@@ -65,7 +65,7 @@
   inset: -2px;
   border-radius: 14px;
   border: 2px solid transparent;
-  background: linear-gradient(135deg, #00ff88, transparent, #00ff88) border-box;
+  background: linear-gradient(135deg, var(--accent-positive), transparent, var(--accent-positive)) border-box;
   -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -81,12 +81,12 @@
 .panelTitle {
   font-size: 16px;
   font-weight: 800;
-  color: #00ff88;
+  color: var(--accent-positive);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   margin: 0;
-  text-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
-  background: linear-gradient(90deg, #00ff88, #22d3ee);
+  text-shadow: 0 0 20px var(--accent-positive-20);
+  background: linear-gradient(90deg, var(--accent-positive), var(--accent-info));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -121,7 +121,7 @@
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
-  color: #d1d4dc;
+  color: var(--text-secondary);
   padding: 6px 12px;
   font-size: 11px;
   cursor: pointer;
@@ -130,15 +130,15 @@
 }
 
 .daysSelect:hover, .daysSelect:focus {
-  border-color: #00ff88;
-  background: rgba(0, 255, 136, 0.08);
+  border-color: var(--accent-positive);
+  background: var(--accent-positive-08);
 }
 
 .controlBtn {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
-  color: #d1d4dc;
+  color: var(--text-secondary);
   padding: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -148,9 +148,9 @@
 }
 
 .controlBtn:hover {
-  border-color: #00ff88;
-  color: #00ff88;
-  background: rgba(0, 255, 136, 0.1);
+  border-color: var(--accent-positive);
+  color: var(--accent-positive);
+  background: var(--accent-positive-08);
   transform: translateY(-1px);
 }
 
@@ -188,9 +188,9 @@
   font-weight: 600;
   padding: 5px 12px;
   border-radius: 20px;
-  background: rgba(34, 211, 238, 0.1);
-  color: #22d3ee;
-  border: 1px solid rgba(34, 211, 238, 0.25);
+  background: var(--accent-info-12);
+  color: var(--accent-info);
+  border: 1px solid var(--accent-info-20);
 }
 
 .marketClosedChip {
@@ -201,15 +201,15 @@
   font-weight: 700;
   padding: 5px 12px;
   border-radius: 20px;
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: var(--accent-negative-15);
+  color: var(--accent-negative);
+  border: 1px solid var(--accent-negative-20);
   animation: pulseRed 2s ease-in-out infinite;
 }
 
 @keyframes pulseRed {
-  0%, 100% { box-shadow: 0 0 5px rgba(239,68,68,0.3); }
-  50% { box-shadow: 0 0 20px rgba(239,68,68,0.5); }
+  0%, 100% { box-shadow: 0 0 5px var(--accent-negative-12); }
+  50% { box-shadow: 0 0 20px var(--accent-negative-20); }
 }
 
 /* ─── FEAR & GREED GAUGE ─────────────────────────────────────────────────────── */
@@ -420,7 +420,7 @@
 .statValue {
   font-size: 13px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 /* ─── SYMBOLS SECTION ─────────────────────────────────────────────────────────── */
@@ -513,7 +513,7 @@
 .symbolLabel {
   font-size: 14px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .symbolSession {
@@ -664,8 +664,8 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   padding: 14px;
-  background: rgba(0, 255, 136, 0.03);
-  border: 1px solid rgba(0, 255, 136, 0.1);
+  background: var(--accent-positive-08);
+  border: 1px solid var(--accent-positive-12);
   border-radius: 12px;
 }
 
@@ -706,8 +706,8 @@
 
 .notesSection {
   padding: 16px 24px;
-  background: rgba(234, 179, 8, 0.05);
-  border-top: 1px solid rgba(234, 179, 8, 0.1);
+  background: var(--accent-warning-08);
+  border-top: 1px solid var(--accent-warning-12);
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
@@ -718,11 +718,11 @@
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: rgba(234, 179, 8, 0.9);
+  color: var(--accent-warning);
   padding: 6px 12px;
-  background: rgba(234, 179, 8, 0.08);
+  background: var(--accent-warning-12);
   border-radius: 6px;
-  border: 1px solid rgba(234, 179, 8, 0.15);
+  border: 1px solid var(--accent-warning-20);
 }
 
 /* ─── LOADING & ERROR STATES ─────────────────────────────────────────────────── */
@@ -739,8 +739,8 @@
 }
 
 .loadingSpinner {
-  color: #00ff88;
-  filter: drop-shadow(0 0 10px rgba(0,255,136,0.5));
+  color: var(--accent-positive);
+  filter: drop-shadow(0 0 10px var(--accent-positive-20));
 }
 
 .errorState {
@@ -750,25 +750,25 @@
   justify-content: center;
   padding: 60px;
   gap: 12px;
-  color: #ef4444;
+  color: var(--accent-negative);
   font-size: 13px;
 }
 
 .retryBtn {
   margin-top: 8px;
   padding: 8px 20px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: var(--accent-negative-08);
+  border: 1px solid var(--accent-negative-12);
   border-radius: 8px;
-  color: #ef4444;
+  color: var(--accent-negative);
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .retryBtn:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: #ef4444;
+  background: var(--accent-negative-12);
+  border-color: var(--accent-negative);
 }
 
 /* ─── ANIMATIONS ─────────────────────────────────────────────────────────────── */

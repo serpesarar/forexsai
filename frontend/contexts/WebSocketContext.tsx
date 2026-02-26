@@ -4,8 +4,11 @@ import React, { createContext, useContext, useCallback, useEffect, useRef, useSt
 
 const WS_BASE = "wss://upbeat-flow-production.up.railway.app";
 
-const RECONNECT_BASE_MS = 2000;
-const RECONNECT_MAX_MS = 30000;
+// Aggressive reconnection for real-time data
+const RECONNECT_BASE_MS = 500; // Start with 500ms (was 2000ms)
+const RECONNECT_MAX_MS = 10000; // Max 10s (was 30s)
+const HEARTBEAT_INTERVAL_MS = 15000; // Send ping every 15s
+const HEARTBEAT_TIMEOUT_MS = 30000; // Consider dead if no pong in 30s
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -59,15 +62,23 @@ export function useWSData() {
 /** Get data for a specific symbol from the WS context */
 export function useWSSymbolData(symbol: string): SymbolData | null {
   const { symbolData } = useContext(WebSocketContext);
+  // Null safety check
+  if (!symbolData) return null;
   return symbolData[symbol] ?? null;
 }
 
 /** Get specific panel data for a symbol from the WS stream.
  *  panelKey: "pulse_v3" | "emel" | "mtf" | "clear_trend" */
-export function useWSPanelData(symbol: string, panelKey: string): any | null {
+export function useWSPanelData(symbol: string, panelKey: string): { data: any | null; wsConnected: boolean } {
   const { symbolData, status } = useContext(WebSocketContext);
   const wsConnected = status === "connected";
-  const data = symbolData[symbol]?.panels?.[panelKey as keyof NonNullable<SymbolData["panels"]>] ?? null;
+  // Null safety checks
+  if (!symbolData) return { data: null, wsConnected };
+  const symbolInfo = symbolData[symbol];
+  if (!symbolInfo) return { data: null, wsConnected };
+  const panels = symbolInfo.panels;
+  if (!panels) return { data: null, wsConnected };
+  const data = panels[panelKey as keyof typeof panels] ?? null;
   return { data, wsConnected };
 }
 
@@ -85,11 +96,17 @@ export function WebSocketProvider({ children }: Props) {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttempt = useRef(0);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const heartbeatTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastPongTime = useRef<number>(Date.now());
 
   const cleanup = useCallback(() => {
     if (reconnectTimer.current) {
       clearTimeout(reconnectTimer.current);
       reconnectTimer.current = null;
+    }
+    if (heartbeatTimer.current) {
+      clearInterval(heartbeatTimer.current);
+      heartbeatTimer.current = null;
     }
     if (wsRef.current) {
       wsRef.current.onopen = null;
@@ -100,7 +117,11 @@ export function WebSocketProvider({ children }: Props) {
         wsRef.current.readyState === WebSocket.OPEN ||
         wsRef.current.readyState === WebSocket.CONNECTING
       ) {
-        wsRef.current.close(1000, "cleanup");
+        try {
+          wsRef.current.close(1000, "cleanup");
+        } catch (e) {
+          // Ignore close errors
+        }
       }
       wsRef.current = null;
     }
@@ -120,7 +141,31 @@ export function WebSocketProvider({ children }: Props) {
       ws.onopen = () => {
         setStatus("connected");
         reconnectAttempt.current = 0;
+        lastPongTime.current = Date.now();
         console.log("[WS] Connected to broadcast stream");
+        
+        // Start heartbeat
+        if (heartbeatTimer.current) {
+          clearInterval(heartbeatTimer.current);
+        }
+        heartbeatTimer.current = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            // Check if we've received a pong recently
+            const timeSinceLastPong = Date.now() - lastPongTime.current;
+            if (timeSinceLastPong > HEARTBEAT_TIMEOUT_MS) {
+              console.warn("[WS] Heartbeat timeout, reconnecting...");
+              cleanup();
+              connect();
+              return;
+            }
+            // Send ping
+            try {
+              ws.send(JSON.stringify({ type: "ping" }));
+            } catch (e) {
+              console.error("[WS] Failed to send ping:", e);
+            }
+          }
+        }, HEARTBEAT_INTERVAL_MS);
       };
 
       ws.onmessage = (event) => {
@@ -129,10 +174,17 @@ export function WebSocketProvider({ children }: Props) {
 
           // Keepalive
           if (msg.type === "ping") {
-            ws.send(JSON.stringify({ type: "pong" }));
+            try {
+              ws.send(JSON.stringify({ type: "pong" }));
+            } catch (e) {
+              console.error("[WS] Failed to send pong:", e);
+            }
             return;
           }
-          if (msg.type === "pong") return;
+          if (msg.type === "pong") {
+            lastPongTime.current = Date.now();
+            return;
+          }
 
           // Partial update message for instant real-time ticks
           if (msg.type === "price_update" && msg.symbol && msg.price !== undefined) {
@@ -177,17 +229,24 @@ export function WebSocketProvider({ children }: Props) {
       ws.onclose = (event) => {
         setStatus("disconnected");
         wsRef.current = null;
+        
+        // Clear heartbeat
+        if (heartbeatTimer.current) {
+          clearInterval(heartbeatTimer.current);
+          heartbeatTimer.current = null;
+        }
 
         if (event.code === 1000) return; // intentional close
 
-        // Exponential backoff
+        // Aggressive exponential backoff for faster reconnection
+        // First retry: 500ms, Second: 750ms, Third: 1125ms, Max: 10s
         const delay = Math.min(
-          RECONNECT_BASE_MS * Math.pow(1.5, reconnectAttempt.current),
+          RECONNECT_BASE_MS * Math.pow(1.3, reconnectAttempt.current),
           RECONNECT_MAX_MS
         );
         reconnectAttempt.current += 1;
         console.log(
-          `[WS] Reconnecting in ${Math.round(delay / 1000)}s (attempt ${reconnectAttempt.current})`
+          `[WS] Connection closed (code: ${event.code}). Reconnecting in ${Math.round(delay)}ms (attempt ${reconnectAttempt.current})`
         );
         reconnectTimer.current = setTimeout(connect, delay);
       };

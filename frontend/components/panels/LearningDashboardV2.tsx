@@ -27,31 +27,17 @@ import {
   triggerLifecycleCheck, type ModelStats, type ActiveSignal, type SignalCheck,
 } from "../../lib/api/learning";
 
-// ── Institutional Color Palette ─────────────────────────────────────────────
-const P = {
-  bg: "#0B0F17",
-  card: "#141C2B",
-  surface: "#111827",
-  border: "rgba(255,255,255,0.06)",
-  text: "#E6EDF3",
-  textSec: "#9AA4B2",
-  muted: "#6B7280",
-  green: "#16C784",
-  red: "#EA3943",
-  warn: "#F5A623",
-  accent: "#4F8CFF",
-  emerald: "#34D399",
-  purple: "#A78BFA",
-};
+// ── Theme-aware Color Palette (CSS Variables) ───────────────────────────────
+// All colors now use CSS variables from theme.tokens.css
 
 const MODEL_THEME: Record<string, { label: string; color: string; Icon: any }> = {
-  ml: { label: "ML_Model", color: P.accent, Icon: SignalsIcon },
+  ml: { label: "ML_Model", color: "var(--accent-info)", Icon: SignalsIcon },
   pulse1: { label: "Pulse 1 — Algo", color: "#22D3EE", Icon: PulseIcon },
-  pulse2: { label: "Pulse 2 — ML", color: P.purple, Icon: SignalsIcon },
-  pulse3: { label: "Pulse 3 — MTF", color: P.emerald, Icon: PulseIcon },
+  pulse2: { label: "Pulse 2 — ML", color: "var(--accent-purple)", Icon: SignalsIcon },
+  pulse3: { label: "Pulse 3 — MTF", color: "var(--accent-positive)", Icon: PulseIcon },
   pulse: { label: "Pulse Engine", color: "#22D3EE", Icon: PulseIcon },
   emel: { label: "EMEL 9-Check", color: "#C084FC", Icon: EmelIcon },
-  hybrid: { label: "Hybrid", color: P.warn, Icon: LearningIcon },
+  hybrid: { label: "Hybrid", color: "var(--accent-warning)", Icon: LearningIcon },
 };
 
 function getTheme(model: string) {
@@ -61,7 +47,7 @@ function getTheme(model: string) {
 function symLabel(sym: string) {
   if (sym === "NDX.INDX") return "NASDAQ";
   if (sym === "GDAXI.INDX") return "DAX";
-  if (sym === "CL.COMM") return "US OIL";
+  if (sym === "CL.F" || sym === "CL.COMM") return "US OIL";
   if (sym === "XAUUSD") return "XAUUSD";
   return sym;
 }
@@ -69,7 +55,7 @@ function symLabel(sym: string) {
 function symIcon(sym: string): string {
   if (sym === "NDX.INDX") return "📈";
   if (sym === "GDAXI.INDX") return "🏛";
-  if (sym === "CL.COMM") return "🛢";
+  if (sym === "CL.F" || sym === "CL.COMM") return "🛢";
   if (sym === "XAUUSD") return "⭐";
   return "📊";
 }
@@ -82,7 +68,7 @@ function ConfidenceRing({ rate, color, size = 56 }: { rate: number; color: strin
   const cx = size / 2;
   return (
     <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-      <circle cx={cx} cy={cx} r={r} fill="none" stroke={P.border} strokeWidth={size * 0.07} />
+      <circle cx={cx} cy={cx} r={r} fill="none" stroke={"var(--border-subtle)"} strokeWidth={size * 0.07} />
       <circle
         cx={cx} cy={cx} r={r} fill="none"
         stroke={color} strokeWidth={size * 0.07}
@@ -96,12 +82,12 @@ function ConfidenceRing({ rate, color, size = 56 }: { rate: number; color: strin
 
 // ── Premium Progress Bar (6px, Rounded, Desaturated) ─────────────────────────
 function TpBar({ name, rate }: { name: string; rate: number }) {
-  const c = rate >= 50 ? P.green : rate >= 25 ? P.warn : P.red;
+  const c = rate >= 50 ? "var(--accent-positive)" : rate >= 25 ? "var(--accent-warning)" : "var(--accent-negative)";
   return (
     <div className="flex items-center gap-2.5">
       <span
         className="w-7 shrink-0"
-        style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.textSec, letterSpacing: "0.02em" }}
+        style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-secondary)", letterSpacing: "0.02em" }}
       >{name}</span>
       <div className="flex-1 rounded-full overflow-hidden" style={{ height: 6, background: "rgba(255,255,255,0.06)" }}>
         <div
@@ -120,7 +106,7 @@ function TpBar({ name, rate }: { name: string; rate: number }) {
 // ── Mini Sparkline (Institutional: subtle, calm) ─────────────────────────────
 function MiniSparkLine({ positive }: { positive: boolean }) {
   // Simple decorative sparkline using random-ish path
-  const color = positive ? P.green : P.red;
+  const color = positive ? "var(--accent-positive)" : "var(--accent-negative)";
   const d = positive
     ? "M2 18 L6 14 L10 16 L14 10 L18 12 L22 6 L26 8 L30 4 L34 6 L38 2"
     : "M2 2 L6 6 L10 4 L14 10 L18 8 L22 14 L26 12 L30 16 L34 14 L38 18";
@@ -144,8 +130,8 @@ function SymbolCard({ sym, d }: { sym: string; d: any }) {
     <div
       className="rounded-xl flex flex-col gap-3 transition-all duration-200 hover:translate-y-[-1px]"
       style={{
-        background: P.card,
-        border: `1px solid ${P.border}`,
+        background: "var(--bg-card)",
+        border: `1px solid ${"var(--border-subtle)"}`,
         padding: "20px",
       }}
     >
@@ -153,9 +139,9 @@ function SymbolCard({ sym, d }: { sym: string; d: any }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span style={{ fontSize: 16 }}>{icon}</span>
-          <span style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: P.text, letterSpacing: "-0.01em" }}>{name}</span>
+          <span style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>{name}</span>
         </div>
-        <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.muted }}>
+        <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>
           ~ {conf.toFixed(0)}% confidence
         </span>
       </div>
@@ -168,7 +154,7 @@ function SymbolCard({ sym, d }: { sym: string; d: any }) {
           fontWeight: 700,
           letterSpacing: "-0.5px",
           lineHeight: 1,
-          color: netPos ? P.green : P.red,
+          color: netPos ? "var(--accent-positive)" : "var(--accent-negative)",
         }}>
           {netPos ? "+" : ""}{netPips.toFixed(1)}p
         </span>
@@ -176,21 +162,21 @@ function SymbolCard({ sym, d }: { sym: string; d: any }) {
       </div>
 
       {/* W / L row */}
-      <div className="flex items-center gap-3" style={{ paddingTop: 4, borderTop: `1px solid ${P.border}` }}>
-        <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.green }}>
+      <div className="flex items-center gap-3" style={{ paddingTop: 4, borderTop: `1px solid ${"var(--border-subtle)"}` }}>
+        <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: "var(--accent-positive)" }}>
           {d.completed ?? 0}W
         </span>
-        <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.red }}>
+        <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: "var(--accent-negative)" }}>
           {d.stopped ?? 0}L
         </span>
-        <span style={{ fontFamily: FONT, fontSize: 11, color: P.muted, marginLeft: "auto" }}>
+        <span style={{ fontFamily: FONT, fontSize: 11, color: "var(--text-muted)", marginLeft: "auto" }}>
           {d.total ?? 0} signals
         </span>
       </div>
 
       {/* Target Bars (TP1-TP4) */}
       {d.target_rates && Object.keys(d.target_rates).length > 0 && (
-        <div className="flex flex-col gap-2" style={{ paddingTop: 8, borderTop: `1px solid ${P.border}` }}>
+        <div className="flex flex-col gap-2" style={{ paddingTop: 8, borderTop: `1px solid ${"var(--border-subtle)"}` }}>
           {Object.entries(d.target_rates).sort().map(([tp, rate]) => (
             <TpBar key={tp} name={tp} rate={rate as number} />
           ))}
@@ -206,19 +192,19 @@ function ModelCard({ model, stats }: { model: string; stats: ModelStats }) {
   const theme = getTheme(model);
   const Icon = theme.Icon;
   const wr = stats.win_rate;
-  const wrColor = wr >= 55 ? P.green : wr >= 40 ? P.warn : P.red;
+  const wrColor = wr >= 55 ? "var(--accent-positive)" : wr >= 40 ? "var(--accent-warning)" : "var(--accent-negative)";
   const netPos = stats.net_pips >= 0;
 
   return (
     <div
       className="rounded-xl overflow-hidden"
-      style={{ background: P.card, border: `1px solid ${P.border}` }}
+      style={{ background: "var(--bg-card)", border: `1px solid ${"var(--border-subtle)"}` }}
     >
       {/* ── Model Header ── */}
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center gap-4 px-5 py-4 transition-colors"
-        style={{ borderBottom: open ? `1px solid ${P.border}` : "none" }}
+        style={{ borderBottom: open ? `1px solid ${"var(--border-subtle)"}` : "none" }}
         onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.015)")}
         onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
@@ -228,8 +214,8 @@ function ModelCard({ model, stats }: { model: string; stats: ModelStats }) {
           <Icon className="w-5 h-5" style={{ color: theme.color, width: 20, height: 20 }} />
         </div>
         <div className="text-left flex-1 min-w-0">
-          <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: P.text, letterSpacing: "-0.01em" }}>{theme.label}</p>
-          <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 400, color: P.muted }}>
+          <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>{theme.label}</p>
+          <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 400, color: "var(--text-muted)" }}>
             {stats.total_signals} signals · All sessions rsct
           </p>
         </div>
@@ -244,25 +230,25 @@ function ModelCard({ model, stats }: { model: string; stats: ModelStats }) {
 
         {/* KPI: Total Net */}
         <div className="text-right shrink-0 hidden sm:flex flex-col items-end">
-          <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.muted, letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
+          <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
             TOTAL NET
           </span>
-          <span style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: netPos ? P.green : P.red, letterSpacing: "-0.5px" }}>
+          <span style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: netPos ? "var(--accent-positive)" : "var(--accent-negative)", letterSpacing: "-0.5px" }}>
             {netPos ? "+" : ""}{stats.net_pips.toFixed(1)}p
           </span>
         </div>
 
         {/* KPI: R/R */}
         <div className="text-right shrink-0 hidden md:flex flex-col items-end">
-          <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.muted, letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
+          <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
             R/R
           </span>
-          <span style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: stats.risk_reward >= 1.5 ? P.green : P.warn, letterSpacing: "-0.3px" }}>
+          <span style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: stats.risk_reward >= 1.5 ? "var(--accent-positive)" : "var(--accent-warning)", letterSpacing: "-0.3px" }}>
             {stats.risk_reward.toFixed(2)}
           </span>
         </div>
 
-        {open ? <ChevronUp className="w-4 h-4 shrink-0" style={{ color: P.muted }} /> : <ChevronDown className="w-4 h-4 shrink-0" style={{ color: P.muted }} />}
+        {open ? <ChevronUp className="w-4 h-4 shrink-0" style={{ color: "var(--text-muted)" }} /> : <ChevronDown className="w-4 h-4 shrink-0" style={{ color: "var(--text-muted)" }} />}
       </button>
 
       {/* ── Expanded Content ── */}
@@ -272,12 +258,12 @@ function ModelCard({ model, stats }: { model: string; stats: ModelStats }) {
           {/* KPI Strip: Total Profit / Total Loss / Best Signal */}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: "TOTAL PROFIT", val: `+${stats.total_profit_pips ?? stats.avg_profit_pips}p`, color: P.green },
-              { label: "TOTAL LOSS", val: `-${stats.total_loss_pips ?? stats.avg_loss_pips}p`, color: P.red },
-              { label: "AVG PROFIT", val: `+${stats.avg_profit_pips}p`, color: P.green },
+              { label: "TOTAL PROFIT", val: `+${stats.total_profit_pips ?? stats.avg_profit_pips}p`, color: "var(--accent-positive)" },
+              { label: "TOTAL LOSS", val: `-${stats.total_loss_pips ?? stats.avg_loss_pips}p`, color: "var(--accent-negative)" },
+              { label: "AVG PROFIT", val: `+${stats.avg_profit_pips}p`, color: "var(--accent-positive)" },
             ].map(s => (
-              <div key={s.label} className="rounded-lg text-center" style={{ background: P.surface, padding: "14px 12px", border: `1px solid ${P.border}` }}>
-                <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 6 }}>
+              <div key={s.label} className="rounded-lg text-center" style={{ background: "var(--bg-surface)", padding: "14px 12px", border: `1px solid ${"var(--border-subtle)"}` }}>
+                <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 6 }}>
                   {s.label}
                 </p>
                 <p style={{ fontFamily: FONT, fontSize: 20, fontWeight: 700, color: s.color, letterSpacing: "-0.5px" }}>
@@ -290,10 +276,10 @@ function ModelCard({ model, stats }: { model: string; stats: ModelStats }) {
           {/* Overall Target Rates */}
           {Object.keys(stats.target_rates).length > 0 && (
             <div className="space-y-2.5">
-              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" as const }}>
+              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const }}>
                 Overall Target Hit Rates
               </p>
-              <div className="rounded-lg" style={{ background: P.surface, padding: 16, border: `1px solid ${P.border}` }}>
+              <div className="rounded-lg" style={{ background: "var(--bg-surface)", padding: 16, border: `1px solid ${"var(--border-subtle)"}` }}>
                 <div className="flex flex-col gap-3">
                   {Object.entries(stats.target_rates).sort().map(([tp, rate]) => (
                     <TpBar key={tp} name={tp} rate={rate} />
@@ -306,7 +292,7 @@ function ModelCard({ model, stats }: { model: string; stats: ModelStats }) {
           {/* Per-Symbol Asset Cards (Grid - Reference Design) */}
           {Object.keys(stats.symbols).length > 0 && (
             <div>
-              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>
+              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>
                 Per Asset Performance
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -326,7 +312,7 @@ function ModelCard({ model, stats }: { model: string; stats: ModelStats }) {
 function ActiveSignalCard({ signal, onSelect }: { signal: ActiveSignal; onSelect: (id: string) => void }) {
   const isBuy = signal.ml_direction === "BUY";
   const isSell = signal.ml_direction === "SELL";
-  const dirColor = isBuy ? P.green : isSell ? P.red : P.warn;
+  const dirColor = isBuy ? "var(--accent-positive)" : isSell ? "var(--accent-negative)" : "var(--accent-warning)";
   const theme = getTheme(signal.model_type || "ml");
 
   const age = Math.round((Date.now() - new Date(signal.created_at).getTime()) / 60000);
@@ -339,8 +325,8 @@ function ActiveSignalCard({ signal, onSelect }: { signal: ActiveSignal; onSelect
       onClick={() => onSelect(signal.id)}
       className="w-full text-left rounded-xl overflow-hidden transition-all duration-200"
       style={{
-        background: P.card,
-        border: `1px solid ${P.border}`,
+        background: "var(--bg-card)",
+        border: `1px solid ${"var(--border-subtle)"}`,
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
@@ -348,7 +334,7 @@ function ActiveSignalCard({ signal, onSelect }: { signal: ActiveSignal; onSelect
         e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.3)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = P.border;
+        e.currentTarget.style.borderColor = "var(--border-subtle)";
         e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.boxShadow = "none";
       }}
@@ -369,7 +355,7 @@ function ActiveSignalCard({ signal, onSelect }: { signal: ActiveSignal; onSelect
           {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: P.text }}>{symLabel(signal.symbol)}</span>
+              <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: "var(--text-primary)" }}>{symLabel(signal.symbol)}</span>
               <span
                 className="px-2 py-0.5 rounded"
                 style={{ fontFamily: FONT, fontSize: 11, fontWeight: 600, color: dirColor, background: `${dirColor}10`, border: `1px solid ${dirColor}18` }}
@@ -380,11 +366,11 @@ function ActiveSignalCard({ signal, onSelect }: { signal: ActiveSignal; onSelect
               >{signal.model_type}</span>
             </div>
             <div className="flex items-center gap-2 mt-1">
-              <span style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>{age}m ago</span>
-              <span style={{ color: P.muted }}>·</span>
-              <span style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>Entry {signal.ml_entry_price?.toFixed(2)}</span>
-              <span style={{ color: P.muted }}>·</span>
-              <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: (signal.ml_confidence ?? 0) >= 60 ? P.green : P.warn }}>
+              <span style={{ fontFamily: FONT, fontSize: 11, color: "var(--text-muted)" }}>{age}m ago</span>
+              <span style={{ color: "var(--text-muted)" }}>·</span>
+              <span style={{ fontFamily: FONT, fontSize: 11, color: "var(--text-muted)" }}>Entry {signal.ml_entry_price?.toFixed(2)}</span>
+              <span style={{ color: "var(--text-muted)" }}>·</span>
+              <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: (signal.ml_confidence ?? 0) >= 60 ? "var(--accent-positive)" : "var(--accent-warning)" }}>
                 {signal.ml_confidence?.toFixed(0)}% conf
               </span>
             </div>
@@ -394,7 +380,7 @@ function ActiveSignalCard({ signal, onSelect }: { signal: ActiveSignal; onSelect
           <div className="shrink-0 flex flex-col items-end gap-1.5">
             <span style={{
               fontFamily: FONT, fontSize: 16, fontWeight: 700,
-              color: profitPos ? P.green : P.muted,
+              color: profitPos ? "var(--accent-positive)" : "var(--text-muted)",
               letterSpacing: "-0.3px"
             }}>
               {profitPos ? "+" : ""}{(signal.highest_profit_pips ?? 0).toFixed(1)}p
@@ -403,8 +389,8 @@ function ActiveSignalCard({ signal, onSelect }: { signal: ActiveSignal; onSelect
               {Array.from({ length: totalTargets }).map((_, i) => (
                 <div key={i} className="rounded-sm" style={{
                   width: 10, height: 10,
-                  background: i < targetsHit ? P.green : "rgba(255,255,255,0.06)",
-                  border: i < targetsHit ? `1px solid ${P.green}50` : `1px solid ${P.border}`,
+                  background: i < targetsHit ? "var(--accent-positive)" : "rgba(255,255,255,0.06)",
+                  border: i < targetsHit ? `1px solid ${"var(--accent-positive)"}50` : `1px solid ${"var(--border-subtle)"}`,
                 }} />
               ))}
             </div>
@@ -430,7 +416,7 @@ function SparkLine({ checks, direction }: { checks: SignalCheck[]; direction: st
   });
   const last = values[values.length - 1];
   const positive = last >= 0;
-  const lineColor = positive ? P.green : P.red;
+  const lineColor = positive ? "var(--accent-positive)" : "var(--accent-negative)";
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
       <defs>
@@ -450,21 +436,21 @@ function SparkLine({ checks, direction }: { checks: SignalCheck[]; direction: st
 
 // ── Arc Target Indicator ─────────────────────────────────────────────────────
 function ArcTarget({ name, hit, pips }: { name: string; hit: boolean; pips: any }) {
-  const color = hit ? P.green : P.muted;
+  const color = hit ? "var(--accent-positive)" : "var(--text-muted)";
   return (
     <div className="flex flex-col items-center gap-1.5"
       style={{ opacity: hit ? 1 : 0.5 }}>
       <div className="rounded-lg flex items-center justify-center" style={{
         width: 36, height: 36,
-        background: hit ? `${P.green}12` : "rgba(255,255,255,0.03)",
-        border: `1px solid ${hit ? `${P.green}30` : P.border}`,
+        background: hit ? `${"var(--accent-positive)"}12` : "rgba(255,255,255,0.03)",
+        border: `1px solid ${hit ? `${"var(--accent-positive)"}30` : "var(--border-subtle)"}`,
       }}>
         {hit
-          ? <CheckCircle className="w-4 h-4" style={{ color: P.green }} />
-          : <Target className="w-4 h-4" style={{ color: P.muted }} />}
+          ? <CheckCircle className="w-4 h-4" style={{ color: "var(--accent-positive)" }} />
+          : <Target className="w-4 h-4" style={{ color: "var(--text-muted)" }} />}
       </div>
       <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color }}>{name}</span>
-      <span style={{ fontFamily: FONT, fontSize: 9, color: P.muted }}>{pips}p</span>
+      <span style={{ fontFamily: FONT, fontSize: 9, color: "var(--text-muted)" }}>{pips}p</span>
     </div>
   );
 }
@@ -483,14 +469,14 @@ function SignalDetailModal({ signalId, onClose }: { signalId: string; onClose: (
   if (isLoading || !data) return (
     <div className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
-      <RefreshCw className="w-6 h-6 animate-spin" style={{ color: P.accent }} />
+      <RefreshCw className="w-6 h-6 animate-spin" style={{ color: "var(--accent-info)" }} />
     </div>
   );
 
   const sig = data.signal;
   if (!sig) return null;
   const isBuy = sig.ml_direction === "BUY";
-  const dirColor = isBuy ? P.green : P.red;
+  const dirColor = isBuy ? "var(--accent-positive)" : "var(--accent-negative)";
   const theme = getTheme(sig.model_type || "ml");
   const checks = data.checks || [];
   const failure = data.failure;
@@ -503,10 +489,10 @@ function SignalDetailModal({ signalId, onClose }: { signalId: string; onClose: (
       style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}>
       <div className="w-full max-w-lg rounded-xl overflow-hidden"
-        style={{ background: P.card, border: `1px solid ${P.border}`, maxHeight: "85vh", overflowY: "auto" }}>
+        style={{ background: "var(--bg-card)", border: `1px solid ${"var(--border-subtle)"}`, maxHeight: "85vh", overflowY: "auto" }}>
 
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${P.border}` }}>
+        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${"var(--border-subtle)"}` }}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg flex items-center justify-center"
               style={{ background: `${dirColor}10`, border: `1px solid ${dirColor}20` }}>
@@ -515,10 +501,10 @@ function SignalDetailModal({ signalId, onClose }: { signalId: string; onClose: (
                 : <ArrowDownRight className="w-5 h-5" style={{ color: dirColor }} />}
             </div>
             <div>
-              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: P.text }}>
+              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>
                 {symLabel(sig.symbol)} · {sig.ml_direction}
               </p>
-              <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>
+              <p style={{ fontFamily: FONT, fontSize: 11, color: "var(--text-muted)" }}>
                 {sig.model_type} · {sig.ml_confidence?.toFixed(0)}% confidence
               </p>
             </div>
@@ -528,26 +514,26 @@ function SignalDetailModal({ signalId, onClose }: { signalId: string; onClose: (
             style={{ background: "rgba(255,255,255,0.03)" }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}>
-            <XCircle className="w-4 h-4" style={{ color: P.muted }} />
+            <XCircle className="w-4 h-4" style={{ color: "var(--text-muted)" }} />
           </button>
         </div>
 
         <div className="p-5 space-y-5">
           {/* Entry + Status */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-lg" style={{ background: P.surface, padding: "12px", border: `1px solid ${P.border}` }}>
-              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 4 }}>Entry</p>
-              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: P.text }}>{sig.ml_entry_price?.toFixed(2)}</p>
+            <div className="rounded-lg" style={{ background: "var(--bg-surface)", padding: "12px", border: `1px solid ${"var(--border-subtle)"}` }}>
+              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 4 }}>Entry</p>
+              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>{sig.ml_entry_price?.toFixed(2)}</p>
             </div>
-            <div className="rounded-lg" style={{ background: P.surface, padding: "12px", border: `1px solid ${P.border}` }}>
-              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 4 }}>Best P/L</p>
-              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: (sig.highest_profit_pips ?? 0) > 0 ? P.green : P.muted }}>
+            <div className="rounded-lg" style={{ background: "var(--bg-surface)", padding: "12px", border: `1px solid ${"var(--border-subtle)"}` }}>
+              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 4 }}>Best P/L</p>
+              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: (sig.highest_profit_pips ?? 0) > 0 ? "var(--accent-positive)" : "var(--text-muted)" }}>
                 {(sig.highest_profit_pips ?? 0) > 0 ? "+" : ""}{(sig.highest_profit_pips ?? 0).toFixed(1)}p
               </p>
             </div>
-            <div className="rounded-lg" style={{ background: P.surface, padding: "12px", border: `1px solid ${P.border}` }}>
-              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 4 }}>Status</p>
-              <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: sig.status === "completed" ? P.green : sig.status === "stopped" ? P.red : P.warn, textTransform: "capitalize" as const }}>
+            <div className="rounded-lg" style={{ background: "var(--bg-surface)", padding: "12px", border: `1px solid ${"var(--border-subtle)"}` }}>
+              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 4 }}>Status</p>
+              <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: sig.status === "completed" ? "var(--accent-positive)" : sig.status === "stopped" ? "var(--accent-negative)" : "var(--accent-warning)", textTransform: "capitalize" as const }}>
                 {sig.status}
               </p>
             </div>
@@ -562,23 +548,23 @@ function SignalDetailModal({ signalId, onClose }: { signalId: string; onClose: (
 
           {/* Sparkline */}
           {checks.length >= 2 && (
-            <div className="rounded-lg" style={{ background: P.surface, padding: 16, border: `1px solid ${P.border}` }}>
-              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 8 }}>P/L Timeline</p>
+            <div className="rounded-lg" style={{ background: "var(--bg-surface)", padding: 16, border: `1px solid ${"var(--border-subtle)"}` }}>
+              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 8 }}>P/L Timeline</p>
               <SparkLine checks={checks} direction={sig.ml_direction} />
             </div>
           )}
 
           {/* Failure Autopsy */}
           {failure && (
-            <div className="rounded-lg" style={{ background: `${P.red}06`, padding: 14, border: `1px solid ${P.red}15` }}>
-              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.red, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 6 }}>
+            <div className="rounded-lg" style={{ background: `${"var(--accent-negative)"}06`, padding: 14, border: `1px solid ${"var(--accent-negative)"}15` }}>
+              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: "var(--accent-negative)", letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 6 }}>
                 Failure Autopsy
               </p>
-              <p style={{ fontFamily: FONT, fontSize: 12, color: P.textSec, lineHeight: 1.5 }}>
+              <p style={{ fontFamily: FONT, fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>
                 {failure.reason || "Market moved against signal direction."}
               </p>
               {failure.max_adverse_pips !== undefined && (
-                <p style={{ fontFamily: FONT, fontSize: 11, color: P.red, marginTop: 4 }}>
+                <p style={{ fontFamily: FONT, fontSize: 11, color: "var(--accent-negative)", marginTop: 4 }}>
                   Max adverse: -{Math.abs(failure.max_adverse_pips).toFixed(1)}p
                 </p>
               )}
@@ -624,25 +610,25 @@ export default function LearningDashboardV2() {
       className="rounded-xl overflow-hidden"
       style={{
         fontFamily: FONT,
-        background: P.bg,
-        border: `1px solid ${P.border}`,
+        background: "var(--bg-primary)",
+        border: `1px solid ${"var(--border-subtle)"}`,
       }}
     >
       {/* ── HEADER ── */}
       <div className="flex items-center justify-between px-5 py-4" style={{
-        background: P.surface,
-        borderBottom: `1px solid ${P.border}`,
+        background: "var(--bg-surface)",
+        borderBottom: `1px solid ${"var(--border-subtle)"}`,
       }}>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ background: `${P.accent}12`, border: `1px solid ${P.accent}20` }}>
-            <LearningIcon size={18} style={{ color: P.accent }} />
+            style={{ background: `${"var(--accent-info)"}12`, border: `1px solid ${"var(--accent-info)"}20` }}>
+            <LearningIcon size={18} style={{ color: "var(--accent-info)" }} />
           </div>
           <div>
-            <h2 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text, letterSpacing: "-0.01em" }}>
+            <h2 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
               Signal Performance
             </h2>
-            <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 400, color: P.muted }}>
+            <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 400, color: "var(--text-muted)" }}>
               Learning Engine · Lifecycle Tracker
             </p>
           </div>
@@ -650,23 +636,23 @@ export default function LearningDashboardV2() {
         <div className="flex items-center gap-2">
           {dashboard?.active_signals !== undefined && (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
-              style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.green, background: `${P.green}08`, border: `1px solid ${P.green}15` }}>
-              <Activity className="w-3 h-3" style={{ color: P.green }} />
+              style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--accent-positive)", background: `${"var(--accent-positive)"}08`, border: `1px solid ${"var(--accent-positive)"}15` }}>
+              <Activity className="w-3 h-3" style={{ color: "var(--accent-positive)" }} />
               {dashboard.active_signals} active
             </span>
           )}
           <select value={days} onChange={(e) => setDays(Number(e.target.value))}
             className="rounded-lg appearance-none cursor-pointer"
-            style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, padding: "6px 10px", backgroundColor: P.surface, color: P.textSec, border: `1px solid ${P.border}` }}>
+            style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, padding: "6px 10px", backgroundColor: "var(--bg-surface)", color: "var(--text-secondary)", border: `1px solid ${"var(--border-subtle)"}` }}>
             <option value={7}>7 days</option>
             <option value={14}>14 days</option>
             <option value={30}>30 days</option>
           </select>
           <button onClick={handleCheck}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-150"
-            style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, background: `${P.accent}10`, border: `1px solid ${P.accent}20`, color: P.accent }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = `${P.accent}18`)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = `${P.accent}10`)}>
+            style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, background: `${"var(--accent-info)"}10`, border: `1px solid ${"var(--accent-info)"}20`, color: "var(--accent-info)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = `${"var(--accent-info)"}18`)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = `${"var(--accent-info)"}10`)}>
             <RefreshCw className={`w-3.5 h-3.5 ${checking ? "animate-spin" : ""}`} />
             Check
           </button>
@@ -674,18 +660,18 @@ export default function LearningDashboardV2() {
       </div>
 
       {isLoading ? (
-        <div className="p-16 flex items-center justify-center" style={{ background: P.bg }}>
-          <RefreshCw className="w-5 h-5 animate-spin" style={{ color: P.accent }} />
+        <div className="p-16 flex items-center justify-center" style={{ background: "var(--bg-primary)" }}>
+          <RefreshCw className="w-5 h-5 animate-spin" style={{ color: "var(--accent-info)" }} />
         </div>
       ) : (
-        <div className="p-5 space-y-5" style={{ background: P.bg }}>
+        <div className="p-5 space-y-5" style={{ background: "var(--bg-primary)" }}>
 
           {/* ── ACTIVE SIGNALS ── */}
           {activeSignals.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: P.green }} />
-                <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" as const }}>
+                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--accent-positive)" }} />
+                <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const }}>
                   Active Signals ({activeSignals.length})
                 </p>
               </div>
@@ -700,7 +686,7 @@ export default function LearningDashboardV2() {
           {/* ── MODEL PERFORMANCE ── */}
           {Object.keys(models).length > 0 ? (
             <div>
-              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>
+              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>
                 Model Performance
               </p>
               <div className="space-y-3">
@@ -717,8 +703,8 @@ export default function LearningDashboardV2() {
           ) : (
             <div className="text-center py-12">
               <EmelIcon size={36} style={{ color: "rgba(255,255,255,0.06)" }} />
-              <p style={{ fontFamily: FONT, fontSize: 14, color: P.muted, marginTop: 12 }}>No signal data for this period.</p>
-              <p style={{ fontFamily: FONT, fontSize: 12, color: P.muted, opacity: 0.5, marginTop: 4 }}>
+              <p style={{ fontFamily: FONT, fontSize: 14, color: "var(--text-muted)", marginTop: 12 }}>No signal data for this period.</p>
+              <p style={{ fontFamily: FONT, fontSize: 12, color: "var(--text-muted)", opacity: 0.5, marginTop: 4 }}>
                 Signals appear as panels generate BUY/SELL decisions.
               </p>
             </div>
@@ -726,17 +712,17 @@ export default function LearningDashboardV2() {
 
           {/* ── FAILURE BREAKDOWN ── */}
           {Object.keys(failBreak).length > 0 && (
-            <div className="rounded-lg" style={{ background: `${P.red}05`, padding: 16, border: `1px solid ${P.red}10` }}>
-              <p className="flex items-center gap-1.5" style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: `${P.red}90`, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 }}>
-                <AlertTriangle className="w-3.5 h-3.5" style={{ color: P.red }} />
+            <div className="rounded-lg" style={{ background: `${"var(--accent-negative)"}05`, padding: 16, border: `1px solid ${"var(--accent-negative)"}10` }}>
+              <p className="flex items-center gap-1.5" style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: `${"var(--accent-negative)"}90`, letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 }}>
+                <AlertTriangle className="w-3.5 h-3.5" style={{ color: "var(--accent-negative)" }} />
                 Failure Breakdown
               </p>
               <div className="flex gap-2 flex-wrap">
                 {Object.entries(failBreak).map(([type, count]) => (
                   <div key={type} className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
-                    style={{ background: `${P.red}08`, border: `1px solid ${P.red}12` }}>
-                    <span style={{ fontFamily: FONT, fontSize: 11, color: P.textSec }}>{type.replace(/_/g, " ")}</span>
-                    <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.red }}>{count}</span>
+                    style={{ background: `${"var(--accent-negative)"}08`, border: `1px solid ${"var(--accent-negative)"}12` }}>
+                    <span style={{ fontFamily: FONT, fontSize: 11, color: "var(--text-secondary)" }}>{type.replace(/_/g, " ")}</span>
+                    <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: "var(--accent-negative)" }}>{count}</span>
                   </div>
                 ))}
               </div>

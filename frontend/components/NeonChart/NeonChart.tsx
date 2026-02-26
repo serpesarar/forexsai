@@ -43,13 +43,14 @@ interface OHLCLegend {
 
 // ─── Constants ────────────────────────────────────────────────────
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const P = { bg: "var(--bg-primary)", card: "var(--bg-card)", surface: "var(--bg-surface)", border: "var(--border-subtle)", text: "var(--text-primary)", muted: "var(--text-muted)", green: "var(--accent-positive)", red: "var(--accent-negative)", warn: "var(--accent-warning)", accent: "var(--accent-info)", purple: "var(--accent-purple)" };
 
 const TIMEFRAMES = ["5m", "15m", "1h", "4h", "1d"] as const;
 
 const EMA_CONFIG = {
   20: { color: "#ff0080", glowColor: "rgba(255,0,128,0.6)", width: 1 as const, label: "EMA20" },
   50: { color: "#ffa500", glowColor: "rgba(255,165,0,0.6)", width: 2 as const, label: "EMA50" },
-  200: { color: "#00e0c6", glowColor: "rgba(0,224,198,0.5)", width: 3 as const, label: "EMA200" },
+  200: { color: "var(--accent-info)", glowColor: "var(--accent-info-50)", width: 3 as const, label: "EMA200" },
 };
 
 // ─── Data fetching ────────────────────────────────────────────────
@@ -272,11 +273,11 @@ export default function NeonChart({
 
     // Candlestick series with neon-ish colors
     const candleSeries = chart.addCandlestickSeries({
-      upColor: "#00ff88",
-      downColor: "#ff3366",
+      upColor: P.green,
+      downColor: P.red,
       borderVisible: false,
-      wickUpColor: "rgba(0,255,136,0.6)",
-      wickDownColor: "rgba(255,51,102,0.6)",
+      wickUpColor: "var(--accent-positive-60)",
+      wickDownColor: "var(--accent-negative-60)",
     });
 
     // Volume
@@ -370,7 +371,7 @@ export default function NeonChart({
       const volumes = chartData.map((d) => ({
         time: (d.timestamp / 1000) as Time,
         value: d.volume,
-        color: d.close >= d.open ? "rgba(0,255,136,0.2)" : "rgba(255,51,102,0.2)",
+        color: d.close >= d.open ? "var(--accent-positive-20)" : "var(--accent-negative-20)",
       }));
 
       candleSeries.setData(candles);

@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { PanelInfoButton } from "../PanelInfoButton";
+import { PanelHeader } from "../PanelHeader";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
-  RotateIcon as RefreshCw,
-  ChartsIcon as BarChart3,
+  AnalysisIcon,
   ArrowUpIcon as TrendingUp,
   ArrowDownIcon as TrendingDown,
   ActivityIcon as Activity,
@@ -17,7 +16,7 @@ import {
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
-const P = { bg: "#0B0F17", card: "#141C2B", surface: "#111827", border: "rgba(255,255,255,0.06)", text: "#E6EDF3", muted: "#6B7280", green: "#16C784", red: "#EA3943", warn: "#F5A623", accent: "#4F8CFF" };
+const P = { bg: "var(--bg-primary)", card: "var(--bg-card)", surface: "var(--bg-surface)", border: "var(--border-subtle)", text: "var(--text-primary)", muted: "var(--text-muted)", green: "var(--accent-positive)", red: "var(--accent-negative)", warn: "var(--accent-warning)", accent: "var(--accent-info)" };
 
 interface TimeframeData {
   timeframe?: string;
@@ -71,8 +70,8 @@ interface MTFData {
 }
 
 const SYMBOLS = [
-  { key: "XAUUSD", label: "XAUUSD" },
   { key: "NDX.INDX", label: "NASDAQ" },
+  { key: "XAUUSD", label: "XAUUSD" },
   { key: "GDAXI.INDX", label: "DAX" },
   { key: "CL.COMM", label: "US Oil" },
 ];
@@ -163,7 +162,7 @@ export default function MTFMatrixPanel() {
     if (rsi < 30) return P.green;
     if (rsi > 60) return P.warn;
     if (rsi < 40) return P.accent;
-    return "rgba(255,255,255,0.6)";
+    return P.text;
   };
 
   const signalBadge = (dir?: string) => {
@@ -182,49 +181,34 @@ export default function MTFMatrixPanel() {
   if (loading && !data) {
     return (
       <div className="rounded-2xl p-6 animate-pulse" style={{ background: P.bg, border: `1px solid ${P.border}` }}>
-        <div className="h-8 rounded w-1/2 mb-4" style={{ background: "rgba(255,255,255,0.04)" }} />
-        <div className="h-48 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }} />
+        <div className="h-8 rounded w-1/2 mb-4" style={{ background: "var(--bg-hover)" }} />
+        <div className="h-48 rounded-xl" style={{ background: "var(--bg-hover)" }} />
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: P.bg, border: `1px solid ${P.border}`, boxShadow: `0 0 40px rgba(0,204,255,0.10), inset 0 1px 0 rgba(255,255,255,0.04)` }}>
+    <div className="rounded-2xl overflow-hidden" style={{ background: P.bg, border: `1px solid ${P.border}`, boxShadow: "0 0 40px var(--accent-info-10), inset 0 1px 0 rgba(255,255,255,0.04)" }}>
 
-      <div className="px-4 py-3 flex items-center justify-between" style={{ background: P.surface, borderBottom: `1px solid ${P.border}` }}>
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${P.accent}12`, border: `1px solid ${P.accent}20` }}>
-            <BarChart3 className="w-4 h-4" style={{ color: P.accent }} />
-          </div>
-          <div>
-            <h2 style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: P.text }}>MTF Confluence Matrix</h2>
-            <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>Multi-Timeframe Analiz</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
-            {SYMBOLS.map((s) => (
-              <button key={s.key} onClick={() => setSymbol(s.key)}
-                className="px-2.5 py-1 text-[10px] font-bold font-mono transition-all"
-                style={{
-                  background: symbol === s.key ? "rgba(0,204,255,0.2)" : "rgba(255,255,255,0.03)",
-                  color: symbol === s.key ? "#00ccff" : "rgba(255,255,255,0.4)",
-                }}>
-                {s.label}
-              </button>
-            ))}
-          </div>
-          <button onClick={fetchData} className="p-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.05)" }}>
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: "rgba(255,255,255,0.35)" }} />
-          </button>
-          <PanelInfoButton panelId="mtf-matrix" />
-        </div>
-      </div>
+      <PanelHeader
+        title="MTF CONFLUENCE"
+        subtitle="MATRIX"
+        icon={<AnalysisIcon size={22} />}
+        iconColor="var(--accent-cyan)"
+        iconBg="var(--accent-cyan-08)"
+        iconBorder="var(--accent-cyan-15)"
+        symbols={SYMBOLS}
+        activeSymbol={symbol}
+        onSymbolChange={setSymbol}
+        onRefresh={fetchData}
+        loading={loading}
+        panelId="mtf-matrix"
+      />
 
       {!data?.success ? (
         <div className="p-8 text-center">
-          <AlertTriangle className="w-10 h-10 mx-auto mb-3 opacity-40" style={{ color: "#f0b429" }} />
-          <p className="text-sm font-mono" style={{ color: "rgba(255,255,255,0.4)" }}>{data?.error || "Veri yüklenemedi"}</p>
+          <AlertTriangle className="w-10 h-10 mx-auto mb-3 opacity-40" style={{ color: P.warn }} />
+          <p className="text-sm font-mono" style={{ color: P.muted }}>{data?.error || "Veri yüklenemedi"}</p>
         </div>
       ) : (
         <>
@@ -246,14 +230,14 @@ export default function MTFMatrixPanel() {
                   <div className="text-xs font-bold font-mono" style={{ color: confluenceColor }}>
                     {confDir.replace(/_/g, " ")} CONFLUENCE
                   </div>
-                  <div className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>
+                  <div className="text-[10px] font-mono" style={{ color: P.muted }}>
                     Risk: {data.confluence.risk_level || "N/A"} • Uyum: {confAlign.toFixed(0)}%
                   </div>
                 </div>
               </div>
               {data.current_price && (
                 <div className="text-right">
-                  <div className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>Fiyat</div>
+                  <div className="text-[10px] font-mono" style={{ color: P.muted }}>Fiyat</div>
                   <div className="text-sm font-bold font-mono text-white/80">{data.current_price?.toFixed(2)}</div>
                 </div>
               )}
@@ -264,12 +248,12 @@ export default function MTFMatrixPanel() {
           <div className="px-3 py-3">
             {/* Table Header */}
             <div className="grid grid-cols-6 gap-1 mb-1.5 px-1">
-              <div className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.25)" }}>TF</div>
-              <div className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.25)" }}>Trend</div>
-              <div className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.25)" }}>EMA</div>
-              <div className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.25)" }}>RSI</div>
-              <div className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.25)" }}>Vol</div>
-              <div className="text-[9px] font-mono uppercase tracking-widest text-center" style={{ color: "rgba(255,255,255,0.25)" }}>Sinyal</div>
+              <div className="text-[9px] font-mono uppercase tracking-widest" style={{ color: P.muted }}>TF</div>
+              <div className="text-[9px] font-mono uppercase tracking-widest" style={{ color: P.muted }}>Trend</div>
+              <div className="text-[9px] font-mono uppercase tracking-widest" style={{ color: P.muted }}>EMA</div>
+              <div className="text-[9px] font-mono uppercase tracking-widest" style={{ color: P.muted }}>RSI</div>
+              <div className="text-[9px] font-mono uppercase tracking-widest" style={{ color: P.muted }}>Vol</div>
+              <div className="text-[9px] font-mono uppercase tracking-widest text-center" style={{ color: P.muted }}>Sinyal</div>
             </div>
 
             {/* Table Rows */}
@@ -284,7 +268,7 @@ export default function MTFMatrixPanel() {
                 const rsiVal = tfData.rsi14;
                 const bbPos = bbPosition(tfData.bollinger);
                 return (
-                  <div key={tf} className="grid grid-cols-6 gap-1 items-center rounded-lg px-2 py-2" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                  <div key={tf} className="grid grid-cols-6 gap-1 items-center rounded-lg px-2 py-2" style={{ background: "var(--bg-hover)", border: "1px solid var(--border-subtle)" }}>
                     {/* TF */}
                     <div className="text-xs font-bold font-mono text-white/70">{TF_LABELS[tf] || tf}</div>
                     {/* Trend */}
@@ -305,7 +289,7 @@ export default function MTFMatrixPanel() {
                       </span>
                     </div>
                     {/* Volatility */}
-                    <div className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.4)" }}>
+                    <div className="text-[10px] font-mono" style={{ color: P.muted }}>
                       {bbPos}
                     </div>
                     {/* Signal */}
@@ -324,9 +308,9 @@ export default function MTFMatrixPanel() {
           {/* Conflict Warning */}
           {data.confluence && confAlign < 60 && (
             <div className="px-4 pb-3">
-              <div className="rounded-xl p-2.5 flex items-center gap-2" style={{ background: "rgba(240,180,41,0.06)", border: "1px solid rgba(240,180,41,0.12)" }}>
-                <AlertTriangle className="w-4 h-4 shrink-0" style={{ color: "#f0b429" }} />
-                <p className="text-[10px] font-mono" style={{ color: "#f0b429" }}>
+              <div className="rounded-xl p-2.5 flex items-center gap-2" style={{ background: "var(--accent-warning-06)", border: "1px solid var(--accent-warning-12)" }}>
+                <AlertTriangle className="w-4 h-4 shrink-0" style={{ color: P.warn }} />
+                <p className="text-[10px] font-mono" style={{ color: P.warn }}>
                   Timeframe çelişkisi tespit edildi. Higher TF pullback olabilir - dikkatli olun.
                 </p>
               </div>
@@ -336,8 +320,8 @@ export default function MTFMatrixPanel() {
       )}
 
       {/* Footer */}
-      <div className="px-4 py-2 text-center" style={{ background: "rgba(0,0,0,0.2)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-        <p className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.2)" }}>
+      <div className="px-4 py-2 text-center" style={{ background: "rgba(0,0,0,0.2)", borderTop: "1px solid var(--border-subtle)" }}>
+        <p className="text-[10px] font-mono" style={{ color: P.muted }}>
           {lastUpdate ? `Son güncelleme: ${lastUpdate.toLocaleTimeString()}` : "Yükleniyor..."} | MTF Analysis
         </p>
       </div>

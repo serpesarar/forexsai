@@ -9,7 +9,8 @@ import {
     ISeriesApi,
     Time,
 } from "lightweight-charts";
-import { ActivityIcon as Activity, RotateIcon as RefreshCw, HarmonicIcon as Hexagon, CloseIcon as XIcon, TargetIcon as Target, AlertIcon as ShieldAlert, ArrowUpIcon as TrendingUp, ArrowDownIcon as TrendingDown, ExpandIcon as Maximize2, ExpandIcon as Minimize2 } from "../ui/CustomIcons";
+import { ActivityIcon as Activity, HarmonicIcon as Hexagon, CloseIcon as XIcon, TargetIcon as Target, AlertIcon as ShieldAlert, ArrowUpIcon as TrendingUp, ArrowDownIcon as TrendingDown, ExpandIcon as Maximize2, ExpandIcon as Minimize2 } from "../ui/CustomIcons";
+import { PanelHeader } from "../PanelHeader";
 import { useQuery } from "@tanstack/react-query";
 import { useI18nStore } from "../../lib/i18n/store";
 import {
@@ -40,13 +41,14 @@ import styles from "./harmonic-visualizer.module.css";
 // ─── CONFIG ──────────────────────────────────────────────────────────
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const P = { bg: "var(--bg-primary)", card: "var(--bg-card)", surface: "var(--bg-surface)", border: "var(--border-subtle)", text: "var(--text-primary)", muted: "var(--text-muted)", green: "var(--accent-positive)", red: "var(--accent-negative)", warn: "var(--accent-warning)", accent: "var(--accent-info)", purple: "var(--accent-purple)" };
 
-const SYMBOLS = [
-    { value: "NDX.INDX", label: "NASDAQ" },
-    { value: "XAUUSD", label: "XAU/USD" },
-    { value: "GDAXI.INDX", label: "DAX" },
-    { value: "CL.COMM", label: "US OIL" },
-] as const;
+const SYMBOLS: { key: string; label: string }[] = [
+    { key: "NDX.INDX", label: "NASDAQ" },
+    { key: "XAUUSD", label: "XAUUSD" },
+    { key: "GDAXI.INDX", label: "DAX" },
+    { key: "CL.COMM", label: "US Oil" },
+];
 
 const TIMEFRAMES = ["5m", "15m", "1h", "4h"] as const;
 type TimeframeType = (typeof TIMEFRAMES)[number];
@@ -164,7 +166,7 @@ export default function HarmonicVisualizerPanel() {
     const { t, locale } = useI18nStore();
 
     // ── State
-    const [symbol, setSymbol] = useState<string>(SYMBOLS[0].value);
+    const [symbol, setSymbol] = useState<string>(SYMBOLS[0].key);
     const [timeframe, setTimeframe] = useState<TimeframeType>("4h");
     const [selectedPattern, setSelectedPattern] = useState<DetectedPattern | null>(null);
     const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
@@ -585,65 +587,23 @@ export default function HarmonicVisualizerPanel() {
     return (
         <div className={`${styles.panel} ${isFullscreen ? styles.panelFullscreen : ''}`}>
             {/* Header */}
-            <div className={styles.header}>
-                <div className={styles.headerLeft}>
-                    <Hexagon size={18} className={styles.iconGlow} />
-                    <h2 className={styles.title}>{t("harmonicVisualizer.title")}</h2>
-                    {/* Pattern count badges */}
-                    {patterns.length > 0 && (
-                        <div className={styles.headerBadges}>
-                            {patterns.filter(p => isHarmonicPattern(p)).length > 0 && (
-                                <span className={styles.badgeOrange}>
-                                    {patterns.filter(p => isHarmonicPattern(p)).length} Harmonic
-                                </span>
-                            )}
-                            {patterns.filter(p => !isHarmonicPattern(p)).length > 0 && (
-                                <span className={styles.badgeBlue}>
-                                    {patterns.filter(p => !isHarmonicPattern(p)).length} Classic
-                                </span>
-                            )}
-                        </div>
-                    )}
-                </div>
-                <div className={styles.headerControls}>
-                    <select
-                        value={symbol}
-                        onChange={(e) => setSymbol(e.target.value)}
-                        className={styles.select}
-                    >
-                        {SYMBOLS.map((s) => (
-                            <option key={s.value} value={s.value}>
-                                {s.label}
-                            </option>
-                        ))}
-                    </select>
-                    <div className={styles.timeframeGroup}>
-                        {TIMEFRAMES.map((tf) => (
-                            <button
-                                key={tf}
-                                onClick={() => setTimeframe(tf)}
-                                className={`${styles.tfBtn} ${timeframe === tf ? styles.tfBtnActive : ""}`}
-                            >
-                                {tf}
-                            </button>
-                        ))}
-                    </div>
-                    <button
-                        onClick={() => refetch()}
-                        className={styles.refreshBtn}
-                        title="Refresh"
-                    >
-                        <RefreshCw size={14} className={isLoading ? styles.spin : ""} />
-                    </button>
-                    <button
-                        onClick={toggleFullscreen}
-                        className={styles.refreshBtn}
-                        title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-                    >
-                        {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-                    </button>
-                </div>
-            </div>
+            <PanelHeader
+                title="HARMONIC"
+                subtitle="PATTERN VISUALIZER"
+                icon={<Hexagon size={22} />}
+                iconColor="var(--accent-cyan)"
+                iconBg="var(--accent-cyan-08)"
+                iconBorder="var(--accent-cyan-15)"
+                symbols={SYMBOLS}
+                activeSymbol={symbol}
+                onSymbolChange={setSymbol}
+                timeframe={timeframe}
+                onTimeframeChange={(tf) => setTimeframe(tf as TimeframeType)}
+                timeframes={[...TIMEFRAMES]}
+                onRefresh={() => refetch()}
+                loading={isLoading}
+                panelId="harmonic-visualizer"
+            />
 
             {/* Color legend */}
             <div className={styles.legend}>
@@ -795,7 +755,7 @@ export default function HarmonicVisualizerPanel() {
                             {selectedPattern.target_price && (
                                 <div className={styles.detailRow}>
                                     <span><Target size={14} /> {t("harmonicVisualizer.targetPrice")}</span>
-                                    <strong style={{ color: "#00ff88" }}>
+                                    <strong style={{ color: P.green }}>
                                         {selectedPattern.target_price.toFixed(2)}
                                     </strong>
                                 </div>

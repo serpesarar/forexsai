@@ -2,17 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
-import { PanelInfoButton } from "../PanelInfoButton";
+import { PanelHeader } from "../PanelHeader";
 import {
-  ArrowUpIcon as ArrowUp,
-  ArrowDownIcon as ArrowDown,
   ActivityIcon as Activity,
   TargetIcon as Target,
-  RotateIcon as RefreshCw,
   ArrowUpRightIcon as TrendingUp,
   ArrowDownRightIcon as TrendingDown,
 } from "../ui/CustomIcons";
-import { PulseIcon, EmelIcon, SignalsIcon } from "../ui/CustomIcons";
+import { PulseIcon } from "../ui/CustomIcons";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
@@ -75,12 +72,15 @@ const SYMBOLS = [
   { key: "CL.COMM", label: "US Oil" },
 ];
 
-/* ── Institutional Color Palette ── */
-const P = { bg: "#0B0F17", card: "#141C2B", surface: "#111827", border: "rgba(255,255,255,0.06)", text: "#E6EDF3", muted: "#6B7280", green: "#16C784", red: "#EA3943", warn: "#F5A623", accent: "#4F8CFF" };
-const neonColors: Record<string, { accent: string; glow: string; bg: string }> = {
-  up: { accent: P.green, glow: "rgba(22,199,132,0.08)", bg: "rgba(22,199,132,0.05)" },
-  down: { accent: P.red, glow: "rgba(234,57,67,0.08)", bg: "rgba(234,57,67,0.05)" },
-  neutral: { accent: P.warn, glow: "rgba(245,166,35,0.08)", bg: "rgba(245,166,35,0.05)" },
+/* ── Theme-aware Color Palette (CSS Variables) ── */
+const getThemeColors = (direction: string) => {
+  const isUp = direction === "up";
+  const isDown = direction === "down";
+  return {
+    accent: isUp ? "var(--accent-positive)" : isDown ? "var(--accent-negative)" : "var(--accent-warning)",
+    glow: isUp ? "rgba(22,199,132,0.08)" : isDown ? "rgba(234,57,67,0.08)" : "rgba(245,166,35,0.08)",
+    bg: isUp ? "var(--success-bg)" : isDown ? "var(--danger-bg)" : "var(--warning-bg)",
+  };
 };
 
 export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitchMode }: PulsePanelProps) {
@@ -132,266 +132,207 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
     };
   }, [fetchData]);
 
-  const nc = data ? neonColors[data.trend.direction] || neonColors.neutral : neonColors.neutral;
+  const nc = data ? getThemeColors(data.trend.direction) : getThemeColors("neutral");
+
+  const getDirColor = (dir: string) => {
+    if (dir === "up" || dir === "BUY") return "var(--accent-positive)";
+    if (dir === "down" || dir === "SELL") return "var(--accent-negative)";
+    return "var(--accent-warning)";
+  };
 
   if (loading && !data) {
     return (
-      <div className="p-2 animate-pulse bg-transparent">
-        <div className="h-40 mb-4" style={{ background: "rgba(255,255,255,0.04)" }} />
-        <div className="grid grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-24 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }} />
-          ))}
-        </div>
+      <div className="animate-pulse p-6 rounded-xl border border-theme-subtle" style={{ background: "var(--bg-primary)" }}>
+        <div className="h-12 w-1/3 bg-white/5 rounded-lg mb-6" />
+        <div className="grid grid-cols-12 gap-[1px] bg-white/5 h-64 rounded-xl" />
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden bg-transparent border-0 shadow-none">
+    <div className="flex flex-col rounded-xl overflow-hidden" style={{ background: "var(--bg-primary)", border: "1px solid var(--border-subtle)", fontFamily: FONT }}>
 
-      {/* ── Header ── */}
-      <div className="px-2 py-2 flex items-center justify-between flex-wrap gap-2 bg-transparent">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${P.accent}12`, border: `1px solid ${P.accent}20` }}>
-            <PulseIcon size={16} style={{ color: P.accent }} />
+      {/* ── HEADER (New Design) ── */}
+      <PanelHeader
+        title="PULSE 1"
+        subtitle="ALGORITHMIC SCALP"
+        icon={<PulseIcon size={22} />}
+        iconBg="var(--accent-cyan-08)"
+        iconBorder="var(--accent-cyan-15)"
+        iconColor="var(--accent-cyan)"
+        symbols={SYMBOLS}
+        activeSymbol={activeSymbol}
+        onSymbolChange={setActiveSymbol}
+        timeframe={timeframe}
+        onTimeframeChange={setTimeframe}
+        timeframes={["5m", "15m", "1h"]}
+        onRefresh={fetchData}
+        loading={loading}
+        panelId="pulse-panel"
+        extraContent={data ? (
+          <div>
+            <div className="text-[26px] font-bold tracking-tighter leading-none" style={{ color: "var(--text-primary)" }}>
+              {data.price.current.toFixed(2)}
+            </div>
+            <div className="text-[12px] font-medium mt-1 flex items-center gap-1" style={{ color: data.price.change_5 > 0 ? "var(--accent-positive)" : data.price.change_5 < 0 ? "var(--accent-negative)" : "var(--text-muted)" }}>
+              {data.price.change_5 > 0 ? "▲" : data.price.change_5 < 0 ? "▼" : ""}
+              {Math.abs(data.price.change_5).toFixed(2)}% <span style={{ color: "var(--text-muted)" }}>(5m)</span>
+            </div>
           </div>
-          <div className="min-w-0">
-            <h2 style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: P.text }}>{t("pulse.title")}</h2>
-            <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>{t("pulse.subtitle")}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
-            {SYMBOLS.map((s) => (
-              <button key={s.key} onClick={() => setActiveSymbol(s.key)}
-                className="px-2.5 py-1 text-[10px] font-bold font-mono transition-all"
-                style={{
-                  background: activeSymbol === s.key ? `${nc.accent}25` : "rgba(255,255,255,0.03)",
-                  color: activeSymbol === s.key ? nc.accent : "rgba(255,255,255,0.4)",
-                  borderRight: "1px solid rgba(255,255,255,0.05)",
-                }}
-              >{s.label}</button>
-            ))}
-          </div>
-          <select value={timeframe} onChange={(e) => setTimeframe(e.target.value)}
-            className="text-[10px] font-mono px-2 py-1 rounded-lg" style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <option value="5m">5m</option>
-            <option value="15m">15m</option>
-          </select>
-          <button onClick={fetchData} className="p-1.5 rounded-lg transition-all hover:brightness-150" style={{ background: "rgba(255,255,255,0.05)" }}>
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: "rgba(255,255,255,0.35)" }} />
-          </button>
-          <PanelInfoButton panelId="pulse-panel" />
-          {onSwitchMode && (
-            <button onClick={onSwitchMode} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold font-mono"
-              style={{ background: "rgba(99,102,241,0.2)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.3)" }}>
-              <EmelIcon size={12} style={{ color: "#818cf8" }} /> EMEL
-            </button>
-          )}
-        </div>
-      </div>
+        ) : undefined}
+      />
 
-
-
-      {/* ── Error ── */}
+      {/* ── ERROR DISPLAY ── */}
       {error && !data && !loading && (
-        <div className="p-8 text-center">
-          <Activity className="w-12 h-12 mx-auto mb-3 opacity-40" style={{ color: nc.accent }} />
-          <p className="font-medium mb-1 font-mono text-sm" style={{ color: nc.accent }}>{activeSymbol}</p>
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulse.insufficientData")}</p>
+        <div className="p-12 text-center flex flex-col items-center justify-center" style={{ background: "var(--bg-primary)" }}>
+          <Activity className="w-10 h-10 mb-3 opacity-20" style={{ color: "var(--text-primary)" }} />
+          <h3 className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>Data Unavailable</h3>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>{t("pulse.insufficientData")}</p>
         </div>
       )}
 
+      {/* ── MAIN GRID (3 COLUMNS) ── */}
       {data && (
-        <>
-          {/* ── Main Trend Gauge ── */}
-          <div className="p-2 text-center bg-transparent">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              {data.trend.direction === "up" ? (
-                <ArrowUp className="w-7 h-7" style={{ color: nc.accent }} />
-              ) : data.trend.direction === "down" ? (
-                <ArrowDown className="w-7 h-7" style={{ color: nc.accent }} />
-              ) : (
-                <Activity className="w-7 h-7" style={{ color: nc.accent }} />
-              )}
-              <span style={{ fontFamily: FONT, fontSize: 28, fontWeight: 700, color: nc.accent, letterSpacing: "-0.5px" }}>
-                {data.trend.label}
-              </span>
-            </div>
-            <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 500, color: nc.accent, opacity: 0.8 }}>
-              {data.trend.strength_pct}% {t("pulse.strong")}
-            </p>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px]" style={{ background: "var(--border-subtle)" }}>
 
-            {/* Strength Bar */}
-            <div className="w-full max-w-xs mx-auto mt-4">
-              <div className="rounded-full overflow-hidden" style={{ height: 6, background: P.border }}>
-                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${data.trend.strength_pct}%`, background: nc.accent, opacity: 0.85 }} />
-              </div>
-              <p style={{ fontFamily: FONT, fontSize: 10, color: P.muted, marginTop: 6 }}>({data.trend.strength.toFixed(2)}/1.0)</p>
-            </div>
-
-            {/* Last 5 Candles */}
-            <div className="flex items-center justify-center gap-1.5 mt-4">
-              <span className="text-[10px] font-mono mr-2" style={{ color: "rgba(255,255,255,0.25)" }}>{t("pulse.last5min")}</span>
-              {data.trend.last_5_candles.map((candle, i) => (
-                <span key={i} style={{ fontSize: 16, color: candle === "up" ? P.green : candle === "down" ? P.red : P.muted }}>
-                  {candle === "up" ? "▲" : candle === "down" ? "▼" : "●"}
+          {/* COLUMN 1: TREND & MACRO (4/12) */}
+          <div className="col-span-12 md:col-span-4 p-5 flex flex-col gap-6" style={{ background: "var(--bg-primary)" }}>
+            {/* Macro Trend */}
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>System Trend Bias</div>
+              <div className="flex items-end gap-3 mb-2">
+                <span className="text-2xl font-bold tracking-tight" style={{ color: getDirColor(data.trend.direction) }}>
+                  {data.trend.label.toUpperCase()}
                 </span>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Price & Time Bar ── */}
-          <div className="flex items-center justify-center gap-6 sm:gap-10 px-2 py-2 flex-wrap bg-transparent">
-            <div className="text-center">
-              <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.06em", textTransform: "uppercase" as const }}>{t("pulse.price")}</span>
-              <p style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: P.text, letterSpacing: "-0.3px" }}>{data.price.current.toFixed(2)}</p>
-            </div>
-            <div className="text-center">
-              <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.06em", textTransform: "uppercase" as const }}>{t("pulse.change5m")}</span>
-              <p style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: data.price.change_5 >= 0 ? P.green : P.red, letterSpacing: "-0.3px" }}>
-                {data.price.change_5 >= 0 ? "+" : ""}{data.price.change_5.toFixed(2)}%
-              </p>
-            </div>
-            <div className="text-center">
-              <span className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulse.update")}</span>
-              <p className="text-xs font-mono" style={{ color: "rgba(255,255,255,0.5)" }}>{t("pulse.every5s")}</p>
-            </div>
-          </div>
-
-          {/* ── 3-Column Grid ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-3">
-            {/* Levels */}
-            <div className="rounded-xl p-3.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
-              <h3 className="text-[10px] uppercase tracking-widest font-mono mb-3 flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
-                <Target className="w-3 h-3" style={{ color: "#00ccff" }} /> {t("pulse.levels")}
-              </h3>
-              <div className="space-y-1.5 text-sm font-mono">
-                <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: `${P.red}06` }}>
-                  <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.red }}>R2</span>
-                  <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.r2.toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: `${P.red}06` }}>
-                  <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.red }}>R1</span>
-                  <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.r1.toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between px-2 py-1.5 rounded-lg" style={{ background: `${P.green}08`, border: `1px solid ${P.green}20` }}>
-                  <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.green }}>{t("pulse.priceLabel")}</span>
-                  <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.green }}>{data.price.current.toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: `${P.accent}06` }}>
-                  <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.accent }}>S1</span>
-                  <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.s1.price.toFixed(0)}{data.levels.s1.alert && " ⚡"}</span>
-                </div>
-                <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: `${P.accent}06` }}>
-                  <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.accent }}>S2</span>
-                  <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.s2.toFixed(0)}</span>
+                <span className="text-[13px] font-medium pb-1" style={{ color: getDirColor(data.trend.direction), opacity: 0.8 }}>
+                  {data.trend.strength_pct}%
+                </span>
+              </div>
+              <div className="h-[6px] w-full rounded-full overflow-hidden" style={{ background: "var(--bg-input)" }}>
+                <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${data.trend.strength_pct}%`, background: getDirColor(data.trend.direction) }} />
+              </div>
+              <div className="flex items-center justify-between mt-3">
+                <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Last 5 Candles (5m)</span>
+                <div className="flex gap-1.5">
+                  {data.trend.last_5_candles.map((c, i) => (
+                    <div key={i} className="w-2.5 h-2.5 rounded-sm" style={{ background: c === "up" ? "var(--accent-positive)" : c === "down" ? "var(--accent-negative)" : "var(--accent-warning)", opacity: 0.8 }} />
+                  ))}
                 </div>
               </div>
-              {data.levels.s1.alert && (
-                <p className="text-[10px] font-mono mt-2" style={{ color: "#f0b429" }}>
-                  ⚡ {t("pulse.nearSupport")} ({data.levels.s1.distance.toFixed(0)} {t("pulse.pts")})
-                </p>
-              )}
             </div>
 
-            {/* Momentum */}
-            <div className="rounded-xl p-3.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
-              <h3 className="text-[10px] uppercase tracking-widest font-mono mb-3 flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
-                <Activity className="w-3 h-3" style={{ color: "#818cf8" }} /> {t("pulse.momentum")}
-              </h3>
-              <div className="space-y-2.5">
-                {([
-                  { label: "RSI", value: data.momentum.rsi.value.toFixed(0), trend: data.momentum.rsi.trend },
-                  { label: "MACD", value: `${data.momentum.macd.value > 0 ? "+" : ""}${data.momentum.macd.value.toFixed(2)}`, trend: data.momentum.macd.trend },
-                  { label: "Stoch", value: data.momentum.stochastic.value.toFixed(0), trend: data.momentum.stochastic.trend },
-                ] as const).map((m) => (
-                  <div key={m.label} className="flex justify-between items-center px-2 py-1.5 rounded-lg font-mono text-sm" style={{ background: "rgba(255,255,255,0.02)" }}>
-                    <span style={{ color: "rgba(255,255,255,0.4)" }}>{m.label}</span>
-                    <div className="flex items-center gap-1.5">
-                      <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{m.value}</span>
-                      <span style={{ color: m.trend === "up" ? P.green : P.red }}>
-                        {m.trend === "up" ? "▲" : "▼"}
-                      </span>
+            {/* Momentum Oscillators */}
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>Momentum (5m)</div>
+              <div className="space-y-0.5">
+                {[
+                  { label: "RSI (14)", val: data.momentum.rsi.value.toFixed(1), t: data.momentum.rsi.trend },
+                  { label: "MACD", val: data.momentum.macd.value.toFixed(3), t: data.momentum.macd.trend },
+                  { label: "Stoch", val: data.momentum.stochastic.value.toFixed(1), t: data.momentum.stochastic.trend },
+                ].map((item, i) => (
+                  <div key={i} className="flex justify-between items-center py-2 px-3 rounded" style={{ background: "var(--bg-input)" }}>
+                    <span className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>{item.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[13px] font-semibold" style={{ color: "var(--text-primary)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>{item.val}</span>
+                      <span className="text-[10px]" style={{ color: getDirColor(item.t) }}>{item.t === "up" ? "▲" : "▼"}</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
+          </div>
 
-            {/* Volume */}
-            <div className="rounded-xl p-3.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
-              <h3 className="text-[10px] uppercase tracking-widest font-mono mb-3 flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
-                <PulseIcon size={12} style={{ color: "#f0b429" }} /> {t("pulse.volume")}
-              </h3>
-              <div className="text-center py-3">
-                <p style={{ fontFamily: FONT, fontSize: 20, fontWeight: 700, color: data.volume.status === "high" ? P.green : data.volume.status === "low" ? P.red : data.volume.status === "normal" ? P.warn : P.muted }}>
-                  {data.volume.label}
-                </p>
-                {data.volume.available && data.volume.ratio != null && (
-                  <p className="text-[10px] font-mono mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>{data.volume.ratio.toFixed(2)}x avg</p>
+          {/* COLUMN 2: LEVELS & VOLUME (4/12) */}
+          <div className="col-span-12 md:col-span-4 p-5 flex flex-col gap-6" style={{ background: "var(--bg-primary)" }}>
+            {/* Key Price Levels */}
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>Key Price Levels</div>
+              <div className="space-y-1">
+                {[
+                  { lbl: "R2", val: data.levels.r2, type: "res" },
+                  { lbl: "R1", val: data.levels.r1, type: "res" },
+                  { lbl: "PX", val: data.price.current, type: "curr" },
+                  { lbl: "S1", val: data.levels.s1.price, type: "sup", alert: data.levels.s1.alert },
+                  { lbl: "S2", val: data.levels.s2, type: "sup" },
+                ].map((lvl, i) => (
+                  <div key={i} className="flex justify-between items-center py-1.5 px-3 rounded border"
+                    style={{
+                      background: lvl.type === "curr" ? "var(--bg-input)" : lvl.alert ? "var(--info-bg)" : "transparent",
+                      borderColor: lvl.type === "curr" ? "var(--border-default)" : lvl.alert ? "var(--info-border)" : "transparent",
+                    }}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-bold w-4" style={{ color: lvl.type === "res" ? "var(--accent-negative)" : lvl.type === "sup" ? "var(--accent-positive)" : "var(--text-primary)" }}>{lvl.lbl}</span>
+                      {lvl.alert && <span className="text-[10px]" style={{ color: "var(--accent-info)" }}>⚡ Near</span>}
+                    </div>
+                    <span className={`text-[13px] ${lvl.type === "curr" ? "font-bold" : "font-medium"}`}
+                      style={{ color: lvl.type === "curr" ? "var(--text-primary)" : "var(--text-muted)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>
+                      {lvl.val.toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Tick Volume */}
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>Tick Volume Profile</div>
+              <div className="p-3 rounded border flex justify-between items-center" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
+                <span className="text-[13px] font-bold" style={{ color: data.volume.status === "high" ? "var(--accent-positive)" : "var(--text-muted)" }}>
+                  {data.volume.label.toUpperCase()}
+                </span>
+                {data.volume.ratio && (
+                  <span className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
+                    {data.volume.ratio.toFixed(2)}x <span style={{ color: "var(--text-muted)" }}>Avg Vol</span>
+                  </span>
                 )}
-                <p className="text-[10px] font-mono mt-2" style={{ color: "rgba(255,255,255,0.2)" }}>
-                  {data.volume.available
-                    ? (data.volume.status === "high" ? t("pulse.buyersActive") : data.volume.status === "low" ? t("pulse.lowInterest") : "")
-                    : t("pulse.noData")}
-                </p>
               </div>
             </div>
           </div>
 
-          {/* ── AI Suggestion ── */}
-          <div className="px-3 pb-3">
-            <div className="rounded-xl p-4" style={{ background: `${P.accent}06`, border: `1px solid ${P.accent}12` }}>
-              <div className="flex items-center gap-2 mb-2.5">
-                <SignalsIcon size={16} style={{ color: P.accent }} />
-                <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.accent }}>{t("pulse.aiComment")}</span>
+          {/* COLUMN 3: AI SETUP (4/12) */}
+          <div className="col-span-12 md:col-span-4 p-5 flex flex-col h-full" style={{ background: "var(--bg-primary)" }}>
+            <div className="text-[11px] font-bold uppercase tracking-widest mb-3 flex items-center justify-between" style={{ color: "var(--text-muted)" }}>
+              <span>Algorithmic Setup</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: "var(--info-bg)", color: "var(--accent-info)" }}>AI OPTIMIZED</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {/* Target */}
+              <div className="p-3 rounded border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
+                <div className="text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--text-muted)" }}>Take Profit (TP)</div>
+                <div className="text-[18px] font-bold tracking-tight mb-0.5" style={{ color: "var(--accent-positive)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>{data.suggestion.target.toFixed(1)}</div>
+                <div className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>+{data.suggestion.target_distance.toFixed(1)} pts</div>
               </div>
-              <p style={{ fontFamily: FONT, fontSize: 12, lineHeight: 1.6, color: "rgba(230,237,243,0.65)" }}>{data.suggestion.text}</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-3 text-center">
-                <div className="rounded-lg py-2" style={{ background: `${P.green}06`, border: `1px solid ${P.green}15` }}>
-                  <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.05em" }}>{t("pulse.target")}</p>
-                  <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: P.green }}>{data.suggestion.target.toFixed(0)}</p>
-                  <p style={{ fontFamily: FONT, fontSize: 9, color: P.muted }}>+{data.suggestion.target_distance.toFixed(0)} pts</p>
-                </div>
-                <div className="rounded-lg py-2" style={{ background: `${P.red}06`, border: `1px solid ${P.red}15` }}>
-                  <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.05em" }}>{t("pulse.stop")}</p>
-                  <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: P.red }}>{data.suggestion.stop.toFixed(0)}</p>
-                  <p style={{ fontFamily: FONT, fontSize: 9, color: P.muted }}>-{data.suggestion.stop_distance.toFixed(0)} pts</p>
-                </div>
-                <div className="rounded-lg py-2" style={{ background: `${P.accent}06`, border: `1px solid ${P.accent}15` }}>
-                  <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.05em" }}>R/R</p>
-                  <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: P.accent }}>{data.suggestion.rr_ratio.toFixed(2)}</p>
-                </div>
-                <div className="rounded-lg py-2" style={{ background: P.surface, border: `1px solid ${P.border}` }}>
-                  <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.05em" }}>{t("pulse.expectation")}</p>
-                  <p style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: "rgba(230,237,243,0.7)" }}>{data.suggestion.timeframe_estimate}</p>
-                </div>
+              {/* Stop Loss */}
+              <div className="p-3 rounded border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
+                <div className="text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--text-muted)" }}>Stop Loss (SL)</div>
+                <div className="text-[18px] font-bold tracking-tight mb-0.5" style={{ color: "var(--accent-negative)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>{data.suggestion.stop.toFixed(1)}</div>
+                <div className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>-{data.suggestion.stop_distance.toFixed(1)} pts</div>
               </div>
             </div>
+
+            <div className="flex flex-col gap-2 mb-4">
+              <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: "var(--border-subtle)" }}>
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Reward / Risk Ratio</span>
+                <span className="text-[13px] font-bold" style={{ color: "var(--text-primary)" }}>{data.suggestion.rr_ratio.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: "var(--border-subtle)" }}>
+                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Est. Horizon</span>
+                <span className="text-[13px] font-bold" style={{ color: "var(--text-primary)" }}>{data.suggestion.timeframe_estimate}</span>
+              </div>
+            </div>
+
+            {/* AI Log */}
+            <div className="mt-auto p-3 rounded border flex-1" style={{ background: "var(--info-bg)", borderColor: "var(--info-border)" }}>
+              <div className="text-[10px] uppercase tracking-widest font-bold mb-1.5" style={{ color: "var(--accent-info)" }}>SYSTEM LOG _</div>
+              <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-primary)", opacity: 0.85 }}>
+                {data.suggestion.text}
+              </p>
+            </div>
+
           </div>
 
-          {/* ── Action Buttons ── */}
-          <div className="px-3 pb-3 flex gap-2 flex-wrap">
-            <button className="flex-1 min-w-[90px] py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all duration-150"
-              style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, background: `${P.green}08`, color: P.green, border: `1px solid ${P.green}18` }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = `${P.green}15`)}
-              onMouseLeave={(e) => (e.currentTarget.style.background = `${P.green}08`)}>
-              <TrendingUp className="w-3.5 h-3.5" /> {t("pulse.watchUp")}
-            </button>
-            <button className="flex-1 min-w-[90px] py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all duration-150"
-              style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, background: `${P.red}08`, color: P.red, border: `1px solid ${P.red}18` }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = `${P.red}15`)}
-              onMouseLeave={(e) => (e.currentTarget.style.background = `${P.red}08`)}>
-              <TrendingDown className="w-3.5 h-3.5" /> {t("pulse.watchDown")}
-            </button>
-            <button className="flex-1 min-w-[90px] py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all duration-150"
-              style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, background: P.surface, color: P.muted, border: `1px solid ${P.border}` }}>
-              <Activity className="w-3.5 h-3.5" /> {t("pulse.detailedChart")}
-            </button>
-          </div>
-        </>
+        </div>
       )}
     </div>
   );

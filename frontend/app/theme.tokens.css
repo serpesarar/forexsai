@@ -1,0 +1,404 @@
+/**
+ * THEME TOKENS - Centralized Design System
+ * ==========================================
+ * Single source of truth for all theme values.
+ * Import this BEFORE any component styles in layout.tsx
+ * 
+ * Usage in components:
+ *   color: var(--text-primary)
+ *   background: var(--bg-card)
+ *   border-color: var(--border-subtle)
+ * 
+ * Two theme presets available:
+ *   - premium (default): Institutional dark theme
+ *   - terminal: Higher contrast terminal-style
+ */
+
+/* ============================================
+   BASE TOKEN DEFINITIONS (Default: Premium)
+   ============================================ */
+:root {
+  /* ── Background Scale ── */
+  --bg-primary: #0B0F17;
+  --bg-secondary: #0D111A;
+  --bg-card: rgba(20, 28, 43, 0.85);
+  --bg-surface: #111827;
+  --bg-elevated: rgba(30, 41, 59, 0.6);
+  --bg-input: rgba(255, 255, 255, 0.03);
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-active: rgba(255, 255, 255, 0.08);
+
+  /* ── Text Scale ── */
+  --text-primary: #E6EDF3;
+  --text-secondary: #9AA4B2;
+  --text-muted: #6B7280;
+  --text-disabled: rgba(255, 255, 255, 0.3);
+  --text-inverse: #0B0F17;
+
+  /* ── Accent Colors (Premium Fintech) ── */
+  --accent-positive: #16C784;
+  --accent-negative: #EA3943;
+  --accent-info: #4F8CFF;
+  --accent-warning: #F5A623;
+  --accent-purple: #A78BFA;
+  --accent-cyan: #33D6C8;
+
+  /* ── Accent Cyan Variants (Panel Headers) ── */
+  --accent-cyan-08: rgba(51, 214, 200, 0.08);
+  --accent-cyan-10: rgba(51, 214, 200, 0.10);
+  --accent-cyan-12: rgba(51, 214, 200, 0.12);
+  --accent-cyan-15: rgba(51, 214, 200, 0.15);
+  --accent-cyan-20: rgba(51, 214, 200, 0.20);
+  --accent-cyan-30: rgba(51, 214, 200, 0.30);
+  --accent-cyan-40: rgba(51, 214, 200, 0.40);
+
+  /* ── Accent Opacity Variants (for CSS modules) ── */
+  --accent-positive-04: rgba(22, 199, 132, 0.04);
+  --accent-positive-06: rgba(22, 199, 132, 0.06);
+  --accent-positive-08: rgba(22, 199, 132, 0.08);
+  --accent-positive-10: rgba(22, 199, 132, 0.10);
+  --accent-positive-12: rgba(22, 199, 132, 0.12);
+  --accent-positive-15: rgba(22, 199, 132, 0.15);
+  --accent-positive-18: rgba(22, 199, 132, 0.18);
+  --accent-positive-20: rgba(22, 199, 132, 0.20);
+  --accent-positive-35: rgba(22, 199, 132, 0.35);
+  --accent-positive-50: rgba(22, 199, 132, 0.50);
+
+  --accent-negative-04: rgba(234, 57, 67, 0.04);
+  --accent-negative-06: rgba(234, 57, 67, 0.06);
+  --accent-negative-08: rgba(234, 57, 67, 0.08);
+  --accent-negative-10: rgba(234, 57, 67, 0.10);
+  --accent-negative-12: rgba(234, 57, 67, 0.12);
+  --accent-negative-15: rgba(234, 57, 67, 0.15);
+  --accent-negative-20: rgba(234, 57, 67, 0.20);
+  --accent-negative-35: rgba(234, 57, 67, 0.35);
+  --accent-negative-50: rgba(234, 57, 67, 0.50);
+  --accent-negative-60: rgba(234, 57, 67, 0.60);
+
+  --accent-info-08: rgba(79, 140, 255, 0.08);
+  --accent-info-12: rgba(79, 140, 255, 0.12);
+  --accent-info-15: rgba(79, 140, 255, 0.15);
+  --accent-info-20: rgba(79, 140, 255, 0.20);
+  --accent-info-35: rgba(79, 140, 255, 0.35);
+
+  --accent-warning-08: rgba(245, 166, 35, 0.08);
+  --accent-info-04: rgba(79, 140, 255, 0.04);
+  --accent-info-05: rgba(79, 140, 255, 0.05);
+  --accent-info-06: rgba(79, 140, 255, 0.06);
+  --accent-info-08: rgba(79, 140, 255, 0.08);
+  --accent-info-10: rgba(79, 140, 255, 0.10);
+  --accent-info-12: rgba(79, 140, 255, 0.12);
+  --accent-info-15: rgba(79, 140, 255, 0.15);
+  --accent-info-20: rgba(79, 140, 255, 0.20);
+  --accent-info-25: rgba(79, 140, 255, 0.25);
+  --accent-info-30: rgba(79, 140, 255, 0.30);
+  --accent-info-35: rgba(79, 140, 255, 0.35);
+  --accent-info-40: rgba(79, 140, 255, 0.40);
+  --accent-info-50: rgba(79, 140, 255, 0.50);
+
+  --accent-warning-04: rgba(245, 166, 35, 0.04);
+  --accent-warning-06: rgba(245, 166, 35, 0.06);
+  --accent-warning-08: rgba(245, 166, 35, 0.08);
+  --accent-warning-10: rgba(245, 166, 35, 0.10);
+  --accent-warning-12: rgba(245, 166, 35, 0.12);
+  --accent-warning-15: rgba(245, 166, 35, 0.15);
+  --accent-warning-20: rgba(245, 166, 35, 0.20);
+  --accent-warning-25: rgba(245, 166, 35, 0.25);
+  --accent-warning-30: rgba(245, 166, 35, 0.30);
+  --accent-warning-35: rgba(245, 166, 35, 0.35);
+  --accent-warning-40: rgba(245, 166, 35, 0.40);
+
+  /* Purple accent variants */
+  --accent-purple-05: rgba(167, 139, 250, 0.05);
+  --accent-purple-08: rgba(167, 139, 250, 0.08);
+  --accent-purple-10: rgba(167, 139, 250, 0.10);
+  --accent-purple-12: rgba(167, 139, 250, 0.12);
+  --accent-purple-15: rgba(167, 139, 250, 0.15);
+  --accent-purple-20: rgba(167, 139, 250, 0.20);
+  --accent-purple-30: rgba(167, 139, 250, 0.30);
+  --accent-purple-35: rgba(167, 139, 250, 0.35);
+  --accent-purple-40: rgba(167, 139, 250, 0.40);
+  --accent-purple-50: rgba(167, 139, 250, 0.50);
+
+  /* ── Divider ── */
+  --divider: rgba(255, 255, 255, 0.05);
+
+  /* ── Legacy Neon Aliases (DEPRECATED - Map to Premium) ── */
+  --neon-cyan: var(--accent-info);
+  --neon-pink: var(--accent-negative);
+  --neon-blue: var(--accent-info);
+  --neon-purple: var(--accent-info);
+  --neon-orange: var(--accent-warning);
+  --neon-green: var(--accent-positive);
+  --neon-red: var(--accent-negative);
+
+  /* ── Border Scale ── */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.15);
+  --border-accent: rgba(79, 140, 255, 0.3);
+
+  /* ── Semantic Colors ── */
+  --success: var(--accent-positive);
+  --danger: var(--accent-negative);
+  --warning: var(--accent-warning);
+  --info: var(--accent-info);
+
+  /* ── State Colors (with opacity) ── */
+  --success-bg: rgba(22, 199, 132, 0.1);
+  --success-border: rgba(22, 199, 132, 0.2);
+  --success-bg-5: rgba(22, 199, 132, 0.05);
+  --success-bg-6: rgba(22, 199, 132, 0.06);
+  --success-bg-8: rgba(22, 199, 132, 0.08);
+  --success-bg-10: rgba(22, 199, 132, 0.1);
+  --success-bg-12: rgba(22, 199, 132, 0.12);
+  --success-bg-15: rgba(22, 199, 132, 0.15);
+  --success-bg-20: rgba(22, 199, 132, 0.2);
+  --success-border-15: rgba(22, 199, 132, 0.15);
+  --success-border-20: rgba(22, 199, 132, 0.2);
+  --success-border-25: rgba(22, 199, 132, 0.25);
+  --success-border-30: rgba(22, 199, 132, 0.3);
+  
+  --danger-bg: rgba(234, 57, 67, 0.1);
+  --danger-border: rgba(234, 57, 67, 0.2);
+  --danger-bg-5: rgba(234, 57, 67, 0.05);
+  --danger-bg-6: rgba(234, 57, 67, 0.06);
+  --danger-bg-8: rgba(234, 57, 67, 0.08);
+  --danger-bg-10: rgba(234, 57, 67, 0.1);
+  --danger-bg-12: rgba(234, 57, 67, 0.12);
+  --danger-bg-15: rgba(234, 57, 67, 0.15);
+  --danger-bg-20: rgba(234, 57, 67, 0.2);
+  --danger-border-15: rgba(234, 57, 67, 0.15);
+  --danger-border-20: rgba(234, 57, 67, 0.2);
+  --danger-border-25: rgba(234, 57, 67, 0.25);
+  --danger-border-30: rgba(234, 57, 67, 0.3);
+  
+  --warning-bg: rgba(245, 166, 35, 0.1);
+  --warning-border: rgba(245, 166, 35, 0.2);
+  --warning-bg-5: rgba(245, 166, 35, 0.05);
+  --warning-bg-6: rgba(245, 166, 35, 0.06);
+  --warning-bg-8: rgba(245, 166, 35, 0.08);
+  --warning-bg-10: rgba(245, 166, 35, 0.1);
+  --warning-bg-12: rgba(245, 166, 35, 0.12);
+  --warning-bg-15: rgba(245, 166, 35, 0.15);
+  --warning-bg-20: rgba(245, 166, 35, 0.2);
+  --warning-border-15: rgba(245, 166, 35, 0.15);
+  --warning-border-20: rgba(245, 166, 35, 0.2);
+  --warning-border-25: rgba(245, 166, 35, 0.25);
+  --warning-border-30: rgba(245, 166, 35, 0.3);
+  
+  --info-bg: rgba(79, 140, 255, 0.1);
+  --info-border: rgba(79, 140, 255, 0.2);
+  --info-bg-5: rgba(79, 140, 255, 0.05);
+  --info-bg-6: rgba(79, 140, 255, 0.06);
+  --info-bg-8: rgba(79, 140, 255, 0.08);
+  --info-bg-10: rgba(79, 140, 255, 0.1);
+  --info-bg-12: rgba(79, 140, 255, 0.12);
+  --info-bg-15: rgba(79, 140, 255, 0.15);
+  --info-bg-20: rgba(79, 140, 255, 0.2);
+  --info-border-15: rgba(79, 140, 255, 0.15);
+  --info-border-20: rgba(79, 140, 255, 0.2);
+  --info-border-25: rgba(79, 140, 255, 0.25);
+  --info-border-30: rgba(79, 140, 255, 0.3);
+  
+  --purple-bg: rgba(167, 139, 250, 0.1);
+  --purple-border: rgba(167, 139, 250, 0.2);
+  --purple-bg-5: rgba(167, 139, 250, 0.05);
+  --purple-bg-6: rgba(167, 139, 250, 0.06);
+  --purple-bg-10: rgba(167, 139, 250, 0.1);
+  --purple-bg-15: rgba(167, 139, 250, 0.15);
+  --purple-border-15: rgba(167, 139, 250, 0.15);
+  --purple-border-20: rgba(167, 139, 250, 0.2);
+
+  /* ── Shadow/Glow Scale ── */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --glow-info: 0 0 20px rgba(79, 140, 255, 0.3);
+  --glow-positive: 0 0 20px rgba(22, 199, 132, 0.25);
+  --glow-negative: 0 0 20px rgba(234, 57, 67, 0.25);
+
+  /* ── Typography ── */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+
+  /* ── Spacing ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+
+  /* ── Panel Spacing (UI Hierarchy Pass) ── */
+  --panel-padding: 24px;
+  --panel-header-padding: 20px 24px;
+  --panel-content-padding: 24px;
+  --panel-section-gap: 20px;
+  --panel-header-content-gap: 20px;
+
+  /* ── Shadow Elevation ── */
+  --shadow-elev-1: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-elev-2: 0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-elev-3: 0 10px 15px rgba(0, 0, 0, 0.35), 0 4px 6px rgba(0, 0, 0, 0.25);
+
+  /* ── Radius ── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* ── Transitions ── */
+  --transition-fast: 150ms ease-out;
+  --transition-base: 200ms ease-out;
+  --transition-slow: 300ms ease-out;
+
+  /* ── Scrollbar ── */
+  --scrollbar-track: rgba(255, 255, 255, 0.02);
+  --scrollbar-thumb: rgba(79, 140, 255, 0.25);
+  --scrollbar-thumb-hover: rgba(79, 140, 255, 0.45);
+
+  /* ── Glass Effects ── */
+  --glass-bg: rgba(17, 24, 39, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-blur: blur(12px);
+}
+
+/* ============================================
+   PREMIUM THEME PRESET (Explicit)
+   ============================================ */
+:root[data-theme="premium"] {
+  /* Background Scale */
+  --bg-primary: #0B0F17;
+  --bg-secondary: #0D111A;
+  --bg-card: rgba(20, 28, 43, 0.85);
+  --bg-surface: #111827;
+  --bg-elevated: rgba(30, 41, 59, 0.6);
+  --bg-input: rgba(255, 255, 255, 0.03);
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-active: rgba(255, 255, 255, 0.08);
+
+  /* Text Scale */
+  --text-primary: #E6EDF3;
+  --text-secondary: #9AA4B2;
+  --text-muted: #6B7280;
+  --text-disabled: rgba(255, 255, 255, 0.3);
+  --text-inverse: #0B0F17;
+
+  /* Accents - Premium Fintech */
+  --accent-positive: #16C784;
+  --accent-negative: #EA3943;
+  --accent-info: #4F8CFF;
+  --accent-warning: #F5A623;
+  --accent-purple: #A78BFA;
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.15);
+  --border-accent: rgba(79, 140, 255, 0.3);
+
+  /* State Backgrounds */
+  --success-bg: rgba(22, 199, 132, 0.1);
+  --success-border: rgba(22, 199, 132, 0.2);
+  --danger-bg: rgba(234, 57, 67, 0.1);
+  --danger-border: rgba(234, 57, 67, 0.2);
+  --warning-bg: rgba(245, 166, 35, 0.1);
+  --warning-border: rgba(245, 166, 35, 0.2);
+  --info-bg: rgba(79, 140, 255, 0.1);
+  --info-border: rgba(79, 140, 255, 0.2);
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================
+   TERMINAL THEME PRESET (High Contrast)
+   ============================================ */
+:root[data-theme="terminal"] {
+  /* Background Scale - Higher contrast */
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-card: rgba(20, 20, 20, 0.95);
+  --bg-surface: #141414;
+  --bg-elevated: rgba(30, 30, 30, 0.9);
+  --bg-input: rgba(255, 255, 255, 0.05);
+  --bg-hover: rgba(255, 255, 255, 0.08);
+  --bg-active: rgba(255, 255, 255, 0.12);
+
+  /* Text Scale - Sharper contrast */
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0A0A0;
+  --text-muted: #666666;
+  --text-disabled: rgba(255, 255, 255, 0.4);
+  --text-inverse: #000000;
+
+  /* Accents - Brighter for terminal */
+  --accent-positive: #00FF88;
+  --accent-negative: #FF3366;
+  --accent-info: #00CCFF;
+  --accent-warning: #FFCC00;
+  --accent-purple: #CC88FF;
+
+  /* Borders - More visible */
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-default: rgba(255, 255, 255, 0.15);
+  --border-strong: rgba(255, 255, 255, 0.25);
+  --border-accent: rgba(0, 204, 255, 0.5);
+
+  /* State Backgrounds - More saturated */
+  --success-bg: rgba(0, 255, 136, 0.15);
+  --success-border: rgba(0, 255, 136, 0.3);
+  --danger-bg: rgba(255, 51, 102, 0.15);
+  --danger-border: rgba(255, 51, 102, 0.3);
+  --warning-bg: rgba(255, 204, 0, 0.15);
+  --warning-border: rgba(255, 204, 0, 0.3);
+  --info-bg: rgba(0, 204, 255, 0.15);
+  --info-border: rgba(0, 204, 255, 0.3);
+
+  /* Shadows - Sharper */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.8);
+
+  /* Glow - Stronger */
+  --glow-info: 0 0 30px rgba(0, 204, 255, 0.4);
+  --glow-positive: 0 0 30px rgba(0, 255, 136, 0.35);
+  --glow-negative: 0 0 30px rgba(255, 51, 102, 0.35);
+}
+
+/* ============================================
+   HELPER CLASSES (Optional Utility)
+   ============================================ */
+
+/* Text colors */
+.text-theme-primary { color: var(--text-primary); }
+.text-theme-secondary { color: var(--text-secondary); }
+.text-theme-muted { color: var(--text-muted); }
+.text-theme-positive { color: var(--accent-positive); }
+.text-theme-negative { color: var(--accent-negative); }
+.text-theme-info { color: var(--accent-info); }
+.text-theme-warning { color: var(--accent-warning); }
+
+/* Backgrounds */
+.bg-theme-primary { background: var(--bg-primary); }
+.bg-theme-card { background: var(--bg-card); }
+.bg-theme-surface { background: var(--bg-surface); }
+.bg-theme-positive { background: var(--success-bg); }
+.bg-theme-negative { background: var(--danger-bg); }
+.bg-theme-info { background: var(--info-bg); }
+
+/* Borders */
+.border-theme-subtle { border-color: var(--border-subtle); }
+.border-theme-default { border-color: var(--border-default); }
+.border-theme-accent { border-color: var(--border-accent); }

@@ -32,11 +32,11 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-    { href: "/", key: "dashboard", label: "Dashboard", icon: DashboardIcon, accentColor: "#00e0c6", glowColor: "0 0 12px rgba(0,224,198,0.5)" },
-    { href: "/charts", key: "charts", label: "Charts", icon: ChartsIcon, accentColor: "#3b82f6", glowColor: "0 0 12px rgba(59,130,246,0.5)" },
-    { href: "/trading", key: "trading", label: "AI Trading", icon: TradingIcon, accentColor: "#8b5cf6", glowColor: "0 0 12px rgba(139,92,246,0.5)" },
-    { href: "/analysis", key: "analysis", label: "Analysis", icon: AnalysisIcon, accentColor: "#f59e0b", glowColor: "0 0 12px rgba(245,158,11,0.5)" },
-    { href: "/signals", key: "signals", label: "Detailed Signals", icon: SignalsIcon, accentColor: "#ef4444", glowColor: "0 0 12px rgba(239,68,68,0.5)" },
+    { href: "/", key: "dashboard", label: "Dashboard", icon: DashboardIcon, accentColor: "var(--accent-info)", glowColor: "0 0 12px var(--accent-info-50)" },
+    { href: "/charts", key: "charts", label: "Charts", icon: ChartsIcon, accentColor: "var(--accent-info)", glowColor: "0 0 12px var(--accent-info-50)" },
+    { href: "/trading", key: "trading", label: "AI Trading", icon: TradingIcon, accentColor: "var(--accent-purple)", glowColor: "0 0 12px var(--accent-purple-50)" },
+    { href: "/analysis", key: "analysis", label: "Analysis", icon: AnalysisIcon, accentColor: "var(--accent-warning)", glowColor: "0 0 12px var(--accent-warning-50)" },
+    { href: "/signals", key: "signals", label: "Detailed Signals", icon: SignalsIcon, accentColor: "var(--accent-negative)", glowColor: "0 0 12px var(--accent-negative-50)" },
 ];
 
 const LEGAL_LINKS = [
@@ -93,17 +93,17 @@ export default function Sidebar() {
                     <Link href="/" className="group flex items-center gap-2.5 min-w-0">
                         <div className="relative flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-300 group-hover:scale-110"
                             style={{
-                                background: "linear-gradient(135deg, #00e0c6 0%, #3b82f6 100%)",
-                                boxShadow: "0 0 20px rgba(0,224,198,0.35), inset 0 1px 0 rgba(255,255,255,0.15)",
+                                background: "linear-gradient(135deg, var(--accent-info) 0%, var(--accent-info) 100%)",
+                                boxShadow: "0 0 20px var(--accent-info-35), inset 0 1px 0 rgba(255,255,255,0.15)",
                             }}>
                             <ForexsAILogoIcon className="text-white" size={18} />
                         </div>
                         {!collapsed && (
                             <div className="min-w-0 sidebar-fade-in">
                                 <h1 className="text-[15px] font-black tracking-tight text-white leading-none">
-                                    FOREXS<span style={{ color: "#00e0c6" }}>AI</span>
+                                    FOREXS<span style={{ color: "var(--accent-info)" }}>AI</span>
                                 </h1>
-                                <p className="text-[8px] font-bold tracking-[0.25em] uppercase leading-none mt-0.5" style={{ color: "rgba(0,224,198,0.5)" }}>
+                                <p className="text-[8px] font-bold tracking-[0.25em] uppercase leading-none mt-0.5" style={{ color: "var(--accent-info-50)" }}>
                                     Intelligence
                                 </p>
                             </div>
@@ -166,7 +166,7 @@ export default function Sidebar() {
                 <Link href="mailto:support@forexsai.com"
                     className={`group flex items-center gap-2.5 rounded-lg transition-all duration-200 ${collapsed ? "justify-center px-0 py-2" : "px-3 py-1.5"}`}
                     style={{ color: "rgba(255,255,255,0.3)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = "#00e0c6"; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent-info)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}
                     title={collapsed ? "Support" : undefined}
                 >
@@ -182,7 +182,7 @@ export default function Sidebar() {
                     }}
                     className={`group flex items-center gap-2.5 rounded-lg transition-all duration-200 ${collapsed ? "justify-center px-0 py-2" : "px-3 py-1.5"}`}
                     style={{ color: "rgba(255,255,255,0.3)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = "#00e0c6"; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent-info)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}
                     title={collapsed ? "Language" : undefined}
                 >

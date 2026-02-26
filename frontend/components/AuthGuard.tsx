@@ -40,7 +40,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       if (isDemoMode()) {
         const { isAuthenticated, setUser, setToken } = useAuthStore.getState();
         if (!isAuthenticated) {
-          console.log("%c🟢 DEMO MODE ACTIVE", "color: #00ff88; font-size: 16px; font-weight: bold;");
+          console.log("%c🟢 DEMO MODE ACTIVE", "color: var(--accent-positive); font-size: 16px; font-weight: bold;");
           // Inject demo user into zustand store
           const demoUser = {
             id: "999",

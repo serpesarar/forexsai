@@ -12,13 +12,26 @@ import {
   ArrowDownIcon as ArrowDown,
   InfoIcon as Info,
   CloseIcon as X,
-  RotateIcon as RefreshCw,
 } from "../ui/CustomIcons";
+import PanelHeader from "../PanelHeader";
 import TrendChannelChart from "./TrendChannelChart";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
-const P = { bg: "#0B0F17", card: "#141C2B", surface: "#111827", border: "rgba(255,255,255,0.06)", text: "#E6EDF3", muted: "#6B7280", green: "#16C784", red: "#EA3943", warn: "#F5A623", accent: "#4F8CFF", blue: "#4F8CFF" };
+const P = {
+  bg: "var(--bg-primary)",
+  card: "var(--bg-card)",
+  surface: "var(--bg-surface)",
+  border: "var(--border-subtle)",
+  text: "var(--text-primary)",
+  textSec: "var(--text-secondary)",
+  muted: "var(--text-muted)",
+  green: "var(--accent-positive)",
+  red: "var(--accent-negative)",
+  warn: "var(--accent-warning)",
+  accent: "var(--accent-info)",
+  blue: "var(--blue)",
+};
 
 interface LevelData {
   type: "resistance" | "current" | "support";
@@ -171,64 +184,25 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
 
   return (
     <div className="bg-transparent overflow-hidden">
-      {/* Header */}
-      <div className="bg-transparent p-2">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${P.blue}15`, border: `1px solid ${P.blue}25` }}>
-              <Target className="w-5 h-5" style={{ color: P.blue }} />
-            </div>
-            <div className="min-w-0">
-              <h2 style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: P.text }}>
-                CLEAR TREND
-              </h2>
-              <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>
-                Closes: {data?.chart_data?.closes?.length ?? 0}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {/* Symbol Switcher */}
-            <div className="flex rounded-lg overflow-hidden" style={{ border: `1px solid ${P.border}` }}>
-              {SYMBOLS.map((s) => (
-                <button
-                  key={s.key}
-                  onClick={() => setActiveSymbol(s.key)}
-                  style={{
-                    padding: "6px 10px",
-                    fontSize: 11,
-                    fontWeight: 600,
-                    fontFamily: FONT,
-                    background: activeSymbol === s.key ? `${P.accent}20` : "rgba(255,255,255,0.03)",
-                    color: activeSymbol === s.key ? P.accent : P.muted,
-                    borderRight: `1px solid ${P.border}`,
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-            <select
-              value={timeframe}
-              onChange={(e) => setTimeframe(e.target.value)}
-              style={{ fontFamily: FONT, fontSize: 11, padding: "6px 8px", borderRadius: 8, border: `1px solid ${P.border}`, background: P.surface, color: P.text }}
-            >
-              <option value="15m">15m</option>
-              <option value="1H">1H</option>
-              <option value="4H">4H</option>
-              <option value="1D">1D</option>
-            </select>
-            <button
-              onClick={fetchData}
-              className="p-1.5 rounded-lg transition-all"
-              style={{ background: "rgba(255,255,255,0.05)" }}
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: P.muted }} />
-            </button>
-          </div>
-        </div>
-      </div>
+      <PanelHeader
+        title="CLEAR TREND V3"
+        subtitle="ADVANCED TREND ANALYSIS"
+        icon={<TrendingUp size={22} />}
+        iconColor="var(--accent-cyan)"
+        iconBg="var(--accent-cyan-08)"
+        iconBorder="var(--accent-cyan-15)"
+        symbols={[
+          { key: "NDX.INDX", label: "NASDAQ" },
+          { key: "XAUUSD", label: "XAUUSD" },
+          { key: "GDAXI.INDX", label: "DAX" },
+          { key: "CL.COMM", label: "US Oil" },
+        ]}
+        activeSymbol={activeSymbol}
+        onSymbolChange={setActiveSymbol}
+        onRefresh={fetchData}
+        loading={loading}
+        panelId="clear-trend-v3"
+      />
 
       {data && (
         <>

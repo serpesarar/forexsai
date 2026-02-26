@@ -2,14 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
-import { PanelInfoButton } from "../PanelInfoButton";
+import { PanelHeader } from "../PanelHeader";
 import {
   BrainIcon as Brain,
   ArrowUpIcon as TrendingUp,
   ArrowDownIcon as TrendingDown,
   ActivityIcon as Activity,
   TargetIcon as Target,
-  RotateIcon as RefreshCw,
   ZapIcon as Zap,
   ArrowUpIcon as ArrowUp,
   ArrowDownIcon as ArrowDown,
@@ -24,7 +23,6 @@ import {
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
-const P = { bg: "#0B0F17", card: "#141C2B", surface: "#111827", border: "rgba(255,255,255,0.06)", text: "#E6EDF3", muted: "#6B7280", green: "#16C784", red: "#EA3943", warn: "#F5A623", accent: "#4F8CFF", purple: "#A78BFA" };
 
 interface ScoreBreakdown {
   ml: { pts: number; confidence: number; direction: string };
@@ -83,12 +81,12 @@ const SYMBOLS = [
 const TIMEFRAMES = ["5m", "15m", "30m", "1H", "4H"];
 
 const signalStyles: Record<string, { accent: string; glow: string; bg: string }> = {
-  CONFIRM: { accent: P.green, glow: "rgba(22,199,132,0.06)", bg: "rgba(22,199,132,0.04)" },
-  SCOUT: { accent: P.warn, glow: "rgba(245,166,35,0.06)", bg: "rgba(245,166,35,0.04)" },
-  HOLD: { accent: P.accent, glow: "rgba(79,140,255,0.06)", bg: "rgba(79,140,255,0.04)" },
+  CONFIRM: { accent: "var(--accent-positive)", glow: "rgba(22,199,132,0.06)", bg: "var(--success-bg)" },
+  SCOUT: { accent: "var(--accent-warning)", glow: "rgba(245,166,35,0.06)", bg: "var(--warning-bg)" },
+  HOLD: { accent: "var(--accent-info)", glow: "rgba(79,140,255,0.06)", bg: "var(--info-bg)" },
 };
 
-const dirColor: Record<string, string> = { BUY: P.green, SELL: P.red, HOLD: P.accent, NEUTRAL: P.warn };
+const dirColor: Record<string, string> = { BUY: "var(--accent-positive)", SELL: "var(--accent-negative)", HOLD: "var(--accent-info)", NEUTRAL: "var(--accent-warning)" };
 
 export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: PulseMLPanelProps) {
   const { t } = useI18nStore();
@@ -141,34 +139,30 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
 
   const st = signalStyles[data?.signal_type || "HOLD"] || signalStyles.HOLD;
 
+  const getDirColor = (dir: string) => {
+    if (dir === "BUY" || dir === "up" || dir === "UP") return "var(--accent-positive)";
+    if (dir === "SELL" || dir === "down" || dir === "DOWN") return "var(--accent-negative)";
+    return "var(--accent-warning)";
+  };
+
   if (loading && !data) {
     return (
-      <div className="rounded-2xl p-6 animate-pulse" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)" }}>
-        <div className="h-8 rounded w-2/3 mb-4" style={{ background: "rgba(255,255,255,0.04)" }} />
-        <div className="h-24 rounded-xl mb-4" style={{ background: "rgba(255,255,255,0.04)" }} />
-        <div className="grid grid-cols-3 gap-3">
-          {[1, 2, 3].map(i => <div key={i} className="h-16 rounded-lg" style={{ background: "rgba(255,255,255,0.04)" }} />)}
-        </div>
+      <div className="animate-pulse p-6 rounded-xl border border-theme-subtle" style={{ background: "var(--bg-primary)" }}>
+        <div className="h-12 w-1/3 bg-white/5 rounded-lg mb-6" />
+        <div className="grid grid-cols-12 gap-[1px] bg-white/5 h-64 rounded-xl" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-2xl p-6" style={{ background: "rgba(2,6,23,0.85)", border: "1px solid rgba(255,255,255,0.06)" }}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Brain className="w-5 h-5" style={{ color: "#a78bfa" }} />
-            <span className="text-sm font-bold tracking-wider" style={{ color: "#a78bfa" }}>PULSE 2 — ML HYBRID</span>
-          </div>
-          <button onClick={() => { setLoading(true); fetchData(); }} className="p-1.5 rounded-lg hover:bg-white/10 transition">
-            <RefreshCw className="w-4 h-4 text-white/40" />
-          </button>
-        </div>
-        <div className="flex items-center gap-2 text-amber-400 text-sm">
-          <AlertTriangle className="w-4 h-4" />
-          <span>{error}</span>
-        </div>
+      <div className="rounded-xl p-12 text-center flex flex-col items-center justify-center font-['Inter']" style={{ background: "var(--bg-primary)", border: "1px solid var(--border-subtle)" }}>
+        <Activity className="w-10 h-10 mb-3 opacity-20" style={{ color: "var(--text-primary)" }} />
+        <h3 className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>Data Unavailable</h3>
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>{error}</p>
+        <button onClick={() => { setLoading(true); fetchData(); }} className="mt-4 px-3 py-1.5 rounded bg-white/5 text-xs text-white/50 hover:bg-white/10 transition-colors">
+          Retry Connection
+        </button>
       </div>
     );
   }
@@ -178,168 +172,168 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const scorePct = ((data?.pulse_score || 0) / maxScore) * 100;
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(2,6,23,0.85)", border: `1px solid ${st.accent}20` }}>
-      {/* Header */}
-      <div className="px-5 pt-4 pb-3 flex items-center justify-between" style={{ background: st.bg }}>
-        <div className="flex items-center gap-2">
-          <Brain className="w-5 h-5" style={{ color: st.accent }} />
-          <span className="text-sm font-bold tracking-wider" style={{ color: st.accent }}>PULSE 2 — ML HYBRID</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => { setLoading(true); fetchData(); }} className="p-1.5 rounded-lg hover:bg-white/10 transition">
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} style={{ color: "rgba(255,255,255,0.4)" }} />
-          </button>
-          <PanelInfoButton panelId="pulse-ml" />
-        </div>
-      </div>
+    <div className="flex flex-col rounded-xl overflow-hidden" style={{ background: "var(--bg-primary)", border: "1px solid var(--border-subtle)", fontFamily: FONT }}>
 
-      <div className="px-5 pb-5">
-        {/* Symbol + Timeframe Tabs */}
-        <div className="flex items-center justify-between mt-3">
-          <div className="flex gap-1">
-            {SYMBOLS.map(s => (
-              <button key={s.key} onClick={() => setActiveSymbol(s.key)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeSymbol === s.key ? "text-white" : "text-white/30 hover:text-white/60"}`}
-                style={activeSymbol === s.key ? { background: st.accent + "20", color: st.accent } : {}}>
-                {s.label}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-1">
-            {TIMEFRAMES.map(tf => (
-              <button key={tf} onClick={() => setTimeframe(tf)}
-                className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${timeframe === tf ? "text-white bg-white/10" : "text-white/30 hover:text-white/50"}`}>
-                {tf}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Main Signal Area */}
-        {data && (
-          <>
-            <div className="mt-4 flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span style={{ fontFamily: FONT, fontSize: 32, fontWeight: 700, letterSpacing: "-0.5px", color: dirColor[data.signal] || P.text }}>
-                    {data.signal}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: st.accent + "20", color: st.accent }}>
-                    {data.signal_type}
-                  </span>
-                </div>
-                <div className="text-white/40 text-xs mt-1">
-                  Score: {data.pulse_score}/{maxScore} • Conf: {data.confidence.toFixed(1)}%
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-mono font-bold text-white">
-                  ${data.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                </div>
-                <div className="text-[10px] text-white/40 mt-1">
-                  {lastUpdate ? lastUpdate.toLocaleTimeString() : "—"}
-                </div>
-              </div>
+      {/* ── HEADER (New Design) ── */}
+      <PanelHeader
+        title="PULSE 2"
+        subtitle="ML HYBRID"
+        icon={<Brain size={22} />}
+        iconBg="var(--accent-cyan-08)"
+        iconBorder="var(--accent-cyan-15)"
+        iconColor="var(--accent-cyan)"
+        symbols={SYMBOLS}
+        activeSymbol={activeSymbol}
+        onSymbolChange={setActiveSymbol}
+        timeframe={timeframe}
+        onTimeframeChange={setTimeframe}
+        timeframes={TIMEFRAMES}
+        onRefresh={() => { setLoading(true); fetchData(); }}
+        loading={loading}
+        panelId="pulse-ml"
+        extraContent={data ? (
+          <div>
+            <div className="text-[26px] font-bold tracking-tighter leading-none" style={{ color: "var(--text-primary)" }}>
+              {data.price.toFixed(2)}
             </div>
+          </div>
+        ) : undefined}
+      />
 
-            {/* Regime Badge */}
-            {data?.regime && (
-              <div className="mt-3 flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold font-mono"
+      {/* ── MAIN GRID (3 COLUMNS) ── */}
+      {data && (
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px]" style={{ background: "var(--border-subtle)" }}>
+
+          {/* COLUMN 1: ML OUTPUT & REGIME (4/12) */}
+          <div className="col-span-12 md:col-span-4 p-5 flex flex-col gap-6" style={{ background: "var(--bg-primary)" }}>
+            {/* Model Output */}
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>ML Model Prediction</div>
+              <div className="flex items-end gap-3 mb-2">
+                <span className="text-2xl font-bold tracking-tight" style={{ color: getDirColor(data.signal) }}>
+                  {data.signal}
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider mb-1"
                   style={{
-                    background: data.regime.type.includes("TREND_UP") ? `${P.green}10` :
-                      data.regime.type.includes("TREND_DOWN") ? `${P.red}10` :
-                        data.regime.type === "RANGING" ? `${P.warn}10` : `${P.accent}10`,
-                    color: data.regime.type.includes("TREND_UP") ? P.green :
-                      data.regime.type.includes("TREND_DOWN") ? P.red :
-                        data.regime.type === "RANGING" ? P.warn : P.accent,
-                    border: `1px solid ${data.regime.type.includes("TREND_UP") ? `${P.green}20` :
-                      data.regime.type.includes("TREND_DOWN") ? `${P.red}20` :
-                        data.regime.type === "RANGING" ? `${P.warn}20` : `${P.accent}20`}`,
+                    background: data.signal_type === "CONFIRM" ? "var(--success-bg)" : data.signal_type === "SCOUT" ? "var(--warning-bg)" : "var(--info-bg)",
+                    color: data.signal_type === "CONFIRM" ? "var(--accent-positive)" : data.signal_type === "SCOUT" ? "var(--accent-warning)" : "var(--accent-info)",
                   }}>
-                  <Shield className="w-3 h-3" />
-                  {data.regime.type.replace(/_/g, " ")}
+                  {data.signal_type}
+                </span>
+              </div>
+              <div className="h-[6px] w-full rounded-full overflow-hidden mt-3" style={{ background: "var(--bg-input)" }}>
+                <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${scorePct}%`, background: getDirColor(data.signal) }} />
+              </div>
+              <div className="flex items-center justify-between mt-2 font-mono text-[10px]">
+                <span style={{ color: "var(--text-muted)" }}>Score: {data.pulse_score}/{maxScore}</span>
+                <span style={{ color: "var(--text-secondary)" }}>Conf: {data.confidence.toFixed(1)}%</span>
+              </div>
+            </div>
+
+            {/* Market Regime */}
+            {data.regime && (
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-widest mb-3 flex items-center justify-between" style={{ color: "var(--text-muted)" }}>
+                  <span>Market Regime</span>
+                  {data.regime.is_ath && <span className="flex items-center gap-1 text-[9px] text-[var(--accent-warning)] border border-[var(--accent-warning)] px-1 rounded bg-[var(--warning-bg)]"><Mountain size={10} /> ATH</span>}
                 </div>
-                <div className="px-2 py-1 rounded-full text-[10px] font-mono font-bold"
-                  style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  ADX {data.regime.adx} | {data.regime.session}
-                </div>
-                {data.regime.is_ath && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-mono font-bold"
-                    style={{ background: "rgba(255,215,0,0.12)", color: "#ffd700", border: "1px solid rgba(255,215,0,0.25)" }}>
-                    <Mountain className="w-3 h-3" /> ATH
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center py-1.5 px-3 rounded border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Classification</span>
+                    <span className="text-[12px] font-bold" style={{ color: data.regime.type.includes("UP") ? "var(--accent-positive)" : data.regime.type.includes("DOWN") ? "var(--accent-negative)" : "var(--accent-info)" }}>
+                      {data.regime.type.replace(/_/g, " ")}
+                    </span>
                   </div>
-                )}
+                  <div className="flex justify-between items-center py-1.5 px-3 rounded border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>ADX Strength</span>
+                    <span className="text-[12px] font-semibold text-white/80 font-mono">{data.regime.adx}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 px-3 rounded border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
+                    <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Session</span>
+                    <span className="text-[12px] font-semibold text-white/80">{data.regime.session}</span>
+                  </div>
+                </div>
               </div>
             )}
+          </div>
 
-            {/* Score Bar */}
-            <div className="mt-3 rounded-full overflow-hidden" style={{ height: 6, background: P.border }}>
-              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${scorePct}%`, background: st.accent, opacity: 0.85 }} />
-            </div>
-
-            {/* Score Breakdown */}
-            {bd && (
-              <div className="mt-4 grid grid-cols-5 gap-2">
-                {[
-                  { label: "ML", pts: bd.ml.pts, max: 35, detail: bd.ml.direction, icon: Brain },
-                  { label: "EMA", pts: bd.ema.pts, max: 25, detail: bd.ema.status, icon: TrendingUp },
-                  { label: "MACD", pts: bd.macd.pts, max: 15, detail: bd.macd.hist.toFixed(3), icon: BarChart3 },
-                  { label: "RSI", pts: bd.rsi.pts, max: 15, detail: bd.rsi.value.toFixed(1), icon: Activity },
-                  { label: "VOL", pts: bd.volume.pts, max: 10, detail: `${bd.volume.pts}p`, icon: Zap },
-                ].map(item => {
-                  const Icon = item.icon;
-                  const pct = (item.pts / item.max) * 100;
-                  return (
-                    <div key={item.label} className="text-center rounded-xl p-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                      <Icon className="w-3.5 h-3.5 mx-auto mb-1" style={{ color: st.accent }} />
-                      <div className="text-[10px] font-bold text-white/60">{item.label}</div>
-                      <div className="text-xs font-mono font-bold text-white mt-0.5">{item.pts}</div>
-                      <div className="mt-1 rounded-full overflow-hidden" style={{ height: 4, background: P.border }}>
-                        <div className="h-full rounded-full" style={{ width: `${Math.min(100, pct)}%`, background: st.accent, opacity: 0.85 }} />
+          {/* COLUMN 2: COMPONENT SCORES (4/12) */}
+          <div className="col-span-12 md:col-span-4 p-5 flex flex-col gap-6" style={{ background: "var(--bg-primary)" }}>
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-widest mb-3 flex justify-between" style={{ color: "var(--text-muted)" }}>
+                <span>Model Components</span>
+                <span>MAX 100</span>
+              </div>
+              {bd && (
+                <div className="space-y-1">
+                  {[
+                    { label: "ML Engine", pts: bd.ml.pts, max: 35, detail: bd.ml.direction },
+                    { label: "EMA Cross", pts: bd.ema.pts, max: 25, detail: bd.ema.status },
+                    { label: "MACD Hist", pts: bd.macd.pts, max: 15, detail: bd.macd.hist.toFixed(3) },
+                    { label: "RSI Flow", pts: bd.rsi.pts, max: 15, detail: bd.rsi.value.toFixed(1) },
+                    { label: "Volume Profile", pts: bd.volume.pts, max: 10, detail: `${bd.volume.pts}pts` },
+                  ].map((comp, i) => (
+                    <div key={i} className="flex justify-between items-center py-2 px-3 rounded" style={{ background: "var(--bg-input)" }}>
+                      <div className="flex flex-col">
+                        <span className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>{comp.label}</span>
+                        <span className="text-[9px]" style={{ color: "var(--text-disabled)" }}>{comp.detail}</span>
                       </div>
-                      <div className="text-[9px] text-white/30 mt-0.5 truncate">{item.detail}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-semibold" style={{ color: "var(--text-primary)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>{comp.pts}</span>
+                        <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>/ {comp.max}</span>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
-            {/* Target / Stop / R:R */}
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              <div className="rounded-xl p-3 text-center" style={{ background: `${P.green}05`, border: `1px solid ${P.green}12` }}>
-                <Target className="w-3.5 h-3.5 mx-auto mb-1" style={{ color: P.green }} />
-                <div style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.05em" }}>TARGET</div>
-                <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: P.green }}>${data.target.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+          {/* COLUMN 3: AI SETUP (4/12) */}
+          <div className="col-span-12 md:col-span-4 p-5 flex flex-col h-full" style={{ background: "var(--bg-primary)" }}>
+            <div className="text-[11px] font-bold uppercase tracking-widest mb-3 flex items-center justify-between" style={{ color: "var(--text-muted)" }}>
+              <span>Algorithmic Setup</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: "var(--purple-bg)", color: "var(--accent-purple)" }}>ML SECURED</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {/* Target */}
+              <div className="p-3 rounded border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
+                <div className="text-[10px] uppercase font-semibold mb-1 flex items-center gap-1.5" style={{ color: "var(--text-muted)" }}><Target className="w-3 h-3" style={{ color: "var(--accent-positive)" }} /> Target (TP)</div>
+                <div className="text-[18px] font-bold tracking-tight" style={{ color: "var(--accent-positive)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>{data.target.toFixed(2)}</div>
               </div>
-              <div className="rounded-xl p-3 text-center" style={{ background: `${P.red}05`, border: `1px solid ${P.red}12` }}>
-                <AlertTriangle className="w-3.5 h-3.5 mx-auto mb-1" style={{ color: P.red }} />
-                <div style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.05em" }}>STOP</div>
-                <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: P.red }}>${data.stop.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
-              </div>
-              <div className="rounded-xl p-3 text-center" style={{ background: `${P.accent}05`, border: `1px solid ${P.accent}12` }}>
-                <Zap className="w-3.5 h-3.5 mx-auto mb-1" style={{ color: P.accent }} />
-                <div style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.05em" }}>R:R</div>
-                <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: P.accent }}>{data.rr_ratio}x</div>
+              {/* Stop Loss */}
+              <div className="p-3 rounded border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
+                <div className="text-[10px] uppercase font-semibold mb-1 flex items-center gap-1.5" style={{ color: "var(--text-muted)" }}><AlertTriangle className="w-3 h-3" style={{ color: "var(--accent-negative)" }} /> Stop (SL)</div>
+                <div className="text-[18px] font-bold tracking-tight" style={{ color: "var(--accent-negative)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>{data.stop.toFixed(2)}</div>
               </div>
             </div>
 
-            {/* Suggestion */}
-            <div className="mt-3 px-3 py-2 rounded-xl text-xs text-white/60" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
-              {data.suggestion}
+            <div className="p-3 rounded border flex justify-between items-center mb-4" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
+              <span className="text-[11px] font-medium uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>Reward / Risk Ratio</span>
+              <span className="text-[14px] font-bold" style={{ color: "var(--accent-info)" }}>{data.rr_ratio.toFixed(2)} <span className="text-[10px] text-[var(--text-disabled)]">x</span></span>
             </div>
 
-            {/* Notes */}
-            {data.details.notes && data.details.notes.length > 0 && (
-              <div className="mt-2 space-y-1">
-                {data.details.notes.slice(0, 3).map((note, i) => (
-                  <div key={i} className="text-[10px] text-white/30">• {note}</div>
-                ))}
+            {/* AI Log */}
+            <div className="mt-auto flex flex-col gap-2">
+              <div className="p-3 rounded border flex-1" style={{ background: "var(--purple-bg)", borderColor: "var(--purple-border)" }}>
+                <div className="text-[10px] uppercase tracking-widest font-bold mb-1.5" style={{ color: "var(--accent-purple)" }}>ML NOTES _</div>
+                <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-primary)", opacity: 0.85 }}>
+                  {data.suggestion}
+                </p>
               </div>
-            )}
-          </>
-        )}
-      </div>
+
+              {data.details.notes && data.details.notes.length > 0 && (
+                <div className="flex justify-between items-center text-[9px] uppercase px-1">
+                  <span style={{ color: "var(--text-muted)" }}>Diagnostic factors: {data.details.notes.length}</span>
+                </div>
+              )}
+            </div>
+
+          </div>
+
+        </div>
+      )}
     </div>
   );
 }

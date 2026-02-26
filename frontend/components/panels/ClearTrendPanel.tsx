@@ -7,14 +7,13 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Target,
   ArrowUp,
   ArrowDown,
   Info,
   X,
-  RefreshCw,
 } from "lucide-react";
 import TrendChannelChart from "./TrendChannelChart";
+import PanelHeader from "../PanelHeader";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
@@ -81,10 +80,10 @@ interface ClearTrendPanelProps {
 }
 
 const SYMBOLS = [
-  { key: "NDX.INDX", label: "NASDAQ", icon: "📊" },
-  { key: "XAUUSD", label: "XAUUSD", icon: "🥇" },
-  { key: "GDAXI.INDX", label: "DAX", icon: "🇩🇪" },
-  { key: "CL.COMM", label: "US Oil", icon: "🛢️" },
+  { key: "NDX.INDX", label: "NASDAQ" },
+  { key: "XAUUSD", label: "XAUUSD" },
+  { key: "GDAXI.INDX", label: "DAX" },
+  { key: "CL.COMM", label: "US Oil" },
 ];
 
 export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: ClearTrendPanelProps) {
@@ -169,54 +168,23 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
 
   return (
     <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-900/50 to-purple-900/50 p-3 border-b border-gray-800">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Target className="w-5 h-5 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-bold text-white truncate">Clear Trend</h2>
-              <p className="text-xs text-gray-400 truncate">Simple Trend Analysis</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {/* Symbol Switcher */}
-            <div className="flex rounded-lg overflow-hidden border border-gray-700">
-              {SYMBOLS.map((s) => (
-                <button
-                  key={s.key}
-                  onClick={() => setActiveSymbol(s.key)}
-                  className={`px-3 py-1.5 text-xs font-bold transition-all flex items-center gap-1 ${activeSymbol === s.key
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-800 text-gray-400 hover:text-white"
-                    }`}
-                >
-                  <span>{s.icon}</span>
-                  {s.label}
-                </button>
-              ))}
-            </div>
-            <select
-              value={timeframe}
-              onChange={(e) => setTimeframe(e.target.value)}
-              className="bg-gray-800 text-white text-xs px-2 py-1.5 rounded-lg border border-gray-700"
-            >
-              <option value="15m">15m</option>
-              <option value="1H">1H</option>
-              <option value="4H">4H</option>
-              <option value="1D">1D</option>
-            </select>
-            <button
-              onClick={fetchData}
-              className="p-1.5 bg-gray-800 rounded-lg hover:bg-gray-700"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-gray-400 ${loading ? "animate-spin" : ""}`} />
-            </button>
-          </div>
-        </div>
-      </div>
+      <PanelHeader
+        title="CLEAR TREND"
+        subtitle="TREND ANALYSIS"
+        icon={<TrendingUp size={22} />}
+        iconColor="var(--accent-cyan)"
+        iconBg="var(--accent-cyan-08)"
+        iconBorder="var(--accent-cyan-15)"
+        symbols={SYMBOLS}
+        activeSymbol={activeSymbol}
+        onSymbolChange={setActiveSymbol}
+        timeframe={timeframe}
+        onTimeframeChange={setTimeframe}
+        timeframes={["15m", "1H", "4H", "1D"]}
+        onRefresh={fetchData}
+        loading={loading}
+        panelId="clear-trend"
+      />
 
       {data && (
         <>

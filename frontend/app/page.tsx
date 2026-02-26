@@ -1432,10 +1432,33 @@ export default function HomePage() {
                       </LazyPanel>
                     </div>
                   )}
+                  {getCard("pulse-ml")?.visible !== false && (
+                    <div className="mb-6 w-full">
+                      <LazyPanel fallbackHeight={300}>
+                        <PulseMLPanel />
+                      </LazyPanel>
+                    </div>
+                  )}
                   {getCard("pulse-v3")?.visible !== false && (
                     <div className="mb-6 w-full">
                       <LazyPanel fallbackHeight={300}>
                         <PulseV3Panel />
+                      </LazyPanel>
+                    </div>
+                  )}
+                  {getCard("emel-panel")?.visible !== false && (
+                    <div className="mb-6 w-full">
+                      <LazyPanel fallbackHeight={300}>
+                        <EmelPanel />
+                      </LazyPanel>
+                    </div>
+                  )}
+
+                  {/* ═══ HARMONIC VISUALIZER ═══ */}
+                  {getCard("harmonic-visualizer")?.visible !== false && (
+                    <div className="mb-6 w-full">
+                      <LazyPanel fallbackHeight={400}>
+                        <HarmonicVisualizerPanel />
                       </LazyPanel>
                     </div>
                   )}

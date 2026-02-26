@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
-import { PanelInfoButton } from "../PanelInfoButton";
+import { PanelHeaderCompact } from "../PanelHeader";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
   ArrowUpIcon as TrendingUp,
@@ -25,7 +25,7 @@ import {
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
-const P = { bg: "#0B0F17", card: "#141C2B", surface: "#111827", border: "rgba(255,255,255,0.06)", text: "#E6EDF3", muted: "#6B7280", green: "#16C784", red: "#EA3943", warn: "#F5A623", accent: "#4F8CFF" };
+const P = { bg: "var(--bg-primary)", card: "var(--bg-card)", surface: "var(--bg-surface)", border: "var(--border-subtle)", text: "var(--text-primary)", muted: "var(--text-muted)", green: "var(--accent-positive)", red: "var(--accent-negative)", warn: "var(--accent-warning)", accent: "var(--accent-info)", cyan: "var(--accent-info)", gold: "var(--accent-warning)" };
 
 interface PulseV3Data {
   symbol: string;
@@ -89,9 +89,9 @@ const SYMBOLS = [
 
 /* ── Institutional Color Palette ── */
 const signalNeon: Record<string, { accent: string; glow: string; bg: string }> = {
-  CONFIRM: { accent: P.green, glow: "rgba(22,199,132,0.06)", bg: "rgba(22,199,132,0.04)" },
-  SCOUT: { accent: P.warn, glow: "rgba(245,166,35,0.06)", bg: "rgba(245,166,35,0.04)" },
-  HOLD: { accent: P.accent, glow: "rgba(79,140,255,0.06)", bg: "rgba(79,140,255,0.04)" },
+  CONFIRM: { accent: P.green, glow: "var(--accent-positive-06)", bg: "var(--accent-positive-04)" },
+  SCOUT: { accent: P.warn, glow: "var(--accent-warning-06)", bg: "var(--accent-warning-04)" },
+  HOLD: { accent: P.accent, glow: "var(--accent-info-06)", bg: "var(--accent-info-04)" },
 };
 
 const dirNeon: Record<string, string> = { BUY: P.green, SELL: P.red, NEUTRAL: P.warn };
@@ -171,11 +171,11 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   if (loading && !data) {
     return (
       <div className="p-2 animate-pulse bg-transparent">
-        <div className="h-10 rounded w-2/3 mb-4" style={{ background: "rgba(255,255,255,0.04)" }} />
-        <div className="h-32 rounded-xl mb-4" style={{ background: "rgba(255,255,255,0.04)" }} />
+        <div className="h-10 rounded w-2/3 mb-4" style={{ background: "var(--bg-hover)" }} />
+        <div className="h-32 rounded-xl mb-4" style={{ background: "var(--bg-hover)" }} />
         <div className="grid grid-cols-3 gap-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-24 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }} />
+            <div key={i} className="h-24 rounded-xl" style={{ background: "var(--bg-hover)" }} />
           ))}
         </div>
       </div>
@@ -186,18 +186,18 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
     return (
       <div className="overflow-hidden bg-transparent">
         <div className="px-2 py-2 flex items-center gap-2.5 bg-transparent">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(240,180,41,0.2)", boxShadow: "0 0 12px rgba(240,180,41,0.3)" }}>
-            <Zap className="w-4 h-4" style={{ color: "#f0b429" }} />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "var(--accent-warning-20)", boxShadow: "0 0 12px var(--accent-warning-30)" }}>
+            <Zap className="w-4 h-4" style={{ color: P.warn }} />
           </div>
           <div>
             <h2 className="text-sm font-bold text-white/90 font-mono">{t("pulseV3.title")}</h2>
-            <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulseV3.subtitle")}</p>
+            <p className="text-[10px]" style={{ color: P.muted }}>{t("pulseV3.subtitle")}</p>
           </div>
         </div>
         <div className="p-8 text-center">
-          <Activity className="w-12 h-12 mx-auto mb-3 opacity-40" style={{ color: "#f0b429" }} />
-          <p className="font-medium mb-1 font-mono text-sm" style={{ color: "#f0b429" }}>{activeSymbol}</p>
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulse.insufficientData")}</p>
+          <Activity className="w-12 h-12 mx-auto mb-3 opacity-40" style={{ color: P.warn }} />
+          <p className="font-medium mb-1 font-mono text-sm" style={{ color: P.warn }}>{activeSymbol}</p>
+          <p className="text-sm" style={{ color: P.muted }}>{t("pulse.insufficientData")}</p>
         </div>
       </div>
     );
@@ -216,36 +216,31 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   return (
     <div className="overflow-hidden bg-transparent shadow-none border-0">
 
-      {/* ── Header ── */}
-      <div className="px-2 py-2 flex items-center justify-between flex-wrap gap-2 bg-transparent">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${P.accent}12`, border: `1px solid ${P.accent}20` }}>
-            <Zap className="w-4 h-4" style={{ color: P.accent }} />
-          </div>
-          <div className="min-w-0">
-            <h2 style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: P.text }}>{t("pulseV3.title")}</h2>
-            <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>{t("pulseV3.subtitle")}</p>
-          </div>
+      {/* ── Header (New Design) ── */}
+      <PanelHeaderCompact
+        title="PULSE 3"
+        subtitle="HYBRID SCALP"
+        icon={<Zap size={20} />}
+        iconColor="var(--accent-cyan)"
+        onRefresh={fetchData}
+        loading={loading}
+        panelId="pulse-v3"
+      >
+        <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid var(--border-default)" }}>
+          {SYMBOLS.map((s) => (
+            <button key={s.key} onClick={() => setActiveSymbol(s.key)}
+              className="px-3 py-1.5 text-xs font-semibold transition-all"
+              style={{
+                background: activeSymbol === s.key ? "rgba(255,255,255,0.04)" : "transparent",
+                color: activeSymbol === s.key ? "var(--text-primary)" : "var(--text-secondary)",
+                borderRight: "1px solid var(--border-subtle)",
+                fontWeight: activeSymbol === s.key ? 600 : 500,
+                minHeight: "32px",
+              }}
+            >{s.label}</button>
+          ))}
         </div>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
-            {SYMBOLS.map((s) => (
-              <button key={s.key} onClick={() => setActiveSymbol(s.key)}
-                className="px-2.5 py-1 text-[10px] font-bold font-mono transition-all"
-                style={{
-                  background: activeSymbol === s.key ? `${nc.accent}25` : "rgba(255,255,255,0.03)",
-                  color: activeSymbol === s.key ? nc.accent : "rgba(255,255,255,0.4)",
-                  borderRight: "1px solid rgba(255,255,255,0.05)",
-                }}
-              >{s.label}</button>
-            ))}
-          </div>
-          <button onClick={fetchData} className="p-1.5 rounded-lg transition-all hover:brightness-150" style={{ background: "rgba(255,255,255,0.05)" }}>
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} style={{ color: "rgba(255,255,255,0.35)" }} />
-          </button>
-          <PanelInfoButton panelId="pulse-v3" />
-        </div>
-      </div>
+      </PanelHeaderCompact>
 
 
 
@@ -285,7 +280,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
           </span>
         </div>
 
-        <p className="text-sm font-mono mt-1.5" style={{ color: "rgba(255,255,255,0.35)" }}>
+        <p className="text-sm font-mono mt-1.5" style={{ color: P.muted }}>
           {t("pulseV3.priceLabel")} <span className="font-bold text-white/80">{data.price}</span>
         </p>
 
@@ -315,13 +310,13 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
             </div>
             {/* Session */}
             <div className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold"
-              style={{ background: "rgba(0,204,255,0.08)", color: "#00ccff", border: "1px solid rgba(0,204,255,0.15)" }}>
+              style={{ background: "var(--accent-info-08)", color: P.accent, border: "1px solid var(--accent-info-15)" }}>
               {data.regime.session}
             </div>
             {/* ATH */}
             {data.regime.is_ath && (
               <div className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold"
-                style={{ background: "rgba(255,215,0,0.12)", color: "#ffd700", border: "1px solid rgba(255,215,0,0.25)" }}>
+                style={{ background: "var(--accent-warning-12)", color: P.warn, border: "1px solid var(--accent-warning-25)" }}>
                 <Mountain className="w-3 h-3" /> ATH
               </div>
             )}
@@ -334,14 +329,14 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         {Object.entries(data.timeframes).map(([tf, info]) => {
           const trendC = info.trend === "up" ? P.green : info.trend === "down" ? P.red : P.warn;
           return (
-            <div key={tf} className="rounded-xl p-3 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
-              <div className="text-[10px] uppercase tracking-widest font-mono mb-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>{tf}</div>
+            <div key={tf} className="rounded-xl p-3 text-center" style={{ background: "var(--bg-hover)", border: "1px solid var(--border-subtle)" }}>
+              <div className="text-[10px] uppercase tracking-widest font-mono mb-1.5" style={{ color: P.muted }}>{tf}</div>
               <div className="flex items-center justify-center gap-1 mb-1">
                 {info.trend === "up" ? <ArrowUp className="w-3.5 h-3.5" style={{ color: trendC }} /> :
                   info.trend === "down" ? <ArrowDown className="w-3.5 h-3.5" style={{ color: trendC }} /> :
                     <Activity className="w-3.5 h-3.5" style={{ color: trendC }} />}
                 <span className="text-lg font-bold font-mono text-white/90">{info.raw_score}</span>
-                <span className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.25)" }}>/{info.max}</span>
+                <span className="text-[10px] font-mono" style={{ color: P.muted }}>/{info.max}</span>
               </div>
               <div className="text-[10px] font-mono" style={{ color: trendC }}>
                 {info.trend === "up" ? t("pulseV3.up") : info.trend === "down" ? t("pulseV3.down") : t("pulseV3.neutral")}
@@ -356,9 +351,9 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
 
       {/* ── Levels + R/R ── */}
       <div className="grid grid-cols-2 gap-2.5 px-3 pb-3">
-        <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
-          <h3 className="text-[10px] uppercase tracking-widest font-mono mb-2.5 flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
-            <Target className="w-3 h-3" style={{ color: "#00ccff" }} /> {t("pulseV3.levels")}
+        <div className="rounded-xl p-3" style={{ background: "var(--bg-hover)", border: "1px solid var(--border-subtle)" }}>
+          <h3 className="text-[10px] uppercase tracking-widest font-mono mb-2.5 flex items-center gap-1.5" style={{ color: P.muted }}>
+            <Target className="w-3 h-3" style={{ color: P.accent }} /> {t("pulseV3.levels")}
           </h3>
           <div className="space-y-1.5 text-sm font-mono">
             <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: `${P.red}06` }}>
@@ -384,25 +379,25 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
           </div>
         </div>
 
-        <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
-          <h3 className="text-[10px] uppercase tracking-widest font-mono mb-2.5 flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
-            <Brain className="w-3 h-3" style={{ color: "#818cf8" }} /> {t("pulseV3.targetStop")}
+        <div className="rounded-xl p-3" style={{ background: "var(--bg-hover)", border: "1px solid var(--border-subtle)" }}>
+          <h3 className="text-[10px] uppercase tracking-widest font-mono mb-2.5 flex items-center gap-1.5" style={{ color: P.muted }}>
+            <Brain className="w-3 h-3" style={{ color: P.accent }} /> {t("pulseV3.targetStop")}
           </h3>
           <div className="space-y-1.5 text-sm font-mono">
-            <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: "rgba(0,255,136,0.06)" }}>
-              <span style={{ color: "#00ff88" }}>{t("pulseV3.target")}</span>
-              <span className="font-bold" style={{ color: "#00ff88" }}>{data.levels.target.toFixed(0)}</span>
+            <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: "var(--accent-positive-06)" }}>
+              <span style={{ color: P.green }}>{t("pulseV3.target")}</span>
+              <span className="font-bold" style={{ color: P.green }}>{data.levels.target.toFixed(0)}</span>
             </div>
-            <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: "rgba(255,51,102,0.06)" }}>
-              <span style={{ color: "#ff3366" }}>{t("pulseV3.stop")}</span>
-              <span className="font-bold" style={{ color: "#ff3366" }}>{data.levels.stop.toFixed(0)}</span>
+            <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: "var(--accent-negative-06)" }}>
+              <span style={{ color: P.red }}>{t("pulseV3.stop")}</span>
+              <span className="font-bold" style={{ color: P.red }}>{data.levels.stop.toFixed(0)}</span>
             </div>
             <div className="flex justify-between px-2 py-1.5 rounded-lg" style={{
-              background: data.rr_ratio >= 1.5 ? "rgba(0,255,136,0.06)" : data.rr_ratio >= 1.2 ? "rgba(240,180,41,0.06)" : "rgba(255,51,102,0.06)",
-              border: `1px solid ${data.rr_ratio >= 1.5 ? "rgba(0,255,136,0.15)" : data.rr_ratio >= 1.2 ? "rgba(240,180,41,0.15)" : "rgba(255,51,102,0.15)"}`,
+              background: data.rr_ratio >= 1.5 ? "var(--accent-positive-06)" : data.rr_ratio >= 1.2 ? "var(--accent-warning-06)" : "var(--accent-negative-06)",
+              border: `1px solid ${data.rr_ratio >= 1.5 ? "var(--accent-positive-15)" : data.rr_ratio >= 1.2 ? "var(--accent-warning-15)" : "var(--accent-negative-15)"}`,
             }}>
-              <span style={{ color: "rgba(255,255,255,0.4)" }}>R/R</span>
-              <span className="font-bold" style={{ color: data.rr_ratio >= 1.5 ? "#00ff88" : data.rr_ratio >= 1.2 ? "#f0b429" : "#ff3366" }}>{data.rr_ratio.toFixed(2)}</span>
+              <span style={{ color: P.muted }}>R/R</span>
+              <span className="font-bold" style={{ color: data.rr_ratio >= 1.5 ? P.green : data.rr_ratio >= 1.2 ? P.warn : P.red }}>{data.rr_ratio.toFixed(2)}</span>
             </div>
           </div>
         </div>
@@ -415,20 +410,20 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
             <Brain className="w-4 h-4" style={{ color: P.accent }} />
             <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.accent }}>{t("pulseV3.analysis")}</span>
           </div>
-          <p style={{ fontFamily: FONT, fontSize: 12, lineHeight: 1.6, color: "rgba(230,237,243,0.65)" }}>{data.suggestion}</p>
+          <p style={{ fontFamily: FONT, fontSize: 12, lineHeight: 1.6, color: P.text }}>{data.suggestion}</p>
         </div>
       </div>
 
       {/* ── Entry Zones ── */}
       {data.entry_zones && data.entry_zones.length > 0 && (
         <div className="px-3 pb-3">
-          <h4 className="text-[10px] uppercase tracking-widest font-mono mb-2 px-1" style={{ color: "rgba(255,255,255,0.3)" }}>{t("pulseV3.entryZones")}</h4>
+          <h4 className="text-[10px] uppercase tracking-widest font-mono mb-2 px-1" style={{ color: P.muted }}>{t("pulseV3.entryZones")}</h4>
           <div className="grid grid-cols-3 gap-2">
             {data.entry_zones.map((zone, idx) => (
-              <div key={idx} className="rounded-xl p-2.5 text-center font-mono" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                <p className="text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>{zone.label}</p>
+              <div key={idx} className="rounded-xl p-2.5 text-center font-mono" style={{ background: "var(--bg-hover)", border: "1px solid var(--border-subtle)" }}>
+                <p className="text-[9px]" style={{ color: P.muted }}>{zone.label}</p>
                 <p className="text-sm font-bold text-white/80">{zone.price}</p>
-                <p className="text-[10px]" style={{ color: "#00ccff" }}>%{zone.share}</p>
+                <p className="text-[10px]" style={{ color: P.accent }}>%{zone.share}</p>
               </div>
             ))}
           </div>
@@ -438,8 +433,8 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       {/* ── Order Blocks ── */}
       {data.order_blocks && data.order_blocks.length > 0 && (
         <div className="px-3 pb-3">
-          <h4 className="text-[10px] uppercase tracking-widest font-mono mb-2 px-1 flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
-            <Crosshair className="w-3 h-3" style={{ color: "#c084fc" }} /> Order Blocks (4H)
+          <h4 className="text-[10px] uppercase tracking-widest font-mono mb-2 px-1 flex items-center gap-1.5" style={{ color: P.muted }}>
+            <Crosshair className="w-3 h-3" style={{ color: P.accent }} /> Order Blocks (4H)
           </h4>
           <div className="flex gap-2 flex-wrap">
             {data.order_blocks.filter(ob => ob.is_nearby).map((ob, idx) => (
@@ -463,7 +458,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       {data.notes && data.notes.length > 0 && (
         <div className="px-3 pb-3 space-y-1">
           {data.notes.map((note, i) => (
-            <div key={i} className="flex items-center gap-1.5 text-[10px] font-mono" style={{ color: "#f0b429" }}>
+            <div key={i} className="flex items-center gap-1.5 text-[10px] font-mono" style={{ color: P.warn }}>
               <AlertTriangle className="w-3 h-3 shrink-0" /> {note}
             </div>
           ))}
@@ -472,7 +467,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
 
       {/* ── Footer ── */}
       <div className="px-2 py-2 text-center bg-transparent">
-        <p className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.2)" }}>
+        <p className="text-[10px] font-mono" style={{ color: P.muted }}>
           {lastUpdate ? `${t("pulseV3.lastUpdate")} ${lastUpdate.toLocaleTimeString()}` : t("pulseV3.updating")}{" "}
           | {t("pulseV3.validity")} {(data.valid_for_seconds / 60).toFixed(0)} {t("pulseV3.min")}
         </p>

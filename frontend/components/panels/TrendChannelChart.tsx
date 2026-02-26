@@ -22,6 +22,7 @@ interface TrendChannelChartProps {
 const BASE_W = 900;
 const BASE_H = 420;
 const PAD = { top: 20, right: 90, bottom: 75, left: 10 };
+const P = { bg: "var(--bg-primary)", card: "var(--bg-card)", surface: "var(--bg-surface)", border: "var(--border-subtle)", text: "var(--text-primary)", muted: "var(--text-muted)", green: "var(--accent-positive)", red: "var(--accent-negative)", warn: "var(--accent-warning)", accent: "var(--accent-info)", purple: "var(--accent-purple)" };
 
 export default function TrendChannelChart({
   closes,
@@ -309,13 +310,13 @@ export default function TrendChannelChart({
         <button
           onClick={(e) => { e.stopPropagation(); setScrollOffset(prev => Math.min(maxOffset, prev + 20)); }}
           className="w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold font-mono transition-all hover:brightness-150"
-          style={{ background: "rgba(0,255,136,0.1)", color: "#00ff88", border: "1px solid rgba(0,255,136,0.2)" }}
+          style={{ background: "var(--accent-positive-10)", color: P.green, border: "1px solid var(--accent-positive-20)" }}
           title="Scroll back in time"
         >◀</button>
         <button
           onClick={(e) => { e.stopPropagation(); setScrollOffset(prev => Math.max(0, prev - 20)); }}
           className="w-7 h-7 rounded-md flex items-center justify-center text-sm font-bold font-mono transition-all hover:brightness-150"
-          style={{ background: "rgba(0,255,136,0.1)", color: "#00ff88", border: "1px solid rgba(0,255,136,0.2)" }}
+          style={{ background: "var(--accent-positive-10)", color: P.green, border: "1px solid var(--accent-positive-20)" }}
           title="Scroll forward in time"
         >▶</button>
         {scrollOffset > 0 && (
@@ -377,8 +378,8 @@ export default function TrendChannelChart({
             <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
           </filter>
           <linearGradient id="tcAreaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#00ff88" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="#00ff88" stopOpacity="0.01" />
+            <stop offset="0%" stopColor={P.green} stopOpacity="0.18" />
+            <stop offset="100%" stopColor={P.green} stopOpacity="0.01" />
           </linearGradient>
           <linearGradient id="tcChannelFill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#6366f1" stopOpacity="0.08" />
@@ -386,8 +387,8 @@ export default function TrendChannelChart({
             <stop offset="100%" stopColor="#6366f1" stopOpacity="0.08" />
           </linearGradient>
           <radialGradient id="tcDotGlow">
-            <stop offset="0%" stopColor="#00ff88" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#00ff88" stopOpacity="0" />
+            <stop offset="0%" stopColor={P.green} stopOpacity="0.9" />
+            <stop offset="100%" stopColor={P.green} stopOpacity="0" />
           </radialGradient>
         </defs>
 
@@ -593,16 +594,16 @@ export default function TrendChannelChart({
         <path d={areaPath} fill="url(#tcAreaGrad)" />
 
         {/* Price line */}
-        <path d={pricePath} fill="none" stroke="#00ff88" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" filter="url(#tcPriceGlow)" />
+        <path d={pricePath} fill="none" stroke={P.green} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" filter="url(#tcPriceGlow)" />
 
         {/* Current price horizontal line + dot (only when viewing latest) */}
         {visibleWindow.isAtLatest && (
           <>
-            <line x1={PAD.left} y1={yScale(currentPrice)} x2={BASE_W - PAD.right} y2={yScale(currentPrice)} stroke="#00ff88" strokeWidth={1} strokeDasharray="3 3" opacity={0.4} />
+            <line x1={PAD.left} y1={yScale(currentPrice)} x2={BASE_W - PAD.right} y2={yScale(currentPrice)} stroke={P.green} strokeWidth={1} strokeDasharray="3 3" opacity={0.4} />
             <circle cx={lastX} cy={yScale(currentPrice)} r={16} fill="url(#tcDotGlow)" opacity={0.4} className="price-dot-glow" />
-            <circle cx={lastX} cy={yScale(currentPrice)} r={5} fill="#00ff88" stroke="#020617" strokeWidth={2} />
-            <rect x={BASE_W - PAD.right + 2} y={yScale(currentPrice) - 12} width={84} height={24} rx={5} fill="rgba(0,255,136,0.18)" stroke="#00ff88" strokeWidth={1.2} />
-            <text x={BASE_W - PAD.right + 10} y={yScale(currentPrice) + 5} fill="#00ff88" fontSize={11} fontFamily="monospace" fontWeight="bold">
+            <circle cx={lastX} cy={yScale(currentPrice)} r={5} fill={P.green} stroke={P.bg} strokeWidth={2} />
+            <rect x={BASE_W - PAD.right + 2} y={yScale(currentPrice) - 12} width={84} height={24} rx={5} fill="var(--accent-positive-18)" stroke={P.green} strokeWidth={1.2} />
+            <text x={BASE_W - PAD.right + 10} y={yScale(currentPrice) + 5} fill={P.green} fontSize={11} fontFamily="monospace" fontWeight="bold">
               {currentPrice.toFixed(decimals)}
             </text>
           </>
