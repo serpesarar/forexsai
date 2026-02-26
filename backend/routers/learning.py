@@ -1337,7 +1337,7 @@ async def get_strategy_performance(
             "target_hits": 0, "stop_hits": 0, "conf_sum": 0,
             "tp1_hits": 0, "tp2_hits": 0, "tp3_hits": 0, "tp4_hits": 0,
         } for s in ["ultra_safe", "balanced", "full_power", "aggressive"]} 
-                 for sym in ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.F"]
+                 for sym in ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.F"]}
         
         outcomes_found = 0
         
