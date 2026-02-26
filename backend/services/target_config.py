@@ -61,7 +61,7 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
         stoploss_pips=8,  # 8 pips = $8.00
         is_percentage=False,
     ),
-    "CL.COMM": SymbolConfig(
+    "CL.F": SymbolConfig(
         pip_value=1.0,  # placeholder, overridden by is_percentage
         targets=[
             TargetLevel("TP1", 0.02),   # 0.02%

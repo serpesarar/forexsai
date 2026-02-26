@@ -101,7 +101,15 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"❌ Lifecycle hatası: {e}")
 
-    # 5. Background scheduler (diğer görevler için)
+    # 5. EODHD REAL-TIME WEBSOCKET (Anlık fiyat verisi)
+    try:
+        from services.eodhd_websocket_client import start_eodhd_websocket
+        asyncio.create_task(start_eodhd_websocket())
+        print("✅ EODHD WebSocket client başlatıldı - Gerçek zamanlı fiyat verisi")
+    except Exception as e:
+        print(f"⚠️ EODHD WebSocket başlatılamadı: {e}")
+
+    # 6. Background scheduler (diğer görevler için)
     try:
         from services.background_scheduler import start_scheduler
         start_scheduler()

@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 # ═══════════════════════════════════════════════════════════════
 # TRACKED SYMBOLS
 # ═══════════════════════════════════════════════════════════════
-TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"]
+TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.F"]
 
 # ═══════════════════════════════════════════════════════════════
 # FETCH INTERVALS (seconds)
@@ -149,12 +149,34 @@ async def _fetch_price_from_api(symbol: str) -> Optional[float]:
             if isinstance(data, dict):
                 # Prioritize real-time keys over 'close' which may be stale after-hours
                 # 'last' and 'price' are more likely to be actual current quotes
-                for key in ("last", "price", "close", "value", "previousClose"):
+                # Fallback chain: last → price → close → value → previousClose
+                for key in ("last", "price", "close", "value"):
                     if key in data and data[key] is not None:
+                        val = data[key]
+                        # Skip "NA", "N/A", empty strings, or other non-numeric values
+                        if isinstance(val, str):
+                            val_stripped = val.strip().upper()
+                            if val_stripped in ("NA", "N/A", "", "NULL", "NONE"):
+                                continue
                         try:
-                            return float(data[key])
+                            return float(val)
                         except (TypeError, ValueError):
                             continue
+                # Final fallback: previousClose (useful when market is closed)
+                if "previousClose" in data and data["previousClose"] is not None:
+                    val = data["previousClose"]
+                    if isinstance(val, str):
+                        val_stripped = val.strip().upper()
+                        if val_stripped not in ("NA", "N/A", "", "NULL", "NONE"):
+                            try:
+                                return float(val)
+                            except (TypeError, ValueError):
+                                pass
+                    else:
+                        try:
+                            return float(val)
+                        except (TypeError, ValueError):
+                            pass
     except Exception as e:
         logger.debug(f"Price fetch failed for {symbol}: {e}")
     return None

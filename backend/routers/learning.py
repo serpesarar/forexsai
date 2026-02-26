@@ -1172,7 +1172,7 @@ async def hard_reset_learning_data(
 @router.post("/strategy-performance/reset")
 async def reset_strategy_performance(
     confirm: bool = Query(False, description="Must be true to actually delete data"),
-    symbol: Optional[str] = Query(None, description="Optional: specific symbol to reset (NDX.INDX, XAUUSD, GDAXI.INDX, CL.COMM)")
+    symbol: Optional[str] = Query(None, description="Optional: specific symbol to reset (NDX.INDX, XAUUSD, GDAXI.INDX, CL.F)")
 ):
     """
     Reset strategy performance data for ML model analysis.
@@ -1191,7 +1191,7 @@ async def reset_strategy_performance(
         return {
             "error": "Pass confirm=true to reset strategy performance data",
             "message": "This will delete prediction_logs and outcome_results for ML model analysis",
-            "symbols_affected": ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"] if not symbol else [symbol],
+            "symbols_affected": ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.F"] if not symbol else [symbol],
             "deleted": False
         }
     
@@ -1204,7 +1204,7 @@ async def reset_strategy_performance(
     
     try:
         # Target symbols for strategy performance analysis
-        target_symbols = [symbol] if symbol else ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"]
+        target_symbols = [symbol] if symbol else ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.F"]
         
         # First, get prediction IDs for these symbols
         pred_result = client.table("prediction_logs").select("id").in_("symbol", target_symbols).execute()
@@ -1337,7 +1337,7 @@ async def get_strategy_performance(
             "target_hits": 0, "stop_hits": 0, "conf_sum": 0,
             "tp1_hits": 0, "tp2_hits": 0, "tp3_hits": 0, "tp4_hits": 0,
         } for s in ["ultra_safe", "balanced", "full_power", "aggressive"]} 
-                 for sym in ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"]}
+                 for sym in ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.F"]
         
         outcomes_found = 0
         
