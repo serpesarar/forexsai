@@ -91,6 +91,9 @@ def get_email_template(title: str, content: str, button_text: str, button_url: s
 
 async def send_email(to: str, subject: str, html: str) -> bool:
     """Send email using Resend API"""
+    logger.info(f"[EMAIL] Sending to {to}, subject: {subject}")
+    logger.info(f"[EMAIL] RESEND_API_KEY status: {'SET' if RESEND_API_KEY else 'NOT SET'}")
+    
     if not RESEND_API_KEY:
         logger.error("RESEND_API_KEY not configured")
         return False

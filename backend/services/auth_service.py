@@ -317,6 +317,8 @@ async def signup(
         from services.email_service import send_verification_email
         
         verification_token = generate_token()
+        logger.info(f"[SIGNUP] Creating verification token for {email}")
+        
         client.table("email_verifications").insert({
             "user_id": user_id,
             "token": verification_token,
@@ -324,7 +326,13 @@ async def signup(
         })
         
         # Send verification email
-        email_sent = await send_verification_email(email, verification_token, full_name)
+        logger.info(f"[SIGNUP] Sending verification email to {email}")
+        try:
+            email_sent = await send_verification_email(email, verification_token, full_name)
+            logger.info(f"[SIGNUP] Email sent result: {email_sent}")
+        except Exception as e:
+            logger.error(f"[SIGNUP] Email send failed: {e}")
+            email_sent = False
         
         # 11. Create referral record if referred (status pending until verification)
         if referred_by:
