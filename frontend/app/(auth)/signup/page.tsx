@@ -302,13 +302,16 @@ function SignupForm() {
           {/* Step 4: Success */}
           {step === 4 && success && (
             <div className="text-center space-y-8 py-4">
-              <div className="w-16 h-16 mx-auto rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                <svg className="w-8 h-8 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="20 6 9 17 4 12" /></svg>
+              <div className="w-16 h-16 mx-auto rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
+                <svg className="w-8 h-8 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               </div>
               <div>
-                <h2 className="text-2xl font-light text-white mb-2">{t("auth.signup.successTitle")}</h2>
-                <p className="text-gray-500 font-light">
-                  {t("auth.signup.successText")} <span className="text-gray-300 font-medium">{email}</span>
+                <h2 className="text-2xl font-light text-white mb-2">Kayıt Başarılı! 🎉</h2>
+                <p className="text-gray-400 font-light text-sm mb-2">
+                  <span className="text-gray-300 font-medium">{email}</span> adresine bir doğrulama linki gönderdik.
+                </p>
+                <p className="text-gray-500 text-xs">
+                  Lütfen email kutunuzu kontrol edin ve hesabınızı aktifleştirin.
                 </p>
               </div>
               {newReferralCode && (
@@ -332,8 +335,8 @@ function SignupForm() {
                   </div>
                 </div>
               )}
-              <Link href="/login" className="block w-full py-3.5 rounded-sm bg-gradient-to-r from-gray-700 via-gray-400 to-gray-700 border border-gray-500/50 shadow-[0_0_15px_rgba(192,192,192,0.1)] hover:shadow-[0_0_25px_rgba(192,192,192,0.25)] transition-all duration-300 text-white uppercase tracking-widest text-xs font-medium text-center">
-                {t("nav.login")}
+              <Link href="/" className="block w-full py-3.5 rounded-sm bg-gradient-to-r from-cyan-600 via-cyan-500 to-cyan-600 border border-cyan-400/50 shadow-[0_0_15px_rgba(0,224,198,0.2)] hover:shadow-[0_0_25px_rgba(0,224,198,0.35)] transition-all duration-300 text-white uppercase tracking-widest text-xs font-medium text-center">
+                Hadi Başlayalım →
               </Link>
             </div>
           )}
