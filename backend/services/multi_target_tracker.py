@@ -8,9 +8,12 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+# Aligned with target_config.py values for consistency
 SYMBOL_TARGETS = {
-    'NDX.INDX': {'TP1': 15, 'TP2': 25, 'TP3': 45, 'TP4': 80, 'TP5': None, 'SL': 35},
-    'XAUUSD': {'TP1': 5, 'TP2': 10, 'TP3': 25, 'TP4': 30, 'TP5': 50, 'SL': 8}
+    'NDX.INDX': {'TP1': 15, 'TP2': 25, 'TP3': 35, 'TP4': 50, 'TP5': None, 'SL': 50},
+    # XAUUSD: Optimized for volatility - matches target_config.py
+    # TP1=8, TP2=15, TP3=25, TP4=40, SL=15 (was TP1=5, TP2=10, SL=8)
+    'XAUUSD': {'TP1': 8, 'TP2': 15, 'TP3': 25, 'TP4': 40, 'TP5': 50, 'SL': 15}
 }
 
 @dataclass

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 from uuid import UUID
 
 from database.supabase_client import get_supabase_client, is_db_available
@@ -17,22 +17,54 @@ logger = logging.getLogger(__name__)
 # ─── Uses target_config.py as single source of truth for TP/SL levels ──────────
 
 
-def _has_active_signal(client, symbol: str, model_type: str) -> bool:
-    """Check if there's already an active signal for this symbol+model.
-    Once signal closes (completed/stopped/expired), a new one can open immediately."""
+def _has_active_signal(client, symbol: str, model_type: str) -> Tuple[bool, Optional[str], Optional[str]]:
+    """
+    Check if there's already an active signal for this symbol+model.
+    Returns: (has_active, signal_id, current_direction)
+    """
     try:
-        result = client.table("prediction_logs").select("id").eq(
+        result = client.table("prediction_logs").select("id, ml_direction").eq(
             "symbol", symbol
         ).eq("model_type", model_type
         ).eq("status", "active"
         ).limit(1).execute()
         
-        has_active = result.get("data") and len(result["data"]) > 0
+        data = result.get("data") or []
+        has_active = len(data) > 0
+        
         if has_active:
-            logger.debug(f"Active signal exists: {symbol} {model_type}")
-        return has_active
+            signal_id = data[0].get("id")
+            current_dir = data[0].get("ml_direction")
+            logger.debug(f"Active signal exists: {symbol} {model_type} dir={current_dir}")
+            return True, signal_id, current_dir
+        
+        return False, None, None
     except Exception as e:
         logger.error(f"Active signal check error: {e}")
+        return False, None, None
+
+
+def _close_existing_signal(client, signal_id: str, new_direction: str, reason: str = "direction_change"):
+    """
+    Close existing signal when direction changes.
+    This allows new signals to open when model flips direction.
+    """
+    try:
+        from datetime import datetime
+        update_data = {
+            "status": "stopped",
+            "exit_time": datetime.utcnow().isoformat() + "Z",
+            "exit_price": None,  # Will be filled by lifecycle
+            "factors": {
+                "close_reason": reason,
+                "replaced_by_direction": new_direction,
+            }
+        }
+        client.table("prediction_logs").eq("id", signal_id).update(update_data)
+        logger.info(f"Closed signal {signal_id[:8]}: {reason} -> {new_direction}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to close signal {signal_id}: {e}")
         return False
 
 
@@ -91,6 +123,101 @@ def _extract_factors(context: Dict[str, Any], analysis: Dict[str, Any]) -> Dict[
     return factors
 
 
+def _get_current_session() -> str:
+    """Get current trading session for filtering"""
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+    hour = now.hour
+    
+    # London: 08:00-17:00 UTC
+    # NY: 13:00-22:00 UTC  
+    # Overlap: 13:00-17:00 UTC (highest volatility)
+    
+    if 13 <= hour < 17:
+        return "overlap"      # London-NY overlap
+    elif 8 <= hour < 13:
+        return "europe"       # London only
+    elif 13 <= hour < 22:
+        return "us"           # NY only
+    elif 0 <= hour < 8:
+        return "asia"         # Asia session
+    else:
+        return "closed"       # After hours
+
+
+def _check_session_filter(symbol: str) -> Tuple[bool, str]:
+    """
+    Check if signal should be filtered based on session
+    Returns: (should_filter, reason)
+    """
+    session = _get_current_session()
+    
+    # XAU/USD: Avoid Asia session (low volatility, false signals)
+    if symbol == "XAUUSD" and session == "asia":
+        return True, f"XAU/USD filtered: Asia session (low liquidity)"
+    
+    # All symbols: Avoid closed/after hours
+    if session == "closed":
+        return True, f"{symbol} filtered: Market closed/after hours"
+    
+    return False, ""
+
+
+def _check_correlation_filter(
+    symbol: str, 
+    direction: str, 
+    context: Dict[str, Any]
+) -> Tuple[bool, str]:
+    """
+    Check if signal should be filtered based on correlations
+    Returns: (should_filter, reason)
+    """
+    macro = context.get("macro", {}) or {}
+    
+    # XAU/USD - DXY negative correlation
+    if symbol == "XAUUSD":
+        dxy = macro.get("dxy", {})
+        dxy_change = dxy.get("change_24h", 0) or dxy.get("change_pct", 0)
+        
+        if dxy_change is not None:
+            # If DXY is strongly up, avoid XAU BUY
+            if direction == "BUY" and dxy_change > 0.3:
+                return True, f"XAU BUY filtered: DXY strengthening (+{dxy_change:.2f}%)"
+            # If DXY is strongly down, avoid XAU SELL
+            if direction == "SELL" and dxy_change < -0.3:
+                return True, f"XAU SELL filtered: DXY weakening ({dxy_change:.2f}%)"
+    
+    # NASDAQ - VIX filter (high VIX = avoid new positions)
+    if symbol == "NDX.INDX":
+        vix = macro.get("vix", {})
+        vix_price = vix.get("price", 0)
+        
+        if vix_price and vix_price > 25:
+            return True, f"NDX filtered: High VIX ({vix_price}) - market fear"
+    
+    return False, ""
+
+
+def _check_news_filter(context: Dict[str, Any]) -> Tuple[bool, str]:
+    """
+    Check if signal should be filtered due to high-impact news
+    Returns: (should_filter, reason)
+    """
+    news = context.get("news", {}) or {}
+    high_impact_count = news.get("high_impact_count", 0)
+    sentiment_score = news.get("sentiment_score", 0)
+    
+    # Filter if too many high-impact news in last hour
+    if high_impact_count >= 3:
+        return True, f"Filtered: {high_impact_count} high-impact news events"
+    
+    # Filter if extreme sentiment (market panic/euphoria)
+    if sentiment_score and abs(sentiment_score) > 0.8:
+        return True, f"Filtered: Extreme sentiment ({sentiment_score:.2f})"
+    
+    return False, ""
+
+
 async def log_prediction(
     symbol: str,
     context: Dict[str, Any],
@@ -100,7 +227,8 @@ async def log_prediction(
     model_type: Optional[str] = None,
 ) -> Optional[str]:
     """
-    Log a prediction to the database.
+    Log a prediction to the database with session, correlation and news filters.
+    Uses adaptive TP/SL based on ATR and market conditions.
     
     Args:
         symbol: Trading symbol (e.g., "NDX.INDX", "XAUUSD")
@@ -122,6 +250,7 @@ async def log_prediction(
     try:
         ml = context.get("ml_prediction", {}) or {}
         direction = ml.get("direction", "HOLD")
+        confidence = float(ml.get("confidence", 0.5))
         
         # ── Skip HOLD signals entirely — they create expired spam in DB ──
         if direction not in ("BUY", "SELL"):
@@ -130,28 +259,109 @@ async def log_prediction(
         
         effective_model_type = model_type or (strategy.lower() if strategy else "ml")
         
-        # ── Active signal check: block if same symbol+model already has active signal ──
-        if _has_active_signal(client, symbol, effective_model_type):
+        # ═══════════════════════════════════════════════════════════════════════
+        # FILTERS: Session, Correlation, News
+        # ═══════════════════════════════════════════════════════════════════════
+        
+        # 1. Session Filter
+        should_filter, reason = _check_session_filter(symbol)
+        if should_filter:
+            logger.info(f"FILTERED: {reason}")
             return None
+        
+        # 2. Correlation Filter (DXY for XAU, VIX for NDX)
+        should_filter, reason = _check_correlation_filter(symbol, direction, context)
+        if should_filter:
+            logger.info(f"FILTERED: {reason}")
+            return None
+        
+        # 3. News Filter
+        should_filter, reason = _check_news_filter(context)
+        if should_filter:
+            logger.info(f"FILTERED: {reason}")
+            return None
+        
+        # ═══════════════════════════════════════════════════════════════════════
+        # 4. Multi-Timeframe Confirmation
+        # ═══════════════════════════════════════════════════════════════════════
+        from services.mtf_confirmation import confirm_signal_mtf
+        
+        # Get MTF signals from context (if available)
+        mtf_signals = context.get("mtf_signals", {}) or {}
+        if not mtf_signals:
+            # Try to extract from analysis
+            mtf_signals = analysis.get("timeframe_signals", {})
+        
+        if mtf_signals:
+            should_take, mtf_reason, mtf_details = await confirm_signal_mtf(
+                symbol, direction, mtf_signals
+            )
+            
+            # Store MTF details in factors for reference
+            context["mtf_confirmation"] = {
+                "passed": should_take,
+                "reason": mtf_reason,
+                "details": mtf_details,
+            }
+            
+            if not should_take:
+                logger.info(f"FILTERED (MTF): {mtf_reason}")
+                # Don't return None - just log the disagreement but allow signal
+                # This is configurable based on strictness preference
+                # For now, we allow but mark as low confidence
+                confidence *= 0.7  # Reduce confidence due to MTF disagreement
+        
+        # ═══════════════════════════════════════════════════════════════════════
+        # ACTIVE SIGNAL HANDLING: Direction Change Logic
+        # ═══════════════════════════════════════════════════════════════════════
+        has_active, active_signal_id, active_direction = _has_active_signal(client, symbol, effective_model_type)
+        
+        if has_active:
+            if active_direction == direction:
+                # Same direction - skip duplicate
+                logger.debug(f"Active {direction} signal already exists for {symbol} {effective_model_type}")
+                return None
+            else:
+                # Direction changed! Close old signal and allow new one
+                logger.info(f"Direction change detected: {active_direction} -> {direction} for {symbol} {effective_model_type}")
+                _close_existing_signal(client, active_signal_id, direction, "direction_flip")
 
-        # ── Build targets from target_config (single source of truth) ──
+        # ═══════════════════════════════════════════════════════════════════════
+        # ADAPTIVE TARGETS: ATR-based dynamic TP/SL
+        # ═══════════════════════════════════════════════════════════════════════
         import json as _json
-        from services.target_config import get_symbol_config, calculate_target_prices, calculate_stoploss_price
-        cfg = get_symbol_config(symbol)
+        from services.adaptive_targets import get_adaptive_tp_sl
         
         entry_price = ml.get("entry_price") or 0
         
-        # Calculate actual price targets for DB storage
+        # Use adaptive targets if entry price available
         if entry_price and entry_price > 0:
-            target_prices = calculate_target_prices(entry_price, direction, symbol)
-            sl_price = calculate_stoploss_price(entry_price, direction, symbol)
-            # Store as {TP1: price, TP2: price, ...}
-            targets_dict = target_prices
-            targets_dict["SL"] = round(sl_price, 4)
+            adaptive = await get_adaptive_tp_sl(symbol, direction, entry_price, confidence)
+            targets_dict = adaptive["targets"]
+            stop_loss_pips = adaptive["targets_pips"]["SL"]
+            
+            # Store adaptive metadata in factors
+            factors = _extract_factors(context, analysis)
+            factors["adaptive_targets"] = {
+                "atr": adaptive["atr"],
+                "session": adaptive["session"],
+                "volatility_ratio": adaptive["volatility_ratio"],
+                "risk_reward": adaptive["risk_reward"],
+            }
+            factors["session"] = _get_current_session()
+            factors["filters_applied"] = ["session", "correlation", "news"]
+            
+            logger.info(f"Adaptive targets for {symbol}: ATR={adaptive['atr']:.2f}, "
+                       f"Session={adaptive['session']}, RR={adaptive['risk_reward']:.2f}")
         else:
+            # Fallback to static targets
+            from services.target_config import get_symbol_config
+            cfg = get_symbol_config(symbol)
             targets_dict = {tl.name: tl.pips for tl in cfg.targets}
-
-        factors = _extract_factors(context, analysis)
+            targets_dict["SL"] = cfg.stoploss_pips
+            stop_loss_pips = cfg.stoploss_pips
+            factors = _extract_factors(context, analysis)
+            factors["session"] = _get_current_session()
         
         # Store strategy in both the column and factors JSONB
         if strategy:
@@ -176,7 +386,7 @@ async def log_prediction(
             # Signal Lifecycle columns
             "status": "active" if direction in ("BUY", "SELL") else "expired",
             "targets": _json.dumps(targets_dict),
-            "stop_loss_pips": cfg.stoploss_pips,
+            "stop_loss_pips": stop_loss_pips,
             "targets_hit": _json.dumps({tp: False for tp in targets_dict if tp != "SL"}),
             "highest_profit_pips": 0,
             "lowest_drawdown_pips": 0,

@@ -122,7 +122,12 @@ async def get_accuracy_by_model(
     days: int = Query(30, ge=1, le=90),
     check_interval: str = Query("24h")
 ):
-    """Get accuracy breakdown per model/strategy (EMEL, PULSE, PULSE_ML, PULSE_V3)."""
+    """
+    Get accuracy breakdown per model/strategy (EMEL, PULSE, PULSE_ML, PULSE_V3).
+    
+    CRITICAL FIX: Now uses prediction_logs lifecycle status as PRIMARY source
+    for consistency with /accuracy and /strategy-performance endpoints.
+    """
     if not is_db_available():
         return {"error": "Database not available"}
     
@@ -135,10 +140,10 @@ async def get_accuracy_by_model(
     cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
     
     try:
-        # Get all predictions with outcomes in the time range
+        # PRIMARY: Get predictions with lifecycle status (completed/stopped)
         query = client.table("prediction_logs").select(
-            "id, strategy, ml_direction, claude_direction, factors, created_at"
-        ).gte("created_at", cutoff).eq("outcome_checked", True)
+            "id, strategy, model_type, ml_direction, claude_direction, factors, status, targets_hit, created_at"
+        ).gte("created_at", cutoff).neq("status", "active")  # Only non-active signals
         
         if symbol:
             query = query.eq("symbol", symbol)
@@ -147,28 +152,13 @@ async def get_accuracy_by_model(
         predictions = pred_result.get("data") or []
         
         if not predictions:
-            return {"models": [], "total": 0, "days": days}
+            return {"models": [], "total": 0, "days": days, "note": "No completed signals found"}
         
-        # Get outcome results for these predictions
-        pred_ids = [p["id"] for p in predictions]
-        
-        # Build a map of prediction_id -> outcome
-        outcome_map = {}
-        # Fetch in batches of 50
-        for i in range(0, len(pred_ids), 50):
-            batch = pred_ids[i:i+50]
-            for pid in batch:
-                outcome_result = client.table("outcome_results").select(
-                    "prediction_id, ml_correct, claude_correct, hit_target, hit_stop"
-                ).eq("prediction_id", pid).eq("check_interval", check_interval).execute()
-                outcomes = outcome_result.get("data") or []
-                if outcomes:
-                    outcome_map[pid] = outcomes[0]
-        
-        # Group by strategy
+        # Group by strategy/model_type using lifecycle status
         strategy_stats = {}
         for pred in predictions:
-            strategy = pred.get("strategy") or pred.get("factors", {}).get("strategy") or pred.get("factors", {}).get("source") or "UNKNOWN"
+            # Use model_type if available, otherwise fall back to strategy/factors
+            strategy = pred.get("model_type") or pred.get("strategy") or pred.get("factors", {}).get("strategy") or pred.get("factors", {}).get("source") or "UNKNOWN"
             
             if strategy not in strategy_stats:
                 strategy_stats[strategy] = {
@@ -178,42 +168,59 @@ async def get_accuracy_by_model(
                     "claude_correct": 0,
                     "target_hit": 0,
                     "stop_hit": 0,
-                    "no_outcome": 0,
+                    "expired": 0,
                 }
             
             stats = strategy_stats[strategy]
             stats["total"] += 1
             
-            outcome = outcome_map.get(pred["id"])
-            if outcome:
-                if outcome.get("ml_correct"):
-                    stats["ml_correct"] += 1
-                if outcome.get("claude_correct"):
-                    stats["claude_correct"] += 1
-                if outcome.get("hit_target"):
+            # Use lifecycle status as primary indicator
+            status = pred.get("status")
+            targets_hit = pred.get("targets_hit") or {}
+            if isinstance(targets_hit, str):
+                import json
+                try:
+                    targets_hit = json.loads(targets_hit)
+                except:
+                    targets_hit = {}
+            
+            any_target_hit = any(targets_hit.values()) if targets_hit else False
+            
+            if status == "completed":
+                # Signal completed successfully (target hit)
+                stats["ml_correct"] += 1
+                stats["target_hit"] += 1
+            elif status == "stopped":
+                # Signal stopped out
+                stats["stop_hit"] += 1
+            elif status == "expired":
+                # Expired without outcome
+                stats["expired"] += 1
+                # Check if any target was hit before expiry
+                if any_target_hit:
                     stats["target_hit"] += 1
-                if outcome.get("hit_stop"):
-                    stats["stop_hit"] += 1
-            else:
-                stats["no_outcome"] += 1
+            
+            # Claude correctness - would need outcome_results for this
+            # For now, use ml_correct as proxy if directions match
+            # (This can be enhanced with a separate query to outcome_results)
         
         # Calculate percentages
         models = []
         for strategy, stats in strategy_stats.items():
             total = stats["total"]
-            with_outcome = total - stats["no_outcome"]
+            with_outcome = stats["ml_correct"] + stats["stop_hit"]  # completed + stopped
+            
             models.append({
                 "strategy": stats["strategy"],
                 "total_predictions": total,
                 "with_outcome": with_outcome,
                 "ml_accuracy": round(stats["ml_correct"] / with_outcome, 3) if with_outcome > 0 else None,
                 "ml_correct": stats["ml_correct"],
-                "claude_accuracy": round(stats["claude_correct"] / with_outcome, 3) if with_outcome > 0 else None,
-                "claude_correct": stats["claude_correct"],
                 "target_hit_rate": round(stats["target_hit"] / with_outcome, 3) if with_outcome > 0 else None,
                 "target_hits": stats["target_hit"],
                 "stop_hit_rate": round(stats["stop_hit"] / with_outcome, 3) if with_outcome > 0 else None,
                 "stop_hits": stats["stop_hit"],
+                "expired": stats["expired"],
             })
         
         # Sort by total predictions descending
@@ -225,6 +232,7 @@ async def get_accuracy_by_model(
             "days": days,
             "check_interval": check_interval,
             "symbol": symbol,
+            "source": "lifecycle_primary",
         }
     
     except Exception as e:
@@ -1621,3 +1629,109 @@ async def test_notification(
         result = await telegram_notifier.test_connection(chat_id)
     
     return result
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SIGNAL DETAIL ENDPOINT (for SignalDetailModal)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/signal/{signal_id}")
+async def get_signal_detail_endpoint(signal_id: str):
+    """
+    Get detailed information for a specific signal.
+    Includes prediction data, all lifecycle checks, outcome results, and failure analysis.
+    Used by SignalDetailModal in the frontend.
+    """
+    from services.signal_lifecycle import get_signal_detail
+    
+    try:
+        detail = await get_signal_detail(signal_id)
+        return detail
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()[:300]}
+
+
+@router.get("/signals/recent")
+async def get_recent_signals_endpoint(
+    symbol: Optional[str] = Query(None, description="Filter by symbol"),
+    limit: int = Query(50, ge=1, le=200),
+    include_active: bool = Query(True, description="Include active signals")
+):
+    """
+    Get recent signals with summary information for the signal list.
+    Enhanced version of /predictions with calculated duration and PNL.
+    """
+    if not is_db_available():
+        return {"error": "Database not available", "signals": []}
+    
+    client = get_supabase_client()
+    if not client:
+        return {"error": "Database client not available", "signals": []}
+    
+    try:
+        from datetime import datetime
+        
+        query = client.table("prediction_logs").select(
+            "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
+            "ml_target_price, ml_stop_price, model_type, strategy, status, "
+            "targets_hit, highest_profit_pips, lowest_drawdown_pips, "
+            "exit_price, exit_time, created_at"
+        ).order("created_at", desc=True).limit(limit)
+        
+        if symbol:
+            query = query.eq("symbol", symbol)
+        
+        if not include_active:
+            query = query.neq("status", "active")
+        
+        result = query.execute()
+        signals = result.get("data") or []
+        
+        # Enhance with calculated fields
+        enhanced = []
+        for sig in signals:
+            entry = dict(sig)
+            
+            # Calculate duration
+            created = sig.get("created_at")
+            exit_time = sig.get("exit_time")
+            
+            if exit_time and created:
+                try:
+                    from dateutil import parser
+                    created_dt = parser.parse(created)
+                    exit_dt = parser.parse(exit_time)
+                    duration_minutes = (exit_dt - created_dt).total_seconds() / 60
+                    entry["duration_minutes"] = round(duration_minutes, 1)
+                except:
+                    entry["duration_minutes"] = None
+            else:
+                entry["duration_minutes"] = None
+            
+            # Calculate PNL
+            entry_price = sig.get("ml_entry_price")
+            exit_price = sig.get("exit_price")
+            direction = sig.get("ml_direction")
+            
+            if entry_price and exit_price and direction in ["BUY", "SELL"]:
+                from services.target_config import pips_from_price_change
+                if direction == "BUY":
+                    pnl_pips = pips_from_price_change(exit_price - entry_price, sig.get("symbol"))
+                else:
+                    pnl_pips = pips_from_price_change(entry_price - exit_price, sig.get("symbol"))
+                entry["pnl_pips"] = round(pnl_pips, 2)
+            else:
+                entry["pnl_pips"] = None
+            
+            enhanced.append(entry)
+        
+        return {
+            "signals": enhanced,
+            "count": len(enhanced),
+            "symbol": symbol
+        }
+        
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()[:300], "signals": []}

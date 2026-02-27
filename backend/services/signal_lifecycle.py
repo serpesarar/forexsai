@@ -82,7 +82,10 @@ metrics = LifecycleMetrics()
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 LIFECYCLE_CHECK_INTERVAL = 180        # 3 minutes — price check every 3 min
-SIGNAL_MAX_AGE_MINUTES = 30            # Expire after 30 min
+# REVERTED: Back to 30 minutes for scalping signals
+# Scalping signals: 30 min lifetime with 3-min price checks
+# TP1-2-3-4 and SL checked every 3 minutes
+SIGNAL_MAX_AGE_MINUTES = 30            # Expire after 30 minutes (scalping mode)
 MAX_ACTIVE_SIGNALS = 100              # Cap for performance
 ARCHIVE_AFTER_DAYS = 30               # Move to cold storage after 30 days
 

@@ -52,13 +52,16 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
     ),
     "XAUUSD": SymbolConfig(
         pip_value=1.0,  # 1 pip = $1.00 (4711→4710 = 1 pip)
+        # OPTIMIZED: Wider targets and stop for XAU/USD volatility
+        # Previous: TP1=4, TP2=7, TP3=10, SL=8 (too tight, caused frequent stops)
+        # New: TP1=8, TP2=15, TP3=25, SL=15 (better R:R, accommodates volatility)
         targets=[
-            TargetLevel("TP1", 4),    # 4 pips = $4.00
-            TargetLevel("TP2", 7),    # 7 pips = $7.00
-            TargetLevel("TP3", 10),   # 10 pips = $10.00
-            TargetLevel("TP4", 17),   # 17 pips = $17.00
+            TargetLevel("TP1", 8),    # 8 pips = $8.00  (was 4)
+            TargetLevel("TP2", 15),   # 15 pips = $15.00 (was 7)
+            TargetLevel("TP3", 25),   # 25 pips = $25.00 (was 10)
+            TargetLevel("TP4", 40),   # 40 pips = $40.00 (was 17)
         ],
-        stoploss_pips=8,  # 8 pips = $8.00
+        stoploss_pips=15,  # 15 pips = $15.00 (was 8) - accommodates hourly ATR of 15-25
         is_percentage=False,
     ),
     "CL.F": SymbolConfig(

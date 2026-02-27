@@ -351,10 +351,14 @@ async def get_accuracy_summary(
     """
     Get accuracy summary for recent predictions.
     
+    CRITICAL FIX: Now uses prediction_logs lifecycle status as PRIMARY source
+    (consistent with strategy-performance endpoint)
+    Falls back to outcome_results for signals without lifecycle resolution.
+    
     Args:
         symbol: Filter by symbol (optional)
         days: Number of days to look back
-        check_interval: Which outcome interval to use
+        check_interval: Which outcome interval to use (for fallback only)
     
     Returns:
         Summary dict with accuracy metrics
@@ -370,17 +374,19 @@ async def get_accuracy_summary(
     cutoff_iso = cutoff.isoformat() + "Z"
     
     try:
-        query = client.table("outcome_results").select(
-            "*, prediction_logs!inner(symbol, ml_direction, claude_direction, factors)"
-        ).eq("check_interval", check_interval).gte("created_at", cutoff_iso)
+        # PRIMARY: Use prediction_logs lifecycle status (completed/stopped)
+        # This is the SINGLE SOURCE OF TRUTH for accuracy calculations
+        query = client.table("prediction_logs").select(
+            "id, symbol, ml_direction, claude_direction, status, outcome_results(ml_correct, claude_correct, hit_target, hit_stop)"
+        ).gte("created_at", cutoff_iso).neq("status", "active")  # Only completed/stopped/expired
         
         if symbol:
-            query = query.eq("prediction_logs.symbol", symbol)
+            query = query.eq("symbol", symbol)
         
         result = query.execute()
-        outcomes = result.get("data") or []
+        predictions = result.get("data") or []
         
-        if not outcomes:
+        if not predictions:
             return {
                 "symbol": symbol,
                 "period_days": days,
@@ -388,27 +394,74 @@ async def get_accuracy_summary(
                 "total_predictions": 0,
                 "ml_accuracy": None,
                 "claude_accuracy": None,
+                "note": "No completed predictions found"
             }
         
-        total = len(outcomes)
-        ml_correct = sum(1 for o in outcomes if o.get("ml_correct"))
-        claude_outcomes = [o for o in outcomes if o.get("claude_correct") is not None]
-        claude_correct = sum(1 for o in claude_outcomes if o.get("claude_correct"))
+        # Calculate accuracy using lifecycle status
+        total_with_outcome = 0
+        ml_correct_count = 0
+        claude_correct_count = 0
+        claude_total = 0
+        target_hits = 0
+        stop_hits = 0
         
-        both_correct = sum(1 for o in outcomes if o.get("ml_correct") and o.get("claude_correct"))
-        either_correct = sum(1 for o in outcomes if o.get("ml_correct") or o.get("claude_correct"))
+        for pred in predictions:
+            status = pred.get("status")
+            outcomes = pred.get("outcome_results") or []
+            
+            # Get primary outcome (prefer 24h interval)
+            primary_outcome = None
+            for o in outcomes:
+                if o.get("check_interval") == "24h":
+                    primary_outcome = o
+                    break
+            if not primary_outcome and outcomes:
+                primary_outcome = outcomes[0]
+            
+            # Count based on lifecycle status (completed = target hit, stopped = SL hit)
+            if status == "completed":
+                total_with_outcome += 1
+                ml_correct_count += 1
+                target_hits += 1
+                if pred.get("claude_direction"):
+                    claude_total += 1
+                    # Check if claude was correct via outcome
+                    if primary_outcome and primary_outcome.get("claude_correct"):
+                        claude_correct_count += 1
+            elif status == "stopped":
+                total_with_outcome += 1
+                stop_hits += 1
+                # ml_correct remains 0 for stopped signals
+                if pred.get("claude_direction"):
+                    claude_total += 1
+                    if primary_outcome and primary_outcome.get("claude_correct"):
+                        claude_correct_count += 1
+            elif status == "expired" and primary_outcome:
+                # Expired but has outcome - use outcome data
+                total_with_outcome += 1
+                if primary_outcome.get("ml_correct") or primary_outcome.get("hit_target"):
+                    ml_correct_count += 1
+                    target_hits += 1
+                if primary_outcome.get("hit_stop"):
+                    stop_hits += 1
+                if pred.get("claude_direction"):
+                    claude_total += 1
+                    if primary_outcome.get("claude_correct"):
+                        claude_correct_count += 1
         
         return {
             "symbol": symbol,
             "period_days": days,
             "check_interval": check_interval,
-            "total_predictions": total,
-            "ml_accuracy": round(ml_correct / total, 3) if total > 0 else None,
-            "ml_correct_count": ml_correct,
-            "claude_accuracy": round(claude_correct / len(claude_outcomes), 3) if claude_outcomes else None,
-            "claude_correct_count": claude_correct,
-            "both_correct_rate": round(both_correct / total, 3) if total > 0 else None,
-            "either_correct_rate": round(either_correct / total, 3) if total > 0 else None,
+            "total_predictions": len(predictions),
+            "with_outcome": total_with_outcome,
+            "ml_accuracy": round(ml_correct_count / total_with_outcome, 3) if total_with_outcome > 0 else None,
+            "ml_correct_count": ml_correct_count,
+            "target_hits": target_hits,
+            "stop_hits": stop_hits,
+            "claude_accuracy": round(claude_correct_count / claude_total, 3) if claude_total > 0 else None,
+            "claude_correct_count": claude_correct_count,
+            "source": "lifecycle_primary",  # Indicates new calculation method
         }
         
     except Exception as e:
