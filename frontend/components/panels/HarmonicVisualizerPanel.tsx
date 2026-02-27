@@ -591,7 +591,7 @@ export default function HarmonicVisualizerPanel() {
             <PanelHeader
                 title="HARMONIC"
                 subtitle="PATTERN VISUALIZER"
-                icon={<Hexagon size={22} />}
+                icon={<Hexagon size={24} strokeWidth={2.5} />}
                 iconColor="var(--accent-cyan)"
                 iconBg="var(--accent-cyan-08)"
                 iconBorder="var(--accent-cyan-15)"

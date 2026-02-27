@@ -467,7 +467,7 @@ export default function StrategyOptimizerPanel() {
       <PanelHeaderCompact
         title="STRATEGY OPTIMIZER"
         subtitle="PORTFOLIO INTELLIGENCE"
-        icon={<Brain size={22} />}
+        icon={<Brain size={24} strokeWidth={2.5} />}
         iconColor="var(--accent-cyan)"
         onRefresh={() => refetch()}
         loading={isFetching}

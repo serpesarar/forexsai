@@ -17,6 +17,7 @@ import {
   ChevronDownIcon as ChevronDown,
   ChevronUpIcon as ChevronUp,
 } from "../ui/CustomIcons";
+import { BarChart3 } from "lucide-react";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
@@ -139,7 +140,7 @@ export default function SMCPanel() {
       <PanelHeader
         title="SMC"
         subtitle="SMART MONEY CONCEPTS"
-        icon={<TrendingUp size={22} />}
+        icon={<BarChart3 size={24} strokeWidth={2.5} />}
         iconColor="var(--accent-cyan)"
         iconBg="var(--accent-cyan-08)"
         iconBorder="var(--accent-cyan-15)"

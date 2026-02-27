@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { PanelHeader } from "../PanelHeader";
 import {
   Calendar,
+  CalendarDays,
   TrendingUp,
   TrendingDown,
   Activity,
@@ -154,7 +155,7 @@ export default function SeasonalityPanel() {
       <PanelHeader
         title="SEASONALITY"
         subtitle="HISTORICAL PATTERNS"
-        icon={<Calendar size={22} />}
+        icon={<CalendarDays size={24} strokeWidth={2.5} />}
         iconColor="var(--accent-cyan)"
         iconBg="var(--accent-cyan-08)"
         iconBorder="var(--accent-cyan-15)"

@@ -84,16 +84,23 @@ export function PanelHeader({
       <div className="flex items-center gap-5 z-10 flex-wrap">
         {/* Icon + Title Group */}
         <div className="flex items-center gap-4">
-          {/* Icon Box */}
+          {/* Icon Box - 3D Premium Style */}
           <div 
-            className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 transition-all"
+            className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 hover:scale-105"
             style={{ 
-              background: iconBg, 
+              background: `linear-gradient(135deg, ${iconBg} 0%, rgba(255,255,255,0.05) 100%)`,
               border: `1px solid ${iconBorder}`,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              boxShadow: `
+                0 4px 12px rgba(0,0,0,0.4),
+                0 1px 2px rgba(255,255,255,0.1) inset,
+                0 -1px 2px rgba(0,0,0,0.3) inset
+              `,
             }}
           >
-            <div style={{ color: iconColor }}>{icon}</div>
+            <div style={{ 
+              color: iconColor,
+              filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))",
+            }}>{icon}</div>
           </div>
 
           {/* Title Stack */}
@@ -273,13 +280,21 @@ export function PanelHeaderCompact({
       {/* Left: Icon + Title */}
       <div className="flex items-center gap-3 z-10">
         <div 
-          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 hover:scale-105"
           style={{ 
-            background: "var(--accent-cyan-08)", 
+            background: "linear-gradient(135deg, var(--accent-cyan-08) 0%, rgba(255,255,255,0.05) 100%)",
             border: "1px solid var(--accent-cyan-15)",
+            boxShadow: `
+              0 4px 12px rgba(0,0,0,0.4),
+              0 1px 2px rgba(255,255,255,0.1) inset,
+              0 -1px 2px rgba(0,0,0,0.3) inset
+            `,
           }}
         >
-          <div style={{ color: iconColor }}>{icon}</div>
+          <div style={{ 
+            color: iconColor,
+            filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))",
+          }}>{icon}</div>
         </div>
         <div className="flex flex-col gap-0.5">
           <h1 

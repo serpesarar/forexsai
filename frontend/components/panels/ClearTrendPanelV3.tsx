@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
-  ArrowUpIcon as TrendingUp,
   ArrowDownIcon as TrendingDown,
   MinusIcon as Minus,
   TargetIcon as Target,
@@ -13,6 +12,7 @@ import {
   InfoIcon as Info,
   CloseIcon as X,
 } from "../ui/CustomIcons";
+import { LineChart } from "lucide-react";
 import PanelHeader from "../PanelHeader";
 import TrendChannelChart from "./TrendChannelChart";
 
@@ -187,7 +187,7 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
       <PanelHeader
         title="CLEAR TREND V3"
         subtitle="ADVANCED TREND ANALYSIS"
-        icon={<TrendingUp size={22} />}
+        icon={<LineChart size={24} strokeWidth={2.5} />}
         iconColor="var(--accent-cyan)"
         iconBg="var(--accent-cyan-08)"
         iconBorder="var(--accent-cyan-15)"

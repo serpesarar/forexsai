@@ -9,7 +9,6 @@ import {
   ArrowUpRightIcon as TrendingUp,
   ArrowDownRightIcon as TrendingDown,
 } from "../ui/CustomIcons";
-import { PulseIcon } from "../ui/CustomIcons";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
@@ -156,7 +155,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
       <PanelHeader
         title="PULSE 1"
         subtitle="ALGORITHMIC SCALP"
-        icon={<PulseIcon size={22} />}
+        icon={<Activity size={24} strokeWidth={2.5} />}
         iconBg="var(--accent-cyan-08)"
         iconBorder="var(--accent-cyan-15)"
         iconColor="var(--accent-cyan)"

@@ -22,6 +22,7 @@ import {
   MinusIcon as Minus,
 } from "../ui/CustomIcons";
 import { EmelIcon, PulseIcon, SignalsIcon } from "../ui/CustomIcons";
+import { ShieldCheck } from "lucide-react";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
@@ -164,7 +165,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
       <PanelHeader
         title="EMEL"
         subtitle="ADVANCED ANALYSIS • 9 CHECKS"
-        icon={<EmelIcon size={22} />}
+        icon={<ShieldCheck size={24} strokeWidth={2.5} />}
         iconBg="var(--accent-cyan-08)"
         iconBorder="var(--accent-cyan-15)"
         iconColor="var(--accent-cyan)"

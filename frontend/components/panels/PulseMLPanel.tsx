@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
 import { PanelHeader } from "../PanelHeader";
 import {
-  BrainIcon as Brain,
   ArrowUpIcon as TrendingUp,
   ArrowDownIcon as TrendingDown,
   ActivityIcon as Activity,
@@ -20,6 +19,7 @@ import {
   SecurityShieldIcon as Shield,
   MountainIcon as Mountain,
 } from "../ui/CustomIcons";
+import { Brain } from "lucide-react";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
@@ -178,7 +178,7 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       <PanelHeader
         title="PULSE 2"
         subtitle="ML HYBRID"
-        icon={<Brain size={22} />}
+        icon={<Brain size={24} strokeWidth={2.5} />}
         iconBg="var(--accent-cyan-08)"
         iconBorder="var(--accent-cyan-15)"
         iconColor="var(--accent-cyan)"

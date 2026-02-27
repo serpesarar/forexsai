@@ -326,7 +326,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
       <PanelHeader
         title="CYBER TREND"
         subtitle="AI-POWERED ANALYSIS"
-        icon={<Cpu size={22} />}
+        icon={<Cpu size={24} strokeWidth={2.5} />}
         iconColor="var(--accent-cyan)"
         iconBg="var(--accent-cyan-08)"
         iconBorder="var(--accent-cyan-15)"

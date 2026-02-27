@@ -171,7 +171,7 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
       <PanelHeader
         title="CLEAR TREND"
         subtitle="TREND ANALYSIS"
-        icon={<TrendingUp size={22} />}
+        icon={<TrendingUp size={24} strokeWidth={2.5} />}
         iconColor="var(--accent-cyan)"
         iconBg="var(--accent-cyan-08)"
         iconBorder="var(--accent-cyan-15)"

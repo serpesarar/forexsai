@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { PanelHeader } from "../PanelHeader";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
-  AnalysisIcon,
   ArrowUpIcon as TrendingUp,
   ArrowDownIcon as TrendingDown,
   ActivityIcon as Activity,
@@ -13,6 +12,7 @@ import {
   CheckCircleIcon as CheckCircle,
   CloseIcon as XCircle,
 } from "../ui/CustomIcons";
+import { LayoutGrid } from "lucide-react";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
@@ -193,7 +193,7 @@ export default function MTFMatrixPanel() {
       <PanelHeader
         title="MTF CONFLUENCE"
         subtitle="MATRIX"
-        icon={<AnalysisIcon size={22} />}
+        icon={<LayoutGrid size={24} strokeWidth={2.5} />}
         iconColor="var(--accent-cyan)"
         iconBg="var(--accent-cyan-08)"
         iconBorder="var(--accent-cyan-15)"

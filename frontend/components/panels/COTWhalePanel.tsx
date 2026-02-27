@@ -159,7 +159,7 @@ export default function COTWhalePanel() {
       <PanelHeader
         title="COT WHALE"
         subtitle="POSITIONING DATA"
-        icon={<Fish size={22} />}
+        icon={<Fish size={24} strokeWidth={2.5} />}
         iconColor="var(--accent-cyan)"
         iconBg="var(--accent-cyan-08)"
         iconBorder="var(--accent-cyan-15)"

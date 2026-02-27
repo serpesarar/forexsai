@@ -220,7 +220,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       <PanelHeaderCompact
         title="PULSE 3"
         subtitle="HYBRID SCALP"
-        icon={<Zap size={20} />}
+        icon={<Zap size={24} strokeWidth={2.5} />}
         iconColor="var(--accent-cyan)"
         onRefresh={fetchData}
         loading={loading}

@@ -185,7 +185,7 @@ export default function RiskRewardPanel() {
       <PanelHeader
         title="RISK REWARD"
         subtitle="POSITION CALCULATOR"
-        icon={<Scale size={22} />}
+        icon={<Scale size={24} strokeWidth={2.5} />}
         iconColor="var(--accent-cyan)"
         iconBg="var(--accent-cyan-08)"
         iconBorder="var(--accent-cyan-15)"
