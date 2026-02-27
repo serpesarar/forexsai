@@ -170,22 +170,71 @@ async def check_rate_limit(identifier: str, action: str) -> Tuple[bool, Optional
 # SIGNUP
 # =============================================================================
 
+async def verify_turnstile(token: str, ip_address: Optional[str] = None) -> Tuple[bool, Optional[str]]:
+    """
+    Verify Cloudflare Turnstile token.
+    Returns (success, error_message)
+    """
+    from config import settings
+    
+    # DEBUG: Log key status
+    key_status = "SET" if settings.turnstile_secret_key else "NOT SET"
+    logger.warning(f"[TURNSTILE DEBUG] Secret key status: {key_status}")
+    if settings.turnstile_secret_key:
+        logger.warning(f"[TURNSTILE DEBUG] Key starts with: {settings.turnstile_secret_key[:10]}...")
+    
+    if not settings.turnstile_secret_key:
+        logger.warning("Turnstile secret key not configured, skipping verification")
+        return True, None
+    
+    if not token:
+        return False, "Bot doğrulaması gerekli"
+    
+    try:
+        import httpx
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+                data={
+                    "secret": settings.turnstile_secret_key,
+                    "response": token,
+                    "remoteip": ip_address or ""
+                }
+            )
+            
+            result = response.json()
+            
+            if result.get("success"):
+                return True, None
+            else:
+                error_codes = result.get("error-codes", ["unknown"])
+                logger.warning(f"Turnstile verification failed: {error_codes}")
+                return False, "Bot doğrulaması başarısız"
+                
+    except Exception as e:
+        logger.error(f"Turnstile verification error: {e}")
+        return False, "Bot doğrulaması sırasında hata oluştu"
+
+
 async def signup(
     email: str,
     password: str,
     full_name: Optional[str] = None,
     referral_code: Optional[str] = None,
     ip_address: Optional[str] = None,
-    user_agent: Optional[str] = None
+    user_agent: Optional[str] = None,
+    turnstile_token: Optional[str] = None
 ) -> SignupResult:
     """
-    Register new user with email verification.
+    Register new user with email verification and bot protection.
     
     Spam protection:
     - Rate limiting per IP
     - Email format validation
     - Password strength check
     - Fingerprint tracking
+    - Cloudflare Turnstile CAPTCHA
+    - Email verification required
     """
     # 1. Validate inputs
     if not validate_email(email):
@@ -195,7 +244,12 @@ async def signup(
     if not valid_pw:
         return SignupResult(success=False, error=pw_error, error_code="WEAK_PASSWORD")
     
-    # 2. Rate limit check
+    # 2. Bot protection - Turnstile verification
+    turnstile_valid, turnstile_error = await verify_turnstile(turnstile_token, ip_address)
+    if not turnstile_valid:
+        return SignupResult(success=False, error=turnstile_error or "Bot doğrulaması başarısız", error_code="INVALID_CAPTCHA")
+    
+    # 3. Rate limit check
     if ip_address:
         allowed, rate_error = await check_rate_limit(ip_address, "signup")
         if not allowed:
@@ -230,7 +284,7 @@ async def signup(
         if ip_address and user_agent:
             fingerprint = get_client_fingerprint(ip_address, user_agent)
         
-        # 8. Create user - ACTIVE by default (no email verification required)
+        # 8. Create user - PENDING status (email verification required)
         new_referral_code = generate_referral_code()
         
         user_data = {
@@ -239,8 +293,8 @@ async def signup(
             "membership_tier": "free",
             "referral_code": new_referral_code,
             "referred_by": referred_by,
-            "status": "active",  # Changed from "pending" to "active"
-            "email_verified": True,  # Changed from False to True
+            "status": "pending",  # User must verify email to activate
+            "email_verified": False,  # Will be set to True after verification
             "signup_ip": ip_address,
             "signup_fingerprint": fingerprint,
         }
@@ -259,35 +313,37 @@ async def signup(
             "salt": salt
         })
         
-        # 10. Skip email verification (no email service configured)
-        # verification_token = generate_token()
-        # client.table("email_verifications").insert({
-        #     "user_id": user_id,
-        #     "token": verification_token,
-        #     "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat()
-        # }).execute()
+        # 10. Create email verification token and send email
+        from services.email_service import send_verification_email
         
-        # 11. Create referral record if referred
+        verification_token = generate_token()
+        client.table("email_verifications").insert({
+            "user_id": user_id,
+            "token": verification_token,
+            "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat()
+        })
+        
+        # Send verification email
+        email_sent = await send_verification_email(email, verification_token, full_name)
+        
+        # 11. Create referral record if referred (status pending until verification)
         if referred_by:
             client.table("referrals").insert({
                 "referrer_id": referred_by,
                 "referred_id": user_id,
-                "status": "completed"
+                "status": "pending"  # Will be completed after email verification
             })
-            
-            # Update referrer's count (rpc not available in custom client, skip)
-            pass
         
         # 12. Update daily metrics (optional, rpc not available in custom client)
         pass
         
-        logger.info(f"New signup (auto-verified): {email}")
+        logger.info(f"New signup (verification required): {email}, email_sent: {email_sent}")
         
         return SignupResult(
             success=True,
             user_id=user_id,
             referral_code=new_referral_code,
-            verification_sent=False  # Changed from True to False
+            verification_sent=email_sent
         )
         
     except Exception as e:
@@ -311,7 +367,7 @@ async def verify_email(token: str) -> Tuple[bool, Optional[str]]:
         result = client.table("email_verifications")\
             .select("*")\
             .eq("token", token)\
-            .is_("used_at", "null")\
+            .is_("verified_at", "null")\
             .execute()
         
         if not result.get("data") or len(result["data"]) == 0:
@@ -335,7 +391,7 @@ async def verify_email(token: str) -> Tuple[bool, Optional[str]]:
         
         # Mark token as used
         client.table("email_verifications").eq("id", verification["id"]).update({
-            "used_at": datetime.utcnow().isoformat()
+            "verified_at": datetime.utcnow().isoformat()
         })
         
         # Complete referral if exists
@@ -441,13 +497,13 @@ async def login(
             
             return AuthResult(success=False, error="Email veya şifre hatalı", error_code="INVALID_CREDENTIALS")
         
-        # 7. Skip email verification check (auto-verified on signup)
-        # if not user["email_verified"]:
-        #     return AuthResult(
-        #         success=False, 
-        #         error="Lütfen önce email adresinizi doğrulayın",
-        #         error_code="EMAIL_NOT_VERIFIED"
-        #     )
+        # 7. Check email verification status
+        if not user["email_verified"]:
+            return AuthResult(
+                success=False, 
+                error="Lütfen önce email adresinizi doğrulayın. Doğrulama linki emailinize gönderildi.",
+                error_code="EMAIL_NOT_VERIFIED"
+            )
         
         # 8. Create session
         session_token = generate_token(48)

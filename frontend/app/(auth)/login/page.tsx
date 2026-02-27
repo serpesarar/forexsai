@@ -7,6 +7,8 @@ import { useAuthStore } from "@/lib/auth/store";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
+
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuthStore();
@@ -17,11 +19,16 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [resendingEmail, setResendingEmail] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setErrorCode(null);
+    setResendSuccess(false);
 
     try {
       const loginPromise = login(email, password);
@@ -30,6 +37,7 @@ export default function LoginPage() {
       );
       const result = await Promise.race([loginPromise, timeoutPromise]);
       if (!result.success) {
+        setErrorCode(result.error_code || null);
         throw new Error(result.error || t("auth.login.failed") || "Login failed");
       }
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -38,6 +46,28 @@ export default function LoginPage() {
       setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email) return;
+    setResendingEmail(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app"}/api/auth/resend-verification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResendSuccess(true);
+      } else {
+        setError(data.error || "Email gönderilemedi.");
+      }
+    } catch {
+      setError("Bağlantı hatası. Lütfen tekrar deneyin.");
+    } finally {
+      setResendingEmail(false);
     }
   };
 
@@ -130,9 +160,43 @@ export default function LoginPage() {
 
             {/* Error */}
             {error && (
-              <div className="mb-6 p-4 rounded-xl bg-red-500/8 border border-red-500/20 flex items-center gap-3">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-                <span className="text-red-400 text-sm font-light">{error}</span>
+              <div className={`mb-6 p-4 rounded-xl border ${errorCode === "EMAIL_NOT_VERIFIED" ? "bg-amber-500/8 border-amber-500/20" : "bg-red-500/8 border-red-500/20"}`}>
+                <div className="flex items-center gap-3 mb-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={errorCode === "EMAIL_NOT_VERIFIED" ? "#f59e0b" : "#f87171"} strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                  <span className={`text-sm font-light ${errorCode === "EMAIL_NOT_VERIFIED" ? "text-amber-400" : "text-red-400"}`}>{error}</span>
+                </div>
+                {errorCode === "EMAIL_NOT_VERIFIED" && (
+                  <div className="mt-3 pt-3 border-t border-amber-500/20">
+                    {resendSuccess ? (
+                      <p className="text-xs text-emerald-400">✓ Doğrulama linki gönderildi!</p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setResendingEmail(true);
+                          try {
+                            const res = await fetch(`${API_BASE}/api/auth/resend-verification`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ email }),
+                            });
+                            if (res.ok) {
+                              setResendSuccess(true);
+                            }
+                          } catch {
+                            // Ignore errors
+                          } finally {
+                            setResendingEmail(false);
+                          }
+                        }}
+                        disabled={resendingEmail}
+                        className="text-xs text-amber-400 hover:text-amber-300 transition-colors disabled:opacity-50"
+                      >
+                        {resendingEmail ? "Gönderiliyor..." : "Doğrulama linkini tekrar gönder →"}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

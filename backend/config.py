@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     supabase_url: str | None = Field(default=None, env="SUPABASE_URL")
     supabase_key: str | None = Field(default=None, env="SUPABASE_KEY")
     resend_api_key: str | None = Field(default=None, env="RESEND_API_KEY")
+    turnstile_secret_key: str | None = Field(default=None, env="TURNSTILE_SECRET_KEY")
     ob_fractal_period: int = Field(default=2, env="OB_FRACTAL_PERIOD")
     ob_min_displacement_atr: float = Field(default=1.0, env="OB_MIN_DISPLACEMENT_ATR")
     ob_min_score: float = Field(default=50.0, env="OB_MIN_SCORE")

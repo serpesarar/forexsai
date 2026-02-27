@@ -30,7 +30,7 @@ interface AuthState {
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
   setHasHydrated: (state: boolean) => void;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; error_code?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   checkAuth: () => Promise<boolean>;
@@ -95,7 +95,15 @@ export const useAuthStore = create<AuthState>()(
 
           if (!res.ok) {
             set({ isLoading: false });
-            return { success: false, error: data.detail || "Giriş başarısız" };
+            // Handle specific error codes
+            const errorCode = data.error_code;
+            let errorMessage = data.detail || data.error || "Giriş başarısız";
+            
+            if (errorCode === "EMAIL_NOT_VERIFIED") {
+              errorMessage = "Email adresiniz doğrulanmamış. Lütfen email kutunuzu kontrol edin.";
+            }
+            
+            return { success: false, error: errorMessage, error_code: errorCode };
           }
 
           const user: User = {

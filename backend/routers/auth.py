@@ -35,6 +35,7 @@ class SignupRequest(BaseModel):
     password: str = Field(..., min_length=5, max_length=128)
     full_name: Optional[str] = Field(None, max_length=100)
     referral_code: Optional[str] = Field(None, max_length=20)
+    turnstile_token: str = Field(..., min_length=1, description="Cloudflare Turnstile CAPTCHA token")
 
 
 class SignupResponse(BaseModel):
@@ -165,7 +166,8 @@ async def signup_user(request: Request, body: SignupRequest):
             full_name=body.full_name,
             referral_code=body.referral_code,
             ip_address=get_client_ip(request),
-            user_agent=get_user_agent(request)
+            user_agent=get_user_agent(request),
+            turnstile_token=body.turnstile_token
         )
         
         if not result.success:
@@ -276,6 +278,57 @@ async def verify_email_endpoint(body: VerifyEmailRequest):
         raise HTTPException(status_code=400, detail=error)
     
     return {"success": True, "message": "Email adresiniz doğrulandı!"}
+
+
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr
+
+
+@router.post("/resend-verification")
+async def resend_verification(body: ResendVerificationRequest):
+    """Resend verification email to user"""
+    from services.auth_service import get_supabase, generate_token
+    from services.email_service import send_verification_email
+    
+    client = await get_supabase()
+    if not client:
+        raise HTTPException(status_code=500, detail="Veritabanı bağlantısı kurulamadı")
+    
+    # Find user
+    user_result = client.table("user_profiles")\
+        .select("id,email,full_name,email_verified")\
+        .eq("email", body.email.lower())\
+        .execute()
+    
+    if not user_result.get("data") or len(user_result["data"]) == 0:
+        # Don't reveal if email exists
+        return {"success": True, "message": "Eğer email kayıtlıysa, doğrulama linki gönderildi."}
+    
+    user = user_result["data"][0]
+    
+    # Check if already verified
+    if user.get("email_verified"):
+        return {"success": True, "message": "Email adresiniz zaten doğrulanmış."}
+    
+    # Generate new token
+    verification_token = generate_token()
+    
+    # Delete old tokens for this user
+    client.table("email_verifications")\
+        .eq("user_id", user["id"])\
+        .delete()
+    
+    # Insert new token
+    client.table("email_verifications").insert({
+        "user_id": user["id"],
+        "token": verification_token,
+        "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat()
+    })
+    
+    # Send email
+    await send_verification_email(user["email"], verification_token, user.get("full_name"))
+    
+    return {"success": True, "message": "Doğrulama linki email adresinize gönderildi."}
 
 
 @router.get("/check-feature/{feature}", response_model=FeatureAccessResponse)

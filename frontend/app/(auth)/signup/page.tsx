@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import Turnstile from "react-turnstile";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
@@ -26,6 +27,7 @@ function SignupForm() {
   const [referrerName, setReferrerName] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [newReferralCode, setNewReferralCode] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   useEffect(() => {
     const ref = searchParams.get("ref");
@@ -61,11 +63,12 @@ function SignupForm() {
     setError(null);
     if (password !== confirmPassword) { setError(t("auth.signup.passwordMismatch") || "Şifreler eşleşmiyor"); setLoading(false); return; }
     if (password.length < 5) { setError(t("auth.signup.passwordTooShort") || "En az 5 karakter"); setLoading(false); return; }
+    if (!turnstileToken) { setError("Lütfen bot doğrulamasını tamamlayın"); setLoading(false); return; }
     try {
       const res = await fetch(`${API_BASE}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, full_name: fullName || null, referral_code: referralCode || null }),
+        body: JSON.stringify({ email, password, full_name: fullName || null, referral_code: referralCode || null, turnstile_token: turnstileToken }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Kayıt başarısız");
@@ -271,6 +274,17 @@ function SignupForm() {
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-1">Referral Bonus</p>
                 <p className="text-xs text-gray-600 font-light">{t("auth.signup.referralInfo")}</p>
               </div>
+              
+              {/* Cloudflare Turnstile */}
+              <div className="flex justify-center">
+                <Turnstile
+                  sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA"}
+                  onVerify={(token) => setTurnstileToken(token)}
+                  onError={() => setTurnstileToken(null)}
+                  theme="dark"
+                />
+              </div>
+              
               <div className="flex gap-3">
                 <button onClick={() => setStep(2)} className="px-4 py-3.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/8 text-gray-400 transition-all">
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
