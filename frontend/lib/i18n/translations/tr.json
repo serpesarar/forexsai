@@ -108,6 +108,35 @@
     "signup": "Hesap Oluştur",
     "minimize": "Küçült"
   },
+  "auth": {
+    "signup": {
+      "start": "Başlayalım",
+      "createAccount": "Hesap Oluştur",
+      "email": "E-posta",
+      "password": "Şifre",
+      "passwordHint": "En az 5 karakter",
+      "fullName": "Ad Soyad (İsteğe Bağlı)",
+      "referral": "Davet Kodu (İsteğe Bağlı)",
+      "continue": "Devam Et",
+      "haveAccount": "Zaten hesabın var mı?",
+      "verifyEmail": "E-postanı Doğrula",
+      "otpSent": "6 haneli kodu gönderdik",
+      "verify": "Doğrula",
+      "resendCode": "Kod gelmedi mi? Tekrar gönder",
+      "successTitle": "Hoş Geldin!",
+      "successMessage": "Hesabınız başarıyla doğrulandı.",
+      "yourInviteCode": "Davet Kodunuz",
+      "goToDashboard": "Başlayalım →",
+      "invalidEmail": "Lütfen geçerli bir e-posta adresi girin",
+      "passwordTooShort": "Şifre en az 5 karakter olmalı",
+      "passwordMismatch": "Şifreler uyuşmuyor",
+      "processing": "İşleniyor...",
+      "verifying": "Doğrulanıyor...",
+      "turnstileRequired": "Lütfen güvenlik doğrulamasını tamamlayın",
+      "enter6Digits": "Lütfen 6 haneli kodu girin",
+      "resendSuccess": "Yeni kod e-postanıza gönderildi!"
+    }
+  },
   "header": {
     "title": "AI Trading Dashboard",
     "subtitle": "NASDAQ + XAUUSD + DAX"
@@ -718,7 +747,8 @@
     "charts": "Grafikler",
     "dashboard": "Dashboard",
     "trading": "AI Trading",
-    "homePage": "Ana Sayfa"
+    "homePage": "Ana Sayfa",
+    "login": "Giriş Yap"
   },
   "whale": {
     "title": "Balina Takibi",

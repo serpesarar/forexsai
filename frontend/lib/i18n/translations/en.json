@@ -108,6 +108,35 @@
     "signup": "Create Account",
     "minimize": "Minimize"
   },
+  "auth": {
+    "signup": {
+      "start": "Get Started",
+      "createAccount": "Create Account",
+      "email": "Email",
+      "password": "Password",
+      "passwordHint": "At least 5 characters",
+      "fullName": "Full Name (Optional)",
+      "referral": "Invite Code (Optional)",
+      "continue": "Continue",
+      "haveAccount": "Already have an account?",
+      "verifyEmail": "Verify Your Email",
+      "otpSent": "We've sent a 6-digit code to",
+      "verify": "Verify",
+      "resendCode": "Didn't receive it? Resend code",
+      "successTitle": "Welcome!",
+      "successMessage": "Your account has been verified successfully.",
+      "yourInviteCode": "Your Invite Code",
+      "goToDashboard": "Let's Get Started →",
+      "invalidEmail": "Please enter a valid email",
+      "passwordTooShort": "Password must be at least 5 characters",
+      "passwordMismatch": "Passwords do not match",
+      "processing": "Processing...",
+      "verifying": "Verifying...",
+      "turnstileRequired": "Please complete the security verification",
+      "enter6Digits": "Please enter the 6-digit code",
+      "resendSuccess": "New code sent to your email!"
+    }
+  },
   "header": {
     "title": "AI Trading Dashboard",
     "subtitle": "NASDAQ + XAUUSD + DAX"
@@ -726,7 +755,8 @@
     "charts": "Charts",
     "dashboard": "Dashboard",
     "trading": "AI Trading",
-    "homePage": "Home"
+    "homePage": "Home",
+    "login": "Login"
   },
   "whale": {
     "title": "Whale Tracker",

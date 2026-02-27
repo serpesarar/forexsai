@@ -125,7 +125,7 @@ function SignupForm() {
       return;
     }
     if (!turnstileToken) {
-      setError("Please complete the security verification");
+      setError(t("auth.signup.turnstileRequired"));
       setLoading(false);
       return;
     }
@@ -161,7 +161,7 @@ function SignupForm() {
     
     const code = otpCode.join("");
     if (code.length !== 6) {
-      setError("Please enter the 6-digit code");
+      setError(t("auth.signup.enter6Digits"));
       setLoading(false);
       return;
     }
@@ -195,7 +195,7 @@ function SignupForm() {
       });
       if (res.ok) {
         setError(null);
-        alert("New code sent to your email!");
+        alert(t("auth.signup.resendSuccess"));
       }
     } catch {
       // Ignore
@@ -205,7 +205,60 @@ function SignupForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 relative">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 relative overflow-hidden">
+      {/* Starry Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        {/* Gradient background */}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #080d1a 50%, #060a14 100%)' }} />
+        
+        {/* Animated stars */}
+        <div className="stars-container">
+          {[...Array(100)].map((_, i) => (
+            <div
+              key={i}
+              className="star"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                width: `${Math.random() * 2 + 1}px`,
+                height: `${Math.random() * 2 + 1}px`,
+                animationDelay: `${Math.random() * 5}s`,
+                animationDuration: `${Math.random() * 3 + 2}s`,
+              }}
+            />
+          ))}
+        </div>
+        
+        {/* Gradient orbs */}
+        <div className="absolute -top-40 -left-40 w-[800px] h-[800px] rounded-full opacity-30"
+          style={{ background: 'radial-gradient(circle, rgba(0,224,198,0.15) 0%, transparent 70%)' }} />
+        <div className="absolute top-1/3 -right-20 w-[600px] h-[600px] rounded-full opacity-25"
+          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%)' }} />
+        <div className="absolute -bottom-40 left-1/3 w-[700px] h-[700px] rounded-full opacity-20"
+          style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)' }} />
+        
+        {/* Vignette */}
+        <div className="absolute inset-0"
+          style={{ background: 'radial-gradient(ellipse at center, transparent 0%, rgba(11,18,32,0.6) 100%)' }} />
+      </div>
+      
+      <style jsx>{`
+        .stars-container {
+          position: absolute;
+          inset: 0;
+        }
+        .star {
+          position: absolute;
+          background: white;
+          border-radius: 50%;
+          opacity: 0;
+          animation: twinkle ease-in-out infinite;
+        }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0; transform: scale(0.5); }
+          50% { opacity: 0.8; transform: scale(1); }
+        }
+      `}</style>
       {/* Language */}
       <div className="absolute top-6 right-6 z-50">
         <LanguageSwitcher />
@@ -306,14 +359,14 @@ function SignupForm() {
                 disabled={loading}
                 className="w-full py-3.5 rounded-lg bg-gradient-to-r from-cyan-600 via-cyan-500 to-cyan-600 border border-cyan-400/30 shadow-[0_0_20px_rgba(0,224,198,0.2)] hover:shadow-[0_0_30px_rgba(0,224,198,0.35)] transition-all duration-300 text-white uppercase tracking-widest text-xs font-medium disabled:opacity-50"
               >
-                {loading ? "Processing..." : (t("auth.signup.continue") || "Continue")}
+                {loading ? t("auth.signup.processing") : t("auth.signup.continue")}
               </button>
             </div>
 
             <p className="text-center text-gray-600 mt-6 text-xs">
               {t("auth.signup.haveAccount") || "Already have an account?"}{" "}
               <Link href="/login" className="text-cyan-400 hover:text-cyan-300 transition-colors">
-                {t("nav.login") || "Login"}
+                {t("nav.login")}
               </Link>
             </p>
           </div>
@@ -363,7 +416,7 @@ function SignupForm() {
               disabled={loading || otpCode.join("").length !== 6}
               className="w-full py-3.5 rounded-lg bg-gradient-to-r from-cyan-600 via-cyan-500 to-cyan-600 border border-cyan-400/30 shadow-[0_0_20px_rgba(0,224,198,0.2)] hover:shadow-[0_0_30px_rgba(0,224,198,0.35)] transition-all duration-300 text-white uppercase tracking-widest text-xs font-medium disabled:opacity-50 mb-4"
             >
-              {loading ? "Verifying..." : (t("auth.signup.verify") || "Verify")}
+              {loading ? t("auth.signup.verifying") : t("auth.signup.verify")}
             </button>
 
             <button
