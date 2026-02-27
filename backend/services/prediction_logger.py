@@ -327,41 +327,31 @@ async def log_prediction(
                 _close_existing_signal(client, active_signal_id, direction, "direction_flip")
 
         # ═══════════════════════════════════════════════════════════════════════
-        # ADAPTIVE TARGETS: ATR-based dynamic TP/SL
+        # STATIC TARGETS: Fixed pip-based TP/SL (Reverted from ATR)
+        # ATR system removed - using fixed pip values from target_config
         # ═══════════════════════════════════════════════════════════════════════
         import json as _json
-        from services.adaptive_targets import get_adaptive_tp_sl
+        from services.target_config import get_symbol_config, calculate_target_prices, calculate_stoploss_price
         
+        cfg = get_symbol_config(symbol)
         entry_price = ml.get("entry_price") or 0
         
-        # Use adaptive targets if entry price available
+        # Calculate actual price targets for DB storage using fixed pip values
         if entry_price and entry_price > 0:
-            adaptive = await get_adaptive_tp_sl(symbol, direction, entry_price, confidence)
-            targets_dict = adaptive["targets"]
-            stop_loss_pips = adaptive["targets_pips"]["SL"]
-            
-            # Store adaptive metadata in factors
-            factors = _extract_factors(context, analysis)
-            factors["adaptive_targets"] = {
-                "atr": adaptive["atr"],
-                "session": adaptive["session"],
-                "volatility_ratio": adaptive["volatility_ratio"],
-                "risk_reward": adaptive["risk_reward"],
-            }
-            factors["session"] = _get_current_session()
-            factors["filters_applied"] = ["session", "correlation", "news"]
-            
-            logger.info(f"Adaptive targets for {symbol}: ATR={adaptive['atr']:.2f}, "
-                       f"Session={adaptive['session']}, RR={adaptive['risk_reward']:.2f}")
+            target_prices = calculate_target_prices(entry_price, direction, symbol)
+            sl_price = calculate_stoploss_price(entry_price, direction, symbol)
+            # Store as {TP1: price, TP2: price, ...}
+            targets_dict = target_prices
+            targets_dict["SL"] = round(sl_price, 4)
+            stop_loss_pips = cfg.stoploss_pips
         else:
-            # Fallback to static targets
-            from services.target_config import get_symbol_config
-            cfg = get_symbol_config(symbol)
             targets_dict = {tl.name: tl.pips for tl in cfg.targets}
             targets_dict["SL"] = cfg.stoploss_pips
             stop_loss_pips = cfg.stoploss_pips
-            factors = _extract_factors(context, analysis)
-            factors["session"] = _get_current_session()
+        
+        factors = _extract_factors(context, analysis)
+        factors["session"] = _get_current_session()
+        factors["target_type"] = "static_pips"
         
         # Store strategy in both the column and factors JSONB
         if strategy:

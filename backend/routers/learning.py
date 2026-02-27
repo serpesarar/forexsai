@@ -1735,3 +1735,363 @@ async def get_recent_signals_endpoint(
     except Exception as e:
         import traceback
         return {"error": str(e), "traceback": traceback.format_exc()[:300], "signals": []}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MODEL & TIMEFRAME ANALYSIS ENDPOINTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/model-analysis")
+async def get_model_timeframe_analysis(
+    model: str = Query(..., description="Model type: ml, emel, pulse1, pulse2, pulse3"),
+    symbol: Optional[str] = Query(None, description="Symbol filter: XAUUSD, NDX.INDX, GDAXI.INDX, CL.F"),
+    timeframe: Optional[str] = Query(None, description="Timeframe: 5m, 15m, 30m, 1h, 4h, 1d"),
+    days: int = Query(30, ge=1, le=90)
+):
+    """
+    Get detailed analysis for a specific model + timeframe + symbol combination.
+    
+    Returns performance metrics including:
+    - Win rate by target level
+    - Average profit/loss
+    - Total signals count
+    - Per-symbol breakdown
+    """
+    if not is_db_available():
+        return {"error": "Database not available"}
+    
+    client = get_supabase_client()
+    if client is None:
+        return {"error": "Database client not available"}
+    
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff_iso = cutoff.isoformat() + "Z"
+        
+        # Build query
+        query = client.table("prediction_logs").select(
+            "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
+            "ml_target_price, ml_stop_price, model_type, strategy, status, "
+            "targets_hit, highest_profit_pips, lowest_drawdown_pips, "
+            "exit_price, exit_time, stop_loss_pips, targets, created_at"
+        ).gte("created_at", cutoff_iso).neq("status", "active")
+        
+        # Filter by model (check both model_type and strategy fields)
+        model_lower = model.lower()
+        if model_lower == "ml":
+            query = query.or_("model_type.eq.ml,model_type.is.null")
+        elif model_lower in ["pulse1", "pulse2", "pulse3"]:
+            query = query.eq("model_type", model_lower)
+        elif model_lower == "emel":
+            query = query.or_("model_type.eq.emel,strategy.eq.EMEL")
+        else:
+            query = query.eq("model_type", model_lower)
+        
+        # Optional filters
+        if symbol:
+            query = query.eq("symbol", symbol)
+        if timeframe:
+            query = query.eq("timeframe", timeframe)
+        
+        result = query.order("created_at", desc=True).limit(500).execute()
+        signals = result.get("data") or []
+        
+        if not signals:
+            return {
+                "model": model,
+                "symbol": symbol,
+                "timeframe": timeframe,
+                "total_signals": 0,
+                "message": "No signals found for this filter combination"
+            }
+        
+        # Calculate statistics
+        stats = {
+            "total": len(signals),
+            "completed": 0,
+            "stopped": 0,
+            "expired": 0,
+            "by_symbol": {},
+            "by_timeframe": {},
+            "by_direction": {"BUY": 0, "SELL": 0},
+            "target_hits": {"TP1": 0, "TP2": 0, "TP3": 0, "TP4": 0},
+            "total_profit_pips": 0,
+            "total_loss_pips": 0,
+            "avg_profit_pips": 0,
+            "avg_loss_pips": 0,
+            "max_profit_pips": 0,
+            "max_loss_pips": 0,
+        }
+        
+        profits = []
+        losses = []
+        
+        for sig in signals:
+            # Status counts
+            status = sig.get("status", "expired")
+            if status == "completed":
+                stats["completed"] += 1
+            elif status == "stopped":
+                stats["stopped"] += 1
+            else:
+                stats["expired"] += 1
+            
+            # Symbol breakdown
+            sym = sig.get("symbol", "unknown")
+            if sym not in stats["by_symbol"]:
+                stats["by_symbol"][sym] = {"total": 0, "completed": 0, "stopped": 0, "net_pips": 0}
+            stats["by_symbol"][sym]["total"] += 1
+            if status == "completed":
+                stats["by_symbol"][sym]["completed"] += 1
+            elif status == "stopped":
+                stats["by_symbol"][sym]["stopped"] += 1
+            
+            # Timeframe breakdown
+            tf = sig.get("timeframe", "unknown")
+            if tf not in stats["by_timeframe"]:
+                stats["by_timeframe"][tf] = {"total": 0, "completed": 0, "stopped": 0}
+            stats["by_timeframe"][tf]["total"] += 1
+            if status == "completed":
+                stats["by_timeframe"][tf]["completed"] += 1
+            elif status == "stopped":
+                stats["by_timeframe"][tf]["stopped"] += 1
+            
+            # Direction
+            direction = sig.get("ml_direction")
+            if direction in ["BUY", "SELL"]:
+                stats["by_direction"][direction] += 1
+            
+            # Target hits
+            targets_hit = sig.get("targets_hit", {})
+            if isinstance(targets_hit, str):
+                try:
+                    import json
+                    targets_hit = json.loads(targets_hit)
+                except:
+                    targets_hit = {}
+            for tp in ["TP1", "TP2", "TP3", "TP4"]:
+                if targets_hit.get(tp):
+                    stats["target_hits"][tp] += 1
+            
+            # P/L calculation
+            sl_pips = sig.get("stop_loss_pips", 0)
+            if status == "completed":
+                profit = sig.get("highest_profit_pips", 0)
+                stats["total_profit_pips"] += profit
+                profits.append(profit)
+                if sym in stats["by_symbol"]:
+                    stats["by_symbol"][sym]["net_pips"] += profit
+            elif status == "stopped":
+                loss = abs(sl_pips) if sl_pips else abs(sig.get("lowest_drawdown_pips", 0))
+                stats["total_loss_pips"] += loss
+                losses.append(loss)
+                if sym in stats["by_symbol"]:
+                    stats["by_symbol"][sym]["net_pips"] -= loss
+        
+        # Calculate averages
+        if profits:
+            stats["avg_profit_pips"] = round(sum(profits) / len(profits), 2)
+            stats["max_profit_pips"] = round(max(profits), 2)
+        if losses:
+            stats["avg_loss_pips"] = round(sum(losses) / len(losses), 2)
+            stats["max_loss_pips"] = round(max(losses), 2)
+        
+        # Win rate calculation
+        total_with_outcome = stats["completed"] + stats["stopped"]
+        win_rate = round(stats["completed"] / total_with_outcome * 100, 1) if total_with_outcome > 0 else 0
+        
+        # Target hit rates
+        target_rates = {}
+        for tp, hits in stats["target_hits"].items():
+            target_rates[tp] = round(hits / stats["total"] * 100, 1) if stats["total"] > 0 else 0
+        
+        return {
+            "model": model,
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "period_days": days,
+            "total_signals": stats["total"],
+            "win_rate": win_rate,
+            "completed": stats["completed"],
+            "stopped": stats["stopped"],
+            "expired": stats["expired"],
+            "target_rates": target_rates,
+            "total_profit_pips": round(stats["total_profit_pips"], 2),
+            "total_loss_pips": round(stats["total_loss_pips"], 2),
+            "net_pips": round(stats["total_profit_pips"] - stats["total_loss_pips"], 2),
+            "avg_profit_pips": stats["avg_profit_pips"],
+            "avg_loss_pips": stats["avg_loss_pips"],
+            "max_profit_pips": stats["max_profit_pips"],
+            "max_loss_pips": stats["max_loss_pips"],
+            "risk_reward": round(stats["avg_profit_pips"] / stats["avg_loss_pips"], 2) if stats["avg_loss_pips"] > 0 else 0,
+            "by_symbol": stats["by_symbol"],
+            "by_timeframe": stats["by_timeframe"],
+            "by_direction": stats["by_direction"],
+            "signals": signals[:20],  # Last 20 signals for display
+        }
+        
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()[:500]}
+
+
+@router.get("/model-analysis/summary")
+async def get_all_models_summary(
+    days: int = Query(30, ge=1, le=90),
+    symbol: Optional[str] = Query(None)
+):
+    """
+    Get summary statistics for all models across all timeframes.
+    Used for the Model Analysis Panel overview.
+    """
+    if not is_db_available():
+        return {"error": "Database not available"}
+    
+    client = get_supabase_client()
+    if client is None:
+        return {"error": "Database client not available"}
+    
+    try:
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff_iso = cutoff.isoformat() + "Z"
+        
+        query = client.table("prediction_logs").select(
+            "symbol, timeframe, model_type, strategy, status, "
+            "highest_profit_pips, lowest_drawdown_pips, stop_loss_pips, targets_hit"
+        ).gte("created_at", cutoff_iso).neq("status", "active")
+        
+        if symbol:
+            query = query.eq("symbol", symbol)
+        
+        result = query.execute()
+        signals = result.get("data") or []
+        
+        # Initialize model structure
+        MODELS = ["ml", "emel", "pulse1", "pulse2", "pulse3"]
+        TIMEFRAMES = ["5m", "15m", "30m", "1h", "4h", "1d"]
+        
+        summary = {}
+        for model in MODELS:
+            summary[model] = {
+                "total_signals": 0,
+                "by_timeframe": {tf: {"total": 0, "completed": 0, "stopped": 0, "win_rate": 0} for tf in TIMEFRAMES},
+                "overall_win_rate": 0,
+                "total_completed": 0,
+                "total_stopped": 0,
+            }
+        
+        # Process signals
+        for sig in signals:
+            # Determine model
+            model_type = sig.get("model_type", "ml") or "ml"
+            strategy = sig.get("strategy", "")
+            
+            if model_type.lower() in ["pulse", "pulse1"] or (strategy and "PULSE" in strategy.upper() and "V3" not in strategy.upper() and "ML" not in strategy.upper()):
+                model_key = "pulse1"
+            elif model_type.lower() == "pulse2" or (strategy and "PULSE_ML" in strategy.upper()):
+                model_key = "pulse2"
+            elif model_type.lower() == "pulse3" or (strategy and "PULSE_V3" in strategy.upper()):
+                model_key = "pulse3"
+            elif model_type.lower() == "emel" or (strategy and "EMEL" in strategy.upper()):
+                model_key = "emel"
+            else:
+                model_key = "ml"
+            
+            if model_key not in summary:
+                continue
+            
+            # Get timeframe
+            tf = sig.get("timeframe", "1h")
+            if tf not in TIMEFRAMES:
+                tf = "1h"  # Default
+            
+            # Update counts
+            summary[model_key]["total_signals"] += 1
+            summary[model_key]["by_timeframe"][tf]["total"] += 1
+            
+            status = sig.get("status")
+            if status == "completed":
+                summary[model_key]["total_completed"] += 1
+                summary[model_key]["by_timeframe"][tf]["completed"] += 1
+            elif status == "stopped":
+                summary[model_key]["total_stopped"] += 1
+                summary[model_key]["by_timeframe"][tf]["stopped"] += 1
+        
+        # Calculate win rates
+        for model in MODELS:
+            total_with_outcome = summary[model]["total_completed"] + summary[model]["total_stopped"]
+            if total_with_outcome > 0:
+                summary[model]["overall_win_rate"] = round(summary[model]["total_completed"] / total_with_outcome * 100, 1)
+            
+            # Per timeframe win rates
+            for tf in TIMEFRAMES:
+                tf_data = summary[model]["by_timeframe"][tf]
+                tf_outcome = tf_data["completed"] + tf_data["stopped"]
+                if tf_outcome > 0:
+                    tf_data["win_rate"] = round(tf_data["completed"] / tf_outcome * 100, 1)
+        
+        return {
+            "period_days": days,
+            "symbol": symbol,
+            "models": summary
+        }
+        
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()[:500]}
+
+
+@router.get("/available-timeframes/{model}")
+async def get_model_timeframes(model: str):
+    """
+    Get available timeframes for a specific model.
+    Some models only work on specific timeframes (e.g., Pulse3, ML on 1h only).
+    """
+    if not is_db_available():
+        return {"error": "Database not available"}
+    
+    client = get_supabase_client()
+    if client is None:
+        return {"error": "Database client not available"}
+    
+    try:
+        # Query distinct timeframes for this model
+        model_lower = model.lower()
+        
+        if model_lower == "ml":
+            query = client.table("prediction_logs").select("timeframe").or_("model_type.eq.ml,model_type.is.null")
+        elif model_lower in ["pulse1", "pulse2", "pulse3"]:
+            query = client.table("prediction_logs").select("timeframe").eq("model_type", model_lower)
+        elif model_lower == "emel":
+            query = client.table("prediction_logs").select("timeframe").or_("model_type.eq.emel,strategy.eq.EMEL")
+        else:
+            query = client.table("prediction_logs").select("timeframe").eq("model_type", model_lower)
+        
+        result = query.limit(1000).execute()
+        signals = result.get("data") or []
+        
+        timeframes = list(set(s.get("timeframe", "1h") for s in signals if s.get("timeframe")))
+        timeframes.sort()
+        
+        # Default available timeframes by model
+        DEFAULT_TFS = {
+            "ml": ["1h"],  # ML typically only on 1h
+            "pulse1": ["5m", "15m"],
+            "pulse2": ["5m", "15m", "1h"],
+            "pulse3": ["1h"],  # Pulse3 typically only on 1h
+            "emel": ["5m", "15m", "1h", "4h"],
+        }
+        
+        # Merge with actual data
+        available = list(set(timeframes + DEFAULT_TFS.get(model_lower, ["1h"])))
+        available.sort(key=lambda x: ["5m", "15m", "30m", "1h", "4h", "1d"].index(x) if x in ["5m", "15m", "30m", "1h", "4h", "1d"] else 99)
+        
+        return {
+            "model": model,
+            "available_timeframes": available,
+            "default_timeframe": available[0] if available else "1h"
+        }
+        
+    except Exception as e:
+        return {"error": str(e), "model": model, "available_timeframes": ["1h"]}
+
