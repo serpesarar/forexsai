@@ -313,25 +313,30 @@ async def signup(
             "salt": salt
         })
         
-        # 10. Create email verification token and send email
-        from services.email_service import send_verification_email
+        # 10. Create email verification OTP and send email
+        from services.email_service import send_verification_email_with_otp
+        import random
         
+        # Generate 6-digit OTP
+        otp_code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
         verification_token = generate_token()
-        logger.info(f"[SIGNUP] Creating verification token for {email}")
+        
+        logger.info(f"[SIGNUP] Creating OTP for {email}: {otp_code}")
         
         client.table("email_verifications").insert({
             "user_id": user_id,
             "token": verification_token,
-            "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat()
+            "otp_code": otp_code,
+            "expires_at": (datetime.utcnow() + timedelta(minutes=30)).isoformat()  # 30 min expiry
         })
         
-        # Send verification email
-        logger.info(f"[SIGNUP] Sending verification email to {email}")
+        # Send verification email with OTP
+        logger.info(f"[SIGNUP] Sending OTP email to {email}")
         try:
-            email_sent = await send_verification_email(email, verification_token, full_name)
-            logger.info(f"[SIGNUP] Email sent result: {email_sent}")
+            email_sent = await send_verification_email_with_otp(email, otp_code, full_name)
+            logger.info(f"[SIGNUP] OTP email sent result: {email_sent}")
         except Exception as e:
-            logger.error(f"[SIGNUP] Email send failed: {e}")
+            logger.error(f"[SIGNUP] OTP email send failed: {e}")
             email_sent = False
         
         # 11. Create referral record if referred (status pending until verification)

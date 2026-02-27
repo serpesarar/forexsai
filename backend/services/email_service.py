@@ -141,6 +141,71 @@ async def send_verification_email(to: str, token: str, full_name: Optional[str] 
     return await send_email(to, "ForexsAI - Email Doğrulama", html)
 
 
+async def send_verification_email_with_otp(to: str, otp_code: str, full_name: Optional[str] = None, language: str = "tr") -> bool:
+    """Send email verification with OTP code (bilingual TR/EN)"""
+    name = full_name or ("User" if language == "en" else "Kullanıcı")
+    
+    # Bilingual content
+    if language == "en":
+        title = "Verify Your Email Address"
+        greeting = f"Hi {name}, welcome to ForexsAI!"
+        content_text = f"Your verification code is:<br><br><div style='font-size: 48px; font-weight: bold; color: #00E0C6; letter-spacing: 8px; text-align: center; padding: 20px; background: rgba(0,224,198,0.1); border-radius: 12px; margin: 20px 0;'>{otp_code}</div><br>This code is valid for 30 minutes. Enter this code in the app to verify your account."
+        footer = "If you didn't create this account, you can safely ignore this email."
+        email_subject = "ForexsAI - Email Verification"
+    else:
+        title = "Email Adresinizi Doğrulayın"
+        greeting = f"Merhaba {name}, ForexsAI'ya hoş geldiniz!"
+        content_text = f"Doğrulama kodunuz:<br><br><div style='font-size: 48px; font-weight: bold; color: #00E0C6; letter-spacing: 8px; text-align: center; padding: 20px; background: rgba(0,224,198,0.1); border-radius: 12px; margin: 20px 0;'>{otp_code}</div><br>Bu kod 30 dakika geçerlidir. Hesabınızı doğrulamak için bu kodu uygulamaya girin."
+        footer = "Bu hesabı siz oluşturmadıysanız, bu emaili görmezden gelebilirsiniz."
+        email_subject = "ForexsAI - Email Doğrulama"
+    
+    # Custom OTP template
+    html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0B1220;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0B1220; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0d1829 0%, #131f33 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 224, 198, 0.08);">
+                    <tr>
+                        <td style="padding: 40px 40px 20px 40px; text-align: center;">
+                            <p style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px;">
+                                Forexs<span style="background: linear-gradient(90deg, #00E0C6, #3B82F6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">AI</span>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 20px 40px 20px 40px;">
+                            <h1 style="margin: 0 0 20px 0; font-size: 26px; font-weight: 700; color: #ffffff; text-align: center;">{title}</h1>
+                            <p style="margin: 0 0 20px 0; font-size: 16px; color: #94a3b8; text-align: center;">{greeting}</p>
+                            <div style="font-size: 15px; line-height: 1.7; color: #cbd5e1; text-align: center;">
+                                {content_text}
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 24px 40px 32px 40px; border-top: 1px solid rgba(255, 255, 255, 0.06);">
+                            <p style="margin: 0; font-size: 12px; color: #64748b; text-align: center; line-height: 1.6;">{footer}</p>
+                            <p style="margin: 16px 0 0 0; font-size: 11px; color: #475569; text-align: center;">© 2024 ForexsAI - AI-Powered Market Analysis</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+    
+    return await send_email(to, email_subject, html)
+
+
 async def send_password_reset_email(to: str, token: str, full_name: Optional[str] = None) -> bool:
     """Send password reset link"""
     name = full_name or "Kullanıcı"

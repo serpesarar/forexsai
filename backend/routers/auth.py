@@ -280,6 +280,81 @@ async def verify_email_endpoint(body: VerifyEmailRequest):
     return {"success": True, "message": "Email adresiniz doğrulandı!"}
 
 
+class VerifyOTPRequest(BaseModel):
+    email: EmailStr
+    otp_code: str = Field(..., min_length=6, max_length=6)
+
+
+@router.post("/verify-otp")
+async def verify_otp_endpoint(body: VerifyOTPRequest):
+    """Verify email with OTP code"""
+    from services.auth_service import get_supabase
+    from datetime import datetime
+    
+    client = await get_supabase()
+    if not client:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+    
+    # Find user by email
+    user_result = client.table("user_profiles")\
+        .select("id,email_verified")\
+        .eq("email", body.email.lower())\
+        .execute()
+    
+    if not user_result.get("data") or len(user_result["data"]) == 0:
+        raise HTTPException(status_code=400, detail="User not found")
+    
+    user = user_result["data"][0]
+    user_id = user["id"]
+    
+    # Check if already verified
+    if user.get("email_verified"):
+        return {"success": True, "message": "Email already verified"}
+    
+    # Find OTP verification
+    verification = client.table("email_verifications")\
+        .select("id,otp_code,expires_at,verified_at")\
+        .eq("user_id", user_id)\
+        .is_("verified_at", "null")\
+        .order("created_at", desc=True)\
+        .limit(1)\
+        .execute()
+    
+    if not verification.get("data") or len(verification["data"]) == 0:
+        raise HTTPException(status_code=400, detail="No verification code found")
+    
+    v_data = verification["data"][0]
+    
+    # Check expiry
+    expires_at = datetime.fromisoformat(v_data["expires_at"].replace("Z", "+00:00"))
+    if datetime.now(expires_at.tzinfo) > expires_at:
+        raise HTTPException(status_code=400, detail="Verification code expired")
+    
+    # Check OTP
+    if v_data["otp_code"] != body.otp_code:
+        raise HTTPException(status_code=400, detail="Invalid verification code")
+    
+    # Update user
+    client.table("user_profiles").eq("id", user_id).update({
+        "email_verified": True,
+        "email_verified_at": datetime.utcnow().isoformat(),
+        "status": "active"
+    })
+    
+    # Mark verification as used
+    client.table("email_verifications").eq("id", v_data["id"]).update({
+        "verified_at": datetime.utcnow().isoformat()
+    })
+    
+    # Complete referral if exists
+    client.table("referrals").eq("referred_id", user_id).update({
+        "status": "completed",
+        "completed_at": datetime.utcnow().isoformat()
+    })
+    
+    return {"success": True, "message": "Email verified successfully"}
+
+
 class ResendVerificationRequest(BaseModel):
     email: EmailStr
 

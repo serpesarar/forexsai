@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, useRef } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useI18n } from "@/lib/i18n";
@@ -9,82 +9,199 @@ import Turnstile from "react-turnstile";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
+// Confetti effect using canvas
+function triggerConfetti() {
+  if (typeof window === "undefined") return;
+  
+  const duration = 3000;
+  const animationEnd = Date.now() + duration;
+  const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+  function random(min: number, max: number) {
+    return Math.random() * (max - min) + min;
+  }
+
+  const interval = setInterval(function() {
+    const timeLeft = animationEnd - Date.now();
+
+    if (timeLeft <= 0) {
+      return clearInterval(interval);
+    }
+
+    const particleCount = 50 * (timeLeft / duration);
+    
+    // Create confetti particles
+    for (let i = 0; i < particleCount; i++) {
+      createParticle(random(0, window.innerWidth), random(0, window.innerHeight));
+    }
+  }, 250);
+
+  function createParticle(x: number, y: number) {
+    const particle = document.createElement('div');
+    particle.style.position = 'fixed';
+    particle.style.left = x + 'px';
+    particle.style.top = y + 'px';
+    particle.style.width = '10px';
+    particle.style.height = '10px';
+    particle.style.backgroundColor = ['#00E0C6', '#3B82F6', '#F59E0B', '#EF4444', '#10B981'][Math.floor(Math.random() * 5)];
+    particle.style.borderRadius = '50%';
+    particle.style.pointerEvents = 'none';
+    particle.style.zIndex = '9999';
+    document.body.appendChild(particle);
+
+    const animation = particle.animate([
+      { transform: 'translate(0, 0) rotate(0deg)', opacity: 1 },
+      { transform: `translate(${random(-200, 200)}px, ${random(-200, 500)}px) rotate(${random(0, 360)}deg)`, opacity: 0 }
+    ], {
+      duration: random(1000, 3000),
+      easing: 'cubic-bezier(0, .9, .57, 1)',
+      delay: random(0, 200)
+    });
+
+    animation.onfinish = () => particle.remove();
+  }
+}
+
 function SignupForm() {
   const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [step, setStep] = useState(1);
+  // Form state
+  const [step, setStep] = useState<"form" | "otp" | "success">("form");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [referralCode, setReferralCode] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""]);
+  
+  // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [referralValid, setReferralValid] = useState<boolean | null>(null);
-  const [referrerName, setReferrerName] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [newReferralCode, setNewReferralCode] = useState<string | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   useEffect(() => {
     const ref = searchParams.get("ref");
-    if (ref) {
-      setReferralCode(ref);
-      validateReferralCode(ref);
-    }
+    if (ref) setReferralCode(ref);
   }, [searchParams]);
 
-  const getPasswordStrength = (pw: string) => {
-    if (pw.length < 5) return 0;
-    if (pw.length < 8) return 1;
-    if (pw.length < 12) return 2;
-    return 3;
+  // Handle OTP input
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length > 1) value = value[0];
+    if (!/^\d*$/.test(value)) return;
+    
+    const newOtp = [...otpCode];
+    newOtp[index] = value;
+    setOtpCode(newOtp);
+    
+    // Auto-focus next input
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`otp-${index + 1}`);
+      nextInput?.focus();
+    }
   };
 
-  const passwordStrength = getPasswordStrength(password);
-  const strengthLabels = [t("auth.signup.weak"), t("auth.signup.medium"), t("auth.signup.strong"), t("auth.signup.secure")];
-  const strengthColors = ["bg-red-500", "bg-yellow-500", "bg-emerald-500", "bg-emerald-400"];
-
-  const validateReferralCode = async (code: string) => {
-    if (!code || code.length < 4) { setReferralValid(null); setReferrerName(null); return; }
-    try {
-      const res = await fetch(`${API_BASE}/api/auth/validate-referral/${code}`);
-      const data = await res.json();
-      setReferralValid(data.valid);
-      setReferrerName(data.valid ? data.referrer_name : null);
-    } catch { setReferralValid(null); }
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !otpCode[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`);
+      prevInput?.focus();
+    }
   };
 
+  // Step 1: Submit registration
   const handleSignup = async () => {
     setLoading(true);
     setError(null);
-    if (password !== confirmPassword) { setError(t("auth.signup.passwordMismatch") || "Şifreler eşleşmiyor"); setLoading(false); return; }
-    if (password.length < 5) { setError(t("auth.signup.passwordTooShort") || "En az 5 karakter"); setLoading(false); return; }
-    if (!turnstileToken) { setError("Lütfen bot doğrulamasını tamamlayın"); setLoading(false); return; }
+    
+    if (!email.includes("@")) {
+      setError(t("auth.signup.invalidEmail") || "Please enter a valid email");
+      setLoading(false);
+      return;
+    }
+    if (password.length < 5) {
+      setError(t("auth.signup.passwordTooShort") || "Password must be at least 5 characters");
+      setLoading(false);
+      return;
+    }
+    if (!turnstileToken) {
+      setError("Please complete the security verification");
+      setLoading(false);
+      return;
+    }
+    
     try {
       const res = await fetch(`${API_BASE}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, full_name: fullName || null, referral_code: referralCode || null, turnstile_token: turnstileToken }),
+        body: JSON.stringify({ 
+          email, 
+          password, 
+          full_name: fullName || null, 
+          referral_code: referralCode || null, 
+          turnstile_token: turnstileToken 
+        }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Kayıt başarısız");
+      if (!res.ok) throw new Error(data.detail || "Registration failed");
+      
       setNewReferralCode(data.referral_code);
-      setSuccess(true);
-      setStep(4);
+      setStep("otp");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata oluştu");
-    } finally { setLoading(false); }
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally { 
+      setLoading(false); 
+    }
   };
 
-  const canProceed = () => {
-    if (step === 1) return email.includes("@") && email.includes(".");
-    if (step === 2) return password.length >= 5 && password === confirmPassword;
-    if (step === 3) return true;
-    return false;
+  // Step 2: Verify OTP
+  const handleVerifyOTP = async () => {
+    setLoading(true);
+    setError(null);
+    
+    const code = otpCode.join("");
+    if (code.length !== 6) {
+      setError("Please enter the 6-digit code");
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp_code: code }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Verification failed");
+      
+      setStep("success");
+      setTimeout(triggerConfetti, 100);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Verification failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Resend OTP
+  const handleResendOTP = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/resend-verification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) {
+        setError(null);
+        alert("New code sent to your email!");
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -93,6 +210,8 @@ function SignupForm() {
       <div className="absolute top-6 right-6 z-50">
         <LanguageSwitcher />
       </div>
+      
+      {/* Back */}
       <div className="absolute top-6 left-6 z-50">
         <Link href="/welcome" className="flex items-center gap-2 text-xs uppercase tracking-widest text-gray-500 hover:text-white transition-colors">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
@@ -100,183 +219,79 @@ function SignupForm() {
         </Link>
       </div>
 
-      <div className="w-full max-w-lg">
+      <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center gap-1 justify-center mb-10">
           <span className="text-2xl font-bold tracking-[0.15em] bg-gradient-to-br from-gray-100 to-gray-400 bg-clip-text text-transparent">FOREXS</span>
           <span className="text-2xl font-light tracking-[0.15em] text-white/90">AI</span>
         </div>
 
-        {/* Step dots */}
-        {!success && (
-          <div className="flex items-center justify-center gap-3 mb-10">
-            {[1, 2, 3].map((s) => (
-              <div key={s} className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300 border ${step > s ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-400" :
-                    step === s ? "bg-white/10 border-white/20 text-white" :
-                      "bg-white/[0.03] border-white/8 text-gray-600"
-                  }`}>
-                  {step > s ? (
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
-                  ) : s}
-                </div>
-                {s < 3 && (
-                  <div className={`w-10 h-px rounded-full transition-all duration-500 ${step > s ? "bg-cyan-500/40" : "bg-white/8"}`} />
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Card */}
-        <div className="bg-white/[0.03] backdrop-blur-2xl rounded-2xl border border-white/8 p-8 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/3 blur-3xl pointer-events-none" />
-
-          {/* Error */}
-          {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-500/8 border border-red-500/20 flex items-center gap-3">
-              <svg className="w-4 h-4 text-red-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-              <span className="text-red-400 text-sm font-light">{error}</span>
+        {/* STEP 1: Registration Form */}
+        {step === "form" && (
+          <div className="bg-white/[0.03] backdrop-blur-2xl rounded-2xl border border-white/8 p-8 shadow-2xl">
+            <div className="mb-8">
+              <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-2">{t("auth.signup.start") || "Get Started"}</p>
+              <h2 className="text-2xl font-light text-white">{t("auth.signup.createAccount") || "Create Account"}</h2>
             </div>
-          )}
 
-          {/* Step 1: Email */}
-          {step === 1 && (
-            <div className="space-y-6">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-1">Create Account</p>
-                <h2 className="text-xl font-light text-white">{t("auth.signup.title")}</h2>
-                <p className="text-sm text-gray-600 mt-1 font-light">{t("auth.signup.subtitle")}</p>
+            {error && (
+              <div className="mb-6 p-4 rounded-xl bg-red-500/8 border border-red-500/20">
+                <span className="text-red-400 text-sm font-light">{error}</span>
               </div>
-              <div>
-                <label className="block text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">{t("auth.signup.emailLabel")}</label>
-                <div className="relative">
-                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("auth.signup.emailPlaceholder")} autoFocus
-                    className="w-full pl-11 pr-4 py-3.5 rounded-lg bg-white/[0.04] border border-white/8 text-white placeholder-gray-600 text-sm font-light focus:outline-none focus:border-white/20 transition-all" />
-                </div>
-              </div>
-              <button onClick={() => setStep(2)} disabled={!canProceed()}
-                className="w-full py-3.5 rounded-sm bg-gradient-to-r from-gray-700 via-gray-400 to-gray-700 border border-gray-500/50 shadow-[0_0_15px_rgba(192,192,192,0.1)] hover:shadow-[0_0_25px_rgba(192,192,192,0.25)] transition-all duration-300 text-white uppercase tracking-widest text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                {t("auth.signup.continue")}
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
-              </button>
-              <div className="pt-4 border-t border-white/5 space-y-3">
-                <p className="text-xs uppercase tracking-[0.2em] text-gray-600">{t("auth.signup.freeFeatures")}</p>
-                {[t("auth.signup.features.0"), t("auth.signup.features.1"), t("auth.signup.features.2")].map((f, i) => (
-                  <div key={i} className="flex items-center gap-3 text-xs text-gray-500">
-                    <span className="text-cyan-500/50 text-[8px]">◆</span>
-                    {f as string}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Step 2: Password */}
-          {step === 2 && (
-            <div className="space-y-6">
+            <div className="space-y-5">
+              {/* Email */}
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-1">Security</p>
-                <h2 className="text-xl font-light text-white">{t("auth.signup.passwordTitle")}</h2>
-                <p className="text-sm text-gray-600 mt-1 font-light">{t("auth.signup.passwordSubtitle")}</p>
+                <label className="block text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">{t("auth.signup.email") || "Email"}</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full px-4 py-3.5 rounded-lg bg-white/[0.04] border border-white/8 text-white placeholder-gray-600 text-sm font-light focus:outline-none focus:border-cyan-500/50 transition-all"
+                />
               </div>
-              <div>
-                <label className="block text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">{t("auth.signup.passwordLabel")}</label>
-                <div className="relative">
-                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                  <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("auth.signup.passwordPlaceholder") as string} autoFocus
-                    className="w-full pl-11 pr-12 py-3.5 rounded-lg bg-white/[0.04] border border-white/8 text-white placeholder-gray-600 text-sm font-light focus:outline-none focus:border-white/20 transition-all" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400">
-                    {showPassword ? (
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
-                    ) : (
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-                    )}
-                  </button>
-                </div>
-                {password && (
-                  <div className="mt-3">
-                    <div className="h-0.5 w-full bg-white/5 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full transition-all duration-500 ${strengthColors[passwordStrength]}`} style={{ width: `${((passwordStrength + 1) / 4) * 100}%` }} />
-                    </div>
-                    <p className={`text-xs mt-1.5 ${passwordStrength >= 2 ? "text-emerald-400" : "text-gray-600"}`}>{strengthLabels[passwordStrength]}</p>
-                  </div>
-                )}
-              </div>
-              <div>
-                <label className="block text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">{t("auth.signup.passwordRepeatLabel")}</label>
-                <div className="relative">
-                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                  <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••"
-                    className="w-full pl-11 pr-12 py-3.5 rounded-lg bg-white/[0.04] border border-white/8 text-white placeholder-gray-600 text-sm font-light focus:outline-none focus:border-white/20 transition-all" />
-                  {confirmPassword && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      {password === confirmPassword ? (
-                        <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => setStep(1)} className="px-4 py-3.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/8 text-gray-400 transition-all">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
-                </button>
-                <button onClick={() => setStep(3)} disabled={!canProceed()}
-                  className="flex-1 py-3.5 rounded-sm bg-gradient-to-r from-gray-700 via-gray-400 to-gray-700 border border-gray-500/50 shadow-[0_0_15px_rgba(192,192,192,0.1)] hover:shadow-[0_0_25px_rgba(192,192,192,0.25)] transition-all duration-300 text-white uppercase tracking-widest text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                  {t("auth.signup.continue")}
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
-                </button>
-              </div>
-            </div>
-          )}
 
-          {/* Step 3: Profile */}
-          {step === 3 && (
-            <div className="space-y-6">
+              {/* Password */}
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-1">Profile</p>
-                <h2 className="text-xl font-light text-white">{t("auth.signup.profileTitle")}</h2>
-                <p className="text-sm text-gray-600 mt-1 font-light">{t("auth.signup.profileSubtitle")}</p>
+                <label className="block text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">{t("auth.signup.password") || "Password"}</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3.5 rounded-lg bg-white/[0.04] border border-white/8 text-white placeholder-gray-600 text-sm font-light focus:outline-none focus:border-cyan-500/50 transition-all"
+                />
+                <p className="mt-1 text-xs text-gray-600">{t("auth.signup.passwordHint") || "At least 5 characters"}</p>
               </div>
+
+              {/* Full Name */}
               <div>
-                <label className="block text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">{t("auth.signup.nameLabel")}</label>
-                <div className="relative">
-                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                  <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t("auth.signup.namePlaceholder") as string}
-                    className="w-full pl-11 pr-4 py-3.5 rounded-lg bg-white/[0.04] border border-white/8 text-white placeholder-gray-600 text-sm font-light focus:outline-none focus:border-white/20 transition-all" />
-                </div>
+                <label className="block text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">{t("auth.signup.fullName") || "Full Name (Optional)"}</label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="John Doe"
+                  className="w-full px-4 py-3.5 rounded-lg bg-white/[0.04] border border-white/8 text-white placeholder-gray-600 text-sm font-light focus:outline-none focus:border-cyan-500/50 transition-all"
+                />
               </div>
+
+              {/* Referral Code */}
               <div>
-                <label className="block text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">{t("auth.signup.referralLabel")}</label>
-                <div className="relative">
-                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="20 12 20 22 4 22 4 12" /><rect x="2" y="7" width="20" height="5" /><path d="M12 22V7" /><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" /></svg>
-                  <input type="text" value={referralCode} onChange={(e) => { setReferralCode(e.target.value.toUpperCase()); validateReferralCode(e.target.value); }} placeholder="ABCD1234"
-                    className="w-full pl-11 pr-12 py-3.5 rounded-lg bg-white/[0.04] border border-white/8 text-white placeholder-gray-600 text-sm font-mono uppercase tracking-wider focus:outline-none focus:border-white/20 transition-all" />
-                  {referralValid !== null && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      {referralValid ? (
-                        <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {referralValid && referrerName && (
-                  <p className="mt-2 text-xs text-cyan-400 font-light">✦ {referrerName} invited you</p>
-                )}
+                <label className="block text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">{t("auth.signup.referral") || "Invite Code (Optional)"}</label>
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  placeholder="ABCD1234"
+                  className="w-full px-4 py-3.5 rounded-lg bg-white/[0.04] border border-white/8 text-white placeholder-gray-600 text-sm font-mono uppercase tracking-wider focus:outline-none focus:border-cyan-500/50 transition-all"
+                />
               </div>
-              <div className="p-4 rounded-lg bg-white/[0.03] border border-white/8">
-                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-1">Referral Bonus</p>
-                <p className="text-xs text-gray-600 font-light">{t("auth.signup.referralInfo")}</p>
-              </div>
-              
-              {/* Cloudflare Turnstile */}
-              <div className="flex justify-center">
+
+              {/* Turnstile */}
+              <div className="flex justify-center py-2">
                 <Turnstile
                   sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA"}
                   onVerify={(token) => setTurnstileToken(token)}
@@ -284,88 +299,125 @@ function SignupForm() {
                   theme="dark"
                 />
               </div>
-              
-              <div className="flex gap-3">
-                <button onClick={() => setStep(2)} className="px-4 py-3.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/8 text-gray-400 transition-all">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
-                </button>
-                <button onClick={handleSignup} disabled={loading}
-                  className="flex-1 py-3.5 rounded-sm bg-gradient-to-r from-gray-700 via-gray-400 to-gray-700 border border-gray-500/50 shadow-[0_0_15px_rgba(192,192,192,0.1)] hover:shadow-[0_0_25px_rgba(192,192,192,0.25)] transition-all duration-300 text-white uppercase tracking-widest text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                  {loading ? (
-                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
-                  ) : t("auth.signup.complete")}
-                </button>
-              </div>
-            </div>
-          )}
 
-          {/* Step 4: Success */}
-          {step === 4 && success && (
-            <div className="text-center space-y-8 py-4">
-              <div className="w-16 h-16 mx-auto rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
-                <svg className="w-8 h-8 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              </div>
-              <div>
-                <h2 className="text-2xl font-light text-white mb-2">Kayıt Başarılı! 🎉</h2>
-                <p className="text-gray-400 font-light text-sm mb-2">
-                  <span className="text-gray-300 font-medium">{email}</span> adresine bir doğrulama linki gönderdik.
-                </p>
-                <p className="text-gray-500 text-xs">
-                  Lütfen email kutunuzu kontrol edin ve hesabınızı aktifleştirin.
-                </p>
-              </div>
-              {newReferralCode && (
-                <div className="p-6 rounded-xl bg-white/[0.03] border border-white/8">
-                  <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-3">{t("auth.signup.yourReferral")}</p>
-                  <div className="flex items-center justify-center gap-3 mb-4">
-                    <code className="text-3xl font-mono font-bold text-white/80 tracking-wider">{newReferralCode}</code>
-                    <button onClick={() => navigator.clipboard.writeText(newReferralCode)} className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-all">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
-                    </button>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <button onClick={() => { const url = `https://forexsai.com/signup?ref=${newReferralCode}`; window.open(`https://wa.me/?text=${encodeURIComponent(`🚀 ForexSAI: ${url}`)}`, "_blank"); }}
-                      className="w-full py-2.5 rounded-lg bg-white/[0.03] border border-white/8 text-green-400/70 text-xs uppercase tracking-widest hover:bg-white/[0.06] transition-all">
-                      {t("auth.signup.shareWhatsApp")}
-                    </button>
-                    <button onClick={() => navigator.clipboard.writeText(`https://forexsai.com/signup?ref=${newReferralCode}`)}
-                      className="w-full py-2.5 rounded-lg bg-white/[0.03] border border-white/8 text-gray-500 text-xs uppercase tracking-widest hover:bg-white/[0.06] transition-all">
-                      {t("auth.signup.copyLink")}
-                    </button>
-                  </div>
-                </div>
-              )}
-              <Link href="/" className="block w-full py-3.5 rounded-sm bg-gradient-to-r from-cyan-600 via-cyan-500 to-cyan-600 border border-cyan-400/50 shadow-[0_0_15px_rgba(0,224,198,0.2)] hover:shadow-[0_0_25px_rgba(0,224,198,0.35)] transition-all duration-300 text-white uppercase tracking-widest text-xs font-medium text-center">
-                Hadi Başlayalım →
+              {/* Submit */}
+              <button
+                onClick={handleSignup}
+                disabled={loading}
+                className="w-full py-3.5 rounded-lg bg-gradient-to-r from-cyan-600 via-cyan-500 to-cyan-600 border border-cyan-400/30 shadow-[0_0_20px_rgba(0,224,198,0.2)] hover:shadow-[0_0_30px_rgba(0,224,198,0.35)] transition-all duration-300 text-white uppercase tracking-widest text-xs font-medium disabled:opacity-50"
+              >
+                {loading ? "Processing..." : (t("auth.signup.continue") || "Continue")}
+              </button>
+            </div>
+
+            <p className="text-center text-gray-600 mt-6 text-xs">
+              {t("auth.signup.haveAccount") || "Already have an account?"}{" "}
+              <Link href="/login" className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                {t("nav.login") || "Login"}
               </Link>
-            </div>
-          )}
-        </div>
+            </p>
+          </div>
+        )}
 
-        {!success && (
-          <p className="text-center text-gray-600 mt-6 text-xs tracking-wide">
-            {t("auth.signup.haveAccount")}{" "}
-            <Link href="/login" className="text-gray-400 hover:text-white transition-colors">
-              {t("nav.login")}
+        {/* STEP 2: OTP Verification */}
+        {step === "otp" && (
+          <div className="bg-white/[0.03] backdrop-blur-2xl rounded-2xl border border-white/8 p-8 shadow-2xl text-center">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
+              <svg className="w-8 h-8 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M22 17H2a3 3 0 0 0 3-3V9a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v5a3 3 0 0 0 3 3z"/>
+                <path d="M6 9V5a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v4"/>
+              </svg>
+            </div>
+            
+            <h2 className="text-2xl font-light text-white mb-2">{t("auth.signup.verifyEmail") || "Verify Your Email"}</h2>
+            <p className="text-gray-400 text-sm mb-6">
+              {t("auth.signup.otpSent") || "We've sent a 6-digit code to"}<br/>
+              <span className="text-white font-medium">{email}</span>
+            </p>
+
+            {error && (
+              <div className="mb-6 p-3 rounded-xl bg-red-500/8 border border-red-500/20">
+                <span className="text-red-400 text-sm">{error}</span>
+              </div>
+            )}
+
+            {/* OTP Inputs */}
+            <div className="flex justify-center gap-2 mb-6">
+              {otpCode.map((digit, index) => (
+                <input
+                  key={index}
+                  id={`otp-${index}`}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleOtpChange(index, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                  className="w-12 h-14 text-center text-2xl font-bold bg-white/[0.04] border border-white/8 rounded-lg text-white focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={handleVerifyOTP}
+              disabled={loading || otpCode.join("").length !== 6}
+              className="w-full py-3.5 rounded-lg bg-gradient-to-r from-cyan-600 via-cyan-500 to-cyan-600 border border-cyan-400/30 shadow-[0_0_20px_rgba(0,224,198,0.2)] hover:shadow-[0_0_30px_rgba(0,224,198,0.35)] transition-all duration-300 text-white uppercase tracking-widest text-xs font-medium disabled:opacity-50 mb-4"
+            >
+              {loading ? "Verifying..." : (t("auth.signup.verify") || "Verify")}
+            </button>
+
+            <button
+              onClick={handleResendOTP}
+              disabled={loading}
+              className="text-xs text-gray-500 hover:text-cyan-400 transition-colors"
+            >
+              {t("auth.signup.resendCode") || "Didn't receive it? Resend code"}
+            </button>
+          </div>
+        )}
+
+        {/* STEP 3: Success */}
+        {step === "success" && (
+          <div className="bg-white/[0.03] backdrop-blur-2xl rounded-2xl border border-white/8 p-8 shadow-2xl text-center">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center animate-bounce">
+              <svg className="w-10 h-10 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            
+            <h2 className="text-3xl font-light text-white mb-2">🎉 {t("auth.signup.successTitle") || "Welcome!"}</h2>
+            <p className="text-gray-400 text-sm mb-6">
+              {t("auth.signup.successMessage") || "Your account has been verified successfully."}
+            </p>
+
+            {newReferralCode && (
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/8 mb-6">
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mb-2">{t("auth.signup.yourInviteCode") || "Your Invite Code"}</p>
+                <div className="flex items-center justify-center gap-3">
+                  <code className="text-2xl font-mono font-bold text-white/80 tracking-wider">{newReferralCode}</code>
+                  <button onClick={() => navigator.clipboard.writeText(newReferralCode!)} className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-all">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <Link
+              href="/"
+              className="block w-full py-4 rounded-lg bg-gradient-to-r from-cyan-600 via-cyan-500 to-cyan-600 border border-cyan-400/30 shadow-[0_0_25px_rgba(0,224,198,0.3)] hover:shadow-[0_0_40px_rgba(0,224,198,0.5)] transition-all duration-300 text-white uppercase tracking-widest text-sm font-medium animate-pulse"
+            >
+              {t("auth.signup.goToDashboard") || "Let's Get Started →"}
             </Link>
-          </p>
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-function SignupLoading() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <svg className="w-8 h-8 animate-spin text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
-    </div>
-  );
-}
-
 export default function SignupPage() {
   return (
-    <Suspense fallback={<SignupLoading />}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" /></div>}>
       <SignupForm />
     </Suspense>
   );
