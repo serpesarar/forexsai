@@ -3,7 +3,8 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { apiClient } from "@/lib/api/client";
+
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -22,22 +23,27 @@ function VerifyEmailContent() {
 
     const verifyEmail = async () => {
       try {
-        const response = await apiClient.post("/api/auth/verify-email", { token });
+        const res = await fetch(`${API_BASE}/api/auth/verify-email`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
         
-        if (response.data.success) {
+        const data = await res.json();
+        
+        if (data.success) {
           setStatus("success");
           setMessage("Email adresiniz başarıyla doğrulandı!");
-          // Redirect to login after 3 seconds
           setTimeout(() => {
             router.push("/login");
           }, 3000);
         } else {
           setStatus("error");
-          setMessage(response.data.error || "Doğrulama başarısız oldu.");
+          setMessage(data.error || "Doğrulama başarısız oldu.");
         }
       } catch (error: any) {
         setStatus("error");
-        setMessage(error.response?.data?.error || "Doğrulama sırasında bir hata oluştu.");
+        setMessage("Doğrulama sırasında bir hata oluştu.");
       }
     };
 
