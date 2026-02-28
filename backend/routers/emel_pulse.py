@@ -393,6 +393,7 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             
             # DEBUG: Detaylı log
             logger.info(f"[EMEL Volume Debug] {symbol} {timeframe}: avg={avg_volume:.2f}, current={current_volume:.2f}, ratio={volume_ratio:.2f}")
+            logger.info(f"[EMEL Volume Debug] {symbol} {timeframe}: recent_volumes={recent_volumes.tolist()}")
             
             if volume_ratio >= 1.2:
                 vol_status = "pass"
@@ -442,6 +443,7 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
                     "meaningful_count": len(meaningful_volumes),
                     "threshold": float(MIN_MEANINGFUL_VOLUME),
                     "last_5": [float(v) for v in volumes[-5:]] if len(volumes) >= 5 else [float(v) for v in volumes],
+                    "recent_5_avg": [float(v) for v in recent_volumes] if 'recent_volumes' in locals() else [],
                 }
             },
             "comment": vol_comment
