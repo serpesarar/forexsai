@@ -374,8 +374,10 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         has_meaningful_volume = len(meaningful_volumes) >= 5 and np.mean(meaningful_volumes) > MIN_MEANINGFUL_VOLUME
         
         if has_meaningful_volume:
-            # Son 5 tam mumun hacim ortalaması (son mum hariç)
-            recent_volumes = volumes[-6:-1] if len(volumes) >= 6 else volumes[:-1] if len(volumes) >= 2 else volumes
+            # Son 5 tam mumun hacim ortalaması
+            # volumes[-5:] son 5 mum, ama son mum tam kapanmamış olabilir
+            # Bu yüzden son 5 mumun son 4'ünü kullan (son tam mumlar)
+            recent_volumes = volumes[-5:-1] if len(volumes) >= 5 else volumes[:-1] if len(volumes) >= 2 else volumes
             avg_volume = np.mean(recent_volumes) if len(recent_volumes) > 0 else 1
             
             # Son TAM mumu bul (sondan geriye doğru 0 olmayan ilk değer)
@@ -393,7 +395,6 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             
             # DEBUG: Detaylı log
             logger.info(f"[EMEL Volume Debug] {symbol} {timeframe}: avg={avg_volume:.2f}, current={current_volume:.2f}, ratio={volume_ratio:.2f}")
-            logger.info(f"[EMEL Volume Debug] {symbol} {timeframe}: recent_volumes={recent_volumes.tolist()}")
             
             if volume_ratio >= 1.2:
                 vol_status = "pass"
