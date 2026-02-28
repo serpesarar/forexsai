@@ -801,12 +801,19 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         vol_pts = 0
         volume_status = "unknown"
         volume_ratio = 1.0
+        
+        # DEBUG: Log volumes info
+        logger.info(f"[PULSE1 Volume Debug] {symbol}: len={len(volumes)}, sum={float(np.sum(volumes)):.2f}, last_5={volumes[-5:].tolist() if len(volumes) >= 5 else []}")
+        
         if len(volumes) >= 21 and float(np.sum(volumes)) > 0:
             # Son 19 tam mumun ortalaması (son mum hariç)
             avg_volume = float(np.mean(volumes[-21:-1]))
             # Son tam mum (sondan 2.)
             current_volume = float(volumes[-2]) if volumes[-2] > 0 else float(np.mean(volumes[-6:-1]))
             volume_ratio = current_volume / avg_volume if avg_volume > 0 else 1
+            
+            logger.info(f"[PULSE1 Volume Debug] {symbol}: avg={avg_volume:.2f}, current={current_volume:.2f}, ratio={volume_ratio:.2f}")
+            
             if volume_ratio >= 1.3:
                 vol_pts = 10
                 volume_status = "high"
@@ -815,6 +822,8 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
                 volume_status = "normal"
             else:
                 volume_status = "low"
+        else:
+            logger.warning(f"[PULSE1 Volume Debug] {symbol}: Yetersiz veri - len={len(volumes)}, sum={float(np.sum(volumes)):.2f}")
         score += vol_pts
         score_details["volume"] = {"ratio": round(volume_ratio, 2), "status": volume_status, "pts": vol_pts}
         
