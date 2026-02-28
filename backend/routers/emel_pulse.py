@@ -374,21 +374,16 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         has_meaningful_volume = len(meaningful_volumes) >= 5 and np.mean(meaningful_volumes) > MIN_MEANINGFUL_VOLUME
         
         if has_meaningful_volume:
-            # Son mum genellikle tam kapanmamış olur ve hacim 0 olabilir
-            # Bu yüzden son birkaç mumu kontrol edip 0 olmayan ilkini kullan
-            if len(volumes) >= 2:
-                # Son 20 tam mumun ortalaması (sondan 2. mumdan başlayarak)
-                avg_volume = np.mean(volumes[-21:-1]) if len(volumes) >= 21 else np.mean(volumes[:-1])
-                
-                # Son TAM mumu bul (sondan geriye doğru 0 olmayan ilk değer)
-                current_volume = avg_volume  # Default olarak ortalama
-                for i in range(2, min(6, len(volumes) + 1)):  # Sondan 2.'den 5.'ye kadar kontrol et
-                    if volumes[-i] > 0:
-                        current_volume = volumes[-i]
-                        break
-            else:
-                avg_volume = volumes[0] if volumes[0] > 0 else 1
-                current_volume = volumes[0] if volumes[0] > 0 else avg_volume
+            # Son 5 tam mumun hacim ortalaması (son mum hariç)
+            recent_volumes = volumes[-6:-1] if len(volumes) >= 6 else volumes[:-1] if len(volumes) >= 2 else volumes
+            avg_volume = np.mean(recent_volumes) if len(recent_volumes) > 0 else 1
+            
+            # Son TAM mumu bul (sondan geriye doğru 0 olmayan ilk değer)
+            current_volume = avg_volume  # Default olarak ortalama
+            for i in range(2, min(6, len(volumes) + 1)):  # Sondan 2.'den 5.'ye kadar kontrol et
+                if volumes[-i] > 0:
+                    current_volume = volumes[-i]
+                    break
             
             # Hacim trendini belirle
             if current_volume > 0 and avg_volume > 0:
@@ -397,8 +392,7 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
                 volume_ratio = 1.0  # Nötr
             
             # DEBUG: Detaylı log
-            logger.info(f"[EMEL Volume Debug] {symbol} {timeframe}: avg={avg_volume:.2f}, current={current_volume:.2f}, ratio={volume_ratio:.2f}, meaningful={len(meaningful_volumes)}, threshold={MIN_MEANINGFUL_VOLUME:.2f}")
-            logger.info(f"[EMEL Volume Debug] {symbol} {timeframe}: last_5_volumes={volumes[-5:].tolist()}")
+            logger.info(f"[EMEL Volume Debug] {symbol} {timeframe}: avg={avg_volume:.2f}, current={current_volume:.2f}, ratio={volume_ratio:.2f}")
             
             if volume_ratio >= 1.2:
                 vol_status = "pass"
