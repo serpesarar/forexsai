@@ -351,10 +351,32 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         # ─────────────────────────────────────────────────────────────────────
         # 7️⃣ HACİM ANALİZİ
         # ─────────────────────────────────────────────────────────────────────
-        if len(volumes) > 0 and float(np.sum(volumes)) > 0:
-            avg_volume = np.mean(volumes[-20:])
+        # DEBUG: Hacim verisi detaylarını logla
+        logger.info(f"[EMEL Volume Debug] {symbol}: volumes_count={len(volumes)}, sum={float(np.sum(volumes)):.2f}, sample={volumes[-5:].tolist() if len(volumes) >= 5 else volumes.tolist()}")
+        
+        # Minimum anlamlı hacim threshold'u (sembole göre değişir)
+        MIN_MEANINGFUL_VOLUME = {
+            "NDX.INDX": 10000000,    # 10M - NASDAQ günlük hacim milyarlarla
+            "XAUUSD": 100,            # 100 - XAUUSD foreks hacimleri daha düşük
+            "GDAXI.INDX": 1000000,    # 1M - DAX
+            "CL.COMM": 1000,          # 1000 - Petrol
+        }.get(symbol, 100)
+        
+        if len(volumes) > 0 and float(np.sum(volumes)) > MIN_MEANINGFUL_VOLUME:
+            # Son 20 mumun hacim ortalaması (son mum hariç - o tam kapanmamış olabilir)
+            avg_volume = np.mean(volumes[-21:-1]) if len(volumes) >= 21 else np.mean(volumes[:-1]) if len(volumes) > 1 else volumes[0]
             current_volume = volumes[-1]
-            volume_ratio = current_volume / avg_volume if avg_volume > 0 else 1
+            
+            # Son mum henüz tam kapanmamış olabilir, bu yüzden önceki mumla karşılaştır
+            prev_volume = volumes[-2] if len(volumes) >= 2 else avg_volume
+            
+            # Hacim trendini belirle (mevcut vs önceki mum)
+            if current_volume > 0 and avg_volume > 0:
+                volume_ratio = current_volume / avg_volume
+            else:
+                volume_ratio = 1.0
+            
+            logger.info(f"[EMEL Volume Debug] {symbol}: avg={avg_volume:.2f}, current={current_volume:.2f}, ratio={volume_ratio:.2f}")
             
             if volume_ratio >= 1.2:
                 vol_status = "pass"
@@ -362,7 +384,7 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
                 vol_label = "YÜKSEK HACİM"
                 vol_comment = "Hacim ortalamanın üzerinde. Hareket güçlü."
                 green_count += 1
-            elif volume_ratio >= 0.8:
+            elif volume_ratio >= 0.6:  # 0.8'den 0.6'ya düşürdük (daha toleranslı)
                 vol_status = "warning"
                 vol_color = "yellow"
                 vol_label = "NORMAL HACİM"
@@ -375,12 +397,15 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
                 vol_comment = "Düşük hacimli hareket güvenilmez. Hacim artmadan işlem açma."
                 red_count += 1
         else:
+            # Hacim verisi yok veya çok düşük - bunu red yerine warning yap
+            # Çünkü bazı sembollerde (özellikle endekslerde) hacim verisi eksik olabilir
             vol_status = "warning"
             vol_color = "yellow"
             vol_label = "VERİ YOK"
-            vol_comment = "Hacim verisi mevcut değil."
+            vol_comment = f"Hacim verisi yetersiz (toplam: {float(np.sum(volumes)):.0f})."
             yellow_count += 1
-            volume_ratio = 1
+            volume_ratio = 1.0  # Nötr kabul et
+            logger.warning(f"[EMEL Volume Debug] {symbol}: Yetersiz hacim verisi - sum={float(np.sum(volumes)):.2f}, threshold={MIN_MEANINGFUL_VOLUME}")
         
         checks.append({
             "id": 7,
@@ -392,7 +417,11 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             "label": vol_label,
             "details": {
                 "ratio": round(volume_ratio * 100, 0),
-                "trend": "Artıyor" if volume_ratio > 1 else "Azalıyor"
+                "trend": "Artıyor" if volume_ratio > 1 else "Azalıyor",
+                "debug": {
+                    "volumes_count": len(volumes),
+                    "total_volume": float(np.sum(volumes)),
+                }
             },
             "comment": vol_comment
         })
@@ -2216,4 +2245,61 @@ async def get_performance_stats(days: int = 7):
     except Exception as e:
         logger.error(f"Performance stats error: {e}")
         return {"error": str(e)}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# DATAHUB DEBUG - Hacim Verisi Kontrolü
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/debug/datahub/{symbol}")
+async def debug_datahub_volumes(symbol: str):
+    """
+    DataHub'daki hacim verilerini kontrol et.
+    Hacim analizinin neden 0.0 gösterdiğini debug etmek için.
+    """
+    try:
+        from services.data_hub import get_candles, get_hub_status
+        from services.market_data_service import get_ohlcv_data
+        
+        result = {
+            "symbol": symbol,
+            "timestamp": datetime.now().isoformat(),
+            "data_hub_status": get_hub_status(),
+            "candle_data": {}
+        }
+        
+        # Her timeframe için hacim verisini kontrol et
+        for tf in ["5m", "15m", "30m", "1h", "4h", "eod"]:
+            candles = get_candles(symbol, tf, limit=20)
+            if candles:
+                volumes = [c.get("volume", 0) for c in candles]
+                result["candle_data"][tf] = {
+                    "count": len(candles),
+                    "volumes_sample": volumes[-5:],  # Son 5 hacim
+                    "avg_volume": sum(volumes) / len(volumes) if volumes else 0,
+                    "max_volume": max(volumes) if volumes else 0,
+                    "min_volume": min(volumes) if volumes else 0,
+                    "total_volume": sum(volumes),
+                }
+            else:
+                result["candle_data"][tf] = {"count": 0, "error": "No data in cache"}
+        
+        # EMEL'in kullandığı get_ohlcv_data ile karşılaştır
+        ohlcv_1h = await get_ohlcv_data(symbol, "1h", limit=20)
+        if ohlcv_1h:
+            volumes = [c.get("volume", 0) for c in ohlcv_1h]
+            result["ohlcv_1h_via_market_data_service"] = {
+                "count": len(ohlcv_1h),
+                "volumes_sample": volumes[-5:],
+                "avg_volume": sum(volumes) / len(volumes) if volumes else 0,
+            }
+        else:
+            result["ohlcv_1h_via_market_data_service"] = {"error": "No data"}
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"DataHub debug error: {e}")
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()}
 

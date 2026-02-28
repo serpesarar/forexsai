@@ -743,6 +743,21 @@ def get_macro() -> Dict[str, Any]:
         return {k: {"symbol": v.get("symbol"), "price": v.get("price")} for k, v in _macro_data.items()}
 
 
+def _get_volume_stats(symbol: str, store: Dict) -> Dict:
+    """Get volume statistics for a symbol's candle store."""
+    candles = store.get(symbol, {}).get("candles", [])
+    if not candles:
+        return {"count": 0, "total_volume": 0, "avg_volume": 0, "sample": []}
+    
+    volumes = [c.get("volume", 0) for c in candles[-20:]]  # Son 20 mum
+    return {
+        "count": len(candles),
+        "total_volume": sum(volumes),
+        "avg_volume": sum(volumes) / len(volumes) if volumes else 0,
+        "sample": volumes[-5:] if len(volumes) >= 5 else volumes,
+    }
+
+
 def get_hub_status() -> Dict[str, Any]:
     """Get DataHub status for debugging."""
     with _lock:
@@ -779,6 +794,18 @@ def get_hub_status() -> Dict[str, Any]:
                     "stale": hours_old > 2 if hours_old else True
                 }
         
+        # Volume stats for debugging
+        volume_stats = {}
+        for s in TRACKED_SYMBOLS:
+            volume_stats[s] = {
+                "5m": _get_volume_stats(s, _candles_5m),
+                "15m": _get_volume_stats(s, _candles_15m),
+                "30m": _get_volume_stats(s, _candles_30m),
+                "1h": _get_volume_stats(s, _candles_1h),
+                "4h": _get_volume_stats(s, _candles_4h),
+                "eod": _get_volume_stats(s, _candles_eod),
+            }
+        
         status = {
             "running": _hub_running,
             "symbols": TRACKED_SYMBOLS,
@@ -790,6 +817,7 @@ def get_hub_status() -> Dict[str, Any]:
             "candles_1h": {s: len(_candles_1h.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
             "candles_4h": {s: len(_candles_4h.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
             "candles_eod": {s: len(_candles_eod.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
+            "volume_stats": volume_stats,  # Hacim istatistikleri eklendi
             "macro": {k: v.get("price") for k, v in _macro_data.items()},
             "last_fetch": {k: datetime.fromtimestamp(v).isoformat() for k, v in _last_fetch.items()},
             "seeded_from_cache": dict(_initial_seed_done),
