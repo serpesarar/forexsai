@@ -363,18 +363,22 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         }.get(symbol, 100)
         
         if len(volumes) > 0 and float(np.sum(volumes)) > MIN_MEANINGFUL_VOLUME:
-            # Son 20 mumun hacim ortalaması (son mum hariç - o tam kapanmamış olabilir)
-            avg_volume = np.mean(volumes[-21:-1]) if len(volumes) >= 21 else np.mean(volumes[:-1]) if len(volumes) > 1 else volumes[0]
-            current_volume = volumes[-1]
+            # Son mum genellikle tam kapanmamış olur ve hacim 0 olabilir
+            # Bu yüzden son TAM mumu kullan (sondan bir önceki)
+            if len(volumes) >= 2:
+                # Son 20 tam mumun ortalaması (sondan 2. mumdan başlayarak)
+                avg_volume = np.mean(volumes[-21:-1]) if len(volumes) >= 21 else np.mean(volumes[:-1])
+                # Son TAM mumun hacmi (sondan 2.)
+                current_volume = volumes[-2] if volumes[-2] > 0 else volumes[-3] if len(volumes) >= 3 and volumes[-3] > 0 else avg_volume
+            else:
+                avg_volume = volumes[0] if volumes[0] > 0 else 1
+                current_volume = volumes[0] if volumes[0] > 0 else avg_volume
             
-            # Son mum henüz tam kapanmamış olabilir, bu yüzden önceki mumla karşılaştır
-            prev_volume = volumes[-2] if len(volumes) >= 2 else avg_volume
-            
-            # Hacim trendini belirle (mevcut vs önceki mum)
+            # Hacim trendini belirle
             if current_volume > 0 and avg_volume > 0:
                 volume_ratio = current_volume / avg_volume
             else:
-                volume_ratio = 1.0
+                volume_ratio = 1.0  # Nötr
             
             logger.info(f"[EMEL Volume Debug] {symbol}: avg={avg_volume:.2f}, current={current_volume:.2f}, ratio={volume_ratio:.2f}")
             
