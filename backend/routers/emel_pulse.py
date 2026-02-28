@@ -46,6 +46,11 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         highs = np.array([c["high"] for c in ohlcv], dtype=np.float64)
         lows = np.array([c["low"] for c in ohlcv], dtype=np.float64)
         volumes = np.array([c.get("volume", 0) for c in ohlcv], dtype=np.float64)
+        
+        # DEBUG: Log volumes array details to diagnose timeframe mixing issues
+        logger.info(f"[EMEL Volume Debug] {symbol} {timeframe}: volumes.shape={volumes.shape}, "
+                   f"first_5={volumes[:5].tolist()}, last_5={volumes[-5:].tolist()}, "
+                   f"min={float(volumes.min()):.0f}, max={float(volumes.max()):.0f}, mean={float(volumes.mean()):.0f}")
         # Use live price from DataHub (updated every 30s) instead of stale candle close
         from services.data_fetcher import fetch_latest_price
         _live = await fetch_latest_price(symbol)
@@ -349,43 +354,27 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         })
         
         # ─────────────────────────────────────────────────────────────────────
-        # 7️⃣ HACİM ANALİZİ
+        # 7️⃣ HACİM ANALİZİ - YENİDEN YAZILDI (Timeframe-aware)
         # ─────────────────────────────────────────────────────────────────────
-        # DEBUG: Hacim verisi detaylarını logla
-        logger.info(f"[EMEL Volume Debug] {symbol}: volumes_count={len(volumes)}, sum={float(np.sum(volumes)):.2f}, sample={volumes[-5:].tolist() if len(volumes) >= 5 else volumes.tolist()}")
+        # 
+        # SORUN: Fallback yapıldığında farklı timeframe'lerin hacim ölçekleri karışıyor
+        # 1H hacmi: ~50-100M, 5M hacmi: ~2000-5000
+        # 
+        # ÇÖZÜM: Sadece son 4 meaningful volume'ü kullan, tüm array'in ortalamasını değil
+        #
         
-        # Minimum anlamlı hacim threshold'u (sembole VE timeframe'e göre değişir)
-        # Timeframe çarpanı: Daha kısa timeframe'lerde hacimler daha düşük olur
-        tf_multiplier = {
-            "5m": 0.01, "15m": 0.03, "30m": 0.06, "1h": 1.0, "4h": 4.0, "1d": 24.0
-        }.get(timeframe.lower(), 1.0)
+        # Sadece son 4 tam mumun hacimlerini al (son mum tam kapanmamış olabilir)
+        recent_volumes_list = [v for v in volumes[-5:-1] if v > 0] if len(volumes) >= 5 else [v for v in volumes if v > 0]
         
-        MIN_MEANINGFUL_VOLUME_BASE = {
-            "NDX.INDX": 1000000,      # 1M - NASDAQ (saatlik baz)
-            "XAUUSD": 50,             # 50 - XAUUSD foreks
-            "GDAXI.INDX": 100000,     # 100K - DAX (saatlik baz)
-            "CL.COMM": 100,           # 100 - Petrol
-        }.get(symbol, 100)
+        # Son 4 mumdan en az 2'sinde anlamlı hacim var mı?
+        has_recent_volume = len(recent_volumes_list) >= 2
         
-        MIN_MEANINGFUL_VOLUME = MIN_MEANINGFUL_VOLUME_BASE * tf_multiplier
-        
-        # Hacim verisi var mı kontrol et (en az birkaç mumda hacim > 0)
-        meaningful_volumes = [v for v in volumes if v > 0]
-        has_meaningful_volume = len(meaningful_volumes) >= 5 and np.mean(meaningful_volumes) > MIN_MEANINGFUL_VOLUME
-        
-        if has_meaningful_volume:
-            # Son 5 tam mumun hacim ortalaması
-            # volumes[-5:] son 5 mum, ama son mum tam kapanmamış olabilir
-            # Bu yüzden son 5 mumun son 4'ünü kullan (son tam mumlar)
-            recent_volumes = volumes[-5:-1] if len(volumes) >= 5 else volumes[:-1] if len(volumes) >= 2 else volumes
-            avg_volume = np.mean(recent_volumes) if len(recent_volumes) > 0 else 1
+        if has_recent_volume:
+            # Sadece son 4 mumun ortalaması (timeframe mixing sorununu önler)
+            avg_volume = np.mean(recent_volumes_list)
             
-            # Son TAM mumu bul (sondan geriye doğru 0 olmayan ilk değer)
-            current_volume = avg_volume  # Default olarak ortalama
-            for i in range(2, min(6, len(volumes) + 1)):  # Sondan 2.'den 5.'ye kadar kontrol et
-                if volumes[-i] > 0:
-                    current_volume = volumes[-i]
-                    break
+            # Son tam mum (sondan 2. veya 3.)
+            current_volume = recent_volumes_list[-1] if recent_volumes_list else avg_volume
             
             # Hacim trendini belirle
             if current_volume > 0 and avg_volume > 0:
@@ -394,7 +383,8 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
                 volume_ratio = 1.0  # Nötr
             
             # DEBUG: Detaylı log
-            logger.info(f"[EMEL Volume Debug] {symbol} {timeframe}: avg={avg_volume:.2f}, current={current_volume:.2f}, ratio={volume_ratio:.2f}")
+            logger.info(f"[EMEL Volume Debug] {symbol} {timeframe}: recent_volumes={recent_volumes_list}, "
+                       f"avg={avg_volume:.2f}, current={current_volume:.2f}, ratio={volume_ratio:.2f}")
             
             if volume_ratio >= 1.2:
                 vol_status = "pass"
