@@ -354,15 +354,26 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         # DEBUG: Hacim verisi detaylarını logla
         logger.info(f"[EMEL Volume Debug] {symbol}: volumes_count={len(volumes)}, sum={float(np.sum(volumes)):.2f}, sample={volumes[-5:].tolist() if len(volumes) >= 5 else volumes.tolist()}")
         
-        # Minimum anlamlı hacim threshold'u (sembole göre değişir)
-        MIN_MEANINGFUL_VOLUME = {
-            "NDX.INDX": 10000000,    # 10M - NASDAQ günlük hacim milyarlarla
-            "XAUUSD": 100,            # 100 - XAUUSD foreks hacimleri daha düşük
-            "GDAXI.INDX": 1000000,    # 1M - DAX
-            "CL.COMM": 1000,          # 1000 - Petrol
+        # Minimum anlamlı hacim threshold'u (sembole VE timeframe'e göre değişir)
+        # Timeframe çarpanı: Daha kısa timeframe'lerde hacimler daha düşük olur
+        tf_multiplier = {
+            "5m": 0.01, "15m": 0.03, "30m": 0.06, "1h": 1.0, "4h": 4.0, "1d": 24.0
+        }.get(timeframe.lower(), 1.0)
+        
+        MIN_MEANINGFUL_VOLUME_BASE = {
+            "NDX.INDX": 1000000,      # 1M - NASDAQ (saatlik baz)
+            "XAUUSD": 50,             # 50 - XAUUSD foreks
+            "GDAXI.INDX": 100000,     # 100K - DAX (saatlik baz)
+            "CL.COMM": 100,           # 100 - Petrol
         }.get(symbol, 100)
         
-        if len(volumes) > 0 and float(np.sum(volumes)) > MIN_MEANINGFUL_VOLUME:
+        MIN_MEANINGFUL_VOLUME = MIN_MEANINGFUL_VOLUME_BASE * tf_multiplier
+        
+        # Hacim verisi var mı kontrol et (en az birkaç mumda hacim > 0)
+        meaningful_volumes = [v for v in volumes if v > 0]
+        has_meaningful_volume = len(meaningful_volumes) >= 5 and np.mean(meaningful_volumes) > MIN_MEANINGFUL_VOLUME
+        
+        if has_meaningful_volume:
             # Son mum genellikle tam kapanmamış olur ve hacim 0 olabilir
             # Bu yüzden son TAM mumu kullan (sondan bir önceki)
             if len(volumes) >= 2:
