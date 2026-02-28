@@ -420,11 +420,12 @@ async def detect_regime(symbol: str, force_refresh: bool = False) -> RegimeResul
     session = _detect_session(symbol)
 
     # ═══ REGIME DECISION ═══
+    # ADX threshold 25'ten 30'a yükseltildi - daha güçlü trendlerde filtre devreye girsin
     regime: RegimeType = "TRANSITION"
 
-    if adx >= 25 and structure == "bullish":
+    if adx >= 30 and structure == "bullish":
         regime = "STRONG_TREND_UP"
-    elif adx >= 25 and structure == "bearish":
+    elif adx >= 30 and structure == "bearish":
         regime = "STRONG_TREND_DOWN"
     elif adx < 20 and atr_ratio < 1.0:
         regime = "RANGING"
@@ -432,7 +433,8 @@ async def detect_regime(symbol: str, force_refresh: bool = False) -> RegimeResul
         regime = "TRANSITION"
 
     # ATH override: if at ATH and structure bullish, force trend up
-    if is_ath and structure != "bearish" and adx >= 18:
+    # ADX threshold 18'den 22'ye yükseltildi (yeni threshold'un %75'i)
+    if is_ath and structure != "bearish" and adx >= 22:
         regime = "STRONG_TREND_UP"
 
     # Build result with regime-specific parameters
