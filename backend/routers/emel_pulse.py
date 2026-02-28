@@ -410,10 +410,10 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             vol_status = "warning"
             vol_color = "yellow"
             vol_label = "VERİ YOK"
-            vol_comment = f"Hacim verisi yetersiz (toplam: {float(np.sum(volumes)):.0f})."
+            vol_comment = f"Hacim verisi yetersiz (son 4 mumda yeterli veri yok)."
             yellow_count += 1
             volume_ratio = 1.0  # Nötr kabul et
-            logger.warning(f"[EMEL Volume Debug] {symbol}: Yetersiz hacim verisi - sum={float(np.sum(volumes)):.2f}, threshold={MIN_MEANINGFUL_VOLUME}")
+            logger.warning(f"[EMEL Volume Debug] {symbol}: Yetersiz hacim verisi - recent_count={len(recent_volumes_list) if 'recent_volumes_list' in locals() else 0}")
         
         checks.append({
             "id": 7,
@@ -431,10 +431,9 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
                     "total_volume": float(np.sum(volumes)),
                     "avg_volume": float(avg_volume) if 'avg_volume' in locals() else 0,
                     "current_volume": float(current_volume) if 'current_volume' in locals() else 0,
-                    "meaningful_count": len(meaningful_volumes),
-                    "threshold": float(MIN_MEANINGFUL_VOLUME),
+                    "recent_count": len(recent_volumes_list) if 'recent_volumes_list' in locals() else 0,
                     "last_5": [float(v) for v in volumes[-5:]] if len(volumes) >= 5 else [float(v) for v in volumes],
-                    "recent_5_avg": [float(v) for v in recent_volumes] if 'recent_volumes' in locals() else [],
+                    "recent_volumes": recent_volumes_list if 'recent_volumes_list' in locals() else [],
                 }
             },
             "comment": vol_comment
