@@ -797,12 +797,15 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         score_details["macd"] = {"hist": round(macd_hist, 4), "pts": macd_pts}
         
         # 5. Hacim (10 puan)
+        # NOT: Son mum tam kapanmamış olabilir, bu yüzden son 19 tam mumu kullan
         vol_pts = 0
         volume_status = "unknown"
         volume_ratio = 1.0
-        if len(volumes) >= 20 and float(np.sum(volumes)) > 0:
-            avg_volume = float(np.mean(volumes[-20:]))
-            current_volume = float(volumes[-1])
+        if len(volumes) >= 21 and float(np.sum(volumes)) > 0:
+            # Son 19 tam mumun ortalaması (son mum hariç)
+            avg_volume = float(np.mean(volumes[-21:-1]))
+            # Son tam mum (sondan 2.)
+            current_volume = float(volumes[-2]) if volumes[-2] > 0 else float(np.mean(volumes[-6:-1]))
             volume_ratio = current_volume / avg_volume if avg_volume > 0 else 1
             if volume_ratio >= 1.3:
                 vol_pts = 10
@@ -1292,10 +1295,13 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
         score += max(0, rsi_pts)
         
         # ─── Hacim Onayı (10 puan max) ───────────────────────────────────
+        # NOT: Son mum tam kapanmamış olabilir, bu yüzden son 9 tam mumu kullan
         vol_pts = 0
-        if len(volumes) >= 10 and float(np.sum(volumes)) > 0:
-            vol_avg = float(np.mean(volumes[-10:]))
-            vol_current = float(volumes[-1])
+        if len(volumes) >= 11 and float(np.sum(volumes)) > 0:
+            # Son 9 tam mumun ortalaması (son mum hariç)
+            vol_avg = float(np.mean(volumes[-11:-1]))
+            # Son tam mum (sondan 2.)
+            vol_current = float(volumes[-2]) if volumes[-2] > 0 else float(np.mean(volumes[-6:-1]))
             vol_ratio = vol_current / vol_avg if vol_avg > 0 else 1
             if vol_ratio >= 1.2:
                 vol_pts = 10
@@ -1561,10 +1567,13 @@ def _analyze_5m(closes, highs, lows, volumes, ta) -> Dict:
     details["ema_stack"] = {"sma5": round(sma5, 2), "sma10": round(sma10, 2), "ema20": round(ema20, 2), "dir": ema_dir, "pts": ema_pts}
     
     # 3. Hacim artışı (10 puan)
+    # NOT: Son mum tam kapanmamış olabilir, bu yüzden son 9 tam mumu kullan
     vol_pts = 0
-    if len(volumes) >= 10 and float(np.sum(volumes)) > 0:
-        vol_avg = float(np.mean(volumes[-10:]))
-        vol_last = float(volumes[-1])
+    if len(volumes) >= 11 and float(np.sum(volumes)) > 0:
+        # Son 9 tam mumun ortalaması (son mum hariç)
+        vol_avg = float(np.mean(volumes[-11:-1]))
+        # Son tam mum (sondan 2.)
+        vol_last = float(volumes[-2]) if volumes[-2] > 0 else float(np.mean(volumes[-6:-1]))
         vol_ratio = vol_last / vol_avg if vol_avg > 0 else 1
         if vol_ratio >= 1.3:
             vol_pts = 10

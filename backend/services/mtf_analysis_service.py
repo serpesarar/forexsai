@@ -1161,14 +1161,16 @@ def _analyze_timeframe(
     )
     
     # Volume analysis
-    avg_vol = _sma(volumes, 20) if len(volumes) >= 20 else float(np.mean(volumes)) if len(volumes) else 0
-    current_vol = float(volumes[-1]) if len(volumes) else 0
+    # NOT: Son mum tam kapanmamış olabilir, bu yüzden son 19 tam mumu kullan
+    avg_vol = _sma(volumes[:-1], 20) if len(volumes) >= 21 else float(np.mean(volumes[:-1])) if len(volumes) >= 2 else 0
+    # Son tam mum (sondan 2.)
+    current_vol = float(volumes[-2]) if len(volumes) >= 2 and volumes[-2] > 0 else avg_vol
     vol_ratio = current_vol / avg_vol if avg_vol > 0 else 1.0
     
-    # Volume trend (compare last 5 to previous 5)
-    if len(volumes) >= 10:
-        recent_vol = float(np.mean(volumes[-5:]))
-        prev_vol = float(np.mean(volumes[-10:-5]))
+    # Volume trend (compare last 5 to previous 5) - son tam mumları kullan
+    if len(volumes) >= 11:
+        recent_vol = float(np.mean(volumes[-6:-1]))  # Son 5 tam mum
+        prev_vol = float(np.mean(volumes[-11:-6]))   # Önceki 5 tam mum
         if recent_vol > prev_vol * 1.2:
             vol_trend = "INCREASING"
         elif recent_vol < prev_vol * 0.8:
