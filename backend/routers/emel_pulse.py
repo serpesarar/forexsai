@@ -797,22 +797,18 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         score_details["macd"] = {"hist": round(macd_hist, 4), "pts": macd_pts}
         
         # 5. Hacim (10 puan)
-        # NOT: Son mum tam kapanmamış olabilir, bu yüzden son 19 tam mumu kullan
+        # NOT: Son mum tam kapanmamış olabilir (hacim=0), bu yüzden son 4 TAM mumu kullan
         vol_pts = 0
         volume_status = "unknown"
         volume_ratio = 1.0
         
-        # DEBUG: Log volumes info
-        logger.info(f"[PULSE1 Volume Debug] {symbol}: len={len(volumes)}, sum={float(np.sum(volumes)):.2f}, last_5={volumes[-5:].tolist() if len(volumes) >= 5 else []}")
+        # Son 5 mumdan 0 olmayanları al (son mum hariç)
+        recent_volumes = [v for v in volumes[-5:-1] if v > 0] if len(volumes) >= 5 else [v for v in volumes if v > 0]
         
-        if len(volumes) >= 21 and float(np.sum(volumes)) > 0:
-            # Son 19 tam mumun ortalaması (son mum hariç)
-            avg_volume = float(np.mean(volumes[-21:-1]))
-            # Son tam mum (sondan 2.)
-            current_volume = float(volumes[-2]) if volumes[-2] > 0 else float(np.mean(volumes[-6:-1]))
+        if len(recent_volumes) >= 2:
+            avg_volume = float(np.mean(recent_volumes))
+            current_volume = float(recent_volumes[-1])  # Son tam mum
             volume_ratio = current_volume / avg_volume if avg_volume > 0 else 1
-            
-            logger.info(f"[PULSE1 Volume Debug] {symbol}: avg={avg_volume:.2f}, current={current_volume:.2f}, ratio={volume_ratio:.2f}")
             
             if volume_ratio >= 1.3:
                 vol_pts = 10
@@ -822,8 +818,6 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
                 volume_status = "normal"
             else:
                 volume_status = "low"
-        else:
-            logger.warning(f"[PULSE1 Volume Debug] {symbol}: Yetersiz veri - len={len(volumes)}, sum={float(np.sum(volumes)):.2f}")
         score += vol_pts
         score_details["volume"] = {"ratio": round(volume_ratio, 2), "status": volume_status, "pts": vol_pts}
         
@@ -1304,13 +1298,14 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
         score += max(0, rsi_pts)
         
         # ─── Hacim Onayı (10 puan max) ───────────────────────────────────
-        # NOT: Son mum tam kapanmamış olabilir, bu yüzden son 9 tam mumu kullan
+        # NOT: Son mum tam kapanmamış olabilir (hacim=0), bu yüzden son 4 TAM mumu kullan
         vol_pts = 0
-        if len(volumes) >= 11 and float(np.sum(volumes)) > 0:
-            # Son 9 tam mumun ortalaması (son mum hariç)
-            vol_avg = float(np.mean(volumes[-11:-1]))
-            # Son tam mum (sondan 2.)
-            vol_current = float(volumes[-2]) if volumes[-2] > 0 else float(np.mean(volumes[-6:-1]))
+        # Son 5 mumdan 0 olmayanları al (son mum hariç)
+        recent_volumes = [v for v in volumes[-5:-1] if v > 0] if len(volumes) >= 5 else [v for v in volumes if v > 0]
+        
+        if len(recent_volumes) >= 2:
+            vol_avg = float(np.mean(recent_volumes))
+            vol_current = float(recent_volumes[-1])  # Son tam mum
             vol_ratio = vol_current / vol_avg if vol_avg > 0 else 1
             if vol_ratio >= 1.2:
                 vol_pts = 10
@@ -1576,13 +1571,14 @@ def _analyze_5m(closes, highs, lows, volumes, ta) -> Dict:
     details["ema_stack"] = {"sma5": round(sma5, 2), "sma10": round(sma10, 2), "ema20": round(ema20, 2), "dir": ema_dir, "pts": ema_pts}
     
     # 3. Hacim artışı (10 puan)
-    # NOT: Son mum tam kapanmamış olabilir, bu yüzden son 9 tam mumu kullan
+    # NOT: Son mum tam kapanmamış olabilir (hacim=0), bu yüzden son 4 TAM mumu kullan
     vol_pts = 0
-    if len(volumes) >= 11 and float(np.sum(volumes)) > 0:
-        # Son 9 tam mumun ortalaması (son mum hariç)
-        vol_avg = float(np.mean(volumes[-11:-1]))
-        # Son tam mum (sondan 2.)
-        vol_last = float(volumes[-2]) if volumes[-2] > 0 else float(np.mean(volumes[-6:-1]))
+    # Son 5 mumdan 0 olmayanları al (son mum hariç)
+    recent_volumes = [v for v in volumes[-5:-1] if v > 0] if len(volumes) >= 5 else [v for v in volumes if v > 0]
+    
+    if len(recent_volumes) >= 2:
+        vol_avg = float(np.mean(recent_volumes))
+        vol_last = float(recent_volumes[-1])  # Son tam mum
         vol_ratio = vol_last / vol_avg if vol_avg > 0 else 1
         if vol_ratio >= 1.3:
             vol_pts = 10
