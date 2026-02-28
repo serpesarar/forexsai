@@ -375,12 +375,17 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         
         if has_meaningful_volume:
             # Son mum genellikle tam kapanmamış olur ve hacim 0 olabilir
-            # Bu yüzden son TAM mumu kullan (sondan bir önceki)
+            # Bu yüzden son birkaç mumu kontrol edip 0 olmayan ilkini kullan
             if len(volumes) >= 2:
                 # Son 20 tam mumun ortalaması (sondan 2. mumdan başlayarak)
                 avg_volume = np.mean(volumes[-21:-1]) if len(volumes) >= 21 else np.mean(volumes[:-1])
-                # Son TAM mumun hacmi (sondan 2.)
-                current_volume = volumes[-2] if volumes[-2] > 0 else volumes[-3] if len(volumes) >= 3 and volumes[-3] > 0 else avg_volume
+                
+                # Son TAM mumu bul (sondan geriye doğru 0 olmayan ilk değer)
+                current_volume = avg_volume  # Default olarak ortalama
+                for i in range(2, min(6, len(volumes) + 1)):  # Sondan 2.'den 5.'ye kadar kontrol et
+                    if volumes[-i] > 0:
+                        current_volume = volumes[-i]
+                        break
             else:
                 avg_volume = volumes[0] if volumes[0] > 0 else 1
                 current_volume = volumes[0] if volumes[0] > 0 else avg_volume
