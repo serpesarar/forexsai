@@ -89,8 +89,9 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "order-blocks-xauusd", title: "Order Blocks XAUUSD", column: "center", order: 22, visible: true, size: "full", collapsed: false },
     { id: "rhythm-detectors", title: "Rhythm Detectors", column: "center", order: 23, visible: true, size: "full", collapsed: false },
     { id: "charts", title: "Trading Charts", column: "center", order: 24, visible: true, size: "full", collapsed: false },
+    { id: "news-correlation", title: "News-Chart Correlation", column: "center", order: 25, visible: true, size: "full", collapsed: false },
   ],
-  version: 24,
+  version: 25,
 };
 
 const LAYOUT_STORAGE_KEY = "dashboard-layout-v7";

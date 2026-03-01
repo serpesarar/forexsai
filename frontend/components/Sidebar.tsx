@@ -19,6 +19,7 @@ import {
     TermsIcon,
     LogoutIcon,
     UserProfileIcon,
+    NewspaperIcon,
 } from "./ui/CustomIcons";
 import { useUser, useAuthStore } from "../lib/auth/store";
 import { useI18nStore } from "../lib/i18n/store";
@@ -66,6 +67,13 @@ const NAV_ITEMS: NavItem[] = [
         label: "Signals", 
         icon: SignalsIcon, 
         gradient: "from-rose-500 to-red-500" 
+    },
+    { 
+        href: "/news-correlation", 
+        key: "news-correlation", 
+        label: "News AI", 
+        icon: NewspaperIcon, 
+        gradient: "from-emerald-500 to-teal-500" 
     },
 ];
 

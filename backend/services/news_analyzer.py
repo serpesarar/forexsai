@@ -35,26 +35,46 @@ SUPPORTED_SYMBOLS = {
 
 # Impact rules for common scenarios
 IMPACT_RULES = {
-    "trump_iran": {
-        "keywords": ["trump", "iran", "nuclear", "deal", "military", "threat"],
+    "trump_policy": {
+        "keywords": ["trump", "trump's", "trump administration", "white house", "executive order"],
         "impacts": [
-            {"symbol": "XAUUSD", "direction": "bullish", "score": 8, "reasoning": "Safe haven demand"},
-            {"symbol": "USOIL", "direction": "bullish", "score": 7, "reasoning": "Supply disruption risk"},
-            {"symbol": "VIX", "direction": "bullish", "score": 6, "reasoning": "Geopolitical uncertainty"},
-            {"symbol": "DXY", "direction": "bullish", "score": 5, "reasoning": "Safe haven flow"},
-            {"symbol": "NASDAQ", "direction": "bearish", "score": 5, "reasoning": "Risk-off sentiment"},
+            {"symbol": "XAUUSD", "direction": "bullish", "score": 6, "reasoning": "Policy uncertainty safe haven"},
+            {"symbol": "VIX", "direction": "bullish", "score": 7, "reasoning": "Political volatility"},
+            {"symbol": "NASDAQ", "direction": "bearish", "score": 5, "reasoning": "Trade policy concerns"},
+        ],
+        "sentiment": "risk_off",
+        "volatility": "medium",
+    },
+    "trump_iran": {
+        "keywords": ["trump", "iran", "nuclear", "deal", "military", "threat", "attack iran", "iran war"],
+        "impacts": [
+            {"symbol": "XAUUSD", "direction": "bullish", "score": 9, "reasoning": "Safe haven demand"},
+            {"symbol": "USOIL", "direction": "bullish", "score": 8, "reasoning": "Supply disruption risk"},
+            {"symbol": "VIX", "direction": "bullish", "score": 8, "reasoning": "Geopolitical uncertainty"},
+            {"symbol": "DXY", "direction": "bullish", "score": 6, "reasoning": "Safe haven flow"},
+            {"symbol": "NASDAQ", "direction": "bearish", "score": 6, "reasoning": "Risk-off sentiment"},
         ],
         "sentiment": "risk_off",
         "volatility": "high",
     },
     "fed_rate": {
-        "keywords": ["fed", "federal reserve", "rate", "interest", "hike", "cut", "powell"],
+        "keywords": ["fed", "federal reserve", "fomc", "rate decision", "rate hike", "rate cut", "interest rate", "powell"],
         "impacts": [
             {"symbol": "DXY", "direction": "bullish", "score": 8, "reasoning": "Rate hike bullish for USD"},
             {"symbol": "XAUUSD", "direction": "bearish", "score": 7, "reasoning": "Higher rates hurt gold"},
             {"symbol": "NASDAQ", "direction": "bearish", "score": 7, "reasoning": "Higher rates hurt tech"},
         ],
         "sentiment": "risk_off" if "hike" in "{text}" else "neutral",
+        "volatility": "high",
+    },
+    "fed_dovish": {
+        "keywords": ["fed", "dovish", "rate cut", "easing", "accommodative", "powell dovish"],
+        "impacts": [
+            {"symbol": "DXY", "direction": "bearish", "score": 7, "reasoning": "Rate cuts weaken USD"},
+            {"symbol": "XAUUSD", "direction": "bullish", "score": 8, "reasoning": "Lower rates help gold"},
+            {"symbol": "NASDAQ", "direction": "bullish", "score": 8, "reasoning": "Lower rates help growth stocks"},
+        ],
+        "sentiment": "risk_on",
         "volatility": "high",
     },
     "inflation_data": {
@@ -96,12 +116,51 @@ IMPACT_RULES = {
         "volatility": "high",
     },
     "crypto_regulation": {
-        "keywords": ["bitcoin", "crypto", "regulation", "sec", "etf"],
+        "keywords": ["bitcoin", "crypto", "regulation", "sec", "etf", "spot etf", "crypto etf"],
         "impacts": [
             {"symbol": "BTCUSD", "direction": "bullish", "score": 8, "reasoning": "ETF approval/positive news"},
             {"symbol": "NASDAQ", "direction": "bullish", "score": 5, "reasoning": "Crypto correlation"},
         ],
         "sentiment": "risk_on",
+        "volatility": "high",
+    },
+    "gold_breakout": {
+        "keywords": ["gold", "xau", "gold price", "gold hits", "gold rally", "gold surge", "all-time high", "record high", "safe haven gold"],
+        "impacts": [
+            {"symbol": "XAUUSD", "direction": "bullish", "score": 9, "reasoning": "Gold momentum/breakout"},
+            {"symbol": "DXY", "direction": "bearish", "score": 5, "reasoning": "Inverse correlation"},
+            {"symbol": "VIX", "direction": "bullish", "score": 4, "reasoning": "Safe haven demand"},
+        ],
+        "sentiment": "risk_off",
+        "volatility": "high",
+    },
+    "oil_supply": {
+        "keywords": ["oil", "wti", "brent", "crude", "opec", "opec+", "production cut", "supply disruption", "oil inventory", "eia report", "api report"],
+        "impacts": [
+            {"symbol": "USOIL", "direction": "bullish", "score": 8, "reasoning": "Supply concerns"},
+            {"symbol": "XAUUSD", "direction": "bullish", "score": 5, "reasoning": "Inflation hedge"},
+        ],
+        "sentiment": "risk_off",
+        "volatility": "high",
+    },
+    "tech_earnings": {
+        "keywords": ["earnings", "revenue", "profit", "guidance", "outlook", "nvidia", "apple", "tesla", "amazon", "microsoft", "google", "meta", "alphabet", "beat estimates", "miss estimates"],
+        "impacts": [
+            {"symbol": "NASDAQ", "direction": "bullish", "score": 7, "reasoning": "Tech earnings positive"},
+            {"symbol": "DAX", "direction": "bullish", "score": 5, "reasoning": "Global risk-on"},
+        ],
+        "sentiment": "risk_on",
+        "volatility": "medium",
+    },
+    "banking_crisis": {
+        "keywords": ["bank", "banking crisis", "bank failure", "deposit", "fdic", "credit suisse", "deutsche bank", "svb", "silicon valley bank", "contagion", "liquidity crisis"],
+        "impacts": [
+            {"symbol": "XAUUSD", "direction": "bullish", "score": 9, "reasoning": "Banking crisis safe haven"},
+            {"symbol": "VIX", "direction": "bullish", "score": 9, "reasoning": "Financial panic"},
+            {"symbol": "DXY", "direction": "bearish", "score": 5, "reasoning": "Fed may cut rates"},
+            {"symbol": "NASDAQ", "direction": "bearish", "score": 7, "reasoning": "Financial sector drag"},
+        ],
+        "sentiment": "risk_off",
         "volatility": "high",
     },
 }

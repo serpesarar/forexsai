@@ -251,18 +251,18 @@ const NewsCard = memo(function NewsCard({
       </div>
       
       {/* Key Levels (if any) */}
-      {news.key_levels && (
+      {news.keyLevels && (
         <div className="flex items-center gap-3 mb-3 text-xs">
-          {news.key_levels.support && news.key_levels.support.length > 0 && (
+          {news.keyLevels.support && news.keyLevels.support.length > 0 && (
             <div className="flex items-center gap-1 text-green-400">
               <Target className="w-3 h-3" />
-              <span>Support: {news.key_levels.support.slice(0, 2).join(", ")}</span>
+              <span>Support: {news.keyLevels.support.slice(0, 2).join(", ")}</span>
             </div>
           )}
-          {news.key_levels.resistance && news.key_levels.resistance.length > 0 && (
+          {news.keyLevels.resistance && news.keyLevels.resistance.length > 0 && (
             <div className="flex items-center gap-1 text-red-400">
               <Target className="w-3 h-3" />
-              <span>Resistance: {news.key_levels.resistance.slice(0, 2).join(", ")}</span>
+              <span>Resistance: {news.keyLevels.resistance.slice(0, 2).join(", ")}</span>
             </div>
           )}
         </div>
@@ -275,11 +275,11 @@ const NewsCard = memo(function NewsCard({
             <Sparkles className="w-3 h-3" />
             AI Confidence
           </span>
-          {news.ai_confidence < 60 && (
+          {news.aiConfidence < 60 && (
             <span className="text-yellow-500 text-[10px]">Analysis Uncertain</span>
           )}
         </div>
-        <ConfidenceBar confidence={news.ai_confidence} />
+        <ConfidenceBar confidence={news.aiConfidence} />
       </div>
       
       {/* Pulse animation for high impact breaking news */}

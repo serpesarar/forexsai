@@ -149,6 +149,16 @@ export const CARD_REGISTRY: CardDefinition[] = [
     component: null,
     gridSpan: { small: 1, medium: 2, large: 3, full: 3 },
   },
+  {
+    id: "news-correlation",
+    title: "News-Chart Correlation",
+    defaultColumn: "center",
+    defaultOrder: 7,
+    defaultSize: "full",
+    minSize: "large",
+    component: null,
+    gridSpan: { small: 1, medium: 2, large: 3, full: 3 },
+  },
 ];
 
 // Helper to get card definition

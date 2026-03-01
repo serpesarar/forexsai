@@ -728,3 +728,83 @@ async def get_cached_data(symbol: str) -> Optional[Dict[str, Any]]:
     except Exception as e:
         logger.error(f"Error getting cached data for {symbol}: {e}")
         return None
+
+
+# RSS Aggregation tracking
+_last_rss_update: Optional[datetime] = None
+RSS_UPDATE_INTERVAL = 120  # 2 minutes for RSS feeds
+
+
+async def run_rss_aggregation_if_needed():
+    """Run RSS aggregation every 2 minutes"""
+    global _last_rss_update
+    
+    now = datetime.utcnow()
+    
+    # Check if we need to run RSS aggregation
+    if _last_rss_update and (now - _last_rss_update).total_seconds() < RSS_UPDATE_INTERVAL:
+        return
+    
+    _last_rss_update = now
+    
+    try:
+        from services.rss_aggregator import get_rss_aggregator
+        
+        aggregator = get_rss_aggregator()
+        stats = await aggregator.run_aggregation_cycle()
+        
+        if stats["new"] > 0 or stats["ai_analyzed"] > 0:
+            logger.info(f"RSS aggregation: {stats}")
+    
+    except Exception as e:
+        logger.error(f"RSS aggregation error: {e}")
+
+
+# Patch the background_scheduler_loop to include RSS
+_original_background_scheduler_loop = background_scheduler_loop
+
+
+async def background_scheduler_loop_with_rss():
+    """Main background scheduler loop with RSS support."""
+    global _scheduler_running
+    
+    if _scheduler_running:
+        logger.warning("Scheduler already running")
+        return
+    
+    _scheduler_running = True
+    logger.info("Background scheduler started (with RSS support)")
+
+    # Non-blocking catch-up: check if jobs are stale from previous crash/restart
+    try:
+        await _check_and_catchup()
+    except Exception as e:
+        logger.debug(f"Catch-up error (non-fatal): {e}")
+    
+    while _scheduler_running:
+        try:
+            await run_update_cycle()
+            # Check outcomes periodically
+            await check_outcomes_if_needed()
+            # Signal lifecycle: price check every 3 min (internally gated)
+            await check_lifecycle_if_needed()
+            # Analyze errors periodically (self-learning)
+            await analyze_errors_if_needed()
+            # Log ML predictions every 15 min
+            await log_predictions_if_needed()
+            # Log Pulse/EMEL signals every 15 min
+            await log_pulse_signals_if_needed()
+            # RSS aggregation every 2 minutes
+            await run_rss_aggregation_if_needed()
+        except Exception as e:
+            logger.error(f"Scheduler error: {e}")
+        
+        # Wait before next cycle
+        await asyncio.sleep(DATA_UPDATE_INTERVAL)
+    
+    logger.info("Background scheduler stopped")
+
+
+# Replace the original function
+import sys
+sys.modules[__name__].background_scheduler_loop = background_scheduler_loop_with_rss

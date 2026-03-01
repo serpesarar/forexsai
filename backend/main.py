@@ -276,6 +276,8 @@ try:
         websocket,
         signal_lifecycle_router,
         strategy_optimizer,
+        news_correlation,
+        rss_router,
     )
     from services.data_fetcher import fetch_latest_price
     from services.ml_service import run_nasdaq_signal, run_xauusd_signal
@@ -315,6 +317,8 @@ try:
     app.include_router(websocket.router)
     app.include_router(signal_lifecycle_router.router)
     app.include_router(strategy_optimizer.router)
+    app.include_router(news_correlation.router)
+    app.include_router(rss_router.router)
     
     ROUTERS_LOADED = True
 except Exception as e:
