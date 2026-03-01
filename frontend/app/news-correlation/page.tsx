@@ -2,7 +2,6 @@
 
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
-import { Skeleton } from "@/components/ui/skeleton";
 
 // Dynamic import for heavy panel component
 const NewsChartCorrelationPanel = dynamic(
@@ -10,8 +9,11 @@ const NewsChartCorrelationPanel = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-[600px] w-full bg-slate-950 rounded-xl border border-slate-800 p-4">
-        <Skeleton className="h-full w-full bg-slate-900" />
+      <div className="h-[600px] w-full bg-slate-950 rounded-xl border border-slate-800 p-4 flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center gap-4">
+          <div className="h-8 w-48 bg-slate-800 rounded"></div>
+          <div className="h-4 w-32 bg-slate-800 rounded"></div>
+        </div>
       </div>
     ),
   }
@@ -32,8 +34,11 @@ export default function NewsCorrelationPage() {
         
         <Suspense
           fallback={
-            <div className="h-[600px] w-full bg-slate-950 rounded-xl border border-slate-800 p-4">
-              <Skeleton className="h-full w-full bg-slate-900" />
+            <div className="h-[600px] w-full bg-slate-950 rounded-xl border border-slate-800 p-4 flex items-center justify-center">
+              <div className="animate-pulse flex flex-col items-center gap-4">
+                <div className="h-8 w-48 bg-slate-800 rounded"></div>
+                <div className="h-4 w-32 bg-slate-800 rounded"></div>
+              </div>
             </div>
           }
         >
