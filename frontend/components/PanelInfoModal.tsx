@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Info, Lightbulb, BarChart3, BookOpen } from "lucide-react";
 import { useI18nStore } from "../lib/i18n/store";
 import { PANEL_INFO_REGISTRY } from "../lib/panelInfoData";
@@ -54,7 +55,7 @@ export function PanelInfoModal({ isOpen, onClose, panelId }: PanelInfoModalProps
         };
     }, [isOpen, handleKeyDown]);
 
-    if (!isVisible || !panelInfo) return null;
+    if (!isVisible || !panelInfo || typeof document === "undefined") return null;
 
     const title = t(panelInfo.titleKey);
     const description = t(panelInfo.descriptionKey);
@@ -76,16 +77,17 @@ export function PanelInfoModal({ isOpen, onClose, panelId }: PanelInfoModalProps
         low: t("panelInfo.importance.low"),
     };
 
-    return (
+    const modalContent = (
         <div
-            className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 ${isAnimating ? "opacity-100" : "opacity-0"
+            className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 transition-all duration-300 ${isAnimating ? "opacity-100" : "opacity-0"
                 }`}
             onClick={onClose}
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
         >
             {/* Backdrop with blur */}
             <div
                 className={`absolute inset-0 transition-all duration-300 ${isAnimating
-                        ? "bg-black/60 backdrop-blur-md"
+                        ? "bg-black/70 backdrop-blur-md"
                         : "bg-black/0 backdrop-blur-none"
                     }`}
             />
@@ -195,6 +197,9 @@ export function PanelInfoModal({ isOpen, onClose, panelId }: PanelInfoModalProps
             </div>
         </div>
     );
+
+    // Portal ile body'ye mount et
+    return createPortal(modalContent, document.body);
 }
 
 export default PanelInfoModal;

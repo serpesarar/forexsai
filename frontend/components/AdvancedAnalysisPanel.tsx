@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Activity,
   AlertTriangle,
@@ -86,8 +87,28 @@ const API_BASE = "https://upbeat-flow-production.up.railway.app";
 function UserGuideModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { t, locale } = useI18nStore();
   const isEn = locale === "en";
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  // ESC tuşu ile kapatma
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEsc);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !mounted || typeof document === "undefined") return null;
 
   const steps = [
     {
@@ -149,13 +170,14 @@ function UserGuideModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
     { name: "VIX", meaning: isEn ? "Fear index >25 = Risk off" : "Korku endeksi >25 = Risk off", critical: false },
   ];
 
-  return (
+  const modalContent = (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       onClick={onClose}
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
       
       {/* Modal */}
       <div 
@@ -270,6 +292,9 @@ function UserGuideModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
       </div>
     </div>
   );
+  
+  // Portal ile body'ye mount et
+  return createPortal(modalContent, document.body);
 }
 
 export default function AdvancedAnalysisPanel({ className = "" }: { className?: string }) {

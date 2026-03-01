@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, ReactNode } from "react";
+import { useState, useCallback, ReactNode, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Info, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, HelpCircle } from "lucide-react";
 import { useI18nStore } from "../lib/i18n/store";
 
@@ -515,10 +516,30 @@ interface InfoModalProps {
 
 export function InfoModal({ isOpen, onClose, infoKey, customData }: InfoModalProps) {
   const { t, locale } = useI18nStore();
+  const [mounted, setMounted] = useState(false);
   const tradingInfo = getTradingInfo(locale);
   const info = customData || tradingInfo[infoKey];
   
-  if (!isOpen || !info) return null;
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+  
+  // ESC tuşu ile kapatma
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEsc);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, onClose]);
+  
+  if (!isOpen || !info || !mounted || typeof document === "undefined") return null;
 
   const getImportanceColor = (importance: string) => {
     switch (importance) {
@@ -538,13 +559,14 @@ export function InfoModal({ isOpen, onClose, infoKey, customData }: InfoModalPro
     }
   };
 
-  return (
+  const modalContent = (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       onClick={onClose}
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
     >
       {/* Backdrop with blur */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
       
       {/* Modal */}
       <div 
@@ -625,6 +647,9 @@ export function InfoModal({ isOpen, onClose, infoKey, customData }: InfoModalPro
       </div>
     </div>
   );
+  
+  // Portal ile body'ye mount et
+  return createPortal(modalContent, document.body);
 }
 
 // ═══════════════════════════════════════════════════════════════════
