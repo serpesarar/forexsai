@@ -915,10 +915,10 @@ export default function HomePage() {
         return renderNewsCard();
       case "comex-news":
         return <COMEXNewsPanel />;
+      case "mtf-advanced":
       case "advanced-nasdaq":
-        return <AdvancedAnalysisPanel symbol="NASDAQ" />;
       case "advanced-xauusd":
-        return <AdvancedAnalysisPanel symbol="XAUUSD" />;
+        return <AdvancedAnalysisPanel />;
       case "whale-tracker":
         return <WhaleTrackerPanel />;
       case "institutional-data":

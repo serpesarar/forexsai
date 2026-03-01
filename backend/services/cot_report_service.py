@@ -54,6 +54,18 @@ COT_CONTRACTS = {
         "name": "E-mini S&P 500",
         "exchange": "CME",
     },
+    "DAX": {
+        "code": "244002",
+        "search": "DAX",
+        "name": "DAX Futures",
+        "exchange": "CME",
+    },
+    "USOIL": {
+        "code": "067651",
+        "search": "CRUDE OIL",
+        "name": "WTI Crude Oil Futures",
+        "exchange": "NYMEX",
+    },
 }
 
 # CFTC URLs
@@ -631,9 +643,10 @@ async def get_cot_adjustment(symbol: str) -> Dict:
 
 
 async def get_cot_summary() -> Dict:
-    """Get COT summary for all tracked symbols."""
+    """Get COT summary for all tracked symbols - XAUUSD, NASDAQ, DAX, USOIL."""
     results = {}
-    for sym in ("XAUUSD", "NASDAQ", "SILVER", "SP500"):
+    # Main 4 symbols for the dashboard
+    for sym in ("XAUUSD", "NASDAQ", "DAX", "USOIL"):
         try:
             cot = await fetch_cot_data(sym)
             results[sym] = asdict(cot)

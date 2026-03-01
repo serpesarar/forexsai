@@ -757,6 +757,13 @@
     "updatesEveryFriday": "Cuma güncellenir",
     "pressureRange": "-1.0 ile +1.0"
   },
+  "cot": {
+    "commercials": "Commercials",
+    "speculators": "Spekülatörler",
+    "specLong": "Spec Long",
+    "openInterest": "Açık Pozisyon",
+    "adjustment": "Düzeltme"
+  },
   "chartsPage": {
     "title": "Canlı Grafikler",
     "subtitle": "TradingView ile profesyonel grafik analizi",

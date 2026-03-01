@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
+  TrendingUpIcon as TrendingUp,
   ArrowDownIcon as TrendingDown,
   MinusIcon as Minus,
   TargetIcon as Target,

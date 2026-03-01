@@ -340,10 +340,11 @@ def _bollinger_bands(closes: np.ndarray, period: int = 20, std_dev: float = 2.0)
 def _adx(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, period: int = 14) -> tuple[float, float, float]:
     """
     Calculate Average Directional Index (ADX) with +DI and -DI.
+    Uses Wilder's smoothing method for accurate ADX calculation.
     Returns: (adx, plus_di, minus_di)
     """
-    if len(closes) < period + 1:
-        return 25.0, 50.0, 50.0  # Neutral defaults
+    if len(closes) < period * 2 + 1:
+        return 25.0, 50.0, 50.0  # Neutral defaults - need enough data for smoothing
     
     # Calculate True Range and Directional Movement
     tr_list = []
@@ -367,24 +368,42 @@ def _adx(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, period: int = 
         plus_dm_list.append(plus_dm)
         minus_dm_list.append(minus_dm)
     
-    if len(tr_list) < period:
+    if len(tr_list) < period * 2:
         return 25.0, 50.0, 50.0
     
-    # Smoothed averages
-    tr_smooth = float(np.mean(tr_list[-period:]))
-    plus_dm_smooth = float(np.mean(plus_dm_list[-period:]))
-    minus_dm_smooth = float(np.mean(minus_dm_list[-period:]))
+    # Wilder's Smoothing Method
+    # First value is simple average
+    tr_smooth = np.mean(tr_list[:period])
+    plus_dm_smooth = np.mean(plus_dm_list[:period])
+    minus_dm_smooth = np.mean(minus_dm_list[:period])
     
-    # +DI and -DI
+    # Apply smoothing for remaining periods
+    dx_values = []
+    for i in range(period, min(len(tr_list), period * 2)):
+        # Smooth TR, +DM, -DM
+        tr_smooth = tr_smooth - (tr_smooth / period) + tr_list[i]
+        plus_dm_smooth = plus_dm_smooth - (plus_dm_smooth / period) + plus_dm_list[i]
+        minus_dm_smooth = minus_dm_smooth - (minus_dm_smooth / period) + minus_dm_list[i]
+        
+        # Calculate +DI and -DI
+        plus_di = (plus_dm_smooth / tr_smooth * 100) if tr_smooth > 0 else 50
+        minus_di = (minus_dm_smooth / tr_smooth * 100) if tr_smooth > 0 else 50
+        
+        # Calculate DX
+        di_sum = plus_di + minus_di
+        dx = abs(plus_di - minus_di) / di_sum * 100 if di_sum > 0 else 0
+        dx_values.append(dx)
+    
+    # Calculate ADX as smoothed DX
+    if len(dx_values) < period:
+        adx = np.mean(dx_values) if dx_values else 25.0
+    else:
+        # Smooth the DX values to get ADX
+        adx = np.mean(dx_values[-period:])
+    
+    # Final +DI and -DI values
     plus_di = (plus_dm_smooth / tr_smooth * 100) if tr_smooth > 0 else 50
     minus_di = (minus_dm_smooth / tr_smooth * 100) if tr_smooth > 0 else 50
-    
-    # DX and ADX
-    di_sum = plus_di + minus_di
-    dx = abs(plus_di - minus_di) / di_sum * 100 if di_sum > 0 else 0
-    
-    # Simple ADX (average of recent DX values)
-    adx = dx  # Simplified - for full ADX would need smoothing
     
     return float(adx), float(plus_di), float(minus_di)
 
@@ -1580,20 +1599,50 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
         
         # Multi-asset correlation analysis
         correlation_data = None
-        if "XAU" in symbol.upper() or "NDX" in symbol.upper() or "NAS" in symbol.upper():
+        symbol_upper = symbol.upper()
+        
+        # Tüm semboller için korelasyon analizi
+        is_gold = "XAU" in symbol_upper
+        is_nasdaq = "NDX" in symbol_upper or "NAS" in symbol_upper
+        is_dax = "DAX" in symbol_upper or "GDAXI" in symbol_upper
+        is_oil = "CL." in symbol_upper or "OIL" in symbol_upper or "WTI" in symbol_upper
+        
+        if is_gold or is_nasdaq or is_dax or is_oil:
             try:
-                # Weights for correlation scoring
-                correlation_weights = {
-                    "DXY": 0.35,   # Strongest for Gold
-                    "VIX": 0.25,   # Risk sentiment
-                    "US10Y": 0.20, # Bond yields
-                    "SPX": 0.20    # Risk-on/off
-                }
+                # Sembol bazlı korelasyon ağırlıkları
+                if is_gold:
+                    correlation_weights = {
+                        "DXY": 0.40,   # Gold için en güçlü (negatif korelasyon)
+                        "VIX": 0.25,   # Risk sentiment
+                        "US10Y": 0.20, # Bond yields
+                        "SPX": 0.15    # Risk-on/off
+                    }
+                elif is_nasdaq:
+                    correlation_weights = {
+                        "DXY": 0.25,   # Negatif korelasyon
+                        "VIX": 0.35,   # NASDAQ için çok önemli
+                        "US10Y": 0.25, # Faiz etkisi
+                        "SPX": 0.15    # Genel piyasa
+                    }
+                elif is_dax:
+                    correlation_weights = {
+                        "DXY": 0.20,   # EUR/USD etkisi
+                        "VIX": 0.25,   # Küresel risk
+                        "US10Y": 0.20, # Faiz
+                        "SPX": 0.35    # ABD piyasası ile güçlü korelasyon
+                    }
+                else:  # Oil
+                    correlation_weights = {
+                        "DXY": 0.35,   # Negatif korelasyon
+                        "VIX": 0.20,   # Risk sentiment
+                        "US10Y": 0.15, # Ekonomik büyüme göstergesi
+                        "SPX": 0.30    # Ekonomik aktivite
+                    }
                 
                 confluence_score = 0.0
                 conflicting_signals = []
                 
-                # DXY analysis (negative correlation with Gold)
+                # DXY analysis
                 dxy_trend = "NEUTRAL"
                 dxy_strength = 50.0
                 try:
@@ -1604,8 +1653,9 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
                 except Exception:
                     pass
                 
-                # DXY check: Gold bullish needs DXY bearish
-                if "XAU" in symbol.upper():
+                # DXY korelasyon kontrolü (tüm semboller için DXY genellikle negatif korelasyonlu)
+                if is_gold:
+                    # Gold: DXY bearish = Gold bullish
                     if confluence.overall_signal in ["BUY", "STRONG_BUY"]:
                         if dxy_trend == "BEARISH":
                             confluence_score += correlation_weights["DXY"]
@@ -1618,6 +1668,40 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
                         elif dxy_trend == "BEARISH":
                             confluence_score -= correlation_weights["DXY"]
                             conflicting_signals.append("DXY_BEARISH")
+                elif is_nasdaq:
+                    # NASDAQ: DXY bearish = NASDAQ bullish (genellikle)
+                    if confluence.overall_signal in ["BUY", "STRONG_BUY"]:
+                        if dxy_trend == "BEARISH":
+                            confluence_score += correlation_weights["DXY"]
+                        elif dxy_trend == "BULLISH":
+                            confluence_score -= correlation_weights["DXY"] * 0.5
+                            conflicting_signals.append("DXY_BULLISH")
+                    elif confluence.overall_signal in ["SELL", "STRONG_SELL"]:
+                        if dxy_trend == "BULLISH":
+                            confluence_score += correlation_weights["DXY"] * 0.5
+                        elif dxy_trend == "BEARISH":
+                            confluence_score -= correlation_weights["DXY"] * 0.5
+                elif is_dax:
+                    # DAX: DXY etkisi EUR/USD üzerinden dolaylı
+                    if confluence.overall_signal in ["BUY", "STRONG_BUY"]:
+                        if dxy_trend == "BEARISH":  # EUR/USD yukarı = DAX yukarı
+                            confluence_score += correlation_weights["DXY"] * 0.8
+                        elif dxy_trend == "BULLISH":
+                            confluence_score -= correlation_weights["DXY"] * 0.4
+                    elif confluence.overall_signal in ["SELL", "STRONG_SELL"]:
+                        if dxy_trend == "BULLISH":
+                            confluence_score += correlation_weights["DXY"] * 0.4
+                elif is_oil:
+                    # Oil: DXY bearish = Oil bullish (genellikle)
+                    if confluence.overall_signal in ["BUY", "STRONG_BUY"]:
+                        if dxy_trend == "BEARISH":
+                            confluence_score += correlation_weights["DXY"]
+                        elif dxy_trend == "BULLISH":
+                            confluence_score -= correlation_weights["DXY"] * 0.5
+                            conflicting_signals.append("DXY_BULLISH")
+                    elif confluence.overall_signal in ["SELL", "STRONG_SELL"]:
+                        if dxy_trend == "BULLISH":
+                            confluence_score += correlation_weights["DXY"] * 0.5
                 
                 # VIX analysis
                 vix_price = 20.0
@@ -1629,32 +1713,66 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
                 
                 vix_regime = "LOW" if vix_price < 15 else "NORMAL" if vix_price < 25 else "HIGH" if vix_price < 35 else "EXTREME"
                 
-                # High VIX = risk-off = Gold bullish usually
-                if vix_regime in ["HIGH", "EXTREME"]:
-                    if confluence.overall_signal in ["BUY", "STRONG_BUY"]:
-                        confluence_score += correlation_weights["VIX"] * 0.5
-                    else:
-                        conflicting_signals.append("VIX_HIGH_BUT_BEARISH")
+                # VIX bazlı korelasyon
+                if is_gold:
+                    # High VIX = risk-off = Gold bullish
+                    if vix_regime in ["HIGH", "EXTREME"]:
+                        if confluence.overall_signal in ["BUY", "STRONG_BUY"]:
+                            confluence_score += correlation_weights["VIX"] * 0.6
+                        else:
+                            conflicting_signals.append("VIX_HIGH_BUT_BEARISH")
+                elif is_nasdaq:
+                    # High VIX = risk-off = NASDAQ bearish
+                    if vix_regime in ["HIGH", "EXTREME"]:
+                        if confluence.overall_signal in ["SELL", "STRONG_SELL"]:
+                            confluence_score += correlation_weights["VIX"] * 0.6
+                        elif confluence.overall_signal in ["BUY", "STRONG_BUY"]:
+                            confluence_score -= correlation_weights["VIX"] * 0.4
+                            conflicting_signals.append("VIX_HIGH_BUT_BULLISH")
+                elif is_dax:
+                    # High VIX = genellikle global risk-off
+                    if vix_regime in ["HIGH", "EXTREME"]:
+                        if confluence.overall_signal in ["SELL", "STRONG_SELL"]:
+                            confluence_score += correlation_weights["VIX"] * 0.5
+                        elif confluence.overall_signal in ["BUY", "STRONG_BUY"]:
+                            confluence_score -= correlation_weights["VIX"] * 0.3
+                elif is_oil:
+                    # Oil: VIX genellikle doğrudan ilişkili değil
+                    if vix_regime == "EXTREME":
+                        # Extreme VIX = ekonomik belirsizlik = Oil volatilite
+                        confluence_score -= correlation_weights["VIX"] * 0.2  # Caution
                 
                 # Determine if correlation confirms
-                correlation_confirms = confluence_score > 0.3 and len(conflicting_signals) == 0
+                correlation_confirms = confluence_score > 0.25 and len(conflicting_signals) == 0
+                
+                # Korelasyon katsayısı (sembol bazlı)
+                if is_gold:
+                    dxy_corr = -0.85
+                elif is_nasdaq:
+                    dxy_corr = -0.40
+                elif is_dax:
+                    dxy_corr = -0.35
+                elif is_oil:
+                    dxy_corr = -0.55
+                else:
+                    dxy_corr = -0.50
                 
                 correlation_data = CorrelationData(
-                    dxy_correlation=-0.85 if "XAU" in symbol.upper() else -0.3,
+                    dxy_correlation=dxy_corr,
                     dxy_trend=dxy_trend,
                     dxy_strength=dxy_strength,
                     vix_level=vix_price,
                     vix_regime=vix_regime,
-                    bond_yield_trend="NEUTRAL",  # Would need US10Y data feed
-                    bond_yield_level=4.5,  # Placeholder
-                    spx_trend="NEUTRAL",  # Would need SPX data
+                    bond_yield_trend="NEUTRAL",
+                    bond_yield_level=4.5,
+                    spx_trend="NEUTRAL",
                     correlation_confirms=correlation_confirms,
                     confluence_score=round(confluence_score, 2),
                     conflicting_signals=conflicting_signals
                 )
                 confluence.correlation = correlation_data
-            except Exception:
-                pass  # Correlation data optional
+            except Exception as e:
+                logger.warning(f"Correlation analysis failed for {symbol}: {e}")
         
         result = {
             "success": True,

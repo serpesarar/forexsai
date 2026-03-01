@@ -209,46 +209,82 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         })
         
         # ─────────────────────────────────────────────────────────────────────
-        # 4️⃣ FORMASYON ANALİZİ
+        # 4️⃣ FORMASYON ANALİZİ (Gerçek Formasyon Bulucu)
         # ─────────────────────────────────────────────────────────────────────
-        patterns = prediction.get("active_patterns", [])
-        if patterns and len(patterns) > 0:
-            top_pattern = patterns[0] if isinstance(patterns[0], dict) else {"name": str(patterns[0])}
-            pattern_name = top_pattern.get("name", "Bilinmiyor")
-            pattern_completion = top_pattern.get("completion", 80)
-            pattern_direction = top_pattern.get("direction", "neutral")
+        try:
+            from services.candlestick_pattern_service import detect_patterns_manual, PATTERN_INFO
             
-            if pattern_completion >= 85:
-                pattern_status = "pass"
-                pattern_color = "green"
-                pattern_label = f"{pattern_name.upper()}"
-                pattern_comment = f"Formasyon onaylandı. Hedef ve stop seviyeleri belirlendi."
-                green_count += 1
+            # OHLCV'den opens dizisini çıkar
+            opens = np.array([c["open"] for c in ohlcv], dtype=np.float64)
+            
+            # Formasyonları tespit et
+            detected_patterns = detect_patterns_manual(opens, highs, lows, closes, timeframe)
+            
+            if detected_patterns and len(detected_patterns) > 0:
+                # En güçlü formasyonu al
+                top_pattern = detected_patterns[0]
+                pattern_id = top_pattern.pattern_id
+                pattern_strength = top_pattern.strength
+                pattern_confidence = top_pattern.confidence
+                
+                # Formasyon bilgilerini al
+                pattern_info = PATTERN_INFO.get(pattern_id, {})
+                pattern_name_tr = pattern_info.get("name_tr", pattern_id.replace("_", " "))
+                pattern_signal = pattern_info.get("signal", "neutral")
+                
+                # Güç ve yöne göre durum belirle
+                if pattern_confidence >= 80 and pattern_strength >= 3:
+                    pattern_status = "pass"
+                    pattern_color = "green"
+                    pattern_label = f"{pattern_name_tr.upper()}"
+                    pattern_comment = f"Güçlü {pattern_signal} formasyonu tespit edildi. Onaylı."
+                    green_count += 1
+                elif pattern_confidence >= 60:
+                    pattern_status = "warning"
+                    pattern_color = "yellow"
+                    pattern_label = f"{pattern_name_tr.upper()}"
+                    pattern_comment = f"{pattern_signal} formasyonu oluşuyor. Onay bekleniyor."
+                    yellow_count += 1
+                else:
+                    pattern_status = "warning"
+                    pattern_color = "yellow"
+                    pattern_label = f"{pattern_name_tr.upper()} (Zayıf)"
+                    pattern_comment = "Zayıf formasyon sinyali. Dikkatli olun."
+                    yellow_count += 1
+                    
+                pattern_completion = pattern_confidence
+                patterns_found = len(detected_patterns)
             else:
                 pattern_status = "warning"
                 pattern_color = "yellow"
-                pattern_label = f"{pattern_name.upper()} (Oluşuyor)"
-                pattern_comment = f"Formasyon %{pattern_completion} tamamlandı. Onay bekliyor."
+                pattern_label = "FORMASYON YOK"
+                pattern_comment = "Aktif formasyon tespit edilmedi."
                 yellow_count += 1
-        else:
+                pattern_completion = 0
+                patterns_found = 0
+                
+        except Exception as pattern_err:
+            logger.warning(f"Pattern detection error: {pattern_err}")
             pattern_status = "warning"
             pattern_color = "yellow"
             pattern_label = "FORMASYON YOK"
-            pattern_comment = "Aktif formasyon tespit edilmedi."
+            pattern_comment = "Formasyon analizi yapılamadı."
             yellow_count += 1
             pattern_completion = 0
+            patterns_found = 0
         
         checks.append({
             "id": 4,
             "name": "Formasyon Analizi",
             "subtitle": "Pattern Recognition",
             "status": pattern_status,
-            "direction": "neutral",
+            "direction": pattern_signal if pattern_status != "warning" else "neutral",
             "color": pattern_color,
             "label": pattern_label,
             "details": {
-                "completion": pattern_completion,
-                "patterns_found": len(patterns)
+                "completion": round(pattern_completion, 1),
+                "patterns_found": patterns_found,
+                "strength": pattern_strength if pattern_status != "warning" else 0
             },
             "comment": pattern_comment
         })
@@ -522,23 +558,120 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         })
         
         # ─────────────────────────────────────────────────────────────────────
-        # KARAR ÖZETİ
+        # KONFLUANS TABANLI AĞIRLIKLI SİNYAL KATMANI (YENİ)
         # ─────────────────────────────────────────────────────────────────────
+        
+        # 1. ENSTRÜMAN-SPESİFİK AĞIRLIKLAR
+        SYMBOL_WEIGHTS = {
+            "NDX.INDX": {
+                "trend": 25, "mtf": 20, "regime": 15, "momentum": 20,
+                "volume": 15, "sr": 10, "pattern": 15, "portfolio": 20
+            },
+            "GDAXI.INDX": {
+                "trend": 20, "mtf": 25, "regime": 15, "momentum": 20,
+                "volume": 15, "sr": 15, "pattern": 10, "portfolio": 20
+            },
+            "XAUUSD": {
+                "trend": 15, "mtf": 20, "regime": 15, "momentum": 25,
+                "volume": 10, "sr": 20, "pattern": 15, "portfolio": 20
+            },
+            "CL.COMM": {
+                "trend": 20, "mtf": 15, "regime": 20, "momentum": 20,
+                "volume": 20, "sr": 15, "pattern": 10, "portfolio": 20
+            }
+        }
+        
+        weights = SYMBOL_WEIGHTS.get(symbol, SYMBOL_WEIGHTS["NDX.INDX"])
+        
+        # 2. FAKTÖR DURUMLARINI HARİTALA
+        factor_status = {
+            "trend": trend_status,      # pass/warning/fail
+            "mtf": mtf_status,
+            "regime": regime_status,
+            "momentum": mom_status,
+            "volume": vol_status,
+            "sr": sr_status,
+            "pattern": pattern_status,
+            "portfolio": port_status
+        }
+        
+        # 3. AĞIRLIKLI SKOR HESAPLA (detaylı katkı takibi)
+        score = 0
+        factor_contributions = {}  # Her faktörün katkısını takip et
+        for factor, status in factor_status.items():
+            weight = weights.get(factor, 15)
+            contribution = 0
+            if status == "pass":
+                contribution = weight
+                score += weight
+            elif status == "fail":
+                contribution = -weight * 1.5  # Red'ler daha ağır bassın
+                score += contribution
+            # warning = 0 puan (nötr)
+            factor_contributions[factor] = {
+                "weight": weight,
+                "status": status,
+                "contribution": round(contribution, 1)
+            }
+        
+        # 4. KONFLUANS BONUS/CEZALARI
+        bonuses = []
+        
+        # "Kutsal Üçlü": MTF + Trend + Momentum aynı yönde
+        if mtf_status == "pass" and trend_status == "pass" and mom_status == "pass":
+            # Yön kontrolü
+            if trend_direction == "up" and mom_label == "YUKARI MOMENTUM":
+                score += 15
+                bonuses.append({"name": "Holy Trinity (Bullish)", "value": 15})
+            elif trend_direction == "down" and mom_label == "AŞAĞI MOMENTUM":
+                score -= 15
+                bonuses.append({"name": "Holy Trinity (Bearish)", "value": -15})
+        
+        # "Yatay+Düşük Hacim" cezası
+        if regime_status != "pass" and vol_status == "fail":
+            score -= 20
+            bonuses.append({"name": "Low Volume + Ranging", "value": -20})
+        
+        # Portföy riski aşımı = kesin red
+        if port_status == "fail":
+            score = -100  # Override everything
+            bonuses.append({"name": "Risk Limit Exceeded", "value": -100})
+        
+        # 5. SİNYAL SEVİYESİ BELİRLE
         signal = prediction.get("direction", "HOLD")
         confidence = prediction.get("confidence", 50)
         
-        # Determine final decision
-        # 5+ green = strong signal, 4 green + ML agrees = cautious signal
-        if red_count >= 3:
-            decision = "HOLD"
-            decision_reason = "Çok fazla risk faktörü var"
-        elif green_count >= 5:
-            decision = signal if signal != "HOLD" else "BUY" if trend_direction == "up" else "SELL"
-        elif green_count >= 4 and signal in ("BUY", "SELL") and red_count <= 1:
-            decision = signal
+        # ML sinyali ile skoru birleştir
+        ml_boost = 0
+        if signal == "BUY":
+            ml_boost = (confidence - 50) / 5  # +0 to +10
+        elif signal == "SELL":
+            ml_boost = -(confidence - 50) / 5  # -0 to -10
+        
+        final_score = score + ml_boost
+        
+        # 6. KARAR VER
+        if final_score >= 70:
+            decision = "STRONG_BUY"
+            decision_reason = f"Güçlü konfluans skoru: {final_score:.1f}"
+        elif final_score >= 55:
+            decision = "BUY"
+            decision_reason = f"Konfluans skoru: {final_score:.1f}"
+        elif final_score >= 40:
+            decision = "BUY_SETUP"
+            decision_reason = f"Bekleyen alış fırsatı: {final_score:.1f} - Koşullar oluşunca giriş"
+        elif final_score <= -70:
+            decision = "STRONG_SELL"
+            decision_reason = f"Güçlü satış konfluansı: {final_score:.1f}"
+        elif final_score <= -55:
+            decision = "SELL"
+            decision_reason = f"Satış konfluansı: {final_score:.1f}"
+        elif final_score <= -40:
+            decision = "SELL_SETUP"
+            decision_reason = f"Bekleyen satış fırsatı: {final_score:.1f} - Koşullar oluşunca giriş"
         else:
             decision = "HOLD"
-            decision_reason = "Yeterli onay yok"
+            decision_reason = f"Yetersiz konfluans: {final_score:.1f} (40-55 arası sinyal gerekli)"
         
         # Build rejection reasons
         rejections = []
@@ -605,14 +738,27 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             "confidence": confidence,
             "price": current_price,
             "checks": checks,
+            "confluence": {
+                "score": round(final_score, 1),
+                "raw_score": round(score, 1),
+                "ml_boost": round(ml_boost, 1),
+                "max_score": 100,
+                "min_signal_threshold": 40,
+                "strong_threshold": 70,
+                "weights_applied": weights,
+                "factor_contributions": factor_contributions,
+                "bonuses": bonuses,
+                "calculation_method": "weighted_confluence_v2"
+            },
             "summary": {
                 "green_count": green_count,
                 "yellow_count": yellow_count,
                 "red_count": red_count,
                 "total": 9,
                 "decision": decision,
+                "decision_reason": decision_reason,
                 "rejections": rejections,
-                "entry_conditions": conditions
+                "entry_conditions": conditions if decision in ["BUY_SETUP", "SELL_SETUP"] else []
             }
         }
         

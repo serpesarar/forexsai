@@ -4,6 +4,7 @@ interface IconProps {
     className?: string;
     size?: number;
     style?: React.CSSProperties;
+    strokeWidth?: number;
 }
 
 // ─── SIDEBAR NAV ICONS ────────────────────────────────────────────────────────
@@ -384,7 +385,7 @@ export function PatternIcon({ className, size = 18, style }: IconProps) {
 /**
  * HarmonicIcon — Butterfly / Gartley kelebek forması
  */
-export function HarmonicIcon({ className, size = 18, style }: IconProps) {
+export function HarmonicIcon({ className, size = 18, style, strokeWidth = 1.5 }: IconProps) {
     return (
         <svg
             width={size}
@@ -392,7 +393,7 @@ export function HarmonicIcon({ className, size = 18, style }: IconProps) {
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.5"
+            strokeWidth={strokeWidth}
             strokeLinecap="round"
             strokeLinejoin="round"
             className={className}
@@ -1131,7 +1132,7 @@ export const CloseIcon = ({ size = 24, className = "" }: IconProps) => (
     </svg>
 );
 
-export const ZapIcon = ({ size = 24, className = "" }: IconProps) => (
+export const ZapIcon = ({ size = 24, className = "", strokeWidth = 1 }: IconProps) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={{ overflow: 'visible' }}>
         <defs>
             <linearGradient id="zap-grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -1143,7 +1144,7 @@ export const ZapIcon = ({ size = 24, className = "" }: IconProps) => (
                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
         </defs>
-        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="url(#zap-grad)" stroke="#ffff00" strokeWidth="1" strokeLinejoin="round" filter="url(#zap-glow)" />
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="url(#zap-grad)" stroke="#ffff00" strokeWidth={strokeWidth} strokeLinejoin="round" filter="url(#zap-glow)" />
     </svg>
 );
 
@@ -1241,8 +1242,8 @@ export const MountainIcon = ({ size = 24, className = "", style }: IconProps) =>
     </svg>
 );
 
-export const ActivityIcon = ({ size = 24, className = "", style }: IconProps) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
+export const ActivityIcon = ({ size = 24, className = "", style, strokeWidth = 1.5 }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
         <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
     </svg>
 );
@@ -1286,3 +1287,23 @@ export const MinusIcon = ({ size = 24, className = "", style }: IconProps) => (
         <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
 );
+
+// TrendingUp Icon
+export const TrendingUpIcon = ({ size = 24, className = "", style, strokeWidth = 1.5 }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+        <polyline points="16 7 22 7 22 13" />
+    </svg>
+);
+
+// TrendingDown Icon
+export const TrendingDownIcon = ({ size = 24, className = "", style, strokeWidth = 1.5 }: IconProps) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
+        <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
+        <polyline points="16 17 22 17 22 11" />
+    </svg>
+);
+
+// TrendingUp (alias for compatibility)
+export const TrendingUp = TrendingUpIcon;
+export const TrendingDown = TrendingDownIcon;

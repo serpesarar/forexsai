@@ -180,6 +180,10 @@ function SymbolCard({ snap }: { snap: SymbolSnapshot }) {
     SILVER: "Silver",
     NASDAQ: "NASDAQ-100",
     SP500: "S&P 500",
+    DAX: "DAX 40",
+    USOIL: "WTI Oil",
+    CL: "WTI Oil",
+    "CL.COMM": "WTI Oil",
   };
 
   const symbolIcon: Record<string, string> = {
@@ -187,6 +191,10 @@ function SymbolCard({ snap }: { snap: SymbolSnapshot }) {
     SILVER: "🥈",
     NASDAQ: "📊",
     SP500: "📈",
+    DAX: "🇩🇪",
+    USOIL: "🛢️",
+    CL: "🛢️",
+    "CL.COMM": "🛢️",
   };
 
   return (

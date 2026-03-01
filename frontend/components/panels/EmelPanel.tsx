@@ -33,10 +33,30 @@ interface CheckItem {
   details: Record<string, any>; comment: string;
 }
 
+interface FactorContribution {
+  weight: number;
+  status: string;
+  contribution: number;
+}
+
+interface ConfluenceData {
+  score: number;
+  raw_score: number;
+  ml_boost: number;
+  max_score: number;
+  min_signal_threshold: number;
+  strong_threshold: number;
+  weights_applied: Record<string, number>;
+  factor_contributions?: Record<string, FactorContribution>;
+  bonuses?: Array<{ name: string; value: number }>;
+  calculation_method: string;
+}
+
 interface EmelData {
   symbol: string; timeframe: string; signal: string; confidence: number; price: number;
   checks: CheckItem[];
-  summary: { green_count: number; yellow_count: number; red_count: number; decision: string; rejections: string[]; entry_conditions: string[]; };
+  confluence?: ConfluenceData;
+  summary: { green_count: number; yellow_count: number; red_count: number; decision: string; decision_reason?: string; rejections: string[]; entry_conditions: string[]; };
 }
 
 interface EmelPanelProps { symbol?: string; onSwitchMode?: () => void; }
@@ -152,11 +172,21 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
     );
   }
 
-  const sigColor = data?.signal === "BUY" ? theme.green : data?.signal === "SELL" ? theme.red : theme.warn;
+  const sigColor = data?.signal === "BUY" || data?.signal === "STRONG_BUY" || data?.signal === "BUY_SETUP" 
+    ? theme.green 
+    : data?.signal === "SELL" || data?.signal === "STRONG_SELL" || data?.signal === "SELL_SETUP" 
+      ? theme.red 
+      : theme.warn;
   const gc = data?.summary.green_count || 0;
   const yc = data?.summary.yellow_count || 0;
   const rc = data?.summary.red_count || 0;
   const tot = gc + yc + rc || 1;
+  
+  // Confluence score
+  const confluenceScore = data?.confluence?.score ?? 0;
+  const confluenceMax = data?.confluence?.max_score ?? 100;
+  const confluenceThreshold = data?.confluence?.min_signal_threshold ?? 40;
+  const confluenceStrong = data?.confluence?.strong_threshold ?? 70;
 
   return (
     <div className="flex flex-col rounded-xl overflow-hidden" style={{ background: theme.bg, border: `1px solid ${theme.border}`, fontFamily: FONT }}>
@@ -201,36 +231,54 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
         <div className="flex flex-col gap-[1px]" style={{ background: theme.border }}>
 
           {/* HERO SIGNAL STRIP (Top Row) */}
-          <div className="grid grid-cols-4 gap-[1px]" style={{ background: theme.border }}>
+          <div className="grid grid-cols-5 gap-[1px]" style={{ background: theme.border }}>
             {/* Signal */}
             <div className="p-4 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
               <span className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: theme.muted }}>Signal</span>
-              <span className="text-3xl font-bold tracking-tight" style={{ color: sigColor }}>{data.signal}</span>
+              <span className="text-2xl font-bold tracking-tight" style={{ color: sigColor }}>{data.signal}</span>
+            </div>
+            {/* Confluence Score - NEW */}
+            <div className="p-4 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
+              <span className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: theme.muted }}>Confluence</span>
+              <span className="text-2xl font-bold tracking-tight font-mono" style={{ 
+                color: confluenceScore >= confluenceStrong ? theme.green : 
+                       confluenceScore >= confluenceThreshold ? theme.warn : 
+                       confluenceScore <= -confluenceStrong ? theme.red :
+                       confluenceScore <= -confluenceThreshold ? theme.warn : theme.muted
+              }}>
+                {confluenceScore > 0 ? "+" : ""}{confluenceScore.toFixed(0)}
+              </span>
+              <div className="flex gap-0.5 rounded-full overflow-hidden mt-1" style={{ height: 3, width: 40, background: "rgba(255,255,255,0.04)" }}>
+                <div className="h-full" style={{ 
+                  width: `${Math.min(100, Math.max(0, (confluenceScore + confluenceMax) / (2 * confluenceMax) * 100))}%`, 
+                  background: confluenceScore >= 0 ? theme.green : theme.red 
+                }} />
+              </div>
             </div>
             {/* Confidence */}
             <div className="p-4 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
-              <span className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: theme.muted }}>Confidence</span>
-              <span className="text-3xl font-bold tracking-tight font-mono" style={{ color: theme.accent }}>{data.confidence.toFixed(0)}%</span>
+              <span className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: theme.muted }}>ML Conf</span>
+              <span className="text-2xl font-bold tracking-tight font-mono" style={{ color: theme.accent }}>{data.confidence.toFixed(0)}%</span>
             </div>
             {/* Decision */}
             <div className="p-4 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
               <span className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: theme.muted }}>Action</span>
-              <span className="text-[14px] font-bold px-3 py-1 rounded" style={{ color: sigColor, background: `${sigColor}15`, border: `1px solid ${sigColor}30` }}>
+              <span className="text-[12px] font-bold px-3 py-1 rounded" style={{ color: sigColor, background: `${sigColor}15`, border: `1px solid ${sigColor}30` }}>
                 {data.summary.decision}
               </span>
             </div>
             {/* Score Breakdown */}
             <div className="p-4 flex flex-col justify-center" style={{ background: theme.bg }}>
-              <span className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: theme.muted }}>Checkpoint Score</span>
+              <span className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: theme.muted }}>Checks</span>
               <div className="flex gap-0.5 rounded-full overflow-hidden mb-2" style={{ height: 6, background: "rgba(255,255,255,0.04)" }}>
                 <div className="h-full" style={{ width: `${(gc / tot) * 100}%`, background: theme.green }} />
                 <div className="h-full" style={{ width: `${(yc / tot) * 100}%`, background: theme.warn }} />
                 <div className="h-full" style={{ width: `${(rc / tot) * 100}%`, background: theme.red }} />
               </div>
-              <div className="flex justify-between items-center text-[10px] font-mono font-bold">
-                <span style={{ color: theme.green }}>{gc} PASS</span>
-                <span style={{ color: theme.warn }}>{yc} WARN</span>
-                <span style={{ color: theme.red }}>{rc} FAIL</span>
+              <div className="flex justify-between items-center text-[9px] font-mono font-bold">
+                <span style={{ color: theme.green }}>{gc}✓</span>
+                <span style={{ color: theme.warn }}>{yc}~</span>
+                <span style={{ color: theme.red }}>{rc}✗</span>
               </div>
             </div>
           </div>
@@ -242,32 +290,50 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
               {data.checks.map((check) => {
                 const Icon = CHECK_ICONS[check.id] || Activity;
                 const cc = cn(check.color);
+                // Sol renk şeridi için gradyan
+                const leftBorderColor = check.color === "green" ? theme.green : 
+                                        check.color === "red" ? theme.red : theme.warn;
+                const leftBorderGradient = check.color === "green" ? `linear-gradient(180deg, ${theme.green}40 0%, ${theme.green}10 100%)` :
+                                           check.color === "red" ? `linear-gradient(180deg, ${theme.red}40 0%, ${theme.red}10 100%)` :
+                                           `linear-gradient(180deg, ${theme.warn}40 0%, ${theme.warn}10 100%)`;
                 return (
-                  <div key={check.id} className="p-3 flex flex-col h-full" style={{ background: theme.bg }}>
-                    {/* Header */}
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex gap-2">
-                        <Badge n={check.id} color={cc.c} />
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-bold uppercase tracking-wider leading-none mb-0.5" style={{ color: theme.text }}>{check.name}</span>
-                          <span className="text-[9px]" style={{ color: theme.muted }}>{check.subtitle}</span>
+                  <div key={check.id} className="flex flex-col h-full" style={{ background: theme.bg }}>
+                    {/* Sol renk şeridi + içerik */}
+                    <div className="flex flex-1">
+                      {/* Sol renk şeridi */}
+                      <div style={{ 
+                        width: 4, 
+                        background: leftBorderGradient,
+                        minHeight: '100%'
+                      }} />
+                      {/* İçerik */}
+                      <div className="flex-1 p-3">
+                        {/* Header */}
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex gap-2">
+                            <Badge n={check.id} color={cc.c} />
+                            <div className="flex flex-col">
+                              <span className="text-[10px] font-bold uppercase tracking-wider leading-none mb-0.5" style={{ color: theme.text }}>{check.name}</span>
+                              <span className="text-[9px]" style={{ color: theme.muted }}>{check.subtitle}</span>
+                            </div>
+                          </div>
+                          <StatusIcon s={check.status} />
+                        </div>
+                        {/* Current State */}
+                        <div className="text-[10px] font-bold font-mono px-2 py-1 rounded inline-flex items-center gap-1.5 self-start mb-2" style={{ color: cc.c, background: cc.bg, border: `1px solid ${cc.b}` }}>
+                          <Icon className="w-3 h-3" /> {check.label}
+                        </div>
+                        {/* Metric Rows */}
+                        <div className="flex flex-col gap-1 mb-2 font-mono">
+                          {Object.entries(check.details).slice(0, 2).map(([k, v]) => (
+                            <DetailRow key={k} k={k} v={v} />
+                          ))}
+                        </div>
+                        {/* Description Footer */}
+                        <div className="mt-auto pt-2 border-t text-[9px] leading-relaxed" style={{ borderColor: theme.border, color: "rgba(255,255,255,0.4)" }}>
+                          {check.comment}
                         </div>
                       </div>
-                      <StatusIcon s={check.status} />
-                    </div>
-                    {/* Current State */}
-                    <div className="text-[10px] font-bold font-mono px-2 py-1 rounded inline-flex items-center gap-1.5 self-start mb-2" style={{ color: cc.c, background: cc.bg, border: `1px solid ${cc.b}` }}>
-                      <Icon className="w-3 h-3" /> {check.label}
-                    </div>
-                    {/* Metric Rows */}
-                    <div className="flex flex-col gap-1 mb-2 font-mono">
-                      {Object.entries(check.details).slice(0, 2).map(([k, v]) => (
-                        <DetailRow key={k} k={k} v={v} />
-                      ))}
-                    </div>
-                    {/* Description Footer */}
-                    <div className="mt-auto pt-2 border-t text-[9px] leading-relaxed" style={{ borderColor: theme.border, color: "rgba(255,255,255,0.4)" }}>
-                      {check.comment}
                     </div>
                   </div>
                 );
@@ -282,6 +348,51 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
               </div>
 
               <div className="flex flex-col gap-4">
+                {/* Confluence Score Breakdown */}
+                {data.confluence && (
+                  <div className="p-3 rounded border" style={{ background: theme.surface, borderColor: theme.border }}>
+                    <div className="text-[9px] uppercase tracking-widest font-bold mb-2 flex items-center gap-1.5" style={{ color: theme.accent }}>
+                      <Gauge className="w-3 h-3" /> Confluence Breakdown
+                    </div>
+                    <div className="flex flex-col gap-1 mb-2">
+                      <div className="flex justify-between text-[10px]">
+                        <span style={{ color: theme.muted }}>Raw Score</span>
+                        <span className="font-mono font-bold" style={{ color: theme.text }}>{data.confluence.raw_score > 0 ? "+" : ""}{data.confluence.raw_score.toFixed(1)}</span>
+                      </div>
+                      <div className="flex justify-between text-[10px]">
+                        <span style={{ color: theme.muted }}>ML Boost</span>
+                        <span className="font-mono font-bold" style={{ color: data.confluence.ml_boost >= 0 ? theme.green : theme.red }}>
+                          {data.confluence.ml_boost > 0 ? "+" : ""}{data.confluence.ml_boost.toFixed(1)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-[10px] pt-1 border-t" style={{ borderColor: theme.border }}>
+                        <span style={{ color: theme.muted }}>Final Score</span>
+                        <span className="font-mono font-bold" style={{ color: confluenceScore >= confluenceStrong ? theme.green : confluenceScore >= confluenceThreshold ? theme.warn : theme.red }}>
+                          {data.confluence.score > 0 ? "+" : ""}{data.confluence.score.toFixed(1)}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Factor Contributions */}
+                    {data.confluence.factor_contributions && (
+                      <div className="mt-2 pt-2 border-t" style={{ borderColor: theme.border }}>
+                        <div className="text-[8px] uppercase tracking-wider mb-1" style={{ color: theme.muted }}>Factor Weights</div>
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+                          {Object.entries(data.confluence.factor_contributions).slice(0, 6).map(([factor, info]: [string, any]) => (
+                            <div key={factor} className="flex justify-between text-[9px]">
+                              <span style={{ color: theme.muted }}>{factor}</span>
+                              <span className="font-mono" style={{ 
+                                color: info.contribution > 0 ? theme.green : info.contribution < 0 ? theme.red : theme.warn 
+                              }}>
+                                {info.contribution > 0 ? "+" : ""}{info.contribution}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Rejections */}
                 {data.summary.rejections.length > 0 ? (
                   <div className="p-3 rounded border" style={{ background: `${theme.red}05`, borderColor: `${theme.red}15` }}>

@@ -95,16 +95,11 @@ export default function AnalysisView() {
                     </LazyPanel>
                 </div>
 
-                {/* Advanced Analysis per symbol */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {/* Advanced Analysis - Unified Panel with Symbol Selector */}
+                <div className="w-full">
                     <LazyPanel fallbackHeight={300}>
                         <Suspense fallback={<PanelLoader />}>
-                            <AdvancedAnalysisPanel symbol="NASDAQ" />
-                        </Suspense>
-                    </LazyPanel>
-                    <LazyPanel fallbackHeight={300}>
-                        <Suspense fallback={<PanelLoader />}>
-                            <AdvancedAnalysisPanel symbol="XAUUSD" />
+                            <AdvancedAnalysisPanel />
                         </Suspense>
                     </LazyPanel>
                 </div>

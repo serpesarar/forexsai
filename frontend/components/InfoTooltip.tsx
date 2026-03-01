@@ -355,6 +355,32 @@ export function getTradingInfo(locale: string): Record<string, InfoData> {
   },
 
   // ═══════════════════════════════════════════════════════════════════
+  // MTF ADVANCED PANEL - USER GUIDE
+  // ═══════════════════════════════════════════════════════════════════
+
+  mtf_advanced_guide: {
+    title: isEn ? "MTF Advanced Analysis Panel - User Guide" : "MTF Advanced Analysis Panel - Kullanım Kılavuzu",
+    description: isEn 
+      ? "Multi-timeframe technical analysis combining Market Regime, Price Action, Volume Profile, Pivot Points and Correlation analysis."
+      : "Piyasa Rejimi, Price Action, Hacim Profili, Pivot Noktaları ve Korelasyon analizini birleştiren çoklu zaman dilimi teknik analiz paneli.",
+    usage: isEn 
+      ? "Use this panel to determine overall market conditions before entering a trade. All components must align for high-confidence setups."
+      : "İşlem girmeden önce genel piyasa koşullarını belirlemek için kullanın. Yüksek güvenlikli setup'lar için tüm bileşenler uyumlu olmalıdır.",
+    levels: [
+      { value: isEn ? "🎯 STEP 1: Market Regime" : "🎯 ADIM 1: Market Regime", meaning: "ADX + DI Spread", action: isEn ? "Trend > 30 ADX + High DI Spread" : "Trend > 30 ADX + Yüksek DI Spread" },
+      { value: isEn ? "📊 STEP 2: Price Action" : "📊 ADIM 2: Price Action", meaning: "Structure Quality", action: isEn ? "VALID_BREAKOUT = Best" : "VALID_BREAKOUT = En İyi" },
+      { value: isEn ? "⚠️ STEP 3: Liquidity" : "⚠️ ADIM 3: Likidite", meaning: "Sweep Detection", action: isEn ? "Avoid if sweep detected" : "Sweep varsa kaçın" },
+      { value: isEn ? "📍 STEP 4: S/R Levels" : "📍 ADIM 4: D/D Seviyeleri", meaning: "Pivot + HVN", action: isEn ? "Trade at R2/S2 (0.618 Fib)" : "R2/S2'de (0.618 Fib) işlem" },
+      { value: isEn ? "⚡ STEP 5: Correlation" : "⚡ ADIM 5: Korelasyon", meaning: "DXY/VIX Check", action: isEn ? "DXY opposite to Gold" : "DXY altına zıt" },
+      { value: isEn ? "💰 STEP 6: Position Size" : "💰 ADIM 6: Pozisyon", meaning: "Risk %", action: isEn ? "Reduce on high volatility" : "Yüksek volatilitede azalt" },
+    ],
+    example: isEn 
+      ? "Gold: TRENDING regime + VALID_BREAKOUT + R2 support + DXY bearish = STRONG BUY"
+      : "Altın: TRENDING rejim + VALID_BREAKOUT + R2 desteği + DXY düşüş = GÜÇLÜ ALIM",
+    importance: "critical",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
   // POSITION SIZING
   // ═══════════════════════════════════════════════════════════════════
 

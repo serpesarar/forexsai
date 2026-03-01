@@ -765,6 +765,13 @@
     "updatesEveryFriday": "Updates Friday",
     "pressureRange": "-1.0 to +1.0"
   },
+  "cot": {
+    "commercials": "Commercials",
+    "speculators": "Speculators",
+    "specLong": "Spec Long",
+    "openInterest": "Open Interest",
+    "adjustment": "Adjustment"
+  },
   "chartsPage": {
     "title": "Live Charts",
     "subtitle": "Professional chart analysis with TradingView",

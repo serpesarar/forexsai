@@ -29,8 +29,8 @@ from dataclasses import dataclass, asdict
 
 logger = logging.getLogger(__name__)
 
-# Tracked symbols
-TRACKED_SYMBOLS = ["XAUUSD", "SILVER", "NASDAQ", "SP500"]
+# Tracked symbols - All 4 main symbols
+TRACKED_SYMBOLS = ["XAUUSD", "NASDAQ", "DAX", "USOIL"]
 
 # In-memory cache
 _whale_cache: Dict[str, Dict] = {}
