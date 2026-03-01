@@ -48,6 +48,21 @@ class BreakerBlock:
 
 
 @dataclass
+class GapInfo:
+    date: str
+    prev_close: float
+    today_open: float
+    size: float
+    size_pct: float
+    atr_multiple: float
+    classification: str  # EXTREME_GAP, NORMAL_GAP, MINIMAL
+    direction: str  # BULLISH, BEARISH
+    fill_probability: float
+    is_fvg: bool
+    strength: str  # HIGH, MEDIUM, LOW
+
+
+@dataclass
 class SMCAnalysis:
     market_structure: Dict
     order_blocks: List[OrderBlock]
@@ -55,6 +70,7 @@ class SMCAnalysis:
     liquidity_pools: List[LiquidityPool]
     breaker_blocks: List[BreakerBlock]
     bias: Dict
+    gaps: List[GapInfo]  # NEW: Gap analysis
 
 
 def find_swing_points(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, period: int = 5) -> tuple:
@@ -581,5 +597,236 @@ async def calculate_smc(symbol: str, candles: list) -> dict:
         ],
         "bias": bias,
         "calculation_method": "rule_based",
-        "candles_analyzed": len(candles)
+        "candles_analyzed": len(candles),
+        "gaps": []  # Will be populated by gap analysis
     }
+
+
+def calculate_atr(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, period: int = 20) -> float:
+    """Calculate Average True Range for gap classification."""
+    if len(closes) < period + 1:
+        return np.mean(highs - lows) if len(highs) > 0 else 1.0
+    
+    tr1 = highs[1:] - lows[1:]
+    tr2 = np.abs(highs[1:] - closes[:-1])
+    tr3 = np.abs(lows[1:] - closes[:-1])
+    
+    tr = np.maximum(np.maximum(tr1, tr2), tr3)
+    return float(np.mean(tr[-period:]))
+
+
+def calculate_gap_fill_probability(gap_size_pct: float, direction: str, symbol: str) -> float:
+    """
+    Calculate historical gap fill probability based on size.
+    EOD data: ~70% of gaps fill within 3 days if < 1 ATR
+    """
+    # Smaller gaps fill more often
+    if abs(gap_size_pct) < 0.5:
+        return 0.85  # 85% fill rate for small gaps
+    elif abs(gap_size_pct) < 1.0:
+        return 0.70  # 70% fill rate for normal gaps
+    elif abs(gap_size_pct) < 2.0:
+        return 0.45  # 45% fill rate for large gaps
+    else:
+        return 0.20  # 20% fill rate for extreme gaps (trend continuation)
+
+
+def analyze_gaps(
+    candles: list,
+    atr: float
+) -> List[GapInfo]:
+    """
+    Analyze inter-day gaps in EOD data.
+    Gap = Previous Close to Current Open (overnight session)
+    
+    CRITICAL: Never interpolate/adjust prices. Gaps are valuable information!
+    """
+    gaps = []
+    
+    if len(candles) < 3:
+        return gaps
+    
+    for i in range(1, len(candles)):
+        prev_candle = candles[i-1]
+        current_candle = candles[i]
+        
+        prev_close = prev_candle["close"]
+        today_open = current_candle["open"]
+        
+        # Calculate gap
+        gap_size = today_open - prev_close
+        gap_pct = (gap_size / prev_close) * 100
+        
+        # Skip minimal gaps (< 0.1%)
+        if abs(gap_pct) < 0.1:
+            continue
+        
+        # ATR multiple
+        atr_multiple = abs(gap_size) / atr if atr > 0 else 0
+        
+        # Classification
+        if atr_multiple > 2.0:
+            classification = "EXTREME_GAP"
+            strength = "HIGH"
+        elif atr_multiple > 0.5:
+            classification = "NORMAL_GAP"
+            strength = "MEDIUM" if atr_multiple > 1.0 else "LOW"
+        else:
+            classification = "MINIMAL"
+            strength = "LOW"
+        
+        direction = "BULLISH" if gap_size > 0 else "BEARISH"
+        
+        # Fill probability
+        fill_prob = calculate_gap_fill_probability(gap_pct, direction, "")
+        
+        # Check if gap is filled (current price returned to prev_close area)
+        current_low = current_candle["low"]
+        current_high = current_candle["high"]
+        
+        is_filled = False
+        if direction == "BULLISH" and current_low <= prev_close * 1.001:
+            is_filled = True
+        elif direction == "BEARISH" and current_high >= prev_close * 0.999:
+            is_filled = True
+        
+        # Gap as FVG: If gap > 0.5 ATR, it's a "Strong FVG"
+        is_fvg = atr_multiple > 0.5
+        
+        gaps.append(GapInfo(
+            date=current_candle.get("date", f"Day {i}"),
+            prev_close=round(prev_close, 2),
+            today_open=round(today_open, 2),
+            size=round(gap_size, 2),
+            size_pct=round(gap_pct, 2),
+            atr_multiple=round(atr_multiple, 2),
+            classification=classification,
+            direction=direction,
+            fill_probability=round(fill_prob, 2),
+            is_fvg=is_fvg,
+            strength=strength
+        ))
+    
+    # Return last 5 gaps
+    return gaps[-5:]
+
+
+def detect_gap_fvgs(
+    candles: list,
+    atr: float
+) -> List[FairValueGap]:
+    """
+    Detect FVGs specifically from gaps (inter-day).
+    In EOD data, gaps ARE the most significant FVGs.
+    """
+    gap_fvgs = []
+    
+    if len(candles) < 2:
+        return gap_fvgs
+    
+    for i in range(1, len(candles)):
+        prev_close = candles[i-1]["close"]
+        today_open = candles[i]["open"]
+        today_low = candles[i]["low"]
+        today_high = candles[i]["high"]
+        
+        gap_size = abs(today_open - prev_close)
+        gap_pct = (gap_size / prev_close) * 100
+        
+        # Only significant gaps (> 0.5 ATR) become FVGs
+        if gap_pct < 0.5 or gap_size < atr * 0.5:
+            continue
+        
+        direction = "bullish" if today_open > prev_close else "bearish"
+        
+        # Check fill status
+        if direction == "bullish":
+            if today_low <= prev_close:
+                fill_pct = 100.0
+                status = "filled"
+            else:
+                # Partial fill calculation
+                fill_pct = ((today_open - today_low) / gap_size) * 100 if gap_size > 0 else 0
+                status = "partial" if fill_pct > 10 else "open"
+            
+            gap_fvgs.append(FairValueGap(
+                direction="bullish_gap",
+                high=round(today_open, 2),
+                low=round(prev_close, 2),
+                fill_pct=round(fill_pct, 1),
+                status=status
+            ))
+        else:
+            if today_high >= prev_close:
+                fill_pct = 100.0
+                status = "filled"
+            else:
+                fill_pct = ((today_high - today_open) / gap_size) * 100 if gap_size > 0 else 0
+                status = "partial" if fill_pct > 10 else "open"
+            
+            gap_fvgs.append(FairValueGap(
+                direction="bearish_gap",
+                high=round(prev_close, 2),
+                low=round(today_open, 2),
+                fill_pct=round(fill_pct, 1),
+                status=status
+            ))
+    
+    return gap_fvgs
+
+
+async def calculate_smc_with_gaps(symbol: str, candles: list) -> dict:
+    """
+    Enhanced SMC analysis with Gap-Aware optimizations for EOD data.
+    """
+    result = await calculate_smc(symbol, candles)
+    
+    if "error" in result:
+        return result
+    
+    # Calculate ATR for gap classification
+    highs = np.array([c["high"] for c in candles])
+    lows = np.array([c["low"] for c in candles])
+    closes = np.array([c["close"] for c in candles])
+    atr = calculate_atr(highs, lows, closes)
+    
+    # Analyze gaps
+    gaps = analyze_gaps(candles, atr)
+    result["gaps"] = [
+        {
+            "date": g.date,
+            "prev_close": g.prev_close,
+            "today_open": g.today_open,
+            "size": g.size,
+            "size_pct": g.size_pct,
+            "atr_multiple": g.atr_multiple,
+            "classification": g.classification,
+            "direction": g.direction,
+            "fill_probability": g.fill_probability,
+            "is_fvg": g.is_fvg,
+            "strength": g.strength
+        }
+        for g in gaps
+    ]
+    
+    # Add gap FVGs to existing FVGs
+    gap_fvgs = detect_gap_fvgs(candles, atr)
+    existing_fvgs = result.get("fair_value_gaps", [])
+    
+    # Mark gap FVGs as "strong"
+    for gf in gap_fvgs:
+        existing_fvgs.append({
+            "direction": gf.direction,
+            "high": gf.high,
+            "low": gf.low,
+            "fill_pct": gf.fill_pct,
+            "status": gf.status,
+            "type": "gap_fvg",
+            "strength": "high"
+        })
+    
+    result["fair_value_gaps"] = existing_fvgs[-6:]  # Keep last 6 (3 normal + 3 gap)
+    result["atr_20"] = round(atr, 2)
+    result["gap_analysis_enabled"] = True
+    
+    return result

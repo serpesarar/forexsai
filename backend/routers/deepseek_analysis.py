@@ -49,11 +49,11 @@ async def smc_analysis(symbol: str):
     NO DeepSeek/AI - Pure technical calculation for instant results.
     """
     try:
-        from services.smc_calculator_service import calculate_smc
+        from services.smc_calculator_service import calculate_smc_with_gaps
         from services.data_hub import data_hub
         
-        # Get candle data
-        candles = data_hub.get_candles(symbol, "1h", limit=100)
+        # Get EOD candle data (daily) for gap analysis
+        candles = data_hub.get_candles(symbol, "1d", limit=50)
         
         if not candles or len(candles) < 20:
             return NumpySafeJSONResponse(
@@ -61,7 +61,7 @@ async def smc_analysis(symbol: str):
                 status_code=400
             )
         
-        result = await calculate_smc(symbol, candles)
+        result = await calculate_smc_with_gaps(symbol, candles)
         return NumpySafeJSONResponse(content={"success": True, "data": result})
         
     except Exception as e:

@@ -26,6 +26,20 @@ import {
   Zap
 } from 'lucide-react';
 
+interface GapInfo {
+  date: string;
+  prev_close: number;
+  today_open: number;
+  size: number;
+  size_pct: number;
+  atr_multiple: number;
+  classification: string;
+  direction: string;
+  fill_probability: number;
+  is_fvg: boolean;
+  strength: string;
+}
+
 interface SMCData {
   symbol: string;
   timestamp: string;
@@ -50,6 +64,8 @@ interface SMCData {
     low: number;
     fill_pct: number;
     status: string;
+    type?: string;
+    strength?: string;
   }>;
   liquidity_pools: Array<{
     type: string;
@@ -71,6 +87,9 @@ interface SMCData {
     narrative: string;
     score: number;
   };
+  gaps: GapInfo[];
+  atr_20: number;
+  gap_analysis_enabled: boolean;
   calculation_method: string;
 }
 
@@ -266,16 +285,26 @@ export default function SMCPanel() {
       {/* Fair Value Gaps */}
       {fair_value_gaps.length > 0 && (
         <div className="mb-3">
-          <div className="text-xs text-gray-400 mb-2">Fair Value Gaps ({fair_value_gaps.length})</div>
+          <div className="text-xs text-gray-400 mb-2">
+            Fair Value Gaps ({fair_value_gaps.length})
+            <span className="text-xs text-gray-500 ml-1">(Gap FVGs = Strong)</span>
+          </div>
           <div className="space-y-1.5">
             {fair_value_gaps.map((fvg, i) => (
-              <div key={i} className="bg-gray-800/30 rounded p-2 flex items-center justify-between">
+              <div key={i} className={`rounded p-2 flex items-center justify-between ${
+                fvg.type === 'gap_fvg' ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-gray-800/30'
+              }`}>
                 <div className="flex items-center gap-2">
                   <span className={`text-xs font-medium ${
-                    fvg.direction === 'bullish' ? 'text-green-400' : 'text-red-400'
+                    fvg.direction?.includes('bullish') ? 'text-green-400' : 'text-red-400'
                   }`}>
-                    {fvg.direction}
+                    {fvg.direction?.includes('gap') ? '⚡ ' : ''}{fvg.direction}
                   </span>
+                  {fvg.type === 'gap_fvg' && (
+                    <span className="text-xs text-yellow-400 bg-yellow-400/10 px-1 rounded">
+                      GAP
+                    </span>
+                  )}
                   <span className="text-xs text-gray-500">
                     {fvg.low.toFixed(1)} - {fvg.high.toFixed(1)}
                   </span>
@@ -284,7 +313,7 @@ export default function SMCPanel() {
                   <div className="w-16 h-2 bg-gray-700 rounded-full overflow-hidden">
                     <div 
                       className={`h-full ${
-                        fvg.direction === 'bullish' ? 'bg-green-400' : 'bg-red-400'
+                        fvg.direction?.includes('bullish') ? 'bg-green-400' : 'bg-red-400'
                       }`}
                       style={{ width: `${fvg.fill_pct}%` }}
                     />
@@ -333,10 +362,60 @@ export default function SMCPanel() {
         </div>
       )}
 
+      {/* Gap Analysis */}
+      {data.gaps && data.gaps.length > 0 && (
+        <div className="mb-3">
+          <div className="text-xs text-gray-400 mb-2 flex items-center gap-1">
+            <TrendingUp className="w-3 h-3" />
+            Gap Analysis (EOD)
+            <span className="text-xs text-blue-400">ATR: {data.atr_20?.toFixed(2) || '--'}</span>
+          </div>
+          <div className="space-y-1.5">
+            {data.gaps.slice(-3).map((gap, i) => (
+              <div key={i} className={`bg-gray-800/30 rounded p-2 border-l-2 ${
+                gap.direction === 'BULLISH' ? 'border-green-400' : 'border-red-400'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-medium ${
+                      gap.direction === 'BULLISH' ? 'text-green-400' : 'text-red-400'
+                    }`}>
+                      {gap.direction === 'BULLISH' ? '↑' : '↓'} {gap.size_pct.toFixed(2)}%
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {gap.atr_multiple.toFixed(1)}x ATR
+                    </span>
+                    {gap.is_fvg && (
+                      <span className="text-xs text-yellow-400 bg-yellow-400/10 px-1 rounded">
+                        FVG
+                      </span>
+                    )}
+                  </div>
+                  <span className={`text-xs ${
+                    gap.classification === 'EXTREME_GAP' ? 'text-red-400' :
+                    gap.classification === 'NORMAL_GAP' ? 'text-yellow-400' : 'text-gray-400'
+                  }`}>
+                    {gap.classification.replace('_', ' ')}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mt-1 text-xs">
+                  <span className="text-gray-500">
+                    Fill Prob: {(gap.fill_probability * 100).toFixed(0)}%
+                  </span>
+                  <span className="text-gray-400">
+                    {gap.prev_close.toFixed(1)} → {gap.today_open.toFixed(1)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
       <div className="mt-auto pt-2 border-t border-gray-700 text-center">
         <p className="text-xs text-gray-500">
-          Rule-based • 100 candles analyzed
+          Gap-Aware • {data.gaps?.length || 0} gaps • ATR: {data.atr_20?.toFixed(2) || '--'}
         </p>
       </div>
     </div>
