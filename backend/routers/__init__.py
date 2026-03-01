@@ -30,7 +30,6 @@ from routers import (
     strategy_optimizer,
     chart_data,
     websocket,
-    cot_whale,
 )
 
 __all__ = [
@@ -65,5 +64,4 @@ __all__ = [
     "strategy_optimizer",
     "chart_data",
     "websocket",
-    "cot_whale",
 ]
