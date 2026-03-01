@@ -105,7 +105,7 @@ export const NewsChartCorrelationPanel = memo(function NewsChartCorrelationPanel
         `/api/data/cached/${apiSymbol}?timeframe=${timeframe}&bars=200`
       );
       
-      if (response.success && response.data) {
+      if (response.success && response.data && response.data.candles && Array.isArray(response.data.candles)) {
         // Transform to CandleData format
         const formattedCandles: CandleData[] = response.data.candles.map((c: any) => ({
           time: typeof c.time === "string" ? new Date(c.time).getTime() / 1000 : c.time,
@@ -118,7 +118,8 @@ export const NewsChartCorrelationPanel = memo(function NewsChartCorrelationPanel
         
         setCandles(formattedCandles);
       } else {
-        setError("Failed to load chart data");
+        console.warn("Invalid chart data response:", response);
+        setError("Failed to load chart data - invalid response format");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");

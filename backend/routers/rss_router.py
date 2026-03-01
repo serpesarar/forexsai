@@ -94,7 +94,7 @@ async def get_rss_news(
         
         # Skip low priority items if requested
         if skip_ai_filtered:
-            query = query.not_eq("urgency", "low")
+            query = query.neq("urgency", "low")
         
         response = query.execute()
         
