@@ -16,7 +16,7 @@ from services.news_analyzer import (
     SymbolImpact,
     IMPACT_RULES
 )
-from database.supabase_client import supabase
+from database.supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/news-correlation", tags=["news-correlation"])
 
@@ -158,6 +158,8 @@ async def get_correlated_news(
     Get news correlated to a specific symbol within time range
     """
     try:
+        supabase = get_supabase_client()
+        
         # Default time range: last 24 hours
         if not end_time:
             end_time = int(datetime.utcnow().timestamp())
@@ -241,6 +243,8 @@ async def get_recent_news(
     Get recent analyzed news
     """
     try:
+        supabase = get_supabase_client()
+        
         query = (
             supabase.table("enriched_news")
             .select("*")
@@ -266,6 +270,8 @@ async def store_analyzed_news(news_data: Dict[str, Any]):
     Store pre-analyzed news to database
     """
     try:
+        supabase = get_supabase_client()
+        
         # Ensure required fields
         if "id" not in news_data:
             news_data["id"] = f"news_{datetime.utcnow().timestamp()}"
@@ -371,6 +377,8 @@ async def get_news_stats(
     Get news analysis statistics
     """
     try:
+        supabase = get_supabase_client()
+        
         start_date = datetime.utcnow() - timedelta(days=days)
         
         # Query for stats

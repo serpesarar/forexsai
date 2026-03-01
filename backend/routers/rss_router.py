@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel
 
 from services.rss_aggregator import get_rss_aggregator, RSS_SOURCES
-from database.supabase_client import supabase
+from database.supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/rss", tags=["rss"])
 
@@ -72,6 +72,8 @@ async def get_rss_news(
     Get RSS news with optional filtering
     """
     try:
+        supabase = get_supabase_client()
+        
         start_time = datetime.utcnow() - timedelta(hours=hours)
         
         # Build query
@@ -139,6 +141,8 @@ async def get_latest_breaking(limit: int = Query(10, ge=1, le=50)):
     Get only breaking/high urgency news from last hour
     """
     try:
+        supabase = get_supabase_client()
+        
         start_time = datetime.utcnow() - timedelta(hours=1)
         
         response = (
@@ -171,6 +175,8 @@ async def get_news_by_category(
     Get news by category (forex, markets, business, commodities, crypto)
     """
     try:
+        supabase = get_supabase_client()
+        
         start_time = datetime.utcnow() - timedelta(hours=hours)
         
         response = (
@@ -218,6 +224,8 @@ async def get_rss_stats(hours: int = Query(24, ge=1, le=168)):
     Get RSS aggregation statistics
     """
     try:
+        supabase = get_supabase_client()
+        
         start_time = datetime.utcnow() - timedelta(hours=hours)
         
         # Get counts by urgency
@@ -297,6 +305,8 @@ async def search_rss_news(
     Search RSS news by keyword in title or content
     """
     try:
+        supabase = get_supabase_client()
+        
         # Search in headline (case-insensitive)
         response = (
             supabase.table("enriched_news")

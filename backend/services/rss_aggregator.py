@@ -15,7 +15,7 @@ import feedparser
 from difflib import SequenceMatcher
 
 from services.news_analyzer import get_analyzer, NewsAnalysisResult
-from database.supabase_client import supabase
+from database.supabase_client import get_supabase_client
 
 # RSS Feed Sources
 RSS_SOURCES = {
@@ -560,6 +560,8 @@ class RSSAggregator:
     async def store_in_database(self, item: RSSNewsItem) -> bool:
         """Store processed news in database"""
         try:
+            supabase = get_supabase_client()
+            
             # Check if already exists
             existing = supabase.table("enriched_news").select("id").eq("id", item.id).execute()
             
@@ -609,6 +611,8 @@ class RSSAggregator:
         }
         
         try:
+            supabase = get_supabase_client()
+            
             # Fetch all feeds
             items = await self.fetch_all_feeds()
             stats["fetched"] = len(items)
