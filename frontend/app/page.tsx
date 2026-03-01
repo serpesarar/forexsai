@@ -54,6 +54,7 @@ const MTFMatrixPanel = lazy(() => import("../components/panels/MTFMatrixPanel"))
 const RiskRewardPanel = lazy(() => import("../components/panels/RiskRewardPanel"));
 const COTWhalePanel = lazy(() => import("../components/panels/COTWhalePanel"));
 const SeasonalityPanel = lazy(() => import("../components/panels/SeasonalityPanel"));
+const SmartSetupPanel = lazy(() => import("../components/panels/SmartSetupPanel"));
 const HarmonicVisualizerPanel = lazy(() => import("../components/panels/HarmonicVisualizerPanel"));
 const StrategyOptimizerPanel = lazy(() => import("../components/panels/StrategyOptimizerPanel"));
 const NewsChartCorrelationPanel = lazy(() => import("../components/panels/NewsChartCorrelationPanel"));
@@ -952,6 +953,8 @@ export default function HomePage() {
         return <COTWhalePanel />;
       case "seasonality":
         return <SeasonalityPanel />;
+      case "smart-setup":
+        return <SmartSetupPanel />;
       case "harmonic-visualizer":
         return <HarmonicVisualizerPanel />;
       case "strategy-optimizer":

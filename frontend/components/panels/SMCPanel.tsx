@@ -1,346 +1,342 @@
-"use client";
+/**
+ * SMC Panel - Smart Money Concepts Analysis
+ * ==========================================
+ * Now uses rule-based geometric calculation (FREE, instant).
+ * Previously used DeepSeek API (expensive, slow).
+ */
 
-import { useState, useEffect } from "react";
-import { PanelHeader } from "../PanelHeader";
-import {
-  TrendingUp,
-  SecurityShieldIcon as Shield,
-  AnalysisIcon as Layers,
-  TargetIcon as Target,
-  ArrowDownIcon as TrendingDown,
-  ActivityIcon as Activity,
-  AlertIcon as AlertTriangle,
-  ZapIcon as Zap,
-  ArrowUpRightIcon as ArrowUpRight,
-  ArrowDownRightIcon as ArrowDownRight,
-  MinusIcon as Minus,
-  ChevronDownIcon as ChevronDown,
-  ChevronUpIcon as ChevronUp,
-} from "../ui/CustomIcons";
-import { BarChart3 } from "lucide-react";
+'use client';
 
+import React, { useState, useEffect, useCallback } from 'react';
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
-const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
-const P = { bg: "var(--bg-primary)", card: "var(--bg-card)", surface: "var(--bg-surface)", border: "var(--border-subtle)", text: "var(--text-primary)", muted: "var(--text-muted)", green: "var(--accent-positive)", red: "var(--accent-negative)", warn: "var(--accent-warning)", accent: "var(--accent-info)" };
+
+const SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"];
+const SYMBOL_LABELS: Record<string, string> = {
+  "NDX.INDX": "NASDAQ",
+  "XAUUSD": "XAU/USD",
+  "GDAXI.INDX": "DAX",
+  "CL.COMM": "US OIL"
+};
+import { 
+  Layers, 
+  TrendingUp, 
+  TrendingDown, 
+  AlertCircle,
+  RefreshCw,
+  Zap
+} from 'lucide-react';
 
 interface SMCData {
-  market_structure?: {
+  symbol: string;
+  timestamp: string;
+  market_structure: {
     current_trend: string;
-    last_bos?: { direction: string; price: number; confirmed: boolean };
-    last_choch?: { direction: string; price: number; confirmed: boolean };
+    last_bos: any;
+    last_choch: any;
     swing_high: number;
     swing_low: number;
   };
-  order_blocks?: Array<{
-    type: string;
+  order_blocks: Array<{
+    type: 'bullish' | 'bearish';
     price_high: number;
     price_low: number;
     strength: number;
     status: string;
-    timeframe?: string;
+    timeframe: string;
   }>;
-  fair_value_gaps?: Array<{
+  fair_value_gaps: Array<{
     direction: string;
     high: number;
     low: number;
     fill_pct: number;
     status: string;
   }>;
-  liquidity_pools?: Array<{
+  liquidity_pools: Array<{
     type: string;
     price: number;
     strength: string;
     swept: boolean;
   }>;
-  breaker_blocks?: Array<{
+  breaker_blocks: Array<{
     type: string;
     price_high: number;
     price_low: number;
     status: string;
   }>;
-  bias?: {
+  bias: {
     direction: string;
     confidence: number;
     key_level_to_watch: number;
     invalidation: number;
     narrative: string;
+    score: number;
   };
-  _reasoning?: string;
-  error?: string;
+  calculation_method: string;
 }
 
-const SYMBOLS = [
-  { key: "NDX.INDX", label: "NASDAQ" },
-  { key: "XAUUSD", label: "XAUUSD" },
-  { key: "GDAXI.INDX", label: "DAX" },
-  { key: "CL.COMM", label: "US Oil" },
-];
-
 export default function SMCPanel() {
-  const [symbol, setSymbol] = useState("XAUUSD");
+  const [activeSymbol, setActiveSymbol] = useState("NDX.INDX");
   const [data, setData] = useState<SMCData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showReasoning, setShowReasoning] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const handler = () => fetchData();
-    window.addEventListener("dashboard-refresh", handler);
-    return () => window.removeEventListener("dashboard-refresh", handler);
-  }, [symbol]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      setLoading(true);
-      const res = await fetch(`${API_BASE}/api/deepseek/smc/${symbol}`);
-      const json = await res.json();
-      if (json.success && json.data) {
-        setData(json.data);
-        setLastUpdate(new Date());
-      } else {
-        setData({ error: json.error || "No data" });
+      // Use new rule-based endpoint (FREE, instant)
+      const response = await fetch(`${API_BASE}/api/deepseek/smc/${activeSymbol}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } catch (e) {
-      console.error("SMC fetch error:", e);
-      setData({ error: "Connection failed" });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setData(result.data);
+      } else {
+        setError(result.error || 'Failed to fetch SMC data');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeSymbol]);
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 1800000); // 30 min - DeepSeek analysis doesn't change frequently
-    return () => clearInterval(interval);
-  }, [symbol]);
+  }, [fetchData, activeSymbol]);
 
-  const trendColor = (t: string) =>
-    t?.includes("bullish") || t === "up" ? "var(--accent-positive)" : t?.includes("bearish") || t === "down" ? "var(--accent-negative)" : "var(--accent-warning)";
-  const strengthBar = (s: number) => Math.min(100, (s / 10) * 100);
+  // Refresh every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(fetchData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
 
   if (loading && !data) {
     return (
-      <div className="p-2 animate-pulse bg-transparent">
-        <div className="h-8 rounded w-1/2 mb-4" style={{ background: "var(--bg-input)" }} />
-        <div className="space-y-3">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-16 rounded-xl" style={{ background: "var(--bg-input)" }} />
-          ))}
+      <div className="h-full flex items-center justify-center">
+        <div className="flex items-center gap-2 text-gray-400">
+          <div className="w-5 h-5 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+          <span className="text-sm">Analyzing price action...</span>
         </div>
       </div>
     );
   }
 
-  const bias = data?.bias;
-  const accent = trendColor(bias?.direction || "neutral");
+  if (error && !data) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-2" />
+          <p className="text-red-400 text-sm">{error}</p>
+          <button 
+            onClick={fetchData}
+            className="mt-3 px-3 py-1.5 bg-purple-500/20 text-purple-400 rounded text-xs hover:bg-purple-500/30 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const { market_structure, order_blocks, fair_value_gaps, liquidity_pools, bias } = data;
 
   return (
-    <div className="overflow-hidden bg-transparent shadow-none border-0">
-
-      <PanelHeader
-        title="SMC"
-        subtitle="SMART MONEY CONCEPTS"
-        icon={<BarChart3 size={24} strokeWidth={2.5} />}
-        iconColor="var(--accent-cyan)"
-        iconBg="var(--accent-cyan-08)"
-        iconBorder="var(--accent-cyan-15)"
-        symbols={SYMBOLS}
-        activeSymbol={symbol}
-        onSymbolChange={setSymbol}
-        onRefresh={fetchData}
-        loading={loading}
-        panelId="smc"
-      />
-
-      {data?.error ? (
-        <div className="p-8 text-center">
-          <AlertTriangle className="w-10 h-10 mx-auto mb-3 opacity-40" style={{ color: "var(--accent-warning)" }} />
-          <p className="text-sm font-mono" style={{ color: "var(--text-muted)" }}>DeepSeek analiz bekleniyor...</p>
-          <p className="text-[10px] mt-1 font-mono" style={{ color: "var(--text-disabled)" }}>{data.error}</p>
+    <div className="h-full flex flex-col p-3 overflow-y-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Layers className="w-4 h-4 text-purple-400" />
+          <span className="text-sm font-semibold text-white">Smart Money</span>
+          <span className="text-xs text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">FREE</span>
         </div>
-      ) : (
-        <>
-          {/* Bias Banner */}
-          {bias && (
-            <div className="px-4 py-3 flex items-center justify-between" style={{ background: "var(--info-bg)" }}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "var(--info-bg)", border: "1px solid var(--info-border)" }}>
-                  {bias.direction === "bullish" ? <TrendingUp className="w-5 h-5" style={{ color: accent }} /> :
-                    bias.direction === "bearish" ? <TrendingDown className="w-5 h-5" style={{ color: accent }} /> :
-                      <Activity className="w-5 h-5" style={{ color: accent }} />}
+        <div className="flex items-center gap-2">
+          <select
+            value={activeSymbol}
+            onChange={(e) => setActiveSymbol(e.target.value)}
+            className="bg-gray-800 text-xs text-white rounded px-2 py-1 border border-gray-700"
+          >
+            {SYMBOLS.map((s) => (
+              <option key={s} value={s}>{SYMBOL_LABELS[s]}</option>
+            ))}
+          </select>
+          <button 
+            onClick={fetchData}
+            className="p-1 hover:bg-gray-700 rounded transition-colors"
+            disabled={loading}
+          >
+            <RefreshCw className={`w-4 h-4 text-gray-400 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Market Structure */}
+      <div className="bg-gray-800/30 rounded-lg p-3 mb-3">
+        <div className="text-xs text-gray-400 mb-2">Market Structure</div>
+        <div className="flex items-center gap-2 mb-2">
+          <span className={`text-sm font-medium ${
+            market_structure.current_trend === 'bullish' ? 'text-green-400' :
+            market_structure.current_trend === 'bearish' ? 'text-red-400' : 'text-yellow-400'
+          }`}>
+            {market_structure.current_trend.toUpperCase()}
+          </span>
+          <span className="text-xs text-gray-500">
+            SH: {market_structure.swing_high.toFixed(1)} / SL: {market_structure.swing_low.toFixed(1)}
+          </span>
+        </div>
+      </div>
+
+      {/* Bias */}
+      <div className={`rounded-lg p-3 mb-3 ${
+        bias.direction === 'bullish' ? 'bg-green-500/10 border border-green-500/20' :
+        bias.direction === 'bearish' ? 'bg-red-500/10 border border-red-500/20' :
+        'bg-yellow-500/10 border border-yellow-500/20'
+      }`}>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs text-gray-400">Bias</span>
+          <span className={`text-sm font-bold ${
+            bias.direction === 'bullish' ? 'text-green-400' :
+            bias.direction === 'bearish' ? 'text-red-400' : 'text-yellow-400'
+          }`}>
+            {bias.direction.toUpperCase()}
+          </span>
+        </div>
+        <div className="text-xs text-gray-300 mb-2">{bias.narrative}</div>
+        <div className="flex items-center gap-4 text-xs">
+          <div>
+            <span className="text-gray-500">Key Level: </span>
+            <span className="text-blue-400 font-mono">{bias.key_level_to_watch.toFixed(2)}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Invalidation: </span>
+            <span className="text-red-400 font-mono">{bias.invalidation.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Order Blocks */}
+      {order_blocks.length > 0 && (
+        <div className="mb-3">
+          <div className="text-xs text-gray-400 mb-2">Order Blocks ({order_blocks.length})</div>
+          <div className="space-y-1.5">
+            {order_blocks.map((ob, i) => (
+              <div key={i} className="bg-gray-800/30 rounded p-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium ${
+                    ob.type === 'bullish' ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    {ob.type === 'bullish' ? 'Bull' : 'Bear'}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {ob.price_low.toFixed(1)} - {ob.price_high.toFixed(1)}
+                  </span>
                 </div>
-                <div>
-                  <div className="text-sm font-bold font-mono uppercase" style={{ fontFamily: FONT, color: accent }}>
-                    {bias.direction} BIAS
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: 10 }).map((_, j) => (
+                      <div 
+                        key={j} 
+                        className={`w-1 h-3 rounded-sm ${
+                          j < ob.strength ? 'bg-purple-400' : 'bg-gray-700'
+                        }`}
+                      />
+                    ))}
                   </div>
-                  <div style={{ fontFamily: FONT, fontSize: 10, color: "var(--text-muted)" }}>
-                    Güven: {bias.confidence}% • İzle: {bias.key_level_to_watch?.toFixed(0)}
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${
+                    ob.status === 'fresh' ? 'bg-green-500/20 text-green-400' : 
+                    ob.status === 'tested' ? 'bg-yellow-500/20 text-yellow-400' :
+                    'bg-gray-500/20 text-gray-400'
+                  }`}>
+                    {ob.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Fair Value Gaps */}
+      {fair_value_gaps.length > 0 && (
+        <div className="mb-3">
+          <div className="text-xs text-gray-400 mb-2">Fair Value Gaps ({fair_value_gaps.length})</div>
+          <div className="space-y-1.5">
+            {fair_value_gaps.map((fvg, i) => (
+              <div key={i} className="bg-gray-800/30 rounded p-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium ${
+                    fvg.direction === 'bullish' ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    {fvg.direction}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {fvg.low.toFixed(1)} - {fvg.high.toFixed(1)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-16 h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full ${
+                        fvg.direction === 'bullish' ? 'bg-green-400' : 'bg-red-400'
+                      }`}
+                      style={{ width: `${fvg.fill_pct}%` }}
+                    />
                   </div>
+                  <span className="text-xs text-gray-400">{fvg.fill_pct.toFixed(0)}%</span>
                 </div>
               </div>
-              <div className="text-right">
-                <div style={{ fontFamily: FONT, fontSize: 11, color: "var(--text-muted)" }}>İnvalidasyon</div>
-                <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: "var(--accent-negative)" }}>{bias.invalidation?.toFixed(0)}</div>
-              </div>
-            </div>
-          )}
+            ))}
+          </div>
+        </div>
+      )}
 
-          {/* Market Structure */}
-          {data?.market_structure && (
-            <div className="px-2 py-2 border-0">
-              <h3 className="text-[10px] uppercase tracking-widest font-mono mb-2" style={{ color: P.muted }}>
-                <Layers className="w-3 h-3 inline mr-1" style={{ color: P.accent }} /> Market Structure
-              </h3>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-lg p-2 text-center" style={{ background: "var(--bg-hover)", border: "1px solid var(--border-subtle)" }}>
-                  <div className="text-[9px] font-mono" style={{ color: P.muted }}>TREND</div>
-                  <div className="text-xs font-bold font-mono mt-0.5" style={{ color: trendColor(data.market_structure.current_trend) }}>
-                    {data.market_structure.current_trend?.toUpperCase()}
-                  </div>
+      {/* Liquidity Pools */}
+      {liquidity_pools.length > 0 && (
+        <div className="mb-3">
+          <div className="text-xs text-gray-400 mb-2">Liquidity Pools ({liquidity_pools.length})</div>
+          <div className="space-y-1.5">
+            {liquidity_pools.map((pool, i) => (
+              <div key={i} className="bg-gray-800/30 rounded p-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium ${
+                    pool.type === 'buy_side' ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    {pool.type === 'buy_side' ? 'Buy' : 'Sell'}
+                  </span>
+                  <span className="text-xs text-gray-500 font-mono">
+                    {pool.price.toFixed(2)}
+                  </span>
                 </div>
-                <div className="rounded-lg p-2 text-center" style={{ background: "var(--bg-hover)", border: "1px solid var(--border-subtle)" }}>
-                  <div className="text-[9px] font-mono" style={{ color: P.muted }}>SWING H</div>
-                  <div className="text-xs font-bold font-mono mt-0.5 text-white/80">{data.market_structure.swing_high?.toFixed(0)}</div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs ${
+                    pool.strength === 'strong' ? 'text-purple-400' :
+                    pool.strength === 'moderate' ? 'text-blue-400' : 'text-gray-400'
+                  }`}>
+                    {pool.strength}
+                  </span>
+                  {pool.swept ? (
+                    <span className="text-xs text-red-400">swept</span>
+                  ) : (
+                    <span className="text-xs text-green-400">active</span>
+                  )}
                 </div>
-                <div className="rounded-lg p-2 text-center" style={{ background: "var(--bg-hover)", border: "1px solid var(--border-subtle)" }}>
-                  <div className="text-[9px] font-mono" style={{ color: P.muted }}>SWING L</div>
-                  <div className="text-xs font-bold font-mono mt-0.5 text-white/80">{data.market_structure.swing_low?.toFixed(0)}</div>
-                </div>
               </div>
-              {/* BOS / CHoCH */}
-              <div className="flex gap-2 mt-2">
-                {data.market_structure.last_bos && (
-                  <div className="flex-1 rounded-lg px-2.5 py-1.5 flex items-center justify-between" style={{ background: "var(--success-bg)", border: "1px solid var(--success-border)" }}>
-                    <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color: "var(--accent-positive)" }}>BOS</span>
-                    <span className="text-[10px] font-mono text-white/70">{data.market_structure.last_bos.direction} @ {data.market_structure.last_bos.price?.toFixed(0)}</span>
-                  </div>
-                )}
-                {data.market_structure.last_choch && (
-                  <div className="flex-1 rounded-lg px-2.5 py-1.5 flex items-center justify-between" style={{ background: "var(--danger-bg)", border: "1px solid var(--danger-border)" }}>
-                    <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color: "var(--accent-negative)" }}>CHoCH</span>
-                    <span className="text-[10px] font-mono text-white/70">{data.market_structure.last_choch.direction} @ {data.market_structure.last_choch.price?.toFixed(0)}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Order Blocks */}
-          {data?.order_blocks && data.order_blocks.length > 0 && (
-            <div className="px-2 py-2 border-0">
-              <h3 className="text-[10px] uppercase tracking-widest font-mono mb-2" style={{ color: P.muted }}>
-                <Target className="w-3 h-3 inline mr-1" style={{ color: P.accent }} /> Order Blocks
-              </h3>
-              <div className="space-y-1.5">
-                {data.order_blocks.slice(0, 4).map((ob, i) => {
-                  const c = ob.type === "bullish" ? "var(--accent-positive)" : "var(--accent-negative)";
-                  return (
-                    <div key={i} className="rounded-lg px-3 py-2 flex items-center justify-between" style={{ background: `${c}10`, border: `1px solid ${c}20` }}>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-6 rounded-full" style={{ background: c }} />
-                        <div>
-                          <div className="text-[10px] font-bold font-mono" style={{ color: c }}>{ob.type.toUpperCase()} OB</div>
-                          <div className="text-[9px] font-mono" style={{ color: P.muted }}>{ob.price_low?.toFixed(0)} - {ob.price_high?.toFixed(0)}</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-16">
-                          <div className="rounded-full overflow-hidden" style={{ height: 4, background: "var(--border-subtle)" }}>
-                            <div className="h-full rounded-full" style={{ width: `${strengthBar(ob.strength)}%`, background: c, opacity: 0.85 }} />
-                          </div>
-                          <div className="text-[8px] font-mono text-center mt-0.5" style={{ color: P.muted }}>{ob.strength}/10</div>
-                        </div>
-                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: `${c}15`, color: c }}>{ob.status}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Fair Value Gaps */}
-          {data?.fair_value_gaps && data.fair_value_gaps.length > 0 && (
-            <div className="px-2 py-2 border-0">
-              <h3 className="text-[10px] uppercase tracking-widest font-mono mb-2" style={{ color: P.muted }}>
-                <Zap className="w-3 h-3 inline mr-1" style={{ color: P.warn }} /> Fair Value Gaps
-              </h3>
-              <div className="grid grid-cols-2 gap-2">
-                {data.fair_value_gaps.slice(0, 4).map((fvg, i) => {
-                  const c = fvg.direction === "bullish" ? "var(--accent-positive)" : "var(--accent-negative)";
-                  return (
-                    <div key={i} className="rounded-lg p-2.5" style={{ background: "var(--bg-hover)", border: "1px solid var(--border-subtle)" }}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[9px] font-bold font-mono" style={{ color: c }}>{fvg.direction.toUpperCase()}</span>
-                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{
-                          background: fvg.status === "open" ? "var(--success-bg)" : "var(--bg-hover)",
-                          color: fvg.status === "open" ? "var(--accent-positive)" : P.muted,
-                        }}>{fvg.status}</span>
-                      </div>
-                      <div className="text-[10px] font-mono text-white/60">{fvg.low?.toFixed(0)} - {fvg.high?.toFixed(0)}</div>
-                      <div className="rounded-full mt-1.5 overflow-hidden" style={{ height: 4, background: "var(--border-subtle)" }}>
-                        <div className="h-full rounded-full" style={{ width: `${fvg.fill_pct || 0}%`, background: "var(--accent-warning)", opacity: 0.85 }} />
-                      </div>
-                      <div className="text-[8px] font-mono mt-0.5" style={{ color: P.muted }}>Fill: {fvg.fill_pct || 0}%</div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Liquidity Pools */}
-          {data?.liquidity_pools && data.liquidity_pools.length > 0 && (
-            <div className="px-2 py-2 border-0">
-              <h3 className="text-[10px] uppercase tracking-widest font-mono mb-2" style={{ color: P.muted }}>
-                Liquidity Pools
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {data.liquidity_pools.map((lp, i) => {
-                  const c = lp.type === "buy_side" ? "var(--accent-positive)" : "var(--accent-negative)";
-                  return (
-                    <div key={i} className="rounded-lg px-3 py-1.5 flex items-center gap-2" style={{ background: `${c}10`, border: `1px solid ${c}20` }}>
-                      {lp.type === "buy_side" ? <ArrowUpRight className="w-3 h-3" style={{ color: c }} /> : <ArrowDownRight className="w-3 h-3" style={{ color: c }} />}
-                      <span className="text-[10px] font-mono font-bold" style={{ color: c }}>{lp.price?.toFixed(0)}</span>
-                      <span className="text-[8px] font-mono" style={{ color: P.muted }}>{lp.strength}</span>
-                      {lp.swept && <span className="text-[8px] font-mono px-1 rounded" style={{ background: "var(--danger-bg)", color: "var(--accent-negative)" }}>SWEPT</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Narrative */}
-          {bias?.narrative && (
-            <div className="px-2 py-2 border-0">
-              <div className="rounded-xl p-3" style={{ background: "var(--info-bg)", border: "1px solid var(--info-border)" }}>
-                <p style={{ fontFamily: FONT, fontSize: 12, lineHeight: 1.6, color: P.text }}>{bias.narrative}</p>
-              </div>
-            </div>
-          )}
-
-          {/* AI Reasoning (collapsible) */}
-          {data?._reasoning && (
-            <div className="px-2 py-2 border-0">
-              <button onClick={() => setShowReasoning(!showReasoning)} className="flex items-center gap-1.5 text-[10px] font-mono w-full" style={{ color: P.muted }}>
-                {showReasoning ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                AI Reasoning
-              </button>
-              {showReasoning && (
-                <div className="mt-2 rounded-lg p-3 text-[10px] font-mono leading-relaxed whitespace-pre-wrap" style={{ background: "var(--bg-surface)", color: P.muted, maxHeight: 200, overflowY: "auto" }}>
-                  {data._reasoning}
-                </div>
-              )}
-            </div>
-          )}
-        </>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Footer */}
-      <div className="px-2 py-2 text-center bg-transparent">
-        <p className="text-[10px] font-mono" style={{ color: P.muted }}>
-          {lastUpdate ? `Son güncelleme: ${lastUpdate.toLocaleTimeString()}` : "Yükleniyor..."} | DeepSeek-R1
+      <div className="mt-auto pt-2 border-t border-gray-700 text-center">
+        <p className="text-xs text-gray-500">
+          Rule-based • 100 candles analyzed
         </p>
       </div>
     </div>

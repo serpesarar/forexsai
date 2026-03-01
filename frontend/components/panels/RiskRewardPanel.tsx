@@ -1,403 +1,377 @@
-"use client";
+/**
+ * Risk/Reward Panel
+ * ==================
+ * Pure mathematical calculation for risk management.
+ * NO DeepSeek/AI - Kelly Criterion, ATR, position sizing formulas.
+ */
 
-import { useState, useEffect } from "react";
-import { PanelHeader } from "../PanelHeader";
-import {
-  Scale,
-  Target,
-  AlertTriangle,
-  TrendingUp,
-  TrendingDown,
-  Percent,
-  ChevronDown,
-  ChevronUp,
-  Flame,
-  Lock,
-  Unlock,
-} from "lucide-react";
+'use client';
 
+import React, { useState, useEffect, useCallback } from 'react';
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
-// ── Theme-aware Color Palette (CSS Variables) ───────────────────────────────
-const P = {
-  bg: "var(--bg-primary)",
-  card: "var(--bg-card)",
-  surface: "var(--bg-surface)",
-  border: "var(--border-subtle)",
-  text: "var(--text-primary)",
-  textSec: "var(--text-secondary)",
-  muted: "var(--text-muted)",
-  green: "var(--accent-positive)",
-  red: "var(--accent-negative)",
-  warn: "var(--accent-warning)",
-  accent: "var(--accent-info)",
-  cyan: "var(--accent-cyan)",
-  purple: "var(--accent-purple)",
+const SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"];
+const SYMBOL_LABELS: Record<string, string> = {
+  "NDX.INDX": "NASDAQ",
+  "XAUUSD": "XAU/USD",
+  "GDAXI.INDX": "DAX",
+  "CL.COMM": "US OIL"
 };
+import { 
+  Shield, 
+  TrendingUp, 
+  TrendingDown, 
+  AlertCircle,
+  RefreshCw,
+  DollarSign,
+  Target,
+  Percent
+} from 'lucide-react';
 
 interface RiskData {
-  position_sizing?: {
-    kelly_fraction: number;
-    adjusted_size: number;
-    reason: string;
-    max_risk_pct: number;
-  };
-  stop_loss?: {
-    price: number;
-    atr_multiplier: number;
-    type: string;
-    distance_pct: number;
-  };
-  take_profits?: Array<{
-    level: number;
-    close_pct: number;
-    rr_ratio: number;
-    logic: string;
-  }>;
-  trail_stop?: {
-    activation_price: number;
-    trail_distance_atr: number;
-    enabled: boolean;
-  };
-  portfolio_heat?: {
-    current_exposure_pct: number;
-    max_allowed_pct: number;
-    correlation_adjustment: number;
-    final_heat_pct: number;
-  };
-  risk_score?: {
-    overall: number;
-    factors: string[];
+  symbol: string;
+  timestamp: string;
+  current_price: number;
+  direction: 'long' | 'short';
+  atr_14: number;
+  kelly_criterion: {
+    kelly_pct: number;
+    fractional_kelly: number;
     recommendation: string;
+    reason: string;
+    edge_ratio: number;
   };
-  _reasoning?: string;
-  error?: string;
+  stop_loss: {
+    price: number;
+    distance: number;
+    distance_pct: number;
+    method: string;
+  };
+  take_profits: Array<{
+    level: number;
+    price: number;
+    r_r_ratio: number;
+    distance_pct: number;
+  }>;
+  position_sizing: {
+    units: number;
+    adjusted_units: number;
+    position_value: number;
+    risk_amount: number;
+    risk_pct: number;
+    volatility_adjustment: number;
+  };
+  trailing_stop: {
+    activated: boolean;
+    activation_rr: number;
+    current_rr: number;
+    trail_price: number;
+  };
+  volatility: {
+    adjustment: number;
+    volatility_regime: string;
+    current_volatility: number;
+    historical_volatility: number;
+  };
+  recommendations: {
+    position_size: string;
+    max_risk: string;
+    stop_loss: string;
+    primary_target: string;
+  };
 }
 
-const SYMBOLS = [
-  { key: "NDX.INDX", label: "NASDAQ" },
-  { key: "XAUUSD", label: "XAUUSD" },
-  { key: "GDAXI.INDX", label: "DAX" },
-  { key: "CL.COMM", label: "US Oil" },
-];
-
 export default function RiskRewardPanel() {
-  const [symbol, setSymbol] = useState("XAUUSD");
+  const [activeSymbol, setActiveSymbol] = useState("NDX.INDX");
   const [data, setData] = useState<RiskData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showReasoning, setShowReasoning] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [direction, setDirection] = useState<'long' | 'short'>('long');
+  const [accountSize, setAccountSize] = useState(10000);
+  const [riskPerTrade, setRiskPerTrade] = useState(1.0);
 
-  useEffect(() => {
-    const handler = () => fetchData();
-    window.addEventListener("dashboard-refresh", handler);
-    return () => window.removeEventListener("dashboard-refresh", handler);
-  }, [symbol]);
-
-  const generateFallbackData = (sym: string): RiskData => {
-    // Static fallback data for when DeepSeek API is unavailable
-    const isGold = sym === "XAUUSD";
-    const isNasdaq = sym.includes("NDX") || sym.includes("NASDAQ");
-    const baseRisk = isGold ? 45 : isNasdaq ? 55 : 50;
-    return {
-      position_sizing: {
-        kelly_fraction: 0.12,
-        adjusted_size: 0.08,
-        reason: `DeepSeek offline — using conservative ${isGold ? 'gold' : isNasdaq ? 'equity' : 'commodity'} defaults`,
-        max_risk_pct: isGold ? 1.5 : 2.0,
-      },
-      risk_score: {
-        overall: baseRisk,
-        factors: [
-          "DeepSeek API unavailable — static risk estimate",
-          isGold ? "Gold: moderate volatility environment assumed" : "Equity: standard market conditions assumed",
-        ],
-        recommendation: "Use conservative position sizing until live analysis resumes",
-      },
-      portfolio_heat: {
-        current_exposure_pct: 0,
-        max_allowed_pct: 6,
-        correlation_adjustment: 1.0,
-        final_heat_pct: 0,
-      },
-    };
-  };
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      setLoading(true);
-      const res = await fetch(`${API_BASE}/api/deepseek/risk/${symbol}`);
-      const json = await res.json();
-      if (json.success && json.data) {
-        // Check if API returned an error in data
-        if (json.data.error && !json.data.risk_score) {
-          // API call failed (e.g., 402 Insufficient Balance) — use fallback
-          console.warn("RiskReward API error, using fallback:", json.data.error);
-          setData(generateFallbackData(symbol));
-        } else {
-          setData(json.data);
-        }
-        setLastUpdate(new Date());
-      } else {
-        setData(generateFallbackData(symbol));
-        setLastUpdate(new Date());
+      const response = await fetch(
+        `${API_BASE}/api/deepseek/risk/${activeSymbol}?direction=${direction}&account_size=${accountSize}&risk_per_trade=${riskPerTrade}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } catch (e) {
-      console.error("Risk fetch error:", e);
-      setData(generateFallbackData(symbol));
-      setLastUpdate(new Date());
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setData(result.data);
+      } else {
+        setError(result.error || 'Failed to fetch risk data');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeSymbol, direction, accountSize, riskPerTrade]);
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 1800000); // 30 min - DeepSeek analysis doesn't change frequently
-    return () => clearInterval(interval);
-  }, [symbol]);
+  }, [fetchData, activeSymbol]);
 
-  const riskScoreColor = (s?: number) => {
-    if (!s) return P.accent;
-    if (s < 30) return P.green;
-    if (s < 60) return P.warn;
-    return P.red;
+  // Refresh every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(fetchData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  const getKellyColor = (recommendation: string) => {
+    switch (recommendation) {
+      case 'avoid': return 'text-red-400';
+      case 'minimal': return 'text-orange-400';
+      case 'conservative': return 'text-yellow-400';
+      case 'moderate': return 'text-blue-400';
+      case 'aggressive': return 'text-green-400';
+      default: return 'text-gray-400';
+    }
   };
 
   if (loading && !data) {
     return (
-      <div className="p-2 animate-pulse bg-transparent">
-        <div className="h-8 rounded w-1/2 mb-4" style={{ background: P.border }} />
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-20 rounded-xl" style={{ background: P.border }} />
-          ))}
+      <div className="h-full flex items-center justify-center">
+        <div className="flex items-center gap-2 text-gray-400">
+          <div className="w-5 h-5 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+          <span className="text-sm">Calculating risk...</span>
         </div>
       </div>
     );
   }
 
-  const scoreColor = riskScoreColor(data?.risk_score?.overall);
+  if (error && !data) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-2" />
+          <p className="text-red-400 text-sm">{error}</p>
+          <button 
+            onClick={fetchData}
+            className="mt-3 px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded text-xs hover:bg-blue-500/30 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const { kelly_criterion, stop_loss, take_profits, position_sizing, volatility, trailing_stop } = data;
 
   return (
-    <div className="overflow-hidden bg-transparent border-0 shadow-none">
+    <div className="h-full flex flex-col p-3 overflow-y-auto">
       {/* Header */}
-      <PanelHeader
-        title="RISK REWARD"
-        subtitle="POSITION CALCULATOR"
-        icon={<Scale size={24} strokeWidth={2.5} />}
-        iconColor="var(--accent-cyan)"
-        iconBg="var(--accent-cyan-08)"
-        iconBorder="var(--accent-cyan-15)"
-        symbols={SYMBOLS}
-        activeSymbol={symbol}
-        onSymbolChange={setSymbol}
-        onRefresh={fetchData}
-        loading={loading}
-        panelId="risk-reward"
-      />
-
-      {data?.error ? (
-        <div className="p-8 text-center">
-          <AlertTriangle className="w-10 h-10 mx-auto mb-3 opacity-40" style={{ color: P.warn }} />
-          <p className="text-sm font-mono" style={{ color: P.muted }}>DeepSeek analiz bekleniyor...</p>
-          <p className="text-[10px] mt-1 font-mono" style={{ color: P.muted }}>{data.error}</p>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Shield className="w-4 h-4 text-blue-400" />
+          <span className="text-sm font-semibold text-white">Risk/Reward</span>
+          <span className="text-xs text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">FREE</span>
         </div>
-      ) : (
-        <>
-          {/* Risk Score + Position Sizing */}
-          <div className="p-4 flex gap-3">
-            {/* Risk Score */}
-            {data?.risk_score && (
-              <div className="flex-1 rounded-xl p-3 text-center" style={{ background: P.card, border: `1px solid ${P.border}` }}>
-                <div className="relative inline-flex items-center justify-center w-20 h-20 mb-2">
-                  <svg className="w-20 h-20 -rotate-90">
-                    <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5" />
-                    <circle cx="40" cy="40" r="34" fill="none" stroke={scoreColor} strokeWidth="5"
-                      strokeDasharray={`${((data.risk_score.overall || 0) / 100) * 213.6} 213.6`} strokeLinecap="round"
-                      style={{ filter: `drop-shadow(0 0 6px ${scoreColor}60)` }} />
-                  </svg>
-                  <div className="absolute text-center">
-                    <span className="text-lg font-bold font-mono" style={{ color: scoreColor }}>{data.risk_score.overall}</span>
-                    <span className="text-[8px] font-mono block" style={{ color: P.muted }}>RISK</span>
-                  </div>
-                </div>
-                <div className="text-[10px] font-mono" style={{ color: P.muted }}>
-                  {data.risk_score.overall < 30 ? "Düşük Risk" : data.risk_score.overall < 60 ? "Orta Risk" : "Yüksek Risk"}
-                </div>
-              </div>
-            )}
+        <div className="flex items-center gap-2">
+          <select
+            value={activeSymbol}
+            onChange={(e) => setActiveSymbol(e.target.value)}
+            className="bg-gray-800 text-xs text-white rounded px-2 py-1 border border-gray-700"
+          >
+            {SYMBOLS.map((s) => (
+              <option key={s} value={s}>{SYMBOL_LABELS[s]}</option>
+            ))}
+          </select>
+          <button 
+            onClick={fetchData}
+            className="p-1 hover:bg-gray-700 rounded transition-colors"
+            disabled={loading}
+          >
+            <RefreshCw className={`w-4 h-4 text-gray-400 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+      </div>
 
-            {/* Position Sizing */}
-            {data?.position_sizing && (
-              <div className="flex-1 rounded-xl p-3" style={{ background: P.card, border: `1px solid ${P.border}` }}>
-                <div className="text-[9px] uppercase tracking-widest font-mono mb-2" style={{ color: P.muted }}>Position Sizing</div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-mono" style={{ color: P.muted }}>Kelly</span>
-                    <span className="text-sm font-bold font-mono" style={{ color: P.accent }}>{(data.position_sizing.kelly_fraction * 100).toFixed(1)}%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-mono" style={{ color: P.muted }}>Adjusted</span>
-                    <span className="text-sm font-bold font-mono" style={{ color: P.green }}>{(data.position_sizing.adjusted_size * 100).toFixed(1)}%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-mono" style={{ color: P.muted }}>Max Risk</span>
-                    <span className="text-sm font-bold font-mono" style={{ color: P.red }}>{data.position_sizing.max_risk_pct}%</span>
-                  </div>
-                </div>
-                {data.position_sizing.reason && (
-                  <div className="mt-2 text-[9px] font-mono" style={{ color: P.muted }}>{data.position_sizing.reason}</div>
-                )}
-              </div>
-            )}
+      {/* Direction & Settings */}
+      <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-1 bg-gray-800/50 rounded p-0.5">
+          <button
+            onClick={() => setDirection('long')}
+            className={`px-2 py-1 text-xs rounded transition-colors ${
+              direction === 'long' 
+                ? 'bg-green-500/20 text-green-400' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Long
+          </button>
+          <button
+            onClick={() => setDirection('short')}
+            className={`px-2 py-1 text-xs rounded transition-colors ${
+              direction === 'short' 
+                ? 'bg-red-500/20 text-red-400' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Short
+          </button>
+        </div>
+        <select 
+          value={riskPerTrade}
+          onChange={(e) => setRiskPerTrade(Number(e.target.value))}
+          className="bg-gray-800/50 text-xs text-white rounded px-2 py-1 border border-gray-700"
+        >
+          <option value={0.5}>0.5% Risk</option>
+          <option value={1.0}>1% Risk</option>
+          <option value={1.5}>1.5% Risk</option>
+          <option value={2.0}>2% Risk</option>
+        </select>
+      </div>
+
+      {/* Kelly Criterion */}
+      <div className="bg-gray-800/30 rounded-lg p-3 mb-3">
+        <div className="text-xs text-gray-400 mb-2 flex items-center gap-1">
+          <TrendingUp className="w-3 h-3" />
+          Kelly Criterion
+        </div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs text-gray-300">Optimal Position</span>
+          <span className="text-lg font-bold text-blue-400">{kelly_criterion.fractional_kelly.toFixed(2)}%</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-300">Recommendation</span>
+          <span className={`text-sm font-medium ${getKellyColor(kelly_criterion.recommendation)}`}>
+            {kelly_criterion.recommendation}
+          </span>
+        </div>
+        <div className="mt-2 text-xs text-gray-500">{kelly_criterion.reason}</div>
+      </div>
+
+      {/* Stop Loss & Take Profits */}
+      <div className="bg-gray-800/30 rounded-lg p-3 mb-3">
+        <div className="text-xs text-gray-400 mb-2 flex items-center gap-1">
+          <Target className="w-3 h-3" />
+          Levels
+        </div>
+        
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-300">Entry</span>
+            <span className="text-sm font-mono text-white">{data.current_price.toFixed(2)}</span>
           </div>
-
-          {/* Stop Loss & Take Profits */}
-          <div className="px-4 pb-3">
-            <div className="grid grid-cols-2 gap-2.5">
-              {/* Stop Loss */}
-              {data?.stop_loss && (
-                <div className="rounded-xl p-3" style={{ background: `${P.red}10`, border: `1px solid ${P.red}20` }}>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <Lock className="w-3 h-3" style={{ color: P.red }} />
-                    <span className="text-[10px] uppercase tracking-widest font-mono" style={{ color: P.red }}>Stop Loss</span>
-                  </div>
-                  <div className="text-lg font-bold font-mono" style={{ color: P.red, textShadow: `0 0 10px ${P.red}30` }}>
-                    {data.stop_loss.price?.toFixed(1)}
-                  </div>
-                  <div className="flex justify-between mt-1.5">
-                    <span className="text-[9px] font-mono" style={{ color: P.muted }}>ATR x{data.stop_loss.atr_multiplier}</span>
-                    <span className="text-[9px] font-mono" style={{ color: P.muted }}>-{data.stop_loss.distance_pct?.toFixed(2)}%</span>
-                  </div>
-                  <span className="text-[8px] font-mono px-1.5 py-0.5 rounded mt-1 inline-block" style={{ background: `${P.red}15`, color: P.red }}>
-                    {data.stop_loss.type}
-                  </span>
-                </div>
-              )}
-
-              {/* Trail Stop */}
-              {data?.trail_stop && (
-                <div className="rounded-xl p-3" style={{ background: `${P.accent}10`, border: `1px solid ${P.accent}20` }}>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    {data.trail_stop.enabled ? <Unlock className="w-3 h-3" style={{ color: P.accent }} /> : <Lock className="w-3 h-3" style={{ color: P.muted }} />}
-                    <span className="text-[10px] uppercase tracking-widest font-mono" style={{ color: P.accent }}>Trail Stop</span>
-                  </div>
-                  <div className="text-lg font-bold font-mono" style={{ color: P.accent, textShadow: `0 0 10px ${P.accent}30` }}>
-                    {data.trail_stop.activation_price?.toFixed(1)}
-                  </div>
-                  <div className="flex justify-between mt-1.5">
-                    <span className="text-[9px] font-mono" style={{ color: P.muted }}>ATR x{data.trail_stop.trail_distance_atr}</span>
-                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{
-                      background: data.trail_stop.enabled ? "var(--accent-positive-10)" : "var(--bg-hover)",
-                      color: data.trail_stop.enabled ? P.green : P.muted,
-                    }}>{data.trail_stop.enabled ? "AKTİF" : "PASİF"}</span>
-                  </div>
-                </div>
-              )}
+          
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-300">Stop Loss</span>
+            <div className="text-right">
+              <span className="text-sm font-mono text-red-400">{stop_loss.price.toFixed(2)}</span>
+              <span className="text-xs text-gray-500 ml-2">({stop_loss.distance_pct.toFixed(1)}%)</span>
             </div>
           </div>
-
-          {/* Take Profits */}
-          {data?.take_profits && data.take_profits.length > 0 && (
-            <div className="px-4 pb-3">
-              <div className="text-[9px] uppercase tracking-widest font-mono mb-2 px-1" style={{ color: P.muted }}>
-                <Target className="w-3 h-3 inline mr-1" style={{ color: P.green }} /> Take Profits
-              </div>
-              <div className="space-y-1.5">
-                {data.take_profits.map((tp, i) => (
-                  <div key={i} className="rounded-lg px-3 py-2 flex items-center justify-between" style={{ background: `${P.green}05`, border: `1px solid ${P.green}10` }}>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold font-mono" style={{ background: P.border }}>
-                        {i + 1}
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold font-mono" style={{ color: P.green }}>{tp.level?.toFixed(1)}</div>
-                        <div className="text-[9px] font-mono" style={{ color: P.muted }}>{tp.logic}</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[10px] font-bold font-mono" style={{ color: P.accent }}>%{tp.close_pct}</div>
-                      <div className="text-[9px] font-mono" style={{ color: P.muted }}>R:R {tp.rr_ratio?.toFixed(1)}</div>
-                    </div>
-                  </div>
-                ))}
+          
+          {take_profits.map((tp) => (
+            <div key={tp.level} className="flex items-center justify-between">
+              <span className="text-xs text-gray-300">TP{tp.level}</span>
+              <div className="text-right">
+                <span className="text-sm font-mono text-green-400">{tp.price.toFixed(2)}</span>
+                <span className="text-xs text-blue-400 ml-2">{tp.r_r_ratio}:1 R:R</span>
               </div>
             </div>
-          )}
+          ))}
+        </div>
+      </div>
 
-          {/* Portfolio Heat */}
-          {data?.portfolio_heat && (
-            <div className="px-4 pb-3">
-              <div className="rounded-xl p-3" style={{ background: `${P.warn}05`, border: `1px solid ${P.warn}10` }}>
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Flame className="w-3.5 h-3.5" style={{ color: P.warn }} />
-                  <span className="text-[10px] uppercase tracking-widest font-mono" style={{ color: P.warn }}>Portfolio Heat</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <div className="h-2.5 rounded-full overflow-hidden" style={{ background: P.border }}>
-                      <div className="h-full rounded-full transition-all duration-700" style={{
-                        width: `${Math.min(100, (data.portfolio_heat.final_heat_pct / data.portfolio_heat.max_allowed_pct) * 100)}%`,
-                        background: data.portfolio_heat.final_heat_pct > data.portfolio_heat.max_allowed_pct * 0.8
-                          ? `${P.red}30`
-                          : `${P.green}30`,
-                        boxShadow: `0 0 8px ${P.green}30`,
-                      }} />
-                    </div>
-                    <div className="flex justify-between mt-1">
-                      <span className="text-[9px] font-mono" style={{ color: P.muted }}>0%</span>
-                      <span className="text-[9px] font-mono" style={{ color: P.muted }}>{data.portfolio_heat.max_allowed_pct}%</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold font-mono" style={{ color: P.warn }}>{data.portfolio_heat.final_heat_pct?.toFixed(1)}%</div>
-                    <div className="text-[8px] font-mono" style={{ color: P.muted }}>Korrelasyon: x{data.portfolio_heat.correlation_adjustment}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+      {/* Position Sizing */}
+      <div className="bg-gray-800/30 rounded-lg p-3 mb-3">
+        <div className="text-xs text-gray-400 mb-2 flex items-center gap-1">
+          <DollarSign className="w-3 h-3" />
+          Position Sizing
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <div className="text-xs text-gray-500">Units</div>
+            <div className="text-lg font-mono text-white">{position_sizing.adjusted_units.toFixed(2)}</div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500">Position Value</div>
+            <div className="text-lg font-mono text-white">${position_sizing.position_value.toFixed(0)}</div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500">Risk Amount</div>
+            <div className="text-sm font-mono text-red-400">${position_sizing.risk_amount.toFixed(0)}</div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500">Risk %</div>
+            <div className="text-sm font-mono text-yellow-400">{position_sizing.risk_pct.toFixed(1)}%</div>
+          </div>
+        </div>
+        
+        {volatility.adjustment !== 1 && (
+          <div className="mt-2 text-xs">
+            <span className="text-gray-500">Volatility Adjustment: </span>
+            <span className={volatility.adjustment > 1 ? 'text-green-400' : 'text-red-400'}>
+              {volatility.adjustment > 1 ? '+' : ''}{((volatility.adjustment - 1) * 100).toFixed(0)}%
+            </span>
+            <span className="text-gray-500 ml-1">({volatility.volatility_regime} volatility)</span>
+          </div>
+        )}
+      </div>
 
-          {/* Risk Factors */}
-          {data?.risk_score?.factors && data.risk_score.factors.length > 0 && (
-            <div className="px-4 pb-3">
-              <div className="space-y-1">
-                {data.risk_score.factors.map((f, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-[10px] font-mono" style={{ color: P.muted }}>
-                    <AlertTriangle className="w-3 h-3 shrink-0" style={{ color: P.warn }} /> {f}
-                  </div>
-                ))}
-              </div>
-              {data.risk_score.recommendation && (
-                <div className="mt-2 rounded-lg p-2.5" style={{ background: `${P.accent}05`, border: `1px solid ${P.accent}10` }}>
-                  <p className="text-[10px] font-mono" style={{ color: P.accent }}>{data.risk_score.recommendation}</p>
-                </div>
-              )}
-            </div>
-          )}
+      {/* Trailing Stop */}
+      <div className="bg-gray-800/30 rounded-lg p-3 mb-3">
+        <div className="text-xs text-gray-400 mb-2">Trailing Stop</div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-300">Status</span>
+          <span className={`text-xs ${trailing_stop.activated ? 'text-green-400' : 'text-gray-400'}`}>
+            {trailing_stop.activated ? 'Activated' : 'Not Active'}
+          </span>
+        </div>
+        {trailing_stop.activated && (
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-xs text-gray-300">Trail Price</span>
+            <span className="text-sm font-mono text-blue-400">{trailing_stop.trail_price.toFixed(2)}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between mt-1">
+          <span className="text-xs text-gray-300">Current R:R</span>
+          <span className="text-sm font-mono text-white">{trailing_stop.current_rr.toFixed(2)}:1</span>
+        </div>
+      </div>
 
-          {/* AI Reasoning */}
-          {data?._reasoning && (
-            <div className="px-4 pb-2">
-              <button onClick={() => setShowReasoning(!showReasoning)} className="flex items-center gap-1.5 text-[10px] font-mono w-full" style={{ color: P.muted }}>
-                {showReasoning ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                AI Reasoning
-              </button>
-              {showReasoning && (
-                <div className="mt-2 rounded-lg p-3 text-[10px] font-mono leading-relaxed whitespace-pre-wrap" style={{ background: P.surface, color: P.muted, maxHeight: 200, overflowY: "auto" }}>
-                  {data._reasoning}
-                </div>
-              )}
-            </div>
-          )}
-        </>
-      )}
+      {/* Summary */}
+      <div className={`rounded-lg p-3 ${
+        kelly_criterion.recommendation === 'avoid' ? 'bg-red-500/10 border border-red-500/20' :
+        kelly_criterion.recommendation === 'conservative' ? 'bg-yellow-500/10 border border-yellow-500/20' :
+        'bg-green-500/10 border border-green-500/20'
+      }`}>
+        <div className="text-xs text-gray-400 mb-2">Summary</div>
+        <ul className="space-y-1">
+          <li className="text-xs text-gray-300 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+            {data.recommendations.position_size}
+          </li>
+          <li className="text-xs text-gray-300 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+            {data.recommendations.stop_loss}
+          </li>
+          <li className="text-xs text-gray-300 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+            {data.recommendations.primary_target}
+          </li>
+        </ul>
+      </div>
 
       {/* Footer */}
-      <div className="px-2 py-2 text-center bg-transparent">
-        <p className="text-[10px] font-mono" style={{ color: P.muted }}>
-          {lastUpdate ? `Son güncelleme: ${lastUpdate.toLocaleTimeString()}` : "Yükleniyor..."} | DeepSeek-R1
+      <div className="mt-auto pt-2 border-t border-gray-700 text-center">
+        <p className="text-xs text-gray-500">
+          Pure math • ATR: {data.atr_14.toFixed(2)}
         </p>
       </div>
     </div>

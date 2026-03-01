@@ -74,6 +74,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "candlestick-patterns", title: "Candlestick Patterns", column: "right", order: 7, visible: true, size: "medium", collapsed: false },
     { id: "strategy-performance", title: "Strategy Performance", column: "right", order: 8, visible: true, size: "large", collapsed: false },
     { id: "seasonality", title: "Seasonality & Anomaly", column: "right", order: 9, visible: true, size: "large", collapsed: false },
+    { id: "smart-setup", title: "Smart Setup Generator", column: "right", order: 10, visible: true, size: "large", collapsed: false },
 
     // ─── CENTER COLUMN (hidden by default, available in edit mode) ─
     { id: "signal-nasdaq", title: "NASDAQ Trend Analysis", column: "center", order: 0, visible: false, size: "medium", collapsed: false },
