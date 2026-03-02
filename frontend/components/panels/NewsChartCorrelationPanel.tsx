@@ -101,14 +101,16 @@ export const NewsChartCorrelationPanel = memo(function NewsChartCorrelationPanel
       setIsLoading(true);
       const apiSymbol = symbolMap[symbol] || symbol;
       
-      const response = await fetcher<ChartDataResponse>(
-        `/api/data/cached/${apiSymbol}?timeframe=${timeframe}&bars=200`
+      // Use OHLCV endpoint for candle data
+      const response = await fetcher<any>(
+        `/api/data/ohlcv?symbol=${apiSymbol}&timeframe=${timeframe}&limit=200`
       );
       
-      if (response.success && response.data && response.data.candles && Array.isArray(response.data.candles)) {
+      // OHLCV endpoint returns {symbol, timeframe, data: [...]}
+      if (response && response.data && Array.isArray(response.data)) {
         // Transform to CandleData format
-        const formattedCandles: CandleData[] = response.data.candles.map((c: any) => ({
-          time: typeof c.time === "string" ? new Date(c.time).getTime() / 1000 : c.time,
+        const formattedCandles: CandleData[] = response.data.map((c: any) => ({
+          time: Math.floor(c.timestamp / 1000), // Convert ms to seconds
           open: c.open,
           high: c.high,
           low: c.low,
