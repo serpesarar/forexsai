@@ -138,10 +138,27 @@ const generateMockAnalysis = (headline: string): AIAnalysisResponse => {
 
 // Generate mock enriched news
 export const generateMockEnrichedNews = (count: number = 10): EnrichedNews[] => {
+  const urgencyLevels: Array<"breaking" | "high" | "medium" | "low"> = ["breaking", "high", "medium", "low"];
+  
   return Array.from({ length: count }, (_, i) => {
     const headline = mockHeadlines[i % mockHeadlines.length];
     const analysis = generateMockAnalysis(headline);
     const timestamp = generateRandomTimestamp();
+    
+    // Determine urgency based on headline keywords and impact score
+    let urgency: "breaking" | "high" | "medium" | "low" = "low";
+    const lowerHeadline = headline.toLowerCase();
+    const maxImpact = Math.max(...analysis.impacts.map(i => i.score), 0);
+    
+    if (lowerHeadline.includes("all-time high") || lowerHeadline.includes("trump")) {
+      urgency = "breaking";
+    } else if (lowerHeadline.includes("fed") || lowerHeadline.includes("nfp") || maxImpact >= 8) {
+      urgency = "high";
+    } else if (maxImpact >= 5) {
+      urgency = "medium";
+    } else {
+      urgency = urgencyLevels[Math.floor(Math.random() * 2) + 2]; // medium or low
+    }
     
     return {
       id: `news_${Date.now()}_${i}`,
@@ -150,6 +167,7 @@ export const generateMockEnrichedNews = (count: number = 10): EnrichedNews[] => 
       headline,
       content: `Full article content for: ${headline}. This is a mock news article for testing purposes.`,
       category: ["Geopolitical", "Economic", "Central Bank", "Market"][Math.floor(Math.random() * 4)],
+      urgency,
       impacts: analysis.impacts.map(imp => ({
         symbol: imp.symbol,
         direction: imp.direction,

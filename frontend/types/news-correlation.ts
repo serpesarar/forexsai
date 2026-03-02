@@ -50,9 +50,13 @@ export interface RawNews {
   imageUrl?: string;
 }
 
+// News urgency levels
+export type NewsUrgency = "breaking" | "high" | "medium" | "low";
+
 // AI-enriched news with impact analysis
 export interface EnrichedNews extends RawNews {
   impacts: SymbolImpact[];
+  urgency: NewsUrgency;
   sentiment: MarketSentiment;
   volatilityExpectation: VolatilityExpectation;
   keyLevels?: {

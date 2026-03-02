@@ -1,484 +1,623 @@
 "use client";
 
-import React, { memo, useCallback, useEffect, useState, useRef } from "react";
-import { create } from "zustand";
-import { 
-  Newspaper, 
-  CandlestickChart,
-  Sparkles,
-  RefreshCw,
-  Settings2,
-  Eye,
-  EyeOff,
-  Maximize2,
-  Minimize2,
-  AlertCircle
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import dynamic from "next/dynamic";
+import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time } from "lightweight-charts";
+import { format, addSeconds, addMinutes, addHours, addDays, addMonths, addWeeks, subDays, subMonths } from "date-fns";
+import { Filter, Newspaper, BarChart2, Maximize2 } from "lucide-react";
+import { useNewsCorrelationStore } from "@/lib/stores/newsCorrelationStore";
+import type { EnrichedNews } from "@/types/news-correlation";
 import { fetcher } from "@/lib/api";
-import { useNewsCorrelation, useFilteredNews } from "@/lib/stores/useNewsCorrelation";
-import { NewsCorrelationChart } from "@/components/NewsCorrelationChart";
-import { NewsSidebar } from "@/components/NewsSidebar";
-import type { 
-  SupportedSymbol, 
-  CandleData, 
-  EnrichedNews,
-  NewsMarker 
-} from "@/types/news-correlation";
 
-// Panel props
-interface NewsChartCorrelationPanelProps {
-  symbol?: SupportedSymbol;
-  timeframe?: string;
-  className?: string;
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+
+
+
+// Type definitions
+interface ChartCandle {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
 }
 
-// API response type
 interface ChartDataResponse {
   success: boolean;
-  data?: {
-    candles: CandleData[];
+  data: {
     symbol: string;
     timeframe: string;
+    candles: ChartCandle[];
+    source: string;
+    cached_at: string;
+    total_rows: number;
   };
-  error?: string;
 }
 
-// Symbol mapping
-const symbolMap: Record<string, string> = {
-  XAUUSD: "XAUUSD",
-  NASDAQ: "NDX.INDX",
-  DAX: "GDAXI.INDX",
-  USOIL: "CL.COMM",
-  VIX: "VIX.INDX",
-  DXY: "DXY.INDX",
-  EURUSD: "EURUSD",
-  GBPUSD: "GBPUSD",
-  BTCUSD: "BTCUSD",
-};
+// Timeframe configuration
+const timeframes = [
+  { value: "1m", label: "1m", getLimit: () => 200 },
+  { value: "5m", label: "5m", getLimit: () => 200 },
+  { value: "15m", label: "15m", getLimit: () => 200 },
+  { value: "30m", label: "30m", getLimit: () => 200 },
+  { value: "1h", label: "1h", getLimit: () => 200 },
+  { value: "4h", label: "4h", getLimit: () => 200 },
+  { value: "1d", label: "1D", getLimit: () => 365 },
+  { value: "1w", label: "1W", getLimit: () => 104 },
+  { value: "1M", label: "1M", getLimit: () => 60 },
+] as const;
 
-// Main panel component
-export const NewsChartCorrelationPanel = memo(function NewsChartCorrelationPanel({
-  symbol: initialSymbol = "XAUUSD",
-  timeframe: initialTimeframe = "1h",
-  className,
-}: NewsChartCorrelationPanelProps) {
-  // Local state
-  const [symbol, setSymbol] = useState<SupportedSymbol>(initialSymbol);
-  const [timeframe, setTimeframe] = useState(initialTimeframe);
-  const [candles, setCandles] = useState<CandleData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+type TimeframeValue = typeof timeframes[number]["value"];
+
+// Main Component
+export default function NewsChartCorrelationPanel() {
+  const [mounted, setMounted] = useState(false);
+  const [timeframe, setTimeframe] = useState<TimeframeValue>("1h");
+  const [chartData, setChartData] = useState<ChartCandle[]>([]);
+  const [events, setEvents] = useState<EnrichedNews[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showGhostMarkers, setShowGhostMarkers] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  
-  // News correlation store
-  const {
-    news,
-    selectedNewsIds,
-    hoveredNewsId,
-    markers,
-    filters,
-    setNews,
-    setMarkers,
-    selectCandle,
-    selectNews,
-    deselectNews,
-    setHoveredNews,
-    setFilter,
-    clearSelection,
-    setLoading: setStoreLoading,
-    setError: setStoreError,
-  } = useNewsCorrelation();
-  
-  // Refs
-  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  
-  // Fetch chart data
-  const fetchChartData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const apiSymbol = symbolMap[symbol] || symbol;
-      
-      // Use OHLCV endpoint for candle data
-      const response = await fetcher<any>(
-        `/api/data/ohlcv?symbol=${apiSymbol}&timeframe=${timeframe}&limit=200`
-      );
-      
-      // OHLCV endpoint returns {symbol, timeframe, data: [...]}
-      if (response && response.data && Array.isArray(response.data)) {
-        // Transform to CandleData format
-        const formattedCandles: CandleData[] = response.data.map((c: any) => ({
-          time: Math.floor(c.timestamp / 1000), // Convert ms to seconds
-          open: c.open,
-          high: c.high,
-          low: c.low,
-          close: c.close,
-          volume: c.volume,
-        }));
-        
-        setCandles(formattedCandles);
-      } else {
-        console.warn("Invalid chart data response:", response);
-        setError("Failed to load chart data - invalid response format");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [symbol, timeframe]);
-  
-  // Fetch correlated news (try RSS first, fallback to old endpoint)
-  const fetchCorrelatedNews = useCallback(async () => {
-    try {
-      setStoreLoading(true);
-      const apiSymbol = symbolMap[symbol] || symbol;
-      
-      // Try new RSS endpoint first
-      let response = await fetcher<{ success: boolean; data: EnrichedNews[] }>(
-        `/api/rss/news?symbol=${apiSymbol}&hours=48&limit=100&skip_ai_filtered=true`
-      );
-      
-      if (response.success && response.data && response.data.length > 0) {
-        setNews(response.data);
-      } else {
-        // Fallback to old endpoint
-        response = await fetcher<{ success: boolean; data: EnrichedNews[] }>(
-          `/api/news-correlation/correlated/${apiSymbol}?timeframe=${timeframe}&impact_filter=${filters.impactLevel}`
-        );
-        
-        if (response.success && response.data) {
-          setNews(response.data);
-        }
-      }
-    } catch (err) {
-      setStoreError(err instanceof Error ? err.message : "Failed to fetch news");
-    } finally {
-      setStoreLoading(false);
-    }
-  }, [symbol, timeframe, filters.impactLevel, setNews, setStoreLoading, setStoreError]);
-  
-  // Initial data fetch
+  const [activeTab, setActiveTab] = useState<"chart" | "feed">("chart");
+  const { selectedSymbol, symbols, setSelectedSymbol } = useNewsCorrelationStore();
+
   useEffect(() => {
-    fetchChartData();
-    fetchCorrelatedNews();
-  }, [fetchChartData, fetchCorrelatedNews]);
-  
-  // Auto-refresh setup
-  useEffect(() => {
-    refreshIntervalRef.current = setInterval(() => {
-      fetchCorrelatedNews();
-    }, 60000); // Refresh every minute
-    
-    return () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-    };
-  }, [fetchCorrelatedNews]);
-  
-  // WebSocket connection for real-time news
-  useEffect(() => {
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://upbeat-flow-production.up.railway.app";
-    const ws = new WebSocket(`${wsUrl}/api/news-correlation/ws/news`);
-    
-    ws.onopen = () => {
-      console.log("News correlation WebSocket connected");
-      // Subscribe to current symbol
-      ws.send(JSON.stringify({ type: "subscribe", symbol }));
-    };
-    
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        
-        if (message.type === "news") {
-          // Add new news to store
-          useNewsCorrelation.getState().addNews(message.data);
-        }
-      } catch (err) {
-        console.error("WebSocket message error:", err);
-      }
-    };
-    
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
-    
-    ws.onclose = () => {
-      console.log("News correlation WebSocket disconnected");
-    };
-    
-    wsRef.current = ws;
-    
-    return () => {
-      ws.close();
-    };
-  }, [symbol]);
-  
-  // Generate markers from news when news or symbol changes
-  useEffect(() => {
-    const newMarkers: NewsMarker[] = [];
-    const markerMap = new Map<number, NewsMarker>();
-    
-    news.forEach((item) => {
-      const symbolImpact = item.impacts.find(
-        (i) => i.symbol === symbol || i.symbol === "*"
-      );
-      
-      const hasGhostImpact = item.impacts.some(
-        (i) => i.symbol !== symbol && i.symbol !== "*"
-      );
-      
-      if (!symbolImpact && !hasGhostImpact) return;
-      
-      const time = new Date(item.timestamp).getTime() / 1000;
-      
-      // Determine marker properties
-      let color = "#eab308";
-      let shape: NewsMarker["shape"] = "circle";
-      let position: NewsMarker["position"] = "aboveBar";
-      
-      if (symbolImpact) {
-        switch (symbolImpact.direction) {
-          case "bullish":
-            color = "#22c55e";
-            shape = "arrowUp";
-            position = "belowBar";
-            break;
-          case "bearish":
-            color = "#ef4444";
-            shape = "arrowDown";
-            position = "aboveBar";
-            break;
-          case "neutral":
-            color = "#eab308";
-            shape = "square";
-            break;
-        }
-      }
-      
-      // High volatility
-      if (item.volatilityExpectation === "high") {
-        color = "#f59e0b";
-        shape = "square";
-      }
-      
-      // Check existing marker
-      const existing = markerMap.get(time);
-      if (existing) {
-        existing.newsIds.push(item.id);
-        existing.impactCount += symbolImpact ? 1 : 0;
-        existing.tooltip = `${existing.newsIds.length} news events`;
-        if (symbolImpact && symbolImpact.score > 7) {
-          existing.color = color;
-        }
-      } else {
-        markerMap.set(time, {
-          time,
-          position,
-          color,
-          shape,
-          size: symbolImpact?.score ? Math.min(8 + symbolImpact.score, 20) : 10,
-          newsIds: [item.id],
-          tooltip: item.headline.substring(0, 50) + "...",
-          impactCount: symbolImpact ? 1 : 0,
-          isGhost: !symbolImpact,
-          symbol: !symbolImpact ? item.impacts[0]?.symbol : undefined,
-        });
-      }
-    });
-    
-    setMarkers(Array.from(markerMap.values()).sort((a, b) => a.time - b.time));
-  }, [news, symbol, setMarkers]);
-  
-  // Event handlers
-  const handleCandleClick = useCallback((candle: CandleData | null) => {
-    selectCandle(candle);
-  }, [selectCandle]);
-  
-  const handleMarkerClick = useCallback((newsIds: string[]) => {
-    // Select all related news
-    clearSelection();
-    newsIds.forEach((id) => selectNews(id));
-  }, [clearSelection, selectNews]);
-  
-  const handleNewsSelect = useCallback((newsId: string) => {
-    if (selectedNewsIds.includes(newsId)) {
-      deselectNews(newsId);
-    } else {
-      clearSelection();
-      selectNews(newsId);
-    }
-  }, [selectedNewsIds, deselectNews, clearSelection, selectNews]);
-  
-  const handleNewsHover = useCallback((newsId: string | null) => {
-    setHoveredNews(newsId);
-  }, [setHoveredNews]);
-  
-  const handleTimeRangeChange = useCallback((range: { from: number; to: number }) => {
-    // Could use this to filter news based on visible chart range
+    setMounted(true);
   }, []);
-  
-  const handleRefresh = useCallback(() => {
-    fetchChartData();
-    fetchCorrelatedNews();
-  }, [fetchChartData, fetchCorrelatedNews]);
-  
-  const handleSymbolChange = useCallback((newSymbol: SupportedSymbol) => {
-    setSymbol(newSymbol);
-    clearSelection();
-  }, [clearSelection]);
-  
-  // Filtered news
-  const filteredNews = useFilteredNews();
-  
+
+  // Fetch data
+  const fetchData = useCallback(async () => {
+    if (!mounted) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const apiSymbol = selectedSymbol.replace("/", "");
+      const tf = timeframes.find((t) => t.value === timeframe);
+      const limit = tf?.getLimit() || 200;
+
+      // Fetch chart data
+      const chartResponse = await fetcher<ChartDataResponse>(
+        `/api/data/ohlcv?symbol=${apiSymbol}&timeframe=${timeframe}&limit=${limit}`
+      );
+
+      if (chartResponse.success && chartResponse.data?.candles?.length > 5) {
+        setChartData(chartResponse.data.candles);
+      } else {
+        setChartData([]);
+      }
+
+      // Fetch news events
+      const newsResponse = await fetcher<{ success: boolean; data: EnrichedNews[] }>(
+        `/api/rss/news?symbol=${apiSymbol}&limit=50&hours=48`
+      );
+
+      if (newsResponse.success && newsResponse.data) {
+        setEvents(newsResponse.data);
+      }
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError("Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedSymbol, timeframe, mounted]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  if (!mounted) {
+    return <div className="min-h-[600px] bg-slate-950 rounded-lg animate-pulse" />;
+  }
+
   return (
-    <div 
-      className={cn(
-        "flex flex-col bg-slate-950 rounded-xl border border-slate-800 overflow-hidden",
-        isFullscreen ? "fixed inset-0 z-50" : "h-[600px]",
-        className
-      )}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/50">
-        <div className="flex items-center gap-3">
+    <div className="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
+      {/* Header with Tabs */}
+      <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50">
+        <div className="flex items-center gap-6">
+          {/* Symbol Selector */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <Newspaper className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                News-Chart Correlation
-                <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-              </h2>
-              <p className="text-[10px] text-slate-400">
-                AI-analyzed events on chart
-              </p>
-            </div>
-          </div>
-          
-          {/* Symbol selector */}
-          <div className="flex items-center gap-1 ml-4">
-            {["XAUUSD", "NASDAQ", "DAX", "USOIL"].map((sym) => (
-              <button
-                key={sym}
-                onClick={() => handleSymbolChange(sym as SupportedSymbol)}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-xs font-medium transition-all",
-                  symbol === sym
-                    ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                    : "bg-slate-800 text-slate-400 hover:bg-slate-700 border border-transparent"
-                )}
-              >
-                {sym}
-              </button>
-            ))}
-          </div>
-        </div>
-        
-        {/* Controls */}
-        <div className="flex items-center gap-2">
-          {/* Ghost markers toggle */}
-          <button
-            onClick={() => setShowGhostMarkers(!showGhostMarkers)}
-            className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-all",
-              showGhostMarkers
-                ? "bg-slate-800 text-slate-300"
-                : "bg-slate-800/50 text-slate-500"
-            )}
-            title="Toggle ghost markers (indirect impacts)"
-          >
-            {showGhostMarkers ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-            <span className="hidden sm:inline">Ghost</span>
-          </button>
-          
-          {/* Refresh */}
-          <button
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all disabled:opacity-50"
-          >
-            <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
-            <span className="hidden sm:inline">Refresh</span>
-          </button>
-          
-          {/* Fullscreen */}
-          <button
-            onClick={() => setIsFullscreen(!isFullscreen)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all"
-          >
-            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-          </button>
-        </div>
-      </div>
-      
-      {/* Main content */}
-      {error ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-            <p className="text-slate-400">{error}</p>
-            <button
-              onClick={handleRefresh}
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
+            <span className="text-xs text-slate-500 uppercase font-semibold">Symbol</span>
+            <select
+              value={selectedSymbol}
+              onChange={(e) => setSelectedSymbol(e.target.value)}
+              className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500"
             >
-              Retry
+              {symbols.map((symbol) => (
+                <option key={symbol} value={symbol}>
+                  {symbol}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex items-center bg-slate-800 rounded-lg p-1">
+            <button
+              onClick={() => setActiveTab("chart")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
+                activeTab === "chart"
+                  ? "bg-blue-500 text-white"
+                  : "text-slate-400 hover:text-white"
+              )}
+            >
+              <BarChart2 className="w-4 h-4" />
+              Chart View
+            </button>
+            <button
+              onClick={() => setActiveTab("feed")}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
+                activeTab === "feed"
+                  ? "bg-purple-500 text-white"
+                  : "text-slate-400 hover:text-white"
+              )}
+            >
+              <Newspaper className="w-4 h-4" />
+              News Feed
             </button>
           </div>
         </div>
-      ) : (
-        <div className="flex-1 flex overflow-hidden">
-          {/* Chart area */}
-          <div className="flex-1 min-w-0">
-            <NewsCorrelationChart
-              symbol={symbol}
-              timeframe={timeframe}
-              candles={candles}
-              markers={markers}
-              selectedNewsIds={selectedNewsIds}
-              hoveredNewsId={hoveredNewsId}
-              news={news}
-              showGhostMarkers={showGhostMarkers}
-              onCandleClick={handleCandleClick}
-              onMarkerClick={handleMarkerClick}
-              onTimeRangeChange={handleTimeRangeChange}
-            />
+
+        {/* Timeframe selector (only on chart tab) */}
+        {activeTab === "chart" && (
+          <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-1">
+            {timeframes.map((tf) => (
+              <button
+                key={tf.value}
+                onClick={() => setTimeframe(tf.value)}
+                className={cn(
+                  "px-3 py-1 rounded-md text-xs font-medium transition-all",
+                  timeframe === tf.value
+                    ? "bg-slate-600 text-white"
+                    : "text-slate-400 hover:text-white hover:bg-slate-700"
+                )}
+              >
+                {tf.label}
+              </button>
+            ))}
           </div>
-          
-          {/* Sidebar */}
-          <NewsSidebar
-            news={filteredNews}
-            selectedNewsIds={selectedNewsIds}
-            hoveredNewsId={hoveredNewsId}
-            currentSymbol={symbol}
-            isLoading={isLoading}
-            filters={filters}
-            onFilterChange={setFilter}
-            onNewsSelect={handleNewsSelect}
-            onNewsHover={handleNewsHover}
-            onScrollToNews={() => {}}
-            className="w-80 hidden lg:flex"
+        )}
+
+        {/* Open Full News Feed Page */}
+        {activeTab === "feed" && (
+          <Link
+            href="/news-feed"
+            className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg text-sm font-medium hover:bg-purple-500/30 transition-colors"
+          >
+            <Maximize2 className="w-4 h-4" />
+            Full Page View
+          </Link>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-4">
+        {activeTab === "chart" ? (
+          <ChartView
+            chartData={chartData}
+            events={events}
+            symbol={selectedSymbol}
+            timeframe={timeframe}
+            loading={loading}
+            error={error}
+            onRefresh={fetchData}
           />
-        </div>
-      )}
-      
-      {/* Mobile sidebar toggle (shown on small screens) */}
-      <div className="lg:hidden p-3 border-t border-slate-800 bg-slate-900/50">
-        <button
-          className="w-full flex items-center justify-center gap-2 py-2 bg-slate-800 rounded-lg text-sm text-slate-300"
-          onClick={() => {/* Toggle mobile drawer */}}
-        >
-          <Newspaper className="w-4 h-4" />
-          View {filteredNews.length} News Events
-        </button>
+        ) : (
+          <NewsFeedView
+            symbol={selectedSymbol}
+            events={events}
+            loading={loading}
+            error={error}
+          />
+        )}
       </div>
     </div>
   );
-});
+}
 
-export default NewsChartCorrelationPanel;
+// Chart View Component
+interface ChartViewProps {
+  chartData: ChartCandle[];
+  events: EnrichedNews[];
+  symbol: string;
+  timeframe: TimeframeValue;
+  loading: boolean;
+  error: string | null;
+  onRefresh: () => void;
+}
+
+function ChartView({ chartData, events, symbol, timeframe, loading, error, onRefresh }: ChartViewProps) {
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const markersRef = useRef<any[]>([]);
+
+  // Initialize chart
+  useEffect(() => {
+    if (!chartContainerRef.current || chartData.length === 0) return;
+
+    const chart = createChart(chartContainerRef.current, {
+      width: chartContainerRef.current.clientWidth,
+      height: 500,
+      layout: {
+        background: { color: "transparent" },
+        textColor: "#94a3b8",
+      },
+      grid: {
+        vertLines: { color: "rgba(51, 65, 85, 0.3)" },
+        horzLines: { color: "rgba(51, 65, 85, 0.3)" },
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+        vertLine: {
+          color: "#60a5fa",
+          labelBackgroundColor: "#3b82f6",
+        },
+        horzLine: {
+          color: "#60a5fa",
+          labelBackgroundColor: "#3b82f6",
+        },
+      },
+      rightPriceScale: {
+        borderColor: "#334155",
+      },
+      timeScale: {
+        borderColor: "#334155",
+        timeVisible: true,
+        secondsVisible: false,
+      },
+    });
+
+    const candlestickSeries = chart.addCandlestickSeries({
+      upColor: "#22c55e",
+      downColor: "#ef4444",
+      borderUpColor: "#22c55e",
+      borderDownColor: "#ef4444",
+      wickUpColor: "#22c55e",
+      wickDownColor: "#ef4444",
+    });
+
+    // Format data
+    const formattedData = chartData.map((candle) => ({
+      time: candle.time as Time,
+      open: candle.open,
+      high: candle.high,
+      low: candle.low,
+      close: candle.close,
+    }));
+
+    candlestickSeries.setData(formattedData);
+    chart.timeScale().fitContent();
+
+    chartRef.current = chart;
+    candlestickSeriesRef.current = candlestickSeries;
+
+    // Handle resize
+    const handleResize = () => {
+      if (chartContainerRef.current) {
+        chart.applyOptions({ width: chartContainerRef.current.clientWidth });
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      chart.remove();
+    };
+  }, [chartData]);
+
+  // Add news markers
+  useEffect(() => {
+    if (!candlestickSeriesRef.current || events.length === 0 || chartData.length === 0) return;
+
+    // Clear existing markers
+    markersRef.current.forEach((marker) => {
+      // Note: Lightweight Charts doesn't have a direct removeMarker method
+      // We need to clear and reset all markers
+    });
+
+    const chartStartTime = chartData[0]?.time || 0;
+    const chartEndTime = chartData[chartData.length - 1]?.time || 0;
+
+    const markers = events
+      .filter((event) => {
+        const eventTime = Math.floor(new Date(event.timestamp).getTime() / 1000);
+        return eventTime >= chartStartTime && eventTime <= chartEndTime;
+      })
+      .slice(0, 10) // Limit to 10 markers
+      .map((event) => {
+        const eventTime = Math.floor(new Date(event.timestamp).getTime() / 1000);
+        const marker: any = {
+          time: eventTime as Time,
+          position: "aboveBar",
+          color: event.urgency === "breaking" ? "#ef4444" : event.urgency === "high" ? "#f97316" : "#eab308",
+          shape: event.urgency === "breaking" ? "arrowDown" : "circle",
+          size: event.urgency === "breaking" ? 2 : 1,
+          text: event.urgency === "breaking" ? "!" : "",
+        };
+        return marker;
+      });
+
+    candlestickSeriesRef.current.setMarkers(markers);
+    markersRef.current = markers;
+  }, [events, chartData]);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 h-[500px] bg-slate-900/50 rounded-lg animate-pulse" />
+        <div className="h-[500px] bg-slate-900/50 rounded-lg animate-pulse" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[500px] text-red-400">
+        <div className="text-center">
+          <p>{error}</p>
+          <button
+            onClick={onRefresh}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Chart */}
+      <div className="lg:col-span-2">
+        <div ref={chartContainerRef} className="w-full h-[500px]" />
+      </div>
+
+      {/* News Sidebar */}
+      <div className="bg-slate-900/30 rounded-lg border border-slate-800 p-4 overflow-y-auto h-[500px]">
+        <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+          <Newspaper className="w-4 h-4 text-purple-400" />
+          News Events
+        </h3>
+        
+        {events.length === 0 ? (
+          <p className="text-slate-500 text-sm text-center py-8">No recent news events</p>
+        ) : (
+          <div className="space-y-3">
+            {events.map((event) => (
+              <div
+                key={event.id}
+                className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 hover:border-slate-600 transition-colors"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span
+                    className={cn(
+                      "w-2 h-2 rounded-full",
+                      event.urgency === "breaking" && "bg-red-500",
+                      event.urgency === "high" && "bg-orange-500",
+                      event.urgency === "medium" && "bg-yellow-500",
+                      event.urgency === "low" && "bg-slate-500"
+                    )}
+                  />
+                  <span className="text-xs text-slate-500">
+                    {format(new Date(event.timestamp), "MMM d, HH:mm")}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-300 line-clamp-2">{event.headline}</p>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {event.impacts.slice(0, 3).map((impact, idx) => (
+                    <span
+                      key={idx}
+                      className={cn(
+                        "text-xs px-2 py-0.5 rounded",
+                        impact.direction === "bullish" && "bg-green-500/20 text-green-400",
+                        impact.direction === "bearish" && "bg-red-500/20 text-red-400",
+                        impact.direction !== "bullish" && impact.direction !== "bearish" && "bg-slate-700 text-slate-400"
+                      )}
+                    >
+                      {impact.symbol}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// News Feed View Component
+interface NewsFeedViewProps {
+  symbol: string;
+  events: EnrichedNews[];
+  loading: boolean;
+  error: string | null;
+}
+
+function NewsFeedView({ symbol, events, loading, error }: NewsFeedViewProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | "breaking" | "high" | "medium">("all");
+
+  const filteredEvents = events.filter((e) => {
+    if (filter === "all") return true;
+    return e.urgency === filter;
+  });
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-48 bg-slate-900/50 rounded-lg animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12 text-red-400">
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Filter */}
+      <div className="flex items-center gap-2">
+        {["all", "breaking", "high", "medium"].map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f as any)}
+            className={cn(
+              "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+              filter === f
+                ? "bg-purple-500 text-white"
+                : "bg-slate-800 text-slate-400 hover:text-white"
+            )}
+          >
+            {f.charAt(0).toUpperCase() + f.slice(1)}
+          </button>
+        ))}
+        <span className="ml-auto text-xs text-slate-500">
+          {filteredEvents.length} events for {symbol}
+        </span>
+      </div>
+
+      {/* News Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        {filteredEvents.map((event) => (
+          <NewsCard
+            key={event.id}
+            event={event}
+            isExpanded={expandedId === event.id}
+            onToggle={() => setExpandedId(expandedId === event.id ? null : event.id)}
+          />
+        ))}
+      </div>
+
+      {filteredEvents.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-slate-500">No news matching your filters</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// News Card Component
+interface NewsCardProps {
+  event: EnrichedNews;
+  isExpanded: boolean;
+  onToggle: () => void;
+}
+
+function NewsCard({ event, isExpanded, onToggle }: NewsCardProps) {
+  const impactColors = {
+    breaking: "bg-red-900/30 border-red-700/50 text-red-300",
+    high: "bg-orange-900/30 border-orange-700/50 text-orange-300",
+    medium: "bg-yellow-900/30 border-yellow-700/50 text-yellow-300",
+    low: "bg-slate-800/50 border-slate-700/50 text-slate-400",
+  };
+
+  return (
+    <div
+      className={cn(
+        "rounded-xl border p-4 transition-all cursor-pointer",
+        impactColors[event.urgency as keyof typeof impactColors],
+        isExpanded && "shadow-lg shadow-red-900/10"
+      )}
+      onClick={onToggle}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "w-2 h-2 rounded-full",
+              event.urgency === "breaking" && "bg-red-500 animate-pulse",
+              event.urgency === "high" && "bg-orange-500",
+              event.urgency === "medium" && "bg-yellow-500",
+              event.urgency === "low" && "bg-slate-500"
+            )}
+          />
+          <span className="text-xs uppercase font-bold opacity-70">
+            {event.urgency}
+          </span>
+        </div>
+        <span className="text-xs opacity-50">
+          {format(new Date(event.timestamp), "HH:mm")}
+        </span>
+      </div>
+
+      {/* Title */}
+      <h4 className="text-sm font-semibold mb-3 line-clamp-2">{event.headline}</h4>
+
+      {/* Impact Badges */}
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        {event.impacts.slice(0, 4).map((impact, idx) => (
+          <span
+            key={idx}
+            className={cn(
+              "text-xs px-2 py-0.5 rounded-full border",
+              impact.direction === "bullish" && "bg-green-500/20 text-green-400 border-green-500/30",
+              impact.direction === "bearish" && "bg-red-500/20 text-red-400 border-red-500/30",
+              impact.direction !== "bullish" && impact.direction !== "bearish" && "bg-slate-700 text-slate-400 border-slate-600"
+            )}
+          >
+            {impact.symbol} {impact.score}/10
+          </span>
+        ))}
+      </div>
+
+      {/* Expanded Content */}
+      {isExpanded && (
+        <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
+          <div>
+            <span className="text-xs opacity-50">AI Analysis</span>
+            <p className="text-sm mt-1 leading-relaxed">{event.content}</p>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span className="text-xs opacity-50">Sentiment</span>
+              <p className={cn(
+                "text-sm font-medium capitalize",
+                event.sentiment === "risk_on" && "text-green-400",
+                event.sentiment === "risk_off" && "text-red-400",
+                event.sentiment === "neutral" && "text-yellow-400"
+              )}>
+                {event.sentiment?.replace("_", " ")}
+              </p>
+            </div>
+            <div>
+              <span className="text-xs opacity-50">Source</span>
+              <p className="text-sm">{event.source}</p>
+            </div>
+          </div>
+
+          <div>
+            <span className="text-xs opacity-50">AI Confidence</span>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-purple-500 rounded-full"
+                  style={{ width: `${event.aiConfidence}%` }}
+                />
+              </div>
+              <span className="text-xs">{Math.round(event.aiConfidence)}%</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
