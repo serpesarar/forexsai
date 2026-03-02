@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time } from "lightweight-charts";
-import { format, formatDistanceToNow, isWithinInterval, subMinutes, addMinutes } from "date-fns";
-import {
+import { format, isWithinInterval, subMinutes, addMinutes } from "date-fns";
+import { 
   Bell, Star, Wallet, Calendar, FileText, MessageSquare, Newspaper,
-  Building2, LineChart, BookOpen, Search, Filter, ChevronLeft, ChevronRight,
-  Zap, TrendingUp, TrendingDown, Minus, ThumbsUp, Sparkles, Camera, Settings,
+  Building2, LineChart, BookOpen, Filter, ChevronLeft, ChevronRight,
+  TrendingUp, TrendingDown, Sparkles, Camera, Settings,
   Clock, AlertTriangle, RefreshCw, X, ArrowUp, ArrowDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,7 +23,6 @@ interface ChartCandle {
   low: number;
   close: number;
   volume?: number;
-  newsCount?: number;
   priceChange?: number;
 }
 
@@ -35,29 +34,17 @@ interface SymbolData {
   changePercent: number;
 }
 
-// Backend /api/data/ohlcv actual response format
 interface OHLCVResponse {
   symbol: string;
   timeframe: string;
   data: Array<{
-    timestamp: number; // Unix ms
+    timestamp: number;
     open: number;
     high: number;
     low: number;
     close: number;
     volume: number;
   }>;
-  support_resistance: any[];
-}
-
-// Backend candle format (timestamp in milliseconds)
-interface BackendCandle {
-  timestamp: number;  // Unix timestamp in milliseconds (13 digits)
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume?: number;
 }
 
 interface CandleNews {
@@ -68,27 +55,34 @@ interface CandleNews {
   movePercent: number;
 }
 
-// ==================== BIZIM SEMBOLLERIMIZ ====================
-const SYMBOLS: SymbolData[] = [
-  { symbol: "XAUUSD", name: "Gold", price: 4988.57, change: 42.30, changePercent: 0.85 },
-  { symbol: "NDX", name: "NASDAQ", price: 22500.00, change: 125.50, changePercent: 0.56 },
-  { symbol: "DAX", name: "DAX 40", price: 22500.00, change: -180.20, changePercent: -0.79 },
-  { symbol: "USOIL", name: "WTI Crude", price: 75.80, change: 1.20, changePercent: 1.61 },
-  { symbol: "VIX", name: "VIX", price: 18.50, change: -0.85, changePercent: -4.40 },
-  { symbol: "DXY", name: "Dollar Index", price: 104.25, change: 0.12, changePercent: 0.12 },
+interface WSPriceData {
+  symbol: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  timestamp: number;
+}
+
+// ==================== SYMBOLS ====================
+const INITIAL_SYMBOLS: SymbolData[] = [
+  { symbol: "XAUUSD", name: "Gold", price: 0, change: 0, changePercent: 0 },
+  { symbol: "NDX", name: "NASDAQ", price: 0, change: 0, changePercent: 0 },
+  { symbol: "DAX", name: "DAX 40", price: 0, change: 0, changePercent: 0 },
+  { symbol: "USOIL", name: "WTI Crude", price: 0, change: 0, changePercent: 0 },
+  { symbol: "VIX", name: "VIX", price: 0, change: 0, changePercent: 0 },
+  { symbol: "DXY", name: "Dollar Index", price: 0, change: 0, changePercent: 0 },
 ];
 
 const TIMEFRAMES = [
-  { value: "1m", label: "1m", minutes: 1 },
-  { value: "5m", label: "5m", minutes: 5 },
-  { value: "15m", label: "15m", minutes: 15 },
-  { value: "30m", label: "30m", minutes: 30 },
-  { value: "1h", label: "1h", minutes: 60 },
-  { value: "4h", label: "4h", minutes: 240 },
-  { value: "1d", label: "1D", minutes: 1440 },
+  { value: "1m", label: "1m" },
+  { value: "5m", label: "5m" },
+  { value: "15m", label: "15m" },
+  { value: "30m", label: "30m" },
+  { value: "1h", label: "1h" },
+  { value: "4h", label: "4h" },
+  { value: "1d", label: "1D" },
 ];
 
-// ==================== SIDEBAR NAVIGATION ====================
 const sidebarItems = [
   { icon: Bell, label: "Alerts", href: "/alerts", badge: 3 },
   { icon: Star, label: "Watchlist", href: "/watchlist", badge: null },
@@ -102,6 +96,7 @@ const sidebarItems = [
   { icon: LineChart, label: "My Trades", href: "/trades", badge: null },
 ];
 
+// ==================== COMPONENTS ====================
 const SidebarItem = ({ icon: Icon, label, href, active = false, badge, collapsed }: any) => (
   <Link href={href} className={cn(
     "flex items-center gap-3 px-4 py-3 text-sm transition-all relative",
@@ -114,78 +109,42 @@ const SidebarItem = ({ icon: Icon, label, href, active = false, badge, collapsed
   </Link>
 );
 
-// ==================== SYMBOL BAR ====================
-const SymbolBar = ({ symbols, selectedSymbol, onSelect }: { symbols: SymbolData[], selectedSymbol: string, onSelect: (s: string) => void }) => {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const scroll = (dir: "left" | "right") => scrollRef.current?.scrollBy({ left: dir === "left" ? -200 : 200, behavior: "smooth" });
-
-  return (
-    <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-800 bg-[#0a0a0a]">
-      <button onClick={() => scroll("left")} className="p-1 text-gray-500 hover:text-white flex-shrink-0"><ChevronLeft className="w-4 h-4" /></button>
-      <div ref={scrollRef} className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-hide">
-        {symbols.map((sym) => (
-          <button key={sym.symbol} onClick={() => onSelect(sym.symbol)} className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all flex-shrink-0",
-            selectedSymbol === sym.symbol ? "bg-gray-800 text-white border border-gray-700" : "bg-gray-900/50 text-gray-400 hover:bg-gray-800 hover:text-white border border-transparent"
-          )}>
-            <span className="font-semibold">{sym.symbol}</span>
-            <span className={cn("text-xs font-mono", sym.change > 0 ? "text-green-400" : sym.change < 0 ? "text-red-400" : "text-gray-500")}>
-              ${sym.price.toLocaleString()}
-            </span>
-          </button>
-        ))}
-      </div>
-      <button onClick={() => scroll("right")} className="p-1 text-gray-500 hover:text-white flex-shrink-0"><ChevronRight className="w-4 h-4" /></button>
-    </div>
-  );
-};
-
-// ==================== ANALYSIS CARDS ====================
-const AnalysisCard = ({ type, label, value, active = false }: { type: "swing" | "day" | "news", label: string, value: string, active?: boolean }) => {
-  const styles = {
-    swing: { bg: active ? "bg-green-500/10 border-green-500/30" : "bg-gray-900/50 border-gray-800", text: active ? "text-green-400" : "text-gray-400", icon: TrendingUp },
-    day: { bg: active ? "bg-red-500/10 border-red-500/30" : "bg-gray-900/50 border-gray-800", text: active ? "text-red-400" : "text-gray-400", icon: TrendingDown },
-    news: { bg: active ? "bg-purple-500/10 border-purple-500/30" : "bg-gray-900/50 border-gray-800", text: active ? "text-purple-400" : "text-gray-400", icon: Newspaper },
-  };
-  const style = styles[type];
-  const Icon = style.icon;
-  return (
-    <div className={cn("flex items-center gap-3 px-4 py-3 rounded-xl border", style.bg)}>
-      <div className="flex flex-col items-start">
-        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">{label}</span>
-        <span className={cn("text-sm font-semibold flex items-center gap-1.5", style.text)}>
-          {type === "news" && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
-          {value}
-          <Icon className="w-4 h-4" />
-        </span>
-      </div>
-    </div>
-  );
-};
-
-// ==================== TIME AGO COMPONENT (CLIENT ONLY) ====================
 const TimeAgo = ({ timestamp }: { timestamp: string }) => {
   const [timeAgo, setTimeAgo] = useState<string>("");
-
+  
   useEffect(() => {
-    setTimeAgo(formatDistanceToNow(new Date(timestamp), { addSuffix: true }));
-    const interval = setInterval(() => {
-      setTimeAgo(formatDistanceToNow(new Date(timestamp), { addSuffix: true }));
-    }, 60000);
+    const update = () => {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+      
+      if (diffInSeconds < 60) setTimeAgo(`${diffInSeconds}s ago`);
+      else if (diffInSeconds < 3600) setTimeAgo(`${Math.floor(diffInSeconds / 60)}m ago`);
+      else if (diffInSeconds < 86400) setTimeAgo(`${Math.floor(diffInSeconds / 3600)}h ago`);
+      else setTimeAgo(`${Math.floor(diffInSeconds / 86400)}d ago`);
+    };
+    
+    update();
+    const interval = setInterval(update, 60000);
     return () => clearInterval(interval);
   }, [timestamp]);
-
+  
   return <span className="text-xs text-gray-500">{timeAgo || "..."}</span>;
 };
 
-// ==================== NEWS CARD ====================
-const NewsCard = ({ news, isExpanded, onToggle, onClick }: { news: EnrichedNews, isExpanded: boolean, onToggle: () => void, onClick: () => void }) => {
+const NewsCard = ({ news, onClick }: { news: EnrichedNews, onClick: () => void }) => {
   const isHighImpact = news.urgency === "breaking" || news.urgency === "high";
+  
   return (
-    <div className={cn(
-      "group relative p-4 rounded-xl border transition-all cursor-pointer",
-      isHighImpact ? "bg-gradient-to-r from-red-950/30 to-transparent border-red-900/30 hover:border-red-700/50" : "bg-gray-900/30 border-gray-800 hover:border-gray-700"
-    )} onClick={onClick}>
+    <div 
+      onClick={onClick}
+      className={cn(
+        "group relative p-4 rounded-xl border transition-all cursor-pointer",
+        isHighImpact 
+          ? "bg-gradient-to-r from-red-950/30 to-transparent border-red-900/30 hover:border-red-700/50" 
+          : "bg-gray-900/30 border-gray-800 hover:border-gray-700"
+      )}
+    >
       <div className="flex items-center gap-3 mb-3">
         <span className={cn(
           "px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase",
@@ -196,12 +155,21 @@ const NewsCard = ({ news, isExpanded, onToggle, onClick }: { news: EnrichedNews,
         )}>
           {news.urgency === "breaking" ? "BREAKING" : `${news.urgency.toUpperCase()} IMPACT`}
         </span>
-        <span className="text-xs text-gray-500 font-mono">{format(new Date(news.timestamp), "HH:mm")}</span>
+        <span className="text-xs text-gray-500 font-mono">
+          {format(new Date(news.timestamp), "HH:mm")}
+        </span>
         <span className="text-xs text-gray-600">•</span>
         <TimeAgo timestamp={news.timestamp} />
       </div>
-      <h3 className="text-sm font-semibold text-white leading-snug mb-2 uppercase tracking-wide">{news.headline}</h3>
-      <p className="text-xs text-gray-400 leading-relaxed mb-3 line-clamp-2">{news.content || news.headline}</p>
+      
+      <h3 className="text-sm font-semibold text-white leading-snug mb-2 uppercase tracking-wide line-clamp-2">
+        {news.headline}
+      </h3>
+      
+      <p className="text-xs text-gray-400 leading-relaxed mb-3 line-clamp-2">
+        {news.content || news.headline}
+      </p>
+      
       <div className="flex flex-wrap gap-1.5">
         {news.impacts?.slice(0, 6).map((impact, idx) => (
           <span key={idx} className={cn(
@@ -216,128 +184,6 @@ const NewsCard = ({ news, isExpanded, onToggle, onClick }: { news: EnrichedNews,
           </span>
         ))}
       </div>
-      {isExpanded && (
-        <div className="mt-4 pt-4 border-t border-gray-800 animate-in slide-in-from-top-2">
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            <span className="text-sm font-semibold text-purple-400">AI Analysis</span>
-          </div>
-          <p className="text-xs text-gray-300 leading-relaxed mb-4">{news.content || "AI analysis not available."}</p>
-          {news.impacts && news.impacts.length > 0 && (
-            <div className="space-y-2">
-              {news.impacts.map((impact, idx) => (
-                <div key={idx} className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-950/50">
-                  <span className={cn("text-xs font-medium", impact.direction === "bullish" ? "text-green-400" : impact.direction === "bearish" ? "text-red-400" : "text-gray-400")}>
-                    {impact.symbol}
-                  </span>
-                  <span className="text-xs text-gray-500">{impact.reasoning}</span>
-                  <span className="text-xs text-gray-400">{Math.round((impact.confidence || 0.5) * 100)}%</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ==================== CANDLE INFO PANEL ====================
-const CandleInfoPanel = ({ candleNews, onClose, symbol }: { candleNews: CandleNews | null, onClose: () => void, symbol: string }) => {
-  if (!candleNews) return null;
-
-  return (
-    <div className="absolute top-20 left-4 z-20 w-80 bg-gray-900/95 backdrop-blur-xl border border-gray-700 rounded-xl shadow-2xl shadow-black/50 overflow-hidden">
-      <div className="flex items-center justify-between p-4 border-b border-gray-800">
-        <div>
-          <h3 className="font-semibold flex items-center gap-2">
-            {candleNews.candle.time && format(new Date(candleNews.candle.time * 1000), "MMM d, HH:mm")}
-          </h3>
-          <p className="text-xs text-gray-500">Candle Analysis</p>
-        </div>
-        <button onClick={onClose} className="p-1 text-gray-500 hover:text-white hover:bg-gray-800 rounded"><X className="w-4 h-4" /></button>
-      </div>
-
-      <div className="p-4 space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gray-800/50 rounded-lg p-3">
-            <span className="text-xs text-gray-500">Open</span>
-            <p className="font-mono text-sm">${candleNews.candle.open.toFixed(2)}</p>
-          </div>
-          <div className="bg-gray-800/50 rounded-lg p-3">
-            <span className="text-xs text-gray-500">Close</span>
-            <p className="font-mono text-sm">${candleNews.candle.close.toFixed(2)}</p>
-          </div>
-          <div className="bg-gray-800/50 rounded-lg p-3">
-            <span className="text-xs text-gray-500">High</span>
-            <p className="font-mono text-sm text-green-400">${candleNews.candle.high.toFixed(2)}</p>
-          </div>
-          <div className="bg-gray-800/50 rounded-lg p-3">
-            <span className="text-xs text-gray-500">Low</span>
-            <p className="font-mono text-sm text-red-400">${candleNews.candle.low.toFixed(2)}</p>
-          </div>
-        </div>
-
-        {candleNews.hasBigMove && (
-          <div className={cn(
-            "p-3 rounded-lg border",
-            candleNews.moveType === "up" ? "bg-green-500/10 border-green-500/30" : "bg-red-500/10 border-red-500/30"
-          )}>
-            <div className="flex items-center gap-2 mb-2">
-              {candleNews.moveType === "up" ? <ArrowUp className="w-4 h-4 text-green-400" /> : <ArrowDown className="w-4 h-4 text-red-400" />}
-              <span className={cn("font-semibold", candleNews.moveType === "up" ? "text-green-400" : "text-red-400")}>
-                Big {candleNews.moveType === "up" ? "Surge" : "Drop"}
-              </span>
-            </div>
-            <p className="text-xs text-gray-400">
-              Price moved {candleNews.movePercent.toFixed(2)}% during this period.
-              {candleNews.moveType === "up" ? "Strong buying pressure detected." : "Significant selling pressure observed."}
-            </p>
-          </div>
-        )}
-
-        <div>
-          <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-            <Newspaper className="w-4 h-4 text-purple-400" />
-            Related News ({candleNews.news.length})
-          </h4>
-          {candleNews.news.length === 0 ? (
-            <p className="text-xs text-gray-500 italic">No major news events during this period.</p>
-          ) : (
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {candleNews.news.map((n, i) => (
-                <div key={i} className="p-2 bg-gray-800/50 rounded-lg text-xs">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={cn(
-                      "w-1.5 h-1.5 rounded-full",
-                      n.urgency === "breaking" && "bg-red-500",
-                      n.urgency === "high" && "bg-orange-500",
-                      n.urgency === "medium" && "bg-yellow-500"
-                    )} />
-                    <span className="text-gray-400">{format(new Date(n.timestamp), "HH:mm")}</span>
-                  </div>
-                  <p className="text-gray-300 line-clamp-2">{n.headline}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {candleNews.news.length > 0 && (
-          <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-4 h-4 text-purple-400" />
-              <span className="text-sm font-semibold text-purple-400">AI Explanation</span>
-            </div>
-            <p className="text-xs text-gray-300 leading-relaxed">
-              {candleNews.moveType === "up"
-                ? `The ${candleNews.movePercent.toFixed(2)}% surge was likely driven by ${candleNews.news[0]?.headline?.toLowerCase() || "positive market sentiment"}. ${candleNews.news[0]?.impacts?.find(i => i.symbol === symbol)?.reasoning || "Technical buying pressure supported the move."}`
-                : `The ${Math.abs(candleNews.movePercent).toFixed(2)}% decline was influenced by ${candleNews.news[0]?.headline?.toLowerCase() || "negative market sentiment"}. ${candleNews.news[0]?.impacts?.find(i => i.symbol === symbol)?.reasoning || "Technical selling pressure accelerated the drop."}`
-              }
-            </p>
-          </div>
-        )}
-      </div>
     </div>
   );
 };
@@ -347,11 +193,11 @@ export default function NewsCorrelationDashboard() {
   const [selectedSymbol, setSelectedSymbol] = useState("XAUUSD");
   const [timeframe, setTimeframe] = useState("1h");
   const [chartData, setChartData] = useState<ChartCandle[]>([]);
+  const [symbols, setSymbols] = useState<SymbolData[]>(INITIAL_SYMBOLS);
   const [news, setNews] = useState<EnrichedNews[]>([]);
   const [loading, setLoading] = useState(true);
   const [newsLoading, setNewsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedNewsId, setExpandedNewsId] = useState<string | null>(null);
   const [newsFilter, setNewsFilter] = useState<"all" | "popular" | "high">("high");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedCandleNews, setSelectedCandleNews] = useState<CandleNews | null>(null);
@@ -359,24 +205,26 @@ export default function NewsCorrelationDashboard() {
   const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
   const [currentLocale, setCurrentLocale] = useState("tr");
   const [mounted, setMounted] = useState(false);
-
+  const [wsConnected, setWsConnected] = useState(false);
+  
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
+  // Mount effect
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Fetch chart data
   const fetchChartData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Symbol mapping for backend API
       const symbolMap: Record<string, string> = {
         XAUUSD: "XAUUSD",
-        NASDAQ: "NDX.INDX",
         NDX: "NDX.INDX",
         DAX: "GDAXI.INDX",
         USOIL: "CL.COMM",
@@ -385,15 +233,14 @@ export default function NewsCorrelationDashboard() {
       };
       const apiSymbol = symbolMap[selectedSymbol] || selectedSymbol;
 
-      const chartResponse = await fetcher<OHLCVResponse>(
+      const response = await fetcher<OHLCVResponse>(
         `/api/data/ohlcv?symbol=${apiSymbol}&timeframe=${timeframe}&limit=200`
       );
 
-      // Backend returns { data: [{ timestamp (ms), open, high, low, close, volume }] }
-      if (chartResponse?.data && Array.isArray(chartResponse.data) && chartResponse.data.length > 0) {
-        const processedCandles: ChartCandle[] = chartResponse.data.map((row) => {
-          // Convert timestamp from milliseconds to seconds for lightweight-charts
-          const timeInSeconds = row.timestamp > 1e12 ? Math.floor(row.timestamp / 1000) : row.timestamp;
+      if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
+        const processedCandles: ChartCandle[] = response.data.map((row) => {
+          // Convert ms to seconds for lightweight-charts
+          const timeInSeconds = Math.floor(row.timestamp / 1000);
           const priceChange = ((row.close - row.open) / row.open) * 100;
           return {
             time: timeInSeconds,
@@ -408,94 +255,113 @@ export default function NewsCorrelationDashboard() {
         setChartData(processedCandles);
       } else {
         setError("No chart data available");
+        setChartData([]);
       }
-    } catch (error) {
-      console.error("Error fetching chart:", error);
+    } catch (err) {
+      console.error("Error fetching chart:", err);
       setError("Failed to load chart data");
+      setChartData([]);
     } finally {
       setLoading(false);
     }
   }, [selectedSymbol, timeframe]);
 
-  // Helper: parse news items from API response (handles both array and object formats)
-  const parseNewsResponse = (response: any): any[] => {
-    if (Array.isArray(response)) return response;
-    if (response?.success && Array.isArray(response.data)) return response.data;
-    if (response?.data && Array.isArray(response.data)) return response.data;
-    return [];
-  };
-
-  // Helper: map backend fields to frontend EnrichedNews format
-  const mapNewsItems = (items: any[]): EnrichedNews[] => {
-    return items.map((item: any) => ({
-      id: item.id,
-      timestamp: item.timestamp,
-      source: item.source,
-      headline: item.headline,
-      content: item.content || "",
-      category: item.category,
-      url: item.url,
-      impacts: item.impacts || [],
-      sentiment: item.sentiment || "neutral",
-      volatilityExpectation: item.volatility_expectation || item.volatilityExpectation || "medium",
-      urgency: item.urgency || "medium",
-      eventDuration: item.event_duration || item.eventDuration || "short_term",
-      affectedCandles: item.affected_candles || item.affectedCandles || [],
-      aiConfidence: typeof item.ai_confidence === "number"
-        ? (item.ai_confidence <= 1 ? item.ai_confidence * 100 : item.ai_confidence)
-        : (item.aiConfidence || 70),
-      analysisTimestamp: item.analysis_timestamp || item.analysisTimestamp || new Date().toISOString(),
-    }));
-  };
-
+  // Fetch news
   const fetchNews = useCallback(async () => {
     try {
       setNewsLoading(true);
-
-      // News impacts use original symbol names (XAUUSD, DAX, USOIL), not OHLCV API names
-      const apiSymbol = selectedSymbol;
-
-      // Strategy 1: Fetch news filtered by symbol
-      let newsItems: any[] = [];
-      try {
-        const res1 = await fetcher<any>(
-          `/api/rss/news?symbol=${apiSymbol}&limit=50&hours=72`
-        );
-        newsItems = parseNewsResponse(res1);
-      } catch { /* continue to fallback */ }
-
-      // Strategy 2: If no symbol-specific news, fetch ALL news (no symbol filter)
-      if (newsItems.length === 0) {
-        try {
-          const res2 = await fetcher<any>(
-            `/api/rss/news?limit=50&hours=72`
-          );
-          newsItems = parseNewsResponse(res2);
-        } catch { /* continue to fallback */ }
-      }
-
-      // Strategy 3: If still empty, include low-priority (skip_ai_filtered=false)
-      if (newsItems.length === 0) {
-        try {
-          const res3 = await fetcher<any>(
-            `/api/rss/news?limit=50&hours=168&skip_ai_filtered=false`
-          );
-          newsItems = parseNewsResponse(res3);
-        } catch { /* give up on API */ }
-      }
-
-      if (newsItems.length > 0) {
-        setNews(mapNewsItems(newsItems));
+      const response = await fetcher<{ success: boolean; data: EnrichedNews[] }>(
+        `/api/rss/news?symbol=${selectedSymbol}&limit=50&hours=72`
+      );
+      
+      if (response?.success && Array.isArray(response.data)) {
+        setNews(response.data);
       } else {
         setNews([]);
       }
-    } catch (error) {
-      console.error("Error fetching news:", error);
+    } catch (err) {
+      console.error("Error fetching news:", err);
+      setNews([]);
     } finally {
       setNewsLoading(false);
     }
   }, [selectedSymbol]);
 
+  // WebSocket connection for live prices
+  useEffect(() => {
+    if (!mounted) return;
+
+    const connectWebSocket = () => {
+      try {
+        const wsUrl = `wss://upbeat-flow-production.up.railway.app/ws/all`;
+        const ws = new WebSocket(wsUrl);
+        
+        ws.onopen = () => {
+          console.log("[WS] Connected");
+          setWsConnected(true);
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === "price_update" && data.payload) {
+              const payload: WSPriceData = data.payload;
+              
+              setSymbols(prev => prev.map(sym => {
+                // Map backend symbol names to frontend
+                const backendToFrontend: Record<string, string> = {
+                  "XAUUSD": "XAUUSD",
+                  "NDX.INDX": "NDX",
+                  "GDAXI.INDX": "DAX",
+                  "CL.COMM": "USOIL",
+                  "VIX.INDX": "VIX",
+                  "DXY.INDX": "DXY",
+                };
+                
+                if (backendToFrontend[payload.symbol] === sym.symbol) {
+                  return {
+                    ...sym,
+                    price: payload.price,
+                    change: payload.change,
+                    changePercent: payload.changePercent,
+                  };
+                }
+                return sym;
+              }));
+            }
+          } catch (e) {
+            console.error("[WS] Parse error:", e);
+          }
+        };
+        
+        ws.onclose = () => {
+          console.log("[WS] Disconnected");
+          setWsConnected(false);
+          // Reconnect after 5 seconds
+          setTimeout(connectWebSocket, 5000);
+        };
+        
+        ws.onerror = (err) => {
+          console.error("[WS] Error:", err);
+          ws.close();
+        };
+        
+        wsRef.current = ws;
+      } catch (err) {
+        console.error("[WS] Connection failed:", err);
+      }
+    };
+
+    connectWebSocket();
+    
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, [mounted]);
+
+  // Initial data fetch
   useEffect(() => {
     if (mounted) {
       fetchChartData();
@@ -503,42 +369,66 @@ export default function NewsCorrelationDashboard() {
     }
   }, [fetchChartData, fetchNews, mounted]);
 
+  // Initialize chart
   useEffect(() => {
     if (!chartContainerRef.current || !mounted) return;
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
       height: chartContainerRef.current.clientHeight,
-      layout: { background: { color: "transparent" }, textColor: "#6b7280", fontFamily: "Inter, system-ui, sans-serif" },
-      grid: { vertLines: { color: "rgba(255, 255, 255, 0.03)" }, horzLines: { color: "rgba(255, 255, 255, 0.03)" } },
-      crosshair: { mode: CrosshairMode.Normal, vertLine: { color: "rgba(255, 255, 255, 0.1)", labelBackgroundColor: "#374151" }, horzLine: { color: "rgba(255, 255, 255, 0.1)", labelBackgroundColor: "#374151" } },
-      rightPriceScale: { borderColor: "rgba(255, 255, 255, 0.1)", scaleMargins: { top: 0.1, bottom: 0.1 } },
-      timeScale: { borderColor: "rgba(255, 255, 255, 0.1)", timeVisible: true, secondsVisible: false },
+      layout: { 
+        background: { color: "#0a0a0a" }, 
+        textColor: "#6b7280",
+        fontFamily: "Inter, system-ui, sans-serif" 
+      },
+      grid: { 
+        vertLines: { color: "rgba(255, 255, 255, 0.03)" }, 
+        horzLines: { color: "rgba(255, 255, 255, 0.03)" } 
+      },
+      crosshair: { 
+        mode: CrosshairMode.Normal, 
+        vertLine: { color: "rgba(255, 255, 255, 0.1)", labelBackgroundColor: "#374151" }, 
+        horzLine: { color: "rgba(255, 255, 255, 0.1)", labelBackgroundColor: "#374151" } 
+      },
+      rightPriceScale: { 
+        borderColor: "rgba(255, 255, 255, 0.1)",
+        scaleMargins: { top: 0.1, bottom: 0.1 } 
+      },
+      timeScale: { 
+        borderColor: "rgba(255, 255, 255, 0.1)",
+        timeVisible: true,
+        secondsVisible: false 
+      },
     });
 
     const candlestickSeries = chart.addCandlestickSeries({
-      upColor: "#22c55e", downColor: "#ef4444", borderUpColor: "#22c55e", borderDownColor: "#ef4444",
-      wickUpColor: "#22c55e", wickDownColor: "#ef4444",
+      upColor: "#22c55e", 
+      downColor: "#ef4444", 
+      borderUpColor: "#22c55e", 
+      borderDownColor: "#ef4444",
+      wickUpColor: "#22c55e", 
+      wickDownColor: "#ef4444",
     });
 
+    // Click handler for candles
     chart.subscribeClick((param) => {
-      if (param.time && param.point) {
+      if (param.time && candlestickSeries) {
         const time = param.time as number;
         const tf = TIMEFRAMES.find(t => t.value === timeframe);
-        const minutes = tf?.minutes || 60;
-
+        const minutes = tf ? { "1m": 1, "5m": 5, "15m": 15, "30m": 30, "1h": 60, "4h": 240, "1d": 1440 }[tf.value] || 60 : 60;
+        
         const candle = chartData.find(c => c.time === time);
         if (candle) {
           const candleStart = subMinutes(new Date(candle.time * 1000), minutes / 2);
           const candleEnd = addMinutes(new Date(candle.time * 1000), minutes / 2);
-
+          
           const relatedNews = news.filter(n => {
             const newsTime = new Date(n.timestamp);
             return isWithinInterval(newsTime, { start: candleStart, end: candleEnd });
           });
 
           const priceChange = ((candle.close - candle.open) / candle.open) * 100;
-
+          
           setSelectedCandleNews({
             candle,
             news: relatedNews,
@@ -560,21 +450,17 @@ export default function NewsCorrelationDashboard() {
     };
 
     window.addEventListener("resize", handleResize);
-    return () => { window.removeEventListener("resize", handleResize); chart.remove(); };
+    return () => { 
+      window.removeEventListener("resize", handleResize); 
+      chart.remove(); 
+    };
   }, [chartData, news, timeframe, mounted]);
 
+  // Update chart data
   useEffect(() => {
     if (candlestickSeriesRef.current && chartData.length > 0) {
-      const formattedData = chartData.map((candle) => ({
-        time: candle.time as Time,
-        open: candle.open,
-        high: candle.high,
-        low: candle.low,
-        close: candle.close,
-      }));
-
-      candlestickSeriesRef.current.setData(formattedData);
-
+      candlestickSeriesRef.current.setData(chartData);
+      
       const markers = chartData
         .filter(c => Math.abs(c.priceChange || 0) > 1.5)
         .map(candle => ({
@@ -585,7 +471,7 @@ export default function NewsCorrelationDashboard() {
           text: `${Math.abs(candle.priceChange || 0).toFixed(1)}%`,
           size: 2,
         }));
-
+      
       candlestickSeriesRef.current.setMarkers(markers);
       chartRef.current?.timeScale().fitContent();
     }
@@ -602,7 +488,7 @@ export default function NewsCorrelationDashboard() {
     return true;
   });
 
-  const currentSymbol = SYMBOLS.find(s => s.symbol === selectedSymbol);
+  const currentSymbol = symbols.find(s => s.symbol === selectedSymbol);
 
   if (!mounted) {
     return <div className="min-h-screen bg-[#0a0a0a]" />;
@@ -610,6 +496,7 @@ export default function NewsCorrelationDashboard() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex">
+      {/* Sidebar */}
       <aside className={cn("flex-shrink-0 border-r border-gray-800 bg-[#0a0a0a] flex flex-col transition-all duration-300", sidebarCollapsed ? "w-16" : "w-60")}>
         <div className="h-16 flex items-center px-4 border-b border-gray-800">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
@@ -627,47 +514,119 @@ export default function NewsCorrelationDashboard() {
         </div>
       </aside>
 
+      {/* Main */}
       <main className="flex-1 flex flex-col min-w-0">
-        <SymbolBar symbols={SYMBOLS} selectedSymbol={selectedSymbol} onSelect={setSelectedSymbol} />
+        {/* Symbol Bar */}
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-800 bg-[#0a0a0a]">
+          <div className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+            {symbols.map((sym) => (
+              <button 
+                key={sym.symbol} 
+                onClick={() => setSelectedSymbol(sym.symbol)} 
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all flex-shrink-0",
+                  selectedSymbol === sym.symbol 
+                    ? "bg-gray-800 text-white border border-gray-700" 
+                    : "bg-gray-900/50 text-gray-400 hover:bg-gray-800 hover:text-white border border-transparent"
+                )}
+              >
+                <span className="font-semibold">{sym.symbol}</span>
+                <span className={cn(
+                  "text-xs font-mono",
+                  sym.change > 0 ? "text-green-400" : sym.change < 0 ? "text-red-400" : "text-gray-500"
+                )}>
+                  ${sym.price > 0 ? sym.price.toLocaleString() : "-.--"}
+                </span>
+                {wsConnected && selectedSymbol === sym.symbol && (
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="flex-1 flex overflow-hidden">
+          {/* Chart Section */}
           <div className="flex-1 flex flex-col min-w-0 relative">
+            {/* Header */}
             <div className="p-6 border-b border-gray-800">
-              <h1 className="text-xl font-bold text-white mb-4 leading-tight">{selectedSymbol} - {currentSymbol?.name} Market Analysis</h1>
+              <h1 className="text-xl font-bold text-white mb-4">
+                {selectedSymbol} - {currentSymbol?.name} Market Analysis
+              </h1>
               <div className="flex items-center gap-3 flex-wrap">
-                <AnalysisCard type="swing" label="SWING TRADING" value="Bullish" active />
-                <AnalysisCard type="day" label="DAY TRADING" value="Slightly Bearish" active />
-                <AnalysisCard type="news" label="NEWS FEED" value="High Impact" active />
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-green-500/10 border-green-500/30">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-gray-500 uppercase">Swing Trading</span>
+                    <span className="text-sm font-semibold text-green-400 flex items-center gap-1">
+                      Bullish <TrendingUp className="w-4 h-4" />
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-red-500/10 border-red-500/30">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-gray-500 uppercase">Day Trading</span>
+                    <span className="text-sm font-semibold text-red-400 flex items-center gap-1">
+                      Slightly Bearish <TrendingDown className="w-4 h-4" />
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-purple-500/10 border-purple-500/30">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-gray-500 uppercase">News Feed</span>
+                    <span className="text-sm font-semibold text-purple-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                      High Impact
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
+            {/* Chart */}
             <div className="flex-1 relative min-h-0">
-              <CandleInfoPanel candleNews={selectedCandleNews} onClose={() => setSelectedCandleNews(null)} symbol={selectedSymbol} />
-
+              {/* Timeframe selector */}
               <div className="absolute top-4 left-4 z-10 flex items-center gap-1 bg-gray-900/80 backdrop-blur rounded-lg p-1 border border-gray-800">
                 {TIMEFRAMES.map((tf) => (
-                  <button key={tf.value} onClick={() => setTimeframe(tf.value)} className={cn(
-                    "px-3 py-1.5 rounded text-xs font-medium transition-all",
-                    timeframe === tf.value ? "bg-gray-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-800"
-                  )}>{tf.label}</button>
+                  <button 
+                    key={tf.value} 
+                    onClick={() => setTimeframe(tf.value)} 
+                    className={cn(
+                      "px-3 py-1.5 rounded text-xs font-medium transition-all",
+                      timeframe === tf.value ? "bg-gray-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-800"
+                    )}
+                  >
+                    {tf.label}
+                  </button>
                 ))}
               </div>
 
-              <button onClick={fetchChartData} className="absolute top-4 left-64 z-10 p-2 bg-gray-900/80 backdrop-blur rounded-lg border border-gray-800 text-gray-400 hover:text-white transition-colors">
+              {/* Refresh */}
+              <button 
+                onClick={() => { fetchChartData(); fetchNews(); }} 
+                className="absolute top-4 left-64 z-10 p-2 bg-gray-900/80 backdrop-blur rounded-lg border border-gray-800 text-gray-400 hover:text-white transition-colors"
+              >
                 <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
               </button>
 
-              <div className="absolute top-4 right-4 z-10 space-y-2">
-                <div className="bg-gray-900/90 backdrop-blur px-3 py-2 rounded-lg border border-gray-800">
-                  <span className="text-xs text-gray-400">Pullback Area:</span>
-                  <span className="text-sm text-white ml-2 font-mono">${((currentSymbol?.price || 0) * 1.02).toFixed(2)}</span>
+              {/* Price levels */}
+              {currentSymbol && currentSymbol.price > 0 && (
+                <div className="absolute top-4 right-4 z-10 space-y-2">
+                  <div className="bg-gray-900/90 backdrop-blur px-3 py-2 rounded-lg border border-gray-800">
+                    <span className="text-xs text-gray-400">Current:</span>
+                    <span className="text-sm text-white ml-2 font-mono">${currentSymbol.price.toFixed(2)}</span>
+                  </div>
+                  <div className="bg-gray-900/90 backdrop-blur px-3 py-2 rounded-lg border border-gray-800">
+                    <span className="text-xs text-gray-400">Pullback:</span>
+                    <span className="text-sm text-white ml-2 font-mono">${(currentSymbol.price * 1.02).toFixed(2)}</span>
+                  </div>
+                  <div className="bg-gray-900/90 backdrop-blur px-3 py-2 rounded-lg border border-gray-800">
+                    <span className="text-xs text-gray-400">Target:</span>
+                    <span className="text-sm text-red-400 ml-2 font-mono">${(currentSymbol.price * 0.98).toFixed(2)}</span>
+                  </div>
                 </div>
-                <div className="bg-gray-900/90 backdrop-blur px-3 py-2 rounded-lg border border-gray-800">
-                  <span className="text-xs text-gray-400">Target Level:</span>
-                  <span className="text-sm text-red-400 ml-2 font-mono">${((currentSymbol?.price || 0) * 0.98).toFixed(2)}</span>
-                </div>
-              </div>
+              )}
 
+              {/* Loading / Error */}
               {loading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a]">
                   <div className="flex flex-col items-center gap-3">
@@ -676,45 +635,140 @@ export default function NewsCorrelationDashboard() {
                   </div>
                 </div>
               )}
+              
               {error && !loading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a]">
                   <div className="flex flex-col items-center gap-3">
                     <AlertTriangle className="w-8 h-8 text-red-500" />
                     <span className="text-sm text-gray-400">{error}</span>
-                    <button onClick={fetchChartData} className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors">Retry</button>
+                    <button 
+                      onClick={fetchChartData} 
+                      className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600"
+                    >
+                      Retry
+                    </button>
                   </div>
                 </div>
               )}
 
-              <div ref={chartContainerRef} className="w-full h-full" style={{ visibility: loading || error ? 'hidden' : 'visible' }} />
+              {/* Chart container */}
+              <div 
+                ref={chartContainerRef} 
+                className="w-full h-full" 
+                style={{ visibility: loading || error ? 'hidden' : 'visible' }} 
+              />
 
-              {!loading && !error && !selectedCandleNews && (
+              {/* Candle click tip */}
+              {!loading && !error && !selectedCandleNews && chartData.length > 0 && (
                 <div className="absolute bottom-16 left-4 z-10 bg-gray-900/80 backdrop-blur px-3 py-2 rounded-lg border border-gray-800 text-xs text-gray-400">
-                  💡 Click on any candle to see related news and AI analysis
+                  💡 Click any candle to see related news
                 </div>
               )}
 
+              {/* Candle info panel */}
+              {selectedCandleNews && (
+                <div className="absolute top-20 left-4 z-20 w-80 bg-gray-900/95 backdrop-blur-xl border border-gray-700 rounded-xl shadow-2xl overflow-hidden">
+                  <div className="flex items-center justify-between p-4 border-b border-gray-800">
+                    <div>
+                      <h3 className="font-semibold">
+                        {format(new Date(selectedCandleNews.candle.time * 1000), "MMM d, HH:mm")}
+                      </h3>
+                      <p className="text-xs text-gray-500">Candle Analysis</p>
+                    </div>
+                    <button 
+                      onClick={() => setSelectedCandleNews(null)} 
+                      className="p-1 text-gray-500 hover:text-white hover:bg-gray-800 rounded"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  
+                  <div className="p-4 space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-gray-800/50 rounded-lg p-3">
+                        <span className="text-xs text-gray-500">Open</span>
+                        <p className="font-mono text-sm">${selectedCandleNews.candle.open.toFixed(2)}</p>
+                      </div>
+                      <div className="bg-gray-800/50 rounded-lg p-3">
+                        <span className="text-xs text-gray-500">Close</span>
+                        <p className="font-mono text-sm">${selectedCandleNews.candle.close.toFixed(2)}</p>
+                      </div>
+                      <div className="bg-gray-800/50 rounded-lg p-3">
+                        <span className="text-xs text-gray-500">High</span>
+                        <p className="font-mono text-sm text-green-400">${selectedCandleNews.candle.high.toFixed(2)}</p>
+                      </div>
+                      <div className="bg-gray-800/50 rounded-lg p-3">
+                        <span className="text-xs text-gray-500">Low</span>
+                        <p className="font-mono text-sm text-red-400">${selectedCandleNews.candle.low.toFixed(2)}</p>
+                      </div>
+                    </div>
+
+                    {selectedCandleNews.hasBigMove && (
+                      <div className={cn(
+                        "p-3 rounded-lg border",
+                        selectedCandleNews.moveType === "up" ? "bg-green-500/10 border-green-500/30" : "bg-red-500/10 border-red-500/30"
+                      )}>
+                        <div className="flex items-center gap-2 mb-2">
+                          {selectedCandleNews.moveType === "up" ? 
+                            <ArrowUp className="w-4 h-4 text-green-400" /> : 
+                            <ArrowDown className="w-4 h-4 text-red-400" />
+                          }
+                          <span className={cn("font-semibold", selectedCandleNews.moveType === "up" ? "text-green-400" : "text-red-400")}>
+                            Big {selectedCandleNews.moveType === "up" ? "Surge" : "Drop"}: {selectedCandleNews.movePercent.toFixed(2)}%
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <Newspaper className="w-4 h-4 text-purple-400" />
+                        Related News ({selectedCandleNews.news.length})
+                      </h4>
+                      {selectedCandleNews.news.length === 0 ? (
+                        <p className="text-xs text-gray-500 italic">No news for this period.</p>
+                      ) : (
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          {selectedCandleNews.news.map((n, i) => (
+                            <div key={i} className="p-2 bg-gray-800/50 rounded-lg text-xs cursor-pointer hover:bg-gray-800" onClick={() => handleNewsClick(n)}>
+                              <p className="text-gray-300 line-clamp-2">{n.headline}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Days */}
               <div className="absolute bottom-0 left-0 right-0 flex justify-between px-16 py-2 text-xs text-gray-500 border-t border-gray-800 bg-[#0a0a0a]">
-                <span>Monday</span><span>Tuesday</span><span>Wednesday</span><span>Thursday</span><span>Friday</span>
+                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span>
               </div>
             </div>
 
+            {/* Bottom bias */}
             <div className="border-t border-gray-800 bg-gray-900/30 p-4">
               <p className="text-sm text-gray-400">
-                The day trading bias on <span className="text-white font-semibold">{selectedSymbol}</span> is <span className="text-red-400 font-semibold bg-red-500/10 px-2 py-0.5 rounded">slightly bearish</span>
+                Day trading bias on <span className="text-white font-semibold">{selectedSymbol}</span> is{" "}
+                <span className="text-red-400 font-semibold bg-red-500/10 px-2 py-0.5 rounded">slightly bearish</span>
               </p>
-              <p className="text-xs text-gray-500 mt-1">Updated {formatDistanceToNow(new Date(), { addSuffix: true })}</p>
             </div>
           </div>
 
+          {/* News Panel */}
           <aside className="w-[420px] border-l border-gray-800 bg-[#0a0a0a] flex flex-col">
             <div className="h-14 flex items-center justify-between px-4 border-b border-gray-800">
               <div className="flex items-center gap-2">
                 <h2 className="font-semibold">News Feed</h2>
-                <Clock className="w-4 h-4 text-gray-500" />
+                {wsConnected && <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
               </div>
               <div className="flex items-center gap-2">
-                <select value={currentLocale} onChange={(e) => setCurrentLocale(e.target.value)} className="bg-gray-900 border border-gray-800 rounded-lg px-2 py-1 text-xs text-gray-400 focus:outline-none focus:border-purple-500">
+                <select 
+                  value={currentLocale} 
+                  onChange={(e) => setCurrentLocale(e.target.value)}
+                  className="bg-gray-900 border border-gray-800 rounded-lg px-2 py-1 text-xs text-gray-400"
+                >
                   <option value="tr">🇹🇷 TR</option>
                   <option value="en">🇬🇧 EN</option>
                   <option value="de">🇩🇪 DE</option>
@@ -722,21 +776,22 @@ export default function NewsCorrelationDashboard() {
                   <option value="fr">🇫🇷 FR</option>
                   <option value="ar">🇸🇦 AR</option>
                 </select>
-                <button onClick={fetchNews} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                <button onClick={fetchNews} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg">
                   <RefreshCw className={cn("w-4 h-4", newsLoading && "animate-spin")} />
                 </button>
-                <button className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"><Filter className="w-4 h-4" /></button>
-                <button className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"><Search className="w-4 h-4" /></button>
               </div>
             </div>
 
             <div className="flex items-center gap-1 px-4 py-3 border-b border-gray-800">
               {["all", "popular", "high"].map((filter) => (
-                <button key={filter} onClick={() => setNewsFilter(filter as any)} className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2",
-                  newsFilter === filter ? "text-white" : "text-gray-500 hover:text-gray-300"
-                )}>
-                  {filter === "high" && newsFilter === "high" && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
+                <button 
+                  key={filter} 
+                  onClick={() => setNewsFilter(filter as any)} 
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
+                    newsFilter === filter ? "text-white" : "text-gray-500 hover:text-gray-300"
+                  )}
+                >
                   {filter.charAt(0).toUpperCase() + filter.slice(1)}
                 </button>
               ))}
@@ -744,21 +799,19 @@ export default function NewsCorrelationDashboard() {
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {newsLoading ? (
-                Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-32 bg-gray-900/50 rounded-xl animate-pulse border border-gray-800" />)
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-32 bg-gray-900/50 rounded-xl animate-pulse border border-gray-800" />
+                ))
               ) : filteredNews.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Newspaper className="w-6 h-6 text-gray-500" />
-                  </div>
+                  <Newspaper className="w-12 h-12 text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-500 text-sm">No news available</p>
                 </div>
               ) : (
                 filteredNews.map((item) => (
-                  <NewsCard
-                    key={item.id}
-                    news={item}
-                    isExpanded={expandedNewsId === item.id}
-                    onToggle={() => setExpandedNewsId(expandedNewsId === item.id ? null : item.id)}
+                  <NewsCard 
+                    key={item.id} 
+                    news={item} 
                     onClick={() => handleNewsClick(item)}
                   />
                 ))
