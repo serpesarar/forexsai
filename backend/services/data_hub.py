@@ -126,10 +126,78 @@ def _normalize_symbol(symbol: str) -> str:
 
 
 # ═══════════════════════════════════════════════════════════════
+# YAHOO FINANCE FALLBACK (Commodities/Forex bypassing EODHD)
+# ═══════════════════════════════════════════════════════════════
+async def _fetch_yahoo_price(yahoo_symbol: str) -> Optional[float]:
+    """Fetch real-time price from Yahoo Finance."""
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{yahoo_symbol}?interval=1m&range=1d"
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(url, headers=headers)
+            if resp.status_code == 200:
+                data = resp.json()
+                meta = data['chart']['result'][0]['meta']
+                return float(meta['regularMarketPrice'])
+    except Exception as e:
+        logger.error(f"Yahoo fetch error for {yahoo_symbol}: {e}")
+    return None
+
+async def _fetch_yahoo_candles(yahoo_symbol: str, interval: str, limit: int) -> List[Dict]:
+    """Fetch history from Yahoo Finance."""
+    yf_interval = interval
+    if interval == "1h": yf_interval = "60m"
+    elif interval in ("1d", "eod"): yf_interval = "1d"
+    
+    yf_range = "5d"
+    if yf_interval == "60m": yf_range = "1mo"
+    elif yf_interval == "1d": yf_range = "2y"
+    
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{yahoo_symbol}?interval={yf_interval}&range={yf_range}"
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(url, headers=headers)
+            if resp.status_code == 200:
+                result = resp.json()['chart']['result'][0]
+                timestamps = result.get('timestamp', [])
+                quote = result['indicators']['quote'][0]
+                
+                candles = []
+                for i in range(len(timestamps)):
+                    if quote['open'][i] is not None:
+                        # Convert to milliseconds for standard Datahub format
+                        ts_ms = timestamps[i] * 1000
+                        dt_str = datetime.fromtimestamp(timestamps[i]).isoformat()
+                        
+                        candles.append({
+                            "timestamp": ts_ms,
+                            "date": dt_str,
+                            "open": float(quote['open'][i]),
+                            "high": float(quote['high'][i]),
+                            "low": float(quote['low'][i]),
+                            "close": float(quote['close'][i]),
+                            "volume": float(quote.get('volume', [0])[i] or 0)
+                        })
+                return candles[-limit:]
+    except Exception as e:
+        logger.error(f"Yahoo candle error for {yahoo_symbol}: {e}")
+    return []
+
+
+# ═══════════════════════════════════════════════════════════════
 # EODHD API FETCHERS (only called by DataHub pump)
 # ═══════════════════════════════════════════════════════════════
 async def _fetch_price_from_api(symbol: str) -> Optional[float]:
-    """Fetch real-time price from EODHD. Costs 1 API call."""
+    """Fetch real-time price. Intercepts Commodities for Yahoo, else EODHD."""
+    eod_symbol = _normalize_symbol(symbol)
+    
+    # --- YAHOO FINANCE FALLBACK ---
+    if eod_symbol == "CL": # USOil / WTI
+        return await _fetch_yahoo_price("CL=F")
+    if eod_symbol in ("XAUUSD.FOREX", "XAUUSD"): # Gold
+        return await _fetch_yahoo_price("GC=F")
+
     if not settings.eodhd_api_key:
         return None
     eod_symbol = _normalize_symbol(symbol)
@@ -182,10 +250,17 @@ async def _fetch_price_from_api(symbol: str) -> Optional[float]:
 
 
 async def _fetch_candles_from_api(symbol: str, interval: str, limit: int = 500) -> List[Dict]:
-    """Fetch intraday candles from EODHD. Costs 5 API calls."""
+    """Fetch intraday candles. Intercepts Commodities for Yahoo, else EODHD."""
+    eod_symbol = _normalize_symbol(symbol)
+    
+    # --- YAHOO FINANCE FALLBACK ---
+    if eod_symbol == "CL":
+        return await _fetch_yahoo_candles("CL=F", interval, limit)
+    if eod_symbol in ("XAUUSD.FOREX", "XAUUSD"):
+        return await _fetch_yahoo_candles("GC=F", interval, limit)
+
     if not settings.eodhd_api_key:
         return []
-    eod_symbol = _normalize_symbol(symbol)
     
     # Calculate how far back we need to go based on interval and limit
     # EODHD requires 'from' param for historical intraday data
@@ -241,10 +316,17 @@ async def _fetch_candles_from_api(symbol: str, interval: str, limit: int = 500) 
 
 
 async def _fetch_eod_from_api(symbol: str, limit: int = 300) -> List[Dict]:
-    """Fetch EOD candles from EODHD. Costs 5 API calls."""
+    """Fetch EOD candles. Intercepts Commodities for Yahoo, else EODHD."""
+    eod_symbol = _normalize_symbol(symbol)
+    
+    # --- YAHOO FINANCE FALLBACK ---
+    if eod_symbol == "CL":
+        return await _fetch_yahoo_candles("CL=F", "1d", limit)
+    if eod_symbol in ("XAUUSD.FOREX", "XAUUSD"):
+        return await _fetch_yahoo_candles("GC=F", "1d", limit)
+
     if not settings.eodhd_api_key:
         return []
-    eod_symbol = _normalize_symbol(symbol)
     from_date = (datetime.utcnow() - timedelta(days=max(30, limit * 2))).date().isoformat()
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
