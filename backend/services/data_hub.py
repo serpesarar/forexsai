@@ -55,7 +55,7 @@ TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]
 # ═══════════════════════════════════════════════════════════════
 # FETCH INTERVALS (seconds)
 # ═══════════════════════════════════════════════════════════════
-PRICE_INTERVAL = 30       # Fetch live price every 30 seconds
+PRICE_INTERVAL = 5       # Fetch live price every 5 seconds (to simulate WS since EODHD WS requires premium)
 CANDLE_5M_INTERVAL = 300  # Fetch 5m candles every 5 minutes
 CANDLE_30M_INTERVAL = 300 # Fetch 30m candles every 5 minutes (XAUUSD only)
 CANDLE_1H_INTERVAL = 300  # Fetch 1h candles every 5 minutes

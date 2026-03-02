@@ -171,6 +171,16 @@ export function WebSocketProvider({ children }: Props) {
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
+          const receiveTime = Date.now(); // The moment we received the message
+
+          // Tracking lag for debugging
+          if (msg.timestamp || msg?.data?.updated_at) {
+            const msgTime = new Date(msg.timestamp || msg.data?.updated_at).getTime();
+            const lag = receiveTime - msgTime;
+            if (lag > 5000) {
+              console.warn(`[WS] HIGH LAG DETECTED: ${lag}ms - Message timestamp: ${msg.timestamp}`);
+            }
+          }
 
           // Keepalive
           if (msg.type === "ping") {
@@ -188,11 +198,12 @@ export function WebSocketProvider({ children }: Props) {
 
           // Partial update message for instant real-time ticks
           if (msg.type === "price_update" && msg.symbol && msg.price !== undefined) {
+            const now = new Date().toISOString();
             setSymbolData((prev) => {
               const existing = prev[msg.symbol] || ({} as Partial<SymbolData>);
               const existingData = existing.data || {
                 symbol: msg.symbol,
-                updated_at: new Date().toISOString(),
+                updated_at: now,
                 ml_prediction: null,
                 ta_snapshot: null,
                 current_price: null,
@@ -207,10 +218,11 @@ export function WebSocketProvider({ children }: Props) {
                 [msg.symbol]: {
                   ...existing,
                   symbol: msg.symbol, // ensure symbol is set
-                  timestamp: existing.timestamp || new Date().toISOString(),
+                  timestamp: now, // ALWAYS refresh timestamp to trigger re-renders
                   data: {
                     ...existingData,
                     current_price: msg.price,
+                    updated_at: now, // refresh data updated_at too
                     ...(existingData.ta_snapshot ? {
                       ta_snapshot: {
                         ...existingData.ta_snapshot,
