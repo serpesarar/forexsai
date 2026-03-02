@@ -35,19 +35,30 @@ class OrderBlockBacktestRequest(BaseModel):
 
 
 class OrderBlockItem(BaseModel):
-    index: int
+    """Flexible OB item supporting both v1 and v2 formats."""
+    # Common fields
     type: Literal["bullish", "bearish"]
     zone_low: float
     zone_high: float
     score: float
-    displacement: float
-    has_choch: bool
-    has_bos: bool
-    has_fvg: bool
-    fib_level: float
-    volume_ratio: float
-    test_count: int
-    is_valid: bool
+    has_choch: bool = False
+    has_bos: bool = False
+    has_fvg: bool = False
+    # v2 fields
+    detected: Optional[bool] = None
+    strength: Optional[str] = None
+    tested: Optional[bool] = None
+    mitigated: Optional[bool] = None
+    # v1 fields (optional for backward compat)
+    index: Optional[int] = None
+    displacement: Optional[float] = None
+    fib_level: Optional[float] = None
+    volume_ratio: Optional[float] = None
+    test_count: Optional[int] = None
+    is_valid: Optional[bool] = None
+
+    class Config:
+        extra = "allow"
 
 
 class OrderBlockSignal(BaseModel):
@@ -67,6 +78,62 @@ class CombinedSignal(BaseModel):
     reasoning: List[str]
 
 
+class CHoCHItem(BaseModel):
+    detected: Optional[bool] = None
+    type: Optional[str] = None
+    index: Optional[int] = None
+    price: Optional[float] = None
+    prev_swing: Optional[float] = None
+    strength: Optional[str] = None
+
+    class Config:
+        extra = "allow"
+
+
+class BOSItem(BaseModel):
+    detected: Optional[bool] = None
+    type: Optional[str] = None
+    index: Optional[int] = None
+    price: Optional[float] = None
+    broken_level: Optional[float] = None
+    confirmation: Optional[bool] = None
+
+    class Config:
+        extra = "allow"
+
+
+class FVGItem(BaseModel):
+    detected: Optional[bool] = None
+    direction: Optional[str] = None
+    high: Optional[float] = None
+    low: Optional[float] = None
+    size: Optional[float] = None
+    filled: Optional[bool] = None
+    fill_percentage: Optional[float] = None
+
+    class Config:
+        extra = "allow"
+
+
+class StructureCounts(BaseModel):
+    choch: int = 0
+    bos: int = 0
+    fvg: int = 0
+    ob: int = 0
+
+
+class StructureData(BaseModel):
+    choch: Optional[List[CHoCHItem]] = None
+    bos: Optional[List[BOSItem]] = None
+    fvg: Optional[List[FVGItem]] = None
+    order_blocks: Optional[List[OrderBlockItem]] = None
+    trend: Optional[str] = None
+    counts: Optional[StructureCounts] = None
+
+    class Config:
+        extra = "allow"
+
+
 class OrderBlockDetectResponse(BaseModel):
     symbol: str
     timeframe: str
@@ -76,7 +143,15 @@ class OrderBlockDetectResponse(BaseModel):
     order_blocks: List[OrderBlockItem]
     active_signals: List[OrderBlockSignal]
     combined_signal: Optional[CombinedSignal] = None
+    structure: Optional[StructureData] = None
+    choch_list: Optional[List[CHoCHItem]] = None
+    bos_list: Optional[List[BOSItem]] = None
+    fvg_list: Optional[List[FVGItem]] = None
+    trend: Optional[str] = None
     timestamp: str
+
+    class Config:
+        extra = "allow"
 
 
 class OrderBlockEntryResponse(BaseModel):
