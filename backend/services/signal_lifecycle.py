@@ -253,9 +253,13 @@ def _update_signal_status(client, signal_id: str, status: str, exit_price=None):
     if exit_price is not None:
         update_data["exit_price"] = round(float(exit_price), 4)
     try:
-        client.table("prediction_logs").eq("id", signal_id).update(update_data)
+        result = client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
+        if result and result.get("data"):
+            logger.info(f"✅ Signal {signal_id[:8]} status updated to {status}")
+        return result
     except Exception as e:
         logger.error(f"Failed to update signal status {signal_id[:8]}: {e}")
+        return None
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -432,9 +436,11 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         "target_status": json.dumps(target_status),
     }
     try:
-        client.table("signal_checks").insert(check_record)
+        result = client.table("signal_checks").insert(check_record).execute()
+        return result
     except Exception as e:
         logger.error(f"Failed to insert signal_check for {signal_id[:8]}: {e}")
+        return None
 
     # ── 8. Determine new status ──
     new_status = None
@@ -463,12 +469,18 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
             try:
                 created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                 age_minutes = (datetime.now(created_dt.tzinfo) - created_dt).total_seconds() / 60
-                if age_minutes >= effective_max_age:  # Use extended timeout for stale prices
+                
+                # XAUUSD: Force shorter max age to prevent stuck signals
+                max_age_for_symbol = effective_max_age
+                if symbol == "XAUUSD":
+                    max_age_for_symbol = min(effective_max_age, 60)  # Max 60 min for XAUUSD
+                
+                if age_minutes >= max_age_for_symbol:  # Use extended timeout for stale prices
                     new_status = "completed" if any_target_hit else "expired"
                     exit_price = current
-                    logger.info(f"⏰ Signal {signal_id[:8]} aged out ({age_minutes:.0f}m, max={effective_max_age}m) → {new_status} (any_tp={any_target_hit}, stale={is_stale})")
-            except Exception:
-                pass
+                    logger.info(f"⏰ Signal {signal_id[:8]} {symbol} aged out ({age_minutes:.0f}m, max={max_age_for_symbol}m) → {new_status} (any_tp={any_target_hit}, stale={is_stale})")
+            except Exception as exp_err:
+                logger.warning(f"Failed to check signal age for {signal_id[:8]}: {exp_err}")
 
     # ── 9. Update prediction_logs ──
     update_data: Dict[str, Any] = {
@@ -483,7 +495,9 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         update_data["exit_time"] = datetime.utcnow().isoformat() + "Z"
 
     try:
-        client.table("prediction_logs").eq("id", signal_id).update(update_data)
+        result = client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
+        if result and result.get("data") and new_status:
+            logger.info(f"✅ Signal {signal_id[:8]} updated: status={new_status}, high={new_high:.1f}p, low={new_low:.1f}p")
     except Exception as e:
         logger.error(f"Failed to update signal {signal_id[:8]}: {e}")
 
@@ -786,7 +800,8 @@ def _record_job_state(client, job_name: str, summary: Dict[str, Any]):
 async def cleanup_old_signals():
     """
     1. Force-expire very old active signals (>2 hours)
-    2. Delete signal_checks older than 30 days
+    2. Force-expire XAUUSD signals older than 1 hour (special handling)
+    3. Delete signal_checks older than 30 days
     """
     if not is_db_available():
         return
@@ -798,19 +813,49 @@ async def cleanup_old_signals():
     try:
         # Force-expire signals older than 2 hours that are still active
         cutoff = (datetime.utcnow() - timedelta(hours=2)).isoformat() + "Z"
-        result = client.table("prediction_logs").select("id, created_at").eq(
+        result = client.table("prediction_logs").select("id, created_at, symbol").eq(
             "status", "active"
         ).lt("created_at", cutoff).limit(50).execute()
 
         stale = result.get("data") or []
+        expired_count = 0
         for s in stale:
-            client.table("prediction_logs").eq("id", s["id"]).update({
-                "status": "expired",
-                "exit_time": datetime.utcnow().isoformat() + "Z",
-            })
+            try:
+                upd_result = client.table("prediction_logs").eq("id", s["id"]).update({
+                    "status": "expired",
+                    "exit_time": datetime.utcnow().isoformat() + "Z",
+                    "exit_price": None,
+                }).execute()
+                if upd_result and upd_result.get("data"):
+                    expired_count += 1
+            except Exception as upd_err:
+                logger.warning(f"Failed to expire signal {s['id'][:8]}: {upd_err}")
 
-        if stale:
-            logger.info(f"🧹 Force-expired {len(stale)} stale signals (>2h old)")
+        if expired_count:
+            logger.info(f"🧹 Force-expired {expired_count} stale signals (>2h old)")
+        
+        # SPECIAL: Force-expire XAUUSD signals older than 1 hour
+        xau_cutoff = (datetime.utcnow() - timedelta(hours=1)).isoformat() + "Z"
+        xau_result = client.table("prediction_logs").select("id, created_at, symbol").eq(
+            "status", "active"
+        ).eq("symbol", "XAUUSD").lt("created_at", xau_cutoff).limit(100).execute()
+        
+        xau_stale = xau_result.get("data") or []
+        xau_expired = 0
+        for s in xau_stale:
+            try:
+                upd_result = client.table("prediction_logs").eq("id", s["id"]).update({
+                    "status": "expired",
+                    "exit_time": datetime.utcnow().isoformat() + "Z",
+                    "exit_price": None,
+                }).execute()
+                if upd_result and upd_result.get("data"):
+                    xau_expired += 1
+            except Exception as upd_err:
+                logger.warning(f"Failed to expire XAUUSD signal {s['id'][:8]}: {upd_err}")
+        
+        if xau_expired:
+            logger.info(f"🧹 Force-expired {xau_expired} XAUUSD signals (>1h old)")
 
         # Delete signal_checks older than 30 days
         archive_cutoff = (datetime.utcnow() - timedelta(days=ARCHIVE_AFTER_DAYS)).isoformat() + "Z"

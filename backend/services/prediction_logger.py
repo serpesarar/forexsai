@@ -60,9 +60,11 @@ def _close_existing_signal(client, signal_id: str, new_direction: str, reason: s
                 "replaced_by_direction": new_direction,
             }
         }
-        client.table("prediction_logs").eq("id", signal_id).update(update_data)
-        logger.info(f"Closed signal {signal_id[:8]}: {reason} -> {new_direction}")
-        return True
+        result = client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
+        if result and result.get("data"):
+            logger.info(f"✅ Closed signal {signal_id[:8]}: {reason} -> {new_direction}")
+            return True
+        return False
     except Exception as e:
         logger.error(f"Failed to close signal {signal_id}: {e}")
         return False

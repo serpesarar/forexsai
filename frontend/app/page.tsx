@@ -1480,6 +1480,11 @@ export default function HomePage() {
           {activeView === "trading" && <TradingView />}
           {activeView === "analysis" && <AnalysisView />}
           {activeView === "signals" && <SignalsView />}
+          {activeView === "news-correlation" && (
+            <div className="w-full h-[calc(100vh-80px)] p-4">
+              <NewsChartCorrelationPanel />
+            </div>
+          )}
         </div>
 
         <DetailPanel

@@ -1796,6 +1796,17 @@ async def get_model_timeframe_analysis(
         result = query.order("created_at", desc=True).limit(500).execute()
         signals = result.get("data") or []
         
+        # DEBUG: Check active signals count for XAUUSD
+        if symbol == "XAUUSD":
+            active_query = client.table("prediction_logs").select("id, status, model_type, strategy, created_at").eq("symbol", "XAUUSD").eq("status", "active")
+            if model_lower in ["pulse1", "pulse2", "pulse3"]:
+                active_query = active_query.eq("model_type", model_lower)
+            elif model_lower == "emel":
+                active_query = active_query.or_("model_type.eq.emel,strategy.eq.EMEL")
+            active_result = active_query.limit(100).execute()
+            active_signals = active_result.get("data") or []
+            logger.info(f"[XAUUSD DEBUG] model={model}, completed_signals={len(signals)}, active_signals={len(active_signals)}")
+        
         if not signals:
             return {
                 "model": model,
