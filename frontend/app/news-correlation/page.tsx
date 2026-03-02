@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/api";
 import Link from "next/link";
 import type { EnrichedNews } from "@/types/news-correlation";
+import NewsDetailModal from "@/components/NewsDetailModal";
 
 // ==================== TYPES ====================
 interface ChartCandle {
@@ -142,15 +143,16 @@ const AnalysisCard = ({ type, label, value, active = false }: { type: "swing" | 
           <Icon className="w-4 h-4" />
         </span>
       </div>
+
     </div>
   );
 };
 
 // ==================== NEWS CARD ====================
-const NewsCard = ({ news, isExpanded, onToggle }: { news: EnrichedNews, isExpanded: boolean, onToggle: () => void }) => {
+const NewsCard = ({ news, isExpanded, onToggle }: { news: EnrichedNews, isExpanded: boolean, onToggle: (e: React.MouseEvent) => void }) => {
   const isHighImpact = news.urgency === "breaking" || news.urgency === "high";
   return (
-    <div onClick={onToggle} className={cn(
+    <div onClick={(e) => onToggle(e)} className={cn(
       "group relative p-4 rounded-xl border transition-all cursor-pointer",
       isHighImpact ? "bg-gradient-to-r from-red-950/30 to-transparent border-red-900/30 hover:border-red-700/50" : "bg-gray-900/30 border-gray-800 hover:border-gray-700"
     )}>
@@ -329,6 +331,9 @@ export default function NewsCorrelationDashboard() {
   const [newsFilter, setNewsFilter] = useState<"all" | "popular" | "high">("high");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedCandleNews, setSelectedCandleNews] = useState<CandleNews | null>(null);
+  const [selectedNewsForModal, setSelectedNewsForModal] = useState<EnrichedNews | null>(null);
+  const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
+  const [currentLocale, setCurrentLocale] = useState("tr"); // Default to Turkish
   
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -544,6 +549,12 @@ export default function NewsCorrelationDashboard() {
     return true;
   });
 
+  // Handle news click to open modal
+  const handleNewsClick = (newsItem: EnrichedNews) => {
+    setSelectedNewsForModal(newsItem);
+    setIsNewsModalOpen(true);
+  };
+
   const currentSymbol = SYMBOLS.find(s => s.symbol === selectedSymbol);
   const bias = { text: "Slightly Bearish", color: "red" };
 
@@ -674,6 +685,19 @@ export default function NewsCorrelationDashboard() {
                 <Clock className="w-4 h-4 text-gray-500" />
               </div>
               <div className="flex items-center gap-2">
+                {/* Language Selector */}
+                <select 
+                  value={currentLocale}
+                  onChange={(e) => setCurrentLocale(e.target.value)}
+                  className="bg-gray-900 border border-gray-800 rounded-lg px-2 py-1 text-xs text-gray-400 focus:outline-none focus:border-purple-500"
+                >
+                  <option value="tr">🇹🇷 TR</option>
+                  <option value="en">🇬🇧 EN</option>
+                  <option value="de">🇩🇪 DE</option>
+                  <option value="es">🇪🇸 ES</option>
+                  <option value="fr">🇫🇷 FR</option>
+                  <option value="ar">🇸🇦 AR</option>
+                </select>
                 <button onClick={fetchNews} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
                   <RefreshCw className={cn("w-4 h-4", newsLoading && "animate-spin")} />
                 </button>
@@ -713,6 +737,14 @@ export default function NewsCorrelationDashboard() {
           </aside>
         </div>
       </main>
+
+      {/* News Detail Modal */}
+      <NewsDetailModal
+        news={selectedNewsForModal}
+        isOpen={isNewsModalOpen}
+        onClose={() => setIsNewsModalOpen(false)}
+        locale={currentLocale as any}
+      />
     </div>
   );
 }
