@@ -23,16 +23,19 @@ interface ChartCandle {
   close: number;
 }
 
-interface ChartDataResponse {
-  success: boolean;
-  data: {
-    symbol: string;
-    timeframe: string;
-    candles: ChartCandle[];
-    source: string;
-    cached_at: string;
-    total_rows: number;
-  };
+// Backend /api/data/ohlcv actual response format
+interface OHLCVResponse {
+  symbol: string;
+  timeframe: string;
+  data: Array<{
+    timestamp: number; // Unix ms
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+  }>;
+  support_resistance: any[];
 }
 
 // Timeframe configuration
@@ -73,28 +76,84 @@ export default function NewsChartCorrelationPanel() {
       setLoading(true);
       setError(null);
 
-      const apiSymbol = selectedSymbol.replace("/", "");
+      // Symbol mapping for backend API
+      const symbolMap: Record<string, string> = {
+        XAUUSD: "XAUUSD",
+        NASDAQ: "NDX.INDX",
+        NDX: "NDX.INDX",
+        DAX: "GDAXI.INDX",
+        USOIL: "CL.COMM",
+        VIX: "VIX.INDX",
+        DXY: "DXY.INDX",
+        EURUSD: "EURUSD",
+        GBPUSD: "GBPUSD",
+        BTCUSD: "BTCUSD",
+      };
+      const apiSymbol = symbolMap[selectedSymbol.replace("/", "")] || selectedSymbol.replace("/", "");
       const tf = timeframes.find((t) => t.value === timeframe);
       const limit = tf?.getLimit() || 200;
 
-      // Fetch chart data
-      const chartResponse = await fetcher<ChartDataResponse>(
+      // Fetch chart data - backend returns { data: [{ timestamp (ms), open, high, low, close, volume }] }
+      const chartResponse = await fetcher<OHLCVResponse>(
         `/api/data/ohlcv?symbol=${apiSymbol}&timeframe=${timeframe}&limit=${limit}`
       );
 
-      if (chartResponse.success && chartResponse.data?.candles?.length > 5) {
-        setChartData(chartResponse.data.candles);
+      if (chartResponse?.data && Array.isArray(chartResponse.data) && chartResponse.data.length > 5) {
+        const processedCandles: ChartCandle[] = chartResponse.data.map((row) => {
+          // Convert timestamp from milliseconds to seconds for lightweight-charts
+          const timeInSeconds = row.timestamp > 1e12 ? Math.floor(row.timestamp / 1000) : row.timestamp;
+          return {
+            time: timeInSeconds,
+            open: row.open,
+            high: row.high,
+            low: row.low,
+            close: row.close,
+          };
+        });
+        setChartData(processedCandles);
       } else {
         setChartData([]);
       }
 
-      // Fetch news events
-      const newsResponse = await fetcher<{ success: boolean; data: EnrichedNews[] }>(
+      // Fetch news events - backend /api/rss/news returns direct array
+      const newsResponse = await fetcher<any>(
         `/api/rss/news?symbol=${apiSymbol}&limit=50&hours=48`
       );
 
-      if (newsResponse.success && newsResponse.data) {
-        setEvents(newsResponse.data);
+      // Handle both formats: direct array OR { success, data } wrapper
+      let newsItems: any[] = [];
+      if (Array.isArray(newsResponse)) {
+        newsItems = newsResponse;
+      } else if (newsResponse?.success && Array.isArray(newsResponse.data)) {
+        newsItems = newsResponse.data;
+      } else if (newsResponse?.data && Array.isArray(newsResponse.data)) {
+        newsItems = newsResponse.data;
+      }
+
+      if (newsItems.length > 0) {
+        // Map backend field names to frontend EnrichedNews format
+        const mapped: EnrichedNews[] = newsItems.map((item: any) => ({
+          id: item.id,
+          timestamp: item.timestamp,
+          source: item.source,
+          headline: item.headline,
+          content: item.content || "",
+          category: item.category,
+          url: item.url,
+          impacts: item.impacts || [],
+          sentiment: item.sentiment || "neutral",
+          volatilityExpectation: item.volatility_expectation || item.volatilityExpectation || "medium",
+          urgency: item.urgency || "medium",
+          eventDuration: item.event_duration || item.eventDuration || "short_term",
+          affectedCandles: item.affected_candles || item.affectedCandles || [],
+          aiConfidence: typeof item.ai_confidence === "number"
+            ? (item.ai_confidence <= 1 ? item.ai_confidence * 100 : item.ai_confidence)
+            : (item.aiConfidence || 70),
+          analysisTimestamp: item.analysis_timestamp || item.analysisTimestamp || new Date().toISOString(),
+        }));
+        setEvents(mapped);
+      } else {
+        setEvents([]);
       }
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -385,7 +444,7 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
           <Newspaper className="w-4 h-4 text-purple-400" />
           News Events
         </h3>
-        
+
         {events.length === 0 ? (
           <p className="text-slate-500 text-sm text-center py-8">No recent news events</p>
         ) : (
@@ -585,7 +644,7 @@ function NewsCard({ event, isExpanded, onToggle }: NewsCardProps) {
             <span className="text-xs opacity-50">AI Analysis</span>
             <p className="text-sm mt-1 leading-relaxed">{event.content}</p>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <span className="text-xs opacity-50">Sentiment</span>

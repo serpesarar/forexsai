@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time } from "lightweight-charts";
 import { format, formatDistanceToNow, isWithinInterval, subMinutes, addMinutes } from "date-fns";
-import { 
+import {
   Bell, Star, Wallet, Calendar, FileText, MessageSquare, Newspaper,
   Building2, LineChart, BookOpen, Search, Filter, ChevronLeft, ChevronRight,
   Zap, TrendingUp, TrendingDown, Minus, ThumbsUp, Sparkles, Camera, Settings,
@@ -35,13 +35,29 @@ interface SymbolData {
   changePercent: number;
 }
 
-interface ChartDataResponse {
-  success: boolean;
-  data: {
-    symbol: string;
-    timeframe: string;
-    candles: ChartCandle[];
-  };
+// Backend /api/data/ohlcv actual response format
+interface OHLCVResponse {
+  symbol: string;
+  timeframe: string;
+  data: Array<{
+    timestamp: number; // Unix ms
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+  }>;
+  support_resistance: any[];
+}
+
+// Backend candle format (timestamp in milliseconds)
+interface BackendCandle {
+  timestamp: number;  // Unix timestamp in milliseconds (13 digits)
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume?: number;
 }
 
 interface CandleNews {
@@ -150,7 +166,7 @@ const AnalysisCard = ({ type, label, value, active = false }: { type: "swing" | 
 // ==================== TIME AGO COMPONENT (CLIENT ONLY) ====================
 const TimeAgo = ({ timestamp }: { timestamp: string }) => {
   const [timeAgo, setTimeAgo] = useState<string>("");
-  
+
   useEffect(() => {
     setTimeAgo(formatDistanceToNow(new Date(timestamp), { addSuffix: true }));
     const interval = setInterval(() => {
@@ -158,7 +174,7 @@ const TimeAgo = ({ timestamp }: { timestamp: string }) => {
     }, 60000);
     return () => clearInterval(interval);
   }, [timestamp]);
-  
+
   return <span className="text-xs text-gray-500">{timeAgo || "..."}</span>;
 };
 
@@ -229,7 +245,7 @@ const NewsCard = ({ news, isExpanded, onToggle, onClick }: { news: EnrichedNews,
 // ==================== CANDLE INFO PANEL ====================
 const CandleInfoPanel = ({ candleNews, onClose, symbol }: { candleNews: CandleNews | null, onClose: () => void, symbol: string }) => {
   if (!candleNews) return null;
-  
+
   return (
     <div className="absolute top-20 left-4 z-20 w-80 bg-gray-900/95 backdrop-blur-xl border border-gray-700 rounded-xl shadow-2xl shadow-black/50 overflow-hidden">
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
@@ -241,7 +257,7 @@ const CandleInfoPanel = ({ candleNews, onClose, symbol }: { candleNews: CandleNe
         </div>
         <button onClick={onClose} className="p-1 text-gray-500 hover:text-white hover:bg-gray-800 rounded"><X className="w-4 h-4" /></button>
       </div>
-      
+
       <div className="p-4 space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-gray-800/50 rounded-lg p-3">
@@ -274,7 +290,7 @@ const CandleInfoPanel = ({ candleNews, onClose, symbol }: { candleNews: CandleNe
               </span>
             </div>
             <p className="text-xs text-gray-400">
-              Price moved {candleNews.movePercent.toFixed(2)}% during this period. 
+              Price moved {candleNews.movePercent.toFixed(2)}% during this period.
               {candleNews.moveType === "up" ? "Strong buying pressure detected." : "Significant selling pressure observed."}
             </p>
           </div>
@@ -314,7 +330,7 @@ const CandleInfoPanel = ({ candleNews, onClose, symbol }: { candleNews: CandleNe
               <span className="text-sm font-semibold text-purple-400">AI Explanation</span>
             </div>
             <p className="text-xs text-gray-300 leading-relaxed">
-              {candleNews.moveType === "up" 
+              {candleNews.moveType === "up"
                 ? `The ${candleNews.movePercent.toFixed(2)}% surge was likely driven by ${candleNews.news[0]?.headline?.toLowerCase() || "positive market sentiment"}. ${candleNews.news[0]?.impacts?.find(i => i.symbol === symbol)?.reasoning || "Technical buying pressure supported the move."}`
                 : `The ${Math.abs(candleNews.movePercent).toFixed(2)}% decline was influenced by ${candleNews.news[0]?.headline?.toLowerCase() || "negative market sentiment"}. ${candleNews.news[0]?.impacts?.find(i => i.symbol === symbol)?.reasoning || "Technical selling pressure accelerated the drop."}`
               }
@@ -343,7 +359,7 @@ export default function NewsCorrelationDashboard() {
   const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
   const [currentLocale, setCurrentLocale] = useState("tr");
   const [mounted, setMounted] = useState(false);
-  
+
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -356,12 +372,38 @@ export default function NewsCorrelationDashboard() {
     try {
       setLoading(true);
       setError(null);
-      const chartResponse = await fetcher<ChartDataResponse>(`/api/data/ohlcv?symbol=${selectedSymbol}&timeframe=${timeframe}&limit=200`);
-      
-      if (chartResponse.success && chartResponse.data?.candles) {
-        const processedCandles = chartResponse.data.candles.map(candle => {
-          const priceChange = ((candle.close - candle.open) / candle.open) * 100;
-          return { ...candle, priceChange, hasBigMove: Math.abs(priceChange) > 1.5 };
+
+      // Symbol mapping for backend API
+      const symbolMap: Record<string, string> = {
+        XAUUSD: "XAUUSD",
+        NASDAQ: "NDX.INDX",
+        NDX: "NDX.INDX",
+        DAX: "GDAXI.INDX",
+        USOIL: "CL.COMM",
+        VIX: "VIX.INDX",
+        DXY: "DXY.INDX",
+      };
+      const apiSymbol = symbolMap[selectedSymbol] || selectedSymbol;
+
+      const chartResponse = await fetcher<OHLCVResponse>(
+        `/api/data/ohlcv?symbol=${apiSymbol}&timeframe=${timeframe}&limit=200`
+      );
+
+      // Backend returns { data: [{ timestamp (ms), open, high, low, close, volume }] }
+      if (chartResponse?.data && Array.isArray(chartResponse.data) && chartResponse.data.length > 0) {
+        const processedCandles: ChartCandle[] = chartResponse.data.map((row) => {
+          // Convert timestamp from milliseconds to seconds for lightweight-charts
+          const timeInSeconds = row.timestamp > 1e12 ? Math.floor(row.timestamp / 1000) : row.timestamp;
+          const priceChange = ((row.close - row.open) / row.open) * 100;
+          return {
+            time: timeInSeconds,
+            open: row.open,
+            high: row.high,
+            low: row.low,
+            close: row.close,
+            volume: row.volume,
+            priceChange,
+          };
         });
         setChartData(processedCandles);
       } else {
@@ -378,51 +420,58 @@ export default function NewsCorrelationDashboard() {
   const fetchNews = useCallback(async () => {
     try {
       setNewsLoading(true);
-      const newsResponse = await fetcher<{ success: boolean; data: EnrichedNews[] }>(`/api/rss/news?symbol=${selectedSymbol}&limit=50&hours=72`);
-      
-      if (newsResponse.success && newsResponse.data && newsResponse.data.length > 0) {
-        setNews(newsResponse.data);
+
+      // Symbol mapping for news API
+      const symbolMap: Record<string, string> = {
+        XAUUSD: "XAUUSD",
+        NASDAQ: "NDX",
+        NDX: "NDX",
+        DAX: "GDAXI",
+        USOIL: "CL",
+        VIX: "VIX",
+        DXY: "DXY",
+      };
+      const apiSymbol = symbolMap[selectedSymbol] || selectedSymbol;
+
+      // Backend /api/rss/news returns a direct array of RSSNewsResponse objects
+      const newsResponse = await fetcher<any>(
+        `/api/rss/news?symbol=${apiSymbol}&limit=50&hours=72`
+      );
+
+      // Handle both formats: direct array OR { success, data } wrapper
+      let newsItems: any[] = [];
+      if (Array.isArray(newsResponse)) {
+        newsItems = newsResponse;
+      } else if (newsResponse?.success && Array.isArray(newsResponse.data)) {
+        newsItems = newsResponse.data;
+      } else if (newsResponse?.data && Array.isArray(newsResponse.data)) {
+        newsItems = newsResponse.data;
+      }
+
+      if (newsItems.length > 0) {
+        // Map backend field names to frontend expected format
+        const mapped: EnrichedNews[] = newsItems.map((item: any) => ({
+          id: item.id,
+          timestamp: item.timestamp,
+          source: item.source,
+          headline: item.headline,
+          content: item.content || "",
+          category: item.category,
+          url: item.url,
+          impacts: item.impacts || [],
+          sentiment: item.sentiment || "neutral",
+          volatilityExpectation: item.volatility_expectation || item.volatilityExpectation || "medium",
+          urgency: item.urgency || "medium",
+          eventDuration: item.event_duration || item.eventDuration || "short_term",
+          affectedCandles: item.affected_candles || item.affectedCandles || [],
+          aiConfidence: typeof item.ai_confidence === "number"
+            ? (item.ai_confidence <= 1 ? item.ai_confidence * 100 : item.ai_confidence)
+            : (item.aiConfidence || 70),
+          analysisTimestamp: item.analysis_timestamp || item.analysisTimestamp || new Date().toISOString(),
+        }));
+        setNews(mapped);
       } else {
-        setNews([
-          {
-            id: "1",
-            timestamp: new Date(Date.now() - 3600000).toISOString(),
-            source: "Reuters",
-            headline: "Gold rallies to $4,993 as geopolitical tensions rise",
-            content: "Gold prices surged to near $5,000 as Middle East tensions escalate. Safe haven demand increases amid uncertainty.",
-            urgency: "high",
-            impacts: [
-              { symbol: "XAUUSD", direction: "bullish", score: 8, confidence: 0.85, reasoning: "Safe haven demand", emoji: "🚀" },
-              { symbol: "USOIL", direction: "bullish", score: 7, confidence: 0.80, reasoning: "Supply concerns", emoji: "📈" },
-              { symbol: "VIX", direction: "bullish", score: 6, confidence: 0.75, reasoning: "Volatility spike", emoji: "⚠️" },
-            ],
-            sentiment: "risk_off",
-            volatilityExpectation: "high",
-            eventDuration: "short_term",
-            affectedCandles: [],
-            aiConfidence: 85,
-            analysisTimestamp: new Date().toISOString(),
-          },
-          {
-            id: "2",
-            timestamp: new Date(Date.now() - 7200000).toISOString(),
-            source: "Bloomberg",
-            headline: "Fed signals potential rate cuts in coming months",
-            content: "Federal Reserve officials hint at dovish shift in monetary policy. Markets pricing in 75bps of cuts this year.",
-            urgency: "high",
-            impacts: [
-              { symbol: "NDX", direction: "bullish", score: 8, confidence: 0.88, reasoning: "Lower rates boost tech", emoji: "🚀" },
-              { symbol: "XAUUSD", direction: "bullish", score: 7, confidence: 0.82, reasoning: "Weaker dollar helps gold", emoji: "📈" },
-              { symbol: "DXY", direction: "bearish", score: 7, confidence: 0.85, reasoning: "Rate cuts weaken USD", emoji: "📉" },
-            ],
-            sentiment: "risk_on",
-            volatilityExpectation: "high",
-            eventDuration: "long_term",
-            affectedCandles: [],
-            aiConfidence: 82,
-            analysisTimestamp: new Date().toISOString(),
-          },
-        ]);
+        setNews([]);
       }
     } catch (error) {
       console.error("Error fetching news:", error);
@@ -461,19 +510,19 @@ export default function NewsCorrelationDashboard() {
         const time = param.time as number;
         const tf = TIMEFRAMES.find(t => t.value === timeframe);
         const minutes = tf?.minutes || 60;
-        
+
         const candle = chartData.find(c => c.time === time);
         if (candle) {
           const candleStart = subMinutes(new Date(candle.time * 1000), minutes / 2);
           const candleEnd = addMinutes(new Date(candle.time * 1000), minutes / 2);
-          
+
           const relatedNews = news.filter(n => {
             const newsTime = new Date(n.timestamp);
             return isWithinInterval(newsTime, { start: candleStart, end: candleEnd });
           });
 
           const priceChange = ((candle.close - candle.open) / candle.open) * 100;
-          
+
           setSelectedCandleNews({
             candle,
             news: relatedNews,
@@ -509,7 +558,7 @@ export default function NewsCorrelationDashboard() {
       }));
 
       candlestickSeriesRef.current.setData(formattedData);
-      
+
       const markers = chartData
         .filter(c => Math.abs(c.priceChange || 0) > 1.5)
         .map(candle => ({
@@ -520,7 +569,7 @@ export default function NewsCorrelationDashboard() {
           text: `${Math.abs(candle.priceChange || 0).toFixed(1)}%`,
           size: 2,
         }));
-      
+
       candlestickSeriesRef.current.setMarkers(markers);
       chartRef.current?.timeScale().fitContent();
     }
@@ -689,10 +738,10 @@ export default function NewsCorrelationDashboard() {
                 </div>
               ) : (
                 filteredNews.map((item) => (
-                  <NewsCard 
-                    key={item.id} 
-                    news={item} 
-                    isExpanded={expandedNewsId === item.id} 
+                  <NewsCard
+                    key={item.id}
+                    news={item}
+                    isExpanded={expandedNewsId === item.id}
                     onToggle={() => setExpandedNewsId(expandedNewsId === item.id ? null : item.id)}
                     onClick={() => handleNewsClick(item)}
                   />
