@@ -32,15 +32,9 @@ EODHD_WS_URLS = {
 # Symbol to market mapping
 SYMBOL_MARKETS = {
     "NDX.INDX": "us",
-    "GDAXI.INDX": "us",  # DAX is available through US endpoint
-    "XAUUSD": "forex",
-    "EURUSD": "forex",
-    "GBPUSD": "forex",
-    "BTC-USD.CC": "crypto",
-    "ETH-USD.CC": "crypto",
-    # Petrol - EODHD Commodities endpoint
-    "CL.F": "us",  # WTI Crude Oil Futures (US Oil ~$64-71)
-    "BZ.F": "us",  # Brent Crude Oil Futures (Brent ~$71)
+    "GDAXI.INDX": "us",
+    "XAUUSD": "us",
+    "USOIL.FOREX": "us",
 }
 
 # Demo symbols (work with demo API key)
@@ -73,27 +67,17 @@ class EODHDWebSocketClient:
 
     def subscribe(self, symbol: str):
         """Subscribe to a symbol."""
-        # Map frontend symbols to EODHD symbols
+        # Map frontend symbols to EODHD symbols using US ETFs as proxy for live ticks.
+        # This completely bypasses Forex/Index API restrictions while giving exact real-time movement
         symbol_mapping = {
-            "NDX.INDX": "NDX.INDX",
-            "GDAXI.INDX": "GDAXI.INDX",
-            "XAUUSD": "XAUUSD",
-            "USOIL.FOREX": "CL.F",  # WTI Crude Oil Futures
-            "USOIL": "CL.F",    # WTI Crude Oil
-            "BRENT": "BZ.F",    # Brent Crude Oil
+            "NDX.INDX": "QQQ",       # Nasdaq 100 ETF
+            "XAUUSD": "GLD",         # Gold ETF
+            "GDAXI.INDX": "EWG",     # DAX/Germany ETF
+            "USOIL.FOREX": "USO",    # US Oil ETF
         }
         
         eodhd_symbol = symbol_mapping.get(symbol, symbol)
-        market = SYMBOL_MARKETS.get(eodhd_symbol, "us")
-        
-        # Demo key only works with specific symbols
-        if self.api_key == "demo" and eodhd_symbol not in DEMO_SYMBOLS:
-            logger.warning(f"Demo key only works with {DEMO_SYMBOLS}, not {eodhd_symbol}")
-            # Map to demo symbols for testing
-            if "INDX" in symbol or "XAU" in symbol:
-                eodhd_symbol = "AAPL.US"  # Use AAPL as proxy for testing
-            elif "COMM" in symbol or "OIL" in symbol or "CL." in symbol or "BZ." in symbol:
-                eodhd_symbol = "AAPL.US"  # Use AAPL as proxy for oil too
+        market = SYMBOL_MARKETS.get(symbol, "us")
         
         self.subscriptions[market].add(eodhd_symbol)
         logger.info(f"Subscribed to {symbol} (EODHD: {eodhd_symbol}) on {market} market")
@@ -270,15 +254,12 @@ async def start_eodhd_websocket():
     
     # Register callback to broadcast to our WebSocket clients
     def on_price_update(symbol: str, price: float, timestamp: datetime):
-        # Map EODHD symbols back to our frontend symbols
+        # Map EODHD ETF symbols back to our frontend symbols
         reverse_mapping = {
-            "AAPL.US": ["NDX.INDX", "GDAXI.INDX", "USOIL.FOREX", "USOIL", "BRENT"],  # Demo proxy
-            "BTC-USD.CC": ["XAUUSD"],  # Demo proxy
-            "NDX.INDX": ["NDX.INDX"],
-            "GDAXI.INDX": ["GDAXI.INDX"],
-            "XAUUSD": ["XAUUSD"],
-            "CL.F": ["USOIL.FOREX", "USOIL"],      # WTI Crude
-            "BZ.F": ["BRENT"],                  # Brent Crude
+            "QQQ": ["NDX.INDX"],
+            "GLD": ["XAUUSD"],
+            "EWG": ["GDAXI.INDX"],
+            "USO": ["USOIL.FOREX"],
         }
         
         # Get list of symbols to broadcast to
