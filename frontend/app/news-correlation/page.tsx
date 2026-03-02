@@ -1,41 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time } from "lightweight-charts";
-import { format, formatDistanceToNow } from "date-fns";
+import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time, type CandlestickData } from "lightweight-charts";
+import { format, formatDistanceToNow, isWithinInterval, subMinutes, addMinutes } from "date-fns";
 import { 
-  Bell, 
-  Star, 
-  Wallet, 
-  Calendar, 
-  FileText, 
-  MessageSquare, 
-  Newspaper,
-  Building2,
-  LineChart,
-  BookOpen,
-  Search,
-  Filter,
-  ChevronLeft,
-  ChevronRight,
-  Zap,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  ThumbsUp,
-  Sparkles,
-  Camera,
-  Settings,
-  Clock,
-  AlertTriangle,
-  RefreshCw,
-  BookMarked,
-  HelpCircle,
-  LayoutDashboard,
-  Activity,
-  BarChart3,
-  PieChart,
-  Globe2
+  Bell, Star, Wallet, Calendar, FileText, MessageSquare, Newspaper,
+  Building2, LineChart, BookOpen, Search, Filter, ChevronLeft, ChevronRight,
+  Zap, TrendingUp, TrendingDown, Minus, ThumbsUp, Sparkles, Camera, Settings,
+  Clock, AlertTriangle, RefreshCw, X, ArrowUp, ArrowDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/api";
@@ -49,6 +21,9 @@ interface ChartCandle {
   high: number;
   low: number;
   close: number;
+  volume?: number;
+  newsCount?: number;
+  priceChange?: number;
 }
 
 interface SymbolData {
@@ -68,6 +43,14 @@ interface ChartDataResponse {
   };
 }
 
+interface CandleNews {
+  candle: ChartCandle;
+  news: EnrichedNews[];
+  hasBigMove: boolean;
+  moveType: 'up' | 'down' | 'none';
+  movePercent: number;
+}
+
 // ==================== BIZIM SEMBOLLERIMIZ ====================
 const SYMBOLS: SymbolData[] = [
   { symbol: "XAUUSD", name: "Gold", price: 4988.57, change: 42.30, changePercent: 0.85 },
@@ -79,241 +62,98 @@ const SYMBOLS: SymbolData[] = [
 ];
 
 const TIMEFRAMES = [
-  { value: "1m", label: "1m" },
-  { value: "5m", label: "5m" },
-  { value: "15m", label: "15m" },
-  { value: "30m", label: "30m" },
-  { value: "1h", label: "1h" },
-  { value: "4h", label: "4h" },
-  { value: "1d", label: "1D" },
-  { value: "1w", label: "1W" },
+  { value: "1m", label: "1m", minutes: 1 },
+  { value: "5m", label: "5m", minutes: 5 },
+  { value: "15m", label: "15m", minutes: 15 },
+  { value: "30m", label: "30m", minutes: 30 },
+  { value: "1h", label: "1h", minutes: 60 },
+  { value: "4h", label: "4h", minutes: 240 },
+  { value: "1d", label: "1D", minutes: 1440 },
 ];
-
-// ==================== DYNAMIC HEADLINES ====================
-const getDynamicHeadline = (symbol: string, news: EnrichedNews[]): string => {
-  const latestNews = news[0];
-  if (latestNews) {
-    return latestNews.headline;
-  }
-  
-  const headlines: Record<string, string> = {
-    XAUUSD: "Gold rallies to $4,993 as geopolitical tensions rise; Fed rate cut expectations support",
-    NDX: "NASDAQ extends gains as tech earnings beat expectations; AI optimism drives momentum",
-    DAX: "DAX slides on German economic data miss; ECB policy uncertainty weighs",
-    USOIL: "WTI Crude surges to $75.80 on supply concerns; Middle East tensions escalate",
-    VIX: "VIX drops to 18.50 as market volatility subsides; risk-on sentiment prevails",
-    DXY: "Dollar Index steady at 104.25 ahead of Fed speeches; inflation data awaited",
-  };
-  
-  return headlines[symbol] || `${symbol} Market Analysis - Latest Updates`;
-};
 
 // ==================== SIDEBAR NAVIGATION ====================
 const sidebarItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/", badge: null },
   { icon: Bell, label: "Alerts", href: "/alerts", badge: 3 },
   { icon: Star, label: "Watchlist", href: "/watchlist", badge: null },
-  { icon: Activity, label: "Smart Trades", href: "/news-correlation", badge: null, active: true },
+  { icon: Wallet, label: "Smart Trades", href: "/news-correlation", badge: null, active: true },
   { icon: Calendar, label: "Economic Calendar", href: "/calendar", badge: null },
-  { icon: BarChart3, label: "News Analysis", href: "/news-analysis", badge: null },
+  { icon: FileText, label: "News Analysis", href: "/news-analysis", badge: null },
   { icon: MessageSquare, label: "Chat AI", href: "/chat", badge: null },
-  { icon: FileText, label: "Research Reports", href: "/research", badge: null },
-  { icon: BookMarked, label: "Docs", href: "/docs", badge: null },
+  { icon: Newspaper, label: "Research Reports", href: "/research", badge: null },
+  { icon: BookOpen, label: "Docs", href: "/docs", badge: null },
   { icon: Building2, label: "Brokers", href: "/brokers", badge: null },
   { icon: LineChart, label: "My Trades", href: "/trades", badge: null },
 ];
 
-const SidebarItem = ({ 
-  icon: Icon, 
-  label, 
-  href,
-  active = false,
-  badge,
-  collapsed
-}: { 
-  icon: React.ElementType; 
-  label: string; 
-  href: string;
-  active?: boolean;
-  badge?: number | null;
-  collapsed?: boolean;
-}) => (
-  <Link
-    href={href}
-    className={cn(
-      "flex items-center gap-3 px-4 py-3 text-sm transition-all relative",
-      active 
-        ? "text-white bg-gradient-to-r from-purple-500/10 to-transparent border-l-2 border-purple-500" 
-        : "text-gray-400 hover:text-white hover:bg-white/5 border-l-2 border-transparent"
-    )}
-  >
+const SidebarItem = ({ icon: Icon, label, href, active = false, badge, collapsed }: any) => (
+  <Link href={href} className={cn(
+    "flex items-center gap-3 px-4 py-3 text-sm transition-all relative",
+    active ? "text-white bg-gradient-to-r from-purple-500/10 to-transparent border-l-2 border-purple-500" : "text-gray-400 hover:text-white hover:bg-white/5 border-l-2 border-transparent"
+  )}>
     <Icon className={cn("w-5 h-5 flex-shrink-0", active && "text-purple-400")} />
     {!collapsed && <span className="truncate">{label}</span>}
-    {!collapsed && badge && (
-      <span className="ml-auto bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
-        {badge}
-      </span>
-    )}
-    {collapsed && badge && (
-      <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
-    )}
+    {!collapsed && badge && <span className="ml-auto bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">{badge}</span>}
+    {collapsed && badge && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />}
   </Link>
 );
 
 // ==================== SYMBOL BAR ====================
-const SymbolBar = ({ 
-  symbols, 
-  selectedSymbol, 
-  onSelect 
-}: { 
-  symbols: SymbolData[]; 
-  selectedSymbol: string;
-  onSelect: (symbol: string) => void;
-}) => {
+const SymbolBar = ({ symbols, selectedSymbol, onSelect }: { symbols: SymbolData[], selectedSymbol: string, onSelect: (s: string) => void }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const scroll = (direction: "left" | "right") => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: direction === "left" ? -200 : 200, behavior: "smooth" });
-    }
-  };
+  const scroll = (dir: "left" | "right") => scrollRef.current?.scrollBy({ left: dir === "left" ? -200 : 200, behavior: "smooth" });
 
   return (
     <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-800 bg-[#0a0a0a]">
-      <button 
-        onClick={() => scroll("left")}
-        className="p-1 text-gray-500 hover:text-white transition-colors flex-shrink-0"
-      >
-        <ChevronLeft className="w-4 h-4" />
-      </button>
-      
-      <div 
-        ref={scrollRef}
-        className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-hide"
-      >
+      <button onClick={() => scroll("left")} className="p-1 text-gray-500 hover:text-white flex-shrink-0"><ChevronLeft className="w-4 h-4" /></button>
+      <div ref={scrollRef} className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-hide">
         {symbols.map((sym) => (
-          <button
-            key={sym.symbol}
-            onClick={() => onSelect(sym.symbol)}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all flex-shrink-0",
-              selectedSymbol === sym.symbol
-                ? "bg-gray-800 text-white border border-gray-700"
-                : "bg-gray-900/50 text-gray-400 hover:bg-gray-800 hover:text-white border border-transparent"
-            )}
-          >
+          <button key={sym.symbol} onClick={() => onSelect(sym.symbol)} className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all flex-shrink-0",
+            selectedSymbol === sym.symbol ? "bg-gray-800 text-white border border-gray-700" : "bg-gray-900/50 text-gray-400 hover:bg-gray-800 hover:text-white border border-transparent"
+          )}>
             <span className="font-semibold">{sym.symbol}</span>
-            <span className={cn(
-              "text-xs font-mono",
-              sym.change > 0 ? "text-green-400" : sym.change < 0 ? "text-red-400" : "text-gray-500"
-            )}>
+            <span className={cn("text-xs font-mono", sym.change > 0 ? "text-green-400" : sym.change < 0 ? "text-red-400" : "text-gray-500")}>
               ${sym.price.toLocaleString()}
             </span>
           </button>
         ))}
       </div>
-      
-      <button 
-        onClick={() => scroll("right")}
-        className="p-1 text-gray-500 hover:text-white transition-colors flex-shrink-0"
-      >
-        <ChevronRight className="w-4 h-4" />
-      </button>
-      
-      <button className="p-2 text-gray-500 hover:text-white transition-colors flex-shrink-0">
-        <PlusIcon className="w-4 h-4" />
-      </button>
+      <button onClick={() => scroll("right")} className="p-1 text-gray-500 hover:text-white flex-shrink-0"><ChevronRight className="w-4 h-4" /></button>
     </div>
   );
 };
 
-const PlusIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M12 5v14M5 12h14" />
-  </svg>
-);
-
 // ==================== ANALYSIS CARDS ====================
-const AnalysisCard = ({ 
-  type, 
-  label, 
-  value,
-  active = false,
-  onClick
-}: { 
-  type: "swing" | "day" | "news";
-  label: string;
-  value: string;
-  active?: boolean;
-  onClick?: () => void;
-}) => {
+const AnalysisCard = ({ type, label, value, active = false }: { type: "swing" | "day" | "news", label: string, value: string, active?: boolean }) => {
   const styles = {
-    swing: {
-      bg: active ? "bg-green-500/10 border-green-500/30" : "bg-gray-900/50 border-gray-800",
-      text: active ? "text-green-400" : "text-gray-400",
-      icon: TrendingUp,
-      iconColor: "text-green-400",
-    },
-    day: {
-      bg: active ? "bg-red-500/10 border-red-500/30" : "bg-gray-900/50 border-gray-800",
-      text: active ? "text-red-400" : "text-gray-400",
-      icon: TrendingDown,
-      iconColor: "text-red-400",
-    },
-    news: {
-      bg: active ? "bg-purple-500/10 border-purple-500/30" : "bg-gray-900/50 border-gray-800",
-      text: active ? "text-purple-400" : "text-gray-400",
-      icon: Newspaper,
-      iconColor: "text-purple-400",
-    },
+    swing: { bg: active ? "bg-green-500/10 border-green-500/30" : "bg-gray-900/50 border-gray-800", text: active ? "text-green-400" : "text-gray-400", icon: TrendingUp },
+    day: { bg: active ? "bg-red-500/10 border-red-500/30" : "bg-gray-900/50 border-gray-800", text: active ? "text-red-400" : "text-gray-400", icon: TrendingDown },
+    news: { bg: active ? "bg-purple-500/10 border-purple-500/30" : "bg-gray-900/50 border-gray-800", text: active ? "text-purple-400" : "text-gray-400", icon: Newspaper },
   };
-
   const style = styles[type];
   const Icon = style.icon;
-
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-xl border transition-all hover:border-gray-600",
-        style.bg
-      )}
-    >
+    <div className={cn("flex items-center gap-3 px-4 py-3 rounded-xl border", style.bg)}>
       <div className="flex flex-col items-start">
         <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">{label}</span>
         <span className={cn("text-sm font-semibold flex items-center gap-1.5", style.text)}>
           {type === "news" && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
           {value}
-          <Icon className={cn("w-4 h-4", style.iconColor)} />
+          <Icon className="w-4 h-4" />
         </span>
       </div>
-    </button>
+    </div>
   );
 };
 
 // ==================== NEWS CARD ====================
-const NewsCard = ({ 
-  news, 
-  isExpanded, 
-  onToggle 
-}: { 
-  news: EnrichedNews; 
-  isExpanded: boolean;
-  onToggle: () => void;
-}) => {
+const NewsCard = ({ news, isExpanded, onToggle }: { news: EnrichedNews, isExpanded: boolean, onToggle: () => void }) => {
   const isHighImpact = news.urgency === "breaking" || news.urgency === "high";
-  
   return (
-    <div 
-      className={cn(
-        "group relative p-4 rounded-xl border transition-all cursor-pointer",
-        isHighImpact 
-          ? "bg-gradient-to-r from-red-950/30 to-transparent border-red-900/30 hover:border-red-700/50" 
-          : "bg-gray-900/30 border-gray-800 hover:border-gray-700"
-      )}
-      onClick={onToggle}
-    >
-      {/* Header */}
+    <div onClick={onToggle} className={cn(
+      "group relative p-4 rounded-xl border transition-all cursor-pointer",
+      isHighImpact ? "bg-gradient-to-r from-red-950/30 to-transparent border-red-900/30 hover:border-red-700/50" : "bg-gray-900/30 border-gray-800 hover:border-gray-700"
+    )}>
       <div className="flex items-center gap-3 mb-3">
         <span className={cn(
           "px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase",
@@ -324,68 +164,38 @@ const NewsCard = ({
         )}>
           {news.urgency === "breaking" ? "BREAKING" : `${news.urgency.toUpperCase()} IMPACT`}
         </span>
-        <span className="text-xs text-gray-500 font-mono">
-          {new Date(news.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-        </span>
+        <span className="text-xs text-gray-500 font-mono">{new Date(news.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
         <span className="text-xs text-gray-600">•</span>
-        <span className="text-xs text-gray-500">
-          {formatDistanceToNow(new Date(news.timestamp), { addSuffix: true })}
-        </span>
+        <span className="text-xs text-gray-500">{formatDistanceToNow(new Date(news.timestamp), { addSuffix: true })}</span>
       </div>
-
-      {/* Title */}
-      <h3 className="text-sm font-semibold text-white leading-snug mb-2 uppercase tracking-wide">
-        {news.headline}
-      </h3>
-
-      {/* Description */}
-      <p className="text-xs text-gray-400 leading-relaxed mb-3 line-clamp-2">
-        {news.content || news.headline}
-      </p>
-
-      {/* Impact Badges */}
+      <h3 className="text-sm font-semibold text-white leading-snug mb-2 uppercase tracking-wide">{news.headline}</h3>
+      <p className="text-xs text-gray-400 leading-relaxed mb-3 line-clamp-2">{news.content || news.headline}</p>
       <div className="flex flex-wrap gap-1.5">
         {news.impacts?.slice(0, 6).map((impact, idx) => (
-          <span
-            key={idx}
-            className={cn(
-              "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
-              impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
-              impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
-              impact.direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
-            )}
-          >
+          <span key={idx} className={cn(
+            "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
+            impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
+            impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
+            impact.direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
+          )}>
             {impact.direction === "bullish" && <TrendingUp className="w-3 h-3" />}
             {impact.direction === "bearish" && <TrendingDown className="w-3 h-3" />}
-            {impact.symbol}
-            {impact.direction === "bullish" ? "↑" : impact.direction === "bearish" ? "↓" : "→"}
+            {impact.symbol} {impact.direction === "bullish" ? "↑" : impact.direction === "bearish" ? "↓" : "→"}
           </span>
         ))}
       </div>
-
-      {/* Expanded AI Analysis */}
       {isExpanded && (
         <div className="mt-4 pt-4 border-t border-gray-800 animate-in slide-in-from-top-2">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="w-4 h-4 text-purple-400" />
             <span className="text-sm font-semibold text-purple-400">AI Analysis</span>
           </div>
-          <p className="text-xs text-gray-300 leading-relaxed mb-4">
-            {news.content || "AI analysis not available for this news item."}
-          </p>
-          
+          <p className="text-xs text-gray-300 leading-relaxed mb-4">{news.content || "AI analysis not available."}</p>
           {news.impacts && news.impacts.length > 0 && (
             <div className="space-y-2">
               {news.impacts.map((impact, idx) => (
-                <div 
-                  key={idx}
-                  className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-950/50"
-                >
-                  <span className={cn(
-                    "text-xs font-medium",
-                    impact.direction === "bullish" ? "text-green-400" : 
-                    impact.direction === "bearish" ? "text-red-400" : "text-gray-400"
-                  )}>
+                <div key={idx} className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-950/50">
+                  <span className={cn("text-xs font-medium", impact.direction === "bullish" ? "text-green-400" : impact.direction === "bearish" ? "text-red-400" : "text-gray-400")}>
                     {impact.symbol}
                   </span>
                   <span className="text-xs text-gray-500">{impact.reasoning}</span>
@@ -400,8 +210,114 @@ const NewsCard = ({
   );
 };
 
+// ==================== CANDLE INFO PANEL ====================
+const CandleInfoPanel = ({ candleNews, onClose, symbol }: { candleNews: CandleNews | null, onClose: () => void, symbol: string }) => {
+  if (!candleNews) return null;
+  
+  return (
+    <div className="absolute top-20 left-4 z-20 w-80 bg-gray-900/95 backdrop-blur-xl border border-gray-700 rounded-xl shadow-2xl shadow-black/50 overflow-hidden">
+      <div className="flex items-center justify-between p-4 border-b border-gray-800">
+        <div>
+          <h3 className="font-semibold flex items-center gap-2">
+            {candleNews.candle.time && new Date(candleNews.candle.time * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+          </h3>
+          <p className="text-xs text-gray-500">Candle Analysis</p>
+        </div>
+        <button onClick={onClose} className="p-1 text-gray-500 hover:text-white hover:bg-gray-800 rounded"><X className="w-4 h-4" /></button>
+      </div>
+      
+      <div className="p-4 space-y-4">
+        {/* Price Info */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-gray-800/50 rounded-lg p-3">
+            <span className="text-xs text-gray-500">Open</span>
+            <p className="font-mono text-sm">${candleNews.candle.open.toFixed(2)}</p>
+          </div>
+          <div className="bg-gray-800/50 rounded-lg p-3">
+            <span className="text-xs text-gray-500">Close</span>
+            <p className="font-mono text-sm">${candleNews.candle.close.toFixed(2)}</p>
+          </div>
+          <div className="bg-gray-800/50 rounded-lg p-3">
+            <span className="text-xs text-gray-500">High</span>
+            <p className="font-mono text-sm text-green-400">${candleNews.candle.high.toFixed(2)}</p>
+          </div>
+          <div className="bg-gray-800/50 rounded-lg p-3">
+            <span className="text-xs text-gray-500">Low</span>
+            <p className="font-mono text-sm text-red-400">${candleNews.candle.low.toFixed(2)}</p>
+          </div>
+        </div>
+
+        {/* Move Analysis */}
+        {candleNews.hasBigMove && (
+          <div className={cn(
+            "p-3 rounded-lg border",
+            candleNews.moveType === "up" ? "bg-green-500/10 border-green-500/30" : "bg-red-500/10 border-red-500/30"
+          )}>
+            <div className="flex items-center gap-2 mb-2">
+              {candleNews.moveType === "up" ? <ArrowUp className="w-4 h-4 text-green-400" /> : <ArrowDown className="w-4 h-4 text-red-400" />}
+              <span className={cn("font-semibold", candleNews.moveType === "up" ? "text-green-400" : "text-red-400")}>
+                Big {candleNews.moveType === "up" ? "Surge" : "Drop"}
+              </span>
+            </div>
+            <p className="text-xs text-gray-400">
+              Price moved {candleNews.movePercent.toFixed(2)}% during this period. 
+              {candleNews.moveType === "up" 
+                ? "Strong buying pressure detected." 
+                : "Significant selling pressure observed."}
+            </p>
+          </div>
+        )}
+
+        {/* Related News */}
+        <div>
+          <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <Newspaper className="w-4 h-4 text-purple-400" />
+            Related News ({candleNews.news.length})
+          </h4>
+          {candleNews.news.length === 0 ? (
+            <p className="text-xs text-gray-500 italic">No major news events during this period.</p>
+          ) : (
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {candleNews.news.map((n, i) => (
+                <div key={i} className="p-2 bg-gray-800/50 rounded-lg text-xs">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={cn(
+                      "w-1.5 h-1.5 rounded-full",
+                      n.urgency === "breaking" && "bg-red-500",
+                      n.urgency === "high" && "bg-orange-500",
+                      n.urgency === "medium" && "bg-yellow-500"
+                    )} />
+                    <span className="text-gray-400">{new Date(n.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                  </div>
+                  <p className="text-gray-300 line-clamp-2">{n.headline}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* AI Explanation */}
+        {candleNews.news.length > 0 && (
+          <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+              <span className="text-sm font-semibold text-purple-400">AI Explanation</span>
+            </div>
+            <p className="text-xs text-gray-300 leading-relaxed">
+              {candleNews.moveType === "up" 
+                ? `The ${candleNews.movePercent.toFixed(2)}% surge was likely driven by ${candleNews.news[0]?.headline?.toLowerCase() || "positive market sentiment"}. ${candleNews.news[0]?.impacts?.find(i => i.symbol === symbol)?.reasoning || "Technical buying pressure supported the move."}`
+                : `The ${Math.abs(candleNews.movePercent).toFixed(2)}% decline was influenced by ${candleNews.news[0]?.headline?.toLowerCase() || "negative market sentiment"}. ${candleNews.news[0]?.impacts?.find(i => i.symbol === symbol)?.reasoning || "Technical selling pressure accelerated the drop."}`
+              }
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ==================== MAIN COMPONENT ====================
-export default function MRKTAIStyleDashboard() {
+export default function NewsCorrelationDashboard() {
   const [selectedSymbol, setSelectedSymbol] = useState("XAUUSD");
   const [timeframe, setTimeframe] = useState("1h");
   const [chartData, setChartData] = useState<ChartCandle[]>([]);
@@ -412,6 +328,7 @@ export default function MRKTAIStyleDashboard() {
   const [expandedNewsId, setExpandedNewsId] = useState<string | null>(null);
   const [newsFilter, setNewsFilter] = useState<"all" | "popular" | "high">("high");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [selectedCandleNews, setSelectedCandleNews] = useState<CandleNews | null>(null);
   
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -421,13 +338,21 @@ export default function MRKTAIStyleDashboard() {
   const fetchChartData = useCallback(async () => {
     try {
       setLoading(true);
-      const chartResponse = await fetcher<ChartDataResponse>(
-        `/api/data/ohlcv?symbol=${selectedSymbol}&timeframe=${timeframe}&limit=200`
-      );
+      setError(null);
+      const chartResponse = await fetcher<ChartDataResponse>(`/api/data/ohlcv?symbol=${selectedSymbol}&timeframe=${timeframe}&limit=200`);
       
       if (chartResponse.success && chartResponse.data?.candles) {
-        setChartData(chartResponse.data.candles);
-        setError(null);
+        // Process candles to detect big moves
+        const processedCandles = chartResponse.data.candles.map(candle => {
+          const priceChange = ((candle.close - candle.open) / candle.open) * 100;
+          const isBigMove = Math.abs(priceChange) > 1.5; // 1.5% threshold
+          return {
+            ...candle,
+            priceChange,
+            hasBigMove: isBigMove,
+          };
+        });
+        setChartData(processedCandles);
       } else {
         setError("No chart data available");
       }
@@ -443,9 +368,7 @@ export default function MRKTAIStyleDashboard() {
   const fetchNews = useCallback(async () => {
     try {
       setNewsLoading(true);
-      const newsResponse = await fetcher<{ success: boolean; data: EnrichedNews[] }>(
-        `/api/rss/news?symbol=${selectedSymbol}&limit=50&hours=72`
-      );
+      const newsResponse = await fetcher<{ success: boolean; data: EnrichedNews[] }>(`/api/rss/news?symbol=${selectedSymbol}&limit=50&hours=72`);
       
       if (newsResponse.success && newsResponse.data && newsResponse.data.length > 0) {
         setNews(newsResponse.data);
@@ -454,7 +377,7 @@ export default function MRKTAIStyleDashboard() {
         setNews([
           {
             id: "1",
-            timestamp: new Date().toISOString(),
+            timestamp: new Date(Date.now() - 3600000).toISOString(),
             source: "Reuters",
             headline: "Gold rallies to $4,993 as geopolitical tensions rise",
             content: "Gold prices surged to near $5,000 as Middle East tensions escalate. Safe haven demand increases amid uncertainty.",
@@ -473,7 +396,7 @@ export default function MRKTAIStyleDashboard() {
           },
           {
             id: "2",
-            timestamp: new Date(Date.now() - 3600000).toISOString(),
+            timestamp: new Date(Date.now() - 7200000).toISOString(),
             source: "Bloomberg",
             headline: "Fed signals potential rate cuts in coming months",
             content: "Federal Reserve officials hint at dovish shift in monetary policy. Markets pricing in 75bps of cuts this year.",
@@ -488,6 +411,23 @@ export default function MRKTAIStyleDashboard() {
             eventDuration: "long_term",
             affectedCandles: [],
             aiConfidence: 82,
+            analysisTimestamp: new Date().toISOString(),
+          },
+          {
+            id: "3",
+            timestamp: new Date(Date.now() - 10800000).toISOString(),
+            source: "CNBC",
+            headline: "Oil inventories surprise to the upside",
+            content: "EIA reports larger than expected crude inventory build, putting pressure on oil prices.",
+            urgency: "medium",
+            impacts: [
+              { symbol: "USOIL", direction: "bearish", score: 6, confidence: 0.70, reasoning: "Supply surplus", emoji: "📉" },
+            ],
+            sentiment: "neutral",
+            volatilityExpectation: "medium",
+            eventDuration: "short_term",
+            affectedCandles: [],
+            aiConfidence: 70,
             analysisTimestamp: new Date().toISOString(),
           },
         ]);
@@ -511,47 +451,48 @@ export default function MRKTAIStyleDashboard() {
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
       height: chartContainerRef.current.clientHeight,
-      layout: {
-        background: { color: "transparent" },
-        textColor: "#6b7280",
-        fontFamily: "Inter, system-ui, sans-serif",
-      },
-      grid: {
-        vertLines: { color: "rgba(255, 255, 255, 0.03)" },
-        horzLines: { color: "rgba(255, 255, 255, 0.03)" },
-      },
-      crosshair: {
-        mode: CrosshairMode.Normal,
-        vertLine: {
-          color: "rgba(255, 255, 255, 0.1)",
-          labelBackgroundColor: "#374151",
-        },
-        horzLine: {
-          color: "rgba(255, 255, 255, 0.1)",
-          labelBackgroundColor: "#374151",
-        },
-      },
-      rightPriceScale: {
-        borderColor: "rgba(255, 255, 255, 0.1)",
-        scaleMargins: {
-          top: 0.1,
-          bottom: 0.1,
-        },
-      },
-      timeScale: {
-        borderColor: "rgba(255, 255, 255, 0.1)",
-        timeVisible: true,
-        secondsVisible: false,
-      },
+      layout: { background: { color: "transparent" }, textColor: "#6b7280", fontFamily: "Inter, system-ui, sans-serif" },
+      grid: { vertLines: { color: "rgba(255, 255, 255, 0.03)" }, horzLines: { color: "rgba(255, 255, 255, 0.03)" } },
+      crosshair: { mode: CrosshairMode.Normal, vertLine: { color: "rgba(255, 255, 255, 0.1)", labelBackgroundColor: "#374151" }, horzLine: { color: "rgba(255, 255, 255, 0.1)", labelBackgroundColor: "#374151" } },
+      rightPriceScale: { borderColor: "rgba(255, 255, 255, 0.1)", scaleMargins: { top: 0.1, bottom: 0.1 } },
+      timeScale: { borderColor: "rgba(255, 255, 255, 0.1)", timeVisible: true, secondsVisible: false },
     });
 
     const candlestickSeries = chart.addCandlestickSeries({
-      upColor: "#22c55e",
-      downColor: "#ef4444",
-      borderUpColor: "#22c55e",
-      borderDownColor: "#ef4444",
-      wickUpColor: "#22c55e",
-      wickDownColor: "#ef4444",
+      upColor: "#22c55e", downColor: "#ef4444", borderUpColor: "#22c55e", borderDownColor: "#ef4444",
+      wickUpColor: "#22c55e", wickDownColor: "#ef4444",
+    });
+
+    // Add click handler for candles
+    chart.subscribeClick((param) => {
+      if (param.time && param.point) {
+        const time = param.time as number;
+        const tf = TIMEFRAMES.find(t => t.value === timeframe);
+        const minutes = tf?.minutes || 60;
+        
+        // Find candle at this time
+        const candle = chartData.find(c => c.time === time);
+        if (candle) {
+          // Find news within this candle's time range
+          const candleStart = subMinutes(new Date(candle.time * 1000), minutes / 2);
+          const candleEnd = addMinutes(new Date(candle.time * 1000), minutes / 2);
+          
+          const relatedNews = news.filter(n => {
+            const newsTime = new Date(n.timestamp);
+            return isWithinInterval(newsTime, { start: candleStart, end: candleEnd });
+          });
+
+          const priceChange = ((candle.close - candle.open) / candle.open) * 100;
+          
+          setSelectedCandleNews({
+            candle,
+            news: relatedNews,
+            hasBigMove: Math.abs(priceChange) > 1.5,
+            moveType: priceChange > 0 ? 'up' : priceChange < 0 ? 'down' : 'none',
+            movePercent: priceChange,
+          });
+        }
+      }
     });
 
     candlestickSeriesRef.current = candlestickSeries;
@@ -564,14 +505,10 @@ export default function MRKTAIStyleDashboard() {
     };
 
     window.addEventListener("resize", handleResize);
+    return () => { window.removeEventListener("resize", handleResize); chart.remove(); };
+  }, [chartData, news, timeframe]);
 
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      chart.remove();
-    };
-  }, []);
-
-  // Update chart data
+  // Update chart data with markers for big moves
   useEffect(() => {
     if (candlestickSeriesRef.current && chartData.length > 0) {
       const formattedData = chartData.map((candle) => ({
@@ -583,6 +520,20 @@ export default function MRKTAIStyleDashboard() {
       }));
 
       candlestickSeriesRef.current.setData(formattedData);
+      
+      // Add markers for big moves
+      const markers = chartData
+        .filter(c => Math.abs(c.priceChange || 0) > 1.5)
+        .map(candle => ({
+          time: candle.time as Time,
+          position: (candle.priceChange || 0) > 0 ? "belowBar" as const : "aboveBar" as const,
+          color: (candle.priceChange || 0) > 0 ? "#22c55e" : "#ef4444",
+          shape: (candle.priceChange || 0) > 0 ? "arrowUp" as const : "arrowDown" as const,
+          text: `${Math.abs(candle.priceChange || 0).toFixed(1)}%`,
+          size: 2,
+        }));
+      
+      candlestickSeriesRef.current.setMarkers(markers);
       chartRef.current?.timeScale().fitContent();
     }
   }, [chartData]);
@@ -594,61 +545,23 @@ export default function MRKTAIStyleDashboard() {
   });
 
   const currentSymbol = SYMBOLS.find(s => s.symbol === selectedSymbol);
-  const headline = getDynamicHeadline(selectedSymbol, news);
-
-  // Get bias based on latest news
-  const getBias = () => {
-    const latestHighImpact = news.find(n => n.urgency === "high" || n.urgency === "breaking");
-    if (latestHighImpact?.impacts) {
-      const symbolImpact = latestHighImpact.impacts.find(i => i.symbol === selectedSymbol);
-      if (symbolImpact?.direction === "bullish") return { text: "Bullish", color: "green" };
-      if (symbolImpact?.direction === "bearish") return { text: "Slightly Bearish", color: "red" };
-    }
-    return { text: "Neutral", color: "gray" };
-  };
-
-  const bias = getBias();
+  const bias = { text: "Slightly Bearish", color: "red" };
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex">
       {/* Left Sidebar */}
-      <aside 
-        className={cn(
-          "flex-shrink-0 border-r border-gray-800 bg-[#0a0a0a] flex flex-col transition-all duration-300",
-          sidebarCollapsed ? "w-16" : "w-60"
-        )}
-      >
-        {/* Logo */}
+      <aside className={cn("flex-shrink-0 border-r border-gray-800 bg-[#0a0a0a] flex flex-col transition-all duration-300", sidebarCollapsed ? "w-16" : "w-60")}>
         <div className="h-16 flex items-center px-4 border-b border-gray-800">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-sm">F</span>
           </div>
-          {!sidebarCollapsed && (
-            <span className="ml-3 font-bold text-lg">ForexSAI</span>
-          )}
+          {!sidebarCollapsed && <span className="ml-3 font-bold text-lg">ForexSAI</span>}
         </div>
-
-        {/* Navigation */}
         <nav className="py-4 space-y-1 flex-1">
-          {sidebarItems.map((item) => (
-            <SidebarItem
-              key={item.label}
-              icon={item.icon}
-              label={item.label}
-              href={item.href}
-              active={item.active}
-              badge={item.badge}
-              collapsed={sidebarCollapsed}
-            />
-          ))}
+          {sidebarItems.map((item) => <SidebarItem key={item.label} {...item} collapsed={sidebarCollapsed} />)}
         </nav>
-
-        {/* Bottom section */}
         <div className="p-4 border-t border-gray-800">
-          <button 
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="w-full flex items-center justify-center p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-          >
+          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="w-full flex items-center justify-center p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
             <ChevronLeft className={cn("w-5 h-5 transition-transform", sidebarCollapsed && "rotate-180")} />
           </button>
         </div>
@@ -656,75 +569,47 @@ export default function MRKTAIStyleDashboard() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">
-        {/* Top Symbol Bar */}
-        <SymbolBar 
-          symbols={SYMBOLS} 
-          selectedSymbol={selectedSymbol}
-          onSelect={setSelectedSymbol}
-        />
+        <SymbolBar symbols={SYMBOLS} selectedSymbol={selectedSymbol} onSelect={setSelectedSymbol} />
 
-        {/* Content Area */}
         <div className="flex-1 flex overflow-hidden">
           {/* Chart Section */}
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 flex flex-col min-w-0 relative">
             {/* Title & Analysis Cards */}
             <div className="p-6 border-b border-gray-800">
               <h1 className="text-xl font-bold text-white mb-4 leading-tight">
-                {headline}
+                {selectedSymbol} - {currentSymbol?.name} Market Analysis
               </h1>
-              
-              {/* Analysis Cards Row */}
               <div className="flex items-center gap-3 flex-wrap">
-                <AnalysisCard 
-                  type="swing" 
-                  label="SWING TRADING" 
-                  value="Bullish" 
-                  active 
-                />
-                <AnalysisCard 
-                  type="day" 
-                  label="DAY TRADING" 
-                  value={bias.text} 
-                  active 
-                />
-                <AnalysisCard 
-                  type="news" 
-                  label="NEWS FEED" 
-                  value="High Impact" 
-                  active 
-                />
+                <AnalysisCard type="swing" label="SWING TRADING" value="Bullish" active />
+                <AnalysisCard type="day" label="DAY TRADING" value={bias.text} active />
+                <AnalysisCard type="news" label="NEWS FEED" value="High Impact" active />
               </div>
             </div>
 
             {/* Chart Container */}
             <div className="flex-1 relative min-h-0">
+              {/* Candle Info Panel */}
+              <CandleInfoPanel 
+                candleNews={selectedCandleNews} 
+                onClose={() => setSelectedCandleNews(null)} 
+                symbol={selectedSymbol}
+              />
+
               {/* Timeframe Selector */}
               <div className="absolute top-4 left-4 z-10 flex items-center gap-1 bg-gray-900/80 backdrop-blur rounded-lg p-1 border border-gray-800">
                 {TIMEFRAMES.map((tf) => (
-                  <button
-                    key={tf.value}
-                    onClick={() => setTimeframe(tf.value)}
-                    className={cn(
-                      "px-3 py-1.5 rounded text-xs font-medium transition-all",
-                      timeframe === tf.value
-                        ? "bg-gray-700 text-white"
-                        : "text-gray-400 hover:text-white hover:bg-gray-800"
-                    )}
-                  >
-                    {tf.label}
-                  </button>
+                  <button key={tf.value} onClick={() => setTimeframe(tf.value)} className={cn(
+                    "px-3 py-1.5 rounded text-xs font-medium transition-all",
+                    timeframe === tf.value ? "bg-gray-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-800"
+                  )}>{tf.label}</button>
                 ))}
               </div>
 
-              {/* Refresh Button */}
-              <button
-                onClick={fetchChartData}
-                className="absolute top-4 left-64 z-10 p-2 bg-gray-900/80 backdrop-blur rounded-lg border border-gray-800 text-gray-400 hover:text-white transition-colors"
-              >
+              <button onClick={fetchChartData} className="absolute top-4 left-64 z-10 p-2 bg-gray-900/80 backdrop-blur rounded-lg border border-gray-800 text-gray-400 hover:text-white transition-colors">
                 <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
               </button>
 
-              {/* Chart Annotations Overlay */}
+              {/* Chart Annotations */}
               <div className="absolute top-4 right-4 z-10 space-y-2">
                 <div className="bg-gray-900/90 backdrop-blur px-3 py-2 rounded-lg border border-gray-800">
                   <span className="text-xs text-gray-400">Pullback Area:</span>
@@ -736,7 +621,7 @@ export default function MRKTAIStyleDashboard() {
                 </div>
               </div>
 
-              {/* Chart Loading State */}
+              {/* Loading & Error States */}
               {loading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a]">
                   <div className="flex flex-col items-center gap-3">
@@ -745,37 +630,29 @@ export default function MRKTAIStyleDashboard() {
                   </div>
                 </div>
               )}
-
-              {/* Error State */}
               {error && !loading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a]">
                   <div className="flex flex-col items-center gap-3">
                     <AlertTriangle className="w-8 h-8 text-red-500" />
                     <span className="text-sm text-gray-400">{error}</span>
-                    <button
-                      onClick={fetchChartData}
-                      className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors"
-                    >
-                      Retry
-                    </button>
+                    <button onClick={fetchChartData} className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors">Retry</button>
                   </div>
                 </div>
               )}
 
               {/* Chart */}
-              <div 
-                ref={chartContainerRef} 
-                className="w-full h-full"
-                style={{ visibility: loading || error ? 'hidden' : 'visible' }}
-              />
+              <div ref={chartContainerRef} className="w-full h-full" style={{ visibility: loading || error ? 'hidden' : 'visible' }} />
+
+              {/* Instructions */}
+              {!loading && !error && !selectedCandleNews && (
+                <div className="absolute bottom-16 left-4 z-10 bg-gray-900/80 backdrop-blur px-3 py-2 rounded-lg border border-gray-800 text-xs text-gray-400">
+                  💡 Click on any candle to see related news and AI analysis
+                </div>
+              )}
 
               {/* Bottom Time Labels */}
               <div className="absolute bottom-0 left-0 right-0 flex justify-between px-16 py-2 text-xs text-gray-500 border-t border-gray-800 bg-[#0a0a0a]">
-                <span>Monday</span>
-                <span>Tuesday</span>
-                <span>Wednesday</span>
-                <span>Thursday</span>
-                <span>Friday</span>
+                <span>Monday</span><span>Tuesday</span><span>Wednesday</span><span>Thursday</span><span>Friday</span>
               </div>
             </div>
 
@@ -783,14 +660,7 @@ export default function MRKTAIStyleDashboard() {
             <div className="border-t border-gray-800 bg-gray-900/30 p-4">
               <p className="text-sm text-gray-400">
                 The day trading bias on <span className="text-white font-semibold">{selectedSymbol}</span> is{" "}
-                <span className={cn(
-                  "px-2 py-0.5 rounded font-semibold",
-                  bias.color === "green" && "text-green-400 bg-green-500/10",
-                  bias.color === "red" && "text-red-400 bg-red-500/10",
-                  bias.color === "gray" && "text-gray-400 bg-gray-500/10"
-                )}>
-                  {bias.text.toLowerCase()}
-                </span>
+                <span className="text-red-400 font-semibold bg-red-500/10 px-2 py-0.5 rounded">slightly bearish</span>
               </p>
               <p className="text-xs text-gray-500 mt-1">Updated {formatDistanceToNow(new Date(), { addSuffix: true })}</p>
             </div>
@@ -798,73 +668,45 @@ export default function MRKTAIStyleDashboard() {
 
           {/* Right News Panel */}
           <aside className="w-[420px] border-l border-gray-800 bg-[#0a0a0a] flex flex-col">
-            {/* News Header */}
             <div className="h-14 flex items-center justify-between px-4 border-b border-gray-800">
               <div className="flex items-center gap-2">
                 <h2 className="font-semibold">News Feed</h2>
-                <button className="text-gray-500 hover:text-white">
-                  <Clock className="w-4 h-4" />
-                </button>
+                <Clock className="w-4 h-4 text-gray-500" />
               </div>
               <div className="flex items-center gap-2">
-                <button 
-                  onClick={fetchNews}
-                  className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-                >
+                <button onClick={fetchNews} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
                   <RefreshCw className={cn("w-4 h-4", newsLoading && "animate-spin")} />
                 </button>
-                <button className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
-                  <Filter className="w-4 h-4" />
-                </button>
-                <button className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
-                  <Search className="w-4 h-4" />
-                </button>
+                <button className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"><Filter className="w-4 h-4" /></button>
+                <button className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"><Search className="w-4 h-4" /></button>
               </div>
             </div>
 
-            {/* News Filter Tabs */}
             <div className="flex items-center gap-1 px-4 py-3 border-b border-gray-800">
               {["all", "popular", "high"].map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setNewsFilter(filter as any)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2",
-                    newsFilter === filter
-                      ? "text-white"
-                      : "text-gray-500 hover:text-gray-300"
-                  )}
-                >
-                  {filter === "high" && newsFilter === "high" && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                  )}
+                <button key={filter} onClick={() => setNewsFilter(filter as any)} className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2",
+                  newsFilter === filter ? "text-white" : "text-gray-500 hover:text-gray-300"
+                )}>
+                  {filter === "high" && newsFilter === "high" && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
                   {filter.charAt(0).toUpperCase() + filter.slice(1)}
                 </button>
               ))}
             </div>
 
-            {/* News List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {newsLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-32 bg-gray-900/50 rounded-xl animate-pulse border border-gray-800" />
-                ))
+                Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-32 bg-gray-900/50 rounded-xl animate-pulse border border-gray-800" />)
               ) : filteredNews.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Newspaper className="w-6 h-6 text-gray-500" />
                   </div>
                   <p className="text-gray-500 text-sm">No news available</p>
-                  <p className="text-gray-600 text-xs mt-1">Try selecting a different symbol</p>
                 </div>
               ) : (
                 filteredNews.map((item) => (
-                  <NewsCard
-                    key={item.id}
-                    news={item}
-                    isExpanded={expandedNewsId === item.id}
-                    onToggle={() => setExpandedNewsId(expandedNewsId === item.id ? null : item.id)}
-                  />
+                  <NewsCard key={item.id} news={item} isExpanded={expandedNewsId === item.id} onToggle={() => setExpandedNewsId(expandedNewsId === item.id ? null : item.id)} />
                 ))
               )}
             </div>

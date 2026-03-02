@@ -1,424 +1,320 @@
 """
-News Correlation Router
-API endpoints for news-chart correlation system
+News-Chart Correlation API
+Endpoints for matching news events with candlestick data
 """
 
-import json
-from datetime import datetime, timedelta
+from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel
-import asyncio
+from datetime import datetime, timedelta
+import os
 
-from services.news_analyzer import (
-    get_analyzer, 
-    NewsAnalysisResult, 
-    SymbolImpact,
-    IMPACT_RULES
-)
 from database.supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/news-correlation", tags=["news-correlation"])
 
-# Request/Response Models
-class NewsAnalyzeRequest(BaseModel):
-    headline: str
-    content: Optional[str] = ""
-    source: Optional[str] = ""
-    timestamp: Optional[str] = None
 
-class NewsAnalyzeResponse(BaseModel):
-    success: bool
-    data: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-
-class CorrelatedNewsRequest(BaseModel):
-    symbol: str
-    timeframe: str = "1h"
-    start_time: Optional[int] = None
-    end_time: Optional[int] = None
-    impact_filter: Optional[str] = "all"
-
-class EnrichedNewsResponse(BaseModel):
-    id: str
-    timestamp: str
-    source: str
-    headline: str
-    content: Optional[str]
-    impacts: List[Dict[str, Any]]
-    sentiment: str
-    volatility_expectation: str
-    key_levels: Optional[Dict[str, List[float]]]
-    event_duration: str
-    ai_confidence: float
-
-
-# WebSocket connection manager
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: List[WebSocket] = []
-        self.subscribed_symbols: Dict[str, List[WebSocket]] = {}
-    
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-    
-    def disconnect(self, websocket: WebSocket):
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
-        # Remove from symbol subscriptions
-        for symbol, connections in self.subscribed_symbols.items():
-            if websocket in connections:
-                connections.remove(websocket)
-    
-    async def subscribe_to_symbol(self, websocket: WebSocket, symbol: str):
-        if symbol not in self.subscribed_symbols:
-            self.subscribed_symbols[symbol] = []
-        if websocket not in self.subscribed_symbols[symbol]:
-            self.subscribed_symbols[symbol].append(websocket)
-    
-    async def broadcast_to_symbol(self, symbol: str, message: Dict[str, Any]):
-        if symbol in self.subscribed_symbols:
-            disconnected = []
-            for connection in self.subscribed_symbols[symbol]:
-                try:
-                    await connection.send_json(message)
-                except Exception:
-                    disconnected.append(connection)
-            
-            # Clean up disconnected clients
-            for conn in disconnected:
-                self.subscribed_symbols[symbol].remove(conn)
-    
-    async def broadcast(self, message: Dict[str, Any]):
-        disconnected = []
-        for connection in self.active_connections:
-            try:
-                await connection.send_json(message)
-            except Exception:
-                disconnected.append(connection)
-        
-        for conn in disconnected:
-            if conn in self.active_connections:
-                self.active_connections.remove(conn)
-
-
-manager = ConnectionManager()
-
-
-@router.post("/analyze", response_model=NewsAnalyzeResponse)
-async def analyze_news_endpoint(request: NewsAnalyzeRequest):
-    """
-    Analyze a single news item for market impact
-    """
-    try:
-        analyzer = get_analyzer()
-        result = await analyzer.analyze_news(
-            headline=request.headline,
-            content=request.content or "",
-            source=request.source or ""
-        )
-        
-        # Convert to dict
-        response_data = {
-            "impacts": [
-                {
-                    "symbol": i.symbol,
-                    "direction": i.direction,
-                    "score": i.score,
-                    "confidence": i.confidence,
-                    "reasoning": i.reasoning,
-                    "emoji": i.emoji
-                }
-                for i in result.impacts
-            ],
-            "sentiment": result.sentiment,
-            "volatility_expectation": result.volatility_expectation,
-            "key_levels": result.key_levels,
-            "event_duration": result.event_duration,
-            "confidence": result.confidence
-        }
-        
-        return NewsAnalyzeResponse(success=True, data=response_data)
-    
-    except Exception as e:
-        return NewsAnalyzeResponse(success=False, error=str(e))
-
-
-@router.get("/correlated/{symbol}", response_model=List[EnrichedNewsResponse])
-async def get_correlated_news(
+@router.get("/candle-news/{symbol}")
+async def get_candle_news(
     symbol: str,
-    timeframe: str = Query("1h", description="Chart timeframe"),
-    start_time: Optional[int] = Query(None, description="Start timestamp (unix)"),
-    end_time: Optional[int] = Query(None, description="End timestamp (unix)"),
-    impact_filter: str = Query("all", description="Filter by impact: all, high, medium, low"),
-    limit: int = Query(50, description="Max results", ge=1, le=200)
+    timestamp: int,
+    timeframe: str = "1h",
+    window_minutes: int = 30
 ):
     """
-    Get news correlated to a specific symbol within time range
+    Get news events related to a specific candle/time
+    
+    Args:
+        symbol: Trading symbol (e.g., XAUUSD)
+        timestamp: Unix timestamp of the candle
+        timeframe: Candle timeframe
+        window_minutes: Time window to search for news (before and after)
     """
     try:
         supabase = get_supabase_client()
         
-        # Default time range: last 24 hours
-        if not end_time:
-            end_time = int(datetime.utcnow().timestamp())
-        if not start_time:
-            # Default based on timeframe
-            tf_hours = {"5m": 6, "15m": 12, "30m": 24, "1h": 48, "4h": 168, "1d": 720}
-            hours = tf_hours.get(timeframe, 24)
-            start_time = end_time - (hours * 3600)
+        # Calculate time range
+        candle_time = datetime.fromtimestamp(timestamp)
+        start_time = candle_time - timedelta(minutes=window_minutes)
+        end_time = candle_time + timedelta(minutes=window_minutes)
         
-        # Query Supabase for enriched news
-        query = (
-            supabase.table("enriched_news")
-            .select("*")
-            .gte("timestamp", datetime.fromtimestamp(start_time).isoformat())
-            .lte("timestamp", datetime.fromtimestamp(end_time).isoformat())
-            .order("timestamp", desc=True)
-            .limit(limit)
-        )
+        # Fetch news in time window
+        result = supabase.table("enriched_news")\
+            .select("*")\
+            .gte("timestamp", start_time.isoformat())\
+            .lte("timestamp", end_time.isoformat())\
+            .order("timestamp", desc=True)\
+            .execute()
         
-        response = query.execute()
-        
-        if not response.data:
-            return []
-        
-        # Filter by symbol impact
-        filtered_news = []
-        for news in response.data:
+        # Filter news that impacts this symbol
+        related_news = []
+        for news in result.data:
             impacts = news.get("impacts", [])
+            # Check if symbol is directly mentioned
+            symbol_impact = next((i for i in impacts if i.get("symbol") == symbol), None)
+            # Or check for global impacts (all symbols affected)
+            global_impact = next((i for i in impacts if i.get("symbol") in ["*", "ALL"]), None)
             
-            # Check if this symbol is affected
-            symbol_impact = None
-            for imp in impacts:
-                if imp.get("symbol") == symbol or imp.get("symbol") == "*":
-                    symbol_impact = imp
-                    break
-            
-            # Also include news that affects correlated symbols
-            if not symbol_impact and impacts:
-                # Include as ghost marker (30% opacity on chart)
-                symbol_impact = impacts[0]
-                symbol_impact["is_ghost"] = True
-            
-            if symbol_impact:
-                # Apply impact filter
-                if impact_filter != "all":
-                    score = symbol_impact.get("score", 5)
-                    if impact_filter == "high" and score < 7:
-                        continue
-                    if impact_filter == "medium" and (score < 4 or score >= 7):
-                        continue
-                    if impact_filter == "low" and score >= 4:
-                        continue
-                
-                enriched = EnrichedNewsResponse(
-                    id=news.get("id"),
-                    timestamp=news.get("timestamp"),
-                    source=news.get("source", "Unknown"),
-                    headline=news.get("headline"),
-                    content=news.get("content"),
-                    impacts=impacts,
-                    sentiment=news.get("sentiment", "neutral"),
-                    volatility_expectation=news.get("volatility_expectation", "medium"),
-                    key_levels=news.get("key_levels"),
-                    event_duration=news.get("event_duration", "short_term"),
-                    ai_confidence=news.get("ai_confidence", 70.0)
-                )
-                filtered_news.append(enriched)
-        
-        return filtered_news
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/recent")
-async def get_recent_news(
-    limit: int = Query(20, ge=1, le=100),
-    symbols: Optional[str] = Query(None, description="Comma-separated symbols")
-):
-    """
-    Get recent analyzed news
-    """
-    try:
-        supabase = get_supabase_client()
-        
-        query = (
-            supabase.table("enriched_news")
-            .select("*")
-            .order("timestamp", desc=True)
-            .limit(limit)
-        )
-        
-        if symbols:
-            symbol_list = symbols.split(",")
-            # Filter by JSONB contains - requires proper Supabase query
-            # This is a simplified version
-        
-        response = query.execute()
-        return {"success": True, "data": response.data or []}
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/store")
-async def store_analyzed_news(news_data: Dict[str, Any]):
-    """
-    Store pre-analyzed news to database
-    """
-    try:
-        supabase = get_supabase_client()
-        
-        # Ensure required fields
-        if "id" not in news_data:
-            news_data["id"] = f"news_{datetime.utcnow().timestamp()}"
-        
-        if "analysis_timestamp" not in news_data:
-            news_data["analysis_timestamp"] = datetime.utcnow().isoformat()
-        
-        response = supabase.table("enriched_news").insert(news_data).execute()
-        
-        # Broadcast to WebSocket subscribers
-        affected_symbols = [i.get("symbol") for i in news_data.get("impacts", [])]
-        for symbol in set(affected_symbols):
-            if symbol:
-                await manager.broadcast_to_symbol(symbol, {
-                    "type": "news",
-                    "data": news_data,
-                    "timestamp": datetime.utcnow().isoformat()
+            if symbol_impact or global_impact:
+                related_news.append({
+                    **news,
+                    "symbol_impact": symbol_impact or global_impact
                 })
-        
-        return {"success": True, "id": news_data["id"]}
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/impact-rules")
-async def get_impact_rules():
-    """
-    Get all defined impact rules for reference
-    """
-    return {
-        "success": True,
-        "rules": {
-            name: {
-                "keywords": rule["keywords"],
-                "sentiment": rule["sentiment"],
-                "volatility": rule["volatility"]
-            }
-            for name, rule in IMPACT_RULES.items()
-        }
-    }
-
-
-@router.get("/supported-symbols")
-async def get_supported_symbols():
-    """
-    Get list of supported symbols and their characteristics
-    """
-    from services.news_analyzer import SUPPORTED_SYMBOLS
-    return {
-        "success": True,
-        "symbols": SUPPORTED_SYMBOLS
-    }
-
-
-# WebSocket endpoint for real-time news
-@router.websocket("/ws/news")
-async def news_websocket(websocket: WebSocket):
-    """
-    WebSocket for real-time news updates
-    Clients can subscribe to specific symbols
-    """
-    await manager.connect(websocket)
-    
-    try:
-        while True:
-            # Receive messages from client (subscription requests)
-            data = await websocket.receive_json()
-            
-            message_type = data.get("type")
-            
-            if message_type == "subscribe":
-                symbol = data.get("symbol")
-                if symbol:
-                    await manager.subscribe_to_symbol(websocket, symbol)
-                    await websocket.send_json({
-                        "type": "subscribed",
-                        "symbol": symbol
-                    })
-            
-            elif message_type == "unsubscribe":
-                symbol = data.get("symbol")
-                if symbol and symbol in manager.subscribed_symbols:
-                    if websocket in manager.subscribed_symbols[symbol]:
-                        manager.subscribed_symbols[symbol].remove(websocket)
-            
-            elif message_type == "ping":
-                await websocket.send_json({"type": "pong"})
-    
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-    except Exception as e:
-        print(f"WebSocket error: {e}")
-        manager.disconnect(websocket)
-
-
-@router.get("/stats")
-async def get_news_stats(
-    symbol: Optional[str] = Query(None),
-    days: int = Query(7, ge=1, le=30)
-):
-    """
-    Get news analysis statistics
-    """
-    try:
-        supabase = get_supabase_client()
-        
-        start_date = datetime.utcnow() - timedelta(days=days)
-        
-        # Query for stats
-        query = (
-            supabase.table("enriched_news")
-            .select("sentiment, impacts, ai_confidence")
-            .gte("timestamp", start_date.isoformat())
-        )
-        
-        response = query.execute()
-        data = response.data or []
-        
-        # Calculate stats
-        total = len(data)
-        sentiment_counts = {"risk_on": 0, "risk_off": 0, "neutral": 0}
-        volatility_counts = {"high": 0, "medium": 0, "low": 0}
-        symbol_mentions = {}
-        avg_confidence = 0
-        
-        for item in data:
-            sentiment_counts[item.get("sentiment", "neutral")] += 1
-            avg_confidence += item.get("ai_confidence", 70)
-            
-            for impact in item.get("impacts", []):
-                sym = impact.get("symbol")
-                if sym:
-                    symbol_mentions[sym] = symbol_mentions.get(sym, 0) + 1
-        
-        avg_confidence = avg_confidence / total if total > 0 else 0
         
         return {
             "success": True,
-            "stats": {
-                "total_news": total,
-                "sentiment_distribution": sentiment_counts,
-                "average_confidence": round(avg_confidence, 2),
-                "symbol_mentions": symbol_mentions,
-                "period_days": days
+            "data": {
+                "symbol": symbol,
+                "candle_time": candle_time.isoformat(),
+                "timeframe": timeframe,
+                "news_count": len(related_news),
+                "news": related_news
             }
         }
-    
+        
     except Exception as e:
+        print(f"Error fetching candle news: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/big-moves/{symbol}")
+async def get_big_moves(
+    symbol: str,
+    timeframe: str = "1h",
+    threshold_percent: float = 1.5,
+    hours: int = 24
+):
+    """
+    Identify candles with big price movements and their related news
+    
+    Args:
+        symbol: Trading symbol
+        timeframe: Candle timeframe
+        threshold_percent: Minimum % change to be considered "big move"
+        hours: How many hours back to analyze
+    """
+    try:
+        supabase = get_supabase_client()
+        
+        # Get candles with big moves from cache
+        from_time = datetime.utcnow() - timedelta(hours=hours)
+        
+        result = supabase.table("candle_cache")\
+            .select("*")\
+            .eq("symbol", symbol)\
+            .eq("timeframe", timeframe)\
+            .gte("timestamp", from_time.isoformat())\
+            .order("timestamp", desc=True)\
+            .execute()
+        
+        big_moves = []
+        for candle in result.data:
+            open_price = candle.get("open", 0)
+            close_price = candle.get("close", 0)
+            
+            if open_price == 0:
+                continue
+                
+            change_percent = ((close_price - open_price) / open_price) * 100
+            
+            if abs(change_percent) >= threshold_percent:
+                # Get news for this candle
+                candle_time = datetime.fromisoformat(candle["timestamp"])
+                news_result = supabase.table("enriched_news")\
+                    .select("*")\
+                    .gte("timestamp", (candle_time - timedelta(minutes=30)).isoformat())\
+                    .lte("timestamp", (candle_time + timedelta(minutes=30)).isoformat())\
+                    .execute()
+                
+                # Filter relevant news
+                related_news = [
+                    n for n in news_result.data
+                    if any(i.get("symbol") == symbol for i in n.get("impacts", []))
+                ]
+                
+                big_moves.append({
+                    "timestamp": candle["timestamp"],
+                    "unix_time": int(candle_time.timestamp()),
+                    "open": open_price,
+                    "close": close_price,
+                    "high": candle.get("high"),
+                    "low": candle.get("low"),
+                    "change_percent": round(change_percent, 2),
+                    "direction": "up" if change_percent > 0 else "down",
+                    "related_news_count": len(related_news),
+                    "related_news": related_news[:3]  # Top 3 news items
+                })
+        
+        return {
+            "success": True,
+            "data": {
+                "symbol": symbol,
+                "timeframe": timeframe,
+                "threshold_percent": threshold_percent,
+                "big_moves_count": len(big_moves),
+                "big_moves": big_moves
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error fetching big moves: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/explain-move")
+async def explain_price_move(
+    symbol: str,
+    timestamp: int,
+    ai_explain: bool = True
+):
+    """
+    Get AI explanation for a specific price movement
+    
+    Args:
+        symbol: Trading symbol
+        timestamp: Unix timestamp of the move
+        ai_explain: Whether to include AI-generated explanation
+    """
+    try:
+        # First get the candle data
+        supabase = get_supabase_client()
+        candle_time = datetime.fromtimestamp(timestamp)
+        
+        # Get candle
+        candle_result = supabase.table("candle_cache")\
+            .select("*")\
+            .eq("symbol", symbol)\
+            .gte("timestamp", candle_time.isoformat())\
+            .lte("timestamp", (candle_time + timedelta(minutes=1)).isoformat())\
+            .limit(1)\
+            .execute()
+        
+        if not candle_result.data:
+            return {
+                "success": False,
+                "error": "Candle not found"
+            }
+        
+        candle = candle_result.data[0]
+        
+        # Get related news
+        news_result = supabase.table("enriched_news")\
+            .select("*")\
+            .gte("timestamp", (candle_time - timedelta(minutes=30)).isoformat())\
+            .lte("timestamp", (candle_time + timedelta(minutes=30)).isoformat())\
+            .order("urgency")\
+            .execute()
+        
+        # Filter relevant news
+        relevant_news = [
+            n for n in news_result.data
+            if any(i.get("symbol") == symbol for i in n.get("impacts", []))
+        ]
+        
+        # Calculate price change
+        change_percent = ((candle["close"] - candle["open"]) / candle["open"]) * 100
+        
+        # Generate AI explanation
+        explanation = ""
+        if ai_explain and relevant_news:
+            top_news = relevant_news[0]
+            impact = next((i for i in top_news.get("impacts", []) if i.get("symbol") == symbol), None)
+            
+            if change_percent > 0:
+                explanation = f"The {change_percent:.2f}% surge in {symbol} was primarily driven by: {top_news.get('headline')}. "
+                if impact:
+                    explanation += f"AI analysis indicates {impact.get('reasoning', 'positive sentiment')}. "
+            else:
+                explanation = f"The {abs(change_percent):.2f}% decline in {symbol} was influenced by: {top_news.get('headline')}. "
+                if impact:
+                    explanation += f"AI analysis suggests {impact.get('reasoning', 'negative sentiment')}. "
+            
+            explanation += f"Market sentiment was {top_news.get('sentiment', 'neutral')} with {top_news.get('volatility_expectation', 'medium')} volatility expected."
+        
+        return {
+            "success": True,
+            "data": {
+                "symbol": symbol,
+                "timestamp": timestamp,
+                "candle": candle,
+                "change_percent": round(change_percent, 2),
+                "direction": "up" if change_percent > 0 else "down",
+                "related_news": relevant_news,
+                "ai_explanation": explanation if ai_explain else None
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error explaining move: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/economic-events/{symbol}")
+async def get_economic_events(
+    symbol: str,
+    hours_ahead: int = 24,
+    impact_filter: Optional[str] = None
+):
+    """
+    Get upcoming economic events that may affect the symbol
+    
+    Args:
+        symbol: Trading symbol
+        hours_ahead: How many hours ahead to look
+        impact_filter: Filter by impact level (high, medium, low)
+    """
+    try:
+        supabase = get_supabase_client()
+        
+        now = datetime.utcnow()
+        future = now + timedelta(hours=hours_ahead)
+        
+        # Map symbols to relevant currencies/countries
+        symbol_mapping = {
+            "XAUUSD": ["USD", "ALL"],
+            "NDX": ["USD", "ALL"],
+            "DAX": ["EUR", "DE", "ALL"],
+            "USOIL": ["USD", "ALL"],
+            "VIX": ["USD", "ALL"],
+            "DXY": ["USD", "ALL"],
+        }
+        
+        relevant_currencies = symbol_mapping.get(symbol, ["ALL"])
+        
+        # This would typically query an economic calendar table
+        # For now, return mock data structure
+        events = [
+            {
+                "time": (now + timedelta(hours=4)).isoformat(),
+                "currency": "USD",
+                "event": "Non-Farm Payrolls",
+                "impact": "high",
+                "forecast": "185K",
+                "previous": "175K",
+                "expected_impact": f"High volatility expected in {symbol}"
+            },
+            {
+                "time": (now + timedelta(hours=12)).isoformat(),
+                "currency": "USD",
+                "event": "FOMC Meeting Minutes",
+                "impact": "high",
+                "forecast": "-",
+                "previous": "-",
+                "expected_impact": f"Potential trend change for {symbol}"
+            }
+        ]
+        
+        if impact_filter:
+            events = [e for e in events if e["impact"] == impact_filter]
+        
+        return {
+            "success": True,
+            "data": {
+                "symbol": symbol,
+                "events_count": len(events),
+                "events": events
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error fetching economic events: {e}")
         raise HTTPException(status_code=500, detail=str(e))
