@@ -11,7 +11,7 @@ const SMCPanel = lazy(() => import("../../components/panels/SMCPanel"));
 const MTFMatrixPanel = lazy(() => import("../../components/panels/MTFMatrixPanel"));
 const COTWhalePanel = lazy(() => import("../../components/panels/COTWhalePanel"));
 const SeasonalityPanel = lazy(() => import("../../components/panels/SeasonalityPanel"));
-const OrderBlockPanelSimple = lazy(() => import("../../components/OrderBlockPanelSimple"));
+const OrderBlockPanelUnified = lazy(() => import("../../components/OrderBlockPanelUnified"));
 const WhaleTrackerPanel = lazy(() => import("../../components/WhaleTrackerPanel"));
 const InstitutionalDataPanel = lazy(() => import("../../components/InstitutionalDataPanel"));
 const AdvancedAnalysisPanel = lazy(() => import("../../components/AdvancedAnalysisPanel"));
@@ -67,19 +67,12 @@ export default function AnalysisView() {
                     </LazyPanel>
                 </div>
 
-                {/* Order Blocks */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <LazyPanel fallbackHeight={250}>
-                        <Suspense fallback={<PanelLoader />}>
-                            <OrderBlockPanelSimple symbol="NDX.INDX" symbolLabel="NASDAQ" />
-                        </Suspense>
-                    </LazyPanel>
-                    <LazyPanel fallbackHeight={250}>
-                        <Suspense fallback={<PanelLoader />}>
-                            <OrderBlockPanelSimple symbol="XAUUSD" symbolLabel="XAUUSD" />
-                        </Suspense>
-                    </LazyPanel>
-                </div>
+                {/* Smart Money Zones - Unified Panel (4 Symbols) */}
+                <LazyPanel fallbackHeight={400}>
+                    <Suspense fallback={<PanelLoader />}>
+                        <OrderBlockPanelUnified />
+                    </Suspense>
+                </LazyPanel>
 
                 {/* Whale Tracker + Institutional */}
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">

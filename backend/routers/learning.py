@@ -2106,3 +2106,185 @@ async def get_model_timeframes(model: str):
     except Exception as e:
         return {"error": str(e), "model": model, "available_timeframes": ["1h"]}
 
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# XAUUSD SIGNAL REPAIR ENDPOINTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.post("/repair-xauusd-signals")
+async def repair_xauusd_signals(
+    dry_run: bool = Query(True, description="If true, only shows what would be fixed without making changes"),
+    max_age_hours: float = Query(2.0, description="Max age in hours for signals to be considered stuck")
+):
+    """
+    Repair stuck XAUUSD signals that have been active for too long.
+    
+    Problem: XAUUSD signals were getting stuck in 'active' status because:
+    1. Missing .execute() calls in signal lifecycle updates
+    2. Price fetching failures
+    3. Circuit breaker issues
+    
+    This endpoint force-expires old active signals so new ones can be tracked properly.
+    """
+    if not is_db_available():
+        return {"error": "Database not available"}
+    
+    client = get_supabase_client()
+    if not client:
+        return {"error": "Database client not available"}
+    
+    try:
+        from datetime import datetime, timedelta
+        
+        # Find stuck XAUUSD signals
+        cutoff = (datetime.utcnow() - timedelta(hours=max_age_hours)).isoformat() + "Z"
+        
+        result = client.table("prediction_logs").select(
+            "id, symbol, ml_direction, model_type, strategy, status, created_at, ml_entry_price"
+        ).eq("symbol", "XAUUSD").eq("status", "active").lt("created_at", cutoff).limit(200).execute()
+        
+        stuck_signals = result.get("data") or []
+        
+        if not stuck_signals:
+            return {
+                "success": True,
+                "message": "No stuck XAUUSD signals found",
+                "dry_run": dry_run,
+                "signals_checked": 0
+            }
+        
+        # Group by model type for reporting
+        by_model = {}
+        for sig in stuck_signals:
+            model = sig.get("model_type") or sig.get("strategy") or "unknown"
+            by_model[model] = by_model.get(model, 0) + 1
+        
+        if dry_run:
+            return {
+                "success": True,
+                "dry_run": True,
+                "message": f"Found {len(stuck_signals)} stuck XAUUSD signals (dry run - no changes made)",
+                "signals_found": len(stuck_signals),
+                "by_model": by_model,
+                "max_age_hours": max_age_hours,
+                "sample_signals": stuck_signals[:5]
+            }
+        
+        # Actually fix the signals
+        fixed_count = 0
+        errors = []
+        
+        for sig in stuck_signals:
+            try:
+                sig_id = sig["id"]
+                update_result = client.table("prediction_logs").eq("id", sig_id).update({
+                    "status": "expired",
+                    "exit_time": datetime.utcnow().isoformat() + "Z",
+                    "exit_price": sig.get("ml_entry_price"),  # Use entry price as exit
+                    "targets_hit": json.dumps({"TP1": False, "TP2": False, "TP3": False, "TP4": False}),
+                }).execute()
+                
+                if update_result and update_result.get("data"):
+                    fixed_count += 1
+                else:
+                    errors.append(f"No data returned for {sig_id[:8]}")
+            except Exception as sig_err:
+                errors.append(f"{sig['id'][:8]}: {str(sig_err)[:50]}")
+        
+        return {
+            "success": True,
+            "dry_run": False,
+            "message": f"Fixed {fixed_count}/{len(stuck_signals)} stuck XAUUSD signals",
+            "signals_found": len(stuck_signals),
+            "signals_fixed": fixed_count,
+            "by_model": by_model,
+            "errors": errors[:10] if errors else None,
+            "max_age_hours": max_age_hours
+        }
+        
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()[:500]}
+
+
+@router.get("/xauusd-status")
+async def get_xauusd_signal_status():
+    """
+    Get detailed status of XAUUSD signals for debugging.
+    Shows active vs completed/stopped/expired counts by model.
+    """
+    if not is_db_available():
+        return {"error": "Database not available"}
+    
+    client = get_supabase_client()
+    if not client:
+        return {"error": "Database client not available"}
+    
+    try:
+        from datetime import datetime, timedelta
+        
+        # Get all XAUUSD signals from last 7 days
+        cutoff = (datetime.utcnow() - timedelta(days=7)).isoformat() + "Z"
+        
+        result = client.table("prediction_logs").select(
+            "id, model_type, strategy, status, ml_direction, created_at, exit_time"
+        ).eq("symbol", "XAUUSD").gte("created_at", cutoff).limit(500).execute()
+        
+        signals = result.get("data") or []
+        
+        # Count by status and model
+        stats = {
+            "active": {},
+            "completed": {},
+            "stopped": {},
+            "expired": {},
+            "total": 0
+        }
+        
+        for sig in signals:
+            status = sig.get("status", "unknown")
+            model = sig.get("model_type") or sig.get("strategy") or "unknown"
+            
+            if status not in stats:
+                status = "unknown"
+            
+            if model not in stats[status]:
+                stats[status][model] = 0
+            
+            stats[status][model] += 1
+            stats["total"] += 1
+        
+        # Get recent active signals (potential stuck signals)
+        one_hour_ago = (datetime.utcnow() - timedelta(hours=1)).isoformat() + "Z"
+        old_active_result = client.table("prediction_logs").select(
+            "id, model_type, strategy, created_at, ml_entry_price"
+        ).eq("symbol", "XAUUSD").eq("status", "active").lt("created_at", one_hour_ago).limit(100).execute()
+        
+        old_active = old_active_result.get("data") or []
+        
+        return {
+            "success": True,
+            "period_days": 7,
+            "total_signals": stats["total"],
+            "by_status": {
+                "active": stats["active"],
+                "completed": stats["completed"],
+                "stopped": stats["stopped"],
+                "expired": stats["expired"]
+            },
+            "old_active_signals": {
+                "count": len(old_active),
+                "signals": old_active[:10]  # First 10 for inspection
+            },
+            "summary": {
+                "active_total": sum(stats["active"].values()),
+                "completed_total": sum(stats["completed"].values()),
+                "stopped_total": sum(stats["stopped"].values()),
+                "expired_total": sum(stats["expired"].values()),
+            }
+        }
+        
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()[:500]}

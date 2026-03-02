@@ -58,6 +58,7 @@ const SmartSetupPanel = lazy(() => import("../components/panels/SmartSetupPanel"
 const HarmonicVisualizerPanel = lazy(() => import("../components/panels/HarmonicVisualizerPanel"));
 const StrategyOptimizerPanel = lazy(() => import("../components/panels/StrategyOptimizerPanel"));
 const NewsChartCorrelationPanel = lazy(() => import("../components/panels/NewsChartCorrelationPanel"));
+const NewsCorrelationDashboard = lazy(() => import("./news-correlation/page"));
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
 import { useLivePrices } from "../hooks/useLivePrices";
@@ -1481,8 +1482,8 @@ export default function HomePage() {
           {activeView === "analysis" && <AnalysisView />}
           {activeView === "signals" && <SignalsView />}
           {activeView === "news-correlation" && (
-            <div className="w-full h-[calc(100vh-80px)] p-4">
-              <NewsChartCorrelationPanel />
+            <div className="w-full h-[calc(100vh-64px)] overflow-hidden bg-[#0a0a0a]">
+              <NewsCorrelationDashboard />
             </div>
           )}
         </div>

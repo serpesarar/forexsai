@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time } from "lightweight-charts";
+import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time, type CandlestickData } from "lightweight-charts";
 import { format, isWithinInterval, subMinutes, addMinutes } from "date-fns";
 import { 
   Bell, Star, Wallet, Calendar, FileText, MessageSquare, Newspaper,
@@ -189,7 +189,11 @@ const NewsCard = ({ news, onClick }: { news: EnrichedNews, onClick: () => void }
 };
 
 // ==================== MAIN COMPONENT ====================
-export default function NewsCorrelationDashboard() {
+interface NewsCorrelationDashboardProps {
+  embedded?: boolean;
+}
+
+export default function NewsCorrelationDashboard({ embedded = false }: NewsCorrelationDashboardProps) {
   const [selectedSymbol, setSelectedSymbol] = useState("XAUUSD");
   const [timeframe, setTimeframe] = useState("1h");
   const [chartData, setChartData] = useState<ChartCandle[]>([]);
@@ -270,14 +274,73 @@ export default function NewsCorrelationDashboard() {
   const fetchNews = useCallback(async () => {
     try {
       setNewsLoading(true);
-      const response = await fetcher<{ success: boolean; data: EnrichedNews[] }>(
-        `/api/rss/news?symbol=${selectedSymbol}&limit=50&hours=72`
-      );
       
-      if (response?.success && Array.isArray(response.data)) {
-        setNews(response.data);
+      // Try multiple strategies to fetch news
+      let newsData: EnrichedNews[] = [];
+      
+      // Strategy 1: Fetch all news (no symbol filter for maximum results)
+      try {
+        const response = await fetcher<EnrichedNews[] | { success: boolean; data: EnrichedNews[] }>(
+          `/api/rss/news?limit=100&hours=72&skip_ai_filtered=false`
+        );
+        
+        if (Array.isArray(response)) {
+          newsData = response;
+        } else if (response && typeof response === 'object' && 'data' in response) {
+          newsData = response.data;
+        }
+      } catch (e) {
+        console.log("Primary news fetch failed, trying fallback...");
+      }
+      
+      // Strategy 2: If no news, try with longer time window
+      if (newsData.length === 0) {
+        try {
+          const response = await fetcher<EnrichedNews[] | { success: boolean; data: EnrichedNews[] }>(
+            `/api/rss/news?limit=100&hours=168&skip_ai_filtered=false`
+          );
+          
+          if (Array.isArray(response)) {
+            newsData = response;
+          } else if (response && typeof response === 'object' && 'data' in response) {
+            newsData = response.data;
+          }
+        } catch (e) {
+          console.log("Fallback news fetch also failed");
+        }
+      }
+      
+      // Filter news for selected symbol if we have news
+      if (newsData.length > 0 && selectedSymbol) {
+        const symbolMappings: Record<string, string[]> = {
+          'XAUUSD': ['XAUUSD', 'XAU/USD', 'GOLD', 'GC'],
+          'NDX': ['NDX', 'NASDAQ', 'IXIC', 'NDX.INDX'],
+          'DAX': ['DAX', 'GDAXI', 'GDAXI.INDX', 'DE40'],
+          'USOIL': ['USOIL', 'WTI', 'CL', 'CL.COMM', 'OIL'],
+          'VIX': ['VIX', 'VIX.INDX', 'VOLATILITY'],
+          'DXY': ['DXY', 'DXY.INDX', 'DOLLAR', 'USD'],
+        };
+        
+        const relevantSymbols = symbolMappings[selectedSymbol] || [selectedSymbol];
+        
+        const filtered = newsData.filter((item: EnrichedNews) => {
+          // Check if news impacts contain relevant symbol
+          if (item.impacts && item.impacts.length > 0) {
+            return item.impacts.some((impact: any) => 
+              relevantSymbols.some(sym => 
+                impact.symbol?.toUpperCase() === sym.toUpperCase() ||
+                impact.symbol === '*'
+              )
+            );
+          }
+          // If no impacts, include all news (show everything)
+          return true;
+        });
+        
+        // If filtered is empty but we have news, show all news
+        setNews(filtered.length > 0 ? filtered : newsData);
       } else {
-        setNews([]);
+        setNews(newsData);
       }
     } catch (err) {
       console.error("Error fetching news:", err);
@@ -459,7 +522,14 @@ export default function NewsCorrelationDashboard() {
   // Update chart data
   useEffect(() => {
     if (candlestickSeriesRef.current && chartData.length > 0) {
-      candlestickSeriesRef.current.setData(chartData);
+      const formattedData: CandlestickData<Time>[] = chartData.map(c => ({
+        time: c.time as Time,
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close,
+      }));
+      candlestickSeriesRef.current.setData(formattedData);
       
       const markers = chartData
         .filter(c => Math.abs(c.priceChange || 0) > 1.5)
@@ -545,9 +615,9 @@ export default function NewsCorrelationDashboard() {
           </div>
         </div>
 
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100vh - 140px)' }}>
           {/* Chart Section */}
-          <div className="flex-1 flex flex-col min-w-0 relative">
+          <div className="flex-1 flex flex-col min-w-0 relative h-full">
             {/* Header */}
             <div className="p-6 border-b border-gray-800">
               <h1 className="text-xl font-bold text-white mb-4">
