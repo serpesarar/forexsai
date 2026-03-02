@@ -565,7 +565,13 @@ class RSSAggregator:
             # Check if already exists
             existing = supabase.table("enriched_news").select("id").eq("id", item.id).execute()
             
-            if existing.data:
+            existing_data = []
+            if hasattr(existing, 'data'):
+                existing_data = existing.data or []
+            elif isinstance(existing, dict):
+                existing_data = existing.get('data', []) or []
+            
+            if existing_data:
                 # Update sources list if duplicate from another source
                 if item.duplicate_of:
                     supabase.table("enriched_news").update({
@@ -607,6 +613,7 @@ class RSSAggregator:
             "new": 0,
             "duplicates": 0,
             "ai_analyzed": 0,
+            "rule_based": 0,
             "errors": 0,
         }
         
@@ -616,6 +623,7 @@ class RSSAggregator:
             # Fetch all feeds
             items = await self.fetch_all_feeds()
             stats["fetched"] = len(items)
+            print(f"[RSS] Fetched {len(items)} total items from RSS feeds")
             
             # Process each item
             for item in items:
@@ -623,23 +631,41 @@ class RSSAggregator:
                     # Check if already in database
                     existing = supabase.table("enriched_news").select("id").eq("id", item.id).execute()
                     
-                    if existing.data:
+                    if hasattr(existing, 'data') and existing.data:
                         stats["duplicates"] += 1
                         continue
                     
-                    # Analyze with AI (if passes pre-filter)
+                    # Analyze with AI (with timeout) - if passes pre-filter
                     if not item.duplicate_of:
-                        item = await self.analyze_with_ai(item)
-                        if item.ai_processed and item.urgency != "low":
-                            stats["ai_analyzed"] += 1
+                        try:
+                            # 15 second timeout for AI analysis per item
+                            item = await asyncio.wait_for(
+                                self.analyze_with_ai(item),
+                                timeout=15.0
+                            )
+                            if item.ai_processed and item.urgency != "low":
+                                stats["ai_analyzed"] += 1
+                            elif item.ai_processed:
+                                stats["rule_based"] += 1
+                        except asyncio.TimeoutError:
+                            print(f"[RSS] AI analysis timeout for: {item.title[:60]}...")
+                            # Use fallback analysis when AI times out
+                            item = self._fallback_analysis(item)
+                            stats["rule_based"] += 1
+                        except Exception as e:
+                            print(f"[RSS] AI analysis error: {e}")
+                            item = self._fallback_analysis(item)
+                            stats["rule_based"] += 1
                     
-                    # Store in database
+                    # ALWAYS store in database - filtering is done at read time
                     if await self.store_in_database(item):
                         stats["new"] += 1
                     
                 except Exception as e:
                     print(f"[RSS] Error processing item {item.id}: {e}")
                     stats["errors"] += 1
+            
+            print(f"[RSS] Cycle complete: {stats}")
             
         except Exception as e:
             print(f"[RSS] Aggregation cycle error: {e}")
