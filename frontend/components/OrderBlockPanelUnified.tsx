@@ -1,9 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, XCircle, HelpCircle, X, Layers } from "lucide-react";
+import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, XCircle, HelpCircle, X, Layers, Activity } from "lucide-react";
 import { useOrderBlockDetect } from "../lib/api/orderBlocks";
-import { useFVGDetect } from "../lib/api/fvg";
 import { useI18nStore } from "../lib/i18n/store";
 
 const SYMBOLS = [
@@ -20,6 +19,71 @@ interface SymbolDataProps {
   isActive: boolean;
 }
 
+// Types for new API response
+interface CHoCH {
+  detected: boolean;
+  type: string;
+  index: number;
+  price: number;
+  prev_swing: number;
+  strength: string;
+}
+
+interface BOS {
+  detected: boolean;
+  type: string;
+  index: number;
+  price: number;
+  broken_level: number;
+  confirmation: boolean;
+}
+
+interface FVG {
+  detected: boolean;
+  direction: string;
+  high: number;
+  low: number;
+  size: number;
+  filled: boolean;
+  fill_percentage: number;
+}
+
+interface OrderBlock {
+  detected: boolean;
+  type: string;
+  zone_low: number;
+  zone_high: number;
+  score: number;
+  strength: string;
+  tested: boolean;
+  mitigated: boolean;
+}
+
+interface StructureData {
+  choch: CHoCH[];
+  bos: BOS[];
+  fvg: FVG[];
+  order_blocks: OrderBlock[];
+  trend: string;
+  counts: {
+    choch: number;
+    bos: number;
+    fvg: number;
+    ob: number;
+  };
+}
+
+interface ApiResponse {
+  symbol: string;
+  order_blocks?: OrderBlock[];
+  structure?: StructureData;
+  choch_list?: CHoCH[];
+  bos_list?: BOS[];
+  fvg_list?: FVG[];
+  combined_signal?: { action: string; confidence: number; reasoning: string[] };
+  trend?: string;
+}
+
 function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProps) {
   const payload = useMemo(() => ({
     symbol,
@@ -28,29 +92,38 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
     config: {
       fractal_period: 2,
       min_displacement_atr: 1.0,
-      min_score: 50,
+      min_score: 30,  // Lowered for better detection
       zone_type: "wick" as const,
-      max_tests: 2
+      max_tests: 3
     }
   }), [symbol, timeframe]);
 
-  const { data, isLoading } = useOrderBlockDetect(payload);
-  const { data: fvgData, isLoading: fvgLoading } = useFVGDetect({ symbol, timeframe, limit: 200 });
-
-  const typedData = data as {
-    order_blocks?: any[];
-    combined_signal?: { action: string; confidence: number; reasoning: string[] };
-  } | undefined;
-
-  const orderBlocks = typedData?.order_blocks ?? [];
+  const { data, isLoading, error } = useOrderBlockDetect(payload);
+  
+  const typedData = data as ApiResponse | undefined;
+  
+  // Extract data from new API structure
+  const structure = typedData?.structure;
+  const orderBlocks = structure?.order_blocks ?? typedData?.order_blocks ?? [];
+  const chochList = structure?.choch ?? typedData?.choch_list ?? [];
+  const bosList = structure?.bos ?? typedData?.bos_list ?? [];
+  const fvgList = structure?.fvg ?? [];
+  const trend = structure?.trend ?? typedData?.trend ?? "ranging";
   const signal = typedData?.combined_signal;
   
-  const nearestBullish = orderBlocks.find(ob => ob.type === "bullish");
-  const nearestBearish = orderBlocks.find(ob => ob.type === "bearish");
+  const nearestBullish = orderBlocks.find((ob: OrderBlock) => ob.type === "bullish");
+  const nearestBearish = orderBlocks.find((ob: OrderBlock) => ob.type === "bearish");
+  
+  // Latest CHoCH and BOS
+  const latestCHoCH = chochList[chochList.length - 1];
+  const latestBOS = bosList[bosList.length - 1];
+  
+  // Unfilled FVGs
+  const unfilledFVGs = fvgList.filter((fvg: FVG) => !fvg.filled);
 
   const getSignalStyle = (action: string) => {
-    if (action === "BUY") return { bg: "bg-emerald-500/20", border: "border-emerald-500/50", text: "text-emerald-400", icon: TrendingUp };
-    if (action === "SELL") return { bg: "bg-red-500/20", border: "border-red-500/50", text: "text-red-400", icon: TrendingDown };
+    if (action === "BUY" || action === "STRONG BUY") return { bg: "bg-emerald-500/20", border: "border-emerald-500/50", text: "text-emerald-400", icon: TrendingUp };
+    if (action === "SELL" || action === "STRONG SELL") return { bg: "bg-red-500/20", border: "border-red-500/50", text: "text-red-400", icon: TrendingDown };
     return { bg: "bg-zinc-500/20", border: "border-zinc-500/50", text: "text-zinc-400", icon: AlertCircle };
   };
 
@@ -58,9 +131,32 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
   const SignalIcon = signalStyle?.icon || AlertCircle;
 
   if (!isActive) return null;
+  
+  if (error) {
+    return (
+      <div className="p-4 text-center">
+        <AlertCircle className="w-6 h-6 text-red-400 mx-auto mb-2" />
+        <p className="text-xs text-red-400">Error loading data</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3 animate-in fade-in duration-200">
+      {/* Trend Indicator */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Activity className="w-4 h-4 text-blue-400" />
+          <span className="text-xs text-textSecondary">Market Trend</span>
+        </div>
+        <span className={`text-xs font-medium ${
+          trend === "bullish" ? "text-emerald-400" : 
+          trend === "bearish" ? "text-red-400" : "text-yellow-400"
+        }`}>
+          {trend.toUpperCase()}
+        </span>
+      </div>
+
       {/* Ana Sinyal */}
       {signal && signalStyle && (
         <div className={`${signalStyle.bg} ${signalStyle.border} border rounded-xl p-4`}>
@@ -79,7 +175,7 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
               <p className="text-xs text-textSecondary">Confidence</p>
             </div>
           </div>
-          {signal.reasoning.length > 0 && (
+          {signal.reasoning && signal.reasoning.length > 0 && (
             <div className="mt-3 pt-3 border-t border-white/10">
               <p className="text-xs text-textSecondary">{signal.reasoning[0]}</p>
             </div>
@@ -97,10 +193,10 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
           {nearestBullish ? (
             <>
               <p className="text-sm font-mono font-bold text-white">
-                {Number(nearestBullish.zone_low).toFixed(2)}
+                {Number(nearestBullish.zone_low).toFixed(2)} - {Number(nearestBullish.zone_high).toFixed(2)}
               </p>
               <p className="text-[10px] text-textSecondary mt-1">
-                Strength: {Math.round(nearestBullish.score)}/100
+                Strength: {nearestBullish.strength} • Score: {nearestBullish.score}/100
               </p>
             </>
           ) : (
@@ -116,10 +212,10 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
           {nearestBearish ? (
             <>
               <p className="text-sm font-mono font-bold text-white">
-                {Number(nearestBearish.zone_high).toFixed(2)}
+                {Number(nearestBearish.zone_low).toFixed(2)} - {Number(nearestBearish.zone_high).toFixed(2)}
               </p>
               <p className="text-[10px] text-textSecondary mt-1">
-                Strength: {Math.round(nearestBearish.score)}/100
+                Strength: {nearestBearish.strength} • Score: {nearestBearish.score}/100
               </p>
             </>
           ) : (
@@ -128,64 +224,111 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
         </div>
       </div>
 
-      {/* FVG */}
-      {fvgData && (fvgData.nearest_bullish || fvgData.nearest_bearish) && (
-        <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-cyan-400">Fair Value Gaps (FVG)</span>
-            <span className="text-[10px] text-textSecondary">
-              {fvgData.unfilled_count || 0} open
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            {fvgData.nearest_bullish && (
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-3 h-3 text-emerald-400" />
-                <span className="font-mono">{fvgData.nearest_bullish.gap_low.toFixed(2)}</span>
-              </div>
-            )}
-            {fvgData.nearest_bearish && (
-              <div className="flex items-center gap-2">
-                <TrendingDown className="w-3 h-3 text-red-400" />
-                <span className="font-mono">{fvgData.nearest_bearish.gap_high.toFixed(2)}</span>
-              </div>
-            )}
+      {/* CHoCH Detection */}
+      {latestCHoCH && (
+        <div className={`rounded-xl p-3 border ${
+          latestCHoCH.type === "bullish" 
+            ? "bg-emerald-500/10 border-emerald-500/30" 
+            : "bg-red-500/10 border-red-500/30"
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-medium ${
+                latestCHoCH.type === "bullish" ? "text-emerald-400" : "text-red-400"
+              }`}>
+                CHoCH ({latestCHoCH.type.toUpperCase()})
+              </span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10">
+                {latestCHoCH.strength}
+              </span>
+            </div>
+            <span className="text-xs font-mono">{latestCHoCH.price.toFixed(2)}</span>
           </div>
         </div>
       )}
 
-      {/* Structure Check */}
+      {/* BOS Detection */}
+      {latestBOS && (
+        <div className={`rounded-xl p-3 border ${
+          latestBOS.type === "bullish" 
+            ? "bg-blue-500/10 border-blue-500/30" 
+            : "bg-orange-500/10 border-orange-500/30"
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-medium ${
+                latestBOS.type === "bullish" ? "text-blue-400" : "text-orange-400"
+              }`}>
+                BOS ({latestBOS.type.toUpperCase()})
+              </span>
+              {latestBOS.confirmation && (
+                <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+              )}
+            </div>
+            <span className="text-xs font-mono">{latestBOS.price.toFixed(2)}</span>
+          </div>
+        </div>
+      )}
+
+      {/* FVG List */}
+      {unfilledFVGs.length > 0 && (
+        <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-cyan-400">Fair Value Gaps (FVG)</span>
+            <span className="text-[10px] text-textSecondary">{unfilledFVGs.length} open</span>
+          </div>
+          <div className="space-y-1">
+            {unfilledFVGs.slice(0, 3).map((fvg: FVG, i: number) => (
+              <div key={i} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  {fvg.direction === "bullish" ? (
+                    <TrendingUp className="w-3 h-3 text-emerald-400" />
+                  ) : (
+                    <TrendingDown className="w-3 h-3 text-red-400" />
+                  )}
+                  <span className="font-mono">{fvg.low.toFixed(2)} - {fvg.high.toFixed(2)}</span>
+                </div>
+                <span className="text-[10px] text-textSecondary">
+                  {fvg.fill_percentage.toFixed(0)}% filled
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Structure Check Summary */}
       <div className="bg-white/5 rounded-xl p-3">
         <p className="text-xs font-medium text-textSecondary mb-2">Structure Check</p>
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="flex items-center gap-2">
-            {orderBlocks.some(ob => ob.has_choch) ? (
+            {chochList.length > 0 ? (
               <CheckCircle2 className="w-3 h-3 text-emerald-400" />
             ) : (
               <XCircle className="w-3 h-3 text-zinc-500" />
             )}
-            <span className={orderBlocks.some(ob => ob.has_choch) ? "text-white" : "text-textSecondary"}>
-              CHoCH
+            <span className={chochList.length > 0 ? "text-white" : "text-textSecondary"}>
+              CHoCH ({chochList.length})
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {orderBlocks.some(ob => ob.has_bos) ? (
+            {bosList.length > 0 ? (
               <CheckCircle2 className="w-3 h-3 text-emerald-400" />
             ) : (
               <XCircle className="w-3 h-3 text-zinc-500" />
             )}
-            <span className={orderBlocks.some(ob => ob.has_bos) ? "text-white" : "text-textSecondary"}>
-              BOS
+            <span className={bosList.length > 0 ? "text-white" : "text-textSecondary"}>
+              BOS ({bosList.length})
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {fvgData?.unfilled_count ? (
+            {fvgList.length > 0 ? (
               <CheckCircle2 className="w-3 h-3 text-emerald-400" />
             ) : (
               <XCircle className="w-3 h-3 text-zinc-500" />
             )}
-            <span className={fvgData?.unfilled_count ? "text-white" : "text-textSecondary"}>
-              FVG
+            <span className={fvgList.length > 0 ? "text-white" : "text-textSecondary"}>
+              FVG ({fvgList.length})
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -201,7 +344,7 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
         </div>
       </div>
 
-      {(isLoading || fvgLoading) && (
+      {isLoading && (
         <div className="text-center py-2">
           <p className="text-xs text-textSecondary animate-pulse">Analyzing...</p>
         </div>
@@ -225,27 +368,27 @@ export default function OrderBlockPanelUnified() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowInfo(false)}>
           <div className="bg-background border border-white/10 rounded-2xl p-6 max-w-lg mx-4 space-y-4 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">{t("orderBlock.infoTitle")}</h3>
+              <h3 className="text-lg font-semibold">Smart Money Concepts</h3>
               <button onClick={() => setShowInfo(false)} className="p-1 hover:bg-white/10 rounded-full">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="space-y-3 text-sm text-textSecondary">
               <div className="p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
-                <p className="font-medium text-purple-400 mb-1">{t("orderBlock.infoAlgoTitle")}</p>
-                <p className="text-xs">{t("orderBlock.infoAlgoDesc")}</p>
+                <p className="font-medium text-purple-400 mb-1">Order Blocks</p>
+                <p className="text-xs">Institutional zones where smart money accumulated positions.</p>
               </div>
               <div className="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
-                <p className="font-medium text-emerald-400 mb-1">{t("orderBlock.infoBullish")}</p>
-                <p>{t("orderBlock.infoBullishDesc")}</p>
+                <p className="font-medium text-emerald-400 mb-1">CHoCH (Change of Character)</p>
+                <p className="text-xs">Trend reversal signal - price breaks previous swing against trend.</p>
               </div>
-              <div className="p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-                <p className="font-medium text-red-400 mb-1">{t("orderBlock.infoBearish")}</p>
-                <p>{t("orderBlock.infoBearishDesc")}</p>
+              <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                <p className="font-medium text-blue-400 mb-1">BOS (Break of Structure)</p>
+                <p className="text-xs">Trend continuation signal - price breaks previous swing in trend direction.</p>
               </div>
               <div className="p-3 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
                 <p className="font-medium text-cyan-400 mb-1">FVG (Fair Value Gap)</p>
-                <p>{t("orderBlock.infoFvgDesc")}</p>
+                <p className="text-xs">Price imbalance zone - market often returns to fill these gaps.</p>
               </div>
             </div>
           </div>
@@ -259,7 +402,7 @@ export default function OrderBlockPanelUnified() {
             <Layers className="w-5 h-5 text-purple-400" />
             <div>
               <h3 className="text-base font-semibold">Smart Money Zones</h3>
-              <p className="text-xs text-textSecondary">4 Symbols • Order Blocks & FVG</p>
+              <p className="text-xs text-textSecondary">4 Symbols • CHoCH, BOS, FVG, OB Detection</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

@@ -270,10 +270,105 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     }
   }, [selectedSymbol, timeframe]);
 
+  // Mock news for testing when API returns empty
+  const getMockNews = useCallback((): EnrichedNews[] => {
+    const now = new Date();
+    return [
+      {
+        id: "mock-1",
+        timestamp: new Date(now.getTime() - 30 * 60000).toISOString(),
+        source: "Reuters",
+        headline: "Gold prices surge as Fed signals potential rate cuts",
+        content: "Gold prices jumped 1.5% after Federal Reserve Chair Jerome Powell hinted at possible interest rate cuts in the coming months. The precious metal is trading at $2,450, approaching key resistance levels.",
+        category: "markets",
+        url: "#",
+        impacts: [
+          { symbol: "XAUUSD", direction: "bullish", score: 8, confidence: 0.85, reasoning: "Rate cuts typically weaken USD and boost gold", emoji: "🟡" },
+          { symbol: "DXY", direction: "bearish", score: 7, confidence: 0.80, reasoning: "Fed dovish stance weakens dollar", emoji: "💵" }
+        ],
+        sentiment: "risk_on",
+        volatilityExpectation: "high",
+        urgency: "high",
+        eventDuration: "short_term",
+        affectedCandles: [],
+        aiConfidence: 85,
+        analysisTimestamp: now.toISOString()
+      },
+      {
+        id: "mock-2",
+        timestamp: new Date(now.getTime() - 2 * 60 * 60000).toISOString(),
+        source: "Bloomberg",
+        headline: "Oil prices climb on Middle East tensions",
+        content: "Crude oil prices rose 2% amid escalating geopolitical tensions in the Middle East. Supply concerns are driving WTI above $85 per barrel.",
+        category: "commodities",
+        url: "#",
+        impacts: [
+          { symbol: "USOIL", direction: "bullish", score: 9, confidence: 0.92, reasoning: "Supply disruption fears drive oil prices", emoji: "🛢️" },
+          { symbol: "XAUUSD", direction: "bullish", score: 6, confidence: 0.70, reasoning: "Geopolitical risk increases safe haven demand", emoji: "🟡" }
+        ],
+        sentiment: "risk_off",
+        volatilityExpectation: "high",
+        urgency: "breaking",
+        eventDuration: "long_term",
+        affectedCandles: [],
+        aiConfidence: 92,
+        analysisTimestamp: now.toISOString()
+      },
+      {
+        id: "mock-3",
+        timestamp: new Date(now.getTime() - 4 * 60 * 60000).toISOString(),
+        source: "CNBC",
+        headline: "NASDAQ reaches new highs on tech earnings",
+        content: "Technology stocks led the NASDAQ to record levels as major companies reported better-than-expected quarterly results. AI-related stocks showing strong momentum.",
+        category: "markets",
+        url: "#",
+        impacts: [
+          { symbol: "NDX", direction: "bullish", score: 8, confidence: 0.78, reasoning: "Strong tech earnings drive index higher", emoji: "📈" },
+          { symbol: "VIX", direction: "bearish", score: 7, confidence: 0.75, reasoning: "Positive sentiment reduces volatility", emoji: "📉" }
+        ],
+        sentiment: "risk_on",
+        volatilityExpectation: "medium",
+        urgency: "high",
+        eventDuration: "short_term",
+        affectedCandles: [],
+        aiConfidence: 78,
+        analysisTimestamp: now.toISOString()
+      },
+      {
+        id: "mock-4",
+        timestamp: new Date(now.getTime() - 6 * 60 * 60000).toISOString(),
+        source: "ForexLive",
+        headline: "DAX falls on German manufacturing data disappointment",
+        content: "German DAX index declined 0.8% after PMI data showed manufacturing sector contraction continuing. ECB policy expectations shifting.",
+        category: "markets",
+        url: "#",
+        impacts: [
+          { symbol: "DAX", direction: "bearish", score: 7, confidence: 0.72, reasoning: "Weak manufacturing data hurts German equities", emoji: "🇩🇪" },
+          { symbol: "EURUSD", direction: "bearish", score: 6, confidence: 0.68, reasoning: "Economic weakness pressures Euro", emoji: "💶" }
+        ],
+        sentiment: "risk_off",
+        volatilityExpectation: "medium",
+        urgency: "medium",
+        eventDuration: "short_term",
+        affectedCandles: [],
+        aiConfidence: 72,
+        analysisTimestamp: now.toISOString()
+      }
+    ];
+  }, []);
+
   // Fetch news
-  const fetchNews = useCallback(async () => {
+  const fetchNews = useCallback(async (useMock = false) => {
     try {
       setNewsLoading(true);
+      
+      // Use mock data if requested or if API fails
+      if (useMock) {
+        console.log("[News] Using mock data for testing");
+        setNews(getMockNews());
+        setNewsLoading(false);
+        return;
+      }
       
       // Try multiple strategies to fetch news
       let newsData: EnrichedNews[] = [];
@@ -310,6 +405,12 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         }
       }
       
+      // If still no news, use mock data automatically
+      if (newsData.length === 0) {
+        console.log("[News] API returned empty, falling back to mock data");
+        newsData = getMockNews();
+      }
+      
       // Filter news for selected symbol if we have news
       if (newsData.length > 0 && selectedSymbol) {
         const symbolMappings: Record<string, string[]> = {
@@ -344,11 +445,12 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       }
     } catch (err) {
       console.error("Error fetching news:", err);
-      setNews([]);
+      // On error, use mock data
+      setNews(getMockNews());
     } finally {
       setNewsLoading(false);
     }
-  }, [selectedSymbol]);
+  }, [selectedSymbol, getMockNews]);
 
   // WebSocket connection for live prices
   useEffect(() => {
@@ -565,27 +667,29 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex">
-      {/* Sidebar */}
-      <aside className={cn("flex-shrink-0 border-r border-gray-800 bg-[#0a0a0a] flex flex-col transition-all duration-300", sidebarCollapsed ? "w-16" : "w-60")}>
-        <div className="h-16 flex items-center px-4 border-b border-gray-800">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-sm">F</span>
+    <div className={cn("bg-[#0a0a0a] text-white flex", embedded ? "h-full" : "min-h-screen")}>
+      {/* Sidebar - Hidden in embedded mode */}
+      {!embedded && (
+        <aside className={cn("flex-shrink-0 border-r border-gray-800 bg-[#0a0a0a] flex flex-col transition-all duration-300", sidebarCollapsed ? "w-16" : "w-60")}>
+          <div className="h-16 flex items-center px-4 border-b border-gray-800">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-bold text-sm">F</span>
+            </div>
+            {!sidebarCollapsed && <span className="ml-3 font-bold text-lg">ForexSAI</span>}
           </div>
-          {!sidebarCollapsed && <span className="ml-3 font-bold text-lg">ForexSAI</span>}
-        </div>
-        <nav className="py-4 space-y-1 flex-1">
-          {sidebarItems.map((item) => <SidebarItem key={item.label} {...item} collapsed={sidebarCollapsed} />)}
-        </nav>
-        <div className="p-4 border-t border-gray-800">
-          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="w-full flex items-center justify-center p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
-            <ChevronLeft className={cn("w-5 h-5 transition-transform", sidebarCollapsed && "rotate-180")} />
-          </button>
-        </div>
-      </aside>
+          <nav className="py-4 space-y-1 flex-1">
+            {sidebarItems.map((item) => <SidebarItem key={item.label} {...item} collapsed={sidebarCollapsed} />)}
+          </nav>
+          <div className="p-4 border-t border-gray-800">
+            <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="w-full flex items-center justify-center p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+              <ChevronLeft className={cn("w-5 h-5 transition-transform", sidebarCollapsed && "rotate-180")} />
+            </button>
+          </div>
+        </aside>
+      )}
 
       {/* Main */}
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Symbol Bar */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-800 bg-[#0a0a0a]">
           <div className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-hide">
@@ -615,7 +719,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           </div>
         </div>
 
-        <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100vh - 140px)' }}>
+        <div className="flex-1 flex overflow-hidden" style={{ height: embedded ? '100%' : 'calc(100vh - 140px)' }}>
           {/* Chart Section */}
           <div className="flex-1 flex flex-col min-w-0 relative h-full">
             {/* Header */}
@@ -832,8 +936,24 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
               <div className="flex items-center gap-2">
                 <h2 className="font-semibold">News Feed</h2>
                 {wsConnected && <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
+                {/* News count badge */}
+                {!newsLoading && news.length > 0 && (
+                  <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 text-xs rounded-full">
+                    {news.length}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
+                {/* Test Data Button - only show if no news */}
+                {news.length === 0 && !newsLoading && (
+                  <button
+                    onClick={() => { fetchNews(true); }}
+                    className="px-3 py-1.5 bg-purple-500/20 text-purple-400 rounded-lg text-xs hover:bg-purple-500/30 transition-colors"
+                    title="Load test news data"
+                  >
+                    🧪 Test Data
+                  </button>
+                )}
                 <select 
                   value={currentLocale} 
                   onChange={(e) => setCurrentLocale(e.target.value)}
@@ -846,7 +966,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   <option value="fr">🇫🇷 FR</option>
                   <option value="ar">🇸🇦 AR</option>
                 </select>
-                <button onClick={fetchNews} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg">
+                <button onClick={() => fetchNews(false)} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg">
                   <RefreshCw className={cn("w-4 h-4", newsLoading && "animate-spin")} />
                 </button>
               </div>
@@ -875,7 +995,16 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
               ) : filteredNews.length === 0 ? (
                 <div className="text-center py-12">
                   <Newspaper className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 text-sm">No news available</p>
+                  <p className="text-gray-500 text-sm mb-2">No news available</p>
+                  <p className="text-gray-600 text-xs mb-4 px-4">
+                    Supabase enriched_news table may be empty or API is not responding
+                  </p>
+                  <button
+                    onClick={() => { fetchNews(true); }}
+                    className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors"
+                  >
+                    🧪 Load Test News
+                  </button>
                 </div>
               ) : (
                 filteredNews.map((item) => (

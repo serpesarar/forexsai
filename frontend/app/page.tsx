@@ -1483,7 +1483,7 @@ export default function HomePage() {
           {activeView === "signals" && <SignalsView />}
           {activeView === "news-correlation" && (
             <div className="w-full h-[calc(100vh-64px)] overflow-hidden bg-[#0a0a0a]">
-              <NewsCorrelationDashboard />
+              <NewsCorrelationDashboard embedded={true} />
             </div>
           )}
         </div>

@@ -8,6 +8,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 
 from order_block_detector import Candle, OrderBlockConfig, OrderBlockDetector
+from order_block_detector_v2 import detect_all, MarketStructureAnalyzer, SwingDetector
 from services.ml_service import run_nasdaq_signal, run_xauusd_signal
 from services.pattern_analyzer import run_claude_pattern_analysis
 from services.sentiment_analyzer import run_claude_sentiment
@@ -31,36 +32,47 @@ class OrderBlockService:
 
     async def detect(self, symbol: str, timeframe: str, limit: int, config: OrderBlockConfig) -> dict:
         # bump cache version whenever detection inputs/logic changes
-        cache_key = f"v2:{symbol}:{timeframe}:{limit}:{config}"  # noqa: S608 - cache key
+        cache_key = f"v3:{symbol}:{timeframe}:{limit}:{config}"  # noqa: S608 - cache key
         with self._lock:
             cached = self._cache.get(cache_key)
             if cached and datetime.utcnow() - cached.timestamp < self.ttl:
                 return cached.payload
 
         candles = await self._load_candles(symbol=symbol, limit=limit)
+        
+        # Use NEW detector with independent algorithms
+        structure = MarketStructureAnalyzer.analyze(candles)
+        
+        # Also run old detector for compatibility
         detector = OrderBlockDetector(config)
-        order_blocks = detector.detect(candles)
+        old_order_blocks = detector.detect(candles)
 
-        active_signals = []
-        for ob in order_blocks:
-            signal = detector.detect_entry(candles, ob)
-            if signal:
-                active_signals.append(signal)
+        # Prepare enriched order blocks with structure info
+        enriched_obs = []
+        for ob in structure.ob_list[:10]:  # Top 10 OBs
+            ob_dict = ob.to_dict()
+            # Add structure flags for frontend
+            ob_dict["has_choch"] = any(c.index <= ob.index + 5 for c in structure.choch_list)
+            ob_dict["has_bos"] = any(b.index <= ob.index + 5 for b in structure.bos_list)
+            ob_dict["has_fvg"] = any(f.index <= ob.index + 5 for f in structure.fvg_list)
+            enriched_obs.append(ob_dict)
 
-        bearish_obs = sum(1 for ob in order_blocks if ob.type == "bearish")
-        bullish_obs = sum(1 for ob in order_blocks if ob.type == "bullish")
-
-        combined_signal = await self._combine_signals(symbol)
+        combined_signal = await self._combine_signals(symbol, structure)
 
         payload = {
             "symbol": symbol,
             "timeframe": timeframe,
-            "total_order_blocks": len(order_blocks),
-            "bearish_obs": bearish_obs,
-            "bullish_obs": bullish_obs,
-            "order_blocks": [ob.__dict__ for ob in order_blocks],
-            "active_signals": [sig.__dict__ for sig in active_signals],
+            "total_order_blocks": len(structure.ob_list),
+            "bearish_obs": len([ob for ob in structure.ob_list if ob.type == "bearish"]),
+            "bullish_obs": len([ob for ob in structure.ob_list if ob.type == "bullish"]),
+            "order_blocks": enriched_obs,
+            "structure": structure.to_dict(),  # NEW: Full structure data
+            "choch_list": [c.to_dict() for c in structure.choch_list],
+            "bos_list": [b.to_dict() for b in structure.bos_list],
+            "fvg_list": [f.to_dict() for f in structure.fvg_list],
+            "active_signals": [],
             "combined_signal": combined_signal,
+            "trend": structure.trend,
             "timestamp": datetime.utcnow().isoformat() + "Z",
         }
 
@@ -107,27 +119,50 @@ class OrderBlockService:
             "sharpe_ratio": 1.8,
         }
 
-    async def _combine_signals(self, symbol: str) -> dict:
-        if symbol.upper().startswith("XAU"):
-            ml = run_xauusd_signal()
+    async def _combine_signals(self, symbol: str, structure=None) -> dict:
+        # Quick signal based on structure
+        if structure:
+            ob_count = len(structure.ob_list)
+            choch_count = len(structure.choch_list)
+            bos_count = len(structure.bos_list)
+            
+            # Determine action based on structure
+            if structure.trend == "bullish" and ob_count > 0:
+                bullish_obs = [ob for ob in structure.ob_list if ob.type == "bullish"]
+                if bullish_obs:
+                    action = "BUY"
+                    confidence = min(0.95, 0.5 + bullish_obs[0].score / 200)
+                else:
+                    action = "NEUTRAL"
+                    confidence = 0.5
+            elif structure.trend == "bearish" and ob_count > 0:
+                bearish_obs = [ob for ob in structure.ob_list if ob.type == "bearish"]
+                if bearish_obs:
+                    action = "SELL"
+                    confidence = min(0.95, 0.5 + bearish_obs[0].score / 200)
+                else:
+                    action = "NEUTRAL"
+                    confidence = 0.5
+            else:
+                action = "NEUTRAL"
+                confidence = 0.5
+            
+            reasoning = [
+                f"Market structure: {structure.trend.upper()}",
+                f"Order blocks detected: {ob_count}",
+                f"CHoCH events: {choch_count}",
+                f"BOS events: {bos_count}",
+                f"FVG zones: {len(structure.fvg_list)}",
+            ]
         else:
-            ml = run_nasdaq_signal()
-        claude = await run_claude_pattern_analysis("NDX.INDX", ["1d"])
-        sentiment = await run_claude_sentiment()
-        rtyhiim = run_rtyhiim_detector(symbol, "1m")
-
-        confidence = (ml.confidence + sentiment.get("confidence", 0.0)) / 2
-        action = "STRONG BUY" if ml.signal == "BUY" else "NEUTRAL"
+            action = "NEUTRAL"
+            confidence = 0.5
+            reasoning = ["No structure data available"]
+        
         return {
             "action": action,
             "confidence": float(confidence),
-            "reasoning": [
-                f"ML model confirms {ml.signal} ({ml.confidence:.2f})",
-                "Order block detection active",
-                f"Claude patterns aligned: {list(claude['analyses'].keys())[0]}",
-                f"Market sentiment: {sentiment.get('sentiment', 'NEUTRAL')}",
-                f"RTYHIIM rhythm: {rtyhiim['state']['pattern_type']}",
-            ],
+            "reasoning": reasoning,
         }
 
     async def _load_candles(self, symbol: str, limit: int) -> List[Candle]:
