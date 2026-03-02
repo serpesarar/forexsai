@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { X, Sparkles, Camera, TrendingUp, TrendingDown, Clock, ExternalLink, Brain, AlertCircle } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { X, Sparkles, Camera, TrendingUp, TrendingDown, Clock, ExternalLink, Brain, AlertCircle, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import type { EnrichedNews } from "@/types/news-correlation";
@@ -26,6 +26,9 @@ const translations = {
     low: "Low",
     riskOn: "Risk On",
     riskOff: "Risk Off",
+    translate: "Translate",
+    original: "Original",
+    newsContent: "News content is provided in English from international sources.",
   },
   tr: {
     aiAnalysis: "ForexSAI Yapay Zeka Analizi",
@@ -45,6 +48,9 @@ const translations = {
     low: "Düşük",
     riskOn: "Risk Al",
     riskOff: "Risk Kaçın",
+    translate: "Çevir",
+    original: "Orijinal",
+    newsContent: "Haber içeriği uluslararası kaynaklardan İngilizce olarak sağlanmaktadır.",
   },
   de: {
     aiAnalysis: "ForexSAI KI-Analyse",
@@ -64,6 +70,7 @@ const translations = {
     low: "Niedrig",
     riskOn: "Risiko An",
     riskOff: "Risiko Aus",
+    newsContent: "Nachrichten werden auf Englisch von internationalen Quellen bereitgestellt.",
   },
   es: {
     aiAnalysis: "Análisis IA ForexSAI",
@@ -83,6 +90,7 @@ const translations = {
     low: "Bajo",
     riskOn: "Riesgo Activado",
     riskOff: "Riesgo Desactivado",
+    newsContent: "Las noticias se proporcionan en inglés desde fuentes internacionales.",
   },
   fr: {
     aiAnalysis: "Analyse IA ForexSAI",
@@ -102,6 +110,7 @@ const translations = {
     low: "Faible",
     riskOn: "Prise de Risque",
     riskOff: "Évitement du Risque",
+    newsContent: "Les actualités sont fournies en anglais par des sources internationales.",
   },
   ar: {
     aiAnalysis: "تحليل الذكاء الاصطناعي",
@@ -121,6 +130,7 @@ const translations = {
     low: "منخفض",
     riskOn: "تقبل المخاطرة",
     riskOff: "تجنب المخاطرة",
+    newsContent: "يتم توفير الأخبار باللغة الإنجليزية من مصادر دولية.",
   },
 };
 
@@ -133,6 +143,7 @@ interface NewsDetailModalProps {
 
 export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }: NewsDetailModalProps) {
   const t = translations[locale] || translations.en;
+  const [showTranslation, setShowTranslation] = useState(false);
 
   // Close on escape key
   useEffect(() => {
@@ -211,9 +222,9 @@ export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }
             </span>
           </div>
 
-          {/* Headline */}
+          {/* Headline - Localized */}
           <h2 className="text-xl font-bold text-white mb-4 leading-tight pr-8">
-            {news.headline}
+            {locale === "tr" && news.headline_tr ? news.headline_tr : news.headline}
           </h2>
 
           {/* AI Analysis Section */}
@@ -226,8 +237,18 @@ export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }
             </div>
             
             <p className="text-gray-300 text-sm leading-relaxed mb-4">
-              {news.content || news.headline}
+              {locale === "tr" && news.content_tr ? news.content_tr : (news.content || news.headline)}
             </p>
+            
+            {/* Translation Note */}
+            {locale !== "en" && (
+              <div className="flex items-center gap-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <Globe className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                <p className="text-xs text-blue-300">
+                  {t.newsContent}
+                </p>
+              </div>
+            )}
 
             {/* Affected Assets */}
             <div className="mb-4">
@@ -301,7 +322,9 @@ export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }
                       )}>
                         {impact.symbol}
                       </span>
-                      <span className="text-xs text-gray-500">{impact.reasoning}</span>
+                      <span className="text-xs text-gray-500">
+                        {locale === "tr" && impact.reasoning_tr ? impact.reasoning_tr : impact.reasoning}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="flex gap-0.5">

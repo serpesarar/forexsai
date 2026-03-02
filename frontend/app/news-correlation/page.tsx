@@ -7,7 +7,7 @@ import {
   Bell, Star, Wallet, Calendar, FileText, MessageSquare, Newspaper,
   Building2, LineChart, BookOpen, Filter, ChevronLeft, ChevronRight,
   TrendingUp, TrendingDown, Sparkles, Camera, Settings,
-  Clock, AlertTriangle, RefreshCw, X, ArrowUp, ArrowDown
+  Clock, AlertTriangle, RefreshCw, X, ArrowUp, ArrowDown, Brain
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/api";
@@ -132,8 +132,12 @@ const TimeAgo = ({ timestamp }: { timestamp: string }) => {
   return <span className="text-xs text-gray-500">{timeAgo || "..."}</span>;
 };
 
-const NewsCard = ({ news, onClick }: { news: EnrichedNews, onClick: () => void }) => {
+const NewsCard = ({ news, onClick, locale }: { news: EnrichedNews, onClick: () => void, locale: string }) => {
   const isHighImpact = news.urgency === "breaking" || news.urgency === "high";
+  
+  // Get localized content
+  const displayHeadline = locale === "tr" && news.headline_tr ? news.headline_tr : news.headline;
+  const displayContent = locale === "tr" && news.content_tr ? news.content_tr : (news.content || news.headline);
   
   return (
     <div 
@@ -163,11 +167,11 @@ const NewsCard = ({ news, onClick }: { news: EnrichedNews, onClick: () => void }
       </div>
       
       <h3 className="text-sm font-semibold text-white leading-snug mb-2 uppercase tracking-wide line-clamp-2">
-        {news.headline}
+        {displayHeadline}
       </h3>
       
       <p className="text-xs text-gray-400 leading-relaxed mb-3 line-clamp-2">
-        {news.content || news.headline}
+        {displayContent}
       </p>
       
       <div className="flex flex-wrap gap-1.5">
@@ -210,6 +214,10 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   const [currentLocale, setCurrentLocale] = useState("tr");
   const [mounted, setMounted] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
+  
+  // AI Explanation states
+  const [aiExplanation, setAiExplanation] = useState<string | null>(null);
+  const [loadingExplanation, setLoadingExplanation] = useState(false);
   
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -452,9 +460,48 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     }
   }, [selectedSymbol, getMockNews]);
 
+  // Fetch live prices via REST API (fallback)
+  const fetchLivePrices = useCallback(async () => {
+    try {
+      const symbolsToFetch = ["XAUUSD", "NDX.INDX", "GDAXI.INDX", "CL.COMM", "VIX.INDX", "DXY.INDX"];
+      const response = await fetcher<{[key: string]: {price: number; change: number; changePercent: number}}>(
+        `/api/live-prices?symbols=${symbolsToFetch.join(',')}`
+      );
+      
+      if (response) {
+        setSymbols(prev => prev.map(sym => {
+          const backendSymbol = {
+            "XAUUSD": "XAUUSD",
+            "NDX": "NDX.INDX",
+            "DAX": "GDAXI.INDX",
+            "USOIL": "CL.COMM",
+            "VIX": "VIX.INDX",
+            "DXY": "DXY.INDX",
+          }[sym.symbol];
+          
+          const data = response[backendSymbol || sym.symbol];
+          if (data) {
+            return {
+              ...sym,
+              price: data.price,
+              change: data.change,
+              changePercent: data.changePercent,
+            };
+          }
+          return sym;
+        }));
+      }
+    } catch (err) {
+      console.error("[Prices] REST fetch failed:", err);
+    }
+  }, []);
+
   // WebSocket connection for live prices
   useEffect(() => {
     if (!mounted) return;
+
+    // First fetch via REST
+    fetchLivePrices();
 
     const connectWebSocket = () => {
       try {
@@ -473,7 +520,6 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
               const payload: WSPriceData = data.payload;
               
               setSymbols(prev => prev.map(sym => {
-                // Map backend symbol names to frontend
                 const backendToFrontend: Record<string, string> = {
                   "XAUUSD": "XAUUSD",
                   "NDX.INDX": "NDX",
@@ -502,7 +548,6 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         ws.onclose = () => {
           console.log("[WS] Disconnected");
           setWsConnected(false);
-          // Reconnect after 5 seconds
           setTimeout(connectWebSocket, 5000);
         };
         
@@ -519,12 +564,16 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
     connectWebSocket();
     
+    // Periodic REST fallback every 10 seconds
+    const interval = setInterval(fetchLivePrices, 10000);
+    
     return () => {
+      clearInterval(interval);
       if (wsRef.current) {
         wsRef.current.close();
       }
     };
-  }, [mounted]);
+  }, [mounted, fetchLivePrices]);
 
   // Initial data fetch
   useEffect(() => {
@@ -601,6 +650,13 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
             moveType: priceChange > 0 ? 'up' : priceChange < 0 ? 'down' : 'none',
             movePercent: priceChange,
           });
+          
+          // Fetch AI explanation for big moves
+          if (Math.abs(priceChange) > 1.0) {
+            fetchAIExplanation(candle);
+          } else {
+            setAiExplanation(null);
+          }
         }
       }
     });
@@ -633,26 +689,89 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       }));
       candlestickSeriesRef.current.setData(formattedData);
       
-      const markers = chartData
+      // Build markers: News events + Big price moves
+      const markers: any[] = [];
+      
+      // 1. Add news markers
+      const chartStartTime = chartData[0]?.time || 0;
+      const chartEndTime = chartData[chartData.length - 1]?.time || 0;
+      
+      news.forEach((newsItem) => {
+        const newsTime = Math.floor(new Date(newsItem.timestamp).getTime() / 1000);
+        // Only show news within chart time range
+        if (newsTime >= chartStartTime && newsTime <= chartEndTime) {
+          markers.push({
+            time: newsTime as Time,
+            position: "aboveBar" as const,
+            color: newsItem.urgency === "breaking" ? "#ef4444" : 
+                   newsItem.urgency === "high" ? "#f97316" : "#eab308",
+            shape: newsItem.urgency === "breaking" ? "arrowDown" as const : "circle" as const,
+            size: newsItem.urgency === "breaking" ? 2 : 1,
+            text: newsItem.urgency === "breaking" ? "!" : "",
+          });
+        }
+      });
+      
+      // 2. Add big move markers (price change > 1.5%)
+      chartData
         .filter(c => Math.abs(c.priceChange || 0) > 1.5)
-        .map(candle => ({
-          time: candle.time as Time,
-          position: (candle.priceChange || 0) > 0 ? "belowBar" as const : "aboveBar" as const,
-          color: (candle.priceChange || 0) > 0 ? "#22c55e" : "#ef4444",
-          shape: (candle.priceChange || 0) > 0 ? "arrowUp" as const : "arrowDown" as const,
-          text: `${Math.abs(candle.priceChange || 0).toFixed(1)}%`,
-          size: 2,
-        }));
+        .forEach(candle => {
+          markers.push({
+            time: candle.time as Time,
+            position: (candle.priceChange || 0) > 0 ? "belowBar" as const : "aboveBar" as const,
+            color: (candle.priceChange || 0) > 0 ? "#22c55e" : "#ef4444",
+            shape: (candle.priceChange || 0) > 0 ? "arrowUp" as const : "arrowDown" as const,
+            text: `${Math.abs(candle.priceChange || 0).toFixed(1)}%`,
+            size: 2,
+          });
+        });
       
       candlestickSeriesRef.current.setMarkers(markers);
       chartRef.current?.timeScale().fitContent();
     }
-  }, [chartData]);
+  }, [chartData, news]);
 
   const handleNewsClick = (newsItem: EnrichedNews) => {
     setSelectedNewsForModal(newsItem);
     setIsNewsModalOpen(true);
   };
+
+  // Fetch AI explanation for price move  
+  const fetchAIExplanation = useCallback(async (candle: ChartCandle) => {
+    try {
+      setLoadingExplanation(true);
+      const symbolMap: Record<string, string> = {
+        XAUUSD: "XAUUSD",
+        NDX: "NDX.INDX",
+        DAX: "GDAXI.INDX",
+        USOIL: "CL.COMM",
+        VIX: "VIX.INDX",
+        DXY: "DXY.INDX",
+      };
+      const apiSymbol = symbolMap[selectedSymbol] || selectedSymbol;
+      
+      const response = await fetcher<{
+        success: boolean;
+        data?: {
+          explanation: string;
+          related_news: any[];
+          confidence: number;
+        };
+        error?: string;
+      }>(`/api/news-correlation/explain-move?symbol=${apiSymbol}&timestamp=${candle.time}&ai_explain=true`);
+      
+      if (response?.success && response.data) {
+        setAiExplanation(response.data.explanation);
+      } else {
+        setAiExplanation(null);
+      }
+    } catch (err) {
+      console.error("Error fetching AI explanation:", err);
+      setAiExplanation(null);
+    } finally {
+      setLoadingExplanation(false);
+    }
+  }, [selectedSymbol]);
 
   const filteredNews = news.filter((n) => {
     if (newsFilter === "all") return true;
@@ -894,6 +1013,24 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       </div>
                     )}
 
+                    {/* AI Explanation */}
+                    {(loadingExplanation || aiExplanation) && (
+                      <div className="p-3 rounded-lg border bg-purple-500/10 border-purple-500/30">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Brain className="w-4 h-4 text-purple-400" />
+                          <span className="font-semibold text-purple-400">AI Analysis</span>
+                        </div>
+                        {loadingExplanation ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
+                            <span className="text-xs text-gray-400">Analyzing price movement...</span>
+                          </div>
+                        ) : aiExplanation ? (
+                          <p className="text-xs text-gray-300 leading-relaxed">{aiExplanation}</p>
+                        ) : null}
+                      </div>
+                    )}
+
                     <div>
                       <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
                         <Newspaper className="w-4 h-4 text-purple-400" />
@@ -1012,6 +1149,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     key={item.id} 
                     news={item} 
                     onClick={() => handleNewsClick(item)}
+                    locale={currentLocale}
                   />
                 ))
               )}

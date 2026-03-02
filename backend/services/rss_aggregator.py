@@ -215,6 +215,10 @@ class RSSNewsItem:
     duplicate_of: Optional[str]
     sources: List[str]
     
+    # Turkish translations
+    title_tr: str = ""
+    content_tr: str = ""
+    
     @property
     def should_display(self) -> bool:
         """Determine if this news should be displayed on chart"""
@@ -488,7 +492,7 @@ class RSSAggregator:
                 source=item.source
             )
             
-            # Map to item
+            # Map to item with translations
             item.impacts = [
                 {
                     "symbol": imp.symbol,
@@ -496,10 +500,15 @@ class RSSAggregator:
                     "score": imp.score,
                     "confidence": imp.confidence,
                     "reasoning": imp.reasoning,
+                    "reasoning_tr": getattr(imp, 'reasoning_tr', imp.reasoning),
                     "emoji": imp.emoji,
                 }
                 for imp in result.impacts
             ]
+            
+            # Store Turkish translations
+            item.title_tr = getattr(result, 'title_tr', item.title)
+            item.content_tr = getattr(result, 'content_tr', item.content)
             item.sentiment = result.sentiment
             item.volatility_expectation = result.volatility_expectation
             item.ai_confidence = result.confidence / 100.0

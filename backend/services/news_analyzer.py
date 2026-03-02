@@ -108,12 +108,45 @@ IMPACT_RULES = {
     "middle_east": {
         "keywords": ["israel", "gaza", "palestine", "middle east", "war", "conflict"],
         "impacts": [
-            {"symbol": "XAUUSD", "direction": "bullish", "score": 8, "reasoning": "Geopolitical safe haven"},
-            {"symbol": "USOIL", "direction": "bullish", "score": 8, "reasoning": "Middle East supply risk"},
-            {"symbol": "VIX", "direction": "bullish", "score": 7, "reasoning": "Uncertainty spike"},
+            {"symbol": "XAUUSD", "direction": "bullish", "score": 8, "reasoning": "Geopolitical safe haven demand"},
+            {"symbol": "USOIL", "direction": "bullish", "score": 8, "reasoning": "Middle East supply disruption risk"},
+            {"symbol": "VIX", "direction": "bullish", "score": 7, "reasoning": "Geopolitical uncertainty increases volatility"},
+            {"symbol": "DXY", "direction": "mixed", "score": 4, "reasoning": "Flight to safety may help USD"},
+            {"symbol": "NASDAQ", "direction": "bearish", "score": 5, "reasoning": "Risk-off sentiment hurts equities"},
         ],
         "sentiment": "risk_off",
         "volatility": "high",
+    },
+    "iran_conflict_escalation": {
+        "keywords": ["iran", "fighter jets", "aircraft", "shot down", "qatar", "military confrontation"],
+        "impacts": [
+            {"symbol": "USOIL", "direction": "bullish", "score": 9, "reasoning": "Direct military confrontation threatens Strait of Hormuz"},
+            {"symbol": "XAUUSD", "direction": "bullish", "score": 8, "reasoning": "Military escalation drives safe haven buying"},
+            {"symbol": "VIX", "direction": "bullish", "score": 8, "reasoning": "Military conflict creates market fear"},
+            {"symbol": "DXY", "direction": "bullish", "score": 6, "reasoning": "Safe haven flows into USD"},
+            {"symbol": "NASDAQ", "direction": "bearish", "score": 7, "reasoning": "Geopolitical risk premium hurts stocks"},
+        ],
+        "sentiment": "risk_off",
+        "volatility": "high",
+    },
+    "oil_shipping_crisis": {
+        "keywords": ["supertanker", "shipping rates", "haul", "transport", "logistics"],
+        "impacts": [
+            {"symbol": "USOIL", "direction": "bullish", "score": 7, "reasoning": "Higher transport costs increase oil prices"},
+            {"symbol": "XAUUSD", "direction": "neutral", "score": 4, "reasoning": "Indirect impact via oil prices"},
+            {"symbol": "VIX", "direction": "bullish", "score": 5, "reasoning": "Supply chain disruptions add uncertainty"},
+        ],
+        "sentiment": "neutral",
+        "volatility": "medium",
+    },
+    "prediction_markets": {
+        "keywords": ["polymarket", "prediction market", "bets", "wagering", "odds"],
+        "impacts": [
+            {"symbol": "VIX", "direction": "bullish", "score": 6, "reasoning": "High betting volume indicates market uncertainty"},
+            {"symbol": "XAUUSD", "direction": "neutral", "score": 4, "reasoning": "Sentiment indicator, not direct impact"},
+        ],
+        "sentiment": "neutral",
+        "volatility": "medium",
     },
     "crypto_regulation": {
         "keywords": ["bitcoin", "crypto", "regulation", "sec", "etf", "spot etf", "crypto etf"],
@@ -173,6 +206,7 @@ class SymbolImpact:
     score: int  # 1-10
     confidence: float  # 0-1
     reasoning: str
+    reasoning_tr: str = ""  # Turkish translation
     emoji: str = ""
 
 
@@ -244,18 +278,74 @@ class NewsAnalyzer:
         
         return None
     
+    async def _translate_with_ai(self, text: str, target_lang: str = "tr") -> str:
+        """Translate text using DeepSeek AI"""
+        if not self.api_key or self.api_key == "":
+            return text
+            
+        try:
+            async with aiohttp.ClientSession() as session:
+                headers = {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                }
+                
+                prompt = f"""Translate the following financial news to {target_lang.upper()}.
+Keep financial terms accurate and professional.
+
+TEXT: {text}
+
+Provide ONLY the translation, no explanation, no markdown, no JSON.
+Just the translated text."""
+
+                payload = {
+                    "model": "deepseek-chat",
+                    "messages": [
+                        {"role": "system", "content": "You are a professional financial translator. Translate accurately while keeping financial terminology precise."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    "temperature": 0.2,
+                    "max_tokens": 500
+                }
+                
+                async with session.post(
+                    DEEPSEEK_API_URL,
+                    headers=headers,
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=15)
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        translation = data["choices"][0]["message"]["content"].strip()
+                        return translation
+                    else:
+                        return text
+        except Exception as e:
+            print(f"[Translate] Error: {e}")
+            return text
+
     async def _analyze_with_ai(
         self,
         headline: str,
         content: str = "",
         source: str = ""
     ) -> NewsAnalysisResult:
-        """Analyze news using DeepSeek AI"""
+        """Analyze news using DeepSeek AI with multi-language support"""
         
-        prompt = f"""Analyze this financial news and extract market impact information:
+        # Translate content to Turkish for analysis context
+        headline_tr = await self._translate_with_ai(headline, "tr") if headline else ""
+        content_tr = await self._translate_with_ai(content[:300], "tr") if content else ""
+        
+        prompt = f"""Analyze this financial news and extract market impact information.
 
+ORIGINAL (EN):
 HEADLINE: {headline}
 CONTENT: {content[:500] if content else "N/A"}
+
+TRANSLATED (TR):
+BAŞLIK: {headline_tr}
+İÇERİK: {content_tr[:300] if content_tr else "N/A"}
+
 SOURCE: {source}
 TIMESTAMP: {datetime.utcnow().isoformat()}
 
@@ -267,7 +357,8 @@ Provide analysis in strict JSON format:
             "direction": "bullish|bearish|neutral",
             "impact_score": 1-10,
             "confidence": 0.0-1.0,
-            "reasoning": "brief explanation"
+            "reasoning": "brief explanation",
+            "reasoning_tr": "brief explanation in Turkish"
         }}
     ],
     "market_sentiment": "risk_on|risk_off|neutral",
@@ -280,14 +371,14 @@ Provide analysis in strict JSON format:
     "analysis_confidence": 0-100
 }}
 
-Rules:
-- Trump/Iran tensions → XAUUSD↑ (safe haven), USOIL↑ (supply risk), VIX↑ (fear)
-- Fed rate decisions → DXY moves, NASDAQ opposite direction
+Market Impact Rules:
+- Trump/Iran tensions → XAUUSD↑ (safe haven), USOIL↑ (supply risk), VIX↑ (fear), NASDAQ↓
+- Fed rate decisions → DXY moves opposite to NASDAQ
 - Strong jobs data → DXY↑, XAUUSD↓
-- Inflation surprise → XAUUSD↑, DXY↑ (hawkish expectation)
+- Inflation surprise → XAUUSD↑, DXY↑
 - ECB decisions → EURUSD affected, DXY inverse
-- Middle East conflict → XAUUSD↑, USOIL↑, VIX↑
-- Inverse correlations: XAUUSD vs DXY, NASDAQ vs VIX
+- Middle East conflict → XAUUSD↑, USOIL↑, VIX↑, NASDAQ↓
+- Gold/Oil price spikes → affected commodity direction, inverse safe havens
 
 Output JSON only, no markdown."""
 
@@ -335,6 +426,7 @@ Output JSON only, no markdown."""
                             score=imp.get("impact_score", 5),
                             confidence=imp.get("confidence", 0.7),
                             reasoning=imp.get("reasoning", ""),
+                            reasoning_tr=imp.get("reasoning_tr", ""),
                             emoji=emoji
                         ))
                     
@@ -379,10 +471,12 @@ Output JSON only, no markdown."""
         headline: str,
         content: str = "",
         source: str = "",
-        use_cache: bool = True
+        use_cache: bool = True,
+        force_ai: bool = True  # Default to AI analysis for better accuracy
     ) -> NewsAnalysisResult:
         """
-        Main analysis method - checks cache, rules, then AI
+        Main analysis method - ALWAYS uses DeepSeek AI for dynamic analysis
+        Only falls back to rule-based if AI fails
         """
         # Check cache first
         if use_cache:
@@ -401,8 +495,30 @@ Output JSON only, no markdown."""
                         confidence=data.get("confidence", 70.0)
                     )
         
-        # Check rule-based patterns
+        # PRIMARY: Always use DeepSeek AI for dynamic analysis
+        ai_result = None
+        if self.api_key and self.api_key != "":
+            try:
+                ai_result = await self._analyze_with_ai(headline, content, source)
+                # Validate AI result - if too generic, enhance with rules
+                if ai_result and len(ai_result.impacts) > 0:
+                    # Cache AI result
+                    if use_cache:
+                        redis_client = await self._get_redis()
+                        if redis_client:
+                            cache_key = self._get_cache_key(headline, content)
+                            await redis_client.setex(
+                                cache_key,
+                                timedelta(hours=24),
+                                json.dumps(asdict(ai_result), default=str)
+                            )
+                    return ai_result
+            except Exception as e:
+                print(f"[NewsAnalyzer] AI analysis failed, falling back to rules: {e}")
+        
+        # FALLBACK: Use rule-based if AI fails or no API key
         rule_result = self._check_rule_based_impact(headline, content)
+        
         if rule_result:
             # Cache rule-based result
             if use_cache:
@@ -416,21 +532,26 @@ Output JSON only, no markdown."""
                     )
             return rule_result
         
-        # Fall back to AI analysis
-        ai_result = await self._analyze_with_ai(headline, content, source)
-        
-        # Cache AI result
-        if use_cache:
-            redis_client = await self._get_redis()
-            if redis_client:
-                cache_key = self._get_cache_key(headline, content)
-                await redis_client.setex(
-                    cache_key,
-                    timedelta(hours=24),
-                    json.dumps(asdict(ai_result), default=str)
+        # ULTIMATE FALLBACK: Generic neutral analysis
+        fallback_result = NewsAnalysisResult(
+            impacts=[
+                SymbolImpact(
+                    symbol="XAUUSD",
+                    direction="neutral",
+                    score=3,
+                    confidence=0.3,
+                    reasoning="Unable to determine specific impact from available information",
+                    emoji="❓"
                 )
+            ],
+            sentiment="neutral",
+            volatility_expectation="low",
+            key_levels=None,
+            event_duration="short_term",
+            confidence=30.0
+        )
         
-        return ai_result
+        return fallback_result
     
     async def batch_analyze(
         self,
