@@ -214,7 +214,7 @@ async def run_usoil_signal_async(current_price: float | None = None, timeframe: 
     from services.trend_analyzer import run_trend_analysis
     
     try:
-        analysis = await run_trend_analysis("CL.COMM", include_hourly=False, timeframe=timeframe)
+        analysis = await run_trend_analysis("USOIL.FOREX", include_hourly=False, timeframe=timeframe)
         
         # Map trend to signal
         if analysis.trend == "BULLISH" and analysis.confidence > 60:

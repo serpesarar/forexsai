@@ -29,7 +29,7 @@ const SYMBOL_TARGETS: Record<string, Record<string, number>> = {
   "NDX.INDX": { TP1: 15, TP2: 25, TP3: 35, TP4: 50, SL: 50 },
   XAUUSD: { TP1: 4, TP2: 7, TP3: 10, TP4: 17, SL: 8 },
   "GDAXI.INDX": { TP1: 15, TP2: 25, TP3: 35, TP4: 50, SL: 50 },
-  "CL.COMM": { TP1: 0.02, TP2: 0.04, TP3: 0.06, TP4: 0.10, SL: 0.05 },
+  "USOIL.FOREX": { TP1: 0.02, TP2: 0.04, TP3: 0.06, TP4: 0.10, SL: 0.05 },
 };
 
 export default function StrategyPerformanceDashboard({ symbol = "XAUUSD" }: StrategyPerformanceDashboardProps) {
@@ -98,7 +98,7 @@ export default function StrategyPerformanceDashboard({ symbol = "XAUUSD" }: Stra
             <option value="XAUUSD">XAUUSD</option>
             <option value="NDX.INDX">NASDAQ</option>
             <option value="GDAXI.INDX">DAX</option>
-            <option value="CL.COMM">US Oil</option>
+            <option value="USOIL.FOREX">US Oil</option>
           </select>
 
           <select

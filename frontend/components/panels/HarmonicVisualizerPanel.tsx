@@ -48,7 +48,7 @@ const SYMBOLS: { key: string; label: string }[] = [
     { key: "NDX.INDX", label: "NASDAQ" },
     { key: "XAUUSD", label: "XAUUSD" },
     { key: "GDAXI.INDX", label: "DAX" },
-    { key: "CL.COMM", label: "US Oil" },
+    { key: "USOIL.FOREX", label: "US Oil" },
 ];
 
 const TIMEFRAMES = ["5m", "15m", "1h", "4h"] as const;

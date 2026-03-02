@@ -100,7 +100,7 @@ const SYMBOLS = [
   { key: "NDX.INDX", label: "NASDAQ", icon: "📊" },
   { key: "XAUUSD", label: "XAUUSD", icon: "🥇" },
   { key: "GDAXI.INDX", label: "DAX", icon: "🇩🇪" },
-  { key: "CL.COMM", label: "US Oil", icon: "🛢️" },
+  { key: "USOIL.FOREX", label: "US Oil", icon: "🛢️" },
 ];
 
 export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }: ClearTrendPanelProps) {
@@ -196,7 +196,7 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
           { key: "NDX.INDX", label: "NASDAQ" },
           { key: "XAUUSD", label: "XAUUSD" },
           { key: "GDAXI.INDX", label: "DAX" },
-          { key: "CL.COMM", label: "US Oil" },
+          { key: "USOIL.FOREX", label: "US Oil" },
         ]}
         activeSymbol={activeSymbol}
         onSymbolChange={setActiveSymbol}

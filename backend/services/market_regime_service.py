@@ -239,7 +239,7 @@ def _detect_session(symbol: str = "") -> str:
     # NYMEX main: 14:30–21:00 UTC (09:30–16:00 EST)
     # EIA release: Wednesday 15:30 UTC (10:30 EST)
     # London oil: 08:00–14:30 UTC (03:00–09:30 EST)
-    if symbol == "CL.COMM":
+    if symbol == "USOIL.FOREX":
         is_wednesday = now.weekday() == 2
         # EIA window: Wednesday 15:15–15:45 UTC (10:15–10:45 EST)
         if is_wednesday and hour == 15 and 15 <= minute <= 45:

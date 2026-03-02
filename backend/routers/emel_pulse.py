@@ -575,7 +575,7 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
                 "trend": 15, "mtf": 20, "regime": 15, "momentum": 25,
                 "volume": 10, "sr": 20, "pattern": 15, "portfolio": 20
             },
-            "CL.COMM": {
+            "USOIL.FOREX": {
                 "trend": 20, "mtf": 15, "regime": 20, "momentum": 20,
                 "volume": 20, "sr": 15, "pattern": 10, "portfolio": 20
             }
@@ -2167,7 +2167,7 @@ async def get_pulse_v3_analysis(symbol: str):
         
         # ─── OIL ANALYSIS (CL.COMM only) ─────────────────────────────────
         oil_analysis = None
-        if symbol == "CL.COMM":
+        if symbol == "USOIL.FOREX":
             try:
                 from services.oil_analysis_service import generate_oil_analysis
                 from services.market_data_service import get_ohlcv_data as get_ohlcv

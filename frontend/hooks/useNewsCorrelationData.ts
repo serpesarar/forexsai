@@ -140,7 +140,7 @@ export function useNewsCorrelationData({
           XAUUSD: "XAUUSD",
           NASDAQ: "NDX.INDX",
           DAX: "GDAXI.INDX",
-          USOIL: "CL.COMM",
+          USOIL: "USOIL.FOREX",
           VIX: "VIX.INDX",
           DXY: "DXY.INDX",
           EURUSD: "EURUSD",

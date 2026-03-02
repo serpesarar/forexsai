@@ -507,7 +507,7 @@ export default function HomePage() {
         fetcher<any>(`/api/news/feed?lang=${lang}`),
         fetcher<any>("/api/ta/snapshot?symbol=NDX.INDX"),
         fetcher<any>("/api/ta/snapshot?symbol=XAUUSD"),
-        fetcher<any>("/api/ta/snapshot?symbol=CL.COMM"),
+        fetcher<any>("/api/ta/snapshot?symbol=USOIL.FOREX"),
         fetcher<any>("/api/ta/snapshot?symbol=GDAXI.INDX"),
       ]);
       const nasdaq = results[0].status === "fulfilled" ? results[0].value : null;

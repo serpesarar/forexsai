@@ -78,7 +78,7 @@ const SYMBOLS = [
   { key: "NDX.INDX", label: "NASDAQ", display: "NASDAQ" },
   { key: "XAUUSD", label: "XAUUSD", display: "XAU/USD" },
   { key: "GDAXI.INDX", label: "DAX", display: "DAX" },
-  { key: "CL.COMM", label: "US Oil", display: "WTI Oil" },
+  { key: "USOIL.FOREX", label: "US Oil", display: "WTI Oil" },
 ];
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";

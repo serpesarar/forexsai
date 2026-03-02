@@ -82,7 +82,7 @@ export default function NewsChartCorrelationPanel() {
         NASDAQ: "NDX.INDX",
         NDX: "NDX.INDX",
         DAX: "GDAXI.INDX",
-        USOIL: "CL.COMM",
+        USOIL: "USOIL.FOREX",
         VIX: "VIX.INDX",
         DXY: "DXY.INDX",
         EURUSD: "EURUSD",

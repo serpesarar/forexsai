@@ -78,7 +78,7 @@ class EODHDWebSocketClient:
             "NDX.INDX": "NDX.INDX",
             "GDAXI.INDX": "GDAXI.INDX",
             "XAUUSD": "XAUUSD",
-            "CL.COMM": "CL.F",  # WTI Crude Oil Futures
+            "USOIL.FOREX": "CL.F",  # WTI Crude Oil Futures
             "USOIL": "CL.F",    # WTI Crude Oil
             "BRENT": "BZ.F",    # Brent Crude Oil
         }
@@ -272,12 +272,12 @@ async def start_eodhd_websocket():
     def on_price_update(symbol: str, price: float, timestamp: datetime):
         # Map EODHD symbols back to our frontend symbols
         reverse_mapping = {
-            "AAPL.US": ["NDX.INDX", "GDAXI.INDX", "CL.COMM", "USOIL", "BRENT"],  # Demo proxy
+            "AAPL.US": ["NDX.INDX", "GDAXI.INDX", "USOIL.FOREX", "USOIL", "BRENT"],  # Demo proxy
             "BTC-USD.CC": ["XAUUSD"],  # Demo proxy
             "NDX.INDX": ["NDX.INDX"],
             "GDAXI.INDX": ["GDAXI.INDX"],
             "XAUUSD": ["XAUUSD"],
-            "CL.F": ["CL.COMM", "USOIL"],      # WTI Crude
+            "CL.F": ["USOIL.FOREX", "USOIL"],      # WTI Crude
             "BZ.F": ["BRENT"],                  # Brent Crude
         }
         
@@ -297,7 +297,7 @@ async def start_eodhd_websocket():
     
     # Subscribe to our trading symbols
     # Petrol: CL.F = WTI (~$64), BZ.F = Brent (~$71)
-    symbols = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"]
+    symbols = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]
     for symbol in symbols:
         client.subscribe(symbol)
     

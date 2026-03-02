@@ -9,7 +9,7 @@ const SYMBOLS = [
   { id: "NDX.INDX", label: "NASDAQ", flag: "🇺🇸" },
   { id: "XAUUSD", label: "XAUUSD", flag: "🥇" },
   { id: "GDAXI.INDX", label: "DAX", flag: "🇩🇪" },
-  { id: "CL.COMM", label: "US OIL", flag: "🛢️" },
+  { id: "USOIL.FOREX", label: "US OIL", flag: "🛢️" },
 ];
 
 interface SymbolDataProps {

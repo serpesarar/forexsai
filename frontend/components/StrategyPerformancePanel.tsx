@@ -186,7 +186,7 @@ const SYMBOL_META = [
   { key: "NDX.INDX", label: "NASDAQ", icon: "📈", color: P.green },
   { key: "XAUUSD", label: "XAU/USD", icon: "⭐", color: P.warn },
   { key: "GDAXI.INDX", label: "DAX", icon: "🏛", color: P.accent },
-  { key: "CL.COMM", label: "US Oil", icon: "🛢", color: "#FB923C" },
+  { key: "USOIL.FOREX", label: "US Oil", icon: "🛢", color: "#FB923C" },
 ];
 
 // ── Signal List Row ──────────────────────────────────────────────────────────

@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 # ═══════════════════════════════════════════════════════════════
 # TRACKED SYMBOLS
 # ═══════════════════════════════════════════════════════════════
-TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"]
+TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]
 
 # ═══════════════════════════════════════════════════════════════
 # FETCH INTERVALS (seconds)
@@ -105,8 +105,7 @@ def _normalize_symbol(symbol: str) -> str:
     if not s:
         return s
     # Explicit commodity mappings - EODHD uses specific formats
-    if s.upper() in ("USOIL", "WTI", "CL.COMM", "CL"):
-        # EODHD uses "CL" for WTI Crude Oil (NYMEX)
+    if s.upper() in ("WTI", "USOIL.FOREX", "CL"):
         return "CL"
     if s.upper() == "BRENT":
         return "BZ"
@@ -114,7 +113,7 @@ def _normalize_symbol(symbol: str) -> str:
         return "DX-Y.NYB"
     if "." in s:
         # Keep existing dotted symbols but handle special cases
-        if s.upper() == "CL.COMM":
+        if s.upper() == "USOIL.FOREX":
             return "CL"
         if s.upper() == "BZ.COMM":
             return "BZ"

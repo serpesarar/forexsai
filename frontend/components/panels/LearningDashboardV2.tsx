@@ -46,7 +46,7 @@ function getTheme(model: string) {
 function symLabel(sym: string) {
   if (sym === "NDX.INDX") return "NASDAQ";
   if (sym === "GDAXI.INDX") return "DAX";
-  if (sym === "CL.F" || sym === "CL.COMM") return "US OIL";
+  if (sym === "CL.F" || sym === "USOIL.FOREX") return "US OIL";
   if (sym === "XAUUSD") return "XAUUSD";
   return sym;
 }
@@ -54,7 +54,7 @@ function symLabel(sym: string) {
 function symIcon(sym: string): string {
   if (sym === "NDX.INDX") return "📈";
   if (sym === "GDAXI.INDX") return "🏛";
-  if (sym === "CL.F" || sym === "CL.COMM") return "🛢";
+  if (sym === "CL.F" || sym === "USOIL.FOREX") return "🛢";
   if (sym === "XAUUSD") return "⭐";
   return "📊";
 }

@@ -11,12 +11,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useDashboardStore } from "@/lib/store";
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
-const SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"];
+const SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"];
 const SYMBOL_LABELS: Record<string, string> = {
   "NDX.INDX": "NASDAQ",
   "XAUUSD": "XAU/USD",
   "GDAXI.INDX": "DAX",
-  "CL.COMM": "US OIL"
+  "USOIL.FOREX": "US OIL"
 };
 import { 
   Target, 

@@ -102,7 +102,7 @@ SYMBOL_NEWS_MAP = {
     'XAUUSD': 'GOLD,GC.CMX,DXY.INDX,SPY.US',
     'NDX.INDX': 'NDX.INDX,SPY.US,QQQ.US,AAPL.US',
     'GDAXI.INDX': 'GDAXI.INDX,DAX,SPY.US',
-    'CL.COMM': 'CL.CMX,BZ.CMX,OIL,DXY.INDX',
+    'USOIL.FOREX': 'CL.CMX,BZ.CMX,OIL,DXY.INDX',
 }
 
 
@@ -382,8 +382,8 @@ class UnifiedNewsAnalyzer:
         # Map symbol to EODHD news search term
         if "XAU" in symbol:
             news_symbol = "XAUUSD"
-        elif symbol == "CL.COMM":
-            news_symbol = "CL.COMM"
+        elif symbol == "USOIL.FOREX":
+            news_symbol = "USOIL.FOREX"
         elif symbol == "GDAXI.INDX":
             news_symbol = "GDAXI.INDX"
         else:

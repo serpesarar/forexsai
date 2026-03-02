@@ -61,7 +61,7 @@ interface EmelData {
 
 interface EmelPanelProps { symbol?: string; onSwitchMode?: () => void; }
 
-const SYMBOLS = [{ key: "NDX.INDX", label: "NASDAQ" }, { key: "XAUUSD", label: "XAUUSD" }, { key: "GDAXI.INDX", label: "DAX" }, { key: "CL.COMM", label: "US Oil" }];
+const SYMBOLS = [{ key: "NDX.INDX", label: "NASDAQ" }, { key: "XAUUSD", label: "XAUUSD" }, { key: "GDAXI.INDX", label: "DAX" }, { key: "USOIL.FOREX", label: "US Oil" }];
 
 const CHECK_ICONS: Record<number, any> = {
   1: TrendingUp, 2: Activity, 3: Layers, 4: Target, 5: BarChart3, 6: Gauge, 7: Volume2, 8: SignalsIcon, 9: Shield,

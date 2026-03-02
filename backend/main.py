@@ -705,7 +705,7 @@ async def market_status():
             "timezone": "UTC",
             "days": "Sun-Fri (5-day 24h)",
         },
-        "CL.COMM": {
+        "USOIL.FOREX": {
             "name": "WTI Crude Oil",
             "open_utc": "01:00",
             "close_utc": "23:00",

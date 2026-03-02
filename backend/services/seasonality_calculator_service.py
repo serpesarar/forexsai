@@ -101,7 +101,7 @@ SEASONALITY_CACHE = {
             "Q4": {"avg_return": 3.8, "win_rate": 56, "volatility": 16.3},
         }
     },
-    "CL.COMM": {
+    "USOIL.FOREX": {
         "monthly": {
             1: {"avg_return": 2.5, "win_rate": 58, "volatility": 22.5},
             2: {"avg_return": 1.8, "win_rate": 55, "volatility": 21.8},
@@ -210,7 +210,7 @@ def calculate_session_analysis(symbol: str) -> Dict:
             "london": {"activity_pct": 55, "trend_continuation": 70, "avg_range_pct": 0.9},
             "new_york": {"activity_pct": 35, "trend_continuation": 55, "avg_range_pct": 0.6},
         },
-        "CL.COMM": {
+        "USOIL.FOREX": {
             "asian": {"activity_pct": 20, "trend_continuation": 48, "avg_range_pct": 0.5},
             "london": {"activity_pct": 35, "trend_continuation": 58, "avg_range_pct": 0.8},
             "new_york": {"activity_pct": 45, "trend_continuation": 62, "avg_range_pct": 1.0},

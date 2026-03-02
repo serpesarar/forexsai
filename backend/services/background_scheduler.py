@@ -22,7 +22,7 @@ from services.signal_lifecycle import check_lifecycle_if_needed
 logger = logging.getLogger(__name__)
 
 # Symbols to track
-TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"]
+TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]
 
 # Update intervals (seconds) - OPTIMIZED for 100K daily API call limit
 # Each EODHD intraday/real-time request = 5 API calls

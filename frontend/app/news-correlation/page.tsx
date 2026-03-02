@@ -249,7 +249,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         XAUUSD: "XAUUSD",
         NDX: "NDX.INDX",
         DAX: "GDAXI.INDX",
-        USOIL: "CL.COMM",
+        USOIL: "USOIL.FOREX",
         VIX: "VIX.INDX",
         DXY: "DXY.INDX",
       };
@@ -447,7 +447,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           'XAUUSD': ['XAUUSD', 'XAU/USD', 'GOLD', 'GC'],
           'NDX': ['NDX', 'NASDAQ', 'IXIC', 'NDX.INDX'],
           'DAX': ['DAX', 'GDAXI', 'GDAXI.INDX', 'DE40'],
-          'USOIL': ['USOIL', 'WTI', 'CL', 'CL.COMM', 'OIL'],
+          'USOIL': ['USOIL', 'WTI', 'CL', 'USOIL.FOREX', 'OIL'],
           'VIX': ['VIX', 'VIX.INDX', 'VOLATILITY'],
           'DXY': ['DXY', 'DXY.INDX', 'DOLLAR', 'USD'],
         };
@@ -544,7 +544,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   "XAUUSD": "XAUUSD",
                   "NDX.INDX": "NDX",
                   "GDAXI.INDX": "DAX",
-                  "CL.COMM": "USOIL",
+                  "USOIL.FOREX": "USOIL",
                   "VIX.INDX": "VIX",
                   "DXY.INDX": "DXY",
                 };
@@ -788,7 +788,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         XAUUSD: "XAUUSD",
         NDX: "NDX.INDX",
         DAX: "GDAXI.INDX",
-        USOIL: "CL.COMM",
+        USOIL: "USOIL.FOREX",
         VIX: "VIX.INDX",
         DXY: "DXY.INDX",
       };

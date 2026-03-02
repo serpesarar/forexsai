@@ -33,13 +33,13 @@ logger = logging.getLogger(__name__)
 # CONSTANTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "CL.COMM"]
+TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]
 
 SYMBOL_LABELS = {
     "NDX.INDX": "NASDAQ",
     "XAUUSD": "XAUUSD",
     "GDAXI.INDX": "DAX",
-    "CL.COMM": "US OIL",
+    "USOIL.FOREX": "US OIL",
 }
 
 # Component weights for final risk score
@@ -72,7 +72,7 @@ SESSION_SCORES: Dict[str, Dict[str, int]] = {
         "nymex": 35, "london_oil": 55, "nymex_eia_window": 20,
         "closed": 5,
     },
-    "CL.COMM": {
+    "USOIL.FOREX": {
         "asia": 20, "london": 50, "overlap_london_ny": 75,
         "newyork": 70, "xetra": 40, "xetra_us_overlap": 65,
         "nymex": 90, "london_oil": 65, "nymex_eia_window": 95,
@@ -88,7 +88,7 @@ SYMBOL_VIX_TYPE = {
     "NDX.INDX": "equity",
     "XAUUSD": "safe_haven",
     "GDAXI.INDX": "equity",
-    "CL.COMM": "commodity",
+    "USOIL.FOREX": "commodity",
 }
 
 ALL_STRATEGIES = ["ultra_safe", "balanced", "full_power", "aggressive", "nasdaq_precision"]

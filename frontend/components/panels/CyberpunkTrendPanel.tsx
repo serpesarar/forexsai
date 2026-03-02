@@ -104,7 +104,7 @@ const SYMBOLS = [
   { key: "NDX.INDX", label: "NASDAQ" },
   { key: "XAUUSD", label: "XAUUSD" },
   { key: "GDAXI.INDX", label: "DAX" },
-  { key: "CL.COMM", label: "US Oil" },
+  { key: "USOIL.FOREX", label: "US Oil" },
 ];
 
 const TIMEFRAMES = ["15m", "1H", "4H", "1D"];

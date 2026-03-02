@@ -70,7 +70,7 @@ const SYMBOLS = [
   { key: "XAUUSD", label: "XAUUSD" },
   { key: "NDX.INDX", label: "NASDAQ" },
   { key: "GDAXI.INDX", label: "DAX" },
-  { key: "CL.COMM", label: "US Oil" },
+  { key: "USOIL.FOREX", label: "US Oil" },
 ];
 
 export default function COTWhalePanel() {
@@ -167,7 +167,7 @@ export default function COTWhalePanel() {
           { key: "NDX.INDX", label: "NASDAQ" },
           { key: "XAUUSD", label: "XAUUSD" },
           { key: "GDAXI.INDX", label: "DAX" },
-          { key: "CL.COMM", label: "US Oil" },
+          { key: "USOIL.FOREX", label: "US Oil" },
         ]}
         activeSymbol={symbol}
         onSymbolChange={setSymbol}

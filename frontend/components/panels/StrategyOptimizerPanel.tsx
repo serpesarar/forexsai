@@ -108,7 +108,7 @@ const SYMBOL_EMOJI: Record<string, string> = {
   "NDX.INDX": "🇺🇸",
   XAUUSD: "🥇",
   "GDAXI.INDX": "🇩🇪",
-  "CL.COMM": "🛢️",
+  "USOIL.FOREX": "🛢️",
 };
 
 const STRATEGY_LABELS: Record<string, { name: string; icon: typeof Shield; color: string; desc: string }> = {

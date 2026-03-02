@@ -143,7 +143,7 @@ export function WebSocketProvider({ children }: Props) {
         reconnectAttempt.current = 0;
         lastPongTime.current = Date.now();
         console.log("[WS] Connected to broadcast stream");
-        
+
         // Start heartbeat
         if (heartbeatTimer.current) {
           clearInterval(heartbeatTimer.current);
@@ -189,24 +189,36 @@ export function WebSocketProvider({ children }: Props) {
           // Partial update message for instant real-time ticks
           if (msg.type === "price_update" && msg.symbol && msg.price !== undefined) {
             setSymbolData((prev) => {
-              const existing = prev[msg.symbol];
-              if (!existing || !existing.data) return prev; // Do not create a shell if no full data yet
+              const existing = prev[msg.symbol] || ({} as Partial<SymbolData>);
+              const existingData = existing.data || {
+                symbol: msg.symbol,
+                updated_at: new Date().toISOString(),
+                ml_prediction: null,
+                ta_snapshot: null,
+                current_price: null,
+                macro: null,
+                session: null,
+                volume: null,
+                volatility: null,
+              };
 
               return {
                 ...prev,
                 [msg.symbol]: {
                   ...existing,
+                  symbol: msg.symbol, // ensure symbol is set
+                  timestamp: existing.timestamp || new Date().toISOString(),
                   data: {
-                    ...existing.data,
+                    ...existingData,
                     current_price: msg.price,
-                    ...(existing.data.ta_snapshot ? {
+                    ...(existingData.ta_snapshot ? {
                       ta_snapshot: {
-                        ...existing.data.ta_snapshot,
+                        ...existingData.ta_snapshot,
                         current_price: msg.price
                       }
                     } : {})
                   }
-                },
+                } as SymbolData,
               };
             });
             setLastUpdate(new Date());
@@ -229,7 +241,7 @@ export function WebSocketProvider({ children }: Props) {
       ws.onclose = (event) => {
         setStatus("disconnected");
         wsRef.current = null;
-        
+
         // Clear heartbeat
         if (heartbeatTimer.current) {
           clearInterval(heartbeatTimer.current);

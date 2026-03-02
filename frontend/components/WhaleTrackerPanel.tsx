@@ -183,7 +183,7 @@ function SymbolCard({ snap }: { snap: SymbolSnapshot }) {
     DAX: "DAX 40",
     USOIL: "WTI Oil",
     CL: "WTI Oil",
-    "CL.COMM": "WTI Oil",
+    "USOIL.FOREX": "WTI Oil",
   };
 
   const symbolIcon: Record<string, string> = {
@@ -194,7 +194,7 @@ function SymbolCard({ snap }: { snap: SymbolSnapshot }) {
     DAX: "🇩🇪",
     USOIL: "🛢️",
     CL: "🛢️",
-    "CL.COMM": "🛢️",
+    "USOIL.FOREX": "🛢️",
   };
 
   return (

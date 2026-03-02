@@ -25,7 +25,7 @@ const SYMBOLS_CONFIG = [
   { symbol: "NDX.INDX", label: "NASDAQ" },
   { symbol: "XAUUSD", label: "XAU/USD" },
   { symbol: "GDAXI.INDX", label: "DAX" },
-  { symbol: "CL.COMM", label: "US OIL" },
+  { symbol: "USOIL.FOREX", label: "US OIL" },
 ];
 
 /**
