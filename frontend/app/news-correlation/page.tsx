@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time, type CandlestickData } from "lightweight-charts";
+import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time } from "lightweight-charts";
 import { format, formatDistanceToNow } from "date-fns";
 import { 
   Bell, 
@@ -13,10 +13,9 @@ import {
   Newspaper,
   Building2,
   LineChart,
-  Globe,
+  BookOpen,
   Search,
   Filter,
-  MoreHorizontal,
   ChevronLeft,
   ChevronRight,
   Zap,
@@ -28,8 +27,15 @@ import {
   Camera,
   Settings,
   Clock,
-  ChevronDown,
-  X
+  AlertTriangle,
+  RefreshCw,
+  BookMarked,
+  HelpCircle,
+  LayoutDashboard,
+  Activity,
+  BarChart3,
+  PieChart,
+  Globe2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/api";
@@ -47,8 +53,10 @@ interface ChartCandle {
 
 interface SymbolData {
   symbol: string;
+  name: string;
   price: number;
-  change?: number;
+  change: number;
+  changePercent: number;
 }
 
 interface ChartDataResponse {
@@ -60,15 +68,14 @@ interface ChartDataResponse {
   };
 }
 
-// ==================== MOCK DATA ====================
+// ==================== BIZIM SEMBOLLERIMIZ ====================
 const SYMBOLS: SymbolData[] = [
-  { symbol: "XAUUSD", price: 4988.57, change: 0.85 },
-  { symbol: "ESUSD", price: 6869.00, change: -0.32 },
-  { symbol: "BTCUSD", price: 67020.65, change: 2.15 },
-  { symbol: "DXUSD", price: 97.78, change: 0.12 },
-  { symbol: "GBPJPY", price: 208.53, change: -0.45 },
-  { symbol: "USDCAD", price: 1.37, change: 0.08 },
-  { symbol: "^DJI", price: 49350.00, change: 0.56 },
+  { symbol: "XAUUSD", name: "Gold", price: 4988.57, change: 42.30, changePercent: 0.85 },
+  { symbol: "NDX", name: "NASDAQ", price: 22500.00, change: 125.50, changePercent: 0.56 },
+  { symbol: "DAX", name: "DAX 40", price: 22500.00, change: -180.20, changePercent: -0.79 },
+  { symbol: "USOIL", name: "WTI Crude", price: 75.80, change: 1.20, changePercent: 1.61 },
+  { symbol: "VIX", name: "VIX", price: 18.50, change: -0.85, changePercent: -4.40 },
+  { symbol: "DXY", name: "Dollar Index", price: 104.25, change: 0.12, changePercent: 0.12 },
 ];
 
 const TIMEFRAMES = [
@@ -80,40 +87,77 @@ const TIMEFRAMES = [
   { value: "4h", label: "4h" },
   { value: "1d", label: "1D" },
   { value: "1w", label: "1W" },
-  { value: "1M", label: "1M" },
 ];
 
+// ==================== DYNAMIC HEADLINES ====================
+const getDynamicHeadline = (symbol: string, news: EnrichedNews[]): string => {
+  const latestNews = news[0];
+  if (latestNews) {
+    return latestNews.headline;
+  }
+  
+  const headlines: Record<string, string> = {
+    XAUUSD: "Gold rallies to $4,993 as geopolitical tensions rise; Fed rate cut expectations support",
+    NDX: "NASDAQ extends gains as tech earnings beat expectations; AI optimism drives momentum",
+    DAX: "DAX slides on German economic data miss; ECB policy uncertainty weighs",
+    USOIL: "WTI Crude surges to $75.80 on supply concerns; Middle East tensions escalate",
+    VIX: "VIX drops to 18.50 as market volatility subsides; risk-on sentiment prevails",
+    DXY: "Dollar Index steady at 104.25 ahead of Fed speeches; inflation data awaited",
+  };
+  
+  return headlines[symbol] || `${symbol} Market Analysis - Latest Updates`;
+};
+
 // ==================== SIDEBAR NAVIGATION ====================
+const sidebarItems = [
+  { icon: LayoutDashboard, label: "Dashboard", href: "/", badge: null },
+  { icon: Bell, label: "Alerts", href: "/alerts", badge: 3 },
+  { icon: Star, label: "Watchlist", href: "/watchlist", badge: null },
+  { icon: Activity, label: "Smart Trades", href: "/news-correlation", badge: null, active: true },
+  { icon: Calendar, label: "Economic Calendar", href: "/calendar", badge: null },
+  { icon: BarChart3, label: "News Analysis", href: "/news-analysis", badge: null },
+  { icon: MessageSquare, label: "Chat AI", href: "/chat", badge: null },
+  { icon: FileText, label: "Research Reports", href: "/research", badge: null },
+  { icon: BookMarked, label: "Docs", href: "/docs", badge: null },
+  { icon: Building2, label: "Brokers", href: "/brokers", badge: null },
+  { icon: LineChart, label: "My Trades", href: "/trades", badge: null },
+];
+
 const SidebarItem = ({ 
   icon: Icon, 
   label, 
+  href,
   active = false,
   badge,
-  onClick 
+  collapsed
 }: { 
   icon: React.ElementType; 
   label: string; 
+  href: string;
   active?: boolean;
-  badge?: number;
-  onClick?: () => void;
+  badge?: number | null;
+  collapsed?: boolean;
 }) => (
-  <button
-    onClick={onClick}
+  <Link
+    href={href}
     className={cn(
-      "w-full flex items-center gap-3 px-4 py-3 text-sm transition-all",
+      "flex items-center gap-3 px-4 py-3 text-sm transition-all relative",
       active 
-        ? "text-white bg-white/5 border-l-2 border-red-500" 
+        ? "text-white bg-gradient-to-r from-purple-500/10 to-transparent border-l-2 border-purple-500" 
         : "text-gray-400 hover:text-white hover:bg-white/5 border-l-2 border-transparent"
     )}
   >
-    <Icon className={cn("w-5 h-5", active && "text-red-500")} />
-    <span className="hidden lg:block">{label}</span>
-    {badge && (
-      <span className="ml-auto bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+    <Icon className={cn("w-5 h-5 flex-shrink-0", active && "text-purple-400")} />
+    {!collapsed && <span className="truncate">{label}</span>}
+    {!collapsed && badge && (
+      <span className="ml-auto bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">
         {badge}
       </span>
     )}
-  </button>
+    {collapsed && badge && (
+      <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
+    )}
+  </Link>
 );
 
 // ==================== SYMBOL BAR ====================
@@ -138,7 +182,7 @@ const SymbolBar = ({
     <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-800 bg-[#0a0a0a]">
       <button 
         onClick={() => scroll("left")}
-        className="p-1 text-gray-500 hover:text-white transition-colors"
+        className="p-1 text-gray-500 hover:text-white transition-colors flex-shrink-0"
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
@@ -152,16 +196,16 @@ const SymbolBar = ({
             key={sym.symbol}
             onClick={() => onSelect(sym.symbol)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all",
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all flex-shrink-0",
               selectedSymbol === sym.symbol
-                ? "bg-gray-800 text-white"
-                : "bg-gray-900/50 text-gray-400 hover:bg-gray-800 hover:text-white"
+                ? "bg-gray-800 text-white border border-gray-700"
+                : "bg-gray-900/50 text-gray-400 hover:bg-gray-800 hover:text-white border border-transparent"
             )}
           >
             <span className="font-semibold">{sym.symbol}</span>
             <span className={cn(
-              "text-xs",
-              sym.change && sym.change > 0 ? "text-green-400" : sym.change && sym.change < 0 ? "text-red-400" : "text-gray-500"
+              "text-xs font-mono",
+              sym.change > 0 ? "text-green-400" : sym.change < 0 ? "text-red-400" : "text-gray-500"
             )}>
               ${sym.price.toLocaleString()}
             </span>
@@ -171,12 +215,12 @@ const SymbolBar = ({
       
       <button 
         onClick={() => scroll("right")}
-        className="p-1 text-gray-500 hover:text-white transition-colors"
+        className="p-1 text-gray-500 hover:text-white transition-colors flex-shrink-0"
       >
         <ChevronRight className="w-4 h-4" />
       </button>
       
-      <button className="p-2 text-gray-500 hover:text-white transition-colors">
+      <button className="p-2 text-gray-500 hover:text-white transition-colors flex-shrink-0">
         <PlusIcon className="w-4 h-4" />
       </button>
     </div>
@@ -194,31 +238,33 @@ const AnalysisCard = ({
   type, 
   label, 
   value,
-  active = false 
+  active = false,
+  onClick
 }: { 
   type: "swing" | "day" | "news";
   label: string;
   value: string;
   active?: boolean;
+  onClick?: () => void;
 }) => {
   const styles = {
     swing: {
-      bg: active ? "bg-green-500/10" : "bg-gray-900/50",
-      border: active ? "border-green-500/50" : "border-gray-800",
+      bg: active ? "bg-green-500/10 border-green-500/30" : "bg-gray-900/50 border-gray-800",
       text: active ? "text-green-400" : "text-gray-400",
       icon: TrendingUp,
+      iconColor: "text-green-400",
     },
     day: {
-      bg: active ? "bg-red-500/10" : "bg-gray-900/50",
-      border: active ? "border-red-500/50" : "border-gray-800",
+      bg: active ? "bg-red-500/10 border-red-500/30" : "bg-gray-900/50 border-gray-800",
       text: active ? "text-red-400" : "text-gray-400",
       icon: TrendingDown,
+      iconColor: "text-red-400",
     },
     news: {
-      bg: active ? "bg-gray-800" : "bg-gray-900/50",
-      border: active ? "border-gray-600" : "border-gray-800",
-      text: active ? "text-white" : "text-gray-400",
+      bg: active ? "bg-purple-500/10 border-purple-500/30" : "bg-gray-900/50 border-gray-800",
+      text: active ? "text-purple-400" : "text-gray-400",
       icon: Newspaper,
+      iconColor: "text-purple-400",
     },
   };
 
@@ -227,19 +273,18 @@ const AnalysisCard = ({
 
   return (
     <button
+      onClick={onClick}
       className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-xl border transition-all",
-        style.bg,
-        style.border,
-        "hover:border-gray-600"
+        "flex items-center gap-3 px-4 py-3 rounded-xl border transition-all hover:border-gray-600",
+        style.bg
       )}
     >
-      <div className={cn("flex flex-col items-start")}>
-        <span className="text-xs text-gray-500 uppercase tracking-wider">{label}</span>
-        <span className={cn("text-sm font-semibold flex items-center gap-1", style.text)}>
-          {type === "news" && <span className="w-1.5 h-1.5 rounded-full bg-red-500" />}
+      <div className="flex flex-col items-start">
+        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">{label}</span>
+        <span className={cn("text-sm font-semibold flex items-center gap-1.5", style.text)}>
+          {type === "news" && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
           {value}
-          {type !== "news" && <Icon className="w-4 h-4" />}
+          <Icon className={cn("w-4 h-4", style.iconColor)} />
         </span>
       </div>
     </button>
@@ -277,23 +322,15 @@ const NewsCard = ({
           news.urgency === "medium" && "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
           news.urgency === "low" && "bg-gray-700 text-gray-400"
         )}>
-          {news.urgency === "breaking" ? "BREAKING" : `${news.urgency} IMPACT`}
+          {news.urgency === "breaking" ? "BREAKING" : `${news.urgency.toUpperCase()} IMPACT`}
         </span>
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-gray-500 font-mono">
           {new Date(news.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
         </span>
         <span className="text-xs text-gray-600">•</span>
         <span className="text-xs text-gray-500">
           {formatDistanceToNow(new Date(news.timestamp), { addSuffix: true })}
         </span>
-        
-        {/* Right actions */}
-        <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-800 rounded">
-            <ThumbsUp className="w-3.5 h-3.5" />
-          </button>
-          <span className="text-xs text-gray-500">11</span>
-        </div>
       </div>
 
       {/* Title */}
@@ -303,12 +340,12 @@ const NewsCard = ({
 
       {/* Description */}
       <p className="text-xs text-gray-400 leading-relaxed mb-3 line-clamp-2">
-        {news.content}
+        {news.content || news.headline}
       </p>
 
       {/* Impact Badges */}
       <div className="flex flex-wrap gap-1.5">
-        {news.impacts.slice(0, 6).map((impact, idx) => (
+        {news.impacts?.slice(0, 6).map((impact, idx) => (
           <span
             key={idx}
             className={cn(
@@ -334,40 +371,31 @@ const NewsCard = ({
             <span className="text-sm font-semibold text-purple-400">AI Analysis</span>
           </div>
           <p className="text-xs text-gray-300 leading-relaxed mb-4">
-            {news.content}
+            {news.content || "AI analysis not available for this news item."}
           </p>
           
-          {/* Market Impact Details */}
-          <div className="space-y-2">
-            {news.impacts.map((impact, idx) => (
-              <div 
-                key={idx}
-                className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-950/50"
-              >
-                <span className={cn(
-                  "text-xs font-medium",
-                  impact.direction === "bullish" ? "text-green-400" : 
-                  impact.direction === "bearish" ? "text-red-400" : "text-gray-400"
-                )}>
-                  {impact.symbol}
-                </span>
-                <span className="text-xs text-gray-500">{impact.reasoning}</span>
-                <span className="text-xs text-gray-400">{Math.round(impact.confidence * 100)}%</span>
-              </div>
-            ))}
-          </div>
+          {news.impacts && news.impacts.length > 0 && (
+            <div className="space-y-2">
+              {news.impacts.map((impact, idx) => (
+                <div 
+                  key={idx}
+                  className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-950/50"
+                >
+                  <span className={cn(
+                    "text-xs font-medium",
+                    impact.direction === "bullish" ? "text-green-400" : 
+                    impact.direction === "bearish" ? "text-red-400" : "text-gray-400"
+                  )}>
+                    {impact.symbol}
+                  </span>
+                  <span className="text-xs text-gray-500">{impact.reasoning}</span>
+                  <span className="text-xs text-gray-400">{Math.round((impact.confidence || 0.5) * 100)}%</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
-
-      {/* Right side icons */}
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button className="p-2 text-gray-500 hover:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors">
-          <Sparkles className="w-4 h-4" />
-        </button>
-        <button className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors">
-          <Camera className="w-4 h-4" />
-        </button>
-      </div>
     </div>
   );
 };
@@ -379,6 +407,8 @@ export default function MRKTAIStyleDashboard() {
   const [chartData, setChartData] = useState<ChartCandle[]>([]);
   const [news, setNews] = useState<EnrichedNews[]>([]);
   const [loading, setLoading] = useState(true);
+  const [newsLoading, setNewsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expandedNewsId, setExpandedNewsId] = useState<string | null>(null);
   const [newsFilter, setNewsFilter] = useState<"all" | "popular" | "high">("high");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -387,42 +417,96 @@ export default function MRKTAIStyleDashboard() {
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
 
-  // Fetch data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch chart data
-        const chartResponse = await fetcher<ChartDataResponse>(
-          `/api/data/ohlcv?symbol=${selectedSymbol}&timeframe=${timeframe}&limit=200`
-        );
-        
-        if (chartResponse.success && chartResponse.data?.candles) {
-          setChartData(chartResponse.data.candles);
-        }
-
-        // Fetch news
-        const newsResponse = await fetcher<{ success: boolean; data: EnrichedNews[] }>(
-          `/api/rss/news?symbol=${selectedSymbol}&limit=50&hours=48`
-        );
-        
-        if (newsResponse.success && newsResponse.data) {
-          setNews(newsResponse.data);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
+  // Fetch chart data
+  const fetchChartData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const chartResponse = await fetcher<ChartDataResponse>(
+        `/api/data/ohlcv?symbol=${selectedSymbol}&timeframe=${timeframe}&limit=200`
+      );
+      
+      if (chartResponse.success && chartResponse.data?.candles) {
+        setChartData(chartResponse.data.candles);
+        setError(null);
+      } else {
+        setError("No chart data available");
       }
-    };
-
-    fetchData();
+    } catch (error) {
+      console.error("Error fetching chart:", error);
+      setError("Failed to load chart data");
+    } finally {
+      setLoading(false);
+    }
   }, [selectedSymbol, timeframe]);
+
+  // Fetch news data
+  const fetchNews = useCallback(async () => {
+    try {
+      setNewsLoading(true);
+      const newsResponse = await fetcher<{ success: boolean; data: EnrichedNews[] }>(
+        `/api/rss/news?symbol=${selectedSymbol}&limit=50&hours=72`
+      );
+      
+      if (newsResponse.success && newsResponse.data && newsResponse.data.length > 0) {
+        setNews(newsResponse.data);
+      } else {
+        // Mock news for demo
+        setNews([
+          {
+            id: "1",
+            timestamp: new Date().toISOString(),
+            source: "Reuters",
+            headline: "Gold rallies to $4,993 as geopolitical tensions rise",
+            content: "Gold prices surged to near $5,000 as Middle East tensions escalate. Safe haven demand increases amid uncertainty.",
+            urgency: "high",
+            impacts: [
+              { symbol: "XAUUSD", direction: "bullish", score: 8, confidence: 0.85, reasoning: "Safe haven demand", emoji: "🚀" },
+              { symbol: "USOIL", direction: "bullish", score: 7, confidence: 0.80, reasoning: "Supply concerns", emoji: "📈" },
+              { symbol: "VIX", direction: "bullish", score: 6, confidence: 0.75, reasoning: "Volatility spike", emoji: "⚠️" },
+            ],
+            sentiment: "risk_off",
+            volatilityExpectation: "high",
+            eventDuration: "short_term",
+            affectedCandles: [],
+            aiConfidence: 85,
+            analysisTimestamp: new Date().toISOString(),
+          },
+          {
+            id: "2",
+            timestamp: new Date(Date.now() - 3600000).toISOString(),
+            source: "Bloomberg",
+            headline: "Fed signals potential rate cuts in coming months",
+            content: "Federal Reserve officials hint at dovish shift in monetary policy. Markets pricing in 75bps of cuts this year.",
+            urgency: "high",
+            impacts: [
+              { symbol: "NDX", direction: "bullish", score: 8, confidence: 0.88, reasoning: "Lower rates boost tech", emoji: "🚀" },
+              { symbol: "XAUUSD", direction: "bullish", score: 7, confidence: 0.82, reasoning: "Weaker dollar helps gold", emoji: "📈" },
+              { symbol: "DXY", direction: "bearish", score: 7, confidence: 0.85, reasoning: "Rate cuts weaken USD", emoji: "📉" },
+            ],
+            sentiment: "risk_on",
+            volatilityExpectation: "high",
+            eventDuration: "long_term",
+            affectedCandles: [],
+            aiConfidence: 82,
+            analysisTimestamp: new Date().toISOString(),
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error("Error fetching news:", error);
+    } finally {
+      setNewsLoading(false);
+    }
+  }, [selectedSymbol]);
+
+  useEffect(() => {
+    fetchChartData();
+    fetchNews();
+  }, [fetchChartData, fetchNews]);
 
   // Initialize chart
   useEffect(() => {
-    if (!chartContainerRef.current || chartData.length === 0) return;
+    if (!chartContainerRef.current) return;
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
@@ -458,10 +542,6 @@ export default function MRKTAIStyleDashboard() {
         borderColor: "rgba(255, 255, 255, 0.1)",
         timeVisible: true,
         secondsVisible: false,
-        tickMarkFormatter: (time: number) => {
-          const date = new Date(time * 1000);
-          return format(date, "HH:mm");
-        },
       },
     });
 
@@ -474,23 +554,12 @@ export default function MRKTAIStyleDashboard() {
       wickDownColor: "#ef4444",
     });
 
-    const formattedData = chartData.map((candle) => ({
-      time: candle.time as Time,
-      open: candle.open,
-      high: candle.high,
-      low: candle.low,
-      close: candle.close,
-    }));
-
-    candlestickSeries.setData(formattedData);
-    chart.timeScale().fitContent();
-
-    chartRef.current = chart;
     candlestickSeriesRef.current = candlestickSeries;
+    chartRef.current = chart;
 
     const handleResize = () => {
-      if (chartContainerRef.current) {
-        chart.applyOptions({ width: chartContainerRef.current.clientWidth });
+      if (chartContainerRef.current && chartRef.current) {
+        chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
       }
     };
 
@@ -500,6 +569,22 @@ export default function MRKTAIStyleDashboard() {
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
+  }, []);
+
+  // Update chart data
+  useEffect(() => {
+    if (candlestickSeriesRef.current && chartData.length > 0) {
+      const formattedData = chartData.map((candle) => ({
+        time: candle.time as Time,
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+      }));
+
+      candlestickSeriesRef.current.setData(formattedData);
+      chartRef.current?.timeScale().fitContent();
+    }
   }, [chartData]);
 
   const filteredNews = news.filter((n) => {
@@ -508,18 +593,34 @@ export default function MRKTAIStyleDashboard() {
     return true;
   });
 
+  const currentSymbol = SYMBOLS.find(s => s.symbol === selectedSymbol);
+  const headline = getDynamicHeadline(selectedSymbol, news);
+
+  // Get bias based on latest news
+  const getBias = () => {
+    const latestHighImpact = news.find(n => n.urgency === "high" || n.urgency === "breaking");
+    if (latestHighImpact?.impacts) {
+      const symbolImpact = latestHighImpact.impacts.find(i => i.symbol === selectedSymbol);
+      if (symbolImpact?.direction === "bullish") return { text: "Bullish", color: "green" };
+      if (symbolImpact?.direction === "bearish") return { text: "Slightly Bearish", color: "red" };
+    }
+    return { text: "Neutral", color: "gray" };
+  };
+
+  const bias = getBias();
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex">
       {/* Left Sidebar */}
       <aside 
         className={cn(
-          "flex-shrink-0 border-r border-gray-800 bg-[#0a0a0a] transition-all duration-300",
+          "flex-shrink-0 border-r border-gray-800 bg-[#0a0a0a] flex flex-col transition-all duration-300",
           sidebarCollapsed ? "w-16" : "w-60"
         )}
       >
         {/* Logo */}
         <div className="h-16 flex items-center px-4 border-b border-gray-800">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-sm">F</span>
           </div>
           {!sidebarCollapsed && (
@@ -528,20 +629,22 @@ export default function MRKTAIStyleDashboard() {
         </div>
 
         {/* Navigation */}
-        <nav className="py-4 space-y-1">
-          <SidebarItem icon={Bell} label="Alerts" badge={3} />
-          <SidebarItem icon={Star} label="Watchlist" />
-          <SidebarItem icon={Wallet} label="Smart Trades" active />
-          <SidebarItem icon={Calendar} label="Economic Calendar" />
-          <SidebarItem icon={FileText} label="News Analysis" />
-          <SidebarItem icon={MessageSquare} label="Chat AI" />
-          <SidebarItem icon={Newspaper} label="Research Reports" />
-          <SidebarItem icon={Building2} label="Brokers" />
-          <SidebarItem icon={LineChart} label="My Trades" />
+        <nav className="py-4 space-y-1 flex-1">
+          {sidebarItems.map((item) => (
+            <SidebarItem
+              key={item.label}
+              icon={item.icon}
+              label={item.label}
+              href={item.href}
+              active={item.active}
+              badge={item.badge}
+              collapsed={sidebarCollapsed}
+            />
+          ))}
         </nav>
 
         {/* Bottom section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800">
+        <div className="p-4 border-t border-gray-800">
           <button 
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className="w-full flex items-center justify-center p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
@@ -566,12 +669,12 @@ export default function MRKTAIStyleDashboard() {
           <div className="flex-1 flex flex-col min-w-0">
             {/* Title & Analysis Cards */}
             <div className="p-6 border-b border-gray-800">
-              <h1 className="text-2xl font-bold text-white mb-4">
-                Gold slips to $4,993 as Philly Fed beat, trade deficit widen; Trump Iran threats support
+              <h1 className="text-xl font-bold text-white mb-4 leading-tight">
+                {headline}
               </h1>
               
               {/* Analysis Cards Row */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <AnalysisCard 
                   type="swing" 
                   label="SWING TRADING" 
@@ -581,7 +684,7 @@ export default function MRKTAIStyleDashboard() {
                 <AnalysisCard 
                   type="day" 
                   label="DAY TRADING" 
-                  value="Slightly Bearish" 
+                  value={bias.text} 
                   active 
                 />
                 <AnalysisCard 
@@ -594,9 +697,9 @@ export default function MRKTAIStyleDashboard() {
             </div>
 
             {/* Chart Container */}
-            <div className="flex-1 relative">
+            <div className="flex-1 relative min-h-0">
               {/* Timeframe Selector */}
-              <div className="absolute top-4 left-4 z-10 flex items-center gap-1 bg-gray-900/80 backdrop-blur rounded-lg p-1">
+              <div className="absolute top-4 left-4 z-10 flex items-center gap-1 bg-gray-900/80 backdrop-blur rounded-lg p-1 border border-gray-800">
                 {TIMEFRAMES.map((tf) => (
                   <button
                     key={tf.value}
@@ -613,22 +716,57 @@ export default function MRKTAIStyleDashboard() {
                 ))}
               </div>
 
+              {/* Refresh Button */}
+              <button
+                onClick={fetchChartData}
+                className="absolute top-4 left-64 z-10 p-2 bg-gray-900/80 backdrop-blur rounded-lg border border-gray-800 text-gray-400 hover:text-white transition-colors"
+              >
+                <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
+              </button>
+
               {/* Chart Annotations Overlay */}
               <div className="absolute top-4 right-4 z-10 space-y-2">
-                <div className="bg-gray-900/80 backdrop-blur px-3 py-2 rounded-lg border border-gray-800">
+                <div className="bg-gray-900/90 backdrop-blur px-3 py-2 rounded-lg border border-gray-800">
                   <span className="text-xs text-gray-400">Pullback Area:</span>
-                  <span className="text-sm text-white ml-2 font-mono">$5080.00</span>
+                  <span className="text-sm text-white ml-2 font-mono">${((currentSymbol?.price || 0) * 1.02).toFixed(2)}</span>
                 </div>
-                <div className="bg-gray-900/80 backdrop-blur px-3 py-2 rounded-lg border border-gray-800">
+                <div className="bg-gray-900/90 backdrop-blur px-3 py-2 rounded-lg border border-gray-800">
                   <span className="text-xs text-gray-400">Target Level:</span>
-                  <span className="text-sm text-red-400 ml-2 font-mono">$4900.00</span>
+                  <span className="text-sm text-red-400 ml-2 font-mono">${((currentSymbol?.price || 0) * 0.98).toFixed(2)}</span>
                 </div>
               </div>
+
+              {/* Chart Loading State */}
+              {loading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a]">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-2 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
+                    <span className="text-sm text-gray-500">Loading chart...</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Error State */}
+              {error && !loading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a]">
+                  <div className="flex flex-col items-center gap-3">
+                    <AlertTriangle className="w-8 h-8 text-red-500" />
+                    <span className="text-sm text-gray-400">{error}</span>
+                    <button
+                      onClick={fetchChartData}
+                      className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Chart */}
               <div 
                 ref={chartContainerRef} 
                 className="w-full h-full"
+                style={{ visibility: loading || error ? 'hidden' : 'visible' }}
               />
 
               {/* Bottom Time Labels */}
@@ -645,11 +783,16 @@ export default function MRKTAIStyleDashboard() {
             <div className="border-t border-gray-800 bg-gray-900/30 p-4">
               <p className="text-sm text-gray-400">
                 The day trading bias on <span className="text-white font-semibold">{selectedSymbol}</span> is{" "}
-                <span className="text-red-400 font-semibold bg-red-500/10 px-2 py-0.5 rounded">
-                  slightly bearish
+                <span className={cn(
+                  "px-2 py-0.5 rounded font-semibold",
+                  bias.color === "green" && "text-green-400 bg-green-500/10",
+                  bias.color === "red" && "text-red-400 bg-red-500/10",
+                  bias.color === "gray" && "text-gray-400 bg-gray-500/10"
+                )}>
+                  {bias.text.toLowerCase()}
                 </span>
               </p>
-              <p className="text-xs text-gray-500 mt-1">Updated 1 hour ago</p>
+              <p className="text-xs text-gray-500 mt-1">Updated {formatDistanceToNow(new Date(), { addSuffix: true })}</p>
             </div>
           </div>
 
@@ -664,14 +807,17 @@ export default function MRKTAIStyleDashboard() {
                 </button>
               </div>
               <div className="flex items-center gap-2">
+                <button 
+                  onClick={fetchNews}
+                  className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                >
+                  <RefreshCw className={cn("w-4 h-4", newsLoading && "animate-spin")} />
+                </button>
                 <button className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
                   <Filter className="w-4 h-4" />
                 </button>
                 <button className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
                   <Search className="w-4 h-4" />
-                </button>
-                <button className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
-                  <Settings className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -690,7 +836,7 @@ export default function MRKTAIStyleDashboard() {
                   )}
                 >
                   {filter === "high" && newsFilter === "high" && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                   )}
                   {filter.charAt(0).toUpperCase() + filter.slice(1)}
                 </button>
@@ -699,13 +845,17 @@ export default function MRKTAIStyleDashboard() {
 
             {/* News List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-32 bg-gray-900/50 rounded-xl animate-pulse" />
+              {newsLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-32 bg-gray-900/50 rounded-xl animate-pulse border border-gray-800" />
                 ))
               ) : filteredNews.length === 0 ? (
                 <div className="text-center py-12">
+                  <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Newspaper className="w-6 h-6 text-gray-500" />
+                  </div>
                   <p className="text-gray-500 text-sm">No news available</p>
+                  <p className="text-gray-600 text-xs mt-1">Try selecting a different symbol</p>
                 </div>
               ) : (
                 filteredNews.map((item) => (
