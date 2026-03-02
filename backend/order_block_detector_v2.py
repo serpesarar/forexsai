@@ -125,7 +125,7 @@ class OrderBlock:
             "strength": self.strength,
             "tested": self.tested,
             "mitigated": self.mitigated,
-            "has_choch": False,  # For frontend compatibility
+            "has_choch": False,
             "has_bos": False,
             "has_fvg": False
         }
@@ -142,10 +142,10 @@ class MarketStructure:
     
     def to_dict(self):
         return {
-            "choch": [c.to_dict() for c in self.choch_list[-3:]],  # Last 3
+            "choch": [c.to_dict() for c in self.choch_list[-3:]],
             "bos": [b.to_dict() for b in self.bos_list[-3:]],
-            "fvg": [f.to_dict() for f in self.fvg_list[-5:]],  # Last 5
-            "order_blocks": [ob.to_dict() for ob in self.ob_list[:5]],  # Top 5
+            "fvg": [f.to_dict() for f in self.fvg_list[-5:]],
+            "order_blocks": [ob.to_dict() for ob in self.ob_list[:5]],
             "trend": self.trend,
             "counts": {
                 "choch": len(self.choch_list),
@@ -156,148 +156,153 @@ class MarketStructure:
         }
 
 
+class SwingDetector:
+    """Swing Point Detection using Fractals"""
+    
+    @staticmethod
+    def detect(candles: List[Candle], period: int = 2) -> List[SwingPoint]:
+        if len(candles) < period * 2 + 1:
+            return []
+        
+        swings = []
+        
+        for i in range(period, len(candles) - period):
+            # Swing High
+            is_swing_high = True
+            for j in range(1, period + 1):
+                if candles[i].high <= candles[i-j].high or candles[i].high <= candles[i+j].high:
+                    is_swing_high = False
+                    break
+            
+            if is_swing_high:
+                swings.append(SwingPoint(index=i, price=candles[i].high, type="high"))
+                continue
+            
+            # Swing Low
+            is_swing_low = True
+            for j in range(1, period + 1):
+                if candles[i].low >= candles[i-j].low or candles[i].low >= candles[i+j].low:
+                    is_swing_low = False
+                    break
+            
+            if is_swing_low:
+                swings.append(SwingPoint(index=i, price=candles[i].low, type="low"))
+        
+        return swings
+
+
 class CHoCHDetector:
     """
-    CHoCH (Change of Character) Detection Algorithm
-    ================================================
-    Detects trend reversals by identifying breaks of previous swing points
-    against the established trend.
+    CHoCH (Change of Character) Detection
+    ======================================
+    Detects when price breaks structure against the current trend.
     
-    Bullish CHoCH: Price breaks above previous swing high in a downtrend
-    Bearish CHoCH: Price breaks below previous swing low in an uptrend
+    Bullish CHoCH: In a downtrend, price makes a higher high (breaks above previous lower high)
+    Bearish CHoCH: In an uptrend, price makes a lower low (breaks below previous higher low)
     """
     
     @staticmethod
     def detect(candles: List[Candle], swings: List[SwingPoint]) -> List[CHoCH]:
-        if len(swings) < 3 or len(candles) < 20:
+        if len(swings) < 4 or len(candles) < 20:
             return []
         
         choch_list = []
         
-        # Determine initial trend
-        recent_swings = swings[-10:] if len(swings) >= 10 else swings
-        higher_highs = sum(1 for i in range(1, len(recent_swings)) 
-                          if recent_swings[i].type == "high" and 
-                          recent_swings[i].price > recent_swings[i-1].price)
-        lower_lows = sum(1 for i in range(1, len(recent_swings)) 
-                        if recent_swings[i].type == "low" and 
-                        recent_swings[i].price < recent_swings[i-1].price)
+        # Get alternating swings (high, low, high, low...)
+        highs = [s for s in swings if s.type == "high"]
+        lows = [s for s in swings if s.type == "low"]
         
-        trend = "bullish" if higher_highs > lower_lows else "bearish"
+        if len(highs) < 2 or len(lows) < 2:
+            return []
         
-        # Detect CHoCH
-        for i in range(2, len(swings)):
-            current = swings[i]
-            prev = swings[i-1]
-            prev_prev = swings[i-2]
+        # Detect CHoCH by analyzing swing sequences
+        for i in range(1, min(len(highs), len(lows))):
+            # Bullish CHoCH: Higher high after lower highs
+            if i >= 2 and highs[i].price > highs[i-2].price:
+                displacement = (highs[i].price - highs[i-2].price) / highs[i-2].price * 100
+                strength = "strong" if displacement > 1.0 else "moderate" if displacement > 0.5 else "weak"
+                
+                choch_list.append(CHoCH(
+                    index=highs[i].index,
+                    type="bullish",
+                    price=highs[i].price,
+                    prev_swing=highs[i-2].price,
+                    strength=strength
+                ))
             
-            if trend == "bearish":
-                # Bullish CHoCH: Break above previous swing high
-                if current.type == "high" and prev.type == "high":
-                    if current.price > prev_prev.price:
-                        displacement = (current.price - prev_prev.price) / prev_prev.price * 100
-                        strength = "strong" if displacement > 1.5 else "moderate" if displacement > 0.8 else "weak"
-                        choch_list.append(CHoCH(
-                            index=current.index,
-                            type="bullish",
-                            price=current.price,
-                            prev_swing=prev_prev.price,
-                            strength=strength
-                        ))
-                        trend = "bullish"  # Trend changed
-            
-            else:  # bullish trend
-                # Bearish CHoCH: Break below previous swing low
-                if current.type == "low" and prev.type == "low":
-                    if current.price < prev_prev.price:
-                        displacement = (prev_prev.price - current.price) / prev_prev.price * 100
-                        strength = "strong" if displacement > 1.5 else "moderate" if displacement > 0.8 else "weak"
-                        choch_list.append(CHoCH(
-                            index=current.index,
-                            type="bearish",
-                            price=current.price,
-                            prev_swing=prev_prev.price,
-                            strength=strength
-                        ))
-                        trend = "bearish"  # Trend changed
+            # Bearish CHoCH: Lower low after higher lows
+            if i >= 2 and lows[i].price < lows[i-2].price:
+                displacement = (lows[i-2].price - lows[i].price) / lows[i-2].price * 100
+                strength = "strong" if displacement > 1.0 else "moderate" if displacement > 0.5 else "weak"
+                
+                choch_list.append(CHoCH(
+                    index=lows[i].index,
+                    type="bearish",
+                    price=lows[i].price,
+                    prev_swing=lows[i-2].price,
+                    strength=strength
+                ))
         
         return choch_list
 
 
 class BOSDetector:
     """
-    BOS (Break of Structure) Detection Algorithm
-    ============================================
-    Detects trend continuation by identifying breaks of previous swing points
-    in the direction of the established trend.
+    BOS (Break of Structure) Detection
+    ==================================
+    Detects when price continues in trend direction.
     
-    Bullish BOS: Price breaks above previous swing high in an uptrend
-    Bearish BOS: Price breaks below previous swing low in a downtrend
+    Bullish BOS: Higher high in uptrend
+    Bearish BOS: Lower low in downtrend
     """
     
     @staticmethod
     def detect(candles: List[Candle], swings: List[SwingPoint]) -> List[BOS]:
-        if len(swings) < 3 or len(candles) < 20:
+        if len(swings) < 2 or len(candles) < 10:
             return []
         
         bos_list = []
         
-        # Determine trend
-        recent_swings = swings[-10:] if len(swings) >= 10 else swings
-        higher_highs = sum(1 for i in range(1, len(recent_swings)) 
-                          if recent_swings[i].type == "high" and 
-                          recent_swings[i].price > recent_swings[i-1].price)
-        lower_lows = sum(1 for i in range(1, len(recent_swings)) 
-                        if recent_swings[i].type == "low" and 
-                        recent_swings[i].price < recent_swings[i-1].price)
+        highs = [s for s in swings if s.type == "high"]
+        lows = [s for s in swings if s.type == "low"]
         
-        trend = "bullish" if higher_highs > lower_lows else "bearish"
+        # Bullish BOS: Consecutive higher highs
+        for i in range(1, len(highs)):
+            if highs[i].price > highs[i-1].price:
+                # Check confirmation with close
+                candle = candles[highs[i].index]
+                confirmation = candle.close > highs[i-1].price
+                
+                bos_list.append(BOS(
+                    index=highs[i].index,
+                    type="bullish",
+                    price=highs[i].price,
+                    broken_level=highs[i-1].price,
+                    confirmation=confirmation
+                ))
         
-        # Detect BOS
-        for i in range(1, len(swings)):
-            current = swings[i]
-            prev = swings[i-1]
-            
-            if trend == "bullish":
-                # Bullish BOS: Higher high
-                if current.type == "high" and prev.type == "high":
-                    if current.price > prev.price:
-                        # Check for confirmation (close above)
-                        candle = candles[current.index]
-                        confirmation = candle.close > prev.price
-                        bos_list.append(BOS(
-                            index=current.index,
-                            type="bullish",
-                            price=current.price,
-                            broken_level=prev.price,
-                            confirmation=confirmation
-                        ))
-            
-            else:  # bearish
-                # Bearish BOS: Lower low
-                if current.type == "low" and prev.type == "low":
-                    if current.price < prev.price:
-                        candle = candles[current.index]
-                        confirmation = candle.close < prev.price
-                        bos_list.append(BOS(
-                            index=current.index,
-                            type="bearish",
-                            price=current.price,
-                            broken_level=prev.price,
-                            confirmation=confirmation
-                        ))
+        # Bearish BOS: Consecutive lower lows
+        for i in range(1, len(lows)):
+            if lows[i].price < lows[i-1].price:
+                candle = candles[lows[i].index]
+                confirmation = candle.close < lows[i-1].price
+                
+                bos_list.append(BOS(
+                    index=lows[i].index,
+                    type="bearish",
+                    price=lows[i].price,
+                    broken_level=lows[i-1].price,
+                    confirmation=confirmation
+                ))
         
         return bos_list
 
 
 class FVGDetector:
     """
-    FVG (Fair Value Gap) Detection Algorithm
-    ========================================
-    Detects price imbalances where price jumps without overlapping.
-    
-    Bullish FVG: Candle[i-2].high < Candle[i].low (gap up)
-    Bearish FVG: Candle[i-2].low > Candle[i].high (gap down)
+    FVG (Fair Value Gap) Detection
+    ==============================
+    3-candle pattern: High[i-2] < Low[i] for bullish, Low[i-2] > High[i] for bearish
     """
     
     @staticmethod
@@ -312,23 +317,21 @@ class FVGDetector:
             c_prev2 = candles[i-2]
             c_current = candles[i]
             
-            # Bullish FVG
-            if c_prev2.high < c_current.low:
+            # Bullish FVG: Gap up (Low > Previous High)
+            if c_current.low > c_prev2.high:
                 gap_size = c_current.low - c_prev2.high
                 
                 # Check if filled
                 filled = False
                 fill_pct = 0.0
-                for j in range(i, len(candles)):
+                for j in range(i + 1, len(candles)):
                     if candles[j].low <= c_prev2.high:
                         filled = True
                         fill_pct = 100.0
                         break
                     elif candles[j].low < c_current.low:
                         fill_pct = ((c_current.low - candles[j].low) / gap_size) * 100
-                
-                if not filled:
-                    fill_pct = max(0, fill_pct)
+                        fill_pct = min(100, fill_pct)
                 
                 fvg_list.append(FVG(
                     index=i,
@@ -340,23 +343,20 @@ class FVGDetector:
                     fill_percentage=fill_pct
                 ))
             
-            # Bearish FVG
-            elif c_prev2.low > c_current.high:
+            # Bearish FVG: Gap down (High < Previous Low)
+            elif c_current.high < c_prev2.low:
                 gap_size = c_prev2.low - c_current.high
                 
-                # Check if filled
                 filled = False
                 fill_pct = 0.0
-                for j in range(i, len(candles)):
+                for j in range(i + 1, len(candles)):
                     if candles[j].high >= c_prev2.low:
                         filled = True
                         fill_pct = 100.0
                         break
                     elif candles[j].high > c_current.high:
                         fill_pct = ((candles[j].high - c_current.high) / gap_size) * 100
-                
-                if not filled:
-                    fill_pct = max(0, fill_pct)
+                        fill_pct = min(100, fill_pct)
                 
                 fvg_list.append(FVG(
                     index=i,
@@ -373,12 +373,10 @@ class FVGDetector:
 
 class OrderBlockDetector:
     """
-    Order Block Detection Algorithm
-    ===============================
-    Detects institutional order blocks where smart money accumulated.
-    
-    Bullish OB: Bearish candle followed by strong bullish displacement
-    Bearish OB: Bullish candle followed by strong bearish displacement
+    Order Block Detection
+    =====================
+    Bullish OB: Bearish candle before strong bullish move (displacement)
+    Bearish OB: Bullish candle before strong bearish move (displacement)
     """
     
     @staticmethod
@@ -387,26 +385,25 @@ class OrderBlockDetector:
             return []
         
         ob_list = []
-        
-        # Calculate ATR for displacement
         atr = OrderBlockDetector._calculate_atr(candles, 14)
         
-        for i in range(1, len(candles) - 1):
+        for i in range(1, len(candles) - 2):
             c_prev = candles[i-1]
             c_current = candles[i]
             c_next = candles[i+1]
             
             # Bullish Order Block
-            if c_prev.close < c_prev.open:  # Previous bearish
-                displacement = c_next.close - c_current.close
-                if displacement > atr * 1.5:  # Strong displacement
-                    score = min(100, int((displacement / atr) * 20))
+            if c_prev.close < c_prev.open:  # Previous candle was bearish
+                displacement_up = c_next.close - c_current.close
+                
+                if displacement_up > atr * 1.2:  # Strong upward displacement
+                    score = min(100, int(30 + (displacement_up / atr) * 15))
                     strength = "strong" if score > 70 else "moderate" if score > 50 else "weak"
                     
-                    # Check if tested/mitigated
+                    # Check tested/mitigated
                     tested = False
                     mitigated = False
-                    for j in range(i+1, len(candles)):
+                    for j in range(i + 2, min(i + 20, len(candles))):
                         if candles[j].low <= c_current.low:
                             mitigated = True
                             break
@@ -427,16 +424,16 @@ class OrderBlockDetector:
                     ))
             
             # Bearish Order Block
-            elif c_prev.close > c_prev.open:  # Previous bullish
-                displacement = c_current.close - c_next.close
-                if displacement > atr * 1.5:  # Strong displacement
-                    score = min(100, int((displacement / atr) * 20))
+            elif c_prev.close > c_prev.open:  # Previous candle was bullish
+                displacement_down = c_current.close - c_next.close
+                
+                if displacement_down > atr * 1.2:  # Strong downward displacement
+                    score = min(100, int(30 + (displacement_down / atr) * 15))
                     strength = "strong" if score > 70 else "moderate" if score > 50 else "weak"
                     
-                    # Check if tested/mitigated
                     tested = False
                     mitigated = False
-                    for j in range(i+1, len(candles)):
+                    for j in range(i + 2, min(i + 20, len(candles))):
                         if candles[j].high >= c_current.high:
                             mitigated = True
                             break
@@ -456,9 +453,9 @@ class OrderBlockDetector:
                         mitigated=mitigated
                     ))
         
-        # Sort by score (descending)
+        # Sort by score descending
         ob_list.sort(key=lambda x: x.score, reverse=True)
-        return ob_list
+        return ob_list[:10]  # Return top 10
     
     @staticmethod
     def _calculate_atr(candles: List[Candle], period: int) -> float:
@@ -475,38 +472,8 @@ class OrderBlockDetector:
         return float(np.mean(ranges[-period:]))
 
 
-class SwingDetector:
-    """
-    Swing Point Detection
-    =====================
-    Detects swing highs and lows using fractal method.
-    """
-    
-    @staticmethod
-    def detect(candles: List[Candle], period: int = 2) -> List[SwingPoint]:
-        if len(candles) < period * 2 + 1:
-            return []
-        
-        swings = []
-        highs = [c.high for c in candles]
-        lows = [c.low for c in candles]
-        
-        for i in range(period, len(candles) - period):
-            # Swing High
-            if highs[i] == max(highs[i-period:i+period+1]):
-                swings.append(SwingPoint(index=i, price=highs[i], type="high"))
-            
-            # Swing Low
-            elif lows[i] == min(lows[i-period:i+period+1]):
-                swings.append(SwingPoint(index=i, price=lows[i], type="low"))
-        
-        return swings
-
-
 class MarketStructureAnalyzer:
-    """
-    Main analyzer that combines all detection algorithms
-    """
+    """Main analyzer combining all detection algorithms"""
     
     @staticmethod
     def analyze(candles: List[Candle]) -> MarketStructure:
@@ -535,13 +502,14 @@ class MarketStructureAnalyzer:
         if len(swings) < 4:
             return "ranging"
         
-        recent = swings[-6:]
+        # Use last 4 swings to determine trend
+        recent = swings[-4:]
         highs = [s for s in recent if s.type == "high"]
         lows = [s for s in recent if s.type == "low"]
         
         if len(highs) >= 2 and len(lows) >= 2:
-            higher_highs = highs[-1].price > highs[-2].price
-            higher_lows = lows[-1].price > lows[-2].price
+            higher_highs = highs[-1].price > highs[0].price
+            higher_lows = lows[-1].price > lows[0].price
             
             if higher_highs and higher_lows:
                 return "bullish"
@@ -553,8 +521,6 @@ class MarketStructureAnalyzer:
 
 # Convenience function
 def detect_all(candles: List[Candle]) -> Dict:
-    """
-    Main entry point - detects all market structures
-    """
+    """Main entry point - detects all market structures"""
     structure = MarketStructureAnalyzer.analyze(candles)
     return structure.to_dict()
