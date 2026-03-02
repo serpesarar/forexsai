@@ -92,16 +92,16 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
     config: {
       fractal_period: 2,
       min_displacement_atr: 1.0,
-      min_score: 30,  // Lowered for better detection
+      min_score: 45,  // Balanced filter for quality detections
       zone_type: "wick" as const,
       max_tests: 3
     }
   }), [symbol, timeframe]);
 
   const { data, isLoading, error } = useOrderBlockDetect(payload);
-  
+
   const typedData = data as ApiResponse | undefined;
-  
+
   // Extract data from new API structure
   const structure = typedData?.structure;
   const orderBlocks = structure?.order_blocks ?? typedData?.order_blocks ?? [];
@@ -110,14 +110,14 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
   const fvgList = structure?.fvg ?? [];
   const trend = structure?.trend ?? typedData?.trend ?? "ranging";
   const signal = typedData?.combined_signal;
-  
+
   const nearestBullish = orderBlocks.find((ob: OrderBlock) => ob.type === "bullish");
   const nearestBearish = orderBlocks.find((ob: OrderBlock) => ob.type === "bearish");
-  
+
   // Latest CHoCH and BOS
   const latestCHoCH = chochList[chochList.length - 1];
   const latestBOS = bosList[bosList.length - 1];
-  
+
   // Unfilled FVGs
   const unfilledFVGs = fvgList.filter((fvg: FVG) => !fvg.filled);
 
@@ -131,7 +131,7 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
   const SignalIcon = signalStyle?.icon || AlertCircle;
 
   if (!isActive) return null;
-  
+
   if (error) {
     return (
       <div className="p-4 text-center">
@@ -149,10 +149,9 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
           <Activity className="w-4 h-4 text-blue-400" />
           <span className="text-xs text-textSecondary">Market Trend</span>
         </div>
-        <span className={`text-xs font-medium ${
-          trend === "bullish" ? "text-emerald-400" : 
-          trend === "bearish" ? "text-red-400" : "text-yellow-400"
-        }`}>
+        <span className={`text-xs font-medium ${trend === "bullish" ? "text-emerald-400" :
+            trend === "bearish" ? "text-red-400" : "text-yellow-400"
+          }`}>
           {trend.toUpperCase()}
         </span>
       </div>
@@ -226,16 +225,14 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
 
       {/* CHoCH Detection */}
       {latestCHoCH && (
-        <div className={`rounded-xl p-3 border ${
-          latestCHoCH.type === "bullish" 
-            ? "bg-emerald-500/10 border-emerald-500/30" 
+        <div className={`rounded-xl p-3 border ${latestCHoCH.type === "bullish"
+            ? "bg-emerald-500/10 border-emerald-500/30"
             : "bg-red-500/10 border-red-500/30"
-        }`}>
+          }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className={`text-xs font-medium ${
-                latestCHoCH.type === "bullish" ? "text-emerald-400" : "text-red-400"
-              }`}>
+              <span className={`text-xs font-medium ${latestCHoCH.type === "bullish" ? "text-emerald-400" : "text-red-400"
+                }`}>
                 CHoCH ({latestCHoCH.type.toUpperCase()})
               </span>
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10">
@@ -249,16 +246,14 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
 
       {/* BOS Detection */}
       {latestBOS && (
-        <div className={`rounded-xl p-3 border ${
-          latestBOS.type === "bullish" 
-            ? "bg-blue-500/10 border-blue-500/30" 
+        <div className={`rounded-xl p-3 border ${latestBOS.type === "bullish"
+            ? "bg-blue-500/10 border-blue-500/30"
             : "bg-orange-500/10 border-orange-500/30"
-        }`}>
+          }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className={`text-xs font-medium ${
-                latestBOS.type === "bullish" ? "text-blue-400" : "text-orange-400"
-              }`}>
+              <span className={`text-xs font-medium ${latestBOS.type === "bullish" ? "text-blue-400" : "text-orange-400"
+                }`}>
                 BOS ({latestBOS.type.toUpperCase()})
               </span>
               {latestBOS.confirmation && (
@@ -421,11 +416,10 @@ export default function OrderBlockPanelUnified() {
             <button
               key={sym.id}
               onClick={() => setActiveSymbol(sym.id)}
-              className={`py-2 px-1 rounded-lg text-xs font-medium transition ${
-                activeSymbol === sym.id
+              className={`py-2 px-1 rounded-lg text-xs font-medium transition ${activeSymbol === sym.id
                   ? "bg-purple-500 text-white"
                   : "bg-white/5 text-textSecondary hover:bg-white/10"
-              }`}
+                }`}
             >
               <span className="mr-1">{sym.flag}</span>
               {sym.label}
@@ -439,11 +433,10 @@ export default function OrderBlockPanelUnified() {
             <button
               key={tf}
               onClick={() => setTimeframe(tf)}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${
-                timeframe === tf
+              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition ${timeframe === tf
                   ? "bg-accent text-white"
                   : "bg-white/5 text-textSecondary hover:bg-white/10"
-              }`}
+                }`}
             >
               {tf}
             </button>

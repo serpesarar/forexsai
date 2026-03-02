@@ -199,6 +199,8 @@ class CHoCHDetector:
     
     Bullish CHoCH: In a downtrend, price makes a higher high (breaks above previous lower high)
     Bearish CHoCH: In an uptrend, price makes a lower low (breaks below previous higher low)
+    
+    Now validates trend context: a CHoCH must occur AGAINST the prevailing micro-trend.
     """
     
     @staticmethod
@@ -208,42 +210,69 @@ class CHoCHDetector:
         
         choch_list = []
         
-        # Get alternating swings (high, low, high, low...)
         highs = [s for s in swings if s.type == "high"]
         lows = [s for s in swings if s.type == "low"]
         
         if len(highs) < 2 or len(lows) < 2:
             return []
         
-        # Detect CHoCH by analyzing swing sequences
+        # Compute a quick EMA-based micro-trend at each swing
+        closes = np.array([c.close for c in candles])
+        ema_fast = CHoCHDetector._ema(closes, 10)
+        ema_slow = CHoCHDetector._ema(closes, 30)
+        
+        # Detect CHoCH by analyzing swing sequences WITH trend context
         for i in range(1, min(len(highs), len(lows))):
-            # Bullish CHoCH: Higher high after lower highs
-            if i >= 2 and highs[i].price > highs[i-2].price:
-                displacement = (highs[i].price - highs[i-2].price) / highs[i-2].price * 100
-                strength = "strong" if displacement > 1.0 else "moderate" if displacement > 0.5 else "weak"
+            # Bullish CHoCH: Higher high after lower highs — must be in a prior downtrend
+            if i >= 2 and highs[i].price > highs[i-1].price:
+                idx = highs[i].index
+                # Validate prior downtrend: EMA fast < EMA slow before this swing
+                lookback_idx = max(0, idx - 5)
+                prior_downtrend = ema_fast[lookback_idx] < ema_slow[lookback_idx]
                 
-                choch_list.append(CHoCH(
-                    index=highs[i].index,
-                    type="bullish",
-                    price=highs[i].price,
-                    prev_swing=highs[i-2].price,
-                    strength=strength
-                ))
+                if prior_downtrend:
+                    displacement = (highs[i].price - highs[i-1].price) / highs[i-1].price * 100
+                    strength = "strong" if displacement > 0.8 else "moderate" if displacement > 0.3 else "weak"
+                    
+                    choch_list.append(CHoCH(
+                        index=idx,
+                        type="bullish",
+                        price=highs[i].price,
+                        prev_swing=highs[i-1].price,
+                        strength=strength
+                    ))
             
-            # Bearish CHoCH: Lower low after higher lows
-            if i >= 2 and lows[i].price < lows[i-2].price:
-                displacement = (lows[i-2].price - lows[i].price) / lows[i-2].price * 100
-                strength = "strong" if displacement > 1.0 else "moderate" if displacement > 0.5 else "weak"
+            # Bearish CHoCH: Lower low after higher lows — must be in a prior uptrend
+            if i >= 2 and lows[i].price < lows[i-1].price:
+                idx = lows[i].index
+                lookback_idx = max(0, idx - 5)
+                prior_uptrend = ema_fast[lookback_idx] > ema_slow[lookback_idx]
                 
-                choch_list.append(CHoCH(
-                    index=lows[i].index,
-                    type="bearish",
-                    price=lows[i].price,
-                    prev_swing=lows[i-2].price,
-                    strength=strength
-                ))
+                if prior_uptrend:
+                    displacement = (lows[i-1].price - lows[i].price) / lows[i-1].price * 100
+                    strength = "strong" if displacement > 0.8 else "moderate" if displacement > 0.3 else "weak"
+                    
+                    choch_list.append(CHoCH(
+                        index=idx,
+                        type="bearish",
+                        price=lows[i].price,
+                        prev_swing=lows[i-1].price,
+                        strength=strength
+                    ))
         
         return choch_list
+    
+    @staticmethod
+    def _ema(data: np.ndarray, period: int) -> np.ndarray:
+        """Simple EMA calculation."""
+        if len(data) < period:
+            return data.copy()
+        ema = np.zeros_like(data)
+        ema[0] = data[0]
+        k = 2.0 / (period + 1)
+        for i in range(1, len(data)):
+            ema[i] = data[i] * k + ema[i-1] * (1 - k)
+        return ema
 
 
 class BOSDetector:
@@ -252,13 +281,15 @@ class BOSDetector:
     ==================================
     Detects when price continues in trend direction.
     
-    Bullish BOS: Higher high in uptrend
-    Bearish BOS: Lower low in downtrend
+    Bullish BOS: Higher high in uptrend (close must confirm above previous swing high)
+    Bearish BOS: Lower low in downtrend (close must confirm below previous swing low)
+    
+    Validates trend direction before flagging BOS to avoid noise in ranging markets.
     """
     
     @staticmethod
     def detect(candles: List[Candle], swings: List[SwingPoint]) -> List[BOS]:
-        if len(swings) < 2 or len(candles) < 10:
+        if len(swings) < 4 or len(candles) < 10:
             return []
         
         bos_list = []
@@ -266,34 +297,48 @@ class BOSDetector:
         highs = [s for s in swings if s.type == "high"]
         lows = [s for s in swings if s.type == "low"]
         
-        # Bullish BOS: Consecutive higher highs
+        # Bullish BOS: Consecutive higher highs in an uptrend context
         for i in range(1, len(highs)):
             if highs[i].price > highs[i-1].price:
-                # Check confirmation with close
                 candle = candles[highs[i].index]
+                # Close must confirm break above previous swing high
                 confirmation = candle.close > highs[i-1].price
                 
-                bos_list.append(BOS(
-                    index=highs[i].index,
-                    type="bullish",
-                    price=highs[i].price,
-                    broken_level=highs[i-1].price,
-                    confirmation=confirmation
-                ))
+                # Check for uptrend context: recent lows are also rising
+                relevant_lows = [l for l in lows if l.index < highs[i].index]
+                trend_ok = True
+                if len(relevant_lows) >= 2:
+                    trend_ok = relevant_lows[-1].price >= relevant_lows[-2].price
+                
+                if trend_ok:
+                    bos_list.append(BOS(
+                        index=highs[i].index,
+                        type="bullish",
+                        price=highs[i].price,
+                        broken_level=highs[i-1].price,
+                        confirmation=confirmation
+                    ))
         
-        # Bearish BOS: Consecutive lower lows
+        # Bearish BOS: Consecutive lower lows in a downtrend context
         for i in range(1, len(lows)):
             if lows[i].price < lows[i-1].price:
                 candle = candles[lows[i].index]
                 confirmation = candle.close < lows[i-1].price
                 
-                bos_list.append(BOS(
-                    index=lows[i].index,
-                    type="bearish",
-                    price=lows[i].price,
-                    broken_level=lows[i-1].price,
-                    confirmation=confirmation
-                ))
+                # Check for downtrend context: recent highs are also falling
+                relevant_highs = [h for h in highs if h.index < lows[i].index]
+                trend_ok = True
+                if len(relevant_highs) >= 2:
+                    trend_ok = relevant_highs[-1].price <= relevant_highs[-2].price
+                
+                if trend_ok:
+                    bos_list.append(BOS(
+                        index=lows[i].index,
+                        type="bearish",
+                        price=lows[i].price,
+                        broken_level=lows[i-1].price,
+                        confirmation=confirmation
+                    ))
         
         return bos_list
 
@@ -303,15 +348,20 @@ class FVGDetector:
     FVG (Fair Value Gap) Detection
     ==============================
     3-candle pattern: High[i-2] < Low[i] for bullish, Low[i-2] > High[i] for bearish
+    
+    Now filters with ATR-based minimum gap size to reduce noise from tiny gaps.
     """
     
     @staticmethod
     def detect(candles: List[Candle]) -> List[FVG]:
-        if len(candles) < 10:
+        if len(candles) < 15:
             return []
         
         fvg_list = []
-        current_price = candles[-1].close
+        
+        # Calculate ATR for minimum gap size filter
+        atr = FVGDetector._calculate_atr(candles, 14)
+        min_gap = atr * 0.1  # Gap must be at least 10% of ATR
         
         for i in range(2, len(candles)):
             c_prev2 = candles[i-2]
@@ -320,6 +370,10 @@ class FVGDetector:
             # Bullish FVG: Gap up (Low > Previous High)
             if c_current.low > c_prev2.high:
                 gap_size = c_current.low - c_prev2.high
+                
+                # Filter out tiny gaps (noise)
+                if gap_size < min_gap:
+                    continue
                 
                 # Check if filled
                 filled = False
@@ -347,6 +401,9 @@ class FVGDetector:
             elif c_current.high < c_prev2.low:
                 gap_size = c_prev2.low - c_current.high
                 
+                if gap_size < min_gap:
+                    continue
+                
                 filled = False
                 fill_pct = 0.0
                 for j in range(i + 1, len(candles)):
@@ -369,6 +426,18 @@ class FVGDetector:
                 ))
         
         return fvg_list
+    
+    @staticmethod
+    def _calculate_atr(candles: List[Candle], period: int) -> float:
+        if len(candles) < period + 1:
+            return 1.0
+        ranges = []
+        for i in range(1, len(candles)):
+            high = candles[i].high
+            low = candles[i].low
+            prev_close = candles[i-1].close
+            ranges.append(max(high - low, abs(high - prev_close), abs(low - prev_close)))
+        return float(np.mean(ranges[-period:]))
 
 
 class OrderBlockDetector:
@@ -386,24 +455,33 @@ class OrderBlockDetector:
         
         ob_list = []
         atr = OrderBlockDetector._calculate_atr(candles, 14)
+        volumes = np.array([c.volume for c in candles])
+        avg_volume = float(np.mean(volumes)) if len(volumes) > 0 else 1.0
         
         for i in range(1, len(candles) - 2):
             c_prev = candles[i-1]
             c_current = candles[i]
             c_next = candles[i+1]
             
-            # Bullish Order Block
-            if c_prev.close < c_prev.open:  # Previous candle was bearish
-                displacement_up = c_next.close - c_current.close
+            # Volume confirmation: OB candle or displacement candle should have above-average volume
+            local_vol_avg = float(np.mean(volumes[max(0, i-20):i+1])) if i > 0 else avg_volume
+            vol_ratio = volumes[i+1] / local_vol_avg if local_vol_avg > 0 else 1.0
+            
+            # Bullish Order Block: bearish candle before strong upward displacement
+            if c_current.close < c_current.open:  # Current candle was bearish (the OB candle)
+                displacement_up = c_next.close - c_current.open
                 
                 if displacement_up > atr * 1.2:  # Strong upward displacement
-                    score = min(100, int(30 + (displacement_up / atr) * 15))
+                    score = min(100, int(30 + (displacement_up / atr) * 12))
+                    # Volume bonus
+                    if vol_ratio > 1.2:
+                        score = min(100, score + 10)
                     strength = "strong" if score > 70 else "moderate" if score > 50 else "weak"
                     
                     # Check tested/mitigated
                     tested = False
                     mitigated = False
-                    for j in range(i + 2, min(i + 20, len(candles))):
+                    for j in range(i + 2, min(i + 30, len(candles))):
                         if candles[j].low <= c_current.low:
                             mitigated = True
                             break
@@ -423,17 +501,19 @@ class OrderBlockDetector:
                         mitigated=mitigated
                     ))
             
-            # Bearish Order Block
-            elif c_prev.close > c_prev.open:  # Previous candle was bullish
-                displacement_down = c_current.close - c_next.close
+            # Bearish Order Block: bullish candle before strong downward displacement
+            elif c_current.close > c_current.open:  # Current candle was bullish (the OB candle)
+                displacement_down = c_current.open - c_next.close
                 
                 if displacement_down > atr * 1.2:  # Strong downward displacement
-                    score = min(100, int(30 + (displacement_down / atr) * 15))
+                    score = min(100, int(30 + (displacement_down / atr) * 12))
+                    if vol_ratio > 1.2:
+                        score = min(100, score + 10)
                     strength = "strong" if score > 70 else "moderate" if score > 50 else "weak"
                     
                     tested = False
                     mitigated = False
-                    for j in range(i + 2, min(i + 20, len(candles))):
+                    for j in range(i + 2, min(i + 30, len(candles))):
                         if candles[j].high >= c_current.high:
                             mitigated = True
                             break
@@ -453,7 +533,8 @@ class OrderBlockDetector:
                         mitigated=mitigated
                     ))
         
-        # Sort by score descending
+        # Sort by score descending, filter out mitigated OBs for primary display
+        ob_list = [ob for ob in ob_list if not ob.mitigated]
         ob_list.sort(key=lambda x: x.score, reverse=True)
         return ob_list[:10]  # Return top 10
     
@@ -502,18 +583,31 @@ class MarketStructureAnalyzer:
         if len(swings) < 4:
             return "ranging"
         
-        # Use last 4 swings to determine trend
-        recent = swings[-4:]
+        # Use last 6 swings (or available) for more robust trend
+        recent = swings[-6:] if len(swings) >= 6 else swings[-4:]
         highs = [s for s in recent if s.type == "high"]
         lows = [s for s in recent if s.type == "low"]
         
         if len(highs) >= 2 and len(lows) >= 2:
             higher_highs = highs[-1].price > highs[0].price
             higher_lows = lows[-1].price > lows[0].price
+            lower_highs = highs[-1].price < highs[0].price
+            lower_lows = lows[-1].price < lows[0].price
             
             if higher_highs and higher_lows:
                 return "bullish"
-            elif not higher_highs and not higher_lows:
+            elif lower_highs and lower_lows:
+                return "bearish"
+        
+        # Also check EMA alignment as tiebreaker
+        if len(candles) >= 30:
+            closes = np.array([c.close for c in candles])
+            ema20 = CHoCHDetector._ema(closes, 20)
+            ema50_period = min(50, len(candles) - 1)
+            ema50 = CHoCHDetector._ema(closes, ema50_period)
+            if ema20[-1] > ema50[-1] * 1.001:
+                return "bullish"
+            elif ema20[-1] < ema50[-1] * 0.999:
                 return "bearish"
         
         return "ranging"

@@ -13,7 +13,7 @@ from services.ml_service import run_nasdaq_signal, run_xauusd_signal
 from services.pattern_analyzer import run_claude_pattern_analysis
 from services.sentiment_analyzer import run_claude_sentiment
 from services.rtyhiim_service import run_rtyhiim_detector
-from services.data_fetcher import fetch_eod_candles
+from services.data_fetcher import fetch_eod_candles, fetch_ohlc_data
 
 
 @dataclass
@@ -38,7 +38,7 @@ class OrderBlockService:
             if cached and datetime.utcnow() - cached.timestamp < self.ttl:
                 return cached.payload
 
-        candles = await self._load_candles(symbol=symbol, limit=limit)
+        candles = await self._load_candles(symbol=symbol, timeframe=timeframe, limit=limit)
         
         # Use NEW detector with independent algorithms
         structure = MarketStructureAnalyzer.analyze(candles)
@@ -165,15 +165,22 @@ class OrderBlockService:
             "reasoning": reasoning,
         }
 
-    async def _load_candles(self, symbol: str, limit: int) -> List[Candle]:
+    async def _load_candles(self, symbol: str, timeframe: str, limit: int) -> List[Candle]:
         """
-        Load real candles (EOD) when possible; fall back to synthetic only if unavailable.
+        Load candles from DataHub for the requested timeframe.
+        Falls back: requested tf → EOD → synthetic.
+        DataHub supports: 5m, 15m, 30m, 1h, 4h, eod
         """
-        eod = await fetch_eod_candles(symbol, limit=limit)
-        if eod:
+        # Try requested timeframe first
+        data = await fetch_ohlc_data(symbol, timeframe=timeframe, limit=limit)
+
+        # Fallback to EOD if the requested timeframe returned nothing
+        if not data:
+            data = await fetch_eod_candles(symbol, limit=limit)
+
+        if data:
             candles: List[Candle] = []
-            for idx, row in enumerate(eod):
-                # Use idx as timestamp for detector (it only needs ordering)
+            for idx, row in enumerate(data):
                 candles.append(
                     Candle(
                         timestamp=float(idx),
@@ -185,6 +192,8 @@ class OrderBlockService:
                     )
                 )
             return candles
+
+        # Last resort: synthetic (should rarely happen)
         return self._generate_candles(limit)
 
     def _generate_candles(self, limit: int) -> List[Candle]:
