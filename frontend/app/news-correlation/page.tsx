@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time, type CandlestickData } from "lightweight-charts";
+import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time } from "lightweight-charts";
 import { format, formatDistanceToNow, isWithinInterval, subMinutes, addMinutes } from "date-fns";
 import { 
   Bell, Star, Wallet, Calendar, FileText, MessageSquare, Newspaper,
@@ -143,19 +143,33 @@ const AnalysisCard = ({ type, label, value, active = false }: { type: "swing" | 
           <Icon className="w-4 h-4" />
         </span>
       </div>
-
     </div>
   );
 };
 
+// ==================== TIME AGO COMPONENT (CLIENT ONLY) ====================
+const TimeAgo = ({ timestamp }: { timestamp: string }) => {
+  const [timeAgo, setTimeAgo] = useState<string>("");
+  
+  useEffect(() => {
+    setTimeAgo(formatDistanceToNow(new Date(timestamp), { addSuffix: true }));
+    const interval = setInterval(() => {
+      setTimeAgo(formatDistanceToNow(new Date(timestamp), { addSuffix: true }));
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [timestamp]);
+  
+  return <span className="text-xs text-gray-500">{timeAgo || "..."}</span>;
+};
+
 // ==================== NEWS CARD ====================
-const NewsCard = ({ news, isExpanded, onToggle }: { news: EnrichedNews, isExpanded: boolean, onToggle: (e: React.MouseEvent) => void }) => {
+const NewsCard = ({ news, isExpanded, onToggle, onClick }: { news: EnrichedNews, isExpanded: boolean, onToggle: () => void, onClick: () => void }) => {
   const isHighImpact = news.urgency === "breaking" || news.urgency === "high";
   return (
-    <div onClick={(e) => onToggle(e)} className={cn(
+    <div className={cn(
       "group relative p-4 rounded-xl border transition-all cursor-pointer",
       isHighImpact ? "bg-gradient-to-r from-red-950/30 to-transparent border-red-900/30 hover:border-red-700/50" : "bg-gray-900/30 border-gray-800 hover:border-gray-700"
-    )}>
+    )} onClick={onClick}>
       <div className="flex items-center gap-3 mb-3">
         <span className={cn(
           "px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase",
@@ -166,9 +180,9 @@ const NewsCard = ({ news, isExpanded, onToggle }: { news: EnrichedNews, isExpand
         )}>
           {news.urgency === "breaking" ? "BREAKING" : `${news.urgency.toUpperCase()} IMPACT`}
         </span>
-        <span className="text-xs text-gray-500 font-mono">{new Date(news.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+        <span className="text-xs text-gray-500 font-mono">{format(new Date(news.timestamp), "HH:mm")}</span>
         <span className="text-xs text-gray-600">•</span>
-        <span className="text-xs text-gray-500">{formatDistanceToNow(new Date(news.timestamp), { addSuffix: true })}</span>
+        <TimeAgo timestamp={news.timestamp} />
       </div>
       <h3 className="text-sm font-semibold text-white leading-snug mb-2 uppercase tracking-wide">{news.headline}</h3>
       <p className="text-xs text-gray-400 leading-relaxed mb-3 line-clamp-2">{news.content || news.headline}</p>
@@ -221,7 +235,7 @@ const CandleInfoPanel = ({ candleNews, onClose, symbol }: { candleNews: CandleNe
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
         <div>
           <h3 className="font-semibold flex items-center gap-2">
-            {candleNews.candle.time && new Date(candleNews.candle.time * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+            {candleNews.candle.time && format(new Date(candleNews.candle.time * 1000), "MMM d, HH:mm")}
           </h3>
           <p className="text-xs text-gray-500">Candle Analysis</p>
         </div>
@@ -229,7 +243,6 @@ const CandleInfoPanel = ({ candleNews, onClose, symbol }: { candleNews: CandleNe
       </div>
       
       <div className="p-4 space-y-4">
-        {/* Price Info */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-gray-800/50 rounded-lg p-3">
             <span className="text-xs text-gray-500">Open</span>
@@ -249,7 +262,6 @@ const CandleInfoPanel = ({ candleNews, onClose, symbol }: { candleNews: CandleNe
           </div>
         </div>
 
-        {/* Move Analysis */}
         {candleNews.hasBigMove && (
           <div className={cn(
             "p-3 rounded-lg border",
@@ -263,14 +275,11 @@ const CandleInfoPanel = ({ candleNews, onClose, symbol }: { candleNews: CandleNe
             </div>
             <p className="text-xs text-gray-400">
               Price moved {candleNews.movePercent.toFixed(2)}% during this period. 
-              {candleNews.moveType === "up" 
-                ? "Strong buying pressure detected." 
-                : "Significant selling pressure observed."}
+              {candleNews.moveType === "up" ? "Strong buying pressure detected." : "Significant selling pressure observed."}
             </p>
           </div>
         )}
 
-        {/* Related News */}
         <div>
           <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
             <Newspaper className="w-4 h-4 text-purple-400" />
@@ -289,7 +298,7 @@ const CandleInfoPanel = ({ candleNews, onClose, symbol }: { candleNews: CandleNe
                       n.urgency === "high" && "bg-orange-500",
                       n.urgency === "medium" && "bg-yellow-500"
                     )} />
-                    <span className="text-gray-400">{new Date(n.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                    <span className="text-gray-400">{format(new Date(n.timestamp), "HH:mm")}</span>
                   </div>
                   <p className="text-gray-300 line-clamp-2">{n.headline}</p>
                 </div>
@@ -298,7 +307,6 @@ const CandleInfoPanel = ({ candleNews, onClose, symbol }: { candleNews: CandleNe
           )}
         </div>
 
-        {/* AI Explanation */}
         {candleNews.news.length > 0 && (
           <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
@@ -333,13 +341,17 @@ export default function NewsCorrelationDashboard() {
   const [selectedCandleNews, setSelectedCandleNews] = useState<CandleNews | null>(null);
   const [selectedNewsForModal, setSelectedNewsForModal] = useState<EnrichedNews | null>(null);
   const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
-  const [currentLocale, setCurrentLocale] = useState("tr"); // Default to Turkish
+  const [currentLocale, setCurrentLocale] = useState("tr");
+  const [mounted, setMounted] = useState(false);
   
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
 
-  // Fetch chart data
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const fetchChartData = useCallback(async () => {
     try {
       setLoading(true);
@@ -347,15 +359,9 @@ export default function NewsCorrelationDashboard() {
       const chartResponse = await fetcher<ChartDataResponse>(`/api/data/ohlcv?symbol=${selectedSymbol}&timeframe=${timeframe}&limit=200`);
       
       if (chartResponse.success && chartResponse.data?.candles) {
-        // Process candles to detect big moves
         const processedCandles = chartResponse.data.candles.map(candle => {
           const priceChange = ((candle.close - candle.open) / candle.open) * 100;
-          const isBigMove = Math.abs(priceChange) > 1.5; // 1.5% threshold
-          return {
-            ...candle,
-            priceChange,
-            hasBigMove: isBigMove,
-          };
+          return { ...candle, priceChange, hasBigMove: Math.abs(priceChange) > 1.5 };
         });
         setChartData(processedCandles);
       } else {
@@ -369,7 +375,6 @@ export default function NewsCorrelationDashboard() {
     }
   }, [selectedSymbol, timeframe]);
 
-  // Fetch news data
   const fetchNews = useCallback(async () => {
     try {
       setNewsLoading(true);
@@ -378,7 +383,6 @@ export default function NewsCorrelationDashboard() {
       if (newsResponse.success && newsResponse.data && newsResponse.data.length > 0) {
         setNews(newsResponse.data);
       } else {
-        // Mock news for demo
         setNews([
           {
             id: "1",
@@ -418,23 +422,6 @@ export default function NewsCorrelationDashboard() {
             aiConfidence: 82,
             analysisTimestamp: new Date().toISOString(),
           },
-          {
-            id: "3",
-            timestamp: new Date(Date.now() - 10800000).toISOString(),
-            source: "CNBC",
-            headline: "Oil inventories surprise to the upside",
-            content: "EIA reports larger than expected crude inventory build, putting pressure on oil prices.",
-            urgency: "medium",
-            impacts: [
-              { symbol: "USOIL", direction: "bearish", score: 6, confidence: 0.70, reasoning: "Supply surplus", emoji: "📉" },
-            ],
-            sentiment: "neutral",
-            volatilityExpectation: "medium",
-            eventDuration: "short_term",
-            affectedCandles: [],
-            aiConfidence: 70,
-            analysisTimestamp: new Date().toISOString(),
-          },
         ]);
       }
     } catch (error) {
@@ -445,13 +432,14 @@ export default function NewsCorrelationDashboard() {
   }, [selectedSymbol]);
 
   useEffect(() => {
-    fetchChartData();
-    fetchNews();
-  }, [fetchChartData, fetchNews]);
+    if (mounted) {
+      fetchChartData();
+      fetchNews();
+    }
+  }, [fetchChartData, fetchNews, mounted]);
 
-  // Initialize chart
   useEffect(() => {
-    if (!chartContainerRef.current) return;
+    if (!chartContainerRef.current || !mounted) return;
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
@@ -468,17 +456,14 @@ export default function NewsCorrelationDashboard() {
       wickUpColor: "#22c55e", wickDownColor: "#ef4444",
     });
 
-    // Add click handler for candles
     chart.subscribeClick((param) => {
       if (param.time && param.point) {
         const time = param.time as number;
         const tf = TIMEFRAMES.find(t => t.value === timeframe);
         const minutes = tf?.minutes || 60;
         
-        // Find candle at this time
         const candle = chartData.find(c => c.time === time);
         if (candle) {
-          // Find news within this candle's time range
           const candleStart = subMinutes(new Date(candle.time * 1000), minutes / 2);
           const candleEnd = addMinutes(new Date(candle.time * 1000), minutes / 2);
           
@@ -511,9 +496,8 @@ export default function NewsCorrelationDashboard() {
 
     window.addEventListener("resize", handleResize);
     return () => { window.removeEventListener("resize", handleResize); chart.remove(); };
-  }, [chartData, news, timeframe]);
+  }, [chartData, news, timeframe, mounted]);
 
-  // Update chart data with markers for big moves
   useEffect(() => {
     if (candlestickSeriesRef.current && chartData.length > 0) {
       const formattedData = chartData.map((candle) => ({
@@ -526,7 +510,6 @@ export default function NewsCorrelationDashboard() {
 
       candlestickSeriesRef.current.setData(formattedData);
       
-      // Add markers for big moves
       const markers = chartData
         .filter(c => Math.abs(c.priceChange || 0) > 1.5)
         .map(candle => ({
@@ -543,24 +526,25 @@ export default function NewsCorrelationDashboard() {
     }
   }, [chartData]);
 
+  const handleNewsClick = (newsItem: EnrichedNews) => {
+    setSelectedNewsForModal(newsItem);
+    setIsNewsModalOpen(true);
+  };
+
   const filteredNews = news.filter((n) => {
     if (newsFilter === "all") return true;
     if (newsFilter === "high") return n.urgency === "breaking" || n.urgency === "high";
     return true;
   });
 
-  // Handle news click to open modal
-  const handleNewsClick = (newsItem: EnrichedNews) => {
-    setSelectedNewsForModal(newsItem);
-    setIsNewsModalOpen(true);
-  };
-
   const currentSymbol = SYMBOLS.find(s => s.symbol === selectedSymbol);
-  const bias = { text: "Slightly Bearish", color: "red" };
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-[#0a0a0a]" />;
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex">
-      {/* Left Sidebar */}
       <aside className={cn("flex-shrink-0 border-r border-gray-800 bg-[#0a0a0a] flex flex-col transition-all duration-300", sidebarCollapsed ? "w-16" : "w-60")}>
         <div className="h-16 flex items-center px-4 border-b border-gray-800">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
@@ -578,35 +562,23 @@ export default function NewsCorrelationDashboard() {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">
         <SymbolBar symbols={SYMBOLS} selectedSymbol={selectedSymbol} onSelect={setSelectedSymbol} />
 
         <div className="flex-1 flex overflow-hidden">
-          {/* Chart Section */}
           <div className="flex-1 flex flex-col min-w-0 relative">
-            {/* Title & Analysis Cards */}
             <div className="p-6 border-b border-gray-800">
-              <h1 className="text-xl font-bold text-white mb-4 leading-tight">
-                {selectedSymbol} - {currentSymbol?.name} Market Analysis
-              </h1>
+              <h1 className="text-xl font-bold text-white mb-4 leading-tight">{selectedSymbol} - {currentSymbol?.name} Market Analysis</h1>
               <div className="flex items-center gap-3 flex-wrap">
                 <AnalysisCard type="swing" label="SWING TRADING" value="Bullish" active />
-                <AnalysisCard type="day" label="DAY TRADING" value={bias.text} active />
+                <AnalysisCard type="day" label="DAY TRADING" value="Slightly Bearish" active />
                 <AnalysisCard type="news" label="NEWS FEED" value="High Impact" active />
               </div>
             </div>
 
-            {/* Chart Container */}
             <div className="flex-1 relative min-h-0">
-              {/* Candle Info Panel */}
-              <CandleInfoPanel 
-                candleNews={selectedCandleNews} 
-                onClose={() => setSelectedCandleNews(null)} 
-                symbol={selectedSymbol}
-              />
+              <CandleInfoPanel candleNews={selectedCandleNews} onClose={() => setSelectedCandleNews(null)} symbol={selectedSymbol} />
 
-              {/* Timeframe Selector */}
               <div className="absolute top-4 left-4 z-10 flex items-center gap-1 bg-gray-900/80 backdrop-blur rounded-lg p-1 border border-gray-800">
                 {TIMEFRAMES.map((tf) => (
                   <button key={tf.value} onClick={() => setTimeframe(tf.value)} className={cn(
@@ -620,7 +592,6 @@ export default function NewsCorrelationDashboard() {
                 <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
               </button>
 
-              {/* Chart Annotations */}
               <div className="absolute top-4 right-4 z-10 space-y-2">
                 <div className="bg-gray-900/90 backdrop-blur px-3 py-2 rounded-lg border border-gray-800">
                   <span className="text-xs text-gray-400">Pullback Area:</span>
@@ -632,7 +603,6 @@ export default function NewsCorrelationDashboard() {
                 </div>
               </div>
 
-              {/* Loading & Error States */}
               {loading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a]">
                   <div className="flex flex-col items-center gap-3">
@@ -651,33 +621,27 @@ export default function NewsCorrelationDashboard() {
                 </div>
               )}
 
-              {/* Chart */}
               <div ref={chartContainerRef} className="w-full h-full" style={{ visibility: loading || error ? 'hidden' : 'visible' }} />
 
-              {/* Instructions */}
               {!loading && !error && !selectedCandleNews && (
                 <div className="absolute bottom-16 left-4 z-10 bg-gray-900/80 backdrop-blur px-3 py-2 rounded-lg border border-gray-800 text-xs text-gray-400">
                   💡 Click on any candle to see related news and AI analysis
                 </div>
               )}
 
-              {/* Bottom Time Labels */}
               <div className="absolute bottom-0 left-0 right-0 flex justify-between px-16 py-2 text-xs text-gray-500 border-t border-gray-800 bg-[#0a0a0a]">
                 <span>Monday</span><span>Tuesday</span><span>Wednesday</span><span>Thursday</span><span>Friday</span>
               </div>
             </div>
 
-            {/* Bottom Bias Section */}
             <div className="border-t border-gray-800 bg-gray-900/30 p-4">
               <p className="text-sm text-gray-400">
-                The day trading bias on <span className="text-white font-semibold">{selectedSymbol}</span> is{" "}
-                <span className="text-red-400 font-semibold bg-red-500/10 px-2 py-0.5 rounded">slightly bearish</span>
+                The day trading bias on <span className="text-white font-semibold">{selectedSymbol}</span> is <span className="text-red-400 font-semibold bg-red-500/10 px-2 py-0.5 rounded">slightly bearish</span>
               </p>
               <p className="text-xs text-gray-500 mt-1">Updated {formatDistanceToNow(new Date(), { addSuffix: true })}</p>
             </div>
           </div>
 
-          {/* Right News Panel */}
           <aside className="w-[420px] border-l border-gray-800 bg-[#0a0a0a] flex flex-col">
             <div className="h-14 flex items-center justify-between px-4 border-b border-gray-800">
               <div className="flex items-center gap-2">
@@ -685,12 +649,7 @@ export default function NewsCorrelationDashboard() {
                 <Clock className="w-4 h-4 text-gray-500" />
               </div>
               <div className="flex items-center gap-2">
-                {/* Language Selector */}
-                <select 
-                  value={currentLocale}
-                  onChange={(e) => setCurrentLocale(e.target.value)}
-                  className="bg-gray-900 border border-gray-800 rounded-lg px-2 py-1 text-xs text-gray-400 focus:outline-none focus:border-purple-500"
-                >
+                <select value={currentLocale} onChange={(e) => setCurrentLocale(e.target.value)} className="bg-gray-900 border border-gray-800 rounded-lg px-2 py-1 text-xs text-gray-400 focus:outline-none focus:border-purple-500">
                   <option value="tr">🇹🇷 TR</option>
                   <option value="en">🇬🇧 EN</option>
                   <option value="de">🇩🇪 DE</option>
@@ -730,7 +689,13 @@ export default function NewsCorrelationDashboard() {
                 </div>
               ) : (
                 filteredNews.map((item) => (
-                  <NewsCard key={item.id} news={item} isExpanded={expandedNewsId === item.id} onToggle={() => setExpandedNewsId(expandedNewsId === item.id ? null : item.id)} />
+                  <NewsCard 
+                    key={item.id} 
+                    news={item} 
+                    isExpanded={expandedNewsId === item.id} 
+                    onToggle={() => setExpandedNewsId(expandedNewsId === item.id ? null : item.id)}
+                    onClick={() => handleNewsClick(item)}
+                  />
                 ))
               )}
             </div>
@@ -738,7 +703,6 @@ export default function NewsCorrelationDashboard() {
         </div>
       </main>
 
-      {/* News Detail Modal */}
       <NewsDetailModal
         news={selectedNewsForModal}
         isOpen={isNewsModalOpen}

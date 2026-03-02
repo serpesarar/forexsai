@@ -96,13 +96,18 @@ async def get_rss_news(
         if skip_ai_filtered:
             query = query.neq("urgency", "low")
         
-        response = query.execute()
+        result = query.execute()
         
-        if not response.data:
+        # Handle both old and new Supabase response formats
+        if hasattr(result, 'data'):
+            items = result.data or []
+        elif isinstance(result, dict):
+            items = result.get('data', []) or []
+        else:
+            items = []
+        
+        if not items:
             return []
-        
-        # Filter by symbol if specified
-        items = response.data
         if symbol:
             items = [
                 item for item in items
@@ -145,7 +150,7 @@ async def get_latest_breaking(limit: int = Query(10, ge=1, le=50)):
         
         start_time = datetime.utcnow() - timedelta(hours=1)
         
-        response = (
+        result = (
             supabase.table("enriched_news")
             .select("*")
             .gte("timestamp", start_time.isoformat())
@@ -155,10 +160,18 @@ async def get_latest_breaking(limit: int = Query(10, ge=1, le=50)):
             .execute()
         )
         
+        # Handle both old and new Supabase response formats
+        if hasattr(result, 'data'):
+            data = result.data or []
+        elif isinstance(result, dict):
+            data = result.get('data', []) or []
+        else:
+            data = []
+        
         return {
             "success": True,
-            "count": len(response.data or []),
-            "data": response.data or []
+            "count": len(data),
+            "data": data
         }
     
     except Exception as e:
@@ -179,7 +192,7 @@ async def get_news_by_category(
         
         start_time = datetime.utcnow() - timedelta(hours=hours)
         
-        response = (
+        result = (
             supabase.table("enriched_news")
             .select("*")
             .eq("category", category)
@@ -189,11 +202,19 @@ async def get_news_by_category(
             .execute()
         )
         
+        # Handle both old and new Supabase response formats
+        if hasattr(result, 'data'):
+            data = result.data or []
+        elif isinstance(result, dict):
+            data = result.get('data', []) or []
+        else:
+            data = []
+        
         return {
             "success": True,
             "category": category,
-            "count": len(response.data or []),
-            "data": response.data or []
+            "count": len(data),
+            "data": data
         }
     
     except Exception as e:
@@ -244,8 +265,16 @@ async def get_rss_stats(hours: int = Query(24, ge=1, le=168)):
             .execute()
         )
         
+        # Handle sentiment response
+        if hasattr(sentiment_response, 'data'):
+            sentiment_data = sentiment_response.data or []
+        elif isinstance(sentiment_response, dict):
+            sentiment_data = sentiment_response.get('data', []) or []
+        else:
+            sentiment_data = []
+        
         sentiment_counts = {}
-        for item in sentiment_response.data or []:
+        for item in sentiment_data:
             sentiment = item.get("sentiment", "neutral")
             sentiment_counts[sentiment] = sentiment_counts.get(sentiment, 0) + 1
         
@@ -257,35 +286,64 @@ async def get_rss_stats(hours: int = Query(24, ge=1, le=168)):
             .execute()
         )
         
+        # Handle source response
+        if hasattr(source_response, 'data'):
+            source_data = source_response.data or []
+        elif isinstance(source_response, dict):
+            source_data = source_response.get('data', []) or []
+        else:
+            source_data = []
+        
         source_counts = {}
-        for item in source_response.data or []:
+        for item in source_data:
             source = item.get("source", "unknown")
             source_counts[source] = source_counts.get(source, 0) + 1
         
         # Get top impacted symbols
-        all_news = (
+        all_news_result = (
             supabase.table("enriched_news")
             .select("impacts")
             .gte("timestamp", start_time.isoformat())
             .execute()
         )
         
+        # Handle all news response
+        if hasattr(all_news_result, 'data'):
+            all_news = all_news_result.data or []
+        elif isinstance(all_news_result, dict):
+            all_news = all_news_result.get('data', []) or []
+        else:
+            all_news = []
+        
         symbol_counts = {}
-        for item in all_news.data or []:
+        for item in all_news:
             for impact in item.get("impacts", []):
                 symbol = impact.get("symbol")
                 if symbol:
                     symbol_counts[symbol] = symbol_counts.get(symbol, 0) + 1
         
+        # Handle urgency counts
+        if hasattr(urgency_counts, 'count'):
+            total_items = urgency_counts.count
+        elif hasattr(urgency_counts, 'data'):
+            urgency_data = urgency_counts.data or []
+            total_items = len(urgency_data)
+        elif isinstance(urgency_counts, dict):
+            urgency_data = urgency_counts.get('data', []) or []
+            total_items = len(urgency_data)
+        else:
+            urgency_data = []
+            total_items = 0
+        
         return {
             "success": True,
             "period_hours": hours,
-            "total_items": urgency_counts.count if hasattr(urgency_counts, 'count') else len(urgency_counts.data or []),
+            "total_items": total_items,
             "by_urgency": {
-                "breaking": len([x for x in urgency_counts.data or [] if x.get("urgency") == "breaking"]),
-                "high": len([x for x in urgency_counts.data or [] if x.get("urgency") == "high"]),
-                "medium": len([x for x in urgency_counts.data or [] if x.get("urgency") == "medium"]),
-                "low": len([x for x in urgency_counts.data or [] if x.get("urgency") == "low"]),
+                "breaking": len([x for x in urgency_data if x.get("urgency") == "breaking"]),
+                "high": len([x for x in urgency_data if x.get("urgency") == "high"]),
+                "medium": len([x for x in urgency_data if x.get("urgency") == "medium"]),
+                "low": len([x for x in urgency_data if x.get("urgency") == "low"]),
             },
             "by_sentiment": sentiment_counts,
             "by_source": source_counts,
@@ -308,7 +366,7 @@ async def search_rss_news(
         supabase = get_supabase_client()
         
         # Search in headline (case-insensitive)
-        response = (
+        result = (
             supabase.table("enriched_news")
             .select("*")
             .ilike("headline", f"%{q}%")
@@ -317,11 +375,19 @@ async def search_rss_news(
             .execute()
         )
         
+        # Handle response
+        if hasattr(result, 'data'):
+            data = result.data or []
+        elif isinstance(result, dict):
+            data = result.get('data', []) or []
+        else:
+            data = []
+        
         return {
             "success": True,
             "query": q,
-            "count": len(response.data or []),
-            "data": response.data or []
+            "count": len(data),
+            "data": data
         }
     
     except Exception as e:
