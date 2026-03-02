@@ -278,6 +278,7 @@ try:
         strategy_optimizer,
         news_correlation,
         rss_router,
+        prices,
     )
     from services.data_fetcher import fetch_latest_price
     from services.ml_service import run_nasdaq_signal, run_xauusd_signal
@@ -319,6 +320,7 @@ try:
     app.include_router(strategy_optimizer.router)
     app.include_router(news_correlation.router)
     app.include_router(rss_router.router)
+    app.include_router(prices.router)
     
     ROUTERS_LOADED = True
 except Exception as e:

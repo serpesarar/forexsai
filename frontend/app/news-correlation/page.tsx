@@ -73,6 +73,16 @@ const INITIAL_SYMBOLS: SymbolData[] = [
   { symbol: "DXY", name: "Dollar Index", price: 0, change: 0, changePercent: 0 },
 ];
 
+// Big move thresholds by symbol (percentage)
+const BIG_MOVE_THRESHOLDS: Record<string, number> = {
+  XAUUSD: 0.3,   // Gold: 0.3%
+  NDX: 0.5,      // NASDAQ: 0.5% (~60-70 pips)
+  DAX: 0.5,      // DAX: 0.5%
+  USOIL: 0.8,    // Oil: 0.8%
+  VIX: 2.0,      // VIX: 2%
+  DXY: 0.2,      // Dollar Index: 0.2%
+};
+
 const TIMEFRAMES = [
   { value: "1m", label: "1m" },
   { value: "5m", label: "5m" },
@@ -250,9 +260,19 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       );
 
       if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
-        const processedCandles: ChartCandle[] = response.data.map((row) => {
-          // Convert ms to seconds for lightweight-charts
-          const timeInSeconds = Math.floor(row.timestamp / 1000);
+        // Sort candles by timestamp (ascending) and remove duplicates
+        const sortedData = [...response.data].sort((a, b) => a.timestamp - b.timestamp);
+        
+        // Remove duplicates by timestamp
+        const uniqueData = sortedData.filter((row, index, self) => 
+          index === self.findIndex(r => r.timestamp === row.timestamp)
+        );
+        
+        const processedCandles: ChartCandle[] = uniqueData.map((row) => {
+          // Handle both ms and seconds timestamp formats
+          const timestamp = row.timestamp;
+          // If timestamp is in milliseconds (13 digits), convert to seconds (10 digits)
+          const timeInSeconds = timestamp > 1_000_000_000_000 ? Math.floor(timestamp / 1000) : timestamp;
           const priceChange = ((row.close - row.open) / row.open) * 100;
           return {
             time: timeInSeconds,
@@ -264,6 +284,8 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
             priceChange,
           };
         });
+        
+        console.log(`[Chart] Loaded ${processedCandles.length} candles for ${selectedSymbol}`);
         setChartData(processedCandles);
       } else {
         setError("No chart data available");
@@ -460,27 +482,25 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     }
   }, [selectedSymbol, getMockNews]);
 
-  // Fetch live prices via REST API (fallback)
+  // Fetch live prices via REST API
   const fetchLivePrices = useCallback(async () => {
     try {
-      const symbolsToFetch = ["XAUUSD", "NDX.INDX", "GDAXI.INDX", "CL.COMM", "VIX.INDX", "DXY.INDX"];
-      const response = await fetcher<{[key: string]: {price: number; change: number; changePercent: number}}>(
-        `/api/live-prices?symbols=${symbolsToFetch.join(',')}`
-      );
+      const response = await fetcher<{
+        success: boolean;
+        data: {
+          [key: string]: {
+            price: number;
+            change: number;
+            changePercent: number;
+            available: boolean;
+          }
+        }
+      }>(`/api/prices`);
       
-      if (response) {
+      if (response?.success && response.data) {
         setSymbols(prev => prev.map(sym => {
-          const backendSymbol = {
-            "XAUUSD": "XAUUSD",
-            "NDX": "NDX.INDX",
-            "DAX": "GDAXI.INDX",
-            "USOIL": "CL.COMM",
-            "VIX": "VIX.INDX",
-            "DXY": "DXY.INDX",
-          }[sym.symbol];
-          
-          const data = response[backendSymbol || sym.symbol];
-          if (data) {
+          const data = response.data[sym.symbol];
+          if (data && data.available) {
             return {
               ...sym,
               price: data.price,
@@ -689,47 +709,71 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       }));
       candlestickSeriesRef.current.setData(formattedData);
       
-      // Build markers: News events + Big price moves
+      // NEW ALGORITHM: Only show markers for BIG MOVES with related HIGH/BREAKING news
       const markers: any[] = [];
+      const threshold = BIG_MOVE_THRESHOLDS[selectedSymbol] || 0.5;
       
-      // 1. Add news markers
-      const chartStartTime = chartData[0]?.time || 0;
-      const chartEndTime = chartData[chartData.length - 1]?.time || 0;
+      // Find candles with big moves
+      const bigMoveCandles = chartData.filter(c => Math.abs(c.priceChange || 0) >= threshold);
       
-      news.forEach((newsItem) => {
-        const newsTime = Math.floor(new Date(newsItem.timestamp).getTime() / 1000);
-        // Only show news within chart time range
-        if (newsTime >= chartStartTime && newsTime <= chartEndTime) {
+      bigMoveCandles.forEach(candle => {
+        const candleTime = candle.time;
+        const candleDate = new Date(candleTime * 1000);
+        
+        // Look for HIGH/BREAKING news within ±15 minutes of this candle
+        const timeWindowMinutes = 15;
+        const windowStart = new Date(candleDate.getTime() - timeWindowMinutes * 60000);
+        const windowEnd = new Date(candleDate.getTime() + timeWindowMinutes * 60000);
+        
+        // Find significant news that likely caused this move
+        const significantNews = news.filter(n => {
+          const newsDate = new Date(n.timestamp);
+          const isInTimeWindow = newsDate >= windowStart && newsDate <= windowEnd;
+          const isHighImpact = n.urgency === "breaking" || n.urgency === "high";
+          const affectsSymbol = n.impacts?.some(imp => {
+            const sym = imp.symbol?.toUpperCase();
+            return sym === selectedSymbol || 
+                   (selectedSymbol === "NDX" && (sym === "NDX" || sym === "NASDAQ")) ||
+                   (selectedSymbol === "XAUUSD" && (sym === "XAUUSD" || sym === "XAU" || sym === "GOLD")) ||
+                   (selectedSymbol === "DAX" && (sym === "DAX" || sym === "GDAXI")) ||
+                   (selectedSymbol === "USOIL" && (sym === "USOIL" || sym === "WTI" || sym === "CL" || sym === "OIL")) ||
+                   (selectedSymbol === "VIX" && sym === "VIX") ||
+                   (selectedSymbol === "DXY" && (sym === "DXY" || sym === "DOLLAR"));
+          });
+          
+          return isInTimeWindow && isHighImpact && affectsSymbol;
+        });
+        
+        // If we found significant news related to this big move, show the news marker
+        if (significantNews.length > 0) {
+          const topNews = significantNews[0]; // Show the most significant one
+          
+          // Add news marker ABOVE the candle
           markers.push({
-            time: newsTime as Time,
+            time: candleTime as Time,
             position: "aboveBar" as const,
-            color: newsItem.urgency === "breaking" ? "#ef4444" : 
-                   newsItem.urgency === "high" ? "#f97316" : "#eab308",
-            shape: newsItem.urgency === "breaking" ? "arrowDown" as const : "circle" as const,
-            size: newsItem.urgency === "breaking" ? 2 : 1,
-            text: newsItem.urgency === "breaking" ? "!" : "",
+            color: topNews.urgency === "breaking" ? "#ef4444" : "#f97316",
+            shape: "arrowDown" as const,
+            size: 2,
+            text: topNews.urgency === "breaking" ? "!" : "N",
           });
         }
-      });
-      
-      // 2. Add big move markers (price change > 1.5%)
-      chartData
-        .filter(c => Math.abs(c.priceChange || 0) > 1.5)
-        .forEach(candle => {
-          markers.push({
-            time: candle.time as Time,
-            position: (candle.priceChange || 0) > 0 ? "belowBar" as const : "aboveBar" as const,
-            color: (candle.priceChange || 0) > 0 ? "#22c55e" : "#ef4444",
-            shape: (candle.priceChange || 0) > 0 ? "arrowUp" as const : "arrowDown" as const,
-            text: `${Math.abs(candle.priceChange || 0).toFixed(1)}%`,
-            size: 2,
-          });
+        
+        // Always show big move marker BELOW the candle
+        markers.push({
+          time: candleTime as Time,
+          position: (candle.priceChange || 0) > 0 ? "belowBar" as const : "aboveBar" as const,
+          color: (candle.priceChange || 0) > 0 ? "#22c55e" : "#ef4444",
+          shape: (candle.priceChange || 0) > 0 ? "arrowUp" as const : "arrowDown" as const,
+          text: `${Math.abs(candle.priceChange || 0).toFixed(1)}%`,
+          size: 2,
         });
+      });
       
       candlestickSeriesRef.current.setMarkers(markers);
       chartRef.current?.timeScale().fitContent();
     }
-  }, [chartData, news]);
+  }, [chartData, news, selectedSymbol]);
 
   const handleNewsClick = (newsItem: EnrichedNews) => {
     setSelectedNewsForModal(newsItem);
