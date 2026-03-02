@@ -417,59 +417,75 @@ export default function NewsCorrelationDashboard() {
     }
   }, [selectedSymbol, timeframe]);
 
+  // Helper: parse news items from API response (handles both array and object formats)
+  const parseNewsResponse = (response: any): any[] => {
+    if (Array.isArray(response)) return response;
+    if (response?.success && Array.isArray(response.data)) return response.data;
+    if (response?.data && Array.isArray(response.data)) return response.data;
+    return [];
+  };
+
+  // Helper: map backend fields to frontend EnrichedNews format
+  const mapNewsItems = (items: any[]): EnrichedNews[] => {
+    return items.map((item: any) => ({
+      id: item.id,
+      timestamp: item.timestamp,
+      source: item.source,
+      headline: item.headline,
+      content: item.content || "",
+      category: item.category,
+      url: item.url,
+      impacts: item.impacts || [],
+      sentiment: item.sentiment || "neutral",
+      volatilityExpectation: item.volatility_expectation || item.volatilityExpectation || "medium",
+      urgency: item.urgency || "medium",
+      eventDuration: item.event_duration || item.eventDuration || "short_term",
+      affectedCandles: item.affected_candles || item.affectedCandles || [],
+      aiConfidence: typeof item.ai_confidence === "number"
+        ? (item.ai_confidence <= 1 ? item.ai_confidence * 100 : item.ai_confidence)
+        : (item.aiConfidence || 70),
+      analysisTimestamp: item.analysis_timestamp || item.analysisTimestamp || new Date().toISOString(),
+    }));
+  };
+
   const fetchNews = useCallback(async () => {
     try {
       setNewsLoading(true);
 
-      // Symbol mapping for news API
-      const symbolMap: Record<string, string> = {
-        XAUUSD: "XAUUSD",
-        NASDAQ: "NDX",
-        NDX: "NDX",
-        DAX: "GDAXI",
-        USOIL: "CL",
-        VIX: "VIX",
-        DXY: "DXY",
-      };
-      const apiSymbol = symbolMap[selectedSymbol] || selectedSymbol;
+      // News impacts use original symbol names (XAUUSD, DAX, USOIL), not OHLCV API names
+      const apiSymbol = selectedSymbol;
 
-      // Backend /api/rss/news returns a direct array of RSSNewsResponse objects
-      const newsResponse = await fetcher<any>(
-        `/api/rss/news?symbol=${apiSymbol}&limit=50&hours=72`
-      );
-
-      // Handle both formats: direct array OR { success, data } wrapper
+      // Strategy 1: Fetch news filtered by symbol
       let newsItems: any[] = [];
-      if (Array.isArray(newsResponse)) {
-        newsItems = newsResponse;
-      } else if (newsResponse?.success && Array.isArray(newsResponse.data)) {
-        newsItems = newsResponse.data;
-      } else if (newsResponse?.data && Array.isArray(newsResponse.data)) {
-        newsItems = newsResponse.data;
+      try {
+        const res1 = await fetcher<any>(
+          `/api/rss/news?symbol=${apiSymbol}&limit=50&hours=72`
+        );
+        newsItems = parseNewsResponse(res1);
+      } catch { /* continue to fallback */ }
+
+      // Strategy 2: If no symbol-specific news, fetch ALL news (no symbol filter)
+      if (newsItems.length === 0) {
+        try {
+          const res2 = await fetcher<any>(
+            `/api/rss/news?limit=50&hours=72`
+          );
+          newsItems = parseNewsResponse(res2);
+        } catch { /* continue to fallback */ }
+      }
+
+      // Strategy 3: If still empty, include low-priority (skip_ai_filtered=false)
+      if (newsItems.length === 0) {
+        try {
+          const res3 = await fetcher<any>(
+            `/api/rss/news?limit=50&hours=168&skip_ai_filtered=false`
+          );
+          newsItems = parseNewsResponse(res3);
+        } catch { /* give up on API */ }
       }
 
       if (newsItems.length > 0) {
-        // Map backend field names to frontend expected format
-        const mapped: EnrichedNews[] = newsItems.map((item: any) => ({
-          id: item.id,
-          timestamp: item.timestamp,
-          source: item.source,
-          headline: item.headline,
-          content: item.content || "",
-          category: item.category,
-          url: item.url,
-          impacts: item.impacts || [],
-          sentiment: item.sentiment || "neutral",
-          volatilityExpectation: item.volatility_expectation || item.volatilityExpectation || "medium",
-          urgency: item.urgency || "medium",
-          eventDuration: item.event_duration || item.eventDuration || "short_term",
-          affectedCandles: item.affected_candles || item.affectedCandles || [],
-          aiConfidence: typeof item.ai_confidence === "number"
-            ? (item.ai_confidence <= 1 ? item.ai_confidence * 100 : item.ai_confidence)
-            : (item.aiConfidence || 70),
-          analysisTimestamp: item.analysis_timestamp || item.analysisTimestamp || new Date().toISOString(),
-        }));
-        setNews(mapped);
+        setNews(mapNewsItems(newsItems));
       } else {
         setNews([]);
       }

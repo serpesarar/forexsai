@@ -115,23 +115,41 @@ export default function NewsChartCorrelationPanel() {
         setChartData([]);
       }
 
-      // Fetch news events - backend /api/rss/news returns direct array
-      const newsResponse = await fetcher<any>(
-        `/api/rss/news?symbol=${apiSymbol}&limit=50&hours=48`
-      );
+      // Fetch news events - use original symbol names for news impacts
+      const newsSymbol = selectedSymbol.replace("/", "");
 
-      // Handle both formats: direct array OR { success, data } wrapper
+      // Helper: parse news response
+      const parseRes = (r: any): any[] => {
+        if (Array.isArray(r)) return r;
+        if (r?.success && Array.isArray(r.data)) return r.data;
+        if (r?.data && Array.isArray(r.data)) return r.data;
+        return [];
+      };
+
+      // Strategy 1: Symbol-filtered news
       let newsItems: any[] = [];
-      if (Array.isArray(newsResponse)) {
-        newsItems = newsResponse;
-      } else if (newsResponse?.success && Array.isArray(newsResponse.data)) {
-        newsItems = newsResponse.data;
-      } else if (newsResponse?.data && Array.isArray(newsResponse.data)) {
-        newsItems = newsResponse.data;
+      try {
+        const r1 = await fetcher<any>(`/api/rss/news?symbol=${newsSymbol}&limit=50&hours=48`);
+        newsItems = parseRes(r1);
+      } catch { /* continue */ }
+
+      // Strategy 2: All news if symbol-specific is empty
+      if (newsItems.length === 0) {
+        try {
+          const r2 = await fetcher<any>(`/api/rss/news?limit=50&hours=72`);
+          newsItems = parseRes(r2);
+        } catch { /* continue */ }
+      }
+
+      // Strategy 3: Include low-priority news
+      if (newsItems.length === 0) {
+        try {
+          const r3 = await fetcher<any>(`/api/rss/news?limit=50&hours=168&skip_ai_filtered=false`);
+          newsItems = parseRes(r3);
+        } catch { /* give up */ }
       }
 
       if (newsItems.length > 0) {
-        // Map backend field names to frontend EnrichedNews format
         const mapped: EnrichedNews[] = newsItems.map((item: any) => ({
           id: item.id,
           timestamp: item.timestamp,
