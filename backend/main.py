@@ -102,12 +102,15 @@ async def lifespan(app: FastAPI):
         print(f"❌ Lifecycle hatası: {e}")
 
     # 5. EODHD REAL-TIME WEBSOCKET (Anlık fiyat verisi)
-    try:
-        from services.eodhd_websocket_client import start_eodhd_websocket
-        asyncio.create_task(start_eodhd_websocket())
-        print("✅ EODHD WebSocket client başlatıldı - Gerçek zamanlı fiyat verisi")
-    except Exception as e:
-        print(f"⚠️ EODHD WebSocket başlatılamadı: {e}")
+    # Disabled by user request: API tier does not allow forex/indices WebSockets, 
+    # and using ETF proxies shows incorrect absolute price values. 
+    # Relying entirely on DataHub 5s REST polling instead.
+    # try:
+    #     from services.eodhd_websocket_client import start_eodhd_websocket
+    #     asyncio.create_task(start_eodhd_websocket())
+    #     print("✅ EODHD WebSocket client başlatıldı - Gerçek zamanlı fiyat verisi")
+    # except Exception as e:
+    #     print(f"⚠️ EODHD WebSocket başlatılamadı: {e}")
 
     # 6. Background scheduler (diğer görevler için)
     try:
