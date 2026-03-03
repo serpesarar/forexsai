@@ -29,12 +29,28 @@ class NumpySafeEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
+def _sanitize_for_json(obj):
+    """Recursively replace NaN/Infinity float values with 0.0 or None.
+    This prevents json.dumps(allow_nan=False) from crashing."""
+    if isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return 0.0
+        return obj
+    if isinstance(obj, dict):
+        return {k: _sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_sanitize_for_json(v) for v in obj]
+    return obj
+
+
 class NumpySafeJSONResponse(JSONResponse):
     """JSONResponse that uses NumpySafeEncoder for numpy type serialization."""
     def render(self, content) -> bytes:
+        sanitized = _sanitize_for_json(content)
         return json.dumps(
-            content,
+            sanitized,
             ensure_ascii=False,
             allow_nan=False,
             cls=NumpySafeEncoder,
         ).encode("utf-8")
+
