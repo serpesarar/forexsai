@@ -9,7 +9,7 @@ from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Optional, List
 from pydantic import BaseModel
 
-from database.supabase_client import is_db_available, get_init_error
+from database.supabase_client import is_db_available, get_init_error, get_supabase_client
 from services.prediction_logger import get_recent_predictions
 from services.outcome_tracker import (
     check_pending_outcomes,
