@@ -834,5 +834,66 @@
         "desc": "Intelligent risk management"
       }
     }
+  },
+  "modelPerformance": {
+    "title": "Model Performance Analytics",
+    "summary": {
+      "accuracy": "Accuracy Rate",
+      "totalSignals": "Total Signals",
+      "active": "Active",
+      "lastUpdate": "Last Update",
+      "liveHistory": "Live Signal History"
+    },
+    "quickStats": {
+      "success": "Successful Predictions",
+      "avgReturn": "Average Return",
+      "avgResponse": "Avg. Response Time",
+      "sharpe": "Sharpe Ratio",
+      "maxDrawdown": "Max Drawdown",
+      "consecutiveWins": "Max Consecutive Wins",
+      "consecutiveLosses": "Max Consecutive Losses"
+    },
+    "tabs": {
+      "performance": "Performance",
+      "session": "Session Analysis",
+      "comparison": "Comparison"
+    },
+    "charts": {
+      "accuracy": "Accuracy (%)",
+      "marketPrice": "Market Price",
+      "cumulativeProfit": "Cumulative Profit",
+      "equityCurve": "Equity Curve ($10k Start)",
+      "hour": "Hour",
+      "day": "Day",
+      "speed": "Speed",
+      "profit": "Profit",
+      "riskControl": "Risk Control",
+      "trendFollowing": "Trend Following",
+      "bestSession": "Best performing session: ",
+      "sessions": {
+        "preMarket": "Pre-market",
+        "marketOpen": "Market Open",
+        "midDay": "Mid-day",
+        "powerHour": "Power Hour",
+        "afterHours": "After-hours"
+      }
+    },
+    "table": {
+      "recentSignals": "Recent Signals",
+      "date": "Date/Time",
+      "symbol": "Symbol",
+      "signal": "Signal",
+      "actual": "Actual",
+      "result": "Result",
+      "return": "Return",
+      "win": "Win",
+      "loss": "Loss",
+      "hold": "Hold"
+    },
+    "actions": {
+      "export": "Export Report",
+      "setAlert": "Set Alert",
+      "compare": "Compare Mode"
+    }
   }
 }

@@ -834,5 +834,66 @@
         "desc": "Akıllı risk yönetimi"
       }
     }
+  },
+  "modelPerformance": {
+    "title": "Model Performans Analizi",
+    "summary": {
+      "accuracy": "Başarı Oranı",
+      "totalSignals": "Toplam Sinyal",
+      "active": "Aktif",
+      "lastUpdate": "Son Güncelleme",
+      "liveHistory": "Canlı Sinyal Geçmişi"
+    },
+    "quickStats": {
+      "success": "Başarılı Tahminler",
+      "avgReturn": "Ortalama Getiri",
+      "avgResponse": "Ortalama Tepki Süresi",
+      "sharpe": "Sharpe Oranı",
+      "maxDrawdown": "Max Drawdown",
+      "consecutiveWins": "En Uzun Kazanma Serisi",
+      "consecutiveLosses": "En Uzun Kayıp Serisi"
+    },
+    "tabs": {
+      "performance": "Performans",
+      "session": "Seans Analizi",
+      "comparison": "Karşılaştırma"
+    },
+    "charts": {
+      "accuracy": "Doğruluk (%)",
+      "marketPrice": "Piyasa Fiyatı",
+      "cumulativeProfit": "Kümülatif Kazanç",
+      "equityCurve": "Bileşik Bakiye ($10k Başlangıç)",
+      "hour": "Saat",
+      "day": "Gün",
+      "speed": "Hız",
+      "profit": "Kazanç",
+      "riskControl": "Risk Kontrolü",
+      "trendFollowing": "Trend Takibi",
+      "bestSession": "En iyi performans gösteren seans: ",
+      "sessions": {
+        "preMarket": "Seans Öncesi",
+        "marketOpen": "Açılış",
+        "midDay": "Öğle",
+        "powerHour": "Kapanış Öncesi",
+        "afterHours": "Kapanış Sonrası"
+      }
+    },
+    "table": {
+      "recentSignals": "Son Sinyaller",
+      "date": "Tarih/Saat",
+      "symbol": "Sembol",
+      "signal": "Sinyal",
+      "actual": "Gerçekleşen",
+      "result": "Sonuç",
+      "return": "Getiri",
+      "win": "Kazanç",
+      "loss": "Kayıp",
+      "hold": "Bekle"
+    },
+    "actions": {
+      "export": "Raporu İndir",
+      "setAlert": "Alarm Kur",
+      "compare": "Karşılaştırma Modu"
+    }
   }
 }

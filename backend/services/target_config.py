@@ -64,7 +64,7 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
         stoploss_pips=15,  # 15 pips = $15.00 (was 8) - accommodates hourly ATR of 15-25
         is_percentage=False,
     ),
-    "CL.F": SymbolConfig(
+    "USOIL.FOREX": SymbolConfig(
         pip_value=1.0,  # placeholder, overridden by is_percentage
         targets=[
             TargetLevel("TP1", 0.02),   # 0.02%

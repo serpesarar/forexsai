@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { PanelInfoButton } from "./PanelInfoButton";
 import { useQuery } from "@tanstack/react-query";
+import { ModelPerformanceModal } from "./panels/ModelPerformanceModal";
 import {
   ChartsIcon as BarChart3,
   RotateIcon as RefreshCw,
@@ -208,7 +209,7 @@ async function fetchRecentSignals(days: number, symbol?: string): Promise<Signal
   url.searchParams.set("limit", "20");
   url.searchParams.set("include_active", "true");
   if (symbol) url.searchParams.set("symbol", symbol);
-  
+
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error("Failed to fetch signals");
   const data = await res.json();
@@ -217,27 +218,27 @@ async function fetchRecentSignals(days: number, symbol?: string): Promise<Signal
 
 function SignalRow({ signal, onClick }: { signal: Signal; onClick: () => void }) {
   const isBuy = signal.ml_direction === "BUY";
-  const statusColor = 
+  const statusColor =
     signal.status === "completed" ? P.green :
-    signal.status === "stopped" ? P.red :
-    signal.status === "active" ? P.accent :
-    P.muted;
-  
-  const pnlColor = 
+      signal.status === "stopped" ? P.red :
+        signal.status === "active" ? P.accent :
+          P.muted;
+
+  const pnlColor =
     signal.pnl_pips === undefined ? P.muted :
-    signal.pnl_pips > 0 ? P.green :
-    signal.pnl_pips < 0 ? P.red :
-    P.muted;
+      signal.pnl_pips > 0 ? P.green :
+        signal.pnl_pips < 0 ? P.red :
+          P.muted;
 
   return (
-    <tr 
+    <tr
       onClick={onClick}
       className="cursor-pointer hover:bg-white/5 transition-colors"
       style={{ borderBottom: `1px solid ${P.border}` }}
     >
       <td style={{ padding: "10px 14px" }}>
         <div className="flex items-center gap-2">
-          <span style={{ 
+          <span style={{
             color: isBuy ? P.green : P.red,
             fontWeight: 600,
             fontSize: 12,
@@ -250,23 +251,23 @@ function SignalRow({ signal, onClick }: { signal: Signal; onClick: () => void })
         </div>
       </td>
       <td style={{ padding: "10px 14px" }}>
-        <span style={{ 
-          fontFamily: FONT, 
-          fontSize: 11, 
+        <span style={{
+          fontFamily: FONT,
+          fontSize: 11,
           color: statusColor,
-          textTransform: "capitalize" 
+          textTransform: "capitalize"
         }}>
           {signal.status}
         </span>
       </td>
       <td style={{ padding: "10px 14px", textAlign: "right" }}>
-        <span style={{ 
-          fontFamily: FONT, 
-          fontSize: 12, 
+        <span style={{
+          fontFamily: FONT,
+          fontSize: 12,
           color: pnlColor,
           fontWeight: signal.pnl_pips !== undefined ? 600 : 400,
         }}>
-          {signal.pnl_pips !== undefined 
+          {signal.pnl_pips !== undefined
             ? `${signal.pnl_pips > 0 ? "+" : ""}${signal.pnl_pips.toFixed(1)} pips`
             : "—"
           }
@@ -294,6 +295,11 @@ export default function StrategyPerformancePanel() {
   const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>();
   const [selectedSignalId, setSelectedSignalId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Model Performance Modal States
+  const [isModelPerformanceModalOpen, setIsModelPerformanceModalOpen] = useState(false);
+  const [selectedModelPerformanceSymbol, setSelectedModelPerformanceSymbol] = useState<string>("");
+
   const [activeTab, setActiveTab] = useState<"performance" | "signals">("performance");
   const locale = "tr";
 
@@ -426,9 +432,15 @@ export default function StrategyPerformancePanel() {
             {SYMBOL_META.map(({ key: symKey, label, icon, color }) => (
               <div key={symKey}>
                 {/* Symbol Header */}
-                <div className="flex items-center gap-2.5 mb-3">
+                <div
+                  className="flex items-center gap-2.5 mb-3 cursor-pointer group hover:bg-white/5 p-2 -mx-2 rounded-lg transition-colors border border-transparent hover:border-white/5"
+                  onClick={() => {
+                    setSelectedModelPerformanceSymbol(symKey);
+                    setIsModelPerformanceModalOpen(true);
+                  }}
+                >
                   <span style={{ fontSize: 16 }}>{icon}</span>
-                  <h4 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text }}>{label}</h4>
+                  <h4 className="group-hover:text-blue-400 transition-colors" style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text }}>{label}</h4>
                   {data.best_strategies[symKey]?.strategy && (
                     <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 ml-2"
                       style={{ background: `${P.warn}10`, border: `1px solid ${P.warn}18` }}>
@@ -439,6 +451,9 @@ export default function StrategyPerformancePanel() {
                       </span>
                     </span>
                   )}
+                  <span className="text-[10px] text-blue-400/0 group-hover:text-blue-400/80 transition-colors ml-auto font-medium tracking-wide">
+                    VIEW DETAILS →
+                  </span>
                 </div>
 
                 {/* Table */}
@@ -534,9 +549,9 @@ export default function StrategyPerformancePanel() {
                     </tr>
                   ) : signalsData && signalsData.length > 0 ? (
                     signalsData.map((signal) => (
-                      <SignalRow 
-                        key={signal.id} 
-                        signal={signal} 
+                      <SignalRow
+                        key={signal.id}
+                        signal={signal}
                         onClick={() => handleSignalClick(signal.id)}
                       />
                     ))
@@ -570,6 +585,13 @@ export default function StrategyPerformancePanel() {
           onClose={handleCloseModal}
         />
       </Suspense>
+
+      {/* Model Performance Modal */}
+      <ModelPerformanceModal
+        isOpen={isModelPerformanceModalOpen}
+        onClose={() => setIsModelPerformanceModalOpen(false)}
+        symbol={selectedModelPerformanceSymbol}
+      />
     </>
   );
 }

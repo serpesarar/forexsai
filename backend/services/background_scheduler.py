@@ -561,7 +561,7 @@ async def log_pulse_signals_if_needed():
         if not is_db_available():
             continue
 
-        for model_type in ["pulse3", "pulse2", "pulse1", "emel"]:
+        for model_type in ["emel"]:
             try:
                 await _check_and_log_pulse(symbol, model_type, None)
                 await asyncio.sleep(0.3)
