@@ -338,6 +338,76 @@ async def backfill_turkish_translations(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/test-deepseek")
+async def test_deepseek_analysis(
+    headline: str = Query(..., description="News headline to analyze"),
+    content: str = Query("", description="News content/summary"),
+    source: str = Query("manual", description="News source")
+):
+    """
+    TEST endpoint: Send a news item directly to DeepSeek AI and see the raw response
+    Use this to verify DeepSeek is working correctly
+    """
+    try:
+        import os
+        from services.news_analyzer_v2 import get_real_analyzer
+        
+        # Check API key
+        api_key = os.getenv("DEEPSEEK_API_KEY", "")
+        if not api_key:
+            return {
+                "success": False,
+                "error": "DEEPSEEK_API_KEY not configured in environment",
+                "api_key_present": False
+            }
+        
+        # Call DeepSeek
+        print(f"[Test] Calling DeepSeek for: {headline[:60]}...")
+        analyzer = get_real_analyzer()
+        
+        import asyncio
+        result = await analyzer.analyze(
+            headline=headline,
+            content=content,
+            source=source
+        )
+        
+        # Check if it looks like fallback
+        is_fallback = result.confidence < 60 and not result.headline_tr
+        
+        return {
+            "success": True,
+            "api_key_present": True,
+            "is_fallback": is_fallback,
+            "analysis": {
+                "headline_tr": result.headline_tr,
+                "content_tr": result.content_tr,
+                "sentiment": result.sentiment,
+                "volatility_expectation": result.volatility_expectation,
+                "urgency": result.urgency,
+                "confidence": result.confidence,
+                "impacts": [
+                    {
+                        "symbol": imp.symbol,
+                        "direction": imp.direction,
+                        "score": imp.score,
+                        "confidence": imp.confidence,
+                        "reasoning": imp.reasoning,
+                        "reasoning_tr": imp.reasoning_tr
+                    }
+                    for imp in result.impacts
+                ]
+            }
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "api_key_present": bool(os.getenv("DEEPSEEK_API_KEY", ""))
+        }
+
+
 @router.get("/stats")
 async def get_rss_stats(hours: int = Query(24, ge=1, le=168)):
     """

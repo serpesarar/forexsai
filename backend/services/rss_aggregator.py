@@ -472,26 +472,38 @@ class RSSAggregator:
         return all_items
     
     async def analyze_with_ai(self, item: RSSNewsItem) -> RSSNewsItem:
-        """Send news to REAL DeepSeek AI for analysis"""
+        """Send news to REAL DeepSeek AI for analysis - ALL NEWS GOES TO AI"""
+        import os
+        
+        # Check if DeepSeek API key is configured
+        api_key = os.getenv("DEEPSEEK_API_KEY", "")
+        if not api_key:
+            print(f"[RSS] WARNING: DEEPSEEK_API_KEY not set! Using fallback for: {item.title[:50]}...")
+            return self._fallback_analysis(item)
+        
+        print(f"[RSS] Sending to DeepSeek AI: {item.title[:60]}...")
+        
         try:
-            # Check pre-filter
-            should_analyze, reason = self._should_analyze(item.title, item.content)
-            
-            if not should_analyze:
-                # Mark as low priority, skip AI
-                item.urgency = "low"
-                item.ai_processed = True
-                item.processed_at = datetime.utcnow()
-                return item
-            
             # Get REAL AI analysis (V2 - gerçek analiz)
             from services.news_analyzer_v2 import get_real_analyzer
             analyzer = get_real_analyzer()
+            
+            # Log the API call
+            print(f"[RSS] Calling DeepSeek API for item: {item.id}")
+            
             result = await analyzer.analyze(
                 headline=item.title,
                 content=item.content,
                 source=item.source
             )
+            
+            # Check if we got real AI result or fallback
+            if result.confidence < 60 and not result.headline_tr:
+                print(f"[RSS] DeepSeek returned fallback-like result for: {item.title[:50]}...")
+            else:
+                print(f"[RSS] DeepSeek AI SUCCESS for: {item.title[:50]}...")
+                print(f"[RSS]   - Turkish title: {result.headline_tr[:50] if result.headline_tr else 'N/A'}...")
+                print(f"[RSS]   - Impacts: {len(result.impacts)} instruments")
             
             # Map to item with translations
             item.impacts = [
@@ -507,8 +519,8 @@ class RSSAggregator:
                 for imp in result.impacts
             ]
             
-            # Store Turkish translations
-            item.title_tr = result.headline_tr if result.headline_tr else item.title
+            # Store Turkish translations (ensure they're not empty)
+            item.title_tr = result.headline_tr if result.headline_tr else f"[TR] {item.title}"
             item.content_tr = result.content_tr if result.content_tr else item.content
             item.sentiment = result.sentiment
             item.volatility_expectation = result.volatility_expectation
@@ -517,8 +529,11 @@ class RSSAggregator:
             item.ai_processed = True
             item.processed_at = datetime.utcnow()
             
+        except asyncio.TimeoutError:
+            print(f"[RSS] DeepSeek API TIMEOUT for: {item.title[:50]}...")
+            item = self._fallback_analysis(item)
         except Exception as e:
-            print(f"[RSS] AI analysis failed for {item.id}: {e}")
+            print(f"[RSS] DeepSeek API ERROR for {item.id}: {e}")
             # Fallback to rule-based if AI fails
             item = self._fallback_analysis(item)
         
@@ -728,25 +743,28 @@ class RSSAggregator:
                         stats["duplicates"] += 1
                         continue
                     
-                    # Analyze with AI (with timeout) - if passes pre-filter
+                    # Analyze with AI (with timeout) - ALL NEWS GOES TO DEEPSEEK
                     if not item.duplicate_of:
                         try:
-                            # 15 second timeout for AI analysis per item
+                            # 25 second timeout for DeepSeek AI analysis per item
                             item = await asyncio.wait_for(
                                 self.analyze_with_ai(item),
-                                timeout=15.0
+                                timeout=25.0
                             )
-                            if item.ai_processed and item.urgency != "low":
+                            # Check if it was real AI analysis or fallback
+                            if item.ai_confidence >= 0.6 and item.title_tr and not item.title_tr.startswith("[TR]"):
                                 stats["ai_analyzed"] += 1
-                            elif item.ai_processed:
+                                print(f"[RSS] ✓ Real DeepSeek analysis for: {item.title[:50]}...")
+                            else:
                                 stats["rule_based"] += 1
+                                print(f"[RSS] ⚠ Fallback used for: {item.title[:50]}...")
                         except asyncio.TimeoutError:
-                            print(f"[RSS] AI analysis timeout for: {item.title[:60]}...")
+                            print(f"[RSS] ⏱ AI analysis TIMEOUT for: {item.title[:60]}...")
                             # Use fallback analysis when AI times out
                             item = self._fallback_analysis(item)
                             stats["rule_based"] += 1
                         except Exception as e:
-                            print(f"[RSS] AI analysis error: {e}")
+                            print(f"[RSS] ❌ AI analysis ERROR: {e}")
                             item = self._fallback_analysis(item)
                             stats["rule_based"] += 1
                     
