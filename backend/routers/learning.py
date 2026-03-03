@@ -1720,7 +1720,7 @@ async def get_historical_signals_endpoint(
                 profit = -(p.get("lowest_drawdown_pips", 0) or 40.0) # fallback
             else:
                 # Fallback to outcome_results
-                outcomes = p.get("outcome_results", [])
+                outcomes = p.get("outcome_results") or []
                 primary = next((o for o in outcomes if o.get("check_interval") == "1h"), outcomes[0] if outcomes else None)
                 if primary:
                     if primary.get("hit_target") or primary.get("ml_correct"):
@@ -1774,7 +1774,7 @@ async def get_historical_signals_endpoint(
                 result_state = "loss"
                 profit = -(p.get("lowest_drawdown_pips", 0) or 40.0)
             else:
-                outcomes = p.get("outcome_results", [])
+                outcomes = p.get("outcome_results") or []
                 primary = next((o for o in outcomes if o.get("check_interval") == "1h"), outcomes[0] if outcomes else None)
                 if primary:
                     if primary.get("hit_target") or primary.get("ml_correct"):
@@ -1790,7 +1790,7 @@ async def get_historical_signals_endpoint(
                 "symbol": p.get("symbol"),
                 "prediction": direction,
                 "actual": "up" if result_state == "win" else "down" if result_state == "loss" else "flat",
-                "accuracy": round(p.get("ml_confidence", 0), 1),
+                "accuracy": round(p.get("ml_confidence") or 0, 1),
                 "profit": profit,
                 "result": result_state
             })
