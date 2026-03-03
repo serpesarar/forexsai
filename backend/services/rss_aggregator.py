@@ -14,7 +14,7 @@ import aiohttp
 import feedparser
 from difflib import SequenceMatcher
 
-from services.news_analyzer import get_analyzer, NewsAnalysisResult
+from services.news_analyzer_v2 import get_real_analyzer
 from database.supabase_client import get_supabase_client
 
 # RSS Feed Sources

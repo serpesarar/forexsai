@@ -278,10 +278,10 @@ export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }
                   <div className="flex-1 h-1.5 bg-gray-700 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-purple-500 rounded-full"
-                      style={{ width: `${news.aiConfidence}%` }}
+                      style={{ width: `${news.aiConfidence || 0}%` }}
                     />
                   </div>
-                  <span className="text-sm font-semibold">{Math.round(news.aiConfidence)}%</span>
+                  <span className="text-sm font-semibold">{news.aiConfidence ? Math.round(news.aiConfidence) : 0}%</span>
                 </div>
               </div>
               <div>

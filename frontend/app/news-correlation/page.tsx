@@ -73,14 +73,15 @@ const INITIAL_SYMBOLS: SymbolData[] = [
   { symbol: "DXY", name: "Dollar Index", price: 0, change: 0, changePercent: 0 },
 ];
 
-// Big move thresholds by symbol (percentage)
-const BIG_MOVE_THRESHOLDS: Record<string, number> = {
-  XAUUSD: 0.3,   // Gold: 0.3%
-  NDX: 0.5,      // NASDAQ: 0.5% (~60-70 pips)
-  DAX: 0.5,      // DAX: 0.5%
-  USOIL: 0.8,    // Oil: 0.8%
-  VIX: 2.0,      // VIX: 2%
-  DXY: 0.2,      // Dollar Index: 0.2%
+// Big move thresholds by symbol AND timeframe (percentage)
+// Lower thresholds for shorter timeframes
+const BIG_MOVE_THRESHOLDS: Record<string, Record<string, number>> = {
+  XAUUSD: { "1m": 0.05, "5m": 0.08, "15m": 0.10, "30m": 0.15, "1h": 0.20, "4h": 0.30, "1d": 0.50 },
+  NDX:    { "1m": 0.05, "5m": 0.08, "15m": 0.10, "30m": 0.15, "1h": 0.20, "4h": 0.30, "1d": 0.50 },
+  DAX:    { "1m": 0.05, "5m": 0.08, "15m": 0.10, "30m": 0.15, "1h": 0.20, "4h": 0.30, "1d": 0.50 },
+  USOIL:  { "1m": 0.08, "5m": 0.12, "15m": 0.15, "30m": 0.20, "1h": 0.30, "4h": 0.50, "1d": 1.00 },
+  VIX:    { "1m": 0.50, "5m": 0.80, "15m": 1.00, "30m": 1.50, "1h": 2.00, "4h": 3.00, "1d": 5.00 },
+  DXY:    { "1m": 0.03, "5m": 0.05, "15m": 0.08, "30m": 0.10, "1h": 0.15, "4h": 0.20, "1d": 0.30 },
 };
 
 const TIMEFRAMES = [
@@ -711,7 +712,8 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       
       // NEW ALGORITHM: Only show markers for BIG MOVES with related HIGH/BREAKING news
       const markers: any[] = [];
-      const threshold = BIG_MOVE_THRESHOLDS[selectedSymbol] || 0.5;
+      const symbolThresholds = BIG_MOVE_THRESHOLDS[selectedSymbol] || BIG_MOVE_THRESHOLDS["NDX"];
+      const threshold = symbolThresholds[timeframe as string] || 0.1;
       
       // Find candles with big moves
       const bigMoveCandles = chartData.filter(c => Math.abs(c.priceChange || 0) >= threshold);
