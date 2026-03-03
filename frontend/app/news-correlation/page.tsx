@@ -287,6 +287,12 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   const [economicLoading, setEconomicLoading] = useState(false);
   const [earningsLoading, setEarningsLoading] = useState(false);
   
+  // Selected event modals
+  const [selectedEconomicEvent, setSelectedEconomicEvent] = useState<EconomicEvent | null>(null);
+  const [selectedEarningsEvent, setSelectedEarningsEvent] = useState<EarningsEvent | null>(null);
+  const [isEconomicModalOpen, setIsEconomicModalOpen] = useState(false);
+  const [isEarningsModalOpen, setIsEarningsModalOpen] = useState(false);
+  
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -1384,49 +1390,73 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     economicEvents.slice(0, 20).map((event) => (
                       <div 
                         key={event.id}
-                        className="p-4 rounded-xl border border-gray-800 bg-gray-900/30 hover:border-amber-500/30 transition-all"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className={cn(
-                              "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                              event.impact === "High" && "bg-red-500/20 text-red-400 border border-red-500/30",
-                              event.impact === "Medium" && "bg-amber-500/20 text-amber-400 border border-amber-500/30",
-                              event.impact === "Low" && "bg-gray-700 text-gray-400"
-                            )}>
-                              {event.impact}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {format(new Date(event.timestamp), "MMM d, HH:mm")}
-                            </span>
-                          </div>
-                          <span className={cn(
-                            "text-xs px-2 py-0.5 rounded-full border",
-                            event.predicted_direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
-                            event.predicted_direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
-                            event.predicted_direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
-                          )}>
-                            {event.predicted_direction === "bullish" && "📈 Bullish"}
-                            {event.predicted_direction === "bearish" && "📉 Bearish"}
-                            {event.predicted_direction === "neutral" && "➖ Neutral"}
-                          </span>
-                        </div>
-                        <h4 className="text-sm font-semibold text-white mb-1">
-                          {currentLocale === "tr" && event.title_tr ? event.title_tr : event.title}
-                        </h4>
-                        <p className="text-xs text-gray-500 line-clamp-2">
-                          {event.currency} • {event.affected_symbols.slice(0, 4).join(", ")}
-                        </p>
-                        {(event.previous || event.forecast) && (
-                          <div className="flex items-center gap-4 mt-2 text-xs">
-                            {event.previous && (
-                              <span className="text-gray-500">Prev: <span className="text-gray-300">{event.previous}</span></span>
-                            )}
-                            {event.forecast && (
-                              <span className="text-gray-500">Exp: <span className="text-amber-400">{event.forecast}</span></span>
-                            )}
-                          </div>
+                        onClick={() => {
+                          setSelectedEconomicEvent(event);
+                          setIsEconomicModalOpen(true);
+                        }}
+                        className={cn(
+                          "group relative p-4 rounded-xl border transition-all cursor-pointer overflow-hidden",
+                          event.impact === "High" 
+                            ? "bg-gradient-to-r from-red-950/40 via-amber-950/20 to-transparent border-red-900/40 hover:border-red-500/50" 
+                            : event.impact === "Medium"
+                            ? "bg-gradient-to-r from-amber-950/40 to-transparent border-amber-900/40 hover:border-amber-500/50"
+                            : "bg-gradient-to-r from-gray-900/50 to-transparent border-gray-800 hover:border-gray-600"
                         )}
+                      >
+                        {/* Impact glow effect */}
+                        <div className={cn(
+                          "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500",
+                          event.impact === "High" && "bg-gradient-to-br from-red-500/5 to-transparent",
+                          event.impact === "Medium" && "bg-gradient-to-br from-amber-500/5 to-transparent"
+                        )} />
+                        
+                        <div className="relative">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <span className={cn(
+                                "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
+                                event.impact === "High" && "bg-red-500/20 text-red-400 border border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.2)]",
+                                event.impact === "Medium" && "bg-amber-500/20 text-amber-400 border border-amber-500/30",
+                                event.impact === "Low" && "bg-gray-700/50 text-gray-400 border border-gray-600"
+                              )}>
+                                {event.impact}
+                              </span>
+                              <span className="text-xs text-gray-500 font-mono">
+                                {format(new Date(event.timestamp), "MMM d, HH:mm")}
+                              </span>
+                            </div>
+                            <span className={cn(
+                              "text-[10px] px-2 py-0.5 rounded-full border font-medium",
+                              event.predicted_direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
+                              event.predicted_direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
+                              event.predicted_direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
+                            )}>
+                              {event.predicted_direction === "bullish" && "📈 Bullish"}
+                              {event.predicted_direction === "bearish" && "📉 Bearish"}
+                              {event.predicted_direction === "neutral" && "➖ Neutral"}
+                            </span>
+                          </div>
+                          <h4 className="text-sm font-semibold text-white mb-2 tracking-wide">
+                            {currentLocale === "tr" && event.title_tr ? event.title_tr : event.title}
+                          </h4>
+                          <p className="text-xs text-gray-500 line-clamp-1 mb-3">
+                            {event.currency} • {event.affected_symbols.slice(0, 4).join(", ")}
+                          </p>
+                          {(event.previous || event.forecast) && (
+                            <div className="flex items-center gap-4 text-[11px]">
+                              {event.previous && (
+                                <span className="text-gray-500">Prev: <span className="text-gray-300 font-mono">{event.previous}</span></span>
+                              )}
+                              {event.forecast && (
+                                <span className="text-gray-500">Exp: <span className="text-amber-400 font-mono">{event.forecast}</span></span>
+                              )}
+                            </div>
+                          )}
+                          {/* Click hint */}
+                          <div className="absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-[10px] text-gray-600">Click for details →</span>
+                          </div>
+                        </div>
                       </div>
                     ))
                   )}
@@ -1464,53 +1494,66 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     earningsEvents.slice(0, 20).map((event) => (
                       <div 
                         key={event.id}
-                        className="p-4 rounded-xl border border-gray-800 bg-gray-900/30 hover:border-blue-500/30 transition-all"
+                        onClick={() => {
+                          setSelectedEarningsEvent(event);
+                          setIsEarningsModalOpen(true);
+                        }}
+                        className="group relative p-4 rounded-xl border border-gray-800 bg-gradient-to-r from-blue-950/30 via-indigo-950/20 to-transparent hover:border-blue-500/50 transition-all cursor-pointer overflow-hidden"
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded text-xs font-bold">
-                              {event.ticker}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {format(new Date(event.timestamp), "MMM d")}
-                            </span>
+                        {/* Glow effect */}
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-blue-500/5 to-transparent" />
+                        
+                        <div className="relative">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="px-2 py-0.5 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-400 rounded text-xs font-bold border border-blue-500/30">
+                                {event.ticker}
+                              </span>
+                              <span className="text-xs text-gray-500 font-mono">
+                                {format(new Date(event.timestamp), "MMM d")}
+                              </span>
+                              <span className={cn(
+                                "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                                event.time === "after_market" ? "bg-purple-500/20 text-purple-400 border border-purple-500/30" : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                              )}>
+                                {event.time === "after_market" ? "After" : "Pre"}
+                              </span>
+                            </div>
                             <span className={cn(
-                              "text-[10px] px-1.5 py-0.5 rounded",
-                              event.time === "after_market" ? "bg-purple-500/20 text-purple-400" : "bg-amber-500/20 text-amber-400"
+                              "text-[10px] px-2 py-0.5 rounded-full border font-medium",
+                              event.predicted_direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
+                              event.predicted_direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
+                              event.predicted_direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
                             )}>
-                              {event.time === "after_market" ? "After" : "Pre"}
+                              {event.predicted_direction === "bullish" && "📈 Bull"}
+                              {event.predicted_direction === "bearish" && "📉 Bear"}
+                              {event.predicted_direction === "neutral" && "➖ Neutral"}
                             </span>
                           </div>
-                          <span className={cn(
-                            "text-xs px-2 py-0.5 rounded-full border",
-                            event.predicted_direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
-                            event.predicted_direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
-                            event.predicted_direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
-                          )}>
-                            {event.predicted_direction === "bullish" && "📈 Bull"}
-                            {event.predicted_direction === "bearish" && "📉 Bear"}
-                            {event.predicted_direction === "neutral" && "➖ Neutral"}
-                          </span>
-                        </div>
-                        <h4 className="text-sm font-semibold text-white mb-2">
-                          {event.company}
-                        </h4>
-                        <div className="flex items-center gap-4 text-xs">
-                          {event.eps_forecast && (
+                          <h4 className="text-sm font-semibold text-white mb-2 tracking-wide">
+                            {event.company}
+                          </h4>
+                          <div className="flex items-center gap-4 text-[11px]">
+                            {event.eps_forecast && (
+                              <span className="text-gray-500">
+                                EPS: <span className="text-gray-300 font-mono">{event.eps_forecast}</span>
+                              </span>
+                            )}
+                            {event.revenue_forecast && (
+                              <span className="text-gray-500">
+                                Rev: <span className="text-gray-300 font-mono">{event.revenue_forecast}</span>
+                              </span>
+                            )}
                             <span className="text-gray-500">
-                              EPS: <span className="text-gray-300">{event.eps_forecast}</span>
+                              AI: <span className="text-blue-400 font-mono">{event.confidence}%</span>
                             </span>
-                          )}
-                          {event.revenue_forecast && (
-                            <span className="text-gray-500">
-                              Rev: <span className="text-gray-300">{event.revenue_forecast}</span>
-                            </span>
-                          )}
-                          <span className="text-gray-500">
-                            AI: <span className="text-blue-400">{event.confidence}%</span>
-                          </span>
+                          </div>
+                          <p className="text-[10px] text-gray-600 mt-2 uppercase tracking-wider">{event.sector}</p>
+                          {/* Click hint */}
+                          <div className="absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-[10px] text-gray-600">Click for details →</span>
+                          </div>
                         </div>
-                        <p className="text-[10px] text-gray-600 mt-2">{event.sector}</p>
                       </div>
                     ))
                   )}
@@ -1527,6 +1570,233 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         onClose={() => setIsNewsModalOpen(false)}
         locale={currentLocale as any}
       />
+
+      {/* Economic Event Detail Modal */}
+      {isEconomicModalOpen && selectedEconomicEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-[#0f0f0f] border border-gray-800 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl">
+            <div className="h-16 flex items-center justify-between px-6 border-b border-gray-800 bg-gradient-to-r from-amber-950/30 to-transparent">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center border border-amber-500/30">
+                  <Calendar className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white">Economic Event</h3>
+                  <p className="text-xs text-gray-500">{format(new Date(selectedEconomicEvent.timestamp), "MMM d, yyyy HH:mm")}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsEconomicModalOpen(false)}
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              <div className="flex items-center gap-2 mb-4">
+                <span className={cn(
+                  "px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider",
+                  selectedEconomicEvent.impact === "High" && "bg-red-500/20 text-red-400 border border-red-500/30",
+                  selectedEconomicEvent.impact === "Medium" && "bg-amber-500/20 text-amber-400 border border-amber-500/30",
+                  selectedEconomicEvent.impact === "Low" && "bg-gray-700/50 text-gray-400 border border-gray-600"
+                )}>
+                  {selectedEconomicEvent.impact} Impact
+                </span>
+                <span className="text-xs text-gray-500">{selectedEconomicEvent.currency}</span>
+              </div>
+              <h2 className="text-xl font-bold text-white mb-4">
+                {currentLocale === "tr" && selectedEconomicEvent.title_tr ? selectedEconomicEvent.title_tr : selectedEconomicEvent.title}
+              </h2>
+              
+              {(selectedEconomicEvent.previous || selectedEconomicEvent.forecast) && (
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  {selectedEconomicEvent.previous && (
+                    <div className="p-3 rounded-xl bg-gray-900/50 border border-gray-800">
+                      <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Previous</p>
+                      <p className="text-lg font-mono text-gray-300">{selectedEconomicEvent.previous}</p>
+                    </div>
+                  )}
+                  {selectedEconomicEvent.forecast && (
+                    <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-900/40">
+                      <p className="text-[10px] uppercase tracking-wider text-amber-500/70 mb-1">Forecast</p>
+                      <p className="text-lg font-mono text-amber-400">{selectedEconomicEvent.forecast}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-amber-500" />
+                    Expected Direction
+                  </h4>
+                  <p className={cn(
+                    "text-sm p-3 rounded-xl border",
+                    selectedEconomicEvent.predicted_direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
+                    selectedEconomicEvent.predicted_direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
+                    selectedEconomicEvent.predicted_direction === "neutral" && "bg-gray-700/30 text-gray-400 border-gray-600"
+                  )}>
+                    {selectedEconomicEvent.predicted_direction === "bullish" && "📈 Bullish - Expected positive market reaction"}
+                    {selectedEconomicEvent.predicted_direction === "bearish" && "📉 Bearish - Expected negative market reaction"}
+                    {selectedEconomicEvent.predicted_direction === "neutral" && "➖ Neutral - Limited market impact expected"}
+                  </p>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-300 mb-2">Description</h4>
+                  <p className="text-sm text-gray-400 leading-relaxed">
+                    {currentLocale === "tr" && selectedEconomicEvent.description_tr ? selectedEconomicEvent.description_tr : selectedEconomicEvent.description}
+                  </p>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-300 mb-2">Affected Symbols</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedEconomicEvent.affected_symbols.map((symbol) => (
+                      <span key={symbol} className="px-2 py-1 bg-gray-800 text-gray-400 rounded text-xs font-mono">
+                        {symbol}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                
+                {selectedEconomicEvent.why_it_matters && (
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-amber-950/20 to-transparent border border-amber-900/30">
+                    <h4 className="text-sm font-semibold text-amber-400 mb-2">Why It Matters</h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                      {currentLocale === "tr" && selectedEconomicEvent.why_it_matters_tr ? selectedEconomicEvent.why_it_matters_tr : selectedEconomicEvent.why_it_matters}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Earnings Event Detail Modal */}
+      {isEarningsModalOpen && selectedEarningsEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-[#0f0f0f] border border-gray-800 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl">
+            <div className="h-16 flex items-center justify-between px-6 border-b border-gray-800 bg-gradient-to-r from-blue-950/30 to-transparent">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center border border-blue-500/30">
+                  <Building2 className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white">Earnings Report</h3>
+                  <p className="text-xs text-gray-500">{format(new Date(selectedEarningsEvent.timestamp), "MMM d, yyyy")}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsEarningsModalOpen(false)}
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="px-3 py-1 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-400 rounded-lg text-[10px] font-bold border border-blue-500/30">
+                  {selectedEarningsEvent.ticker}
+                </span>
+                <span className={cn(
+                  "text-[10px] px-2 py-0.5 rounded font-medium",
+                  selectedEarningsEvent.time === "after_market" ? "bg-purple-500/20 text-purple-400" : "bg-amber-500/20 text-amber-400"
+                )}>
+                  {selectedEarningsEvent.time === "after_market" ? "After Market" : "Pre Market"}
+                </span>
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2">{selectedEarningsEvent.company}</h2>
+              <p className="text-sm text-gray-500 mb-6">{selectedEarningsEvent.sector}</p>
+              
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="p-3 rounded-xl bg-gray-900/50 border border-gray-800">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">EPS Estimate</p>
+                  <p className="text-lg font-mono text-gray-300">{selectedEarningsEvent.eps_forecast || "N/A"}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-gray-900/50 border border-gray-800">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Revenue Estimate</p>
+                  <p className="text-lg font-mono text-gray-300">{selectedEarningsEvent.revenue_forecast || "N/A"}</p>
+                </div>
+                {selectedEarningsEvent.previous_eps && (
+                  <div className="p-3 rounded-xl bg-gray-900/50 border border-gray-800">
+                    <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Previous EPS</p>
+                    <p className="text-lg font-mono text-gray-300">{selectedEarningsEvent.previous_eps}</p>
+                  </div>
+                )}
+                {selectedEarningsEvent.previous_revenue && (
+                  <div className="p-3 rounded-xl bg-gray-900/50 border border-gray-800">
+                    <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Previous Revenue</p>
+                    <p className="text-lg font-mono text-gray-300">{selectedEarningsEvent.previous_revenue}</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-blue-500" />
+                    AI Prediction
+                  </h4>
+                  <div className="flex items-center gap-4">
+                    <p className={cn(
+                      "text-sm px-4 py-2 rounded-xl border flex-1",
+                      selectedEarningsEvent.predicted_direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
+                      selectedEarningsEvent.predicted_direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
+                      selectedEarningsEvent.predicted_direction === "neutral" && "bg-gray-700/30 text-gray-400 border-gray-600"
+                    )}>
+                      {selectedEarningsEvent.predicted_direction === "bullish" && "📈 Beat Expected"}
+                      {selectedEarningsEvent.predicted_direction === "bearish" && "📉 Miss Expected"}
+                      {selectedEarningsEvent.predicted_direction === "neutral" && "➖ In Line Expected"}
+                    </p>
+                    <div className="text-center">
+                      <p className="text-2xl font-mono text-blue-400">{selectedEarningsEvent.confidence}%</p>
+                      <p className="text-[10px] text-gray-500">Confidence</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {selectedEarningsEvent.affected_symbols.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Affected Symbols</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedEarningsEvent.affected_symbols.map((symbol) => (
+                        <span key={symbol} className="px-2 py-1 bg-gray-800 text-gray-400 rounded text-xs font-mono">
+                          {symbol}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {selectedEarningsEvent.analysis && (
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-blue-950/20 to-transparent border border-blue-900/30">
+                    <h4 className="text-sm font-semibold text-blue-400 mb-2">AI Analysis</h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                      {currentLocale === "tr" && selectedEarningsEvent.analysis_tr ? selectedEarningsEvent.analysis_tr : selectedEarningsEvent.analysis}
+                    </p>
+                  </div>
+                )}
+                
+                {selectedEarningsEvent.key_metrics.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Key Metrics to Watch</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {(currentLocale === "tr" && selectedEarningsEvent.key_metrics_tr ? selectedEarningsEvent.key_metrics_tr : selectedEarningsEvent.key_metrics).map((metric) => (
+                        <span key={metric} className="px-3 py-1.5 bg-blue-950/30 text-blue-400 rounded-lg text-xs border border-blue-900/30">
+                          {metric}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
