@@ -8,7 +8,7 @@ import {
   Building2, LineChart, BookOpen, Filter, ChevronLeft, ChevronRight,
   TrendingUp, TrendingDown, Sparkles, Camera, Settings,
   Clock, AlertTriangle, RefreshCw, X, ArrowUp, ArrowDown, Brain,
-  Minus
+  Minus, Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/api";
@@ -1669,6 +1669,95 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     </p>
                   </div>
                 )}
+                
+                {/* SCENARIO VARIATIONS */}
+                <div className="mt-6 border-t border-gray-800 pt-6">
+                  <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    Scenario Variations
+                  </h4>
+                  
+                  {/* Better Than Expected */}
+                  <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-green-950/40 to-transparent border border-green-900/40">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xs">🟢</span>
+                      <h5 className="text-sm font-semibold text-green-400">Better Than Expected</h5>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">First 5 min</span>
+                        <span className="text-green-400">DXY ↑ 0.3% • XAUUSD ↓ $8</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">First hour</span>
+                        <span className="text-green-400">DXY ↑ 0.5% • NDX ↓ 0.4%</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">Day close</span>
+                        <span className="text-amber-400">Trend continues or reverses based on Fed outlook</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">Next day</span>
+                        <span className="text-gray-400">Profit taking likely, watch for follow-through</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Worse Than Expected */}
+                  <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-red-950/40 to-transparent border border-red-900/40">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 text-xs">🔴</span>
+                      <h5 className="text-sm font-semibold text-red-400">Worse Than Expected</h5>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">First 5 min</span>
+                        <span className="text-red-400">DXY ↓ 0.3% • XAUUSD ↑ $10</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">First hour</span>
+                        <span className="text-red-400">DXY ↓ 0.6% • NDX ↑ 0.5%</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">Day close</span>
+                        <span className="text-amber-400">Dovish Fed expectations boost risk assets</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">Next day</span>
+                        <span className="text-gray-400">Momentum may fade, watch for reversal signals</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* As Expected */}
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-gray-900/50 to-transparent border border-gray-700/50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-gray-400 text-xs">⚪</span>
+                      <h5 className="text-sm font-semibold text-gray-400">As Expected</h5>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">First 5 min</span>
+                        <span className="text-gray-400">Minimal movement ±0.1%</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">First hour</span>
+                        <span className="text-gray-400">Range-bound, look for other catalysts</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">Rest of day</span>
+                        <span className="text-gray-400">Focus shifts to technicals and other news</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Trading Tips */}
+                  <div className="mt-4 p-3 rounded-lg bg-blue-950/30 border border-blue-900/30">
+                    <p className="text-[11px] text-blue-400">
+                      <span className="font-semibold">💡 Pro Tip:</span> Wait 5 minutes after release for initial volatility to settle. Use limit orders, not market orders. Watch for reversals after the first hour.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1792,6 +1881,113 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     </div>
                   </div>
                 )}
+                
+                {/* SCENARIO VARIATIONS */}
+                <div className="mt-6 border-t border-gray-800 pt-6">
+                  <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-blue-500" />
+                    Scenario Variations
+                  </h4>
+                  
+                  {/* Beat Scenario */}
+                  <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-green-950/40 to-transparent border border-green-900/40">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xs">✅</span>
+                      <h5 className="text-sm font-semibold text-green-400">Beat (EPS & Revenue)</h5>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">Pre-market</span>
+                        <span className="text-green-400">Stock +3-5% • {selectedEarningsEvent.ticker} calls spike</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">Open</span>
+                        <span className="text-green-400">Gap up, momentum buyers enter</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">First hour</span>
+                        <span className="text-amber-400">Watch for profit taking at highs</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">Sector effect</span>
+                        <span className="text-blue-400">{selectedEarningsEvent.sector} peers likely rally</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Miss Scenario */}
+                  <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-red-950/40 to-transparent border border-red-900/40">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 text-xs">❌</span>
+                      <h5 className="text-sm font-semibold text-red-400">Miss (EPS or Revenue)</h5>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">Pre-market</span>
+                        <span className="text-red-400">Stock -4-7% • Put volume surges</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">Open</span>
+                        <span className="text-red-400">Gap down, stop losses trigger</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">First hour</span>
+                        <span className="text-amber-400">Dead cat bounce possible, then fade</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">Sector effect</span>
+                        <span className="text-red-400">{selectedEarningsEvent.sector} peers may decline</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Mixed Scenario */}
+                  <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-amber-950/40 to-transparent border border-amber-900/40">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 text-xs">⚠️</span>
+                      <h5 className="text-sm font-semibold text-amber-400">Mixed (Beat EPS, Miss Revenue or vice versa)</h5>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">Pre-market</span>
+                        <span className="text-amber-400">Volatile ±2% • Direction unclear</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">Guidance</span>
+                        <span className="text-amber-400">Forward guidance becomes key driver</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">First hour</span>
+                        <span className="text-gray-400">Wait for conference call clarity</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* In Line */}
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-gray-900/50 to-transparent border border-gray-700/50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-gray-400 text-xs">➖</span>
+                      <h5 className="text-sm font-semibold text-gray-400">In Line (Meets Expectations)</h5>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">Pre-market</span>
+                        <span className="text-gray-400">±1% move • Options IV crush likely</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-gray-500 w-20">Guidance</span>
+                        <span className="text-gray-400">Stock direction depends on forward outlook</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Trading Tips */}
+                  <div className="mt-4 p-3 rounded-lg bg-purple-950/30 border border-purple-900/30">
+                    <p className="text-[11px] text-purple-400">
+                      <span className="font-semibold">💡 Pro Tip:</span> For {selectedEarningsEvent.time === "after_market" ? "after-hours" : "pre-market"} earnings, liquidity is lower and spreads wider. Consider waiting for regular session open for better fills. Watch for post-earnings drift in following days.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
