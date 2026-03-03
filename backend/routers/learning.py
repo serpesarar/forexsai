@@ -1632,6 +1632,7 @@ async def get_signal_detail_endpoint(signal_id: str):
 @router.get("/historical-signals")
 async def get_historical_signals_endpoint(
     symbol: str,
+    model: Optional[str] = Query(None, description="Filter by model type (ml, emel, pulse1, pulse2, pulse3)"),
     days: int = Query(30, ge=1, le=365)
 ):
     """
@@ -1644,18 +1645,44 @@ async def get_historical_signals_endpoint(
     client = get_supabase_client()
     if not client:
         return {"error": "Database client not available"}
+    
+    # Symbol reverse-mapping: frontend display name → DB symbol
+    SYMBOL_MAP = {
+        "NASDAQ": "NDX.INDX",
+        "DAX": "GDAXI.INDX",
+        "US OIL": "USOIL.FOREX",
+        "OIL": "USOIL.FOREX",
+        "CL.COMM": "USOIL.FOREX",
+    }
+    db_symbol = SYMBOL_MAP.get(symbol.upper(), symbol)
+    
+    # Model name mapping
+    MODEL_NAMES = {
+        "ml": ("ml_core", "ML Model"),
+        "emel": ("emel_core", "EMEL 9-Check AI"),
+        "pulse1": ("pulse1_algo", "Pulse 1 — Algo"),
+        "pulse2": ("pulse2_ml", "Pulse 2 — ML Hybrid"),
+        "pulse3": ("pulse3_scalp", "Pulse 3 — Scalp"),
+    }
+    model_id, model_name_label = MODEL_NAMES.get(model or "", ("all_models", "All Models"))
         
     try:
         from datetime import datetime, timedelta
         cutoff = datetime.utcnow() - timedelta(days=days)
         cutoff_iso = cutoff.isoformat()
         
-        # 1. Fetch signal records (no PostgREST join - our custom httpx client doesn't support it)
-        result = client.table("prediction_logs").select(
+        # 1. Fetch signal records
+        query = client.table("prediction_logs").select(
             "id, symbol, ml_direction, ml_confidence, strategy, status, "
             "targets_hit, highest_profit_pips, lowest_drawdown_pips, created_at, "
             "model_type, exit_price, exit_time"
-        ).eq("symbol", symbol).gte("created_at", cutoff_iso).order("created_at", desc=True).limit(500).execute()
+        ).eq("symbol", db_symbol).gte("created_at", cutoff_iso).order("created_at", desc=True).limit(500)
+        
+        # Filter by model_type if specified
+        if model:
+            query = query.eq("model_type", model)
+        
+        result = query.execute()
         
         signals = safe_get_data(result)
         
@@ -1798,9 +1825,18 @@ async def get_historical_signals_endpoint(
         # 5. Compile Comparison Metrics
         comp_accuracy = round((correct_signals / total_signals * 100) if total_signals > 0 else 0, 1)
         
+        # Symbol display name for response
+        SYM_LABELS = {
+            "NDX.INDX": "NASDAQ",
+            "GDAXI.INDX": "DAX",
+            "USOIL.FOREX": "US OIL",
+            "CL.F": "US OIL",
+        }
+        sym_display = SYM_LABELS.get(db_symbol, db_symbol)
+        
         model_performance = {
-            "modelId": "emel_core",
-            "modelName": f"EMEL AI — {symbol} Predictor",
+            "modelId": model_id,
+            "modelName": f"{model_name_label} — {sym_display} Predictor",
             "accuracy": comp_accuracy,
             "totalSignals": total_signals,
             "timeSeriesData": time_series_data[-30:], # Last 30 trades for chart

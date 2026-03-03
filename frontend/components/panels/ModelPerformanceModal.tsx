@@ -80,13 +80,29 @@ interface ModelPerformanceModalProps {
     isOpen: boolean;
     onClose: () => void;
     symbol: string;
+    model?: string;
 }
 
 export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
     isOpen,
     onClose,
     symbol,
+    model,
 }) => {
+    // Symbol display names
+    const SYM_DISPLAY: Record<string, string> = {
+        "NDX.INDX": "NASDAQ", "GDAXI.INDX": "DAX",
+        "USOIL.FOREX": "US OIL", "CL.F": "US OIL",
+        "CL.COMM": "US OIL",
+    };
+    const symbolDisplay = SYM_DISPLAY[symbol] || symbol;
+
+    const MODEL_DISPLAY: Record<string, string> = {
+        ml: "ML Model", emel: "EMEL 9-Check AI",
+        pulse1: "Pulse 1 — Algo", pulse2: "Pulse 2 — ML Hybrid",
+        pulse3: "Pulse 3 — Scalp",
+    };
+    const modelDisplay = model ? (MODEL_DISPLAY[model] || model) : "All Models";
     const translations: Record<string, any> = {
         "modelPerformance.summary.active": "Active",
         "modelPerformance.summary.accuracy": "Accuracy",
@@ -113,9 +129,11 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
     const [activeTab, setActiveTab] = useState<"performance" | "session" | "comparison">("performance");
 
     const { data: rawData, isLoading, isError } = useQuery({
-        queryKey: ["historical-signals", symbol],
+        queryKey: ["historical-signals", symbol, model],
         queryFn: async () => {
-            const response = await fetch(`${API_BASE}/api/learning/historical-signals?symbol=${symbol}`);
+            const params = new URLSearchParams({ symbol });
+            if (model) params.append("model", model);
+            const response = await fetch(`${API_BASE}/api/learning/historical-signals?${params.toString()}`);
             if (!response.ok) throw new Error("Failed to fetch historical signals");
             return response.json();
         },
@@ -180,7 +198,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold text-[#E6EDF3] tracking-tight">
-                                    {data?.modelName || `EMEL AI — ${symbol} Predictor`}
+                                    {data?.modelName || `${modelDisplay} — ${symbolDisplay} Predictor`}
                                 </h2>
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">

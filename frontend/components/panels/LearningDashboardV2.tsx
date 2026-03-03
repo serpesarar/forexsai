@@ -68,7 +68,7 @@ export default function LearningDashboardV2() {
   const [checking, setChecking] = useState(false);
   const [selectedSignal, setSelectedSignal] = useState<string | null>(null);
   const [signalListFilter, setSignalListFilter] = useState<{ model?: string; symbol?: string } | null>(null);
-  const [selectedModelPerformanceSymbol, setSelectedModelPerformanceSymbol] = useState<string | null>(null);
+  const [selectedModelPerformance, setSelectedModelPerformance] = useState<{ symbol: string; model: string } | null>(null);
 
   const { data: dashboard, isLoading, refetch } = useLifecycleDashboard(days);
   const { data: activeData, refetch: refetchActive } = useActiveSignals();
@@ -271,7 +271,7 @@ export default function LearningDashboardV2() {
                   {Object.entries(stats.symbols).map(([sym, d]) => (
                     <div
                       key={sym}
-                      onClick={() => setSelectedModelPerformanceSymbol(symLabel(sym))}
+                      onClick={() => setSelectedModelPerformance({ symbol: sym, model })}
                       className="cursor-pointer"
                     >
                       <SymbolCard sym={sym} d={d} />
@@ -438,11 +438,12 @@ export default function LearningDashboardV2() {
       )}
 
       {/* ── HISTORICAL MODEL PERFORMANCE MODAL ── */}
-      {selectedModelPerformanceSymbol && (
+      {selectedModelPerformance && (
         <ModelPerformanceModal
           isOpen={true}
-          symbol={selectedModelPerformanceSymbol}
-          onClose={() => setSelectedModelPerformanceSymbol(null)}
+          symbol={selectedModelPerformance.symbol}
+          model={selectedModelPerformance.model}
+          onClose={() => setSelectedModelPerformance(null)}
         />
       )}
     </div>
