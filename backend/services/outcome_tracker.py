@@ -376,9 +376,9 @@ async def get_accuracy_summary(
     
     try:
         # PRIMARY: Use prediction_logs lifecycle status (completed/stopped)
-        # This is the SINGLE SOURCE OF TRUTH for accuracy calculations
+        # Custom httpx client doesn't support PostgREST embedded joins
         query = client.table("prediction_logs").select(
-            "id, symbol, ml_direction, claude_direction, status, outcome_results(ml_correct, claude_correct, hit_target, hit_stop)"
+            "id, symbol, ml_direction, claude_direction, status, targets_hit"
         ).gte("created_at", cutoff_iso).neq("status", "active")  # Only completed/stopped/expired
         
         if symbol:
@@ -408,16 +408,6 @@ async def get_accuracy_summary(
         
         for pred in predictions:
             status = pred.get("status")
-            outcomes = pred.get("outcome_results") or []
-            
-            # Get primary outcome (prefer 24h interval)
-            primary_outcome = None
-            for o in outcomes:
-                if o.get("check_interval") == "24h":
-                    primary_outcome = o
-                    break
-            if not primary_outcome and outcomes:
-                primary_outcome = outcomes[0]
             
             # Count based on lifecycle status (completed = target hit, stopped = SL hit)
             if status == "completed":
@@ -426,29 +416,24 @@ async def get_accuracy_summary(
                 target_hits += 1
                 if pred.get("claude_direction"):
                     claude_total += 1
-                    # Check if claude was correct via outcome
-                    if primary_outcome and primary_outcome.get("claude_correct"):
-                        claude_correct_count += 1
             elif status == "stopped":
                 total_with_outcome += 1
                 stop_hits += 1
-                # ml_correct remains 0 for stopped signals
                 if pred.get("claude_direction"):
                     claude_total += 1
-                    if primary_outcome and primary_outcome.get("claude_correct"):
-                        claude_correct_count += 1
-            elif status == "expired" and primary_outcome:
-                # Expired but has outcome - use outcome data
-                total_with_outcome += 1
-                if primary_outcome.get("ml_correct") or primary_outcome.get("hit_target"):
+            elif status == "expired":
+                # Check targets_hit field for expired signals
+                import json as _json
+                targets_hit_raw = pred.get("targets_hit")
+                try:
+                    if isinstance(targets_hit_raw, str):
+                        targets_hit_raw = _json.loads(targets_hit_raw)
+                except:
+                    targets_hit_raw = {}
+                if isinstance(targets_hit_raw, dict) and any(targets_hit_raw.values()):
+                    total_with_outcome += 1
                     ml_correct_count += 1
                     target_hits += 1
-                if primary_outcome.get("hit_stop"):
-                    stop_hits += 1
-                if pred.get("claude_direction"):
-                    claude_total += 1
-                    if primary_outcome.get("claude_correct"):
-                        claude_correct_count += 1
         
         return {
             "symbol": symbol,
@@ -607,9 +592,9 @@ async def get_multi_target_accuracy(
     cutoff_iso = cutoff.isoformat() + "Z"
     
     try:
-        # Get predictions with outcomes
+        # Get predictions (no PostgREST join - custom httpx client doesn't support it)
         query = client.table("prediction_logs").select(
-            "*, outcome_results(*)"
+            "*"
         ).gte("created_at", cutoff_iso)
         
         if symbol:
