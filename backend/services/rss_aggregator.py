@@ -472,7 +472,7 @@ class RSSAggregator:
         return all_items
     
     async def analyze_with_ai(self, item: RSSNewsItem) -> RSSNewsItem:
-        """Send news to DeepSeek AI for analysis"""
+        """Send news to REAL DeepSeek AI for analysis"""
         try:
             # Check pre-filter
             should_analyze, reason = self._should_analyze(item.title, item.content)
@@ -484,9 +484,10 @@ class RSSAggregator:
                 item.processed_at = datetime.utcnow()
                 return item
             
-            # Get AI analysis
-            analyzer = get_analyzer()
-            result = await analyzer.analyze_news(
+            # Get REAL AI analysis (V2 - gerçek analiz)
+            from services.news_analyzer_v2 import get_real_analyzer
+            analyzer = get_real_analyzer()
+            result = await analyzer.analyze(
                 headline=item.title,
                 content=item.content,
                 source=item.source
@@ -500,31 +501,21 @@ class RSSAggregator:
                     "score": imp.score,
                     "confidence": imp.confidence,
                     "reasoning": imp.reasoning,
-                    "reasoning_tr": getattr(imp, 'reasoning_tr', imp.reasoning),
-                    "emoji": imp.emoji,
+                    "reasoning_tr": imp.reasoning_tr,
+                    "emoji": "📈" if imp.direction == "bullish" else "📉" if imp.direction == "bearish" else "➡️",
                 }
                 for imp in result.impacts
             ]
             
             # Store Turkish translations
-            item.title_tr = getattr(result, 'title_tr', item.title)
-            item.content_tr = getattr(result, 'content_tr', item.content)
+            item.title_tr = result.headline_tr if result.headline_tr else item.title
+            item.content_tr = result.content_tr if result.content_tr else item.content
             item.sentiment = result.sentiment
             item.volatility_expectation = result.volatility_expectation
             item.ai_confidence = result.confidence / 100.0
+            item.urgency = result.urgency
             item.ai_processed = True
             item.processed_at = datetime.utcnow()
-            
-            # Determine urgency based on impact and volatility
-            max_score = max((imp.score for imp in result.impacts), default=5)
-            if max_score >= 9 and result.volatility_expectation == "high":
-                item.urgency = "breaking"
-            elif max_score >= 7 or result.volatility_expectation == "high":
-                item.urgency = "high"
-            elif max_score >= 4:
-                item.urgency = "medium"
-            else:
-                item.urgency = "low"
             
         except Exception as e:
             print(f"[RSS] AI analysis failed for {item.id}: {e}")

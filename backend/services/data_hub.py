@@ -40,6 +40,11 @@ from datetime import datetime, timedelta
 from threading import Lock
 from typing import Any, Dict, List, Optional
 
+try:
+    import zoneinfo
+except ImportError:
+    from backports import zoneinfo
+
 import httpx
 import numpy as np
 
@@ -128,8 +133,64 @@ def _normalize_symbol(symbol: str) -> str:
 # ═══════════════════════════════════════════════════════════════
 # YAHOO FINANCE FALLBACK (Commodities/Forex bypassing EODHD)
 # ═══════════════════════════════════════════════════════════════
+def _is_us_market_open() -> bool:
+    """Check if it's currently US Market Hours (09:30 - 16:00 EST/EDT, Mon-Fri)."""
+    try:
+        now_ny = datetime.now(zoneinfo.ZoneInfo("America/New_York"))
+    except Exception:
+        now_ny = datetime.utcnow() - timedelta(hours=5)
+    
+    if now_ny.weekday() >= 5:
+        return False
+    # Use fractional hours (9.5 = 09:30 AM, 16.0 = 4:00 PM)
+    time_val = now_ny.hour + now_ny.minute / 60.0
+    return 9.5 <= time_val <= 16.0
+
+def _filter_us_hours(candles: List[Dict]) -> List[Dict]:
+    """Filter candles to only include US Market Hours (09:30 - 16:00 NY Time)."""
+    filtered = []
+    try:
+        us_tz = zoneinfo.ZoneInfo("America/New_York")
+    except Exception:
+        return candles
+
+    for c in candles:
+        dt_us = datetime.fromtimestamp(c["timestamp"] / 1000.0, tz=us_tz)
+        if dt_us.weekday() >= 5:
+            continue
+        time_val = dt_us.hour + dt_us.minute / 60.0
+        if 9.5 <= time_val <= 16.0:
+            filtered.append(c)
+    return filtered
+
 async def _fetch_yahoo_price(yahoo_symbol: str) -> Optional[float]:
-    """Fetch real-time price from Yahoo Finance."""
+    """Fetch live price from Yahoo Finance as a precise fallback."""
+    if not _is_us_market_open():
+        # Let's seed the price with the last valid closed candle if no cache
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{yahoo_symbol}?interval=5m&range=5d"
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.get(url, headers=headers)
+                if resp.status_code == 200:
+                    result = resp.json()['chart']['result'][0]
+                    timestamps = result.get('timestamp', [])
+                    quote = result.get('indicators', {}).get('quote', [{}])[0]
+                    if timestamps and quote.get('close'):
+                        candles = []
+                        for i in range(len(timestamps)):
+                            if quote['close'][i] is not None:
+                                candles.append({
+                                    "timestamp": timestamps[i] * 1000,
+                                    "close": float(quote['close'][i])
+                                })
+                        valid_candles = _filter_us_hours(candles)
+                        if valid_candles:
+                            return valid_candles[-1]["close"]
+        except Exception:
+            pass
+        return None  # Keeps previous data hub cache intact
+
     headers = {'User-Agent': 'Mozilla/5.0'}
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{yahoo_symbol}?interval=1m&range=1d"
     try:
@@ -179,6 +240,11 @@ async def _fetch_yahoo_candles(yahoo_symbol: str, interval: str, limit: int) -> 
                             "close": float(quote['close'][i]),
                             "volume": float(quote.get('volume', [0])[i] or 0)
                         })
+                
+                # Filter out Asian session / Off-hours data for intraday
+                if yf_interval in ("1m", "5m", "15m", "30m", "60m"):
+                    candles = _filter_us_hours(candles)
+                
                 return candles[-limit:]
     except Exception as e:
         logger.error(f"Yahoo candle error for {yahoo_symbol}: {e}")
