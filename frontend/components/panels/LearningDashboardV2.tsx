@@ -26,6 +26,7 @@ import {
   useLifecycleDashboard, useActiveSignals, useSignalDetail,
   triggerLifecycleCheck, type ModelStats, type ActiveSignal, type SignalCheck,
 } from "../../lib/api/learning";
+import { ModelPerformanceModal } from "./ModelPerformanceModal";
 
 // ── Theme-aware Color Palette (CSS Variables) ───────────────────────────────
 
@@ -67,6 +68,7 @@ export default function LearningDashboardV2() {
   const [checking, setChecking] = useState(false);
   const [selectedSignal, setSelectedSignal] = useState<string | null>(null);
   const [signalListFilter, setSignalListFilter] = useState<{ model?: string; symbol?: string } | null>(null);
+  const [selectedModelPerformanceSymbol, setSelectedModelPerformanceSymbol] = useState<string | null>(null);
 
   const { data: dashboard, isLoading, refetch } = useLifecycleDashboard(days);
   const { data: activeData, refetch: refetchActive } = useActiveSignals();
@@ -267,9 +269,9 @@ export default function LearningDashboardV2() {
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {Object.entries(stats.symbols).map(([sym, d]) => (
-                    <div 
+                    <div
                       key={sym}
-                      onClick={() => setSignalListFilter({ symbol: sym })}
+                      onClick={() => setSelectedModelPerformanceSymbol(symLabel(sym))}
                       className="cursor-pointer"
                     >
                       <SymbolCard sym={sym} d={d} />
@@ -375,7 +377,7 @@ export default function LearningDashboardV2() {
                     return (order[a] ?? 99) - (order[b] ?? 99);
                   })
                   .map(([model, stats]) => (
-                    <div 
+                    <div
                       key={model}
                       onClick={() => setSignalListFilter({ model })}
                       className="cursor-pointer"
@@ -424,14 +426,23 @@ export default function LearningDashboardV2() {
       {/* ── SIGNAL LIST MODAL ── */}
       {signalListFilter && (
         <SignalListModal
-          title={signalListFilter.model 
+          title={signalListFilter.model
             ? `${MODEL_THEME[signalListFilter.model]?.label || signalListFilter.model} Signals`
-            : signalListFilter.symbol 
+            : signalListFilter.symbol
               ? `${symLabel(signalListFilter.symbol)} Signals`
               : "Signals"
           }
           filter={signalListFilter}
           onClose={() => setSignalListFilter(null)}
+        />
+      )}
+
+      {/* ── HISTORICAL MODEL PERFORMANCE MODAL ── */}
+      {selectedModelPerformanceSymbol && (
+        <ModelPerformanceModal
+          isOpen={true}
+          symbol={selectedModelPerformanceSymbol}
+          onClose={() => setSelectedModelPerformanceSymbol(null)}
         />
       )}
     </div>
@@ -571,13 +582,13 @@ function ActiveSignalCard({ signal, onSelect }: { signal: ActiveSignal; onSelect
 
 // ── Modals ──────────────────────────────────────────────────────────────────
 
-function SignalListModal({ 
-  title, 
-  filter, 
-  onClose 
-}: { 
-  title: string; 
-  filter: { model?: string; symbol?: string }; 
+function SignalListModal({
+  title,
+  filter,
+  onClose
+}: {
+  title: string;
+  filter: { model?: string; symbol?: string };
   onClose: () => void;
 }) {
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -597,10 +608,10 @@ function SignalListModal({
         const params = new URLSearchParams();
         params.set("limit", "50");
         if (filter.symbol) params.set("symbol", filter.symbol);
-        
+
         const res = await fetch(`https://upbeat-flow-production.up.railway.app/api/learning/signals/recent?${params}`);
         const data = await res.json();
-        
+
         if (data.signals) {
           let filtered = data.signals;
           if (filter.model) {
@@ -626,7 +637,7 @@ function SignalListModal({
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}>
       <div className="w-full max-w-2xl rounded-xl overflow-hidden"
         style={{ background: "var(--bg-card)", border: `1px solid var(--border-subtle)`, maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
-        
+
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid var(--border-subtle)` }}>
           <div>
             <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>{title}</p>
@@ -655,7 +666,7 @@ function SignalListModal({
               const isBuy = signal.ml_direction === "BUY";
               const dirColor = isBuy ? "var(--accent-positive)" : "var(--accent-negative)";
               const age = Math.round((Date.now() - new Date(signal.created_at).getTime()) / 60000);
-              
+
               return (
                 <button
                   key={signal.id}
