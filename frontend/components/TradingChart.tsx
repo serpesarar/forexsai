@@ -20,6 +20,26 @@ interface CandleData {
   volume: number;
 }
 
+interface NewsMarkerData {
+  time: number;
+  position: 'aboveBar' | 'belowBar' | 'inBar';
+  color: string;
+  shape: 'circle' | 'square' | 'arrowUp' | 'arrowDown';
+  text: string;
+  size: number;
+  // Custom data for tooltip
+  id?: string;
+  headline?: string;
+  headline_en?: string;
+  direction?: string;
+  score?: number;
+  urgency?: string;
+  is_economic_event?: boolean;
+  event_name?: string;
+  reasoning_tr?: string;
+  url?: string;
+}
+
 interface TradingChartProps {
   symbol: string;
   symbolLabel: string;
@@ -29,6 +49,8 @@ interface TradingChartProps {
   isLoading?: boolean;
   currentTimeframe?: string;
   onTimeframeChange?: (tf: string) => void;
+  newsMarkers?: NewsMarkerData[];
+  onMarkerClick?: (marker: NewsMarkerData) => void;
 }
 
 // EMA calculation helper
@@ -67,6 +89,8 @@ export default function TradingChart({
   isLoading = false,
   currentTimeframe = "1d",
   onTimeframeChange,
+  newsMarkers = [],
+  onMarkerClick,
 }: TradingChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartInstanceRef = useRef<IChartApi | null>(null);
@@ -300,6 +324,38 @@ export default function TradingChart({
       console.error("Chart data update error:", err);
     }
   }, [data, chartReady]);
+
+  // Apply news markers when they change
+  useEffect(() => {
+    const candleSeries = candleSeriesRef.current;
+    if (!candleSeries || !newsMarkers.length) return;
+
+    try {
+      // Filter markers to only show those within data range
+      const dataStartTime = data.length > 0 ? data[0].timestamp / 1000 : 0;
+      const dataEndTime = data.length > 0 ? data[data.length - 1].timestamp / 1000 : Infinity;
+      
+      const visibleMarkers = newsMarkers.filter(m => 
+        m.time >= dataStartTime && m.time <= dataEndTime
+      );
+
+      // Format markers for lightweight-charts
+      const formattedMarkers = visibleMarkers.map(m => ({
+        time: m.time as Time,
+        position: m.position,
+        color: m.color,
+        shape: m.shape,
+        text: m.text,
+        size: m.size,
+      }));
+
+      candleSeries.setMarkers(formattedMarkers);
+      
+      console.log(`[TradingChart] Applied ${formattedMarkers.length} news markers for ${symbol}`);
+    } catch (err) {
+      console.error("[TradingChart] Marker update error:", err);
+    }
+  }, [newsMarkers, symbol, data]);
 
   // Calculate price info
   const latestCandle = data[data.length - 1];
