@@ -17,7 +17,7 @@ import {
     XCircle,
     AlertCircle
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+
 import {
     LineChart,
     Line,
@@ -87,7 +87,29 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
     onClose,
     symbol,
 }) => {
-    const t = useTranslations();
+    const translations: Record<string, any> = {
+        "modelPerformance.summary.active": "Active",
+        "modelPerformance.summary.accuracy": "Accuracy",
+        "modelPerformance.summary.totalSignals": "Total Signals",
+        "modelPerformance.actions.export": "Export",
+        "modelPerformance.actions.setAlert": "Set Alert",
+        "modelPerformance.quickStats.success": "Success Rate",
+        "modelPerformance.quickStats.avgReturn": "Avg Return",
+        "modelPerformance.quickStats.sharpe": "Est. Sharpe",
+        "modelPerformance.quickStats.maxDrawdown": "Max Drawdown",
+        "modelPerformance.tabs.performance": "Performance",
+        "modelPerformance.tabs.session": "Session",
+        "modelPerformance.tabs.comparison": "Comparison",
+        "modelPerformance.charts.equityCurve": "Equity Curve",
+        "modelPerformance.charts.accuracy": "Accuracy",
+        "modelPerformance.charts.speed": "Speed",
+        "modelPerformance.charts.profit": "Profit",
+        "modelPerformance.charts.riskControl": "Risk Control",
+        "modelPerformance.charts.trendFollowing": "Trend Following",
+        "modelPerformance.table.recentSignals": "Recent Signals"
+    };
+
+    const t = (key: string) => translations[key] || key;
     const [activeTab, setActiveTab] = useState<"performance" | "session" | "comparison">("performance");
 
     const { data: rawData, isLoading, isError } = useQuery({
