@@ -296,8 +296,14 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
                 const leftBorderGradient = check.color === "green" ? `linear-gradient(180deg, ${theme.green}40 0%, ${theme.green}10 100%)` :
                   check.color === "red" ? `linear-gradient(180deg, ${theme.red}40 0%, ${theme.red}10 100%)` :
                     `linear-gradient(180deg, ${theme.warn}40 0%, ${theme.warn}10 100%)`;
+
+                const angle = check.id % 2 === 1 ? "135deg" : "45deg";
+                const stripeColor1 = `color-mix(in srgb, ${leftBorderColor} 3%, transparent)`;
+                const stripeColor2 = `color-mix(in srgb, ${leftBorderColor} 8%, transparent)`;
+                const stripeBg = `repeating-linear-gradient(${angle}, ${stripeColor1}, ${stripeColor1} 40px, ${stripeColor2} 40px, ${stripeColor2} 80px)`;
+
                 return (
-                  <div key={check.id} className="flex flex-col h-full transition-colors duration-500" style={{ background: cc.bg }}>
+                  <div key={check.id} className="flex flex-col h-full transition-colors duration-500" style={{ background: stripeBg }}>
                     {/* Sol renk şeridi + içerik */}
                     <div className="flex flex-1">
                       {/* Sol renk şeridi */}
