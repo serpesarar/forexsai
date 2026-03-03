@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Calendar, Building2, Newspaper, TrendingUp, TrendingDown, Minus, Clock, AlertCircle } from "lucide-react";
 import {
   EmelIcon, PulseIcon, SignalsIcon, LoadingIcon,
   ThemeSunIcon, ThemeMoonIcon, NasdaqIcon, GoldIcon,
@@ -355,6 +355,44 @@ const initialNewsItems = [
   },
 ];
 
+// Economic Calendar Types
+interface EconomicEvent {
+  id: string;
+  timestamp: string;
+  title: string;
+  title_tr: string;
+  currency: string;
+  impact: "High" | "Medium" | "Low";
+  actual: string | null;
+  forecast: string | null;
+  previous: string | null;
+  predicted_direction: "bullish" | "bearish" | "neutral" | "volatile";
+  affected_symbols: string[];
+  description: string;
+  description_tr: string;
+  why_it_matters: string;
+  why_it_matters_tr: string;
+  typical_market_reaction: string;
+  typical_market_reaction_tr: string;
+}
+
+interface EarningsEvent {
+  id: string;
+  timestamp: string;
+  company: string;
+  ticker: string;
+  sector: string;
+  eps_forecast: string | null;
+  revenue_forecast: string | null;
+  previous_eps: string | null;
+  previous_revenue: string | null;
+  predicted_direction: "bullish" | "bearish" | "neutral";
+  confidence: number;
+  affected_symbols: string[];
+  analysis: string;
+  analysis_tr: string;
+}
+
 const miniSeries = [
   [12, 16, 14, 20, 22, 21, 28, 32, 29, 35],
   [24, 20, 18, 17, 19, 16, 15, 14, 18, 16],
@@ -474,6 +512,9 @@ export default function HomePage() {
     }
   }, [hasCachedData, cachedNasdaq, cachedXauusd]);
   const [newsItems, setNewsItems] = useState(initialNewsItems);
+  const [economicEvents, setEconomicEvents] = useState<EconomicEvent[]>([]);
+  const [earningsEvents, setEarningsEvents] = useState<EarningsEvent[]>([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
   const [claudeSentiments, setClaudeSentiments] = useState<{ nasdaq?: any; xauusd?: any }>({});
   const [claudePatterns, setClaudePatterns] = useState<{ nasdaq?: any; xauusd?: any }>({});
   const [claudePatternsLoading, setClaudePatternsLoading] = useState(false);
@@ -751,6 +792,42 @@ export default function HomePage() {
       document.documentElement.removeAttribute("data-theme");
     }
   }, [theme]);
+
+  // Fetch Economic Calendar and Earnings data
+  useEffect(() => {
+    const fetchCalendarData = async () => {
+      try {
+        setCalendarLoading(true);
+        
+        // Fetch economic calendar
+        const econResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/calendar/economic?days=30`);
+        if (econResponse.ok) {
+          const econData = await econResponse.json();
+          if (econData.success) {
+            setEconomicEvents(econData.events.slice(0, 10)); // Show only first 10
+          }
+        }
+        
+        // Fetch earnings calendar
+        const earnResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/calendar/earnings?days=30`);
+        if (earnResponse.ok) {
+          const earnData = await earnResponse.json();
+          if (earnData.success) {
+            setEarningsEvents(earnData.earnings.slice(0, 10)); // Show only first 10
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch calendar data:", err);
+      } finally {
+        setCalendarLoading(false);
+      }
+    };
+    
+    fetchCalendarData();
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchCalendarData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const formatPctShort = (value: number) => {
     const v = Number(value);
@@ -1274,32 +1351,199 @@ export default function HomePage() {
     </div>
   );
 
-  // News card renderer
-  const renderNewsCard = () => (
-    <div className="glass-premium rounded-2xl p-5 transition-all duration-300 hover:shadow-glow-sm">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{t("news.title")}</p>
-          <h3 className="mt-2 text-lg font-semibold">{t("news.subtitle")}</h3>
-        </div>
-        <span className="text-xs text-textSecondary">30 {t("news.headlines")}</span>
-      </div>
-      <div className="mt-4 max-h-[300px] space-y-3 overflow-y-auto">
-        {newsItems.map((item) => (
-          <div key={item.title} className="rounded-xl border border-white/5 bg-white/5 p-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold">{item.title}</p>
-                <p className="text-xs text-textSecondary">{item.source}</p>
-              </div>
-              <span className={`mt-1 h-2 w-2 rounded-full ${item.sentiment === "bullish" ? "bg-success" : item.sentiment === "bearish" ? "bg-danger" : "bg-white/40"}`} />
-            </div>
-            <p className="mt-2 text-xs text-textSecondary">{item.time}</p>
+  // News card renderer with tabs
+  const renderNewsCard = () => {
+    const [activeTab, setActiveTab] = useState<"news" | "economic" | "earnings">("news");
+    
+    const impactColors = {
+      High: "bg-red-500/20 text-red-300 border-red-500/40",
+      Medium: "bg-yellow-500/20 text-yellow-300 border-yellow-500/40",
+      Low: "bg-green-500/20 text-green-300 border-green-500/40",
+    };
+
+    const directionIcons = {
+      bullish: <TrendingUp className="w-3 h-3 text-emerald-400" />,
+      bearish: <TrendingDown className="w-3 h-3 text-red-400" />,
+      neutral: <Minus className="w-3 h-3 text-gray-400" />,
+      volatile: <AlertCircle className="w-3 h-3 text-yellow-400" />,
+    };
+
+    const formatTime = (dateStr: string) => {
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diffMs = date.getTime() - now.getTime();
+      const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      
+      if (diffHrs < 0) return "Started";
+      if (diffHrs < 24) return `${diffHrs}h ${diffMins}m`;
+      return `${Math.floor(diffHrs / 24)}d`;
+    };
+    
+    return (
+      <div className="glass-premium rounded-2xl p-5 transition-all duration-300 hover:shadow-glow-sm">
+        {/* Header with Tabs */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">Market Intelligence</p>
+            <h3 className="mt-1 text-lg font-semibold">
+              {activeTab === "news" && "News Feed"}
+              {activeTab === "economic" && "Economic Calendar"}
+              {activeTab === "earnings" && "Earnings Calendar"}
+            </h3>
           </div>
-        ))}
+        </div>
+        
+        {/* Tabs */}
+        <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1 mb-4">
+          <button
+            onClick={() => setActiveTab("news")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              activeTab === "news" 
+                ? "bg-slate-700 text-white" 
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+            }`}
+          >
+            <Newspaper className="w-3.5 h-3.5" />
+            News
+          </button>
+          <button
+            onClick={() => setActiveTab("economic")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              activeTab === "economic" 
+                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40" 
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+            }`}
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            Economic
+          </button>
+          <button
+            onClick={() => setActiveTab("earnings")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              activeTab === "earnings" 
+                ? "bg-blue-500/20 text-blue-400 border border-blue-500/40" 
+                : "text-slate-400 hover:text-white hover:bg-slate-800"
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            Earnings
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="max-h-[300px] overflow-y-auto">
+          {/* NEWS TAB */}
+          {activeTab === "news" && (
+            <div className="space-y-3">
+              {newsItems.map((item, idx) => (
+                <div key={idx} className="rounded-xl border border-white/5 bg-white/5 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold">{item.title}</p>
+                      <p className="text-xs text-textSecondary">{item.source}</p>
+                    </div>
+                    <span className={`mt-1 h-2 w-2 rounded-full ${item.sentiment === "bullish" ? "bg-success" : item.sentiment === "bearish" ? "bg-danger" : "bg-white/40"}`} />
+                  </div>
+                  <p className="mt-2 text-xs text-textSecondary">{item.time}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ECONOMIC CALENDAR TAB */}
+          {activeTab === "economic" && (
+            <div className="space-y-3">
+              {calendarLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin w-6 h-6 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full" />
+                </div>
+              ) : economicEvents.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 text-sm">
+                  No upcoming events
+                </div>
+              ) : (
+                economicEvents.map((event, idx) => (
+                  <div key={idx} className="rounded-xl border border-white/5 bg-white/5 p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${impactColors[event.impact]}`}>
+                        {event.impact}
+                      </span>
+                      <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {formatTime(event.timestamp)}
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-white mb-1">{event.title}</p>
+                    <div className="flex items-center gap-2">
+                      {directionIcons[event.predicted_direction]}
+                      <span className="text-xs text-slate-400">
+                        {event.affected_symbols.slice(0, 3).join(", ")}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* EARNINGS TAB */}
+          {activeTab === "earnings" && (
+            <div className="space-y-3">
+              {calendarLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full" />
+                </div>
+              ) : earningsEvents.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 text-sm">
+                  No upcoming earnings
+                </div>
+              ) : (
+                earningsEvents.map((earnings, idx) => (
+                  <div key={idx} className="rounded-xl border border-white/5 bg-white/5 p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded bg-gradient-to-br from-blue-500/30 to-indigo-500/30 flex items-center justify-center text-xs font-bold text-blue-400">
+                          {earnings.ticker.slice(0, 2)}
+                        </span>
+                        <span className="text-sm font-semibold">{earnings.company}</span>
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded ${
+                        earnings.confidence >= 70 ? "bg-emerald-500/20 text-emerald-400" : "bg-yellow-500/20 text-yellow-400"
+                      }`}>
+                        {earnings.confidence}% confidence
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                      <div className="bg-white/5 rounded p-1.5">
+                        <span className="text-slate-500">EPS:</span>{" "}
+                        <span className="text-white">{earnings.eps_forecast || "--"}</span>
+                      </div>
+                      <div className="bg-white/5 rounded p-1.5">
+                        <span className="text-slate-500">Rev:</span>{" "}
+                        <span className="text-white">{earnings.revenue_forecast || "--"}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {directionIcons[earnings.predicted_direction]}
+                      <span className={`text-xs ${
+                        earnings.predicted_direction === "bullish" ? "text-emerald-400" :
+                        earnings.predicted_direction === "bearish" ? "text-red-400" :
+                        "text-gray-400"
+                      }`}>
+                        {earnings.predicted_direction === "bullish" ? "Beat Expected" :
+                         earnings.predicted_direction === "bearish" ? "Miss Expected" : "Neutral"}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Cards that are always visible (top of page) - skip LazyPanel for these
   const alwaysVisibleCards = new Set(["signal-nasdaq", "signal-xauusd"]);
