@@ -16,7 +16,7 @@ from functools import lru_cache
 import redis.asyncio as redis
 
 # Configuration
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+DEEPSEEK_API_KEY = os.getenv("DEEP_SEEKR1", "")
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 

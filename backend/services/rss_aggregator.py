@@ -557,9 +557,9 @@ class RSSAggregator:
         import os
         
         # Check if DeepSeek API key is configured
-        api_key = os.getenv("DEEPSEEK_API_KEY", "")
+        api_key = os.getenv("DEEP_SEEKR1", "")
         if not api_key:
-            print(f"[RSS] WARNING: DEEPSEEK_API_KEY not set! Using fallback for: {item.title[:50]}...")
+            print(f"[RSS] WARNING: DEEP_SEEKR1 not set! Using fallback for: {item.title[:50]}...")
             return self._fallback_analysis(item)
         
         # STEP 1: Check if news is market-related (skip non-financial news)

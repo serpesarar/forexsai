@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 import aiohttp
 
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+DEEPSEEK_API_KEY = os.getenv("DEEP_SEEKR1", "")
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
