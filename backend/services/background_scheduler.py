@@ -732,11 +732,11 @@ async def get_cached_data(symbol: str) -> Optional[Dict[str, Any]]:
 
 # RSS Aggregation tracking
 _last_rss_update: Optional[datetime] = None
-RSS_UPDATE_INTERVAL = 120  # 2 minutes for RSS feeds
+RSS_UPDATE_INTERVAL = 420  # 7 minutes for RSS feeds (was 2 min)
 
 
 async def run_rss_aggregation_if_needed():
-    """Run RSS aggregation every 2 minutes"""
+    """Run RSS aggregation every 7 minutes (optimized for cost)"""
     global _last_rss_update
     
     now = datetime.utcnow()
@@ -758,6 +758,56 @@ async def run_rss_aggregation_if_needed():
     
     except Exception as e:
         logger.error(f"RSS aggregation error: {e}")
+
+
+# Pattern Analysis tracking - günde 2 kez
+_last_pattern_analysis: Optional[datetime] = None
+
+async def run_pattern_analysis_if_needed():
+    """Run pattern analysis twice daily:
+    1. US market açılışından 1 saat sonra (15:30 UTC)
+    2. US market kapanışından 2 saat önce (19:00 UTC)
+    """
+    global _last_pattern_analysis
+    
+    now = datetime.utcnow()
+    hour = now.hour
+    minute = now.minute
+    
+    # US açılış: 14:30 UTC -> 1 saat sonra: 15:30 UTC
+    # US kapanış: 21:00 UTC -> 2 saat önce: 19:00 UTC
+    
+    is_analysis_time = (
+        (hour == 15 and minute >= 25 and minute <= 35) or  # 15:30 ±5dk
+        (hour == 19 and minute >= 0 and minute <= 10)      # 19:00 ±5dk
+    )
+    
+    if not is_analysis_time:
+        return
+    
+    # Son çalışmadan en az 2 saat geçmiş mi?
+    if _last_pattern_analysis and (now - _last_pattern_analysis).total_seconds() < 7200:
+        return
+    
+    _last_pattern_analysis = now
+    
+    try:
+        from services.pattern_analyzer import analyze_patterns_for_symbol
+        
+        symbols = ["XAUUSD", "NDX", "DAX", "USOIL", "DXY", "VIX"]
+        
+        for symbol in symbols:
+            try:
+                result = await analyze_patterns_for_symbol(symbol)
+                logger.info(f"Pattern analysis completed for {symbol}: {result.get('primary_pattern', 'none')}")
+            except Exception as e:
+                logger.error(f"Pattern analysis error for {symbol}: {e}")
+                continue
+        
+        logger.info(f"Daily pattern analysis completed at {hour}:{minute:02d} UTC")
+    
+    except Exception as e:
+        logger.error(f"Pattern analysis scheduler error: {e}")
 
 
 # Patch the background_scheduler_loop to include RSS
@@ -794,8 +844,10 @@ async def background_scheduler_loop_with_rss():
             await log_predictions_if_needed()
             # Log Pulse/EMEL signals every 15 min
             await log_pulse_signals_if_needed()
-            # RSS aggregation every 2 minutes
+            # RSS aggregation every 7 minutes (cost optimized)
             await run_rss_aggregation_if_needed()
+            # Pattern analysis twice daily (US open +1h, close -2h)
+            await run_pattern_analysis_if_needed()
         except Exception as e:
             logger.error(f"Scheduler error: {e}")
         

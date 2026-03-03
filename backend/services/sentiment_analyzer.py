@@ -10,22 +10,45 @@ import json
 
 
 async def run_claude_sentiment(symbol: str = "NDX.INDX", lang: str = "en") -> dict:
-    headlines = await fetch_marketaux_headlines(["NDX", "XAUUSD"])
-
+    """
+    DEPRECATED: Use RSS aggregator sentiment instead (more efficient, cost-optimized)
+    This function now returns RSS-based sentiment without extra DeepSeek calls
+    """
     # Normalize symbol for price lookup
     sym = (symbol or "NDX.INDX").strip()
     if sym.upper() == "NASDAQ":
         sym = "NDX.INDX"
     current_price = await fetch_latest_price(sym)
 
+    # Get recent news from RSS (already analyzed by DeepSeek)
+    from services.redis_client import cache_get
+    rss_sentiment = cache_get(f"rss_sentiment:{sym}") or {}
+
     market_data_summary = {
         "symbol": sym,
         "current_price": current_price,
-        "news_count": len(headlines),
-        "news_source": "marketaux" if settings.marketaux_api_key else "unavailable",
+        "news_count": rss_sentiment.get("news_count", 0),
+        "news_source": "rss_aggregator",
         "timestamp": datetime.utcnow().isoformat() + "Z",
     }
 
+    # Skip DeepSeek - use RSS sentiment data (already analyzed)
+    if rss_sentiment:
+        return {
+            "sentiment": rss_sentiment.get("sentiment", "NEUTRAL"),
+            "confidence": rss_sentiment.get("confidence", 0.6),
+            "probability_up": rss_sentiment.get("probability_up", 35),
+            "probability_down": rss_sentiment.get("probability_down", 30),
+            "probability_sideways": rss_sentiment.get("probability_sideways", 35),
+            "key_factors": rss_sentiment.get("key_factors", []),
+            "analysis": "Using RSS-aggregated sentiment (DeepSeek already analyzed)",
+            "recommendation": rss_sentiment.get("recommendation", "HOLD"),
+            "market_data_summary": market_data_summary,
+            "model_status": "rss_optimized",
+            "headlines": [],
+        }
+
+    # Fallback if no RSS data
     if not settings.deepseek_api_key:
         # Fallback deterministic sentiment if DeepSeek key missing
         return {

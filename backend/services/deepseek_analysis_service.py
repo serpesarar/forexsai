@@ -13,10 +13,10 @@ from typing import Literal, Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
 
-# In-memory cache (TTL = 300s)
+# In-memory cache (TTL = 2 hours for cost optimization)
 _cache: Dict[str, Any] = {}
 _cache_ts: Dict[str, float] = {}
-CACHE_TTL = 1800  # 30 minutes - DeepSeek analysis doesn't change frequently
+CACHE_TTL = 7200  # 2 hours - DeepSeek analysis doesn't change frequently
 
 SYSTEM_PROMPT = """Sen bir Institutional Quantitative Analyst'sin. 
 Görevin: Verilen veri paketinden BÜYÜK RESİM analizi yapıp, net bir pozisyon kararı vermek.

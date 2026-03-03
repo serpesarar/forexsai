@@ -1,11 +1,13 @@
 """
 RSS News Aggregator Service
 Fetches financial news from multiple RSS sources with intelligent filtering
+Optimized for cost: Redis cache + Smart filtering + 7min intervals
 """
 
 import asyncio
 import hashlib
 import html
+import json
 import re
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Set, Any
@@ -16,6 +18,28 @@ from difflib import SequenceMatcher
 
 from services.news_analyzer_v2 import get_real_analyzer
 from database.supabase_client import get_supabase_client
+from services.redis_client import cache_get, cache_set
+
+# IMPORTANT SYMBOLS - Only analyze news affecting these
+IMPORTANT_SYMBOLS = {"XAUUSD", "NDX", "DAX", "USOIL", "VIX", "DXY", "GOLD", "NASDAQ", "OIL"}
+
+# News filtering keywords (for pre-filter before AI)
+MARKET_KEYWORDS = {
+    # Metals
+    "gold", "xau", "silver", "metal", "precious",
+    # Indices
+    "nasdaq", "dax", "index", "indices", "stock", "hisse",
+    # Forex
+    "dollar", "eur", "usd", "fed", "rate", "interest", "faiz",
+    # Oil
+    "oil", "petrol", "crude", "opec", "barrel", "wti", "brent",
+    # Volatility
+    "vix", "volatility", "fear index",
+    # General market
+    "market", "piyasa", "trade", "trading", "yatırım", "invest",
+    # Events
+    "earnings", "kazanç", "gdp", "inflation", "enflasyon", "nfp", "jobs"
+}
 
 # RSS Feed Sources
 RSS_SOURCES = {
@@ -471,8 +495,27 @@ class RSSAggregator:
         
         return all_items
     
+    def _is_market_related(self, title: str, content: str) -> bool:
+        """Check if news is related to important financial markets"""
+        text = f"{title} {content}".lower()
+        
+        # Check if any market keyword exists
+        for keyword in MARKET_KEYWORDS:
+            if keyword in text:
+                return True
+        
+        return False
+    
+    def _get_cache_key(self, title: str) -> str:
+        """Generate cache key for a news item"""
+        # Normalize title for consistent cache keys
+        normalized = re.sub(r'[^\w\s]', '', title.lower())
+        normalized = re.sub(r'\s+', ' ', normalized).strip()
+        title_hash = hashlib.md5(normalized.encode()).hexdigest()[:16]
+        return f"news_analysis:{title_hash}"
+    
     async def analyze_with_ai(self, item: RSSNewsItem) -> RSSNewsItem:
-        """Send news to REAL DeepSeek AI for analysis - ALL NEWS GOES TO AI"""
+        """Send news to DeepSeek AI with caching and smart filtering"""
         import os
         
         # Check if DeepSeek API key is configured
@@ -481,15 +524,39 @@ class RSSAggregator:
             print(f"[RSS] WARNING: DEEPSEEK_API_KEY not set! Using fallback for: {item.title[:50]}...")
             return self._fallback_analysis(item)
         
-        print(f"[RSS] Sending to DeepSeek AI: {item.title[:60]}...")
+        # STEP 1: Check if news is market-related (skip non-financial news)
+        if not self._is_market_related(item.title, item.content):
+            print(f"[RSS] SKIP (not market-related): {item.title[:50]}...")
+            item.urgency = "low"
+            item.ai_processed = True
+            item.processed_at = datetime.utcnow()
+            item.ai_confidence = 0.3
+            return item
+        
+        # STEP 2: Check Redis cache first
+        cache_key = self._get_cache_key(item.title)
+        cached_result = cache_get(cache_key)
+        
+        if cached_result:
+            print(f"[RSS] CACHE HIT for: {item.title[:50]}...")
+            # Restore cached analysis
+            item.impacts = cached_result.get("impacts", [])
+            item.title_tr = cached_result.get("title_tr", f"[TR] {item.title}")
+            item.content_tr = cached_result.get("content_tr", item.content)
+            item.sentiment = cached_result.get("sentiment", "neutral")
+            item.volatility_expectation = cached_result.get("volatility_expectation", "medium")
+            item.urgency = cached_result.get("urgency", "medium")
+            item.ai_confidence = cached_result.get("ai_confidence", 0.7)
+            item.ai_processed = True
+            item.processed_at = datetime.utcnow()
+            return item
+        
+        # STEP 3: Call DeepSeek AI (cache miss)
+        print(f"[RSS] CACHE MISS - Calling DeepSeek for: {item.title[:50]}...")
         
         try:
-            # Get REAL AI analysis (V2 - gerçek analiz)
             from services.news_analyzer_v2 import get_real_analyzer
             analyzer = get_real_analyzer()
-            
-            # Log the API call
-            print(f"[RSS] Calling DeepSeek API for item: {item.id}")
             
             result = await analyzer.analyze(
                 headline=item.title,
@@ -497,15 +564,13 @@ class RSSAggregator:
                 source=item.source
             )
             
-            # Check if we got real AI result or fallback
-            if result.confidence < 60 and not result.headline_tr:
-                print(f"[RSS] DeepSeek returned fallback-like result for: {item.title[:50]}...")
-            else:
-                print(f"[RSS] DeepSeek AI SUCCESS for: {item.title[:50]}...")
-                print(f"[RSS]   - Turkish title: {result.headline_tr[:50] if result.headline_tr else 'N/A'}...")
-                print(f"[RSS]   - Impacts: {len(result.impacts)} instruments")
+            # Check if any important symbol is affected
+            important_impacts = [
+                imp for imp in result.impacts 
+                if imp.symbol in IMPORTANT_SYMBOLS and imp.score >= 5
+            ]
             
-            # Map to item with translations
+            # Map to item
             item.impacts = [
                 {
                     "symbol": imp.symbol,
@@ -519,7 +584,6 @@ class RSSAggregator:
                 for imp in result.impacts
             ]
             
-            # Store Turkish translations (ensure they're not empty)
             item.title_tr = result.headline_tr if result.headline_tr else f"[TR] {item.title}"
             item.content_tr = result.content_tr if result.content_tr else item.content
             item.sentiment = result.sentiment
@@ -529,12 +593,24 @@ class RSSAggregator:
             item.ai_processed = True
             item.processed_at = datetime.utcnow()
             
+            # STEP 4: Store in cache (2 hours TTL)
+            cache_data = {
+                "impacts": item.impacts,
+                "title_tr": item.title_tr,
+                "content_tr": item.content_tr,
+                "sentiment": item.sentiment,
+                "volatility_expectation": item.volatility_expectation,
+                "urgency": item.urgency,
+                "ai_confidence": item.ai_confidence,
+            }
+            cache_set(cache_key, cache_data, ttl=7200)  # 2 hours
+            print(f"[RSS] Cached analysis for: {item.title[:50]}...")
+            
         except asyncio.TimeoutError:
-            print(f"[RSS] DeepSeek API TIMEOUT for: {item.title[:50]}...")
+            print(f"[RSS] DeepSeek TIMEOUT for: {item.title[:50]}...")
             item = self._fallback_analysis(item)
         except Exception as e:
-            print(f"[RSS] DeepSeek API ERROR for {item.id}: {e}")
-            # Fallback to rule-based if AI fails
+            print(f"[RSS] DeepSeek ERROR: {e}")
             item = self._fallback_analysis(item)
         
         return item
