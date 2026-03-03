@@ -7,7 +7,8 @@ import {
   Bell, Star, Wallet, Calendar, FileText, MessageSquare, Newspaper,
   Building2, LineChart, BookOpen, Filter, ChevronLeft, ChevronRight,
   TrendingUp, TrendingDown, Sparkles, Camera, Settings,
-  Clock, AlertTriangle, RefreshCw, X, ArrowUp, ArrowDown, Brain
+  Clock, AlertTriangle, RefreshCw, X, ArrowUp, ArrowDown, Brain,
+  Minus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/api";
@@ -53,6 +54,55 @@ interface CandleNews {
   hasBigMove: boolean;
   moveType: 'up' | 'down' | 'none';
   movePercent: number;
+}
+
+// Economic Calendar types (matching backend API)
+interface EconomicEvent {
+  id: string;
+  timestamp: string;
+  title: string;
+  title_tr: string;
+  currency: string;
+  impact: "High" | "Medium" | "Low";
+  actual?: string;
+  forecast?: string;
+  previous?: string;
+  predicted_direction: "bullish" | "bearish" | "neutral";
+  affected_symbols: string[];
+  impact_analysis: string;
+  impact_analysis_tr: string;
+  description: string;
+  description_tr: string;
+  why_it_matters: string;
+  why_it_matters_tr: string;
+  typical_market_reaction: string;
+  typical_market_reaction_tr: string;
+  is_upcoming: boolean;
+  minutes_until?: number;
+}
+
+interface EarningsEvent {
+  id: string;
+  company: string;
+  company_tr?: string;
+  ticker: string;
+  sector: string;
+  date: string;
+  time: "after_market" | "before_market";
+  eps_forecast?: string;
+  revenue_forecast?: string;
+  previous_eps?: string;
+  previous_revenue?: string;
+  affected_symbols: string[];
+  analysis: string;
+  analysis_tr: string;
+  key_metrics: string[];
+  key_metrics_tr: string[];
+  timestamp: string;
+  is_upcoming: boolean;
+  minutes_until: number;
+  confidence: number;
+  predicted_direction: "bullish" | "bearish" | "neutral";
 }
 
 interface WSPriceData {
@@ -229,6 +279,13 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   // AI Explanation states
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
   const [loadingExplanation, setLoadingExplanation] = useState(false);
+  
+  // Calendar tab states
+  const [activeTab, setActiveTab] = useState<"news" | "economic" | "earnings">("news");
+  const [economicEvents, setEconomicEvents] = useState<EconomicEvent[]>([]);
+  const [earningsEvents, setEarningsEvents] = useState<EarningsEvent[]>([]);
+  const [economicLoading, setEconomicLoading] = useState(false);
+  const [earningsLoading, setEarningsLoading] = useState(false);
   
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -482,6 +539,42 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       setNewsLoading(false);
     }
   }, [selectedSymbol, getMockNews]);
+
+  // Fetch economic calendar
+  const fetchEconomicCalendar = useCallback(async () => {
+    try {
+      setEconomicLoading(true);
+      const response = await fetcher<{ success: boolean; events: EconomicEvent[] }>(
+        `/api/calendar/economic?days=14`
+      );
+      if (response.success) {
+        setEconomicEvents(response.events);
+      }
+    } catch (err) {
+      console.error("Error fetching economic calendar:", err);
+      setEconomicEvents([]);
+    } finally {
+      setEconomicLoading(false);
+    }
+  }, []);
+
+  // Fetch earnings calendar
+  const fetchEarningsCalendar = useCallback(async () => {
+    try {
+      setEarningsLoading(true);
+      const response = await fetcher<{ success: boolean; earnings: EarningsEvent[] }>(
+        `/api/calendar/earnings?days=14`
+      );
+      if (response.success) {
+        setEarningsEvents(response.earnings);
+      }
+    } catch (err) {
+      console.error("Error fetching earnings calendar:", err);
+      setEarningsEvents([]);
+    } finally {
+      setEarningsLoading(false);
+    }
+  }, []);
 
   // Fetch live prices via REST API
   const fetchLivePrices = useCallback(async () => {
@@ -781,6 +874,19 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     setSelectedNewsForModal(newsItem);
     setIsNewsModalOpen(true);
   };
+
+  // Fetch calendar data when tabs change
+  useEffect(() => {
+    if (activeTab === "economic" && economicEvents.length === 0) {
+      fetchEconomicCalendar();
+    }
+  }, [activeTab, economicEvents.length, fetchEconomicCalendar]);
+
+  useEffect(() => {
+    if (activeTab === "earnings" && earningsEvents.length === 0) {
+      fetchEarningsCalendar();
+    }
+  }, [activeTab, earningsEvents.length, fetchEarningsCalendar]);
 
   // Fetch AI explanation for price move  
   const fetchAIExplanation = useCallback(async (candle: ChartCandle) => {
@@ -1113,93 +1219,304 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
             </div>
           </div>
 
-          {/* News Panel */}
+          {/* News Panel with Tabs */}
           <aside className="w-[420px] border-l border-gray-800 bg-[#0a0a0a] flex flex-col">
-            <div className="h-14 flex items-center justify-between px-4 border-b border-gray-800">
-              <div className="flex items-center gap-2">
-                <h2 className="font-semibold">News Feed</h2>
-                {wsConnected && <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
-                {/* News count badge */}
-                {!newsLoading && news.length > 0 && (
-                  <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 text-xs rounded-full">
+            {/* Tabs Header */}
+            <div className="flex border-b border-gray-800">
+              <button
+                onClick={() => setActiveTab("news")}
+                className={cn(
+                  "flex-1 h-12 flex items-center justify-center gap-2 text-sm font-medium transition-all relative",
+                  activeTab === "news" ? "text-white" : "text-gray-500 hover:text-gray-300"
+                )}
+              >
+                <Newspaper className="w-4 h-4" />
+                <span>News</span>
+                {!newsLoading && news.length > 0 && activeTab === "news" && (
+                  <span className="px-1.5 py-0.5 bg-purple-500/20 text-purple-400 text-[10px] rounded-full">
                     {news.length}
                   </span>
                 )}
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Test Data Button - only show if no news */}
-                {news.length === 0 && !newsLoading && (
-                  <button
-                    onClick={() => { fetchNews(true); }}
-                    className="px-3 py-1.5 bg-purple-500/20 text-purple-400 rounded-lg text-xs hover:bg-purple-500/30 transition-colors"
-                    title="Load test news data"
-                  >
-                    🧪 Test Data
-                  </button>
+                {activeTab === "news" && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />
                 )}
-                <select 
-                  value={currentLocale} 
-                  onChange={(e) => setCurrentLocale(e.target.value)}
-                  className="bg-gray-900 border border-gray-800 rounded-lg px-2 py-1 text-xs text-gray-400"
-                >
-                  <option value="tr">🇹🇷 TR</option>
-                  <option value="en">🇬🇧 EN</option>
-                  <option value="de">🇩🇪 DE</option>
-                  <option value="es">🇪🇸 ES</option>
-                  <option value="fr">🇫🇷 FR</option>
-                  <option value="ar">🇸🇦 AR</option>
-                </select>
-                <button onClick={() => fetchNews(false)} className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg">
-                  <RefreshCw className={cn("w-4 h-4", newsLoading && "animate-spin")} />
-                </button>
-              </div>
+              </button>
+              <button
+                onClick={() => setActiveTab("economic")}
+                className={cn(
+                  "flex-1 h-12 flex items-center justify-center gap-2 text-sm font-medium transition-all relative",
+                  activeTab === "economic" ? "text-white" : "text-gray-500 hover:text-gray-300"
+                )}
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Economic</span>
+                {activeTab === "economic" && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500" />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab("earnings")}
+                className={cn(
+                  "flex-1 h-12 flex items-center justify-center gap-2 text-sm font-medium transition-all relative",
+                  activeTab === "earnings" ? "text-white" : "text-gray-500 hover:text-gray-300"
+                )}
+              >
+                <Building2 className="w-4 h-4" />
+                <span>Earnings</span>
+                {activeTab === "earnings" && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500" />
+                )}
+              </button>
             </div>
 
-            <div className="flex items-center gap-1 px-4 py-3 border-b border-gray-800">
-              {["all", "popular", "high"].map((filter) => (
-                <button 
-                  key={filter} 
-                  onClick={() => setNewsFilter(filter as any)} 
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
-                    newsFilter === filter ? "text-white" : "text-gray-500 hover:text-gray-300"
+            {/* News Tab Content */}
+            {activeTab === "news" && (
+              <>
+                {/* News Toolbar */}
+                <div className="h-12 flex items-center justify-between px-4 border-b border-gray-800 bg-[#0a0a0a]">
+                  <div className="flex items-center gap-2">
+                    {wsConnected && <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Live connected" />}
+                    <div className="flex items-center gap-1">
+                      {["all", "popular", "high"].map((filter) => (
+                        <button 
+                          key={filter} 
+                          onClick={() => setNewsFilter(filter as any)} 
+                          className={cn(
+                            "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all",
+                            newsFilter === filter 
+                              ? "bg-purple-500/20 text-purple-400" 
+                              : "text-gray-500 hover:text-gray-300 hover:bg-gray-800"
+                          )}
+                        >
+                          {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {news.length === 0 && !newsLoading && (
+                      <button
+                        onClick={() => { fetchNews(true); }}
+                        className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded-md text-[10px] hover:bg-purple-500/30 transition-colors"
+                        title="Load test news data"
+                      >
+                        🧪 Test
+                      </button>
+                    )}
+                    <select 
+                      value={currentLocale} 
+                      onChange={(e) => setCurrentLocale(e.target.value)}
+                      className="bg-gray-900 border border-gray-800 rounded-md px-2 py-1 text-[11px] text-gray-400"
+                    >
+                      <option value="tr">🇹🇷 TR</option>
+                      <option value="en">🇬🇧 EN</option>
+                      <option value="de">🇩🇪 DE</option>
+                      <option value="es">🇪🇸 ES</option>
+                      <option value="fr">🇫🇷 FR</option>
+                    </select>
+                    <button onClick={() => fetchNews(false)} className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-800 rounded-md">
+                      <RefreshCw className={cn("w-3.5 h-3.5", newsLoading && "animate-spin")} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* News List */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {newsLoading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="h-32 bg-gray-900/50 rounded-xl animate-pulse border border-gray-800" />
+                    ))
+                  ) : filteredNews.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Newspaper className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                      <p className="text-gray-500 text-sm mb-2">No news available</p>
+                      <p className="text-gray-600 text-xs mb-4 px-4">
+                        Supabase enriched_news table may be empty or API is not responding
+                      </p>
+                      <button
+                        onClick={() => { fetchNews(true); }}
+                        className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors"
+                      >
+                        🧪 Load Test News
+                      </button>
+                    </div>
+                  ) : (
+                    filteredNews.map((item) => (
+                      <NewsCard 
+                        key={item.id} 
+                        news={item} 
+                        onClick={() => handleNewsClick(item)}
+                        locale={currentLocale}
+                      />
+                    ))
                   )}
-                >
-                  {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                </button>
-              ))}
-            </div>
+                </div>
+              </>
+            )}
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {newsLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-32 bg-gray-900/50 rounded-xl animate-pulse border border-gray-800" />
-                ))
-              ) : filteredNews.length === 0 ? (
-                <div className="text-center py-12">
-                  <Newspaper className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 text-sm mb-2">No news available</p>
-                  <p className="text-gray-600 text-xs mb-4 px-4">
-                    Supabase enriched_news table may be empty or API is not responding
-                  </p>
-                  <button
-                    onClick={() => { fetchNews(true); }}
-                    className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors"
+            {/* Economic Calendar Tab Content */}
+            {activeTab === "economic" && (
+              <>
+                <div className="h-12 flex items-center justify-between px-4 border-b border-gray-800 bg-[#0a0a0a]">
+                  <h3 className="text-sm font-medium flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-amber-500" />
+                    Economic Events
+                  </h3>
+                  <button 
+                    onClick={() => fetchEconomicCalendar()} 
+                    className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-800 rounded-md"
+                    title="Refresh"
                   >
-                    🧪 Load Test News
+                    <RefreshCw className={cn("w-3.5 h-3.5", economicLoading && "animate-spin")} />
                   </button>
                 </div>
-              ) : (
-                filteredNews.map((item) => (
-                  <NewsCard 
-                    key={item.id} 
-                    news={item} 
-                    onClick={() => handleNewsClick(item)}
-                    locale={currentLocale}
-                  />
-                ))
-              )}
-            </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {economicLoading ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="h-28 bg-gray-900/50 rounded-xl animate-pulse border border-gray-800" />
+                    ))
+                  ) : economicEvents.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Calendar className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                      <p className="text-gray-500 text-sm">No economic events scheduled</p>
+                    </div>
+                  ) : (
+                    economicEvents.slice(0, 20).map((event) => (
+                      <div 
+                        key={event.id}
+                        className="p-4 rounded-xl border border-gray-800 bg-gray-900/30 hover:border-amber-500/30 transition-all"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className={cn(
+                              "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                              event.impact === "High" && "bg-red-500/20 text-red-400 border border-red-500/30",
+                              event.impact === "Medium" && "bg-amber-500/20 text-amber-400 border border-amber-500/30",
+                              event.impact === "Low" && "bg-gray-700 text-gray-400"
+                            )}>
+                              {event.impact}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {format(new Date(event.timestamp), "MMM d, HH:mm")}
+                            </span>
+                          </div>
+                          <span className={cn(
+                            "text-xs px-2 py-0.5 rounded-full border",
+                            event.predicted_direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
+                            event.predicted_direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
+                            event.predicted_direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
+                          )}>
+                            {event.predicted_direction === "bullish" && "📈 Bullish"}
+                            {event.predicted_direction === "bearish" && "📉 Bearish"}
+                            {event.predicted_direction === "neutral" && "➖ Neutral"}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-semibold text-white mb-1">
+                          {currentLocale === "tr" && event.title_tr ? event.title_tr : event.title}
+                        </h4>
+                        <p className="text-xs text-gray-500 line-clamp-2">
+                          {event.currency} • {event.affected_symbols.slice(0, 4).join(", ")}
+                        </p>
+                        {(event.previous || event.forecast) && (
+                          <div className="flex items-center gap-4 mt-2 text-xs">
+                            {event.previous && (
+                              <span className="text-gray-500">Prev: <span className="text-gray-300">{event.previous}</span></span>
+                            )}
+                            {event.forecast && (
+                              <span className="text-gray-500">Exp: <span className="text-amber-400">{event.forecast}</span></span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Earnings Calendar Tab Content */}
+            {activeTab === "earnings" && (
+              <>
+                <div className="h-12 flex items-center justify-between px-4 border-b border-gray-800 bg-[#0a0a0a]">
+                  <h3 className="text-sm font-medium flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-blue-500" />
+                    Earnings Reports
+                  </h3>
+                  <button 
+                    onClick={() => fetchEarningsCalendar()} 
+                    className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-800 rounded-md"
+                    title="Refresh"
+                  >
+                    <RefreshCw className={cn("w-3.5 h-3.5", earningsLoading && "animate-spin")} />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {earningsLoading ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="h-28 bg-gray-900/50 rounded-xl animate-pulse border border-gray-800" />
+                    ))
+                  ) : earningsEvents.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Building2 className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                      <p className="text-gray-500 text-sm">No earnings reports scheduled</p>
+                    </div>
+                  ) : (
+                    earningsEvents.slice(0, 20).map((event) => (
+                      <div 
+                        key={event.id}
+                        className="p-4 rounded-xl border border-gray-800 bg-gray-900/30 hover:border-blue-500/30 transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded text-xs font-bold">
+                              {event.ticker}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {format(new Date(event.timestamp), "MMM d")}
+                            </span>
+                            <span className={cn(
+                              "text-[10px] px-1.5 py-0.5 rounded",
+                              event.time === "after_market" ? "bg-purple-500/20 text-purple-400" : "bg-amber-500/20 text-amber-400"
+                            )}>
+                              {event.time === "after_market" ? "After" : "Pre"}
+                            </span>
+                          </div>
+                          <span className={cn(
+                            "text-xs px-2 py-0.5 rounded-full border",
+                            event.predicted_direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
+                            event.predicted_direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
+                            event.predicted_direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
+                          )}>
+                            {event.predicted_direction === "bullish" && "📈 Bull"}
+                            {event.predicted_direction === "bearish" && "📉 Bear"}
+                            {event.predicted_direction === "neutral" && "➖ Neutral"}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-semibold text-white mb-2">
+                          {event.company}
+                        </h4>
+                        <div className="flex items-center gap-4 text-xs">
+                          {event.eps_forecast && (
+                            <span className="text-gray-500">
+                              EPS: <span className="text-gray-300">{event.eps_forecast}</span>
+                            </span>
+                          )}
+                          {event.revenue_forecast && (
+                            <span className="text-gray-500">
+                              Rev: <span className="text-gray-300">{event.revenue_forecast}</span>
+                            </span>
+                          )}
+                          <span className="text-gray-500">
+                            AI: <span className="text-blue-400">{event.confidence}%</span>
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-gray-600 mt-2">{event.sector}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
           </aside>
         </div>
       </main>
