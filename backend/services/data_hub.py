@@ -164,9 +164,16 @@ def _filter_us_hours(candles: List[Dict]) -> List[Dict]:
     return filtered
 
 async def _fetch_yahoo_price(yahoo_symbol: str) -> Optional[float]:
-    """Fetch live price from Yahoo Finance as a precise fallback."""
-    if not _is_us_market_open():
-        # Let's seed the price with the last valid closed candle if no cache
+    """Fetch live price from Yahoo Finance as a precise fallback.
+    
+    For commodities/forex (GC=F, CL=F): No US hours filter — they trade ~23h/day.
+    For stock indices: US hours filter applies.
+    """
+    # Commodities and forex trade nearly 24h — no US hours restriction
+    is_commodity = yahoo_symbol in ("GC=F", "CL=F", "SI=F", "HG=F")
+    
+    if not is_commodity and not _is_us_market_open():
+        # Stock indices: use last valid US-hours candle
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{yahoo_symbol}?interval=5m&range=5d"
         headers = {'User-Agent': 'Mozilla/5.0'}
         try:
@@ -205,7 +212,14 @@ async def _fetch_yahoo_price(yahoo_symbol: str) -> Optional[float]:
     return None
 
 async def _fetch_yahoo_candles(yahoo_symbol: str, interval: str, limit: int) -> List[Dict]:
-    """Fetch history from Yahoo Finance."""
+    """Fetch history from Yahoo Finance.
+    
+    For commodities/forex (GC=F, CL=F): No US hours filter — they trade ~23h/day.
+    For stock indices: US hours filter applies to intraday data.
+    """
+    # Commodities and forex trade nearly 24h — no US hours restriction
+    is_commodity = yahoo_symbol in ("GC=F", "CL=F", "SI=F", "HG=F")
+    
     yf_interval = interval
     if interval == "1h": yf_interval = "60m"
     elif interval in ("1d", "eod"): yf_interval = "1d"
@@ -241,8 +255,8 @@ async def _fetch_yahoo_candles(yahoo_symbol: str, interval: str, limit: int) -> 
                             "volume": float(quote.get('volume', [0])[i] or 0)
                         })
                 
-                # Filter out Asian session / Off-hours data for intraday
-                if yf_interval in ("1m", "5m", "15m", "30m", "60m"):
+                # Filter out Asian/off-hours ONLY for stock indices, NOT for commodities/forex
+                if not is_commodity and yf_interval in ("1m", "5m", "15m", "30m", "60m"):
                     candles = _filter_us_hours(candles)
                 
                 return candles[-limit:]

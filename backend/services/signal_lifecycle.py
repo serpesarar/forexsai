@@ -437,11 +437,10 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         "target_status": json.dumps(target_status),
     }
     try:
-        result = client.table("signal_checks").insert(check_record).execute()
-        return result
+        client.table("signal_checks").insert(check_record).execute()
     except Exception as e:
         logger.error(f"Failed to insert signal_check for {signal_id[:8]}: {e}")
-        return None
+        # Continue to status determination even if check record insert fails
 
     # ── 8. Determine new status ──
     new_status = None
@@ -471,10 +470,9 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
                 created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                 age_minutes = (datetime.now(created_dt.tzinfo) - created_dt).total_seconds() / 60
                 
-                # XAUUSD: Force shorter max age to prevent stuck signals
+                # Use effective_max_age which respects stale price detection
+                # (stale = market closed → 24h timeout, normal = SIGNAL_MAX_AGE_MINUTES)
                 max_age_for_symbol = effective_max_age
-                if symbol == "XAUUSD":
-                    max_age_for_symbol = min(effective_max_age, 60)  # Max 60 min for XAUUSD
                 
                 if age_minutes >= max_age_for_symbol:  # Use extended timeout for stale prices
                     new_status = "completed" if any_target_hit else "expired"
@@ -834,29 +832,10 @@ async def cleanup_old_signals():
 
         if expired_count:
             logger.info(f"🧹 Force-expired {expired_count} stale signals (>2h old)")
-        
-        # SPECIAL: Force-expire XAUUSD signals older than 1 hour
-        xau_cutoff = (datetime.utcnow() - timedelta(hours=1)).isoformat() + "Z"
-        xau_result = client.table("prediction_logs").select("id, created_at, symbol").eq(
-            "status", "active"
-        ).eq("symbol", "XAUUSD").lt("created_at", xau_cutoff).limit(100).execute()
-        
-        xau_stale = safe_get_data(xau_result)
-        xau_expired = 0
-        for s in xau_stale:
-            try:
-                upd_result = client.table("prediction_logs").eq("id", s["id"]).update({
-                    "status": "expired",
-                    "exit_time": datetime.utcnow().isoformat() + "Z",
-                    "exit_price": None,
-                }).execute()
-                if upd_result and safe_get_data(upd_result):
-                    xau_expired += 1
-            except Exception as upd_err:
-                logger.warning(f"Failed to expire XAUUSD signal {s['id'][:8]}: {upd_err}")
-        
-        if xau_expired:
-            logger.info(f"🧹 Force-expired {xau_expired} XAUUSD signals (>1h old)")
+
+        # Note: XAUUSD-specific force-expire removed — stale price detection
+        # + proper lifecycle check now handles XAUUSD signals correctly.
+        # Commodities/forex prices are fetched 24h (no US-hours filter).
 
         # Delete signal_checks older than 30 days
         archive_cutoff = (datetime.utcnow() - timedelta(days=ARCHIVE_AFTER_DAYS)).isoformat() + "Z"

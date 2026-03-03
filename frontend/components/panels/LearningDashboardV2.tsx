@@ -376,15 +376,22 @@ export default function LearningDashboardV2() {
                     const order: Record<string, number> = { ml: 0, pulse1: 1, pulse2: 2, pulse3: 3, pulse: 3.5, emel: 4, hybrid: 5 };
                     return (order[a] ?? 99) - (order[b] ?? 99);
                   })
-                  .map(([model, stats]) => (
-                    <div
-                      key={model}
-                      onClick={() => setSignalListFilter({ model })}
-                      className="cursor-pointer"
-                    >
-                      <ModelCard model={model} stats={stats} />
-                    </div>
-                  ))}
+                  .map(([model, stats]) => {
+                    const firstSymbol = Object.keys(stats.symbols || {})[0] || "";
+                    return (
+                      <div
+                        key={model}
+                        onClick={() => {
+                          if (firstSymbol) {
+                            setSelectedModelPerformance({ symbol: firstSymbol, model });
+                          }
+                        }}
+                        className={firstSymbol ? "cursor-pointer" : ""}
+                      >
+                        <ModelCard model={model} stats={stats} />
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           ) : (

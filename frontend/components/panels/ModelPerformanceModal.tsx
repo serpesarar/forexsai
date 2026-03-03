@@ -122,7 +122,14 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
         "modelPerformance.charts.profit": "Profit",
         "modelPerformance.charts.riskControl": "Risk Control",
         "modelPerformance.charts.trendFollowing": "Trend Following",
-        "modelPerformance.table.recentSignals": "Recent Signals"
+        "modelPerformance.table.recentSignals": "Recent Signals",
+        "modelPerformance.table.date": "Date",
+        "modelPerformance.table.symbol": "Symbol",
+        "modelPerformance.table.signal": "Signal",
+        "modelPerformance.table.result": "Result",
+        "modelPerformance.table.return": "Return",
+        "modelPerformance.table.win": "Win",
+        "modelPerformance.table.loss": "Loss"
     };
 
     const t = (key: string) => translations[key] || key;
