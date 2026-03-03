@@ -254,7 +254,7 @@ def _update_signal_status(client, signal_id: str, status: str, exit_price=None):
         update_data["exit_price"] = round(float(exit_price), 4)
     try:
         result = client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
-        if result and result.get("data"):
+        if result and getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []):
             logger.info(f"✅ Signal {signal_id[:8]} status updated to {status}")
         return result
     except Exception as e:
@@ -496,7 +496,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
 
     try:
         result = client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
-        if result and result.get("data") and new_status:
+        if result and getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) and new_status:
             logger.info(f"✅ Signal {signal_id[:8]} updated: status={new_status}, high={new_high:.1f}p, low={new_low:.1f}p")
     except Exception as e:
         logger.error(f"Failed to update signal {signal_id[:8]}: {e}")
@@ -687,7 +687,7 @@ async def _run_lifecycle_check_inner() -> Dict[str, Any]:
         signals = None
         try:
             rpc_result = client.rpc("claim_active_signals", {"p_limit": MAX_ACTIVE_SIGNALS})
-            if rpc_result.get("data") and isinstance(rpc_result["data"], list):
+            if getattr(rpc_result, 'data', []) if not isinstance(rpc_result, dict) else rpc_result.get('data', []) and isinstance(rpc_result["data"], list):
                 signals = rpc_result["data"]
                 logger.debug(f"lifecycle.claim_rpc | claimed={len(signals)}")
         except Exception as rpc_err:
@@ -698,7 +698,7 @@ async def _run_lifecycle_check_inner() -> Dict[str, Any]:
             result = client.table("prediction_logs").select("*").eq(
                 "status", "active"
             ).order("created_at", desc=True).limit(MAX_ACTIVE_SIGNALS).execute()
-            signals = result.get("data") or []
+            signals = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
 
         if not signals:
             duration_ms = (time.monotonic() - t_start) * 1000
@@ -817,7 +817,7 @@ async def cleanup_old_signals():
             "status", "active"
         ).lt("created_at", cutoff).limit(50).execute()
 
-        stale = result.get("data") or []
+        stale = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         expired_count = 0
         for s in stale:
             try:
@@ -826,7 +826,7 @@ async def cleanup_old_signals():
                     "exit_time": datetime.utcnow().isoformat() + "Z",
                     "exit_price": None,
                 }).execute()
-                if upd_result and upd_result.get("data"):
+                if upd_result and getattr(upd_result, 'data', []) if not isinstance(upd_result, dict) else upd_result.get('data', []):
                     expired_count += 1
             except Exception as upd_err:
                 logger.warning(f"Failed to expire signal {s['id'][:8]}: {upd_err}")
@@ -840,7 +840,7 @@ async def cleanup_old_signals():
             "status", "active"
         ).eq("symbol", "XAUUSD").lt("created_at", xau_cutoff).limit(100).execute()
         
-        xau_stale = xau_result.get("data") or []
+        xau_stale = getattr(xau_result, 'data', []) if not isinstance(xau_result, dict) else xau_result.get('data', []) or []
         xau_expired = 0
         for s in xau_stale:
             try:
@@ -849,7 +849,7 @@ async def cleanup_old_signals():
                     "exit_time": datetime.utcnow().isoformat() + "Z",
                     "exit_price": None,
                 }).execute()
-                if upd_result and upd_result.get("data"):
+                if upd_result and getattr(upd_result, 'data', []) if not isinstance(upd_result, dict) else upd_result.get('data', []):
                     xau_expired += 1
             except Exception as upd_err:
                 logger.warning(f"Failed to expire XAUUSD signal {s['id'][:8]}: {upd_err}")
@@ -900,7 +900,7 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
             "created_at", desc=True
         ).limit(1000).execute()
 
-        signals = result.get("data") or []
+        signals = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
 
         # Per-model stats
         models = {}
@@ -1052,7 +1052,7 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
             "failure_type, market_regime, confluence_score, signal_id"
         ).gte("created_at", cutoff).limit(500).execute()
 
-        failures = fail_result.get("data") or []
+        failures = getattr(fail_result, 'data', []) if not isinstance(fail_result, dict) else fail_result.get('data', []) or []
         failure_breakdown = {}
         for f in failures:
             ft = f.get("failure_type", "unknown")
@@ -1062,7 +1062,7 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
         active_result = client.table("prediction_logs").select(
             "id"
         ).eq("status", "active").execute()
-        active_count = len(active_result.get("data") or [])
+        active_count = len(getattr(active_result, 'data', []) if not isinstance(active_result, dict) else active_result.get('data', []) or [])
 
         return {
             "period_days": days,
@@ -1092,7 +1092,7 @@ async def get_signal_detail(signal_id: str) -> Dict[str, Any]:
         sig_result = client.table("prediction_logs").select("*").eq(
             "id", signal_id
         ).execute()
-        sig_data = sig_result.get("data")
+        sig_data = getattr(sig_result, 'data', []) if not isinstance(sig_result, dict) else sig_result.get('data', [])
         if not sig_data:
             return {"error": "Signal not found"}
         signal = sig_data[0]
@@ -1101,13 +1101,13 @@ async def get_signal_detail(signal_id: str) -> Dict[str, Any]:
         checks_result = client.table("signal_checks").select("*").eq(
             "signal_id", signal_id
         ).order("check_time", desc=False).execute()
-        checks = checks_result.get("data") or []
+        checks = getattr(checks_result, 'data', []) if not isinstance(checks_result, dict) else checks_result.get('data', []) or []
 
         # Get failure autopsy if exists
         fail_result = client.table("signal_failures").select("*").eq(
             "signal_id", signal_id
         ).execute()
-        failure = (fail_result.get("data") or [None])[0]
+        failure = (getattr(fail_result, 'data', []) if not isinstance(fail_result, dict) else fail_result.get('data', []) or [None])[0]
 
         # Parse JSON fields
         parse_json_fields(signal, ["targets", "targets_hit", "factors"])
@@ -1148,7 +1148,7 @@ async def export_failures(days: int = 30) -> List[Dict[str, Any]]:
             "created_at", cutoff
         ).order("created_at", desc=True).limit(500).execute()
 
-        failures = result.get("data") or []
+        failures = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
 
         # Parse JSON fields
         for f in failures:

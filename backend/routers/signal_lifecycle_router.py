@@ -40,7 +40,7 @@ async def get_active_signals():
             "created_at"
         ).eq("status", "active").order("created_at", desc=True).limit(50).execute()
 
-        signals = result.get("data") or []
+        signals = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
 
         # Parse JSON fields
         import json
@@ -142,7 +142,7 @@ async def backfill_existing_records():
             "id, strategy, status, created_at, ml_direction, targets, model_type"
         ).limit(500).execute()
 
-        records = result.get("data") or []
+        records = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
 
         for rec in records:
             updates = {}
@@ -161,7 +161,7 @@ async def backfill_existing_records():
                 from services.target_config import get_symbol_config
                 # Need symbol — fetch it
                 full = client.table("prediction_logs").select("symbol").eq("id", rec["id"]).execute()
-                sym = (full.get("data") or [{}])[0].get("symbol", "NDX.INDX")
+                sym = (getattr(full, 'data', []) if not isinstance(full, dict) else full.get('data', []) or [{}])[0].get("symbol", "NDX.INDX")
                 cfg = get_symbol_config(sym)
                 targets_dict = {tl.name: tl.pips for tl in cfg.targets}
                 updates["targets"] = json.dumps(targets_dict)
@@ -210,7 +210,7 @@ async def get_lifecycle_metrics():
     if client:
         try:
             state_result = client.table("scheduler_state").select("*").execute()
-            jobs = state_result.get("data") or []
+            jobs = getattr(state_result, 'data', []) if not isinstance(state_result, dict) else state_result.get('data', []) or []
             result["scheduler_jobs"] = {j["job_name"]: j for j in jobs}
         except Exception as e:
             result["scheduler_jobs_error"] = str(e)

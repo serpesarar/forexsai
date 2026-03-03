@@ -284,7 +284,7 @@ async def save_to_cache(symbol: str, data: Dict[str, Any], news: Optional[Dict[s
         # Upsert to cache
         result = client.table("live_data_cache").select("id").eq("symbol", symbol).execute()
         
-        if result.get("data") and len(result["data"]) > 0:
+        if getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) and len(result["data"]) > 0:
             # Update existing — .eq() before .update(), no .execute() needed
             client.table("live_data_cache").eq("symbol", symbol).update(cache_data)
         else:
@@ -626,7 +626,7 @@ async def _check_and_catchup():
         result = client.table("scheduler_state").select(
             "job_name, last_run_at"
         ).eq("job_name", "lifecycle_check").limit(1).execute()
-        rows = result.get("data") or []
+        rows = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         if not rows:
             return
         last_run = rows[0].get("last_run_at")
@@ -710,7 +710,7 @@ async def get_cached_data(symbol: str) -> Optional[Dict[str, Any]]:
     try:
         result = client.table("live_data_cache").select("*").eq("symbol", symbol).execute()
         
-        if result.get("data") and len(result["data"]) > 0:
+        if getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) and len(result["data"]) > 0:
             row = result["data"][0]
             return {
                 "symbol": row.get("symbol"),

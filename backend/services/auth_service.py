@@ -263,7 +263,7 @@ async def signup(
     try:
         # 4. Check if email exists
         existing = client.table("user_profiles").select("id").eq("email", email.lower()).execute()
-        if existing.get("data"):
+        if getattr(existing, 'data', []) if not isinstance(existing, dict) else existing.get('data', []):
             return SignupResult(success=False, error="Bu email zaten kayıtlı", error_code="EMAIL_EXISTS")
         
         # 5. Hash password
@@ -276,7 +276,7 @@ async def signup(
                 .select("id")\
                 .eq("referral_code", referral_code.upper())\
                 .execute()
-            if referrer.get("data") and len(referrer["data"]) > 0:
+            if getattr(referrer, 'data', []) if not isinstance(referrer, dict) else referrer.get('data', []) and len(referrer["data"]) > 0:
                 referred_by = referrer["data"][0]["id"]
         
         # 7. Generate fingerprint
@@ -301,7 +301,7 @@ async def signup(
         
         result = client.table("user_profiles").insert(user_data)
         
-        if not result.get("data"):
+        if not getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []):
             return SignupResult(success=False, error="Kayıt oluşturulamadı", error_code="INSERT_FAILED")
         
         user_id = result["data"][0]["id"]
@@ -383,7 +383,7 @@ async def verify_email(token: str) -> Tuple[bool, Optional[str]]:
             .is_("verified_at", "null")\
             .execute()
         
-        if not result.get("data") or len(result["data"]) == 0:
+        if not getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or len(result["data"]) == 0:
             return False, "Geçersiz veya süresi dolmuş doğrulama linki"
         
         verification = result["data"][0]
@@ -462,7 +462,7 @@ async def login(
             .eq("email", email.lower())\
             .execute()
         
-        if not user_result.get("data") or len(user_result["data"]) == 0:
+        if not getattr(user_result, 'data', []) if not isinstance(user_result, dict) else user_result.get('data', []) or len(user_result["data"]) == 0:
             return AuthResult(success=False, error="Email veya şifre hatalı", error_code="INVALID_CREDENTIALS")
         
         user = user_result["data"][0]
@@ -492,7 +492,7 @@ async def login(
             .eq("user_id", user_id)\
             .execute()
         
-        if not creds_result.get("data") or len(creds_result["data"]) == 0:
+        if not getattr(creds_result, 'data', []) if not isinstance(creds_result, dict) else creds_result.get('data', []) or len(creds_result["data"]) == 0:
             return AuthResult(success=False, error="Kimlik bilgileri bulunamadı", error_code="NO_CREDENTIALS")
         
         creds = creds_result["data"][0]
@@ -585,7 +585,7 @@ async def validate_session(token: str) -> Optional[UserProfile]:
             .eq("token_hash", token_hash)\
             .execute()
         
-        if not session_result.get("data") or len(session_result["data"]) == 0:
+        if not getattr(session_result, 'data', []) if not isinstance(session_result, dict) else session_result.get('data', []) or len(session_result["data"]) == 0:
             return None
         
         session = session_result["data"][0]
@@ -603,7 +603,7 @@ async def validate_session(token: str) -> Optional[UserProfile]:
             .eq("id", session["user_id"])\
             .execute()
         
-        if not user_result.get("data") or len(user_result["data"]) == 0:
+        if not getattr(user_result, 'data', []) if not isinstance(user_result, dict) else user_result.get('data', []) or len(user_result["data"]) == 0:
             return None
         
         user = user_result["data"][0]
@@ -665,7 +665,7 @@ async def check_referral_reward(referred_user_id: str) -> bool:
             .eq("status", "completed")\
             .execute()
         
-        if not referral.get("data") or len(referral["data"]) == 0:
+        if not getattr(referral, 'data', []) if not isinstance(referral, dict) else referral.get('data', []) or len(referral["data"]) == 0:
             return False
         
         referrer_id = referral["data"][0]["referrer_id"]
@@ -720,7 +720,7 @@ async def grant_pro_membership(user_id: str, days: int, reason: str) -> bool:
             .execute()
         
         current_expiry = None
-        if user.get("data") and len(user["data"]) > 0 and user["data"][0].get("tier_expires_at"):
+        if getattr(user, 'data', []) if not isinstance(user, dict) else user.get('data', []) and len(user["data"]) > 0 and user["data"][0].get("tier_expires_at"):
             current_expiry = datetime.fromisoformat(
                 user["data"][0]["tier_expires_at"].replace("Z", "+00:00")
             )
@@ -743,7 +743,7 @@ async def grant_pro_membership(user_id: str, days: int, reason: str) -> bool:
             .eq("slug", "pro")\
             .execute()
         
-        if pro_package.get("data") and len(pro_package["data"]) > 0:
+        if getattr(pro_package, 'data', []) if not isinstance(pro_package, dict) else pro_package.get('data', []) and len(pro_package["data"]) > 0:
             client.table("user_subscriptions").insert({
                 "user_id": user_id,
                 "package_id": pro_package["data"][0]["id"],
@@ -783,7 +783,7 @@ async def check_feature_access(user_id: str, feature: str) -> Tuple[bool, Option
             .eq("id", user_id)\
             .execute()
         
-        if not user.get("data") or len(user["data"]) == 0:
+        if not getattr(user, 'data', []) if not isinstance(user, dict) else user.get('data', []) or len(user["data"]) == 0:
             return False, "Kullanıcı bulunamadı"
         
         tier = user["data"][0]["membership_tier"]
@@ -843,7 +843,7 @@ async def track_claude_usage(user_id: str, endpoint: str, tokens: int, cost: flo
         # Update user total
         current = client.table("user_profiles").select("total_claude_calls").eq("id", user_id).execute()
         current_count = 0
-        if current.get("data") and len(current["data"]) > 0:
+        if getattr(current, 'data', []) if not isinstance(current, dict) else current.get('data', []) and len(current["data"]) > 0:
             current_count = current["data"][0].get("total_claude_calls", 0) or 0
         client.table("user_profiles").eq("id", user_id).update({
             "total_claude_calls": current_count + 1
@@ -872,7 +872,7 @@ async def check_claude_limit(user_id: str) -> Tuple[bool, Optional[str], int]:
             .eq("id", user_id)\
             .execute()
         
-        if not user.get("data") or len(user["data"]) == 0:
+        if not getattr(user, 'data', []) if not isinstance(user, dict) else user.get('data', []) or len(user["data"]) == 0:
             return False, "Kullanıcı bulunamadı", 0
         
         tier = user["data"][0]["membership_tier"]

@@ -301,7 +301,7 @@ async def verify_otp_endpoint(body: VerifyOTPRequest):
         .eq("email", body.email.lower())\
         .execute()
     
-    if not user_result.get("data") or len(user_result["data"]) == 0:
+    if not getattr(user_result, 'data', []) if not isinstance(user_result, dict) else user_result.get('data', []) or len(user_result["data"]) == 0:
         raise HTTPException(status_code=400, detail="User not found")
     
     user = user_result["data"][0]
@@ -320,7 +320,7 @@ async def verify_otp_endpoint(body: VerifyOTPRequest):
         .limit(1)\
         .execute()
     
-    if not verification.get("data") or len(verification["data"]) == 0:
+    if not getattr(verification, 'data', []) if not isinstance(verification, dict) else verification.get('data', []) or len(verification["data"]) == 0:
         raise HTTPException(status_code=400, detail="No verification code found")
     
     v_data = verification["data"][0]
@@ -375,7 +375,7 @@ async def resend_verification(body: ResendVerificationRequest):
         .eq("email", body.email.lower())\
         .execute()
     
-    if not user_result.get("data") or len(user_result["data"]) == 0:
+    if not getattr(user_result, 'data', []) if not isinstance(user_result, dict) else user_result.get('data', []) or len(user_result["data"]) == 0:
         # Don't reveal if email exists
         return {"success": True, "message": "Eğer email kayıtlıysa, doğrulama linki gönderildi."}
     
@@ -458,8 +458,8 @@ async def get_referral_stats(user: UserProfile = Depends(require_auth)):
         .eq("referrer_id", user.id)\
         .execute()
     
-    total = len(referrals.get("data", [])) if referrals.get("data") else 0
-    completed = sum(1 for r in (referrals.get("data") or []) if r["status"] in ["completed", "rewarded"])
+    total = len(referrals.get("data", [])) if getattr(referrals, 'data', []) if not isinstance(referrals, dict) else referrals.get('data', []) else 0
+    completed = sum(1 for r in (getattr(referrals, 'data', []) if not isinstance(referrals, dict) else referrals.get('data', []) or []) if r["status"] in ["completed", "rewarded"])
     pending = total - completed
     
     # Calculate progress to reward
@@ -515,7 +515,7 @@ async def get_packages():
         .order("display_order")\
         .execute()
     
-    return {"packages": packages.get("data") or []}
+    return {"packages": getattr(packages, 'data', []) if not isinstance(packages, dict) else packages.get('data', []) or []}
 
 
 @router.get("/validate-referral/{code}")
@@ -532,7 +532,7 @@ async def validate_referral_code(code: str):
         .eq("referral_code", code.upper())\
         .execute()
     
-    if result.get("data") and len(result["data"]) > 0:
+    if getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) and len(result["data"]) > 0:
         name = result["data"][0].get("full_name", "Bir kullanıcı")
         return {
             "valid": True,
@@ -576,7 +576,7 @@ async def forgot_password(body: ForgotPasswordRequest):
             .eq("email", body.email.lower())\
             .execute()
         
-        if not user.get("data") or len(user["data"]) == 0:
+        if not getattr(user, 'data', []) if not isinstance(user, dict) else user.get('data', []) or len(user["data"]) == 0:
             # Don't reveal if email exists
             return {"success": True, "message": "Eğer email kayıtlıysa, şifre sıfırlama linki gönderildi."}
         
@@ -642,7 +642,7 @@ async def reset_password(body: ResetPasswordRequest):
         .eq("verification_type", "password_reset")\
         .execute()
     
-    if not verification.get("data") or len(verification["data"]) == 0:
+    if not getattr(verification, 'data', []) if not isinstance(verification, dict) else verification.get('data', []) or len(verification["data"]) == 0:
         raise HTTPException(status_code=400, detail="Geçersiz veya süresi dolmuş token")
     
     # Check expiry

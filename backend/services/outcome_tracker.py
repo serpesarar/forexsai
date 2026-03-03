@@ -245,7 +245,7 @@ async def check_prediction_outcome(
         
         result = client.table("outcome_results").insert(outcome).execute()
         
-        if result.get("data"):
+        if getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []):
             logger.info(f"Recorded outcome for prediction {prediction.get('id')}: ML {'✓' if ml_correct else '✗'}, Targets: {targets_hit}")
             
             # If trade failed (hit stop or missed targets), analyze why
@@ -310,7 +310,7 @@ async def check_pending_outcomes(check_interval: str = "24h") -> List[Dict[str, 
             "outcome_checked", False
         ).lt("created_at", cutoff_iso).limit(100).execute()
         
-        predictions = result.get("data") or []
+        predictions = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         
         if not predictions:
             logger.info(f"No pending predictions older than {check_interval}")
@@ -324,7 +324,7 @@ async def check_pending_outcomes(check_interval: str = "24h") -> List[Dict[str, 
                 "prediction_id", pred["id"]
             ).eq("check_interval", check_interval).execute()
             
-            if existing.get("data"):
+            if getattr(existing, 'data', []) if not isinstance(existing, dict) else existing.get('data', []):
                 # Already has outcome for this interval - mark as checked if not already
                 await mark_prediction_checked(pred["id"])
                 continue
@@ -384,7 +384,7 @@ async def get_accuracy_summary(
             query = query.eq("symbol", symbol)
         
         result = query.execute()
-        predictions = result.get("data") or []
+        predictions = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         
         if not predictions:
             return {
@@ -615,7 +615,7 @@ async def get_multi_target_accuracy(
             query = query.eq("symbol", symbol)
         
         result = query.execute()
-        predictions = result.get("data") or []
+        predictions = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         
         if not predictions:
             return {
