@@ -488,7 +488,7 @@ async def save_failure_analysis(analysis: FailureAnalysis) -> bool:
         }
         
         result = client.table("failure_analyses").insert(data).execute()
-        return bool(getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []))
+        return bool(result.get("data"))
         
     except Exception as e:
         logger.error(f"Failed to save failure analysis: {e}")
@@ -516,7 +516,7 @@ async def get_learned_adjustments(symbol: str, direction: str) -> Dict[str, Any]
             "symbol", symbol
         ).eq("direction", direction).limit(100).execute()
         
-        failures = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
+        failures = result.get("data") or []
         
         if not failures:
             return {"adjustments": [], "confidence_modifier": 0}

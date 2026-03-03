@@ -619,7 +619,7 @@ async def check_fake_signal_timeout(symbol: str) -> tuple:
             .limit(5) \
             .execute()
 
-        if result and getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []):
+        if result and result.get("data"):
             signals = result["data"]
             # Count losses in last 24 hours
             now = datetime.now(timezone.utc)

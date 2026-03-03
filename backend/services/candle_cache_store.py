@@ -135,7 +135,7 @@ def load_candles(symbol: str, timeframe: str, limit: int = 500) -> List[Dict]:
             .execute()
         )
 
-        if result.get("error") or not getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []):
+        if result.get("error") or not result.get("data"):
             return []
 
         # Convert to DataHub format and reverse to ascending order
@@ -185,7 +185,7 @@ def get_last_candle_time(symbol: str, timeframe: str) -> Optional[str]:
             .limit(1)
             .execute()
         )
-        if getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) and len(result["data"]) > 0:
+        if result.get("data") and len(result["data"]) > 0:
             return result["data"][0].get("last_candle_time")
     except Exception as e:
         logger.debug(f"Get last candle time error: {e}")
@@ -200,7 +200,7 @@ def get_cache_stats() -> Dict:
 
     try:
         result = db.table("candle_cache_meta").select("*").execute()
-        if getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []):
+        if result.get("data"):
             stats = {}
             for row in result["data"]:
                 key = f"{row['symbol']}/{row['timeframe']}"

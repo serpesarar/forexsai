@@ -29,7 +29,7 @@ def _has_active_signal(client, symbol: str, model_type: str) -> Tuple[bool, Opti
         ).eq("status", "active"
         ).limit(1).execute()
         
-        data = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
+        data = result.get("data") or []
         has_active = len(data) > 0
         
         if has_active:
@@ -61,7 +61,7 @@ def _close_existing_signal(client, signal_id: str, new_direction: str, reason: s
             }
         }
         result = client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
-        if result and getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []):
+        if result and result.get("data"):
             logger.info(f"✅ Closed signal {signal_id[:8]}: {reason} -> {new_direction}")
             return True
         return False
@@ -396,7 +396,7 @@ async def log_prediction(
             logger.debug(f"DB dedup: active {effective_model_type} {direction} signal already exists for {symbol}")
             return None
 
-        if getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) and len(result["data"]) > 0:
+        if result.get("data") and len(result["data"]) > 0:
             prediction_id = result["data"][0].get("id")
             logger.info(f"prediction_logger.logged | id={prediction_id[:8] if prediction_id else '?'} symbol={symbol} model={effective_model_type} dir={direction}")
             
@@ -467,7 +467,7 @@ async def get_recent_predictions(
         query = query.order("created_at", desc=True).limit(limit)
         
         result = query.execute()
-        return getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
+        return result.get("data") or []
         
     except Exception as e:
         logger.error(f"Failed to get predictions: {e}")
@@ -490,7 +490,7 @@ async def mark_prediction_checked(prediction_id: str) -> bool:
         if result.get("error"):
             logger.error(f"Failed to mark prediction {prediction_id} checked: {result['error']}")
             return False
-        data = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', [])
+        data = result.get("data")
         if not data or len(data) == 0:
             logger.warning(f"mark_prediction_checked: update returned empty data for {prediction_id[:8]}, result={result}")
             return False
