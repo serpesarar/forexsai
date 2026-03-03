@@ -171,6 +171,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Global exception handler to catch serialization errors and return JSON
+from fastapi import Request
+from fastapi.responses import PlainTextResponse
+import traceback as tb_module
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import logging
+    logging.getLogger("global").error(f"Unhandled exception on {request.url.path}: {exc}\n{tb_module.format_exc()}")
+    return PlainTextResponse(
+        content=f'{{"error": "{str(exc)[:200]}", "path": "{request.url.path}"}}',
+        status_code=500,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Content-Type": "application/json"
+        }
+    )
+
 # Panel response cache middleware (caches panel API responses for WS broadcast)
 try:
     from middleware.panel_cache import PanelCacheMiddleware
@@ -185,6 +203,11 @@ except Exception as e:
 @app.get("/")
 async def root():
     return {"message": "AI Trading Dashboard API", "status": "ok"}
+
+@app.get("/api/version")
+async def version_check():
+    """Returns the deployed git commit hash for debugging."""
+    return {"version": "529a989-nan-fix", "deployed_at": "2026-03-03T20:50:00Z"}
 
 
 @app.get("/api/health")
