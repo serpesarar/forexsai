@@ -243,6 +243,101 @@ async def force_refresh(background_tasks: BackgroundTasks):
     }
 
 
+@router.post("/backfill-translations")
+async def backfill_turkish_translations(
+    hours: int = Query(48, ge=1, le=168, description="Hours of news to translate"),
+    limit: int = Query(100, ge=1, le=500, description="Max items to process")
+):
+    """
+    Admin endpoint: Add Turkish translations to existing news without them
+    """
+    try:
+        supabase = get_supabase_client()
+        
+        start_time = datetime.utcnow() - timedelta(hours=hours)
+        
+        # Get news without headline_tr
+        result = (
+            supabase.table("enriched_news")
+            .select("*")
+            .is_("headline_tr", "null")
+            .gte("timestamp", start_time.isoformat())
+            .order("timestamp", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        
+        if hasattr(result, 'data'):
+            items = result.data or []
+        elif isinstance(result, dict):
+            items = result.get('data', []) or []
+        else:
+            items = []
+        
+        if not items:
+            return {
+                "success": True,
+                "message": "No items need translation",
+                "processed": 0
+            }
+        
+        # Simple translation helper
+        translations = {
+            "earnings": "kazanç", "revenue": "gelir", "profit": "kâr", "loss": "zarar",
+            "beat": "tahminleri aştı", "miss": "tahminleri karşılayamadı",
+            "growth": "büyüme", "decline": "düşüş", "surge": "yükseliş", "drop": "düşüş",
+            "rise": "yükseliş", "fall": "düşüş", "strong": "güçlü", "weak": "zayıf",
+            "market": "piyasa", "stock": "hisse", "price": "fiyat", "trading": "ticaret",
+            "rate": "oran", "fed": "Fed", "cut": "indirim", "hike": "artış",
+        }
+        
+        def quick_translate(text):
+            if not text:
+                return text
+            translated = text.lower()
+            for en, tr in translations.items():
+                translated = translated.replace(en, tr)
+            if translated == text.lower():
+                return f"[TR] {text}"
+            return translated.capitalize()
+        
+        updated = 0
+        for item in items:
+            try:
+                headline_tr = quick_translate(item.get("headline", ""))
+                content = item.get("content", "")
+                content_tr = quick_translate(content[:200] + "..." if len(content) > 200 else content)
+                
+                # Update impacts with reasoning_tr
+                impacts = item.get("impacts", [])
+                for imp in impacts:
+                    if "reasoning_tr" not in imp or not imp["reasoning_tr"]:
+                        direction = imp.get("direction", "neutral")
+                        direction_tr = "yükseliş" if direction == "bullish" else "düşüş" if direction == "bearish" else "nötr"
+                        imp["reasoning_tr"] = f"{imp.get('symbol', 'Sembol')} için {direction_tr} etki"
+                
+                supabase.table("enriched_news").update({
+                    "headline_tr": headline_tr,
+                    "content_tr": content_tr,
+                    "impacts": impacts
+                }).eq("id", item["id"]).execute()
+                
+                updated += 1
+            except Exception as e:
+                print(f"[Backfill] Error updating {item.get('id')}: {e}")
+                continue
+        
+        return {
+            "success": True,
+            "message": f"Updated {updated} items with Turkish translations",
+            "processed": updated,
+            "total": len(items)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/stats")
 async def get_rss_stats(hours: int = Query(24, ge=1, le=168)):
     """
