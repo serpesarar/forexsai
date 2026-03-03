@@ -718,6 +718,259 @@ async def get_monitored_keywords():
     }
 
 
+@router.get("/diagnostics")
+async def get_rss_diagnostics():
+    """
+    Diagnostic endpoint: Check API key status, analysis health, and recent stats.
+    Shows whether DeepSeek AI is actually analyzing news or falling back to rules.
+    """
+    import os
+    
+    try:
+        supabase = get_supabase_client()
+        
+        # Check API key
+        deepseek_key = os.getenv("DEEP_SEEKR1", "")
+        anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
+        
+        # Get recent news stats
+        start_time = datetime.utcnow() - timedelta(hours=24)
+        
+        result = (
+            supabase.table("enriched_news")
+            .select("id, timestamp, headline_tr, ai_confidence, urgency, impacts, source")
+            .gte("timestamp", start_time.isoformat())
+            .order("timestamp", desc=True)
+            .limit(100)
+            .execute()
+        )
+        
+        if hasattr(result, 'data'):
+            items = result.data or []
+        elif isinstance(result, dict):
+            items = result.get('data', []) or []
+        else:
+            items = []
+        
+        # Analyze: how many used real AI vs fallback?
+        ai_analyzed = 0
+        fallback_analyzed = 0
+        no_impacts = 0
+        identical_impacts_count = 0
+        
+        # Track impact patterns to detect identical results
+        impact_patterns = {}
+        
+        for item in items:
+            headline_tr = item.get("headline_tr", "")
+            confidence = item.get("ai_confidence", 0)
+            impacts = item.get("impacts", [])
+            
+            # Detect fallback: headline_tr starts with [TR] or low confidence
+            if headline_tr.startswith("[TR]") or confidence <= 50:
+                fallback_analyzed += 1
+            else:
+                ai_analyzed += 1
+            
+            if not impacts:
+                no_impacts += 1
+            
+            # Track impact pattern
+            pattern_key = "|".join(
+                f"{imp.get('symbol')}:{imp.get('direction')}" 
+                for imp in sorted(impacts, key=lambda x: x.get("symbol", ""))
+            )
+            impact_patterns[pattern_key] = impact_patterns.get(pattern_key, 0) + 1
+        
+        # Find most common pattern (identical results indicator)
+        most_common_pattern = max(impact_patterns.items(), key=lambda x: x[1]) if impact_patterns else ("none", 0)
+        
+        return {
+            "success": True,
+            "api_keys": {
+                "DEEP_SEEKR1": "✅ SET" if deepseek_key else "❌ NOT SET",
+                "ANTHROPIC_API_KEY": "✅ SET" if anthropic_key else "❌ NOT SET",
+            },
+            "last_24h_stats": {
+                "total_news": len(items),
+                "ai_analyzed": ai_analyzed,
+                "fallback_analyzed": fallback_analyzed,
+                "no_impacts": no_impacts,
+                "ai_ratio": f"{(ai_analyzed / max(len(items), 1)) * 100:.1f}%",
+            },
+            "identical_pattern_analysis": {
+                "most_common_pattern": most_common_pattern[0],
+                "occurrences": most_common_pattern[1],
+                "total_patterns": len(impact_patterns),
+                "warning": "⚠️ Many identical patterns detected — fallback rule-based analysis likely" if most_common_pattern[1] > 5 else "✅ Diverse analysis patterns",
+            },
+            "latest_news_sample": [
+                {
+                    "headline": item.get("headline", "")[:80],
+                    "headline_tr": item.get("headline_tr", "")[:80],
+                    "confidence": item.get("ai_confidence", 0),
+                    "impacts_count": len(item.get("impacts", [])),
+                    "source": item.get("source", ""),
+                    "is_fallback": item.get("headline_tr", "").startswith("[TR]") or item.get("ai_confidence", 0) <= 50,
+                }
+                for item in items[:5]
+            ],
+        }
+    
+    except Exception as e:
+        import os
+        return {
+            "success": False,
+            "error": str(e),
+            "api_keys": {
+                "DEEP_SEEKR1": "✅ SET" if os.getenv("DEEP_SEEKR1", "") else "❌ NOT SET",
+                "ANTHROPIC_API_KEY": "✅ SET" if os.getenv("ANTHROPIC_API_KEY", "") else "❌ NOT SET",
+            },
+        }
+
+
+@router.post("/re-analyze")
+async def re_analyze_fallback_news(
+    background_tasks: BackgroundTasks,
+    hours: int = Query(48, ge=1, le=168, description="Re-analyze news from last N hours"),
+    limit: int = Query(50, ge=1, le=200, description="Max items to re-analyze"),
+):
+    """
+    Re-analyze news items that used fallback (rule-based) instead of real AI.
+    Detects fallback items by: headline_tr starting with '[TR]' or low ai_confidence.
+    Re-sends them to DeepSeek for proper per-news analysis.
+    """
+    import os
+    
+    # Check if DeepSeek key is available
+    deepseek_key = os.getenv("DEEP_SEEKR1", "")
+    if not deepseek_key:
+        raise HTTPException(
+            status_code=400, 
+            detail="DEEP_SEEKR1 environment variable not set. Cannot re-analyze without DeepSeek API key."
+        )
+    
+    async def run_re_analysis():
+        try:
+            supabase = get_supabase_client()
+            from services.news_analyzer_v2 import get_real_analyzer
+            
+            start_time = datetime.utcnow() - timedelta(hours=hours)
+            
+            # Get fallback-analyzed news (headline_tr starts with [TR] or low confidence)
+            result = (
+                supabase.table("enriched_news")
+                .select("*")
+                .gte("timestamp", start_time.isoformat())
+                .order("timestamp", desc=True)
+                .limit(limit * 2)  # Fetch more to filter
+                .execute()
+            )
+            
+            if hasattr(result, 'data'):
+                items = result.data or []
+            elif isinstance(result, dict):
+                items = result.get('data', []) or []
+            else:
+                items = []
+            
+            # Filter to only fallback items
+            fallback_items = [
+                item for item in items
+                if (
+                    item.get("headline_tr", "").startswith("[TR]") or
+                    (item.get("ai_confidence", 0) <= 50) or
+                    _has_identical_pattern(item.get("impacts", []))
+                )
+            ][:limit]
+            
+            print(f"[Re-analyze] Found {len(fallback_items)} fallback items to re-analyze")
+            
+            analyzer = get_real_analyzer()
+            re_analyzed = 0
+            errors = 0
+            
+            for item in fallback_items:
+                try:
+                    result = await analyzer.analyze(
+                        headline=item.get("headline", ""),
+                        content=item.get("content", ""),
+                        source=item.get("source", "")
+                    )
+                    
+                    # Check if result is real AI (not fallback)
+                    if result.confidence >= 60 and result.headline_tr and not result.headline_tr.startswith("["):
+                        # Update in database
+                        new_impacts = [
+                            {
+                                "symbol": imp.symbol,
+                                "direction": imp.direction,
+                                "score": imp.score,
+                                "confidence": imp.confidence,
+                                "reasoning": imp.reasoning,
+                                "reasoning_tr": imp.reasoning_tr,
+                                "emoji": "📈" if imp.direction == "bullish" else "📉" if imp.direction == "bearish" else "➡️",
+                            }
+                            for imp in result.impacts
+                        ]
+                        
+                        update_data = {
+                            "headline_tr": result.headline_tr,
+                            "content_tr": result.content_tr,
+                            "impacts": new_impacts,
+                            "sentiment": result.sentiment,
+                            "volatility_expectation": result.volatility_expectation,
+                            "urgency": result.urgency,
+                            "ai_confidence": result.confidence,
+                            "analysis_timestamp": datetime.utcnow().isoformat(),
+                            "show_on_chart": result.urgency in ["high", "breaking"] or any(imp.score >= 6 for imp in result.impacts),
+                        }
+                        
+                        supabase.table("enriched_news").update(update_data).eq("id", item["id"]).execute()
+                        re_analyzed += 1
+                        print(f"[Re-analyze] ✅ Updated: {item.get('headline', '')[:60]}...")
+                    else:
+                        print(f"[Re-analyze] ⚠️ Still fallback for: {item.get('headline', '')[:60]}...")
+                        
+                except Exception as e:
+                    print(f"[Re-analyze] ❌ Error: {e}")
+                    errors += 1
+                    
+                # Small delay to avoid rate limiting
+                import asyncio
+                await asyncio.sleep(1)
+            
+            print(f"[Re-analyze] Complete: {re_analyzed} updated, {errors} errors out of {len(fallback_items)} items")
+            
+        except Exception as e:
+            print(f"[Re-analyze] Fatal error: {e}")
+    
+    background_tasks.add_task(run_re_analysis)
+    
+    return {
+        "success": True,
+        "message": f"Re-analysis started in background. Will process up to {limit} fallback items from last {hours}h.",
+        "api_key_status": "✅ SET" if deepseek_key else "❌ NOT SET",
+    }
+
+
+def _has_identical_pattern(impacts: list) -> bool:
+    """Check if impacts match the common fallback pattern (all same direction)"""
+    if not impacts or len(impacts) < 3:
+        return False
+    
+    # Check if this is the generic geopolitical pattern
+    symbols = {imp.get("symbol") for imp in impacts}
+    if symbols >= {"XAUUSD", "USOIL", "VIX"}:
+        # All bullish except one bearish = generic pattern
+        directions = [imp.get("direction") for imp in impacts]
+        bullish_count = directions.count("bullish")
+        if bullish_count >= 3:
+            return True
+    
+    return False
+
+
 # Background task runner (to be called by scheduler)
 async def run_rss_aggregation() -> dict:
     """
@@ -726,3 +979,4 @@ async def run_rss_aggregation() -> dict:
     aggregator = get_rss_aggregator()
     stats = await aggregator.run_aggregation_cycle()
     return stats
+

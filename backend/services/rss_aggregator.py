@@ -713,32 +713,44 @@ class RSSAggregator:
             "breaking": "son dakika",
         }
         
+        # BEST-MATCH: Find the rule with the MOST keyword matches (not first-match)
+        best_rule_name = None
+        best_rule = None
+        best_match_count = 0
+        
         for rule_name, rule in IMPACT_RULES.items():
-            if any(keyword in text for keyword in rule["keywords"]):
-                item.impacts = [
-                    {
-                        "symbol": imp["symbol"],
-                        "direction": imp["direction"],
-                        "score": imp["score"],
-                        "confidence": 0.7,
-                        "reasoning": imp["reasoning"],
-                        "reasoning_tr": f"{imp['symbol']} için {imp['direction'] == 'bullish' and 'yükseliş' or imp['direction'] == 'bearish' and 'düşüş' or 'nötr'} etki",
-                        "emoji": "📈" if imp["direction"] == "bullish" else "📉" if imp["direction"] == "bearish" else "➡️",
-                    }
-                    for imp in rule["impacts"]
-                ]
-                item.sentiment = rule["sentiment"]
-                item.volatility_expectation = rule["volatility"]
-                item.urgency = "high" if rule["volatility"] == "high" else "medium"
-                item.ai_confidence = 0.75
-                item.ai_processed = True
-                item.processed_at = datetime.utcnow()
-                
-                # Generate Turkish translations
-                item.title_tr = self._quick_translate(item.title, translations)
-                item.content_tr = self._quick_translate(item.content[:200] + "..." if len(item.content) > 200 else item.content, translations)
-                
-                return item
+            match_count = sum(1 for keyword in rule["keywords"] if keyword in text)
+            if match_count > best_match_count:
+                best_match_count = match_count
+                best_rule_name = rule_name
+                best_rule = rule
+        
+        if best_rule and best_match_count > 0:
+            print(f"[RSS] Fallback matched rule '{best_rule_name}' with {best_match_count} keyword hits for: {item.title[:60]}...")
+            item.impacts = [
+                {
+                    "symbol": imp["symbol"],
+                    "direction": imp["direction"],
+                    "score": imp["score"],
+                    "confidence": 0.7,
+                    "reasoning": imp["reasoning"],
+                    "reasoning_tr": f"{imp['symbol']} için {imp['direction'] == 'bullish' and 'yükseliş' or imp['direction'] == 'bearish' and 'düşüş' or 'nötr'} etki",
+                    "emoji": "📈" if imp["direction"] == "bullish" else "📉" if imp["direction"] == "bearish" else "➡️",
+                }
+                for imp in best_rule["impacts"]
+            ]
+            item.sentiment = best_rule["sentiment"]
+            item.volatility_expectation = best_rule["volatility"]
+            item.urgency = "high" if best_rule["volatility"] == "high" else "medium"
+            item.ai_confidence = 0.75
+            item.ai_processed = True
+            item.processed_at = datetime.utcnow()
+            
+            # Generate Turkish translations
+            item.title_tr = self._quick_translate(item.title, translations)
+            item.content_tr = self._quick_translate(item.content[:200] + "..." if len(item.content) > 200 else item.content, translations)
+            
+            return item
         
         # No rules matched - STILL ADD TURKISH TRANSLATIONS
         item.ai_processed = True

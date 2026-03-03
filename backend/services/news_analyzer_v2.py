@@ -222,54 +222,115 @@ Analyze this news NOW:"""
         
         impacts = []
         
-        # Gerçekten içerik tabanlı analiz
-        if any(word in text for word in ["oil", "crude", "opec", "petroleum", "barrel"]):
+        # === GEOPOLITICAL: Iran-specific ===
+        if any(word in text for word in ["iran", "iranian", "tehran", "strait of hormuz"]):
+            if any(word in text for word in ["war", "strike", "attack", "military", "escalation", "conflict"]):
+                impacts.append(SymbolImpact(symbol="USOIL", direction="bullish", score=9, confidence=0.75,
+                    reasoning="Iran military conflict threatens oil supply via Strait of Hormuz",
+                    reasoning_tr="İran askeri çatışması Hürmüz Boğazı üzerinden petrol arzını tehdit ediyor"))
+                impacts.append(SymbolImpact(symbol="XAUUSD", direction="bullish", score=8, confidence=0.7,
+                    reasoning="Geopolitical escalation drives safe haven demand",
+                    reasoning_tr="Jeopolitik tırmanma güvenli liman talebini artırıyor"))
+                impacts.append(SymbolImpact(symbol="VIX", direction="bullish", score=7, confidence=0.65,
+                    reasoning="Military conflict increases market uncertainty",
+                    reasoning_tr="Askeri çatışma piyasa belirsizliğini artırıyor"))
+            elif any(word in text for word in ["crypto", "outflow", "capital flight"]):
+                impacts.append(SymbolImpact(symbol="VIX", direction="bullish", score=6, confidence=0.6,
+                    reasoning="Capital flight signals instability in region",
+                    reasoning_tr="Sermaye kaçışı bölgede istikrarsızlığa işaret ediyor"))
+                impacts.append(SymbolImpact(symbol="DXY", direction="bullish", score=5, confidence=0.55,
+                    reasoning="Safe haven flows may benefit USD",
+                    reasoning_tr="Güvenli liman akışları USD'yi destekleyebilir"))
+        
+        # === GEOPOLITICAL: General conflict ===
+        elif any(word in text for word in ["war", "conflict", "military", "invasion", "missile", "airstrike"]):
+            if any(word in text for word in ["middle east", "israel", "gaza", "palestine", "hamas", "hezbollah"]):
+                impacts.append(SymbolImpact(symbol="XAUUSD", direction="bullish", score=8, confidence=0.7,
+                    reasoning="Middle East conflict drives safe haven demand",
+                    reasoning_tr="Orta Doğu çatışması güvenli liman talebini artırıyor"))
+                impacts.append(SymbolImpact(symbol="USOIL", direction="bullish", score=7, confidence=0.65,
+                    reasoning="Regional instability raises oil supply concerns",
+                    reasoning_tr="Bölgesel istikrarsızlık petrol arzı endişelerini artırıyor"))
+            elif any(word in text for word in ["russia", "ukraine", "nato"]):
+                impacts.append(SymbolImpact(symbol="XAUUSD", direction="bullish", score=7, confidence=0.65,
+                    reasoning="Russia-Ukraine tension increases safe haven demand",
+                    reasoning_tr="Rusya-Ukrayna gerginliği güvenli liman talebini artırıyor"))
+                impacts.append(SymbolImpact(symbol="USOIL", direction="bullish", score=6, confidence=0.6,
+                    reasoning="Eastern European conflict may affect energy supply",
+                    reasoning_tr="Doğu Avrupa çatışması enerji arzını etkileyebilir"))
+            else:
+                impacts.append(SymbolImpact(symbol="VIX", direction="bullish", score=6, confidence=0.6,
+                    reasoning="Military conflict creates uncertainty",
+                    reasoning_tr="Askeri çatışma belirsizlik yaratıyor"))
+        
+        # === SANCTIONS / TRADE WAR ===
+        elif any(word in text for word in ["sanction", "tariff", "trade war", "embargo", "ban"]):
+            impacts.append(SymbolImpact(symbol="VIX", direction="bullish", score=6, confidence=0.6,
+                reasoning="Trade tensions increase market volatility",
+                reasoning_tr="Ticaret gerginlikleri piyasa volatilitesini artırıyor"))
+            if any(word in text for word in ["china", "chinese"]):
+                impacts.append(SymbolImpact(symbol="NDX", direction="bearish", score=7, confidence=0.65,
+                    reasoning="US-China trade tensions hurt tech supply chains",
+                    reasoning_tr="ABD-Çin ticaret gerginlikleri teknoloji tedarik zincirlerini olumsuz etkiliyor"))
+        
+        # === DEFENSE / MILITARY STOCKS ===
+        elif any(word in text for word in ["defense stock", "defense sector", "aerospace", "hanwha", "lockheed", "raytheon", "northrop"]):
+            impacts.append(SymbolImpact(symbol="NDX", direction="neutral", score=4, confidence=0.5,
+                reasoning="Defense sector movement, limited broad market impact",
+                reasoning_tr="Savunma sektörü hareketi, geniş piyasa etkisi sınırlı"))
+            impacts.append(SymbolImpact(symbol="VIX", direction="bullish", score=4, confidence=0.5,
+                reasoning="Defense sector rally often signals geopolitical tension",
+                reasoning_tr="Savunma sektörü rallisi genellikle jeopolitik gerginliğe işaret eder"))
+        
+        # === OIL-SPECIFIC ===
+        elif any(word in text for word in ["oil", "crude", "opec", "petroleum", "barrel"]):
             impacts.append(SymbolImpact(
                 symbol="USOIL",
                 direction="bullish" if any(w in text for w in ["cut", "shortage", "rise", "surge"]) else "bearish" if any(w in text for w in ["glut", "fall", "drop", "crash"]) else "neutral",
-                score=8,
-                confidence=0.7,
+                score=8, confidence=0.7,
                 reasoning="Direct oil market news",
-                reasoning_tr="Doğrudan petrol piyasası haberi"
-            ))
+                reasoning_tr="Doğrudan petrol piyasası haberi"))
         
-        if any(word in text for word in ["gold", "xau", "bullion", "precious metal"]):
+        # === GOLD-SPECIFIC ===
+        elif any(word in text for word in ["gold", "xau", "bullion", "precious metal"]):
             impacts.append(SymbolImpact(
                 symbol="XAUUSD",
                 direction="bullish" if any(w in text for w in ["safe haven", "rise", "surge", "rally"]) else "bearish" if any(w in text for w in ["fall", "drop", "sell"]) else "neutral",
-                score=8,
-                confidence=0.7,
+                score=8, confidence=0.7,
                 reasoning="Direct gold market news",
-                reasoning_tr="Doğrudan altın piyasası haberi"
-            ))
+                reasoning_tr="Doğrudan altın piyasası haberi"))
         
-        if any(word in text for word in ["nasdaq", "tech", "apple", "microsoft", "google", "amazon", "nvidia", "tesla"]):
+        # === TECH-SPECIFIC ===
+        elif any(word in text for word in ["nasdaq", "tech", "apple", "microsoft", "google", "amazon", "nvidia", "tesla"]):
             impacts.append(SymbolImpact(
                 symbol="NDX",
                 direction="bullish" if any(w in text for w in ["beat", "strong", "growth", "rally"]) else "bearish" if any(w in text for w in ["miss", "weak", "fall", "drop", "concern"]) else "neutral",
-                score=7,
-                confidence=0.6,
+                score=7, confidence=0.6,
                 reasoning="Tech sector related news",
-                reasoning_tr="Teknoloji sektörü ile ilgili haber"
-            ))
+                reasoning_tr="Teknoloji sektörü ile ilgili haber"))
         
-        if any(word in text for word in ["fed", "federal reserve", "rate", "powell", "interest"]):
+        # === FED / MONETARY POLICY ===
+        elif any(word in text for word in ["fed", "federal reserve", "rate", "powell", "interest"]):
             impacts.append(SymbolImpact(
                 symbol="DXY",
                 direction="bullish" if any(w in text for w in ["hike", "raise", "strong", "hawkish"]) else "bearish" if any(w in text for w in ["cut", "lower", "dovish"]) else "neutral",
-                score=8,
-                confidence=0.7,
+                score=8, confidence=0.7,
                 reasoning="Federal Reserve policy news affects USD",
-                reasoning_tr="Fed politikası USD'yi etkiler"
-            ))
+                reasoning_tr="Fed politikası USD'yi etkiler"))
             impacts.append(SymbolImpact(
                 symbol="NDX",
                 direction="bearish" if any(w in text for w in ["hike", "raise", "hawkish"]) else "bullish" if any(w in text for w in ["cut", "lower", "dovish"]) else "neutral",
-                score=7,
-                confidence=0.6,
+                score=7, confidence=0.6,
                 reasoning="Interest rates affect tech stocks",
-                reasoning_tr="Faiz oranları teknoloji hisselerini etkiler"
-            ))
+                reasoning_tr="Faiz oranları teknoloji hisselerini etkiler"))
+        
+        # === CRYPTO-SPECIFIC ===
+        elif any(word in text for word in ["crypto", "bitcoin", "ethereum", "blockchain"]):
+            impacts.append(SymbolImpact(
+                symbol="NDX",
+                direction="neutral", score=3, confidence=0.4,
+                reasoning="Crypto news has limited direct impact on traditional markets",
+                reasoning_tr="Kripto haberlerin geleneksel piyasalara doğrudan etkisi sınırlı"))
         
         if not impacts:
             # Hiçbir eşleşme yoksa nötr
