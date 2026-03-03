@@ -691,26 +691,37 @@ Provide analysis in JSON format:
             "first_5min": "Expected price movement",
             "first_hour": "Expected price movement", 
             "day_close": "Expected price movement",
-            "next_day": "Expected price movement"
+            "next_day": "Expected price movement",
+            "impacts": [
+                {{"symbol": "DXY", "direction": "bullish|bearish", "magnitude": "+0.3%"}},
+                {{"symbol": "XAUUSD", "direction": "bullish|bearish", "magnitude": "-$8"}},
+                {{"symbol": "NDX", "direction": "bullish|bearish", "magnitude": "+0.4%"}}
+            ]
         }},
         "worse_than_expected": {{
             "direction": "bullish|bearish",
             "first_5min": "Expected price movement",
             "first_hour": "Expected price movement",
             "day_close": "Expected price movement",
-            "next_day": "Expected price movement"
+            "next_day": "Expected price movement",
+            "impacts": [
+                {{"symbol": "DXY", "direction": "bullish|bearish", "magnitude": "-0.3%"}},
+                {{"symbol": "XAUUSD", "direction": "bullish|bearish", "magnitude": "+$10"}},
+                {{"symbol": "NDX", "direction": "bullish|bearish", "magnitude": "-0.5%"}}
+            ]
         }},
         "as_expected": {{
             "direction": "neutral",
             "first_5min": "Expected price movement",
             "first_hour": "Expected price movement",
-            "day_close": "Expected price movement"
+            "day_close": "Expected price movement",
+            "impacts": []
         }}
     }},
     "trading_tips": "Key trading strategy tips"
 }}
 
-Be specific with price movements (e.g., "DXY +0.3%", "XAUUSD -$8"). Consider correlations between markets.
+IMPORTANT: Include "impacts" array with affected symbols, their direction (bullish/bearish), and magnitude (e.g., "+0.3%", "-$8", "+0.4%"). Focus on DXY, XAUUSD, NDX, USOIL, VIX.
 """
 
     try:
@@ -863,25 +874,42 @@ Provide analysis in JSON format:
             "pre_market": "Expected stock move",
             "open": "Opening bell reaction",
             "first_hour": "First hour behavior",
-            "sector_effect": "Impact on sector peers"
+            "sector_effect": "Impact on sector peers",
+            "impacts": [
+                {{"symbol": "{event_data.get('ticker', 'STOCK')}", "direction": "bullish", "magnitude": "+4%"}},
+                {{"symbol": "NDX", "direction": "bullish", "magnitude": "+0.5%"}},
+                {{"symbol": "VIX", "direction": "bearish", "magnitude": "-5%"}}
+            ]
         }},
         "miss": {{
             "direction": "bearish",
             "pre_market": "Expected stock move",
             "open": "Opening bell reaction",
             "first_hour": "First hour behavior",
-            "sector_effect": "Impact on sector peers"
+            "sector_effect": "Impact on sector peers",
+            "impacts": [
+                {{"symbol": "{event_data.get('ticker', 'STOCK')}", "direction": "bearish", "magnitude": "-6%"}},
+                {{"symbol": "NDX", "direction": "bearish", "magnitude": "-0.4%"}},
+                {{"symbol": "VIX", "direction": "bullish", "magnitude": "+8%"}}
+            ]
         }},
         "mixed": {{
             "direction": "volatile",
             "pre_market": "Expected stock move",
             "guidance_importance": "Why guidance matters",
-            "trading_approach": "How to trade mixed results"
+            "trading_approach": "How to trade mixed results",
+            "impacts": [
+                {{"symbol": "{event_data.get('ticker', 'STOCK')}", "direction": "volatile", "magnitude": "±2%"}},
+                {{"symbol": "NDX", "direction": "neutral", "magnitude": "±0.2%"}}
+            ]
         }},
         "inline": {{
             "direction": "neutral",
             "pre_market": "Expected stock move",
-            "guidance_focus": "What to watch for"
+            "guidance_focus": "What to watch for",
+            "impacts": [
+                {{"symbol": "{event_data.get('ticker', 'STOCK')}", "direction": "neutral", "magnitude": "±1%"}}
+            ]
         }}
     }},
     "key_metrics": ["Most important metrics to watch"],

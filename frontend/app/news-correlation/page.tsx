@@ -57,6 +57,37 @@ interface CandleNews {
 }
 
 // Economic Calendar types (matching backend API)
+interface ScenarioImpact {
+  symbol: string;
+  direction: "bullish" | "bearish" | "neutral";
+  magnitude: string;
+}
+
+interface Scenario {
+  direction: string;
+  first_5min?: string;
+  first_hour?: string;
+  day_close?: string;
+  next_day?: string;
+  pre_market?: string;
+  open?: string;
+  sector_effect?: string;
+  guidance_importance?: string;
+  guidance_focus?: string;
+  trading_approach?: string;
+  impacts?: ScenarioImpact[];
+}
+
+interface Scenarios {
+  better_than_expected?: Scenario;
+  worse_than_expected?: Scenario;
+  as_expected?: Scenario;
+  beat?: Scenario;
+  miss?: Scenario;
+  mixed?: Scenario;
+  inline?: Scenario;
+}
+
 interface EconomicEvent {
   id: string;
   timestamp: string;
@@ -79,6 +110,9 @@ interface EconomicEvent {
   typical_market_reaction_tr: string;
   is_upcoming: boolean;
   minutes_until?: number;
+  scenarios?: Scenarios;
+  trading_tips?: string;
+  confidence?: number;
 }
 
 interface EarningsEvent {
@@ -103,6 +137,8 @@ interface EarningsEvent {
   minutes_until: number;
   confidence: number;
   predicted_direction: "bullish" | "bearish" | "neutral";
+  scenarios?: Scenarios;
+  trading_tips?: string;
 }
 
 interface WSPriceData {
@@ -1683,22 +1719,48 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       <span className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xs">🟢</span>
                       <h5 className="text-sm font-semibold text-green-400">Better Than Expected</h5>
                     </div>
+                    {/* Impacts - News Card Style */}
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {selectedEconomicEvent.scenarios?.better_than_expected?.impacts?.map((impact: any, idx: number) => (
+                        <span key={idx} className={cn(
+                          "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
+                          impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
+                          impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
+                          impact.direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
+                        )}>
+                          {impact.direction === "bullish" ? "↗" : impact.direction === "bearish" ? "↘" : "→"}
+                          {impact.symbol} {impact.magnitude}
+                        </span>
+                      )) || (
+                        <>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-green-500/10 text-green-400 border-green-500/20">
+                            ↗ DXY +0.3%
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-red-500/10 text-red-400 border-red-500/20">
+                            ↘ XAUUSD -$8
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-red-500/10 text-red-400 border-red-500/20">
+                            ↘ NDX -0.4%
+                          </span>
+                        </>
+                      )}
+                    </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">First 5 min</span>
-                        <span className="text-green-400">DXY ↑ 0.3% • XAUUSD ↓ $8</span>
+                        <span className="text-green-400">{selectedEconomicEvent.scenarios?.better_than_expected?.first_5min || "Sharp initial move"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">First hour</span>
-                        <span className="text-green-400">DXY ↑ 0.5% • NDX ↓ 0.4%</span>
+                        <span className="text-green-400">{selectedEconomicEvent.scenarios?.better_than_expected?.first_hour || "Momentum continues"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">Day close</span>
-                        <span className="text-amber-400">Trend continues or reverses based on Fed outlook</span>
+                        <span className="text-amber-400">{selectedEconomicEvent.scenarios?.better_than_expected?.day_close || "Watch for profit taking"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">Next day</span>
-                        <span className="text-gray-400">Profit taking likely, watch for follow-through</span>
+                        <span className="text-gray-400">{selectedEconomicEvent.scenarios?.better_than_expected?.next_day || "Follow-through or reversal"}</span>
                       </div>
                     </div>
                   </div>
@@ -1709,22 +1771,48 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       <span className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 text-xs">🔴</span>
                       <h5 className="text-sm font-semibold text-red-400">Worse Than Expected</h5>
                     </div>
+                    {/* Impacts - News Card Style */}
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {selectedEconomicEvent.scenarios?.worse_than_expected?.impacts?.map((impact: any, idx: number) => (
+                        <span key={idx} className={cn(
+                          "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
+                          impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
+                          impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
+                          impact.direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
+                        )}>
+                          {impact.direction === "bullish" ? "↗" : impact.direction === "bearish" ? "↘" : "→"}
+                          {impact.symbol} {impact.magnitude}
+                        </span>
+                      )) || (
+                        <>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-red-500/10 text-red-400 border-red-500/20">
+                            ↘ DXY -0.3%
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-green-500/10 text-green-400 border-green-500/20">
+                            ↗ XAUUSD +$10
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-green-500/10 text-green-400 border-green-500/20">
+                            ↗ NDX +0.5%
+                          </span>
+                        </>
+                      )}
+                    </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">First 5 min</span>
-                        <span className="text-red-400">DXY ↓ 0.3% • XAUUSD ↑ $10</span>
+                        <span className="text-red-400">{selectedEconomicEvent.scenarios?.worse_than_expected?.first_5min || "Sharp initial move"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">First hour</span>
-                        <span className="text-red-400">DXY ↓ 0.6% • NDX ↑ 0.5%</span>
+                        <span className="text-red-400">{selectedEconomicEvent.scenarios?.worse_than_expected?.first_hour || "Momentum continues"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">Day close</span>
-                        <span className="text-amber-400">Dovish Fed expectations boost risk assets</span>
+                        <span className="text-amber-400">{selectedEconomicEvent.scenarios?.worse_than_expected?.day_close || "Watch for reversals"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">Next day</span>
-                        <span className="text-gray-400">Momentum may fade, watch for reversal signals</span>
+                        <span className="text-gray-400">{selectedEconomicEvent.scenarios?.worse_than_expected?.next_day || "Mean reversion possible"}</span>
                       </div>
                     </div>
                   </div>
@@ -1738,15 +1826,15 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">First 5 min</span>
-                        <span className="text-gray-400">Minimal movement ±0.1%</span>
+                        <span className="text-gray-400">{selectedEconomicEvent.scenarios?.as_expected?.first_5min || "Minimal movement ±0.1%"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">First hour</span>
-                        <span className="text-gray-400">Range-bound, look for other catalysts</span>
+                        <span className="text-gray-400">{selectedEconomicEvent.scenarios?.as_expected?.first_hour || "Range-bound, look for other catalysts"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">Rest of day</span>
-                        <span className="text-gray-400">Focus shifts to technicals and other news</span>
+                        <span className="text-gray-400">{selectedEconomicEvent.scenarios?.as_expected?.day_close || "Focus shifts to technicals and other news"}</span>
                       </div>
                     </div>
                   </div>
@@ -1754,7 +1842,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   {/* Trading Tips */}
                   <div className="mt-4 p-3 rounded-lg bg-blue-950/30 border border-blue-900/30">
                     <p className="text-[11px] text-blue-400">
-                      <span className="font-semibold">💡 Pro Tip:</span> Wait 5 minutes after release for initial volatility to settle. Use limit orders, not market orders. Watch for reversals after the first hour.
+                      <span className="font-semibold">💡 Pro Tip:</span> {selectedEconomicEvent.trading_tips || "Wait 5 minutes after release for initial volatility to settle. Use limit orders, not market orders. Watch for reversals after the first hour."}
                     </p>
                   </div>
                 </div>
@@ -1895,22 +1983,48 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       <span className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xs">✅</span>
                       <h5 className="text-sm font-semibold text-green-400">Beat (EPS & Revenue)</h5>
                     </div>
+                    {/* Impacts - News Card Style */}
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {selectedEarningsEvent.scenarios?.beat?.impacts?.map((impact: any, idx: number) => (
+                        <span key={idx} className={cn(
+                          "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
+                          impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
+                          impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
+                          impact.direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
+                        )}>
+                          {impact.direction === "bullish" ? "↗" : impact.direction === "bearish" ? "↘" : "→"}
+                          {impact.symbol} {impact.magnitude}
+                        </span>
+                      )) || (
+                        <>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-green-500/10 text-green-400 border-green-500/20">
+                            ↗ {selectedEarningsEvent.ticker} +4%
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-green-500/10 text-green-400 border-green-500/20">
+                            ↗ NDX +0.5%
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-red-500/10 text-red-400 border-red-500/20">
+                            ↘ VIX -5%
+                          </span>
+                        </>
+                      )}
+                    </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">Pre-market</span>
-                        <span className="text-green-400">Stock +3-5% • {selectedEarningsEvent.ticker} calls spike</span>
+                        <span className="text-green-400">{selectedEarningsEvent.scenarios?.beat?.pre_market || `Stock +3-5% • ${selectedEarningsEvent.ticker} calls spike`}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">Open</span>
-                        <span className="text-green-400">Gap up, momentum buyers enter</span>
+                        <span className="text-green-400">{selectedEarningsEvent.scenarios?.beat?.open || "Gap up, momentum buyers enter"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">First hour</span>
-                        <span className="text-amber-400">Watch for profit taking at highs</span>
+                        <span className="text-amber-400">{selectedEarningsEvent.scenarios?.beat?.first_hour || "Watch for profit taking at highs"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
-                        <span className="text-gray-500 w-20">Sector effect</span>
-                        <span className="text-blue-400">{selectedEarningsEvent.sector} peers likely rally</span>
+                        <span className="text-gray-500 w-20">Sector</span>
+                        <span className="text-blue-400">{selectedEarningsEvent.scenarios?.beat?.sector_effect || `${selectedEarningsEvent.sector} peers likely rally`}</span>
                       </div>
                     </div>
                   </div>
@@ -1921,22 +2035,48 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       <span className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 text-xs">❌</span>
                       <h5 className="text-sm font-semibold text-red-400">Miss (EPS or Revenue)</h5>
                     </div>
+                    {/* Impacts - News Card Style */}
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {selectedEarningsEvent.scenarios?.miss?.impacts?.map((impact: any, idx: number) => (
+                        <span key={idx} className={cn(
+                          "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
+                          impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
+                          impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
+                          impact.direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
+                        )}>
+                          {impact.direction === "bullish" ? "↗" : impact.direction === "bearish" ? "↘" : "→"}
+                          {impact.symbol} {impact.magnitude}
+                        </span>
+                      )) || (
+                        <>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-red-500/10 text-red-400 border-red-500/20">
+                            ↘ {selectedEarningsEvent.ticker} -6%
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-red-500/10 text-red-400 border-red-500/20">
+                            ↘ NDX -0.4%
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-green-500/10 text-green-400 border-green-500/20">
+                            ↗ VIX +8%
+                          </span>
+                        </>
+                      )}
+                    </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">Pre-market</span>
-                        <span className="text-red-400">Stock -4-7% • Put volume surges</span>
+                        <span className="text-red-400">{selectedEarningsEvent.scenarios?.miss?.pre_market || `Stock -4-7% • Put volume surges`}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">Open</span>
-                        <span className="text-red-400">Gap down, stop losses trigger</span>
+                        <span className="text-red-400">{selectedEarningsEvent.scenarios?.miss?.open || "Gap down, stop losses trigger"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">First hour</span>
-                        <span className="text-amber-400">Dead cat bounce possible, then fade</span>
+                        <span className="text-amber-400">{selectedEarningsEvent.scenarios?.miss?.first_hour || "Dead cat bounce possible, then fade"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
-                        <span className="text-gray-500 w-20">Sector effect</span>
-                        <span className="text-red-400">{selectedEarningsEvent.sector} peers may decline</span>
+                        <span className="text-gray-500 w-20">Sector</span>
+                        <span className="text-red-400">{selectedEarningsEvent.scenarios?.miss?.sector_effect || `${selectedEarningsEvent.sector} peers may decline`}</span>
                       </div>
                     </div>
                   </div>
@@ -1947,18 +2087,41 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       <span className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 text-xs">⚠️</span>
                       <h5 className="text-sm font-semibold text-amber-400">Mixed (Beat EPS, Miss Revenue or vice versa)</h5>
                     </div>
+                    {/* Impacts - News Card Style */}
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {selectedEarningsEvent.scenarios?.mixed?.impacts?.map((impact: any, idx: number) => (
+                        <span key={idx} className={cn(
+                          "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
+                          impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
+                          impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
+                          impact.direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
+                        )}>
+                          {impact.direction === "bullish" ? "↗" : impact.direction === "bearish" ? "↘" : "→"}
+                          {impact.symbol} {impact.magnitude}
+                        </span>
+                      )) || (
+                        <>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-amber-500/10 text-amber-400 border-amber-500/20">
+                            → {selectedEarningsEvent.ticker} ±2%
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-gray-700/50 text-gray-400 border-gray-600">
+                            → NDX ±0.2%
+                          </span>
+                        </>
+                      )}
+                    </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">Pre-market</span>
-                        <span className="text-amber-400">Volatile ±2% • Direction unclear</span>
+                        <span className="text-amber-400">{selectedEarningsEvent.scenarios?.mixed?.pre_market || "Volatile ±2% • Direction unclear"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">Guidance</span>
-                        <span className="text-amber-400">Forward guidance becomes key driver</span>
+                        <span className="text-amber-400">{selectedEarningsEvent.scenarios?.mixed?.guidance_importance || "Forward guidance becomes key driver"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">First hour</span>
-                        <span className="text-gray-400">Wait for conference call clarity</span>
+                        <span className="text-gray-400">{selectedEarningsEvent.scenarios?.mixed?.trading_approach || "Wait for conference call clarity"}</span>
                       </div>
                     </div>
                   </div>
@@ -1969,14 +2132,37 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       <span className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-gray-400 text-xs">➖</span>
                       <h5 className="text-sm font-semibold text-gray-400">In Line (Meets Expectations)</h5>
                     </div>
+                    {/* Impacts - News Card Style */}
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {selectedEarningsEvent.scenarios?.inline?.impacts?.map((impact: any, idx: number) => (
+                        <span key={idx} className={cn(
+                          "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
+                          impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
+                          impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
+                          impact.direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
+                        )}>
+                          {impact.direction === "bullish" ? "↗" : impact.direction === "bearish" ? "↘" : "→"}
+                          {impact.symbol} {impact.magnitude}
+                        </span>
+                      )) || (
+                        <>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-gray-700/50 text-gray-400 border-gray-600">
+                            → {selectedEarningsEvent.ticker} ±1%
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-gray-700/50 text-gray-400 border-gray-600">
+                            → NDX ±0.1%
+                          </span>
+                        </>
+                      )}
+                    </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">Pre-market</span>
-                        <span className="text-gray-400">±1% move • Options IV crush likely</span>
+                        <span className="text-gray-400">{selectedEarningsEvent.scenarios?.inline?.pre_market || "±1% move • Options IV crush likely"}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
                         <span className="text-gray-500 w-20">Guidance</span>
-                        <span className="text-gray-400">Stock direction depends on forward outlook</span>
+                        <span className="text-gray-400">{selectedEarningsEvent.scenarios?.inline?.guidance_focus || "Stock direction depends on forward outlook"}</span>
                       </div>
                     </div>
                   </div>
@@ -1984,7 +2170,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   {/* Trading Tips */}
                   <div className="mt-4 p-3 rounded-lg bg-purple-950/30 border border-purple-900/30">
                     <p className="text-[11px] text-purple-400">
-                      <span className="font-semibold">💡 Pro Tip:</span> For {selectedEarningsEvent.time === "after_market" ? "after-hours" : "pre-market"} earnings, liquidity is lower and spreads wider. Consider waiting for regular session open for better fills. Watch for post-earnings drift in following days.
+                      <span className="font-semibold">💡 Pro Tip:</span> {selectedEarningsEvent.trading_tips || `For ${selectedEarningsEvent.time === "after_market" ? "after-hours" : "pre-market"} earnings, liquidity is lower and spreads wider. Consider waiting for regular session open for better fills. Watch for post-earnings drift in following days.`}
                     </p>
                   </div>
                 </div>
