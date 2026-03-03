@@ -39,42 +39,30 @@ class NewsAnalysisResult:
 class RealNewsAnalyzer:
     """
     GERÇEK haber analizi - Her haberi özgün olarak değerlendirir
-    Claude (Anthropic) öncelikli, DeepSeek fallback
     """
     
     def __init__(self):
-        self.deepseek_key = DEEPSEEK_API_KEY
-        self.anthropic_key = ANTHROPIC_API_KEY
+        self.api_key = DEEPSEEK_API_KEY
         
     async def analyze(self, headline: str, content: str = "", source: str = "") -> NewsAnalysisResult:
         """
-        Haberi gerçekten analiz et - Claude öncelikli
+        Haberi gerçekten analiz et - Rule-based değil, AI-based
         """
-        # Önce Claude dene (daha iyi çeviri)
-        if self.anthropic_key:
-            try:
-                print(f"[RealAnalyzer] Trying Claude AI for: {headline[:50]}...")
-                prompt = self._build_prompt(headline, content, source)
-                result = await self._call_claude(prompt)
-                print(f"[RealAnalyzer] ✓ Claude SUCCESS")
-                return result
-            except Exception as e:
-                print(f"[RealAnalyzer] Claude failed: {e}, trying DeepSeek...")
+        if not self.api_key:
+            # API key yoksa fallback
+            return self._fallback_analysis(headline, content)
         
-        # Claude çalışmazsa DeepSeek dene
-        if self.deepseek_key:
-            try:
-                print(f"[RealAnalyzer] Trying DeepSeek AI...")
-                prompt = self._build_prompt(headline, content, source)
-                result = await self._call_deepseek(prompt)
-                print(f"[RealAnalyzer] ✓ DeepSeek SUCCESS")
-                return result
-            except Exception as e:
-                print(f"[RealAnalyzer] DeepSeek failed: {e}")
-        
-        # Hiçbiri çalışmazsa fallback
-        print(f"[RealAnalyzer] ⚠ Using fallback analysis")
-        return self._fallback_analysis(headline, content)
+        try:
+            # DeepSeek AI'a gönder - HER haberi gerçekten analiz et
+            prompt = self._build_prompt(headline, content, source)
+            
+            result = await self._call_deepseek(prompt)
+            
+            return result
+            
+        except Exception as e:
+            print(f"[RealAnalyzer] AI failed: {e}")
+            return self._fallback_analysis(headline, content)
     
     def _build_prompt(self, headline: str, content: str, source: str) -> str:
         """
@@ -158,85 +146,11 @@ IMPORTANT RULES:
 
 Analyze this news NOW:"""
 
-    async def _call_claude(self, prompt: str) -> NewsAnalysisResult:
-        """Claude (Anthropic) AI çağrısı - Daha iyi Türkçe çeviri"""
-        async with aiohttp.ClientSession() as session:
-            headers = {
-                "x-api-key": self.anthropic_key,
-                "anthropic-version": "2023-06-01",
-                "Content-Type": "application/json"
-            }
-            
-            payload = {
-                "model": "claude-3-haiku-20240307",  # Hızlı ve ucuz model
-                "max_tokens": 1500,
-                "temperature": 0.2,
-                "system": "You are an expert financial analyst and professional translator. Analyze news precisely and provide accurate Turkish translations.",
-                "messages": [
-                    {"role": "user", "content": prompt}
-                ]
-            }
-            
-            async with session.post(
-                ANTHROPIC_API_URL,
-                headers=headers,
-                json=payload,
-                timeout=aiohttp.ClientTimeout(total=30)
-            ) as response:
-                if response.status != 200:
-                    error_text = await response.text()
-                    raise Exception(f"Claude API error {response.status}: {error_text}")
-                
-                data = await response.json()
-                content = data["content"][0]["text"]
-                
-                # Extract JSON from response (Claude might wrap it in markdown)
-                json_str = content
-                if "```json" in content:
-                    json_str = content.split("```json")[1].split("```")[0].strip()
-                elif "```" in content:
-                    json_str = content.split("```")[1].split("```")[0].strip()
-                
-                result = json.loads(json_str)
-                
-                # Parse impacts
-                impacts = []
-                for imp in result.get("affected_instruments", []):
-                    if imp.get("impact_score", 0) >= 4 or imp.get("confidence", 0) >= 0.6:
-                        impacts.append(SymbolImpact(
-                            symbol=imp["symbol"],
-                            direction=imp["direction"],
-                            score=imp["impact_score"],
-                            confidence=imp["confidence"],
-                            reasoning=imp["reasoning"],
-                            reasoning_tr=imp.get("reasoning_tr", imp["reasoning"])
-                        ))
-                
-                if not impacts:
-                    impacts.append(SymbolImpact(
-                        symbol="NDX",
-                        direction="neutral",
-                        score=3,
-                        confidence=0.5,
-                        reasoning="News does not have significant market impact",
-                        reasoning_tr="Haberin önemli piyasa etkisi yok"
-                    ))
-                
-                return NewsAnalysisResult(
-                    impacts=impacts,
-                    sentiment=result.get("market_sentiment", "neutral"),
-                    volatility_expectation=result.get("volatility_expectation", "medium"),
-                    urgency=result.get("urgency", "medium"),
-                    confidence=result.get("analysis_confidence", 75),
-                    headline_tr=result.get("headline_tr", ""),
-                    content_tr=result.get("content_tr", "")
-                )
-    
     async def _call_deepseek(self, prompt: str) -> NewsAnalysisResult:
         """DeepSeek AI çağrısı"""
         async with aiohttp.ClientSession() as session:
             headers = {
-                "Authorization": f"Bearer {self.deepseek_key}",
+                "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json"
             }
             
@@ -246,7 +160,7 @@ Analyze this news NOW:"""
                     {"role": "system", "content": "You are an expert financial analyst. Analyze news precisely and only report ACTUAL impacts, not generic patterns."},
                     {"role": "user", "content": prompt}
                 ],
-                "temperature": 0.2,
+                "temperature": 0.2,  # Düşük temperature = daha tutarlı, gerçekçi
                 "max_tokens": 1000,
                 "response_format": {"type": "json_object"}
             }
@@ -268,6 +182,7 @@ Analyze this news NOW:"""
                 # Parse impacts
                 impacts = []
                 for imp in result.get("affected_instruments", []):
+                    # Only include if actually affected (score > 3 and not neutral with low confidence)
                     if imp.get("impact_score", 0) >= 4 or imp.get("confidence", 0) >= 0.6:
                         impacts.append(SymbolImpact(
                             symbol=imp["symbol"],
@@ -278,6 +193,7 @@ Analyze this news NOW:"""
                             reasoning_tr=imp.get("reasoning_tr", imp["reasoning"])
                         ))
                 
+                # If no significant impacts, add neutral
                 if not impacts:
                     impacts.append(SymbolImpact(
                         symbol="NDX",
@@ -285,7 +201,7 @@ Analyze this news NOW:"""
                         score=3,
                         confidence=0.5,
                         reasoning="News does not have significant market impact",
-                        reasoning_tr="Haberin önemli piyasa etkisi yok"
+                        reasoning_türkçe="Haberin önemli piyasa etkisi yok"
                     ))
                 
                 return NewsAnalysisResult(
