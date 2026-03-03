@@ -149,7 +149,7 @@ async def get_accuracy_by_model(
             query = query.eq("symbol", symbol)
         
         pred_result = query.order("created_at", desc=True).limit(500).execute()
-        predictions = pred_result.get("data") or []
+        predictions = getattr(pred_result, 'data', []) if not isinstance(pred_result, dict) else pred_result.get('data', []) or []
         
         if not predictions:
             return {"models": [], "total": 0, "days": days, "note": "No completed signals found"}
@@ -407,7 +407,7 @@ async def check_all_pending_outcomes():
             "outcome_checked", False
         ).order("created_at", desc=True).limit(200).execute()
         
-        predictions = result.get("data") or []
+        predictions = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         
         if not predictions:
             return {"message": "No pending predictions found", "outcomes_checked": 0}
@@ -424,7 +424,7 @@ async def check_all_pending_outcomes():
                 "prediction_id", pred_id
             ).eq("check_interval", "24h").execute()
             
-            if existing.get("data"):
+            if getattr(existing, 'data', []) if not isinstance(existing, dict) else existing.get('data', []):
                 # Outcome exists but prediction not marked - fix it
                 from services.prediction_logger import mark_prediction_checked
                 await mark_prediction_checked(pred_id)
@@ -533,7 +533,7 @@ async def get_error_analyses(
             query = query.eq("error_type", error_type)
         
         result = query.execute()
-        analyses = result.get("data") or []
+        analyses = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         
         # Filter by symbol if needed
         if symbol:
@@ -570,7 +570,7 @@ async def get_learning_feedback(
             query = query.eq("is_active", True)
         
         result = query.execute()
-        feedbacks = result.get("data") or []
+        feedbacks = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         
         if symbol:
             feedbacks = [f for f in feedbacks if f.get("symbol") is None or f.get("symbol") == symbol]
@@ -618,19 +618,19 @@ async def get_self_learning_status(symbol: Optional[str] = Query(None)):
     try:
         # Count predictions
         pred_result = client.table("prediction_logs").select("id", count="exact").execute()
-        total_predictions = len(pred_result.get("data") or [])
+        total_predictions = len(getattr(pred_result, 'data', []) if not isinstance(pred_result, dict) else pred_result.get('data', []) or [])
         
         # Count outcomes
         out_result = client.table("outcome_results").select("id", count="exact").execute()
-        total_outcomes = len(out_result.get("data") or [])
+        total_outcomes = len(getattr(out_result, 'data', []) if not isinstance(out_result, dict) else out_result.get('data', []) or [])
         
         # Count error analyses
         err_result = client.table("error_analysis").select("id", count="exact").execute()
-        total_error_analyses = len(err_result.get("data") or [])
+        total_error_analyses = len(getattr(err_result, 'data', []) if not isinstance(err_result, dict) else err_result.get('data', []) or [])
         
         # Count active feedback rules
         fb_result = client.table("learning_feedback").select("id").eq("is_active", True).execute()
-        active_feedback_rules = len(fb_result.get("data") or [])
+        active_feedback_rules = len(getattr(fb_result, 'data', []) if not isinstance(fb_result, dict) else fb_result.get('data', []) or [])
         
         # Get recent error types distribution
         recent_errors = client.table("error_analysis").select(
@@ -639,7 +639,7 @@ async def get_self_learning_status(symbol: Optional[str] = Query(None)):
         
         error_distribution = {}
         fake_move_count = 0
-        for e in (recent_errors.get("data") or []):
+        for e in (getattr(recent_errors, 'data', []) if not isinstance(recent_errors, dict) else recent_errors.get('data', []) or []):
             et = e.get("error_type", "unknown")
             error_distribution[et] = error_distribution.get(et, 0) + 1
             if e.get("is_fake_move"):
@@ -652,7 +652,7 @@ async def get_self_learning_status(symbol: Optional[str] = Query(None)):
             "total_error_analyses": total_error_analyses,
             "active_feedback_rules": active_feedback_rules,
             "recent_error_distribution": error_distribution,
-            "fake_move_rate": round(fake_move_count / max(1, len(recent_errors.get("data") or [])), 2),
+            "fake_move_rate": round(fake_move_count / max(1, len(getattr(recent_errors, 'data', []) if not isinstance(recent_errors, dict) else recent_errors.get('data', []) or [])), 2),
             "learning_coverage": round(total_error_analyses / max(1, total_outcomes) * 100, 1)
         }
         
@@ -748,7 +748,7 @@ async def get_failure_patterns(
             query = query.eq("direction", direction)
         
         result = query.order("created_at", desc=True).limit(limit).execute()
-        patterns = result.get("data") or []
+        patterns = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         
         # Aggregate failure reasons
         reason_stats = {}
@@ -793,7 +793,7 @@ async def get_tp_success_analysis(
             query = query.eq("symbol", symbol)
         
         result = query.execute()
-        outcomes = result.get("data") or []
+        outcomes = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         
         if not outcomes:
             return {
@@ -899,7 +899,7 @@ async def get_prediction_history(
             query = query.eq("symbol", symbol)
         
         result = query.execute()
-        predictions = result.get("data") or []
+        predictions = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         
         # Format for frontend
         formatted = []
@@ -1868,7 +1868,7 @@ async def get_recent_signals_endpoint(
             query = query.neq("status", "active")
         
         result = query.execute()
-        signals = result.get("data") or []
+        signals = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', [])
         
         # Enhance with calculated fields
         enhanced = []
@@ -1976,7 +1976,7 @@ async def get_model_timeframe_analysis(
             query = query.eq("timeframe", timeframe)
         
         result = query.order("created_at", desc=True).limit(500).execute()
-        signals = result.get("data") or []
+        signals = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         
         # DEBUG: Check active signals count for XAUUSD
         if symbol == "XAUUSD":
@@ -1986,7 +1986,7 @@ async def get_model_timeframe_analysis(
             elif model_lower == "emel":
                 active_query = active_query.or_("model_type.eq.emel,strategy.eq.EMEL")
             active_result = active_query.limit(100).execute()
-            active_signals = active_result.get("data") or []
+            active_signals = getattr(active_result, 'data', []) if not isinstance(active_result, dict) else active_result.get('data', []) or []
             logger.info(f"[XAUUSD DEBUG] model={model}, completed_signals={len(signals)}, active_signals={len(active_signals)}")
         
         if not signals:
@@ -2157,7 +2157,7 @@ async def get_all_models_summary(
             query = query.eq("symbol", symbol)
         
         result = query.execute()
-        signals = result.get("data") or []
+        signals = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         
         # Initialize model structure
         MODELS = ["ml", "emel", "pulse1", "pulse2", "pulse3"]
@@ -2261,7 +2261,7 @@ async def get_model_timeframes(model: str):
             query = client.table("prediction_logs").select("timeframe").eq("model_type", model_lower)
         
         result = query.limit(1000).execute()
-        signals = result.get("data") or []
+        signals = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         
         timeframes = list(set(s.get("timeframe", "1h") for s in signals if s.get("timeframe")))
         timeframes.sort()
@@ -2326,7 +2326,7 @@ async def repair_xauusd_signals(
             "id, symbol, ml_direction, model_type, strategy, status, created_at, ml_entry_price"
         ).eq("symbol", "XAUUSD").eq("status", "active").lt("created_at", cutoff).limit(200).execute()
         
-        stuck_signals = result.get("data") or []
+        stuck_signals = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         
         if not stuck_signals:
             return {
@@ -2367,7 +2367,7 @@ async def repair_xauusd_signals(
                     "targets_hit": json.dumps({"TP1": False, "TP2": False, "TP3": False, "TP4": False}),
                 }).execute()
                 
-                if update_result and update_result.get("data"):
+                if update_result and getattr(update_result, 'data', []) if not isinstance(update_result, dict) else update_result.get('data', []):
                     fixed_count += 1
                 else:
                     errors.append(f"No data returned for {sig_id[:8]}")
@@ -2413,7 +2413,7 @@ async def get_xauusd_signal_status():
             "id, model_type, strategy, status, ml_direction, created_at, exit_time"
         ).eq("symbol", "XAUUSD").gte("created_at", cutoff).limit(500).execute()
         
-        signals = result.get("data") or []
+        signals = getattr(result, 'data', []) if not isinstance(result, dict) else result.get('data', []) or []
         
         # Count by status and model
         stats = {
@@ -2443,7 +2443,7 @@ async def get_xauusd_signal_status():
             "id, model_type, strategy, created_at, ml_entry_price"
         ).eq("symbol", "XAUUSD").eq("status", "active").lt("created_at", one_hour_ago).limit(100).execute()
         
-        old_active = old_active_result.get("data") or []
+        old_active = getattr(old_active_result, 'data', []) if not isinstance(old_active_result, dict) else old_active_result.get('data', []) or []
         
         return {
             "success": True,
