@@ -83,9 +83,9 @@ const theme = {
 };
 
 function cn(color: string) {
-  return color === "green" ? { c: theme.green, bg: `${theme.green}05`, b: `${theme.green}15` }
-    : color === "red" ? { c: theme.red, bg: `${theme.red}05`, b: `${theme.red}15` }
-      : { c: theme.warn, bg: `${theme.warn}05`, b: `${theme.warn}15` };
+  return color === "green" ? { c: theme.green, bg: `color-mix(in srgb, ${theme.green} 5%, transparent)`, b: `color-mix(in srgb, ${theme.green} 15%, transparent)` }
+    : color === "red" ? { c: theme.red, bg: `color-mix(in srgb, ${theme.red} 5%, transparent)`, b: `color-mix(in srgb, ${theme.red} 15%, transparent)` }
+      : { c: theme.warn, bg: `color-mix(in srgb, ${theme.warn} 5%, transparent)`, b: `color-mix(in srgb, ${theme.warn} 15%, transparent)` };
 }
 
 function MtfPills({ tf }: { tf: Array<{ tf: string; dir: string }> }) {
