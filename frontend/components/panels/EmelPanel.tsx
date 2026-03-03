@@ -233,14 +233,18 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
           {/* HERO SIGNAL STRIP (Top Row) */}
           <div className="grid grid-cols-5 gap-[1px]" style={{ background: theme.border }}>
             {/* Signal */}
-            <div className="p-4 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
-              <span className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: theme.muted }}>Signal</span>
-              <span className="text-2xl font-bold tracking-tight" style={{ color: sigColor }}>{data.signal}</span>
+            <div className="relative p-5 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
+              <div className="absolute top-4 left-4 flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: sigColor }}></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: sigColor }}></span>
+              </div>
+              <span className="text-[11px] uppercase tracking-widest font-bold mb-1.5" style={{ color: "rgba(255,255,255,0.7)" }}>Signal</span>
+              <span className="text-[28px] leading-none font-bold tracking-tight drop-shadow-sm" style={{ color: sigColor }}>{data.signal}</span>
             </div>
             {/* Confluence Score - NEW */}
-            <div className="p-4 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
-              <span className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: theme.muted }}>Confluence</span>
-              <span className="text-2xl font-bold tracking-tight font-mono" style={{
+            <div className="p-5 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
+              <span className="text-[11px] uppercase tracking-widest font-bold mb-1.5" style={{ color: "rgba(255,255,255,0.7)" }}>Confluence</span>
+              <span className="text-[28px] leading-none font-bold tracking-tight font-mono drop-shadow-sm" style={{
                 color: confluenceScore >= confluenceStrong ? theme.green :
                   confluenceScore >= confluenceThreshold ? theme.warn :
                     confluenceScore <= -confluenceStrong ? theme.red :
@@ -248,7 +252,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
               }}>
                 {confluenceScore > 0 ? "+" : ""}{confluenceScore.toFixed(0)}
               </span>
-              <div className="flex gap-0.5 rounded-full overflow-hidden mt-1" style={{ height: 3, width: 40, background: "rgba(255,255,255,0.04)" }}>
+              <div className="flex gap-0.5 rounded-full overflow-hidden mt-2" style={{ height: 4, width: 44, background: "rgba(255,255,255,0.06)" }}>
                 <div className="h-full" style={{
                   width: `${Math.min(100, Math.max(0, (confluenceScore + confluenceMax) / (2 * confluenceMax) * 100))}%`,
                   background: confluenceScore >= 0 ? theme.green : theme.red
@@ -256,26 +260,30 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
               </div>
             </div>
             {/* Confidence */}
-            <div className="p-4 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
-              <span className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: theme.muted }}>ML Conf</span>
-              <span className="text-2xl font-bold tracking-tight font-mono" style={{ color: theme.accent }}>{data.confidence.toFixed(0)}%</span>
+            <div className="p-5 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
+              <span className="text-[11px] uppercase tracking-widest font-bold mb-1.5" style={{ color: "rgba(255,255,255,0.7)" }}>ML Conf</span>
+              <span className="text-[28px] leading-none font-bold tracking-tight font-mono drop-shadow-sm" style={{ color: theme.accent }}>{data.confidence.toFixed(0)}%</span>
             </div>
             {/* Decision */}
-            <div className="p-4 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
-              <span className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: theme.muted }}>Action</span>
-              <span className="text-[12px] font-bold px-3 py-1 rounded" style={{ color: sigColor, background: `${sigColor}15`, border: `1px solid ${sigColor}30` }}>
+            <div className="relative p-5 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
+              <div className="absolute top-4 left-4 flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: sigColor }}></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: sigColor }}></span>
+              </div>
+              <span className="text-[11px] uppercase tracking-widest font-bold mb-2.5" style={{ color: "rgba(255,255,255,0.7)" }}>Action</span>
+              <span className="text-[14px] font-bold px-3 py-1.5 rounded" style={{ color: sigColor, background: `${sigColor}15`, border: `1px solid ${sigColor}30` }}>
                 {data.summary.decision}
               </span>
             </div>
             {/* Score Breakdown */}
-            <div className="p-4 flex flex-col justify-center" style={{ background: theme.bg }}>
-              <span className="text-[10px] uppercase tracking-widest font-bold mb-2" style={{ color: theme.muted }}>Checks</span>
-              <div className="flex gap-0.5 rounded-full overflow-hidden mb-2" style={{ height: 6, background: "rgba(255,255,255,0.04)" }}>
+            <div className="p-5 flex flex-col justify-center" style={{ background: theme.bg }}>
+              <span className="text-[11px] uppercase tracking-widest font-bold mb-2.5" style={{ color: "rgba(255,255,255,0.7)" }}>Checks</span>
+              <div className="flex gap-0.5 rounded-full overflow-hidden mb-2.5" style={{ height: 8, background: "rgba(255,255,255,0.06)" }}>
                 <div className="h-full" style={{ width: `${(gc / tot) * 100}%`, background: theme.green }} />
                 <div className="h-full" style={{ width: `${(yc / tot) * 100}%`, background: theme.warn }} />
                 <div className="h-full" style={{ width: `${(rc / tot) * 100}%`, background: theme.red }} />
               </div>
-              <div className="flex justify-between items-center text-[9px] font-mono font-bold">
+              <div className="flex justify-between items-center text-[11px] font-mono font-bold">
                 <span style={{ color: theme.green }}>{gc}✓</span>
                 <span style={{ color: theme.warn }}>{yc}~</span>
                 <span style={{ color: theme.red }}>{rc}✗</span>

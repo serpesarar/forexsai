@@ -1,7 +1,7 @@
-"""
-Hook: useNewsMarkers
-Chart üzerinde haber markerlarını göstermek için
-"""
+/**
+ * Hook: useNewsMarkers
+ * Chart üzerinde haber markerlarını göstermek için
+ */
 
 import { useEffect, useState, useCallback } from 'react';
 
@@ -44,21 +44,21 @@ export function useNewsMarkers(
 
   const fetchMarkers = useCallback(async () => {
     if (!symbol) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(
         `${API_URL}/api/rss/chart-markers/${symbol}?hours=${hours}&min_impact_score=${minImpactScore}`
       );
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         setMarkers(data.markers);
       } else {
@@ -74,10 +74,10 @@ export function useNewsMarkers(
 
   useEffect(() => {
     fetchMarkers();
-    
+
     // Her 5 dakikada bir güncelle
     const interval = setInterval(fetchMarkers, 5 * 60 * 1000);
-    
+
     return () => clearInterval(interval);
   }, [fetchMarkers]);
 
