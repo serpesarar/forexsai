@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta, timezone
+from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Any, Dict, Optional, Tuple
 from uuid import UUID
 
@@ -29,7 +30,7 @@ def _has_active_signal(client, symbol: str, model_type: str) -> Tuple[bool, Opti
         ).eq("status", "active"
         ).limit(1).execute()
         
-        data = result.get("data") or []
+        data = safe_get_data(result)
         has_active = len(data) > 0
         
         if has_active:
@@ -61,7 +62,7 @@ def _close_existing_signal(client, signal_id: str, new_direction: str, reason: s
             }
         }
         result = client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
-        if result and result.get("data"):
+        if result and safe_get_data(result):
             logger.info(f"✅ Closed signal {signal_id[:8]}: {reason} -> {new_direction}")
             return True
         return False
@@ -396,7 +397,7 @@ async def log_prediction(
             logger.debug(f"DB dedup: active {effective_model_type} {direction} signal already exists for {symbol}")
             return None
 
-        if result.get("data") and len(result["data"]) > 0:
+        if safe_get_data(result) and len(result["data"]) > 0:
             prediction_id = result["data"][0].get("id")
             logger.info(f"prediction_logger.logged | id={prediction_id[:8] if prediction_id else '?'} symbol={symbol} model={effective_model_type} dir={direction}")
             
@@ -467,7 +468,7 @@ async def get_recent_predictions(
         query = query.order("created_at", desc=True).limit(limit)
         
         result = query.execute()
-        return result.get("data") or []
+        return safe_get_data(result)
         
     except Exception as e:
         logger.error(f"Failed to get predictions: {e}")
@@ -487,10 +488,10 @@ async def mark_prediction_checked(prediction_id: str) -> bool:
         result = client.table("prediction_logs").eq("id", prediction_id).update(
             {"outcome_checked": True}
         )
-        if result.get("error"):
+        if safe_get_error(result):
             logger.error(f"Failed to mark prediction {prediction_id} checked: {result['error']}")
             return False
-        data = result.get("data")
+        data = safe_get_data(result)
         if not data or len(data) == 0:
             logger.warning(f"mark_prediction_checked: update returned empty data for {prediction_id[:8]}, result={result}")
             return False

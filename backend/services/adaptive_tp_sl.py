@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import numpy as np
 from datetime import datetime, timedelta
+from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass
 
@@ -488,7 +489,7 @@ async def save_failure_analysis(analysis: FailureAnalysis) -> bool:
         }
         
         result = client.table("failure_analyses").insert(data).execute()
-        return bool(result.get("data"))
+        return bool(safe_get_data(result))
         
     except Exception as e:
         logger.error(f"Failed to save failure analysis: {e}")
@@ -516,7 +517,7 @@ async def get_learned_adjustments(symbol: str, direction: str) -> Dict[str, Any]
             "symbol", symbol
         ).eq("direction", direction).limit(100).execute()
         
-        failures = result.get("data") or []
+        failures = safe_get_data(result)
         
         if not failures:
             return {"adjustments": [], "confidence_modifier": 0}

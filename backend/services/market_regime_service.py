@@ -19,6 +19,7 @@ import logging
 import numpy as np
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Dict, Any, Optional, List, Literal
 
 logger = logging.getLogger(__name__)
@@ -619,7 +620,7 @@ async def check_fake_signal_timeout(symbol: str) -> tuple:
             .limit(5) \
             .execute()
 
-        if result and result.get("data"):
+        if result and safe_get_data(result):
             signals = result["data"]
             # Count losses in last 24 hours
             now = datetime.now(timezone.utc)

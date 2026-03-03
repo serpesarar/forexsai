@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
+from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Any, Dict, List, Optional
 
 from database.supabase_client import get_supabase_client, is_db_available
@@ -245,7 +246,7 @@ async def check_prediction_outcome(
         
         result = client.table("outcome_results").insert(outcome).execute()
         
-        if result.get("data"):
+        if safe_get_data(result):
             logger.info(f"Recorded outcome for prediction {prediction.get('id')}: ML {'✓' if ml_correct else '✗'}, Targets: {targets_hit}")
             
             # If trade failed (hit stop or missed targets), analyze why
@@ -310,7 +311,7 @@ async def check_pending_outcomes(check_interval: str = "24h") -> List[Dict[str, 
             "outcome_checked", False
         ).lt("created_at", cutoff_iso).limit(100).execute()
         
-        predictions = result.get("data") or []
+        predictions = safe_get_data(result)
         
         if not predictions:
             logger.info(f"No pending predictions older than {check_interval}")
@@ -324,7 +325,7 @@ async def check_pending_outcomes(check_interval: str = "24h") -> List[Dict[str, 
                 "prediction_id", pred["id"]
             ).eq("check_interval", check_interval).execute()
             
-            if existing.get("data"):
+            if safe_get_data(existing):
                 # Already has outcome for this interval - mark as checked if not already
                 await mark_prediction_checked(pred["id"])
                 continue
@@ -384,7 +385,7 @@ async def get_accuracy_summary(
             query = query.eq("symbol", symbol)
         
         result = query.execute()
-        predictions = result.get("data") or []
+        predictions = safe_get_data(result)
         
         if not predictions:
             return {
@@ -615,7 +616,7 @@ async def get_multi_target_accuracy(
             query = query.eq("symbol", symbol)
         
         result = query.execute()
-        predictions = result.get("data") or []
+        predictions = safe_get_data(result)
         
         if not predictions:
             return {

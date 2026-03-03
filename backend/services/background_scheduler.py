@@ -8,6 +8,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timedelta
+from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Dict, Any, Optional, List
 
 from database.supabase_client import get_supabase_client, is_db_available
@@ -284,7 +285,7 @@ async def save_to_cache(symbol: str, data: Dict[str, Any], news: Optional[Dict[s
         # Upsert to cache
         result = client.table("live_data_cache").select("id").eq("symbol", symbol).execute()
         
-        if result.get("data") and len(result["data"]) > 0:
+        if safe_get_data(result) and len(result["data"]) > 0:
             # Update existing — .eq() before .update(), no .execute() needed
             client.table("live_data_cache").eq("symbol", symbol).update(cache_data)
         else:
@@ -341,7 +342,7 @@ def _get_cached_panel_data(symbol: str) -> Dict[str, Any]:
     for panel_name, cache_key in panel_keys.items():
         try:
             cached = cache_get(cache_key)
-            if cached and not cached.get("error"):
+            if cached and not safe_get_error(cached):
                 panels[panel_name] = cached
         except Exception:
             pass
@@ -589,7 +590,7 @@ async def _check_and_log_pulse(symbol: str, model_type: str, client):
         else:
             return
 
-        if not isinstance(result, dict) or result.get("error"):
+        if not isinstance(result, dict) or safe_get_error(result):
             return
 
         sig = result.get(sig_key, "HOLD")
@@ -626,7 +627,7 @@ async def _check_and_catchup():
         result = client.table("scheduler_state").select(
             "job_name, last_run_at"
         ).eq("job_name", "lifecycle_check").limit(1).execute()
-        rows = result.get("data") or []
+        rows = safe_get_data(result)
         if not rows:
             return
         last_run = rows[0].get("last_run_at")
@@ -710,7 +711,7 @@ async def get_cached_data(symbol: str) -> Optional[Dict[str, Any]]:
     try:
         result = client.table("live_data_cache").select("*").eq("symbol", symbol).execute()
         
-        if result.get("data") and len(result["data"]) > 0:
+        if safe_get_data(result) and len(result["data"]) > 0:
             row = result["data"][0]
             return {
                 "symbol": row.get("symbol"),

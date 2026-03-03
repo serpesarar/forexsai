@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
+from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Any, Dict, List, Optional
 from collections import defaultdict
 
@@ -49,7 +50,7 @@ async def analyze_factor_correlations(
             query = query.eq("prediction_logs.symbol", symbol)
         
         result = query.execute()
-        outcomes = result.get("data") or []
+        outcomes = safe_get_data(result)
         
         if len(outcomes) < min_samples:
             return {
@@ -278,7 +279,7 @@ async def save_insights_to_db(insights: List[Dict[str, Any]]) -> int:
             }
             
             result = client.table("learning_insights").insert(record).execute()
-            if result.get("data"):
+            if safe_get_data(result):
                 saved += 1
         
         return saved
@@ -314,7 +315,7 @@ async def get_active_insights(symbol: Optional[str] = None) -> List[Dict[str, An
         query = query.order("created_at", desc=True).limit(50)
         
         result = query.execute()
-        return result.get("data") or []
+        return safe_get_data(result)
         
     except Exception as e:
         logger.error(f"Failed to get active insights: {e}")

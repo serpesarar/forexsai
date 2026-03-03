@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from datetime import datetime, timedelta
+from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, asdict
 
@@ -242,7 +243,7 @@ async def schedule_model_comparison():
         for tf in timeframes:
             try:
                 result = await run_model_comparison(symbol, tf)
-                if result.get("error"):
+                if safe_get_error(result):
                     logger.warning(f"Comparison error for {symbol}/{tf}: {result['error']}")
                 else:
                     logger.info(f"Model comparison completed: {symbol}/{tf} - EMEL:{result['emel']['signal']} PULSE:{result['pulse']['signal']}")

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
+from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -82,7 +83,7 @@ def persist_candles(symbol: str, timeframe: str, candles: List[Dict]) -> int:
         result = db.table("candle_cache").upsert(
             chunk, on_conflict="symbol,timeframe,candle_time"
         )
-        if result.get("error"):
+        if safe_get_error(result):
             logger.error(f"Persist candles error ({symbol}/{timeframe}): {result['error']}")
         else:
             persisted += len(chunk)
@@ -135,7 +136,7 @@ def load_candles(symbol: str, timeframe: str, limit: int = 500) -> List[Dict]:
             .execute()
         )
 
-        if result.get("error") or not result.get("data"):
+        if safe_get_error(result) or not safe_get_data(result):
             return []
 
         # Convert to DataHub format and reverse to ascending order
@@ -185,7 +186,7 @@ def get_last_candle_time(symbol: str, timeframe: str) -> Optional[str]:
             .limit(1)
             .execute()
         )
-        if result.get("data") and len(result["data"]) > 0:
+        if safe_get_data(result) and len(result["data"]) > 0:
             return result["data"][0].get("last_candle_time")
     except Exception as e:
         logger.debug(f"Get last candle time error: {e}")
@@ -200,7 +201,7 @@ def get_cache_stats() -> Dict:
 
     try:
         result = db.table("candle_cache_meta").select("*").execute()
-        if result.get("data"):
+        if safe_get_data(result):
             stats = {}
             for row in result["data"]:
                 key = f"{row['symbol']}/{row['timeframe']}"

@@ -5,6 +5,7 @@ Endpoints for prediction tracking, outcome checking, and learning insights.
 from __future__ import annotations
 
 from fastapi import APIRouter, Query
+from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Optional, List
 from pydantic import BaseModel
 
@@ -1329,7 +1330,7 @@ async def get_strategy_performance(
         result = client.table("prediction_logs").select(
             "id, symbol, strategy, ml_confidence, status, targets_hit, model_type, outcome_results(hit_target, hit_stop, ml_correct, check_interval)"
         ).gte("created_at", cutoff_iso).limit(1000).execute()
-        predictions = (result.get('data') if isinstance(result, dict) else getattr(result, 'data', None)) or []
+        predictions = (safe_get_data(result) if isinstance(result, dict) else getattr(result, 'data', None)) or []
         
         # Classify by confidence — thresholds adjusted for realistic ML output
         # ML typically produces 45-70% confidence range

@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import logging
 from datetime import datetime, timedelta
+from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Any, Dict, List, Optional
 
 from anthropic import Anthropic
@@ -92,7 +93,7 @@ async def save_candle_snapshot(
         
         result = client.table("candle_snapshots").insert(snapshot)
         
-        if isinstance(result, dict) and result.get("data"):
+        if isinstance(result, dict) and safe_get_data(result):
             logger.info(f"Saved candle snapshot for prediction {prediction_id}: {snapshot_type}")
             return result["data"][0].get("id") if result["data"] else None
         elif hasattr(result, 'data') and result.data:
@@ -331,7 +332,7 @@ async def create_error_analysis(
     try:
         # Fetch prediction
         pred_result = client.table("prediction_logs").select("*").eq("id", prediction_id).execute()
-        prediction = pred_result.get("data", [{}])[0] if pred_result.get("data") else None
+        prediction = pred_result.get("data", [{}])[0] if safe_get_data(pred_result) else None
         
         if not prediction:
             logger.warning(f"Prediction not found: {prediction_id}")
@@ -341,13 +342,13 @@ async def create_error_analysis(
         outcome = None
         if outcome_id:
             out_result = client.table("outcome_results").select("*").eq("id", outcome_id).execute()
-            outcome = out_result.get("data", [{}])[0] if out_result.get("data") else None
+            outcome = out_result.get("data", [{}])[0] if safe_get_data(out_result) else None
         else:
             # Get latest outcome for this prediction
             out_result = client.table("outcome_results").select("*").eq(
                 "prediction_id", prediction_id
             ).order("created_at", desc=True).limit(1).execute()
-            outcome = out_result.get("data", [{}])[0] if out_result.get("data") else None
+            outcome = out_result.get("data", [{}])[0] if safe_get_data(out_result) else None
         
         if not outcome:
             logger.warning(f"No outcome found for prediction: {prediction_id}")
@@ -375,7 +376,7 @@ async def create_error_analysis(
         ).eq("snapshot_type", "at_prediction").execute()
         
         candles_at_prediction = []
-        if snap_result.get("data"):
+        if safe_get_data(snap_result):
             candles_at_prediction = snap_result["data"][0].get("candles", [])
         
         # Fetch current candles for "after" comparison
@@ -448,7 +449,7 @@ async def create_error_analysis(
         
         result = client.table("error_analysis").insert(error_record).execute()
         
-        if result.get("data"):
+        if safe_get_data(result):
             logger.info(f"Created error analysis for prediction {prediction_id}: {error_type}")
             
             # Create learning feedback if we have a clear lesson
@@ -528,7 +529,7 @@ async def create_learning_feedback_from_analysis(
         
         result = client.table("learning_feedback").insert(feedback).execute()
         
-        if result.get("data"):
+        if safe_get_data(result):
             logger.info(f"Created learning feedback from error {error_id}")
             return result["data"][0].get("id")
         
@@ -575,7 +576,7 @@ async def check_and_analyze_failed_predictions(
         ).eq("ml_correct", False).lt("created_at", cutoff_iso).limit(limit * 2)
         
         result = query.execute()
-        outcomes = result.get("data") or []
+        outcomes = safe_get_data(result)
         
         if not outcomes:
             logger.debug("No failed predictions to analyze")
@@ -593,7 +594,7 @@ async def check_and_analyze_failed_predictions(
                 "prediction_id", prediction_id
             ).execute()
             
-            if existing.get("data"):
+            if safe_get_data(existing):
                 continue  # Already analyzed
             
             # Create analysis
@@ -625,7 +626,7 @@ async def get_active_learning_feedback(symbol: str) -> List[Dict[str, Any]]:
             "is_active", True
         ).execute()
         
-        feedbacks = result.get("data") or []
+        feedbacks = safe_get_data(result)
         
         # Filter by symbol (include both symbol-specific and general feedback)
         relevant = [
