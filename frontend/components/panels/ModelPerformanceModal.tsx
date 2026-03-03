@@ -215,10 +215,10 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                                 {t("modelPerformance.summary.accuracy")}
                                             </div>
                                             <div className="text-5xl font-bold text-[#E6EDF3] tracking-tighter mb-2 drop-shadow-[0_0_15px_rgba(56,189,248,0.3)]">
-                                                {data.accuracy}%
+                                                {data?.accuracy || 0}%
                                             </div>
                                             <div className="text-sm font-medium text-[#9AA4B2]">
-                                                {data.totalSignals} {t("modelPerformance.summary.totalSignals")}
+                                                {data?.totalSignals || 0} {t("modelPerformance.summary.totalSignals")}
                                             </div>
                                         </div>
                                         {/* Circular Progress Ring Background (CSS pure) */}
@@ -240,7 +240,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                                 strokeWidth="4"
                                                 fill="none"
                                                 strokeDasharray={377}
-                                                strokeDashoffset={377 - (377 * (data.accuracy || 0)) / 100}
+                                                strokeDashoffset={377 - (377 * (data?.accuracy || 0)) / 100}
                                                 className="text-blue-400"
                                             />
                                         </svg>
@@ -251,14 +251,14 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                         {[
                                             {
                                                 label: t("modelPerformance.quickStats.success"),
-                                                value: `${Math.round((data.totalSignals * data.accuracy) / 100)}/${data.totalSignals}`,
+                                                value: `${Math.round(((data?.totalSignals || 0) * (data?.accuracy || 0)) / 100)}/${data?.totalSignals || 0}`,
                                                 trend: "Current",
                                                 icon: Target,
                                                 color: "emerald",
                                             },
                                             {
                                                 label: t("modelPerformance.quickStats.avgReturn"),
-                                                value: `+${data.comparisonMetrics.profit}%`,
+                                                value: `+${data?.comparisonMetrics?.profit || 0}%`,
                                                 trend: "Avg",
                                                 icon: TrendingUp,
                                                 color: "blue",
@@ -334,7 +334,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                         {activeTab === "performance" && (
                                             <div className="h-[300px] w-full">
                                                 <ResponsiveContainer width="100%" height="100%">
-                                                    <AreaChart data={data.timeSeriesData}>
+                                                    <AreaChart data={data?.timeSeriesData || []}>
                                                         <defs>
                                                             <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
                                                                 <stop offset="5%" stopColor="#16C784" stopOpacity={0.2} />
@@ -402,11 +402,11 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                                             cy="50%"
                                                             outerRadius="70%"
                                                             data={[
-                                                                { subject: t("modelPerformance.charts.accuracy"), A: data.comparisonMetrics.accuracy, fullMark: 100 },
-                                                                { subject: t("modelPerformance.charts.speed"), A: data.comparisonMetrics.speed, fullMark: 100 },
-                                                                { subject: t("modelPerformance.charts.profit"), A: data.comparisonMetrics.profit, fullMark: 100 },
-                                                                { subject: t("modelPerformance.charts.riskControl"), A: data.comparisonMetrics.riskControl, fullMark: 100 },
-                                                                { subject: t("modelPerformance.charts.trendFollowing"), A: data.comparisonMetrics.trendFollowing, fullMark: 100 },
+                                                                { subject: t("modelPerformance.charts.accuracy"), A: data?.comparisonMetrics?.accuracy || 0, fullMark: 100 },
+                                                                { subject: t("modelPerformance.charts.speed"), A: data?.comparisonMetrics?.speed || 0, fullMark: 100 },
+                                                                { subject: t("modelPerformance.charts.profit"), A: data?.comparisonMetrics?.profit || 0, fullMark: 100 },
+                                                                { subject: t("modelPerformance.charts.riskControl"), A: data?.comparisonMetrics?.riskControl || 0, fullMark: 100 },
+                                                                { subject: t("modelPerformance.charts.trendFollowing"), A: data?.comparisonMetrics?.trendFollowing || 0, fullMark: 100 },
                                                             ]}
                                                         >
                                                             <PolarGrid stroke="#ffffff1a" />
@@ -461,7 +461,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-white/5">
-                                                {data.recentSignals.length > 0 ? data.recentSignals.map((signal) => (
+                                                {(data?.recentSignals || []).length > 0 ? (data?.recentSignals || []).map((signal) => (
                                                     <tr key={signal.id} className="hover:bg-white/[0.02] transition-colors group">
                                                         <td className="px-6 py-4 font-medium text-[#9AA4B2]">
                                                             {signal.date}
