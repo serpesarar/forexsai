@@ -338,31 +338,29 @@ async def backfill_turkish_translations(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/test-deepseek")
-async def test_deepseek_analysis(
+@router.post("/test-ai")
+async def test_ai_analysis(
     headline: str = Query(..., description="News headline to analyze"),
     content: str = Query("", description="News content/summary"),
     source: str = Query("manual", description="News source")
 ):
     """
-    TEST endpoint: Send a news item directly to DeepSeek AI and see the raw response
-    Use this to verify DeepSeek is working correctly
+    TEST endpoint: Send a news item to Claude/DeepSeek AI and see the raw response
+    Use this to verify AI is working correctly
     """
     try:
         import os
         from services.news_analyzer_v2 import get_real_analyzer
         
-        # Check API key
-        api_key = os.getenv("DEEPSEEK_API_KEY", "")
-        if not api_key:
-            return {
-                "success": False,
-                "error": "DEEPSEEK_API_KEY not configured in environment",
-                "api_key_present": False
-            }
+        # Check API keys
+        anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
+        deepseek_key = os.getenv("DEEPSEEK_API_KEY", "")
         
-        # Call DeepSeek
-        print(f"[Test] Calling DeepSeek for: {headline[:60]}...")
+        print(f"[Test] ANTHROPIC_API_KEY present: {bool(anthropic_key)}")
+        print(f"[Test] DEEPSEEK_API_KEY present: {bool(deepseek_key)}")
+        
+        # Call AI
+        print(f"[Test] Analyzing: {headline[:60]}...")
         analyzer = get_real_analyzer()
         
         import asyncio
@@ -372,13 +370,20 @@ async def test_deepseek_analysis(
             source=source
         )
         
-        # Check if it looks like fallback
-        is_fallback = result.confidence < 60 and not result.headline_tr
+        # Determine which AI was used (Claude or DeepSeek or fallback)
+        ai_used = "fallback"
+        if result.confidence >= 70 and result.headline_tr and not result.headline_tr.startswith("["):
+            ai_used = "claude"  # Claude yüksek kaliteli çeviri yapar
+        elif result.headline_tr and result.headline_tr.startswith("["):
+            ai_used = "fallback"
         
         return {
             "success": True,
-            "api_key_present": True,
-            "is_fallback": is_fallback,
+            "ai_used": ai_used,
+            "api_keys": {
+                "anthropic": bool(anthropic_key),
+                "deepseek": bool(deepseek_key)
+            },
             "analysis": {
                 "headline_tr": result.headline_tr,
                 "content_tr": result.content_tr,
@@ -401,10 +406,14 @@ async def test_deepseek_analysis(
         }
         
     except Exception as e:
+        import os
         return {
             "success": False,
             "error": str(e),
-            "api_key_present": bool(os.getenv("DEEPSEEK_API_KEY", ""))
+            "api_keys": {
+                "anthropic": bool(os.getenv("ANTHROPIC_API_KEY", "")),
+                "deepseek": bool(os.getenv("DEEPSEEK_API_KEY", ""))
+            }
         }
 
 
