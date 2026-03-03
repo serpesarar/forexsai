@@ -172,16 +172,16 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
     );
   }
 
-  const sigColor = data?.signal === "BUY" || data?.signal === "STRONG_BUY" || data?.signal === "BUY_SETUP" 
-    ? theme.green 
-    : data?.signal === "SELL" || data?.signal === "STRONG_SELL" || data?.signal === "SELL_SETUP" 
-      ? theme.red 
+  const sigColor = data?.signal === "BUY" || data?.signal === "STRONG_BUY" || data?.signal === "BUY_SETUP"
+    ? theme.green
+    : data?.signal === "SELL" || data?.signal === "STRONG_SELL" || data?.signal === "SELL_SETUP"
+      ? theme.red
       : theme.warn;
   const gc = data?.summary.green_count || 0;
   const yc = data?.summary.yellow_count || 0;
   const rc = data?.summary.red_count || 0;
   const tot = gc + yc + rc || 1;
-  
+
   // Confluence score
   const confluenceScore = data?.confluence?.score ?? 0;
   const confluenceMax = data?.confluence?.max_score ?? 100;
@@ -214,8 +214,8 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
               {data.price.toFixed(2)}
             </div>
             {onSwitchMode && (
-              <button 
-                onClick={onSwitchMode} 
+              <button
+                onClick={onSwitchMode}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold font-mono transition-all"
                 style={{ background: `${theme.warn}15`, border: `1px solid ${theme.warn}30`, color: theme.warn }}
               >
@@ -240,18 +240,18 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
             {/* Confluence Score - NEW */}
             <div className="p-4 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
               <span className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: theme.muted }}>Confluence</span>
-              <span className="text-2xl font-bold tracking-tight font-mono" style={{ 
-                color: confluenceScore >= confluenceStrong ? theme.green : 
-                       confluenceScore >= confluenceThreshold ? theme.warn : 
-                       confluenceScore <= -confluenceStrong ? theme.red :
-                       confluenceScore <= -confluenceThreshold ? theme.warn : theme.muted
+              <span className="text-2xl font-bold tracking-tight font-mono" style={{
+                color: confluenceScore >= confluenceStrong ? theme.green :
+                  confluenceScore >= confluenceThreshold ? theme.warn :
+                    confluenceScore <= -confluenceStrong ? theme.red :
+                      confluenceScore <= -confluenceThreshold ? theme.warn : theme.muted
               }}>
                 {confluenceScore > 0 ? "+" : ""}{confluenceScore.toFixed(0)}
               </span>
               <div className="flex gap-0.5 rounded-full overflow-hidden mt-1" style={{ height: 3, width: 40, background: "rgba(255,255,255,0.04)" }}>
-                <div className="h-full" style={{ 
-                  width: `${Math.min(100, Math.max(0, (confluenceScore + confluenceMax) / (2 * confluenceMax) * 100))}%`, 
-                  background: confluenceScore >= 0 ? theme.green : theme.red 
+                <div className="h-full" style={{
+                  width: `${Math.min(100, Math.max(0, (confluenceScore + confluenceMax) / (2 * confluenceMax) * 100))}%`,
+                  background: confluenceScore >= 0 ? theme.green : theme.red
                 }} />
               </div>
             </div>
@@ -291,18 +291,18 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
                 const Icon = CHECK_ICONS[check.id] || Activity;
                 const cc = cn(check.color);
                 // Sol renk şeridi için gradyan
-                const leftBorderColor = check.color === "green" ? theme.green : 
-                                        check.color === "red" ? theme.red : theme.warn;
+                const leftBorderColor = check.color === "green" ? theme.green :
+                  check.color === "red" ? theme.red : theme.warn;
                 const leftBorderGradient = check.color === "green" ? `linear-gradient(180deg, ${theme.green}40 0%, ${theme.green}10 100%)` :
-                                           check.color === "red" ? `linear-gradient(180deg, ${theme.red}40 0%, ${theme.red}10 100%)` :
-                                           `linear-gradient(180deg, ${theme.warn}40 0%, ${theme.warn}10 100%)`;
+                  check.color === "red" ? `linear-gradient(180deg, ${theme.red}40 0%, ${theme.red}10 100%)` :
+                    `linear-gradient(180deg, ${theme.warn}40 0%, ${theme.warn}10 100%)`;
                 return (
-                  <div key={check.id} className="flex flex-col h-full" style={{ background: theme.bg }}>
+                  <div key={check.id} className="flex flex-col h-full transition-colors duration-500" style={{ background: cc.bg }}>
                     {/* Sol renk şeridi + içerik */}
                     <div className="flex flex-1">
                       {/* Sol renk şeridi */}
-                      <div style={{ 
-                        width: 4, 
+                      <div style={{
+                        width: 4,
                         background: leftBorderGradient,
                         minHeight: '100%'
                       }} />
@@ -380,8 +380,8 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
                           {Object.entries(data.confluence.factor_contributions).slice(0, 6).map(([factor, info]: [string, any]) => (
                             <div key={factor} className="flex justify-between text-[9px]">
                               <span style={{ color: theme.muted }}>{factor}</span>
-                              <span className="font-mono" style={{ 
-                                color: info.contribution > 0 ? theme.green : info.contribution < 0 ? theme.red : theme.warn 
+                              <span className="font-mono" style={{
+                                color: info.contribution > 0 ? theme.green : info.contribution < 0 ? theme.red : theme.warn
                               }}>
                                 {info.contribution > 0 ? "+" : ""}{info.contribution}
                               </span>
