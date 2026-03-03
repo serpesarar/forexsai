@@ -4,12 +4,17 @@ Economic Calendar Router
 Ekonomik takvim ve kazanç takvimi API endpointleri
 """
 
+import os
+import json
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Literal
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
+import aiohttp
 
 router = APIRouter(prefix="/api/calendar", tags=["calendar"])
+
+DEEP_SEEKR1 = os.getenv("DEEP_SEEKR1", "")
 
 # =============================================================================
 # DATA MODELS
@@ -585,7 +590,7 @@ async def get_today_events():
 @router.get("/event/{event_id}")
 async def get_event_details(event_id: str):
     """
-    Get detailed information about a specific economic event
+    Get detailed information about a specific economic event with DeepSeek AI analysis
     """
     try:
         # Ekonomik olayları kontrol et
@@ -595,14 +600,21 @@ async def get_event_details(event_id: str):
                 next_date = get_next_event_date(template["schedule"], now)
                 minutes_until = int((next_date - now).total_seconds() / 60)
                 
+                # DeepSeek AI Analysis
+                event_data = {
+                    **template,
+                    "timestamp": next_date.isoformat(),
+                    "is_upcoming": True,
+                    "minutes_until": max(0, minutes_until),
+                }
+                
+                ai_analysis = await analyze_economic_event_with_deepseek(event_data)
+                
                 return {
                     "success": True,
                     "event": {
-                        **template,
-                        "timestamp": next_date.isoformat(),
-                        "is_upcoming": True,
-                        "minutes_until": max(0, minutes_until),
-                        "predicted_direction": "volatile" if template["impact"] == "High" else "neutral",
+                        **event_data,
+                        **ai_analysis
                     }
                 }
         
@@ -620,15 +632,21 @@ async def get_event_details(event_id: str):
                 
                 minutes_until = int((event_date - datetime.utcnow()).total_seconds() / 60)
                 
+                # DeepSeek AI Analysis
+                event_data = {
+                    **template,
+                    "timestamp": event_date.isoformat(),
+                    "is_upcoming": True,
+                    "minutes_until": max(0, minutes_until),
+                }
+                
+                ai_analysis = await analyze_earnings_with_deepseek(event_data)
+                
                 return {
                     "success": True,
                     "event": {
-                        **template,
-                        "timestamp": event_date.isoformat(),
-                        "is_upcoming": True,
-                        "minutes_until": max(0, minutes_until),
-                        "confidence": 70,
-                        "predicted_direction": "neutral",
+                        **event_data,
+                        **ai_analysis
                     }
                 }
         
@@ -638,3 +656,324 @@ async def get_event_details(event_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# =============================================================================
+# DEEPSEEK AI ANALYSIS
+# =============================================================================
+
+async def analyze_economic_event_with_deepseek(event_data: Dict) -> Dict:
+    """
+    Analyze economic event using DeepSeek-R1
+    Returns AI-powered market impact prediction and scenarios
+    """
+    if not DEEP_SEEKR1:
+        # Return fallback analysis if no API key
+        return _fallback_economic_analysis(event_data)
+    
+    prompt = f"""Analyze this economic event and predict market impact scenarios:
+
+EVENT: {event_data.get('title', 'Unknown')}
+CURRENCY: {event_data.get('currency', 'USD')}
+IMPACT LEVEL: {event_data.get('impact', 'Medium')}
+PREVIOUS: {event_data.get('previous', 'N/A')}
+FORECAST: {event_data.get('forecast', 'N/A')}
+AFFECTED SYMBOLS: {', '.join(event_data.get('affected_symbols', []))}
+
+Provide analysis in JSON format:
+{{
+    "predicted_direction": "bullish|bearish|neutral|volatile",
+    "confidence": 0-100,
+    "impact_analysis": "Detailed impact analysis in English",
+    "impact_analysis_tr": "Detaylı etki analizi Türkçe",
+    "scenarios": {{
+        "better_than_expected": {{
+            "direction": "bullish|bearish",
+            "first_5min": "Expected price movement",
+            "first_hour": "Expected price movement", 
+            "day_close": "Expected price movement",
+            "next_day": "Expected price movement"
+        }},
+        "worse_than_expected": {{
+            "direction": "bullish|bearish",
+            "first_5min": "Expected price movement",
+            "first_hour": "Expected price movement",
+            "day_close": "Expected price movement",
+            "next_day": "Expected price movement"
+        }},
+        "as_expected": {{
+            "direction": "neutral",
+            "first_5min": "Expected price movement",
+            "first_hour": "Expected price movement",
+            "day_close": "Expected price movement"
+        }}
+    }},
+    "trading_tips": "Key trading strategy tips"
+}}
+
+Be specific with price movements (e.g., "DXY +0.3%", "XAUUSD -$8"). Consider correlations between markets.
+"""
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                "https://api.deepseek.com/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {DEEP_SEEKR1}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "deepseek-reasoner",
+                    "messages": [
+                        {"role": "system", "content": "You are an expert financial analyst specializing in macroeconomic events and market impact prediction. Always respond in valid JSON format."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    "temperature": 0.3,
+                    "max_tokens": 1500
+                },
+                timeout=aiohttp.ClientTimeout(total=30)
+            ) as response:
+                if response.status != 200:
+                    print(f"[EconomicAI] DeepSeek error: {response.status}")
+                    return _fallback_economic_analysis(event_data)
+                
+                data = await response.json()
+                content = data["choices"][0]["message"]["content"]
+                
+                # Extract JSON from response
+                try:
+                    # Try to find JSON in the response
+                    json_start = content.find('{')
+                    json_end = content.rfind('}') + 1
+                    if json_start >= 0 and json_end > json_start:
+                        json_str = content[json_start:json_end]
+                        ai_result = json.loads(json_str)
+                        ai_result["ai_analyzed"] = True
+                        ai_result["ai_model"] = "deepseek-reasoner"
+                        return ai_result
+                    else:
+                        return _fallback_economic_analysis(event_data)
+                except json.JSONDecodeError:
+                    print(f"[EconomicAI] JSON parse error")
+                    return _fallback_economic_analysis(event_data)
+                    
+    except Exception as e:
+        print(f"[EconomicAI] Error: {e}")
+        return _fallback_economic_analysis(event_data)
+
+
+def _fallback_economic_analysis(event_data: Dict) -> Dict:
+    """Fallback analysis when DeepSeek is unavailable"""
+    impact = event_data.get('impact', 'Medium')
+    currency = event_data.get('currency', 'USD')
+    
+    # Default scenarios based on impact level
+    if impact == "High":
+        return {
+            "predicted_direction": "volatile",
+            "confidence": 75,
+            "impact_analysis": "High-impact event expected to cause significant market volatility. Multiple asset classes will be affected.",
+            "impact_analysis_tr": "Yüksek etkili olay önemli piyasa volatilitesine neden olması bekleniyor. Birden fazla varlık sınıfı etkilenecek.",
+            "scenarios": {
+                "better_than_expected": {
+                    "direction": "bullish" if currency == "USD" else "mixed",
+                    "first_5min": f"{currency} +0.3% • XAUUSD -$8 • NDX +0.4%",
+                    "first_hour": f"{currency} +0.5% momentum continues",
+                    "day_close": "Trend extends, watch for profit-taking",
+                    "next_day": "Possible reversal, monitor closely"
+                },
+                "worse_than_expected": {
+                    "direction": "bearish" if currency == "USD" else "mixed",
+                    "first_5min": f"{currency} -0.3% • XAUUSD +$10 • NDX -0.5%",
+                    "first_hour": f"{currency} -0.6% as risk-off takes hold",
+                    "day_close": "Extended move, consider counter-trend",
+                    "next_day": "Mean reversion possible"
+                },
+                "as_expected": {
+                    "direction": "neutral",
+                    "first_5min": "Minimal movement ±0.1%",
+                    "first_hour": "Range-bound consolidation",
+                    "day_close": "Focus shifts to other catalysts"
+                }
+            },
+            "trading_tips": "Use limit orders. Wait 5min post-release for volatility to settle. Watch for reversals after first hour.",
+            "ai_analyzed": False,
+            "ai_model": "fallback"
+        }
+    else:
+        return {
+            "predicted_direction": "neutral",
+            "confidence": 60,
+            "impact_analysis": "Medium-impact event with limited market reaction expected.",
+            "impact_analysis_tr": "Sınırlı piyasa reaksiyonu beklenen orta etkili olay.",
+            "scenarios": {
+                "better_than_expected": {
+                    "direction": "slightly_bullish",
+                    "first_5min": f"{currency} +0.1% • Minor moves",
+                    "first_hour": "Momentum fades quickly",
+                    "day_close": "Little lasting impact",
+                    "next_day": "Back to technicals"
+                },
+                "worse_than_expected": {
+                    "direction": "slightly_bearish",
+                    "first_5min": f"{currency} -0.1% • Minor moves",
+                    "first_hour": "Quickly absorbed by market",
+                    "day_close": "Negligible impact",
+                    "next_day": "Normal trading resumes"
+                },
+                "as_expected": {
+                    "direction": "neutral",
+                    "first_5min": "No significant movement",
+                    "first_hour": "Range-bound",
+                    "day_close": "Minimal effect"
+                }
+            },
+            "trading_tips": "Focus on technical levels. This event unlikely to change trend direction.",
+            "ai_analyzed": False,
+            "ai_model": "fallback"
+        }
+
+
+async def analyze_earnings_with_deepseek(event_data: Dict) -> Dict:
+    """
+    Analyze earnings event using DeepSeek-R1
+    Returns AI-powered earnings prediction and scenarios
+    """
+    if not DEEP_SEEKR1:
+        return _fallback_earnings_analysis(event_data)
+    
+    prompt = f"""Analyze this earnings report and predict stock and market impact:
+
+COMPANY: {event_data.get('company', 'Unknown')}
+TICKER: {event_data.get('ticker', 'UNKNOWN')}
+SECTOR: {event_data.get('sector', 'Technology')}
+EPS FORECAST: {event_data.get('eps_forecast', 'N/A')}
+REVENUE FORECAST: {event_data.get('revenue_forecast', 'N/A')}
+PREVIOUS EPS: {event_data.get('previous_eps', 'N/A')}
+AFFECTED SYMBOLS: {', '.join(event_data.get('affected_symbols', []))}
+
+Provide analysis in JSON format:
+{{
+    "predicted_direction": "bullish|bearish|neutral",
+    "confidence": 0-100,
+    "analysis": "Detailed analysis in English",
+    "analysis_tr": "Detaylı analiz Türkçe",
+    "scenarios": {{
+        "beat": {{
+            "direction": "bullish",
+            "pre_market": "Expected stock move",
+            "open": "Opening bell reaction",
+            "first_hour": "First hour behavior",
+            "sector_effect": "Impact on sector peers"
+        }},
+        "miss": {{
+            "direction": "bearish",
+            "pre_market": "Expected stock move",
+            "open": "Opening bell reaction",
+            "first_hour": "First hour behavior",
+            "sector_effect": "Impact on sector peers"
+        }},
+        "mixed": {{
+            "direction": "volatile",
+            "pre_market": "Expected stock move",
+            "guidance_importance": "Why guidance matters",
+            "trading_approach": "How to trade mixed results"
+        }},
+        "inline": {{
+            "direction": "neutral",
+            "pre_market": "Expected stock move",
+            "guidance_focus": "What to watch for"
+        }}
+    }},
+    "key_metrics": ["Most important metrics to watch"],
+    "trading_tips": "Key trading strategy tips"
+}}
+
+Consider: Company weight in indices, sector correlations, market sentiment, options implied moves.
+"""
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                "https://api.deepseek.com/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {DEEP_SEEKR1}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "deepseek-reasoner",
+                    "messages": [
+                        {"role": "system", "content": "You are an expert equity analyst specializing in earnings analysis and market impact prediction. Always respond in valid JSON format."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    "temperature": 0.3,
+                    "max_tokens": 1500
+                },
+                timeout=aiohttp.ClientTimeout(total=30)
+            ) as response:
+                if response.status != 200:
+                    return _fallback_earnings_analysis(event_data)
+                
+                data = await response.json()
+                content = data["choices"][0]["message"]["content"]
+                
+                try:
+                    json_start = content.find('{')
+                    json_end = content.rfind('}') + 1
+                    if json_start >= 0 and json_end > json_start:
+                        json_str = content[json_start:json_end]
+                        ai_result = json.loads(json_str)
+                        ai_result["ai_analyzed"] = True
+                        ai_result["ai_model"] = "deepseek-reasoner"
+                        return ai_result
+                    else:
+                        return _fallback_earnings_analysis(event_data)
+                except json.JSONDecodeError:
+                    return _fallback_earnings_analysis(event_data)
+                    
+    except Exception as e:
+        print(f"[EarningsAI] Error: {e}")
+        return _fallback_earnings_analysis(event_data)
+
+
+def _fallback_earnings_analysis(event_data: Dict) -> Dict:
+    """Fallback analysis when DeepSeek is unavailable"""
+    ticker = event_data.get('ticker', 'UNKNOWN')
+    sector = event_data.get('sector', 'Technology')
+    
+    return {
+        "predicted_direction": "neutral",
+        "confidence": 70,
+        "analysis": f"Standard earnings analysis for {ticker}. Watch for EPS and revenue surprises vs estimates.",
+        "analysis_tr": f"{ticker} için standart kazanç analizi. EPS ve gelir tahminlere karşı sürprizleri izleyin.",
+        "scenarios": {
+            "beat": {
+                "direction": "bullish",
+                "pre_market": f"{ticker} +3-5% • Calls spike",
+                "open": "Gap up, momentum buyers enter",
+                "first_hour": "Watch for profit taking at highs",
+                "sector_effect": f"{sector} peers likely rally"
+            },
+            "miss": {
+                "direction": "bearish",
+                "pre_market": f"{ticker} -4-7% • Put volume surges",
+                "open": "Gap down, stop losses trigger",
+                "first_hour": "Dead cat bounce possible, then fade",
+                "sector_effect": f"{sector} peers may decline"
+            },
+            "mixed": {
+                "direction": "volatile",
+                "pre_market": f"{ticker} ±2% • Direction unclear",
+                "guidance_importance": "Forward guidance becomes key driver",
+                "trading_approach": "Wait for conference call clarity"
+            },
+            "inline": {
+                "direction": "neutral",
+                "pre_market": f"{ticker} ±1% • IV crush likely",
+                "guidance_focus": "Stock direction depends on forward outlook"
+            }
+        },
+        "key_metrics": ["EPS vs Estimate", "Revenue vs Estimate", "Forward Guidance", "Gross Margin"],
+        "trading_tips": f"For {event_data.get('time', 'after-hours')} earnings, liquidity is lower. Consider waiting for regular session open.",
+        "ai_analyzed": False,
+        "ai_model": "fallback"
+    }
