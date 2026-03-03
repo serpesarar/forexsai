@@ -30,6 +30,7 @@ from routers import (
     strategy_optimizer,
     chart_data,
     websocket,
+    economic_calendar_router,
 )
 
 __all__ = [
@@ -64,4 +65,5 @@ __all__ = [
     "strategy_optimizer",
     "chart_data",
     "websocket",
+    "economic_calendar_router",
 ]
