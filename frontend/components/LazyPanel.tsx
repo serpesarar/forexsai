@@ -8,8 +8,6 @@ interface LazyPanelProps {
   children: React.ReactNode;
   fallbackHeight?: number;
   rootMargin?: string;
-  /** Seconds to wait before unmounting an off-screen panel (UX buffer for scroll) */
-  unmountDelay?: number;
 }
 
 /**
@@ -25,14 +23,12 @@ function LazyPanelInner({
   children,
   fallbackHeight = 200,
   rootMargin = "200px",
-  unmountDelay = 30,
 }: LazyPanelProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
   // Track whether panel was ever rendered (to show nicer skeleton on unmount)
   const wasRendered = useRef(false);
-  const unmountTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const el = ref.current;
@@ -49,29 +45,13 @@ function LazyPanelInner({
     return () => observer.disconnect();
   }, [rootMargin]);
 
-  // Mount immediately when visible, unmount after delay when invisible
+  // Mount immediately when visible, and stay mounted forever to prevent layout shift
   useEffect(() => {
     if (isVisible) {
-      // Cancel any pending unmount
-      if (unmountTimer.current) {
-        clearTimeout(unmountTimer.current);
-        unmountTimer.current = null;
-      }
       setShouldRender(true);
       wasRendered.current = true;
-    } else if (wasRendered.current) {
-      // Panel left viewport — start unmount countdown
-      unmountTimer.current = setTimeout(() => {
-        setShouldRender(false);
-      }, unmountDelay * 1000);
     }
-
-    return () => {
-      if (unmountTimer.current) {
-        clearTimeout(unmountTimer.current);
-      }
-    };
-  }, [isVisible, unmountDelay]);
+  }, [isVisible]);
 
   return (
     <div ref={ref}>
