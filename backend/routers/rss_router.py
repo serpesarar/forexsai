@@ -18,7 +18,9 @@ class RSSNewsResponse(BaseModel):
     timestamp: str
     source: str
     headline: str
+    headline_tr: Optional[str] = None  # Turkish translation
     content: Optional[str]
+    content_tr: Optional[str] = None  # Turkish translation
     category: str
     url: str
     impacts: List[dict]
@@ -115,14 +117,16 @@ async def get_rss_news(
                        for imp in item.get("impacts", []))
             ]
         
-        # Format response
+        # Format response - WITH TURKISH TRANSLATIONS
         return [
             RSSNewsResponse(
                 id=item["id"],
                 timestamp=item["timestamp"],
                 source=item["source"],
                 headline=item["headline"],
+                headline_tr=item.get("headline_tr"),
                 content=item.get("content"),
+                content_tr=item.get("content_tr"),
                 category=item.get("category", "general"),
                 url=item.get("url", ""),
                 impacts=item.get("impacts", []),

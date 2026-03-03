@@ -525,10 +525,64 @@ class RSSAggregator:
         return item
     
     def _fallback_analysis(self, item: RSSNewsItem) -> RSSNewsItem:
-        """Rule-based analysis when AI fails"""
+        """Rule-based analysis when AI fails - TURKISH TRANSLATIONS INCLUDED"""
         from services.news_analyzer import IMPACT_RULES
         
         text = f"{item.title} {item.content}".lower()
+        
+        # Simple translation dictionary for common financial terms
+        translations = {
+            "earnings": "kazanç",
+            "revenue": "gelir",
+            "profit": "kâr",
+            "loss": "zarar",
+            "beat": "tahminleri aştı",
+            "miss": "tahminleri karşılayamadı",
+            "growth": "büyüme",
+            "decline": "düşüş",
+            "surge": "yükseliş",
+            "drop": "düşüş",
+            "rise": "yükseliş",
+            "fall": "düşüş",
+            "strong": "güçlü",
+            "weak": "zayıf",
+            "bullish": "yükseliş trendi",
+            "bearish": "düşüş trendi",
+            "buy": "alım",
+            "sell": "satım",
+            "hold": "bekle",
+            "outperform": "üstün performans",
+            "underperform": "zayıf performans",
+            "upgrade": "yükseltildi",
+            "downgrade": "düşürüldü",
+            "target": "hedef",
+            "price": "fiyat",
+            "market": "piyasa",
+            "stock": "hisse",
+            "trading": "ticaret",
+            "investor": "yatırımcı",
+            "analyst": "analist",
+            "report": "rapor",
+            "quarter": "çeyrek",
+            "fiscal": "mali",
+            "guidance": "tahmin",
+            "outlook": "görünüm",
+            "forecast": "öngörü",
+            "expectation": "beklenti",
+            "estimate": "tahmin",
+            "result": "sonuç",
+            "announcement": "duyuru",
+            "statement": "açıklama",
+            "conference": "konferans",
+            "call": "toplantı",
+            "meeting": "toplantı",
+            "discussion": "tartışma",
+            "update": "güncelleme",
+            "news": "haber",
+            "update": "güncelleme",
+            "alert": "uyarı",
+            "breaking": "son dakika",
+        }
         
         for rule_name, rule in IMPACT_RULES.items():
             if any(keyword in text for keyword in rule["keywords"]):
@@ -539,6 +593,7 @@ class RSSAggregator:
                         "score": imp["score"],
                         "confidence": 0.7,
                         "reasoning": imp["reasoning"],
+                        "reasoning_tr": f"{imp['symbol']} için {imp['direction'] == 'bullish' and 'yükseliş' or imp['direction'] == 'bearish' and 'düşüş' or 'nötr'} etki",
                         "emoji": "📈" if imp["direction"] == "bullish" else "📉" if imp["direction"] == "bearish" else "➡️",
                     }
                     for imp in rule["impacts"]
@@ -549,13 +604,39 @@ class RSSAggregator:
                 item.ai_confidence = 0.75
                 item.ai_processed = True
                 item.processed_at = datetime.utcnow()
+                
+                # Generate Turkish translations
+                item.title_tr = self._quick_translate(item.title, translations)
+                item.content_tr = self._quick_translate(item.content[:200] + "..." if len(item.content) > 200 else item.content, translations)
+                
                 return item
         
-        # No rules matched
+        # No rules matched - STILL ADD TURKISH TRANSLATIONS
         item.ai_processed = True
         item.processed_at = datetime.utcnow()
         item.urgency = "low"
+        item.impacts = []
+        
+        # Generate Turkish translations even for low urgency
+        item.title_tr = self._quick_translate(item.title, translations)
+        item.content_tr = self._quick_translate(item.content[:200] + "..." if len(item.content) > 200 else item.content, translations)
+        
         return item
+    
+    def _quick_translate(self, text: str, translations: dict) -> str:
+        """Quick keyword-based translation"""
+        if not text:
+            return text
+        
+        translated = text
+        for en, tr in translations.items():
+            translated = translated.replace(en, tr).replace(en.capitalize(), tr.capitalize()).replace(en.upper(), tr.upper())
+        
+        # If no translation happened, add a marker
+        if translated == text:
+            return f"[TR] {text}"
+        
+        return translated
     
     async def store_in_database(self, item: RSSNewsItem) -> bool:
         """Store processed news in database"""
@@ -579,16 +660,28 @@ class RSSAggregator:
                     }).eq("id", item.id).execute()
                 return False
             
-            # Insert new
+            # Prepare impacts with Turkish translations
+            impacts_with_tr = []
+            for imp in item.impacts:
+                imp_copy = dict(imp)
+                # Ensure reasoning_tr exists
+                if "reasoning_tr" not in imp_copy or not imp_copy["reasoning_tr"]:
+                    direction_tr = "yükseliş" if imp.get("direction") == "bullish" else "düşüş" if imp.get("direction") == "bearish" else "nötr"
+                    imp_copy["reasoning_tr"] = f"{imp.get('symbol', 'Sembol')} için {direction_tr} etki"
+                impacts_with_tr.append(imp_copy)
+            
+            # Insert new - WITH TURKISH TRANSLATIONS
             data = {
                 "id": item.id,
                 "timestamp": item.published_at.isoformat(),
                 "source": item.source,
                 "headline": item.title,
+                "headline_tr": item.title_tr if item.title_tr else f"[TR] {item.title}",
                 "content": item.content,
+                "content_tr": item.content_tr if item.content_tr else item.content[:300] + "..." if len(item.content) > 300 else item.content,
                 "category": item.category,
                 "url": item.original_url,
-                "impacts": item.impacts,
+                "impacts": impacts_with_tr,
                 "sentiment": item.sentiment,
                 "volatility_expectation": item.volatility_expectation,
                 "event_duration": "short_term",
