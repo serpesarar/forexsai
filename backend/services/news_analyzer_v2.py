@@ -279,15 +279,55 @@ Analyze this news NOW:"""
                 reasoning_tr="Önemli piyasa etkisi tespit edilmedi"
             ))
         
+        # Fallback'de basitçe başlığın başına [TR] ekleyelim ve bazı kelimeleri çevirelim
+        headline_tr = self._simple_translate(headline)
+        content_tr = self._simple_translate(content[:200]) if content else headline_tr
+        
         return NewsAnalysisResult(
             impacts=impacts,
             sentiment="neutral",
             volatility_expectation="medium",
             urgency="medium",
             confidence=50,
-            headline_tr="",
-            content_tr=""
+            headline_tr=headline_tr,
+            content_tr=content_tr
         )
+    
+    def _simple_translate(self, text: str) -> str:
+        """Basit çeviri - DeepSeek olmadığında kullanılır"""
+        if not text:
+            return ""
+        
+        # Basit kelime çevirileri
+        translations = {
+            "goldman sachs": "Goldman Sachs",
+            "oil price": "petrol fiyatı",
+            "impact": "etki",
+            "asian earnings": "Asya kazançları",
+            "says": "diyor ki",
+            "could": "olabilir",
+            "due to": "nedeniyle",
+            "conflict": "çatışma",
+            "corporate": "kurumsal",
+            "earnings": "kazançlar",
+            "price": "fiyat",
+            "rise": "yükseliş",
+            "fall": "düşüş",
+            "market": "piyasa",
+            "stock": "hisse",
+            "trade": "ticaret",
+            "rate": "oran",
+            "fed": "Fed",
+            "cut": "indirim",
+            "hike": "artış",
+        }
+        
+        result = text.lower()
+        for en, tr in translations.items():
+            result = result.replace(en, tr)
+        
+        # Baş harfi büyük yap
+        return result.capitalize()
 
 
 # Singleton
