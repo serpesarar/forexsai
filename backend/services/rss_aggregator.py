@@ -28,17 +28,55 @@ MARKET_KEYWORDS = {
     # Metals
     "gold", "xau", "silver", "metal", "precious",
     # Indices
-    "nasdaq", "dax", "index", "indices", "stock", "hisse",
+    "nasdaq", "dax", "index", "indices", "stock", "hisse", "sp500", "s&p", "dow", "jones",
     # Forex
-    "dollar", "eur", "usd", "fed", "rate", "interest", "faiz",
+    "dollar", "eur", "usd", "fed", "rate", "interest", "faiz", "euro", "gbp", "pound", "yen", 
+    "jpy", "sterling", "exchange rate", "doviz", "kurlar", "turkish lira", "lira", "tl",
     # Oil
-    "oil", "petrol", "crude", "opec", "barrel", "wti", "brent",
+    "oil", "petrol", "crude", "opec", "barrel", "wti", "brent", "gas", "natural gas", "energy",
     # Volatility
-    "vix", "volatility", "fear index",
-    # General market
-    "market", "piyasa", "trade", "trading", "yatırım", "invest",
-    # Events
-    "earnings", "kazanç", "gdp", "inflation", "enflasyon", "nfp", "jobs"
+    "vix", "volatility", "fear index", "volatilite",
+    
+    # === CRITICAL EVENTS - Always analyze ===
+    # War & Conflict (always affects all markets)
+    "war", "savaş", "saldırı", "attack", "strike", "missile", "füze", "bomb", "bombing", "patlama",
+    "explosion", "killed", "ölü", "dead", "casualties", " Yaralı", "injured", "conflict", "çatışma",
+    "invasion", "işgal", "military", "askeri", "troop", "operation", "refugee", "mülteci",
+    "iran", "israel", "gaza", "ukraine", "ukrayna", "russia", "rusya", "china", "çin", "taiwan",
+    "tayvan", "middle east", "orta doğu", "tensions", "gerginlik", "escalation", "tırmanma",
+    
+    # Central Banks & Interest Rates (critical for all markets)
+    "fed", "fomc", "interest rate", "faiz", "rate hike", "rate cut", "faiz artışı", "faiz indirimi",
+    "powell", "ecb", "european central bank", "avm", "boe", "bank of england", "boj", 
+    "merkez bankası", "central bank", "monetary policy", "para politikası", "hawkish", "dovish",
+    
+    # Economic Data (critical)
+    "inflation", "enflasyon", "cpi", "ppi", "gdp", "growth", "büyüme", "recession", "resesyon",
+    "nfp", "non-farm", "işsizlik", "unemployment", "jobless", "claims", "retail sales", 
+    "consumer", "producer", "manufacturing", "pmi", "industrial production", "trade balance",
+    "budget", "deficit", "borç", "debt", "credit rating", "kredi notu", "downgrade",
+    
+    # Earnings (always affects NDX/DAX)
+    "earnings", "kazanç", "revenue", "gelir", "profit", "kâr", "loss", "zarar", "eps", "beat",
+    "miss", "forecast", "guidance", "tahmin", "outlook", "guidance", "forecast", "apple", 
+    "microsoft", "amazon", "google", "tesla", "nvidia", "meta", "berkshire", "jpmorgan",
+    "earnings call", "conference call", "quarterly", "çeyrek", "q1", "q2", "q3", "q4",
+    
+    # Political Events (major impact)
+    "trump", "biden", "election", "seçim", "vote", "oy", "bipartisan", "congress", "senate",
+    "house", "white house", "beyaz saray", "government", "hükümet", "shutdown", "debt ceiling",
+    "tariff", "gümrük vergisi", "sanctions", "yaptırım", "trade war", "ticaret savaşı",
+    
+    # Crisis Events
+    "crisis", "kriz", "default", "bankruptcy", "iflas", "bailout", "kurtarma", "emergency",
+    "acil durum", "black swan", "pandemic", "pandemi", "lockdown", "kapanma", "supply chain",
+    "tedarik zinciri", "shortage", "kıtlık", "blackout", "kesinti",
+    
+    # General market terms
+    "market", "piyasa", "trade", "trading", "yatırım", "invest", "rally", "selloff", "dump",
+    "crash", "çöküş", "correction", "düzeltme", "bull", "bear", "boğa", "ayı", "rally", 
+    "ralli", "surge", "yükseliş", "plunge", "düşüş", "tumble", "soar", "jump", "slide",
+    "volatility", "volatilite", "liquidity", "likidite"
 }
 
 # RSS Feed Sources
@@ -729,9 +767,64 @@ class RSSAggregator:
         
         return translated
     
-    async def store_in_database(self, item: RSSNewsItem) -> bool:
-        """Store processed news in database"""
+    async def _check_economic_calendar(self, item: RSSNewsItem) -> RSSNewsItem:
+        """Check if news matches any economic calendar event"""
         try:
+            from services.economic_calendar_service import get_calendar_service
+            
+            calendar = get_calendar_service()
+            events = await calendar.fetch_today_events()
+            
+            news_title = item.title.lower()
+            news_time = item.published_at
+            
+            for event in events:
+                # Check time proximity (within 30 minutes)
+                time_diff = abs((news_time - event.timestamp).total_seconds())
+                
+                if time_diff < 1800:  # 30 minutes
+                    # Check if event keywords match
+                    event_keywords = event.event_name.lower().split()
+                    matches = sum(1 for kw in event_keywords if kw in news_title)
+                    
+                    if matches >= 2:  # At least 2 keywords match
+                        # This news is about an economic event!
+                        item.urgency = "high"
+                        item.volatility_expectation = "high"
+                        
+                        # Add economic event info
+                        if not item.impacts:
+                            item.impacts = []
+                        
+                        # Add impacts for affected symbols
+                        for symbol in event.affected_symbols:
+                            if not any(imp.get("symbol") == symbol for imp in item.impacts):
+                                item.impacts.append({
+                                    "symbol": symbol,
+                                    "direction": "neutral",  # Will be determined by AI
+                                    "score": 7 if event.impact == "high" else 5,
+                                    "confidence": 0.75,
+                                    "reasoning": f"Related to {event.event_name}",
+                                    "reasoning_tr": f"{event.event_name} ile ilgili",
+                                    "emoji": "📊",
+                                    "is_economic_event": True,
+                                    "event_name": event.event_name
+                                })
+                        
+                        print(f"[RSS] Matched economic event: {event.event_name} for news: {item.title[:50]}...")
+                        break
+            
+            return item
+        except Exception as e:
+            print(f"[RSS] Economic calendar check error: {e}")
+            return item
+    
+    async def store_in_database(self, item: RSSNewsItem) -> bool:
+        """Store processed news in database with economic calendar integration"""
+        try:
+            # Check economic calendar first
+            item = await self._check_economic_calendar(item)
+            
             supabase = get_supabase_client()
             
             # Check if already exists
@@ -761,6 +854,20 @@ class RSSAggregator:
                     imp_copy["reasoning_tr"] = f"{imp.get('symbol', 'Sembol')} için {direction_tr} etki"
                 impacts_with_tr.append(imp_copy)
             
+            # Determine marker type for chart
+            marker_type = "news"
+            marker_color = "#3B82F6"  # Blue for regular news
+            
+            if item.urgency == "breaking":
+                marker_type = "breaking_news"
+                marker_color = "#EF4444"  # Red
+            elif item.urgency == "high":
+                marker_type = "high_impact"
+                marker_color = "#F59E0B"  # Orange
+            elif any(imp.get("is_economic_event") for imp in item.impacts):
+                marker_type = "economic_event"
+                marker_color = "#8B5CF6"  # Purple
+            
             # Insert new - WITH TURKISH TRANSLATIONS
             data = {
                 "id": item.id,
@@ -781,6 +888,10 @@ class RSSAggregator:
                 "urgency": item.urgency,
                 "duplicate_of": item.duplicate_of,
                 "sources": item.sources,
+                # Chart marker data
+                "marker_type": marker_type,
+                "marker_color": marker_color,
+                "show_on_chart": item.urgency in ["high", "breaking"] or any(imp.get("score", 0) >= 6 for imp in item.impacts),
             }
             
             supabase.table("enriched_news").insert(data).execute()

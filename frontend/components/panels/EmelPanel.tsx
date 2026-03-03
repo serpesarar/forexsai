@@ -111,8 +111,8 @@ function DetailRow({ k, v }: { k: string; v: any }) {
     : typeof v === "object" && v !== null ? Object.values(v).join(", ") : String(v);
   return (
     <div className="flex justify-between items-center py-0.5">
-      <span className="text-[9px] uppercase tracking-wider" style={{ color: theme.muted }}>{k.replace(/_/g, " ")}</span>
-      <span className="text-[10px] font-bold font-mono" style={{ color: theme.text }}>{display}</span>
+      <span className="text-[10px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.7)" }}>{k.replace(/_/g, " ")}</span>
+      <span className="text-[11px] font-bold font-mono" style={{ color: theme.text }}>{display}</span>
     </div>
   );
 }
@@ -298,8 +298,8 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
                     `linear-gradient(180deg, ${theme.warn}40 0%, ${theme.warn}10 100%)`;
 
                 const angle = check.id % 2 === 1 ? "135deg" : "45deg";
-                const stripeColor1 = `color-mix(in srgb, ${leftBorderColor} 3%, transparent)`;
-                const stripeColor2 = `color-mix(in srgb, ${leftBorderColor} 8%, transparent)`;
+                const stripeColor1 = `color-mix(in srgb, ${leftBorderColor} 6%, transparent)`;
+                const stripeColor2 = `color-mix(in srgb, ${leftBorderColor} 15%, transparent)`;
                 const stripeBg = `repeating-linear-gradient(${angle}, ${stripeColor1}, ${stripeColor1} 40px, ${stripeColor2} 40px, ${stripeColor2} 80px)`;
 
                 return (
@@ -319,15 +319,15 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
                           <div className="flex gap-2">
                             <Badge n={check.id} color={cc.c} />
                             <div className="flex flex-col">
-                              <span className="text-[10px] font-bold uppercase tracking-wider leading-none mb-0.5" style={{ color: theme.text }}>{check.name}</span>
-                              <span className="text-[9px]" style={{ color: theme.muted }}>{check.subtitle}</span>
+                              <span className="text-[11px] font-bold uppercase tracking-wider leading-none mb-1" style={{ color: theme.text }}>{check.name}</span>
+                              <span className="text-[10px]" style={{ color: theme.text, opacity: 0.85 }}>{check.subtitle}</span>
                             </div>
                           </div>
                           <StatusIcon s={check.status} />
                         </div>
                         {/* Current State */}
-                        <div className="text-[10px] font-bold font-mono px-2 py-1 rounded inline-flex items-center gap-1.5 self-start mb-2" style={{ color: cc.c, background: cc.bg, border: `1px solid ${cc.b}` }}>
-                          <Icon className="w-3 h-3" /> {check.label}
+                        <div className="text-[11px] font-bold font-mono px-2.5 py-1.5 rounded inline-flex items-center gap-2 self-start mb-3 mt-1" style={{ color: cc.c, background: cc.bg, border: `1px solid ${cc.b}` }}>
+                          <Icon className="w-3.5 h-3.5" /> {check.label}
                         </div>
                         {/* Metric Rows */}
                         <div className="flex flex-col gap-1 mb-2 font-mono">
@@ -336,7 +336,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
                           ))}
                         </div>
                         {/* Description Footer */}
-                        <div className="mt-auto pt-2 border-t text-[9px] leading-relaxed" style={{ borderColor: theme.border, color: "rgba(255,255,255,0.4)" }}>
+                        <div className="mt-auto pt-3 border-t text-[10px] font-medium leading-relaxed" style={{ borderColor: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>
                           {check.comment}
                         </div>
                       </div>

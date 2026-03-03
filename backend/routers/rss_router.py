@@ -182,6 +182,137 @@ async def get_latest_breaking(limit: int = Query(10, ge=1, le=50)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/chart-markers/{symbol}")
+async def get_chart_news_markers(
+    symbol: str,
+    hours: int = Query(24, ge=1, le=168, description="Lookback period in hours"),
+    min_impact_score: int = Query(5, ge=1, le=10, description="Minimum impact score to show on chart")
+):
+    """
+    Get news markers for chart display.
+    Returns news that should be shown as markers on the candlestick chart.
+    """
+    try:
+        supabase = get_supabase_client()
+        
+        start_time = datetime.utcnow() - timedelta(hours=hours)
+        
+        # Get news that:
+        # 1. Has show_on_chart = true
+        # 2. OR has high urgency
+        # 3. OR affects the requested symbol with score >= min_impact_score
+        result = (
+            supabase.table("enriched_news")
+            .select("*")
+            .gte("timestamp", start_time.isoformat())
+            .or_(f"show_on_chart.eq.true,urgency.in.(high,breaking)")
+            .order("timestamp", desc=True)
+            .limit(100)
+            .execute()
+        )
+        
+        # Handle both old and new Supabase response formats
+        if hasattr(result, 'data'):
+            items = result.data or []
+        elif isinstance(result, dict):
+            items = result.get('data', []) or []
+        else:
+            items = []
+        
+        # Filter for symbol-specific impacts
+        markers = []
+        for item in items:
+            impacts = item.get("impacts", [])
+            
+            # Check if this news affects the requested symbol
+            symbol_impact = None
+            for imp in impacts:
+                if imp.get("symbol") == symbol and imp.get("score", 0) >= min_impact_score:
+                    symbol_impact = imp
+                    break
+            
+            # Include if it affects this symbol or is a major economic event
+            is_economic_event = any(imp.get("is_economic_event") for imp in impacts)
+            
+            if symbol_impact or is_economic_event or item.get("urgency") in ["breaking", "high"]:
+                # Determine marker appearance
+                direction = symbol_impact.get("direction", "neutral") if symbol_impact else "neutral"
+                score = symbol_impact.get("score", 5) if symbol_impact else 5
+                
+                marker = {
+                    "id": item["id"],
+                    "time": item["timestamp"],
+                    "position": "aboveBar" if direction == "bullish" else "belowBar" if direction == "bearish" else "inBar",
+                    "color": item.get("marker_color", "#3B82F6"),
+                    "shape": "circle" if item.get("urgency") == "breaking" else "square" if is_economic_event else "arrowUp" if direction == "bullish" else "arrowDown" if direction == "bearish" else "circle",
+                    "text": "📰",
+                    "size": 2 if score >= 8 else 1.5 if score >= 6 else 1,
+                    "headline": item.get("headline_tr") or item["headline"],
+                    "headline_en": item["headline"],
+                    "direction": direction,
+                    "score": score,
+                    "urgency": item.get("urgency", "medium"),
+                    "is_economic_event": is_economic_event,
+                    "event_name": symbol_impact.get("event_name") if symbol_impact else None,
+                    "reasoning_tr": symbol_impact.get("reasoning_tr") if symbol_impact else None,
+                    "url": item.get("url", ""),
+                }
+                markers.append(marker)
+        
+        return {
+            "success": True,
+            "symbol": symbol,
+            "count": len(markers),
+            "markers": markers
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/economic-calendar")
+async def get_economic_calendar(
+    date: Optional[str] = Query(None, description="Date in YYYY-MM-DD format (default: today)"),
+    currency: Optional[str] = Query(None, description="Filter by currency: USD, EUR, GBP, etc.")
+):
+    """
+    Get economic calendar events for today or specific date
+    """
+    try:
+        from services.economic_calendar_service import get_calendar_service
+        
+        calendar = get_calendar_service()
+        events = await calendar.fetch_today_events()
+        
+        if currency:
+            events = [e for e in events if e.currency == currency.upper()]
+        
+        return {
+            "success": True,
+            "date": date or datetime.utcnow().strftime("%Y-%m-%d"),
+            "count": len(events),
+            "events": [
+                {
+                    "id": e.id,
+                    "timestamp": e.timestamp.isoformat(),
+                    "currency": e.currency,
+                    "event_name": e.event_name,
+                    "impact": e.impact,
+                    "actual": e.actual,
+                    "forecast": e.forecast,
+                    "previous": e.previous,
+                    "affected_symbols": e.affected_symbols,
+                    "is_earnings": e.is_earnings,
+                    "company": e.company
+                }
+                for e in events
+            ]
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/by-category/{category}")
 async def get_news_by_category(
     category: str,
