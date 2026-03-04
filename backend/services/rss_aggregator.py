@@ -781,7 +781,16 @@ class RSSAggregator:
             
             for event in events:
                 # Check time proximity (within 30 minutes)
-                time_diff = abs((news_time - event.timestamp).total_seconds())
+                # Parse event timestamp if it's a string
+                event_time = event.timestamp
+                if isinstance(event_time, str):
+                    from datetime import datetime as dt
+                    try:
+                        event_time = dt.fromisoformat(event_time.replace('Z', '+00:00'))
+                    except:
+                        continue  # Skip events with invalid timestamps
+                
+                time_diff = abs((news_time - event_time).total_seconds())
                 
                 if time_diff < 1800:  # 30 minutes
                     # Check if event keywords match
@@ -832,17 +841,19 @@ class RSSAggregator:
             existing = supabase.table("enriched_news").select("id").eq("id", item.id).execute()
             
             existing_data = []
-            if hasattr(existing, 'data'):
-                existing_data = existing.data or []
-            elif isinstance(existing, dict):
+            if isinstance(existing, dict):
                 existing_data = existing.get('data', []) or []
+            elif hasattr(existing, 'data'):
+                existing_data = existing.data or []
             
             if existing_data:
                 # Update sources list if duplicate from another source
                 if item.duplicate_of:
-                    supabase.table("enriched_news").update({
+                    upd_result = supabase.table("enriched_news").update({
                         "sources": item.sources
-                    }).eq("id", item.id).execute()
+                    }).eq("id", item.id)
+                    if upd_result.get("error"):
+                        print(f"[RSS] Update error: {upd_result['error']}")
                 return False
             
             # Prepare impacts with Turkish translations
@@ -898,7 +909,9 @@ class RSSAggregator:
             
             # Attempt insert with detailed error logging
             try:
-                result = supabase.table("enriched_news").insert(data).execute()
+                result = supabase.table("enriched_news").insert(data)
+                if result.get("error"):
+                    raise Exception(result["error"])
                 print(f"[RSS] ✓ Saved to DB: {item.id[:40]}... - {item.title[:60]}...")
                 return True
             except Exception as insert_error:
