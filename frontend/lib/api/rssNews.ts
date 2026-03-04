@@ -115,7 +115,7 @@ export async function fetchNewsByCategory(
   return data.data || [];
 }
 
-// Ekonomik takvim verilerini getir
+// Ekonomik takvim verilerini getir (ekonomik olaylar + kazançlar)
 export async function fetchEconomicCalendar(
   date?: string,
   currency?: string
@@ -124,12 +124,40 @@ export async function fetchEconomicCalendar(
   if (date) params.append("date", date);
   if (currency) params.append("currency", currency);
 
-  const res = await fetch(`${API_BASE}/api/rss/economic-calendar?${params}`);
-  if (!res.ok) {
+  // Fetch both economic events and earnings
+  const [economicRes, earningsRes] = await Promise.all([
+    fetch(`${API_BASE}/api/calendar/economic?${params}`),
+    fetch(`${API_BASE}/api/calendar/earnings?${params}`)
+  ]);
+
+  if (!economicRes.ok) {
+    console.error("[fetchEconomicCalendar] Economic fetch failed:", await economicRes.text());
     throw new Error("Failed to fetch economic calendar");
   }
-  const data = await res.json();
-  return data.events || [];
+
+  const economicData = await economicRes.json();
+  const economicEvents = (economicData.events || []).map((e: any) => ({...e, is_earnings: false}));
+
+  let earningsEvents: any[] = [];
+  if (earningsRes.ok) {
+    const earningsData = await earningsRes.json();
+    earningsEvents = (earningsData.earnings || []).map((e: any) => ({
+      ...e,
+      is_earnings: true,
+      event_name: e.title || `${e.company} Earnings`,
+      currency: "USD",
+      impact: e.impact || "High"
+    }));
+  } else {
+    console.warn("[fetchEconomicCalendar] Earnings fetch failed (non-critical)");
+  }
+
+  // Combine and sort by timestamp
+  const allEvents = [...economicEvents, ...earningsEvents];
+  allEvents.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+  console.log(`[fetchEconomicCalendar] Fetched ${economicEvents.length} economic + ${earningsEvents.length} earnings events`);
+  return allEvents;
 }
 
 // RSS sağlık durumunu kontrol et

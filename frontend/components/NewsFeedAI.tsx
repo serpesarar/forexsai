@@ -64,13 +64,7 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
     staleTime: 2 * 60 * 1000,
   });
 
-  // DEBUG LOG
-  useEffect(() => {
-    console.log("[NewsFeedAI Debug] newsItems:", newsItems);
-    console.log("[NewsFeedAI Debug] newsLoading:", newsLoading);
-    console.log("[NewsFeedAI Debug] newsError:", newsError);
-    console.log("[NewsFeedAI Debug] newsItems length:", newsItems?.length);
-  }, [newsItems, newsLoading, newsError]);
+
 
   // Fetch economic calendar
   const {
@@ -131,8 +125,6 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
 
   // Render News Tab
   const renderNewsTab = () => {
-    console.log("[NewsFeedAI Debug] renderNewsTab called, newsLoading:", newsLoading, "newsItems:", newsItems?.length);
-    
     if (newsLoading) {
       return (
         <div className="flex items-center justify-center py-8">
