@@ -157,8 +157,9 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
   const renderNewsTab = () => {
     if (newsLoading) {
       return (
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full" />
+        <div className="flex flex-col items-center justify-center py-8">
+          <div className="animate-spin w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full mb-2" />
+          <span className="text-xs text-slate-500">Haberler yükleniyor...</span>
         </div>
       );
     }
@@ -167,8 +168,14 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
       return (
         <div className="text-center py-8 text-slate-400 text-sm">
           <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
-          Haberler yüklenirken hata oluştu
-          <div className="text-xs text-red-500 mt-2">{String(newsError)}</div>
+          <div className="mb-2">Haberler yüklenirken hata oluştu</div>
+          <div className="text-xs text-red-500/70 mb-3">{String(newsError)}</div>
+          <button 
+            onClick={() => refetchNews()}
+            className="px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs rounded-lg transition"
+          >
+            Tekrar Dene
+          </button>
         </div>
       );
     }
@@ -177,7 +184,13 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
       return (
         <div className="text-center py-8 text-slate-400 text-sm">
           <Newspaper className="w-8 h-8 mx-auto mb-2 opacity-30" />
-          Son 24 saatte haber bulunamadı
+          <div>Son 24 saatte haber bulunamadı</div>
+          <button 
+            onClick={() => refetchNews()}
+            className="mt-3 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-400 text-xs rounded-lg transition"
+          >
+            Yenile
+          </button>
         </div>
       );
     }
