@@ -64,6 +64,14 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
     staleTime: 2 * 60 * 1000,
   });
 
+  // DEBUG LOG
+  useEffect(() => {
+    console.log("[NewsFeedAI Debug] newsItems:", newsItems);
+    console.log("[NewsFeedAI Debug] newsLoading:", newsLoading);
+    console.log("[NewsFeedAI Debug] newsError:", newsError);
+    console.log("[NewsFeedAI Debug] newsItems length:", newsItems?.length);
+  }, [newsItems, newsLoading, newsError]);
+
   // Fetch economic calendar
   const {
     data: economicEvents,
@@ -123,6 +131,8 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
 
   // Render News Tab
   const renderNewsTab = () => {
+    console.log("[NewsFeedAI Debug] renderNewsTab called, newsLoading:", newsLoading, "newsItems:", newsItems?.length);
+    
     if (newsLoading) {
       return (
         <div className="flex items-center justify-center py-8">
@@ -136,6 +146,7 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
         <div className="text-center py-8 text-slate-400 text-sm">
           <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
           Haberler yüklenirken hata oluştu
+          <div className="text-xs text-red-500 mt-2">{String(newsError)}</div>
         </div>
       );
     }

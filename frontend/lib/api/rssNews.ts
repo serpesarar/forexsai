@@ -64,11 +64,21 @@ export async function fetchRSSNews(
     params.append("symbol", symbol);
   }
 
-  const res = await fetch(`${API_BASE}/api/rss/news?${params}`);
+  const url = `${API_BASE}/api/rss/news?${params}`;
+  console.log("[fetchRSSNews] Fetching:", url);
+
+  const res = await fetch(url);
+  console.log("[fetchRSSNews] Response status:", res.status);
+  
   if (!res.ok) {
+    const errorText = await res.text();
+    console.error("[fetchRSSNews] Error:", errorText);
     throw new Error("Failed to fetch RSS news");
   }
-  return res.json();
+  
+  const data = await res.json();
+  console.log("[fetchRSSNews] Data count:", data?.length);
+  return data;
 }
 
 // Son breaking/high urgency haberleri getir
