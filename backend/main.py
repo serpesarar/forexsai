@@ -358,16 +358,28 @@ except Exception as e:
 @app.get("/api/debug")
 async def debug_info():
     from config import settings
+    
+    # List all registered routes
+    routes = []
+    for route in app.routes:
+        if hasattr(route, "methods") and hasattr(route, "path"):
+            routes.append({
+                "path": route.path,
+                "methods": list(route.methods) if route.methods else [],
+                "name": route.name if hasattr(route, "name") else None
+            })
+    
     return {
         "routers_loaded": ROUTERS_LOADED,
         "import_error": IMPORT_ERROR if not ROUTERS_LOADED else None,
+        "registered_routes_count": len(routes),
+        "sample_routes": routes[:20],  # First 20 routes
         "env_vars_os": {
             "EODHD_API_KEY": "set" if os.getenv("EODHD_API_KEY") else "not set",
             "ANTHROPIC_API_KEY": "set" if os.getenv("ANTHROPIC_API_KEY") else "not set",
             "DEEP_SEEKR1": "set" if os.getenv("DEEP_SEEKR1") else "not set",
             "SUPABASE_URL": "set" if os.getenv("SUPABASE_URL") else "not set",
             "SUPABASE_KEY": "set" if os.getenv("SUPABASE_KEY") else "not set",
-            "SUPABASE_ANON_KEY": "set" if os.getenv("SUPABASE_ANON_KEY") else "not set",
         },
         "settings_config": {
             "anthropic_api_key": "set" if settings.anthropic_api_key else "not set",

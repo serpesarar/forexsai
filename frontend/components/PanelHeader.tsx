@@ -16,30 +16,33 @@ export interface PanelHeaderProps {
   // Title
   title: string;
   subtitle: string;
-  
+
   // Icon
   icon: ReactNode;
   iconBg?: string;
   iconBorder?: string;
   iconColor?: string;
-  
+
   // Symbol Switcher
   symbols: SymbolOption[];
   activeSymbol: string;
   onSymbolChange: (symbol: string) => void;
-  
+
   // Timeframe (optional)
   timeframe?: string;
   onTimeframeChange?: (tf: string) => void;
   timeframes?: string[];
-  
+
   // Actions
   onRefresh: () => void;
   loading?: boolean;
   panelId: string;
-  
+
   // Extra content (price display, etc.)
   extraContent?: ReactNode;
+
+  // Signal age (seconds since last signal)
+  signalAge?: string;
 }
 
 // ── Component ──
@@ -60,24 +63,25 @@ export function PanelHeader({
   loading = false,
   panelId,
   extraContent,
+  signalAge,
 }: PanelHeaderProps) {
   return (
-    <div 
+    <div
       className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 lg:gap-5 relative"
-      style={{ 
-        background: "var(--bg-card)", 
+      style={{
+        background: "var(--bg-card)",
         borderBottom: "1px solid var(--border-subtle)",
         padding: "var(--panel-header-padding, 20px 24px)",
         fontFamily: FONT,
       }}
     >
       {/* Subtle grid pattern background */}
-      <div 
-        className="absolute inset-0 opacity-[0.02] pointer-events-none" 
-        style={{ 
-          backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0L0 0 0 20' fill='none' stroke='%23FFF' stroke-width='1'/%3E%3C/svg%3E\")", 
-          backgroundSize: "20px 20px" 
-        }} 
+      <div
+        className="absolute inset-0 opacity-[0.02] pointer-events-none"
+        style={{
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0L0 0 0 20' fill='none' stroke='%23FFF' stroke-width='1'/%3E%3C/svg%3E\")",
+          backgroundSize: "20px 20px"
+        }}
       />
 
       {/* Left: Icon + Title + Extra Content */}
@@ -85,9 +89,9 @@ export function PanelHeader({
         {/* Icon + Title Group */}
         <div className="flex items-center gap-4">
           {/* Icon Box - 3D Premium Style */}
-          <div 
+          <div
             className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 hover:scale-105"
-            style={{ 
+            style={{
               background: `linear-gradient(135deg, ${iconBg} 0%, rgba(255,255,255,0.05) 100%)`,
               border: `1px solid ${iconBorder}`,
               boxShadow: `
@@ -97,7 +101,7 @@ export function PanelHeader({
               `,
             }}
           >
-            <div style={{ 
+            <div style={{
               color: iconColor,
               filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))",
             }}>{icon}</div>
@@ -107,9 +111,9 @@ export function PanelHeader({
           <div className="flex flex-col gap-0.5">
             {/* Main Title with Cyan Accent */}
             <div className="flex items-center gap-3">
-              <h1 
+              <h1
                 className="text-lg font-semibold tracking-tight"
-                style={{ 
+                style={{
                   color: "var(--accent-cyan)",
                   fontSize: "17px",
                   fontWeight: 650,
@@ -119,10 +123,10 @@ export function PanelHeader({
                 {title}
               </h1>
               {timeframe && (
-                <span 
+                <span
                   className="text-[11px] px-2 py-0.5 rounded-md uppercase tracking-wider font-semibold"
-                  style={{ 
-                    background: "var(--bg-input)", 
+                  style={{
+                    background: "var(--bg-input)",
                     color: "var(--text-muted)",
                     border: "1px solid var(--border-subtle)",
                   }}
@@ -131,11 +135,11 @@ export function PanelHeader({
                 </span>
               )}
             </div>
-            
+
             {/* Subtitle */}
-            <div 
+            <div
               className="text-xs font-medium uppercase tracking-wider"
-              style={{ 
+              style={{
                 color: "var(--text-muted)",
                 opacity: 0.9,
                 letterSpacing: "0.04em",
@@ -149,9 +153,9 @@ export function PanelHeader({
         {/* Divider + Extra Content (Price, etc.) */}
         {extraContent && (
           <>
-            <div 
-              className="h-10 w-[1px] hidden lg:block" 
-              style={{ background: "var(--border-subtle)" }} 
+            <div
+              className="h-10 w-[1px] hidden lg:block"
+              style={{ background: "var(--border-subtle)" }}
             />
             <div className="hidden lg:block">
               {extraContent}
@@ -164,16 +168,16 @@ export function PanelHeader({
       <div className="flex items-center gap-3 z-10 flex-wrap">
         {/* Timeframe Selector (if provided) */}
         {onTimeframeChange && (
-          <div 
+          <div
             className="flex rounded-lg p-0.5"
-            style={{ 
-              background: "var(--bg-input)", 
-              border: "1px solid var(--border-subtle)" 
+            style={{
+              background: "var(--bg-input)",
+              border: "1px solid var(--border-subtle)"
             }}
           >
             {timeframes.map((tf) => (
-              <button 
-                key={tf} 
+              <button
+                key={tf}
                 onClick={() => onTimeframeChange(tf)}
                 className="px-3 py-1.5 text-xs font-semibold transition-all rounded-md"
                 style={{
@@ -190,16 +194,16 @@ export function PanelHeader({
         )}
 
         {/* Symbol Switcher */}
-        <div 
+        <div
           className="flex rounded-lg p-0.5"
-          style={{ 
-            background: "var(--bg-input)", 
-            border: "1px solid var(--border-subtle)" 
+          style={{
+            background: "var(--bg-input)",
+            border: "1px solid var(--border-subtle)"
           }}
         >
           {symbols.map((s) => (
-            <button 
-              key={s.key} 
+            <button
+              key={s.key}
               onClick={() => onSymbolChange(s.key)}
               className="px-3.5 py-2 text-xs font-semibold transition-all rounded-md"
               style={{
@@ -216,18 +220,33 @@ export function PanelHeader({
           ))}
         </div>
 
+        {/* Signal Age Badge */}
+        {signalAge && (
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-mono font-semibold"
+            style={{
+              background: "var(--bg-input)",
+              border: "1px solid var(--border-subtle)",
+              color: "var(--text-muted)",
+            }}
+          >
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--accent-positive)", animation: "pulse 2s infinite" }} />
+            {signalAge}
+          </div>
+        )}
+
         {/* Refresh Button */}
-        <button 
-          onClick={onRefresh} 
+        <button
+          onClick={onRefresh}
           className="w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:bg-white/5"
-          style={{ 
-            border: "1px solid var(--border-subtle)", 
+          style={{
+            border: "1px solid var(--border-subtle)",
             background: "var(--bg-input)",
           }}
         >
-          <RefreshCw 
-            className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} 
-            style={{ color: "var(--text-muted)" }} 
+          <RefreshCw
+            className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
+            style={{ color: "var(--text-muted)" }}
           />
         </button>
 
@@ -247,7 +266,8 @@ export function PanelHeaderCompact({
   onRefresh,
   loading = false,
   panelId,
-  children, // Additional controls
+  children,
+  signalAge,
 }: {
   title: string;
   subtitle: string;
@@ -257,31 +277,32 @@ export function PanelHeaderCompact({
   loading?: boolean;
   panelId: string;
   children?: ReactNode;
+  signalAge?: string;
 }) {
   return (
-    <div 
+    <div
       className="flex justify-between items-center relative"
-      style={{ 
-        background: "var(--bg-card)", 
+      style={{
+        background: "var(--bg-card)",
         borderBottom: "1px solid var(--border-subtle)",
         padding: "16px 20px",
         fontFamily: FONT,
       }}
     >
       {/* Subtle grid pattern */}
-      <div 
-        className="absolute inset-0 opacity-[0.02] pointer-events-none" 
-        style={{ 
-          backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0L0 0 0 20' fill='none' stroke='%23FFF' stroke-width='1'/%3E%3C/svg%3E\")", 
-          backgroundSize: "20px 20px" 
-        }} 
+      <div
+        className="absolute inset-0 opacity-[0.02] pointer-events-none"
+        style={{
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0L0 0 0 20' fill='none' stroke='%23FFF' stroke-width='1'/%3E%3C/svg%3E\")",
+          backgroundSize: "20px 20px"
+        }}
       />
 
       {/* Left: Icon + Title */}
       <div className="flex items-center gap-3 z-10">
-        <div 
+        <div
           className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 hover:scale-105"
-          style={{ 
+          style={{
             background: "linear-gradient(135deg, var(--accent-cyan-08) 0%, rgba(255,255,255,0.05) 100%)",
             border: "1px solid var(--accent-cyan-15)",
             boxShadow: `
@@ -291,15 +312,15 @@ export function PanelHeaderCompact({
             `,
           }}
         >
-          <div style={{ 
+          <div style={{
             color: iconColor,
             filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))",
           }}>{icon}</div>
         </div>
         <div className="flex flex-col gap-0.5">
-          <h1 
+          <h1
             className="text-base font-semibold tracking-tight"
-            style={{ 
+            style={{
               color: "var(--accent-cyan)",
               fontWeight: 650,
               letterSpacing: "-0.01em",
@@ -307,7 +328,7 @@ export function PanelHeaderCompact({
           >
             {title}
           </h1>
-          <div 
+          <div
             className="text-[11px] font-medium uppercase tracking-wider"
             style={{ color: "var(--text-muted)" }}
           >
@@ -319,17 +340,31 @@ export function PanelHeaderCompact({
       {/* Right: Controls */}
       <div className="flex items-center gap-2 z-10">
         {children}
-        <button 
-          onClick={onRefresh} 
+        {/* Signal Age Badge */}
+        {signalAge && (
+          <div
+            className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-mono font-semibold"
+            style={{
+              background: "var(--bg-input)",
+              border: "1px solid var(--border-subtle)",
+              color: "var(--text-muted)",
+            }}
+          >
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--accent-positive)", animation: "pulse 2s infinite" }} />
+            {signalAge}
+          </div>
+        )}
+        <button
+          onClick={onRefresh}
           className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-white/5"
-          style={{ 
-            border: "1px solid var(--border-subtle)", 
+          style={{
+            border: "1px solid var(--border-subtle)",
             background: "var(--bg-input)",
           }}
         >
-          <RefreshCw 
-            className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} 
-            style={{ color: "var(--text-muted)" }} 
+          <RefreshCw
+            className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+            style={{ color: "var(--text-muted)" }}
           />
         </button>
         <PanelInfoButton panelId={panelId} />

@@ -90,6 +90,8 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
   const [error, setError] = useState<string | null>(null);
   const [timeframe, setTimeframe] = useState("5m");
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [signalAge, setSignalAge] = useState<string>("");
+  const [signalTimestamp, setSignalTimestamp] = useState<Date | null>(null);
 
 
   const fetchData = useCallback(async () => {
@@ -104,6 +106,12 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
       } else {
         setData(json);
         setLastUpdate(new Date());
+        // Reset signal age timer when new signal arrives
+        if (json.signal_timestamp) {
+          setSignalTimestamp(new Date(json.signal_timestamp));
+        } else {
+          setSignalTimestamp(new Date());
+        }
       }
     } catch (e) {
       console.error("PULSE fetch error:", e);
@@ -116,9 +124,25 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
   }, [fetchData]);
+
+  // Signal age timer - updates every second
+  useEffect(() => {
+    if (!signalTimestamp) return;
+    const tick = () => {
+      const diff = Math.floor((Date.now() - signalTimestamp.getTime()) / 1000);
+      if (diff < 60) {
+        setSignalAge(`${diff}s`);
+      } else {
+        setSignalAge(`${Math.floor(diff / 60)}m ${diff % 60}s`);
+      }
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [signalTimestamp]);
 
   // Listen for global refresh event from header button
   useEffect(() => {
@@ -168,6 +192,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
         onRefresh={fetchData}
         loading={loading}
         panelId="pulse-panel"
+        signalAge={signalAge}
         extraContent={data ? (
           <div>
             <div className="text-[26px] font-bold tracking-tighter leading-none" style={{ color: "var(--text-primary)" }}>

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
 import { PanelHeaderCompact } from "../PanelHeader";
-import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
   ArrowUpIcon as TrendingUp,
   ArrowDownIcon as TrendingDown,
@@ -103,10 +102,9 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [signalAge, setSignalAge] = useState<string>("");
+  const [signalTimestamp, setSignalTimestamp] = useState<Date | null>(null);
 
-
-  // WebSocket data — real-time, no polling needed
-  const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "pulse_v3");
 
   const fetchData = useCallback(async () => {
     try {
@@ -120,6 +118,11 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       } else {
         setData(json);
         setLastUpdate(new Date());
+        if (json.signal_timestamp) {
+          setSignalTimestamp(new Date(json.signal_timestamp));
+        } else {
+          setSignalTimestamp(new Date());
+        }
       }
     } catch (e) {
       console.error("PULSE V3 fetch error:", e);
@@ -130,26 +133,28 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
     }
   }, [activeSymbol]);
 
-  // Use WS data when available
+  // HTTP polling every 60 seconds
   useEffect(() => {
-    if (wsData) {
-      setData(wsData);
-      setLastUpdate(new Date());
-      setLoading(false);
-      setError(null);
-    }
-  }, [wsData]);
+    fetchData();
+    const interval = setInterval(fetchData, 60000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
 
-  // HTTP fetch on mount + polling only when WS is NOT connected
+  // Signal age timer - updates every second
   useEffect(() => {
-    if (!wsData) {
-      fetchData();
-    }
-    if (!wsConnected) {
-      const interval = setInterval(fetchData, 60000);
-      return () => clearInterval(interval);
-    }
-  }, [fetchData, wsConnected, wsData]);
+    if (!signalTimestamp) return;
+    const tick = () => {
+      const diff = Math.floor((Date.now() - signalTimestamp.getTime()) / 1000);
+      if (diff < 60) {
+        setSignalAge(`${diff}s`);
+      } else {
+        setSignalAge(`${Math.floor(diff / 60)}m ${diff % 60}s`);
+      }
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [signalTimestamp]);
 
   // Listen for global refresh event from header button
   useEffect(() => {
@@ -225,6 +230,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         onRefresh={fetchData}
         loading={loading}
         panelId="pulse-v3"
+        signalAge={signalAge}
       >
         <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid var(--border-default)" }}>
           {SYMBOLS.map((s) => (
@@ -281,7 +287,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         </div>
 
         <p className="text-sm font-mono mt-1.5" style={{ color: P.muted }}>
-          {t("pulseV3.priceLabel")} <span className="font-bold text-white/80">{data.price}</span>
+          {t("pulseV3.priceLabel")} <span className="font-bold text-white/80">{typeof data.price === 'number' ? data.price.toFixed(2) : data.price}</span>
         </p>
 
         {/* ── Regime Badge ── */}

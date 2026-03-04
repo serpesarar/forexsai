@@ -13,6 +13,53 @@ import numpy as np
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/panel", tags=["Panel Analysis"])
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# SCALPING TP/SL DISTANCE TABLE (instrument-specific)
+# These are fixed pip/point distances appropriate for scalping timeframes
+# ═══════════════════════════════════════════════════════════════════════════════
+SCALP_DISTANCES = {
+    "NDX.INDX":     {"tp": 20, "sl": 12},   # points
+    "XAUUSD":       {"tp": 7,  "sl": 4},    # dollars
+    "GDAXI.INDX":   {"tp": 20, "sl": 12},   # points
+    "USOIL.FOREX":  {"tp": 0.50, "sl": 0.30}, # dollars
+}
+
+def _calc_ema(values, period):
+    """Calculate true Exponential Moving Average (matching TradingView)."""
+    if len(values) < period:
+        return float(values[-1]) if len(values) > 0 else 0.0
+    alpha = 2.0 / (period + 1.0)
+    ema = float(np.mean(values[:period]))
+    for v in values[period:]:
+        ema = alpha * float(v) + (1 - alpha) * ema
+    return ema
+
+
+def _scalp_tp_sl(symbol: str, current_price: float, direction: str, atr_val: float):
+    """Calculate scalping-appropriate TP/SL using fixed instrument distances.
+    Falls back to ATR×0.5 if ATR is very low (low volatility)."""
+    dist = SCALP_DISTANCES.get(symbol, {"tp": 15, "sl": 10})
+    tp_dist = dist["tp"]
+    sl_dist = dist["sl"]
+    
+    # Clamp: if ATR is very low, reduce distances
+    atr_tp = atr_val * 1.0
+    atr_sl = atr_val * 0.6
+    tp_dist = min(tp_dist, max(atr_tp, tp_dist * 0.3))  # Don't go below 30% of fixed
+    sl_dist = min(sl_dist, max(atr_sl, sl_dist * 0.3))
+    
+    if direction == "BUY":
+        target = current_price + tp_dist
+        stop = current_price - sl_dist
+    elif direction == "SELL":
+        target = current_price - tp_dist
+        stop = current_price + sl_dist
+    else:
+        target = current_price + tp_dist
+        stop = current_price - sl_dist
+    
+    return target, stop, tp_dist, sl_dist
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # EMEL PANEL - 9 KONTROL NOKTASI
@@ -266,6 +313,8 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         except Exception as pattern_err:
             logger.warning(f"Pattern detection error: {pattern_err}")
             pattern_status = "warning"
+            pattern_signal = "neutral"
+            pattern_strength = 0
             pattern_color = "yellow"
             pattern_label = "FORMASYON YOK"
             pattern_comment = "Formasyon analizi yapılamadı."
@@ -891,11 +940,9 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         
         score_details["candle_10"] = {"up": up_count, "down": down_count, "bias": candle_bias, "pts": round(score)}
         
-        # 2. EMA Stack (25 puan) - YENİ: EMA5 > EMA10 > EMA20
-        ema_5 = ta.get("close", current_price)  # Use last close as proxy for very short EMA
-        if len(closes) >= 5:
-            ema_5 = float(np.mean(closes[-5:]))  # SMA5 as fast EMA proxy
-        ema_10 = float(np.mean(closes[-10:])) if len(closes) >= 10 else current_price
+        # 2. EMA Stack (25 puan) - TRUE EMA5 > EMA10 > EMA20
+        ema_5 = _calc_ema(closes, 5)
+        ema_10 = _calc_ema(closes, 10)
         ema_20 = ta.get("ema_20", current_price)
         
         ema_pts = 0
@@ -1030,20 +1077,10 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         nearest_level = "s1" if dist_s1 < dist_r1 else "r1"
         nearest_distance = min(dist_s1, dist_r1)
         
-        # Hedef ve Stop — ATR fallback if pivot levels contradict trend direction
+        # Hedef ve Stop — SCALPING distances (instrument-specific)
         atr_14 = ta.get("atr_14", abs(high_20 - low_20) / 20)
-        if trend_direction == "up":
-            target = r1 if r1 > current_price else current_price + atr_14 * 1.5
-            stop = s1 if s1 < current_price else current_price - atr_14 * 1.0
-        elif trend_direction == "down":
-            target = s1 if s1 < current_price else current_price - atr_14 * 1.5
-            stop = r1 if r1 > current_price else current_price + atr_14 * 1.0
-        else:
-            target = r1 if r1 > current_price else current_price + atr_14 * 1.0
-            stop = s1 if s1 < current_price else current_price - atr_14 * 1.0
-        
-        potential_profit = abs(target - current_price)
-        potential_loss = abs(current_price - stop)
+        scalp_dir = "BUY" if trend_direction == "up" else "SELL" if trend_direction == "down" else "HOLD"
+        target, stop, potential_profit, potential_loss = _scalp_tp_sl(symbol, current_price, scalp_dir, atr_14)
         rr_ratio = potential_profit / potential_loss if potential_loss > 0 else 0
         
         # ─── FİLTRELER (REGIME-AWARE) ────────────────────────────────────
@@ -1149,6 +1186,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
             "symbol": symbol,
             "timeframe": timeframe,
             "timestamp": datetime.now().isoformat(),
+            "signal_timestamp": datetime.now().isoformat(),
             "signal": pulse_signal,
             "signal_type": signal_type,
             "pulse_score": round(score, 1),
@@ -1161,7 +1199,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
             },
             "price": {
                 "current": round(current_price, 2),
-                "change_5": round((closes[-1] - closes[-6]) / closes[-6] * 100, 2) if len(closes) >= 6 else 0
+                "change_5": round((current_price - closes[-6]) / closes[-6] * 100, 2) if len(closes) >= 6 else 0
             },
             "levels": {
                 "r2": round(r2, 2),
@@ -1484,27 +1522,9 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
             signal_type = "HOLD"
             notes.append(filter_reason)
             
-        # ─── Hedef / Stop (ATR bazlı - trend modunda daha geniş target) ─
-        target = prediction.get("target_price")
-        stop = prediction.get("stop_price")
-        
-        # Trend modunda hedef genişlet (trendde küçük risk, büyük kâr)
-        atr_target_mult = 2.0
-        atr_stop_mult = 1.5
-        if regime.regime in ["STRONG_TREND_UP", "STRONG_TREND_DOWN"]:
-            atr_target_mult = 3.0  # Trendde 3x ATR hedef
-            atr_stop_mult = 1.2    # Trendde daha dar stop (trailing)
-        
-        if not target or not stop:
-            if signal == "BUY":
-                stop = current_price - (atr_val * atr_stop_mult)
-                target = current_price + (atr_val * atr_target_mult)
-            elif signal == "SELL":
-                stop = current_price + (atr_val * atr_stop_mult)
-                target = current_price - (atr_val * atr_target_mult)
-            else:
-                target = current_price
-                stop = current_price
+        # ─── Hedef / Stop (SCALPING distances — instrument-specific) ────
+        atr_val = ta.get("atr_14", current_price * 0.002)
+        target, stop, _, _ = _scalp_tp_sl(symbol, current_price, signal, atr_val)
         
         # ─── R/R Kontrolü (regime-dynamic minimum) ──────────────────────
         min_rr = regime.min_rr
@@ -1569,6 +1589,7 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
             "symbol": symbol,
             "timeframe": timeframe,
             "timestamp": datetime.now().isoformat(),
+            "signal_timestamp": datetime.now().isoformat(),
             "signal": signal,
             "signal_type": signal_type,
             "pulse_score": round(score, 1),
@@ -2029,26 +2050,9 @@ async def get_pulse_v3_analysis(symbol: str):
         s1 = 2 * pivot - high_20
         s2 = pivot - (high_20 - low_20)
         
-        # Hedef/Stop — regime-aware ATR multipliers
+        # Hedef/Stop — SCALPING distances (instrument-specific)
         atr_val = ta_5m.get("atr_14", abs(high_20 - low_20) / 20)
-        atr_target_mult = 1.5
-        atr_stop_mult = 1.0
-        if regime.regime in ["STRONG_TREND_UP", "STRONG_TREND_DOWN"]:
-            atr_target_mult = 2.5  # Trend: wider target (küçük risk, büyük kâr)
-            atr_stop_mult = 0.8    # Trend: tighter stop (trailing)
-        
-        if direction == "BUY":
-            target = r1 if r1 > current_price else current_price + atr_val * atr_target_mult
-            stop = s1 if s1 < current_price else current_price - atr_val * atr_stop_mult
-        elif direction == "SELL":
-            target = s1 if s1 < current_price else current_price - atr_val * atr_target_mult
-            stop = r1 if r1 > current_price else current_price + atr_val * atr_stop_mult
-        else:
-            target = r1 if r1 > current_price else current_price + atr_val * 1.0
-            stop = s1 if s1 < current_price else current_price - atr_val * 1.0
-        
-        potential_profit = abs(target - current_price)
-        potential_loss = abs(current_price - stop)
+        target, stop, potential_profit, potential_loss = _scalp_tp_sl(symbol, current_price, direction, atr_val)
         rr_ratio = potential_profit / potential_loss if potential_loss > 0 else 0
         
         # ─── R/R FİLTRE (regime-dynamic) ─────────────────────────────────
@@ -2209,6 +2213,7 @@ async def get_pulse_v3_analysis(symbol: str):
         return {
             "symbol": symbol,
             "timestamp": datetime.now().isoformat(),
+            "signal_timestamp": datetime.now().isoformat(),
             "pulse_score": round(total_score, 1),
             "max_score": 100,
             "signal_type": signal_type,
