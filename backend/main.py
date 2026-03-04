@@ -278,6 +278,7 @@ try:
         usoil,
         dax,
         pattern_engine,
+        patterns_stub,
         claude_sentiment,
         order_blocks,
         rtyhiim,
@@ -313,6 +314,7 @@ try:
     from services.order_block_service import service as order_block_service
     from order_block_detector import OrderBlockConfig
 
+    app.include_router(patterns_stub.router)
     app.include_router(nasdaq.router)
     app.include_router(xauusd.router)
     app.include_router(usoil.router)
