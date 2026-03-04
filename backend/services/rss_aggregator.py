@@ -895,11 +895,26 @@ class RSSAggregator:
                 "show_on_chart": item.urgency in ["high", "breaking"] or any(imp.get("score", 0) >= 6 for imp in item.impacts),
             }
             
-            supabase.table("enriched_news").insert(data).execute()
-            return True
+            # Attempt insert with detailed error logging
+            try:
+                result = supabase.table("enriched_news").insert(data).execute()
+                print(f"[RSS] ✓ Saved to DB: {item.id[:40]}... - {item.title[:60]}...")
+                return True
+            except Exception as insert_error:
+                error_msg = str(insert_error)
+                print(f"[RSS] ✗ DB INSERT FAILED for {item.id[:40]}...")
+                print(f"[RSS]   Error: {error_msg}")
+                # Log which columns might be missing
+                if "column" in error_msg.lower() and "does not exist" in error_msg.lower():
+                    print(f"[RSS]   → Missing column error! Check migrations.")
+                elif "constraint" in error_msg.lower():
+                    print(f"[RSS]   → Constraint violation!")
+                return False
             
         except Exception as e:
-            print(f"[RSS] Database error: {e}")
+            print(f"[RSS] Database error (outer): {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     async def run_aggregation_cycle(self) -> Dict[str, Any]:

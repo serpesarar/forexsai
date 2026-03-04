@@ -77,6 +77,7 @@ async def get_rss_news(
         supabase = get_supabase_client()
         
         start_time = datetime.utcnow() - timedelta(hours=hours)
+        print(f"[RSS API] Querying news from last {hours}h (since {start_time.isoformat()})")
         
         # Build query
         query = (
@@ -108,7 +109,13 @@ async def get_rss_news(
         else:
             items = []
         
+        print(f"[RSS API] Found {len(items)} items from DB query")
+        
         if not items:
+            # Debug: Check total count without time filter
+            count_result = supabase.table("enriched_news").select("id", count="exact").execute()
+            total_count = getattr(count_result, 'count', 'unknown')
+            print(f"[RSS API] No items found. Total items in table: {total_count}")
             return []
         if symbol:
             items = [
