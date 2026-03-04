@@ -116,7 +116,7 @@ async function fetchModelAnalysis(
   model: string,
   symbol?: string,
   timeframe?: string,
-  days: number = 30
+  days: number = 0
 ): Promise<ModelStats> {
   const params = new URLSearchParams();
   params.set("model", model);
@@ -129,7 +129,7 @@ async function fetchModelAnalysis(
   return res.json();
 }
 
-async function fetchModelsSummary(days: number = 30, symbol?: string): Promise<Record<string, ModelSummary>> {
+async function fetchModelsSummary(days: number = 0, symbol?: string): Promise<Record<string, ModelSummary>> {
   const params = new URLSearchParams();
   params.set("days", days.toString());
   if (symbol) params.set("symbol", symbol);
@@ -285,7 +285,7 @@ export default function ModelAnalysisPanel() {
   const [selectedModel, setSelectedModel] = useState<string>("emel");
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>("1h");
   const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>();
-  const [days, setDays] = useState<number>(30);
+  const [days, setDays] = useState<number>(0);
   const [showSignals, setShowSignals] = useState(false);
 
   // Get available timeframes for selected model
@@ -340,6 +340,9 @@ export default function ModelAnalysisPanel() {
               <option value={14}>14 Days</option>
               <option value={30}>30 Days</option>
               <option value={60}>60 Days</option>
+              <option value={90}>90 Days</option>
+              <option value={365}>365 Days</option>
+              <option value={0}>All Time</option>
             </select>
 
             {/* Symbol Filter */}

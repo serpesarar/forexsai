@@ -106,7 +106,7 @@ async def trigger_outcome_check(
 @router.get("/accuracy")
 async def get_accuracy(
     symbol: Optional[str] = Query(None),
-    days: int = Query(7, ge=1, le=90),
+    days: int = Query(0, ge=0, le=1095),
     check_interval: str = Query("24h")
 ):
     """Get accuracy summary for recent predictions."""
@@ -120,7 +120,7 @@ async def get_accuracy(
 @router.get("/accuracy-by-model")
 async def get_accuracy_by_model(
     symbol: Optional[str] = Query(None),
-    days: int = Query(30, ge=1, le=90),
+    days: int = Query(0, ge=0, le=1095),
     check_interval: str = Query("24h")
 ):
     """
@@ -138,7 +138,7 @@ async def get_accuracy_by_model(
         return {"error": "Database client not available"}
     
     from datetime import datetime, timedelta
-    cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
+    cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z" if days > 0 else "2000-01-01T00:00:00Z"
     
     try:
         # PRIMARY: Get predictions with lifecycle status (completed/stopped)
@@ -294,7 +294,7 @@ async def get_insights(symbol: Optional[str] = Query(None)):
 @router.get("/dashboard")
 async def get_learning_dashboard(
     symbol: Optional[str] = Query(None),
-    days: int = Query(7, ge=1, le=30)
+    days: int = Query(0, ge=0, le=1095)
 ):
     """
     Get a complete learning dashboard with accuracy, insights, and factor analysis.
@@ -350,7 +350,7 @@ async def get_all_target_configs():
 @router.get("/multi-target-accuracy")
 async def get_target_accuracy(
     symbol: Optional[str] = Query(None),
-    days: int = Query(7, ge=1, le=90),
+    days: int = Query(0, ge=0, le=1095),
     check_interval: str = Query("1h", description="Check interval: 1h, 4h, 24h")
 ):
     """
@@ -466,7 +466,7 @@ async def check_all_pending_outcomes():
 @router.get("/multi-target-dashboard")
 async def get_multi_target_dashboard(
     symbol: Optional[str] = Query(None),
-    days: int = Query(7, ge=1, le=30)
+    days: int = Query(0, ge=0, le=1095)
 ):
     """
     Get complete multi-target dashboard with accuracy per target level.
@@ -771,7 +771,7 @@ async def get_failure_patterns(
 @router.get("/tp-success-analysis")
 async def get_tp_success_analysis(
     symbol: Optional[str] = Query(None),
-    days: int = Query(7, ge=1, le=90)
+    days: int = Query(0, ge=0, le=1095)
 ):
     """
     Analyze which TP levels are most successful and at what conditions.
@@ -786,7 +786,7 @@ async def get_tp_success_analysis(
     
     try:
         from datetime import datetime, timedelta
-        cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
+        cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z" if days > 0 else "2000-01-01T00:00:00Z"
         
         query = client.table("multi_target_outcomes").select("*").gte("created_at", cutoff)
         
@@ -870,7 +870,7 @@ async def get_tp_success_analysis(
 @router.get("/prediction-history")
 async def get_prediction_history(
     symbol: Optional[str] = Query(None, description="Filter by symbol (e.g., XAUUSD, NDX.INDX)"),
-    days: int = Query(7, ge=1, le=30, description="Number of days to look back"),
+    days: int = Query(0, ge=0, le=1095, description="Number of days to look back (0=all time)"),
     limit: int = Query(50, ge=1, le=200, description="Max number of records")
 ):
     """
@@ -888,7 +888,7 @@ async def get_prediction_history(
         return {"error": "Database client not available", "predictions": []}
     
     try:
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime(2000, 1, 1)
         cutoff_iso = cutoff.isoformat() + "Z"
         
         # Get predictions (no PostgREST join - custom httpx client doesn't support it)
@@ -1291,7 +1291,7 @@ async def reset_strategy_performance(
 
 @router.get("/strategy-performance")
 async def get_strategy_performance(
-    days: int = Query(30, ge=1, le=90, description="Number of days to analyze")
+    days: int = Query(0, ge=0, le=1095, description="Number of days to analyze (0=all time)")
 ):
     """Get performance statistics for each ML strategy.
     
@@ -1311,7 +1311,7 @@ async def get_strategy_performance(
         return {"error": "Database client not available"}
     
     try:
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime(2000, 1, 1)
         cutoff_iso = cutoff.isoformat() + "Z"
         
         # Get predictions with lifecycle fields (no PostgREST join - custom httpx client doesn't support it)
@@ -1462,7 +1462,7 @@ async def create_multi_target_tracking(
 async def get_multi_target_analysis(
     symbol: str,
     strategy: Optional[str] = None,
-    days: int = Query(30, ge=1, le=365)
+    days: int = Query(0, ge=0, le=1095)
 ):
     """Strateji bazlı multi-target analizi"""
     return await multi_target_tracker.get_strategy_analysis(symbol, strategy, days)
@@ -1486,7 +1486,7 @@ async def update_multi_target_price(symbol: str, current_price: float):
 @router.get("/strategy-performance/{symbol}")
 async def get_strategy_performance(
     symbol: str,
-    days: int = Query(30, ge=1, le=365)
+    days: int = Query(0, ge=0, le=1095)
 ):
     """Her strateji için ayrı performans analizi"""
     strategies = ['ultra_safe', 'balanced', 'full_power', 'aggressive']
@@ -1633,7 +1633,7 @@ async def get_signal_detail_endpoint(signal_id: str):
 async def get_historical_signals_endpoint(
     symbol: str,
     model: Optional[str] = Query(None, description="Filter by model type (ml, emel, pulse1, pulse2, pulse3)"),
-    days: int = Query(30, ge=1, le=365)
+    days: int = Query(0, ge=0, le=1095)
 ):
     """
     Get detailed historical signal data, equity curve, and session analytics
@@ -1668,7 +1668,7 @@ async def get_historical_signals_endpoint(
         
     try:
         from datetime import datetime, timedelta
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime(2000, 1, 1)
         cutoff_iso = cutoff.isoformat()
         
         # 1. Fetch signal records
@@ -1965,7 +1965,7 @@ async def get_model_timeframe_analysis(
     model: str = Query(..., description="Model type: ml, emel, pulse1, pulse2, pulse3"),
     symbol: Optional[str] = Query(None, description="Symbol filter: XAUUSD, NDX.INDX, GDAXI.INDX, USOIL.FOREX"),
     timeframe: Optional[str] = Query(None, description="Timeframe: 5m, 15m, 30m, 1h, 4h, 1d"),
-    days: int = Query(30, ge=1, le=90)
+    days: int = Query(0, ge=0, le=1095)
 ):
     """
     Get detailed analysis for a specific model + timeframe + symbol combination.
@@ -1984,7 +1984,7 @@ async def get_model_timeframe_analysis(
         return {"error": "Database client not available"}
     
     try:
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime(2000, 1, 1)
         cutoff_iso = cutoff.isoformat() + "Z"
         
         # Build query
@@ -2167,7 +2167,7 @@ async def get_model_timeframe_analysis(
 
 @router.get("/model-analysis/summary")
 async def get_all_models_summary(
-    days: int = Query(30, ge=1, le=90),
+    days: int = Query(0, ge=0, le=1095),
     symbol: Optional[str] = Query(None)
 ):
     """
@@ -2182,7 +2182,7 @@ async def get_all_models_summary(
         return {"error": "Database client not available"}
     
     try:
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime(2000, 1, 1)
         cutoff_iso = cutoff.isoformat() + "Z"
         
         query = client.table("prediction_logs").select(
