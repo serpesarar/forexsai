@@ -329,6 +329,63 @@ async def get_economic_calendar(
         }
     
     except Exception as e:
+        import traceback
+        print(f"[EconomicCalendar] Error: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/earnings")
+async def get_earnings_calendar(
+    date: Optional[str] = Query(None, description="Date in YYYY-MM-DD format (default: today)"),
+    symbol: Optional[str] = Query(None, description="Filter by symbol")
+):
+    """
+    Get earnings calendar events for NASDAQ-100 and DAX companies
+    """
+    try:
+        # For now return mock data - will integrate real data source later
+        mock_earnings = [
+            {
+                "id": "AAPL_2026_03_05",
+                "timestamp": "2026-03-05T16:00:00+00:00",
+                "currency": "USD",
+                "event_name": "Apple Inc. Q1 2026 Earnings",
+                "impact": "High",
+                "actual": None,
+                "forecast": "$1.85 EPS",
+                "previous": "$1.78 EPS",
+                "affected_symbols": ["AAPL", "NDX", "QQQ"],
+                "is_earnings": True,
+                "company": "Apple Inc."
+            },
+            {
+                "id": "MSFT_2026_03_06",
+                "timestamp": "2026-03-06T16:00:00+00:00",
+                "currency": "USD",
+                "event_name": "Microsoft Corp. Q2 2026 Earnings",
+                "impact": "High",
+                "actual": None,
+                "forecast": "$2.92 EPS",
+                "previous": "$2.85 EPS",
+                "affected_symbols": ["MSFT", "NDX", "QQQ"],
+                "is_earnings": True,
+                "company": "Microsoft Corp."
+            }
+        ]
+        
+        if symbol:
+            mock_earnings = [e for e in mock_earnings if symbol.upper() in e.get("affected_symbols", [])]
+        
+        return {
+            "success": True,
+            "date": date or datetime.utcnow().strftime("%Y-%m-%d"),
+            "count": len(mock_earnings),
+            "events": mock_earnings
+        }
+    
+    except Exception as e:
+        print(f"[EarningsCalendar] Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

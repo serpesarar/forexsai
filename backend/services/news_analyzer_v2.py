@@ -204,7 +204,30 @@ Analyze this news NOW:"""
                     elif "```" in content:
                         content = content.split("```")[1].split("```")[0].strip()
                     
-                    result = json.loads(content)
+                    # Try to fix incomplete JSON (truncated responses)
+                    try:
+                        result = json.loads(content)
+                    except json.JSONDecodeError as json_err:
+                        # Try to fix common truncation issues
+                        if "Unterminated string" in str(json_err):
+                            logger.warning(f"[DeepSeek] Incomplete JSON, attempting to fix...")
+                            # Add closing braces/brackets
+                            open_braces = content.count('{') - content.count('}')
+                            open_brackets = content.count('[') - content.count(']')
+                            fixed_content = content
+                            for _ in range(open_brackets):
+                                fixed_content += "]"
+                            for _ in range(open_braces):
+                                fixed_content += "}"
+                            # Remove trailing commas before closing braces
+                            fixed_content = fixed_content.replace(',}', '}').replace(',]', ']')
+                            try:
+                                result = json.loads(fixed_content)
+                                logger.info("[DeepSeek] JSON fixed successfully!")
+                            except:
+                                raise json_err
+                        else:
+                            raise
                     
                     logger.info(f"[DeepSeek] Parsed result: headline_tr={result.get('headline_tr', 'N/A')[:50]}...")
                     
