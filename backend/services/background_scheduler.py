@@ -41,7 +41,7 @@ _last_outcome_check: Optional[datetime] = None
 _last_error_analysis: Optional[datetime] = None
 _last_prediction_log: Dict[str, datetime] = {}  # Per symbol
 _last_pulse_log: Dict[str, datetime] = {}  # Per symbol, for Pulse signal logging
-PULSE_LOG_INTERVAL = 900  # Log Pulse/EMEL signals every 15 minutes
+PULSE_LOG_INTERVAL = 180  # Log Pulse/EMEL signals every 3 minutes (sync with lifecycle)
 _last_macro_update: Optional[datetime] = None
 _cached_macro: Dict[str, Any] = {}  # Cached macro data
 
@@ -562,7 +562,7 @@ async def log_pulse_signals_if_needed():
         if not is_db_available():
             continue
 
-        for model_type in ["emel"]:
+        for model_type in ["emel", "pulse1", "pulse2", "pulse3"]:
             try:
                 await _check_and_log_pulse(symbol, model_type, None)
                 await asyncio.sleep(0.3)

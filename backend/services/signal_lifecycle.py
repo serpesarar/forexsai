@@ -335,7 +335,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
             f"price={current:.2f} unchanged for 1min+ - PAUSING lifetime (24h max)"
         )
     else:
-        effective_max_age = SIGNAL_MAX_AGE_MINUTES  # Normal 15 min timeout
+        effective_max_age = SIGNAL_MAX_AGE_MINUTES  # Normal 30 min timeout
 
     # ── 2. Calculate profit/loss in pips using spot price ──
     if direction == "BUY":

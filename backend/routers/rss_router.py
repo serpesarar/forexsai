@@ -93,6 +93,11 @@ async def get_rss_news(
             .limit(limit)
         )
         
+        # Log total count for debugging
+        count_result = supabase.table("enriched_news").select("id", count="exact").execute()
+        total_in_db = getattr(count_result, 'count', 0)
+        print(f"[RSS API] Total items in DB: {total_in_db}")
+        
         # Apply filters
         if urgency:
             query = query.eq("urgency", urgency)

@@ -23,6 +23,7 @@ import {
   getSymbolEmoji,
   RSSNewsItem,
 } from "../lib/api/rssNews";
+import { useI18nStore } from "../lib/i18n/store";
 
 // Types
 interface EconomicEvent {
@@ -48,25 +49,30 @@ interface NewsFeedAIProps {
 export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
   const [activeTab, setActiveTab] = useState<NewsTab>("news");
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
+  const { currentLocale } = useI18nStore();
   
   // MANUAL FETCH STATE
   const [newsItems, setNewsItems] = useState<RSSNewsItem[] | null>(null);
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsError, setNewsError] = useState<Error | null>(null);
+  
+  // Determine if we should show Turkish content
+  const isTurkish = currentLocale === 'tr';
+  const isSpanish = currentLocale === 'es';
 
   // DEBUG: Component mount
   useEffect(() => {
     console.log("[NewsFeedAI] Component MOUNTED");
   }, []);
 
-  // MANUAL FETCH
+  // MANUAL FETCH - Get news from last 72 hours to ensure we don't miss high impact news
   const fetchNews = async () => {
     console.log("[NewsFeedAI] fetchNews called");
     setNewsLoading(true);
     setNewsError(null);
     
     try {
-      const url = `https://upbeat-flow-production.up.railway.app/api/rss/news?hours=24&limit=50&skip_ai_filtered=true`;
+      const url = `https://upbeat-flow-production.up.railway.app/api/rss/news?hours=72&limit=100&skip_ai_filtered=true`;
       console.log("[NewsFeedAI] Fetching:", url);
       
       const response = await fetch(url);
@@ -206,7 +212,7 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
     return (
       <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
         {newsItems.map((item) => (
-          <NewsCard key={item.id} item={item} formatTime={formatTime} />
+          <NewsCard key={item.id} item={item} formatTime={formatTime} isTurkish={isTurkish} />
         ))}
       </div>
     );
@@ -350,6 +356,13 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition text-[10px] text-slate-400"
+            title="Sayfa başına dön"
+          >
+            ↑ Yukarı
+          </button>
+          <button
             onClick={handleRefresh}
             className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition"
             disabled={newsLoading || economicLoading}
@@ -443,9 +456,11 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
 function NewsCard({
   item,
   formatTime,
+  isTurkish = false,
 }: {
   item: RSSNewsItem;
   formatTime: (dateStr: string) => string;
+  isTurkish?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -455,6 +470,14 @@ function NewsCard({
     if (urgency === "medium") return "🟡";
     return "🟢";
   };
+  
+  // Determine headline based on locale
+  const displayHeadline = isTurkish && item.headline_tr 
+    ? item.headline_tr 
+    : item.headline;
+  
+  // Show original as subtitle if translated
+  const showOriginal = isTurkish && item.headline_tr && item.headline_tr !== item.headline;
 
   return (
     <div
@@ -477,9 +500,9 @@ function NewsCard({
             <span className="text-[10px] text-slate-500">{formatTime(item.timestamp)}</span>
           </div>
           <p className="text-sm font-medium text-white leading-tight line-clamp-2">
-            {item.headline_tr || item.headline}
+            {displayHeadline}
           </p>
-          {item.headline_tr && item.headline_tr !== item.headline && (
+          {showOriginal && (
             <p className="text-xs text-slate-400 mt-1 line-clamp-1">{item.headline}</p>
           )}
         </div>

@@ -150,19 +150,16 @@ def _get_current_session() -> str:
 
 def _check_session_filter(symbol: str) -> Tuple[bool, str]:
     """
-    Check if signal should be filtered based on session
+    Check if signal should be filtered based on session.
     Returns: (should_filter, reason)
+    
+    NOTE: Session filter is now LOG-ONLY — signals are always recorded
+    so model performance can be measured. The filter info is tagged in
+    factors for analysis. Signals only stop when data flow stops.
     """
-    session = _get_current_session()
-    
-    # XAU/USD: Avoid Asia session (low volatility, false signals)
-    if symbol == "XAUUSD" and session == "asia":
-        return True, f"XAU/USD filtered: Asia session (low liquidity)"
-    
-    # All symbols: Avoid closed/after hours
-    if session == "closed":
-        return True, f"{symbol} filtered: Market closed/after hours"
-    
+    # No longer blocking any signals based on session.
+    # Signal recording should happen whenever price data is flowing.
+    # The lifecycle system handles expiration via stale-price detection.
     return False, ""
 
 
@@ -172,31 +169,33 @@ def _check_correlation_filter(
     context: Dict[str, Any]
 ) -> Tuple[bool, str]:
     """
-    Check if signal should be filtered based on correlations
-    Returns: (should_filter, reason)
+    Check correlation context and TAG signals — never block them.
+    Returns: (should_filter=False always, reason_tag)
+    
+    NOTE: Correlation filter no longer blocks signals. Instead, it returns
+    a reason string that gets stored in factors for analysis. Confidence
+    is reduced in the caller when correlation disagrees.
     """
     macro = context.get("macro", {}) or {}
     
-    # XAU/USD - DXY negative correlation
+    # XAU/USD - DXY negative correlation (tag, don't block)
     if symbol == "XAUUSD":
         dxy = macro.get("dxy", {})
         dxy_change = dxy.get("change_24h", 0) or dxy.get("change_pct", 0)
         
         if dxy_change is not None:
-            # If DXY is strongly up, avoid XAU BUY
             if direction == "BUY" and dxy_change > 0.3:
-                return True, f"XAU BUY filtered: DXY strengthening (+{dxy_change:.2f}%)"
-            # If DXY is strongly down, avoid XAU SELL
+                return False, f"XAU BUY correlation_warning: DXY strengthening (+{dxy_change:.2f}%)"
             if direction == "SELL" and dxy_change < -0.3:
-                return True, f"XAU SELL filtered: DXY weakening ({dxy_change:.2f}%)"
+                return False, f"XAU SELL correlation_warning: DXY weakening ({dxy_change:.2f}%)"
     
-    # NASDAQ - VIX filter (high VIX = avoid new positions)
+    # NASDAQ - VIX context (tag, don't block)
     if symbol == "NDX.INDX":
         vix = macro.get("vix", {})
         vix_price = vix.get("price", 0)
         
         if vix_price and vix_price > 25:
-            return True, f"NDX filtered: High VIX ({vix_price}) - market fear"
+            return False, f"NDX correlation_warning: High VIX ({vix_price})"
     
     return False, ""
 
@@ -272,11 +271,14 @@ async def log_prediction(
             logger.info(f"FILTERED: {reason}")
             return None
         
-        # 2. Correlation Filter (DXY for XAU, VIX for NDX)
-        should_filter, reason = _check_correlation_filter(symbol, direction, context)
-        if should_filter:
-            logger.info(f"FILTERED: {reason}")
-            return None
+        # 2. Correlation Context (DXY for XAU, VIX for NDX) — tag only, never block
+        _correlation_tag = ""
+        _, correlation_reason = _check_correlation_filter(symbol, direction, context)
+        if correlation_reason:
+            logger.info(f"CORRELATION TAG: {correlation_reason}")
+            _correlation_tag = correlation_reason
+            # Reduce confidence but DON'T block — let the signal be recorded for evaluation
+            confidence *= 0.7
         
         # 3. News Filter
         should_filter, reason = _check_news_filter(context)
@@ -355,6 +357,8 @@ async def log_prediction(
         factors = _extract_factors(context, analysis)
         factors["session"] = _get_current_session()
         factors["target_type"] = "static_pips"
+        if _correlation_tag:
+            factors["correlation_warning"] = _correlation_tag
         
         # Store strategy in both the column and factors JSONB
         if strategy:
