@@ -175,7 +175,7 @@ Analyze this news NOW:"""
                     "messages": [
                         {"role": "user", "content": "You are an expert financial analyst. Analyze news precisely and only report ACTUAL impacts, not generic patterns. Respond ONLY with valid JSON.\n\n" + prompt}
                     ],
-                    "max_tokens": 1500
+                    "max_tokens": 800
                 }
                 
                 logger.info(f"[DeepSeek] Sending request to {DEEPSEEK_API_URL}")
@@ -184,7 +184,7 @@ Analyze this news NOW:"""
                     DEEPSEEK_API_URL,
                     headers=headers,
                     json=payload,
-                    timeout=aiohttp.ClientTimeout(total=20)
+                    timeout=aiohttp.ClientTimeout(total=60)
                 ) as response:
                     logger.info(f"[DeepSeek] Response status: {response.status}")
                     

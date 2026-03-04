@@ -869,15 +869,16 @@ class RSSAggregator:
                 marker_type = "economic_event"
                 marker_color = "#8B5CF6"  # Purple
             
-            # Insert new - WITH TURKISH TRANSLATIONS
+            # Insert new - COMPATIBLE WITH EXISTING DB SCHEMA
+            # Only use columns that exist in the database
             data = {
                 "id": item.id,
                 "timestamp": item.published_at.isoformat(),
                 "source": item.source,
                 "headline": item.title,
-                "headline_tr": item.title_tr if item.title_tr else f"[TR] {item.title}",
+                # "headline_tr": item.title_tr if item.title_tr else f"[TR] {item.title}",  # TODO: Add column
                 "content": item.content,
-                "content_tr": item.content_tr if item.content_tr else item.content[:300] + "..." if len(item.content) > 300 else item.content,
+                # "content_tr": item.content_tr if item.content_tr else item.content[:300] + "..." if len(item.content) > 300 else item.content,  # TODO: Add column
                 "category": item.category,
                 "url": item.original_url,
                 "impacts": impacts_with_tr,
@@ -889,10 +890,10 @@ class RSSAggregator:
                 "urgency": item.urgency,
                 "duplicate_of": item.duplicate_of,
                 "sources": item.sources,
-                # Chart marker data
-                "marker_type": marker_type,
-                "marker_color": marker_color,
-                "show_on_chart": item.urgency in ["high", "breaking"] or any(imp.get("score", 0) >= 6 for imp in item.impacts),
+                # Chart marker data - TODO: Add these columns
+                # "marker_type": marker_type,
+                # "marker_color": marker_color,
+                # "show_on_chart": item.urgency in ["high", "breaking"] or any(imp.get("score", 0) >= 6 for imp in item.impacts),
             }
             
             # Attempt insert with detailed error logging
@@ -949,10 +950,10 @@ class RSSAggregator:
                     # Analyze with AI (with timeout) - ALL NEWS GOES TO DEEPSEEK
                     if not item.duplicate_of:
                         try:
-                            # 25 second timeout for DeepSeek AI analysis per item
+                            # 60 second timeout for DeepSeek AI analysis per item (reasoning model is slower)
                             item = await asyncio.wait_for(
                                 self.analyze_with_ai(item),
-                                timeout=25.0
+                                timeout=60.0
                             )
                             # Check if it was real AI analysis or fallback
                             if item.ai_confidence >= 0.6 and item.title_tr and not item.title_tr.startswith("[TR]"):
