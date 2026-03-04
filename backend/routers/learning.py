@@ -1862,6 +1862,7 @@ async def get_historical_signals_endpoint(
 @router.get("/signals/recent")
 async def get_recent_signals_endpoint(
     symbol: Optional[str] = Query(None, description="Filter by symbol"),
+    model: Optional[str] = Query(None, description="Filter by model type (ml, emel, pulse1, pulse2, pulse3)"),
     limit: int = Query(50, ge=1, le=200),
     include_active: bool = Query(True, description="Include active signals")
 ):
@@ -1888,6 +1889,17 @@ async def get_recent_signals_endpoint(
         
         if symbol:
             query = query.eq("symbol", symbol)
+        
+        if model:
+            model_lower = model.lower()
+            if model_lower == "ml":
+                query = query.or_("model_type.eq.ml,model_type.is.null")
+            elif model_lower in ["pulse1", "pulse2", "pulse3"]:
+                query = query.eq("model_type", model_lower)
+            elif model_lower == "emel":
+                query = query.or_("model_type.eq.emel,strategy.eq.EMEL")
+            else:
+                query = query.eq("model_type", model_lower)
         
         if not include_active:
             query = query.neq("status", "active")

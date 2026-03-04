@@ -616,19 +616,13 @@ function SignalListModal({
         const params = new URLSearchParams();
         params.set("limit", "50");
         if (filter.symbol) params.set("symbol", filter.symbol);
+        if (filter.model) params.set("model", filter.model);
 
         const res = await fetch(`https://upbeat-flow-production.up.railway.app/api/learning/signals/recent?${params}`);
         const data = await res.json();
 
         if (data.signals) {
-          let filtered = data.signals;
-          if (filter.model) {
-            filtered = filtered.filter((s: any) => {
-              const mt = s.model_type || s.strategy || "";
-              return mt.toLowerCase().includes(filter.model!.toLowerCase());
-            });
-          }
-          setSignals(filtered);
+          setSignals(data.signals);
         }
       } catch (e) {
         console.error("Failed to fetch signals:", e);
