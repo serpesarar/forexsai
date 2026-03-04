@@ -880,16 +880,19 @@ class RSSAggregator:
                 marker_type = "economic_event"
                 marker_color = "#8B5CF6"  # Purple
             
-            # Insert new - COMPATIBLE WITH EXISTING DB SCHEMA
-            # Only use columns that exist in the database
+            # Insert new - WITH CHART MARKERS
+            # Determine if this news should show on chart
+            show_on_chart = (
+                item.urgency in ["high", "breaking"] or 
+                any(imp.get("score", 0) >= 6 for imp in item.impacts)
+            )
+            
             data = {
                 "id": item.id,
                 "timestamp": item.published_at.isoformat(),
                 "source": item.source,
                 "headline": item.title,
-                # "headline_tr": item.title_tr if item.title_tr else f"[TR] {item.title}",  # TODO: Add column
                 "content": item.content,
-                # "content_tr": item.content_tr if item.content_tr else item.content[:300] + "..." if len(item.content) > 300 else item.content,  # TODO: Add column
                 "category": item.category,
                 "url": item.original_url,
                 "impacts": impacts_with_tr,
@@ -901,10 +904,10 @@ class RSSAggregator:
                 "urgency": item.urgency,
                 "duplicate_of": item.duplicate_of,
                 "sources": item.sources,
-                # Chart marker data - TODO: Add these columns
-                # "marker_type": marker_type,
-                # "marker_color": marker_color,
-                # "show_on_chart": item.urgency in ["high", "breaking"] or any(imp.get("score", 0) >= 6 for imp in item.impacts),
+                # Chart marker data
+                "marker_type": marker_type,
+                "marker_color": marker_color,
+                "show_on_chart": show_on_chart,
             }
             
             # Attempt insert with detailed error logging

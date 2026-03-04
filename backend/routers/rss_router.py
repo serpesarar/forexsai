@@ -30,6 +30,10 @@ class RSSNewsResponse(BaseModel):
     ai_confidence: float
     duplicate_of: Optional[str]
     sources: List[str]
+    # Chart markers
+    show_on_chart: bool = False
+    marker_type: str = "news"
+    marker_color: str = "#3B82F6"
 
 class RSSStatsResponse(BaseModel):
     fetched: int
@@ -68,7 +72,8 @@ async def get_rss_news(
     sentiment: Optional[str] = Query(None, description="Filter by sentiment"),
     hours: int = Query(24, ge=1, le=168, description="Lookback period in hours"),
     limit: int = Query(50, ge=1, le=200, description="Max items to return"),
-    skip_ai_filtered: bool = Query(True, description="Skip low-priority non-AI analyzed items")
+    skip_ai_filtered: bool = Query(True, description="Skip low-priority non-AI analyzed items"),
+    show_on_chart: Optional[bool] = Query(None, description="Filter by chart visibility")
 ):
     """
     Get RSS news with optional filtering
@@ -99,6 +104,10 @@ async def get_rss_news(
         if skip_ai_filtered:
             query = query.neq("urgency", "low")
         
+        # Filter by chart visibility
+        if show_on_chart is not None:
+            query = query.eq("show_on_chart", show_on_chart)
+        
         result = query.execute()
         
         # Handle both old and new Supabase response formats
@@ -124,7 +133,7 @@ async def get_rss_news(
                        for imp in item.get("impacts", []))
             ]
         
-        # Format response - WITH TURKISH TRANSLATIONS
+        # Format response - WITH TURKISH TRANSLATIONS & CHART MARKERS
         return [
             RSSNewsResponse(
                 id=item["id"],
@@ -143,6 +152,9 @@ async def get_rss_news(
                 ai_confidence=item.get("ai_confidence", 0) / 100,
                 duplicate_of=item.get("duplicate_of"),
                 sources=item.get("sources", [item["source"]]),
+                show_on_chart=item.get("show_on_chart", False),
+                marker_type=item.get("marker_type", "news"),
+                marker_color=item.get("marker_color", "#3B82F6"),
             )
             for item in items
         ]
