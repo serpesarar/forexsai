@@ -1537,6 +1537,21 @@ export default function HomePage() {
                     </div>
                   )}
 
+                  {/* ═══ AI NEWS FEED - Fixed at bottom ═══ */}
+                  <div className="mb-6 w-full">
+                    <Suspense fallback={
+                      <div className="glass-premium rounded-2xl p-5 animate-pulse">
+                        <div className="h-8 bg-white/10 rounded mb-4"></div>
+                        <div className="space-y-3">
+                          <div className="h-16 bg-white/5 rounded"></div>
+                          <div className="h-16 bg-white/5 rounded"></div>
+                        </div>
+                      </div>
+                    }>
+                      <NewsFeedAI />
+                    </Suspense>
+                  </div>
+
                 </main>
               </DraggableDashboard>
             </div>
