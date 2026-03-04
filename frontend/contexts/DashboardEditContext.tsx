@@ -57,8 +57,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "pulse-ml", title: "PULSE 2 - ML Hybrid", column: "left", order: 2, visible: true, size: "large", collapsed: false },
     { id: "pulse-v3", title: "PULSE 3 - Hybrid Scalp", column: "left", order: 3, visible: true, size: "large", collapsed: false },
     { id: "emel-panel", title: "EMEL Panel - 9 Checkpoints", column: "left", order: 4, visible: true, size: "large", collapsed: false },
-    { id: "claude-patterns", title: "Claude Patterns", column: "left", order: 5, visible: true, size: "medium", collapsed: false },
-    { id: "news", title: "Market News", column: "left", order: 6, visible: true, size: "medium", collapsed: false },
+    { id: "news", title: "Market News", column: "left", order: 5, visible: true, size: "medium", collapsed: false },
     { id: "learning-dashboard", title: "Learning Dashboard", column: "left", order: 7, visible: true, size: "large", collapsed: false },
     { id: "cot-whale", title: "COT & Whale Intelligence", column: "left", order: 8, visible: true, size: "large", collapsed: false },
 

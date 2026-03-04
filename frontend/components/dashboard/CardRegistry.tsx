@@ -63,17 +63,6 @@ export const CARD_REGISTRY: CardDefinition[] = [
     component: PatternEngineV2,
     gridSpan: { small: 1, medium: 1, large: 2, full: 3 },
   },
-  {
-    id: "claude-patterns",
-    title: "Claude Patterns",
-    defaultColumn: "center",
-    defaultOrder: 1,
-    defaultSize: "medium",
-    minSize: "small",
-    component: null,
-    gridSpan: { small: 1, medium: 1, large: 1, full: 3 },
-  },
-  
   // Right Column - Sentiment & News
   {
     id: "sentiment",

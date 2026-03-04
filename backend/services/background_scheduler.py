@@ -792,23 +792,8 @@ async def run_pattern_analysis_if_needed():
     
     _last_pattern_analysis = now
     
-    try:
-        from services.pattern_analyzer import analyze_patterns_for_symbol
-        
-        symbols = ["XAUUSD", "NDX", "DAX", "USOIL", "DXY", "VIX"]
-        
-        for symbol in symbols:
-            try:
-                result = await analyze_patterns_for_symbol(symbol)
-                logger.info(f"Pattern analysis completed for {symbol}: {result.get('primary_pattern', 'none')}")
-            except Exception as e:
-                logger.error(f"Pattern analysis error for {symbol}: {e}")
-                continue
-        
-        logger.info(f"Daily pattern analysis completed at {hour}:{minute:02d} UTC")
-    
-    except Exception as e:
-        logger.error(f"Pattern analysis scheduler error: {e}")
+    # Pattern analyzer disabled
+    logger.info(f"Pattern analysis skipped (disabled) at {hour}:{minute:02d} UTC")
 
 
 # Patch the background_scheduler_loop to include RSS

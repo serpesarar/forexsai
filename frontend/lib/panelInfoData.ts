@@ -69,15 +69,6 @@ export const PANEL_INFO_REGISTRY: Record<string, PanelInfo> = {
         importance: "high",
         icon: "🔬",
     },
-    "claude-patterns": {
-        titleKey: "panelInfo.claudePatterns.title",
-        descriptionKey: "panelInfo.claudePatterns.description",
-        usageKey: "panelInfo.claudePatterns.usage",
-        tipsKey: "panelInfo.claudePatterns.tips",
-        dataPointsKey: "panelInfo.claudePatterns.dataPoints",
-        importance: "high",
-        icon: "🧠",
-    },
     "sentiment": {
         titleKey: "panelInfo.sentiment.title",
         descriptionKey: "panelInfo.sentiment.description",

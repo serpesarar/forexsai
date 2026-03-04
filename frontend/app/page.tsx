@@ -988,8 +988,6 @@ export default function HomePage() {
       }
       case "pattern-engine":
         return <PatternEngineV2 />;
-      case "claude-patterns":
-        return renderClaudePatternCard();
       case "sentiment":
         return renderSentimentCard();
       case "news":

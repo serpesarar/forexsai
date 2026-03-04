@@ -278,7 +278,6 @@ try:
         usoil,
         dax,
         pattern_engine,
-        claude_patterns,
         claude_sentiment,
         order_blocks,
         rtyhiim,
@@ -289,7 +288,6 @@ try:
         ai_analysis,
         learning,
         fvg,
-        claude_news,
         auth,
         live_news,
         mtf_analysis,
@@ -310,7 +308,6 @@ try:
     from services.data_fetcher import fetch_latest_price
     from services.ml_service import run_nasdaq_signal, run_xauusd_signal
     from services.pattern_engine_runner import run_pattern_engine
-    from services.pattern_analyzer import run_claude_pattern_analysis
     from services.sentiment_analyzer import run_claude_sentiment
     from services.rtyhiim_service import run_rtyhiim_detector
     from services.order_block_service import service as order_block_service
@@ -321,7 +318,6 @@ try:
     app.include_router(usoil.router)
     app.include_router(dax.router)
     app.include_router(pattern_engine.router)
-    app.include_router(claude_patterns.router)
     app.include_router(claude_sentiment.router)
     app.include_router(order_blocks.router)
     app.include_router(rtyhiim.router)
@@ -332,7 +328,6 @@ try:
     app.include_router(ai_analysis.router)
     app.include_router(learning.router)
     app.include_router(fvg.router)
-    app.include_router(claude_news.router)
     app.include_router(auth.router)
     app.include_router(live_news.router)
     app.include_router(mtf_analysis.router)

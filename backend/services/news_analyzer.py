@@ -299,12 +299,10 @@ Provide ONLY the translation, no explanation, no markdown, no JSON.
 Just the translated text."""
 
                 payload = {
-                    "model": "deepseek-chat",
+                    "model": "deepseek-reasoner",
                     "messages": [
-                        {"role": "system", "content": "You are a professional financial translator. Translate accurately while keeping financial terminology precise."},
-                        {"role": "user", "content": prompt}
+                        {"role": "user", "content": "You are a professional financial translator. Translate accurately while keeping financial terminology precise.\n\n" + prompt}
                     ],
-                    "temperature": 0.2,
                     "max_tokens": 500
                 }
                 
@@ -390,14 +388,11 @@ Output JSON only, no markdown."""
                 }
                 
                 payload = {
-                    "model": "deepseek-chat",
+                    "model": "deepseek-reasoner",
                     "messages": [
-                        {"role": "system", "content": "You are a financial market analyst. Analyze news and predict market impacts accurately."},
-                        {"role": "user", "content": prompt}
+                        {"role": "user", "content": "You are a financial market analyst. Analyze news and predict market impacts accurately. Respond in JSON format.\n\n" + prompt}
                     ],
-                    "temperature": 0.3,
-                    "max_tokens": 800,
-                    "response_format": {"type": "json_object"}
+                    "max_tokens": 1000
                 }
                 
                 async with session.post(

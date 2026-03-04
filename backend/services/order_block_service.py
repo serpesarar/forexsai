@@ -10,7 +10,6 @@ import numpy as np
 from order_block_detector import Candle, OrderBlockConfig, OrderBlockDetector
 from order_block_detector_v2 import detect_all, MarketStructureAnalyzer, SwingDetector
 from services.ml_service import run_nasdaq_signal, run_xauusd_signal
-from services.pattern_analyzer import run_claude_pattern_analysis
 from services.sentiment_analyzer import run_claude_sentiment
 from services.rtyhiim_service import run_rtyhiim_detector
 from services.data_fetcher import fetch_eod_candles, fetch_ohlc_data

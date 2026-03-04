@@ -1039,12 +1039,8 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
             return {"confidence_adjustment": 0, "signal": "NEUTRAL"}
     
     async def fetch_patterns():
-        try:
-            from services.pattern_analyzer import run_claude_pattern_analysis
-            return await run_claude_pattern_analysis(normalized_symbol, ["15m", "1h"], lang="tr")
-        except Exception as e:
-            logger.debug(f"Pattern fetch failed: {e}")
-            return {"analyses": {}}
+        # Pattern analyzer disabled - using empty result
+        return {"analyses": {}}
     
     async def fetch_candlestick():
         try:

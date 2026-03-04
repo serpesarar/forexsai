@@ -167,13 +167,11 @@ Analyze this news NOW:"""
                 }
                 
                 payload = {
-                    "model": "deepseek-chat",
+                    "model": "deepseek-reasoner",
                     "messages": [
-                        {"role": "system", "content": "You are an expert financial analyst. Analyze news precisely and only report ACTUAL impacts, not generic patterns. Respond ONLY with valid JSON."},
-                        {"role": "user", "content": prompt}
+                        {"role": "user", "content": "You are an expert financial analyst. Analyze news precisely and only report ACTUAL impacts, not generic patterns. Respond ONLY with valid JSON.\n\n" + prompt}
                     ],
-                    "temperature": 0.2,
-                    "max_tokens": 1000
+                    "max_tokens": 1500
                 }
                 
                 logger.info(f"[DeepSeek] Sending request to {DEEPSEEK_API_URL}")
