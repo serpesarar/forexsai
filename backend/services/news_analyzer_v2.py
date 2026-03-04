@@ -196,7 +196,7 @@ Analyze this news NOW:"""
                     data = await response.json()
                     content = data["choices"][0]["message"]["content"]
                     
-                    logger.info(f"[DeepSeek] Raw response: {content[:200]}...")
+                    logger.info(f"[DeepSeek] Raw response preview: {content[:200]}...")
                     
                     # Clean up response - sometimes DeepSeek adds markdown
                     if "```json" in content:
@@ -231,6 +231,8 @@ Analyze this news NOW:"""
                             reasoning_tr="Haberin önemli piyasa etkisi yok"
                         ))
                     
+                    logger.info(f"[DeepSeek] Successfully parsed result: confidence={result.get('analysis_confidence', 0)}, headline_tr={result.get('headline_tr', 'N/A')[:50]}...")
+                    
                     return NewsAnalysisResult(
                         impacts=impacts,
                         sentiment=result.get("market_sentiment", "neutral"),
@@ -242,10 +244,15 @@ Analyze this news NOW:"""
                     )
                     
         except json.JSONDecodeError as e:
+            import traceback
             logger.error(f"[DeepSeek] JSON parse error: {e}")
+            logger.error(f"[DeepSeek] Failed content: {content[:500] if 'content' in locals() else 'N/A'}")
+            logger.error(f"[DeepSeek] Traceback: {traceback.format_exc()}")
             raise
         except Exception as e:
-            logger.error(f"[DeepSeek] Exception during API call: {e}")
+            import traceback
+            logger.error(f"[DeepSeek] Exception during API call: {type(e).__name__}: {e}")
+            logger.error(f"[DeepSeek] Full traceback: {traceback.format_exc()}")
             raise
     
     def _fallback_analysis(self, headline: str, content: str) -> NewsAnalysisResult:
