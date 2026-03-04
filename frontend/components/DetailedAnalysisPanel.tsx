@@ -14,10 +14,16 @@ import {
   Globe,
   Activity,
   Clock,
+  ExternalLink,
+  Filter,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useDetailedAIAnalysis } from "../lib/api/detailedAiAnalysis";
 import { useI18nStore } from "../lib/i18n/store";
 import { useClaudeAnalysisStore } from "../lib/claudeAnalysisStore";
+import { useQuery } from "@tanstack/react-query";
+import { fetchRSSNews, RSSNewsItem, getSymbolEmoji, getImpactColor } from "../lib/api/rssNews";
 
 type Props = {
   symbol: string;
@@ -62,10 +68,25 @@ function mlLabel(direction: string, t: (key: string) => string) {
   return d;
 }
 
+// Haber etkisini normalize et
+function normalizeSymbol(symbol: string): string {
+  const map: Record<string, string> = {
+    "NDX.INDX": "NDX",
+    "XAUUSD": "XAUUSD",
+    "GDAXI.INDX": "DAX",
+    "USOIL.FOREX": "USOIL",
+    "DXY.INDX": "DXY",
+    "VIX.INDX": "VIX",
+  };
+  return map[symbol] || symbol.replace(".INDX", "").replace(".FOREX", "");
+}
+
 export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
   const { t, locale } = useI18nStore();
   const { data: fetchedData, isLoading, isFetching, error, refetch } = useDetailedAIAnalysis(symbol);
   const [showContext, setShowContext] = useState(false);
+  const [showNews, setShowNews] = useState(true);
+  const [newsFilter, setNewsFilter] = useState<"all" | "high" | "breaking">("all");
   const { getDetailed, setDetailed, getLastUpdated } = useClaudeAnalysisStore();
   
   // Get persisted data
@@ -81,6 +102,25 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
       setDetailed(symbol, fetchedData);
     }
   }, [fetchedData, symbol, setDetailed]);
+
+  // Fetch related news for this symbol
+  const normalizedSymbol = normalizeSymbol(symbol);
+  const { data: relatedNews, isLoading: newsLoading } = useQuery({
+    queryKey: ["detailed-news", normalizedSymbol],
+    queryFn: () => fetchRSSNews(48, 30, normalizedSymbol),
+    refetchInterval: 5 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Filter news
+  const filteredNews = relatedNews?.filter((news) => {
+    if (newsFilter === "high") return news.urgency === "high" || news.urgency === "breaking";
+    if (newsFilter === "breaking") return news.urgency === "breaking";
+    return true;
+  });
+
+  // Calculate sentiment from news
+  const newsSentiment = useNewsSentimentAnalysis(filteredNews || [], normalizedSymbol);
 
   const analysis = (data?.analysis || {}) as any;
   const context = (data?.context || {}) as any;
@@ -220,6 +260,7 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
         </div>
       ) : data ? (
         <>
+          {/* Decision Header */}
           <div className="flex flex-wrap items-center justify-between gap-3 bg-white/5 rounded-2xl p-5 border border-white/5">
             <div className="flex flex-wrap items-center gap-3">
               <DecisionBadge decision={decision} t={t} />
@@ -246,6 +287,95 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
             </div>
           )}
 
+          {/* NEWS SECTION - NEW */}
+          {showNews && (
+            <div className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-2xl p-5 border border-purple-500/20">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Newspaper className="w-4 h-4 text-purple-400" />
+                  <p className="text-xs font-semibold uppercase tracking-wider text-purple-300">
+                    AI-Analizli İlgili Haberler ({filteredNews?.length || 0})
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={newsFilter}
+                    onChange={(e) => setNewsFilter(e.target.value as any)}
+                    className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-300"
+                  >
+                    <option value="all">Tümü</option>
+                    <option value="high">Yüksek Etki</option>
+                    <option value="breaking">Breaking</option>
+                  </select>
+                  <button
+                    onClick={() => setShowNews(false)}
+                    className="p-1 hover:bg-white/10 rounded transition"
+                  >
+                    <ChevronUp className="w-4 h-4 text-slate-400" />
+                  </button>
+                </div>
+              </div>
+
+              {newsLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin w-5 h-5 border-2 border-purple-500/30 border-t-purple-500 rounded-full" />
+                </div>
+              ) : filteredNews && filteredNews.length > 0 ? (
+                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                  {filteredNews.slice(0, 5).map((news) => (
+                    <NewsItem key={news.id} news={news} symbol={normalizedSymbol} />
+                  ))}
+                  {filteredNews.length > 5 && (
+                    <p className="text-xs text-slate-400 text-center py-2">
+                      +{filteredNews.length - 5} daha fazla haber
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400 text-center py-4">
+                  Son 48 saatte ilgili haber bulunamadı
+                </p>
+              )}
+
+              {/* News Sentiment Summary */}
+              {newsSentiment && (
+                <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-3 gap-3">
+                  <div className="text-center">
+                    <p className="text-[10px] text-slate-400">Haber Etkisi</p>
+                    <p className={`text-sm font-semibold ${getImpactColor(newsSentiment.overallDirection)}`}>
+                      {newsSentiment.overallDirection === "bullish" ? "🟢 Pozitif" : 
+                       newsSentiment.overallDirection === "bearish" ? "🔴 Negatif" : "⚪ Nötr"}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] text-slate-400">Ortalama Skor</p>
+                    <p className="text-sm font-semibold text-slate-200">
+                      {newsSentiment.avgScore.toFixed(1)}/10
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] text-slate-400">Güven</p>
+                    <p className="text-sm font-semibold text-slate-200">
+                      {newsSentiment.avgConfidence.toFixed(0)}%
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!showNews && (
+            <button
+              onClick={() => setShowNews(true)}
+              className="w-full flex items-center justify-center gap-2 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm text-slate-400 transition"
+            >
+              <Newspaper className="w-4 h-4" />
+              Haber Analizini Göster
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Key Levels & Market Regime */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-white/5 rounded-2xl p-5 border border-white/5">
               <div className="flex items-center gap-2 mb-3">
@@ -314,6 +444,7 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
             </div>
           </div>
 
+          {/* Macro & News Impact */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-white/5 rounded-2xl p-5 border border-white/5">
               <div className="flex items-center gap-2 mb-3">
@@ -341,11 +472,11 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <div className="text-textSecondary">{t("detailedAnalysis.headlineCount")}</div>
-                <div className="font-mono font-semibold">{typeof newsImpact.headline_count === "number" ? newsImpact.headline_count : (newsImpact.count ?? "-")}</div>
+                <div className="font-mono font-semibold">{typeof newsImpact.headline_count === "number" ? newsImpact.headline_count : (newsImpact.count ?? filteredNews?.length ?? "-")}</div>
               </div>
               <div className="flex items-center justify-between text-sm mt-2">
                 <div className="text-textSecondary">Tone</div>
-                <div className="font-semibold">{newsImpact.tone ? String(newsImpact.tone) : "-"}</div>
+                <div className="font-semibold">{newsSentiment?.overallDirection || newsImpact.tone || "-"}</div>
               </div>
               {Array.isArray(newsImpact.headlines) && newsImpact.headlines.length > 0 && (
                 <ul className="mt-3 space-y-1">
@@ -356,18 +487,10 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
                   ))}
                 </ul>
               )}
-              {Array.isArray(newsImpact.notes) && newsImpact.notes.length > 0 && !newsImpact.headlines && (
-                <ul className="mt-3 space-y-1">
-                  {newsImpact.notes.slice(0, 3).map((n: any, i: number) => (
-                    <li key={i} className="text-xs text-textSecondary">
-                      {String(n)}
-                    </li>
-                  ))}
-                </ul>
-              )}
             </div>
           </div>
 
+          {/* Risk Management */}
           <div className="bg-white/5 rounded-2xl p-5 border border-white/5">
             <div className="flex items-center gap-2 mb-3">
               <Target className="w-4 h-4 text-accent" />
@@ -398,6 +521,7 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
             )}
           </div>
 
+          {/* Thesis Section */}
           {(bullCase.length > 0 || bearCase.length > 0 || thesisArray.length > 0 || redFlags.length > 0 || thesisSummary) && (
             <div className="space-y-4">
               {/* Thesis Summary */}
@@ -484,3 +608,106 @@ export default function DetailedAnalysisPanel({ symbol, symbolLabel }: Props) {
     </div>
   );
 }
+
+// News Item Component
+function NewsItem({ news, symbol }: { news: RSSNewsItem; symbol: string }) {
+  const getUrgencyIcon = (urgency: string) => {
+    if (urgency === "breaking") return "🚨";
+    if (urgency === "high") return "🔴";
+    if (urgency === "medium") return "🟡";
+    return "🟢";
+  };
+
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    if (diffMins < 5) return "Şimdi";
+    if (diffMins < 60) return `${diffMins}d`;
+    if (diffHours < 24) return `${diffHours}s`;
+    return `${Math.floor(diffHours / 24)}g`;
+  };
+
+  // Find symbol-specific impact
+  const symbolImpact = news.impacts?.find(
+    (i) => i.symbol === symbol || i.symbol === symbol.replace(".INDX", "")
+  );
+
+  return (
+    <div className="bg-white/5 rounded-xl p-3 border border-white/10 hover:bg-white/10 transition">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm">{getUrgencyIcon(news.urgency)}</span>
+            <span className="text-[10px] text-slate-400">{news.source}</span>
+            <span className="text-[10px] text-slate-500">{formatTime(news.timestamp)}</span>
+          </div>
+          <p className="text-xs font-medium text-slate-200 line-clamp-2">
+            {news.headline_tr || news.headline}
+          </p>
+          {symbolImpact && (
+            <div className="flex items-center gap-2 mt-1">
+              <span className={getImpactColor(symbolImpact.direction)}>
+                {symbolImpact.direction === "bullish" ? "🟢" : symbolImpact.direction === "bearish" ? "🔴" : "⚪"}
+                {" "}{symbolImpact.score}/10
+              </span>
+              {symbolImpact.reasoning_tr && (
+                <span className="text-[10px] text-slate-400 truncate">{symbolImpact.reasoning_tr}</span>
+              )}
+            </div>
+          )}
+        </div>
+        {news.url && (
+          <a
+            href={news.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-1 hover:bg-white/10 rounded transition flex-shrink-0"
+          >
+            <ExternalLink className="w-3 h-3 text-slate-400" />
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Hook: News Sentiment Analysis
+function useNewsSentimentAnalysis(news: RSSNewsItem[], symbol: string) {
+  return useMemo(() => {
+    if (!news || news.length === 0) return null;
+
+    const symbolImpacts = news
+      .flatMap((n) => n.impacts || [])
+      .filter((i) => i.symbol === symbol || i.symbol === symbol.replace(".INDX", ""));
+
+    if (symbolImpacts.length === 0) return null;
+
+    const bullishCount = symbolImpacts.filter((i) => i.direction === "bullish").length;
+    const bearishCount = symbolImpacts.filter((i) => i.direction === "bearish").length;
+    const neutralCount = symbolImpacts.filter((i) => i.direction === "neutral").length;
+
+    const totalScore = symbolImpacts.reduce((sum, i) => sum + i.score, 0);
+    const totalConfidence = symbolImpacts.reduce((sum, i) => sum + i.confidence, 0);
+
+    let overallDirection: "bullish" | "bearish" | "neutral" = "neutral";
+    if (bullishCount > bearishCount && bullishCount > neutralCount) overallDirection = "bullish";
+    else if (bearishCount > bullishCount && bearishCount > neutralCount) overallDirection = "bearish";
+
+    return {
+      overallDirection,
+      bullishCount,
+      bearishCount,
+      neutralCount,
+      avgScore: totalScore / symbolImpacts.length,
+      avgConfidence: (totalConfidence / symbolImpacts.length) * 100,
+      totalImpacts: symbolImpacts.length,
+    };
+  }, [news, symbol]);
+}
+
+// useMemo import for the hook
+import { useMemo } from "react";

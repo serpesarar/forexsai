@@ -8,9 +8,11 @@ import {
   IChartApi,
   ISeriesApi,
   Time,
+  MouseEventParams,
 } from "lightweight-charts";
-import { Activity, RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
+import { Activity, RefreshCw, TrendingUp, TrendingDown, Newspaper, X, ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useNewsMarkers, NewsMarker } from "../hooks/useNewsMarkers";
 
 interface CandleData {
   timestamp: number;
@@ -25,6 +27,7 @@ interface LiveChartPanelProps {
   symbol: string;
   symbolLabel: string;
   height?: number;
+  showNewsMarkers?: boolean;
 }
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
@@ -78,10 +81,81 @@ function calculateEMA(values: number[], period: number): number[] {
   return ema;
 }
 
+// Haber detay tooltip component
+function NewsTooltip({ marker, onClose, position }: { marker: NewsMarker; onClose: () => void; position: { x: number; y: number } }) {
+  const getDirectionColor = (dir: string) => {
+    if (dir === "bullish") return "text-green-400";
+    if (dir === "bearish") return "text-red-400";
+    return "text-gray-400";
+  };
+
+  const getUrgencyIcon = (urgency: string) => {
+    if (urgency === "breaking") return "🚨";
+    if (urgency === "high") return "🔴";
+    if (urgency === "medium") return "🟡";
+    return "🟢";
+  };
+
+  return (
+    <div
+      className="fixed z-50 w-80 bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl p-4 animate-in fade-in zoom-in-95 duration-200"
+      style={{
+        left: Math.min(position.x, window.innerWidth - 340),
+        top: Math.min(position.y, window.innerHeight - 300),
+      }}
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{getUrgencyIcon(marker.urgency)}</span>
+          <span className={`text-xs font-bold uppercase tracking-wider ${getDirectionColor(marker.direction)}`}>
+            {marker.direction}
+          </span>
+          <span className="text-xs text-slate-400">Score: {marker.score}/10</span>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-1 hover:bg-white/10 rounded-lg transition"
+        >
+          <X className="w-4 h-4 text-slate-400" />
+        </button>
+      </div>
+
+      <h4 className="text-sm font-semibold text-white mb-2 leading-tight">
+        {marker.headline}
+      </h4>
+
+      {marker.headline_en && marker.headline_en !== marker.headline && (
+        <p className="text-xs text-slate-400 mb-2 italic">{marker.headline_en}</p>
+      )}
+
+      {marker.reasoning_tr && (
+        <p className="text-xs text-slate-300 mb-3 bg-white/5 p-2 rounded-lg">
+          💡 {marker.reasoning_tr}
+        </p>
+      )}
+
+      <div className="flex items-center justify-between text-xs text-slate-400">
+        <span>{new Date(marker.time).toLocaleString("tr-TR")}</span>
+        {marker.url && (
+          <a
+            href={marker.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition"
+          >
+            Haber <ExternalLink className="w-3 h-3" />
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function LiveChartPanel({
   symbol,
   symbolLabel,
   height = 400,
+  showNewsMarkers = true,
 }: LiveChartPanelProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartInstanceRef = useRef<IChartApi | null>(null);
@@ -89,10 +163,14 @@ export default function LiveChartPanel({
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
   const ema20SeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const ema50SeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+  const markerSeriesRef = useRef<ISeriesApi<"Scatter"> | null>(null);
 
   const [timeframe, setTimeframe] = useState<TimeframeType>("15m");
   const [livePrice, setLivePrice] = useState<number | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [selectedMarker, setSelectedMarker] = useState<NewsMarker | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [showMarkers, setShowMarkers] = useState(true);
 
   // Fetch chart data
   const { data: chartData, isLoading, refetch } = useQuery({
@@ -101,6 +179,13 @@ export default function LiveChartPanel({
     refetchInterval: 60000,
     staleTime: 30000,
   });
+
+  // Fetch news markers
+  const { markers: newsMarkers, isLoading: markersLoading } = useNewsMarkers(
+    symbol,
+    24,
+    5
+  );
 
   // Fetch live price every 2 seconds
   useEffect(() => {
@@ -150,6 +235,8 @@ export default function LiveChartPanel({
       rightPriceScale: {
         borderColor: "rgba(255,255,255,0.1)",
       },
+      handleScroll: { vertTouchDrag: false },
+      handleScale: { axisPressedMouseMove: false },
     });
 
     const candleSeries = chart.addCandlestickSeries({
@@ -184,6 +271,16 @@ export default function LiveChartPanel({
       lastValueVisible: false,
     });
 
+    // Marker series for news
+    const markerSeries = chart.addSeries({
+      type: "Scatter",
+      color: "#3B82F6",
+      lineWidth: 0,
+      lastValueVisible: false,
+      priceLineVisible: false,
+      priceFormat: { type: "price", precision: 2, minMove: 0.01 },
+    } as any);
+
     const resizeObserver = new ResizeObserver(() => {
       try {
         chart.applyOptions({ width: container.clientWidth });
@@ -193,26 +290,49 @@ export default function LiveChartPanel({
     });
     resizeObserver.observe(container);
 
+    // Click handler for markers
+    chart.subscribeClick((param: MouseEventParams) => {
+      if (param.point && param.time) {
+        const clickedTime = new Date((param.time as number) * 1000);
+        const timeWindow = 5 * 60 * 1000; // 5 minutes window
+
+        const clickedMarker = newsMarkers.find((m) => {
+          const markerTime = new Date(m.time).getTime();
+          const clickTimeMs = clickedTime.getTime();
+          return Math.abs(markerTime - clickTimeMs) < timeWindow;
+        });
+
+        if (clickedMarker) {
+          setSelectedMarker(clickedMarker);
+          setTooltipPosition({ x: param.point.x, y: param.point.y });
+        } else {
+          setSelectedMarker(null);
+        }
+      }
+    });
+
     chartInstanceRef.current = chart;
     candleSeriesRef.current = candleSeries;
     volumeSeriesRef.current = volumeSeries;
     ema20SeriesRef.current = ema20Series;
     ema50SeriesRef.current = ema50Series;
+    markerSeriesRef.current = markerSeries;
 
     return () => {
       resizeObserver.disconnect();
       chart.remove();
       chartInstanceRef.current = null;
     };
-  }, [height]);
+  }, [height, newsMarkers]);
 
-  // Update data
+  // Update chart data
   useEffect(() => {
     const chart = chartInstanceRef.current;
     const candleSeries = candleSeriesRef.current;
     const volumeSeries = volumeSeriesRef.current;
     const ema20Series = ema20SeriesRef.current;
     const ema50Series = ema50SeriesRef.current;
+    const markerSeries = markerSeriesRef.current;
 
     if (!chart || !candleSeries || !volumeSeries || !chartData?.length) return;
 
@@ -250,11 +370,35 @@ export default function LiveChartPanel({
       if (ema20Series) ema20Series.setData(ema20Data);
       if (ema50Series) ema50Series.setData(ema50Data);
 
+      // Add news markers
+      if (markerSeries && showMarkers && newsMarkers.length > 0) {
+        const chartStartTime = chartData[0].timestamp;
+        const chartEndTime = chartData[chartData.length - 1].timestamp;
+
+        const visibleMarkers = newsMarkers
+          .filter((m) => {
+            const markerTime = new Date(m.time).getTime();
+            return markerTime >= chartStartTime && markerTime <= chartEndTime;
+          })
+          .map((m) => ({
+            time: (new Date(m.time).getTime() / 1000) as Time,
+            value: m.position === "aboveBar" ? 
+              chartData.find((c) => c.timestamp >= new Date(m.time).getTime())?.high || 0 :
+              chartData.find((c) => c.timestamp >= new Date(m.time).getTime())?.low || 0,
+            color: m.direction === "bullish" ? "#22c55e" : m.direction === "bearish" ? "#ef4444" : "#3B82F6",
+            size: m.urgency === "breaking" ? 3 : m.urgency === "high" ? 2.5 : 2,
+          }));
+
+        markerSeries.setData(visibleMarkers);
+      } else if (markerSeries) {
+        markerSeries.setData([]);
+      }
+
       chart.timeScale().fitContent();
     } catch (err) {
       console.error("Chart data update error:", err);
     }
-  }, [chartData]);
+  }, [chartData, newsMarkers, showMarkers]);
 
   // Calculate price change
   const firstCandle = chartData?.[0];
@@ -292,6 +436,25 @@ export default function LiveChartPanel({
         </div>
 
         <div className="flex items-center gap-3">
+          {/* News toggle */}
+          {showNewsMarkers && (
+            <button
+              onClick={() => setShowMarkers(!showMarkers)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition ${showMarkers
+                  ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                  : "bg-white/5 text-slate-400 hover:bg-white/10"
+                }`}
+            >
+              <Newspaper className="w-3.5 h-3.5" />
+              Haberler {showMarkers ? "Açık" : "Kapalı"}
+              {newsMarkers.length > 0 && (
+                <span className="bg-white/20 px-1.5 py-0.5 rounded-full text-[10px]">
+                  {newsMarkers.length}
+                </span>
+              )}
+            </button>
+          )}
+
           {/* Live indicator */}
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <div className="relative">
@@ -344,6 +507,27 @@ export default function LiveChartPanel({
               </div>
             </div>
           )}
+
+          {/* Marker Legend */}
+          {showMarkers && newsMarkers.length > 0 && (
+            <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+              <div className="flex items-center gap-3 text-[10px] text-slate-300">
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                  <span>Pozitif</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                  <span>Negatif</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                  <span>Nötr</span>
+                </div>
+              </div>
+              <p className="text-[9px] text-slate-400 mt-1">Mum üzerindeki noktalara tıklayın</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -357,7 +541,22 @@ export default function LiveChartPanel({
           <div className="h-0.5 w-4 bg-amber-500 rounded" />
           <span className="text-textSecondary">EMA 50</span>
         </div>
+        {newsMarkers.length > 0 && (
+          <div className="flex items-center gap-2 ml-auto">
+            <Newspaper className="w-3 h-3 text-slate-400" />
+            <span className="text-textSecondary">{newsMarkers.length} haber işaretlendi</span>
+          </div>
+        )}
       </div>
+
+      {/* News Tooltip */}
+      {selectedMarker && (
+        <NewsTooltip
+          marker={selectedMarker}
+          onClose={() => setSelectedMarker(null)}
+          position={tooltipPosition}
+        />
+      )}
     </div>
   );
 }

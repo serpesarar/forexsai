@@ -242,18 +242,20 @@ export default function TradingView() {
           </div>
 
           <div className="grid grid-cols-1 gap-6">
-            {/* NASDAQ Chart */}
+            {/* NASDAQ Chart with News Markers */}
             <LiveChartPanel
               symbol="NDX.INDX"
               symbolLabel="NASDAQ-100"
-              height={300}
+              height={350}
+              showNewsMarkers={true}
             />
 
-            {/* XAUUSD Chart */}
+            {/* XAUUSD Chart with News Markers */}
             <LiveChartPanel
               symbol="XAUUSD"
               symbolLabel="Gold (XAU/USD)"
-              height={300}
+              height={350}
+              showNewsMarkers={true}
             />
           </div>
         </section>

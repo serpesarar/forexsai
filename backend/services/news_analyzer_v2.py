@@ -48,19 +48,25 @@ class RealNewsAnalyzer:
         """
         Haberi gerçekten analiz et - Rule-based değil, AI-based
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"[RealAnalyzer] Analyzing: {headline[:60]}...")
+        logger.info(f"[RealAnalyzer] API key present: {bool(self.api_key)}")
+        
         if not self.api_key:
-            # API key yoksa fallback
+            logger.warning("[RealAnalyzer] No API key, using fallback")
             return self._fallback_analysis(headline, content)
         
         try:
-            # DeepSeek AI'a gönder - HER haberi gerçekten analiz et
             prompt = self._build_prompt(headline, content, source)
-            
             result = await self._call_deepseek(prompt)
             
+            logger.info(f"[RealAnalyzer] AI analysis successful: confidence={result.confidence}")
             return result
             
         except Exception as e:
+            logger.error(f"[RealAnalyzer] AI failed: {e}")
             print(f"[RealAnalyzer] AI failed: {e}")
             return self._fallback_analysis(headline, content)
     
@@ -147,72 +153,98 @@ IMPORTANT RULES:
 Analyze this news NOW:"""
 
     async def _call_deepseek(self, prompt: str) -> NewsAnalysisResult:
-        """DeepSeek AI çağrısı"""
-        async with aiohttp.ClientSession() as session:
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
-            }
-            
-            payload = {
-                "model": "deepseek-chat",
-                "messages": [
-                    {"role": "system", "content": "You are an expert financial analyst. Analyze news precisely and only report ACTUAL impacts, not generic patterns."},
-                    {"role": "user", "content": prompt}
-                ],
-                "temperature": 0.2,  # Düşük temperature = daha tutarlı, gerçekçi
-                "max_tokens": 1000,
-                "response_format": {"type": "json_object"}
-            }
-            
-            async with session.post(
-                DEEPSEEK_API_URL,
-                headers=headers,
-                json=payload,
-                timeout=aiohttp.ClientTimeout(total=20)
-            ) as response:
-                if response.status != 200:
-                    error_text = await response.text()
-                    raise Exception(f"API error {response.status}: {error_text}")
+        """DeepSeek AI çağrısı - Hata loglamalı ve robust"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"[DeepSeek] Calling API with key present: {bool(self.api_key)}")
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                headers = {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                }
                 
-                data = await response.json()
-                content = data["choices"][0]["message"]["content"]
-                result = json.loads(content)
+                payload = {
+                    "model": "deepseek-chat",
+                    "messages": [
+                        {"role": "system", "content": "You are an expert financial analyst. Analyze news precisely and only report ACTUAL impacts, not generic patterns. Respond ONLY with valid JSON."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    "temperature": 0.2,
+                    "max_tokens": 1000
+                }
                 
-                # Parse impacts
-                impacts = []
-                for imp in result.get("affected_instruments", []):
-                    # Only include if actually affected (score > 3 and not neutral with low confidence)
-                    if imp.get("impact_score", 0) >= 4 or imp.get("confidence", 0) >= 0.6:
+                logger.info(f"[DeepSeek] Sending request to {DEEPSEEK_API_URL}")
+                
+                async with session.post(
+                    DEEPSEEK_API_URL,
+                    headers=headers,
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=20)
+                ) as response:
+                    logger.info(f"[DeepSeek] Response status: {response.status}")
+                    
+                    if response.status != 200:
+                        error_text = await response.text()
+                        logger.error(f"[DeepSeek] API error {response.status}: {error_text}")
+                        raise Exception(f"API error {response.status}: {error_text}")
+                    
+                    data = await response.json()
+                    content = data["choices"][0]["message"]["content"]
+                    
+                    logger.info(f"[DeepSeek] Raw response: {content[:200]}...")
+                    
+                    # Clean up response - sometimes DeepSeek adds markdown
+                    if "```json" in content:
+                        content = content.split("```json")[1].split("```")[0].strip()
+                    elif "```" in content:
+                        content = content.split("```")[1].split("```")[0].strip()
+                    
+                    result = json.loads(content)
+                    
+                    logger.info(f"[DeepSeek] Parsed result: headline_tr={result.get('headline_tr', 'N/A')[:50]}...")
+                    
+                    # Parse impacts
+                    impacts = []
+                    for imp in result.get("affected_instruments", []):
+                        if imp.get("impact_score", 0) >= 4 or imp.get("confidence", 0) >= 0.6:
+                            impacts.append(SymbolImpact(
+                                symbol=imp["symbol"],
+                                direction=imp["direction"],
+                                score=imp["impact_score"],
+                                confidence=imp["confidence"],
+                                reasoning=imp["reasoning"],
+                                reasoning_tr=imp.get("reasoning_tr", imp["reasoning"])
+                            ))
+                    
+                    if not impacts:
                         impacts.append(SymbolImpact(
-                            symbol=imp["symbol"],
-                            direction=imp["direction"],
-                            score=imp["impact_score"],
-                            confidence=imp["confidence"],
-                            reasoning=imp["reasoning"],
-                            reasoning_tr=imp.get("reasoning_tr", imp["reasoning"])
+                            symbol="NDX",
+                            direction="neutral",
+                            score=3,
+                            confidence=0.5,
+                            reasoning="News does not have significant market impact",
+                            reasoning_tr="Haberin önemli piyasa etkisi yok"
                         ))
-                
-                # If no significant impacts, add neutral
-                if not impacts:
-                    impacts.append(SymbolImpact(
-                        symbol="NDX",
-                        direction="neutral",
-                        score=3,
-                        confidence=0.5,
-                        reasoning="News does not have significant market impact",
-                        reasoning_tr="Haberin önemli piyasa etkisi yok"
-                    ))
-                
-                return NewsAnalysisResult(
-                    impacts=impacts,
-                    sentiment=result.get("market_sentiment", "neutral"),
-                    volatility_expectation=result.get("volatility_expectation", "medium"),
-                    urgency=result.get("urgency", "medium"),
-                    confidence=result.get("analysis_confidence", 70),
-                    headline_tr=result.get("headline_tr", ""),
-                    content_tr=result.get("content_tr", "")
-                )
+                    
+                    return NewsAnalysisResult(
+                        impacts=impacts,
+                        sentiment=result.get("market_sentiment", "neutral"),
+                        volatility_expectation=result.get("volatility_expectation", "medium"),
+                        urgency=result.get("urgency", "medium"),
+                        confidence=result.get("analysis_confidence", 70),
+                        headline_tr=result.get("headline_tr", ""),
+                        content_tr=result.get("content_tr", "")
+                    )
+                    
+        except json.JSONDecodeError as e:
+            logger.error(f"[DeepSeek] JSON parse error: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"[DeepSeek] Exception during API call: {e}")
+            raise
     
     def _fallback_analysis(self, headline: str, content: str) -> NewsAnalysisResult:
         """

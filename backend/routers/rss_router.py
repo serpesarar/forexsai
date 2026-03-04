@@ -481,39 +481,47 @@ async def test_ai_analysis(
     """
     try:
         import os
-        from services.news_analyzer_v2 import get_real_analyzer
+        import logging
+        from services.news_analyzer_v2 import get_real_analyzer, DEEPSEEK_API_KEY
         
-        # Check API keys
+        logger = logging.getLogger(__name__)
+        
+        # Check API keys - CORRECT ENV VAR NAME
         anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
-        deepseek_key = os.getenv("DEEPSEEK_API_KEY", "")
+        deepseek_key = os.getenv("DEEP_SEEKR1", "")  # This is the correct env var name!
         
-        print(f"[Test] ANTHROPIC_API_KEY present: {bool(anthropic_key)}")
-        print(f"[Test] DEEPSEEK_API_KEY present: {bool(deepseek_key)}")
+        logger.info(f"[Test-AI] ANTHROPIC_API_KEY present: {bool(anthropic_key)}")
+        logger.info(f"[Test-AI] DEEP_SEEKR1 present: {bool(deepseek_key)}")
+        logger.info(f"[Test-AI] Module-level DEEPSEEK_API_KEY present: {bool(DEEPSEEK_API_KEY)}")
+        
+        # Check for mismatch
+        if deepseek_key and not DEEPSEEK_API_KEY:
+            logger.error("[Test-AI] MISMATCH: DEEP_SEEKR1 is set but module didn't load it!")
         
         # Call AI
-        print(f"[Test] Analyzing: {headline[:60]}...")
+        logger.info(f"[Test-AI] Analyzing: {headline[:60]}...")
         analyzer = get_real_analyzer()
         
-        import asyncio
         result = await analyzer.analyze(
             headline=headline,
             content=content,
             source=source
         )
         
-        # Determine which AI was used (Claude or DeepSeek or fallback)
+        # Determine which AI was used
         ai_used = "fallback"
         if result.confidence >= 70 and result.headline_tr and not result.headline_tr.startswith("["):
-            ai_used = "claude"  # Claude yüksek kaliteli çeviri yapar
-        elif result.headline_tr and result.headline_tr.startswith("["):
-            ai_used = "fallback"
+            ai_used = "deepseek"  # Real DeepSeek analysis
+        elif result.confidence >= 60 and result.headline_tr and len(result.headline_tr) > 10:
+            ai_used = "deepseek_partial"
         
         return {
             "success": True,
             "ai_used": ai_used,
             "api_keys": {
                 "anthropic": bool(anthropic_key),
-                "deepseek": bool(deepseek_key)
+                "deepseek_env": bool(deepseek_key),
+                "deepseek_module": bool(DEEPSEEK_API_KEY)
             },
             "analysis": {
                 "headline_tr": result.headline_tr,
