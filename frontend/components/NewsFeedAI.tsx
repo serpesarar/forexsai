@@ -51,6 +51,11 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
   const [activeTab, setActiveTab] = useState<NewsTab>("news");
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
 
+  // DEBUG: Component mount
+  useEffect(() => {
+    console.log("[NewsFeedAI] Component MOUNTED");
+  }, []);
+
   // Fetch AI-enriched news
   const {
     data: newsItems,
@@ -64,7 +69,12 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
     staleTime: 2 * 60 * 1000,
   });
 
-
+  // DEBUG: Data changes
+  useEffect(() => {
+    console.log("[NewsFeedAI] newsItems:", newsItems?.length, "items");
+    console.log("[NewsFeedAI] newsLoading:", newsLoading);
+    console.log("[NewsFeedAI] newsError:", newsError);
+  }, [newsItems, newsLoading, newsError]);
 
   // Fetch economic calendar
   const {
