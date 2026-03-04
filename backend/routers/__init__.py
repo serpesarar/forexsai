@@ -4,7 +4,6 @@ from routers import (
     usoil,
     dax,
     pattern_engine, 
-    claude_patterns, 
     claude_sentiment, 
     order_blocks, 
     rtyhiim, 
@@ -31,6 +30,7 @@ from routers import (
     chart_data,
     websocket,
     economic_calendar_router,
+    prices,
 )
 
 __all__ = [
@@ -39,7 +39,6 @@ __all__ = [
     "usoil",
     "dax",
     "pattern_engine",
-    "claude_patterns",
     "claude_sentiment",
     "order_blocks",
     "rtyhiim",
@@ -66,4 +65,5 @@ __all__ = [
     "chart_data",
     "websocket",
     "economic_calendar_router",
+    "prices",
 ]
