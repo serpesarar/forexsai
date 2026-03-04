@@ -853,7 +853,7 @@ async def cleanup_old_signals():
 #  Dashboard Data: aggregated stats per model
 # ═════════════════════════════════════════════════════════════════════════════
 
-async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
+async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
     """
     Build Learning Dashboard v2 data:
       - Per model type: total, win rate, avg profit, avg loss, R/R, target rates
@@ -867,18 +867,23 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
     if not client:
         return {"error": "No DB client"}
 
-    cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
-
     try:
         # All non-active signals in period
-        result = client.table("prediction_logs").select(
+        query = client.table("prediction_logs").select(
             "id, symbol, ml_direction, ml_confidence, ml_entry_price, "
             "model_type, status, targets_hit, highest_profit_pips, "
             "lowest_drawdown_pips, exit_price, exit_time, stop_loss_pips, "
             "targets, created_at, strategy"
-        ).neq("status", "active").gte("created_at", cutoff).order(
+        ).neq("status", "active")
+
+        # days=0 means all time (no cutoff filter)
+        if days > 0:
+            cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
+            query = query.gte("created_at", cutoff)
+
+        result = query.order(
             "created_at", desc=True
-        ).limit(1000).execute()
+        ).limit(5000).execute()
 
         signals = safe_get_data(result)
 
@@ -963,7 +968,7 @@ async def get_dashboard_stats(days: int = 30) -> Dict[str, Any]:
                         m["symbols"][sym]["target_hits"][tp_name]["hit"] += 1
 
         # Ensure all known model types exist in response (even with 0 signals)
-        KNOWN_MODELS = ["ml", "pulse1", "pulse2", "pulse3", "emel"]
+        KNOWN_MODELS = ["ml", "pulse1", "pulse2", "pulse3", "emel", "emel_inverse"]
         for km in KNOWN_MODELS:
             if km not in models:
                 models[km] = {

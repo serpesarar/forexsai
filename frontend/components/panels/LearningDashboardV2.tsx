@@ -37,6 +37,7 @@ const MODEL_THEME: Record<string, { label: string; color: string; Icon: any }> =
   pulse3: { label: "Pulse 3 — MTF", color: "var(--accent-positive)", Icon: PulseIcon },
   pulse: { label: "Pulse Engine", color: "#22D3EE", Icon: PulseIcon },
   emel: { label: "EMEL 9-Check", color: "#C084FC", Icon: EmelIcon },
+  emel_inverse: { label: "Tersine NASDAQ", color: "#F97316", Icon: EmelIcon },
   hybrid: { label: "Hybrid", color: "var(--accent-warning)", Icon: LearningIcon },
 };
 
@@ -64,7 +65,7 @@ function symIcon(sym: string): string {
 // MAIN COMPONENT — SIGNAL PERFORMANCE DASHBOARD
 // ════════════════════════════════════════════════════════════════════════════
 export default function LearningDashboardV2() {
-  const [days, setDays] = useState(30);
+  const [days, setDays] = useState(365);
   const [checking, setChecking] = useState(false);
   const [selectedSignal, setSelectedSignal] = useState<string | null>(null);
   const [signalListFilter, setSignalListFilter] = useState<{ model?: string; symbol?: string } | null>(null);
@@ -328,6 +329,9 @@ export default function LearningDashboardV2() {
             <option value={7}>7 days</option>
             <option value={14}>14 days</option>
             <option value={30}>30 days</option>
+            <option value={90}>90 days</option>
+            <option value={365}>365 days</option>
+            <option value={0}>All Time</option>
           </select>
           <button onClick={handleCheck}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-150"
@@ -373,7 +377,7 @@ export default function LearningDashboardV2() {
               <div className="space-y-3">
                 {Object.entries(models)
                   .sort(([a], [b]) => {
-                    const order: Record<string, number> = { ml: 0, pulse1: 1, pulse2: 2, pulse3: 3, pulse: 3.5, emel: 4, hybrid: 5 };
+                    const order: Record<string, number> = { ml: 0, pulse1: 1, pulse2: 2, pulse3: 3, pulse: 3.5, emel: 4, emel_inverse: 4.5, hybrid: 5 };
                     return (order[a] ?? 99) - (order[b] ?? 99);
                   })
                   .map(([model, stats]) => {

@@ -92,7 +92,7 @@ async def manual_lifecycle_check():
 # ─── Dashboard Stats ─────────────────────────────────────────────────────────
 
 @router.get("/api/signals/dashboard")
-async def get_dashboard(days: int = 30):
+async def get_dashboard(days: int = 365):
     """Return aggregated performance stats per model type for Learning Dashboard v2."""
     from services.signal_lifecycle import get_dashboard_stats
 

@@ -687,40 +687,51 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             bonuses.append({"name": "Risk Limit Exceeded", "value": -100})
         
         # 5. SİNYAL SEVİYESİ BELİRLE
-        signal = prediction.get("direction", "HOLD")
-        confidence = prediction.get("confidence", 50)
+        # DÜZELTME: Sinyal yönü kendi 9-check skorundan türetilir, ML'den DEĞİL
+        # ML prediction yalnızca minor boost olarak skora eklenir
+        ml_confidence = prediction.get("confidence", 50)
         
-        # ML sinyali ile skoru birleştir
+        # ML sinyali ile skoru birleştir (küçük boost, yön değiştirmez)
         ml_boost = 0
-        if signal == "BUY":
-            ml_boost = (confidence - 50) / 5  # +0 to +10
-        elif signal == "SELL":
-            ml_boost = -(confidence - 50) / 5  # -0 to -10
+        ml_dir = prediction.get("direction", "HOLD")
+        if ml_dir == "BUY":
+            ml_boost = (ml_confidence - 50) / 5  # +0 to +10
+        elif ml_dir == "SELL":
+            ml_boost = -(ml_confidence - 50) / 5  # -0 to -10
         
         final_score = score + ml_boost
         
-        # 6. KARAR VER
+        # 6. KARAR VER — Yön 9-check skorundan gelir
         if final_score >= 70:
             decision = "STRONG_BUY"
+            signal = "BUY"
             decision_reason = f"Güçlü konfluans skoru: {final_score:.1f}"
         elif final_score >= 55:
             decision = "BUY"
+            signal = "BUY"
             decision_reason = f"Konfluans skoru: {final_score:.1f}"
         elif final_score >= 40:
             decision = "BUY_SETUP"
+            signal = "HOLD"
             decision_reason = f"Bekleyen alış fırsatı: {final_score:.1f} - Koşullar oluşunca giriş"
         elif final_score <= -70:
             decision = "STRONG_SELL"
+            signal = "SELL"
             decision_reason = f"Güçlü satış konfluansı: {final_score:.1f}"
         elif final_score <= -55:
             decision = "SELL"
+            signal = "SELL"
             decision_reason = f"Satış konfluansı: {final_score:.1f}"
         elif final_score <= -40:
             decision = "SELL_SETUP"
+            signal = "HOLD"
             decision_reason = f"Bekleyen satış fırsatı: {final_score:.1f} - Koşullar oluşunca giriş"
         else:
             decision = "HOLD"
+            signal = "HOLD"
             decision_reason = f"Yetersiz konfluans: {final_score:.1f} (40-55 arası sinyal gerekli)"
+        
+        confidence = min(abs(final_score), 100)
         
         # Build rejection reasons
         rejections = []
@@ -776,6 +787,40 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
                     model_type="emel",
                 )
                 logger.info(f"EMEL signal logged: {symbol} {decision} @ {current_price}")
+                
+                # ─── TERSİNE NASDAQ: NDX.INDX sinyallerini tersine çevirerek logla ──
+                if symbol == "NDX.INDX":
+                    inverse_signal = "SELL" if signal == "BUY" else "BUY"
+                    inverse_context = {
+                        "ta": ta,
+                        "source": "EMEL_INVERSE",
+                        "checks_summary": {
+                            "green": green_count,
+                            "yellow": yellow_count,
+                            "red": red_count
+                        },
+                        "ml_prediction": {
+                            "direction": inverse_signal,
+                            "confidence": confidence,
+                            "entry_price": current_price,
+                            "target_price": prediction.get("stop_price"),  # TP↔SL swap
+                            "stop_price": prediction.get("target_price")
+                        }
+                    }
+                    inverse_analysis = {
+                        "final_decision": inverse_signal,
+                        "confidence": confidence,
+                        "model_used": "EMEL-9-Inverse"
+                    }
+                    await log_prediction(
+                        symbol=symbol,
+                        context=inverse_context,
+                        analysis=inverse_analysis,
+                        timeframe=timeframe,
+                        strategy="EMEL_INVERSE",
+                        model_type="emel_inverse",
+                    )
+                    logger.info(f"EMEL INVERSE signal logged: {symbol} {inverse_signal} @ {current_price}")
             except Exception as log_err:
                 logger.warning(f"Failed to log EMEL prediction: {log_err}")
         
