@@ -60,14 +60,18 @@ class RealNewsAnalyzer:
         
         try:
             prompt = self._build_prompt(headline, content, source)
+            logger.info(f"[RealAnalyzer] Prompt built, calling DeepSeek...")
             result = await self._call_deepseek(prompt)
             
             logger.info(f"[RealAnalyzer] AI analysis successful: confidence={result.confidence}")
             return result
             
         except Exception as e:
+            import traceback
             logger.error(f"[RealAnalyzer] AI failed: {e}")
+            logger.error(f"[RealAnalyzer] Traceback: {traceback.format_exc()}")
             print(f"[RealAnalyzer] AI failed: {e}")
+            print(f"[RealAnalyzer] Traceback: {traceback.format_exc()}")
             return self._fallback_analysis(headline, content)
     
     def _build_prompt(self, headline: str, content: str, source: str) -> str:

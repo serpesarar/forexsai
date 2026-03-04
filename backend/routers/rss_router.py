@@ -546,9 +546,11 @@ async def test_ai_analysis(
         
     except Exception as e:
         import os
+        import traceback
         return {
             "success": False,
             "error": str(e),
+            "traceback": traceback.format_exc(),
             "api_keys": {
                 "anthropic": bool(os.getenv("ANTHROPIC_API_KEY", "")),
                 "deepseek": bool(os.getenv("DEEPSEEK_API_KEY", ""))
