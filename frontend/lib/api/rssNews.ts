@@ -67,18 +67,33 @@ export async function fetchRSSNews(
   const url = `${API_BASE}/api/rss/news?${params}`;
   console.log("[fetchRSSNews] Fetching:", url);
 
-  const res = await fetch(url);
-  console.log("[fetchRSSNews] Response status:", res.status);
-  
-  if (!res.ok) {
-    const errorText = await res.text();
-    console.error("[fetchRSSNews] Error:", errorText);
-    throw new Error("Failed to fetch RSS news");
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    
+    const res = await fetch(url, { 
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+      }
+    });
+    clearTimeout(timeoutId);
+    
+    console.log("[fetchRSSNews] Response status:", res.status);
+    
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("[fetchRSSNews] Error:", errorText);
+      throw new Error(`Failed to fetch RSS news: ${res.status}`);
+    }
+    
+    const data = await res.json();
+    console.log("[fetchRSSNews] Data count:", data?.length);
+    return data;
+  } catch (error) {
+    console.error("[fetchRSSNews] Fetch error:", error);
+    throw error;
   }
-  
-  const data = await res.json();
-  console.log("[fetchRSSNews] Data count:", data?.length);
-  return data;
 }
 
 // Son breaking/high urgency haberleri getir

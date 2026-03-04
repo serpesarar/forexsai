@@ -76,6 +76,26 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
     console.log("[NewsFeedAI] newsError:", newsError);
   }, [newsItems, newsLoading, newsError]);
 
+  // Manual fetch test on mount
+  useEffect(() => {
+    const testFetch = async () => {
+      try {
+        console.log("[NewsFeedAI] Testing direct fetch...");
+        const response = await fetch("https://upbeat-flow-production.up.railway.app/api/rss/news?limit=2");
+        console.log("[NewsFeedAI] Direct fetch status:", response.status);
+        if (response.ok) {
+          const data = await response.json();
+          console.log("[NewsFeedAI] Direct fetch success:", data.length, "items");
+        } else {
+          console.error("[NewsFeedAI] Direct fetch failed:", response.statusText);
+        }
+      } catch (err) {
+        console.error("[NewsFeedAI] Direct fetch error:", err);
+      }
+    };
+    testFetch();
+  }, []);
+
   // Fetch economic calendar
   const {
     data: economicEvents,
