@@ -10,12 +10,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { 
-  BarChart3, 
-  TrendingUp, 
-  TrendingDown, 
-  Clock, 
-  Target, 
+import {
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  Clock,
+  Target,
   Activity,
   ChevronDown,
   ChevronUp,
@@ -98,7 +98,7 @@ const SYMBOLS = [
   { id: "XAUUSD", label: "XAU/USD", icon: "⭐" },
   { id: "NDX.INDX", label: "NASDAQ", icon: "📈" },
   { id: "GDAXI.INDX", label: "DAX", icon: "🏛" },
-  { id: "CL.F", label: "US Oil", icon: "🛢" },
+  { id: "USOIL.FOREX", label: "US Oil", icon: "🛢" },
 ];
 
 // Model -> Available Timeframes mapping
@@ -113,8 +113,8 @@ const MODEL_TIMEFRAMES: Record<string, string[]> = {
 // ── API Functions ───────────────────────────────────────────────────────────
 
 async function fetchModelAnalysis(
-  model: string, 
-  symbol?: string, 
+  model: string,
+  symbol?: string,
   timeframe?: string,
   days: number = 30
 ): Promise<ModelStats> {
@@ -123,7 +123,7 @@ async function fetchModelAnalysis(
   params.set("days", days.toString());
   if (symbol) params.set("symbol", symbol);
   if (timeframe) params.set("timeframe", timeframe);
-  
+
   const res = await fetch(`${API_BASE}/api/learning/model-analysis?${params}`);
   if (!res.ok) throw new Error("Failed to fetch model analysis");
   return res.json();
@@ -133,7 +133,7 @@ async function fetchModelsSummary(days: number = 30, symbol?: string): Promise<R
   const params = new URLSearchParams();
   params.set("days", days.toString());
   if (symbol) params.set("symbol", symbol);
-  
+
   const res = await fetch(`${API_BASE}/api/learning/model-analysis/summary?${params}`);
   if (!res.ok) throw new Error("Failed to fetch models summary");
   const data = await res.json();
@@ -142,14 +142,14 @@ async function fetchModelsSummary(days: number = 30, symbol?: string): Promise<R
 
 // ── Components ──────────────────────────────────────────────────────────────
 
-function TimeframeButton({ 
-  tf, 
-  isActive, 
-  isAvailable, 
-  onClick 
-}: { 
-  tf: typeof TIMEFRAMES[0]; 
-  isActive: boolean; 
+function TimeframeButton({
+  tf,
+  isActive,
+  isAvailable,
+  onClick
+}: {
+  tf: typeof TIMEFRAMES[0];
+  isActive: boolean;
   isAvailable: boolean;
   onClick: () => void;
 }) {
@@ -175,21 +175,21 @@ function TimeframeButton({
   );
 }
 
-function ModelCard({ 
-  model, 
-  isSelected, 
+function ModelCard({
+  model,
+  isSelected,
   onClick,
   stats
-}: { 
-  model: typeof MODELS[0]; 
-  isSelected: boolean; 
+}: {
+  model: typeof MODELS[0];
+  isSelected: boolean;
   onClick: () => void;
   stats?: ModelSummary;
 }) {
   const Icon = model.icon;
   const winRate = stats?.overall_win_rate || 0;
   const totalSignals = stats?.total_signals || 0;
-  
+
   return (
     <button
       onClick={onClick}
@@ -200,7 +200,7 @@ function ModelCard({
       }}
     >
       <div className="flex items-center gap-3 mb-2">
-        <div 
+        <div
           className="w-10 h-10 rounded-lg flex items-center justify-center"
           style={{ background: `${model.color}20` }}
         >
@@ -211,12 +211,12 @@ function ModelCard({
           <p className="text-xs text-gray-400">{model.description}</p>
         </div>
       </div>
-      
+
       {stats && (
         <div className="mt-2 pt-2 border-t border-white/5">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400">Win Rate</span>
-            <span 
+            <span
               className="text-sm font-bold"
               style={{ color: winRate >= 50 ? "#10B981" : winRate >= 40 ? "#F59E0B" : "#EF4444" }}
             >
@@ -245,10 +245,10 @@ function StatCard({ label, value, subtext, color = "white" }: { label: string; v
 
 function SymbolRow({ symbol, data }: { symbol: typeof SYMBOLS[0]; data: any }) {
   if (!data) return null;
-  
+
   const winRate = data.total > 0 ? (data.completed / (data.completed + data.stopped)) * 100 : 0;
   const isProfit = data.net_pips > 0;
-  
+
   return (
     <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: "rgba(255,255,255,0.03)" }}>
       <div className="flex items-center gap-2">
@@ -290,7 +290,7 @@ export default function ModelAnalysisPanel() {
 
   // Get available timeframes for selected model
   const availableTimeframes = MODEL_TIMEFRAMES[selectedModel] || ["1h"];
-  
+
   // Auto-select first available timeframe when model changes
   useEffect(() => {
     if (!availableTimeframes.includes(selectedTimeframe)) {
@@ -328,7 +328,7 @@ export default function ModelAnalysisPanel() {
               <p className="text-sm text-gray-400">Multi-timeframe signal performance</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
             {/* Period Selector */}
             <select
@@ -341,7 +341,7 @@ export default function ModelAnalysisPanel() {
               <option value={30}>30 Days</option>
               <option value={60}>60 Days</option>
             </select>
-            
+
             {/* Symbol Filter */}
             <select
               value={selectedSymbol || ""}
@@ -447,9 +447,9 @@ export default function ModelAnalysisPanel() {
                         </span>
                       </div>
                       <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                        <div 
+                        <div
                           className="h-full rounded-full transition-all"
-                          style={{ 
+                          style={{
                             width: `${rate}%`,
                             background: rate >= 40 ? "#10B981" : rate >= 25 ? "#F59E0B" : "#EF4444"
                           }}
@@ -483,11 +483,11 @@ export default function ModelAnalysisPanel() {
                 {showSignals ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 {showSignals ? "Hide" : "Show"} Recent Signals ({analysis.signals?.length || 0})
               </button>
-              
+
               {showSignals && analysis.signals && (
                 <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
                   {analysis.signals.map((sig: any) => (
-                    <div 
+                    <div
                       key={sig.id}
                       className="flex items-center justify-between p-3 rounded-lg"
                       style={{ background: "rgba(255,255,255,0.03)" }}

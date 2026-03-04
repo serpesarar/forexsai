@@ -5,18 +5,16 @@ import { useQuery } from "@tanstack/react-query";
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    X,
-    Clock,
-    TrendingUp,
-    Activity,
-    Target,
-    BarChart2,
-    Download,
-    Bell,
-    CheckCircle2,
-    XCircle,
-    AlertCircle
-} from "lucide-react";
+    CloseIcon as X,
+    ClockIcon as Clock,
+    ArrowUpIcon as TrendingUp,
+    ActivityIcon as Activity,
+    TargetIcon as Target,
+    ChartsIcon as BarChart2,
+    CheckCircleIcon as CheckCircle2,
+    CloseIcon as XCircle,
+    AlertIcon as AlertCircle
+} from "../ui/CustomIcons";
 
 import {
     LineChart,
@@ -83,12 +81,50 @@ interface ModelPerformanceModalProps {
     model?: string;
 }
 
+// ── Compute real Sharpe & Drawdown from equity curve data ──
+function computeAdvancedStats(timeSeriesData: ModelPerformance["timeSeriesData"] | undefined) {
+    if (!timeSeriesData || timeSeriesData.length < 2) {
+        return { sharpe: null, maxDrawdown: null };
+    }
+    // Daily returns from equity
+    const returns: number[] = [];
+    for (let i = 1; i < timeSeriesData.length; i++) {
+        const prev = timeSeriesData[i - 1].equity;
+        const curr = timeSeriesData[i].equity;
+        if (prev > 0) returns.push((curr - prev) / prev);
+    }
+    // Sharpe ratio (annualized, assuming daily data)
+    let sharpe: number | null = null;
+    if (returns.length >= 2) {
+        const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+        const variance = returns.reduce((a, r) => a + (r - mean) ** 2, 0) / (returns.length - 1);
+        const stdDev = Math.sqrt(variance);
+        sharpe = stdDev > 0 ? (mean / stdDev) * Math.sqrt(252) : null;
+    }
+    // Max drawdown from equity curve
+    let maxDrawdown: number | null = null;
+    let peak = timeSeriesData[0].equity;
+    let maxDD = 0;
+    for (const d of timeSeriesData) {
+        if (d.equity > peak) peak = d.equity;
+        const dd = peak > 0 ? (peak - d.equity) / peak : 0;
+        if (dd > maxDD) maxDD = dd;
+    }
+    maxDrawdown = maxDD * 100; // percentage
+    return { sharpe, maxDrawdown };
+}
+
 export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
     isOpen,
     onClose,
     symbol,
     model,
 }) => {
+    // Detect language from localStorage or browser (no LanguageContext in this project)
+    const lang = typeof window !== "undefined"
+        ? (localStorage.getItem("language") || navigator.language?.startsWith("tr") ? "tr" : "en")
+        : "en";
+
     // Symbol display names
     const SYM_DISPLAY: Record<string, string> = {
         "NDX.INDX": "NASDAQ", "GDAXI.INDX": "DAX",
@@ -103,36 +139,69 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
         pulse3: "Pulse 3 — Scalp",
     };
     const modelDisplay = model ? (MODEL_DISPLAY[model] || model) : "All Models";
-    const translations: Record<string, any> = {
-        "modelPerformance.summary.active": "Active",
-        "modelPerformance.summary.accuracy": "Accuracy",
-        "modelPerformance.summary.totalSignals": "Total Signals",
-        "modelPerformance.actions.export": "Export",
-        "modelPerformance.actions.setAlert": "Set Alert",
-        "modelPerformance.quickStats.success": "Success Rate",
-        "modelPerformance.quickStats.avgReturn": "Avg Return",
-        "modelPerformance.quickStats.sharpe": "Est. Sharpe",
-        "modelPerformance.quickStats.maxDrawdown": "Max Drawdown",
-        "modelPerformance.tabs.performance": "Performance",
-        "modelPerformance.tabs.session": "Session",
-        "modelPerformance.tabs.comparison": "Comparison",
-        "modelPerformance.charts.equityCurve": "Equity Curve",
-        "modelPerformance.charts.accuracy": "Accuracy",
-        "modelPerformance.charts.speed": "Speed",
-        "modelPerformance.charts.profit": "Profit",
-        "modelPerformance.charts.riskControl": "Risk Control",
-        "modelPerformance.charts.trendFollowing": "Trend Following",
-        "modelPerformance.table.recentSignals": "Recent Signals",
-        "modelPerformance.table.date": "Date",
-        "modelPerformance.table.symbol": "Symbol",
-        "modelPerformance.table.signal": "Signal",
-        "modelPerformance.table.result": "Result",
-        "modelPerformance.table.return": "Return",
-        "modelPerformance.table.win": "Win",
-        "modelPerformance.table.loss": "Loss"
-    };
 
-    const t = (key: string) => translations[key] || key;
+    const translations: Record<string, Record<string, string>> = {
+        en: {
+            active: "Active",
+            accuracy: "Accuracy",
+            totalSignals: "Total Signals",
+            success: "Success Rate",
+            avgReturn: "Avg Return",
+            sharpe: "Sharpe Ratio",
+            maxDrawdown: "Max Drawdown",
+            performance: "Performance",
+            session: "Session",
+            comparison: "Comparison",
+            equityCurve: "Equity Curve",
+            accuracyChart: "Accuracy",
+            speed: "Speed",
+            profit: "Profit",
+            riskControl: "Risk Control",
+            trendFollowing: "Trend Following",
+            recentSignals: "Recent Signals",
+            date: "Date",
+            symbolCol: "Symbol",
+            signal: "Signal",
+            result: "Result",
+            returnCol: "Return",
+            win: "Win",
+            loss: "Loss",
+            noData: "No recent signals found for this instrument.",
+            sessionPlaceholder: "Session analysis heatmap is being prepared from historical data.",
+            sessionTitle: "Session Analysis Heatmap",
+        },
+        tr: {
+            active: "Aktif",
+            accuracy: "Doğruluk",
+            totalSignals: "Toplam Sinyal",
+            success: "Başarı Oranı",
+            avgReturn: "Ort. Getiri",
+            sharpe: "Sharpe Oranı",
+            maxDrawdown: "Maks. Düşüş",
+            performance: "Performans",
+            session: "Seans",
+            comparison: "Karşılaştırma",
+            equityCurve: "Bakiye Eğrisi",
+            accuracyChart: "Doğruluk",
+            speed: "Hız",
+            profit: "Kâr",
+            riskControl: "Risk Kontrolü",
+            trendFollowing: "Trend Takibi",
+            recentSignals: "Son Sinyaller",
+            date: "Tarih",
+            symbolCol: "Sembol",
+            signal: "Sinyal",
+            result: "Sonuç",
+            returnCol: "Getiri",
+            win: "Kazanç",
+            loss: "Kayıp",
+            noData: "Bu enstrüman için sinyal bulunamadı.",
+            sessionPlaceholder: "Seans analiz haritası geçmiş verilerden hazırlanıyor.",
+            sessionTitle: "Seans Analiz Haritası",
+        },
+    };
+    const tr = translations[lang] || translations.en;
+    const t = (key: string) => tr[key] || key;
     const [activeTab, setActiveTab] = useState<"performance" | "session" | "comparison">("performance");
 
     const { data: rawData, isLoading, isError } = useQuery({
@@ -215,22 +284,12 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                 </div>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#9AA4B2] hover:text-[#E6EDF3] bg-white/5 hover:bg-white/10 rounded-lg transition-colors border border-white/5">
-                                <Download className="w-4 h-4" />
-                                {t("modelPerformance.actions.export")}
-                            </button>
-                            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 rounded-lg transition-colors border border-blue-500/20">
-                                <Bell className="w-4 h-4" />
-                                {t("modelPerformance.actions.setAlert")}
-                            </button>
-                            <button
-                                onClick={onClose}
-                                className="p-2 text-[#6B7280] hover:text-[#E6EDF3] hover:bg-white/5 rounded-lg transition-colors"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
+                        <button
+                            onClick={onClose}
+                            className="p-2 text-[#6B7280] hover:text-[#E6EDF3] hover:bg-white/5 rounded-lg transition-colors"
+                        >
+                            <X className="w-5 h-5" style={{ width: 20, height: 20 }} />
+                        </button>
                     </div>
 
                     <div className="p-6 overflow-y-auto custom-scrollbar flex-1 relative">
@@ -259,13 +318,13 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                         <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                         <div className="relative z-10 text-center">
                                             <div className="text-[#6B7280] text-xs font-medium tracking-wider uppercase mb-2">
-                                                {t("modelPerformance.summary.accuracy")}
+                                                {t("accuracy")}
                                             </div>
                                             <div className="text-5xl font-bold text-[#E6EDF3] tracking-tighter mb-2 drop-shadow-[0_0_15px_rgba(56,189,248,0.3)]">
                                                 {data?.accuracy || 0}%
                                             </div>
                                             <div className="text-sm font-medium text-[#9AA4B2]">
-                                                {data?.totalSignals || 0} {t("modelPerformance.summary.totalSignals")}
+                                                {data?.totalSignals || 0} {t("totalSignals")}
                                             </div>
                                         </div>
                                         {/* Circular Progress Ring Background (CSS pure) */}
@@ -293,70 +352,78 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                         </svg>
                                     </div>
 
-                                    {/* Quick Stats */}
-                                    <div className="lg:col-span-3 grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                        {[
+                                    {/* Quick Stats — computed from real data */}
+                                    {(() => {
+                                        const advanced = computeAdvancedStats(data?.timeSeriesData);
+                                        const statsItems = [
                                             {
-                                                label: t("modelPerformance.quickStats.success"),
+                                                label: t("success"),
                                                 value: `${Math.round(((data?.totalSignals || 0) * (data?.accuracy || 0)) / 100)}/${data?.totalSignals || 0}`,
                                                 trend: "Current",
-                                                icon: Target,
                                                 color: "emerald",
+                                                iconColor: "#10B981",
+                                                iconBg: "rgba(16,185,129,0.1)",
                                             },
                                             {
-                                                label: t("modelPerformance.quickStats.avgReturn"),
-                                                value: `+${data?.comparisonMetrics?.profit || 0}%`,
+                                                label: t("avgReturn"),
+                                                value: data?.comparisonMetrics?.profit ? `+${data.comparisonMetrics.profit}%` : "—",
                                                 trend: "Avg",
-                                                icon: TrendingUp,
                                                 color: "blue",
+                                                iconColor: "#4F8CFF",
+                                                iconBg: "rgba(79,140,255,0.1)",
                                             },
                                             {
-                                                label: t("modelPerformance.quickStats.sharpe"),
-                                                value: "1.8",
-                                                trend: "Est",
-                                                icon: Activity,
+                                                label: t("sharpe"),
+                                                value: advanced.sharpe !== null ? advanced.sharpe.toFixed(2) : "—",
+                                                trend: advanced.sharpe !== null ? (advanced.sharpe >= 1 ? "Good" : "Low") : "N/A",
                                                 color: "purple",
+                                                iconColor: "#A78BFA",
+                                                iconBg: "rgba(167,139,250,0.1)",
                                             },
                                             {
-                                                label: t("modelPerformance.quickStats.maxDrawdown"),
-                                                value: "-5.4%",
+                                                label: t("maxDrawdown"),
+                                                value: advanced.maxDrawdown !== null ? `-${advanced.maxDrawdown.toFixed(1)}%` : "—",
                                                 trend: "Max",
-                                                icon: BarChart2,
                                                 color: "rose",
+                                                iconColor: "#F43F5E",
+                                                iconBg: "rgba(244,63,94,0.1)",
                                             },
-                                        ].map((stat, i) => (
-                                            <div
-                                                key={i}
-                                                className="bg-[#141C2B] rounded-xl p-5 border border-white/5 hover:border-white/10 transition-colors"
-                                            >
-                                                <div className="flex items-center justify-between mb-4">
-                                                    <div className={`p-2 rounded-lg bg-${stat.color}-500/10`}>
-                                                        <stat.icon
-                                                            className={`w-4 h-4 text-${stat.color}-400`}
-                                                        />
+                                        ];
+                                        return (
+                                            <div className="lg:col-span-3 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                                {statsItems.map((stat, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className="bg-[#141C2B] rounded-xl p-5 border border-white/5 hover:border-white/10 transition-colors"
+                                                    >
+                                                        <div className="flex items-center justify-between mb-4">
+                                                            <div className="p-2 rounded-lg" style={{ background: stat.iconBg }}>
+                                                                <Activity className="w-4 h-4" style={{ color: stat.iconColor, width: 16, height: 16 }} />
+                                                            </div>
+                                                            <span className="text-xs font-semibold px-2 py-1 rounded" style={{ color: stat.iconColor, background: stat.iconBg }}>
+                                                                {stat.trend}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-2xl font-bold text-[#E6EDF3] tracking-tight mb-1">
+                                                            {stat.value}
+                                                        </div>
+                                                        <div className="text-xs font-medium text-[#6B7280]">
+                                                            {stat.label}
+                                                        </div>
                                                     </div>
-                                                    <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded">
-                                                        {stat.trend}
-                                                    </span>
-                                                </div>
-                                                <div className="text-2xl font-bold text-[#E6EDF3] tracking-tight mb-1">
-                                                    {stat.value}
-                                                </div>
-                                                <div className="text-xs font-medium text-[#6B7280]">
-                                                    {stat.label}
-                                                </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
+                                        );
+                                    })()}
                                 </div>
 
                                 {/* Tabs & Main Chart */}
                                 <div className="bg-[#141C2B] rounded-xl border border-white/5 mb-8">
                                     <div className="flex border-b border-white/5">
                                         {[
-                                            { id: "performance", label: t("modelPerformance.tabs.performance") },
-                                            { id: "session", label: t("modelPerformance.tabs.session") },
-                                            { id: "comparison", label: t("modelPerformance.tabs.comparison") },
+                                            { id: "performance", label: t("performance") },
+                                            { id: "session", label: t("session") },
+                                            { id: "comparison", label: t("comparison") },
                                         ].map((tab) => (
                                             <button
                                                 key={tab.id}
@@ -420,7 +487,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                                             yAxisId="left"
                                                             type="monotone"
                                                             dataKey="equity"
-                                                            name={t("modelPerformance.charts.equityCurve")}
+                                                            name={t("equityCurve")}
                                                             stroke="#16C784"
                                                             strokeWidth={2}
                                                             fillOpacity={1}
@@ -430,7 +497,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                                             yAxisId="right"
                                                             type="monotone"
                                                             dataKey="accuracy"
-                                                            name={t("modelPerformance.charts.accuracy")}
+                                                            name={t("accuracyChart")}
                                                             stroke="#4F8CFF"
                                                             strokeWidth={2}
                                                             dot={false}
@@ -449,11 +516,11 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                                             cy="50%"
                                                             outerRadius="70%"
                                                             data={[
-                                                                { subject: t("modelPerformance.charts.accuracy"), A: data?.comparisonMetrics?.accuracy || 0, fullMark: 100 },
-                                                                { subject: t("modelPerformance.charts.speed"), A: data?.comparisonMetrics?.speed || 0, fullMark: 100 },
-                                                                { subject: t("modelPerformance.charts.profit"), A: data?.comparisonMetrics?.profit || 0, fullMark: 100 },
-                                                                { subject: t("modelPerformance.charts.riskControl"), A: data?.comparisonMetrics?.riskControl || 0, fullMark: 100 },
-                                                                { subject: t("modelPerformance.charts.trendFollowing"), A: data?.comparisonMetrics?.trendFollowing || 0, fullMark: 100 },
+                                                                { subject: t("accuracyChart"), A: data?.comparisonMetrics?.accuracy || 0, fullMark: 100 },
+                                                                { subject: t("speed"), A: data?.comparisonMetrics?.speed || 0, fullMark: 100 },
+                                                                { subject: t("profit"), A: data?.comparisonMetrics?.profit || 0, fullMark: 100 },
+                                                                { subject: t("riskControl"), A: data?.comparisonMetrics?.riskControl || 0, fullMark: 100 },
+                                                                { subject: t("trendFollowing"), A: data?.comparisonMetrics?.trendFollowing || 0, fullMark: 100 },
                                                             ]}
                                                         >
                                                             <PolarGrid stroke="#ffffff1a" />
@@ -480,11 +547,11 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                         {activeTab === "session" && (
                                             <div className="flex flex-col items-center justify-center h-[300px] text-center">
                                                 <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
-                                                    <Clock className="w-8 h-8 text-[#6B7280]" />
+                                                    <Clock className="w-8 h-8" style={{ color: "#6B7280", width: 32, height: 32 }} />
                                                 </div>
-                                                <h3 className="text-[#E6EDF3] font-medium text-lg mb-2">Session Analysis Heatmap</h3>
+                                                <h3 className="text-[#E6EDF3] font-medium text-lg mb-2">{t("sessionTitle")}</h3>
                                                 <p className="text-[#9AA4B2] text-sm max-w-sm">
-                                                    Heatmap visualization of performance across market hours is being synthesized from backend data.
+                                                    {t("sessionPlaceholder")}
                                                 </p>
                                             </div>
                                         )}
@@ -494,17 +561,17 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                 {/* Recent Signals Table */}
                                 <div>
                                     <h3 className="text-[#E6EDF3] font-semibold mb-4 text-lg">
-                                        {t("modelPerformance.table.recentSignals")}
+                                        {t("recentSignals")}
                                     </h3>
                                     <div className="overflow-x-auto rounded-xl border border-white/5 bg-[#141C2B]">
                                         <table className="w-full text-left text-sm">
                                             <thead className="bg-white/5 border-b border-white/5 text-[#9AA4B2] text-xs font-semibold uppercase tracking-wider">
                                                 <tr>
-                                                    <th className="px-6 py-4">{t("modelPerformance.table.date")}</th>
-                                                    <th className="px-6 py-4">{t("modelPerformance.table.symbol")}</th>
-                                                    <th className="px-6 py-4">{t("modelPerformance.table.signal")}</th>
-                                                    <th className="px-6 py-4">{t("modelPerformance.table.result")}</th>
-                                                    <th className="px-6 py-4 text-right">{t("modelPerformance.table.return")}</th>
+                                                    <th className="px-6 py-4">{t("date")}</th>
+                                                    <th className="px-6 py-4">{t("symbolCol")}</th>
+                                                    <th className="px-6 py-4">{t("signal")}</th>
+                                                    <th className="px-6 py-4">{t("result")}</th>
+                                                    <th className="px-6 py-4 text-right">{t("returnCol")}</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-white/5">
@@ -531,18 +598,18 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                                         <td className="px-6 py-4">
                                                             {signal.result === "win" ? (
                                                                 <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
-                                                                    <CheckCircle2 className="w-4 h-4" />
-                                                                    {t("modelPerformance.table.win")}
+                                                                    <CheckCircle2 className="w-4 h-4" style={{ width: 16, height: 16 }} />
+                                                                    {t("win")}
                                                                 </div>
                                                             ) : signal.result === "loss" ? (
                                                                 <div className="flex items-center gap-1.5 text-rose-400 font-medium">
-                                                                    <XCircle className="w-4 h-4" />
-                                                                    {t("modelPerformance.table.loss")}
+                                                                    <XCircle className="w-4 h-4" style={{ width: 16, height: 16 }} />
+                                                                    {t("loss")}
                                                                 </div>
                                                             ) : (
                                                                 <div className="flex items-center gap-1.5 text-[#9AA4B2] font-medium">
-                                                                    <AlertCircle className="w-4 h-4" />
-                                                                    Pending
+                                                                    <AlertCircle className="w-4 h-4" style={{ width: 16, height: 16 }} />
+                                                                    {lang === "tr" ? "Beklemede" : "Pending"}
                                                                 </div>
                                                             )}
                                                         </td>
@@ -561,7 +628,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                                                 )) : (
                                                     <tr>
                                                         <td colSpan={5} className="px-6 py-8 text-center text-[#9AA4B2]">
-                                                            {t("common.noData")} No recent signals found for this instrument.
+                                                            {t("noData")}
                                                         </td>
                                                     </tr>
                                                 )}

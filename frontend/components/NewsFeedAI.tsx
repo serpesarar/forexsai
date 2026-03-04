@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   Newspaper,
   Calendar,
@@ -17,7 +16,6 @@ import {
   Brain,
 } from "lucide-react";
 import {
-  fetchRSSNews,
   fetchEconomicCalendar,
   getUrgencyColor,
   getUrgencyLabel,
@@ -50,70 +48,80 @@ interface NewsFeedAIProps {
 export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
   const [activeTab, setActiveTab] = useState<NewsTab>("news");
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
+  
+  // MANUAL FETCH STATE
+  const [newsItems, setNewsItems] = useState<RSSNewsItem[] | null>(null);
+  const [newsLoading, setNewsLoading] = useState(true);
+  const [newsError, setNewsError] = useState<Error | null>(null);
 
   // DEBUG: Component mount
   useEffect(() => {
     console.log("[NewsFeedAI] Component MOUNTED");
   }, []);
 
-  // Fetch AI-enriched news
-  const {
-    data: newsItems,
-    isLoading: newsLoading,
-    error: newsError,
-    refetch: refetchNews,
-  } = useQuery({
-    queryKey: ["rss-news", selectedSymbol],
-    queryFn: () => fetchRSSNews(24, 50, selectedSymbol || undefined),
-    refetchInterval: 5 * 60 * 1000, // 5 minutes
-    staleTime: 2 * 60 * 1000,
-  });
-
-  // DEBUG: Data changes
-  useEffect(() => {
-    console.log("[NewsFeedAI] newsItems:", newsItems?.length, "items");
-    console.log("[NewsFeedAI] newsLoading:", newsLoading);
-    console.log("[NewsFeedAI] newsError:", newsError);
-  }, [newsItems, newsLoading, newsError]);
-
-  // Manual fetch test on mount
-  useEffect(() => {
-    const testFetch = async () => {
-      try {
-        console.log("[NewsFeedAI] Testing direct fetch...");
-        const response = await fetch("https://upbeat-flow-production.up.railway.app/api/rss/news?limit=2");
-        console.log("[NewsFeedAI] Direct fetch status:", response.status);
-        if (response.ok) {
-          const data = await response.json();
-          console.log("[NewsFeedAI] Direct fetch success:", data.length, "items");
-        } else {
-          console.error("[NewsFeedAI] Direct fetch failed:", response.statusText);
-        }
-      } catch (err) {
-        console.error("[NewsFeedAI] Direct fetch error:", err);
+  // MANUAL FETCH
+  const fetchNews = async () => {
+    console.log("[NewsFeedAI] fetchNews called");
+    setNewsLoading(true);
+    setNewsError(null);
+    
+    try {
+      const url = `https://upbeat-flow-production.up.railway.app/api/rss/news?hours=24&limit=50&skip_ai_filtered=true`;
+      console.log("[NewsFeedAI] Fetching:", url);
+      
+      const response = await fetch(url);
+      console.log("[NewsFeedAI] Response status:", response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-    };
-    testFetch();
+      
+      const data = await response.json();
+      console.log("[NewsFeedAI] Data received:", data.length, "items");
+      setNewsItems(data);
+    } catch (err) {
+      console.error("[NewsFeedAI] Fetch error:", err);
+      setNewsError(err as Error);
+    } finally {
+      setNewsLoading(false);
+    }
+  };
+
+  // Fetch on mount
+  useEffect(() => {
+    fetchNews();
   }, []);
 
-  // Fetch economic calendar
-  const {
-    data: economicEvents,
-    isLoading: economicLoading,
-    refetch: refetchEconomic,
-  } = useQuery({
-    queryKey: ["economic-calendar"],
-    queryFn: () => fetchEconomicCalendar(),
-    refetchInterval: 10 * 60 * 1000, // 10 minutes
-  });
+  // Refetch function
+  const refetchNews = () => fetchNews();
+
+  // MANUAL ECONOMIC FETCH
+  const [economicEvents, setEconomicEvents] = useState<any[] | null>(null);
+  const [economicLoading, setEconomicLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEconomic = async () => {
+      try {
+        const res = await fetch("https://upbeat-flow-production.up.railway.app/api/calendar/economic?days=30");
+        if (res.ok) {
+          const data = await res.json();
+          setEconomicEvents(data.events || []);
+        }
+      } catch (e) {
+        console.error("[NewsFeedAI] Economic fetch error:", e);
+      } finally {
+        setEconomicLoading(false);
+      }
+    };
+    fetchEconomic();
+  }, []);
 
   // Filter earnings events
   const earningsEvents = economicEvents?.filter((e) => e.is_earnings) || [];
 
   const handleRefresh = useCallback(() => {
     if (activeTab === "news") refetchNews();
-    else refetchEconomic();
-  }, [activeTab, refetchNews, refetchEconomic]);
+  }, [activeTab, refetchNews]);
 
   const impactColors = {
     High: "bg-red-500/20 text-red-300 border-red-500/40",
