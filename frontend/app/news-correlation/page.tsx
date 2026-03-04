@@ -846,12 +846,13 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       }));
       candlestickSeriesRef.current.setData(formattedData);
 
-      // NEW ALGORITHM: Only show markers for BIG MOVES with related HIGH/BREAKING news
+      // ALGORITHM: Only show markers on BIG MOVES that have NEWS CORRELATION
+      // NO more % labels on every candle — only meaningful news markers
       const markers: any[] = [];
       const symbolThresholds = BIG_MOVE_THRESHOLDS[selectedSymbol] || BIG_MOVE_THRESHOLDS["NDX"];
       const threshold = symbolThresholds[timeframe as string] || 0.1;
 
-      // Find candles with big moves
+      // Find candles with big moves (significant body size)
       const bigMoveCandles = chartData.filter(c => Math.abs(c.priceChange || 0) >= threshold);
 
       bigMoveCandles.forEach(candle => {
@@ -867,11 +868,12 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         const windowStart = new Date(candleDate.getTime() - timeWindowMinutes * 60000);
         const windowEnd = new Date(candleDate.getTime() + timeWindowMinutes * 60000);
 
-        // Find significant news that likely caused this move
-        const significantNews = news.filter(n => {
+        // Find news that affects this symbol in this time window
+        const correlatedNews = news.filter(n => {
           const newsDate = new Date(n.timestamp);
           const isInTimeWindow = newsDate >= windowStart && newsDate <= windowEnd;
-          const isHighImpact = n.urgency === "breaking" || n.urgency === "high";
+          // Accept medium, high, and breaking urgency — not just high/breaking
+          const isRelevantUrgency = n.urgency === "breaking" || n.urgency === "high" || n.urgency === "medium";
           const affectsSymbol = n.impacts?.some(imp => {
             const sym = imp.symbol?.toUpperCase();
             return sym === selectedSymbol ||
@@ -880,38 +882,31 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
               (selectedSymbol === "DAX" && (sym === "DAX" || sym === "GDAXI")) ||
               (selectedSymbol === "USOIL" && (sym === "USOIL" || sym === "WTI" || sym === "CL" || sym === "OIL")) ||
               (selectedSymbol === "VIX" && sym === "VIX") ||
-              (selectedSymbol === "DXY" && (sym === "DXY" || sym === "DOLLAR"));
+              (selectedSymbol === "DXY" && (sym === "DXY" || sym === "DOLLAR" || sym === "USD"));
           });
 
-          return isInTimeWindow && isHighImpact && affectsSymbol;
+          return isInTimeWindow && isRelevantUrgency && affectsSymbol;
         });
 
-        // If we found significant news related to this big move, show the news marker
-        if (significantNews.length > 0) {
-          const topNews = significantNews[0]; // Show the most significant one
+        // ONLY show marker if there IS correlated news — no orphan % labels
+        if (correlatedNews.length > 0) {
+          const topNews = correlatedNews[0];
+          const isBullish = (candle.priceChange || 0) > 0;
 
-          // Add news marker ABOVE the candle
+          // News marker — shows which news caused this move
           markers.push({
             time: candleTime as Time,
-            position: "aboveBar" as const,
-            color: topNews.urgency === "breaking" ? "#ef4444" : "#f97316",
-            shape: "arrowDown" as const,
-            size: 2,
-            text: topNews.urgency === "breaking" ? "!" : "N",
+            position: isBullish ? "belowBar" as const : "aboveBar" as const,
+            color: topNews.urgency === "breaking" ? "#ef4444" : topNews.urgency === "high" ? "#f97316" : "#4F8CFF",
+            shape: isBullish ? "arrowUp" as const : "arrowDown" as const,
+            size: topNews.urgency === "breaking" ? 3 : 2,
+            text: topNews.urgency === "breaking" ? "⚡" : "📰",
           });
         }
-
-        // Always show big move marker BELOW the candle
-        markers.push({
-          time: candleTime as Time,
-          position: (candle.priceChange || 0) > 0 ? "belowBar" as const : "aboveBar" as const,
-          color: (candle.priceChange || 0) > 0 ? "#22c55e" : "#ef4444",
-          shape: (candle.priceChange || 0) > 0 ? "arrowUp" as const : "arrowDown" as const,
-          text: `${Math.abs(candle.priceChange || 0).toFixed(1)}%`,
-          size: 2,
-        });
       });
 
+      // Sort markers by time (lightweight-charts requirement)
+      markers.sort((a, b) => (a.time as number) - (b.time as number));
       candlestickSeriesRef.current.setMarkers(markers);
       chartRef.current?.timeScale().fitContent();
     }

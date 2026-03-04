@@ -133,24 +133,13 @@ RSS_SOURCES = {
         "fetch_interval": 300,
     },
     
-    # Priority 3 - Commodities & Crypto
+    
+    # Priority 3 - Commodities (directly affects XAUUSD and USOIL)
     "kitco_gold": {
         "url": "https://www.kitco.com/rss/gold-news.xml",
         "priority": 3,
         "category": "commodities",
         "fetch_interval": 600,  # 10 minutes
-    },
-    "coindesk": {
-        "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
-        "priority": 3,
-        "category": "crypto",
-        "fetch_interval": 600,
-    },
-    "cointelegraph": {
-        "url": "https://cointelegraph.com/rss",
-        "priority": 3,
-        "category": "crypto",
-        "fetch_interval": 600,
     },
     "oilprice": {
         "url": "https://oilprice.com/rss/main",

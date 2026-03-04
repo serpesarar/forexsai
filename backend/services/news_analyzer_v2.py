@@ -201,7 +201,7 @@ Analyze this news NOW:"""
                         score=3,
                         confidence=0.5,
                         reasoning="News does not have significant market impact",
-                        reasoning_türkçe="Haberin önemli piyasa etkisi yok"
+                        reasoning_tr="Haberin önemli piyasa etkisi yok"
                     ))
                 
                 return NewsAnalysisResult(
