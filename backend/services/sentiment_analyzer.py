@@ -19,6 +19,9 @@ async def run_claude_sentiment(symbol: str = "NDX.INDX", lang: str = "en") -> di
     if sym.upper() == "NASDAQ":
         sym = "NDX.INDX"
     current_price = await fetch_latest_price(sym)
+    
+    # Initialize headlines (prevent NameError)
+    headlines = []
 
     # Get recent news from RSS (already analyzed by DeepSeek)
     from services.redis_client import cache_get
@@ -72,8 +75,15 @@ async def run_claude_sentiment(symbol: str = "NDX.INDX", lang: str = "en") -> di
             "headlines": headlines,
         }
 
+    # Fetch headlines if needed for DeepSeek analysis
+    if not headlines:
+        try:
+            headlines = await fetch_marketaux_headlines(sym)
+        except Exception:
+            headlines = []
+    
     # Build a compact prompt with live data
-    headline_lines = "\n".join([f"- {h.get('title','')} ({h.get('source','')})" for h in headlines[:10]])
+    headline_lines = "\n".join([f"- {h.get('title','')} ({h.get('source','')})" for h in headlines[:10]]) if headlines else "- No recent headlines available"
     language_line = "Write all human-readable strings in Turkish." if (lang or "en").lower().startswith("tr") else "Write all human-readable strings in English."
     prompt = f"""
 You are a market analyst. Using ONLY the provided data, output STRICT JSON (no markdown, no commentary) matching this schema:
