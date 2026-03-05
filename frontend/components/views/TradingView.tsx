@@ -18,6 +18,7 @@ import RhythmDetectorSimple from "../../components/RhythmDetectorSimple";
 import TradingChartWrapper from "../../components/TradingChartWrapper";
 import LiveChartPanel from "../../components/LiveChartPanel";
 import { useI18nStore } from "../../lib/i18n/store";
+import ErrorBoundary from "../ErrorBoundary";
 
 // Golden Ratio constant
 const PHI = 1.618;
@@ -150,7 +151,9 @@ export default function TradingView() {
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
-                <ClaudeAnalysisPanelLarge symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                <ErrorBoundary>
+                  <ClaudeAnalysisPanelLarge symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                </ErrorBoundary>
               </div>
             </section>
 
@@ -283,7 +286,9 @@ function ClaudeAnalysisPanelLarge({ symbol, symbolLabel }: { symbol: string; sym
     <div className="relative">
       <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-purple-500/30 via-pink-500/20 to-purple-500/30 opacity-50 blur-sm" />
       <div className="relative">
-        <ClaudeAnalysisPanel symbol={symbol} symbolLabel={symbolLabel} />
+        <ErrorBoundary>
+          <ClaudeAnalysisPanel symbol={symbol} symbolLabel={symbolLabel} />
+        </ErrorBoundary>
       </div>
     </div>
   );

@@ -1,45 +1,51 @@
 "use client";
 
-import React from "react";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { Component, ReactNode } from "react";
+import { AlertCircle } from "lucide-react";
 
 interface Props {
-  children: React.ReactNode;
-  fallbackMessage?: string;
+  children: ReactNode;
+  fallback?: ReactNode;
 }
 
 interface State {
   hasError: boolean;
-  error: Error | null;
+  error?: Error;
 }
 
-export class PanelErrorBoundary extends React.Component<Props, State> {
+export default class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error("[PanelErrorBoundary]", error, info.componentStack);
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error("[ErrorBoundary] Caught error:", error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+      
       return (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4 flex flex-col items-center justify-center gap-3 min-h-[120px]">
-          <AlertTriangle className="w-6 h-6 text-red-400" />
-          <p className="text-sm text-red-300">
-            {this.props.fallbackMessage || "Bu panel yüklenirken hata oluştu"}
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-6 text-center">
+          <AlertCircle className="w-10 h-10 mx-auto mb-3 text-red-400" />
+          <h3 className="text-sm font-medium text-white mb-2">
+            Bir hata oluştu
+          </h3>
+          <p className="text-xs text-slate-400 mb-3">
+            {this.state.error?.message || "Bilinmeyen hata"}
           </p>
           <button
-            onClick={() => this.setState({ hasError: false, error: null })}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs text-white/70 transition"
+            onClick={() => this.setState({ hasError: false })}
+            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs rounded-lg transition"
           >
-            <RefreshCw className="w-3 h-3" />
             Tekrar Dene
           </button>
         </div>

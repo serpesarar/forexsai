@@ -6,6 +6,7 @@ import { LoadingIcon, SignalsIcon, AdvancedAnalysisIcon, EmelIcon } from "../ui/
 import AuthGuard from "../../components/AuthGuard";
 import { LazyPanel } from "../../components/LazyPanel";
 import { useI18nStore } from "../../lib/i18n/store";
+import ErrorBoundary from "../ErrorBoundary";
 
 const SMCPanel = lazy(() => import("../../components/panels/SMCPanel"));
 const MTFMatrixPanel = lazy(() => import("../../components/panels/MTFMatrixPanel"));
@@ -42,14 +43,18 @@ export default function AnalysisView() {
                 {/* SMC Panel */}
                 <LazyPanel fallbackHeight={350}>
                     <Suspense fallback={<PanelLoader />}>
-                        <SMCPanel />
+                        <ErrorBoundary>
+                            <SMCPanel />
+                        </ErrorBoundary>
                     </Suspense>
                 </LazyPanel>
 
                 {/* MTF Matrix */}
                 <LazyPanel fallbackHeight={300}>
                     <Suspense fallback={<PanelLoader />}>
-                        <MTFMatrixPanel />
+                        <ErrorBoundary>
+                            <MTFMatrixPanel />
+                        </ErrorBoundary>
                     </Suspense>
                 </LazyPanel>
 
@@ -57,12 +62,16 @@ export default function AnalysisView() {
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     <LazyPanel fallbackHeight={300}>
                         <Suspense fallback={<PanelLoader />}>
-                            <COTWhalePanel />
+                            <ErrorBoundary>
+                                <COTWhalePanel />
+                            </ErrorBoundary>
                         </Suspense>
                     </LazyPanel>
                     <LazyPanel fallbackHeight={300}>
                         <Suspense fallback={<PanelLoader />}>
-                            <SeasonalityPanel />
+                            <ErrorBoundary>
+                                <SeasonalityPanel />
+                            </ErrorBoundary>
                         </Suspense>
                     </LazyPanel>
                 </div>
@@ -70,7 +79,9 @@ export default function AnalysisView() {
                 {/* Smart Money Zones - Unified Panel (4 Symbols) */}
                 <LazyPanel fallbackHeight={400}>
                     <Suspense fallback={<PanelLoader />}>
-                        <OrderBlockPanelUnified />
+                        <ErrorBoundary>
+                            <OrderBlockPanelUnified />
+                        </ErrorBoundary>
                     </Suspense>
                 </LazyPanel>
 
@@ -78,12 +89,16 @@ export default function AnalysisView() {
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     <LazyPanel fallbackHeight={300}>
                         <Suspense fallback={<PanelLoader />}>
-                            <WhaleTrackerPanel />
+                            <ErrorBoundary>
+                                <WhaleTrackerPanel />
+                            </ErrorBoundary>
                         </Suspense>
                     </LazyPanel>
                     <LazyPanel fallbackHeight={300}>
                         <Suspense fallback={<PanelLoader />}>
-                            <InstitutionalDataPanel />
+                            <ErrorBoundary>
+                                <InstitutionalDataPanel />
+                            </ErrorBoundary>
                         </Suspense>
                     </LazyPanel>
                 </div>
@@ -92,7 +107,9 @@ export default function AnalysisView() {
                 <div className="w-full">
                     <LazyPanel fallbackHeight={300}>
                         <Suspense fallback={<PanelLoader />}>
-                            <AdvancedAnalysisPanel />
+                            <ErrorBoundary>
+                                <AdvancedAnalysisPanel />
+                            </ErrorBoundary>
                         </Suspense>
                     </LazyPanel>
                 </div>

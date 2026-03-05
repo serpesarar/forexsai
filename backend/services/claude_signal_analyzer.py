@@ -8,14 +8,33 @@ from __future__ import annotations
 import logging
 import json
 from dataclasses import dataclass, asdict
-from datetime import datetime
-from typing import List, Optional, Literal
+from datetime import datetime, timedelta
+from typing import List, Optional, Literal, Dict, Any
 
 import httpx
 
 from config import settings
 
 logger = logging.getLogger(__name__)
+
+# Simple TTL cache for analysis results
+_analysis_cache: Dict[str, tuple[datetime, Any]] = {}
+CACHE_TTL_MINUTES = 5
+
+def _get_cached_analysis(symbol: str) -> Optional[Any]:
+    """Get cached analysis if not expired."""
+    if symbol in _analysis_cache:
+        cached_at, result = _analysis_cache[symbol]
+        if datetime.now() - cached_at < timedelta(minutes=CACHE_TTL_MINUTES):
+            logger.info(f"Using cached analysis for {symbol}")
+            return result
+        else:
+            del _analysis_cache[symbol]
+    return None
+
+def _set_cached_analysis(symbol: str, result: Any):
+    """Cache analysis result with timestamp."""
+    _analysis_cache[symbol] = (datetime.now(), result)
 
 # DeepSeek R1 model
 DEEPSEEK_MODEL = "deepseek-reasoner"
@@ -525,7 +544,13 @@ def _fallback_analysis(prediction: dict, ta_data: dict = None) -> ClaudeAnalysis
 async def get_full_analysis(symbol: str) -> dict:
     """
     Get ML prediction and Claude analysis together.
+    Cached for 5 minutes to prevent timeout issues.
     """
+    # Check cache first
+    cached = _get_cached_analysis(symbol)
+    if cached:
+        return cached
+    
     from services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
     from services.data_fetcher import fetch_eod_candles, fetch_latest_price
     import numpy as np
@@ -571,7 +596,7 @@ async def get_full_analysis(symbol: str) -> dict:
     # Get Claude analysis
     claude_result = await analyze_signal_with_claude(prediction_dict, ta_data)
     
-    return {
+    result = {
         "ml_prediction": prediction_dict,
         "claude_analysis": {
             "symbol": claude_result.symbol,
@@ -602,3 +627,8 @@ async def get_full_analysis(symbol: str) -> dict:
             "boll_zscore": ta_data.get("boll_zscore", 0),
         }
     }
+    
+    # Cache the result
+    _set_cached_analysis(symbol, result)
+    
+    return result
