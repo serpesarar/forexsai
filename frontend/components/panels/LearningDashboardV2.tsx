@@ -65,7 +65,7 @@ function symIcon(sym: string): string {
 // MAIN COMPONENT — SIGNAL PERFORMANCE DASHBOARD
 // ════════════════════════════════════════════════════════════════════════════
 export default function LearningDashboardV2() {
-  const [days, setDays] = useState(365);
+  const [days, setDays] = useState(0);
   const [checking, setChecking] = useState(false);
   const [selectedSignal, setSelectedSignal] = useState<string | null>(null);
   const [signalListFilter, setSignalListFilter] = useState<{ model?: string; symbol?: string } | null>(null);
@@ -272,7 +272,10 @@ export default function LearningDashboardV2() {
                   {Object.entries(stats.symbols).map(([sym, d]) => (
                     <div
                       key={sym}
-                      onClick={() => setSelectedModelPerformance({ symbol: sym, model })}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedModelPerformance({ symbol: sym, model });
+                      }}
                       className="cursor-pointer"
                     >
                       <SymbolCard sym={sym} d={d} />
@@ -385,12 +388,6 @@ export default function LearningDashboardV2() {
                     return (
                       <div
                         key={model}
-                        onClick={() => {
-                          if (firstSymbol) {
-                            setSelectedModelPerformance({ symbol: firstSymbol, model });
-                          }
-                        }}
-                        className={firstSymbol ? "cursor-pointer" : ""}
                       >
                         <ModelCard model={model} stats={stats} />
                       </div>

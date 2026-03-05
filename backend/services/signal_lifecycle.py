@@ -1033,9 +1033,13 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
             }
 
         # Failure patterns
-        fail_result = client.table("signal_failures").select(
+        fail_query = client.table("signal_failures").select(
             "failure_type, market_regime, confluence_score, signal_id"
-        ).gte("created_at", cutoff).limit(500).execute()
+        )
+        if days > 0:
+            fail_cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
+            fail_query = fail_query.gte("created_at", fail_cutoff)
+        fail_result = fail_query.limit(500).execute()
 
         failures = safe_get_data(fail_result)
         failure_breakdown = {}
