@@ -14,6 +14,8 @@ interface State {
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
+  // Alias for PanelErrorBoundary import compatibility
+  static displayName = "ErrorBoundary";
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
@@ -55,3 +57,6 @@ export default class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+// Named export for LazyPanel compatibility
+export { ErrorBoundary as PanelErrorBoundary };
