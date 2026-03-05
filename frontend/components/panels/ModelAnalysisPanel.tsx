@@ -25,6 +25,7 @@ import {
   Zap,
   Crosshair
 } from "lucide-react";
+import { ModelPerformanceModal } from "./ModelPerformanceModal";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
@@ -277,26 +278,233 @@ function SymbolRow({ symbol, data }: { symbol: typeof SYMBOLS[0]; data: any }) {
   );
 }
 
+const TRANSLATIONS: Record<string, Record<string, string>> = {
+  en: {
+    noSignals: "No active signals found for this model across timeframes.",
+    symbol: "Symbol",
+    consensus: "Consensus",
+    mixed: "MIXED",
+    strongBuy: "STRONG BUY",
+    strongSell: "STRONG SELL",
+    buy: "BUY",
+    sell: "SELL",
+    hold: "HOLD",
+    matrixTitle: "Timeframe Matrix (Current)",
+    matrixDesc: "Real-time active signals across all timeframes",
+    updating: "Updating...",
+    selectModel: "Select Model",
+    timeframe: "Timeframe",
+    available: "Available",
+    totalSignals: "Total Signals",
+    winRate: "Win Rate",
+    completedTotal: "Completed / Total",
+    netPips: "Net Pips",
+    avg: "Avg",
+    riskReward: "Risk/Reward",
+    max: "Max",
+    targetHitRates: "Target Hit Rates",
+    noSignalsPeriod: "No signals found for {model} in the selected period.",
+    tryDiff: "Try selecting a different timeframe or model",
+    modelAnalysis: "Model Analysis",
+    multiTf: "Multi-timeframe signal performance",
+    days7: "7 Days",
+    days14: "14 Days",
+    days30: "30 Days",
+    days60: "60 Days",
+    days90: "90 Days",
+    days365: "365 Days",
+    allTime: "All Time",
+    allSymbols: "All Symbols"
+  },
+  tr: {
+    noSignals: "Bu model için zaman dilimlerinde aktif sinyal bulunamadı.",
+    symbol: "Sembol",
+    consensus: "Ortak Karar",
+    mixed: "KARIŞIK",
+    strongBuy: "GÜÇLÜ AL",
+    strongSell: "GÜÇLÜ SAT",
+    buy: "AL",
+    sell: "SAT",
+    hold: "BEKLE",
+    matrixTitle: "Zaman Dilimi Matrisi (Anlık)",
+    matrixDesc: "Tüm zaman dilimlerindeki gerçek zamanlı aktif sinyaller",
+    updating: "Güncelleniyor...",
+    selectModel: "Model Seçin",
+    timeframe: "Zaman Dilimi",
+    available: "Mevcut",
+    totalSignals: "Toplam Sinyal",
+    winRate: "Kazanma Oranı",
+    completedTotal: "Tamamlanan / Toplam",
+    netPips: "Net Pip",
+    avg: "Ort",
+    riskReward: "Risk/Ödül",
+    max: "Maks",
+    targetHitRates: "Hedef Vurma Oranları",
+    noSignalsPeriod: "Seçili periyotta {model} için sinyal bulunamadı.",
+    tryDiff: "Farklı bir model veya zaman dilimi seçmeyi deneyin",
+    modelAnalysis: "Model Analizi",
+    multiTf: "Çoklu zaman dilimi sinyal performansı",
+    days7: "7 Gün",
+    days14: "14 Gün",
+    days30: "30 Gün",
+    days60: "60 Gün",
+    days90: "90 Gün",
+    days365: "365 Gün",
+    allTime: "Tüm Zamanlar",
+    allSymbols: "Tüm Semboller"
+  }
+};
+
+function useModelTranslations() {
+  const [lang, setLang] = useState<string>("en");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("language");
+      if (stored) {
+        setLang(stored);
+      } else if (navigator.language?.startsWith("tr")) {
+        setLang("tr");
+      }
+    }
+  }, []);
+
+  return TRANSLATIONS[lang] || TRANSLATIONS["en"];
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// TIMEFRAME MATRIX COMPONENT
+// ════════════════════════════════════════════════════════════════════════════
+
+function TimeframeMatrix({ matrixData, t, onRowClick }: { matrixData: any, t: Record<string, string>, onRowClick: (symbol: string) => void }) {
+  if (!matrixData || Object.keys(matrixData).length === 0) {
+    return (
+      <div className="p-8 text-center text-gray-500 border border-white/5 rounded-xl bg-white/5">
+        {t.noSignals}
+      </div>
+    );
+  }
+
+  const tfs = ["15m", "30m", "1h", "4h", "1d"];
+
+  return (
+    <div className="overflow-x-auto rounded-xl border border-white/5 bg-[#141C2B] shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
+      <table className="w-full text-left border-collapse">
+        <thead>
+          <tr style={{ background: "rgba(11,15,23,0.6)" }}>
+            <th className="py-4 px-5 text-[11px] font-semibold text-[#9AA4B2] uppercase tracking-[0.08em] border-b border-white/5">{t.symbol}</th>
+            {tfs.map(tf => (
+              <th key={tf} className="py-4 px-5 text-[11px] font-semibold text-[#9AA4B2] uppercase tracking-[0.08em] border-b border-white/5 text-center">{tf}</th>
+            ))}
+            <th className="py-4 px-5 text-[11px] font-semibold text-[#9AA4B2] uppercase tracking-[0.08em] border-b border-white/5 text-right">{t.consensus}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {SYMBOLS.map(symbol => {
+            const rowData = matrixData[symbol.id];
+            if (!rowData) return null;
+
+            // Calculate consensus
+            let buyScore = 0;
+            let sellScore = 0;
+            let totalWeights = 0;
+
+            tfs.forEach(tf => {
+              const cell = rowData[tf];
+              if (cell && cell.age_hours < 24) { // Only count if recent
+                const weight = tf === "1d" ? 2 : tf === "4h" ? 1.5 : 1;
+                if (cell.direction === "BUY") {
+                  buyScore += cell.confidence * weight;
+                  totalWeights += weight;
+                } else if (cell.direction === "SELL") {
+                  sellScore += cell.confidence * weight;
+                  totalWeights += weight;
+                }
+              }
+            });
+
+            let consensus = t.mixed;
+            let consColor = "text-yellow-400";
+            let consScore = 0;
+
+            if (totalWeights > 0) {
+              const avgBuy = buyScore / totalWeights;
+              const avgSell = sellScore / totalWeights;
+
+              if (avgBuy > avgSell + 10) {
+                consensus = avgBuy > 65 ? t.strongBuy : t.buy;
+                consColor = "text-green-400";
+                consScore = avgBuy;
+              } else if (avgSell > avgBuy + 10) {
+                consensus = avgSell > 65 ? t.strongSell : t.sell;
+                consColor = "text-red-400";
+                consScore = avgSell;
+              } else {
+                consensus = t.mixed;
+                consColor = "text-yellow-400";
+                consScore = Math.max(avgBuy, avgSell);
+              }
+            }
+
+            return (
+              <tr
+                key={symbol.id}
+                className="border-b border-white/5 hover:bg-[#1A2333] transition-colors cursor-pointer group"
+                onClick={() => onRowClick(symbol.id)}
+              >
+                <td className="py-4 px-5 font-semibold text-[#E6EDF3] flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#0B0F17] flex items-center justify-center border border-white/5 group-hover:border-blue-500/30 transition-colors">
+                    <span className="text-sm">{symbol.icon}</span>
+                  </div>
+                  {symbol.label}
+                </td>
+                {tfs.map(tf => {
+                  const cell = rowData[tf];
+                  if (!cell) return <td key={tf} className="py-4 px-5 text-center text-[#6B7280]">-</td>;
+
+                  const isOld = cell.age_hours > 24;
+                  const isHold = cell.direction === "HOLD";
+                  const colorMatch = cell.direction === "BUY" ? "text-[#16C784]" : cell.direction === "SELL" ? "text-[#EA3943]" : "text-[#F5A623]";
+                  const dotColor = cell.direction === "BUY" ? "bg-[#16C784]" : cell.direction === "SELL" ? "bg-[#EA3943]" : "bg-[#F5A623]";
+
+                  return (
+                    <td key={tf} className={`py-4 px-5 text-center ${isOld ? 'opacity-40' : ''}`} title={isOld ? 'Signal older than 24h' : ''}>
+                      <div className="inline-flex items-center justify-center gap-2 bg-[#0B0F17] px-3 py-1.5 rounded-lg border border-white/5">
+                        <span className={`w-2 h-2 rounded-full ${isHold ? 'bg-transparent border border-[#6B7280]' : dotColor} ${!isHold ? 'shadow-[0_0_8px_currentColor] opacity-80' : ''}`}></span>
+                        <span className={`font-semibold text-sm ${colorMatch}`}>{isHold ? '-' : cell.confidence.toFixed(0)}</span>
+                      </div>
+                    </td>
+                  );
+                })}
+                <td className="py-4 px-5 text-right">
+                  <div className={`font-bold text-[13px] tracking-wide ${consColor} bg-[#0B0F17] inline-block px-3 py-1.5 rounded-lg border border-white/5`}>
+                    {consensus} <span className="text-[#6B7280] text-xs font-medium ml-1">({consScore.toFixed(0)})</span>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ════════════════════════════════════════════════════════════════════════════
 
 export default function ModelAnalysisPanel() {
+  const t = useModelTranslations();
+
   const [selectedModel, setSelectedModel] = useState<string>("emel");
-  const [selectedTimeframe, setSelectedTimeframe] = useState<string>("1h");
   const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>();
   const [days, setDays] = useState<number>(0);
   const [showSignals, setShowSignals] = useState(false);
 
-  // Get available timeframes for selected model
-  const availableTimeframes = MODEL_TIMEFRAMES[selectedModel] || ["1h"];
-
-  // Auto-select first available timeframe when model changes
-  useEffect(() => {
-    if (!availableTimeframes.includes(selectedTimeframe)) {
-      setSelectedTimeframe(availableTimeframes[0]);
-    }
-  }, [selectedModel, availableTimeframes, selectedTimeframe]);
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalSymbol, setModalSymbol] = useState<string>("NDX.INDX");
 
   // Fetch models summary
   const { data: modelsSummary, isLoading: summaryLoading } = useQuery({
@@ -305,10 +513,22 @@ export default function ModelAnalysisPanel() {
     staleTime: 60000,
   });
 
-  // Fetch detailed analysis for selected model
+  // Fetch matrix data (current cross-timeframe signals)
+  const { data: matrixData, isLoading: matrixLoading } = useQuery({
+    queryKey: ["signals-matrix", selectedModel],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/api/learning/signals/matrix?model=${selectedModel}`);
+      if (!res.ok) throw new Error("Failed to fetch matrix");
+      const data = await res.json();
+      return data.matrix;
+    },
+    staleTime: 30000,
+  });
+
+  // Fetch detailed analysis for selected model (aggregated across all timeframes since matrix shows current state)
   const { data: analysis, isLoading: analysisLoading } = useQuery({
-    queryKey: ["model-analysis", selectedModel, selectedSymbol, selectedTimeframe, days],
-    queryFn: () => fetchModelAnalysis(selectedModel, selectedSymbol, selectedTimeframe, days),
+    queryKey: ["model-analysis", selectedModel, selectedSymbol, undefined, days],
+    queryFn: () => fetchModelAnalysis(selectedModel, selectedSymbol, undefined, days),
     staleTime: 60000,
   });
 
@@ -324,8 +544,8 @@ export default function ModelAnalysisPanel() {
               <BarChart3 className="w-5 h-5" style={{ color: "var(--accent-info)" }} />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">Model Analysis</h2>
-              <p className="text-sm text-gray-400">Multi-timeframe signal performance</p>
+              <h2 className="text-lg font-semibold text-white">{t.modelAnalysis}</h2>
+              <p className="text-sm text-gray-400">{t.multiTf}</p>
             </div>
           </div>
 
@@ -336,13 +556,13 @@ export default function ModelAnalysisPanel() {
               onChange={(e) => setDays(Number(e.target.value))}
               className="px-3 py-1.5 rounded-lg text-sm bg-white/5 border border-white/10 text-white"
             >
-              <option value={7}>7 Days</option>
-              <option value={14}>14 Days</option>
-              <option value={30}>30 Days</option>
-              <option value={60}>60 Days</option>
-              <option value={90}>90 Days</option>
-              <option value={365}>365 Days</option>
-              <option value={0}>All Time</option>
+              <option value={7}>{t.days7}</option>
+              <option value={14}>{t.days14}</option>
+              <option value={30}>{t.days30}</option>
+              <option value={60}>{t.days60}</option>
+              <option value={90}>{t.days90}</option>
+              <option value={365}>{t.days365}</option>
+              <option value={0}>{t.allTime}</option>
             </select>
 
             {/* Symbol Filter */}
@@ -351,7 +571,7 @@ export default function ModelAnalysisPanel() {
               onChange={(e) => setSelectedSymbol(e.target.value || undefined)}
               className="px-3 py-1.5 rounded-lg text-sm bg-white/5 border border-white/10 text-white"
             >
-              <option value="">All Symbols</option>
+              <option value="">{t.allSymbols}</option>
               {SYMBOLS.map(s => (
                 <option key={s.id} value={s.id}>{s.label}</option>
               ))}
@@ -363,7 +583,7 @@ export default function ModelAnalysisPanel() {
       <div className="p-6 space-y-6">
         {/* ── Model Selection ── */}
         <div>
-          <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">Select Model</h3>
+          <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">{t.selectModel}</h3>
           <div className="grid grid-cols-5 gap-3">
             {MODELS.map(model => (
               <ModelCard
@@ -377,25 +597,29 @@ export default function ModelAnalysisPanel() {
           </div>
         </div>
 
-        {/* ── Timeframe Selector ── */}
+        {/* ── Timeframe Heatmap Matrix ── */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Timeframe</h3>
-            <p className="text-xs text-gray-500">
-              Available: {availableTimeframes.join(", ").toUpperCase()}
-            </p>
+            <div>
+              <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                <Layers className="w-4 h-4 text-blue-400" />
+                Timeframe Matrix (Current)
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Real-time active signals across all timeframes
+              </p>
+            </div>
+            {matrixLoading && <div className="text-xs text-gray-500 animate-pulse">Updating...</div>}
           </div>
-          <div className="flex gap-2">
-            {TIMEFRAMES.map(tf => (
-              <TimeframeButton
-                key={tf.id}
-                tf={tf}
-                isActive={selectedTimeframe === tf.id}
-                isAvailable={availableTimeframes.includes(tf.id)}
-                onClick={() => setSelectedTimeframe(tf.id)}
-              />
-            ))}
-          </div>
+
+          <TimeframeMatrix
+            matrixData={matrixData}
+            t={t}
+            onRowClick={(symbolId) => {
+              setModalSymbol(symbolId);
+              setIsModalOpen(true);
+            }}
+          />
         </div>
 
         {/* ── Analysis Results ── */}
@@ -412,26 +636,26 @@ export default function ModelAnalysisPanel() {
             {/* Stats Grid */}
             <div className="grid grid-cols-4 gap-4">
               <StatCard
-                label="Total Signals"
+                label={t.totalSignals}
                 value={analysis.total_signals.toString()}
                 subtext={`${analysis.completed}W / ${analysis.stopped}L`}
               />
               <StatCard
-                label="Win Rate"
+                label={t.winRate}
                 value={`${analysis.win_rate.toFixed(1)}%`}
-                subtext="Completed / Total"
+                subtext={t.completedTotal}
                 color={analysis.win_rate >= 50 ? "#10B981" : analysis.win_rate >= 40 ? "#F59E0B" : "#EF4444"}
               />
               <StatCard
-                label="Net Pips"
+                label={t.netPips}
                 value={`${analysis.net_pips > 0 ? "+" : ""}${analysis.net_pips.toFixed(1)}p`}
-                subtext={`Avg: ${analysis.avg_profit_pips.toFixed(1)}p`}
+                subtext={`${t.avg}: ${analysis.avg_profit_pips.toFixed(1)}p`}
                 color={analysis.net_pips >= 0 ? "#10B981" : "#EF4444"}
               />
               <StatCard
-                label="Risk/Reward"
+                label={t.riskReward}
                 value={analysis.risk_reward.toFixed(2)}
-                subtext={`Max: ${analysis.max_profit_pips.toFixed(0)}p`}
+                subtext={`${t.max}: ${analysis.max_profit_pips.toFixed(0)}p`}
                 color={analysis.risk_reward >= 1.5 ? "#10B981" : "#F59E0B"}
               />
             </div>
@@ -439,7 +663,7 @@ export default function ModelAnalysisPanel() {
             {/* Target Hit Rates */}
             {Object.keys(analysis.target_rates || {}).length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">Target Hit Rates</h3>
+                <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">{t.targetHitRates}</h3>
                 <div className="grid grid-cols-4 gap-3">
                   {Object.entries(analysis.target_rates).map(([tp, rate]) => (
                     <div key={tp} className="p-3 rounded-lg" style={{ background: "var(--bg-card)" }}>
@@ -519,11 +743,19 @@ export default function ModelAnalysisPanel() {
         ) : (
           <div className="text-center py-12 text-gray-500">
             <Target className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p>No signals found for {MODELS.find(m => m.id === selectedModel)?.label} on {selectedTimeframe.toUpperCase()}</p>
-            <p className="text-sm mt-1">Try selecting a different timeframe or model</p>
+            <p>{t.noSignalsPeriod.replace('{model}', MODELS.find(m => m.id === selectedModel)?.label || '')}</p>
+            <p className="text-sm mt-1">{t.tryDiff}</p>
           </div>
         )}
       </div>
+
+      {/* ── Detailed Analytics Modal ── */}
+      <ModelPerformanceModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        symbol={modalSymbol}
+        model={selectedModel}
+      />
     </div>
   );
 }

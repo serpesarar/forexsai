@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/api";
+import { fetchNewsForCandle, MatchedNewsItem } from "@/lib/api/rssNews";
 import Link from "next/link";
 import type { EnrichedNews } from "@/types/news-correlation";
 import NewsDetailModal from "@/components/NewsDetailModal";
@@ -50,10 +51,11 @@ interface OHLCVResponse {
 
 interface CandleNews {
   candle: ChartCandle;
-  news: EnrichedNews[];
+  news: MatchedNewsItem[];
   hasBigMove: boolean;
   moveType: 'up' | 'down' | 'none';
   movePercent: number;
+  isLoadingNews?: boolean;
 }
 
 // Economic Calendar types (matching backend API)
@@ -781,31 +783,23 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       wickDownColor: "#ef4444",
     });
 
-    // Click handler for candles
+    // Click handler for candles - AKILLI HABER EŞLEŞTİRME
     chart.subscribeClick((param) => {
       if (param.time && candlestickSeries) {
         const time = param.time as number;
-        const tf = TIMEFRAMES.find(t => t.value === timeframe);
-        const minutes = tf ? { "1m": 1, "5m": 5, "15m": 15, "30m": 30, "1h": 60, "4h": 240, "1d": 1440 }[tf.value] || 60 : 60;
-
         const candle = chartData.find(c => c.time === time);
+
         if (candle) {
-          const candleStart = subMinutes(new Date(candle.time * 1000), minutes / 2);
-          const candleEnd = addMinutes(new Date(candle.time * 1000), minutes / 2);
-
-          const relatedNews = news.filter(n => {
-            const newsTime = new Date(n.timestamp);
-            return isWithinInterval(newsTime, { start: candleStart, end: candleEnd });
-          });
-
           const priceChange = ((candle.close - candle.open) / candle.open) * 100;
 
+          // Önce temel bilgileri göster (haberler loading olacak)
           setSelectedCandleNews({
             candle,
-            news: relatedNews,
+            news: [],
             hasBigMove: Math.abs(priceChange) > 1.5,
             moveType: priceChange > 0 ? 'up' : priceChange < 0 ? 'down' : 'none',
             movePercent: priceChange,
+            isLoadingNews: true,
           });
 
           // Fetch AI explanation for big moves
@@ -814,6 +808,41 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           } else {
             setAiExplanation(null);
           }
+
+          // AKILLI HABER EŞLEŞTİRME - Backend API'sini çağır
+          fetchNewsForCandle(
+            selectedSymbol,
+            new Date(candle.time * 1000).toISOString(),
+            candle.open,
+            candle.close,
+            candle.high,
+            candle.low,
+            timeframe
+          ).then(response => {
+            setSelectedCandleNews(prev => prev ? {
+              ...prev,
+              news: response.news || [],
+              isLoadingNews: false,
+            } : null);
+          }).catch(error => {
+            console.error("[CandleClick] Error fetching matched news:", error);
+            // Fallback: Basit zaman bazlı eşleştirme
+            const tf = TIMEFRAMES.find(t => t.value === timeframe);
+            const minutes = tf ? { "1m": 1, "5m": 5, "15m": 15, "30m": 30, "1h": 60, "4h": 240, "1d": 1440 }[tf.value] || 60 : 60;
+            const candleStart = subMinutes(new Date(candle.time * 1000), minutes / 2);
+            const candleEnd = addMinutes(new Date(candle.time * 1000), minutes / 2);
+
+            const relatedNews = news.filter(n => {
+              const newsTime = new Date(n.timestamp);
+              return isWithinInterval(newsTime, { start: candleStart, end: candleEnd });
+            }).slice(0, 5); // Max 5
+
+            setSelectedCandleNews(prev => prev ? {
+              ...prev,
+              news: relatedNews as any,
+              isLoadingNews: false,
+            } : null);
+          });
         }
       }
     });
@@ -912,8 +941,33 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     }
   }, [chartData, news, selectedSymbol, timeframe]);
 
-  const handleNewsClick = (newsItem: EnrichedNews) => {
-    setSelectedNewsForModal(newsItem);
+  const handleNewsClick = (newsItem: EnrichedNews | MatchedNewsItem) => {
+    const item = newsItem as any;
+    const enrichedItem: EnrichedNews = item.source ? item : {
+      id: item.id || '',
+      headline: item.headline_en || item.headline || '',
+      headline_tr: item.headline || '',
+      summary: '',
+      source: 'news',
+      source_url: item.url || '',
+      published_at: item.timestamp || new Date().toISOString(),
+      timestamp: item.timestamp || new Date().toISOString(),
+      symbols: [selectedSymbol],
+      urgency: item.urgency || 'low',
+      sentiment: item.direction || 'neutral',
+      ai_confidence: 0.7,
+      is_economic_event: false,
+      translation_status: 'completed',
+      impacts: [{
+        symbol: selectedSymbol,
+        direction: item.direction || 'neutral',
+        score: item.score || 0,
+        confidence: 0.7,
+        reasoning: item.reasoning_tr || '',
+        reasoning_tr: item.reasoning_tr,
+      }],
+    };
+    setSelectedNewsForModal(enrichedItem);
     setIsNewsModalOpen(true);
   };
 
@@ -1228,15 +1282,87 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     <div>
                       <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
                         <Newspaper className="w-4 h-4 text-purple-400" />
-                        Related News ({selectedCandleNews.news.length})
+                        {selectedCandleNews.isLoadingNews ? (
+                          <span className="flex items-center gap-2">
+                            Related News
+                            <span className="w-3 h-3 border-2 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
+                          </span>
+                        ) : (
+                          <>
+                            Related News
+                            <span className="text-xs font-normal text-gray-400">
+                              ({selectedCandleNews.news.length}
+                              {selectedCandleNews.news.some(n => n.relevance_score > 0) && ' matched'})
+                            </span>
+                          </>
+                        )}
                       </h4>
-                      {selectedCandleNews.news.length === 0 ? (
-                        <p className="text-xs text-gray-500 italic">No news for this period.</p>
+
+                      {selectedCandleNews.isLoadingNews ? (
+                        <div className="flex items-center justify-center py-4">
+                          <span className="text-xs text-gray-500">Finding relevant news...</span>
+                        </div>
+                      ) : selectedCandleNews.news.length === 0 ? (
+                        <div className="p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
+                          <p className="text-xs text-gray-500">
+                            {selectedCandleNews.hasBigMove
+                              ? "No high-impact news found for this significant price movement."
+                              : "No major news correlated with this candle."
+                            }
+                          </p>
+                          {selectedCandleNews.hasBigMove && (
+                            <p className="text-[10px] text-gray-600 mt-1">
+                              This could be technical trading or algorithmic activity.
+                            </p>
+                          )}
+                        </div>
                       ) : (
                         <div className="space-y-2 max-h-48 overflow-y-auto">
                           {selectedCandleNews.news.map((n, i) => (
-                            <div key={i} className="p-2 bg-gray-800/50 rounded-lg text-xs cursor-pointer hover:bg-gray-800" onClick={() => handleNewsClick(n)}>
-                              <p className="text-gray-300 line-clamp-2">{n.headline}</p>
+                            <div
+                              key={i}
+                              className="p-2.5 bg-gray-800/50 rounded-lg text-xs cursor-pointer hover:bg-gray-800 border border-transparent hover:border-gray-700 transition-all"
+                              onClick={() => handleNewsClick(n)}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-gray-300 line-clamp-2 flex-1">{n.headline}</p>
+                                {n.relevance_score > 0 && (
+                                  <span className={cn(
+                                    "text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0",
+                                    n.relevance_score >= 0.7 ? "bg-green-500/20 text-green-400" :
+                                      n.relevance_score >= 0.5 ? "bg-yellow-500/20 text-yellow-400" :
+                                        "bg-gray-500/20 text-gray-400"
+                                  )}>
+                                    {Math.round(n.relevance_score * 100)}%
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <span className={cn(
+                                  "text-[10px] px-1.5 py-0.5 rounded",
+                                  n.urgency === 'breaking' ? "bg-red-500/20 text-red-400" :
+                                    n.urgency === 'high' ? "bg-orange-500/20 text-orange-400" :
+                                      "bg-gray-500/20 text-gray-400"
+                                )}>
+                                  {n.urgency}
+                                </span>
+                                <span className={cn(
+                                  "text-[10px] px-1.5 py-0.5 rounded",
+                                  n.direction === 'bullish' ? "bg-green-500/20 text-green-400" :
+                                    n.direction === 'bearish' ? "bg-red-500/20 text-red-400" :
+                                      "bg-gray-500/20 text-gray-400"
+                                )}>
+                                  {n.direction} {n.score}/10
+                                </span>
+                                <span className="text-[10px] text-gray-500">
+                                  {format(new Date(n.timestamp), "HH:mm")}
+                                </span>
+                              </div>
+                              {n.reasoning_tr && (
+                                <p className="text-[10px] text-gray-500 mt-1.5 line-clamp-1">
+                                  💡 {n.reasoning_tr}
+                                </p>
+                              )}
                             </div>
                           ))}
                         </div>
