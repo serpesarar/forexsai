@@ -720,7 +720,7 @@ async function fetchActiveSignals(): Promise<{ signals: ActiveSignal[]; count: n
 }
 
 async function fetchLifecycleDashboard(days: number = 365): Promise<LifecycleDashboard> {
-  const res = await fetch(`${API_BASE}/api/signals/dashboard?days=${days}`);
+  const res = await fetch(`${API_BASE}/api/signals/dashboard?days=${days}`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch lifecycle dashboard");
   return res.json();
 }

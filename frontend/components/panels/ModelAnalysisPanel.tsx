@@ -124,7 +124,7 @@ async function fetchModelAnalysis(
   if (symbol) params.set("symbol", symbol);
   if (timeframe) params.set("timeframe", timeframe);
 
-  const res = await fetch(`${API_BASE}/api/learning/model-analysis?${params}`);
+  const res = await fetch(`${API_BASE}/api/learning/model-analysis?${params}`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch model analysis");
   return res.json();
 }
@@ -134,7 +134,7 @@ async function fetchModelsSummary(days: number = 0, symbol?: string): Promise<Re
   params.set("days", days.toString());
   if (symbol) params.set("symbol", symbol);
 
-  const res = await fetch(`${API_BASE}/api/learning/model-analysis/summary?${params}`);
+  const res = await fetch(`${API_BASE}/api/learning/model-analysis/summary?${params}`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch models summary");
   const data = await res.json();
   return data.models;
