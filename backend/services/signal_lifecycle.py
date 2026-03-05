@@ -868,24 +868,38 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
         return {"error": "No DB client"}
 
     try:
-        # All non-active signals in period
-        query = client.table("prediction_logs").select(
-            "id, symbol, ml_direction, ml_confidence, ml_entry_price, "
-            "model_type, status, targets_hit, highest_profit_pips, "
-            "lowest_drawdown_pips, exit_price, exit_time, stop_loss_pips, "
-            "targets, created_at, strategy"
-        ).neq("status", "active")
+        # Supabase PostgREST caps at 1000 rows per request.
+        # We must paginate to get ALL signals.
+        PAGE_SIZE = 1000
+        signals = []
+        offset = 0
 
-        # days=0 means all time (no cutoff filter)
-        if days > 0:
-            cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
-            query = query.gte("created_at", cutoff)
+        while True:
+            query = client.table("prediction_logs").select(
+                "id, symbol, ml_direction, ml_confidence, ml_entry_price, "
+                "model_type, status, targets_hit, highest_profit_pips, "
+                "lowest_drawdown_pips, exit_price, exit_time, stop_loss_pips, "
+                "targets, created_at, strategy"
+            ).neq("status", "active")
 
-        result = query.order(
-            "created_at", desc=True
-        ).limit(5000).execute()
+            # days=0 means all time (no cutoff filter)
+            if days > 0:
+                cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
+                query = query.gte("created_at", cutoff)
 
-        signals = safe_get_data(result)
+            result = query.order(
+                "created_at", desc=True
+            ).limit(PAGE_SIZE).offset(offset).execute()
+
+            batch = safe_get_data(result)
+            if not batch:
+                break
+            signals.extend(batch)
+            if len(batch) < PAGE_SIZE:
+                break  # Last page
+            offset += PAGE_SIZE
+
+        logger.info(f"Dashboard: fetched {len(signals)} total signals via pagination")
 
         # Per-model stats
         models = {}
