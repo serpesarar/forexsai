@@ -12,7 +12,7 @@ import {
 } from "lightweight-charts";
 import { Activity, RefreshCw, TrendingUp, TrendingDown, Newspaper, X, ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useNewsMarkers, NewsMarker } from "../hooks/useNewsMarkers";
+import { useNewsMarkers, NewsMarker, convertToChartMarkers } from "../hooks/useNewsMarkers";
 
 interface CandleData {
   timestamp: number;
@@ -163,7 +163,6 @@ export default function LiveChartPanel({
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
   const ema20SeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const ema50SeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
-  const markerSeriesRef = useRef<ISeriesApi<"Scatter"> | null>(null);
 
   const [timeframe, setTimeframe] = useState<TimeframeType>("15m");
   const [livePrice, setLivePrice] = useState<number | null>(null);
@@ -181,7 +180,7 @@ export default function LiveChartPanel({
   });
 
   // Fetch news markers
-  const { markers: newsMarkers, isLoading: markersLoading } = useNewsMarkers(
+  const { markers: newsMarkers, loading: markersLoading } = useNewsMarkers(
     symbol,
     24,
     5
@@ -271,16 +270,6 @@ export default function LiveChartPanel({
       lastValueVisible: false,
     });
 
-    // Marker series for news
-    const markerSeries = chart.addSeries({
-      type: "Scatter",
-      color: "#3B82F6",
-      lineWidth: 0,
-      lastValueVisible: false,
-      priceLineVisible: false,
-      priceFormat: { type: "price", precision: 2, minMove: 0.01 },
-    } as any);
-
     const resizeObserver = new ResizeObserver(() => {
       try {
         chart.applyOptions({ width: container.clientWidth });
@@ -316,7 +305,6 @@ export default function LiveChartPanel({
     volumeSeriesRef.current = volumeSeries;
     ema20SeriesRef.current = ema20Series;
     ema50SeriesRef.current = ema50Series;
-    markerSeriesRef.current = markerSeries;
 
     return () => {
       resizeObserver.disconnect();
@@ -332,7 +320,6 @@ export default function LiveChartPanel({
     const volumeSeries = volumeSeriesRef.current;
     const ema20Series = ema20SeriesRef.current;
     const ema50Series = ema50SeriesRef.current;
-    const markerSeries = markerSeriesRef.current;
 
     if (!chart || !candleSeries || !volumeSeries || !chartData?.length) return;
 
@@ -371,7 +358,7 @@ export default function LiveChartPanel({
       if (ema50Series) ema50Series.setData(ema50Data);
 
       // Add news markers
-      if (markerSeries && showMarkers && newsMarkers.length > 0) {
+      if (candleSeries && showMarkers && newsMarkers.length > 0) {
         const chartStartTime = chartData[0].timestamp;
         const chartEndTime = chartData[chartData.length - 1].timestamp;
 
@@ -380,18 +367,11 @@ export default function LiveChartPanel({
             const markerTime = new Date(m.time).getTime();
             return markerTime >= chartStartTime && markerTime <= chartEndTime;
           })
-          .map((m) => ({
-            time: (new Date(m.time).getTime() / 1000) as Time,
-            value: m.position === "aboveBar" ? 
-              chartData.find((c) => c.timestamp >= new Date(m.time).getTime())?.high || 0 :
-              chartData.find((c) => c.timestamp >= new Date(m.time).getTime())?.low || 0,
-            color: m.direction === "bullish" ? "#22c55e" : m.direction === "bearish" ? "#ef4444" : "#3B82F6",
-            size: m.urgency === "breaking" ? 3 : m.urgency === "high" ? 2.5 : 2,
-          }));
+          .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
 
-        markerSeries.setData(visibleMarkers);
-      } else if (markerSeries) {
-        markerSeries.setData([]);
+        candleSeries.setMarkers(convertToChartMarkers(visibleMarkers) as any[]);
+      } else if (candleSeries) {
+        candleSeries.setMarkers([]);
       }
 
       chart.timeScale().fitContent();
@@ -415,8 +395,8 @@ export default function LiveChartPanel({
       <div className="flex items-center justify-between p-4 border-b border-white/5">
         <div className="flex items-center gap-3">
           <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${symbol.includes("XAU")
-              ? "bg-gradient-to-br from-amber-500/30 to-yellow-500/30"
-              : "bg-gradient-to-br from-emerald-500/30 to-teal-500/30"
+            ? "bg-gradient-to-br from-amber-500/30 to-yellow-500/30"
+            : "bg-gradient-to-br from-emerald-500/30 to-teal-500/30"
             }`}>
             <Activity className={`h-5 w-5 ${symbol.includes("XAU") ? "text-amber-400" : "text-emerald-400"}`} />
           </div>
@@ -441,8 +421,8 @@ export default function LiveChartPanel({
             <button
               onClick={() => setShowMarkers(!showMarkers)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition ${showMarkers
-                  ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                  : "bg-white/5 text-slate-400 hover:bg-white/10"
+                ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                : "bg-white/5 text-slate-400 hover:bg-white/10"
                 }`}
             >
               <Newspaper className="w-3.5 h-3.5" />
@@ -473,8 +453,8 @@ export default function LiveChartPanel({
                 key={tf}
                 onClick={() => setTimeframe(tf)}
                 className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase transition ${timeframe === tf
-                    ? "bg-accent text-white"
-                    : "text-textSecondary hover:text-white hover:bg-white/10"
+                  ? "bg-accent text-white"
+                  : "text-textSecondary hover:text-white hover:bg-white/10"
                   }`}
               >
                 {tf}

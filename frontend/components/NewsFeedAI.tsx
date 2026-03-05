@@ -42,6 +42,12 @@ interface EconomicEvent {
 
 type NewsTab = "news" | "economic" | "earnings";
 
+const directionIcons: Record<string, React.ReactNode> = {
+  bullish: <TrendingUp className="w-3 h-3 text-emerald-400" />,
+  bearish: <TrendingDown className="w-3 h-3 text-red-400" />,
+  neutral: <Minus className="w-3 h-3 text-gray-400" />,
+};
+
 interface NewsFeedAIProps {
   className?: string;
 }
@@ -49,16 +55,15 @@ interface NewsFeedAIProps {
 export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
   const [activeTab, setActiveTab] = useState<NewsTab>("news");
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
-  const { currentLocale } = useI18nStore();
-  
+  const { locale } = useI18nStore();
+
   // MANUAL FETCH STATE
   const [newsItems, setNewsItems] = useState<RSSNewsItem[] | null>(null);
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsError, setNewsError] = useState<Error | null>(null);
-  
+
   // Determine if we should show Turkish content
-  const isTurkish = currentLocale === 'tr';
-  const isSpanish = currentLocale === 'es';
+  const isTurkish = locale === 'tr';
 
   // DEBUG: Component mount
   useEffect(() => {
@@ -70,18 +75,18 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
     console.log("[NewsFeedAI] fetchNews called");
     setNewsLoading(true);
     setNewsError(null);
-    
+
     try {
       const url = `https://upbeat-flow-production.up.railway.app/api/rss/news?hours=72&limit=100&skip_ai_filtered=true`;
       console.log("[NewsFeedAI] Fetching:", url);
-      
+
       const response = await fetch(url);
       console.log("[NewsFeedAI] Response status:", response.status);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       console.log("[NewsFeedAI] Data received:", data.length, "items");
       setNewsItems(data);
@@ -129,16 +134,10 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
     if (activeTab === "news") refetchNews();
   }, [activeTab, refetchNews]);
 
-  const impactColors = {
+  const impactColors: Record<string, string> = {
     High: "bg-red-500/20 text-red-300 border-red-500/40",
     Medium: "bg-yellow-500/20 text-yellow-300 border-yellow-500/40",
     Low: "bg-green-500/20 text-green-300 border-green-500/40",
-  };
-
-  const directionIcons = {
-    bullish: <TrendingUp className="w-3 h-3 text-emerald-400" />,
-    bearish: <TrendingDown className="w-3 h-3 text-red-400" />,
-    neutral: <Minus className="w-3 h-3 text-gray-400" />,
   };
 
   const formatTime = (dateStr: string) => {
@@ -184,7 +183,7 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
           <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
           <div className="mb-2">Haberler yüklenirken hata oluştu</div>
           <div className="text-xs text-red-500/70 mb-3">{String(newsError)}</div>
-          <button 
+          <button
             onClick={() => refetchNews()}
             className="px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-xs rounded-lg transition"
           >
@@ -199,7 +198,7 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
         <div className="text-center py-8 text-slate-400 text-sm">
           <Newspaper className="w-8 h-8 mx-auto mb-2 opacity-30" />
           <div>Son 24 saatte haber bulunamadı</div>
-          <button 
+          <button
             onClick={() => refetchNews()}
             className="mt-3 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-400 text-xs rounded-lg transition"
           >
@@ -378,11 +377,10 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
       <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1 mb-4">
         <button
           onClick={() => setActiveTab("news")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-            activeTab === "news"
-              ? "bg-slate-700 text-white"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${activeTab === "news"
+            ? "bg-slate-700 text-white"
+            : "text-slate-400 hover:text-white hover:bg-slate-800"
+            }`}
         >
           <Newspaper className="w-3.5 h-3.5" />
           Haberler
@@ -394,22 +392,20 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
         </button>
         <button
           onClick={() => setActiveTab("economic")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-            activeTab === "economic"
-              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${activeTab === "economic"
+            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+            : "text-slate-400 hover:text-white hover:bg-slate-800"
+            }`}
         >
           <Calendar className="w-3.5 h-3.5" />
           Ekonomik
         </button>
         <button
           onClick={() => setActiveTab("earnings")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-            activeTab === "earnings"
-              ? "bg-blue-500/20 text-blue-400 border border-blue-500/40"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${activeTab === "earnings"
+            ? "bg-blue-500/20 text-blue-400 border border-blue-500/40"
+            : "text-slate-400 hover:text-white hover:bg-slate-800"
+            }`}
         >
           <Building2 className="w-3.5 h-3.5" />
           Kazançlar
@@ -422,9 +418,8 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
           <Filter className="w-3 h-3 text-slate-400 flex-shrink-0" />
           <button
             onClick={() => setSelectedSymbol(null)}
-            className={`px-2 py-1 rounded text-[10px] font-medium transition ${
-              !selectedSymbol ? "bg-accent text-white" : "bg-white/5 text-slate-400 hover:bg-white/10"
-            }`}
+            className={`px-2 py-1 rounded text-[10px] font-medium transition ${!selectedSymbol ? "bg-accent text-white" : "bg-white/5 text-slate-400 hover:bg-white/10"
+              }`}
           >
             Tümü
           </button>
@@ -432,11 +427,10 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
             <button
               key={sym}
               onClick={() => setSelectedSymbol(sym)}
-              className={`px-2 py-1 rounded text-[10px] font-medium transition whitespace-nowrap ${
-                selectedSymbol === sym
-                  ? "bg-accent text-white"
-                  : "bg-white/5 text-slate-400 hover:bg-white/10"
-              }`}
+              className={`px-2 py-1 rounded text-[10px] font-medium transition whitespace-nowrap ${selectedSymbol === sym
+                ? "bg-accent text-white"
+                : "bg-white/5 text-slate-400 hover:bg-white/10"
+                }`}
             >
               {getSymbolEmoji(sym)} {sym}
             </button>
@@ -470,24 +464,23 @@ function NewsCard({
     if (urgency === "medium") return "🟡";
     return "🟢";
   };
-  
+
   // Determine headline based on locale
-  const displayHeadline = isTurkish && item.headline_tr 
-    ? item.headline_tr 
+  const displayHeadline = isTurkish && item.headline_tr
+    ? item.headline_tr
     : item.headline;
-  
+
   // Show original as subtitle if translated
   const showOriginal = isTurkish && item.headline_tr && item.headline_tr !== item.headline;
 
   return (
     <div
-      className={`rounded-xl border p-3 transition hover:shadow-md ${
-        item.urgency === "breaking"
-          ? "border-red-500/30 bg-red-500/5"
-          : item.urgency === "high"
+      className={`rounded-xl border p-3 transition hover:shadow-md ${item.urgency === "breaking"
+        ? "border-red-500/30 bg-red-500/5"
+        : item.urgency === "high"
           ? "border-orange-500/30 bg-orange-500/5"
           : "border-white/5 bg-white/5 hover:bg-white/10"
-      }`}
+        }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
