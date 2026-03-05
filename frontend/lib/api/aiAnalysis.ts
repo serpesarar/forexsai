@@ -65,19 +65,49 @@ export interface FullAnalysisData {
 }
 
 async function fetchAIAnalysis(symbol: string): Promise<FullAnalysisData> {
-  const res = await fetch(`${API_BASE}/api/ai-analysis/${symbol}`);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch AI analysis for ${symbol}`);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/ai-analysis/${symbol}`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    
+    if (!res.ok) {
+      throw new Error(`Failed to fetch AI analysis for ${symbol}`);
+    }
+    return res.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`AI analysis timed out for ${symbol}. Please try again.`);
+    }
+    throw error;
   }
-  return res.json();
 }
 
 async function fetchAllAIAnalysis(): Promise<FullAnalysisData[]> {
-  const res = await fetch(`${API_BASE}/api/ai-analysis/`);
-  if (!res.ok) {
-    throw new Error("Failed to fetch AI analysis");
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/ai-analysis/`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    
+    if (!res.ok) {
+      throw new Error("Failed to fetch AI analysis");
+    }
+    return res.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error("AI analysis timed out. Please try again.");
+    }
+    throw error;
   }
-  return res.json();
 }
 
 export function useAIAnalysis(symbol: string, enabled: boolean = false) {

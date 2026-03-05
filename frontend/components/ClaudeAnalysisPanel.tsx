@@ -97,8 +97,39 @@ export default function ClaudeAnalysisPanel({ symbol, symbolLabel }: Props) {
   
   const handleAnalyze = () => {
     setShouldFetch(true);
-    refetch();
+    refetch().catch((err) => {
+      console.error("[ClaudeAnalysis] Analysis error:", err);
+    });
   };
+  
+  // Error state UI
+  if (error && !data) {
+    return (
+      <div className="rounded-2xl p-6" style={{ background: P.bg, border: `1px solid ${P.border}` }}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "var(--accent-purple-15)" }}>
+            <Sparkles className="w-5 h-5" style={{ color: P.purple }} />
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-widest font-mono" style={{ color: P.muted }}>{t("claudeAnalysis.title")}</p>
+            <h3 className="text-base font-bold font-mono text-white/90">{symbolLabel}</h3>
+          </div>
+        </div>
+        <div className="text-center py-8">
+          <AlertTriangle className="w-10 h-10 mx-auto mb-3" style={{ color: P.warn }} />
+          <p className="text-sm mb-2" style={{ color: P.text }}>AI Analizi şu anda kullanılamıyor</p>
+          <p className="text-xs mb-4" style={{ color: P.muted }}>{String(error).slice(0, 100)}</p>
+          <button
+            onClick={handleAnalyze}
+            className="px-4 py-2 rounded-xl text-sm font-medium transition-all hover:brightness-125"
+            style={{ background: "var(--accent-purple-12)", border: "1px solid var(--accent-purple-20)", color: P.purple }}
+          >
+            Tekrar Dene
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl overflow-hidden" style={{ background: P.bg, border: `1px solid ${P.border}`, boxShadow: "0 0 40px var(--accent-purple-10), inset 0 1px 0 rgba(255,255,255,0.04)" }}>
