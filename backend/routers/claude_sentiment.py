@@ -18,3 +18,18 @@ async def analyze_sentiment(
     """
     result = await run_claude_sentiment(symbol=symbol, lang=lang)
     return ClaudeSentimentResponse(**result)
+
+
+@router.post("/analyze-patterns")
+async def analyze_patterns(symbol: str = Query(default="NDX.INDX"), lang: str = Query(default="en")):
+    """
+    Pattern analysis endpoint (deprecated, redirects to stub)
+    """
+    # Return mock pattern analysis to prevent 404 errors
+    return {
+        "symbol": symbol,
+        "patterns": [],
+        "summary": "Pattern analysis temporarily unavailable",
+        "message": "Pattern analyzer v2 is being developed",
+        "timestamp": __import__("datetime").datetime.utcnow().isoformat() + "Z"
+    }
