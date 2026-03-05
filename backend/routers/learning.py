@@ -142,28 +142,24 @@ async def get_accuracy_by_model(
     cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z" if days > 0 else "2000-01-01T00:00:00Z"
     
     try:
-        # PRIMARY: Cursor-paginate to get ALL predictions (Supabase caps at 1000/request)
+        # Day-by-day pagination to bypass Supabase 1000-row cap
         predictions = []
-        cursor_ts = None
-        PAGE_SIZE = 1000
-        while True:
-            query = client.table("prediction_logs").select(
+        from datetime import datetime as dt_cls
+        start = dt_cls.fromisoformat(cutoff.replace("Z","")) if cutoff != "2000-01-01T00:00:00Z" else (datetime.utcnow() - timedelta(days=90))
+        end = datetime.utcnow()
+        cur = start
+        while cur < end:
+            ds = cur.replace(hour=0,minute=0,second=0,microsecond=0)
+            de = ds + timedelta(days=1)
+            q = client.table("prediction_logs").select(
                 "id, strategy, model_type, ml_direction, claude_direction, factors, status, targets_hit, created_at"
-            ).gte("created_at", cutoff).neq("status", "active")
+            ).gte("created_at", ds.isoformat()+"Z").lt("created_at", de.isoformat()+"Z").neq("status", "active")
             if symbol:
-                query = query.eq("symbol", symbol)
-            if cursor_ts:
-                query = query.lt("created_at", cursor_ts)
-            batch_result = query.order("created_at", desc=True).limit(PAGE_SIZE).execute()
-            batch = safe_get_data(batch_result)
-            if not batch:
-                break
-            predictions.extend(batch)
-            if len(batch) < PAGE_SIZE:
-                break
-            cursor_ts = batch[-1].get("created_at")
-            if not cursor_ts:
-                break
+                q = q.eq("symbol", symbol)
+            batch = safe_get_data(q.order("created_at", desc=True).limit(1000).execute())
+            if batch:
+                predictions.extend(batch)
+            cur = de
         
         if not predictions:
             return {"models": [], "total": 0, "days": days, "note": "No completed signals found"}
@@ -1327,26 +1323,20 @@ async def get_strategy_performance(
         cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime.strptime("2000-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
         cutoff_iso = cutoff.isoformat() + "Z"
         
-        # Cursor-paginate to get ALL predictions (Supabase caps at 1000/request)
+        # Day-by-day pagination to bypass Supabase 1000-row cap
         predictions = []
-        cursor_ts = None
-        PAGE_SIZE = 1000
-        while True:
-            q = client.table("prediction_logs").select(
+        start = cutoff
+        end = datetime.utcnow()
+        cur = start
+        while cur < end:
+            ds = cur.replace(hour=0,minute=0,second=0,microsecond=0)
+            de = ds + timedelta(days=1)
+            batch = safe_get_data(client.table("prediction_logs").select(
                 "id, symbol, strategy, ml_confidence, status, targets_hit, model_type, created_at"
-            ).gte("created_at", cutoff_iso)
-            if cursor_ts:
-                q = q.lt("created_at", cursor_ts)
-            batch_result = q.order("created_at", desc=True).limit(PAGE_SIZE).execute()
-            batch = safe_get_data(batch_result)
-            if not batch:
-                break
-            predictions.extend(batch)
-            if len(batch) < PAGE_SIZE:
-                break
-            cursor_ts = batch[-1].get("created_at")
-            if not cursor_ts:
-                break
+            ).gte("created_at", ds.isoformat()+"Z").lt("created_at", de.isoformat()+"Z").order("created_at", desc=True).limit(1000).execute())
+            if batch:
+                predictions.extend(batch)
+            cur = de
         
         # Classify by confidence — thresholds adjusted for realistic ML output
         # ML typically produces 45-70% confidence range
@@ -2213,29 +2203,24 @@ async def get_all_models_summary(
         cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime.strptime("2000-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
         cutoff_iso = cutoff.isoformat() + "Z"
         
-        # Cursor-paginate to get ALL signals (Supabase caps at 1000/request)
+        # Day-by-day pagination to bypass Supabase 1000-row cap
         signals = []
-        cursor_ts = None
-        PAGE_SIZE = 1000
-        while True:
-            query = client.table("prediction_logs").select(
+        start = cutoff
+        end = datetime.utcnow()
+        cur = start
+        while cur < end:
+            ds = cur.replace(hour=0,minute=0,second=0,microsecond=0)
+            de = ds + timedelta(days=1)
+            q = client.table("prediction_logs").select(
                 "symbol, timeframe, model_type, strategy, status, "
                 "highest_profit_pips, lowest_drawdown_pips, stop_loss_pips, targets_hit, created_at"
-            ).gte("created_at", cutoff_iso).neq("status", "active")
+            ).gte("created_at", ds.isoformat()+"Z").lt("created_at", de.isoformat()+"Z").neq("status", "active")
             if symbol:
-                query = query.eq("symbol", symbol)
-            if cursor_ts:
-                query = query.lt("created_at", cursor_ts)
-            batch_result = query.order("created_at", desc=True).limit(PAGE_SIZE).execute()
-            batch = safe_get_data(batch_result)
-            if not batch:
-                break
-            signals.extend(batch)
-            if len(batch) < PAGE_SIZE:
-                break
-            cursor_ts = batch[-1].get("created_at")
-            if not cursor_ts:
-                break
+                q = q.eq("symbol", symbol)
+            batch = safe_get_data(q.order("created_at", desc=True).limit(1000).execute())
+            if batch:
+                signals.extend(batch)
+            cur = de
         
         # Initialize model structure
         MODELS = ["ml", "emel", "pulse1", "pulse2", "pulse3"]

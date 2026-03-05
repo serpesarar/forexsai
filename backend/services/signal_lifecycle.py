@@ -869,44 +869,60 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
 
     try:
         # Supabase PostgREST caps at 1000 rows per request.
-        # Use timestamp-cursor pagination (works on all supabase-py versions).
-        PAGE_SIZE = 1000
+        # Fetch day-by-day to stay under 1000 rows per request.
         signals = []
-        cursor_ts = None  # Will hold the oldest created_at from last batch
 
-        while True:
-            query = client.table("prediction_logs").select(
+        # Determine date range
+        if days > 0:
+            start_date = datetime.utcnow() - timedelta(days=days)
+        else:
+            # All time: start from 90 days ago (covers all historical data)
+            start_date = datetime.utcnow() - timedelta(days=90)
+
+        end_date = datetime.utcnow()
+        current = start_date
+
+        while current < end_date:
+            day_start = current.replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = (day_start + timedelta(days=1))
+            
+            day_start_iso = day_start.isoformat() + "Z"
+            day_end_iso = day_end.isoformat() + "Z"
+
+            result = client.table("prediction_logs").select(
                 "id, symbol, ml_direction, ml_confidence, ml_entry_price, "
                 "model_type, status, targets_hit, highest_profit_pips, "
                 "lowest_drawdown_pips, exit_price, exit_time, stop_loss_pips, "
                 "targets, created_at, strategy"
-            ).neq("status", "active")
-
-            # days=0 means all time (no cutoff filter)
-            if days > 0:
-                cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
-                query = query.gte("created_at", cutoff)
-
-            # Cursor: fetch older records than last batch
-            if cursor_ts:
-                query = query.lt("created_at", cursor_ts)
-
-            result = query.order(
-                "created_at", desc=True
-            ).limit(PAGE_SIZE).execute()
+            ).neq("status", "active").gte(
+                "created_at", day_start_iso
+            ).lt(
+                "created_at", day_end_iso
+            ).limit(1000).execute()
 
             batch = safe_get_data(result)
-            if not batch:
-                break
-            signals.extend(batch)
-            if len(batch) < PAGE_SIZE:
-                break  # Last page
-            # Set cursor to oldest record's timestamp
-            cursor_ts = batch[-1].get("created_at")
-            if not cursor_ts:
-                break
+            if batch:
+                signals.extend(batch)
+            
+            current = day_end
 
-        logger.info(f"Dashboard: fetched {len(signals)} total signals via cursor pagination")
+        # Also fetch today's partial data
+        today_start = end_date.replace(hour=0, minute=0, second=0, microsecond=0).isoformat() + "Z"
+        result = client.table("prediction_logs").select(
+            "id, symbol, ml_direction, ml_confidence, ml_entry_price, "
+            "model_type, status, targets_hit, highest_profit_pips, "
+            "lowest_drawdown_pips, exit_price, exit_time, stop_loss_pips, "
+            "targets, created_at, strategy"
+        ).neq("status", "active").gte("created_at", today_start).limit(1000).execute()
+        today_batch = safe_get_data(result)
+        if today_batch:
+            # Deduplicate with existing signals by id
+            existing_ids = {s.get("id") for s in signals}
+            for s in today_batch:
+                if s.get("id") not in existing_ids:
+                    signals.append(s)
+
+        logger.info(f"Dashboard: fetched {len(signals)} total signals via day-by-day pagination")
 
         # Per-model stats
         models = {}
