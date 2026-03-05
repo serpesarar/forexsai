@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { ModelPerformanceModal } from "./ModelPerformanceModal";
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -81,6 +81,7 @@ interface ModelSummary {
 const MODELS = [
   { id: "ml", label: "ML Model", icon: Brain, color: "#3B82F6", description: "Machine Learning predictions" },
   { id: "emel", label: "EMEL 9-Check", icon: Layers, color: "#8B5CF6", description: "9-Checkpoint validation" },
+  { id: "emel_inverse", label: "EMEL Inverse", icon: Layers, color: "#D946EF", description: "Reverse signal strategy" },
   { id: "pulse1", label: "Pulse 1", icon: Zap, color: "#22D3EE", description: "Algorithmic scalping" },
   { id: "pulse2", label: "Pulse 2", icon: Activity, color: "#10B981", description: "ML-enhanced scalping" },
   { id: "pulse3", label: "Pulse 3", icon: Crosshair, color: "#F59E0B", description: "Multi-timeframe analysis" },
@@ -104,11 +105,12 @@ const SYMBOLS = [
 
 // Model -> Available Timeframes mapping
 const MODEL_TIMEFRAMES: Record<string, string[]> = {
-  ml: ["1h"],           // ML only on 1h
-  emel: ["5m", "15m", "1h", "4h"],
-  pulse1: ["5m", "15m"],
-  pulse2: ["5m", "15m", "1h"],
-  pulse3: ["1h"],       // Pulse3 only on 1h
+  ml: ["1h"],
+  emel: ["15m", "30m", "1h", "4h", "1d"],
+  emel_inverse: ["15m", "30m", "1h", "4h", "1d"],
+  pulse1: ["15m", "30m", "1h", "4h", "1d"],
+  pulse2: ["15m", "30m", "1h", "4h", "1d"],
+  pulse3: ["15m", "30m", "1h", "4h", "1d"],
 };
 
 // ── API Functions ───────────────────────────────────────────────────────────

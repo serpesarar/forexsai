@@ -2609,3 +2609,340 @@ async def get_xauusd_signal_status():
     except Exception as e:
         import traceback
         return {"error": str(e), "traceback": traceback.format_exc()[:500]}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MODEL DETAIL ANALYTICS — Comprehensive performance breakdown
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/model-detail-analytics")
+async def get_model_detail_analytics(
+    model: str = Query(..., description="Model type (ml, emel, pulse1, pulse2, pulse3, emel_inverse)"),
+    symbol: str = Query(..., description="Symbol (NDX.INDX, XAUUSD, GDAXI.INDX, USOIL.FOREX)"),
+    days: int = Query(0, description="Days to look back (0 = all time)")
+):
+    """
+    Comprehensive model performance analytics for a specific model+symbol.
+    Returns hourly heatmap, timeframe comparison, daily accuracy trends,
+    day-of-week breakdown, TP hit rates, Sharpe ratio, and max drawdown.
+    """
+    if not is_db_available():
+        return {"error": "Database not available"}
+
+    client = get_supabase_client()
+    if not client:
+        return {"error": "Database client not available"}
+
+    try:
+        from datetime import datetime, timezone, timedelta
+        from dateutil import parser as dt_parser
+        import json as _json
+        import math
+
+        # ── 1. Fetch signals ──
+        query = client.table("prediction_logs").select(
+            "id, symbol, timeframe, ml_direction, ml_confidence, status, "
+            "ml_entry_price, created_at, highest_profit_pips, lowest_drawdown_pips, "
+            "targets_hit, model_type, strategy"
+        ).order("created_at", desc=True)
+
+        # Model filter
+        model_lower = model.lower()
+        if model_lower == "ml":
+            query = query.or_("model_type.eq.ml,model_type.is.null")
+        elif model_lower == "emel":
+            query = query.or_("model_type.eq.emel,strategy.eq.EMEL")
+        else:
+            query = query.eq("model_type", model_lower)
+
+        # Symbol filter
+        query = query.eq("symbol", symbol)
+
+        # Time filter
+        if days > 0:
+            cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
+            query = query.gte("created_at", cutoff)
+
+        query = query.limit(5000)
+        result = query.execute()
+        signals = safe_get_data(result)
+
+        if not signals:
+            return {
+                "model": model_lower,
+                "symbol": symbol,
+                "overview": {
+                    "total_signals": 0, "win_rate": 0, "completed": 0, "stopped": 0,
+                    "expired": 0, "active": 0, "net_pips": 0, "avg_profit_pips": 0,
+                    "avg_loss_pips": 0, "risk_reward": 0, "sharpe_ratio": 0,
+                    "max_drawdown_pips": 0, "profit_factor": 0,
+                },
+                "hourly_heatmap": [],
+                "timeframe_comparison": [],
+                "daily_accuracy": [],
+                "day_of_week": [],
+                "tp_hit_rates": {},
+                "recent_signals": [],
+            }
+
+        # ── 2. Classify signals ──
+        now_utc = datetime.now(timezone.utc)
+        total = len(signals)
+        completed = 0
+        stopped = 0
+        expired = 0
+        active = 0
+        total_profit_pips = 0.0
+        total_loss_pips = 0.0
+        win_pips_list = []
+        loss_pips_list = []
+        cumulative_pips = 0.0
+        peak_pips = 0.0
+        max_drawdown = 0.0
+
+        # Aggregation buckets
+        hourly_stats = {h: {"total": 0, "wins": 0, "pips": 0.0} for h in range(24)}
+        tf_stats = {}
+        daily_stats = {}
+        dow_stats = {d: {"total": 0, "wins": 0, "pips": 0.0} for d in range(7)}
+        tp_counts = {"TP1": 0, "TP2": 0, "TP3": 0, "TP4": 0}
+        tp_total_for_rate = 0
+
+        recent_signals_list = []
+
+        for sig in signals:
+            status = sig.get("status", "unknown")
+            created_at_str = sig.get("created_at", "")
+            profit_pips = sig.get("highest_profit_pips") or 0
+            loss_pips = sig.get("lowest_drawdown_pips") or 0
+            direction = sig.get("ml_direction", "HOLD")
+            confidence = sig.get("ml_confidence", 50) or 50
+            tf = (sig.get("timeframe") or "1h").lower()
+
+            # Parse date
+            try:
+                created_dt = dt_parser.parse(created_at_str)
+                if created_dt.tzinfo is None:
+                    created_dt = created_dt.replace(tzinfo=timezone.utc)
+                hour = created_dt.hour
+                dow = created_dt.weekday()  # 0=Mon, 6=Sun
+                date_key = created_dt.strftime("%Y-%m-%d")
+            except:
+                hour = 12
+                dow = 0
+                date_key = "unknown"
+
+            # Categorize by status
+            is_win = False
+            pips_change = 0.0
+
+            if status == "completed":
+                completed += 1
+                is_win = True
+                pips_change = profit_pips if profit_pips > 0 else 20.0
+                total_profit_pips += pips_change
+                win_pips_list.append(pips_change)
+            elif status == "stopped":
+                stopped += 1
+                is_win = False
+                pips_change = -(loss_pips if loss_pips > 0 else 40.0)
+                total_loss_pips += abs(pips_change)
+                loss_pips_list.append(abs(pips_change))
+            elif status == "expired":
+                expired += 1
+                pips_change = 0
+            elif status == "active":
+                active += 1
+                continue  # Skip active for analytics
+            else:
+                # Check targets_hit
+                try:
+                    th = sig.get("targets_hit")
+                    if isinstance(th, str):
+                        th = _json.loads(th)
+                    if isinstance(th, dict) and any(th.values()):
+                        completed += 1
+                        is_win = True
+                        pips_change = profit_pips if profit_pips > 0 else 15.0
+                        total_profit_pips += pips_change
+                        win_pips_list.append(pips_change)
+                    else:
+                        continue
+                except:
+                    continue
+
+            # Cumulative pips for Sharpe / drawdown
+            cumulative_pips += pips_change
+            if cumulative_pips > peak_pips:
+                peak_pips = cumulative_pips
+            dd = peak_pips - cumulative_pips
+            if dd > max_drawdown:
+                max_drawdown = dd
+
+            # Hourly bucket
+            hourly_stats[hour]["total"] += 1
+            if is_win:
+                hourly_stats[hour]["wins"] += 1
+            hourly_stats[hour]["pips"] += pips_change
+
+            # Timeframe bucket
+            if tf not in tf_stats:
+                tf_stats[tf] = {"total": 0, "wins": 0, "pips": 0.0}
+            tf_stats[tf]["total"] += 1
+            if is_win:
+                tf_stats[tf]["wins"] += 1
+            tf_stats[tf]["pips"] += pips_change
+
+            # Daily bucket
+            if date_key not in daily_stats:
+                daily_stats[date_key] = {"total": 0, "wins": 0, "pips": 0.0, "cumulative": 0.0}
+            daily_stats[date_key]["total"] += 1
+            if is_win:
+                daily_stats[date_key]["wins"] += 1
+            daily_stats[date_key]["pips"] += pips_change
+
+            # Day of week
+            dow_stats[dow]["total"] += 1
+            if is_win:
+                dow_stats[dow]["wins"] += 1
+            dow_stats[dow]["pips"] += pips_change
+
+            # TP hit rates
+            try:
+                th = sig.get("targets_hit")
+                if isinstance(th, str):
+                    th = _json.loads(th)
+                if isinstance(th, dict):
+                    tp_total_for_rate += 1
+                    for tp_key in ["TP1", "TP2", "TP3", "TP4"]:
+                        if th.get(tp_key):
+                            tp_counts[tp_key] += 1
+            except:
+                pass
+
+            # Recent signals (top 30)
+            if len(recent_signals_list) < 30:
+                recent_signals_list.append({
+                    "id": sig.get("id", "")[:8],
+                    "date": created_at_str[:16] if created_at_str else "",
+                    "direction": direction,
+                    "confidence": round(confidence, 1),
+                    "status": status,
+                    "pips": round(pips_change, 1),
+                    "timeframe": tf,
+                })
+
+        # ── 3. Calculate derived metrics ──
+        resolved = completed + stopped
+        win_rate = (completed / resolved * 100) if resolved > 0 else 0
+        avg_profit = (sum(win_pips_list) / len(win_pips_list)) if win_pips_list else 0
+        avg_loss = (sum(loss_pips_list) / len(loss_pips_list)) if loss_pips_list else 0
+        risk_reward = (avg_profit / avg_loss) if avg_loss > 0 else 0
+        net_pips = total_profit_pips - total_loss_pips
+        profit_factor = (total_profit_pips / total_loss_pips) if total_loss_pips > 0 else 0
+
+        # Sharpe ratio (simplified: mean pips / std pips, annualized)
+        all_pips = win_pips_list + [-lp for lp in loss_pips_list]
+        sharpe = 0.0
+        if len(all_pips) >= 2:
+            mean_p = sum(all_pips) / len(all_pips)
+            var_p = sum((p - mean_p) ** 2 for p in all_pips) / (len(all_pips) - 1)
+            std_p = math.sqrt(var_p) if var_p > 0 else 1
+            sharpe = round((mean_p / std_p) * math.sqrt(252), 2)
+
+        # ── 4. Build response ──
+
+        # Hourly heatmap
+        hourly_heatmap = []
+        for h in range(24):
+            s = hourly_stats[h]
+            hourly_heatmap.append({
+                "hour": h,
+                "total": s["total"],
+                "wins": s["wins"],
+                "win_rate": round((s["wins"] / s["total"] * 100) if s["total"] > 0 else 0, 1),
+                "avg_pips": round(s["pips"] / s["total"], 1) if s["total"] > 0 else 0,
+            })
+
+        # Timeframe comparison
+        tf_order = ["5m", "15m", "30m", "1h", "4h", "1d"]
+        timeframe_comparison = []
+        for tf_key in tf_order:
+            if tf_key in tf_stats:
+                s = tf_stats[tf_key]
+                timeframe_comparison.append({
+                    "tf": tf_key,
+                    "total": s["total"],
+                    "win_rate": round((s["wins"] / s["total"] * 100) if s["total"] > 0 else 0, 1),
+                    "net_pips": round(s["pips"], 1),
+                    "avg_pips": round(s["pips"] / s["total"], 1) if s["total"] > 0 else 0,
+                })
+
+        # Daily accuracy (sorted by date, with cumulative)
+        sorted_dates = sorted(daily_stats.keys())
+        daily_accuracy = []
+        running_cum = 0.0
+        for dk in sorted_dates:
+            if dk == "unknown":
+                continue
+            ds = daily_stats[dk]
+            running_cum += ds["pips"]
+            daily_accuracy.append({
+                "date": dk,
+                "total": ds["total"],
+                "wins": ds["wins"],
+                "win_rate": round((ds["wins"] / ds["total"] * 100) if ds["total"] > 0 else 0, 1),
+                "cumulative_pips": round(running_cum, 1),
+            })
+
+        # Day of week
+        dow_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        day_of_week = []
+        for d in range(7):
+            s = dow_stats[d]
+            day_of_week.append({
+                "day": dow_names[d],
+                "day_short": dow_names[d][:3],
+                "total": s["total"],
+                "wins": s["wins"],
+                "win_rate": round((s["wins"] / s["total"] * 100) if s["total"] > 0 else 0, 1),
+                "avg_pips": round(s["pips"] / s["total"], 1) if s["total"] > 0 else 0,
+            })
+
+        # TP hit rates
+        tp_hit_rates = {}
+        for tp_key in ["TP1", "TP2", "TP3", "TP4"]:
+            tp_hit_rates[tp_key] = round(
+                (tp_counts[tp_key] / tp_total_for_rate * 100) if tp_total_for_rate > 0 else 0, 1
+            )
+
+        return {
+            "model": model_lower,
+            "symbol": symbol,
+            "overview": {
+                "total_signals": total,
+                "win_rate": round(win_rate, 1),
+                "completed": completed,
+                "stopped": stopped,
+                "expired": expired,
+                "active": active,
+                "net_pips": round(net_pips, 1),
+                "avg_profit_pips": round(avg_profit, 1),
+                "avg_loss_pips": round(avg_loss, 1),
+                "risk_reward": round(risk_reward, 2),
+                "sharpe_ratio": sharpe,
+                "max_drawdown_pips": round(max_drawdown, 1),
+                "profit_factor": round(profit_factor, 2),
+            },
+            "hourly_heatmap": hourly_heatmap,
+            "timeframe_comparison": timeframe_comparison,
+            "daily_accuracy": daily_accuracy[-60:],  # Last 60 days
+            "day_of_week": day_of_week,
+            "tp_hit_rates": tp_hit_rates,
+            "recent_signals": recent_signals_list,
+        }
+
+    except Exception as e:
+        import traceback
+        logger.error(f"Model detail analytics error: {e}\n{traceback.format_exc()}")
+        return {"error": str(e)}
