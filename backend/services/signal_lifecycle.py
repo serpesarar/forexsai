@@ -869,10 +869,10 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
 
     try:
         # Supabase PostgREST caps at 1000 rows per request.
-        # We must paginate to get ALL signals.
+        # Use timestamp-cursor pagination (works on all supabase-py versions).
         PAGE_SIZE = 1000
         signals = []
-        offset = 0
+        cursor_ts = None  # Will hold the oldest created_at from last batch
 
         while True:
             query = client.table("prediction_logs").select(
@@ -887,9 +887,13 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                 cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
                 query = query.gte("created_at", cutoff)
 
+            # Cursor: fetch older records than last batch
+            if cursor_ts:
+                query = query.lt("created_at", cursor_ts)
+
             result = query.order(
                 "created_at", desc=True
-            ).range(offset, offset + PAGE_SIZE - 1).execute()
+            ).limit(PAGE_SIZE).execute()
 
             batch = safe_get_data(result)
             if not batch:
@@ -897,9 +901,12 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
             signals.extend(batch)
             if len(batch) < PAGE_SIZE:
                 break  # Last page
-            offset += PAGE_SIZE
+            # Set cursor to oldest record's timestamp
+            cursor_ts = batch[-1].get("created_at")
+            if not cursor_ts:
+                break
 
-        logger.info(f"Dashboard: fetched {len(signals)} total signals via pagination")
+        logger.info(f"Dashboard: fetched {len(signals)} total signals via cursor pagination")
 
         # Per-model stats
         models = {}

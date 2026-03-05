@@ -142,9 +142,9 @@ async def get_accuracy_by_model(
     cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z" if days > 0 else "2000-01-01T00:00:00Z"
     
     try:
-        # PRIMARY: Paginate to get ALL predictions (Supabase caps at 1000/request)
+        # PRIMARY: Cursor-paginate to get ALL predictions (Supabase caps at 1000/request)
         predictions = []
-        offset = 0
+        cursor_ts = None
         PAGE_SIZE = 1000
         while True:
             query = client.table("prediction_logs").select(
@@ -152,14 +152,18 @@ async def get_accuracy_by_model(
             ).gte("created_at", cutoff).neq("status", "active")
             if symbol:
                 query = query.eq("symbol", symbol)
-            batch_result = query.order("created_at", desc=True).range(offset, offset + PAGE_SIZE - 1).execute()
+            if cursor_ts:
+                query = query.lt("created_at", cursor_ts)
+            batch_result = query.order("created_at", desc=True).limit(PAGE_SIZE).execute()
             batch = safe_get_data(batch_result)
             if not batch:
                 break
             predictions.extend(batch)
             if len(batch) < PAGE_SIZE:
                 break
-            offset += PAGE_SIZE
+            cursor_ts = batch[-1].get("created_at")
+            if not cursor_ts:
+                break
         
         if not predictions:
             return {"models": [], "total": 0, "days": days, "note": "No completed signals found"}
@@ -1323,21 +1327,26 @@ async def get_strategy_performance(
         cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime.strptime("2000-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
         cutoff_iso = cutoff.isoformat() + "Z"
         
-        # Paginate to get ALL predictions (Supabase caps at 1000/request)
+        # Cursor-paginate to get ALL predictions (Supabase caps at 1000/request)
         predictions = []
-        offset = 0
+        cursor_ts = None
         PAGE_SIZE = 1000
         while True:
-            batch_result = client.table("prediction_logs").select(
-                "id, symbol, strategy, ml_confidence, status, targets_hit, model_type"
-            ).gte("created_at", cutoff_iso).order("created_at", desc=True).range(offset, offset + PAGE_SIZE - 1).execute()
+            q = client.table("prediction_logs").select(
+                "id, symbol, strategy, ml_confidence, status, targets_hit, model_type, created_at"
+            ).gte("created_at", cutoff_iso)
+            if cursor_ts:
+                q = q.lt("created_at", cursor_ts)
+            batch_result = q.order("created_at", desc=True).limit(PAGE_SIZE).execute()
             batch = safe_get_data(batch_result)
             if not batch:
                 break
             predictions.extend(batch)
             if len(batch) < PAGE_SIZE:
                 break
-            offset += PAGE_SIZE
+            cursor_ts = batch[-1].get("created_at")
+            if not cursor_ts:
+                break
         
         # Classify by confidence — thresholds adjusted for realistic ML output
         # ML typically produces 45-70% confidence range
@@ -2204,25 +2213,29 @@ async def get_all_models_summary(
         cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime.strptime("2000-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
         cutoff_iso = cutoff.isoformat() + "Z"
         
-        # Paginate to get ALL signals (Supabase caps at 1000/request)
+        # Cursor-paginate to get ALL signals (Supabase caps at 1000/request)
         signals = []
-        offset = 0
+        cursor_ts = None
         PAGE_SIZE = 1000
         while True:
             query = client.table("prediction_logs").select(
                 "symbol, timeframe, model_type, strategy, status, "
-                "highest_profit_pips, lowest_drawdown_pips, stop_loss_pips, targets_hit"
+                "highest_profit_pips, lowest_drawdown_pips, stop_loss_pips, targets_hit, created_at"
             ).gte("created_at", cutoff_iso).neq("status", "active")
             if symbol:
                 query = query.eq("symbol", symbol)
-            batch_result = query.order("created_at", desc=True).range(offset, offset + PAGE_SIZE - 1).execute()
+            if cursor_ts:
+                query = query.lt("created_at", cursor_ts)
+            batch_result = query.order("created_at", desc=True).limit(PAGE_SIZE).execute()
             batch = safe_get_data(batch_result)
             if not batch:
                 break
             signals.extend(batch)
             if len(batch) < PAGE_SIZE:
                 break
-            offset += PAGE_SIZE
+            cursor_ts = batch[-1].get("created_at")
+            if not cursor_ts:
+                break
         
         # Initialize model structure
         MODELS = ["ml", "emel", "pulse1", "pulse2", "pulse3"]
