@@ -889,7 +889,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
 
             result = query.order(
                 "created_at", desc=True
-            ).limit(PAGE_SIZE).offset(offset).execute()
+            ).range(offset, offset + PAGE_SIZE - 1).execute()
 
             batch = safe_get_data(result)
             if not batch:

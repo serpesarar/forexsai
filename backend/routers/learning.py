@@ -152,7 +152,7 @@ async def get_accuracy_by_model(
             ).gte("created_at", cutoff).neq("status", "active")
             if symbol:
                 query = query.eq("symbol", symbol)
-            batch_result = query.order("created_at", desc=True).limit(PAGE_SIZE).offset(offset).execute()
+            batch_result = query.order("created_at", desc=True).range(offset, offset + PAGE_SIZE - 1).execute()
             batch = safe_get_data(batch_result)
             if not batch:
                 break
@@ -1330,7 +1330,7 @@ async def get_strategy_performance(
         while True:
             batch_result = client.table("prediction_logs").select(
                 "id, symbol, strategy, ml_confidence, status, targets_hit, model_type"
-            ).gte("created_at", cutoff_iso).order("created_at", desc=True).limit(PAGE_SIZE).offset(offset).execute()
+            ).gte("created_at", cutoff_iso).order("created_at", desc=True).range(offset, offset + PAGE_SIZE - 1).execute()
             batch = safe_get_data(batch_result)
             if not batch:
                 break
@@ -2215,7 +2215,7 @@ async def get_all_models_summary(
             ).gte("created_at", cutoff_iso).neq("status", "active")
             if symbol:
                 query = query.eq("symbol", symbol)
-            batch_result = query.order("created_at", desc=True).limit(PAGE_SIZE).offset(offset).execute()
+            batch_result = query.order("created_at", desc=True).range(offset, offset + PAGE_SIZE - 1).execute()
             batch = safe_get_data(batch_result)
             if not batch:
                 break
