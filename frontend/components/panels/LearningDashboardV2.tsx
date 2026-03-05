@@ -21,6 +21,7 @@ import {
   ChevronDownIcon as ChevronDown,
   ChevronUpIcon as ChevronUp,
 } from "../ui/CustomIcons";
+import { useQuery } from "@tanstack/react-query";
 import { EmelIcon, PulseIcon, LearningIcon, SignalsIcon } from "../ui/CustomIcons";
 import {
   useLifecycleDashboard, useActiveSignals, useSignalDetail,
@@ -169,6 +170,19 @@ export default function LearningDashboardV2() {
     const wrColor = wr >= 55 ? "var(--accent-positive)" : wr >= 40 ? "var(--accent-warning)" : "var(--accent-negative)";
     const netPos = stats.net_pips >= 0;
 
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+    const { data: matrixData, isLoading: matrixLoading } = useQuery({
+      queryKey: ["signals-matrix", model],
+      queryFn: async () => {
+        const res = await fetch(`${API_BASE}/api/learning/signals/matrix?model=${model}`);
+        if (!res.ok) throw new Error("Failed to fetch matrix");
+        const data = await res.json();
+        return data.matrix;
+      },
+      staleTime: 30000,
+      enabled: open,
+    });
+
     return (
       <div
         className="rounded-xl overflow-hidden"
@@ -281,6 +295,75 @@ export default function LearningDashboardV2() {
                       <SymbolCard sym={sym} d={d} />
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Timeframe Matrix View */}
+            {Object.keys(stats.symbols).length > 0 && (
+              <div>
+                <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>
+                  Timeframe Breakdown (Live)
+                </p>
+                <div className="rounded-lg overflow-x-auto scrollbar-hide" style={{ background: "var(--bg-surface)", border: `1px solid var(--border-subtle)` }}>
+                  {matrixLoading ? (
+                    <div className="p-6 flex items-center justify-center">
+                      <RefreshCw className="w-4 h-4 animate-spin" style={{ color: "var(--text-muted)" }} />
+                    </div>
+                  ) : !matrixData || Object.keys(matrixData).length === 0 ? (
+                    <div className="p-6 text-center text-[12px]" style={{ color: "var(--text-muted)" }}>
+                      No active signals found.
+                    </div>
+                  ) : (
+                    <table className="w-full text-left border-collapse min-w-[500px]">
+                      <thead>
+                        <tr style={{ background: "rgba(255,255,255,0.02)" }}>
+                          <th className="py-3 px-4 text-[10px] font-semibold uppercase tracking-[0.08em] border-b border-[var(--border-subtle)]" style={{ color: "var(--text-muted)" }}>Symbol</th>
+                          {["15m", "30m", "1h", "4h", "1d"].map(tf => (
+                            <th key={tf} className="py-3 px-4 text-[10px] font-semibold uppercase tracking-[0.08em] border-b border-[var(--border-subtle)] text-center" style={{ color: "var(--text-muted)" }}>{tf}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"].map(symId => {
+                          const rowData = matrixData[symId] || matrixData[symId.split('.')[0]];
+                          if (!rowData) return null;
+                          const name = symLabel(symId);
+                          const icon = symIcon(symId);
+                          return (
+                            <tr key={symId} className="border-b transition-colors cursor-pointer" style={{ borderColor: "var(--border-subtle)" }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedModelPerformance({ symbol: symId, model });
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
+                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                              <td className="py-3 px-4 flex items-center gap-2">
+                                <span className="text-[14px]">{icon}</span>
+                                <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>{name}</span>
+                              </td>
+                              {["15m", "30m", "1h", "4h", "1d"].map(tf => {
+                                const cell = rowData[tf];
+                                if (!cell) return <td key={tf} className="py-3 px-4 text-center text-[var(--text-muted)]">-</td>;
+                                const isHold = cell.direction === "HOLD";
+                                const isOld = cell.age_hours > 24;
+                                const dotColor = cell.direction === "BUY" ? "var(--accent-positive)" : cell.direction === "SELL" ? "var(--accent-negative)" : "var(--accent-warning)";
+                                const textColor = cell.direction === "BUY" ? "var(--accent-positive)" : cell.direction === "SELL" ? "var(--accent-negative)" : "var(--text-muted)";
+                                return (
+                                  <td key={tf} className={`py-3 px-4 text-center ${isOld ? 'opacity-40' : ''}`} title={isOld ? 'Signal older than 24h' : ''}>
+                                    <div className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-md" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
+                                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: isHold ? 'transparent' : dotColor, border: isHold ? '1px solid var(--text-muted)' : 'none', boxShadow: isHold ? 'none' : `0 0 6px ${dotColor}80` }}></span>
+                                      <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 600, color: textColor }}>{isHold ? '-' : cell.confidence.toFixed(0)}</span>
+                                    </div>
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </div>
             )}
