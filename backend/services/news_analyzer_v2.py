@@ -77,6 +77,7 @@ class RealNewsAnalyzer:
     def _build_prompt(self, headline: str, content: str, source: str) -> str:
         """
         DeepSeek için prompt oluştur - Her haber için özel
+        URGENCY belirleme kritik - Büyük fiyat hareketlerini tetikleyen haberleri tespit et
         """
         return f"""Analyze this financial news article and determine its ACTUAL market impact.
 
@@ -90,39 +91,60 @@ INSTRUCTIONS:
 2. Identify the MAIN subject (which company, sector, country, or asset)
 3. Determine if this is POSITIVE, NEGATIVE, or NEUTRAL news
 4. Decide which financial instruments are ACTUALLY affected (not generic list)
-5. Provide SPECIFIC reasoning for each affected instrument
+5. Determine URGENCY level based on potential to cause IMMEDIATE price movement
+
+URGENCY LEVEL CRITERIA - BE STRICT:
+- "breaking": ONLY for major unexpected events that cause immediate volatility
+  * Examples: War declarations, major central bank surprises, Trump policy shocks
+  * Market impact: Immediate 1%+ price movement likely
+  
+- "high": Significant market-moving news with clear directional impact
+  * Examples: Fed rate decisions, major earnings beats/misses, geopolitical escalation
+  * Market impact: 0.5-1% price movement likely within minutes
+  * Must have HIGH confidence (>75%) and score (>=7)
+  
+- "medium": Moderate impact news, market will react but less dramatically
+  * Examples: Economic data releases (NFP, CPI), sector-specific news
+  * Market impact: 0.2-0.5% price movement
+  
+- "low": Background news, minimal immediate impact
+  * Examples: Analyst upgrades/downgrades, routine economic reports
+  * Market impact: <0.2% or delayed reaction
+
+SCORING GUIDE - BE CONSERVATIVE:
+- 9-10: Market-defining events (Black swan, major war, 2008-style crisis)
+- 7-8: Major market movers (Fed surprise, major conflict escalation)
+- 5-6: Notable but expected (Scheduled economic data, earnings)
+- 3-4: Minor impact (Sector news, analyst reports)
+- 1-2: Almost no impact (Routine announcements)
 
 EXAMPLES OF CORRECT ANALYSIS:
 
-Example 1:
-Headline: "Apple reports record iPhone sales, beats earnings estimates"
-→ Affects: NASDAQ (bullish, 8/10) - Apple is major NASDAQ component
-→ Affects: DXY (neutral) - Not directly related to USD
-→ Affects: XAUUSD (neutral) - No relation to gold
+Example 1 - BREAKING:
+Headline: "Trump announces 25% tariffs on all Chinese goods effective immediately"
+→ Urgency: "breaking" - Immediate market shock
+→ NASDAQ (bearish, 9/10) - Trade war escalation
+→ XAUUSD (bullish, 8/10) - Safe haven rush
+→ DXY (bullish, 7/10) - Flight to safety
 
-Example 2:
-Headline: "Saudi Arabia cuts oil production by 1 million barrels"
-→ Affects: USOIL (bullish, 9/10) - Direct supply reduction
-→ Affects: XAUUSD (neutral/slight bullish, 4/10) - Inflation hedge
-→ Affects: NASDAQ (bearish, 6/10) - Higher oil = higher costs
+Example 2 - HIGH:
+Headline: "Fed unexpectedly cuts rates by 50bps amid recession fears"
+→ Urgency: "high" - Major policy surprise
+→ DXY (bearish, 8/10) - Rate cut weakens USD
+→ XAUUSD (bullish, 8/10) - Lower rates boost gold
+→ NASDAQ (bullish, 7/10) - Cheaper borrowing helps tech
 
-Example 3:
-Headline: "Fed Chair Powell signals rate cuts coming soon"
-→ Affects: DXY (bearish, 8/10) - Lower rates weaken dollar
-→ Affects: XAUUSD (bullish, 8/10) - Lower rates help gold
-→ Affects: NASDAQ (bullish, 7/10) - Lower rates help growth stocks
+Example 3 - MEDIUM:
+Headline: "NFP comes in at 180k vs 200k expected, unemployment steady"
+→ Urgency: "medium" - Expected data release, moderate impact
+→ DXY (bearish, 5/10) - Slight miss but not shocking
+→ XAUUSD (neutral, 4/10) - Minimal impact
 
-Example 4:
-Headline: "Devon Energy merges with Coterra in $50B deal"
-→ Affects: USOIL (neutral, 5/10) - Company specific, not market wide
-→ Affects: NASDAQ (neutral) - Energy sector specific
-→ Affects: XAUUSD (neutral) - No relation to gold
-
-Example 5:
-Headline: "Australian pension funds hedge against currency surge"
-→ Affects: DXY (neutral) - Australia specific
-→ Affects: XAUUSD (neutral) - No direct gold impact
-→ Affects: NASDAQ (neutral) - Regional news
+Example 4 - LOW:
+Headline: "Goldman Sachs upgrades Apple to buy, raises target to $220"
+→ Urgency: "low" - Single stock, expected analyst action
+→ NASDAQ (neutral, 3/10) - Minimal broad market impact
+→ XAUUSD (neutral, 1/10) - No gold impact
 
 RESPONSE FORMAT (STRICT JSON - ALL FIELDS REQUIRED):
 {{
@@ -148,11 +170,11 @@ RESPONSE FORMAT (STRICT JSON - ALL FIELDS REQUIRED):
 IMPORTANT: headline_tr and content_tr MUST be Turkish translations, NOT empty!
 
 IMPORTANT RULES:
+- Be CONSERVATIVE with urgency - "breaking" should be RARE (<5% of news)
+- "high" urgency should also be selective (<15% of news)  
+- Most routine news should be "medium" or "low"
+- Score and urgency should be CONSISTENT (high urgency = high score)
 - ONLY include instruments ACTUALLY affected by this specific news
-- If news is about oil company merger, don't say it affects gold
-- If news is about Australian pension funds, don't say it affects US Dollar
-- Be PRECISE and SPECIFIC - generic impacts are wrong
-- Score 1-3 = minimal impact, 4-6 = moderate, 7-8 = significant, 9-10 = major
 
 Analyze this news NOW:"""
 

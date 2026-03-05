@@ -213,26 +213,28 @@ async def get_latest_breaking(limit: int = Query(10, ge=1, le=50)):
 async def get_chart_news_markers(
     symbol: str,
     hours: int = Query(24, ge=1, le=168, description="Lookback period in hours"),
-    min_impact_score: int = Query(5, ge=1, le=10, description="Minimum impact score to show on chart")
+    min_impact_score: int = Query(6, ge=1, le=10, description="Minimum impact score to show on chart"),
+    max_markers: int = Query(15, ge=1, le=50, description="Maximum number of markers to return")
 ):
     """
-    Get news markers for chart display.
-    Returns news that should be shown as markers on the candlestick chart.
+    Get news markers for chart display - INTELLIGENT FILTERING.
+    Only returns HIGH QUALITY markers that are likely to have caused price movements.
     """
     try:
         supabase = get_supabase_client()
         
         start_time = datetime.utcnow() - timedelta(hours=hours)
         
-        # Get news that:
-        # 1. Has show_on_chart = true
-        # 2. OR has high urgency
-        # 3. OR affects the requested symbol with score >= min_impact_score
+        # STRATEGY: Get only high-quality news markers
+        # Priority 1: Breaking news (always show)
+        # Priority 2: High urgency with score >= min_impact_score
+        # Priority 3: Medium urgency only if score >= 8
+        
         result = (
             supabase.table("enriched_news")
             .select("*")
             .gte("timestamp", start_time.isoformat())
-            .or_(f"show_on_chart.eq.true,urgency.in.(high,breaking)")
+            .or_(f"urgency.eq.breaking,and(urgency.eq.high,ai_confidence.gte.60)")
             .order("timestamp", desc=True)
             .limit(100)
             .execute()
@@ -246,54 +248,203 @@ async def get_chart_news_markers(
         else:
             items = []
         
-        # Filter for symbol-specific impacts
+        # Additional query for medium urgency but high impact
+        if len(items) < max_markers:
+            medium_result = (
+                supabase.table("enriched_news")
+                .select("*")
+                .gte("timestamp", start_time.isoformat())
+                .eq("urgency", "medium")
+                .gte("ai_confidence", 70)
+                .order("timestamp", desc=True)
+                .limit(30)
+                .execute()
+            )
+            
+            medium_items = medium_result.data if hasattr(medium_result, 'data') else medium_result.get('data', [])
+            
+            # Merge without duplicates
+            existing_ids = {item["id"] for item in items}
+            for item in medium_items:
+                if item["id"] not in existing_ids:
+                    items.append(item)
+        
+        # Filter for symbol-specific impacts with HIGH RELEVANCE
         markers = []
         for item in items:
             impacts = item.get("impacts", [])
+            urgency = item.get("urgency", "medium")
+            ai_confidence = item.get("ai_confidence", 0)
             
             # Check if this news affects the requested symbol
             symbol_impact = None
             for imp in impacts:
-                if imp.get("symbol") == symbol and imp.get("score", 0) >= min_impact_score:
-                    symbol_impact = imp
-                    break
+                imp_score = imp.get("score", 0)
+                imp_symbol = imp.get("symbol", "")
+                
+                # Symbol matching with variations
+                symbol_variations = [symbol]
+                if ".INDX" in symbol:
+                    symbol_variations.append(symbol.replace(".INDX", ""))
+                elif symbol in ["NDX", "DAX", "VIX", "DXY"]:
+                    symbol_variations.append(f"{symbol}.INDX")
+                
+                if imp_symbol in symbol_variations:
+                    # STRICT FILTERING based on urgency
+                    if urgency == "breaking":
+                        # Breaking news: accept score >= 6
+                        if imp_score >= 6:
+                            symbol_impact = imp
+                            break
+                    elif urgency == "high":
+                        # High urgency: accept score >= min_impact_score
+                        if imp_score >= min_impact_score and ai_confidence >= 50:
+                            symbol_impact = imp
+                            break
+                    elif urgency == "medium":
+                        # Medium urgency: only high confidence AND high score
+                        if imp_score >= 8 and ai_confidence >= 70:
+                            symbol_impact = imp
+                            break
             
-            # Include if it affects this symbol or is a major economic event
+            if not symbol_impact:
+                continue
+            
+            # Check for economic events
             is_economic_event = any(imp.get("is_economic_event") for imp in impacts)
             
-            if symbol_impact or is_economic_event or item.get("urgency") in ["breaking", "high"]:
-                # Determine marker appearance
-                direction = symbol_impact.get("direction", "neutral") if symbol_impact else "neutral"
-                score = symbol_impact.get("score", 5) if symbol_impact else 5
-                
-                marker = {
-                    "id": item["id"],
-                    "time": item["timestamp"],
-                    "position": "aboveBar" if direction == "bullish" else "belowBar" if direction == "bearish" else "inBar",
-                    "color": item.get("marker_color", "#3B82F6"),
-                    "shape": "circle" if item.get("urgency") == "breaking" else "square" if is_economic_event else "arrowUp" if direction == "bullish" else "arrowDown" if direction == "bearish" else "circle",
-                    "text": "📰",
-                    "size": 2 if score >= 8 else 1.5 if score >= 6 else 1,
-                    "headline": item.get("headline_tr") or item["headline"],
-                    "headline_en": item["headline"],
-                    "direction": direction,
-                    "score": score,
-                    "urgency": item.get("urgency", "medium"),
-                    "is_economic_event": is_economic_event,
-                    "event_name": symbol_impact.get("event_name") if symbol_impact else None,
-                    "reasoning_tr": symbol_impact.get("reasoning_tr") if symbol_impact else None,
-                    "url": item.get("url", ""),
-                }
-                markers.append(marker)
+            # Determine marker appearance
+            direction = symbol_impact.get("direction", "neutral")
+            score = symbol_impact.get("score", 5)
+            
+            # Color based on urgency and direction
+            if urgency == "breaking":
+                color = "#DC2626"  # Red
+            elif urgency == "high":
+                color = "#F59E0B" if direction == "neutral" else "#22C55E" if direction == "bullish" else "#EF4444"
+            else:
+                color = "#3B82F6"  # Blue
+            
+            # Shape based on urgency
+            if urgency == "breaking":
+                shape = "circle"
+            elif is_economic_event:
+                shape = "square"
+            elif direction == "bullish":
+                shape = "arrowUp"
+            elif direction == "bearish":
+                shape = "arrowDown"
+            else:
+                shape = "circle"
+            
+            marker = {
+                "id": item["id"],
+                "time": item["timestamp"],
+                "position": "aboveBar" if direction == "bullish" else "belowBar" if direction == "bearish" else "inBar",
+                "color": color,
+                "shape": shape,
+                "text": "🚨" if urgency == "breaking" else "📊" if is_economic_event else "📰",
+                "size": 2.5 if urgency == "breaking" else 2 if score >= 8 else 1.5 if score >= 6 else 1,
+                "headline": item.get("headline_tr") or item["headline"],
+                "headline_en": item["headline"],
+                "direction": direction,
+                "score": score,
+                "urgency": urgency,
+                "is_economic_event": is_economic_event,
+                "event_name": symbol_impact.get("event_name"),
+                "reasoning_tr": symbol_impact.get("reasoning_tr", ""),
+                "url": item.get("url", ""),
+                "ai_confidence": ai_confidence,
+            }
+            markers.append(marker)
+        
+        # Sort by timestamp and limit
+        markers.sort(key=lambda x: x["time"], reverse=False)
+        markers = markers[:max_markers]
         
         return {
             "success": True,
             "symbol": symbol,
             "count": len(markers),
+            "filters_applied": {
+                "min_impact_score": min_impact_score,
+                "max_markers": max_markers,
+                "urgency_filter": "breaking + high (medium only if score>=8)"
+            },
             "markers": markers
         }
     
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/candle-news/{symbol}")
+async def get_news_for_candle(
+    symbol: str,
+    candle_timestamp: str = Query(..., description="ISO timestamp of the candle"),
+    candle_open: float = Query(..., description="Candle open price"),
+    candle_close: float = Query(..., description="Candle close price"),
+    candle_high: float = Query(..., description="Candle high price"),
+    candle_low: float = Query(..., description="Candle low price"),
+    timeframe: str = Query("1h", description="Candle timeframe")
+):
+    """
+    INTELLIGENT: Get news that likely caused a specific candle's movement.
+    Only returns HIGH RELEVANCE news (max 5 items).
+    """
+    try:
+        from services.news_candle_matcher import get_news_candle_matcher
+        
+        matcher = get_news_candle_matcher()
+        
+        matched_news = matcher.match_news_to_candle_simple(
+            symbol=symbol,
+            candle_timestamp=candle_timestamp,
+            candle_open=candle_open,
+            candle_close=candle_close,
+            candle_high=candle_high,
+            candle_low=candle_low
+        )
+        
+        # Format response
+        formatted_news = []
+        for news in matched_news:
+            symbol_impact = news.get("symbol_impact", {})
+            formatted_news.append({
+                "id": news.get("id"),
+                "headline": news.get("headline_tr") or news.get("headline"),
+                "headline_en": news.get("headline"),
+                "timestamp": news.get("timestamp"),
+                "source": news.get("source"),
+                "urgency": news.get("urgency"),
+                "score": symbol_impact.get("score", 5),
+                "direction": symbol_impact.get("direction", "neutral"),
+                "reasoning_tr": symbol_impact.get("reasoning_tr", ""),
+                "relevance_score": round(news.get("relevance_score", 0), 2),
+                "url": news.get("url", ""),
+            })
+        
+        # Calculate candle stats
+        change_pct = ((candle_close - candle_open) / candle_open) * 100 if candle_open != 0 else 0
+        range_pct = ((candle_high - candle_low) / candle_open) * 100 if candle_open != 0 else 0
+        
+        return {
+            "success": True,
+            "symbol": symbol,
+            "candle": {
+                "timestamp": candle_timestamp,
+                "change_pct": round(change_pct, 2),
+                "range_pct": round(range_pct, 2),
+                "is_significant": abs(change_pct) > 0.5 or range_pct > 1.0
+            },
+            "news_count": len(formatted_news),
+            "news": formatted_news
+        }
+        
+    except Exception as e:
+        import traceback
+        print(f"[CandleNews] Error: {e}")
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
 

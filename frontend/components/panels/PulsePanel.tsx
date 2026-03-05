@@ -90,13 +90,13 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
   const [error, setError] = useState<string | null>(null);
   const [timeframe, setTimeframe] = useState("5m");
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [signalAge, setSignalAge] = useState<string>("");
-  const [signalTimestamp, setSignalTimestamp] = useState<Date | null>(null);
+  const [signalAge, setSignalAge] = useState<string>("0s");
+  const [signalTimestamp, setSignalTimestamp] = useState<Date | null>(new Date());
 
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (showLoading = false) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       setError(null);
       const res = await fetch(`${API_BASE}/api/panel/pulse/${activeSymbol}?timeframe=${timeframe}`);
       const json = await res.json();
@@ -108,8 +108,12 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
         setLastUpdate(new Date());
         // Reset signal age timer when new signal arrives
         if (json.signal_timestamp) {
-          setSignalTimestamp(new Date(json.signal_timestamp));
+          // Parse ISO timestamp and ensure it's treated as UTC
+          const ts = new Date(json.signal_timestamp);
+          console.log(`[Pulse1] signal_timestamp: ${json.signal_timestamp}, parsed: ${ts.toISOString()}, now: ${new Date().toISOString()}`);
+          setSignalTimestamp(ts);
         } else {
+          console.log(`[Pulse1] No signal_timestamp, using current time`);
           setSignalTimestamp(new Date());
         }
       }
@@ -118,13 +122,18 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
       setError("fetch_error");
       setData(null);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [activeSymbol, timeframe]);
 
+  // Fetch when symbol or timeframe changes
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 60000);
+    fetchData(true);
+  }, [activeSymbol, timeframe]);
+
+  // HTTP polling every 60 seconds
+  useEffect(() => {
+    const interval = setInterval(() => fetchData(false), 60000); // Background refresh without loading
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -132,11 +141,19 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
   useEffect(() => {
     if (!signalTimestamp) return;
     const tick = () => {
-      const diff = Math.floor((Date.now() - signalTimestamp.getTime()) / 1000);
+      const now = Date.now();
+      const ts = signalTimestamp.getTime();
+      let diff = Math.floor((now - ts) / 1000);
+      
+      // Prevent negative values (clock skew or timezone issues)
+      if (diff < 0) diff = 0;
+      
       if (diff < 60) {
         setSignalAge(`${diff}s`);
       } else {
-        setSignalAge(`${Math.floor(diff / 60)}m ${diff % 60}s`);
+        const mins = Math.floor(diff / 60);
+        const secs = diff % 60;
+        setSignalAge(`${mins}m ${secs}s`);
       }
     };
     tick();
@@ -146,7 +163,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
 
   // Listen for global refresh event from header button
   useEffect(() => {
-    const handler = () => fetchData();
+    const handler = () => fetchData(true);
     window.addEventListener("pulse-refresh", handler);
     window.addEventListener("dashboard-refresh", handler);
     return () => {
@@ -189,7 +206,6 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
         timeframe={timeframe}
         onTimeframeChange={setTimeframe}
         timeframes={["5m", "15m", "1h"]}
-        onRefresh={fetchData}
         loading={loading}
         panelId="pulse-panel"
         signalAge={signalAge}

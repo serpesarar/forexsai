@@ -2,7 +2,6 @@
 
 import { ReactNode } from "react";
 import { PanelInfoButton } from "./PanelInfoButton";
-import { RotateIcon as RefreshCw } from "./ui/CustomIcons";
 
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 
@@ -33,8 +32,8 @@ export interface PanelHeaderProps {
   onTimeframeChange?: (tf: string) => void;
   timeframes?: string[];
 
-  // Actions
-  onRefresh: () => void;
+  // Actions (onRefresh is now optional - manual refresh button removed)
+  onRefresh?: () => void;
   loading?: boolean;
   panelId: string;
 
@@ -235,21 +234,6 @@ export function PanelHeader({
           </div>
         )}
 
-        {/* Refresh Button */}
-        <button
-          onClick={onRefresh}
-          className="w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:bg-white/5"
-          style={{
-            border: "1px solid var(--border-subtle)",
-            background: "var(--bg-input)",
-          }}
-        >
-          <RefreshCw
-            className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
-            style={{ color: "var(--text-muted)" }}
-          />
-        </button>
-
         {/* Info Button */}
         <PanelInfoButton panelId={panelId} />
       </div>
@@ -273,7 +257,7 @@ export function PanelHeaderCompact({
   subtitle: string;
   icon: ReactNode;
   iconColor?: string;
-  onRefresh: () => void;
+  onRefresh?: () => void;
   loading?: boolean;
   panelId: string;
   children?: ReactNode;
@@ -354,19 +338,6 @@ export function PanelHeaderCompact({
             {signalAge}
           </div>
         )}
-        <button
-          onClick={onRefresh}
-          className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:bg-white/5"
-          style={{
-            border: "1px solid var(--border-subtle)",
-            background: "var(--bg-input)",
-          }}
-        >
-          <RefreshCw
-            className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
-            style={{ color: "var(--text-muted)" }}
-          />
-        </button>
         <PanelInfoButton panelId={panelId} />
       </div>
     </div>

@@ -25,6 +25,8 @@ import {
 } from "../lib/api/rssNews";
 import { useI18nStore } from "../lib/i18n/store";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+
 // Types
 interface EconomicEvent {
   id: string;
@@ -77,7 +79,7 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
     setNewsError(null);
 
     try {
-      const url = `https://upbeat-flow-production.up.railway.app/api/rss/news?hours=72&limit=100&skip_ai_filtered=true`;
+      const url = `${API_URL}/api/rss/news?hours=72&limit=100&skip_ai_filtered=true`;
       console.log("[NewsFeedAI] Fetching:", url);
 
       const response = await fetch(url);
@@ -113,7 +115,7 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
   useEffect(() => {
     const fetchEconomic = async () => {
       try {
-        const res = await fetch("https://upbeat-flow-production.up.railway.app/api/calendar/economic?days=30");
+        const res = await fetch(`${API_URL}/api/calendar/economic?days=30`);
         if (res.ok) {
           const data = await res.json();
           setEconomicEvents(data.events || []);

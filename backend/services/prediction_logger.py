@@ -343,8 +343,8 @@ async def log_prediction(
         
         # Calculate actual price targets for DB storage using fixed pip values
         if entry_price and entry_price > 0:
-            target_prices = calculate_target_prices(entry_price, direction, symbol)
-            sl_price = calculate_stoploss_price(entry_price, direction, symbol)
+            target_prices = calculate_target_prices(entry_price, direction, symbol, timeframe)
+            sl_price = calculate_stoploss_price(entry_price, direction, symbol, timeframe)
             # Store as {TP1: price, TP2: price, ...}
             targets_dict = target_prices
             targets_dict["SL"] = round(sl_price, 4)

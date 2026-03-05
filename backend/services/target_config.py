@@ -96,48 +96,81 @@ def get_symbol_config(symbol: str) -> SymbolConfig:
     return SYMBOL_CONFIGS.get(symbol, DEFAULT_CONFIG)
 
 
-def calculate_target_prices(entry_price: float, direction: str, symbol: str) -> Dict[str, float]:
+def get_timeframe_addition_pct(timeframe: str) -> float:
+    """
+    Returns the percentage addition for wider timeframes.
+    User rule: +0.2% per timeframe step after 15m.
+    """
+    steps = {
+        "1m": 0.0,
+        "5m": 0.0,
+        "15m": 0.0,
+        "30m": 0.2,
+        "1h": 0.4,
+        "4h": 0.6,
+        "1d": 0.8,
+    }
+    return steps.get(timeframe.lower(), 0.0)
+
+
+def calculate_target_prices(entry_price: float, direction: str, symbol: str, timeframe: str = "15m") -> Dict[str, float]:
     """
     Calculate target prices based on entry price and direction.
     Supports both pip-based and percentage-based targets.
+    Adds timeframe-based expansion (+0.2% per step) to maintain Risk/Reward ratios.
     """
     config = get_symbol_config(symbol)
     targets = {}
+    
+    # Calculate timeframe expansion distance based on entry price
+    tf_addition_pct = get_timeframe_addition_pct(timeframe)
+    tf_addition_distance = entry_price * (tf_addition_pct / 100.0)
 
     for target in config.targets:
         if config.is_percentage:
             # Percentage-based: distance = entry_price * (pct / 100)
-            distance = entry_price * (target.pips / 100.0)
+            base_distance = entry_price * (target.pips / 100.0)
         else:
             # Pip-based: distance = pips * pip_value
-            distance = target.pips * config.pip_value
+            base_distance = target.pips * config.pip_value
+
+        total_distance = base_distance + tf_addition_distance
 
         if direction == "BUY":
-            targets[target.name] = entry_price + distance
+            targets[target.name] = entry_price + total_distance
         elif direction == "SELL":
-            targets[target.name] = entry_price - distance
+            targets[target.name] = entry_price - total_distance
         else:
             targets[target.name] = entry_price
 
     return targets
 
 
-def calculate_stoploss_price(entry_price: float, direction: str, symbol: str) -> float:
+def calculate_stoploss_price(entry_price: float, direction: str, symbol: str, timeframe: str = "15m") -> float:
     """
     Calculate stoploss price based on entry price and direction.
     Supports both pip-based and percentage-based stoploss.
+    Expands SL distance by +0.2% of entry price for each timeframe step.
     """
     config = get_symbol_config(symbol)
 
+    # 1. Base SL calculation
     if config.is_percentage:
-        sl_distance = entry_price * (config.stoploss_pips / 100.0)
+        base_sl_distance = entry_price * (config.stoploss_pips / 100.0)
     else:
-        sl_distance = config.stoploss_pips * config.pip_value
+        base_sl_distance = config.stoploss_pips * config.pip_value
+
+    # 2. Timeframe expansion (+0.2% per step)
+    tf_addition_pct = get_timeframe_addition_pct(timeframe)
+    tf_addition_distance = entry_price * (tf_addition_pct / 100.0)
+    
+    # 3. Total Distance
+    total_sl_distance = base_sl_distance + tf_addition_distance
 
     if direction == "BUY":
-        return entry_price - sl_distance
+        return entry_price - total_sl_distance
     elif direction == "SELL":
-        return entry_price + sl_distance
+        return entry_price + total_sl_distance
     return entry_price
 
 

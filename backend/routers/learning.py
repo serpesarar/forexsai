@@ -1877,6 +1877,82 @@ async def get_historical_signals_endpoint(
         return {"error": str(e)}
 
 
+@router.get("/signals/matrix")
+async def get_signals_matrix(
+    model: str = Query(..., description="Model type (ml, emel, pulse1, pulse2, pulse3)")
+):
+    """
+    Returns the latest signal for each symbol and timeframe to populate the Heatmap Matrix.
+    """
+    if not is_db_available():
+        return {"error": "Database not available", "matrix": {}}
+    
+    client = get_supabase_client()
+    if not client:
+        return {"error": "Database client not available", "matrix": {}}
+        
+    try:
+        query = client.table("prediction_logs").select(
+            "symbol, timeframe, ml_direction, ml_confidence, created_at, status"
+        ).order("created_at", desc=True).limit(1000)
+        
+        model_lower = model.lower()
+        if model_lower == "ml":
+            query = query.or_("model_type.eq.ml,model_type.is.null")
+        elif model_lower in ["pulse1", "pulse2", "pulse3"]:
+            query = query.eq("model_type", model_lower)
+        elif model_lower == "emel":
+            query = query.or_("model_type.eq.emel,strategy.eq.EMEL")
+        else:
+            query = query.eq("model_type", model_lower)
+            
+        result = query.execute()
+        signals = safe_get_data(result)
+        
+        matrix = {}
+        filled_combos = set()
+        
+        for sig in signals:
+            sym = sig.get("symbol")
+            tf = sig.get("timeframe", "1h").lower()
+            direction = sig.get("ml_direction", "HOLD")
+            conf = sig.get("ml_confidence", 50)
+            status = sig.get("status", "unknown")
+            created_at = sig.get("created_at")
+            
+            if not sym: continue
+            
+            combo_key = f"{sym}_{tf}"
+            if combo_key in filled_combos:
+                continue
+                
+            filled_combos.add(combo_key)
+            if sym not in matrix:
+                matrix[sym] = {}
+                
+            matrix[sym][tf] = {
+                "direction": direction,
+                "confidence": conf,
+                "status": status,
+                "age_hours": 0  # Calculated below
+            }
+            
+            if created_at:
+                try:
+                    from dateutil import parser
+                    from datetime import datetime, timezone
+                    created_dt = parser.parse(created_at)
+                    now_dt = datetime.now(timezone.utc)
+                    matrix[sym][tf]["age_hours"] = (now_dt - created_dt).total_seconds() / 3600
+                except:
+                    pass
+            
+        return {"matrix": matrix}
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "trace": traceback.format_exc(), "matrix": {}}
+
+
 @router.get("/signals/recent")
 async def get_recent_signals_endpoint(
     symbol: Optional[str] = Query(None, description="Filter by symbol"),

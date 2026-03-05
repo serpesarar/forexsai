@@ -96,12 +96,13 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [signalAge, setSignalAge] = useState<string>("");
-  const [signalTimestamp, setSignalTimestamp] = useState<Date | null>(null);
+  const [signalAge, setSignalAge] = useState<string>("0s");
+  const [signalTimestamp, setSignalTimestamp] = useState<Date | null>(new Date());
 
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (showLoading = false) => {
     try {
+      if (showLoading) setLoading(true);
       setError(null);
       const res = await fetch(`${API_BASE}/api/panel/pulse-ml/${activeSymbol}?timeframe=${timeframe}`);
       const json = await res.json();
@@ -112,7 +113,9 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         setData(json);
         setLastUpdate(new Date());
         if (json.signal_timestamp) {
-          setSignalTimestamp(new Date(json.signal_timestamp));
+          const ts = new Date(json.signal_timestamp);
+          console.log(`[Pulse2] signal_timestamp: ${json.signal_timestamp}, parsed: ${ts.toISOString()}`);
+          setSignalTimestamp(ts);
         } else {
           setSignalTimestamp(new Date());
         }
@@ -122,14 +125,17 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       setError("fetch_error");
       setData(null);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [activeSymbol, timeframe]);
 
+  // Fetch when symbol or timeframe changes
   useEffect(() => {
-    setLoading(true);
-    fetchData();
-    const interval = setInterval(fetchData, 60000);
+    fetchData(true);
+  }, [activeSymbol, timeframe]);
+
+  useEffect(() => {
+    const interval = setInterval(() => fetchData(false), 60000); // Background refresh without loading
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -137,11 +143,19 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   useEffect(() => {
     if (!signalTimestamp) return;
     const tick = () => {
-      const diff = Math.floor((Date.now() - signalTimestamp.getTime()) / 1000);
+      const now = Date.now();
+      const ts = signalTimestamp.getTime();
+      let diff = Math.floor((now - ts) / 1000);
+      
+      // Prevent negative values (clock skew or timezone issues)
+      if (diff < 0) diff = 0;
+      
       if (diff < 60) {
         setSignalAge(`${diff}s`);
       } else {
-        setSignalAge(`${Math.floor(diff / 60)}m ${diff % 60}s`);
+        const mins = Math.floor(diff / 60);
+        const secs = diff % 60;
+        setSignalAge(`${mins}m ${secs}s`);
       }
     };
     tick();
@@ -151,7 +165,7 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
 
   // Listen for global refresh event from header button
   useEffect(() => {
-    const handler = () => fetchData();
+    const handler = () => fetchData(true);
     window.addEventListener("pulse-refresh", handler);
     window.addEventListener("dashboard-refresh", handler);
     return () => {
@@ -211,7 +225,6 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         timeframe={timeframe}
         onTimeframeChange={setTimeframe}
         timeframes={TIMEFRAMES}
-        onRefresh={() => { setLoading(true); fetchData(); }}
         loading={loading}
         panelId="pulse-ml"
         signalAge={signalAge}

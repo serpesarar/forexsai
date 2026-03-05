@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
 import { PanelHeader } from "../PanelHeader";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
@@ -139,29 +139,87 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
   const [data, setData] = useState<EmelData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState("1H");
+  const [signalAge, setSignalAge] = useState<string>("0s");
+  const [signalTimestamp, setSignalTimestamp] = useState<Date | null>(new Date());
   const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "emel");
 
-  useEffect(() => {
-    const handler = () => fetchData();
-    window.addEventListener("dashboard-refresh", handler);
-    return () => window.removeEventListener("dashboard-refresh", handler);
-  }, [activeSymbol, timeframe]);
-
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (showLoading = false) => {
     try {
+      if (showLoading) setLoading(true);
       const res = await fetch(`${API_BASE}/api/panel/emel/${activeSymbol}?timeframe=${timeframe}`);
       const json = await res.json();
-      if (!json.error) setData(json);
+      if (!json.error) {
+        setData(json);
+        if (json.signal_timestamp) {
+          const ts = new Date(json.signal_timestamp);
+          console.log(`[EMEL] signal_timestamp: ${json.signal_timestamp}, parsed: ${ts.toISOString()}`);
+          setSignalTimestamp(ts);
+        } else {
+          setSignalTimestamp(new Date());
+        }
+      }
     } catch (e) { console.error("EMEL fetch error:", e); }
-    finally { setLoading(false); }
-  };
+    finally { if (showLoading) setLoading(false); }
+  }, [activeSymbol, timeframe]);
 
-  useEffect(() => { if (wsData) { setData(wsData); setLoading(false); } }, [wsData]);
+  // Fetch when symbol or timeframe changes
   useEffect(() => {
-    if (!wsData) fetchData();
-    if (!wsConnected) { const iv = setInterval(fetchData, 120000); return () => clearInterval(iv); }
-  }, [activeSymbol, timeframe, wsConnected]);
+    fetchData(true);
+  }, [activeSymbol, timeframe]);
+
+  // Interval polling every 60 seconds
+  useEffect(() => {
+    const interval = setInterval(() => fetchData(false), 60000); // Background refresh without loading
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  // Signal age timer - updates every second
+  useEffect(() => {
+    if (!signalTimestamp) return;
+    const tick = () => {
+      const now = Date.now();
+      const ts = signalTimestamp.getTime();
+      let diff = Math.floor((now - ts) / 1000);
+      
+      // Prevent negative values (clock skew or timezone issues)
+      if (diff < 0) diff = 0;
+      
+      if (diff < 60) {
+        setSignalAge(`${diff}s`);
+      } else {
+        const mins = Math.floor(diff / 60);
+        const secs = diff % 60;
+        setSignalAge(`${mins}m ${secs}s`);
+      }
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [signalTimestamp]);
+
+  // Listen for global refresh event from header button
+  useEffect(() => {
+    const handler = () => fetchData(true);
+    window.addEventListener("dashboard-refresh", handler);
+    return () => window.removeEventListener("dashboard-refresh", handler);
+  }, [fetchData]);
+
+  // WebSocket data handling - only update data, not timestamp (to keep accurate age)
+  useEffect(() => {
+    if (wsData) {
+      setData(wsData);
+      setLoading(false);
+      // Only update timestamp if WebSocket provides it and it's newer
+      if (wsData.signal_timestamp) {
+        const wsTs = new Date(wsData.signal_timestamp);
+        const currentTs = signalTimestamp;
+        if (!currentTs || wsTs > currentTs) {
+          console.log(`[EMEL WebSocket] Updating signal_timestamp: ${wsData.signal_timestamp}`);
+          setSignalTimestamp(wsTs);
+        }
+      }
+    }
+  }, [wsData, signalTimestamp]);
 
   if (loading && !data) {
     return (
@@ -205,9 +263,9 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
         timeframe={timeframe}
         onTimeframeChange={setTimeframe}
         timeframes={["15m", "1H", "4H", "1D"]}
-        onRefresh={fetchData}
         loading={loading}
         panelId="emel-panel"
+        signalAge={signalAge}
         extraContent={data ? (
           <div className="flex items-center gap-3">
             <div className="text-[26px] font-bold tracking-tighter leading-none font-mono" style={{ color: theme.text }}>

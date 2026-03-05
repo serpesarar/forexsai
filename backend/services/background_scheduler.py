@@ -493,6 +493,7 @@ async def log_predictions_if_needed():
 
 async def _log_pulse_signal(symbol: str, direction: str, confidence: float,
                            entry_price: float, model_type: str, strategy: str,
+                           timeframe: str = "15m",
                            ta: dict = None, extra: dict = None):
     """Helper: log a Pulse/EMEL signal to prediction_logs via log_prediction()."""
     try:
@@ -528,7 +529,7 @@ async def _log_pulse_signal(symbol: str, direction: str, confidence: float,
             symbol=symbol,
             context=context,
             analysis=analysis,
-            timeframe="5m",
+            timeframe=timeframe,
             strategy=strategy,
             model_type=model_type,
         )
@@ -562,30 +563,31 @@ async def log_pulse_signals_if_needed():
         if not is_db_available():
             continue
 
-        for model_type in ["emel", "pulse1", "pulse2", "pulse3"]:
-            try:
-                await _check_and_log_pulse(symbol, model_type, None)
-                await asyncio.sleep(0.3)
-            except Exception as e:
-                logger.error(f"{model_type} log error {symbol}: {e}")
+        for model_type in ["emel", "pulse1", "pulse2", "pulse3", "emel_inverse"]:
+            for tf in ["15m", "30m", "1h", "4h", "1d"]:
+                try:
+                    await _check_and_log_pulse(symbol, model_type, None, tf)
+                    await asyncio.sleep(0.3)
+                except Exception as e:
+                    logger.error(f"{model_type} {tf} log error {symbol}: {e}")
 
 
-async def _check_and_log_pulse(symbol: str, model_type: str, client):
+async def _check_and_log_pulse(symbol: str, model_type: str, client, timeframe: str = "15m"):
     """Run one model's analysis for one symbol and log if BUY/SELL."""
     try:
         from routers.emel_pulse import get_pulse_v3_analysis, get_pulse_ml_analysis, get_pulse_analysis, get_emel_analysis
 
         if model_type == "pulse3":
-            result = await get_pulse_v3_analysis(symbol)
+            result = await get_pulse_v3_analysis(symbol, timeframe=timeframe)
             strategy, sig_key = "PULSE_V3", "direction"
         elif model_type == "pulse2":
-            result = await get_pulse_ml_analysis(symbol)
+            result = await get_pulse_ml_analysis(symbol, timeframe=timeframe)
             strategy, sig_key = "PULSE_ML", "signal"
         elif model_type == "pulse1":
-            result = await get_pulse_analysis(symbol)
+            result = await get_pulse_analysis(symbol, timeframe=timeframe)
             strategy, sig_key = "PULSE_V1", "signal"
-        elif model_type == "emel":
-            result = await get_emel_analysis(symbol)
+        elif model_type in ["emel", "emel_inverse"]:
+            result = await get_emel_analysis(symbol, timeframe=timeframe)
             strategy, sig_key = "EMEL", "signal"
         else:
             return
@@ -609,7 +611,16 @@ async def _check_and_log_pulse(symbol: str, model_type: str, client):
             logger.debug(f"{model_type} {symbol}: no valid entry price, skipping")
             return
         conf = result.get("confidence", 50) or 50
-        await _log_pulse_signal(symbol, sig, conf, entry, model_type, strategy)
+        
+        # Determine actual model constraint explicitly 
+        final_model_type = model_type
+        if model_type == "emel_inverse":
+            # the reverse logic is usually integrated in the emel_pulse API itself,
+            # but if this is just logging directly from here, we need to enforce that sig is inverted
+            sig = "SELL" if sig == "BUY" else ("BUY" if sig == "SELL" else "HOLD")
+            strategy = "EMEL_INVERSE"
+            
+        await _log_pulse_signal(symbol, sig, conf, entry, final_model_type, strategy, timeframe)
 
     except Exception as e:
         logger.error(f"{model_type} log error {symbol}: {e}")

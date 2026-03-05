@@ -828,6 +828,7 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             "symbol": symbol,
             "timeframe": timeframe,
             "timestamp": datetime.now().isoformat(),
+            "signal_timestamp": datetime.now().isoformat(),
             "signal": decision,
             "confidence": confidence,
             "price": current_price,
@@ -1940,20 +1941,12 @@ def _analyze_4h(closes, ta) -> Dict:
 
 
 @router.get("/pulse-v3/{symbol}")
-async def get_pulse_v3_analysis(symbol: str):
+async def get_pulse_v3_analysis(symbol: str, timeframe: str = "5m"):
     """
     PULSE 3 - Hybrid Scalp: 3 Zamanlı, 3 Filtreli, Hızlı Karar (REGIME-AWARE)
     
-    Zaman Dilimleri: 5m(%50) + 1H(%30) + 4H(%20)
+    Zaman Dilimleri: 5m(%50) + 1H(%30) + 4H(%20) (Base timeframe is dynamic)
     Sinyal Tipleri: SCOUT (40-65) / CONFIRM (65+) / HOLD (<40)
-    R/R Minimum: Regime-dynamic (1.2-1.5)
-    Cache: 5m=30sn, 1H=5dk, 4H=10dk
-    
-    REGIME-AWARE:
-    - Order Block detection (ICT simplified) replaces basic S/R in trend
-    - Direction filtering (no SELL in STRONG_TREND_UP)
-    - Dynamic R/R based on regime
-    - Entry zones adjusted for trend pullbacks
     """
     try:
         from services.ml_prediction_service import _compute_technical_indicators
@@ -1967,20 +1960,20 @@ async def get_pulse_v3_analysis(symbol: str):
         is_timed_out, timeout_until, timeout_reason = await check_fake_signal_timeout(symbol)
         
         # ─── PARALEL VERİ ÇEKME (Cache'li) ───────────────────────────────
-        data_5m, data_1h, data_4h = await asyncio.gather(
-            _fetch_tf_data(symbol, "5m", limit=50, cache_seconds=30),
+        data_base, data_1h, data_4h = await asyncio.gather(
+            _fetch_tf_data(symbol, timeframe, limit=50, cache_seconds=30),
             _fetch_tf_data(symbol, "1H", limit=60, cache_seconds=300),
             _fetch_tf_data(symbol, "4H", limit=30, cache_seconds=600)
         )
         
-        if not data_5m or len(data_5m) < 15:
-            return {"error": "Insufficient data for this symbol. Intraday data may not be available.", "error_key": "pulse.insufficientData"}
+        if not data_base or len(data_base) < 15:
+            return {"error": f"Insufficient {timeframe} data for this symbol.", "error_key": "pulse.insufficientData"}
         
-        # Convert 5m data
-        c5 = np.array([c["close"] for c in data_5m], dtype=np.float64)
-        h5 = np.array([c["high"] for c in data_5m], dtype=np.float64)
-        l5 = np.array([c["low"] for c in data_5m], dtype=np.float64)
-        v5 = np.array([c.get("volume", 0) for c in data_5m], dtype=np.float64)
+        # Convert base data
+        c5 = np.array([c["close"] for c in data_base], dtype=np.float64)
+        h5 = np.array([c["high"] for c in data_base], dtype=np.float64)
+        l5 = np.array([c["low"] for c in data_base], dtype=np.float64)
+        v5 = np.array([c.get("volume", 0) for c in data_base], dtype=np.float64)
         # Use live price from DataHub (updated every 30s)
         from services.data_fetcher import fetch_latest_price
         _live = await fetch_latest_price(symbol)

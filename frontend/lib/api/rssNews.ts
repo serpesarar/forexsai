@@ -221,6 +221,82 @@ export async function reAnalyzeFallbackNews(
   return res.json();
 }
 
+// Interface for candle news response
+export interface CandleNewsResponse {
+  success: boolean;
+  symbol: string;
+  candle: {
+    timestamp: string;
+    change_pct: number;
+    range_pct: number;
+    is_significant: boolean;
+  };
+  news_count: number;
+  news: MatchedNewsItem[];
+}
+
+export interface MatchedNewsItem {
+  id: string;
+  headline: string;
+  headline_en: string;
+  timestamp: string;
+  source: string;
+  urgency: string;
+  score: number;
+  direction: string;
+  reasoning_tr: string;
+  relevance_score: number;
+  url: string;
+}
+
+// AKILLI HABER-MUM EŞLEŞTİRME
+// Büyük mum hareketlerini gerçekten açıklayan haberleri getir
+export async function fetchNewsForCandle(
+  symbol: string,
+  candleTimestamp: string,
+  candleOpen: number,
+  candleClose: number,
+  candleHigh: number,
+  candleLow: number,
+  timeframe: string = "1h"
+): Promise<CandleNewsResponse> {
+  const params = new URLSearchParams({
+    candle_timestamp: candleTimestamp,
+    candle_open: candleOpen.toString(),
+    candle_close: candleClose.toString(),
+    candle_high: candleHigh.toString(),
+    candle_low: candleLow.toString(),
+    timeframe: timeframe,
+  });
+
+  const url = `${API_BASE}/api/rss/candle-news/${symbol}?${params}`;
+  console.log("[fetchNewsForCandle] Fetching:", url);
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: { Accept: "application/json" },
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("[fetchNewsForCandle] Error:", errorText);
+      throw new Error(`Failed to fetch candle news: ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log(`[fetchNewsForCandle] Found ${data.news?.length || 0} relevant news items`);
+    return data;
+  } catch (error) {
+    console.error("[fetchNewsForCandle] Fetch error:", error);
+    throw error;
+  }
+}
+
 // Haber önceliğine göre renk belirle
 export function getUrgencyColor(urgency: string): string {
   switch (urgency) {
