@@ -93,10 +93,13 @@ async def get_rss_news(
             .limit(limit)
         )
         
-        # Log total count for debugging
-        count_result = supabase.table("enriched_news").select("id", count="exact").execute()
-        total_in_db = getattr(count_result, 'count', 0)
-        print(f"[RSS API] Total items in DB: {total_in_db}")
+        # Log total count for debugging (simplified)
+        try:
+            count_result = supabase.table("enriched_news").select("id").execute()
+            total_in_db = len(count_result.get('data', [])) if isinstance(count_result, dict) else len(count_result.data or [])
+            print(f"[RSS API] Total items in DB: {total_in_db}")
+        except Exception as count_err:
+            print(f"[RSS API] Count query failed: {count_err}")
         
         # Apply filters
         if urgency:
