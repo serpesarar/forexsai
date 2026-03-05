@@ -63,6 +63,288 @@ function symIcon(sym: string): string {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// HELPER COMPONENTS
+// ════════════════════════════════════════════════════════════════════════════
+
+function SymbolCard({ sym, d }: { sym: string; d: any }) {
+  const name = symLabel(sym);
+  const icon = symIcon(sym);
+  const wr = d.win_rate ?? 0;
+  const netPips = d.net_pips ?? 0;
+  const netPos = netPips >= 0;
+  const conf = wr;
+
+  return (
+    <div
+      className="rounded-xl flex flex-col gap-3 transition-all duration-200 hover:translate-y-[-1px]"
+      style={{
+        background: "var(--bg-card)",
+        border: `1px solid var(--border-subtle)`,
+        padding: "20px",
+      }}
+    >
+      {/* Header: Icon + Name + Confidence */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span style={{ fontSize: 16 }}>{icon}</span>
+          <span style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>{name}</span>
+        </div>
+        <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>
+          ~ {conf.toFixed(0)}% confidence
+        </span>
+      </div>
+
+      {/* Main PnL Number */}
+      <div className="flex items-end justify-between">
+        <span style={{
+          fontFamily: FONT,
+          fontSize: 32,
+          fontWeight: 700,
+          letterSpacing: "-0.5px",
+          lineHeight: 1,
+          color: netPos ? "var(--accent-positive)" : "var(--accent-negative)",
+        }}>
+          {netPos ? "+" : ""}{netPips.toFixed(1)}p
+        </span>
+      </div>
+
+      {/* W / L row */}
+      <div className="flex items-center gap-3" style={{ paddingTop: 4, borderTop: `1px solid var(--border-subtle)` }}>
+        <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: "var(--accent-positive)" }}>
+          {d.completed ?? 0}W
+        </span>
+        <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: "var(--accent-negative)" }}>
+          {d.stopped ?? 0}L
+        </span>
+        <span style={{ fontFamily: FONT, fontSize: 11, color: "var(--text-muted)", marginLeft: "auto" }}>
+          {d.total ?? 0} signals
+        </span>
+      </div>
+
+      {/* Target Bars (TP1-TP4) */}
+      {d.target_rates && Object.keys(d.target_rates).length > 0 && (
+        <div className="flex flex-col gap-2" style={{ paddingTop: 8, borderTop: `1px solid var(--border-subtle)` }}>
+          {Object.entries(d.target_rates).sort().map(([tp, rate]) => (
+            <TpBar key={tp} name={tp} rate={rate as number} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ModelCard({ model, stats, onSelectSymbol }: { model: string; stats: ModelStats; onSelectSymbol: (symbol: string, model: string) => void }) {
+  const [open, setOpen] = useState(true);
+  const theme = getTheme(model);
+  const Icon = theme.Icon;
+  const wr = stats.win_rate;
+  const wrColor = wr >= 55 ? "var(--accent-positive)" : wr >= 40 ? "var(--accent-warning)" : "var(--accent-negative)";
+  const netPos = stats.net_pips >= 0;
+
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+  const { data: matrixData, isLoading: matrixLoading } = useQuery({
+    queryKey: ["signals-matrix", model],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/api/learning/signals/matrix?model=${model}`);
+      if (!res.ok) throw new Error("Failed to fetch matrix");
+      const data = await res.json();
+      return data.matrix;
+    },
+    staleTime: 30000,
+    enabled: open,
+  });
+
+  return (
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{ background: "var(--bg-card)", border: `1px solid var(--border-subtle)` }}
+    >
+      {/* ── Model Header ── */}
+      <div
+        className="w-full flex items-center gap-4 px-5 py-4 transition-colors cursor-pointer"
+        style={{ borderBottom: open ? `1px solid var(--border-subtle)` : "none" }}
+        onClick={() => setOpen(!open)}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.015)")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+      >
+        {/* Icon + Label */}
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+          style={{ background: `${theme.color}12`, border: `1px solid ${theme.color}20` }}>
+          <Icon className="w-5 h-5" style={{ color: theme.color, width: 20, height: 20 }} />
+        </div>
+        <div className="text-left flex-1 min-w-0">
+          <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>{theme.label}</p>
+          <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 400, color: "var(--text-muted)" }}>
+            {stats.total_signals} signals · All sessions
+          </p>
+        </div>
+
+        {/* Win Rate Ring */}
+        <div className="relative shrink-0">
+          <ConfidenceRing rate={wr} color={wrColor} size={48} />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: wrColor }}>{wr}%</span>
+          </div>
+        </div>
+
+        {/* KPI: Total Net */}
+        <div className="text-right shrink-0 hidden sm:flex flex-col items-end">
+          <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
+            TOTAL NET
+          </span>
+          <span style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: netPos ? "var(--accent-positive)" : "var(--accent-negative)", letterSpacing: "-0.5px" }}>
+            {netPos ? "+" : ""}{stats.net_pips.toFixed(1)}p
+          </span>
+        </div>
+
+        {/* KPI: R/R */}
+        <div className="text-right shrink-0 hidden md:flex flex-col items-end">
+          <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
+            R/R
+          </span>
+          <span style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: stats.risk_reward >= 1.5 ? "var(--accent-positive)" : "var(--accent-warning)", letterSpacing: "-0.3px" }}>
+            {stats.risk_reward.toFixed(2)}
+          </span>
+        </div>
+
+        {open ? <ChevronUp className="w-4 h-4 shrink-0" style={{ color: "var(--text-muted)" }} /> : <ChevronDown className="w-4 h-4 shrink-0" style={{ color: "var(--text-muted)" }} />}
+      </div>
+
+      {/* ── Expanded Content ── */}
+      {open && (
+        <div className="p-5 space-y-5">
+          {/* KPI Strip */}
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: "TOTAL PROFIT", val: `+${stats.total_profit_pips ?? stats.avg_profit_pips}p`, color: "var(--accent-positive)" },
+              { label: "TOTAL LOSS", val: `-${stats.total_loss_pips ?? stats.avg_loss_pips}p`, color: "var(--accent-negative)" },
+              { label: "AVG PROFIT", val: `+${stats.avg_profit_pips}p`, color: "var(--accent-positive)" },
+            ].map(s => (
+              <div key={s.label} className="rounded-lg text-center" style={{ background: "var(--bg-surface)", padding: "14px 12px", border: `1px solid var(--border-subtle)` }}>
+                <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 6 }}>
+                  {s.label}
+                </p>
+                <p style={{ fontFamily: FONT, fontSize: 20, fontWeight: 700, color: s.color, letterSpacing: "-0.5px" }}>
+                  {s.val}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Overall Target Rates */}
+          {Object.keys(stats.target_rates).length > 0 && (
+            <div className="space-y-2.5">
+              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const }}>
+                Overall Target Hit Rates
+              </p>
+              <div className="rounded-lg" style={{ background: "var(--bg-surface)", padding: 16, border: `1px solid var(--border-subtle)` }}>
+                <div className="flex flex-col gap-3">
+                  {Object.entries(stats.target_rates).sort().map(([tp, rate]) => (
+                    <TpBar key={tp} name={tp} rate={rate} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Per-Symbol Asset Cards */}
+          {Object.keys(stats.symbols).length > 0 && (
+            <div>
+              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>
+                Per Asset Performance
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {Object.entries(stats.symbols).map(([sym, d]) => (
+                  <div
+                    key={sym}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectSymbol(sym, model);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <SymbolCard sym={sym} d={d} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Timeframe Matrix View */}
+          {Object.keys(stats.symbols).length > 0 && (
+            <div>
+              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>
+                Timeframe Breakdown (Live)
+              </p>
+              <div className="rounded-lg overflow-x-auto scrollbar-hide" style={{ background: "var(--bg-surface)", border: `1px solid var(--border-subtle)` }}>
+                {matrixLoading ? (
+                  <div className="p-6 flex items-center justify-center">
+                    <RefreshCw className="w-4 h-4 animate-spin" style={{ color: "var(--text-muted)" }} />
+                  </div>
+                ) : !matrixData || Object.keys(matrixData).length === 0 ? (
+                  <div className="p-6 text-center text-[12px]" style={{ color: "var(--text-muted)" }}>
+                    No active signals found.
+                  </div>
+                ) : (
+                  <table className="w-full text-left border-collapse min-w-[500px]">
+                    <thead>
+                      <tr style={{ background: "rgba(255,255,255,0.02)" }}>
+                        <th className="py-3 px-4 text-[10px] font-semibold uppercase tracking-[0.08em] border-b border-[var(--border-subtle)]" style={{ color: "var(--text-muted)" }}>Symbol</th>
+                        {["15m", "30m", "1h", "4h", "1d"].map(tf => (
+                          <th key={tf} className="py-3 px-4 text-[10px] font-semibold uppercase tracking-[0.08em] border-b border-[var(--border-subtle)] text-center" style={{ color: "var(--text-muted)" }}>{tf}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"].map(symId => {
+                        const rowData = matrixData[symId] || matrixData[symId.split('.')[0]];
+                        if (!rowData) return null;
+                        const name = symLabel(symId);
+                        const icon = symIcon(symId);
+                        return (
+                          <tr key={symId} className="border-b transition-colors cursor-pointer" style={{ borderColor: "var(--border-subtle)" }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectSymbol(symId, model);
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                            <td className="py-3 px-4 flex items-center gap-2">
+                              <span className="text-[14px]">{icon}</span>
+                              <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>{name}</span>
+                            </td>
+                            {["15m", "30m", "1h", "4h", "1d"].map(tf => {
+                              const cell = rowData[tf];
+                              if (!cell) return <td key={tf} className="py-3 px-4 text-center text-[var(--text-muted)]">-</td>;
+                              const isHold = cell.direction === "HOLD";
+                              const isOld = cell.age_hours > 24;
+                              const dotColor = cell.direction === "BUY" ? "var(--accent-positive)" : cell.direction === "SELL" ? "var(--accent-negative)" : "var(--accent-warning)";
+                              const textColor = cell.direction === "BUY" ? "var(--accent-positive)" : cell.direction === "SELL" ? "var(--accent-negative)" : "var(--text-muted)";
+                              return (
+                                <td key={tf} className={`py-3 px-4 text-center ${isOld ? 'opacity-40' : ''}`} title={isOld ? 'Signal older than 24h' : ''}>
+                                  <div className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-md" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
+                                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: isHold ? 'transparent' : dotColor, border: isHold ? '1px solid var(--text-muted)' : 'none', boxShadow: isHold ? 'none' : `0 0 6px ${dotColor}80` }}></span>
+                                    <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 600, color: textColor }}>{isHold ? '-' : cell.confidence.toFixed(0)}</span>
+                                  </div>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT — SIGNAL PERFORMANCE DASHBOARD
 // ════════════════════════════════════════════════════════════════════════════
 export default function LearningDashboardV2() {
@@ -93,285 +375,7 @@ export default function LearningDashboardV2() {
   const failBreak = dashboard?.failure_breakdown || {};
   const activeSignals = activeData?.signals || [];
 
-  // ── Helper Components (defined inside main component to access state) ──
-
-  function SymbolCard({ sym, d }: { sym: string; d: any }) {
-    const name = symLabel(sym);
-    const icon = symIcon(sym);
-    const wr = d.win_rate ?? 0;
-    const netPips = d.net_pips ?? 0;
-    const netPos = netPips >= 0;
-    const conf = wr;
-
-    return (
-      <div
-        className="rounded-xl flex flex-col gap-3 transition-all duration-200 hover:translate-y-[-1px]"
-        style={{
-          background: "var(--bg-card)",
-          border: `1px solid var(--border-subtle)`,
-          padding: "20px",
-        }}
-      >
-        {/* Header: Icon + Name + Confidence */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span style={{ fontSize: 16 }}>{icon}</span>
-            <span style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>{name}</span>
-          </div>
-          <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>
-            ~ {conf.toFixed(0)}% confidence
-          </span>
-        </div>
-
-        {/* Main PnL Number */}
-        <div className="flex items-end justify-between">
-          <span style={{
-            fontFamily: FONT,
-            fontSize: 32,
-            fontWeight: 700,
-            letterSpacing: "-0.5px",
-            lineHeight: 1,
-            color: netPos ? "var(--accent-positive)" : "var(--accent-negative)",
-          }}>
-            {netPos ? "+" : ""}{netPips.toFixed(1)}p
-          </span>
-        </div>
-
-        {/* W / L row */}
-        <div className="flex items-center gap-3" style={{ paddingTop: 4, borderTop: `1px solid var(--border-subtle)` }}>
-          <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: "var(--accent-positive)" }}>
-            {d.completed ?? 0}W
-          </span>
-          <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: "var(--accent-negative)" }}>
-            {d.stopped ?? 0}L
-          </span>
-          <span style={{ fontFamily: FONT, fontSize: 11, color: "var(--text-muted)", marginLeft: "auto" }}>
-            {d.total ?? 0} signals
-          </span>
-        </div>
-
-        {/* Target Bars (TP1-TP4) */}
-        {d.target_rates && Object.keys(d.target_rates).length > 0 && (
-          <div className="flex flex-col gap-2" style={{ paddingTop: 8, borderTop: `1px solid var(--border-subtle)` }}>
-            {Object.entries(d.target_rates).sort().map(([tp, rate]) => (
-              <TpBar key={tp} name={tp} rate={rate as number} />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  function ModelCard({ model, stats }: { model: string; stats: ModelStats }) {
-    const [open, setOpen] = useState(true);
-    const theme = getTheme(model);
-    const Icon = theme.Icon;
-    const wr = stats.win_rate;
-    const wrColor = wr >= 55 ? "var(--accent-positive)" : wr >= 40 ? "var(--accent-warning)" : "var(--accent-negative)";
-    const netPos = stats.net_pips >= 0;
-
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
-    const { data: matrixData, isLoading: matrixLoading } = useQuery({
-      queryKey: ["signals-matrix", model],
-      queryFn: async () => {
-        const res = await fetch(`${API_BASE}/api/learning/signals/matrix?model=${model}`);
-        if (!res.ok) throw new Error("Failed to fetch matrix");
-        const data = await res.json();
-        return data.matrix;
-      },
-      staleTime: 30000,
-      enabled: open,
-    });
-
-    return (
-      <div
-        className="rounded-xl overflow-hidden"
-        style={{ background: "var(--bg-card)", border: `1px solid var(--border-subtle)` }}
-      >
-        {/* ── Model Header ── */}
-        <div
-          className="w-full flex items-center gap-4 px-5 py-4 transition-colors cursor-pointer"
-          style={{ borderBottom: open ? `1px solid var(--border-subtle)` : "none" }}
-          onClick={() => setOpen(!open)}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.015)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-        >
-          {/* Icon + Label */}
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: `${theme.color}12`, border: `1px solid ${theme.color}20` }}>
-            <Icon className="w-5 h-5" style={{ color: theme.color, width: 20, height: 20 }} />
-          </div>
-          <div className="text-left flex-1 min-w-0">
-            <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>{theme.label}</p>
-            <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 400, color: "var(--text-muted)" }}>
-              {stats.total_signals} signals · All sessions
-            </p>
-          </div>
-
-          {/* Win Rate Ring */}
-          <div className="relative shrink-0">
-            <ConfidenceRing rate={wr} color={wrColor} size={48} />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: wrColor }}>{wr}%</span>
-            </div>
-          </div>
-
-          {/* KPI: Total Net */}
-          <div className="text-right shrink-0 hidden sm:flex flex-col items-end">
-            <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
-              TOTAL NET
-            </span>
-            <span style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: netPos ? "var(--accent-positive)" : "var(--accent-negative)", letterSpacing: "-0.5px" }}>
-              {netPos ? "+" : ""}{stats.net_pips.toFixed(1)}p
-            </span>
-          </div>
-
-          {/* KPI: R/R */}
-          <div className="text-right shrink-0 hidden md:flex flex-col items-end">
-            <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
-              R/R
-            </span>
-            <span style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: stats.risk_reward >= 1.5 ? "var(--accent-positive)" : "var(--accent-warning)", letterSpacing: "-0.3px" }}>
-              {stats.risk_reward.toFixed(2)}
-            </span>
-          </div>
-
-          {open ? <ChevronUp className="w-4 h-4 shrink-0" style={{ color: "var(--text-muted)" }} /> : <ChevronDown className="w-4 h-4 shrink-0" style={{ color: "var(--text-muted)" }} />}
-        </div>
-
-        {/* ── Expanded Content ── */}
-        {open && (
-          <div className="p-5 space-y-5">
-            {/* KPI Strip */}
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: "TOTAL PROFIT", val: `+${stats.total_profit_pips ?? stats.avg_profit_pips}p`, color: "var(--accent-positive)" },
-                { label: "TOTAL LOSS", val: `-${stats.total_loss_pips ?? stats.avg_loss_pips}p`, color: "var(--accent-negative)" },
-                { label: "AVG PROFIT", val: `+${stats.avg_profit_pips}p`, color: "var(--accent-positive)" },
-              ].map(s => (
-                <div key={s.label} className="rounded-lg text-center" style={{ background: "var(--bg-surface)", padding: "14px 12px", border: `1px solid var(--border-subtle)` }}>
-                  <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 6 }}>
-                    {s.label}
-                  </p>
-                  <p style={{ fontFamily: FONT, fontSize: 20, fontWeight: 700, color: s.color, letterSpacing: "-0.5px" }}>
-                    {s.val}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {/* Overall Target Rates */}
-            {Object.keys(stats.target_rates).length > 0 && (
-              <div className="space-y-2.5">
-                <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const }}>
-                  Overall Target Hit Rates
-                </p>
-                <div className="rounded-lg" style={{ background: "var(--bg-surface)", padding: 16, border: `1px solid var(--border-subtle)` }}>
-                  <div className="flex flex-col gap-3">
-                    {Object.entries(stats.target_rates).sort().map(([tp, rate]) => (
-                      <TpBar key={tp} name={tp} rate={rate} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Per-Symbol Asset Cards */}
-            {Object.keys(stats.symbols).length > 0 && (
-              <div>
-                <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>
-                  Per Asset Performance
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {Object.entries(stats.symbols).map(([sym, d]) => (
-                    <div
-                      key={sym}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedModelPerformance({ symbol: sym, model });
-                      }}
-                      className="cursor-pointer"
-                    >
-                      <SymbolCard sym={sym} d={d} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Timeframe Matrix View */}
-            {Object.keys(stats.symbols).length > 0 && (
-              <div>
-                <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>
-                  Timeframe Breakdown (Live)
-                </p>
-                <div className="rounded-lg overflow-x-auto scrollbar-hide" style={{ background: "var(--bg-surface)", border: `1px solid var(--border-subtle)` }}>
-                  {matrixLoading ? (
-                    <div className="p-6 flex items-center justify-center">
-                      <RefreshCw className="w-4 h-4 animate-spin" style={{ color: "var(--text-muted)" }} />
-                    </div>
-                  ) : !matrixData || Object.keys(matrixData).length === 0 ? (
-                    <div className="p-6 text-center text-[12px]" style={{ color: "var(--text-muted)" }}>
-                      No active signals found.
-                    </div>
-                  ) : (
-                    <table className="w-full text-left border-collapse min-w-[500px]">
-                      <thead>
-                        <tr style={{ background: "rgba(255,255,255,0.02)" }}>
-                          <th className="py-3 px-4 text-[10px] font-semibold uppercase tracking-[0.08em] border-b border-[var(--border-subtle)]" style={{ color: "var(--text-muted)" }}>Symbol</th>
-                          {["15m", "30m", "1h", "4h", "1d"].map(tf => (
-                            <th key={tf} className="py-3 px-4 text-[10px] font-semibold uppercase tracking-[0.08em] border-b border-[var(--border-subtle)] text-center" style={{ color: "var(--text-muted)" }}>{tf}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"].map(symId => {
-                          const rowData = matrixData[symId] || matrixData[symId.split('.')[0]];
-                          if (!rowData) return null;
-                          const name = symLabel(symId);
-                          const icon = symIcon(symId);
-                          return (
-                            <tr key={symId} className="border-b transition-colors cursor-pointer" style={{ borderColor: "var(--border-subtle)" }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedModelPerformance({ symbol: symId, model });
-                              }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
-                              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-                              <td className="py-3 px-4 flex items-center gap-2">
-                                <span className="text-[14px]">{icon}</span>
-                                <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>{name}</span>
-                              </td>
-                              {["15m", "30m", "1h", "4h", "1d"].map(tf => {
-                                const cell = rowData[tf];
-                                if (!cell) return <td key={tf} className="py-3 px-4 text-center text-[var(--text-muted)]">-</td>;
-                                const isHold = cell.direction === "HOLD";
-                                const isOld = cell.age_hours > 24;
-                                const dotColor = cell.direction === "BUY" ? "var(--accent-positive)" : cell.direction === "SELL" ? "var(--accent-negative)" : "var(--accent-warning)";
-                                const textColor = cell.direction === "BUY" ? "var(--accent-positive)" : cell.direction === "SELL" ? "var(--accent-negative)" : "var(--text-muted)";
-                                return (
-                                  <td key={tf} className={`py-3 px-4 text-center ${isOld ? 'opacity-40' : ''}`} title={isOld ? 'Signal older than 24h' : ''}>
-                                    <div className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-md" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
-                                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: isHold ? 'transparent' : dotColor, border: isHold ? '1px solid var(--text-muted)' : 'none', boxShadow: isHold ? 'none' : `0 0 6px ${dotColor}80` }}></span>
-                                      <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 600, color: textColor }}>{isHold ? '-' : cell.confidence.toFixed(0)}</span>
-                                    </div>
-                                  </td>
-                                );
-                              })}
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
+  // ── Helper Components (extracted outside to prevent infinite renders) ──
 
   return (
     <div
@@ -472,7 +476,7 @@ export default function LearningDashboardV2() {
                       <div
                         key={model}
                       >
-                        <ModelCard model={model} stats={stats} />
+                        <ModelCard model={model} stats={stats} onSelectSymbol={(sym, mod) => setSelectedModelPerformance({ symbol: sym, model: mod })} />
                       </div>
                     );
                   })}
