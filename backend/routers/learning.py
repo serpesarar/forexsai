@@ -5,6 +5,7 @@ Endpoints for prediction tracking, outcome checking, and learning insights.
 from __future__ import annotations
 
 from fastapi import APIRouter, Query
+from datetime import datetime, timedelta
 from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Optional, List
 from pydantic import BaseModel
@@ -888,7 +889,7 @@ async def get_prediction_history(
         return {"error": "Database client not available", "predictions": []}
     
     try:
-        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime(2000, 1, 1)
+        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime.strptime("2000-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
         cutoff_iso = cutoff.isoformat() + "Z"
         
         # Get predictions (no PostgREST join - custom httpx client doesn't support it)
@@ -1311,7 +1312,7 @@ async def get_strategy_performance(
         return {"error": "Database client not available"}
     
     try:
-        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime(2000, 1, 1)
+        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime.strptime("2000-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
         cutoff_iso = cutoff.isoformat() + "Z"
         
         # Get predictions with lifecycle fields (no PostgREST join - custom httpx client doesn't support it)
@@ -1668,7 +1669,7 @@ async def get_historical_signals_endpoint(
         
     try:
         from datetime import datetime, timedelta
-        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime(2000, 1, 1)
+        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime.strptime("2000-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
         cutoff_iso = cutoff.isoformat()
         
         # 1. Fetch signal records
@@ -1984,7 +1985,7 @@ async def get_model_timeframe_analysis(
         return {"error": "Database client not available"}
     
     try:
-        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime(2000, 1, 1)
+        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime.strptime("2000-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
         cutoff_iso = cutoff.isoformat() + "Z"
         
         # Build query
@@ -2182,7 +2183,7 @@ async def get_all_models_summary(
         return {"error": "Database client not available"}
     
     try:
-        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime(2000, 1, 1)
+        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime.strptime("2000-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
         cutoff_iso = cutoff.isoformat() + "Z"
         
         query = client.table("prediction_logs").select(
