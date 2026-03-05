@@ -3,7 +3,8 @@
  * DeepSeek AI analizli haberler için API çağrıları
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+// Hardcoded API base - environment variable may not be available
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 export interface NewsImpact {
   symbol: string;
