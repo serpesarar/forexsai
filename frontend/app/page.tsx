@@ -799,18 +799,19 @@ export default function HomePage() {
     const fetchCalendarData = async () => {
       try {
         setCalendarLoading(true);
-        
+
+        const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
         // Fetch economic calendar
-        const econResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/calendar/economic?days=30`);
+        const econResponse = await fetch(`${apiBase}/api/calendar/economic?days=30`);
         if (econResponse.ok) {
           const econData = await econResponse.json();
           if (econData.success) {
             setEconomicEvents(econData.events.slice(0, 10)); // Show only first 10
           }
         }
-        
+
         // Fetch earnings calendar
-        const earnResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/calendar/earnings?days=30`);
+        const earnResponse = await fetch(`${apiBase}/api/calendar/earnings?days=30`);
         if (earnResponse.ok) {
           const earnData = await earnResponse.json();
           if (earnData.success) {
@@ -823,7 +824,7 @@ export default function HomePage() {
         setCalendarLoading(false);
       }
     };
-    
+
     fetchCalendarData();
     // Refresh every 5 minutes
     const interval = setInterval(fetchCalendarData, 5 * 60 * 1000);

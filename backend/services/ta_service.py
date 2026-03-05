@@ -123,17 +123,33 @@ async def compute_ta_snapshot(symbol: str, limit: int = 220) -> dict:
     if prev_close and current_price:
         change_pct = float(((current_price - prev_close) / prev_close) * 100.0)
 
+    def _safe_float(v):
+        if v is None:
+            return None
+        import math
+        try:
+            f = float(v)
+            if math.isnan(f) or math.isinf(f):
+                return None
+            return f
+        except (ValueError, TypeError):
+            return None
+
     return {
         "symbol": symbol,
-        "current_price": current_price,
-        "last_close": last_close,
-        "prev_close": prev_close,
-        "change_pct": change_pct,
-        "ema": {"ema20": ema20, "ema50": ema50, "ema200": ema200},
-        "rsi14": rsi14,
+        "current_price": _safe_float(current_price),
+        "last_close": _safe_float(last_close),
+        "prev_close": _safe_float(prev_close),
+        "change_pct": _safe_float(change_pct),
+        "ema": {
+            "ema20": _safe_float(ema20), 
+            "ema50": _safe_float(ema50), 
+            "ema200": _safe_float(ema200)
+        },
+        "rsi14": _safe_float(rsi14),
         "trend": trend,
-        "supports": [s.__dict__ for s in supports],
-        "resistances": [r.__dict__ for r in resistances],
+        "supports": [{"price": _safe_float(s.price), "kind": s.kind, "hits": s.hits, "strength": _safe_float(s.strength)} for s in supports],
+        "resistances": [{"price": _safe_float(r.price), "kind": r.kind, "hits": r.hits, "strength": _safe_float(r.strength)} for r in resistances],
     }
 
 
