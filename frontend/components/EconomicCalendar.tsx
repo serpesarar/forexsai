@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Calendar, Clock, TrendingUp, TrendingDown, Minus, AlertCircle, Filter, Info } from "lucide-react";
+import { getApiBase } from "../lib/api/base";
 import { useI18nStore } from "../lib/i18n/store";
 
 interface EconomicEvent {
@@ -32,7 +33,7 @@ interface EconomicCalendarProps {
   onEventClick?: (event: EconomicEvent) => void;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+const API_URL = getApiBase();
 
 const impactStyles = {
   High: "bg-red-500/20 text-red-200 border-red-500/40",

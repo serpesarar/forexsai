@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { getApiBase } from "./base";
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 export interface LearningHealth {
   db_available: boolean;

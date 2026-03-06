@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { getApiBase } from "./api/base";
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 export async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const controller = new AbortController();

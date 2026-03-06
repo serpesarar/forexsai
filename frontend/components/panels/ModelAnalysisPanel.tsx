@@ -26,8 +26,9 @@ import {
   Crosshair
 } from "lucide-react";
 import { ModelPerformanceModal } from "./ModelPerformanceModal";
+import { getApiBase } from "../../lib/api/base";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
 // ── Types ───────────────────────────────────────────────────────────────────

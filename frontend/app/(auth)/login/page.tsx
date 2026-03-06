@@ -4,10 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth/store";
+import { getApiBase } from "@/lib/api/base";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 export default function LoginPage() {
   const router = useRouter();
@@ -53,7 +54,7 @@ export default function LoginPage() {
     if (!email) return;
     setResendingEmail(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app"}/api/auth/resend-verification`, {
+      const res = await fetch(`${API_BASE}/api/auth/resend-verification`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

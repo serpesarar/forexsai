@@ -15,8 +15,9 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { getApiBase } from "../../lib/api/base";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 const TF_ORDER = ["all", "5m", "15m", "30m", "1h", "4h", "1d"];
 
 interface HourlyData {

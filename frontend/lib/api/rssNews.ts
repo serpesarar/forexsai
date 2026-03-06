@@ -3,8 +3,9 @@
  * DeepSeek AI analizli haberler için API çağrıları
  */
 
-// Hardcoded API base - environment variable may not be available
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+import { getApiBase } from "./base";
+
+const API_BASE = getApiBase();
 
 export interface NewsImpact {
   symbol: string;

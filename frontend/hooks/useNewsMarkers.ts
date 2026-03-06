@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { getApiBase } from '../lib/api/base';
 
 export interface NewsMarker {
   id: string;
@@ -31,7 +32,7 @@ interface UseNewsMarkersReturn {
   refetch: () => void;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://upbeat-flow-production.up.railway.app';
+const API_URL = getApiBase();
 
 export function useNewsMarkers(
   symbol: string,

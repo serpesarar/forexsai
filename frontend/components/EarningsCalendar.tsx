@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { TrendingUp, Building2, Clock, DollarSign, BarChart3, AlertCircle, Filter, Info } from "lucide-react";
+import { getApiBase } from "../lib/api/base";
 import { useI18nStore } from "../lib/i18n/store";
 
 interface EarningsEvent {
@@ -29,7 +30,7 @@ interface EarningsCalendarProps {
   onEarningsClick?: (earnings: EarningsEvent) => void;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+const API_URL = getApiBase();
 
 const sectorColors: Record<string, string> = {
   Technology: "from-blue-500/30 to-cyan-500/30 text-blue-400",

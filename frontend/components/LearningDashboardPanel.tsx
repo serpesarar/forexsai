@@ -28,10 +28,11 @@ import {
   triggerOutcomeCheck,
   trigger1hOutcomeCheck,
 } from "../lib/api/learning";
+import { getApiBase } from "../lib/api/base";
 import { useI18nStore } from "../lib/i18n/store";
 import { ModelPerformanceModal } from "./panels/ModelPerformanceModal";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 /* ═══════════════════════════════════════════════════════════════════
    TYPES & CONSTANTS

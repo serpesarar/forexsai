@@ -27,6 +27,7 @@ import {
   useLifecycleDashboard, useActiveSignals, useSignalDetail,
   triggerLifecycleCheck, type ModelStats, type ActiveSignal, type SignalCheck,
 } from "../../lib/api/learning";
+import { getApiBase } from "../../lib/api/base";
 import { ModelPerformanceModal } from "./ModelPerformanceModal";
 
 // ── Theme-aware Color Palette (CSS Variables) ───────────────────────────────
@@ -150,7 +151,7 @@ function ModelCard({ model, stats, onSelectSymbol }: { model: string; stats: Mod
     })
     .filter(([, value]) => (value?.total || 0) > 0);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+  const API_BASE = getApiBase();
   const { data: matrixData, isLoading: matrixLoading } = useQuery({
     queryKey: ["signals-matrix", model],
     queryFn: async () => {
@@ -762,7 +763,7 @@ function SignalListModal({
         if (filter.symbol) params.set("symbol", filter.symbol);
         if (filter.model) params.set("model", filter.model);
 
-        const API = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+        const API = getApiBase();
         const res = await fetch(`${API}/api/learning/signals/recent?${params}`);
         const data = await res.json();
 

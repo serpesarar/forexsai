@@ -27,11 +27,12 @@ import {
   Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getApiBase } from "@/lib/api/base";
 import { fetcher } from "@/lib/api";
 import Link from "next/link";
 import type { EnrichedNews } from "@/types/news-correlation";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+const API_URL = getApiBase();
 
 // Impact badge colors
 const impactColors = {

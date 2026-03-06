@@ -13,6 +13,7 @@ import { useAuthStore, useIsAuthenticated, waitForHydration } from "../lib/auth/
 import CircularProgress from "../components/CircularProgress";
 import DetailPanel from "../components/DetailPanel";
 import { useDashboardStore, useDetailPanelStore } from "../lib/store";
+import { getApiBase } from "../lib/api/base";
 import { fetcher } from "../lib/api";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { useI18nStore } from "../lib/i18n/store";
@@ -800,7 +801,7 @@ export default function HomePage() {
       try {
         setCalendarLoading(true);
 
-        const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+        const apiBase = getApiBase();
         // Fetch economic calendar
         const econResponse = await fetch(`${apiBase}/api/calendar/economic?days=30`);
         if (econResponse.ok) {

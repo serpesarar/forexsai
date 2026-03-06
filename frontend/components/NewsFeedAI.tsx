@@ -26,9 +26,10 @@ import {
   getSymbolEmoji,
   RSSNewsItem,
 } from "../lib/api/rssNews";
+import { getApiBase } from "../lib/api/base";
 import { useI18nStore } from "../lib/i18n/store";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+const API_URL = getApiBase();
 
 // Types
 interface EconomicEvent {
