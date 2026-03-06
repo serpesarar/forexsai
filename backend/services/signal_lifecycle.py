@@ -1,13 +1,13 @@
 """
 Signal Lifecycle Manager
 ─────────────────────────
-Tracks active signals every 5 minutes, captures wicks (session high/low),
+Tracks active signals every minute, captures wicks (session high/low),
 detects target hits and stop losses, performs failure autopsy, and manages
-signal expiration/cleanup.
+timeframe-aware signal expiration/cleanup.
 
 Tables used:
   - prediction_logs  (read active, update status/targets_hit/exit)
-  - signal_checks    (insert 5-min snapshots)
+  - signal_checks    (insert per-check snapshots)
   - signal_failures  (insert failure autopsy on stop)
 """
 from __future__ import annotations
@@ -24,10 +24,15 @@ from typing import Any, Dict, List, Optional
 from database.supabase_client import get_supabase_client, is_db_available
 from services.data_fetcher import fetch_intraday_candles, fetch_latest_price
 from services.target_config import (
-    get_symbol_config,
     calculate_target_prices,
     calculate_stoploss_price,
     pips_from_price_change,
+)
+from services.signal_analytics import (
+    classify_signal,
+    normalize_model_type,
+    normalize_timeframe as normalize_analytics_timeframe,
+    parse_targets_hit,
 )
 from utils.json_helpers import parse_json_field, parse_json_fields
 
@@ -82,15 +87,25 @@ class LifecycleMetrics:
 metrics = LifecycleMetrics()
 
 # ─── Configuration ───────────────────────────────────────────────────────────
-LIFECYCLE_CHECK_INTERVAL = 180        # 3 minutes — price check every 3 min
-# REVERTED: Back to 30 minutes for scalping signals
-# Scalping signals: 30 min lifetime with 3-min price checks
-# TP1-2-3-4 and SL checked every 3 minutes
-SIGNAL_MAX_AGE_MINUTES = 30            # Expire after 30 minutes (scalping mode)
+LIFECYCLE_CHECK_INTERVAL = 60         # 1 minute — compare signals every minute
+SIGNAL_MAX_AGE_MINUTES = 15           # Default evaluation window for legacy/15m
 MAX_ACTIVE_SIGNALS = 100              # Cap for performance
 ARCHIVE_AFTER_DAYS = 30               # Move to cold storage after 30 days
+CLEANUP_INTERVAL_SECONDS = 1800       # Cleanup every 30 minutes
+
+KNOWN_TIMEFRAMES = {"1m", "5m", "15m", "30m", "1h", "4h", "1d"}
+TIMEFRAME_EVALUATION_WINDOWS = {
+    "1m": 2,
+    "5m": 10,
+    "15m": SIGNAL_MAX_AGE_MINUTES,
+    "30m": 60,
+    "1h": 120,
+    "4h": 480,
+    "1d": 2880,
+}
 
 _last_lifecycle_check: Optional[datetime] = None
+_last_cleanup_run: Optional[datetime] = None
 _lifecycle_lock = asyncio.Lock()  # Prevents concurrent lifecycle checks in same process
 
 
@@ -131,6 +146,97 @@ def _is_price_stale(symbol: str, current_price: float) -> bool:
     # Price is same as before - check how long
     minutes_unchanged = (now - last_time).total_seconds() / 60
     return minutes_unchanged >= PRICE_STALENESS_THRESHOLD_MINUTES
+
+
+def _normalize_timeframe(value: Optional[str]) -> str:
+    normalized = (value or "").lower().strip()
+    return normalized if normalized in KNOWN_TIMEFRAMES else "15m"
+
+
+def _evaluation_window_minutes(timeframe: Optional[str]) -> int:
+    return TIMEFRAME_EVALUATION_WINDOWS.get(_normalize_timeframe(timeframe), SIGNAL_MAX_AGE_MINUTES)
+
+
+def _cleanup_grace_minutes(timeframe: Optional[str]) -> int:
+    return max(_evaluation_window_minutes(timeframe) * 2, 120)
+
+
+def _parse_created_at(value: Any) -> Optional[datetime]:
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, str):
+        try:
+            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except Exception:
+            return None
+    return None
+
+
+def _coerce_float(value: Any) -> Optional[float]:
+    if value in (None, ""):
+        return None
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    if parsed != parsed:
+        return None
+    return parsed
+
+
+def _is_reasonable_price_level(
+    entry_price: float,
+    candidate_price: Optional[float],
+    fallback_price: float,
+    direction: str,
+    *,
+    is_stop: bool = False,
+) -> bool:
+    if candidate_price is None or candidate_price <= 0:
+        return False
+
+    if direction == "BUY":
+        if is_stop and candidate_price >= entry_price:
+            return False
+        if not is_stop and candidate_price <= entry_price:
+            return False
+    elif direction == "SELL":
+        if is_stop and candidate_price <= entry_price:
+            return False
+        if not is_stop and candidate_price >= entry_price:
+            return False
+
+    fallback_distance = abs(fallback_price - entry_price)
+    candidate_distance = abs(candidate_price - entry_price)
+    if fallback_distance <= 0:
+        return False
+
+    ratio = candidate_distance / fallback_distance
+    return 0.2 <= ratio <= 5.0
+
+
+def _resolve_target_prices(
+    signal: dict,
+    entry_price: float,
+    direction: str,
+    symbol: str,
+    timeframe: str,
+) -> Dict[str, float]:
+    stored_targets = signal.get("targets") or {}
+    if not isinstance(stored_targets, dict):
+        stored_targets = {}
+
+    fallback_targets = calculate_target_prices(entry_price, direction, symbol, timeframe)
+    resolved_targets: Dict[str, float] = {}
+    for tp_name, fallback_price in fallback_targets.items():
+        stored_price = _coerce_float(stored_targets.get(tp_name))
+        if _is_reasonable_price_level(entry_price, stored_price, fallback_price, direction):
+            resolved_targets[tp_name] = round(stored_price or fallback_price, 4)
+        else:
+            resolved_targets[tp_name] = round(fallback_price, 4)
+    return resolved_targets
 
 
 async def _get_session_high_low(symbol: str, minutes: int = 5) -> Dict[str, Optional[float]]:
@@ -282,18 +388,20 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     """
     signal_id = signal["id"]
     symbol = signal["symbol"]
-    direction = signal.get("ml_direction", "HOLD")
-    entry_price = signal.get("ml_entry_price")
+    direction = (signal.get("ml_direction") or "HOLD").upper().strip()
+    entry_price = _coerce_float(signal.get("ml_entry_price"))
+    timeframe = _normalize_timeframe(signal.get("timeframe"))
+    evaluation_window = _evaluation_window_minutes(timeframe)
 
     # Parse JSON string fields from DB (safe normalization)
     parse_json_fields(signal, ["targets", "targets_hit", "factors"])
 
-    if not entry_price or direction == "HOLD":
+    if entry_price is None or direction not in {"BUY", "SELL"}:
         # Can't track HOLD signals; mark expired
         _update_signal_status(client, signal_id, "expired", entry_price)
         return "expired"
 
-    config = get_symbol_config(symbol)
+    created_dt = _parse_created_at(signal.get("created_at"))
 
     # ── 1. Get current spot price (DataHub-backed canonical source) ──
     current = None
@@ -305,13 +413,10 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         logger.warning(f"lifecycle.price_error | symbol={symbol} error={e}")
 
     if current is None or current <= 0:
-        # Even if price is unavailable, enforce max-age timeout so signals don't stay active forever.
-        created_at = signal.get("created_at", "")
         try:
-            if isinstance(created_at, str) and created_at:
-                created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+            if created_dt is not None:
                 age_minutes = (datetime.now(created_dt.tzinfo) - created_dt).total_seconds() / 60
-                if age_minutes >= SIGNAL_MAX_AGE_MINUTES:
+                if age_minutes >= evaluation_window:
                     _update_signal_status(client, signal_id, "expired", entry_price)
                     logger.info(
                         f"⏰ Signal {signal_id[:8]} {symbol} expired without price update "
@@ -335,7 +440,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
             f"price={current:.2f} unchanged for 1min+ - PAUSING lifetime (24h max)"
         )
     else:
-        effective_max_age = SIGNAL_MAX_AGE_MINUTES  # Normal 30 min timeout
+        effective_max_age = evaluation_window
 
     # ── 2. Calculate profit/loss in pips using spot price ──
     if direction == "BUY":
@@ -384,20 +489,16 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
 
 
     # ── 3. Update cumulative high/low ──
-    prev_high = signal.get("highest_profit_pips") or 0
-    prev_low = signal.get("lowest_drawdown_pips") or 0
+    prev_high = _coerce_float(signal.get("highest_profit_pips"), 0.0) or 0.0
+    prev_low = _coerce_float(signal.get("lowest_drawdown_pips"), 0.0) or 0.0
     new_high = max(prev_high, best_pips)
     new_low = min(prev_low, worst_pips)
 
     # ── 4. Check targets ──
-    targets_config = signal.get("targets") or {}
-    # If targets not populated yet, compute them
-    if not targets_config:
-        for tl in config.targets:
-            targets_config[tl.name] = tl.pips
-
+    target_prices = _resolve_target_prices(signal, entry_price, direction, symbol, timeframe)
     targets_hit = signal.get("targets_hit") or {}
-    target_prices = calculate_target_prices(entry_price, direction, symbol)
+    if not isinstance(targets_hit, dict):
+        targets_hit = {}
 
     for tp_name, tp_price in target_prices.items():
         if targets_hit.get(tp_name):
@@ -410,8 +511,8 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
             logger.info(f"✅ Signal {signal_id[:8]} {symbol} {direction}: {tp_name} HIT @ low={session_low:.2f} (target={tp_price:.2f})")
 
     # ── 5. Check stop loss ──
-    sl_pips = signal.get("stop_loss_pips") or config.stoploss_pips
-    sl_price = calculate_stoploss_price(entry_price, direction, symbol)
+    sl_price = calculate_stoploss_price(entry_price, direction, symbol, timeframe)
+    resolved_sl_pips = abs(pips_from_price_change(abs(entry_price - sl_price), symbol))
     hit_stop = False
 
     if direction == "BUY" and session_low and session_low <= sl_price:
@@ -464,17 +565,13 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         logger.info(f"🛑 Signal {signal_id[:8]} {symbol} {direction} STOPPED @ {sl_price:.2f}")
     else:
         # Check age for expiration (respect effective_max_age for stale prices)
-        created_at = signal.get("created_at", "")
-        if isinstance(created_at, str) and created_at:
+        if created_dt is not None:
             try:
-                created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                 age_minutes = (datetime.now(created_dt.tzinfo) - created_dt).total_seconds() / 60
                 
-                # Use effective_max_age which respects stale price detection
-                # (stale = market closed → 24h timeout, normal = SIGNAL_MAX_AGE_MINUTES)
                 max_age_for_symbol = effective_max_age
                 
-                if age_minutes >= max_age_for_symbol:  # Use extended timeout for stale prices
+                if age_minutes >= max_age_for_symbol:
                     new_status = "completed" if any_target_hit else "expired"
                     exit_price = current
                     logger.info(f"⏰ Signal {signal_id[:8]} {symbol} aged out ({age_minutes:.0f}m, max={max_age_for_symbol}m) → {new_status} (any_tp={any_target_hit}, stale={is_stale})")
@@ -486,7 +583,8 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         "highest_profit_pips": round(new_high, 2),
         "lowest_drawdown_pips": round(new_low, 2),
         "targets_hit": json.dumps(targets_hit),
-        "targets": json.dumps(targets_config),
+        "targets": json.dumps(target_prices),
+        "stop_loss_pips": round(resolved_sl_pips, 2),
     }
     if new_status:
         update_data["status"] = new_status
@@ -644,11 +742,10 @@ def _find_contradictions(indicators: dict, direction: str) -> Dict[str, str]:
 
 async def run_lifecycle_check() -> Dict[str, Any]:
     """
-    Main entry point — runs every 5 minutes.
+    Main entry point — runs every minute.
     1. Fetch all active signals
     2. Process each one (target/stop check, wick capture)
-    3. Cleanup expired signals
-    4. Return summary with metrics
+    3. Return summary with metrics
     """
     # Prevent concurrent lifecycle checks within same process
     if _lifecycle_lock.locked():
@@ -798,9 +895,8 @@ def _record_job_state(client, job_name: str, summary: Dict[str, Any]):
 
 async def cleanup_old_signals():
     """
-    1. Force-expire very old active signals (>2 hours)
-    2. Force-expire XAUUSD signals older than 1 hour (special handling)
-    3. Delete signal_checks older than 30 days
+    1. Force-expire active signals that exceed timeframe-aware cleanup grace
+    2. Keep signal_checks retention bounded
     """
     if not is_db_available():
         return
@@ -810,16 +906,20 @@ async def cleanup_old_signals():
         return
 
     try:
-        # Force-expire signals older than 2 hours that are still active
-        cutoff = (datetime.utcnow() - timedelta(hours=2)).isoformat() + "Z"
-        result = client.table("prediction_logs").select("id, created_at, symbol").eq(
+        result = client.table("prediction_logs").select("id, created_at, symbol, timeframe").eq(
             "status", "active"
-        ).lt("created_at", cutoff).limit(50).execute()
+        ).order("created_at", desc=False).limit(200).execute()
 
-        stale = safe_get_data(result)
+        stale = safe_get_data(result) or []
         expired_count = 0
         for s in stale:
             try:
+                created_dt = _parse_created_at(s.get("created_at"))
+                if created_dt is None:
+                    continue
+                age_minutes = (datetime.now(created_dt.tzinfo) - created_dt).total_seconds() / 60
+                if age_minutes < _cleanup_grace_minutes(s.get("timeframe")):
+                    continue
                 upd_result = client.table("prediction_logs").eq("id", s["id"]).update({
                     "status": "expired",
                     "exit_time": datetime.utcnow().isoformat() + "Z",
@@ -831,11 +931,7 @@ async def cleanup_old_signals():
                 logger.warning(f"Failed to expire signal {s['id'][:8]}: {upd_err}")
 
         if expired_count:
-            logger.info(f"🧹 Force-expired {expired_count} stale signals (>2h old)")
-
-        # Note: XAUUSD-specific force-expire removed — stale price detection
-        # + proper lifecycle check now handles XAUUSD signals correctly.
-        # Commodities/forex prices are fetched 24h (no US-hours filter).
+            logger.info(f"🧹 Force-expired {expired_count} stale signals beyond cleanup grace")
 
         # Delete signal_checks older than 30 days
         archive_cutoff = (datetime.utcnow() - timedelta(days=ARCHIVE_AFTER_DAYS)).isoformat() + "Z"
@@ -869,22 +965,6 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
 
     try:
         tf_order = ["5m", "15m", "30m", "1h", "4h", "1d"]
-        known_timeframes = set(tf_order)
-
-        def _coerce_float(value, default: Optional[float] = None) -> Optional[float]:
-            if value in (None, ""):
-                return default
-            try:
-                parsed = float(value)
-            except (TypeError, ValueError):
-                return default
-            if parsed != parsed:
-                return default
-            return parsed
-
-        def _normalize_timeframe(value: Optional[str]) -> Optional[str]:
-            normalized = (value or "").lower().strip()
-            return normalized if normalized in known_timeframes else None
 
         # Supabase PostgREST caps at 1000 rows per request.
         # Fetch day-by-day to stay under 1000 rows per request.
@@ -945,16 +1025,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
         # Per-model stats
         models = {}
         for sig in signals:
-            mt = sig.get("model_type") or sig.get("strategy") or "ml"
-            # Normalize old "pulse" entries based on strategy field
-            if mt == "pulse":
-                strat = (sig.get("strategy") or "").upper()
-                if strat == "PULSE_V3":
-                    mt = "pulse3"
-                elif strat == "PULSE_ML":
-                    mt = "pulse2"
-                else:
-                    mt = "pulse1"
+            mt = normalize_model_type(sig)
             if mt not in models:
                 models[mt] = {
                     "total": 0, "completed": 0, "stopped": 0, "expired": 0,
@@ -967,11 +1038,12 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
 
             m = models[mt]
             m["total"] += 1
-            status = sig.get("status", "expired")
+            sym = sig.get("symbol", "?")
+            status, _, scored_pips = classify_signal(sig, default_symbol=sym)
+            if status not in {"completed", "stopped", "expired"}:
+                continue
             m[status] = m.get(status, 0) + 1
 
-            # Symbol breakdown with per-symbol target tracking
-            sym = sig.get("symbol", "?")
             if sym not in m["symbols"]:
                 m["symbols"][sym] = {
                     "total": 0, "completed": 0, "stopped": 0, "expired": 0,
@@ -981,8 +1053,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
             m["symbols"][sym]["total"] += 1
             m["symbols"][sym][status] = m["symbols"][sym].get(status, 0) + 1
 
-            # Timeframe tracking
-            tf = _normalize_timeframe(sig.get("timeframe"))
+            tf = normalize_analytics_timeframe(sig.get("timeframe"))
             if tf:
                 if tf not in m["timeframes"]:
                     m["timeframes"][tf] = {
@@ -992,38 +1063,22 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                 m["timeframes"][tf]["total"] += 1
                 m["timeframes"][tf][status] = m["timeframes"][tf].get(status, 0) + 1
 
-            # Profit/loss — use ACTUAL entry→exit P/L, not peak drawdown
-            entry_price = _coerce_float(sig.get("ml_entry_price"))
-            exit_price_val = _coerce_float(sig.get("exit_price"))
-            direction = (sig.get("ml_direction") or "HOLD").upper()
-            sl_pips = abs(_coerce_float(sig.get("stop_loss_pips"), 0.0) or 0.0)
-            lowest_drawdown = abs(_coerce_float(sig.get("lowest_drawdown_pips"), 0.0) or 0.0)
-
-            if status == "completed" and entry_price is not None and exit_price_val is not None:
-                # Actual profit at exit
-                if direction == "BUY":
-                    actual_profit = pips_from_price_change(exit_price_val - entry_price, sym)
-                elif direction == "SELL":
-                    actual_profit = pips_from_price_change(entry_price - exit_price_val, sym)
-                else:
-                    actual_profit = 0
-                actual_profit = max(actual_profit, 0)  # Completed signals should be positive
+            if status == "completed":
+                actual_profit = max(scored_pips or 0.0, 0.0)
                 m["total_profit_pips"] += actual_profit
                 m["profits"].append(actual_profit)
                 m["symbols"][sym]["total_profit_pips"] += actual_profit
                 if tf and tf in m["timeframes"]:
                     m["timeframes"][tf]["total_profit_pips"] += actual_profit
             elif status == "stopped":
-                # Use stop_loss_pips as the loss (this is the actual exit cost)
-                loss = sl_pips or lowest_drawdown
+                loss = abs(scored_pips or 0.0)
                 m["total_loss_pips"] += loss
                 m["losses"].append(loss)
                 m["symbols"][sym]["total_loss_pips"] += loss
                 if tf and tf in m["timeframes"]:
                     m["timeframes"][tf]["total_loss_pips"] += loss
 
-            # Target hit rates (global + per-symbol)
-            th = parse_json_field(sig.get("targets_hit"), {})
+            th = parse_targets_hit(sig.get("targets_hit"))
             if th:
                 for tp_name, hit in th.items():
                     # Global
@@ -1040,7 +1095,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                         m["symbols"][sym]["target_hits"][tp_name]["hit"] += 1
 
         # Ensure all known model types exist in response (even with 0 signals)
-        KNOWN_MODELS = ["ml", "pulse1", "pulse2", "pulse3", "emel", "emel_inverse"]
+        KNOWN_MODELS = ["ml", "pulse1", "pulse2", "pulse3", "emel", "emel_inverse", "hybrid"]
         for km in KNOWN_MODELS:
             if km not in models:
                 models[km] = {
@@ -1247,8 +1302,8 @@ async def export_failures(days: int = 30) -> List[Dict[str, Any]]:
 # ═════════════════════════════════════════════════════════════════════════════
 
 async def check_lifecycle_if_needed():
-    """Called from background_scheduler every 60s; runs lifecycle every 5 min."""
-    global _last_lifecycle_check
+    """Called from background_scheduler every 60s; runs lifecycle every minute."""
+    global _last_lifecycle_check, _last_cleanup_run
 
     now = datetime.utcnow()
     if _last_lifecycle_check and (now - _last_lifecycle_check).total_seconds() < LIFECYCLE_CHECK_INTERVAL:
@@ -1275,8 +1330,9 @@ async def check_lifecycle_if_needed():
     except Exception as e:
         logger.error(f"Lifecycle check error: {e}")
 
-    # Cleanup less frequently (every 30 min is fine, ~6x per lifecycle interval)
-    try:
-        await cleanup_old_signals()
-    except Exception as e:
-        logger.error(f"Cleanup error: {e}")
+    if _last_cleanup_run is None or (now - _last_cleanup_run).total_seconds() >= CLEANUP_INTERVAL_SECONDS:
+        try:
+            await cleanup_old_signals()
+            _last_cleanup_run = datetime.utcnow()
+        except Exception as e:
+            logger.error(f"Cleanup error: {e}")

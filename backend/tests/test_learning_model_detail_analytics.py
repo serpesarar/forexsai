@@ -114,3 +114,56 @@ async def test_model_detail_analytics_ignores_legacy_timeframes_and_uses_realize
     assert payload["recent_signals"][0]["confidence"] == 78.0
     assert payload["recent_signals"][1]["confidence"] == 50.0
     assert payload["recent_signals"][1]["timeframe"] == "legacy"
+
+
+@pytest.mark.asyncio
+async def test_model_detail_analytics_repairs_target_hit_rows_with_bad_exit_prices():
+    with patch.dict(
+        sys.modules,
+        {
+            "anthropic": SimpleNamespace(Anthropic=object),
+            "services.telegram_service": SimpleNamespace(telegram_notifier=SimpleNamespace()),
+        },
+    ):
+        module_path = backend_dir / "routers" / "learning.py"
+        spec = importlib.util.spec_from_file_location("test_learning_router_repaired", module_path)
+        learning_module = importlib.util.module_from_spec(spec)
+        assert spec and spec.loader
+        spec.loader.exec_module(learning_module)
+        get_model_detail_analytics = learning_module.get_model_detail_analytics
+
+    signal_rows = [
+        {
+            "id": "repaired-win-001",
+            "symbol": "NDX.INDX",
+            "timeframe": "30m",
+            "ml_direction": "BUY",
+            "ml_confidence": 81,
+            "status": "completed",
+            "ml_entry_price": 100.0,
+            "exit_price": 80.0,
+            "stop_loss_pips": 50,
+            "created_at": "2026-03-06T12:00:00Z",
+            "highest_profit_pips": 3,
+            "lowest_drawdown_pips": -20,
+            "targets_hit": '"{\\"TP1\\": true, \\"TP2\\": true, \\"TP3\\": false, \\"TP4\\": false}"',
+            "targets": '"{\\"TP1\\": 115.0, \\"TP2\\": 125.0, \\"TP3\\": 135.0, \\"TP4\\": 150.0}"',
+            "model_type": "ml",
+            "strategy": None,
+        },
+    ]
+
+    client = _FakeClient([[], signal_rows])
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ):
+        payload = await get_model_detail_analytics(model="ml", symbol="NDX.INDX", days=1, timeframe="all")
+
+    assert payload["overview"]["completed"] == 1
+    assert payload["overview"]["net_pips"] == 25.0
+    assert payload["timeframe_comparison"] == [
+        {"tf": "30m", "total": 1, "active": 0, "win_rate": 100.0, "net_pips": 25.0, "avg_pips": 25.0}
+    ]
+    assert payload["recent_signals"][0]["status"] == "completed"
+    assert payload["recent_signals"][0]["pips"] == 25.0

@@ -31,6 +31,19 @@ from services.adaptive_tp_sl import (
     get_learned_adjustments,
     AdaptiveTPSL,
 )
+from services.signal_analytics import (
+    TIMEFRAME_ORDER,
+    MODEL_ORDER,
+    classify_signal,
+    coerce_float as analytics_coerce_float,
+    normalize_model_type,
+    normalize_timeframe,
+    parse_targets_hit,
+    realized_pips,
+    sort_models,
+    sort_timeframes,
+    summarize_scope,
+)
 from services.multi_target_tracker import tracker as multi_target_tracker
 from services.telegram_service import telegram_notifier
 
@@ -2090,6 +2103,16 @@ async def get_model_timeframe_analysis(
         if timeframe:
             query = query.eq("timeframe", timeframe)
         
+        selected_timeframe = normalize_timeframe(timeframe) if timeframe else None
+        if timeframe and selected_timeframe is None:
+            return {
+                "model": model,
+                "symbol": symbol,
+                "timeframe": timeframe,
+                "total_signals": 0,
+                "message": "No signals found for this filter combination"
+            }
+
         result = query.order("created_at", desc=True).limit(1000).execute()
         all_signals = safe_get_data(result)
         
@@ -2127,62 +2150,57 @@ async def get_model_timeframe_analysis(
         losses = []
         
         for sig in signals:
-            # Status counts
-            status = sig.get("status", "expired")
-            if status == "completed":
+            classified_status, _, scored_pips = classify_signal(sig, default_symbol=symbol)
+            if classified_status not in {"completed", "stopped", "expired"}:
+                continue
+
+            if classified_status == "completed":
                 stats["completed"] += 1
-            elif status == "stopped":
+            elif classified_status == "stopped":
                 stats["stopped"] += 1
             else:
                 stats["expired"] += 1
             
-            # Symbol breakdown
             sym = sig.get("symbol", "unknown")
             if sym not in stats["by_symbol"]:
-                stats["by_symbol"][sym] = {"total": 0, "completed": 0, "stopped": 0, "net_pips": 0}
+                stats["by_symbol"][sym] = {"total": 0, "completed": 0, "stopped": 0, "expired": 0, "net_pips": 0}
             stats["by_symbol"][sym]["total"] += 1
-            if status == "completed":
+            if classified_status == "completed":
                 stats["by_symbol"][sym]["completed"] += 1
-            elif status == "stopped":
+            elif classified_status == "stopped":
                 stats["by_symbol"][sym]["stopped"] += 1
+            else:
+                stats["by_symbol"][sym]["expired"] += 1
             
-            # Timeframe breakdown
-            tf = sig.get("timeframe", "unknown")
-            if tf not in stats["by_timeframe"]:
-                stats["by_timeframe"][tf] = {"total": 0, "completed": 0, "stopped": 0}
-            stats["by_timeframe"][tf]["total"] += 1
-            if status == "completed":
-                stats["by_timeframe"][tf]["completed"] += 1
-            elif status == "stopped":
-                stats["by_timeframe"][tf]["stopped"] += 1
+            tf = normalize_timeframe(sig.get("timeframe"))
+            if tf:
+                if tf not in stats["by_timeframe"]:
+                    stats["by_timeframe"][tf] = {"total": 0, "completed": 0, "stopped": 0, "expired": 0}
+                stats["by_timeframe"][tf]["total"] += 1
+                if classified_status == "completed":
+                    stats["by_timeframe"][tf]["completed"] += 1
+                elif classified_status == "stopped":
+                    stats["by_timeframe"][tf]["stopped"] += 1
+                else:
+                    stats["by_timeframe"][tf]["expired"] += 1
             
-            # Direction
             direction = sig.get("ml_direction")
             if direction in ["BUY", "SELL"]:
                 stats["by_direction"][direction] += 1
             
-            # Target hits
-            targets_hit = sig.get("targets_hit", {})
-            if isinstance(targets_hit, str):
-                try:
-                    import json
-                    targets_hit = json.loads(targets_hit)
-                except:
-                    targets_hit = {}
+            targets_hit = parse_targets_hit(sig.get("targets_hit"))
             for tp in ["TP1", "TP2", "TP3", "TP4"]:
                 if targets_hit.get(tp):
                     stats["target_hits"][tp] += 1
             
-            # P/L calculation
-            sl_pips = sig.get("stop_loss_pips", 0)
-            if status == "completed":
-                profit = sig.get("highest_profit_pips", 0)
+            if classified_status == "completed":
+                profit = max(scored_pips or 0.0, 0.0)
                 stats["total_profit_pips"] += profit
                 profits.append(profit)
                 if sym in stats["by_symbol"]:
                     stats["by_symbol"][sym]["net_pips"] += profit
-            elif status == "stopped":
-                loss = abs(sl_pips) if sl_pips else abs(sig.get("lowest_drawdown_pips", 0))
+            elif classified_status == "stopped":
+                loss = abs(scored_pips or 0.0)
                 stats["total_loss_pips"] += loss
                 losses.append(loss)
                 if sym in stats["by_symbol"]:
@@ -2276,54 +2294,46 @@ async def get_all_models_summary(
         
         # Initialize model structure
         MODELS = ["ml", "emel", "pulse1", "pulse2", "pulse3"]
-        TIMEFRAMES = ["5m", "15m", "30m", "1h", "4h", "1d"]
+        TIMEFRAMES = list(TIMEFRAME_ORDER)
         
         summary = {}
         for model in MODELS:
             summary[model] = {
                 "total_signals": 0,
-                "by_timeframe": {tf: {"total": 0, "completed": 0, "stopped": 0, "win_rate": 0} for tf in TIMEFRAMES},
+                "by_timeframe": {tf: {"total": 0, "completed": 0, "stopped": 0, "expired": 0, "win_rate": 0} for tf in TIMEFRAMES},
                 "overall_win_rate": 0,
                 "total_completed": 0,
                 "total_stopped": 0,
+                "total_expired": 0,
             }
         
-        # Process signals
         for sig in signals:
-            # Determine model
-            model_type = sig.get("model_type", "ml") or "ml"
-            strategy = sig.get("strategy", "")
-            
-            if model_type.lower() in ["pulse", "pulse1"] or (strategy and "PULSE" in strategy.upper() and "V3" not in strategy.upper() and "ML" not in strategy.upper()):
-                model_key = "pulse1"
-            elif model_type.lower() == "pulse2" or (strategy and "PULSE_ML" in strategy.upper()):
-                model_key = "pulse2"
-            elif model_type.lower() == "pulse3" or (strategy and "PULSE_V3" in strategy.upper()):
-                model_key = "pulse3"
-            elif model_type.lower() == "emel" or (strategy and "EMEL" in strategy.upper()):
-                model_key = "emel"
-            else:
-                model_key = "ml"
+            model_key = normalize_model_type(sig)
             
             if model_key not in summary:
                 continue
+
+            classified_status, _, _ = classify_signal(sig, default_symbol=symbol)
+            if classified_status not in {"completed", "stopped", "expired"}:
+                continue
             
-            # Get timeframe
-            tf = sig.get("timeframe", "1h")
-            if tf not in TIMEFRAMES:
-                tf = "1h"  # Default
-            
-            # Update counts
             summary[model_key]["total_signals"] += 1
-            summary[model_key]["by_timeframe"][tf]["total"] += 1
+            tf = normalize_timeframe(sig.get("timeframe"))
+            if tf:
+                summary[model_key]["by_timeframe"][tf]["total"] += 1
             
-            status = sig.get("status")
-            if status == "completed":
+            if classified_status == "completed":
                 summary[model_key]["total_completed"] += 1
-                summary[model_key]["by_timeframe"][tf]["completed"] += 1
-            elif status == "stopped":
+                if tf:
+                    summary[model_key]["by_timeframe"][tf]["completed"] += 1
+            elif classified_status == "stopped":
                 summary[model_key]["total_stopped"] += 1
-                summary[model_key]["by_timeframe"][tf]["stopped"] += 1
+                if tf:
+                    summary[model_key]["by_timeframe"][tf]["stopped"] += 1
+            else:
+                summary[model_key]["total_expired"] += 1
+                if tf:
+                    summary[model_key]["by_timeframe"][tf]["expired"] += 1
         
         # Calculate win rates
         for model in MODELS:
@@ -2374,8 +2384,9 @@ async def get_model_timeframes(model: str):
         # Filter by model in Python
         signals = [s for s in all_signals if _normalize_model_type(s) == model_lower]
         
-        timeframes = list(set(s.get("timeframe", "1h") for s in signals if s.get("timeframe")))
-        timeframes.sort()
+        timeframes = sort_timeframes(
+            normalize_timeframe(s.get("timeframe")) for s in signals
+        )
         
         # Default available timeframes by model
         DEFAULT_TFS = {
@@ -2384,11 +2395,11 @@ async def get_model_timeframes(model: str):
             "pulse2": ["5m", "15m", "1h"],
             "pulse3": ["1h"],  # Pulse3 typically only on 1h
             "emel": ["5m", "15m", "1h", "4h"],
+            "emel_inverse": ["5m", "15m", "1h", "4h"],
+            "hybrid": ["1h"],
         }
         
-        # Merge with actual data
-        available = list(set(timeframes + DEFAULT_TFS.get(model_lower, ["1h"])))
-        available.sort(key=lambda x: ["5m", "15m", "30m", "1h", "4h", "1d"].index(x) if x in ["5m", "15m", "30m", "1h", "4h", "1d"] else 99)
+        available = sort_timeframes(timeframes + DEFAULT_TFS.get(model_lower, ["1h"]))
         
         return {
             "model": model,
@@ -2589,24 +2600,7 @@ async def get_xauusd_signal_status():
 
 def _normalize_model_type(sig: dict) -> str:
     """Normalize model_type from a prediction_logs record — same logic as dashboard."""
-    mt = sig.get("model_type") or sig.get("strategy") or "ml"
-    mt = mt.lower().strip()
-    if mt == "pulse" or mt == "":
-        strat = (sig.get("strategy") or "").upper()
-        if strat == "PULSE_V3":
-            return "pulse3"
-        elif strat == "PULSE_ML":
-            return "pulse2"
-        elif "EMEL" in strat and "INVERSE" in strat:
-            return "emel_inverse"
-        elif "EMEL" in strat:
-            return "emel"
-        elif "PULSE" in strat:
-            return "pulse1"
-        return "ml"
-    if mt in ("pulse1", "pulse2", "pulse3", "emel", "emel_inverse", "hybrid"):
-        return mt
-    return "ml"
+    return normalize_model_type(sig)
 
 
 @router.get("/model-detail-analytics")
@@ -2698,47 +2692,23 @@ async def get_model_detail_analytics(
         import logging as _logging
         _log = _logging.getLogger(__name__)
 
-        tf_order = ["5m", "15m", "30m", "1h", "4h", "1d"]
-        valid_timeframes = set(tf_order)
-        model_order = ["ml", "pulse1", "pulse2", "pulse3", "emel", "emel_inverse", "hybrid"]
+        tf_order = list(TIMEFRAME_ORDER)
+        model_order = list(MODEL_ORDER)
 
         def _sort_timeframes(values: List[str]) -> List[str]:
-            return sorted(
-                values,
-                key=lambda value: (tf_order.index(value) if value in tf_order else 99, value),
-            )
+            return sort_timeframes(values)
 
         def _sort_models(values: List[str]) -> List[str]:
-            return sorted(
-                values,
-                key=lambda value: (model_order.index(value) if value in model_order else 99, value),
-            )
+            return sort_models(values)
 
         def _normalize_timeframe(value: Optional[str]) -> Optional[str]:
-            normalized = (value or "").lower().strip()
-            return normalized if normalized in valid_timeframes else None
+            return normalize_timeframe(value)
 
         def _coerce_float(value, default: Optional[float] = None) -> Optional[float]:
-            if value in (None, ""):
-                return default
-            try:
-                parsed = float(value)
-            except (TypeError, ValueError):
-                return default
-            if math.isnan(parsed) or math.isinf(parsed):
-                return default
-            return parsed
+            return analytics_coerce_float(value, default)
 
         def _realized_pips(sig: dict) -> Optional[float]:
-            entry_price = _coerce_float(sig.get("ml_entry_price"))
-            exit_price = _coerce_float(sig.get("exit_price"))
-            direction = (sig.get("ml_direction") or "").upper().strip()
-
-            if entry_price is None or exit_price is None or direction not in {"BUY", "SELL"}:
-                return None
-
-            price_change = exit_price - entry_price if direction == "BUY" else entry_price - exit_price
-            return pips_from_price_change(price_change, sig.get("symbol") or symbol)
+            return realized_pips(sig, default_symbol=symbol)
 
         def _parse_datetime(value: Optional[str]):
             if not value:
@@ -2752,76 +2722,13 @@ async def get_model_detail_analytics(
                 return None
 
         def _parse_targets_hit(raw_value):
-            if isinstance(raw_value, str):
-                try:
-                    raw_value = _json.loads(raw_value)
-                except Exception:
-                    return {}
-            return raw_value if isinstance(raw_value, dict) else {}
+            return parse_targets_hit(raw_value)
 
         def _classify_signal(sig: dict):
-            status = (sig.get("status") or "unknown").lower().strip()
-            profit_pips = max(_coerce_float(sig.get("highest_profit_pips"), 0.0) or 0.0, 0.0)
-            loss_pips = abs(_coerce_float(sig.get("lowest_drawdown_pips"), 0.0) or 0.0)
-            stop_loss_pips = abs(_coerce_float(sig.get("stop_loss_pips"), 0.0) or 0.0)
-            realized_pips = _realized_pips(sig)
-            targets_hit = _parse_targets_hit(sig.get("targets_hit"))
-
-            if status == "completed":
-                actual_profit = max(realized_pips if realized_pips is not None else profit_pips, 0.0)
-                return "completed", True, actual_profit
-            if status == "stopped":
-                actual_loss = stop_loss_pips or loss_pips
-                return "stopped", False, -actual_loss
-            if status == "expired":
-                return "expired", False, 0.0
-            if status == "active":
-                return "active", None, None
-            if targets_hit and any(targets_hit.values()):
-                fallback_profit = max(realized_pips if realized_pips is not None else profit_pips, 0.0)
-                return "completed", True, fallback_profit
-            return None, None, None
+            return classify_signal(sig, default_symbol=symbol)
 
         def _summarize_scope(scope_signals: List[dict]) -> dict:
-            completed = 0
-            stopped = 0
-            expired = 0
-            active = 0
-            total_profit = 0.0
-            total_loss = 0.0
-            scored_signals = 0
-
-            for scope_sig in scope_signals:
-                scoped_status, _, scoped_pips = _classify_signal(scope_sig)
-                if scoped_status == "active":
-                    active += 1
-                    continue
-                if scoped_status is None:
-                    continue
-
-                scored_signals += 1
-                if scoped_status == "completed":
-                    completed += 1
-                    total_profit += scoped_pips or 0.0
-                elif scoped_status == "stopped":
-                    stopped += 1
-                    total_loss += abs(scoped_pips or 0.0)
-                elif scoped_status == "expired":
-                    expired += 1
-
-            resolved = completed + stopped
-            net_pips = total_profit - total_loss
-            return {
-                "total_signals": len(scope_signals),
-                "scored_signals": scored_signals,
-                "completed": completed,
-                "stopped": stopped,
-                "expired": expired,
-                "active": active,
-                "win_rate": round((completed / resolved * 100) if resolved > 0 else 0, 1),
-                "net_pips": round(net_pips, 1),
-                "avg_pips": round(net_pips / scored_signals, 1) if scored_signals > 0 else 0,
-            }
+            return summarize_scope(scope_signals, default_symbol=symbol)
 
         if days > 0:
             start_date = datetime.utcnow() - timedelta(days=days)
