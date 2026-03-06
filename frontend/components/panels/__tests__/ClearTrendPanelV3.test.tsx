@@ -16,6 +16,7 @@ vi.mock("../../../lib/i18n/store", () => ({
 
 // Mock CustomIcons
 vi.mock("../../ui/CustomIcons", () => ({
+  TrendingUpIcon: () => <span data-testid="trending-up">↗</span>,
   ArrowUpIcon: () => <span data-testid="arrow-up">↑</span>,
   ArrowDownIcon: () => <span data-testid="arrow-down">↓</span>,
   MinusIcon: () => <span data-testid="minus">−</span>,
@@ -100,9 +101,10 @@ describe("ClearTrendPanelV3", () => {
     await waitFor(() => {
       expect(screen.getByText("15000.00")).toBeTruthy();
     });
-    
-    // Check that chart data length is displayed
-    expect(screen.getByText(/Closes: 5/)).toBeTruthy();
+
+    expect(screen.getByTestId("trending-up")).toBeTruthy();
+    expect(screen.getByText("BUY")).toBeTruthy();
+    expect(screen.queryByTestId("trend-channel-chart")).toBeNull();
   });
 
   it("renders SELL signal correctly with red color", async () => {
@@ -155,8 +157,10 @@ describe("ClearTrendPanelV3", () => {
     await waitFor(() => {
       expect(screen.getByText("2000.00")).toBeTruthy();
     });
-    
-    expect(screen.getByText(/Closes: 6/)).toBeTruthy();
+
+    expect(screen.getByTestId("arrow-down")).toBeTruthy();
+    expect(screen.getByText("SELL")).toBeTruthy();
+    expect(screen.getByTestId("trend-channel-chart")).toBeTruthy();
   });
 
   it("never crashes when chart_data is undefined", () => {
@@ -197,9 +201,10 @@ describe("ClearTrendPanelV3", () => {
     
     // Should not throw
     expect(() => render(<ClearTrendPanelV3 symbol="NDX.INDX" />)).not.toThrow();
-    
-    // Should show "Closes: 0"
-    expect(screen.getByText(/Closes: 0/)).toBeTruthy();
+
+    expect(screen.getByText("15000.00")).toBeTruthy();
+    expect(screen.getByText("HOLD")).toBeTruthy();
+    expect(screen.queryByTestId("trend-channel-chart")).toBeNull();
   });
 
   it("handles chart_data.closes.length > 5 check correctly", async () => {
@@ -248,23 +253,31 @@ describe("ClearTrendPanelV3", () => {
     render(<ClearTrendPanelV3 symbol="NDX.INDX" />);
     
     await waitFor(() => {
-      expect(screen.getByText(/Closes: 10/)).toBeTruthy();
+      expect(screen.getByText("15000.00")).toBeTruthy();
     });
-    
+
+    expect(screen.getByText("BUY")).toBeTruthy();
     // Should render chart when closes.length > 5
     expect(screen.getByTestId("trend-channel-chart")).toBeTruthy();
   });
 
   it("renders error state gracefully when API fails", async () => {
-    // Mock fetch to fail
-    global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
+    const fetchSpy = vi.spyOn(global, "fetch").mockRejectedValue(new Error("Network error"));
     
     mockUseWSPanelData.mockReturnValue({ data: null, wsConnected: false });
     
     render(<ClearTrendPanelV3 symbol="NDX.INDX" />);
     
-    // Should show loading initially, then handle error gracefully
-    // Component should not crash
     expect(document.querySelector(".animate-pulse")).toBeTruthy();
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      expect(document.querySelector(".animate-pulse")).toBeNull();
+    });
+
+    expect(screen.getByText("CLEAR TREND V3")).toBeTruthy();
   });
 });

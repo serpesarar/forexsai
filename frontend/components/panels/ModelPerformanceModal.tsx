@@ -136,12 +136,14 @@ const T = {
     timeframes: "Timeframes",
     hourly: "Hourly",
     dayOfWeek: "Weekdays",
+    insightPulse: "Insight pulse",
     winRate: "Win rate",
     netPips: "Net pips",
     resolved: "Resolved",
     profitFactor: "Profit factor",
     sharpe: "Sharpe",
     maxDrawdown: "Max drawdown",
+    edgeQuality: "Edge quality",
     active: "Active",
     completed: "Wins",
     stopped: "Losses",
@@ -165,9 +167,25 @@ const T = {
     totalSignals: "Signals",
     avgPips: "Avg pips",
     bestTimeframe: "Best timeframe",
+    bestHour: "Best hour",
+    bestDay: "Best day",
     biggestSample: "Largest sample",
     coveredTimeframes: "Covered TF",
     model: "Model",
+    bestHoursUtc: "Best hours (UTC)",
+    weakHoursUtc: "Weak hours (UTC)",
+    noTrades: "No trades",
+    signalsLower: "signals",
+    strongEdge: "Strong edge",
+    mixedEdge: "Mixed edge",
+    fragileEdge: "Fragile edge",
+    edgeNoteStrong: "Win rate, profit factor and net pips are aligned positively.",
+    edgeNoteMixed: "The setup is tradable, but edge quality is uneven across the sample.",
+    edgeNoteFragile: "Recent results need caution; size and drawdown should be watched.",
+    sampleConfidence: "Sample confidence",
+    highConfidence: "High confidence",
+    buildingConfidence: "Building confidence",
+    limitedSample: "Limited sample",
     benchmarkNote:
       "Overview, hourly and weekday analytics respect the selected timeframe. The benchmark table compares all available timeframes within the current model scope.",
     noData: "No resolved signal history was found for this scope.",
@@ -184,12 +202,14 @@ const T = {
     timeframes: "Timeframe'ler",
     hourly: "Saatlik",
     dayOfWeek: "Hafta Günleri",
+    insightPulse: "İçgörü özeti",
     winRate: "Başarı oranı",
     netPips: "Net pips",
     resolved: "Sonuçlanan",
     profitFactor: "Kâr faktörü",
     sharpe: "Sharpe",
     maxDrawdown: "Maks. düşüş",
+    edgeQuality: "Kenar kalitesi",
     active: "Aktif",
     completed: "Kazanç",
     stopped: "Kayıp",
@@ -213,9 +233,25 @@ const T = {
     totalSignals: "Sinyal",
     avgPips: "Ort. pips",
     bestTimeframe: "En iyi timeframe",
+    bestHour: "En iyi saat",
+    bestDay: "En iyi gün",
     biggestSample: "En büyük örneklem",
     coveredTimeframes: "Kapsanan TF",
     model: "Model",
+    bestHoursUtc: "En iyi saatler (UTC)",
+    weakHoursUtc: "Zayıf saatler (UTC)",
+    noTrades: "İşlem yok",
+    signalsLower: "sinyal",
+    strongEdge: "Güçlü avantaj",
+    mixedEdge: "Karışık avantaj",
+    fragileEdge: "Kırılgan yapı",
+    edgeNoteStrong: "Başarı oranı, kâr faktörü ve net pips birlikte pozitif hizalanıyor.",
+    edgeNoteMixed: "Kurgu işlem alınabilir seviyede, ancak örneklem boyunca kalite dalgalı.",
+    edgeNoteFragile: "Sonuçlar dikkat gerektiriyor; pozisyon boyutu ve drawdown yakından izlenmeli.",
+    sampleConfidence: "Örneklem güveni",
+    highConfidence: "Yüksek güven",
+    buildingConfidence: "Gelişen güven",
+    limitedSample: "Sınırlı örneklem",
     benchmarkNote:
       "Genel bakış, saatlik ve hafta günü analizleri seçili timeframe'e göre filtrelenir. Aşağıdaki benchmark tablosu aynı model kapsamındaki tüm timeframe'leri karşılaştırır.",
     noData: "Bu kapsam için sonuçlanmış sinyal geçmişi bulunamadı.",
@@ -298,6 +334,10 @@ function formatDateRange(start?: string | null, end?: string | null, lang: "en" 
     day: "numeric",
     year: "numeric",
   })}`;
+}
+
+function formatHour(hour: number) {
+  return `${String(hour).padStart(2, "0")}:00`;
 }
 
 function emptyAnalytics(symbol: string, model?: string): AnalyticsData {
@@ -383,6 +423,15 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
       document.body.style.overflow = previousOverflow;
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -645,6 +694,39 @@ function OverviewPanel({
   const ov = data.overview;
   const resolved = ov.completed + ov.stopped;
   const modelRows = (data.model_comparison || []).filter((row) => (row.total || 0) > 0);
+  const bestTimeframe = [...data.timeframe_comparison]
+    .filter((row) => row.total > 0)
+    .sort((a, b) => b.win_rate - a.win_rate || b.net_pips - a.net_pips)[0];
+  const bestHour = [...data.hourly_heatmap]
+    .filter((row) => row.total > 0)
+    .sort((a, b) => b.win_rate - a.win_rate || b.avg_pips - a.avg_pips)[0];
+  const bestDay = [...data.day_of_week]
+    .filter((row) => row.total > 0)
+    .sort((a, b) => b.win_rate - a.win_rate || b.avg_pips - a.avg_pips)[0];
+  const edgeTone =
+    ov.win_rate >= 57 && ov.profit_factor >= 1.4 && ov.net_pips >= 0
+      ? {
+          label: copy.strongEdge,
+          note: copy.edgeNoteStrong,
+          accent: "var(--accent-positive)",
+        }
+      : ov.win_rate >= 48 && ov.profit_factor >= 1
+        ? {
+            label: copy.mixedEdge,
+            note: copy.edgeNoteMixed,
+            accent: "var(--accent-warning)",
+          }
+        : {
+            label: copy.fragileEdge,
+            note: copy.edgeNoteFragile,
+            accent: "var(--accent-negative)",
+          };
+  const sampleTone =
+    resolved >= 40
+      ? { label: copy.highConfidence, accent: "var(--accent-positive)" }
+      : resolved >= 15
+        ? { label: copy.buildingConfidence, accent: "var(--accent-info)" }
+        : { label: copy.limitedSample, accent: "var(--accent-warning)" };
 
   return (
     <div className="space-y-4">
@@ -686,6 +768,46 @@ function OverviewPanel({
           sub={`${copy.expired}: ${ov.expired}`}
         />
       </div>
+
+      <SectionCard title={copy.insightPulse}>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+          <InsightCard label={copy.edgeQuality} value={edgeTone.label} detail={edgeTone.note} accent={edgeTone.accent} />
+          <InsightCard
+            label={copy.bestTimeframe}
+            value={bestTimeframe ? bestTimeframe.tf.toUpperCase() : "—"}
+            detail={bestTimeframe ? `${bestTimeframe.win_rate.toFixed(1)}% · ${formatPips(bestTimeframe.net_pips)}` : copy.noData}
+            accent={bestTimeframe ? wrColor(bestTimeframe.win_rate) : "var(--text-muted)"}
+          />
+          <InsightCard
+            label={copy.bestHour}
+            value={bestHour ? formatHour(bestHour.hour) : "—"}
+            detail={bestHour ? `${bestHour.win_rate.toFixed(1)}% · ${bestHour.total} ${copy.signalsLower}` : copy.noData}
+            accent={bestHour ? wrColor(bestHour.win_rate) : "var(--text-muted)"}
+          />
+          <InsightCard
+            label={copy.bestDay}
+            value={bestDay ? bestDay.day_short : "—"}
+            detail={bestDay ? `${bestDay.win_rate.toFixed(1)}% · ${formatPips(bestDay.avg_pips)}` : copy.noData}
+            accent={bestDay ? wrColor(bestDay.win_rate) : "var(--text-muted)"}
+          />
+        </div>
+
+        <div
+          className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3"
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
+        >
+          <div>
+            <p style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-muted)", fontWeight: 700 }}>
+              {copy.sampleConfidence}
+            </p>
+            <p style={{ marginTop: 6, fontSize: 16, fontWeight: 800, color: sampleTone.accent }}>{sampleTone.label}</p>
+          </div>
+          <p style={{ fontSize: 12, color: "var(--text-muted)" }}>
+            {resolved} {copy.resolved.toLowerCase()} · {ov.total_signals} {copy.totalSignals.toLowerCase()} · {copy.timeframe}:{" "}
+            {selectedTimeframe === "all" ? copy.allTimeframes : selectedTimeframe.toUpperCase()}
+          </p>
+        </div>
+      </SectionCard>
 
       <SectionCard title={copy.scopeSummary}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -983,17 +1105,17 @@ function HourlyPanel({ data, copy }: { data: HourlyData[]; copy: LocaleCopy }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <SectionCard title="Best Hours (UTC)">
+        <SectionCard title={copy.bestHoursUtc}>
           <div className="space-y-2">
             {best.map((row) => (
-              <HourRow key={row.hour} row={row} positive />
+              <HourRow key={row.hour} row={row} positive copy={copy} />
             ))}
           </div>
         </SectionCard>
-        <SectionCard title="Weak Hours (UTC)">
+        <SectionCard title={copy.weakHoursUtc}>
           <div className="space-y-2">
             {worst.map((row) => (
-              <HourRow key={row.hour} row={row} positive={false} />
+              <HourRow key={row.hour} row={row} positive={false} copy={copy} />
             ))}
           </div>
         </SectionCard>
@@ -1013,7 +1135,7 @@ function HourlyPanel({ data, copy }: { data: HourlyData[]; copy: LocaleCopy }) {
             >
               <div className="flex items-center justify-between gap-2">
                 <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)" }}>
-                  {String(row.hour).padStart(2, "0")}:00
+                  {formatHour(row.hour)}
                 </span>
                 <span
                   style={{
@@ -1026,7 +1148,7 @@ function HourlyPanel({ data, copy }: { data: HourlyData[]; copy: LocaleCopy }) {
                 </span>
               </div>
               <p style={{ marginTop: 10, fontSize: 11, color: "var(--text-muted)" }}>
-                {row.total > 0 ? `${row.wins}/${row.total}` : "No trades"}
+                {row.total > 0 ? `${row.wins}/${row.total}` : copy.noTrades}
               </p>
               {row.total > 0 && (
                 <p
@@ -1238,16 +1360,38 @@ function InfoPill({ label, value }: { label: string; value: string }) {
   );
 }
 
-function HourRow({ row, positive }: { row: HourlyData; positive: boolean }) {
+function HourRow({ row, positive, copy }: { row: HourlyData; positive: boolean; copy: LocaleCopy }) {
   return (
     <div className="flex items-center justify-between rounded-xl px-3 py-3" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
-      <span style={{ color: "var(--text-primary)", fontWeight: 700 }}>{String(row.hour).padStart(2, "0")}:00</span>
+      <span style={{ color: "var(--text-primary)", fontWeight: 700 }}>{formatHour(row.hour)}</span>
       <div className="text-right">
         <p style={{ color: positive ? "var(--accent-positive)" : "var(--accent-negative)", fontWeight: 700 }}>
           {row.win_rate.toFixed(1)}%
         </p>
-        <p style={{ color: "var(--text-muted)", fontSize: 12 }}>{row.total} signals</p>
+        <p style={{ color: "var(--text-muted)", fontSize: 12 }}>{row.total} {copy.signalsLower}</p>
       </div>
+    </div>
+  );
+}
+
+function InsightCard({
+  label,
+  value,
+  detail,
+  accent,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  accent: string;
+}) {
+  return (
+    <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)", borderRadius: 16, padding: 14 }}>
+      <p style={{ fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-muted)", fontWeight: 700 }}>
+        {label}
+      </p>
+      <p style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: accent, letterSpacing: "-0.03em" }}>{value}</p>
+      <p style={{ marginTop: 6, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.45 }}>{detail}</p>
     </div>
   );
 }

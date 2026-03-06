@@ -43,10 +43,19 @@ const basePayload = {
     max_drawdown_pips: 18,
     profit_factor: 1.9,
   },
-  hourly_heatmap: [],
-  timeframe_comparison: [{ tf: "5m", total: 6, active: 0, win_rate: 50, net_pips: 12, avg_pips: 2 }],
+  hourly_heatmap: [
+    { hour: 8, total: 4, wins: 3, win_rate: 75, avg_pips: 6.5 },
+    { hour: 12, total: 3, wins: 1, win_rate: 33.3, avg_pips: -2.1 },
+  ],
+  timeframe_comparison: [
+    { tf: "5m", total: 6, active: 0, win_rate: 50, net_pips: 12, avg_pips: 2 },
+    { tf: "15m", total: 4, active: 0, win_rate: 75, net_pips: 18, avg_pips: 4.5 },
+  ],
   daily_accuracy: [],
-  day_of_week: [],
+  day_of_week: [
+    { day: "Monday", day_short: "Mon", total: 5, wins: 3, win_rate: 60, avg_pips: 3.1 },
+    { day: "Tuesday", day_short: "Tue", total: 4, wins: 3, win_rate: 75, avg_pips: 5.4 },
+  ],
   tp_hit_rates: { TP1: 70 },
   recent_signals: [],
   selected_timeframe: "all",
@@ -64,11 +73,11 @@ const basePayload = {
   },
 };
 
-function renderModal() {
+function renderModal(props?: Partial<React.ComponentProps<typeof ModelPerformanceModal>>) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <ModelPerformanceModal isOpen onClose={vi.fn()} symbol="NDX.INDX" model="all" />
+      <ModelPerformanceModal isOpen onClose={vi.fn()} symbol="NDX.INDX" model="all" {...props} />
     </QueryClientProvider>
   );
 }
@@ -113,5 +122,24 @@ describe("ModelPerformanceModal", () => {
 
     expect(await screen.findByText("Failed analytics")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Retry" }).length).toBeGreaterThan(0);
+  });
+
+  it("renders premium insight summary tiles", async () => {
+    renderModal();
+
+    expect(await screen.findByText("Insight pulse")).toBeInTheDocument();
+    expect(screen.getByText("Strong edge")).toBeInTheDocument();
+    expect(screen.getByText("Best hour")).toBeInTheDocument();
+    expect(screen.getByText("Best day")).toBeInTheDocument();
+  });
+
+  it("closes when escape is pressed", async () => {
+    const onClose = vi.fn();
+    renderModal({ onClose });
+
+    await screen.findByText("Performance analytics");
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
