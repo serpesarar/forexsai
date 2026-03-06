@@ -890,7 +890,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
             day_end_iso = day_end.isoformat() + "Z"
 
             result = client.table("prediction_logs").select(
-                "id, symbol, ml_direction, ml_confidence, ml_entry_price, "
+                "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
                 "model_type, status, targets_hit, highest_profit_pips, "
                 "lowest_drawdown_pips, exit_price, exit_time, stop_loss_pips, "
                 "targets, created_at, strategy"
@@ -909,7 +909,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
         # Also fetch today's partial data
         today_start = end_date.replace(hour=0, minute=0, second=0, microsecond=0).isoformat() + "Z"
         result = client.table("prediction_logs").select(
-            "id, symbol, ml_direction, ml_confidence, ml_entry_price, "
+            "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
             "model_type, status, targets_hit, highest_profit_pips, "
             "lowest_drawdown_pips, exit_price, exit_time, stop_loss_pips, "
             "targets, created_at, strategy"
@@ -944,6 +944,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                     "profits": [], "losses": [],
                     "target_hits": {},  # TP1: count, TP2: count, etc.
                     "symbols": {},
+                    "timeframes": {},  # per-timeframe stats
                 }
 
             m = models[mt]
@@ -961,6 +962,16 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                 }
             m["symbols"][sym]["total"] += 1
             m["symbols"][sym][status] = m["symbols"][sym].get(status, 0) + 1
+
+            # Timeframe tracking
+            tf = (sig.get("timeframe") or "1h").lower()
+            if tf not in m["timeframes"]:
+                m["timeframes"][tf] = {
+                    "total": 0, "completed": 0, "stopped": 0, "expired": 0,
+                    "total_profit_pips": 0, "total_loss_pips": 0,
+                }
+            m["timeframes"][tf]["total"] += 1
+            m["timeframes"][tf][status] = m["timeframes"][tf].get(status, 0) + 1
 
             # Profit/loss — use ACTUAL entry→exit P/L, not peak drawdown
             entry_price = sig.get("ml_entry_price") or 0
@@ -980,12 +991,16 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                 m["total_profit_pips"] += actual_profit
                 m["profits"].append(actual_profit)
                 m["symbols"][sym]["total_profit_pips"] += actual_profit
+                if tf in m["timeframes"]:
+                    m["timeframes"][tf]["total_profit_pips"] += actual_profit
             elif status == "stopped":
                 # Use stop_loss_pips as the loss (this is the actual exit cost)
                 loss = abs(sl_pips) if sl_pips else abs(sig.get("lowest_drawdown_pips") or 0)
                 m["total_loss_pips"] += loss
                 m["losses"].append(loss)
                 m["symbols"][sym]["total_loss_pips"] += loss
+                if tf in m["timeframes"]:
+                    m["timeframes"][tf]["total_loss_pips"] += loss
 
             # Target hit rates (global + per-symbol)
             th = parse_json_field(sig.get("targets_hit"), {})
@@ -1014,6 +1029,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                     "profits": [], "losses": [],
                     "target_hits": {},
                     "symbols": {},
+                    "timeframes": {},
                 }
 
         # Build final stats
@@ -1053,6 +1069,22 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                     "target_rates": sym_target_rates,
                 }
 
+            # Build per-timeframe stats
+            timeframes_out = {}
+            tf_order = ["5m", "15m", "30m", "1h", "4h", "1d"]
+            for tf_key in tf_order:
+                if tf_key in m.get("timeframes", {}):
+                    tfd = m["timeframes"][tf_key]
+                    tf_outcome = tfd.get("completed", 0) + tfd.get("stopped", 0)
+                    timeframes_out[tf_key] = {
+                        "total": tfd["total"],
+                        "completed": tfd.get("completed", 0),
+                        "stopped": tfd.get("stopped", 0),
+                        "expired": tfd.get("expired", 0),
+                        "win_rate": round(tfd.get("completed", 0) / (tf_outcome or 1) * 100, 1),
+                        "net_pips": round(tfd.get("total_profit_pips", 0) - tfd.get("total_loss_pips", 0), 1),
+                    }
+
             model_stats[mt] = {
                 "total_signals": m["total"],
                 "completed": m["completed"],
@@ -1067,6 +1099,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                 "net_pips": round(m["total_profit_pips"] - m["total_loss_pips"], 1),
                 "target_rates": target_rates,
                 "symbols": symbols_out,
+                "timeframe_stats": timeframes_out,
             }
 
         # Failure patterns

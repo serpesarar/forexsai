@@ -1879,10 +1879,11 @@ async def get_historical_signals_endpoint(
 
 @router.get("/signals/matrix")
 async def get_signals_matrix(
-    model: str = Query(..., description="Model type (ml, emel, pulse1, pulse2, pulse3)")
+    model: str = Query("ml", description="Model type (ml, emel, pulse1, pulse2, pulse3)")
 ):
     """
     Returns the latest signal for each symbol and timeframe to populate the Heatmap Matrix.
+    Fetches ALL recent signals and filters by model type in Python (avoids .or_() compatibility issues).
     """
     if not is_db_available():
         return {"error": "Database not available", "matrix": {}}
@@ -1892,22 +1893,16 @@ async def get_signals_matrix(
         return {"error": "Database client not available", "matrix": {}}
         
     try:
-        query = client.table("prediction_logs").select(
-            "symbol, timeframe, ml_direction, ml_confidence, created_at, status"
-        ).order("created_at", desc=True).limit(1000)
+        # Fetch all recent signals (no model filter at DB level)
+        result = client.table("prediction_logs").select(
+            "symbol, timeframe, ml_direction, ml_confidence, created_at, status, model_type, strategy"
+        ).order("created_at", desc=True).limit(1000).execute()
         
-        model_lower = model.lower()
-        if model_lower == "ml":
-            query = query.or_("model_type.eq.ml,model_type.is.null")
-        elif model_lower in ["pulse1", "pulse2", "pulse3"]:
-            query = query.eq("model_type", model_lower)
-        elif model_lower == "emel":
-            query = query.or_("model_type.eq.emel,strategy.eq.EMEL")
-        else:
-            query = query.eq("model_type", model_lower)
-            
-        result = query.execute()
-        signals = safe_get_data(result)
+        all_signals = safe_get_data(result)
+        
+        # Filter by model type in Python
+        model_lower = model.lower().strip()
+        signals = [s for s in all_signals if _normalize_model_type(s) == model_lower]
         
         matrix = {}
         filled_combos = set()
@@ -1934,7 +1929,7 @@ async def get_signals_matrix(
                 "direction": direction,
                 "confidence": conf,
                 "status": status,
-                "age_hours": 0  # Calculated below
+                "age_hours": 0
             }
             
             if created_at:
@@ -1943,14 +1938,14 @@ async def get_signals_matrix(
                     from datetime import datetime, timezone
                     created_dt = parser.parse(created_at)
                     now_dt = datetime.now(timezone.utc)
-                    matrix[sym][tf]["age_hours"] = (now_dt - created_dt).total_seconds() / 3600
+                    matrix[sym][tf]["age_hours"] = round((now_dt - created_dt).total_seconds() / 3600, 1)
                 except:
                     pass
             
         return {"matrix": matrix}
     except Exception as e:
         import traceback
-        return {"error": str(e), "trace": traceback.format_exc(), "matrix": {}}
+        return {"error": str(e), "trace": traceback.format_exc()[:500], "matrix": {}}
 
 
 @router.get("/signals/recent")
@@ -1979,27 +1974,23 @@ async def get_recent_signals_endpoint(
             "ml_target_price, ml_stop_price, model_type, strategy, status, "
             "targets_hit, highest_profit_pips, lowest_drawdown_pips, "
             "exit_price, exit_time, created_at"
-        ).order("created_at", desc=True).limit(limit)
+        ).order("created_at", desc=True).limit(limit * 3)  # Fetch extra to allow for Python filtering
         
         if symbol:
             query = query.eq("symbol", symbol)
-        
-        if model:
-            model_lower = model.lower()
-            if model_lower == "ml":
-                query = query.or_("model_type.eq.ml,model_type.is.null")
-            elif model_lower in ["pulse1", "pulse2", "pulse3"]:
-                query = query.eq("model_type", model_lower)
-            elif model_lower == "emel":
-                query = query.or_("model_type.eq.emel,strategy.eq.EMEL")
-            else:
-                query = query.eq("model_type", model_lower)
         
         if not include_active:
             query = query.neq("status", "active")
         
         result = query.execute()
-        signals = safe_get_data(result)
+        all_signals = safe_get_data(result)
+        
+        # Filter by model in Python (no .or_() needed)
+        if model:
+            model_lower = model.lower().strip()
+            signals = [s for s in all_signals if _normalize_model_type(s) == model_lower][:limit]
+        else:
+            signals = all_signals[:limit]
         
         # Enhance with calculated fields
         enhanced = []
@@ -2078,10 +2069,14 @@ async def get_model_timeframe_analysis(
         return {"error": "Database client not available"}
     
     try:
+        import logging as _logging
+        _log = _logging.getLogger(__name__)
+        
         cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime.strptime("2000-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
         cutoff_iso = cutoff.isoformat() + "Z"
+        model_lower = model.lower().strip()
         
-        # Build query
+        # Build query — no model filter at DB level (use Python filtering)
         query = client.table("prediction_logs").select(
             "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
             "ml_target_price, ml_stop_price, model_type, strategy, status, "
@@ -2089,36 +2084,17 @@ async def get_model_timeframe_analysis(
             "exit_price, exit_time, stop_loss_pips, targets, created_at"
         ).gte("created_at", cutoff_iso).neq("status", "active")
         
-        # Filter by model (check both model_type and strategy fields)
-        model_lower = model.lower()
-        if model_lower == "ml":
-            query = query.or_("model_type.eq.ml,model_type.is.null")
-        elif model_lower in ["pulse1", "pulse2", "pulse3"]:
-            query = query.eq("model_type", model_lower)
-        elif model_lower == "emel":
-            query = query.or_("model_type.eq.emel,strategy.eq.EMEL")
-        else:
-            query = query.eq("model_type", model_lower)
-        
-        # Optional filters
+        # Optional filters (symbol and timeframe are safe — no .or_() needed)
         if symbol:
             query = query.eq("symbol", symbol)
         if timeframe:
             query = query.eq("timeframe", timeframe)
         
-        result = query.order("created_at", desc=True).limit(500).execute()
-        signals = safe_get_data(result)
+        result = query.order("created_at", desc=True).limit(1000).execute()
+        all_signals = safe_get_data(result)
         
-        # DEBUG: Check active signals count for XAUUSD
-        if symbol == "XAUUSD":
-            active_query = client.table("prediction_logs").select("id, status, model_type, strategy, created_at").eq("symbol", "XAUUSD").eq("status", "active")
-            if model_lower in ["pulse1", "pulse2", "pulse3"]:
-                active_query = active_query.eq("model_type", model_lower)
-            elif model_lower == "emel":
-                active_query = active_query.or_("model_type.eq.emel,strategy.eq.EMEL")
-            active_result = active_query.limit(100).execute()
-            active_signals = safe_get_data(active_result)
-            logger.info(f"[XAUUSD DEBUG] model={model}, completed_signals={len(signals)}, active_signals={len(active_signals)}")
+        # Filter by model in Python
+        signals = [s for s in all_signals if _normalize_model_type(s) == model_lower]
         
         if not signals:
             return {
@@ -2387,20 +2363,16 @@ async def get_model_timeframes(model: str):
         return {"error": "Database client not available"}
     
     try:
-        # Query distinct timeframes for this model
-        model_lower = model.lower()
+        # Query all recent signals and filter model type in Python
+        model_lower = model.lower().strip()
         
-        if model_lower == "ml":
-            query = client.table("prediction_logs").select("timeframe").or_("model_type.eq.ml,model_type.is.null")
-        elif model_lower in ["pulse1", "pulse2", "pulse3"]:
-            query = client.table("prediction_logs").select("timeframe").eq("model_type", model_lower)
-        elif model_lower == "emel":
-            query = client.table("prediction_logs").select("timeframe").or_("model_type.eq.emel,strategy.eq.EMEL")
-        else:
-            query = client.table("prediction_logs").select("timeframe").eq("model_type", model_lower)
+        result = client.table("prediction_logs").select(
+            "timeframe, model_type, strategy"
+        ).limit(1000).execute()
+        all_signals = safe_get_data(result)
         
-        result = query.limit(1000).execute()
-        signals = safe_get_data(result)
+        # Filter by model in Python
+        signals = [s for s in all_signals if _normalize_model_type(s) == model_lower]
         
         timeframes = list(set(s.get("timeframe", "1h") for s in signals if s.get("timeframe")))
         timeframes.sort()
@@ -2615,6 +2587,28 @@ async def get_xauusd_signal_status():
 # MODEL DETAIL ANALYTICS — Comprehensive performance breakdown
 # ═══════════════════════════════════════════════════════════════════════════════
 
+def _normalize_model_type(sig: dict) -> str:
+    """Normalize model_type from a prediction_logs record — same logic as dashboard."""
+    mt = sig.get("model_type") or sig.get("strategy") or "ml"
+    mt = mt.lower().strip()
+    if mt == "pulse" or mt == "":
+        strat = (sig.get("strategy") or "").upper()
+        if strat == "PULSE_V3":
+            return "pulse3"
+        elif strat == "PULSE_ML":
+            return "pulse2"
+        elif "EMEL" in strat and "INVERSE" in strat:
+            return "emel_inverse"
+        elif "EMEL" in strat:
+            return "emel"
+        elif "PULSE" in strat:
+            return "pulse1"
+        return "ml"
+    if mt in ("pulse1", "pulse2", "pulse3", "emel", "emel_inverse", "hybrid"):
+        return mt
+    return "ml"
+
+
 @router.get("/model-detail-analytics")
 async def get_model_detail_analytics(
     model: str = Query("ml", description="Model type (ml, emel, pulse1, pulse2, pulse3, emel_inverse, hybrid)"),
@@ -2638,38 +2632,45 @@ async def get_model_detail_analytics(
         from dateutil import parser as dt_parser
         import json as _json
         import math
+        import logging as _logging
+        _log = _logging.getLogger(__name__)
 
-        # ── 1. Fetch signals ──
-        query = client.table("prediction_logs").select(
-            "id, symbol, timeframe, ml_direction, ml_confidence, status, "
-            "ml_entry_price, created_at, highest_profit_pips, lowest_drawdown_pips, "
-            "targets_hit, model_type, strategy"
-        ).order("created_at", desc=True)
+        model_lower = model.lower().strip()
 
-        # Model filter
-        model_lower = model.lower()
-        if model_lower == "ml":
-            query = query.or_("model_type.eq.ml,model_type.is.null")
-        elif model_lower == "emel":
-            query = query.or_("model_type.eq.emel,strategy.eq.EMEL")
-        elif model_lower == "emel_inverse":
-            query = query.or_("model_type.eq.emel_inverse,strategy.eq.EMEL_INVERSE")
-        elif model_lower == "hybrid":
-            query = query.or_("model_type.eq.hybrid,strategy.eq.HYBRID")
-        else:
-            query = query.eq("model_type", model_lower)
-
-        # Symbol filter
-        query = query.eq("symbol", symbol)
-
-        # Time filter
+        # ── 1. Fetch signals via day-by-day pagination (bypass 1000-row cap) ──
+        # Filter only by symbol at DB level; model filtering done in Python
         if days > 0:
-            cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
-            query = query.gte("created_at", cutoff)
+            start_date = datetime.utcnow() - timedelta(days=days)
+        else:
+            start_date = datetime.utcnow() - timedelta(days=365)
 
-        query = query.limit(5000)
-        result = query.execute()
-        signals = safe_get_data(result)
+        end_date = datetime.utcnow()
+        all_signals = []
+        current = start_date
+
+        while current < end_date:
+            day_start = current.replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = day_start + timedelta(days=1)
+
+            result = client.table("prediction_logs").select(
+                "id, symbol, timeframe, ml_direction, ml_confidence, status, "
+                "ml_entry_price, created_at, highest_profit_pips, lowest_drawdown_pips, "
+                "targets_hit, model_type, strategy"
+            ).eq("symbol", symbol).gte(
+                "created_at", day_start.isoformat() + "Z"
+            ).lt(
+                "created_at", day_end.isoformat() + "Z"
+            ).order("created_at", desc=True).limit(1000).execute()
+
+            batch = safe_get_data(result)
+            if batch:
+                all_signals.extend(batch)
+            current = day_end
+
+        # ── 2. Filter by model type in Python ──
+        signals = [s for s in all_signals if _normalize_model_type(s) == model_lower]
+
+        _log.info(f"model-detail-analytics: {len(all_signals)} raw → {len(signals)} for model={model_lower}, symbol={symbol}")
 
         if not signals:
             return {
@@ -2948,5 +2949,6 @@ async def get_model_detail_analytics(
 
     except Exception as e:
         import traceback
-        logger.error(f"Model detail analytics error: {e}\n{traceback.format_exc()}")
-        return {"error": str(e)}
+        import logging as _logging
+        _logging.getLogger(__name__).error(f"Model detail analytics error: {e}\n{traceback.format_exc()}")
+        return {"error": str(e), "traceback": traceback.format_exc()[:500]}
