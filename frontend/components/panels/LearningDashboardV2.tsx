@@ -42,6 +42,8 @@ const MODEL_THEME: Record<string, { label: string; color: string; Icon: any }> =
   hybrid: { label: "Hybrid", color: "var(--accent-warning)", Icon: LearningIcon },
 };
 
+const TIMEFRAME_ORDER = ["5m", "15m", "30m", "1h", "4h", "1d"];
+
 function getTheme(model: string) {
   return MODEL_THEME[model] || MODEL_THEME.ml;
 }
@@ -140,6 +142,13 @@ function ModelCard({ model, stats, onSelectSymbol }: { model: string; stats: Mod
   const wr = stats.win_rate;
   const wrColor = wr >= 55 ? "var(--accent-positive)" : wr >= 40 ? "var(--accent-warning)" : "var(--accent-negative)";
   const netPos = stats.net_pips >= 0;
+  const timeframeEntries = Object.entries(stats.timeframe_stats || {})
+    .sort(([a], [b]) => {
+      const aIndex = TIMEFRAME_ORDER.indexOf(a);
+      const bIndex = TIMEFRAME_ORDER.indexOf(b);
+      return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex);
+    })
+    .filter(([, value]) => (value?.total || 0) > 0);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
   const { data: matrixData, isLoading: matrixLoading } = useQuery({
@@ -230,6 +239,53 @@ function ModelCard({ model, stats, onSelectSymbol }: { model: string; stats: Mod
               </div>
             ))}
           </div>
+
+          {timeframeEntries.length > 0 && (
+            <div>
+              <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>
+                Timeframe Edge
+              </p>
+              <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
+                {timeframeEntries.map(([tf, tfStats]) => {
+                  const tfNetPositive = (tfStats.net_pips ?? 0) >= 0;
+                  const tfTone = (tfStats.win_rate ?? 0) >= 55
+                    ? "var(--accent-positive)"
+                    : (tfStats.win_rate ?? 0) >= 40
+                      ? "var(--accent-warning)"
+                      : "var(--accent-negative)";
+
+                  return (
+                    <div
+                      key={tf}
+                      className="rounded-lg"
+                      style={{
+                        background: "var(--bg-surface)",
+                        padding: 14,
+                        border: `1px solid var(--border-subtle)`,
+                      }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 700, color: "var(--text-primary)", textTransform: "uppercase" as const }}>
+                          {tf}
+                        </span>
+                        <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 600, color: tfTone }}>
+                          {tfStats.win_rate?.toFixed(1) ?? "0.0"}%
+                        </span>
+                      </div>
+                      <div className="mt-3 flex items-end justify-between gap-2">
+                        <span style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: tfNetPositive ? "var(--accent-positive)" : "var(--accent-negative)", letterSpacing: "-0.02em" }}>
+                          {(tfStats.net_pips ?? 0) >= 0 ? "+" : ""}{(tfStats.net_pips ?? 0).toFixed(1)}p
+                        </span>
+                        <span style={{ fontFamily: FONT, fontSize: 11, color: "var(--text-muted)" }}>
+                          {tfStats.total} sig
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Overall Target Rates */}
           {Object.keys(stats.target_rates).length > 0 && (

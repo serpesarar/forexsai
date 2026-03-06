@@ -1,642 +1,1334 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-    LineChart,
-    Line,
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    Cell
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+const TF_ORDER = ["all", "5m", "15m", "30m", "1h", "4h", "1d"];
 
-/* ═══════════════════════════════════════════════════════════════════
-   TYPES
-   ═══════════════════════════════════════════════════════════════════ */
+interface HourlyData {
+  hour: number;
+  total: number;
+  wins: number;
+  win_rate: number;
+  avg_pips: number;
+}
 
-interface HourlyData { hour: number; total: number; wins: number; win_rate: number; avg_pips: number; }
-interface TFData { tf: string; total: number; win_rate: number; net_pips: number; avg_pips: number; }
-interface DailyData { date: string; total: number; wins: number; win_rate: number; cumulative_pips: number; }
-interface DOWData { day: string; day_short: string; total: number; wins: number; win_rate: number; avg_pips: number; }
-interface RecentSignal { id: string; date: string; direction: string; confidence: number; status: string; pips: number; timeframe: string; }
+interface TFData {
+  tf: string;
+  total: number;
+  active?: number;
+  win_rate: number;
+  net_pips: number;
+  avg_pips: number;
+}
+
+interface DailyData {
+  date: string;
+  total: number;
+  wins: number;
+  win_rate: number;
+  cumulative_pips: number;
+}
+
+interface DOWData {
+  day: string;
+  day_short: string;
+  total: number;
+  wins: number;
+  win_rate: number;
+  avg_pips: number;
+}
+
+interface RecentSignal {
+  id: string;
+  date: string;
+  direction: string;
+  confidence: number;
+  status: string;
+  pips: number;
+  timeframe: string;
+}
+
+interface ModelComparisonRow {
+  model: string;
+  total: number;
+  scored_signals?: number;
+  completed?: number;
+  stopped?: number;
+  expired?: number;
+  active?: number;
+  win_rate: number;
+  net_pips: number;
+  avg_pips: number;
+}
+
+interface AnalyticsMeta {
+  requested_model?: string;
+  selected_model?: string;
+  selected_timeframe?: string;
+  available_timeframes?: string[];
+  available_models?: string[];
+  days?: number;
+  all_time?: boolean;
+  date_from?: string | null;
+  date_to?: string | null;
+  scope_total_signals?: number;
+  filtered_total_signals?: number;
+  traceback?: string;
+}
 
 interface AnalyticsData {
-    model: string;
-    symbol: string;
-    overview: {
-        total_signals: number; win_rate: number; completed: number; stopped: number;
-        expired: number; active: number; net_pips: number; avg_profit_pips: number;
-        avg_loss_pips: number; risk_reward: number; sharpe_ratio: number;
-        max_drawdown_pips: number; profit_factor: number;
-    };
-    hourly_heatmap: HourlyData[];
-    timeframe_comparison: TFData[];
-    daily_accuracy: DailyData[];
-    day_of_week: DOWData[];
-    tp_hit_rates: Record<string, number>;
-    recent_signals: RecentSignal[];
+  model: string;
+  symbol: string;
+  overview: {
+    total_signals: number;
+    win_rate: number;
+    completed: number;
+    stopped: number;
+    expired: number;
+    active: number;
+    net_pips: number;
+    avg_profit_pips: number;
+    avg_loss_pips: number;
+    risk_reward: number;
+    sharpe_ratio: number;
+    max_drawdown_pips: number;
+    profit_factor: number;
+  };
+  hourly_heatmap: HourlyData[];
+  timeframe_comparison: TFData[];
+  daily_accuracy: DailyData[];
+  day_of_week: DOWData[];
+  tp_hit_rates: Record<string, number>;
+  recent_signals: RecentSignal[];
+  selected_timeframe?: string;
+  available_timeframes?: string[];
+  available_models?: string[];
+  model_comparison?: ModelComparisonRow[];
+  meta?: AnalyticsMeta;
+  error?: string;
 }
 
 interface ModelPerformanceModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    symbol: string;
-    model?: string;
+  isOpen: boolean;
+  onClose: () => void;
+  symbol: string;
+  model?: string;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   I18N
-   ═══════════════════════════════════════════════════════════════════ */
+const T = {
+  en: {
+    overview: "Overview",
+    timeframes: "Timeframes",
+    hourly: "Hourly",
+    dayOfWeek: "Weekdays",
+    winRate: "Win rate",
+    netPips: "Net pips",
+    resolved: "Resolved",
+    profitFactor: "Profit factor",
+    sharpe: "Sharpe",
+    maxDrawdown: "Max drawdown",
+    active: "Active",
+    completed: "Wins",
+    stopped: "Losses",
+    expired: "Expired",
+    allModels: "All models",
+    allTimeframes: "All TF",
+    allHistory: "All history",
+    filteredScope: "Filtered scope",
+    modelBenchmark: "Cross-model benchmark",
+    scopeSummary: "Scope summary",
+    timeframeDistribution: "Timeframe distribution",
+    dailyTrend: "Daily equity curve",
+    tpHitRates: "Target hit rates",
+    recentSignals: "Recent signals",
+    date: "Date",
+    direction: "Direction",
+    confidence: "Confidence",
+    status: "Status",
+    pips: "Pips",
+    timeframe: "Timeframe",
+    totalSignals: "Signals",
+    avgPips: "Avg pips",
+    bestTimeframe: "Best timeframe",
+    biggestSample: "Largest sample",
+    coveredTimeframes: "Covered TF",
+    model: "Model",
+    benchmarkNote:
+      "Overview, hourly and weekday analytics respect the selected timeframe. The benchmark table compares all available timeframes within the current model scope.",
+    noData: "No resolved signal history was found for this scope.",
+    loading: "Loading analytics…",
+    retry: "Retry",
+    close: "Close",
+    analytics: "Performance analytics",
+    selectedScope: "Selected scope",
+    availableModels: "Available models",
+    refreshing: "Refreshing",
+  },
+  tr: {
+    overview: "Genel Bakış",
+    timeframes: "Timeframe'ler",
+    hourly: "Saatlik",
+    dayOfWeek: "Hafta Günleri",
+    winRate: "Başarı oranı",
+    netPips: "Net pips",
+    resolved: "Sonuçlanan",
+    profitFactor: "Kâr faktörü",
+    sharpe: "Sharpe",
+    maxDrawdown: "Maks. düşüş",
+    active: "Aktif",
+    completed: "Kazanç",
+    stopped: "Kayıp",
+    expired: "Süresi dolan",
+    allModels: "Tüm modeller",
+    allTimeframes: "Tüm TF",
+    allHistory: "Tüm geçmiş",
+    filteredScope: "Filtrelenen kapsam",
+    modelBenchmark: "Modeller arası kıyas",
+    scopeSummary: "Kapsam özeti",
+    timeframeDistribution: "Timeframe dağılımı",
+    dailyTrend: "Günlük getiri eğrisi",
+    tpHitRates: "Hedef isabet oranları",
+    recentSignals: "Son sinyaller",
+    date: "Tarih",
+    direction: "Yön",
+    confidence: "Güven",
+    status: "Durum",
+    pips: "Pips",
+    timeframe: "Timeframe",
+    totalSignals: "Sinyal",
+    avgPips: "Ort. pips",
+    bestTimeframe: "En iyi timeframe",
+    biggestSample: "En büyük örneklem",
+    coveredTimeframes: "Kapsanan TF",
+    model: "Model",
+    benchmarkNote:
+      "Genel bakış, saatlik ve hafta günü analizleri seçili timeframe'e göre filtrelenir. Aşağıdaki benchmark tablosu aynı model kapsamındaki tüm timeframe'leri karşılaştırır.",
+    noData: "Bu kapsam için sonuçlanmış sinyal geçmişi bulunamadı.",
+    loading: "Analitik yükleniyor…",
+    retry: "Tekrar dene",
+    close: "Kapat",
+    analytics: "Performans analitiği",
+    selectedScope: "Seçili kapsam",
+    availableModels: "Mevcut modeller",
+    refreshing: "Güncelleniyor",
+  },
+} as const;
 
-const T: Record<string, Record<string, string>> = {
-    en: {
-        overview: "Overview", hourly: "Hourly Heatmap", timeframe: "Timeframe Analysis",
-        dayOfWeek: "Day Analysis", winRate: "Win Rate", totalSignals: "Total Signals",
-        netPips: "Net Pips", riskReward: "R:R Ratio", sharpe: "Sharpe Ratio",
-        maxDD: "Max Drawdown", profitFactor: "Profit Factor", completed: "Wins",
-        stopped: "Losses", tpHitRates: "Target Hit Rates", dailyAccuracy: "Daily Accuracy",
-        cumPips: "Cumulative Pips", recentSignals: "Recent Signals", date: "Date",
-        direction: "Direction", confidence: "Confidence", status: "Status", pips: "Pips",
-        tf: "TF", bestHours: "Best Trading Hours", worstHours: "Worst Hours",
-        signals: "signals", noData: "No signal data available for this combination.",
-        avgPips: "Avg Pips", close: "Close",
-    },
-    tr: {
-        overview: "Genel Bakış", hourly: "Saatlik Performans", timeframe: "Zaman Dilimi Analizi",
-        dayOfWeek: "Gün Analizi", winRate: "Başarı Oranı", totalSignals: "Toplam Sinyal",
-        netPips: "Net Pips", riskReward: "R:R Oranı", sharpe: "Sharpe Oranı",
-        maxDD: "Maks. Düşüş", profitFactor: "Kâr Faktörü", completed: "Kazanç",
-        stopped: "Kayıp", tpHitRates: "Hedef İsabet Oranları", dailyAccuracy: "Günlük Doğruluk",
-        cumPips: "Kümülatif Pips", recentSignals: "Son Sinyaller", date: "Tarih",
-        direction: "Yön", confidence: "Güven", status: "Durum", pips: "Pips",
-        tf: "ZD", bestHours: "En İyi İşlem Saatleri", worstHours: "Kötü Saatler",
-        signals: "sinyal", noData: "Bu kombinasyon için sinyal verisi bulunamadı.",
-        avgPips: "Ort. Pips", close: "Kapat",
-    },
-};
+type LocaleCopy = (typeof T)[keyof typeof T];
 
 const SYM_DISPLAY: Record<string, string> = {
-    "NDX.INDX": "NASDAQ", "GDAXI.INDX": "DAX", "USOIL.FOREX": "US OIL", "CL.F": "US OIL",
+  "NDX.INDX": "NASDAQ",
+  "GDAXI.INDX": "DAX",
+  "USOIL.FOREX": "US OIL",
+  "CL.F": "US OIL",
 };
+
 const MODEL_DISPLAY: Record<string, string> = {
-    ml: "ML Model", emel: "EMEL 9-Check", pulse1: "Pulse 1 — Algo", pulse2: "Pulse 2 — ML",
-    pulse3: "Pulse 3 — Scalp", emel_inverse: "EMEL Inverse",
+  all: "All Models",
+  ml: "ML Model",
+  emel: "EMEL 9-Check",
+  pulse1: "Pulse 1 — Algo",
+  pulse2: "Pulse 2 — ML",
+  pulse3: "Pulse 3 — Scalp",
+  emel_inverse: "EMEL Inverse",
+  hybrid: "Hybrid",
 };
 
-/* ═══════════════════════════════════════════════════════════════════
-   HELPER: Color Scales
-   ═══════════════════════════════════════════════════════════════════ */
-
-function wrColor(wr: number): string {
-    if (wr >= 70) return "#00F0FF";
-    if (wr >= 55) return "#16C784";
-    if (wr >= 45) return "#F5A623";
-    if (wr >= 30) return "#EA3943";
-    return "#6B7280";
+function getLanguage(): "en" | "tr" {
+  if (typeof window === "undefined") return "en";
+  const saved = localStorage.getItem("language");
+  if (saved === "tr" || saved === "en") return saved;
+  return navigator.language?.toLowerCase().startsWith("tr") ? "tr" : "en";
 }
 
-function wrBg(wr: number, total: number): string {
-    if (total === 0) return "rgba(255,255,255,0.02)";
-    if (wr >= 70) return "rgba(0,240,255,0.15)";
-    if (wr >= 55) return "rgba(22,199,132,0.15)";
-    if (wr >= 45) return "rgba(245,166,35,0.12)";
-    if (wr >= 30) return "rgba(234,57,67,0.12)";
-    return "rgba(107,114,128,0.08)";
+function sortTimeframes(values: string[]) {
+  return Array.from(new Set(values.filter(Boolean))).sort((a, b) => {
+    const aIndex = TF_ORDER.indexOf(a);
+    const bIndex = TF_ORDER.indexOf(b);
+    return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex) || a.localeCompare(b);
+  });
 }
 
-function statusColor(s: string): string {
-    if (s === "completed") return "#16C784";
-    if (s === "stopped") return "#EA3943";
-    if (s === "active") return "#00F0FF";
-    return "#6B7280";
+function wrColor(rate: number) {
+  if (rate >= 65) return "var(--accent-positive)";
+  if (rate >= 50) return "var(--accent-info)";
+  if (rate >= 40) return "var(--accent-warning)";
+  return "var(--accent-negative)";
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   COMPONENT
-   ═══════════════════════════════════════════════════════════════════ */
+function statusColor(status: string) {
+  if (status === "completed") return "var(--accent-positive)";
+  if (status === "stopped") return "var(--accent-negative)";
+  if (status === "active") return "var(--accent-info)";
+  if (status === "expired") return "var(--accent-warning)";
+  return "var(--text-muted)";
+}
+
+function formatPips(value: number) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}p`;
+}
+
+function formatDateRange(start?: string | null, end?: string | null, lang: "en" | "tr" = "en") {
+  if (!start || !end) return "—";
+  const locale = lang === "tr" ? "tr-TR" : "en-US";
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return "—";
+  return `${startDate.toLocaleDateString(locale, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })} → ${endDate.toLocaleDateString(locale, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })}`;
+}
+
+function emptyAnalytics(symbol: string, model?: string): AnalyticsData {
+  return {
+    model: model || "all",
+    symbol,
+    overview: {
+      total_signals: 0,
+      win_rate: 0,
+      completed: 0,
+      stopped: 0,
+      expired: 0,
+      active: 0,
+      net_pips: 0,
+      avg_profit_pips: 0,
+      avg_loss_pips: 0,
+      risk_reward: 0,
+      sharpe_ratio: 0,
+      max_drawdown_pips: 0,
+      profit_factor: 0,
+    },
+    hourly_heatmap: [],
+    timeframe_comparison: [],
+    daily_accuracy: [],
+    day_of_week: [],
+    tp_hit_rates: {},
+    recent_signals: [],
+    available_timeframes: [],
+    available_models: [],
+    model_comparison: [],
+    meta: {
+      selected_model: model || "all",
+      selected_timeframe: "all",
+      filtered_total_signals: 0,
+      scope_total_signals: 0,
+    },
+    selected_timeframe: "all",
+  };
+}
+
+function AnalyticsTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div
+      style={{
+        background: "var(--bg-card)",
+        border: "1px solid var(--border-subtle)",
+        borderRadius: 10,
+        padding: "10px 12px",
+      }}
+    >
+      <p style={{ color: "var(--text-muted)", fontSize: 11, marginBottom: 4 }}>{label}</p>
+      {payload.map((entry: any, index: number) => (
+        <div key={`${entry.name}-${index}`} className="flex items-center gap-2" style={{ marginTop: 4 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 999, background: entry.color }} />
+          <span style={{ color: "var(--text-primary)", fontSize: 12 }}>
+            {entry.name}: {typeof entry.value === "number" ? entry.value.toFixed(1) : entry.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
-    isOpen, onClose, symbol, model,
+  isOpen,
+  onClose,
+  symbol,
+  model,
 }) => {
-    const lang = typeof window !== "undefined"
-        ? (localStorage.getItem("language") || (navigator.language?.startsWith("tr") ? "tr" : "en"))
-        : "en";
-    const t = (key: string) => (T[lang]?.[key] || T.en[key] || key);
+  const lang = useMemo(() => getLanguage(), [isOpen]);
+  const copy = T[lang];
+  const [activeTab, setActiveTab] = useState<"overview" | "timeframes" | "hourly" | "dayOfWeek">(
+    "overview"
+  );
+  const [selectedTimeframe, setSelectedTimeframe] = useState<string>("all");
 
-    const [activeTab, setActiveTab] = useState<"overview" | "hourly" | "timeframe" | "dayOfWeek">("overview");
-
-    const { data, isLoading } = useQuery<AnalyticsData>({
-        queryKey: ["model-detail-analytics", model, symbol],
-        queryFn: async () => {
-            const params = new URLSearchParams({ symbol });
-            if (model) params.append("model", model);
-            const res = await fetch(`${API_BASE}/api/learning/model-detail-analytics?${params}`);
-            if (!res.ok) throw new Error("fetch failed");
-            return res.json();
-        },
-        enabled: isOpen && !!symbol,
-    });
-
-    if (!isOpen) return null;
-
-    const symDisplay = SYM_DISPLAY[symbol] || symbol;
-    const modelDisplay = model ? (MODEL_DISPLAY[model] || model) : "All";
-    const ov = data?.overview;
-
-    /* ── Custom Tooltip ── */
-    const CyberTooltip = ({ active, payload, label }: any) => {
-        if (!active || !payload?.length) return null;
-        return (
-            <div style={{
-                background: "rgba(11,15,23,0.95)", border: "1px solid rgba(0,240,255,0.3)",
-                borderRadius: 8, padding: "10px 14px", backdropFilter: "blur(12px)",
-                boxShadow: "0 0 20px rgba(0,240,255,0.15)",
-            }}>
-                <p style={{ color: "#9AA4B2", fontSize: 11, marginBottom: 4 }}>{label}</p>
-                {payload.map((e: any, i: number) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: e.color }} />
-                        <span style={{ color: "#E6EDF3", fontSize: 12 }}>
-                            {e.name}: {typeof e.value === "number" ? e.value.toFixed(1) : e.value}
-                        </span>
-                    </div>
-                ))}
-            </div>
-        );
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
     };
+  }, [isOpen]);
 
-    /* ── Tabs ── */
-    const tabs = [
-        { key: "overview" as const, label: t("overview") },
-        { key: "hourly" as const, label: t("hourly") },
-        { key: "timeframe" as const, label: t("timeframe") },
-        { key: "dayOfWeek" as const, label: t("dayOfWeek") },
-    ];
+  useEffect(() => {
+    if (!isOpen) return;
+    setActiveTab("overview");
+    setSelectedTimeframe("all");
+  }, [isOpen, model, symbol]);
 
-    return (
-        <AnimatePresence>
-            {isOpen && (
-                <motion.div
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                    style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
-                    onClick={onClose}
+  const { data, isLoading, isFetching, error, refetch } = useQuery<AnalyticsData>({
+    queryKey: ["model-detail-analytics", model || "all", symbol, selectedTimeframe],
+    queryFn: async () => {
+      const params = new URLSearchParams({ symbol });
+      if (model) params.set("model", model);
+      if (selectedTimeframe !== "all") params.set("timeframe", selectedTimeframe);
+
+      const response = await fetch(`${API_BASE}/api/learning/model-detail-analytics?${params.toString()}`);
+      const payload = (await response.json().catch(() => null)) as AnalyticsData | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.error || "Failed to load analytics");
+      }
+
+      return payload || emptyAnalytics(symbol, model);
+    },
+    enabled: isOpen && !!symbol,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+  });
+
+  if (!isOpen) return null;
+
+  const effectiveModel = data?.meta?.selected_model || data?.model || model || "all";
+  const effectiveTimeframe = data?.selected_timeframe || data?.meta?.selected_timeframe || selectedTimeframe;
+  const availableTimeframes = sortTimeframes([
+    "all",
+    ...(data?.available_timeframes || []),
+    effectiveTimeframe,
+  ]);
+  const headerModelLabel =
+    effectiveModel === "all" ? copy.allModels : MODEL_DISPLAY[effectiveModel] || effectiveModel;
+  const headerSymbolLabel = SYM_DISPLAY[symbol] || symbol;
+  const queryError = error instanceof Error ? error.message : undefined;
+  const displayError = queryError || data?.error;
+  const overview = data?.overview;
+  const hasData = Boolean(
+    (overview?.total_signals || 0) > 0 ||
+      (data?.timeframe_comparison?.length || 0) > 0 ||
+      (data?.model_comparison?.length || 0) > 1 ||
+      (data?.recent_signals?.length || 0) > 0
+  );
+  const meta = data?.meta;
+
+  const tabs = [
+    { key: "overview" as const, label: copy.overview },
+    { key: "timeframes" as const, label: copy.timeframes },
+    { key: "hourly" as const, label: copy.hourly },
+    { key: "dayOfWeek" as const, label: copy.dayOfWeek },
+  ];
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(10px)" }}
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ y: 16, scale: 0.98, opacity: 0 }}
+          animate={{ y: 0, scale: 1, opacity: 1 }}
+          exit={{ y: 16, scale: 0.98, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 24 }}
+          className="w-full max-w-6xl max-h-[92vh] overflow-y-auto rounded-3xl"
+          style={{
+            background: "var(--bg-primary)",
+            border: "1px solid var(--border-subtle)",
+            boxShadow: "0 30px 80px rgba(0,0,0,0.45)",
+          }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div
+            className="sticky top-0 z-10"
+            style={{
+              background: "rgba(8, 12, 20, 0.92)",
+              backdropFilter: "blur(12px)",
+              borderBottom: "1px solid var(--border-subtle)",
+            }}
+          >
+            <div className="px-6 pt-5 pb-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <ScopeBadge label={headerModelLabel} tone="info" />
+                    <ScopeBadge
+                      label={effectiveTimeframe === "all" ? copy.allTimeframes : effectiveTimeframe.toUpperCase()}
+                      tone="neutral"
+                    />
+                    <ScopeBadge label={meta?.all_time ? copy.allHistory : `${meta?.days || 0}d`} tone="neutral" />
+                    {isFetching && !isLoading && <ScopeBadge label={copy.refreshing} tone="warning" />}
+                  </div>
+                  <h2
+                    style={{
+                      fontSize: 26,
+                      fontWeight: 700,
+                      color: "var(--text-primary)",
+                      letterSpacing: "-0.03em",
+                    }}
+                  >
+                    {headerSymbolLabel}{" "}
+                    <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>{copy.analytics}</span>
+                  </h2>
+                  <p style={{ marginTop: 6, fontSize: 13, color: "var(--text-muted)" }}>
+                    {formatDateRange(meta?.date_from, meta?.date_to, lang)}
+                  </p>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="rounded-xl px-3 py-2 transition-colors"
+                  style={{
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border-subtle)",
+                    color: "var(--text-primary)",
+                  }}
                 >
-                    <motion.div
-                        initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl"
-                        style={{
-                            background: "linear-gradient(145deg, #0B0F17 0%, #111827 50%, #0D1117 100%)",
-                            border: "1px solid rgba(0,240,255,0.15)",
-                            boxShadow: "0 0 40px rgba(0,240,255,0.08), 0 0 80px rgba(0,240,255,0.04)",
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {/* ── HEADER ── */}
-                        <div className="relative px-6 pt-5 pb-4" style={{ borderBottom: "1px solid rgba(0,240,255,0.1)" }}>
-                            {/* Scan line effect */}
-                            <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ opacity: 0.03 }}>
-                                {Array.from({ length: 20 }).map((_, i) => (
-                                    <div key={i} style={{ height: 1, background: "#00F0FF", marginBottom: 3 }} />
-                                ))}
-                            </div>
-                            <div className="flex items-center justify-between relative">
-                                <div>
-                                    <p style={{ fontSize: 11, fontWeight: 500, color: "#00F0FF", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                                        {modelDisplay}
-                                    </p>
-                                    <h2 style={{ fontSize: 22, fontWeight: 700, color: "#E6EDF3", letterSpacing: "-0.02em" }}>
-                                        {symDisplay} <span style={{ color: "#9AA4B2", fontSize: 14, fontWeight: 400 }}>Performance Analytics</span>
-                                    </h2>
-                                </div>
-                                <button
-                                    onClick={onClose}
-                                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-                                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = "rgba(234,57,67,0.2)"}
-                                    onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
-                                >
-                                    <span style={{ color: "#9AA4B2", fontSize: 16 }}>✕</span>
-                                </button>
-                            </div>
-                            {/* Tab Bar */}
-                            <div className="flex gap-1 mt-4" style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: 3 }}>
-                                {tabs.map((tab) => (
-                                    <button
-                                        key={tab.key}
-                                        onClick={() => setActiveTab(tab.key)}
-                                        style={{
-                                            flex: 1, padding: "8px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                                            transition: "all 0.2s",
-                                            background: activeTab === tab.key ? "rgba(0,240,255,0.12)" : "transparent",
-                                            color: activeTab === tab.key ? "#00F0FF" : "#6B7280",
-                                            border: activeTab === tab.key ? "1px solid rgba(0,240,255,0.25)" : "1px solid transparent",
-                                        }}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                  {copy.close}
+                </button>
+              </div>
 
-                        {/* ── BODY ── */}
-                        <div className="p-6">
-                            {isLoading ? (
-                                <div className="flex flex-col items-center justify-center py-16">
-                                    <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(0,240,255,0.2)", borderTopColor: "#00F0FF" }} />
-                                    <p style={{ color: "#6B7280", fontSize: 12, marginTop: 12 }}>Loading analytics...</p>
-                                </div>
-                            ) : !data || data.overview?.total_signals === 0 ? (
-                                <div className="text-center py-16">
-                                    <p style={{ color: "#6B7280", fontSize: 14 }}>{t("noData")}</p>
-                                </div>
-                            ) : (
-                                <>
-                                    {activeTab === "overview" && ov && <OverviewTab ov={ov} tpRates={data.tp_hit_rates} daily={data.daily_accuracy} recent={data.recent_signals} tfData={data.timeframe_comparison} t={t} />}
-                                    {activeTab === "hourly" && <HourlyTab data={data.hourly_heatmap} t={t} />}
-                                    {activeTab === "timeframe" && <TimeframeTab data={data.timeframe_comparison} t={t} tooltip={CyberTooltip} />}
-                                    {activeTab === "dayOfWeek" && <DOWTab data={data.day_of_week} t={t} tooltip={CyberTooltip} />}
-                                </>
-                            )}
-                        </div>
-                    </motion.div>
-                </motion.div>
+              <div className="mt-5 flex flex-wrap items-center gap-2 overflow-x-auto pb-1">
+                {availableTimeframes.map((tf) => {
+                  const selected = selectedTimeframe === tf;
+                  return (
+                    <button
+                      key={tf}
+                      onClick={() => setSelectedTimeframe(tf)}
+                      className="rounded-full px-3 py-1.5 whitespace-nowrap transition-all"
+                      style={{
+                        background: selected ? "rgba(79,140,255,0.14)" : "var(--bg-card)",
+                        border: selected
+                          ? "1px solid rgba(79,140,255,0.35)"
+                          : "1px solid var(--border-subtle)",
+                        color: selected ? "var(--accent-info)" : "var(--text-muted)",
+                        fontSize: 12,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {tf === "all" ? copy.allTimeframes : tf.toUpperCase()}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {tabs.map((tab) => {
+                  const selected = activeTab === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      onClick={() => setActiveTab(tab.key)}
+                      className="rounded-xl px-3.5 py-2 transition-all"
+                      style={{
+                        background: selected ? "var(--bg-card)" : "transparent",
+                        border: selected
+                          ? "1px solid var(--border-subtle)"
+                          : "1px solid transparent",
+                        color: selected ? "var(--text-primary)" : "var(--text-muted)",
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+              <InfoPill
+                label={copy.filteredScope}
+                value={`${meta?.filtered_total_signals ?? overview?.total_signals ?? 0}${
+                  meta?.scope_total_signals && meta.scope_total_signals !== (meta.filtered_total_signals ?? 0)
+                    ? ` / ${meta.scope_total_signals}`
+                    : ""
+                }`}
+              />
+              <InfoPill
+                label={copy.selectedScope}
+                value={`${headerModelLabel} · ${
+                  effectiveTimeframe === "all" ? copy.allTimeframes : effectiveTimeframe.toUpperCase()
+                }`}
+              />
+              <InfoPill
+                label={copy.availableModels}
+                value={`${data?.available_models?.length || (effectiveModel === "all" ? 0 : 1) || 0}`}
+              />
+            </div>
+
+            {displayError && (
+              <div
+                style={{
+                  background: "rgba(245, 158, 11, 0.10)",
+                  border: "1px solid rgba(245, 158, 11, 0.22)",
+                  color: "var(--text-primary)",
+                  borderRadius: 16,
+                  padding: 14,
+                }}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span style={{ fontSize: 13 }}>{displayError}</span>
+                  <button onClick={() => refetch()} style={{ color: "var(--accent-warning)", fontSize: 12, fontWeight: 700 }}>
+                    {copy.retry}
+                  </button>
+                </div>
+              </div>
             )}
-        </AnimatePresence>
-    );
+
+            {isLoading ? (
+              <LoadingState label={copy.loading} />
+            ) : !hasData || !data ? (
+              <EmptyState label={copy.noData} onRetry={() => refetch()} retryLabel={copy.retry} />
+            ) : activeTab === "overview" ? (
+              <OverviewPanel
+                data={data}
+                copy={copy}
+                lang={lang}
+                effectiveModel={effectiveModel}
+                selectedTimeframe={effectiveTimeframe}
+              />
+            ) : activeTab === "timeframes" ? (
+              <TimeframesPanel data={data.timeframe_comparison} copy={copy} />
+            ) : activeTab === "hourly" ? (
+              <HourlyPanel data={data.hourly_heatmap} copy={copy} />
+            ) : (
+              <WeekdayPanel data={data.day_of_week} copy={copy} />
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
 };
 
-/* ═══════════════════════════════════════════════════════════════════
-   TAB 1: OVERVIEW
-   ═══════════════════════════════════════════════════════════════════ */
-
-function OverviewTab({ ov, tpRates, daily, recent, tfData, t }: {
-    ov: AnalyticsData["overview"]; tpRates: Record<string, number>;
-    daily: DailyData[]; recent: RecentSignal[]; tfData: TFData[];
-    t: (k: string) => string;
+function OverviewPanel({
+  data,
+  copy,
+  lang,
+  effectiveModel,
+  selectedTimeframe,
+}: {
+  data: AnalyticsData;
+  copy: LocaleCopy;
+  lang: "en" | "tr";
+  effectiveModel: string;
+  selectedTimeframe: string;
 }) {
-    return (
-        <div className="space-y-5">
-            {/* KPI Grid */}
-            <div className="grid grid-cols-3 gap-3">
-                <KPICard label={t("winRate")} value={`${ov.win_rate}%`} color={wrColor(ov.win_rate)} glow />
-                <KPICard label={t("totalSignals")} value={`${ov.total_signals}`} color="#E6EDF3" sub={`${ov.completed}W / ${ov.stopped}L`} />
-                <KPICard label={t("netPips")} value={`${ov.net_pips >= 0 ? "+" : ""}${ov.net_pips}`} color={ov.net_pips >= 0 ? "#16C784" : "#EA3943"} />
-                <KPICard label={t("riskReward")} value={`${ov.risk_reward}`} color="#F5A623" />
-                <KPICard label={t("sharpe")} value={`${ov.sharpe_ratio}`} color="#8B5CF6" />
-                <KPICard label={t("maxDD")} value={`-${ov.max_drawdown_pips}p`} color="#EA3943" />
-            </div>
+  const ov = data.overview;
+  const resolved = ov.completed + ov.stopped;
+  const modelRows = (data.model_comparison || []).filter((row) => (row.total || 0) > 0);
 
-            {/* Timeframe Breakdown Mini */}
-            {tfData.length > 0 && (
-                <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 16 }}>
-                    <p style={{ fontSize: 11, fontWeight: 600, color: "#9AA4B2", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 12 }}>
-                        {t("timeframe")}
-                    </p>
-                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(tfData.length, 6)}, 1fr)` }}>
-                        {tfData.map((tf) => (
-                            <div key={tf.tf} style={{
-                                background: wrBg(tf.win_rate, tf.total), borderRadius: 8, padding: "10px 8px",
-                                border: `1px solid ${wrColor(tf.win_rate)}20`, textAlign: "center",
-                            }}>
-                                <p style={{ fontSize: 11, fontWeight: 700, color: "#E6EDF3", textTransform: "uppercase" }}>{tf.tf}</p>
-                                <p style={{ fontSize: 18, fontWeight: 700, color: wrColor(tf.win_rate), marginTop: 4 }}>{tf.win_rate}%</p>
-                                <p style={{ fontSize: 10, color: "#6B7280" }}>{tf.total} {t("signals")}</p>
-                                <p style={{ fontSize: 10, color: tf.net_pips >= 0 ? "#16C784" : "#EA3943", marginTop: 2 }}>
-                                    {tf.net_pips >= 0 ? "+" : ""}{tf.net_pips}p
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 xl:grid-cols-6 gap-3">
+        <MetricCard
+          label={copy.winRate}
+          value={`${ov.win_rate.toFixed(1)}%`}
+          accent={wrColor(ov.win_rate)}
+          sub={`${resolved} ${copy.resolved.toLowerCase()}`}
+        />
+        <MetricCard
+          label={copy.netPips}
+          value={formatPips(ov.net_pips)}
+          accent={ov.net_pips >= 0 ? "var(--accent-positive)" : "var(--accent-negative)"}
+          sub={`${copy.active}: ${ov.active}`}
+        />
+        <MetricCard
+          label={copy.resolved}
+          value={`${resolved}`}
+          accent="var(--text-primary)"
+          sub={`${copy.completed}: ${ov.completed} · ${copy.stopped}: ${ov.stopped}`}
+        />
+        <MetricCard
+          label={copy.profitFactor}
+          value={ov.profit_factor.toFixed(2)}
+          accent="var(--accent-warning)"
+          sub={`R/R ${ov.risk_reward.toFixed(2)}`}
+        />
+        <MetricCard
+          label={copy.sharpe}
+          value={ov.sharpe_ratio.toFixed(2)}
+          accent="var(--accent-info)"
+          sub={`${copy.timeframe}: ${selectedTimeframe === "all" ? copy.allTimeframes : selectedTimeframe.toUpperCase()}`}
+        />
+        <MetricCard
+          label={copy.maxDrawdown}
+          value={`-${ov.max_drawdown_pips.toFixed(1)}p`}
+          accent="var(--accent-negative)"
+          sub={`${copy.expired}: ${ov.expired}`}
+        />
+      </div>
 
-            {/* TP Hit Rates */}
-            <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 16 }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "#9AA4B2", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 12 }}>
-                    {t("tpHitRates")}
-                </p>
-                <div className="space-y-2">
-                    {["TP1", "TP2", "TP3", "TP4"].map((tp) => {
-                        const rate = tpRates[tp] || 0;
-                        return (
-                            <div key={tp} className="flex items-center gap-3">
-                                <span style={{ fontSize: 12, fontWeight: 600, color: "#E6EDF3", width: 32 }}>{tp}</span>
-                                <div style={{ flex: 1, height: 8, borderRadius: 4, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
-                                    <div style={{
-                                        width: `${rate}%`, height: "100%", borderRadius: 4,
-                                        background: `linear-gradient(90deg, ${wrColor(rate)}, ${wrColor(rate)}90)`,
-                                        boxShadow: rate > 50 ? `0 0 8px ${wrColor(rate)}40` : "none",
-                                        transition: "width 0.8s ease-out",
-                                    }} />
-                                </div>
-                                <span style={{ fontSize: 12, fontWeight: 600, color: wrColor(rate), width: 44, textAlign: "right" }}>{rate}%</span>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Daily Cumulative Pips Chart */}
-            {daily.length > 0 && (
-                <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 16 }}>
-                    <p style={{ fontSize: 11, fontWeight: 600, color: "#9AA4B2", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 12 }}>
-                        {t("cumPips")}
-                    </p>
-                    <ResponsiveContainer width="100%" height={160}>
-                        <LineChart data={daily}>
-                            <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
-                            <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#6B7280" }} tickFormatter={(v: string) => v.slice(5)} />
-                            <YAxis tick={{ fontSize: 10, fill: "#6B7280" }} />
-                            <Tooltip content={({ active, payload, label }: any) => {
-                                if (!active || !payload?.length) return null;
-                                return (
-                                    <div style={{ background: "rgba(11,15,23,0.95)", border: "1px solid rgba(0,240,255,0.3)", borderRadius: 8, padding: "8px 12px" }}>
-                                        <p style={{ color: "#9AA4B2", fontSize: 11 }}>{label}</p>
-                                        <p style={{ color: "#00F0FF", fontSize: 13, fontWeight: 600 }}>{payload[0].value} pips</p>
-                                    </div>
-                                );
-                            }} />
-                            <Line type="monotone" dataKey="cumulative_pips" stroke="#00F0FF" strokeWidth={2} dot={false} />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
-            )}
-
-            {/* Recent Signals Table */}
-            {recent.length > 0 && (
-                <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 16 }}>
-                    <p style={{ fontSize: 11, fontWeight: 600, color: "#9AA4B2", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 12 }}>
-                        {t("recentSignals")}
-                    </p>
-                    <div className="overflow-x-auto">
-                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                            <thead>
-                                <tr>
-                                    {[t("date"), t("direction"), t("tf"), t("confidence"), t("status"), t("pips")].map((h) => (
-                                        <th key={h} style={{ fontSize: 10, fontWeight: 600, color: "#6B7280", textAlign: "left", padding: "6px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                                            {h}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {recent.slice(0, 10).map((s, i) => (
-                                    <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
-                                        <td style={{ fontSize: 11, color: "#9AA4B2", padding: "6px 8px" }}>{s.date.slice(5, 16)}</td>
-                                        <td style={{ fontSize: 11, fontWeight: 600, color: s.direction === "BUY" ? "#16C784" : s.direction === "SELL" ? "#EA3943" : "#6B7280", padding: "6px 8px" }}>
-                                            {s.direction}
-                                        </td>
-                                        <td style={{ fontSize: 10, color: "#9AA4B2", padding: "6px 8px" }}>{s.timeframe}</td>
-                                        <td style={{ fontSize: 11, color: "#E6EDF3", padding: "6px 8px" }}>{s.confidence}%</td>
-                                        <td style={{ padding: "6px 8px" }}>
-                                            <span style={{
-                                                fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 6,
-                                                background: `${statusColor(s.status)}15`, color: statusColor(s.status),
-                                                border: `1px solid ${statusColor(s.status)}30`,
-                                            }}>
-                                                {s.status === "completed" ? "WIN" : s.status === "stopped" ? "LOSS" : s.status.toUpperCase()}
-                                            </span>
-                                        </td>
-                                        <td style={{ fontSize: 11, fontWeight: 600, color: s.pips >= 0 ? "#16C784" : "#EA3943", padding: "6px 8px" }}>
-                                            {s.pips >= 0 ? "+" : ""}{s.pips}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
+      <SectionCard title={copy.scopeSummary}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <MiniSummary label={copy.completed} value={ov.completed} color="var(--accent-positive)" />
+          <MiniSummary label={copy.stopped} value={ov.stopped} color="var(--accent-negative)" />
+          <MiniSummary label={copy.expired} value={ov.expired} color="var(--accent-warning)" />
+          <MiniSummary label={copy.active} value={ov.active} color="var(--accent-info)" />
         </div>
-    );
-}
+      </SectionCard>
 
-/* ═══════════════════════════════════════════════════════════════════
-   TAB 2: HOURLY HEATMAP
-   ═══════════════════════════════════════════════════════════════════ */
+      {modelRows.length > 1 && (
+        <SectionCard title={copy.modelBenchmark}>
+          <div className="overflow-x-auto">
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  {[copy.model, copy.totalSignals, copy.winRate, copy.netPips, copy.avgPips].map((header) => (
+                    <th key={header} style={tableHeadStyle}>
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {modelRows.map((row) => {
+                  const selected = row.model === effectiveModel;
+                  return (
+                    <tr
+                      key={row.model}
+                      style={{
+                        background: selected ? "rgba(79,140,255,0.08)" : "transparent",
+                        borderBottom: "1px solid var(--border-subtle)",
+                      }}
+                    >
+                      <td style={tableCellStyle}>
+                        <span style={{ color: selected ? "var(--accent-info)" : "var(--text-primary)", fontWeight: 700 }}>
+                          {MODEL_DISPLAY[row.model] || row.model}
+                        </span>
+                      </td>
+                      <td style={tableCellStyle}>{row.total}</td>
+                      <td style={{ ...tableCellStyle, color: wrColor(row.win_rate), fontWeight: 700 }}>
+                        {row.win_rate.toFixed(1)}%
+                      </td>
+                      <td
+                        style={{
+                          ...tableCellStyle,
+                          color: row.net_pips >= 0 ? "var(--accent-positive)" : "var(--accent-negative)",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {formatPips(row.net_pips)}
+                      </td>
+                      <td style={tableCellStyle}>{row.avg_pips.toFixed(1)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </SectionCard>
+      )}
 
-function HourlyTab({ data, t }: { data: HourlyData[]; t: (k: string) => string }) {
-    const bestHours = [...data].filter(h => h.total > 0).sort((a, b) => b.win_rate - a.win_rate).slice(0, 3);
-    const worstHours = [...data].filter(h => h.total > 0).sort((a, b) => a.win_rate - b.win_rate).slice(0, 3);
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <SectionCard title={copy.dailyTrend} className="xl:col-span-2">
+          {data.daily_accuracy.length > 0 ? (
+            <ResponsiveContainer width="100%" height={240}>
+              <LineChart data={data.daily_accuracy}>
+                <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fill: "var(--text-muted)", fontSize: 11 }}
+                  tickFormatter={(value: string) => value.slice(5)}
+                />
+                <YAxis tick={{ fill: "var(--text-muted)", fontSize: 11 }} />
+                <Tooltip content={<AnalyticsTooltip />} />
+                <Line
+                  type="monotone"
+                  dataKey="cumulative_pips"
+                  stroke="var(--accent-info)"
+                  strokeWidth={2.5}
+                  dot={false}
+                  name={copy.netPips}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <MutedEmpty>{copy.noData}</MutedEmpty>
+          )}
+        </SectionCard>
 
-    return (
-        <div className="space-y-5">
-            {/* Best / Worst Hours Badges */}
-            <div className="grid grid-cols-2 gap-3">
-                <div style={{ background: "rgba(0,240,255,0.06)", borderRadius: 12, border: "1px solid rgba(0,240,255,0.15)", padding: 14 }}>
-                    <p style={{ fontSize: 10, fontWeight: 600, color: "#00F0FF", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
-                        🏆 {t("bestHours")}
-                    </p>
-                    {bestHours.map((h) => (
-                        <div key={h.hour} className="flex items-center justify-between" style={{ marginBottom: 4 }}>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: "#E6EDF3" }}>{String(h.hour).padStart(2, "0")}:00</span>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: "#16C784" }}>{h.win_rate}% ({h.total})</span>
-                        </div>
-                    ))}
+        <SectionCard title={copy.tpHitRates}>
+          <div className="space-y-3">
+            {["TP1", "TP2", "TP3", "TP4"].map((tp) => {
+              const rate = data.tp_hit_rates?.[tp] || 0;
+              return (
+                <div key={tp}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 600 }}>{tp}</span>
+                    <span style={{ fontSize: 12, color: wrColor(rate), fontWeight: 700 }}>{rate.toFixed(1)}%</span>
+                  </div>
+                  <div style={{ height: 8, borderRadius: 999, background: "var(--bg-primary)", overflow: "hidden" }}>
+                    <div style={{ width: `${rate}%`, height: "100%", borderRadius: 999, background: wrColor(rate) }} />
+                  </div>
                 </div>
-                <div style={{ background: "rgba(234,57,67,0.06)", borderRadius: 12, border: "1px solid rgba(234,57,67,0.15)", padding: 14 }}>
-                    <p style={{ fontSize: 10, fontWeight: 600, color: "#EA3943", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
-                        ⚠️ {t("worstHours")}
-                    </p>
-                    {worstHours.map((h) => (
-                        <div key={h.hour} className="flex items-center justify-between" style={{ marginBottom: 4 }}>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: "#E6EDF3" }}>{String(h.hour).padStart(2, "0")}:00</span>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: "#EA3943" }}>{h.win_rate}% ({h.total})</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
+              );
+            })}
+          </div>
+        </SectionCard>
+      </div>
 
-            {/* 24-Hour Heatmap Grid */}
-            <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 16 }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "#9AA4B2", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 14 }}>
-                    24-Hour Performance Grid (UTC)
-                </p>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 6 }}>
-                    {data.map((h) => (
-                        <div key={h.hour} style={{
-                            background: wrBg(h.win_rate, h.total),
-                            borderRadius: 8, padding: "10px 6px", textAlign: "center",
-                            border: `1px solid ${h.total > 0 ? wrColor(h.win_rate) + "20" : "rgba(255,255,255,0.03)"}`,
-                            boxShadow: h.win_rate >= 70 && h.total > 0 ? `0 0 12px ${wrColor(h.win_rate)}25` : "none",
-                            transition: "all 0.3s",
-                        }}>
-                            <p style={{ fontSize: 11, fontWeight: 700, color: "#E6EDF3", fontFamily: "monospace" }}>
-                                {String(h.hour).padStart(2, "0")}:00
-                            </p>
-                            <p style={{
-                                fontSize: 16, fontWeight: 700, marginTop: 4,
-                                color: h.total > 0 ? wrColor(h.win_rate) : "#333",
-                            }}>
-                                {h.total > 0 ? `${h.win_rate}%` : "—"}
-                            </p>
-                            <p style={{ fontSize: 9, color: "#6B7280", marginTop: 2 }}>
-                                {h.total > 0 ? `${h.wins}/${h.total}` : "—"}
-                            </p>
-                            {h.total > 0 && (
-                                <p style={{ fontSize: 9, color: h.avg_pips >= 0 ? "#16C784" : "#EA3943", marginTop: 1 }}>
-                                    {h.avg_pips >= 0 ? "+" : ""}{h.avg_pips}p
-                                </p>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   TAB 3: TIMEFRAME ANALYSIS
-   ═══════════════════════════════════════════════════════════════════ */
-
-function TimeframeTab({ data, t, tooltip }: { data: TFData[]; t: (k: string) => string; tooltip: any }) {
-    if (data.length === 0) return <p style={{ color: "#6B7280", textAlign: "center", padding: 40 }}>{t("noData")}</p>;
-
-    const best = data.reduce((a, b) => a.win_rate > b.win_rate ? a : b);
-
-    return (
-        <div className="space-y-5">
-            {/* Bar Chart */}
-            <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 16 }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "#9AA4B2", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 12 }}>
-                    {t("winRate")} by {t("timeframe")}
-                </p>
-                <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={data}>
-                        <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
-                        <XAxis dataKey="tf" tick={{ fontSize: 12, fill: "#9AA4B2", fontWeight: 600 }} />
-                        <YAxis tick={{ fontSize: 10, fill: "#6B7280" }} domain={[0, 100]} />
-                        <Tooltip content={tooltip} />
-                        <Bar dataKey="win_rate" name={t("winRate")} radius={[6, 6, 0, 0]}>
-                            {data.map((entry, i) => (
-                                <Cell
-                                    key={i}
-                                    fill={entry.tf === best.tf ? "#00F0FF" : wrColor(entry.win_rate)}
-                                    style={entry.tf === best.tf ? { filter: "drop-shadow(0 0 6px rgba(0,240,255,0.4))" } : {}}
-                                />
-                            ))}
-                        </Bar>
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
-
-            {/* Comparison Table */}
-            <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 16 }}>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                        <tr>
-                            {[t("tf"), t("totalSignals"), t("winRate"), t("netPips"), t("avgPips")].map((h) => (
-                                <th key={h} style={{ fontSize: 10, fontWeight: 600, color: "#6B7280", textAlign: "left", padding: "8px 10px", borderBottom: "1px solid rgba(255,255,255,0.06)", textTransform: "uppercase" }}>
-                                    {h}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data.map((row) => (
-                            <tr key={row.tf} style={{
-                                borderBottom: "1px solid rgba(255,255,255,0.03)",
-                                background: row.tf === best.tf ? "rgba(0,240,255,0.05)" : "transparent",
-                            }}>
-                                <td style={{ padding: "8px 10px", fontSize: 13, fontWeight: 700, color: row.tf === best.tf ? "#00F0FF" : "#E6EDF3" }}>
-                                    {row.tf.toUpperCase()} {row.tf === best.tf && "⭐"}
-                                </td>
-                                <td style={{ padding: "8px 10px", fontSize: 12, color: "#9AA4B2" }}>{row.total}</td>
-                                <td style={{ padding: "8px 10px", fontSize: 13, fontWeight: 700, color: wrColor(row.win_rate) }}>{row.win_rate}%</td>
-                                <td style={{ padding: "8px 10px", fontSize: 12, fontWeight: 600, color: row.net_pips >= 0 ? "#16C784" : "#EA3943" }}>
-                                    {row.net_pips >= 0 ? "+" : ""}{row.net_pips}
-                                </td>
-                                <td style={{ padding: "8px 10px", fontSize: 12, color: "#9AA4B2" }}>{row.avg_pips}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   TAB 4: DAY OF WEEK
-   ═══════════════════════════════════════════════════════════════════ */
-
-function DOWTab({ data, t, tooltip }: { data: DOWData[]; t: (k: string) => string; tooltip: any }) {
-    const workDays = data.filter((d) => d.total > 0);
-    if (workDays.length === 0) return <p style={{ color: "#6B7280", textAlign: "center", padding: 40 }}>{t("noData")}</p>;
-
-    return (
-        <div className="space-y-5">
-            {/* Horizontal Bars */}
-            <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)", padding: 16 }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "#9AA4B2", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 14 }}>
-                    {t("winRate")} by Day
-                </p>
-                <ResponsiveContainer width="100%" height={220}>
-                    <BarChart data={workDays} layout="vertical">
-                        <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 10, fill: "#6B7280" }} domain={[0, 100]} />
-                        <YAxis dataKey="day_short" type="category" tick={{ fontSize: 12, fill: "#E6EDF3", fontWeight: 600 }} width={40} />
-                        <Tooltip content={tooltip} />
-                        <Bar dataKey="win_rate" name={t("winRate")} radius={[0, 6, 6, 0]}>
-                            {workDays.map((entry, i) => (
-                                <Cell key={i} fill={wrColor(entry.win_rate)} />
-                            ))}
-                        </Bar>
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
-
-            {/* Day Cards */}
-            <div className="grid grid-cols-2 gap-3">
-                {workDays.map((d) => (
-                    <div key={d.day} style={{
-                        background: wrBg(d.win_rate, d.total), borderRadius: 10,
-                        border: `1px solid ${wrColor(d.win_rate)}20`, padding: 14,
-                    }}>
-                        <div className="flex items-center justify-between">
-                            <p style={{ fontSize: 13, fontWeight: 700, color: "#E6EDF3" }}>{d.day}</p>
-                            <p style={{ fontSize: 16, fontWeight: 700, color: wrColor(d.win_rate) }}>{d.win_rate}%</p>
-                        </div>
-                        <div className="flex items-center gap-4 mt-2">
-                            <span style={{ fontSize: 10, color: "#6B7280" }}>{d.total} {t("signals")}</span>
-                            <span style={{ fontSize: 10, color: "#16C784" }}>{d.wins}W</span>
-                            <span style={{ fontSize: 10, color: "#EA3943" }}>{d.total - d.wins}L</span>
-                            <span style={{ fontSize: 10, color: d.avg_pips >= 0 ? "#16C784" : "#EA3943", marginLeft: "auto" }}>
-                                {d.avg_pips >= 0 ? "+" : ""}{d.avg_pips}p
-                            </span>
-                        </div>
-                    </div>
+      <SectionCard title={copy.recentSignals}>
+        {data.recent_signals.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  {[copy.date, copy.direction, copy.timeframe, copy.confidence, copy.status, copy.pips].map((header) => (
+                    <th key={header} style={tableHeadStyle}>
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.recent_signals.slice(0, 12).map((signal) => (
+                  <tr key={`${signal.id}-${signal.date}`} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                    <td style={tableCellStyle}>
+                      {new Date(signal.date || Date.now()).toLocaleString(lang === "tr" ? "tr-TR" : "en-US", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </td>
+                    <td
+                      style={{
+                        ...tableCellStyle,
+                        color:
+                          signal.direction === "BUY"
+                            ? "var(--accent-positive)"
+                            : signal.direction === "SELL"
+                              ? "var(--accent-negative)"
+                              : "var(--text-muted)",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {signal.direction}
+                    </td>
+                    <td style={tableCellStyle}>{signal.timeframe.toUpperCase()}</td>
+                    <td style={tableCellStyle}>{signal.confidence.toFixed(1)}%</td>
+                    <td style={tableCellStyle}>
+                      <span
+                        style={{
+                          background: "var(--bg-primary)",
+                          border: "1px solid var(--border-subtle)",
+                          color: statusColor(signal.status),
+                          borderRadius: 999,
+                          padding: "4px 10px",
+                          fontSize: 11,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {signal.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td
+                      style={{
+                        ...tableCellStyle,
+                        color: signal.pips >= 0 ? "var(--accent-positive)" : "var(--accent-negative)",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {formatPips(signal.pips)}
+                    </td>
+                  </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <MutedEmpty>{copy.noData}</MutedEmpty>
+        )}
+      </SectionCard>
+    </div>
+  );
+}
+
+function TimeframesPanel({ data, copy }: { data: TFData[]; copy: LocaleCopy }) {
+  if (!data.length) return <EmptyCard label={copy.noData} />;
+
+  const best = [...data].sort((a, b) => b.win_rate - a.win_rate || b.net_pips - a.net_pips)[0];
+  const largest = [...data].sort((a, b) => b.total - a.total)[0];
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <MetricCard
+          label={copy.bestTimeframe}
+          value={best.tf.toUpperCase()}
+          accent={wrColor(best.win_rate)}
+          sub={`${best.win_rate.toFixed(1)}% · ${formatPips(best.net_pips)}`}
+        />
+        <MetricCard
+          label={copy.biggestSample}
+          value={largest.tf.toUpperCase()}
+          accent="var(--text-primary)"
+          sub={`${largest.total} ${copy.totalSignals.toLowerCase()}`}
+        />
+        <MetricCard
+          label={copy.coveredTimeframes}
+          value={`${data.length}`}
+          accent="var(--accent-info)"
+          sub={copy.timeframeDistribution}
+        />
+      </div>
+
+      <SectionCard title={copy.timeframeDistribution} subtitle={copy.benchmarkNote}>
+        <ResponsiveContainer width="100%" height={260}>
+          <BarChart data={data}>
+            <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
+            <XAxis dataKey="tf" tick={{ fill: "var(--text-muted)", fontSize: 11 }} />
+            <YAxis tick={{ fill: "var(--text-muted)", fontSize: 11 }} domain={[0, 100]} />
+            <Tooltip content={<AnalyticsTooltip />} />
+            <Bar dataKey="win_rate" name={copy.winRate} radius={[8, 8, 0, 0]}>
+              {data.map((row) => (
+                <Cell key={row.tf} fill={row.tf === best.tf ? "var(--accent-info)" : wrColor(row.win_rate)} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </SectionCard>
+
+      <SectionCard title={copy.timeframes}>
+        <div className="overflow-x-auto">
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                {[copy.timeframe, copy.totalSignals, copy.active, copy.winRate, copy.netPips, copy.avgPips].map((header) => (
+                  <th key={header} style={tableHeadStyle}>
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((row) => (
+                <tr
+                  key={row.tf}
+                  style={{
+                    borderBottom: "1px solid var(--border-subtle)",
+                    background: row.tf === best.tf ? "rgba(79,140,255,0.08)" : "transparent",
+                  }}
+                >
+                  <td
+                    style={{
+                      ...tableCellStyle,
+                      color: row.tf === best.tf ? "var(--accent-info)" : "var(--text-primary)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {row.tf.toUpperCase()}
+                  </td>
+                  <td style={tableCellStyle}>{row.total}</td>
+                  <td style={tableCellStyle}>{row.active || 0}</td>
+                  <td style={{ ...tableCellStyle, color: wrColor(row.win_rate), fontWeight: 700 }}>
+                    {row.win_rate.toFixed(1)}%
+                  </td>
+                  <td
+                    style={{
+                      ...tableCellStyle,
+                      color: row.net_pips >= 0 ? "var(--accent-positive)" : "var(--accent-negative)",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {formatPips(row.net_pips)}
+                  </td>
+                  <td style={tableCellStyle}>{row.avg_pips.toFixed(1)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
+    </div>
+  );
+}
+
+function HourlyPanel({ data, copy }: { data: HourlyData[]; copy: LocaleCopy }) {
+  const populated = data.filter((row) => row.total > 0);
+  if (!populated.length) return <EmptyCard label={copy.noData} />;
+
+  const best = [...populated].sort((a, b) => b.win_rate - a.win_rate).slice(0, 3);
+  const worst = [...populated].sort((a, b) => a.win_rate - b.win_rate).slice(0, 3);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <SectionCard title="Best Hours (UTC)">
+          <div className="space-y-2">
+            {best.map((row) => (
+              <HourRow key={row.hour} row={row} positive />
+            ))}
+          </div>
+        </SectionCard>
+        <SectionCard title="Weak Hours (UTC)">
+          <div className="space-y-2">
+            {worst.map((row) => (
+              <HourRow key={row.hour} row={row} positive={false} />
+            ))}
+          </div>
+        </SectionCard>
+      </div>
+
+      <SectionCard title={copy.hourly}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-6 gap-3">
+          {data.map((row) => (
+            <div
+              key={row.hour}
+              style={{
+                background: row.total > 0 ? "var(--bg-card)" : "var(--bg-primary)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: 14,
+                padding: 14,
+              }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)" }}>
+                  {String(row.hour).padStart(2, "0")}:00
+                </span>
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: row.total > 0 ? wrColor(row.win_rate) : "var(--text-muted)",
+                    fontWeight: 700,
+                  }}
+                >
+                  {row.total > 0 ? `${row.win_rate.toFixed(1)}%` : "—"}
+                </span>
+              </div>
+              <p style={{ marginTop: 10, fontSize: 11, color: "var(--text-muted)" }}>
+                {row.total > 0 ? `${row.wins}/${row.total}` : "No trades"}
+              </p>
+              {row.total > 0 && (
+                <p
+                  style={{
+                    marginTop: 4,
+                    fontSize: 12,
+                    color: row.avg_pips >= 0 ? "var(--accent-positive)" : "var(--accent-negative)",
+                    fontWeight: 700,
+                  }}
+                >
+                  {formatPips(row.avg_pips)}
+                </p>
+              )}
             </div>
+          ))}
         </div>
-    );
+      </SectionCard>
+    </div>
+  );
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   KPI CARD
-   ═══════════════════════════════════════════════════════════════════ */
+function WeekdayPanel({ data, copy }: { data: DOWData[]; copy: LocaleCopy }) {
+  const populated = data.filter((row) => row.total > 0);
+  if (!populated.length) return <EmptyCard label={copy.noData} />;
 
-function KPICard({ label, value, color, sub, glow }: { label: string; value: string; color: string; sub?: string; glow?: boolean }) {
-    return (
-        <div style={{
-            background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "14px 16px",
-            border: `1px solid ${color}18`,
-            boxShadow: glow ? `0 0 20px ${color}15` : "none",
-        }}>
-            <p style={{ fontSize: 10, fontWeight: 500, color: "#6B7280", letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</p>
-            <p style={{ fontSize: 24, fontWeight: 700, color, marginTop: 4, letterSpacing: "-0.5px", fontFamily: "'JetBrains Mono', monospace" }}>{value}</p>
-            {sub && <p style={{ fontSize: 10, color: "#6B7280", marginTop: 2 }}>{sub}</p>}
-        </div>
-    );
+  return (
+    <div className="space-y-4">
+      <SectionCard title={copy.dayOfWeek}>
+        <ResponsiveContainer width="100%" height={260}>
+          <BarChart data={populated} layout="vertical">
+            <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" horizontal={false} />
+            <XAxis type="number" domain={[0, 100]} tick={{ fill: "var(--text-muted)", fontSize: 11 }} />
+            <YAxis
+              dataKey="day_short"
+              type="category"
+              tick={{ fill: "var(--text-primary)", fontSize: 12 }}
+              width={48}
+            />
+            <Tooltip content={<AnalyticsTooltip />} />
+            <Bar dataKey="win_rate" name={copy.winRate} radius={[0, 8, 8, 0]}>
+              {populated.map((row) => (
+                <Cell key={row.day} fill={wrColor(row.win_rate)} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </SectionCard>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+        {populated.map((row) => (
+          <div
+            key={row.day}
+            style={{
+              background: "var(--bg-card)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: 16,
+              padding: 16,
+            }}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>{row.day}</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: wrColor(row.win_rate) }}>
+                {row.win_rate.toFixed(1)}%
+              </span>
+            </div>
+            <div className="mt-3 flex items-center justify-between text-[12px]" style={{ color: "var(--text-muted)" }}>
+              <span>
+                {row.total} {copy.totalSignals.toLowerCase()}
+              </span>
+              <span
+                style={{
+                  color: row.avg_pips >= 0 ? "var(--accent-positive)" : "var(--accent-negative)",
+                  fontWeight: 700,
+                }}
+              >
+                {formatPips(row.avg_pips)}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
+
+function SectionCard({
+  title,
+  subtitle,
+  children,
+  className,
+}: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={className}
+      style={{
+        background: "var(--bg-surface)",
+        border: "1px solid var(--border-subtle)",
+        borderRadius: 20,
+        padding: 18,
+      }}
+    >
+      <div className="mb-4">
+        <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>{title}</p>
+        {subtitle && <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>{subtitle}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function MetricCard({
+  label,
+  value,
+  accent,
+  sub,
+}: {
+  label: string;
+  value: string;
+  accent: string;
+  sub?: string;
+}) {
+  return (
+    <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)", borderRadius: 18, padding: 16 }}>
+      <p
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--text-muted)",
+        }}
+      >
+        {label}
+      </p>
+      <p style={{ marginTop: 8, fontSize: 24, fontWeight: 800, color: accent, letterSpacing: "-0.03em" }}>{value}</p>
+      {sub && <p style={{ marginTop: 6, fontSize: 12, color: "var(--text-muted)" }}>{sub}</p>}
+    </div>
+  );
+}
+
+function MiniSummary({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)", borderRadius: 14, padding: 14 }}>
+      <p style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+        {label}
+      </p>
+      <p style={{ marginTop: 6, fontSize: 22, fontWeight: 800, color }}>{value}</p>
+    </div>
+  );
+}
+
+function ScopeBadge({ label, tone }: { label: string; tone: "info" | "neutral" | "warning" }) {
+  const styles = {
+    info: {
+      background: "rgba(79,140,255,0.12)",
+      border: "1px solid rgba(79,140,255,0.28)",
+      color: "var(--accent-info)",
+    },
+    neutral: {
+      background: "var(--bg-card)",
+      border: "1px solid var(--border-subtle)",
+      color: "var(--text-muted)",
+    },
+    warning: {
+      background: "rgba(245, 158, 11, 0.10)",
+      border: "1px solid rgba(245, 158, 11, 0.22)",
+      color: "var(--accent-warning)",
+    },
+  } as const;
+
+  return (
+    <span
+      style={{
+        ...styles[tone],
+        borderRadius: 999,
+        padding: "6px 10px",
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: "0.04em",
+        textTransform: "uppercase",
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
+function InfoPill({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)", borderRadius: 16, padding: "12px 14px" }}>
+      <p
+        style={{
+          fontSize: 10,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--text-muted)",
+          fontWeight: 700,
+        }}
+      >
+        {label}
+      </p>
+      <p style={{ marginTop: 6, fontSize: 14, color: "var(--text-primary)", fontWeight: 700 }}>{value}</p>
+    </div>
+  );
+}
+
+function HourRow({ row, positive }: { row: HourlyData; positive: boolean }) {
+  return (
+    <div className="flex items-center justify-between rounded-xl px-3 py-3" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
+      <span style={{ color: "var(--text-primary)", fontWeight: 700 }}>{String(row.hour).padStart(2, "0")}:00</span>
+      <div className="text-right">
+        <p style={{ color: positive ? "var(--accent-positive)" : "var(--accent-negative)", fontWeight: 700 }}>
+          {row.win_rate.toFixed(1)}%
+        </p>
+        <p style={{ color: "var(--text-muted)", fontSize: 12 }}>{row.total} signals</p>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({
+  label,
+  onRetry,
+  retryLabel,
+}: {
+  label: string;
+  onRetry: () => void;
+  retryLabel: string;
+}) {
+  return (
+    <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)", borderRadius: 20, padding: 36, textAlign: "center" }}>
+      <p style={{ color: "var(--text-primary)", fontSize: 15, fontWeight: 600 }}>{label}</p>
+      <button
+        onClick={onRetry}
+        className="mt-4 rounded-xl px-4 py-2"
+        style={{
+          background: "var(--bg-card)",
+          border: "1px solid var(--border-subtle)",
+          color: "var(--text-primary)",
+          fontWeight: 700,
+          fontSize: 12,
+        }}
+      >
+        {retryLabel}
+      </button>
+    </div>
+  );
+}
+
+function EmptyCard({ label }: { label: string }) {
+  return (
+    <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)", borderRadius: 20, padding: 32 }}>
+      <MutedEmpty>{label}</MutedEmpty>
+    </div>
+  );
+}
+
+function MutedEmpty({ children }: { children: React.ReactNode }) {
+  return <div style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 13, padding: 20 }}>{children}</div>;
+}
+
+function LoadingState({ label }: { label: string }) {
+  return (
+    <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)", borderRadius: 20, padding: 32 }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        {[0, 1, 2].map((item) => (
+          <SkeletonCard key={item} height={100} />
+        ))}
+      </div>
+      <SkeletonCard height={220} />
+      <p style={{ marginTop: 16, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>{label}</p>
+    </div>
+  );
+}
+
+function SkeletonCard({ height }: { height: number }) {
+  return (
+    <div
+      className="animate-pulse rounded-2xl"
+      style={{ height, background: "rgba(255,255,255,0.04)", border: "1px solid var(--border-subtle)" }}
+    />
+  );
+}
+
+const tableHeadStyle: React.CSSProperties = {
+  textAlign: "left",
+  padding: "10px 12px",
+  borderBottom: "1px solid var(--border-subtle)",
+  color: "var(--text-muted)",
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+};
+
+const tableCellStyle: React.CSSProperties = {
+  padding: "12px",
+  color: "var(--text-muted)",
+  fontSize: 12,
+};

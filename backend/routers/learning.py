@@ -2611,21 +2611,84 @@ def _normalize_model_type(sig: dict) -> str:
 
 @router.get("/model-detail-analytics")
 async def get_model_detail_analytics(
-    model: str = Query("ml", description="Model type (ml, emel, pulse1, pulse2, pulse3, emel_inverse, hybrid)"),
+    model: Optional[str] = Query(None, description="Model type (ml, emel, pulse1, pulse2, pulse3, emel_inverse, hybrid) or 'all'"),
     symbol: str = Query(..., description="Symbol (NDX.INDX, XAUUSD, GDAXI.INDX, USOIL.FOREX, CL.F)"),
-    days: int = Query(0, description="Days to look back (0 = all time)")
+    days: int = Query(0, ge=0, le=3650, description="Days to look back (0 = all available history)"),
+    timeframe: Optional[str] = Query(None, description="Optional timeframe filter (5m, 15m, 30m, 1h, 4h, 1d, or 'all')")
 ):
     """
-    Comprehensive model performance analytics for a specific model+symbol.
-    Returns hourly heatmap, timeframe comparison, daily accuracy trends,
-    day-of-week breakdown, TP hit rates, Sharpe ratio, and max drawdown.
+    Comprehensive model performance analytics for a model+symbol pair.
+    Backward-compatible response with richer metadata for all-model and
+    timeframe-aware drilldowns.
     """
+    requested_model = (model or "all").lower().strip() or "all"
+    resolved_model = "all" if requested_model in {"all", "*"} else requested_model
+    selected_timeframe = (timeframe or "all").lower().strip() or "all"
+    if selected_timeframe in {"*", "all"}:
+        selected_timeframe = "all"
+
+    def _empty_payload(
+        error: Optional[str] = None,
+        *,
+        available_timeframes: Optional[List[str]] = None,
+        available_models: Optional[List[str]] = None,
+        model_comparison: Optional[list] = None,
+        meta_overrides: Optional[dict] = None,
+    ) -> dict:
+        payload = {
+            "model": resolved_model,
+            "symbol": symbol,
+            "overview": {
+                "total_signals": 0,
+                "win_rate": 0,
+                "completed": 0,
+                "stopped": 0,
+                "expired": 0,
+                "active": 0,
+                "net_pips": 0,
+                "avg_profit_pips": 0,
+                "avg_loss_pips": 0,
+                "risk_reward": 0,
+                "sharpe_ratio": 0,
+                "max_drawdown_pips": 0,
+                "profit_factor": 0,
+            },
+            "hourly_heatmap": [],
+            "timeframe_comparison": [],
+            "daily_accuracy": [],
+            "day_of_week": [],
+            "tp_hit_rates": {},
+            "recent_signals": [],
+            "selected_timeframe": selected_timeframe,
+            "available_timeframes": available_timeframes or [],
+            "available_models": available_models or [],
+            "model_comparison": model_comparison or [],
+            "meta": {
+                "requested_model": requested_model,
+                "selected_model": resolved_model,
+                "selected_timeframe": selected_timeframe,
+                "available_timeframes": available_timeframes or [],
+                "available_models": available_models or [],
+                "days": days,
+                "all_time": days == 0,
+                "date_from": None,
+                "date_to": None,
+                "scope_total_signals": 0,
+                "filtered_total_signals": 0,
+            },
+        }
+        if meta_overrides:
+            payload["meta"].update(meta_overrides)
+        if error:
+            payload["error"] = error
+        return payload
+
     if not is_db_available():
-        return {"error": "Database not available"}
+        return _empty_payload(error="Database not available")
 
     client = get_supabase_client()
     if not client:
-        return {"error": "Database client not available"}
+        return _empty_payload(error="Database client not available")
 
     try:
         from datetime import datetime, timezone, timedelta
@@ -2635,18 +2698,121 @@ async def get_model_detail_analytics(
         import logging as _logging
         _log = _logging.getLogger(__name__)
 
-        model_lower = model.lower().strip()
+        tf_order = ["5m", "15m", "30m", "1h", "4h", "1d"]
+        model_order = ["ml", "pulse1", "pulse2", "pulse3", "emel", "emel_inverse", "hybrid"]
 
-        # ── 1. Fetch signals via day-by-day pagination (bypass 1000-row cap) ──
-        # Filter only by symbol at DB level; model filtering done in Python
+        def _sort_timeframes(values: List[str]) -> List[str]:
+            return sorted(
+                values,
+                key=lambda value: (tf_order.index(value) if value in tf_order else 99, value),
+            )
+
+        def _sort_models(values: List[str]) -> List[str]:
+            return sorted(
+                values,
+                key=lambda value: (model_order.index(value) if value in model_order else 99, value),
+            )
+
+        def _normalize_timeframe(value: Optional[str]) -> str:
+            return (value or "1h").lower().strip() or "1h"
+
+        def _parse_datetime(value: Optional[str]):
+            if not value:
+                return None
+            try:
+                parsed = dt_parser.parse(value)
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=timezone.utc)
+                return parsed.astimezone(timezone.utc)
+            except Exception:
+                return None
+
+        def _parse_targets_hit(raw_value):
+            if isinstance(raw_value, str):
+                try:
+                    raw_value = _json.loads(raw_value)
+                except Exception:
+                    return {}
+            return raw_value if isinstance(raw_value, dict) else {}
+
+        def _classify_signal(sig: dict):
+            status = (sig.get("status") or "unknown").lower().strip()
+            profit_pips = float(sig.get("highest_profit_pips") or 0)
+            loss_pips = float(sig.get("lowest_drawdown_pips") or 0)
+            targets_hit = _parse_targets_hit(sig.get("targets_hit"))
+
+            if status == "completed":
+                return "completed", True, profit_pips if profit_pips > 0 else 20.0
+            if status == "stopped":
+                return "stopped", False, -(loss_pips if loss_pips > 0 else 40.0)
+            if status == "expired":
+                return "expired", False, 0.0
+            if status == "active":
+                return "active", None, None
+            if targets_hit and any(targets_hit.values()):
+                return "completed", True, profit_pips if profit_pips > 0 else 15.0
+            return None, None, None
+
+        def _summarize_scope(scope_signals: List[dict]) -> dict:
+            completed = 0
+            stopped = 0
+            expired = 0
+            active = 0
+            total_profit = 0.0
+            total_loss = 0.0
+            scored_signals = 0
+
+            for scope_sig in scope_signals:
+                scoped_status, _, scoped_pips = _classify_signal(scope_sig)
+                if scoped_status == "active":
+                    active += 1
+                    continue
+                if scoped_status is None:
+                    continue
+
+                scored_signals += 1
+                if scoped_status == "completed":
+                    completed += 1
+                    total_profit += scoped_pips or 0.0
+                elif scoped_status == "stopped":
+                    stopped += 1
+                    total_loss += abs(scoped_pips or 0.0)
+                elif scoped_status == "expired":
+                    expired += 1
+
+            resolved = completed + stopped
+            net_pips = total_profit - total_loss
+            return {
+                "total_signals": len(scope_signals),
+                "scored_signals": scored_signals,
+                "completed": completed,
+                "stopped": stopped,
+                "expired": expired,
+                "active": active,
+                "win_rate": round((completed / resolved * 100) if resolved > 0 else 0, 1),
+                "net_pips": round(net_pips, 1),
+                "avg_pips": round(net_pips / scored_signals, 1) if scored_signals > 0 else 0,
+            }
+
         if days > 0:
             start_date = datetime.utcnow() - timedelta(days=days)
         else:
-            start_date = datetime.utcnow() - timedelta(days=365)
+            oldest_result = client.table("prediction_logs").select(
+                "created_at"
+            ).eq("symbol", symbol).order("created_at", desc=False).limit(1).execute()
+            oldest_rows = safe_get_data(oldest_result) or []
+            oldest_dt = _parse_datetime(oldest_rows[0].get("created_at")) if oldest_rows else None
+            if oldest_dt is None:
+                return _empty_payload(
+                    meta_overrides={
+                        "date_to": datetime.utcnow().replace(tzinfo=timezone.utc).isoformat(),
+                    }
+                )
+            start_date = oldest_dt.replace(tzinfo=None)
 
         end_date = datetime.utcnow()
         all_signals = []
-        current = start_date
+        current = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
 
         while current < end_date:
             day_start = current.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -2667,32 +2833,96 @@ async def get_model_detail_analytics(
                 all_signals.extend(batch)
             current = day_end
 
-        # ── 2. Filter by model type in Python ──
-        signals = [s for s in all_signals if _normalize_model_type(s) == model_lower]
+        if not all_signals:
+            return _empty_payload(
+                meta_overrides={
+                    "date_from": start_date.replace(tzinfo=timezone.utc).isoformat(),
+                    "date_to": end_date.replace(tzinfo=timezone.utc).isoformat(),
+                }
+            )
 
-        _log.info(f"model-detail-analytics: {len(all_signals)} raw → {len(signals)} for model={model_lower}, symbol={symbol}")
+        prepared_signals = []
+        for sig in all_signals:
+            created_dt = _parse_datetime(sig.get("created_at")) or datetime.now(timezone.utc)
+            prepared_signals.append({
+                **sig,
+                "_created_dt": created_dt,
+                "_timeframe": _normalize_timeframe(sig.get("timeframe")),
+                "_normalized_model": _normalize_model_type(sig),
+            })
 
-        if not signals:
-            return {
-                "model": model_lower,
-                "symbol": symbol,
-                "overview": {
-                    "total_signals": 0, "win_rate": 0, "completed": 0, "stopped": 0,
-                    "expired": 0, "active": 0, "net_pips": 0, "avg_profit_pips": 0,
-                    "avg_loss_pips": 0, "risk_reward": 0, "sharpe_ratio": 0,
-                    "max_drawdown_pips": 0, "profit_factor": 0,
+        comparison_model_source = prepared_signals if selected_timeframe == "all" else [
+            sig for sig in prepared_signals if sig["_timeframe"] == selected_timeframe
+        ]
+        available_models = _sort_models(list({
+            sig["_normalized_model"] for sig in comparison_model_source if sig.get("_normalized_model")
+        }))
+
+        model_scope_signals = prepared_signals if resolved_model == "all" else [
+            sig for sig in prepared_signals if sig["_normalized_model"] == resolved_model
+        ]
+        available_timeframes = _sort_timeframes(list({
+            sig["_timeframe"] for sig in model_scope_signals if sig.get("_timeframe")
+        }))
+        filtered_signals = model_scope_signals if selected_timeframe == "all" else [
+            sig for sig in model_scope_signals if sig["_timeframe"] == selected_timeframe
+        ]
+
+        _log.info(
+            "model-detail-analytics: %s raw → %s model-scope → %s filtered for model=%s timeframe=%s symbol=%s",
+            len(prepared_signals),
+            len(model_scope_signals),
+            len(filtered_signals),
+            resolved_model,
+            selected_timeframe,
+            symbol,
+        )
+
+        model_comparison = []
+        model_groups = {}
+        for sig in comparison_model_source:
+            model_key = sig["_normalized_model"]
+            model_groups.setdefault(model_key, []).append(sig)
+        for model_key in _sort_models(list(model_groups.keys())):
+            summary = _summarize_scope(model_groups[model_key])
+            model_comparison.append({
+                "model": model_key,
+                "total": summary["total_signals"],
+                "scored_signals": summary["scored_signals"],
+                "completed": summary["completed"],
+                "stopped": summary["stopped"],
+                "expired": summary["expired"],
+                "active": summary["active"],
+                "win_rate": summary["win_rate"],
+                "net_pips": summary["net_pips"],
+                "avg_pips": summary["avg_pips"],
+            })
+
+        if not model_scope_signals:
+            return _empty_payload(
+                available_timeframes=available_timeframes,
+                available_models=available_models,
+                model_comparison=model_comparison,
+                meta_overrides={
+                    "date_from": start_date.replace(tzinfo=timezone.utc).isoformat(),
+                    "date_to": end_date.replace(tzinfo=timezone.utc).isoformat(),
                 },
-                "hourly_heatmap": [],
-                "timeframe_comparison": [],
-                "daily_accuracy": [],
-                "day_of_week": [],
-                "tp_hit_rates": {},
-                "recent_signals": [],
-            }
+            )
 
-        # ── 2. Classify signals ──
+        if selected_timeframe != "all" and not filtered_signals:
+            return _empty_payload(
+                available_timeframes=available_timeframes,
+                available_models=available_models,
+                model_comparison=model_comparison,
+                meta_overrides={
+                    "date_from": start_date.replace(tzinfo=timezone.utc).isoformat(),
+                    "date_to": end_date.replace(tzinfo=timezone.utc).isoformat(),
+                    "scope_total_signals": len(model_scope_signals),
+                },
+            )
+
         now_utc = datetime.now(timezone.utc)
-        total = len(signals)
+        total = len(filtered_signals)
         completed = 0
         stopped = 0
         expired = 0
@@ -2713,71 +2943,36 @@ async def get_model_detail_analytics(
         tp_counts = {"TP1": 0, "TP2": 0, "TP3": 0, "TP4": 0}
         tp_total_for_rate = 0
 
-        recent_signals_list = []
+        chronologically_sorted = sorted(filtered_signals, key=lambda sig: sig["_created_dt"])
+        recent_signals_source = sorted(filtered_signals, key=lambda sig: sig["_created_dt"], reverse=True)
 
-        for sig in signals:
-            status = sig.get("status", "unknown")
-            created_at_str = sig.get("created_at", "")
-            profit_pips = sig.get("highest_profit_pips") or 0
-            loss_pips = sig.get("lowest_drawdown_pips") or 0
-            direction = sig.get("ml_direction", "HOLD")
-            confidence = sig.get("ml_confidence", 50) or 50
-            tf = (sig.get("timeframe") or "1h").lower()
+        for sig in chronologically_sorted:
+            status, is_win, pips_change = _classify_signal(sig)
+            created_dt = sig.get("_created_dt") or now_utc
+            hour = created_dt.hour
+            dow = created_dt.weekday()
+            date_key = created_dt.strftime("%Y-%m-%d")
+            tf = sig.get("_timeframe") or "1h"
 
-            # Parse date
-            try:
-                created_dt = dt_parser.parse(created_at_str)
-                if created_dt.tzinfo is None:
-                    created_dt = created_dt.replace(tzinfo=timezone.utc)
-                hour = created_dt.hour
-                dow = created_dt.weekday()  # 0=Mon, 6=Sun
-                date_key = created_dt.strftime("%Y-%m-%d")
-            except:
-                hour = 12
-                dow = 0
-                date_key = "unknown"
-
-            # Categorize by status
-            is_win = False
-            pips_change = 0.0
+            if status == "active":
+                active += 1
+                continue
+            if status is None:
+                continue
 
             if status == "completed":
                 completed += 1
-                is_win = True
-                pips_change = profit_pips if profit_pips > 0 else 20.0
-                total_profit_pips += pips_change
-                win_pips_list.append(pips_change)
+                total_profit_pips += pips_change or 0.0
+                win_pips_list.append(pips_change or 0.0)
             elif status == "stopped":
                 stopped += 1
-                is_win = False
-                pips_change = -(loss_pips if loss_pips > 0 else 40.0)
-                total_loss_pips += abs(pips_change)
-                loss_pips_list.append(abs(pips_change))
+                total_loss_pips += abs(pips_change or 0.0)
+                loss_pips_list.append(abs(pips_change or 0.0))
             elif status == "expired":
                 expired += 1
-                pips_change = 0
-            elif status == "active":
-                active += 1
-                continue  # Skip active for analytics
-            else:
-                # Check targets_hit
-                try:
-                    th = sig.get("targets_hit")
-                    if isinstance(th, str):
-                        th = _json.loads(th)
-                    if isinstance(th, dict) and any(th.values()):
-                        completed += 1
-                        is_win = True
-                        pips_change = profit_pips if profit_pips > 0 else 15.0
-                        total_profit_pips += pips_change
-                        win_pips_list.append(pips_change)
-                    else:
-                        continue
-                except:
-                    continue
 
             # Cumulative pips for Sharpe / drawdown
-            cumulative_pips += pips_change
+            cumulative_pips += pips_change or 0.0
             if cumulative_pips > peak_pips:
                 peak_pips = cumulative_pips
             dd = peak_pips - cumulative_pips
@@ -2788,7 +2983,7 @@ async def get_model_detail_analytics(
             hourly_stats[hour]["total"] += 1
             if is_win:
                 hourly_stats[hour]["wins"] += 1
-            hourly_stats[hour]["pips"] += pips_change
+            hourly_stats[hour]["pips"] += pips_change or 0.0
 
             # Timeframe bucket
             if tf not in tf_stats:
@@ -2796,7 +2991,7 @@ async def get_model_detail_analytics(
             tf_stats[tf]["total"] += 1
             if is_win:
                 tf_stats[tf]["wins"] += 1
-            tf_stats[tf]["pips"] += pips_change
+            tf_stats[tf]["pips"] += pips_change or 0.0
 
             # Daily bucket
             if date_key not in daily_stats:
@@ -2804,38 +2999,21 @@ async def get_model_detail_analytics(
             daily_stats[date_key]["total"] += 1
             if is_win:
                 daily_stats[date_key]["wins"] += 1
-            daily_stats[date_key]["pips"] += pips_change
+            daily_stats[date_key]["pips"] += pips_change or 0.0
 
             # Day of week
             dow_stats[dow]["total"] += 1
             if is_win:
                 dow_stats[dow]["wins"] += 1
-            dow_stats[dow]["pips"] += pips_change
+            dow_stats[dow]["pips"] += pips_change or 0.0
 
             # TP hit rates
-            try:
-                th = sig.get("targets_hit")
-                if isinstance(th, str):
-                    th = _json.loads(th)
-                if isinstance(th, dict):
-                    tp_total_for_rate += 1
-                    for tp_key in ["TP1", "TP2", "TP3", "TP4"]:
-                        if th.get(tp_key):
-                            tp_counts[tp_key] += 1
-            except:
-                pass
-
-            # Recent signals (top 30)
-            if len(recent_signals_list) < 30:
-                recent_signals_list.append({
-                    "id": sig.get("id", "")[:8],
-                    "date": created_at_str[:16] if created_at_str else "",
-                    "direction": direction,
-                    "confidence": round(confidence, 1),
-                    "status": status,
-                    "pips": round(pips_change, 1),
-                    "timeframe": tf,
-                })
+            th = _parse_targets_hit(sig.get("targets_hit"))
+            if th:
+                tp_total_for_rate += 1
+                for tp_key in ["TP1", "TP2", "TP3", "TP4"]:
+                    if th.get(tp_key):
+                        tp_counts[tp_key] += 1
 
         # ── 3. Calculate derived metrics ──
         resolved = completed + stopped
@@ -2870,17 +3048,21 @@ async def get_model_detail_analytics(
             })
 
         # Timeframe comparison
-        tf_order = ["5m", "15m", "30m", "1h", "4h", "1d"]
         timeframe_comparison = []
-        for tf_key in tf_order:
-            if tf_key in tf_stats:
-                s = tf_stats[tf_key]
+        comparison_tf_groups = {}
+        for sig in model_scope_signals:
+            tf_key = sig.get("_timeframe") or "1h"
+            comparison_tf_groups.setdefault(tf_key, []).append(sig)
+        for tf_key in _sort_timeframes(list(comparison_tf_groups.keys())):
+            summary = _summarize_scope(comparison_tf_groups[tf_key])
+            if summary["scored_signals"] > 0:
                 timeframe_comparison.append({
                     "tf": tf_key,
-                    "total": s["total"],
-                    "win_rate": round((s["wins"] / s["total"] * 100) if s["total"] > 0 else 0, 1),
-                    "net_pips": round(s["pips"], 1),
-                    "avg_pips": round(s["pips"] / s["total"], 1) if s["total"] > 0 else 0,
+                    "total": summary["scored_signals"],
+                    "active": summary["active"],
+                    "win_rate": summary["win_rate"],
+                    "net_pips": summary["net_pips"],
+                    "avg_pips": summary["avg_pips"],
                 })
 
         # Daily accuracy (sorted by date, with cumulative)
@@ -2921,8 +3103,22 @@ async def get_model_detail_analytics(
                 (tp_counts[tp_key] / tp_total_for_rate * 100) if tp_total_for_rate > 0 else 0, 1
             )
 
+        recent_signals = []
+        for sig in recent_signals_source[:30]:
+            recent_status, _, recent_pips = _classify_signal(sig)
+            raw_status = (sig.get("status") or "unknown").lower().strip()
+            recent_signals.append({
+                "id": (sig.get("id") or "")[:8],
+                "date": (sig.get("created_at") or "")[:16],
+                "direction": sig.get("ml_direction", "HOLD"),
+                "confidence": round(float(sig.get("ml_confidence") or 50), 1),
+                "status": recent_status or raw_status or "unknown",
+                "pips": round(recent_pips or 0.0, 1),
+                "timeframe": sig.get("_timeframe") or "1h",
+            })
+
         return {
-            "model": model_lower,
+            "model": resolved_model,
             "symbol": symbol,
             "overview": {
                 "total_signals": total,
@@ -2944,11 +3140,28 @@ async def get_model_detail_analytics(
             "daily_accuracy": daily_accuracy[-60:],  # Last 60 days
             "day_of_week": day_of_week,
             "tp_hit_rates": tp_hit_rates,
-            "recent_signals": recent_signals_list,
+            "recent_signals": recent_signals,
+            "selected_timeframe": selected_timeframe,
+            "available_timeframes": available_timeframes,
+            "available_models": available_models,
+            "model_comparison": model_comparison,
+            "meta": {
+                "requested_model": requested_model,
+                "selected_model": resolved_model,
+                "selected_timeframe": selected_timeframe,
+                "available_timeframes": available_timeframes,
+                "available_models": available_models,
+                "days": days,
+                "all_time": days == 0,
+                "date_from": start_date.replace(tzinfo=timezone.utc).isoformat(),
+                "date_to": end_date.replace(tzinfo=timezone.utc).isoformat(),
+                "scope_total_signals": len(model_scope_signals),
+                "filtered_total_signals": len(filtered_signals),
+            },
         }
 
     except Exception as e:
         import traceback
         import logging as _logging
         _logging.getLogger(__name__).error(f"Model detail analytics error: {e}\n{traceback.format_exc()}")
-        return {"error": str(e), "traceback": traceback.format_exc()[:500]}
+        return _empty_payload(error=str(e), meta_overrides={"traceback": traceback.format_exc()[:500]})

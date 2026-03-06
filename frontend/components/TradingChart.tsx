@@ -155,6 +155,10 @@ export default function TradingChart({
         timeVisible: true,
         secondsVisible: false,
         borderColor: "rgba(255,255,255,0.1)",
+        fixLeftEdge: true,
+        fixRightEdge: false,
+        rightOffset: 12,
+        barSpacing: 6,
       },
       rightPriceScale: {
         borderColor: "rgba(255,255,255,0.1)",
@@ -328,9 +332,16 @@ export default function TradingChart({
   // Apply news markers when they change
   useEffect(() => {
     const candleSeries = candleSeriesRef.current;
-    if (!candleSeries || !newsMarkers.length) return;
+    const chart = chartInstanceRef.current;
+    if (!candleSeries || !chart) return;
 
     try {
+      // Clear existing markers if none provided
+      if (!newsMarkers.length) {
+        candleSeries.setMarkers([]);
+        return;
+      }
+
       // Filter markers to only show those within data range
       const dataStartTime = data.length > 0 ? data[0].timestamp / 1000 : 0;
       const dataEndTime = data.length > 0 ? data[data.length - 1].timestamp / 1000 : Infinity;
@@ -356,6 +367,34 @@ export default function TradingChart({
       console.error("[TradingChart] Marker update error:", err);
     }
   }, [newsMarkers, symbol, data]);
+
+  // Handle marker clicks
+  useEffect(() => {
+    const chart = chartInstanceRef.current;
+    if (!chart || !onMarkerClick) return;
+
+    const handleClick = (param: any) => {
+      if (!param.point || !param.time || !newsMarkers.length) return;
+      
+      const clickedTime = param.time as number;
+      const timeWindow = 5 * 60; // 5 minutes in seconds
+      
+      // Find marker near click time
+      const clickedMarker = newsMarkers.find(m => 
+        Math.abs(m.time - clickedTime) < timeWindow
+      );
+      
+      if (clickedMarker) {
+        onMarkerClick(clickedMarker);
+      }
+    };
+
+    chart.subscribeClick(handleClick);
+    
+    return () => {
+      chart.unsubscribeClick(handleClick);
+    };
+  }, [newsMarkers, onMarkerClick]);
 
   // Calculate price info
   const latestCandle = data[data.length - 1];

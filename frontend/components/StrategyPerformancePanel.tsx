@@ -591,6 +591,7 @@ export default function StrategyPerformancePanel() {
         isOpen={isModelPerformanceModalOpen}
         onClose={() => setIsModelPerformanceModalOpen(false)}
         symbol={selectedModelPerformanceSymbol}
+        model="all"
       />
     </>
   );

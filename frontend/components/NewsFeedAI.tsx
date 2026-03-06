@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Newspaper,
   Calendar,
@@ -14,6 +14,9 @@ import {
   Clock,
   Filter,
   Brain,
+  Flame,
+  Zap,
+  Info,
 } from "lucide-react";
 import {
   fetchEconomicCalendar,
@@ -43,6 +46,7 @@ interface EconomicEvent {
 }
 
 type NewsTab = "news" | "economic" | "earnings";
+type NewsUrgencyFilter = "all" | "breaking" | "high" | "medium";
 
 const directionIcons: Record<string, React.ReactNode> = {
   bullish: <TrendingUp className="w-3 h-3 text-emerald-400" />,
@@ -56,6 +60,7 @@ interface NewsFeedAIProps {
 
 export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
   const [activeTab, setActiveTab] = useState<NewsTab>("news");
+  const [urgencyFilter, setUrgencyFilter] = useState<NewsUrgencyFilter>("all");
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const { locale } = useI18nStore();
 
@@ -91,6 +96,14 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
 
       const data = await response.json();
       console.log("[NewsFeedAI] Data received:", data.length, "items");
+      
+      // Log urgency distribution for debugging
+      const urgencyCounts = data.reduce((acc: any, item: RSSNewsItem) => {
+        acc[item.urgency] = (acc[item.urgency] || 0) + 1;
+        return acc;
+      }, {});
+      console.log("[NewsFeedAI] Urgency distribution:", urgencyCounts);
+      
       setNewsItems(data);
     } catch (err) {
       console.error("[NewsFeedAI] Fetch error:", err);
@@ -132,6 +145,30 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
   // Filter earnings events
   const earningsEvents = economicEvents?.filter((e) => e.is_earnings) || [];
 
+  // FILTERED NEWS - Apply urgency and symbol filters
+  const filteredNews = useMemo(() => {
+    if (!newsItems) return [];
+    
+    let filtered = newsItems;
+    
+    // Apply urgency filter
+    if (urgencyFilter !== "all") {
+      filtered = filtered.filter(item => item.urgency === urgencyFilter);
+    }
+    
+    // Apply symbol filter
+    if (selectedSymbol) {
+      filtered = filtered.filter(item => 
+        item.impacts?.some(impact => 
+          impact.symbol === selectedSymbol || 
+          impact.symbol === selectedSymbol.replace("/", "")
+        )
+      );
+    }
+    
+    return filtered;
+  }, [newsItems, urgencyFilter, selectedSymbol]);
+
   const handleRefresh = useCallback(() => {
     if (activeTab === "news") refetchNews();
   }, [activeTab, refetchNews]);
@@ -166,6 +203,13 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
     if (diffHrs < 0) return "Başladı";
     if (diffHrs < 24) return `${diffHrs}s ${diffMins}d`;
     return `${Math.floor(diffHrs / 24)}g`;
+  };
+
+  // Get urgency count for badge
+  const getUrgencyCount = (urgency: NewsUrgencyFilter) => {
+    if (!newsItems) return 0;
+    if (urgency === "all") return newsItems.length;
+    return newsItems.filter(item => item.urgency === urgency).length;
   };
 
   // Render News Tab
@@ -210,9 +254,24 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
       );
     }
 
+    if (filteredNews.length === 0) {
+      return (
+        <div className="text-center py-8 text-slate-400 text-sm">
+          <Filter className="w-8 h-8 mx-auto mb-2 opacity-30" />
+          <div>Seçili filtreye uygun haber bulunamadı</div>
+          <button
+            onClick={() => {setUrgencyFilter("all"); setSelectedSymbol(null);}}
+            className="mt-3 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-400 text-xs rounded-lg transition"
+          >
+            Filtreleri Temizle
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-        {newsItems.map((item) => (
+        {filteredNews.map((item) => (
           <NewsCard key={item.id} item={item} formatTime={formatTime} isTurkish={isTurkish} />
         ))}
       </div>
@@ -414,30 +473,73 @@ export default function NewsFeedAI({ className = "" }: NewsFeedAIProps) {
         </button>
       </div>
 
-      {/* Symbol Filter */}
+      {/* News Filters - Only show for news tab */}
       {activeTab === "news" && (
-        <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1">
-          <Filter className="w-3 h-3 text-slate-400 flex-shrink-0" />
-          <button
-            onClick={() => setSelectedSymbol(null)}
-            className={`px-2 py-1 rounded text-[10px] font-medium transition ${!selectedSymbol ? "bg-accent text-white" : "bg-white/5 text-slate-400 hover:bg-white/10"
-              }`}
-          >
-            Tümü
-          </button>
-          {["XAUUSD", "NDX", "DAX", "USOIL", "VIX", "DXY"].map((sym) => (
+        <>
+          {/* Urgency Filter */}
+          <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1">
+            <Zap className="w-3 h-3 text-slate-400 flex-shrink-0" />
             <button
-              key={sym}
-              onClick={() => setSelectedSymbol(sym)}
-              className={`px-2 py-1 rounded text-[10px] font-medium transition whitespace-nowrap ${selectedSymbol === sym
-                ? "bg-accent text-white"
-                : "bg-white/5 text-slate-400 hover:bg-white/10"
+              onClick={() => setUrgencyFilter("all")}
+              className={`px-2 py-1 rounded text-[10px] font-medium transition ${urgencyFilter === "all" ? "bg-accent text-white" : "bg-white/5 text-slate-400 hover:bg-white/10"}`}
+            >
+              Tümü
+              <span className="ml-1 opacity-70">({getUrgencyCount("all")})</span>
+            </button>
+            <button
+              onClick={() => setUrgencyFilter("breaking")}
+              className={`px-2 py-1 rounded text-[10px] font-medium transition whitespace-nowrap flex items-center gap-1 ${urgencyFilter === "breaking"
+                ? "bg-red-500 text-white"
+                : "bg-red-500/10 text-red-400 hover:bg-red-500/20"}`}
+            >
+              <Flame className="w-3 h-3" />
+              Breaking
+              <span className="ml-1 opacity-70">({getUrgencyCount("breaking")})</span>
+            </button>
+            <button
+              onClick={() => setUrgencyFilter("high")}
+              className={`px-2 py-1 rounded text-[10px] font-medium transition whitespace-nowrap ${urgencyFilter === "high"
+                ? "bg-orange-500 text-white"
+                : "bg-orange-500/10 text-orange-400 hover:bg-orange-500/20"}`}
+            >
+              Yüksek
+              <span className="ml-1 opacity-70">({getUrgencyCount("high")})</span>
+            </button>
+            <button
+              onClick={() => setUrgencyFilter("medium")}
+              className={`px-2 py-1 rounded text-[10px] font-medium transition whitespace-nowrap ${urgencyFilter === "medium"
+                ? "bg-yellow-500 text-white"
+                : "bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20"}`}
+            >
+              Orta
+              <span className="ml-1 opacity-70">({getUrgencyCount("medium")})</span>
+            </button>
+          </div>
+
+          {/* Symbol Filter */}
+          <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1">
+            <Filter className="w-3 h-3 text-slate-400 flex-shrink-0" />
+            <button
+              onClick={() => setSelectedSymbol(null)}
+              className={`px-2 py-1 rounded text-[10px] font-medium transition ${!selectedSymbol ? "bg-accent text-white" : "bg-white/5 text-slate-400 hover:bg-white/10"
                 }`}
             >
-              {getSymbolEmoji(sym)} {sym}
+              Tüm Semboller
             </button>
-          ))}
-        </div>
+            {["XAUUSD", "NDX", "DAX", "USOIL", "VIX", "DXY"].map((sym) => (
+              <button
+                key={sym}
+                onClick={() => setSelectedSymbol(sym)}
+                className={`px-2 py-1 rounded text-[10px] font-medium transition whitespace-nowrap ${selectedSymbol === sym
+                  ? "bg-accent text-white"
+                  : "bg-white/5 text-slate-400 hover:bg-white/10"
+                  }`}
+              >
+                {getSymbolEmoji(sym)} {sym}
+              </button>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Content */}
@@ -517,7 +619,7 @@ function NewsCard({
       {item.ai_confidence > 70 && (
         <div className="flex items-center gap-1 mt-2 text-[10px] text-purple-400">
           <Brain className="w-3 h-3" />
-          <span>AI Analizi ({item.ai_confidence}% güven)</span>
+          <span>AI Analizi ({Math.round(item.ai_confidence)}% güven)</span>
         </div>
       )}
 

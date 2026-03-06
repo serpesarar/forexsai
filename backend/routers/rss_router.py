@@ -282,12 +282,35 @@ async def get_chart_news_markers(
                 imp_score = imp.get("score", 0)
                 imp_symbol = imp.get("symbol", "")
                 
-                # Symbol matching with variations
+                # Symbol matching with variations - COMPREHENSIVE MAPPING
                 symbol_variations = [symbol]
+                
+                # Add base symbol without suffix
                 if ".INDX" in symbol:
                     symbol_variations.append(symbol.replace(".INDX", ""))
-                elif symbol in ["NDX", "DAX", "VIX", "DXY"]:
-                    symbol_variations.append(f"{symbol}.INDX")
+                elif ".FOREX" in symbol:
+                    symbol_variations.append(symbol.replace(".FOREX", ""))
+                elif ".COMM" in symbol:
+                    symbol_variations.append(symbol.replace(".COMM", ""))
+                
+                # Common symbol aliases
+                symbol_aliases = {
+                    "NDX.INDX": ["NDX", "NASDAQ", "QQQ"],
+                    "NDX": ["NDX.INDX", "NASDAQ", "QQQ"],
+                    "GDAXI.INDX": ["GDAXI", "DAX"],
+                    "DAX": ["GDAXI", "GDAXI.INDX"],
+                    "XAUUSD": ["GOLD", "XAU", "GC"],
+                    "GOLD": ["XAUUSD", "XAU"],
+                    "USOIL.FOREX": ["USOIL", "OIL", "WTI", "CL"],
+                    "USOIL": ["USOIL.FOREX", "OIL", "WTI", "CL"],
+                    "VIX.INDX": ["VIX"],
+                    "VIX": ["VIX.INDX"],
+                    "DXY.INDX": ["DXY", "DOLLAR"],
+                    "DXY": ["DXY.INDX", "DOLLAR"],
+                }
+                
+                if symbol in symbol_aliases:
+                    symbol_variations.extend(symbol_aliases[symbol])
                 
                 if imp_symbol in symbol_variations:
                     # STRICT FILTERING based on urgency
