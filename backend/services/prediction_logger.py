@@ -18,26 +18,47 @@ logger = logging.getLogger(__name__)
 # ─── Uses target_config.py as single source of truth for TP/SL levels ──────────
 
 
-def _has_active_signal(client, symbol: str, model_type: str) -> Tuple[bool, Optional[str], Optional[str]]:
+def _normalize_timeframe(value: Optional[str]) -> str:
+    normalized = (value or "").lower().strip()
+    return normalized if normalized else "15m"
+
+
+def _has_active_signal(
+    client,
+    symbol: str,
+    model_type: str,
+    timeframe: Optional[str],
+    direction: str,
+) -> Tuple[bool, Optional[str], Optional[str]]:
     """
-    Check if there's already an active signal for this symbol+model.
-    Returns: (has_active, signal_id, current_direction)
+    Check if there's already an active signal for this symbol+model+timeframe+direction.
+    Opposite-direction signals and different timeframes are allowed to stay active
+    independently.
     """
     try:
-        result = client.table("prediction_logs").select("id, ml_direction").eq(
+        result = client.table("prediction_logs").select("id, ml_direction, timeframe").eq(
             "symbol", symbol
         ).eq("model_type", model_type
         ).eq("status", "active"
-        ).limit(1).execute()
+        ).limit(20).execute()
         
         data = safe_get_data(result)
-        has_active = len(data) > 0
-        
-        if has_active:
-            signal_id = data[0].get("id")
-            current_dir = data[0].get("ml_direction")
-            logger.debug(f"Active signal exists: {symbol} {model_type} dir={current_dir}")
-            return True, signal_id, current_dir
+        desired_timeframe = _normalize_timeframe(timeframe)
+        desired_direction = (direction or "").upper().strip()
+
+        for row in data:
+            row_direction = (row.get("ml_direction") or "").upper().strip()
+            row_timeframe = _normalize_timeframe(row.get("timeframe"))
+            if row_direction == desired_direction and row_timeframe == desired_timeframe:
+                signal_id = row.get("id")
+                logger.debug(
+                    "Active signal exists: %s %s %s dir=%s",
+                    symbol,
+                    model_type,
+                    desired_timeframe,
+                    desired_direction,
+                )
+                return True, signal_id, row_direction
         
         return False, None, None
     except Exception as e:
@@ -319,36 +340,48 @@ async def log_prediction(
         # ═══════════════════════════════════════════════════════════════════════
         # ACTIVE SIGNAL HANDLING: Direction Change Logic
         # ═══════════════════════════════════════════════════════════════════════
-        has_active, active_signal_id, active_direction = _has_active_signal(client, symbol, effective_model_type)
+        normalized_timeframe = _normalize_timeframe(timeframe)
+        has_active, active_signal_id, active_direction = _has_active_signal(
+            client,
+            symbol,
+            effective_model_type,
+            normalized_timeframe,
+            direction,
+        )
         
         if has_active:
-            if active_direction == direction:
-                # Same direction - skip duplicate
-                logger.debug(f"Active {direction} signal already exists for {symbol} {effective_model_type}")
-                return None
-            else:
-                # Direction changed! Close old signal and allow new one
-                logger.info(f"Direction change detected: {active_direction} -> {direction} for {symbol} {effective_model_type}")
-                _close_existing_signal(client, active_signal_id, direction, "direction_flip")
+            logger.debug(
+                "Active %s signal already exists for %s %s %s",
+                direction,
+                symbol,
+                effective_model_type,
+                normalized_timeframe,
+            )
+            return None
 
         # ═══════════════════════════════════════════════════════════════════════
         # STATIC TARGETS: Fixed pip-based TP/SL (Reverted from ATR)
         # ATR system removed - using fixed pip values from target_config
         # ═══════════════════════════════════════════════════════════════════════
         import json as _json
-        from services.target_config import get_symbol_config, calculate_target_prices, calculate_stoploss_price
+        from services.target_config import (
+            get_symbol_config,
+            calculate_target_prices,
+            calculate_stoploss_price,
+            pips_from_price_change,
+        )
         
         cfg = get_symbol_config(symbol)
         entry_price = ml.get("entry_price") or 0
         
         # Calculate actual price targets for DB storage using fixed pip values
         if entry_price and entry_price > 0:
-            target_prices = calculate_target_prices(entry_price, direction, symbol, timeframe)
-            sl_price = calculate_stoploss_price(entry_price, direction, symbol, timeframe)
+            target_prices = calculate_target_prices(entry_price, direction, symbol, normalized_timeframe)
+            sl_price = calculate_stoploss_price(entry_price, direction, symbol, normalized_timeframe)
             # Store as {TP1: price, TP2: price, ...}
             targets_dict = target_prices
             targets_dict["SL"] = round(sl_price, 4)
-            stop_loss_pips = cfg.stoploss_pips
+            stop_loss_pips = abs(pips_from_price_change(abs(entry_price - sl_price), symbol))
         else:
             targets_dict = {tl.name: tl.pips for tl in cfg.targets}
             targets_dict["SL"] = cfg.stoploss_pips
@@ -367,7 +400,7 @@ async def log_prediction(
 
         record = {
             "symbol": symbol,
-            "timeframe": timeframe,
+            "timeframe": normalized_timeframe,
             "ml_direction": direction,
             "ml_confidence": float(ml.get("confidence", 0.0)),
             "ml_probability_up": ml.get("probability_up"),
@@ -396,9 +429,16 @@ async def log_prediction(
         
         result = client.table("prediction_logs").insert_ignore(record)
         
-        # DB-level dedup: unique index on (symbol, model_type, ml_direction) WHERE status='active'
+        # If a remote environment still has a stricter unique constraint, insert_ignore
+        # may still reject overlaps. Local schema does not require that behavior.
         if result.get("duplicate"):
-            logger.debug(f"DB dedup: active {effective_model_type} {direction} signal already exists for {symbol}")
+            logger.debug(
+                "DB dedup blocked active %s %s %s %s signal",
+                symbol,
+                effective_model_type,
+                normalized_timeframe,
+                direction,
+            )
             return None
 
         if safe_get_data(result) and len(result["data"]) > 0:
