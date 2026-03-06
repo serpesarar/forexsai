@@ -868,6 +868,24 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
         return {"error": "No DB client"}
 
     try:
+        tf_order = ["5m", "15m", "30m", "1h", "4h", "1d"]
+        known_timeframes = set(tf_order)
+
+        def _coerce_float(value, default: Optional[float] = None) -> Optional[float]:
+            if value in (None, ""):
+                return default
+            try:
+                parsed = float(value)
+            except (TypeError, ValueError):
+                return default
+            if parsed != parsed:
+                return default
+            return parsed
+
+        def _normalize_timeframe(value: Optional[str]) -> Optional[str]:
+            normalized = (value or "").lower().strip()
+            return normalized if normalized in known_timeframes else None
+
         # Supabase PostgREST caps at 1000 rows per request.
         # Fetch day-by-day to stay under 1000 rows per request.
         signals = []
@@ -964,22 +982,24 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
             m["symbols"][sym][status] = m["symbols"][sym].get(status, 0) + 1
 
             # Timeframe tracking
-            tf = (sig.get("timeframe") or "1h").lower()
-            if tf not in m["timeframes"]:
-                m["timeframes"][tf] = {
-                    "total": 0, "completed": 0, "stopped": 0, "expired": 0,
-                    "total_profit_pips": 0, "total_loss_pips": 0,
-                }
-            m["timeframes"][tf]["total"] += 1
-            m["timeframes"][tf][status] = m["timeframes"][tf].get(status, 0) + 1
+            tf = _normalize_timeframe(sig.get("timeframe"))
+            if tf:
+                if tf not in m["timeframes"]:
+                    m["timeframes"][tf] = {
+                        "total": 0, "completed": 0, "stopped": 0, "expired": 0,
+                        "total_profit_pips": 0, "total_loss_pips": 0,
+                    }
+                m["timeframes"][tf]["total"] += 1
+                m["timeframes"][tf][status] = m["timeframes"][tf].get(status, 0) + 1
 
             # Profit/loss — use ACTUAL entry→exit P/L, not peak drawdown
-            entry_price = sig.get("ml_entry_price") or 0
-            exit_price_val = sig.get("exit_price") or 0
-            direction = sig.get("ml_direction", "HOLD")
-            sl_pips = sig.get("stop_loss_pips") or 0
+            entry_price = _coerce_float(sig.get("ml_entry_price"))
+            exit_price_val = _coerce_float(sig.get("exit_price"))
+            direction = (sig.get("ml_direction") or "HOLD").upper()
+            sl_pips = abs(_coerce_float(sig.get("stop_loss_pips"), 0.0) or 0.0)
+            lowest_drawdown = abs(_coerce_float(sig.get("lowest_drawdown_pips"), 0.0) or 0.0)
 
-            if status == "completed" and entry_price and exit_price_val:
+            if status == "completed" and entry_price is not None and exit_price_val is not None:
                 # Actual profit at exit
                 if direction == "BUY":
                     actual_profit = pips_from_price_change(exit_price_val - entry_price, sym)
@@ -991,15 +1011,15 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                 m["total_profit_pips"] += actual_profit
                 m["profits"].append(actual_profit)
                 m["symbols"][sym]["total_profit_pips"] += actual_profit
-                if tf in m["timeframes"]:
+                if tf and tf in m["timeframes"]:
                     m["timeframes"][tf]["total_profit_pips"] += actual_profit
             elif status == "stopped":
                 # Use stop_loss_pips as the loss (this is the actual exit cost)
-                loss = abs(sl_pips) if sl_pips else abs(sig.get("lowest_drawdown_pips") or 0)
+                loss = sl_pips or lowest_drawdown
                 m["total_loss_pips"] += loss
                 m["losses"].append(loss)
                 m["symbols"][sym]["total_loss_pips"] += loss
-                if tf in m["timeframes"]:
+                if tf and tf in m["timeframes"]:
                     m["timeframes"][tf]["total_loss_pips"] += loss
 
             # Target hit rates (global + per-symbol)
@@ -1071,7 +1091,6 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
 
             # Build per-timeframe stats
             timeframes_out = {}
-            tf_order = ["5m", "15m", "30m", "1h", "4h", "1d"]
             for tf_key in tf_order:
                 if tf_key in m.get("timeframes", {}):
                     tfd = m["timeframes"][tf_key]

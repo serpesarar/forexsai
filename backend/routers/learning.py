@@ -19,7 +19,7 @@ from services.outcome_tracker import (
     get_multi_target_accuracy,
     check_multi_target_outcome,
 )
-from services.target_config import get_symbol_config, SYMBOL_CONFIGS
+from services.target_config import get_symbol_config, SYMBOL_CONFIGS, pips_from_price_change
 from services.learning_analyzer import (
     analyze_factor_correlations,
     generate_learning_insights,
@@ -2699,6 +2699,7 @@ async def get_model_detail_analytics(
         _log = _logging.getLogger(__name__)
 
         tf_order = ["5m", "15m", "30m", "1h", "4h", "1d"]
+        valid_timeframes = set(tf_order)
         model_order = ["ml", "pulse1", "pulse2", "pulse3", "emel", "emel_inverse", "hybrid"]
 
         def _sort_timeframes(values: List[str]) -> List[str]:
@@ -2713,8 +2714,31 @@ async def get_model_detail_analytics(
                 key=lambda value: (model_order.index(value) if value in model_order else 99, value),
             )
 
-        def _normalize_timeframe(value: Optional[str]) -> str:
-            return (value or "1h").lower().strip() or "1h"
+        def _normalize_timeframe(value: Optional[str]) -> Optional[str]:
+            normalized = (value or "").lower().strip()
+            return normalized if normalized in valid_timeframes else None
+
+        def _coerce_float(value, default: Optional[float] = None) -> Optional[float]:
+            if value in (None, ""):
+                return default
+            try:
+                parsed = float(value)
+            except (TypeError, ValueError):
+                return default
+            if math.isnan(parsed) or math.isinf(parsed):
+                return default
+            return parsed
+
+        def _realized_pips(sig: dict) -> Optional[float]:
+            entry_price = _coerce_float(sig.get("ml_entry_price"))
+            exit_price = _coerce_float(sig.get("exit_price"))
+            direction = (sig.get("ml_direction") or "").upper().strip()
+
+            if entry_price is None or exit_price is None or direction not in {"BUY", "SELL"}:
+                return None
+
+            price_change = exit_price - entry_price if direction == "BUY" else entry_price - exit_price
+            return pips_from_price_change(price_change, sig.get("symbol") or symbol)
 
         def _parse_datetime(value: Optional[str]):
             if not value:
@@ -2737,20 +2761,25 @@ async def get_model_detail_analytics(
 
         def _classify_signal(sig: dict):
             status = (sig.get("status") or "unknown").lower().strip()
-            profit_pips = float(sig.get("highest_profit_pips") or 0)
-            loss_pips = float(sig.get("lowest_drawdown_pips") or 0)
+            profit_pips = max(_coerce_float(sig.get("highest_profit_pips"), 0.0) or 0.0, 0.0)
+            loss_pips = abs(_coerce_float(sig.get("lowest_drawdown_pips"), 0.0) or 0.0)
+            stop_loss_pips = abs(_coerce_float(sig.get("stop_loss_pips"), 0.0) or 0.0)
+            realized_pips = _realized_pips(sig)
             targets_hit = _parse_targets_hit(sig.get("targets_hit"))
 
             if status == "completed":
-                return "completed", True, profit_pips if profit_pips > 0 else 20.0
+                actual_profit = max(realized_pips if realized_pips is not None else profit_pips, 0.0)
+                return "completed", True, actual_profit
             if status == "stopped":
-                return "stopped", False, -(loss_pips if loss_pips > 0 else 40.0)
+                actual_loss = stop_loss_pips or loss_pips
+                return "stopped", False, -actual_loss
             if status == "expired":
                 return "expired", False, 0.0
             if status == "active":
                 return "active", None, None
             if targets_hit and any(targets_hit.values()):
-                return "completed", True, profit_pips if profit_pips > 0 else 15.0
+                fallback_profit = max(realized_pips if realized_pips is not None else profit_pips, 0.0)
+                return "completed", True, fallback_profit
             return None, None, None
 
         def _summarize_scope(scope_signals: List[dict]) -> dict:
@@ -2820,8 +2849,8 @@ async def get_model_detail_analytics(
 
             result = client.table("prediction_logs").select(
                 "id, symbol, timeframe, ml_direction, ml_confidence, status, "
-                "ml_entry_price, created_at, highest_profit_pips, lowest_drawdown_pips, "
-                "targets_hit, model_type, strategy"
+                "ml_entry_price, exit_price, stop_loss_pips, created_at, highest_profit_pips, "
+                "lowest_drawdown_pips, targets_hit, model_type, strategy"
             ).eq("symbol", symbol).gte(
                 "created_at", day_start.isoformat() + "Z"
             ).lt(
@@ -2952,7 +2981,7 @@ async def get_model_detail_analytics(
             hour = created_dt.hour
             dow = created_dt.weekday()
             date_key = created_dt.strftime("%Y-%m-%d")
-            tf = sig.get("_timeframe") or "1h"
+            tf = sig.get("_timeframe")
 
             if status == "active":
                 active += 1
@@ -2986,12 +3015,13 @@ async def get_model_detail_analytics(
             hourly_stats[hour]["pips"] += pips_change or 0.0
 
             # Timeframe bucket
-            if tf not in tf_stats:
-                tf_stats[tf] = {"total": 0, "wins": 0, "pips": 0.0}
-            tf_stats[tf]["total"] += 1
-            if is_win:
-                tf_stats[tf]["wins"] += 1
-            tf_stats[tf]["pips"] += pips_change or 0.0
+            if tf:
+                if tf not in tf_stats:
+                    tf_stats[tf] = {"total": 0, "wins": 0, "pips": 0.0}
+                tf_stats[tf]["total"] += 1
+                if is_win:
+                    tf_stats[tf]["wins"] += 1
+                tf_stats[tf]["pips"] += pips_change or 0.0
 
             # Daily bucket
             if date_key not in daily_stats:
@@ -3051,7 +3081,9 @@ async def get_model_detail_analytics(
         timeframe_comparison = []
         comparison_tf_groups = {}
         for sig in model_scope_signals:
-            tf_key = sig.get("_timeframe") or "1h"
+            tf_key = sig.get("_timeframe")
+            if not tf_key:
+                continue
             comparison_tf_groups.setdefault(tf_key, []).append(sig)
         for tf_key in _sort_timeframes(list(comparison_tf_groups.keys())):
             summary = _summarize_scope(comparison_tf_groups[tf_key])
@@ -3111,10 +3143,10 @@ async def get_model_detail_analytics(
                 "id": (sig.get("id") or "")[:8],
                 "date": (sig.get("created_at") or "")[:16],
                 "direction": sig.get("ml_direction", "HOLD"),
-                "confidence": round(float(sig.get("ml_confidence") or 50), 1),
+                "confidence": round(_coerce_float(sig.get("ml_confidence"), 50.0) or 50.0, 1),
                 "status": recent_status or raw_status or "unknown",
                 "pips": round(recent_pips or 0.0, 1),
-                "timeframe": sig.get("_timeframe") or "1h",
+                "timeframe": sig.get("_timeframe") or "legacy",
             })
 
         return {

@@ -122,6 +122,19 @@ describe("ModelPerformanceModal", () => {
 
     expect(await screen.findByText("Failed analytics")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Retry" }).length).toBeGreaterThan(0);
+    expect(screen.queryByText("No resolved signal history was found for this scope.")).not.toBeInTheDocument();
+  });
+
+  it("keeps warning payloads visible when analytics data still exists", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ...basePayload, error: "Partial analytics warning" }) })
+    );
+
+    renderModal();
+
+    expect(await screen.findByText("Partial analytics warning")).toBeInTheDocument();
+    expect(screen.getByText("Insight pulse")).toBeInTheDocument();
   });
 
   it("renders premium insight summary tiles", async () => {

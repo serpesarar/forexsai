@@ -378,6 +378,15 @@ function emptyAnalytics(symbol: string, model?: string): AnalyticsData {
   };
 }
 
+function hasAnalyticsContent(data?: AnalyticsData | null) {
+  return Boolean(
+    (data?.overview?.total_signals || 0) > 0 ||
+      (data?.timeframe_comparison?.length || 0) > 0 ||
+      (data?.model_comparison?.length || 0) > 1 ||
+      (data?.recent_signals?.length || 0) > 0
+  );
+}
+
 function AnalyticsTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
@@ -453,7 +462,12 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
         throw new Error(payload?.error || "Failed to load analytics");
       }
 
-      return payload || emptyAnalytics(symbol, model);
+      const analytics = payload || emptyAnalytics(symbol, model);
+      if (analytics.error && !hasAnalyticsContent(analytics)) {
+        throw new Error(analytics.error);
+      }
+
+      return analytics;
     },
     enabled: isOpen && !!symbol,
     staleTime: 30000,
@@ -473,14 +487,9 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
     effectiveModel === "all" ? copy.allModels : MODEL_DISPLAY[effectiveModel] || effectiveModel;
   const headerSymbolLabel = SYM_DISPLAY[symbol] || symbol;
   const queryError = error instanceof Error ? error.message : undefined;
-  const displayError = queryError || data?.error;
+  const displayWarning = queryError ? undefined : data?.error;
   const overview = data?.overview;
-  const hasData = Boolean(
-    (overview?.total_signals || 0) > 0 ||
-      (data?.timeframe_comparison?.length || 0) > 0 ||
-      (data?.model_comparison?.length || 0) > 1 ||
-      (data?.recent_signals?.length || 0) > 0
-  );
+  const hasData = hasAnalyticsContent(data);
   const meta = data?.meta;
 
   const tabs = [
@@ -633,7 +642,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
               />
             </div>
 
-            {displayError && (
+            {displayWarning && (
               <div
                 style={{
                   background: "rgba(245, 158, 11, 0.10)",
@@ -644,7 +653,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                 }}
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span style={{ fontSize: 13 }}>{displayError}</span>
+                  <span style={{ fontSize: 13 }}>{displayWarning}</span>
                   <button onClick={() => refetch()} style={{ color: "var(--accent-warning)", fontSize: 12, fontWeight: 700 }}>
                     {copy.retry}
                   </button>
@@ -654,6 +663,8 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
 
             {isLoading ? (
               <LoadingState label={copy.loading} />
+            ) : queryError ? (
+              <ErrorState label={queryError} onRetry={() => refetch()} retryLabel={copy.retry} />
             ) : !hasData || !data ? (
               <EmptyState label={copy.noData} onRetry={() => refetch()} retryLabel={copy.retry} />
             ) : activeTab === "overview" ? (
@@ -1414,6 +1425,43 @@ function EmptyState({
         style={{
           background: "var(--bg-card)",
           border: "1px solid var(--border-subtle)",
+          color: "var(--text-primary)",
+          fontWeight: 700,
+          fontSize: 12,
+        }}
+      >
+        {retryLabel}
+      </button>
+    </div>
+  );
+}
+
+function ErrorState({
+  label,
+  onRetry,
+  retryLabel,
+}: {
+  label: string;
+  onRetry: () => void;
+  retryLabel: string;
+}) {
+  return (
+    <div
+      style={{
+        background: "rgba(245, 158, 11, 0.10)",
+        border: "1px solid rgba(245, 158, 11, 0.22)",
+        borderRadius: 20,
+        padding: 36,
+        textAlign: "center",
+      }}
+    >
+      <p style={{ color: "var(--text-primary)", fontSize: 15, fontWeight: 600 }}>{label}</p>
+      <button
+        onClick={onRetry}
+        className="mt-4 rounded-xl px-4 py-2"
+        style={{
+          background: "var(--bg-card)",
+          border: "1px solid rgba(245, 158, 11, 0.22)",
           color: "var(--text-primary)",
           fontWeight: 700,
           fontSize: 12,
