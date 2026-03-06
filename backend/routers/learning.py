@@ -2617,8 +2617,8 @@ async def get_xauusd_signal_status():
 
 @router.get("/model-detail-analytics")
 async def get_model_detail_analytics(
-    model: str = Query(..., description="Model type (ml, emel, pulse1, pulse2, pulse3, emel_inverse)"),
-    symbol: str = Query(..., description="Symbol (NDX.INDX, XAUUSD, GDAXI.INDX, USOIL.FOREX)"),
+    model: str = Query("ml", description="Model type (ml, emel, pulse1, pulse2, pulse3, emel_inverse, hybrid)"),
+    symbol: str = Query(..., description="Symbol (NDX.INDX, XAUUSD, GDAXI.INDX, USOIL.FOREX, CL.F)"),
     days: int = Query(0, description="Days to look back (0 = all time)")
 ):
     """
@@ -2652,6 +2652,10 @@ async def get_model_detail_analytics(
             query = query.or_("model_type.eq.ml,model_type.is.null")
         elif model_lower == "emel":
             query = query.or_("model_type.eq.emel,strategy.eq.EMEL")
+        elif model_lower == "emel_inverse":
+            query = query.or_("model_type.eq.emel_inverse,strategy.eq.EMEL_INVERSE")
+        elif model_lower == "hybrid":
+            query = query.or_("model_type.eq.hybrid,strategy.eq.HYBRID")
         else:
             query = query.eq("model_type", model_lower)
 

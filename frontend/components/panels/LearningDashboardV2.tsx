@@ -706,7 +706,8 @@ function SignalListModal({
         if (filter.symbol) params.set("symbol", filter.symbol);
         if (filter.model) params.set("model", filter.model);
 
-        const res = await fetch(`https://upbeat-flow-production.up.railway.app/api/learning/signals/recent?${params}`);
+        const API = process.env.NEXT_PUBLIC_API_URL || "https://upbeat-flow-production.up.railway.app";
+        const res = await fetch(`${API}/api/learning/signals/recent?${params}`);
         const data = await res.json();
 
         if (data.signals) {

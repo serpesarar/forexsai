@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 from fastapi import APIRouter
+from utils.safe_supabase import safe_get_data
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ async def get_active_signals():
             "created_at"
         ).eq("status", "active").order("created_at", desc=True).limit(50).execute()
 
-        signals = result.get("data") or []
+        signals = safe_get_data(result) or []
 
         # Parse JSON fields
         import json
@@ -142,7 +143,7 @@ async def backfill_existing_records():
             "id, strategy, status, created_at, ml_direction, targets, model_type"
         ).limit(500).execute()
 
-        records = result.get("data") or []
+        records = safe_get_data(result) or []
 
         for rec in records:
             updates = {}
@@ -161,7 +162,7 @@ async def backfill_existing_records():
                 from services.target_config import get_symbol_config
                 # Need symbol — fetch it
                 full = client.table("prediction_logs").select("symbol").eq("id", rec["id"]).execute()
-                sym = (full.get("data") or [{}])[0].get("symbol", "NDX.INDX")
+                sym = (safe_get_data(full) or [{}])[0].get("symbol", "NDX.INDX")
                 cfg = get_symbol_config(sym)
                 targets_dict = {tl.name: tl.pips for tl in cfg.targets}
                 updates["targets"] = json.dumps(targets_dict)
@@ -183,7 +184,7 @@ async def backfill_existing_records():
                     stats["expired"] += 1
 
             if updates:
-                client.table("prediction_logs").eq("id", rec["id"]).update(updates)
+                client.table("prediction_logs").eq("id", rec["id"]).update(updates).execute()
                 if "model_type" in updates:
                     stats["model_type_updated"] += 1
 

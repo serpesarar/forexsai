@@ -578,7 +578,7 @@ async def _create_failure_autopsy(
             "retrain_weight": 0.5,
         }
 
-        client.table("signal_failures").insert(failure_record)
+        client.table("signal_failures").insert(failure_record).execute()
         logger.info(f"📋 Failure autopsy saved for {signal_id[:8]}: type={failure_type}, regime={regime}, confluence={confluence}")
 
     except Exception as e:
