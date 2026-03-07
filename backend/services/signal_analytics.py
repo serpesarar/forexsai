@@ -7,7 +7,7 @@ from services.target_config import calculate_target_prices, pips_from_price_chan
 
 TIMEFRAME_ORDER = ["5m", "15m", "30m", "1h", "4h", "1d"]
 VALID_TIMEFRAMES = set(TIMEFRAME_ORDER)
-MODEL_ORDER = ["ml", "pulse1", "pulse2", "pulse3", "emel", "emel_inverse", "hybrid"]
+MODEL_ORDER = ["ml", "pulse1", "pulse2", "pulse3", "emel", "emel_inverse", "smc", "hybrid"]
 TP_LEVEL_ORDER = ("TP1", "TP2", "TP3", "TP4")
 
 
@@ -35,6 +35,12 @@ def normalize_timeframe(value: Optional[str]) -> Optional[str]:
 def normalize_model_type(sig: dict) -> str:
     model_type = (sig.get("model_type") or sig.get("strategy") or "ml").lower().strip()
     strategy = (sig.get("strategy") or "").upper().strip()
+
+    if strategy in {"SMART_MONEY_ZONES", "ORDER_BLOCK", "ORDER_BLOCKS", "SMC"}:
+        return "smc"
+
+    if model_type in {"smc", "smart_money_zones", "order_block", "order_blocks"}:
+        return "smc"
 
     if model_type in {"pulse", "pulse1", ""}:
         if strategy == "PULSE_V3":

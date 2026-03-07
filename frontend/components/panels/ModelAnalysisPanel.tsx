@@ -91,10 +91,8 @@ const MODELS = [
 const TIMEFRAMES = [
   { id: "5m", label: "5M", description: "5 Minutes" },
   { id: "15m", label: "15M", description: "15 Minutes" },
-  { id: "30m", label: "30M", description: "30 Minutes" },
   { id: "1h", label: "1H", description: "1 Hour" },
   { id: "4h", label: "4H", description: "4 Hours" },
-  { id: "1d", label: "1D", description: "1 Day" },
 ];
 
 const SYMBOLS = [
@@ -107,11 +105,11 @@ const SYMBOLS = [
 // Model -> Available Timeframes mapping
 const MODEL_TIMEFRAMES: Record<string, string[]> = {
   ml: ["1h"],
-  emel: ["15m", "30m", "1h", "4h", "1d"],
-  emel_inverse: ["15m", "30m", "1h", "4h", "1d"],
-  pulse1: ["15m", "30m", "1h", "4h", "1d"],
-  pulse2: ["15m", "30m", "1h", "4h", "1d"],
-  pulse3: ["15m", "30m", "1h", "4h", "1d"],
+  emel: ["5m", "15m", "1h", "4h"],
+  emel_inverse: ["5m", "15m", "1h", "4h"],
+  pulse1: ["5m", "15m"],
+  pulse2: ["5m", "15m", "1h"],
+  pulse3: ["1h"],
 };
 
 // ── API Functions ───────────────────────────────────────────────────────────
@@ -379,7 +377,17 @@ function useModelTranslations() {
 // TIMEFRAME MATRIX COMPONENT
 // ════════════════════════════════════════════════════════════════════════════
 
-function TimeframeMatrix({ matrixData, t, onRowClick }: { matrixData: any, t: Record<string, string>, onRowClick: (symbol: string) => void }) {
+function TimeframeMatrix({
+  matrixData,
+  timeframes,
+  t,
+  onRowClick,
+}: {
+  matrixData: any;
+  timeframes: string[];
+  t: Record<string, string>;
+  onRowClick: (symbol: string) => void;
+}) {
   if (!matrixData || Object.keys(matrixData).length === 0) {
     return (
       <div className="p-8 text-center text-gray-500 border border-white/5 rounded-xl bg-white/5">
@@ -388,7 +396,7 @@ function TimeframeMatrix({ matrixData, t, onRowClick }: { matrixData: any, t: Re
     );
   }
 
-  const tfs = ["15m", "30m", "1h", "4h", "1d"];
+  const tfs = timeframes;
 
   return (
     <div className="overflow-x-auto rounded-xl border border-white/5 bg-[#141C2B] shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
@@ -536,6 +544,7 @@ export default function ModelAnalysisPanel() {
   });
 
   const isLoading = summaryLoading || analysisLoading;
+  const matrixTimeframes = MODEL_TIMEFRAMES[selectedModel] || ["1h"];
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ background: "var(--bg-primary)", border: "1px solid var(--border-subtle)" }}>
@@ -617,6 +626,7 @@ export default function ModelAnalysisPanel() {
 
           <TimeframeMatrix
             matrixData={matrixData}
+            timeframes={matrixTimeframes}
             t={t}
             onRowClick={(symbolId) => {
               setModalSymbol(symbolId);

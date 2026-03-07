@@ -1,8 +1,10 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ModelPerformanceModal } from "../ModelPerformanceModal";
+
+const queryClients: QueryClient[] = [];
 
 vi.mock("framer-motion", () => {
   const Div = ({ children, ...props }: any) => <div {...props}>{children}</div>;
@@ -76,7 +78,8 @@ const basePayload = {
 };
 
 function renderModal(props?: Partial<React.ComponentProps<typeof ModelPerformanceModal>>) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  queryClients.push(queryClient);
   return render(
     <QueryClientProvider client={queryClient}>
       <ModelPerformanceModal isOpen onClose={vi.fn()} symbol="NDX.INDX" model="all" {...props} />
@@ -94,6 +97,10 @@ describe("ModelPerformanceModal", () => {
   });
 
   afterEach(() => {
+    cleanup();
+    queryClients.forEach((client) => client.clear());
+    queryClients.length = 0;
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
@@ -201,5 +208,28 @@ describe("ModelPerformanceModal", () => {
     fireEvent.keyDown(window, { key: "Escape" });
 
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders Smart Money Zones label for smc scopes", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          ...basePayload,
+          model: "smc",
+          available_models: ["ml", "smc"],
+          model_comparison: [
+            { model: "ml", total: 6, win_rate: 50, net_pips: 8, avg_pips: 1.3 },
+            { model: "smc", total: 6, win_rate: 66.7, net_pips: 24, avg_pips: 4 },
+          ],
+          meta: { ...basePayload.meta, selected_model: "smc" },
+        }),
+      })
+    );
+
+    renderModal({ model: "smc" });
+
+    expect((await screen.findAllByText("Smart Money Zones")).length).toBeGreaterThan(0);
   });
 });

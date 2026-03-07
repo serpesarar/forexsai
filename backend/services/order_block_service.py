@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+import logging
 from threading import Lock
 from typing import Dict, List, Tuple
 
@@ -10,9 +11,15 @@ import numpy as np
 from order_block_detector import Candle, OrderBlockConfig, OrderBlockDetector
 from order_block_detector_v2 import detect_all, MarketStructureAnalyzer, SwingDetector
 from services.ml_service import run_nasdaq_signal, run_xauusd_signal
+from services.prediction_logger import log_prediction
 from services.sentiment_analyzer import run_claude_sentiment
 from services.rtyhiim_service import run_rtyhiim_detector
 from services.data_fetcher import fetch_eod_candles, fetch_ohlc_data
+
+
+logger = logging.getLogger(__name__)
+SMC_MODEL_TYPE = "smc"
+SMC_STRATEGY = "SMART_MONEY_ZONES"
 
 
 @dataclass
@@ -29,12 +36,16 @@ class OrderBlockService:
         self._cache: Dict[str, CacheEntry] = {}
         self._lock = Lock()
 
+    @staticmethod
+    def _utc_now() -> datetime:
+        return datetime.now(UTC)
+
     async def detect(self, symbol: str, timeframe: str, limit: int, config: OrderBlockConfig) -> dict:
         # bump cache version whenever detection inputs/logic changes
-        cache_key = f"v3:{symbol}:{timeframe}:{limit}:{config}"  # noqa: S608 - cache key
+        cache_key = f"v4:{symbol}:{timeframe}:{limit}:{config}"  # noqa: S608 - cache key
         with self._lock:
             cached = self._cache.get(cache_key)
-            if cached and datetime.utcnow() - cached.timestamp < self.ttl:
+            if cached and self._utc_now() - cached.timestamp < self.ttl:
                 return cached.payload
 
         candles = await self._load_candles(symbol=symbol, timeframe=timeframe, limit=limit)
@@ -72,13 +83,56 @@ class OrderBlockService:
             "active_signals": [],
             "combined_signal": combined_signal,
             "trend": structure.trend,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": self._utc_now().isoformat().replace("+00:00", "Z"),
         }
 
+        await self._log_smc_signal(symbol=symbol, timeframe=timeframe, candles=candles, combined_signal=combined_signal)
+
         with self._lock:
-            self._cache[cache_key] = CacheEntry(timestamp=datetime.utcnow(), payload=payload)
+            self._cache[cache_key] = CacheEntry(timestamp=self._utc_now(), payload=payload)
 
         return payload
+
+    async def _log_smc_signal(self, symbol: str, timeframe: str, candles: List[Candle], combined_signal: dict) -> None:
+        direction = (combined_signal or {}).get("action")
+        if direction not in {"BUY", "SELL"} or not candles:
+            return
+
+        entry_price = float(getattr(candles[-1], "close", 0.0) or 0.0)
+        if entry_price <= 0:
+            return
+
+        try:
+            confidence = float((combined_signal or {}).get("confidence", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            confidence = 0.0
+        if confidence <= 1.0:
+            confidence *= 100.0
+        confidence = round(confidence, 1)
+
+        try:
+            await log_prediction(
+                symbol=symbol,
+                context={
+                    "source": SMC_STRATEGY,
+                    "ml_prediction": {
+                        "direction": direction,
+                        "confidence": confidence,
+                        "entry_price": entry_price,
+                    },
+                    "signal_reasoning": (combined_signal or {}).get("reasoning") or [],
+                },
+                analysis={
+                    "final_decision": direction,
+                    "confidence": confidence,
+                    "model_used": SMC_STRATEGY,
+                },
+                timeframe=timeframe,
+                strategy=SMC_STRATEGY,
+                model_type=SMC_MODEL_TYPE,
+            )
+        except Exception:
+            logger.exception("Smart Money Zones signal logging failed for %s %s", symbol, timeframe)
 
     def check_entry(self, symbol: str, timeframe: str, order_block_index: int) -> dict:
         config = OrderBlockConfig()

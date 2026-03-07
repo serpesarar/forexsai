@@ -45,6 +45,16 @@ PULSE_LOG_INTERVAL = 180  # Log Pulse/EMEL signals every 3 minutes (sync with li
 _last_macro_update: Optional[datetime] = None
 _cached_macro: Dict[str, Any] = {}  # Cached macro data
 
+# Legacy/default scheduler logging targets.
+# Intentionally excludes emel_inverse and post-expansion multi-timeframe loops
+# so the historical model-performance panels keep only the original main history.
+LEGACY_PULSE_LOG_TIMEFRAMES: Dict[str, str] = {
+    "emel": "1h",
+    "pulse1": "5m",
+    "pulse2": "15m",
+    "pulse3": "5m",
+}
+
 # Scheduler running flag
 _scheduler_running = False
 
@@ -493,7 +503,7 @@ async def log_predictions_if_needed():
 
 async def _log_pulse_signal(symbol: str, direction: str, confidence: float,
                            entry_price: float, model_type: str, strategy: str,
-                           timeframe: str = "15m",
+                           timeframe: str = "5m",
                            ta: dict = None, extra: dict = None):
     """Helper: log a Pulse/EMEL signal to prediction_logs via log_prediction()."""
     try:
@@ -563,16 +573,15 @@ async def log_pulse_signals_if_needed():
         if not is_db_available():
             continue
 
-        for model_type in ["emel", "pulse1", "pulse2", "pulse3", "emel_inverse"]:
-            for tf in ["15m", "30m", "1h", "4h", "1d"]:
-                try:
-                    await _check_and_log_pulse(symbol, model_type, None, tf)
-                    await asyncio.sleep(0.3)
-                except Exception as e:
-                    logger.error(f"{model_type} {tf} log error {symbol}: {e}")
+        for model_type, tf in LEGACY_PULSE_LOG_TIMEFRAMES.items():
+            try:
+                await _check_and_log_pulse(symbol, model_type, None, tf)
+                await asyncio.sleep(0.3)
+            except Exception as e:
+                logger.error(f"{model_type} {tf} log error {symbol}: {e}")
 
 
-async def _check_and_log_pulse(symbol: str, model_type: str, client, timeframe: str = "15m"):
+async def _check_and_log_pulse(symbol: str, model_type: str, client, timeframe: str = "5m"):
     """Run one model's analysis for one symbol and log if BUY/SELL."""
     try:
         from routers.emel_pulse import get_pulse_v3_analysis, get_pulse_ml_analysis, get_pulse_analysis, get_emel_analysis

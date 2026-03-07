@@ -6,7 +6,7 @@ backend_dir = Path(__file__).parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from services.signal_analytics import classify_signal, parse_targets_hit
+from services.signal_analytics import classify_signal, normalize_model_type, parse_targets_hit
 
 
 def test_parse_targets_hit_decodes_stringified_jsonb_payload():
@@ -28,3 +28,15 @@ def test_classify_signal_uses_hit_target_floor_when_realized_exit_is_negative():
     }
 
     assert classify_signal(signal) == ("completed", True, 25.0)
+
+
+def test_normalize_model_type_maps_smart_money_strategy_to_smc():
+    signal = {"model_type": "ml", "strategy": "SMART_MONEY_ZONES"}
+
+    assert normalize_model_type(signal) == "smc"
+
+
+def test_normalize_model_type_maps_order_block_aliases_to_smc():
+    signal = {"model_type": "order_blocks", "strategy": None}
+
+    assert normalize_model_type(signal) == "smc"

@@ -45,6 +45,15 @@ const MODEL_THEME: Record<string, { label: string; color: string; Icon: any }> =
 
 const TIMEFRAME_ORDER = ["5m", "15m", "30m", "1h", "4h", "1d"];
 
+const LEGACY_MODEL_TIMEFRAMES: Record<string, string[]> = {
+  ml: ["1h"],
+  emel: ["5m", "15m", "1h", "4h"],
+  emel_inverse: ["5m", "15m", "1h", "4h"],
+  pulse1: ["5m", "15m"],
+  pulse2: ["5m", "15m", "1h"],
+  pulse3: ["1h"],
+};
+
 function getTheme(model: string) {
   return MODEL_THEME[model] || MODEL_THEME.ml;
 }
@@ -143,13 +152,15 @@ function ModelCard({ model, stats, onSelectSymbol }: { model: string; stats: Mod
   const wr = stats.win_rate;
   const wrColor = wr >= 55 ? "var(--accent-positive)" : wr >= 40 ? "var(--accent-warning)" : "var(--accent-negative)";
   const netPos = stats.net_pips >= 0;
+  const visibleTimeframes = LEGACY_MODEL_TIMEFRAMES[model] || TIMEFRAME_ORDER;
+  const visibleTimeframeSet = new Set(visibleTimeframes);
   const timeframeEntries = Object.entries(stats.timeframe_stats || {})
     .sort(([a], [b]) => {
       const aIndex = TIMEFRAME_ORDER.indexOf(a);
       const bIndex = TIMEFRAME_ORDER.indexOf(b);
       return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex);
     })
-    .filter(([, value]) => (value?.total || 0) > 0);
+    .filter(([tf, value]) => visibleTimeframeSet.has(tf) && (value?.total || 0) > 0);
 
   const API_BASE = getApiBase();
   const { data: matrixData, isLoading: matrixLoading } = useQuery({
@@ -347,7 +358,7 @@ function ModelCard({ model, stats, onSelectSymbol }: { model: string; stats: Mod
                     <thead>
                       <tr style={{ background: "rgba(255,255,255,0.02)" }}>
                         <th className="py-3 px-4 text-[10px] font-semibold uppercase tracking-[0.08em] border-b border-[var(--border-subtle)]" style={{ color: "var(--text-muted)" }}>Symbol</th>
-                        {["15m", "30m", "1h", "4h", "1d"].map(tf => (
+                        {visibleTimeframes.map(tf => (
                           <th key={tf} className="py-3 px-4 text-[10px] font-semibold uppercase tracking-[0.08em] border-b border-[var(--border-subtle)] text-center" style={{ color: "var(--text-muted)" }}>{tf}</th>
                         ))}
                       </tr>
@@ -370,7 +381,7 @@ function ModelCard({ model, stats, onSelectSymbol }: { model: string; stats: Mod
                               <span className="text-[14px]">{icon}</span>
                               <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>{name}</span>
                             </td>
-                            {["15m", "30m", "1h", "4h", "1d"].map(tf => {
+                            {visibleTimeframes.map(tf => {
                               const cell = rowData[tf];
                               if (!cell) return <td key={tf} className="py-3 px-4 text-center text-[var(--text-muted)]">-</td>;
                               const isHold = cell.direction === "HOLD";

@@ -289,6 +289,7 @@ const MODEL_DISPLAY: Record<string, string> = {
   pulse2: "Pulse 2 — ML",
   pulse3: "Pulse 3 — Scalp",
   emel_inverse: "EMEL Inverse",
+  smc: "Smart Money Zones",
   hybrid: "Hybrid",
 };
 

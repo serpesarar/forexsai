@@ -1719,7 +1719,7 @@ async def get_signal_detail_endpoint(signal_id: str):
 @router.get("/historical-signals")
 async def get_historical_signals_endpoint(
     symbol: str,
-    model: Optional[str] = Query(None, description="Filter by model type (ml, emel, pulse1, pulse2, pulse3)"),
+    model: Optional[str] = Query(None, description="Filter by model type (ml, emel, pulse1, pulse2, pulse3, smc)"),
     days: int = Query(0, ge=0, le=1095)
 ):
     """
@@ -2019,7 +2019,7 @@ async def get_signals_matrix(
 @router.get("/signals/recent")
 async def get_recent_signals_endpoint(
     symbol: Optional[str] = Query(None, description="Filter by symbol"),
-    model: Optional[str] = Query(None, description="Filter by model type (ml, emel, pulse1, pulse2, pulse3)"),
+    model: Optional[str] = Query(None, description="Filter by model type (ml, emel, pulse1, pulse2, pulse3, smc)"),
     days: int = Query(0, ge=0, le=1095, description="Days to look back (0=all available history)"),
     limit: int = Query(50, ge=1, le=200),
     include_active: bool = Query(True, description="Include active signals")
@@ -2380,7 +2380,7 @@ async def get_all_models_summary(
             cur = de
         
         # Initialize model structure
-        MODELS = ["ml", "emel", "pulse1", "pulse2", "pulse3"]
+        MODELS = ["ml", "emel", "pulse1", "pulse2", "pulse3", "smc"]
         TIMEFRAMES = list(TIMEFRAME_ORDER)
         
         summary = {}
@@ -2483,6 +2483,7 @@ async def get_model_timeframes(model: str):
             "pulse3": ["1h"],  # Pulse3 typically only on 1h
             "emel": ["5m", "15m", "1h", "4h"],
             "emel_inverse": ["5m", "15m", "1h", "4h"],
+            "smc": ["5m", "15m", "30m", "1h", "4h", "1d"],
             "hybrid": ["1h"],
         }
         
@@ -2688,7 +2689,7 @@ def _normalize_model_type(sig: dict) -> str:
 
 @router.get("/model-detail-analytics")
 async def get_model_detail_analytics(
-    model: Optional[str] = Query(None, description="Model type (ml, emel, pulse1, pulse2, pulse3, emel_inverse, hybrid) or 'all'"),
+    model: Optional[str] = Query(None, description="Model type (ml, emel, pulse1, pulse2, pulse3, emel_inverse, smc, hybrid) or 'all'"),
     symbol: str = Query(..., description="Symbol (NDX.INDX, XAUUSD, GDAXI.INDX, USOIL.FOREX, CL.F)"),
     days: int = Query(0, ge=0, le=3650, description="Days to look back (0 = all available history)"),
     timeframe: Optional[str] = Query(None, description="Optional timeframe filter (5m, 15m, 30m, 1h, 4h, 1d, or 'all')")

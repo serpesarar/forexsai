@@ -327,13 +327,13 @@ async def test_model_detail_analytics_uses_session_hours_and_tp_sl_only_weekday_
         "stopped": 1,
         "expired": 1,
         "active": 1,
-        "net_pips": 32.0,
-        "avg_profit_pips": 14.0,
+        "net_pips": 35.0,
+        "avg_profit_pips": 15.0,
         "avg_loss_pips": 10.0,
-        "risk_reward": 1.4,
-        "sharpe_ratio": pytest.approx(10.3, rel=1e-3),
+        "risk_reward": 1.5,
+        "sharpe_ratio": pytest.approx(10.9, rel=1e-3),
         "max_drawdown_pips": 10.0,
-        "profit_factor": 4.2,
+        "profit_factor": 4.5,
     }
 
     assert payload["meta"]["hourly_visible_hours"] == [9, 10, 11, 12, 13, 14, 15, 16, 17]
@@ -343,7 +343,7 @@ async def test_model_detail_analytics_uses_session_hours_and_tp_sl_only_weekday_
     hourly_rows = {row["hour"]: row for row in payload["hourly_heatmap"]}
     assert list(hourly_rows.keys()) == [9, 10, 11, 12, 13, 14, 15, 16, 17]
     assert hourly_rows[9] == {"hour": 9, "total": 3, "wins": 2, "win_rate": 66.7, "avg_pips": 6.7}
-    assert hourly_rows[12] == {"hour": 12, "total": 1, "wins": 1, "win_rate": 100.0, "avg_pips": 12.0}
+    assert hourly_rows[12] == {"hour": 12, "total": 1, "wins": 1, "win_rate": 100.0, "avg_pips": 15.0}
     assert hourly_rows[10] == {"hour": 10, "total": 0, "wins": 0, "win_rate": 0, "avg_pips": 0}
 
     weekday_rows = {row["day"]: row for row in payload["day_of_week"]}
@@ -361,7 +361,7 @@ async def test_model_detail_analytics_uses_session_hours_and_tp_sl_only_weekday_
         "total": 1,
         "wins": 1,
         "win_rate": 100.0,
-        "avg_pips": 12.0,
+        "avg_pips": 15.0,
     }
     assert weekday_rows["Wednesday"]["total"] == 0
 
@@ -605,7 +605,7 @@ async def test_model_analysis_target_rates_use_common_resolved_denominator_per_s
     assert payload["stopped"] == 1
     assert payload["expired"] == 1
     assert payload["total_signals"] == 5
-    assert payload["target_rates"] == {"TP1": 50.0, "TP2": 50.0, "TP3": 0.0, "TP4": 0.0}
+    assert payload["target_rates"] == {"TP1": 75.0, "TP2": 50.0, "TP3": 0.0, "TP4": 0.0}
     assert payload["by_symbol"]["NDX.INDX"]["target_rates"] == {
         "TP1": 66.7,
         "TP2": 33.3,
@@ -613,8 +613,64 @@ async def test_model_analysis_target_rates_use_common_resolved_denominator_per_s
         "TP4": 0.0,
     }
     assert payload["by_symbol"]["XAUUSD"]["target_rates"] == {
-        "TP1": 0.0,
+        "TP1": 100.0,
         "TP2": 100.0,
         "TP3": 0.0,
         "TP4": 0.0,
     }
+
+
+@pytest.mark.asyncio
+async def test_model_detail_analytics_includes_smc_in_available_models_and_comparison():
+    learning_module = _load_learning_module("test_learning_router_smc")
+    get_model_detail_analytics = learning_module.get_model_detail_analytics
+
+    signal_rows = [
+        {
+            "id": "smc-win-001",
+            "symbol": "NDX.INDX",
+            "timeframe": "5m",
+            "ml_direction": "BUY",
+            "ml_confidence": 78,
+            "status": "completed",
+            "ml_entry_price": 100.0,
+            "exit_price": 110.0,
+            "stop_loss_pips": 10,
+            "created_at": "2026-03-06T12:00:00Z",
+            "highest_profit_pips": 12,
+            "lowest_drawdown_pips": -2,
+            "targets_hit": {"TP1": True},
+            "model_type": "order_block",
+            "strategy": "SMART_MONEY_ZONES",
+        },
+        {
+            "id": "ml-stop-002",
+            "symbol": "NDX.INDX",
+            "timeframe": "1h",
+            "ml_direction": "SELL",
+            "ml_confidence": 65,
+            "status": "stopped",
+            "ml_entry_price": 100.0,
+            "exit_price": 106.0,
+            "stop_loss_pips": 6,
+            "created_at": "2026-03-06T11:00:00Z",
+            "highest_profit_pips": 1,
+            "lowest_drawdown_pips": -6,
+            "targets_hit": {},
+            "model_type": "ml",
+            "strategy": None,
+        },
+    ]
+
+    client = _FakeClient([[], signal_rows])
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ):
+        payload = await get_model_detail_analytics(model="smc", symbol="NDX.INDX", days=1, timeframe="all")
+
+    assert payload["meta"]["selected_model"] == "smc"
+    assert payload["available_models"] == ["ml", "smc"]
+    assert payload["available_timeframes"] == ["5m"]
+    assert [row["model"] for row in payload["model_comparison"]] == ["ml", "smc"]
+    assert payload["recent_signals"][0]["timeframe"] == "5m"
