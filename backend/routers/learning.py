@@ -1415,6 +1415,7 @@ async def get_strategy_performance(
                  for sym in ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]}
         
         outcomes_found = 0
+        eligible_outcomes_found = 0
         
         # Process — use ONLY lifecycle status as single source of truth
         for p in predictions:
@@ -1437,6 +1438,13 @@ async def get_strategy_performance(
                 continue
 
             outcomes_found += 1
+
+            if classified_status not in {"completed", "stopped"}:
+                if classified_status == "expired":
+                    stats[sym][strat]["expired"] += 1
+                continue
+
+            eligible_outcomes_found += 1
             stats[sym][strat]["with_outcome"] += 1
 
             if is_win:
@@ -1444,8 +1452,6 @@ async def get_strategy_performance(
                 stats[sym][strat]["target_hits"] += 1
             elif classified_status == "stopped":
                 stats[sym][strat]["stop_hits"] += 1
-            elif classified_status == "expired":
-                stats[sym][strat]["expired"] += 1
 
             targets_hit = parse_targets_hit(p.get("targets_hit"))
             if targets_hit.get("TP1"):
@@ -1464,6 +1470,12 @@ async def get_strategy_performance(
             for strat, s in sym_stats.items():
                 wo = s["with_outcome"]
                 total = s["total"]
+                tp_breakdown = {
+                    "TP1": s["tp1_hits"],
+                    "TP2": s["tp2_hits"],
+                    "TP3": s["tp3_hits"],
+                    "TP4": s["tp4_hits"],
+                }
                 result_data[sym][strat] = {
                     "total_predictions": total,
                     "with_outcome": wo,
@@ -1474,11 +1486,10 @@ async def get_strategy_performance(
                     "avg_confidence": round(s["conf_sum"] / total, 1) if total > 0 else 0,
                     "target_hits": s["target_hits"],
                     "stop_hits": s["stop_hits"],
-                    "tp_breakdown": {
-                        "TP1": s["tp1_hits"],
-                        "TP2": s["tp2_hits"],
-                        "TP3": s["tp3_hits"],
-                        "TP4": s["tp4_hits"],
+                    "tp_breakdown": tp_breakdown if wo > 0 else None,
+                    "tp_hit_rates": {
+                        tp_key: round(tp_count / wo * 100, 1)
+                        for tp_key, tp_count in tp_breakdown.items()
                     } if wo > 0 else None,
                 }
         
@@ -1495,6 +1506,7 @@ async def get_strategy_performance(
             "period_days": days,
             "predictions_count": len(predictions),
             "outcomes_count": outcomes_found,
+            "eligible_outcomes_count": eligible_outcomes_found,
             "strategies": result_data,
             "best_strategies": best,
             "strategy_descriptions": {

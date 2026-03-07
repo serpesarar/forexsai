@@ -57,7 +57,11 @@ interface StrategyData {
   avg_confidence: number;
   target_hits: number;
   stop_hits: number;
+  tp_breakdown?: Record<string, number> | null;
+  tp_hit_rates?: Record<string, number> | null;
 }
+
+const TARGET_LEVELS = ["TP1", "TP2", "TP3", "TP4"] as const;
 
 interface StrategyPerformanceResponse {
   period_days: number;
@@ -168,6 +172,28 @@ function StrategyRow({
           <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.green }}>{data.target_hit_rate !== null ? `${data.target_hit_rate}%` : "—"}</span>
           <span style={{ fontFamily: FONT, fontSize: 10, color: P.muted }}>({data.target_hits ?? 0})</span>
         </div>
+        {data.tp_hit_rates && (
+          <div className="flex flex-wrap gap-1.5 mt-2" style={{ maxWidth: 260 }}>
+            {TARGET_LEVELS.map((tpKey) => (
+              <span
+                key={tpKey}
+                className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5"
+                style={{
+                  background: `${P.green}10`,
+                  border: `1px solid ${P.green}18`,
+                }}
+              >
+                <span style={{ fontFamily: FONT, fontSize: 9, fontWeight: 700, color: P.green }}>{tpKey}</span>
+                <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color: P.textSec }}>
+                  {data.tp_hit_rates?.[tpKey] !== undefined ? `${data.tp_hit_rates[tpKey]}%` : "—"}
+                </span>
+                <span style={{ fontFamily: FONT, fontSize: 9, color: P.muted }}>
+                  ({data.tp_breakdown?.[tpKey] ?? 0})
+                </span>
+              </span>
+            ))}
+          </div>
+        )}
       </td>
       <td style={{ padding: "10px 14px", whiteSpace: "nowrap" as const }}>
         <div className="flex items-center gap-1.5">
@@ -460,7 +486,7 @@ export default function StrategyPerformancePanel() {
 
                 {/* Table */}
                 <div className="overflow-x-auto rounded-lg" style={{ border: `1px solid ${P.border}` }}>
-                  <table className="w-full" style={{ minWidth: 640 }}>
+                  <table className="w-full" style={{ minWidth: 760 }}>
                     <thead>
                       <tr style={{ background: P.surface }}>
                         {["Strategy", "Accuracy", "Target Hit", "Stop Hit", "Confidence"].map((h, i) => (

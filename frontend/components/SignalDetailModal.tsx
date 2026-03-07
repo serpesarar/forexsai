@@ -63,6 +63,7 @@ interface SignalDetail {
     targets_hit?: Record<string, boolean>;
     highest_profit_pips: number;
     lowest_drawdown_pips: number;
+    stop_loss_pips?: number;
     exit_price?: number;
     exit_time?: string;
     created_at: string;
@@ -208,11 +209,13 @@ export default function SignalDetailModal({ signalId, isOpen, onClose }: SignalD
   // Calculate PNL
   let pnlPips: number | null = null;
   let pnlClass = "text-gray-400";
-  if (signal?.exit_price && signal.ml_entry_price) {
-    const diff = signal.status === "completed" 
-      ? signal.highest_profit_pips 
+  if (signal) {
+    const diff = signal.status === "completed"
+      ? Math.max(signal.highest_profit_pips || 0, 0)
       : signal.status === "stopped"
-      ? -Math.abs(signal.lowest_drawdown_pips || 0)
+      ? -Math.abs(signal.stop_loss_pips || signal.lowest_drawdown_pips || 0)
+      : signal.status === "expired"
+      ? 0
       : null;
     if (diff !== null) {
       pnlPips = diff;
