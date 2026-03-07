@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from services.target_config import pips_from_price_change
+from services.target_config import calculate_target_prices, pips_from_price_change
 
 TIMEFRAME_ORDER = ["5m", "15m", "30m", "1h", "4h", "1d"]
 VALID_TIMEFRAMES = set(TIMEFRAME_ORDER)
@@ -102,6 +102,58 @@ def parse_targets(raw_value: Any) -> Dict[str, Any]:
     return parse_json_object(raw_value)
 
 
+def resolved_targets(sig: dict, default_symbol: Optional[str] = None) -> Dict[str, Any]:
+    targets = parse_targets(sig.get("targets"))
+    if targets:
+        return targets
+
+    entry_price = coerce_float(sig.get("ml_entry_price"))
+    direction = (sig.get("ml_direction") or "").upper().strip()
+    symbol = sig.get("symbol") or default_symbol
+    timeframe = normalize_timeframe(sig.get("timeframe")) or "15m"
+
+    if entry_price is None or direction not in {"BUY", "SELL"} or not symbol:
+        return {}
+
+    try:
+        return calculate_target_prices(entry_price, direction, symbol, timeframe)
+    except Exception:
+        return {}
+
+
+def first_target_profit_floor(sig: dict, default_symbol: Optional[str] = None) -> Optional[float]:
+    entry_price = coerce_float(sig.get("ml_entry_price"))
+    direction = (sig.get("ml_direction") or "").upper().strip()
+    symbol = sig.get("symbol") or default_symbol
+    targets = resolved_targets(sig, default_symbol=default_symbol)
+    tp1_price = coerce_float(targets.get("TP1"))
+
+    if entry_price is None or direction not in {"BUY", "SELL"} or not symbol or tp1_price is None:
+        return None
+
+    price_change = tp1_price - entry_price if direction == "BUY" else entry_price - tp1_price
+    return max(pips_from_price_change(price_change, symbol), 0.0)
+
+
+def normalized_targets_hit(sig: dict, default_symbol: Optional[str] = None) -> Dict[str, bool]:
+    normalized = dict(parse_targets_hit(sig.get("targets_hit")))
+    highest_confirmed_idx = max(
+        (idx for idx, tp_name in enumerate(TP_LEVEL_ORDER) if normalized.get(tp_name)),
+        default=-1,
+    )
+    if highest_confirmed_idx >= 0:
+        for idx in range(highest_confirmed_idx + 1):
+            normalized[TP_LEVEL_ORDER[idx]] = True
+        return normalized
+
+    profit_pips = max(coerce_float(sig.get("highest_profit_pips"), 0.0) or 0.0, 0.0)
+    tp1_floor = first_target_profit_floor(sig, default_symbol=default_symbol)
+    if tp1_floor is not None and profit_pips >= tp1_floor:
+        normalized["TP1"] = True
+
+    return normalized
+
+
 def realized_pips(sig: dict, default_symbol: Optional[str] = None) -> Optional[float]:
     entry_price = coerce_float(sig.get("ml_entry_price"))
     exit_price = coerce_float(sig.get("exit_price"))
@@ -119,8 +171,8 @@ def target_hit_profit_floor(sig: dict, default_symbol: Optional[str] = None) -> 
     entry_price = coerce_float(sig.get("ml_entry_price"))
     direction = (sig.get("ml_direction") or "").upper().strip()
     symbol = sig.get("symbol") or default_symbol
-    targets_hit = parse_targets_hit(sig.get("targets_hit"))
-    targets = parse_targets(sig.get("targets"))
+    targets_hit = normalized_targets_hit(sig, default_symbol=default_symbol)
+    targets = resolved_targets(sig, default_symbol=default_symbol)
 
     if entry_price is None or direction not in {"BUY", "SELL"} or not symbol or not targets_hit or not targets:
         return None
@@ -148,7 +200,7 @@ def classify_signal(
     loss_pips = abs(coerce_float(sig.get("lowest_drawdown_pips"), 0.0) or 0.0)
     stop_loss_pips = abs(coerce_float(sig.get("stop_loss_pips"), 0.0) or 0.0)
     realized = realized_pips(sig, default_symbol=default_symbol)
-    targets_hit = parse_targets_hit(sig.get("targets_hit"))
+    targets_hit = normalized_targets_hit(sig, default_symbol=default_symbol)
     any_target_hit = any(targets_hit.values()) if targets_hit else False
     target_profit_floor = target_hit_profit_floor(sig, default_symbol=default_symbol)
 

@@ -301,6 +301,66 @@ async def test_strategy_performance_tp_rates_are_independent_and_exclude_expired
 
 
 @pytest.mark.asyncio
+async def test_strategy_performance_infers_missing_tp1_from_profit_excursion():
+    learning_module = _load_learning_module("test_learning_strategy_router_inferred_tp1")
+    now = datetime.now(timezone.utc)
+    rows = [
+        {
+            "id": "balanced-inferred-win-001",
+            "symbol": "XAUUSD",
+            "strategy": None,
+            "timeframe": "30m",
+            "ml_confidence": 60,
+            "status": "stopped",
+            "targets_hit": {},
+            "targets": {},
+            "model_type": "ml",
+            "created_at": _iso(now - timedelta(hours=1)),
+            "highest_profit_pips": 8.3,
+            "lowest_drawdown_pips": -15,
+            "stop_loss_pips": 15,
+            "ml_entry_price": 100.0,
+            "exit_price": None,
+            "ml_direction": "BUY",
+        },
+        {
+            "id": "balanced-plain-loss-002",
+            "symbol": "XAUUSD",
+            "strategy": None,
+            "timeframe": "30m",
+            "ml_confidence": 60,
+            "status": "stopped",
+            "targets_hit": {},
+            "targets": {},
+            "model_type": "ml",
+            "created_at": _iso(now - timedelta(hours=2)),
+            "highest_profit_pips": 3.0,
+            "lowest_drawdown_pips": -15,
+            "stop_loss_pips": 15,
+            "ml_entry_price": 100.0,
+            "exit_price": None,
+            "ml_direction": "BUY",
+        },
+    ]
+    client = _FakeClient(rows)
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ):
+        payload = await learning_module.get_strategy_performance(days=1)
+
+    stats = payload["strategies"]["XAUUSD"]["balanced"]
+    assert stats["with_outcome"] == 2
+    assert stats["correct"] == 1
+    assert stats["target_hits"] == 1
+    assert stats["stop_hits"] == 1
+    assert stats["accuracy"] == pytest.approx(50.0, abs=0.1)
+    assert stats["target_hit_rate"] == pytest.approx(50.0, abs=0.1)
+    assert stats["stop_hit_rate"] == pytest.approx(50.0, abs=0.1)
+    assert stats["tp_breakdown"] == {"TP1": 1, "TP2": 0, "TP3": 0, "TP4": 0}
+
+
+@pytest.mark.asyncio
 async def test_recent_signals_applies_days_filter_and_normalizes_status_and_pnl():
     learning_module = _load_learning_module("test_learning_recent_signals_router")
     now = datetime.now(timezone.utc)

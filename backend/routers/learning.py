@@ -37,8 +37,8 @@ from services.signal_analytics import (
     classify_signal,
     coerce_float as analytics_coerce_float,
     normalize_model_type,
+    normalized_targets_hit,
     normalize_timeframe,
-    parse_targets_hit,
     realized_pips,
     sort_models,
     sort_timeframes,
@@ -1391,7 +1391,7 @@ async def get_strategy_performance(
             de = ds + timedelta(days=1)
             batch = safe_get_data(client.table("prediction_logs").select(
                 "id, symbol, strategy, ml_confidence, status, targets_hit, targets, "
-                "model_type, created_at, highest_profit_pips, lowest_drawdown_pips, "
+                "model_type, timeframe, created_at, highest_profit_pips, lowest_drawdown_pips, "
                 "stop_loss_pips, ml_entry_price, exit_price, ml_direction"
             ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).order("created_at", desc=True).limit(1000).execute())
             if batch:
@@ -1453,7 +1453,7 @@ async def get_strategy_performance(
             elif classified_status == "stopped":
                 stats[sym][strat]["stop_hits"] += 1
 
-            targets_hit = parse_targets_hit(p.get("targets_hit"))
+            targets_hit = normalized_targets_hit(p, default_symbol=sym)
             if targets_hit.get("TP1"):
                 stats[sym][strat]["tp1_hits"] += 1
             if targets_hit.get("TP2"):
@@ -2257,7 +2257,7 @@ async def get_model_timeframe_analysis(
             if direction in ["BUY", "SELL"]:
                 stats["by_direction"][direction] += 1
             
-            targets_hit = parse_targets_hit(sig.get("targets_hit"))
+            targets_hit = normalized_targets_hit(sig, default_symbol=symbol)
             if classified_status in {"completed", "stopped"}:
                 for tp in ["TP1", "TP2", "TP3", "TP4"]:
                     if targets_hit.get(tp):
@@ -2807,8 +2807,8 @@ async def get_model_detail_analytics(
             except Exception:
                 return None
 
-        def _parse_targets_hit(raw_value):
-            return parse_targets_hit(raw_value)
+        def _normalized_targets_hit(sig: dict):
+            return normalized_targets_hit(sig, default_symbol=symbol)
 
         def _classify_signal(sig: dict):
             return classify_signal(sig, default_symbol=symbol)
@@ -3040,7 +3040,7 @@ async def get_model_detail_analytics(
                     daily_stats[date_key]["losses"] += 1
 
             # TP hit rates
-            th = _parse_targets_hit(sig.get("targets_hit"))
+            th = _normalized_targets_hit(sig)
             if status in {"completed", "stopped"} and th:
                 for tp_key in ["TP1", "TP2", "TP3", "TP4"]:
                     if th.get(tp_key):
