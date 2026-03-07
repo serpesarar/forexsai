@@ -444,6 +444,7 @@ export default function LearningDashboardPanel({ symbol }: LearningDashboardPane
           isOpen={true}
           symbol={selectedModal.symbol}
           model={selectedModal.model}
+          days={days}
           onClose={() => setSelectedModal(null)}
         />
       )}

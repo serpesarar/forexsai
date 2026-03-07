@@ -132,6 +132,7 @@ interface ModelPerformanceModalProps {
   onClose: () => void;
   symbol: string;
   model?: string;
+  days?: number;
 }
 
 const T = {
@@ -346,7 +347,7 @@ function formatHour(hour: number) {
   return `${String(hour).padStart(2, "0")}:00`;
 }
 
-function emptyAnalytics(symbol: string, model?: string): AnalyticsData {
+function emptyAnalytics(symbol: string, model?: string, days?: number): AnalyticsData {
   return {
     model: model || "all",
     symbol,
@@ -377,6 +378,8 @@ function emptyAnalytics(symbol: string, model?: string): AnalyticsData {
     meta: {
       selected_model: model || "all",
       selected_timeframe: "all",
+      days,
+      all_time: days === 0,
       filtered_total_signals: 0,
       scope_total_signals: 0,
       hourly_visible_hours: [],
@@ -423,6 +426,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
   onClose,
   symbol,
   model,
+  days,
 }) => {
   const lang = useMemo(() => getLanguage(), [isOpen]);
   const copy = T[lang];
@@ -456,10 +460,11 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
   }, [isOpen, model, symbol]);
 
   const { data, isLoading, isFetching, error, refetch } = useQuery<AnalyticsData>({
-    queryKey: ["model-detail-analytics", model || "all", symbol, selectedTimeframe],
+    queryKey: ["model-detail-analytics", model || "all", symbol, selectedTimeframe, days ?? null],
     queryFn: async () => {
       const params = new URLSearchParams({ symbol });
       if (model) params.set("model", model);
+      if (typeof days === "number") params.set("days", String(days));
       if (selectedTimeframe !== "all") params.set("timeframe", selectedTimeframe);
 
       const response = await fetch(`${API_BASE}/api/learning/model-detail-analytics?${params.toString()}`);
@@ -469,7 +474,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
         throw new Error(payload?.error || "Failed to load analytics");
       }
 
-      const analytics = payload || emptyAnalytics(symbol, model);
+      const analytics = payload || emptyAnalytics(symbol, model, days);
       if (analytics.error && !hasAnalyticsContent(analytics)) {
         throw new Error(analytics.error);
       }

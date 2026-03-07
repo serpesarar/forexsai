@@ -594,6 +594,7 @@ export default function StrategyPerformancePanel() {
         onClose={() => setIsModelPerformanceModalOpen(false)}
         symbol={selectedModelPerformanceSymbol}
         model="all"
+        days={days}
       />
     </>
   );

@@ -758,6 +758,7 @@ export default function ModelAnalysisPanel() {
         onClose={() => setIsModalOpen(false)}
         symbol={modalSymbol}
         model={selectedModel}
+        days={days}
       />
     </div>
   );

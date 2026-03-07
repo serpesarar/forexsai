@@ -2921,7 +2921,10 @@ async def get_model_detail_analytics(
         max_drawdown = 0.0
 
         # Aggregation buckets
-        hourly_stats = {h: {"total": 0, "wins": 0, "pips": 0.0} for h in range(24)}
+        hourly_stats = {
+            h: {"resolved_total": 0, "scored_total": 0, "wins": 0, "losses": 0, "pips": 0.0}
+            for h in range(24)
+        }
         tf_stats = {}
         daily_stats = {}
         tp_counts = {"TP1": 0, "TP2": 0, "TP3": 0, "TP4": 0}
@@ -2964,9 +2967,7 @@ async def get_model_detail_analytics(
                 max_drawdown = dd
 
             # Hourly bucket
-            hourly_stats[hour]["total"] += 1
-            if is_win:
-                hourly_stats[hour]["wins"] += 1
+            hourly_stats[hour]["resolved_total"] += 1
             hourly_stats[hour]["pips"] += pips_change or 0.0
 
             # Timeframe bucket
@@ -2980,11 +2981,27 @@ async def get_model_detail_analytics(
 
             # Daily bucket
             if date_key not in daily_stats:
-                daily_stats[date_key] = {"total": 0, "wins": 0, "pips": 0.0, "cumulative": 0.0, "dow": dow}
-            daily_stats[date_key]["total"] += 1
-            if is_win:
-                daily_stats[date_key]["wins"] += 1
+                daily_stats[date_key] = {
+                    "resolved_total": 0,
+                    "scored_total": 0,
+                    "wins": 0,
+                    "losses": 0,
+                    "pips": 0.0,
+                    "cumulative": 0.0,
+                    "dow": dow,
+                }
+            daily_stats[date_key]["resolved_total"] += 1
             daily_stats[date_key]["pips"] += pips_change or 0.0
+
+            if status in {"completed", "stopped"}:
+                hourly_stats[hour]["scored_total"] += 1
+                daily_stats[date_key]["scored_total"] += 1
+                if status == "completed":
+                    hourly_stats[hour]["wins"] += 1
+                    daily_stats[date_key]["wins"] += 1
+                else:
+                    hourly_stats[hour]["losses"] += 1
+                    daily_stats[date_key]["losses"] += 1
 
             # TP hit rates
             th = _parse_targets_hit(sig.get("targets_hit"))
@@ -3015,17 +3032,17 @@ async def get_model_detail_analytics(
         # ── 4. Build response ──
 
         # Hourly heatmap
-        observed_hours = {hour for hour, bucket in hourly_stats.items() if bucket["total"] > 0}
+        observed_hours = {hour for hour, bucket in hourly_stats.items() if bucket["resolved_total"] > 0}
         hourly_contract = _model_detail_hourly_contract(symbol, observed_hours=observed_hours)
         hourly_heatmap = []
         for h in hourly_contract["hours"]:
             s = hourly_stats[h]
             hourly_heatmap.append({
                 "hour": h,
-                "total": s["total"],
+                "total": s["scored_total"],
                 "wins": s["wins"],
-                "win_rate": round((s["wins"] / s["total"] * 100) if s["total"] > 0 else 0, 1),
-                "avg_pips": round(s["pips"] / s["total"], 1) if s["total"] > 0 else 0,
+                "win_rate": round((s["wins"] / s["scored_total"] * 100) if s["scored_total"] > 0 else 0, 1),
+                "avg_pips": round(s["pips"] / s["scored_total"], 1) if s["scored_total"] > 0 else 0,
             })
 
         # Timeframe comparison
@@ -3059,9 +3076,9 @@ async def get_model_detail_analytics(
             running_cum += ds["pips"]
             daily_accuracy.append({
                 "date": dk,
-                "total": ds["total"],
+                "total": ds["resolved_total"],
                 "wins": ds["wins"],
-                "win_rate": round((ds["wins"] / ds["total"] * 100) if ds["total"] > 0 else 0, 1),
+                "win_rate": round((ds["wins"] / ds["scored_total"] * 100) if ds["scored_total"] > 0 else 0, 1),
                 "cumulative_pips": round(running_cum, 1),
             })
 
@@ -3070,16 +3087,16 @@ async def get_model_detail_analytics(
         dow_daily_groups = {d: [] for d in range(7)}
         for day_bucket in daily_stats.values():
             day_dow = day_bucket.get("dow")
-            if isinstance(day_dow, int) and 0 <= day_dow <= 6 and day_bucket.get("total", 0) > 0:
+            if isinstance(day_dow, int) and 0 <= day_dow <= 6 and day_bucket.get("scored_total", 0) > 0:
                 dow_daily_groups[day_dow].append(day_bucket)
 
         day_of_week = []
         for d in range(7):
             daily_buckets = dow_daily_groups[d]
-            weekday_total = sum(bucket["total"] for bucket in daily_buckets)
+            weekday_total = sum(bucket["scored_total"] for bucket in daily_buckets)
             wins = sum(bucket["wins"] for bucket in daily_buckets)
             avg_day_win_rate = (
-                sum((bucket["wins"] / bucket["total"] * 100) for bucket in daily_buckets if bucket["total"] > 0)
+                sum((bucket["wins"] / bucket["scored_total"] * 100) for bucket in daily_buckets if bucket["scored_total"] > 0)
                 / len(daily_buckets)
             ) if daily_buckets else 0.0
             avg_day_pips = (

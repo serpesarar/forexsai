@@ -97,12 +97,15 @@ describe("ModelPerformanceModal", () => {
     vi.restoreAllMocks();
   });
 
-  it("adds selected timeframe to analytics requests", async () => {
-    renderModal();
+  it("adds selected timeframe and days scope to analytics requests", async () => {
+    renderModal({ days: 30 });
 
     await screen.findByText("Performance analytics");
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining("model=all")
+    );
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining("days=30")
     );
 
     fireEvent.click(await screen.findByRole("button", { name: "15M" }));
@@ -110,6 +113,9 @@ describe("ModelPerformanceModal", () => {
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
         expect.stringContaining("timeframe=15m")
+      );
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining("days=30")
       );
     });
   });

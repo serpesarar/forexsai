@@ -171,7 +171,7 @@ async def test_model_detail_analytics_repairs_target_hit_rows_with_bad_exit_pric
 
 
 @pytest.mark.asyncio
-async def test_model_detail_analytics_uses_session_hours_and_averages_weekdays_by_date_bucket():
+async def test_model_detail_analytics_uses_session_hours_and_tp_sl_only_weekday_buckets():
     with patch.dict(
         sys.modules,
         {
@@ -324,7 +324,7 @@ async def test_model_detail_analytics_uses_session_hours_and_averages_weekdays_b
     hourly_rows = {row["hour"]: row for row in payload["hourly_heatmap"]}
     assert list(hourly_rows.keys()) == [9, 10, 11, 12, 13, 14, 15, 16, 17]
     assert hourly_rows[9] == {"hour": 9, "total": 3, "wins": 2, "win_rate": 66.7, "avg_pips": 6.7}
-    assert hourly_rows[12] == {"hour": 12, "total": 2, "wins": 1, "win_rate": 50.0, "avg_pips": 6.0}
+    assert hourly_rows[12] == {"hour": 12, "total": 1, "wins": 1, "win_rate": 100.0, "avg_pips": 12.0}
     assert hourly_rows[10] == {"hour": 10, "total": 0, "wins": 0, "win_rate": 0, "avg_pips": 0}
 
     weekday_rows = {row["day"]: row for row in payload["day_of_week"]}
@@ -339,9 +339,9 @@ async def test_model_detail_analytics_uses_session_hours_and_averages_weekdays_b
     assert weekday_rows["Tuesday"] == {
         "day": "Tuesday",
         "day_short": "Tue",
-        "total": 2,
+        "total": 1,
         "wins": 1,
-        "win_rate": 50.0,
+        "win_rate": 100.0,
         "avg_pips": 12.0,
     }
     assert weekday_rows["Wednesday"]["total"] == 0
