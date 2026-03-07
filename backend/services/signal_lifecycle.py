@@ -17,7 +17,7 @@ import logging
 import json
 import time
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Any, Dict, List, Optional
 
@@ -37,6 +37,18 @@ from services.signal_analytics import (
 from utils.json_helpers import parse_json_field, parse_json_fields
 
 logger = logging.getLogger(__name__)
+
+
+def _as_utc(dt: datetime) -> datetime:
+    return dt.astimezone(timezone.utc) if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _utc_iso(dt: Optional[datetime] = None) -> str:
+    return _as_utc(dt or _utc_now()).isoformat().replace("+00:00", "Z")
 
 
 # ─── Observability: lightweight metrics ──────────────────────────────────────
@@ -64,7 +76,7 @@ class LifecycleMetrics:
         self.total_stopped += stopped
         self.total_expired += expired
         self.last_check_duration_ms = round(duration_ms, 1)
-        self.last_check_time = datetime.utcnow().isoformat() + "Z"
+        self.last_check_time = _utc_iso()
         if errors == 0:
             self.consecutive_failures = 0
         else:
@@ -127,7 +139,7 @@ def _is_price_stale(symbol: str, current_price: float) -> bool:
     """
     global _price_last_seen, _price_last_seen_time
     
-    now = datetime.utcnow()
+    now = _utc_now()
     last_price = _price_last_seen.get(symbol)
     last_time = _price_last_seen_time.get(symbol)
     
@@ -165,24 +177,24 @@ def _parse_created_at(value: Any) -> Optional[datetime]:
     if not value:
         return None
     if isinstance(value, datetime):
-        return value
+        return _as_utc(value)
     if isinstance(value, str):
         try:
-            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+            return _as_utc(datetime.fromisoformat(value.replace("Z", "+00:00")))
         except Exception:
             return None
     return None
 
 
-def _coerce_float(value: Any) -> Optional[float]:
+def _coerce_float(value: Any, default: Optional[float] = None) -> Optional[float]:
     if value in (None, ""):
-        return None
+        return default
     try:
         parsed = float(value)
     except (TypeError, ValueError):
-        return None
+        return default
     if parsed != parsed:
-        return None
+        return default
     return parsed
 
 
@@ -340,7 +352,7 @@ async def _get_market_context() -> Dict[str, Any]:
     except Exception:
         pass
 
-    now_utc = datetime.utcnow()
+    now_utc = _utc_now()
     hour = now_utc.hour
     if 0 <= hour < 8:
         ctx["session"] = "asia"
@@ -356,7 +368,7 @@ async def _get_market_context() -> Dict[str, Any]:
 
 def _update_signal_status(client, signal_id: str, status: str, exit_price=None):
     """Helper to update a signal's status in prediction_logs."""
-    update_data = {"status": status, "exit_time": datetime.utcnow().isoformat() + "Z"}
+    update_data = {"status": status, "exit_time": _utc_iso()}
     if exit_price is not None:
         update_data["exit_price"] = round(float(exit_price), 4)
     try:
@@ -415,7 +427,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     if current is None or current <= 0:
         try:
             if created_dt is not None:
-                age_minutes = (datetime.now(created_dt.tzinfo) - created_dt).total_seconds() / 60
+                age_minutes = (_utc_now() - created_dt).total_seconds() / 60
                 if age_minutes >= evaluation_window:
                     _update_signal_status(client, signal_id, "expired", entry_price)
                     logger.info(
@@ -528,7 +540,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     # ── 7. Insert signal_check record ──
     check_record = {
         "signal_id": signal_id,
-        "check_time": datetime.utcnow().isoformat() + "Z",
+        "check_time": _utc_iso(),
         "current_price": round(current, 4),
         "session_high": round(session_high, 4) if session_high else None,
         "session_low": round(session_low, 4) if session_low else None,
@@ -567,7 +579,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         # Check age for expiration (respect effective_max_age for stale prices)
         if created_dt is not None:
             try:
-                age_minutes = (datetime.now(created_dt.tzinfo) - created_dt).total_seconds() / 60
+                age_minutes = (_utc_now() - created_dt).total_seconds() / 60
                 
                 max_age_for_symbol = effective_max_age
                 
@@ -582,14 +594,14 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     update_data: Dict[str, Any] = {
         "highest_profit_pips": round(new_high, 2),
         "lowest_drawdown_pips": round(new_low, 2),
-        "targets_hit": json.dumps(targets_hit),
-        "targets": json.dumps(target_prices),
+        "targets_hit": dict(targets_hit),
+        "targets": dict(target_prices),
         "stop_loss_pips": round(resolved_sl_pips, 2),
     }
     if new_status:
         update_data["status"] = new_status
         update_data["exit_price"] = round(exit_price, 4) if exit_price else None
-        update_data["exit_time"] = datetime.utcnow().isoformat() + "Z"
+        update_data["exit_time"] = _utc_iso()
 
     try:
         result = client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
@@ -775,7 +787,7 @@ async def _run_lifecycle_check_inner() -> Dict[str, Any]:
         "still_active": 0,
         "errors": 0,
         "target_hits": [],
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": _utc_iso(),
     }
 
     try:
@@ -878,13 +890,13 @@ def _record_job_state(client, job_name: str, summary: Dict[str, Any]):
         return
     try:
         client.table("scheduler_state").eq("job_name", job_name).update({
-            "last_run_at": datetime.utcnow().isoformat() + "Z",
+            "last_run_at": _utc_iso(),
             "last_duration_ms": summary.get("duration_ms", 0),
             "last_status": "error" if safe_get_error(summary) else "ok",
             "last_error": safe_get_error(summary),
             "run_count": 1,  # Will use raw SQL increment later if needed
-            "updated_at": datetime.utcnow().isoformat() + "Z",
-        })
+            "updated_at": _utc_iso(),
+        }).execute()
     except Exception as e:
         logger.debug(f"_record_job_state({job_name}): {e}")
 
@@ -917,12 +929,12 @@ async def cleanup_old_signals():
                 created_dt = _parse_created_at(s.get("created_at"))
                 if created_dt is None:
                     continue
-                age_minutes = (datetime.now(created_dt.tzinfo) - created_dt).total_seconds() / 60
+                age_minutes = (_utc_now() - created_dt).total_seconds() / 60
                 if age_minutes < _cleanup_grace_minutes(s.get("timeframe")):
                     continue
                 upd_result = client.table("prediction_logs").eq("id", s["id"]).update({
                     "status": "expired",
-                    "exit_time": datetime.utcnow().isoformat() + "Z",
+                    "exit_time": _utc_iso(),
                     "exit_price": None,
                 }).execute()
                 if upd_result and safe_get_data(upd_result):
@@ -934,7 +946,7 @@ async def cleanup_old_signals():
             logger.info(f"🧹 Force-expired {expired_count} stale signals beyond cleanup grace")
 
         # Delete signal_checks older than 30 days
-        archive_cutoff = (datetime.utcnow() - timedelta(days=ARCHIVE_AFTER_DAYS)).isoformat() + "Z"
+        archive_cutoff = _utc_iso(_utc_now() - timedelta(days=ARCHIVE_AFTER_DAYS))
         client.table("signal_checks").select("id").lt(
             "created_at", archive_cutoff
         ).limit(500).execute()
@@ -972,20 +984,20 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
 
         # Determine date range
         if days > 0:
-            start_date = datetime.utcnow() - timedelta(days=days)
+            start_date = _utc_now() - timedelta(days=days)
         else:
             # All time: start from 90 days ago (covers all historical data)
-            start_date = datetime.utcnow() - timedelta(days=90)
+            start_date = _utc_now() - timedelta(days=90)
 
-        end_date = datetime.utcnow()
+        end_date = _utc_now()
         current = start_date
 
         while current < end_date:
             day_start = current.replace(hour=0, minute=0, second=0, microsecond=0)
             day_end = (day_start + timedelta(days=1))
             
-            day_start_iso = day_start.isoformat() + "Z"
-            day_end_iso = day_end.isoformat() + "Z"
+            day_start_iso = _utc_iso(day_start)
+            day_end_iso = _utc_iso(day_end)
 
             result = client.table("prediction_logs").select(
                 "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
@@ -1005,7 +1017,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
             current = day_end
 
         # Also fetch today's partial data
-        today_start = end_date.replace(hour=0, minute=0, second=0, microsecond=0).isoformat() + "Z"
+        today_start = _utc_iso(end_date.replace(hour=0, minute=0, second=0, microsecond=0))
         result = client.table("prediction_logs").select(
             "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
             "model_type, status, targets_hit, highest_profit_pips, "
@@ -1181,7 +1193,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
             "failure_type, market_regime, confluence_score, signal_id"
         )
         if days > 0:
-            fail_cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
+            fail_cutoff = _utc_iso(_utc_now() - timedelta(days=days))
             fail_query = fail_query.gte("created_at", fail_cutoff)
         fail_result = fail_query.limit(500).execute()
 
@@ -1203,7 +1215,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
             "failure_breakdown": failure_breakdown,
             "total_failures": len(failures),
             "active_signals": active_count,
-            "generated_at": datetime.utcnow().isoformat() + "Z",
+            "generated_at": _utc_iso(),
         }
 
     except Exception as e:
@@ -1274,7 +1286,7 @@ async def export_failures(days: int = 30) -> List[Dict[str, Any]]:
     if not client:
         return []
 
-    cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
+    cutoff = _utc_iso(_utc_now() - timedelta(days=days))
 
     try:
         result = client.table("signal_failures").select("*").gte(
@@ -1305,7 +1317,7 @@ async def check_lifecycle_if_needed():
     """Called from background_scheduler every 60s; runs lifecycle every minute."""
     global _last_lifecycle_check, _last_cleanup_run
 
-    now = datetime.utcnow()
+    now = _utc_now()
     if _last_lifecycle_check and (now - _last_lifecycle_check).total_seconds() < LIFECYCLE_CHECK_INTERVAL:
         return
 
@@ -1333,6 +1345,6 @@ async def check_lifecycle_if_needed():
     if _last_cleanup_run is None or (now - _last_cleanup_run).total_seconds() >= CLEANUP_INTERVAL_SECONDS:
         try:
             await cleanup_old_signals()
-            _last_cleanup_run = datetime.utcnow()
+            _last_cleanup_run = _utc_now()
         except Exception as e:
             logger.error(f"Cleanup error: {e}")

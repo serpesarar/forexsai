@@ -363,7 +363,6 @@ async def log_prediction(
         # STATIC TARGETS: Fixed pip-based TP/SL (Reverted from ATR)
         # ATR system removed - using fixed pip values from target_config
         # ═══════════════════════════════════════════════════════════════════════
-        import json as _json
         from services.target_config import (
             get_symbol_config,
             calculate_target_prices,
@@ -379,7 +378,7 @@ async def log_prediction(
             target_prices = calculate_target_prices(entry_price, direction, symbol, normalized_timeframe)
             sl_price = calculate_stoploss_price(entry_price, direction, symbol, normalized_timeframe)
             # Store as {TP1: price, TP2: price, ...}
-            targets_dict = target_prices
+            targets_dict = dict(target_prices)
             targets_dict["SL"] = round(sl_price, 4)
             stop_loss_pips = abs(pips_from_price_change(abs(entry_price - sl_price), symbol))
         else:
@@ -415,9 +414,9 @@ async def log_prediction(
             "outcome_checked": False,
             # Signal Lifecycle columns
             "status": "active" if direction in ("BUY", "SELL") else "expired",
-            "targets": _json.dumps(targets_dict),
+            "targets": targets_dict,
             "stop_loss_pips": stop_loss_pips,
-            "targets_hit": _json.dumps({tp: False for tp in targets_dict if tp != "SL"}),
+            "targets_hit": {tp: False for tp in targets_dict if tp != "SL"},
             "highest_profit_pips": 0,
             "lowest_drawdown_pips": 0,
             "model_type": model_type or (strategy.lower() if strategy else "ml"),

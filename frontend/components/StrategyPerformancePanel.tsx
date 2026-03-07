@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { PanelInfoButton } from "./PanelInfoButton";
 import { useQuery } from "@tanstack/react-query";
 import { ModelPerformanceModal } from "./panels/ModelPerformanceModal";
+import { getApiBase } from "@/lib/api/base";
 import {
   ChartsIcon as BarChart3,
   RotateIcon as RefreshCw,
@@ -26,7 +27,7 @@ import { List, Crosshair } from "lucide-react";
 // Lazy load SignalDetailModal
 const SignalDetailModal = lazy(() => import("./SignalDetailModal"));
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
 // ── Theme-aware Color Palette (CSS Variables) ───────────────────────────────
@@ -206,6 +207,7 @@ interface Signal {
 
 async function fetchRecentSignals(days: number, symbol?: string): Promise<Signal[]> {
   const url = new URL(`${API_BASE}/api/learning/signals/recent`);
+  url.searchParams.set("days", String(days));
   url.searchParams.set("limit", "20");
   url.searchParams.set("include_active", "true");
   if (symbol) url.searchParams.set("symbol", symbol);

@@ -5,7 +5,7 @@ Endpoints for prediction tracking, outcome checking, and learning insights.
 from __future__ import annotations
 
 from fastapi import APIRouter, Query
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Optional, List
 from pydantic import BaseModel
@@ -48,6 +48,21 @@ from services.multi_target_tracker import tracker as multi_target_tracker
 from services.telegram_service import telegram_notifier
 
 router = APIRouter(prefix="/api/learning", tags=["learning"])
+
+
+_ALL_TIME_FLOOR = datetime(2000, 1, 1, tzinfo=timezone.utc)
+
+
+def _as_utc(dt: datetime) -> datetime:
+    return dt.astimezone(timezone.utc) if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _utc_iso(dt: Optional[datetime] = None) -> str:
+    return _as_utc(dt or _utc_now()).isoformat().replace("+00:00", "Z")
 
 
 class HealthResponse(BaseModel):
@@ -151,22 +166,18 @@ async def get_accuracy_by_model(
     if not client:
         return {"error": "Database client not available"}
     
-    from datetime import datetime, timedelta
-    cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z" if days > 0 else "2000-01-01T00:00:00Z"
-    
     try:
         # Day-by-day pagination to bypass Supabase 1000-row cap
         predictions = []
-        from datetime import datetime as dt_cls
-        start = dt_cls.fromisoformat(cutoff.replace("Z","")) if cutoff != "2000-01-01T00:00:00Z" else (datetime.utcnow() - timedelta(days=90))
-        end = datetime.utcnow()
+        start = (_utc_now() - timedelta(days=days)) if days > 0 else (_utc_now() - timedelta(days=90))
+        end = _utc_now()
         cur = start
         while cur < end:
             ds = cur.replace(hour=0,minute=0,second=0,microsecond=0)
             de = ds + timedelta(days=1)
             q = client.table("prediction_logs").select(
                 "id, strategy, model_type, ml_direction, claude_direction, factors, status, targets_hit, created_at"
-            ).gte("created_at", ds.isoformat()+"Z").lt("created_at", de.isoformat()+"Z").neq("status", "active")
+            ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).neq("status", "active")
             if symbol:
                 q = q.eq("symbol", symbol)
             batch = safe_get_data(q.order("created_at", desc=True).limit(1000).execute())
@@ -807,8 +818,7 @@ async def get_tp_success_analysis(
         return {"error": "Database client not available"}
     
     try:
-        from datetime import datetime, timedelta
-        cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z" if days > 0 else "2000-01-01T00:00:00Z"
+        cutoff = _utc_iso(_utc_now() - timedelta(days=days)) if days > 0 else _utc_iso(_ALL_TIME_FLOOR)
         
         query = client.table("multi_target_outcomes").select("*").gte("created_at", cutoff)
         
@@ -910,8 +920,8 @@ async def get_prediction_history(
         return {"error": "Database client not available", "predictions": []}
     
     try:
-        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime.strptime("2000-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
-        cutoff_iso = cutoff.isoformat() + "Z"
+        cutoff = (_utc_now() - timedelta(days=days)) if days > 0 else _ALL_TIME_FLOOR
+        cutoff_iso = _utc_iso(cutoff)
         
         # Get predictions (no PostgREST join - custom httpx client doesn't support it)
         query = client.table("prediction_logs").select(
@@ -1100,8 +1110,8 @@ async def reset_ui_stats(
                         fixed_count += 1
             
             # Step 2: Get fresh stats
-            cutoff = datetime.utcnow() - timedelta(days=7)
-            cutoff_iso = cutoff.isoformat() + "Z"
+            cutoff = _utc_now() - timedelta(days=7)
+            cutoff_iso = _utc_iso(cutoff)
             
             stats_url = f"{url}/rest/v1/outcome_results?created_at=gte.{cutoff_iso}&select=ml_correct,hit_target,hit_stop,prediction_id"
             stats_response = client.get(stats_url, headers=headers)
@@ -1302,7 +1312,7 @@ async def reset_strategy_performance(
         
         return {
             "deleted": True,
-            "reset_timestamp": datetime.utcnow().isoformat() + "Z",
+            "reset_timestamp": _utc_iso(),
             **fresh_stats
         }
         
@@ -1321,10 +1331,6 @@ async def get_strategy_performance(
     1. prediction_logs lifecycle data (status=completed/stopped, targets_hit)
     2. outcome_results table (any check_interval)
     """
-    from datetime import datetime, timedelta
-    from database.supabase_client import get_supabase_client
-    from utils.json_helpers import parse_json_field
-    
     if not is_db_available():
         return {"error": "Database not available"}
     
@@ -1333,20 +1339,21 @@ async def get_strategy_performance(
         return {"error": "Database client not available"}
     
     try:
-        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime.strptime("2000-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
-        cutoff_iso = cutoff.isoformat() + "Z"
+        cutoff = (_utc_now() - timedelta(days=days)) if days > 0 else _ALL_TIME_FLOOR
         
         # Day-by-day pagination to bypass Supabase 1000-row cap
         predictions = []
         start = cutoff
-        end = datetime.utcnow()
+        end = _utc_now()
         cur = start
         while cur < end:
             ds = cur.replace(hour=0,minute=0,second=0,microsecond=0)
             de = ds + timedelta(days=1)
             batch = safe_get_data(client.table("prediction_logs").select(
-                "id, symbol, strategy, ml_confidence, status, targets_hit, model_type, created_at"
-            ).gte("created_at", ds.isoformat()+"Z").lt("created_at", de.isoformat()+"Z").order("created_at", desc=True).limit(1000).execute())
+                "id, symbol, strategy, ml_confidence, status, targets_hit, targets, "
+                "model_type, created_at, highest_profit_pips, lowest_drawdown_pips, "
+                "stop_loss_pips, ml_entry_price, exit_price, ml_direction"
+            ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).order("created_at", desc=True).limit(1000).execute())
             if batch:
                 predictions.extend(batch)
             cur = de
@@ -1362,7 +1369,7 @@ async def get_strategy_performance(
         # Initialize stats with per-target tracking - ALL 4 symbols
         stats = {sym: {s: {
             "total": 0, "with_outcome": 0, "correct": 0,
-            "target_hits": 0, "stop_hits": 0, "conf_sum": 0,
+            "target_hits": 0, "stop_hits": 0, "expired": 0, "conf_sum": 0,
             "tp1_hits": 0, "tp2_hits": 0, "tp3_hits": 0, "tp4_hits": 0,
         } for s in ["ultra_safe", "balanced", "full_power", "aggressive"]} 
                  for sym in ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]}
@@ -1385,33 +1392,30 @@ async def get_strategy_performance(
             stats[sym][strat]["total"] += 1
             stats[sym][strat]["conf_sum"] += conf
             
-            # PRIMARY: lifecycle status (completed/stopped)
-            p_status = p.get("status")
-            if p_status in ("completed", "stopped"):
-                outcomes_found += 1
-                stats[sym][strat]["with_outcome"] += 1
-                
-                if p_status == "completed":
-                    stats[sym][strat]["correct"] += 1
-                    stats[sym][strat]["target_hits"] += 1
-                elif p_status == "stopped":
-                    stats[sym][strat]["stop_hits"] += 1
-                
-                # Parse targets_hit for per-TP tracking
-                targets_hit = parse_json_field(p.get("targets_hit"), {})
-                if targets_hit:
-                    if targets_hit.get("TP1"): stats[sym][strat]["tp1_hits"] += 1
-                    if targets_hit.get("TP2"): stats[sym][strat]["tp2_hits"] += 1
-                    if targets_hit.get("TP3"): stats[sym][strat]["tp3_hits"] += 1
-                    if targets_hit.get("TP4"): stats[sym][strat]["tp4_hits"] += 1
-            else:
-                # FALLBACK: check targets_hit field for signals without lifecycle resolution
-                targets_hit = parse_json_field(p.get("targets_hit"), {})
-                if isinstance(targets_hit, dict) and any(targets_hit.values()):
-                    outcomes_found += 1
-                    stats[sym][strat]["with_outcome"] += 1
-                    stats[sym][strat]["correct"] += 1
-                    stats[sym][strat]["target_hits"] += 1
+            classified_status, is_win, _ = classify_signal(p, default_symbol=sym)
+            if classified_status in {None, "active"}:
+                continue
+
+            outcomes_found += 1
+            stats[sym][strat]["with_outcome"] += 1
+
+            if is_win:
+                stats[sym][strat]["correct"] += 1
+                stats[sym][strat]["target_hits"] += 1
+            elif classified_status == "stopped":
+                stats[sym][strat]["stop_hits"] += 1
+            elif classified_status == "expired":
+                stats[sym][strat]["expired"] += 1
+
+            targets_hit = parse_targets_hit(p.get("targets_hit"))
+            if targets_hit.get("TP1"):
+                stats[sym][strat]["tp1_hits"] += 1
+            if targets_hit.get("TP2"):
+                stats[sym][strat]["tp2_hits"] += 1
+            if targets_hit.get("TP3"):
+                stats[sym][strat]["tp3_hits"] += 1
+            if targets_hit.get("TP4"):
+                stats[sym][strat]["tp4_hits"] += 1
         
         # Build result
         result_data = {}
@@ -1515,7 +1519,7 @@ async def update_multi_target_price(symbol: str, current_price: float):
 
 
 @router.get("/strategy-performance/{symbol}")
-async def get_strategy_performance(
+async def get_strategy_performance_by_symbol(
     symbol: str,
     days: int = Query(0, ge=0, le=1095)
 ):
@@ -1698,9 +1702,8 @@ async def get_historical_signals_endpoint(
     model_id, model_name_label = MODEL_NAMES.get(model or "", ("all_models", "All Models"))
         
     try:
-        from datetime import datetime, timedelta
-        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime.strptime("2000-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
-        cutoff_iso = cutoff.isoformat()
+        cutoff = (_utc_now() - timedelta(days=days)) if days > 0 else _ALL_TIME_FLOOR
+        cutoff_iso = _utc_iso(cutoff)
         
         # 1. Fetch signal records
         query = client.table("prediction_logs").select(
@@ -1965,6 +1968,7 @@ async def get_signals_matrix(
 async def get_recent_signals_endpoint(
     symbol: Optional[str] = Query(None, description="Filter by symbol"),
     model: Optional[str] = Query(None, description="Filter by model type (ml, emel, pulse1, pulse2, pulse3)"),
+    days: int = Query(0, ge=0, le=1095, description="Days to look back (0=all available history)"),
     limit: int = Query(50, ge=1, le=200),
     include_active: bool = Query(True, description="Include active signals")
 ):
@@ -1972,22 +1976,29 @@ async def get_recent_signals_endpoint(
     Get recent signals with summary information for the signal list.
     Enhanced version of /predictions with calculated duration and PNL.
     """
+    if not isinstance(symbol, str):
+        symbol = None
+    if not isinstance(model, str):
+        model = None
+
     if not is_db_available():
-        return {"error": "Database not available", "signals": []}
+        return {"error": "Database not available", "signals": [], "count": 0, "symbol": symbol}
     
     client = get_supabase_client()
     if not client:
-        return {"error": "Database client not available", "signals": []}
+        return {"error": "Database client not available", "signals": [], "count": 0, "symbol": symbol}
     
     try:
-        from datetime import datetime
-        
         query = client.table("prediction_logs").select(
             "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
             "ml_target_price, ml_stop_price, model_type, strategy, status, "
-            "targets_hit, highest_profit_pips, lowest_drawdown_pips, "
-            "exit_price, exit_time, created_at"
+            "targets_hit, targets, highest_profit_pips, lowest_drawdown_pips, "
+            "stop_loss_pips, exit_price, exit_time, created_at"
         ).order("created_at", desc=True).limit(limit * 3)  # Fetch extra to allow for Python filtering
+
+        if days > 0:
+            cutoff = _utc_iso(_utc_now() - timedelta(days=days))
+            query = query.gte("created_at", cutoff)
         
         if symbol:
             query = query.eq("symbol", symbol)
@@ -2026,20 +2037,13 @@ async def get_recent_signals_endpoint(
             else:
                 entry["duration_minutes"] = None
             
-            # Calculate PNL
-            entry_price = sig.get("ml_entry_price")
-            exit_price = sig.get("exit_price")
-            direction = sig.get("ml_direction")
-            
-            if entry_price and exit_price and direction in ["BUY", "SELL"]:
-                from services.target_config import pips_from_price_change
-                if direction == "BUY":
-                    pnl_pips = pips_from_price_change(exit_price - entry_price, sig.get("symbol"))
-                else:
-                    pnl_pips = pips_from_price_change(entry_price - exit_price, sig.get("symbol"))
-                entry["pnl_pips"] = round(pnl_pips, 2)
-            else:
-                entry["pnl_pips"] = None
+            raw_status = (sig.get("status") or "unknown").lower().strip()
+            normalized_status, _, pnl_pips = classify_signal(
+                sig,
+                default_symbol=sig.get("symbol") or symbol,
+            )
+            entry["status"] = normalized_status or raw_status or "unknown"
+            entry["pnl_pips"] = round(pnl_pips, 2) if pnl_pips is not None else None
             
             enhanced.append(entry)
         
@@ -2051,7 +2055,13 @@ async def get_recent_signals_endpoint(
         
     except Exception as e:
         import traceback
-        return {"error": str(e), "traceback": traceback.format_exc()[:300], "signals": []}
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc()[:300],
+            "signals": [],
+            "count": 0,
+            "symbol": symbol,
+        }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2085,8 +2095,8 @@ async def get_model_timeframe_analysis(
         import logging as _logging
         _log = _logging.getLogger(__name__)
         
-        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime.strptime("2000-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
-        cutoff_iso = cutoff.isoformat() + "Z"
+        cutoff = (_utc_now() - timedelta(days=days)) if days > 0 else _ALL_TIME_FLOOR
+        cutoff_iso = _utc_iso(cutoff)
         model_lower = model.lower().strip()
         
         # Build query — no model filter at DB level (use Python filtering)
@@ -2270,13 +2280,13 @@ async def get_all_models_summary(
         return {"error": "Database client not available"}
     
     try:
-        cutoff = (datetime.utcnow() - timedelta(days=days)) if days > 0 else datetime.strptime("2000-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ")
-        cutoff_iso = cutoff.isoformat() + "Z"
+        cutoff = (_utc_now() - timedelta(days=days)) if days > 0 else _ALL_TIME_FLOOR
+        cutoff_iso = _utc_iso(cutoff)
         
         # Day-by-day pagination to bypass Supabase 1000-row cap
         signals = []
         start = cutoff
-        end = datetime.utcnow()
+        end = _utc_now()
         cur = start
         while cur < end:
             ds = cur.replace(hour=0,minute=0,second=0,microsecond=0)
@@ -2284,7 +2294,7 @@ async def get_all_models_summary(
             q = client.table("prediction_logs").select(
                 "symbol, timeframe, model_type, strategy, status, "
                 "highest_profit_pips, lowest_drawdown_pips, stop_loss_pips, targets_hit, created_at"
-            ).gte("created_at", ds.isoformat()+"Z").lt("created_at", de.isoformat()+"Z").neq("status", "active")
+            ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).neq("status", "active")
             if symbol:
                 q = q.eq("symbol", symbol)
             batch = safe_get_data(q.order("created_at", desc=True).limit(1000).execute())
@@ -2439,10 +2449,8 @@ async def repair_xauusd_signals(
         return {"error": "Database client not available"}
     
     try:
-        from datetime import datetime, timedelta
-        
         # Find stuck XAUUSD signals
-        cutoff = (datetime.utcnow() - timedelta(hours=max_age_hours)).isoformat() + "Z"
+        cutoff = _utc_iso(_utc_now() - timedelta(hours=max_age_hours))
         
         result = client.table("prediction_logs").select(
             "id, symbol, ml_direction, model_type, strategy, status, created_at, ml_entry_price"
@@ -2484,9 +2492,9 @@ async def repair_xauusd_signals(
                 sig_id = sig["id"]
                 update_result = client.table("prediction_logs").eq("id", sig_id).update({
                     "status": "expired",
-                    "exit_time": datetime.utcnow().isoformat() + "Z",
+                    "exit_time": _utc_iso(),
                     "exit_price": sig.get("ml_entry_price"),  # Use entry price as exit
-                    "targets_hit": json.dumps({"TP1": False, "TP2": False, "TP3": False, "TP4": False}),
+                    "targets_hit": {"TP1": False, "TP2": False, "TP3": False, "TP4": False},
                 }).execute()
                 
                 if update_result and safe_get_data(update_result):
@@ -2526,10 +2534,8 @@ async def get_xauusd_signal_status():
         return {"error": "Database client not available"}
     
     try:
-        from datetime import datetime, timedelta
-        
         # Get all XAUUSD signals from last 7 days
-        cutoff = (datetime.utcnow() - timedelta(days=7)).isoformat() + "Z"
+        cutoff = _utc_iso(_utc_now() - timedelta(days=7))
         
         result = client.table("prediction_logs").select(
             "id, model_type, strategy, status, ml_direction, created_at, exit_time"
@@ -2560,7 +2566,7 @@ async def get_xauusd_signal_status():
             stats["total"] += 1
         
         # Get recent active signals (potential stuck signals)
-        one_hour_ago = (datetime.utcnow() - timedelta(hours=1)).isoformat() + "Z"
+        one_hour_ago = _utc_iso(_utc_now() - timedelta(hours=1))
         old_active_result = client.table("prediction_logs").select(
             "id, model_type, strategy, created_at, ml_entry_price"
         ).eq("symbol", "XAUUSD").eq("status", "active").lt("created_at", one_hour_ago).limit(100).execute()
@@ -2685,7 +2691,6 @@ async def get_model_detail_analytics(
         return _empty_payload(error="Database client not available")
 
     try:
-        from datetime import datetime, timezone, timedelta
         from dateutil import parser as dt_parser
         import json as _json
         import math
@@ -2731,7 +2736,7 @@ async def get_model_detail_analytics(
             return summarize_scope(scope_signals, default_symbol=symbol)
 
         if days > 0:
-            start_date = datetime.utcnow() - timedelta(days=days)
+            start_date = _utc_now() - timedelta(days=days)
         else:
             oldest_result = client.table("prediction_logs").select(
                 "created_at"
@@ -2741,12 +2746,12 @@ async def get_model_detail_analytics(
             if oldest_dt is None:
                 return _empty_payload(
                     meta_overrides={
-                        "date_to": datetime.utcnow().replace(tzinfo=timezone.utc).isoformat(),
+                        "date_to": _utc_iso(),
                     }
                 )
-            start_date = oldest_dt.replace(tzinfo=None)
+            start_date = _as_utc(oldest_dt)
 
-        end_date = datetime.utcnow()
+        end_date = _utc_now()
         all_signals = []
         current = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -2759,9 +2764,9 @@ async def get_model_detail_analytics(
                 "ml_entry_price, exit_price, stop_loss_pips, created_at, highest_profit_pips, "
                 "lowest_drawdown_pips, targets_hit, model_type, strategy"
             ).eq("symbol", symbol).gte(
-                "created_at", day_start.isoformat() + "Z"
+                "created_at", _utc_iso(day_start)
             ).lt(
-                "created_at", day_end.isoformat() + "Z"
+                "created_at", _utc_iso(day_end)
             ).order("created_at", desc=True).limit(1000).execute()
 
             batch = safe_get_data(result)
@@ -2772,14 +2777,14 @@ async def get_model_detail_analytics(
         if not all_signals:
             return _empty_payload(
                 meta_overrides={
-                    "date_from": start_date.replace(tzinfo=timezone.utc).isoformat(),
-                    "date_to": end_date.replace(tzinfo=timezone.utc).isoformat(),
+                    "date_from": _utc_iso(start_date),
+                    "date_to": _utc_iso(end_date),
                 }
             )
 
         prepared_signals = []
         for sig in all_signals:
-            created_dt = _parse_datetime(sig.get("created_at")) or datetime.now(timezone.utc)
+            created_dt = _parse_datetime(sig.get("created_at")) or _utc_now()
             prepared_signals.append({
                 **sig,
                 "_created_dt": created_dt,
@@ -2840,8 +2845,8 @@ async def get_model_detail_analytics(
                 available_models=available_models,
                 model_comparison=model_comparison,
                 meta_overrides={
-                    "date_from": start_date.replace(tzinfo=timezone.utc).isoformat(),
-                    "date_to": end_date.replace(tzinfo=timezone.utc).isoformat(),
+                    "date_from": _utc_iso(start_date),
+                    "date_to": _utc_iso(end_date),
                 },
             )
 
@@ -2851,8 +2856,8 @@ async def get_model_detail_analytics(
                 available_models=available_models,
                 model_comparison=model_comparison,
                 meta_overrides={
-                    "date_from": start_date.replace(tzinfo=timezone.utc).isoformat(),
-                    "date_to": end_date.replace(tzinfo=timezone.utc).isoformat(),
+                    "date_from": _utc_iso(start_date),
+                    "date_to": _utc_iso(end_date),
                     "scope_total_signals": len(model_scope_signals),
                 },
             )
@@ -3092,8 +3097,8 @@ async def get_model_detail_analytics(
                 "available_models": available_models,
                 "days": days,
                 "all_time": days == 0,
-                "date_from": start_date.replace(tzinfo=timezone.utc).isoformat(),
-                "date_to": end_date.replace(tzinfo=timezone.utc).isoformat(),
+                "date_from": _utc_iso(start_date),
+                "date_to": _utc_iso(end_date),
                 "scope_total_signals": len(model_scope_signals),
                 "filtered_total_signals": len(filtered_signals),
             },

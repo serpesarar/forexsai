@@ -278,5 +278,86 @@ class TestSignalStatusTransitions:
                 assert True
 
 
+class RecordingQuery:
+    def __init__(self, client, table_name: str):
+        self.client = client
+        self.table_name = table_name
+        self.operation = "select"
+        self.payload = None
+        self.filters = []
+
+    def select(self, *_args, **_kwargs):
+        self.operation = "select"
+        return self
+
+    def insert(self, payload):
+        self.operation = "insert"
+        self.payload = payload
+        return self
+
+    def update(self, payload):
+        self.operation = "update"
+        self.payload = payload
+        return self
+
+    def eq(self, column, value):
+        self.filters.append(("eq", column, value))
+        return self
+
+    def execute(self):
+        self.client.operations.append({
+            "table": self.table_name,
+            "op": self.operation,
+            "payload": self.payload,
+            "filters": list(self.filters),
+        })
+        data = [] if self.operation == "select" else [self.payload]
+        return {"data": data, "error": None}
+
+
+class RecordingClient:
+    def __init__(self):
+        self.operations = []
+
+    def table(self, table_name: str):
+        return RecordingQuery(self, table_name)
+
+
+@pytest.mark.asyncio
+async def test_process_signal_persists_targets_as_dicts():
+    from services.signal_lifecycle import _process_signal
+
+    client = RecordingClient()
+    signal = {
+        "id": "persist-dicts-1",
+        "symbol": "XAUUSD",
+        "ml_direction": "BUY",
+        "ml_entry_price": 2000.0,
+        "timeframe": "15m",
+        "status": "active",
+        "targets_hit": {},
+        "created_at": (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat(),
+    }
+
+    with patch("services.signal_lifecycle.fetch_latest_price", new=AsyncMock(return_value=2006.0)):
+        with patch("services.signal_lifecycle.fetch_intraday_candles", new=AsyncMock(return_value=[
+            {"high": 2006.0, "low": 2001.0, "close": 2006.0}
+        ])):
+            with patch("services.signal_lifecycle._resolve_target_prices", return_value={"TP1": 2005.0}):
+                with patch("services.signal_lifecycle.calculate_stoploss_price", return_value=1990.0):
+                    new_status = await _process_signal(client, signal)
+
+    prediction_update = next(
+        op for op in client.operations
+        if op["table"] == "prediction_logs" and op["op"] == "update"
+    )
+
+    assert new_status == "completed"
+    assert isinstance(prediction_update["payload"]["targets_hit"], dict)
+    assert isinstance(prediction_update["payload"]["targets"], dict)
+    assert prediction_update["payload"]["targets_hit"]["TP1"] is True
+    assert prediction_update["payload"]["targets"]["TP1"] == 2005.0
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

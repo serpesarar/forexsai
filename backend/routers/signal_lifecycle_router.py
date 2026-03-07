@@ -126,7 +126,6 @@ async def get_signal_detail_endpoint(signal_id: str):
 async def backfill_existing_records():
     """One-time backfill: set model_type from strategy, expire old active signals."""
     from database.supabase_client import get_supabase_client, is_db_available
-    import json
 
     if not is_db_available():
         return {"error": "DB not available"}
@@ -165,9 +164,9 @@ async def backfill_existing_records():
                 sym = (safe_get_data(full) or [{}])[0].get("symbol", "NDX.INDX")
                 cfg = get_symbol_config(sym)
                 targets_dict = {tl.name: tl.pips for tl in cfg.targets}
-                updates["targets"] = json.dumps(targets_dict)
+                updates["targets"] = targets_dict
                 updates["stop_loss_pips"] = cfg.stoploss_pips
-                updates["targets_hit"] = json.dumps({tp: False for tp in targets_dict})
+                updates["targets_hit"] = {tp: False for tp in targets_dict}
 
             # Expire old active signals (older than 2 hours)
             if rec.get("status") == "active":
