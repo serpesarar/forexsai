@@ -70,6 +70,8 @@ const basePayload = {
     scope_total_signals: 12,
     date_from: "2026-01-01T00:00:00Z",
     date_to: "2026-02-01T00:00:00Z",
+    hourly_visible_hours: [8, 9, 10, 11, 12, 13],
+    hourly_window_label: "08:00–13:00 UTC",
   },
 };
 
@@ -144,6 +146,43 @@ describe("ModelPerformanceModal", () => {
     expect(screen.getByText("Strong edge")).toBeInTheDocument();
     expect(screen.getByText("Best hour")).toBeInTheDocument();
     expect(screen.getByText("Best day")).toBeInTheDocument();
+  });
+
+  it("uses backend session-hour visibility contract in the hourly tab", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          ...basePayload,
+          hourly_heatmap: [
+            { hour: 9, total: 2, wins: 1, win_rate: 50, avg_pips: 4 },
+            { hour: 10, total: 0, wins: 0, win_rate: 0, avg_pips: 0 },
+            { hour: 11, total: 0, wins: 0, win_rate: 0, avg_pips: 0 },
+            { hour: 12, total: 2, wins: 1, win_rate: 50, avg_pips: 6 },
+            { hour: 13, total: 0, wins: 0, win_rate: 0, avg_pips: 0 },
+            { hour: 14, total: 0, wins: 0, win_rate: 0, avg_pips: 0 },
+            { hour: 15, total: 0, wins: 0, win_rate: 0, avg_pips: 0 },
+            { hour: 16, total: 0, wins: 0, win_rate: 0, avg_pips: 0 },
+          ],
+          meta: {
+            ...basePayload.meta,
+            hourly_visible_hours: [9, 10, 11, 12, 13, 14, 15, 16],
+            hourly_window_label: "09:00–16:00 UTC",
+          },
+        }),
+      })
+    );
+
+    renderModal();
+
+    await screen.findByText("Performance analytics");
+    fireEvent.click(screen.getByRole("button", { name: "Hourly" }));
+
+    expect(await screen.findByText("Session window: 09:00–16:00 UTC")).toBeInTheDocument();
+    expect(screen.getAllByText("09:00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("16:00").length).toBeGreaterThan(0);
+    expect(screen.queryByText("00:00")).not.toBeInTheDocument();
   });
 
   it("closes when escape is pressed", async () => {

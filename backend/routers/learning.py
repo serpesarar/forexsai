@@ -65,6 +65,46 @@ def _utc_iso(dt: Optional[datetime] = None) -> str:
     return _as_utc(dt or _utc_now()).isoformat().replace("+00:00", "Z")
 
 
+def _model_detail_hourly_contract(symbol: Optional[str], observed_hours: Optional[set[int]] = None) -> dict:
+    normalized_symbol = (symbol or "").upper().strip()
+
+    if normalized_symbol == "NDX.INDX":
+        base_hours = list(range(9, 17))
+        session_key = "us_cash"
+        window_label = "09:00–16:00 UTC"
+    elif normalized_symbol == "GDAXI.INDX":
+        base_hours = list(range(7, 16))
+        session_key = "xetra_cash"
+        window_label = "07:00–15:00 UTC"
+    elif normalized_symbol in {"USOIL.FOREX", "CL.F", "CL.COMM"}:
+        base_hours = list(range(1, 24))
+        session_key = "oil_extended"
+        window_label = "01:00–23:00 UTC"
+    elif normalized_symbol == "XAUUSD":
+        base_hours = list(range(24))
+        session_key = "continuous_weekday"
+        window_label = "00:00–23:00 UTC"
+    else:
+        base_hours = list(range(24))
+        session_key = "continuous"
+        window_label = "00:00–23:00 UTC"
+
+    normalized_observed = sorted(
+        {
+            hour
+            for hour in (observed_hours or set())
+            if isinstance(hour, int) and 0 <= hour <= 23
+        }
+    )
+    visible_hours = sorted(set(base_hours) | set(normalized_observed))
+
+    return {
+        "hours": visible_hours,
+        "window_label": window_label,
+        "session_key": session_key,
+    }
+
+
 class HealthResponse(BaseModel):
     db_available: bool
     message: str
@@ -2626,6 +2666,7 @@ async def get_model_detail_analytics(
     selected_timeframe = (timeframe or "all").lower().strip() or "all"
     if selected_timeframe in {"*", "all"}:
         selected_timeframe = "all"
+    default_hourly_contract = _model_detail_hourly_contract(symbol)
 
     def _empty_payload(
         error: Optional[str] = None,
@@ -2675,6 +2716,9 @@ async def get_model_detail_analytics(
                 "date_to": None,
                 "scope_total_signals": 0,
                 "filtered_total_signals": 0,
+                "hourly_visible_hours": default_hourly_contract["hours"],
+                "hourly_window_label": default_hourly_contract["window_label"],
+                "hourly_session_key": default_hourly_contract["session_key"],
             },
         }
         if meta_overrides:
@@ -2978,8 +3022,10 @@ async def get_model_detail_analytics(
         # ── 4. Build response ──
 
         # Hourly heatmap
+        observed_hours = {hour for hour, bucket in hourly_stats.items() if bucket["total"] > 0}
+        hourly_contract = _model_detail_hourly_contract(symbol, observed_hours=observed_hours)
         hourly_heatmap = []
-        for h in range(24):
+        for h in hourly_contract["hours"]:
             s = hourly_stats[h]
             hourly_heatmap.append({
                 "hour": h,
@@ -3101,6 +3147,9 @@ async def get_model_detail_analytics(
                 "date_to": _utc_iso(end_date),
                 "scope_total_signals": len(model_scope_signals),
                 "filtered_total_signals": len(filtered_signals),
+                "hourly_visible_hours": hourly_contract["hours"],
+                "hourly_window_label": hourly_contract["window_label"],
+                "hourly_session_key": hourly_contract["session_key"],
             },
         }
 

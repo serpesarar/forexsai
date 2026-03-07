@@ -89,6 +89,9 @@ interface AnalyticsMeta {
   date_to?: string | null;
   scope_total_signals?: number;
   filtered_total_signals?: number;
+  hourly_visible_hours?: number[];
+  hourly_window_label?: string;
+  hourly_session_key?: string;
   traceback?: string;
 }
 
@@ -175,6 +178,7 @@ const T = {
     model: "Model",
     bestHoursUtc: "Best hours (UTC)",
     weakHoursUtc: "Weak hours (UTC)",
+    hourlyWindow: "Session window",
     noTrades: "No trades",
     signalsLower: "signals",
     strongEdge: "Strong edge",
@@ -241,6 +245,7 @@ const T = {
     model: "Model",
     bestHoursUtc: "En iyi saatler (UTC)",
     weakHoursUtc: "Zayıf saatler (UTC)",
+    hourlyWindow: "Seans aralığı",
     noTrades: "İşlem yok",
     signalsLower: "sinyal",
     strongEdge: "Güçlü avantaj",
@@ -374,6 +379,7 @@ function emptyAnalytics(symbol: string, model?: string): AnalyticsData {
       selected_timeframe: "all",
       filtered_total_signals: 0,
       scope_total_signals: 0,
+      hourly_visible_hours: [],
     },
     selected_timeframe: "all",
   };
@@ -679,7 +685,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
             ) : activeTab === "timeframes" ? (
               <TimeframesPanel data={data.timeframe_comparison} copy={copy} />
             ) : activeTab === "hourly" ? (
-              <HourlyPanel data={data.hourly_heatmap} copy={copy} />
+              <HourlyPanel data={data.hourly_heatmap} meta={meta} copy={copy} />
             ) : (
               <WeekdayPanel data={data.day_of_week} copy={copy} />
             )}
@@ -1107,8 +1113,31 @@ function TimeframesPanel({ data, copy }: { data: TFData[]; copy: LocaleCopy }) {
   );
 }
 
-function HourlyPanel({ data, copy }: { data: HourlyData[]; copy: LocaleCopy }) {
-  const populated = data.filter((row) => row.total > 0);
+function HourlyPanel({
+  data,
+  meta,
+  copy,
+}: {
+  data: HourlyData[];
+  meta?: AnalyticsMeta;
+  copy: LocaleCopy;
+}) {
+  const rowByHour = new Map(data.map((row) => [row.hour, row]));
+  const ordered = Array.from(
+    new Set([...(meta?.hourly_visible_hours || []), ...data.map((row) => row.hour)])
+  )
+    .sort((a, b) => a - b)
+    .map(
+      (hour) =>
+        rowByHour.get(hour) || {
+          hour,
+          total: 0,
+          wins: 0,
+          win_rate: 0,
+          avg_pips: 0,
+        }
+    );
+  const populated = ordered.filter((row) => row.total > 0);
   if (!populated.length) return <EmptyCard label={copy.noData} />;
 
   const best = [...populated].sort((a, b) => b.win_rate - a.win_rate).slice(0, 3);
@@ -1133,9 +1162,12 @@ function HourlyPanel({ data, copy }: { data: HourlyData[]; copy: LocaleCopy }) {
         </SectionCard>
       </div>
 
-      <SectionCard title={copy.hourly}>
+      <SectionCard
+        title={copy.hourly}
+        subtitle={meta?.hourly_window_label ? `${copy.hourlyWindow}: ${meta.hourly_window_label}` : undefined}
+      >
         <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-6 gap-3">
-          {data.map((row) => (
+          {ordered.map((row) => (
             <div
               key={row.hour}
               style={{
