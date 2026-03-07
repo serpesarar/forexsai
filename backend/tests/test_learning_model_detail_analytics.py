@@ -171,7 +171,7 @@ async def test_model_detail_analytics_repairs_target_hit_rows_with_bad_exit_pric
 
 
 @pytest.mark.asyncio
-async def test_model_detail_analytics_uses_bucket_denominators_and_session_hours_for_hourly_and_weekday():
+async def test_model_detail_analytics_uses_session_hours_and_averages_weekdays_by_date_bucket():
     with patch.dict(
         sys.modules,
         {
@@ -186,8 +186,25 @@ async def test_model_detail_analytics_uses_bucket_denominators_and_session_hours
         spec.loader.exec_module(learning_module)
         get_model_detail_analytics = learning_module.get_model_detail_analytics
 
-    fixed_now = datetime(2026, 3, 4, 0, 0, tzinfo=timezone.utc)
+    fixed_now = datetime(2026, 3, 11, 0, 0, tzinfo=timezone.utc)
     monday_rows = [
+        {
+            "id": "older-monday-win-000",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "ml_confidence": 73,
+            "status": "completed",
+            "ml_entry_price": 100.0,
+            "exit_price": None,
+            "stop_loss_pips": None,
+            "created_at": "2026-02-23T09:40:00Z",
+            "highest_profit_pips": 12,
+            "lowest_drawdown_pips": -2,
+            "targets_hit": {},
+            "model_type": "ml",
+            "strategy": None,
+        },
         {
             "id": "monday-win-001",
             "symbol": "NDX.INDX",
@@ -282,31 +299,31 @@ async def test_model_detail_analytics_uses_bucket_denominators_and_session_hours
     with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
         learning_module, "get_supabase_client", return_value=client
     ), patch.object(learning_module, "_utc_now", return_value=fixed_now):
-        payload = await get_model_detail_analytics(model="ml", symbol="NDX.INDX", days=2, timeframe="all")
+        payload = await get_model_detail_analytics(model="ml", symbol="NDX.INDX", days=20, timeframe="all")
 
     assert payload["overview"] == {
-        "total_signals": 5,
-        "win_rate": 66.7,
-        "completed": 2,
+        "total_signals": 6,
+        "win_rate": 75.0,
+        "completed": 3,
         "stopped": 1,
         "expired": 1,
         "active": 1,
-        "net_pips": 20.0,
-        "avg_profit_pips": 15.0,
+        "net_pips": 32.0,
+        "avg_profit_pips": 14.0,
         "avg_loss_pips": 10.0,
-        "risk_reward": 1.5,
-        "sharpe_ratio": pytest.approx(7.18, rel=1e-3),
+        "risk_reward": 1.4,
+        "sharpe_ratio": pytest.approx(10.3, rel=1e-3),
         "max_drawdown_pips": 10.0,
-        "profit_factor": 3.0,
+        "profit_factor": 4.2,
     }
 
-    assert payload["meta"]["hourly_visible_hours"] == [9, 10, 11, 12, 13, 14, 15, 16]
-    assert payload["meta"]["hourly_window_label"] == "09:00–16:00 UTC"
+    assert payload["meta"]["hourly_visible_hours"] == [9, 10, 11, 12, 13, 14, 15, 16, 17]
+    assert payload["meta"]["hourly_window_label"] == "09:00–17:00"
     assert payload["meta"]["hourly_session_key"] == "us_cash"
 
     hourly_rows = {row["hour"]: row for row in payload["hourly_heatmap"]}
-    assert list(hourly_rows.keys()) == [9, 10, 11, 12, 13, 14, 15, 16]
-    assert hourly_rows[9] == {"hour": 9, "total": 2, "wins": 1, "win_rate": 50.0, "avg_pips": 4.0}
+    assert list(hourly_rows.keys()) == [9, 10, 11, 12, 13, 14, 15, 16, 17]
+    assert hourly_rows[9] == {"hour": 9, "total": 3, "wins": 2, "win_rate": 66.7, "avg_pips": 6.7}
     assert hourly_rows[12] == {"hour": 12, "total": 2, "wins": 1, "win_rate": 50.0, "avg_pips": 6.0}
     assert hourly_rows[10] == {"hour": 10, "total": 0, "wins": 0, "win_rate": 0, "avg_pips": 0}
 
@@ -314,10 +331,10 @@ async def test_model_detail_analytics_uses_bucket_denominators_and_session_hours
     assert weekday_rows["Monday"] == {
         "day": "Monday",
         "day_short": "Mon",
-        "total": 2,
-        "wins": 1,
-        "win_rate": 50.0,
-        "avg_pips": 4.0,
+        "total": 3,
+        "wins": 2,
+        "win_rate": 75.0,
+        "avg_pips": 10.0,
     }
     assert weekday_rows["Tuesday"] == {
         "day": "Tuesday",
@@ -325,7 +342,7 @@ async def test_model_detail_analytics_uses_bucket_denominators_and_session_hours
         "total": 2,
         "wins": 1,
         "win_rate": 50.0,
-        "avg_pips": 6.0,
+        "avg_pips": 12.0,
     }
     assert weekday_rows["Wednesday"]["total"] == 0
 

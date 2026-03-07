@@ -156,6 +156,7 @@ describe("ModelPerformanceModal", () => {
         json: async () => ({
           ...basePayload,
           hourly_heatmap: [
+            { hour: 0, total: 3, wins: 1, win_rate: 33.3, avg_pips: -1 },
             { hour: 9, total: 2, wins: 1, win_rate: 50, avg_pips: 4 },
             { hour: 10, total: 0, wins: 0, win_rate: 0, avg_pips: 0 },
             { hour: 11, total: 0, wins: 0, win_rate: 0, avg_pips: 0 },
@@ -164,11 +165,12 @@ describe("ModelPerformanceModal", () => {
             { hour: 14, total: 0, wins: 0, win_rate: 0, avg_pips: 0 },
             { hour: 15, total: 0, wins: 0, win_rate: 0, avg_pips: 0 },
             { hour: 16, total: 0, wins: 0, win_rate: 0, avg_pips: 0 },
+            { hour: 17, total: 0, wins: 0, win_rate: 0, avg_pips: 0 },
           ],
           meta: {
             ...basePayload.meta,
-            hourly_visible_hours: [9, 10, 11, 12, 13, 14, 15, 16],
-            hourly_window_label: "09:00–16:00 UTC",
+            hourly_visible_hours: [9, 10, 11, 12, 13, 14, 15, 16, 17],
+            hourly_window_label: "09:00–17:00",
           },
         }),
       })
@@ -179,9 +181,9 @@ describe("ModelPerformanceModal", () => {
     await screen.findByText("Performance analytics");
     fireEvent.click(screen.getByRole("button", { name: "Hourly" }));
 
-    expect(await screen.findByText("Session window: 09:00–16:00 UTC")).toBeInTheDocument();
+    expect(await screen.findByText("Session window: 09:00–17:00")).toBeInTheDocument();
     expect(screen.getAllByText("09:00").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("16:00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("17:00").length).toBeGreaterThan(0);
     expect(screen.queryByText("00:00")).not.toBeInTheDocument();
   });
 

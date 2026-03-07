@@ -69,9 +69,9 @@ def _model_detail_hourly_contract(symbol: Optional[str], observed_hours: Optiona
     normalized_symbol = (symbol or "").upper().strip()
 
     if normalized_symbol == "NDX.INDX":
-        base_hours = list(range(9, 17))
+        base_hours = list(range(9, 18))
         session_key = "us_cash"
-        window_label = "09:00–16:00 UTC"
+        window_label = "09:00–17:00"
     elif normalized_symbol == "GDAXI.INDX":
         base_hours = list(range(7, 16))
         session_key = "xetra_cash"
@@ -96,7 +96,7 @@ def _model_detail_hourly_contract(symbol: Optional[str], observed_hours: Optiona
             if isinstance(hour, int) and 0 <= hour <= 23
         }
     )
-    visible_hours = sorted(set(base_hours) | set(normalized_observed))
+    visible_hours = base_hours or normalized_observed
 
     return {
         "hours": visible_hours,
@@ -2907,7 +2907,7 @@ async def get_model_detail_analytics(
             )
 
         now_utc = datetime.now(timezone.utc)
-        total = len(filtered_signals)
+        total_signals = len(filtered_signals)
         completed = 0
         stopped = 0
         expired = 0
@@ -2924,7 +2924,6 @@ async def get_model_detail_analytics(
         hourly_stats = {h: {"total": 0, "wins": 0, "pips": 0.0} for h in range(24)}
         tf_stats = {}
         daily_stats = {}
-        dow_stats = {d: {"total": 0, "wins": 0, "pips": 0.0} for d in range(7)}
         tp_counts = {"TP1": 0, "TP2": 0, "TP3": 0, "TP4": 0}
         tp_total_for_rate = 0
 
@@ -2981,17 +2980,11 @@ async def get_model_detail_analytics(
 
             # Daily bucket
             if date_key not in daily_stats:
-                daily_stats[date_key] = {"total": 0, "wins": 0, "pips": 0.0, "cumulative": 0.0}
+                daily_stats[date_key] = {"total": 0, "wins": 0, "pips": 0.0, "cumulative": 0.0, "dow": dow}
             daily_stats[date_key]["total"] += 1
             if is_win:
                 daily_stats[date_key]["wins"] += 1
             daily_stats[date_key]["pips"] += pips_change or 0.0
-
-            # Day of week
-            dow_stats[dow]["total"] += 1
-            if is_win:
-                dow_stats[dow]["wins"] += 1
-            dow_stats[dow]["pips"] += pips_change or 0.0
 
             # TP hit rates
             th = _parse_targets_hit(sig.get("targets_hit"))
@@ -3074,16 +3067,31 @@ async def get_model_detail_analytics(
 
         # Day of week
         dow_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        dow_daily_groups = {d: [] for d in range(7)}
+        for day_bucket in daily_stats.values():
+            day_dow = day_bucket.get("dow")
+            if isinstance(day_dow, int) and 0 <= day_dow <= 6 and day_bucket.get("total", 0) > 0:
+                dow_daily_groups[day_dow].append(day_bucket)
+
         day_of_week = []
         for d in range(7):
-            s = dow_stats[d]
+            daily_buckets = dow_daily_groups[d]
+            weekday_total = sum(bucket["total"] for bucket in daily_buckets)
+            wins = sum(bucket["wins"] for bucket in daily_buckets)
+            avg_day_win_rate = (
+                sum((bucket["wins"] / bucket["total"] * 100) for bucket in daily_buckets if bucket["total"] > 0)
+                / len(daily_buckets)
+            ) if daily_buckets else 0.0
+            avg_day_pips = (
+                sum(bucket["pips"] for bucket in daily_buckets) / len(daily_buckets)
+            ) if daily_buckets else 0.0
             day_of_week.append({
                 "day": dow_names[d],
                 "day_short": dow_names[d][:3],
-                "total": s["total"],
-                "wins": s["wins"],
-                "win_rate": round((s["wins"] / s["total"] * 100) if s["total"] > 0 else 0, 1),
-                "avg_pips": round(s["pips"] / s["total"], 1) if s["total"] > 0 else 0,
+                "total": weekday_total,
+                "wins": wins,
+                "win_rate": round(avg_day_win_rate, 1),
+                "avg_pips": round(avg_day_pips, 1),
             })
 
         # TP hit rates
@@ -3111,7 +3119,7 @@ async def get_model_detail_analytics(
             "model": resolved_model,
             "symbol": symbol,
             "overview": {
-                "total_signals": total,
+                "total_signals": total_signals,
                 "win_rate": round(win_rate, 1),
                 "completed": completed,
                 "stopped": stopped,

@@ -1123,9 +1123,8 @@ function HourlyPanel({
   copy: LocaleCopy;
 }) {
   const rowByHour = new Map(data.map((row) => [row.hour, row]));
-  const ordered = Array.from(
-    new Set([...(meta?.hourly_visible_hours || []), ...data.map((row) => row.hour)])
-  )
+  const visibleHours = meta?.hourly_visible_hours?.length ? meta.hourly_visible_hours : data.map((row) => row.hour);
+  const ordered = Array.from(new Set(visibleHours))
     .sort((a, b) => a - b)
     .map(
       (hour) =>
