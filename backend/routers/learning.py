@@ -2213,7 +2213,14 @@ async def get_model_timeframe_analysis(
             
             sym = sig.get("symbol", "unknown")
             if sym not in stats["by_symbol"]:
-                stats["by_symbol"][sym] = {"total": 0, "completed": 0, "stopped": 0, "expired": 0, "net_pips": 0}
+                stats["by_symbol"][sym] = {
+                    "total": 0,
+                    "completed": 0,
+                    "stopped": 0,
+                    "expired": 0,
+                    "net_pips": 0,
+                    "target_hits": {"TP1": 0, "TP2": 0, "TP3": 0, "TP4": 0},
+                }
             stats["by_symbol"][sym]["total"] += 1
             if classified_status == "completed":
                 stats["by_symbol"][sym]["completed"] += 1
@@ -2239,9 +2246,11 @@ async def get_model_timeframe_analysis(
                 stats["by_direction"][direction] += 1
             
             targets_hit = parse_targets_hit(sig.get("targets_hit"))
-            for tp in ["TP1", "TP2", "TP3", "TP4"]:
-                if targets_hit.get(tp):
-                    stats["target_hits"][tp] += 1
+            if classified_status in {"completed", "stopped"}:
+                for tp in ["TP1", "TP2", "TP3", "TP4"]:
+                    if targets_hit.get(tp):
+                        stats["target_hits"][tp] += 1
+                        stats["by_symbol"][sym]["target_hits"][tp] += 1
             
             if classified_status == "completed":
                 profit = max(scored_pips or 0.0, 0.0)
@@ -2271,7 +2280,23 @@ async def get_model_timeframe_analysis(
         # Target hit rates
         target_rates = {}
         for tp, hits in stats["target_hits"].items():
-            target_rates[tp] = round(hits / stats["total"] * 100, 1) if stats["total"] > 0 else 0
+            target_rates[tp] = round(hits / total_with_outcome * 100, 1) if total_with_outcome > 0 else 0
+
+        by_symbol = {}
+        for sym, sym_stats in stats["by_symbol"].items():
+            sym_total_with_outcome = sym_stats["completed"] + sym_stats["stopped"]
+            by_symbol[sym] = {
+                "total": sym_stats["total"],
+                "completed": sym_stats["completed"],
+                "stopped": sym_stats["stopped"],
+                "expired": sym_stats["expired"],
+                "net_pips": sym_stats["net_pips"],
+                "win_rate": round(sym_stats["completed"] / sym_total_with_outcome * 100, 1) if sym_total_with_outcome > 0 else 0,
+                "target_rates": {
+                    tp: round(hits / sym_total_with_outcome * 100, 1) if sym_total_with_outcome > 0 else 0
+                    for tp, hits in sym_stats["target_hits"].items()
+                },
+            }
         
         return {
             "model": model,
@@ -2292,7 +2317,7 @@ async def get_model_timeframe_analysis(
             "max_profit_pips": stats["max_profit_pips"],
             "max_loss_pips": stats["max_loss_pips"],
             "risk_reward": round(stats["avg_profit_pips"] / stats["avg_loss_pips"], 2) if stats["avg_loss_pips"] > 0 else 0,
-            "by_symbol": stats["by_symbol"],
+            "by_symbol": by_symbol,
             "by_timeframe": stats["by_timeframe"],
             "by_direction": stats["by_direction"],
             "signals": signals[:20],  # Last 20 signals for display
@@ -2928,7 +2953,6 @@ async def get_model_detail_analytics(
         tf_stats = {}
         daily_stats = {}
         tp_counts = {"TP1": 0, "TP2": 0, "TP3": 0, "TP4": 0}
-        tp_total_for_rate = 0
 
         chronologically_sorted = sorted(filtered_signals, key=lambda sig: sig["_created_dt"])
         recent_signals_source = sorted(filtered_signals, key=lambda sig: sig["_created_dt"], reverse=True)
@@ -3005,8 +3029,7 @@ async def get_model_detail_analytics(
 
             # TP hit rates
             th = _parse_targets_hit(sig.get("targets_hit"))
-            if th:
-                tp_total_for_rate += 1
+            if status in {"completed", "stopped"} and th:
                 for tp_key in ["TP1", "TP2", "TP3", "TP4"]:
                     if th.get(tp_key):
                         tp_counts[tp_key] += 1
@@ -3115,7 +3138,7 @@ async def get_model_detail_analytics(
         tp_hit_rates = {}
         for tp_key in ["TP1", "TP2", "TP3", "TP4"]:
             tp_hit_rates[tp_key] = round(
-                (tp_counts[tp_key] / tp_total_for_rate * 100) if tp_total_for_rate > 0 else 0, 1
+                (tp_counts[tp_key] / resolved * 100) if resolved > 0 else 0, 1
             )
 
         recent_signals = []

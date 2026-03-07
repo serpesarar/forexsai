@@ -26,6 +26,9 @@ class _SequenceQuery:
     def gte(self, *_args, **_kwargs):
         return self
 
+    def neq(self, *_args, **_kwargs):
+        return self
+
     def lt(self, *_args, **_kwargs):
         return self
 
@@ -47,6 +50,22 @@ class _FakeClient:
         if name == "prediction_logs":
             return self._prediction_logs
         raise AssertionError(f"Unexpected table requested: {name}")
+
+
+def _load_learning_module(module_name: str):
+    with patch.dict(
+        sys.modules,
+        {
+            "anthropic": SimpleNamespace(Anthropic=object),
+            "services.telegram_service": SimpleNamespace(telegram_notifier=SimpleNamespace()),
+        },
+    ):
+        module_path = backend_dir / "routers" / "learning.py"
+        spec = importlib.util.spec_from_file_location(module_name, module_path)
+        learning_module = importlib.util.module_from_spec(spec)
+        assert spec and spec.loader
+        spec.loader.exec_module(learning_module)
+        return learning_module
 
 
 @pytest.mark.asyncio
@@ -347,3 +366,255 @@ async def test_model_detail_analytics_uses_session_hours_and_tp_sl_only_weekday_
     assert weekday_rows["Wednesday"]["total"] == 0
 
     assert any(row["status"] == "active" and row["pips"] == 0.0 for row in payload["recent_signals"])
+
+
+@pytest.mark.asyncio
+async def test_model_detail_analytics_tp_rates_use_common_resolved_denominator():
+    learning_module = _load_learning_module("test_learning_router_tp_rates")
+    get_model_detail_analytics = learning_module.get_model_detail_analytics
+    fixed_now = datetime(2026, 3, 7, 12, 0, tzinfo=timezone.utc)
+
+    signal_rows = [
+        {
+            "id": "tp-win-001",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "ml_confidence": 70,
+            "status": "completed",
+            "ml_entry_price": 100.0,
+            "exit_price": 110.0,
+            "stop_loss_pips": None,
+            "created_at": "2026-03-07T09:00:00Z",
+            "highest_profit_pips": 10,
+            "lowest_drawdown_pips": -1,
+            "targets_hit": {"TP1": True, "TP2": True},
+            "model_type": "ml",
+            "strategy": None,
+        },
+        {
+            "id": "tp-win-002",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "ml_confidence": 68,
+            "status": "completed",
+            "ml_entry_price": 100.0,
+            "exit_price": 108.0,
+            "stop_loss_pips": None,
+            "created_at": "2026-03-07T10:00:00Z",
+            "highest_profit_pips": 8,
+            "lowest_drawdown_pips": -2,
+            "targets_hit": {"TP1": True},
+            "model_type": "ml",
+            "strategy": None,
+        },
+        {
+            "id": "tp-win-003",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "ml_confidence": 65,
+            "status": "completed",
+            "ml_entry_price": 100.0,
+            "exit_price": 106.0,
+            "stop_loss_pips": None,
+            "created_at": "2026-03-07T11:00:00Z",
+            "highest_profit_pips": 6,
+            "lowest_drawdown_pips": -2,
+            "targets_hit": {},
+            "model_type": "ml",
+            "strategy": None,
+        },
+        {
+            "id": "tp-stop-004",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "ml_confidence": 55,
+            "status": "stopped",
+            "ml_entry_price": 100.0,
+            "exit_price": None,
+            "stop_loss_pips": 10,
+            "created_at": "2026-03-07T12:00:00Z",
+            "highest_profit_pips": 2,
+            "lowest_drawdown_pips": -10,
+            "targets_hit": {},
+            "model_type": "ml",
+            "strategy": None,
+        },
+        {
+            "id": "tp-expired-005",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "ml_confidence": 50,
+            "status": "expired",
+            "ml_entry_price": 100.0,
+            "exit_price": None,
+            "stop_loss_pips": None,
+            "created_at": "2026-03-07T13:00:00Z",
+            "highest_profit_pips": 1,
+            "lowest_drawdown_pips": -1,
+            "targets_hit": {},
+            "model_type": "ml",
+            "strategy": None,
+        },
+        {
+            "id": "tp-active-006",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "ml_confidence": 49,
+            "status": "active",
+            "ml_entry_price": 100.0,
+            "exit_price": None,
+            "stop_loss_pips": None,
+            "created_at": "2026-03-07T14:00:00Z",
+            "highest_profit_pips": 0,
+            "lowest_drawdown_pips": 0,
+            "targets_hit": {},
+            "model_type": "ml",
+            "strategy": None,
+        },
+    ]
+
+    client = _FakeClient([[], signal_rows])
+
+    def _classify(sig, default_symbol=None):
+        status = sig.get("status")
+        if status == "completed":
+            return status, True, 10.0
+        if status == "stopped":
+            return status, False, -10.0
+        if status == "expired":
+            return status, False, 0.0
+        if status == "active":
+            return status, False, 0.0
+        return None, False, 0.0
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ), patch.object(learning_module, "_utc_now", return_value=fixed_now), patch.object(
+        learning_module, "classify_signal", side_effect=_classify
+    ):
+        payload = await get_model_detail_analytics(model="ml", symbol="NDX.INDX", days=1, timeframe="all")
+
+    assert payload["overview"]["completed"] == 3
+    assert payload["overview"]["stopped"] == 1
+    assert payload["overview"]["expired"] == 1
+    assert payload["overview"]["active"] == 1
+    assert payload["tp_hit_rates"] == {"TP1": 50.0, "TP2": 25.0, "TP3": 0, "TP4": 0}
+
+
+@pytest.mark.asyncio
+async def test_model_analysis_target_rates_use_common_resolved_denominator_per_symbol():
+    learning_module = _load_learning_module("test_learning_model_analysis_rates")
+    get_model_timeframe_analysis = learning_module.get_model_timeframe_analysis
+    fixed_now = datetime(2026, 3, 7, 12, 0, tzinfo=timezone.utc)
+
+    signal_rows = [
+        {
+            "id": "ndx-win-001",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "status": "completed",
+            "targets_hit": {"TP1": True, "TP2": True},
+            "model_type": "ml",
+            "strategy": None,
+            "created_at": "2026-03-07T09:00:00Z",
+        },
+        {
+            "id": "ndx-win-002",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "status": "completed",
+            "targets_hit": {"TP1": True},
+            "model_type": "ml",
+            "strategy": None,
+            "created_at": "2026-03-07T10:00:00Z",
+        },
+        {
+            "id": "ndx-stop-003",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "SELL",
+            "status": "stopped",
+            "targets_hit": {},
+            "model_type": "ml",
+            "strategy": None,
+            "created_at": "2026-03-07T11:00:00Z",
+        },
+        {
+            "id": "xau-win-004",
+            "symbol": "XAUUSD",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "status": "completed",
+            "targets_hit": {"TP2": True},
+            "model_type": "ml",
+            "strategy": None,
+            "created_at": "2026-03-07T12:00:00Z",
+        },
+        {
+            "id": "xau-expired-005",
+            "symbol": "XAUUSD",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "status": "expired",
+            "targets_hit": {},
+            "model_type": "ml",
+            "strategy": None,
+            "created_at": "2026-03-07T13:00:00Z",
+        },
+        {
+            "id": "pulse-win-006",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "status": "completed",
+            "targets_hit": {"TP1": True},
+            "model_type": "pulse1",
+            "strategy": None,
+            "created_at": "2026-03-07T14:00:00Z",
+        },
+    ]
+
+    client = _FakeClient([signal_rows])
+
+    def _classify(sig, default_symbol=None):
+        status = sig.get("status")
+        if status == "completed":
+            return status, True, 12.0
+        if status == "stopped":
+            return status, False, -8.0
+        if status == "expired":
+            return status, False, 0.0
+        return None, False, 0.0
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ), patch.object(learning_module, "_utc_now", return_value=fixed_now), patch.object(
+        learning_module, "classify_signal", side_effect=_classify
+    ):
+        payload = await get_model_timeframe_analysis(model="ml", symbol=None, timeframe=None, days=30)
+
+    assert payload["completed"] == 3
+    assert payload["stopped"] == 1
+    assert payload["expired"] == 1
+    assert payload["total_signals"] == 5
+    assert payload["target_rates"] == {"TP1": 50.0, "TP2": 50.0, "TP3": 0.0, "TP4": 0.0}
+    assert payload["by_symbol"]["NDX.INDX"]["target_rates"] == {
+        "TP1": 66.7,
+        "TP2": 33.3,
+        "TP3": 0.0,
+        "TP4": 0.0,
+    }
+    assert payload["by_symbol"]["XAUUSD"]["target_rates"] == {
+        "TP1": 0.0,
+        "TP2": 100.0,
+        "TP3": 0.0,
+        "TP4": 0.0,
+    }

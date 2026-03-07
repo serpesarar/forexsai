@@ -1043,7 +1043,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                     "total": 0, "completed": 0, "stopped": 0, "expired": 0,
                     "total_profit_pips": 0, "total_loss_pips": 0,
                     "profits": [], "losses": [],
-                    "target_hits": {},  # TP1: count, TP2: count, etc.
+                    "target_hits": {},  # TP1: hit count, TP2: hit count, etc.
                     "symbols": {},
                     "timeframes": {},  # per-timeframe stats
                 }
@@ -1091,20 +1091,13 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                     m["timeframes"][tf]["total_loss_pips"] += loss
 
             th = parse_targets_hit(sig.get("targets_hit"))
-            if th:
+            if status in {"completed", "stopped"} and th:
                 for tp_name, hit in th.items():
-                    # Global
-                    if tp_name not in m["target_hits"]:
-                        m["target_hits"][tp_name] = {"total": 0, "hit": 0}
-                    m["target_hits"][tp_name]["total"] += 1
                     if hit:
-                        m["target_hits"][tp_name]["hit"] += 1
-                    # Per-symbol
-                    if tp_name not in m["symbols"][sym]["target_hits"]:
-                        m["symbols"][sym]["target_hits"][tp_name] = {"total": 0, "hit": 0}
-                    m["symbols"][sym]["target_hits"][tp_name]["total"] += 1
-                    if hit:
-                        m["symbols"][sym]["target_hits"][tp_name]["hit"] += 1
+                        m["target_hits"][tp_name] = m["target_hits"].get(tp_name, 0) + 1
+                        m["symbols"][sym]["target_hits"][tp_name] = (
+                            m["symbols"][sym]["target_hits"].get(tp_name, 0) + 1
+                        )
 
         # Ensure all known model types exist in response (even with 0 signals)
         KNOWN_MODELS = ["ml", "pulse1", "pulse2", "pulse3", "emel", "emel_inverse", "hybrid"]
@@ -1122,36 +1115,33 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
         # Build final stats
         model_stats = {}
         for mt, m in models.items():
-            total = m["total"] or 1
             # Exclude expired from win_rate calculation (only completed + stopped count)
             total_with_outcome = m["completed"] + m["stopped"]
-            if total_with_outcome == 0:
-                total_with_outcome = 1  # Prevent div by zero
+            outcome_denominator = total_with_outcome or 1
             
             avg_profit = sum(m["profits"]) / len(m["profits"]) if m["profits"] else 0
             avg_loss = sum(m["losses"]) / len(m["losses"]) if m["losses"] else 0
 
             target_rates = {}
-            for tp_name, counts in m["target_hits"].items():
-                t = counts["total"] or 1
-                target_rates[tp_name] = round(counts["hit"] / t * 100, 1)
+            for tp_name in ["TP1", "TP2", "TP3", "TP4"]:
+                hits = m["target_hits"].get(tp_name, 0)
+                target_rates[tp_name] = round(hits / outcome_denominator * 100, 1) if total_with_outcome > 0 else 0
 
             # Build per-symbol stats with target rates
             symbols_out = {}
             for sym, sd in m["symbols"].items():
                 sym_target_rates = {}
-                for tp_name, counts in sd.get("target_hits", {}).items():
-                    t = counts["total"] or 1
-                    sym_target_rates[tp_name] = round(counts["hit"] / t * 100, 1)
                 sym_total_with_outcome = sd.get("completed", 0) + sd.get("stopped", 0)
-                if sym_total_with_outcome == 0:
-                    sym_total_with_outcome = 1
+                sym_outcome_denominator = sym_total_with_outcome or 1
+                for tp_name in ["TP1", "TP2", "TP3", "TP4"]:
+                    hits = sd.get("target_hits", {}).get(tp_name, 0)
+                    sym_target_rates[tp_name] = round(hits / sym_outcome_denominator * 100, 1) if sym_total_with_outcome > 0 else 0
                 symbols_out[sym] = {
                     "total": sd["total"],
                     "completed": sd.get("completed", 0),
                     "stopped": sd.get("stopped", 0),
                     "expired": sd.get("expired", 0),
-                    "win_rate": round(sd.get("completed", 0) / sym_total_with_outcome * 100, 1),
+                    "win_rate": round(sd.get("completed", 0) / sym_outcome_denominator * 100, 1),
                     "net_pips": round(sd.get("total_profit_pips", 0) - sd.get("total_loss_pips", 0), 1),
                     "target_rates": sym_target_rates,
                 }
@@ -1176,7 +1166,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                 "completed": m["completed"],
                 "stopped": m["stopped"],
                 "expired": m["expired"],
-                "win_rate": round(m["completed"] / total_with_outcome * 100, 1),
+                "win_rate": round(m["completed"] / outcome_denominator * 100, 1),
                 "avg_profit_pips": round(avg_profit, 1),
                 "avg_loss_pips": round(avg_loss, 1),
                 "risk_reward": round(avg_profit / avg_loss, 2) if avg_loss > 0 else 0,

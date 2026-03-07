@@ -13,6 +13,7 @@ import sys
 import os
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch, AsyncMock
 
 # Add backend to path
@@ -323,6 +324,46 @@ class RecordingClient:
         return RecordingQuery(self, table_name)
 
 
+class SequenceQuery:
+    def __init__(self, client, table_name: str):
+        self.client = client
+        self.table_name = table_name
+
+    def select(self, *_args, **_kwargs):
+        return self
+
+    def eq(self, *_args, **_kwargs):
+        return self
+
+    def neq(self, *_args, **_kwargs):
+        return self
+
+    def gte(self, *_args, **_kwargs):
+        return self
+
+    def lt(self, *_args, **_kwargs):
+        return self
+
+    def limit(self, *_args, **_kwargs):
+        return self
+
+    def order(self, *_args, **_kwargs):
+        return self
+
+    def execute(self):
+        responses = self.client.responses.setdefault(self.table_name, [])
+        data = responses.pop(0) if responses else []
+        return SimpleNamespace(data=data, error=None)
+
+
+class SequenceClient:
+    def __init__(self, responses):
+        self.responses = {table: list(items) for table, items in responses.items()}
+
+    def table(self, table_name: str):
+        return SequenceQuery(self, table_name)
+
+
 @pytest.mark.asyncio
 async def test_process_signal_persists_targets_as_dicts():
     from services.signal_lifecycle import _process_signal
@@ -357,6 +398,152 @@ async def test_process_signal_persists_targets_as_dicts():
     assert isinstance(prediction_update["payload"]["targets"], dict)
     assert prediction_update["payload"]["targets_hit"]["TP1"] is True
     assert prediction_update["payload"]["targets"]["TP1"] == 2005.0
+
+
+@pytest.mark.asyncio
+async def test_dashboard_target_rates_use_common_resolved_denominator_for_models_and_symbols():
+    from services.signal_lifecycle import get_dashboard_stats
+
+    fixed_now = datetime(2026, 3, 7, 12, 0, tzinfo=timezone.utc)
+    today_rows = [
+        {
+            "id": "ndx-win-001",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "ml_confidence": 70,
+            "ml_entry_price": 100.0,
+            "model_type": "ml",
+            "status": "completed",
+            "targets_hit": {"TP1": True, "TP2": True},
+            "highest_profit_pips": 10,
+            "lowest_drawdown_pips": -1,
+            "exit_price": 110.0,
+            "exit_time": "2026-03-07T09:10:00Z",
+            "stop_loss_pips": None,
+            "targets": {},
+            "created_at": "2026-03-07T09:00:00Z",
+            "strategy": None,
+        },
+        {
+            "id": "ndx-win-002",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "ml_confidence": 69,
+            "ml_entry_price": 100.0,
+            "model_type": "ml",
+            "status": "completed",
+            "targets_hit": {"TP1": True},
+            "highest_profit_pips": 9,
+            "lowest_drawdown_pips": -1,
+            "exit_price": 109.0,
+            "exit_time": "2026-03-07T10:10:00Z",
+            "stop_loss_pips": None,
+            "targets": {},
+            "created_at": "2026-03-07T10:00:00Z",
+            "strategy": None,
+        },
+        {
+            "id": "ndx-stop-003",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "ml_confidence": 58,
+            "ml_entry_price": 100.0,
+            "model_type": "ml",
+            "status": "stopped",
+            "targets_hit": {},
+            "highest_profit_pips": 2,
+            "lowest_drawdown_pips": -8,
+            "exit_price": None,
+            "exit_time": "2026-03-07T11:10:00Z",
+            "stop_loss_pips": 8,
+            "targets": {},
+            "created_at": "2026-03-07T11:00:00Z",
+            "strategy": None,
+        },
+        {
+            "id": "xau-win-004",
+            "symbol": "XAUUSD",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "ml_confidence": 72,
+            "ml_entry_price": 100.0,
+            "model_type": "ml",
+            "status": "completed",
+            "targets_hit": {"TP2": True},
+            "highest_profit_pips": 11,
+            "lowest_drawdown_pips": -2,
+            "exit_price": 111.0,
+            "exit_time": "2026-03-07T12:10:00Z",
+            "stop_loss_pips": None,
+            "targets": {},
+            "created_at": "2026-03-07T12:00:00Z",
+            "strategy": None,
+        },
+        {
+            "id": "xau-expired-005",
+            "symbol": "XAUUSD",
+            "timeframe": "15m",
+            "ml_direction": "BUY",
+            "ml_confidence": 50,
+            "ml_entry_price": 100.0,
+            "model_type": "ml",
+            "status": "expired",
+            "targets_hit": {},
+            "highest_profit_pips": 1,
+            "lowest_drawdown_pips": -1,
+            "exit_price": None,
+            "exit_time": None,
+            "stop_loss_pips": None,
+            "targets": {},
+            "created_at": "2026-03-07T13:00:00Z",
+            "strategy": None,
+        },
+    ]
+
+    client = SequenceClient(
+        {
+            "prediction_logs": [[], today_rows, today_rows, [{"id": "active-1"}]],
+            "signal_failures": [[]],
+        }
+    )
+
+    def _classify(sig, default_symbol=None):
+        status = sig.get("status")
+        if status == "completed":
+            return status, True, 10.0
+        if status == "stopped":
+            return status, False, -8.0
+        if status == "expired":
+            return status, False, 0.0
+        return None, False, 0.0
+
+    with patch("services.signal_lifecycle.is_db_available", return_value=True), patch(
+        "services.signal_lifecycle.get_supabase_client", return_value=client
+    ), patch("services.signal_lifecycle._utc_now", return_value=fixed_now), patch(
+        "services.signal_lifecycle.classify_signal", side_effect=_classify
+    ):
+        payload = await get_dashboard_stats(days=1)
+
+    ml_stats = payload["model_stats"]["ml"]
+    assert ml_stats["completed"] == 3
+    assert ml_stats["stopped"] == 1
+    assert ml_stats["expired"] == 1
+    assert ml_stats["target_rates"] == {"TP1": 50.0, "TP2": 50.0, "TP3": 0, "TP4": 0}
+    assert ml_stats["symbols"]["NDX.INDX"]["target_rates"] == {
+        "TP1": 66.7,
+        "TP2": 33.3,
+        "TP3": 0,
+        "TP4": 0,
+    }
+    assert ml_stats["symbols"]["XAUUSD"]["target_rates"] == {
+        "TP1": 0.0,
+        "TP2": 100.0,
+        "TP3": 0.0,
+        "TP4": 0.0,
+    }
 
 
 if __name__ == "__main__":
