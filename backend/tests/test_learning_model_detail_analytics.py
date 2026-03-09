@@ -190,6 +190,56 @@ async def test_model_detail_analytics_repairs_target_hit_rows_with_bad_exit_pric
 
 
 @pytest.mark.asyncio
+async def test_historical_signals_endpoint_includes_scoped_ml_records_for_ml_filter():
+    learning_module = _load_learning_module("test_learning_historical_scoped_ml")
+    get_historical_signals_endpoint = learning_module.get_historical_signals_endpoint
+
+    signal_rows = [
+        {
+            "id": "scoped-ml-001",
+            "symbol": "NDX.INDX",
+            "ml_direction": "BUY",
+            "ml_confidence": 77,
+            "strategy": "balanced",
+            "status": "completed",
+            "targets_hit": {"TP1": True},
+            "highest_profit_pips": 12,
+            "lowest_drawdown_pips": 0,
+            "created_at": "2026-03-06T11:00:00Z",
+            "model_type": "ml:balanced",
+            "exit_price": 110.0,
+            "exit_time": "2026-03-06T12:00:00Z",
+        },
+        {
+            "id": "pulse-row-002",
+            "symbol": "NDX.INDX",
+            "ml_direction": "BUY",
+            "ml_confidence": 61,
+            "strategy": "PULSE_ML",
+            "status": "completed",
+            "targets_hit": {"TP1": True},
+            "highest_profit_pips": 8,
+            "lowest_drawdown_pips": 0,
+            "created_at": "2026-03-06T10:00:00Z",
+            "model_type": "pulse2",
+            "exit_price": 108.0,
+            "exit_time": "2026-03-06T10:30:00Z",
+        },
+    ]
+
+    client = _FakeClient([signal_rows])
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ):
+        payload = await get_historical_signals_endpoint(symbol="NDX.INDX", model="ml", days=30)
+
+    assert payload["totalSignals"] == 1
+    assert payload["recentSignals"][0]["id"] == "scoped-ml-001"
+    assert payload["modelId"] == "ml_core"
+
+
+@pytest.mark.asyncio
 async def test_model_detail_analytics_uses_session_hours_and_tp_sl_only_weekday_buckets():
     with patch.dict(
         sys.modules,

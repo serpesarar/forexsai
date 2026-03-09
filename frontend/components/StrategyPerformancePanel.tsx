@@ -1,15 +1,12 @@
 "use client";
-/**
- * STRATEGY PERFORMANCE ANALYSIS — Premium Institutional Fintech Panel
- * Bloomberg Terminal meets modern AI startup aesthetic.
- * Design: #0B0F17 dark base, #141C2B cards, #4F8CFF AI accent
- */
 
-import { useState, useEffect, useCallback, lazy, Suspense } from "react";
-import { PanelInfoButton } from "./PanelInfoButton";
+import { useState, useEffect, useCallback, lazy, Suspense, type ComponentType } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ModelPerformanceModal } from "./panels/ModelPerformanceModal";
+import { List, Crosshair } from "lucide-react";
+
 import { getApiBase } from "@/lib/api/base";
+import { PanelInfoButton } from "./PanelInfoButton";
+import { ModelPerformanceModal } from "./panels/ModelPerformanceModal";
 import {
   ChartsIcon as BarChart3,
   RotateIcon as RefreshCw,
@@ -22,16 +19,12 @@ import {
   ArrowUpIcon as TrendingUp,
   AlertIcon as AlertTriangle,
 } from "./ui/CustomIcons";
-import { List, Crosshair } from "lucide-react";
 
-// Lazy load SignalDetailModal
 const SignalDetailModal = lazy(() => import("./SignalDetailModal"));
 
 const API_BASE = getApiBase();
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-
-// ── Theme-aware Color Palette (CSS Variables) ───────────────────────────────
-// All colors now use CSS variables from theme.tokens.css
+const TARGET_LEVELS = ["TP1", "TP2", "TP3", "TP4"] as const;
 
 const P = {
   bg: "var(--bg-primary)",
@@ -47,39 +40,167 @@ const P = {
   accent: "var(--accent-info)",
 };
 
+type LeaderKey = "quality" | "scalping" | "long_term";
+
 interface StrategyData {
+  scope: string;
   total_predictions: number;
+  scored_signals: number;
+  resolved_signals: number;
   with_outcome: number;
   correct: number;
+  completed: number;
+  stopped: number;
+  expired: number;
+  active: number;
   accuracy: number | null;
+  win_rate: number | null;
+  target_hits: number;
+  stop_hits: number;
   target_hit_rate: number | null;
   stop_hit_rate: number | null;
   avg_confidence: number;
-  target_hits: number;
-  stop_hits: number;
-  tp_breakdown?: Record<string, number> | null;
-  tp_hit_rates?: Record<string, number> | null;
+  net_pips: number;
+  avg_pips: number;
+  tp_breakdown: Record<string, number>;
+  tp_hit_rates: Record<string, number | null>;
+  avg_duration_minutes: number | null;
+  avg_win_duration_minutes: number | null;
+  avg_loss_duration_minutes: number | null;
+  quality_score: number;
+  scalp_score: number;
+  long_term_score: number;
 }
 
-const TARGET_LEVELS = ["TP1", "TP2", "TP3", "TP4"] as const;
+interface LeaderData {
+  scope: string | null;
+  score: number | null;
+  resolved_signals: number;
+  win_rate: number | null;
+  net_pips: number | null;
+  avg_duration_minutes: number | null;
+}
+
+interface SymbolSummary {
+  available_scopes: string[];
+  total_predictions: number;
+  resolved_signals: number;
+  leaders: {
+    quality: LeaderData;
+    scalping: LeaderData;
+    long_term: LeaderData;
+  };
+}
 
 interface StrategyPerformanceResponse {
   period_days: number;
-  strategies: {
-    [symbol: string]: {
-      [strategy: string]: StrategyData;
+  predictions_count: number;
+  ml_predictions_count: number;
+  outcomes_count: number;
+  eligible_outcomes_count: number;
+  strategies: Record<string, Record<string, StrategyData>>;
+  symbols: Record<string, SymbolSummary>;
+  best_strategies: Record<string, { strategy: string | null; accuracy: number | null }>;
+  strategy_order: string[];
+  strategy_descriptions: Record<string, string>;
+  overall_summary: {
+    total_predictions: number;
+    resolved_signals: number;
+    leaders: {
+      quality: LeaderData;
+      scalping: LeaderData;
+      long_term: LeaderData;
     };
-  };
-  best_strategies: {
-    [symbol: string]: {
-      strategy: string | null;
-      accuracy: number | null;
-    };
-  };
-  strategy_descriptions: {
-    [strategy: string]: string;
   };
   error?: string;
+}
+
+interface Signal {
+  id: string;
+  symbol: string;
+  timeframe?: string;
+  ml_direction: string;
+  ml_confidence: number;
+  status: string;
+  created_at: string;
+  pnl_pips?: number | null;
+  duration_minutes?: number | null;
+  normalized_model?: string;
+  strategy_scope?: string | null;
+}
+
+interface RecentSignalsResponse {
+  signals: Signal[];
+  count: number;
+  symbol?: string;
+  strategy_scope?: string;
+}
+
+const STRATEGY_CONFIG: Record<string, { name: string; nameEn: string; icon: ComponentType<any>; color: string }> = {
+  main: { name: "Ham ML", nameEn: "Main ML", icon: TrendingUp, color: "#60A5FA" },
+  ultra_safe: { name: "Ultra Güvenli", nameEn: "Ultra Safe", icon: Shield, color: P.green },
+  balanced: { name: "Dengeli", nameEn: "Balanced", icon: Target, color: P.accent },
+  full_power: { name: "Full Power", nameEn: "Full Power", icon: Zap, color: P.warn },
+  aggressive: { name: "Agresif", nameEn: "Aggressive", icon: Flame, color: P.red },
+  nasdaq_precision: { name: "NASDAQ Precision", nameEn: "NASDAQ Precision", icon: Crosshair, color: "#22D3EE" },
+};
+
+const LEADER_META: Record<LeaderKey, { label: string; color: string }> = {
+  quality: { label: "Quality", color: P.accent },
+  scalping: { label: "Scalp", color: P.warn },
+  long_term: { label: "Long", color: P.green },
+};
+
+const SYMBOL_META = [
+  { key: "NDX.INDX", label: "NASDAQ", icon: "📈", color: P.green },
+  { key: "XAUUSD", label: "XAU/USD", icon: "⭐", color: P.warn },
+  { key: "GDAXI.INDX", label: "DAX", icon: "🏛", color: P.accent },
+  { key: "USOIL.FOREX", label: "US Oil", icon: "🛢", color: "#FB923C" },
+];
+
+function formatPercent(value: number | null | undefined) {
+  if (value === null || value === undefined) return "—";
+  return `${Number.isInteger(value) ? value : value.toFixed(1)}%`;
+}
+
+function formatPips(value: number | null | undefined) {
+  if (value === null || value === undefined) return "—";
+  return `${value > 0 ? "+" : ""}${value.toFixed(1)} pips`;
+}
+
+function formatDuration(value: number | null | undefined) {
+  if (value === null || value === undefined) return "—";
+  if (value < 60) return `${Math.round(value)}m`;
+  const hours = value / 60;
+  return `${hours < 10 ? hours.toFixed(1) : Math.round(hours)}h`;
+}
+
+function formatScore(value: number | null | undefined) {
+  if (value === null || value === undefined) return "—";
+  return value.toFixed(1);
+}
+
+function getScopeLabel(scope?: string | null, locale: "tr" | "en" = "tr") {
+  if (!scope) return "—";
+  const config = STRATEGY_CONFIG[scope];
+  if (!config) return scope;
+  return locale === "en" ? config.nameEn : config.name;
+}
+
+function getOrderedScopes(scopes?: string[]) {
+  const source = scopes && scopes.length > 0 ? scopes : Object.keys(STRATEGY_CONFIG);
+  const seen = new Set<string>();
+  return source.filter((scope) => {
+    if (!STRATEGY_CONFIG[scope] || seen.has(scope)) return false;
+    seen.add(scope);
+    return true;
+  });
+}
+
+function scoreColor(value: number) {
+  if (value >= 70) return P.green;
+  if (value >= 45) return P.warn;
+  return P.textSec;
 }
 
 async function fetchStrategyPerformance(days: number): Promise<StrategyPerformanceResponse> {
@@ -88,248 +209,222 @@ async function fetchStrategyPerformance(days: number): Promise<StrategyPerforman
   return res.json();
 }
 
-const STRATEGY_CONFIG: Record<string, {
-  name: string; nameEn: string; icon: any; color: string;
-}> = {
-  ultra_safe: { name: "Ultra Güvenli", nameEn: "Ultra Safe", icon: Shield, color: P.green },
-  balanced: { name: "Dengeli", nameEn: "Balanced", icon: Target, color: P.accent },
-  full_power: { name: "Full Power", nameEn: "Full Power", icon: Zap, color: P.warn },
-  aggressive: { name: "Agresif", nameEn: "Aggressive", icon: Flame, color: P.red },
-  nasdaq_precision: { name: "NASDAQ Precision", nameEn: "NASDAQ Precision", icon: Crosshair, color: "#22D3EE" },
-};
+async function fetchRecentSignals(days: number, symbol?: string, strategyScope?: string): Promise<RecentSignalsResponse> {
+  const params = new URLSearchParams();
+  params.set("days", String(days));
+  params.set("limit", "20");
+  params.set("include_active", "true");
+  params.set("model", "ml");
+  if (symbol) params.set("symbol", symbol);
+  if (strategyScope) params.set("strategy_scope", strategyScope);
 
-// ── Premium Progress Bar (6px, Rounded) ─────────────────────────────────────
+  const res = await fetch(`${API_BASE}/api/learning/signals/recent?${params.toString()}`);
+  if (!res.ok) throw new Error("Failed to fetch signals");
+  return res.json();
+}
+
 function AccuracyBar({ value, color }: { value: number | null; color: string }) {
   if (value === null) return <span style={{ fontFamily: FONT, fontSize: 12, color: P.muted }}>—</span>;
+
   return (
     <div className="flex items-center gap-2.5" style={{ minWidth: 120 }}>
       <div className="flex-1 rounded-full overflow-hidden" style={{ height: 6, background: "rgba(255,255,255,0.06)" }}>
         <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(value, 100)}%`, background: color, opacity: 0.85 }} />
       </div>
-      <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color, width: 40, textAlign: "right" as const }}>{value}%</span>
+      <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color, width: 44, textAlign: "right" as const }}>
+        {formatPercent(value)}
+      </span>
     </div>
   );
 }
 
-// ── Strategy Row (Institutional Table) ──────────────────────────────────────
+function StatCard({ label, value, tone = P.text }: { label: string; value: string | number; tone?: string }) {
+  return (
+    <div className="rounded-xl px-4 py-3" style={{ background: P.surface, border: `1px solid ${P.border}` }}>
+      <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</div>
+      <div style={{ fontFamily: FONT, fontSize: 20, fontWeight: 700, color: tone, marginTop: 6 }}>{value}</div>
+    </div>
+  );
+}
+
+function LeaderCard({ title, leader }: { title: string; leader: LeaderData }) {
+  return (
+    <div className="rounded-xl p-4" style={{ background: P.surface, border: `1px solid ${P.border}` }}>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>{title}</div>
+          <div style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: P.text, marginTop: 6 }}>
+            {getScopeLabel(leader.scope)}
+          </div>
+        </div>
+        <div className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1" style={{ background: `${P.accent}10`, border: `1px solid ${P.accent}18` }}>
+          <Trophy className="w-3 h-3" style={{ color: P.accent }} />
+          <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: P.accent }}>Score {formatScore(leader.score)}</span>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-3 mt-4">
+        <div>
+          <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted }}>Win Rate</div>
+          <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.text }}>{formatPercent(leader.win_rate)}</div>
+        </div>
+        <div>
+          <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted }}>Net Pips</div>
+          <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.text }}>{formatPips(leader.net_pips)}</div>
+        </div>
+        <div>
+          <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted }}>Avg Duration</div>
+          <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.text }}>{formatDuration(leader.avg_duration_minutes)}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ScorePill({ label, value }: { label: string; value: number }) {
+  const color = scoreColor(value);
+  return (
+    <span className="inline-flex items-center gap-1 rounded-md px-2 py-1" style={{ background: `${color}12`, border: `1px solid ${color}20` }}>
+      <span style={{ fontFamily: FONT, fontSize: 9, color, fontWeight: 700 }}>{label}</span>
+      <span style={{ fontFamily: FONT, fontSize: 11, color: P.text, fontWeight: 600 }}>{formatScore(value)}</span>
+    </span>
+  );
+}
+
 function StrategyRow({
   strategy,
   data,
-  isBest,
   locale,
+  leaderBadges,
 }: {
   strategy: string;
   data: StrategyData;
-  isBest: boolean;
-  locale: string;
+  locale: "tr" | "en";
+  leaderBadges: LeaderKey[];
 }) {
   const config = STRATEGY_CONFIG[strategy];
   if (!config) return null;
 
   const Icon = config.icon;
   const accColor = data.accuracy !== null && data.accuracy >= 60 ? P.green : data.accuracy !== null && data.accuracy >= 50 ? P.warn : P.red;
+  const highlighted = leaderBadges.length > 0;
 
   return (
     <tr
       style={{
         borderBottom: `1px solid ${P.border}`,
-        background: isBest ? `${P.warn}04` : "transparent",
+        background: highlighted ? `${config.color}06` : "transparent",
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = isBest ? `${P.warn}06` : "rgba(255,255,255,0.015)")}
-      onMouseLeave={(e) => (e.currentTarget.style.background = isBest ? `${P.warn}04` : "transparent")}
+      onMouseEnter={(e) => (e.currentTarget.style.background = highlighted ? `${config.color}10` : "rgba(255,255,255,0.015)")}
+      onMouseLeave={(e) => (e.currentTarget.style.background = highlighted ? `${config.color}06` : "transparent")}
     >
-      <td style={{ padding: "10px 14px", whiteSpace: "nowrap" as const }}>
-        <div className="flex items-center gap-2.5">
-          <div className="rounded-md flex items-center justify-center shrink-0"
-            style={{ width: 28, height: 28, background: `${config.color}10`, border: `1px solid ${config.color}18` }}>
+      <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+        <div className="flex items-start gap-3">
+          <div className="rounded-md flex items-center justify-center shrink-0" style={{ width: 30, height: 30, background: `${config.color}10`, border: `1px solid ${config.color}18` }}>
             <Icon className="w-3.5 h-3.5" style={{ color: config.color }} />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.text }}>
-                {locale === "en" ? config.nameEn : config.name}
-              </span>
-              {isBest && (
-                <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5"
-                  style={{ background: `${P.warn}15`, border: `1px solid ${P.warn}25` }}>
-                  <Trophy className="w-2.5 h-2.5" style={{ color: P.warn }} />
-                  <span style={{ fontFamily: FONT, fontSize: 9, fontWeight: 700, color: P.warn }}>BEST</span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.text }}>{locale === "en" ? config.nameEn : config.name}</span>
+              {leaderBadges.map((badge) => (
+                <span key={badge} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5" style={{ background: `${LEADER_META[badge].color}14`, border: `1px solid ${LEADER_META[badge].color}22` }}>
+                  <span style={{ fontFamily: FONT, fontSize: 9, color: LEADER_META[badge].color, fontWeight: 700 }}>{LEADER_META[badge].label}</span>
                 </span>
-              )}
+              ))}
             </div>
-            <span style={{ fontFamily: FONT, fontSize: 10, color: P.muted }}>
-              {data.total_predictions} predictions · {data.with_outcome} outcomes
+            <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted, marginTop: 4 }}>
+              {data.total_predictions} signals · {data.resolved_signals} resolved · {data.expired} expired · {data.active} active
+            </div>
+          </div>
+        </div>
+      </td>
+      <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+        <div className="space-y-2">
+          <AccuracyBar value={data.accuracy} color={accColor} />
+          <div style={{ fontFamily: FONT, fontSize: 11, color: P.textSec }}>
+            TP {formatPercent(data.target_hit_rate)} · SL {formatPercent(data.stop_hit_rate)}
+          </div>
+        </div>
+      </td>
+      <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+        <div className="flex flex-wrap gap-1.5">
+          <ScorePill label="Q" value={data.quality_score} />
+          <ScorePill label="S" value={data.scalp_score} />
+          <ScorePill label="L" value={data.long_term_score} />
+        </div>
+      </td>
+      <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+        <div style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: data.net_pips >= 0 ? P.green : P.red }}>{formatPips(data.net_pips)}</div>
+        <div style={{ fontFamily: FONT, fontSize: 11, color: P.textSec, marginTop: 4 }}>Avg {formatPips(data.avg_pips)}</div>
+        <div style={{ fontFamily: FONT, fontSize: 11, color: P.muted, marginTop: 2 }}>Duration {formatDuration(data.avg_duration_minutes)}</div>
+      </td>
+      <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+        <div className="flex flex-wrap gap-1.5" style={{ maxWidth: 290 }}>
+          {TARGET_LEVELS.map((tpKey) => (
+            <span key={tpKey} className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5" style={{ background: `${P.green}10`, border: `1px solid ${P.green}18` }}>
+              <span style={{ fontFamily: FONT, fontSize: 9, fontWeight: 700, color: P.green }}>{tpKey}</span>
+              <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color: P.textSec }}>{formatPercent(data.tp_hit_rates?.[tpKey])}</span>
+              <span style={{ fontFamily: FONT, fontSize: 9, color: P.muted }}>({data.tp_breakdown?.[tpKey] ?? 0})</span>
             </span>
-          </div>
+          ))}
         </div>
       </td>
-      <td style={{ padding: "10px 14px", whiteSpace: "nowrap" as const }}>
-        <AccuracyBar value={data.accuracy} color={accColor} />
-      </td>
-      <td style={{ padding: "10px 14px", whiteSpace: "nowrap" as const }}>
-        <div className="flex items-center gap-1.5">
-          <Target className="w-3 h-3 shrink-0" style={{ color: P.green }} />
-          <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.green }}>{data.target_hit_rate !== null ? `${data.target_hit_rate}%` : "—"}</span>
-          <span style={{ fontFamily: FONT, fontSize: 10, color: P.muted }}>({data.target_hits ?? 0})</span>
-        </div>
-        {data.tp_hit_rates && (
-          <div className="flex flex-wrap gap-1.5 mt-2" style={{ maxWidth: 260 }}>
-            {TARGET_LEVELS.map((tpKey) => (
-              <span
-                key={tpKey}
-                className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5"
-                style={{
-                  background: `${P.green}10`,
-                  border: `1px solid ${P.green}18`,
-                }}
-              >
-                <span style={{ fontFamily: FONT, fontSize: 9, fontWeight: 700, color: P.green }}>{tpKey}</span>
-                <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color: P.textSec }}>
-                  {data.tp_hit_rates?.[tpKey] !== undefined ? `${data.tp_hit_rates[tpKey]}%` : "—"}
-                </span>
-                <span style={{ fontFamily: FONT, fontSize: 9, color: P.muted }}>
-                  ({data.tp_breakdown?.[tpKey] ?? 0})
-                </span>
-              </span>
-            ))}
-          </div>
-        )}
-      </td>
-      <td style={{ padding: "10px 14px", whiteSpace: "nowrap" as const }}>
-        <div className="flex items-center gap-1.5">
-          <XCircle className="w-3 h-3 shrink-0" style={{ color: P.red }} />
-          <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.red }}>{data.stop_hit_rate !== null ? `${data.stop_hit_rate}%` : "—"}</span>
-          <span style={{ fontFamily: FONT, fontSize: 10, color: P.muted }}>({data.stop_hits ?? 0})</span>
-        </div>
-      </td>
-      <td style={{ padding: "10px 14px", textAlign: "right" as const, whiteSpace: "nowrap" as const }}>
-        <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.textSec }}>{data.avg_confidence}%</span>
+      <td style={{ padding: "12px 14px", textAlign: "right" as const, verticalAlign: "top" }}>
+        <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.textSec }}>{formatPercent(data.avg_confidence)}</div>
+        <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted, marginTop: 4 }}>{data.completed}W / {data.stopped}L</div>
       </td>
     </tr>
   );
-}
-
-// ── Symbol Section Config ───────────────────────────────────────────────────
-const SYMBOL_META = [
-  { key: "NDX.INDX", label: "NASDAQ", icon: "📈", color: P.green },
-  { key: "XAUUSD", label: "XAU/USD", icon: "⭐", color: P.warn },
-  { key: "GDAXI.INDX", label: "DAX", icon: "🏛", color: P.accent },
-  { key: "USOIL.FOREX", label: "US Oil", icon: "🛢", color: "#FB923C" },
-];
-
-// ── Signal List Row ──────────────────────────────────────────────────────────
-interface Signal {
-  id: string;
-  symbol: string;
-  ml_direction: string;
-  ml_confidence: number;
-  status: string;
-  created_at: string;
-  pnl_pips?: number;
-  duration_minutes?: number;
-  model_type?: string;
-  strategy?: string;
-}
-
-async function fetchRecentSignals(days: number, symbol?: string): Promise<Signal[]> {
-  const url = new URL(`${API_BASE}/api/learning/signals/recent`);
-  url.searchParams.set("days", String(days));
-  url.searchParams.set("limit", "20");
-  url.searchParams.set("include_active", "true");
-  if (symbol) url.searchParams.set("symbol", symbol);
-
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error("Failed to fetch signals");
-  const data = await res.json();
-  return data.signals || [];
 }
 
 function SignalRow({ signal, onClick }: { signal: Signal; onClick: () => void }) {
   const isBuy = signal.ml_direction === "BUY";
-  const statusColor =
-    signal.status === "completed" ? P.green :
-      signal.status === "stopped" ? P.red :
-        signal.status === "active" ? P.accent :
-          P.muted;
-
-  const pnlColor =
-    signal.pnl_pips === undefined ? P.muted :
-      signal.pnl_pips > 0 ? P.green :
-        signal.pnl_pips < 0 ? P.red :
-          P.muted;
+  const statusColor = signal.status === "completed" ? P.green : signal.status === "stopped" ? P.red : signal.status === "active" ? P.accent : P.muted;
+  const pnlColor = signal.pnl_pips === null || signal.pnl_pips === undefined ? P.muted : signal.pnl_pips > 0 ? P.green : signal.pnl_pips < 0 ? P.red : P.muted;
+  const scope = signal.strategy_scope || "main";
+  const config = STRATEGY_CONFIG[scope] || STRATEGY_CONFIG.main;
 
   return (
-    <tr
-      onClick={onClick}
-      className="cursor-pointer hover:bg-white/5 transition-colors"
-      style={{ borderBottom: `1px solid ${P.border}` }}
-    >
-      <td style={{ padding: "10px 14px" }}>
-        <div className="flex items-center gap-2">
-          <span style={{
-            color: isBuy ? P.green : P.red,
-            fontWeight: 600,
-            fontSize: 12,
-          }}>
-            {isBuy ? "▲" : "▼"} {signal.ml_direction}
-          </span>
-          <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>
-            {signal.symbol}
-          </span>
+    <tr onClick={onClick} className="cursor-pointer hover:bg-white/5 transition-colors" style={{ borderBottom: `1px solid ${P.border}` }}>
+      <td style={{ padding: "12px 14px" }}>
+        <div className="flex items-center gap-2.5">
+          <span style={{ color: isBuy ? P.green : P.red, fontWeight: 600, fontSize: 12 }}>{isBuy ? "▲" : "▼"} {signal.ml_direction}</span>
+          <div>
+            <div style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.text }}>{signal.symbol}</div>
+            <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted }}>{signal.timeframe || "—"} · {(signal.normalized_model || "ml").toUpperCase()}</div>
+          </div>
         </div>
       </td>
-      <td style={{ padding: "10px 14px" }}>
-        <span style={{
-          fontFamily: FONT,
-          fontSize: 11,
-          color: statusColor,
-          textTransform: "capitalize"
-        }}>
-          {signal.status}
+      <td style={{ padding: "12px 14px" }}>
+        <span className="inline-flex items-center gap-1 rounded-md px-2 py-1" style={{ background: `${config.color}12`, border: `1px solid ${config.color}20` }}>
+          <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 700, color: config.color }}>{getScopeLabel(scope)}</span>
         </span>
       </td>
-      <td style={{ padding: "10px 14px", textAlign: "right" }}>
-        <span style={{
-          fontFamily: FONT,
-          fontSize: 12,
-          color: pnlColor,
-          fontWeight: signal.pnl_pips !== undefined ? 600 : 400,
-        }}>
-          {signal.pnl_pips !== undefined
-            ? `${signal.pnl_pips > 0 ? "+" : ""}${signal.pnl_pips.toFixed(1)} pips`
-            : "—"
-          }
-        </span>
+      <td style={{ padding: "12px 14px" }}>
+        <span style={{ fontFamily: FONT, fontSize: 11, color: statusColor, textTransform: "capitalize" }}>{signal.status}</span>
       </td>
-      <td style={{ padding: "10px 14px", textAlign: "right" }}>
-        <span style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>
-          {new Date(signal.created_at).toLocaleDateString("tr-TR", {
-            day: "2-digit",
-            month: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </span>
+      <td style={{ padding: "12px 14px", textAlign: "right" }}>
+        <span style={{ fontFamily: FONT, fontSize: 12, color: pnlColor, fontWeight: signal.pnl_pips !== undefined ? 600 : 400 }}>{formatPips(signal.pnl_pips)}</span>
+      </td>
+      <td style={{ padding: "12px 14px", textAlign: "right" }}>
+        <span style={{ fontFamily: FONT, fontSize: 11, color: P.textSec }}>{formatDuration(signal.duration_minutes)}</span>
+      </td>
+      <td style={{ padding: "12px 14px", textAlign: "right" }}>
+        <span style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>{new Date(signal.created_at).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
       </td>
     </tr>
   );
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// MAIN COMPONENT
-// ════════════════════════════════════════════════════════════════════════════
 export default function StrategyPerformancePanel() {
   const [days, setDays] = useState(30);
   const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>();
+  const [selectedStrategyScope, setSelectedStrategyScope] = useState<string | undefined>();
   const [selectedSignalId, setSelectedSignalId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Model Performance Modal States
   const [isModelPerformanceModalOpen, setIsModelPerformanceModalOpen] = useState(false);
   const [selectedModelPerformanceSymbol, setSelectedModelPerformanceSymbol] = useState<string>("");
-
   const [activeTab, setActiveTab] = useState<"performance" | "signals">("performance");
-  const locale = "tr";
+  const locale: "tr" | "en" = "tr";
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["strategy-performance", days],
@@ -338,19 +433,33 @@ export default function StrategyPerformancePanel() {
     refetchInterval: 300000,
   });
 
-  const { data: signalsData, isLoading: signalsLoading } = useQuery({
-    queryKey: ["recent-signals", days, selectedSymbol],
-    queryFn: () => fetchRecentSignals(days, selectedSymbol),
+  const {
+    data: signalsData,
+    isLoading: signalsLoading,
+    refetch: refetchSignals,
+  } = useQuery({
+    queryKey: ["recent-signals", days, selectedSymbol, selectedStrategyScope],
+    queryFn: () => fetchRecentSignals(days, selectedSymbol, selectedStrategyScope),
     staleTime: 30000,
     refetchInterval: 60000,
+    enabled: activeTab === "signals",
   });
 
-  const handleRefresh = useCallback(() => { refetch(); }, [refetch]);
+  const handleRefresh = useCallback(() => {
+    refetch();
+    if (activeTab === "signals") {
+      refetchSignals();
+    }
+  }, [activeTab, refetch, refetchSignals]);
 
   useEffect(() => {
     window.addEventListener("dashboard-refresh", handleRefresh);
     return () => window.removeEventListener("dashboard-refresh", handleRefresh);
   }, [handleRefresh]);
+
+  const orderedScopes = getOrderedScopes(data?.strategy_order);
+  const selectedSymbolScopes = selectedSymbol ? data?.symbols?.[selectedSymbol]?.available_scopes || [] : [];
+  const selectedScopeDescription = selectedStrategyScope ? data?.strategy_descriptions?.[selectedStrategyScope] : undefined;
 
   const handleSignalClick = (signalId: string) => {
     setSelectedSignalId(signalId);
@@ -375,49 +484,34 @@ export default function StrategyPerformancePanel() {
 
   return (
     <>
-      <div
-        className="rounded-xl overflow-hidden"
-        style={{ fontFamily: FONT, background: P.bg, border: `1px solid ${P.border}` }}
-      >
-        {/* ── Header ── */}
-        <div className="flex items-center justify-between px-5 py-4"
-          style={{ background: P.surface, borderBottom: `1px solid ${P.border}` }}>
+      <div className="rounded-xl overflow-hidden" style={{ fontFamily: FONT, background: P.bg, border: `1px solid ${P.border}` }}>
+        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4" style={{ background: P.surface, borderBottom: `1px solid ${P.border}` }}>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center"
-              style={{ background: `${P.accent}12`, border: `1px solid ${P.accent}20` }}>
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: `${P.accent}12`, border: `1px solid ${P.accent}20` }}>
               <BarChart3 className="w-4.5 h-4.5" style={{ color: P.accent, width: 18, height: 18 }} />
             </div>
             <div>
-              <h3 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text, letterSpacing: "-0.01em" }}>
-                Strategy Performance Analysis
-              </h3>
-              <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>
-                Which filter combination performs best?
-              </p>
+              <h3 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text, letterSpacing: "-0.01em" }}>Strategy Performance Analysis</h3>
+              <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>Real ML preset scopes + raw main flow. Compare quality, scalping edge and long-term durability.</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Tab Switcher */}
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1 mr-2" style={{ background: P.bg, borderRadius: 8, padding: 2 }}>
               <button
+                aria-label="Performance Tab"
                 onClick={() => setActiveTab("performance")}
                 className="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
-                style={{
-                  background: activeTab === "performance" ? `${P.accent}20` : "transparent",
-                  color: activeTab === "performance" ? P.accent : P.muted,
-                }}
+                style={{ background: activeTab === "performance" ? `${P.accent}20` : "transparent", color: activeTab === "performance" ? P.accent : P.muted }}
               >
                 <BarChart3 className="w-3.5 h-3.5 inline mr-1" />
                 Performance
               </button>
               <button
+                aria-label="Signals Tab"
                 onClick={() => setActiveTab("signals")}
                 className="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
-                style={{
-                  background: activeTab === "signals" ? `${P.accent}20` : "transparent",
-                  color: activeTab === "signals" ? P.accent : P.muted,
-                }}
+                style={{ background: activeTab === "signals" ? `${P.accent}20` : "transparent", color: activeTab === "signals" ? P.accent : P.muted }}
               >
                 <List className="w-3.5 h-3.5 inline mr-1" />
                 Signals
@@ -425,6 +519,7 @@ export default function StrategyPerformancePanel() {
             </div>
 
             <select
+              aria-label="Days Filter"
               value={days}
               onChange={(e) => setDays(Number(e.target.value))}
               className="rounded-lg appearance-none cursor-pointer"
@@ -434,10 +529,12 @@ export default function StrategyPerformancePanel() {
               <option value={14}>14 days</option>
               <option value={30}>30 days</option>
               <option value={60}>60 days</option>
+              <option value={90}>90 days</option>
+              <option value={0}>All time</option>
             </select>
 
             <button
-              onClick={() => refetch()}
+              onClick={handleRefresh}
               className="rounded-lg flex items-center justify-center transition-all duration-150"
               style={{ width: 32, height: 32, background: `${P.accent}08`, border: `1px solid ${P.accent}15` }}
               onMouseEnter={(e) => (e.currentTarget.style.background = `${P.accent}15`)}
@@ -449,85 +546,127 @@ export default function StrategyPerformancePanel() {
           </div>
         </div>
 
-        {/* ── Content ── */}
         {isLoading && activeTab === "performance" ? (
           <div className="p-16 flex items-center justify-center" style={{ background: P.bg }}>
             <RefreshCw className="w-5 h-5 animate-spin" style={{ color: P.accent }} />
           </div>
         ) : activeTab === "performance" && data && !data.error ? (
           <div className="p-5 space-y-6" style={{ background: P.bg }}>
-            {/* Symbol Sections */}
-            {SYMBOL_META.map(({ key: symKey, label, icon, color }) => (
-              <div key={symKey}>
-                {/* Symbol Header */}
-                <div
-                  className="flex items-center gap-2.5 mb-3 cursor-pointer group hover:bg-white/5 p-2 -mx-2 rounded-lg transition-colors border border-transparent hover:border-white/5"
-                  onClick={() => {
-                    setSelectedModelPerformanceSymbol(symKey);
-                    setIsModelPerformanceModalOpen(true);
-                  }}
-                >
-                  <span style={{ fontSize: 16 }}>{icon}</span>
-                  <h4 className="group-hover:text-blue-400 transition-colors" style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text }}>{label}</h4>
-                  {data.best_strategies[symKey]?.strategy && (
-                    <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 ml-2"
-                      style={{ background: `${P.warn}10`, border: `1px solid ${P.warn}18` }}>
-                      <Trophy className="w-3 h-3" style={{ color: P.warn }} />
-                      <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color: P.warn }}>
-                        Best: {STRATEGY_CONFIG[data.best_strategies[symKey].strategy as keyof typeof STRATEGY_CONFIG]?.nameEn ?? data.best_strategies[symKey].strategy}
-                        {data.best_strategies[symKey].accuracy !== null && ` (${data.best_strategies[symKey].accuracy}%)`}
-                      </span>
-                    </span>
-                  )}
-                  <span className="text-[10px] text-blue-400/0 group-hover:text-blue-400/80 transition-colors ml-auto font-medium tracking-wide">
-                    VIEW DETAILS →
-                  </span>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3">
+              <StatCard label="ML Predictions" value={data.ml_predictions_count} tone={P.text} />
+              <StatCard label="Resolved Signals" value={data.overall_summary.resolved_signals} tone={P.accent} />
+              <StatCard label="Eligible Outcomes" value={data.eligible_outcomes_count} tone={P.warn} />
+              <LeaderCard title="Best Signal Quality" leader={data.overall_summary.leaders.quality} />
+              <LeaderCard title="Best Scalping Scope" leader={data.overall_summary.leaders.scalping} />
+              <LeaderCard title="Best Long-Term Scope" leader={data.overall_summary.leaders.long_term} />
+            </div>
 
-                {/* Table */}
-                <div className="overflow-x-auto rounded-lg" style={{ border: `1px solid ${P.border}` }}>
-                  <table className="w-full" style={{ minWidth: 760 }}>
-                    <thead>
-                      <tr style={{ background: P.surface }}>
-                        {["Strategy", "Accuracy", "Target Hit", "Stop Hit", "Confidence"].map((h, i) => (
-                          <th key={h} style={{
-                            padding: "10px 14px",
-                            textAlign: i === 4 ? "right" as const : "left" as const,
-                            fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted,
-                            letterSpacing: "0.08em", textTransform: "uppercase" as const,
-                            borderBottom: `1px solid ${P.border}`,
-                          }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.entries(data.strategies[symKey] || {}).map(([strategy, strategyData]) => (
-                        <StrategyRow
-                          key={strategy}
-                          strategy={strategy}
-                          data={strategyData}
-                          isBest={data.best_strategies[symKey]?.strategy === strategy}
-                          locale={locale}
-                        />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ))}
+            {SYMBOL_META.map(({ key: symKey, label, icon }) => {
+              const symbolSummary = data.symbols?.[symKey];
+              const symbolStrategies = data.strategies?.[symKey] || {};
+              const orderedScopes = (data.strategy_order || []).filter((scope) => symbolSummary?.available_scopes?.includes(scope));
 
-            {/* Strategy Descriptions */}
+              return (
+                <div key={symKey} className="space-y-3">
+                  <div
+                    className="flex flex-wrap items-center gap-3 cursor-pointer group hover:bg-white/5 p-2 -mx-2 rounded-lg transition-colors border border-transparent hover:border-white/5"
+                    onClick={() => {
+                      setSelectedModelPerformanceSymbol(symKey);
+                      setIsModelPerformanceModalOpen(true);
+                    }}
+                  >
+                    <span style={{ fontSize: 16 }}>{icon}</span>
+                    <div>
+                      <h4 className="group-hover:text-blue-400 transition-colors" style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text }}>{label}</h4>
+                      <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted, marginTop: 2 }}>
+                        {symbolSummary?.total_predictions ?? 0} ML signals · {symbolSummary?.resolved_signals ?? 0} resolved
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 ml-auto">
+                      {(["quality", "scalping", "long_term"] as LeaderKey[]).map((leaderKey) => {
+                        const leader = symbolSummary?.leaders?.[leaderKey];
+                        return (
+                          <span key={leaderKey} className="inline-flex items-center gap-1 rounded px-2 py-1" style={{ background: `${LEADER_META[leaderKey].color}10`, border: `1px solid ${LEADER_META[leaderKey].color}18` }}>
+                            <span style={{ fontFamily: FONT, fontSize: 9, fontWeight: 700, color: LEADER_META[leaderKey].color }}>{LEADER_META[leaderKey].label}</span>
+                            <span style={{ fontFamily: FONT, fontSize: 10, color: P.text }}>{getScopeLabel(leader?.scope)}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto rounded-lg" style={{ border: `1px solid ${P.border}` }}>
+                    <table className="w-full" style={{ minWidth: 980 }}>
+                      <thead>
+                        <tr style={{ background: P.surface }}>
+                          {["Scope", "Win Rate", "Edge Scores", "Pips / Duration", "TP Ladder", "Confidence"].map((header, index) => (
+                            <th
+                              key={header}
+                              style={{
+                                padding: "10px 14px",
+                                textAlign: index === 5 ? "right" as const : "left" as const,
+                                fontFamily: FONT,
+                                fontSize: 10,
+                                fontWeight: 500,
+                                color: P.muted,
+                                letterSpacing: "0.08em",
+                                textTransform: "uppercase",
+                                borderBottom: `1px solid ${P.border}`,
+                              }}
+                            >
+                              {header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orderedScopes.length > 0 ? (
+                          orderedScopes.map((scope) => {
+                            const strategyData = symbolStrategies[scope];
+                            const leaderBadges = (["quality", "scalping", "long_term"] as LeaderKey[]).filter(
+                              (leaderKey) => symbolSummary?.leaders?.[leaderKey]?.scope === scope
+                            );
+
+                            return (
+                              <StrategyRow
+                                key={`${symKey}-${scope}`}
+                                strategy={scope}
+                                data={strategyData}
+                                locale={locale}
+                                leaderBadges={leaderBadges}
+                              />
+                            );
+                          })
+                        ) : (
+                          <tr>
+                            <td colSpan={6} className="text-center py-8" style={{ color: P.muted, fontFamily: FONT, fontSize: 13 }}>
+                              No ML strategy history found for this symbol yet.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+
             <div style={{ paddingTop: 12, borderTop: `1px solid ${P.border}` }}>
-              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 8 }}>
-                Strategy Descriptions
+              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
+                Strategy Scope Descriptions
               </p>
               <div className="flex flex-wrap gap-x-6 gap-y-2">
-                {Object.entries(data.strategy_descriptions || {}).map(([key, desc]) => {
+                {(data.strategy_order || []).map((key) => {
                   const config = STRATEGY_CONFIG[key];
+                  const desc = data.strategy_descriptions?.[key];
+                  if (!desc) return null;
                   return (
                     <div key={key} className="flex items-center gap-1.5">
                       <div className="w-2 h-2 rounded-full" style={{ background: config?.color || P.muted }} />
-                      <span style={{ fontFamily: FONT, fontSize: 11, color: P.textSec }}>{desc}</span>
+                      <span style={{ fontFamily: FONT, fontSize: 11, color: P.textSec }}>
+                        <strong style={{ color: P.text }}>{getScopeLabel(key)}</strong> — {desc}
+                      </span>
                     </div>
                   );
                 })}
@@ -535,11 +674,79 @@ export default function StrategyPerformancePanel() {
             </div>
           </div>
         ) : activeTab === "signals" ? (
-          <div className="p-5" style={{ background: P.bg }}>
-            {/* Symbol Filter */}
-            <div className="flex items-center gap-2 mb-4">
-              <span style={{ fontFamily: FONT, fontSize: 12, color: P.muted }}>Symbol:</span>
+          <div className="p-5 space-y-4" style={{ background: P.bg }}>
+            <div className="rounded-xl p-4 space-y-3" style={{ background: P.surface, border: `1px solid ${P.border}` }}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>Signal Analysis Scopes</div>
+                  <div style={{ fontFamily: FONT, fontSize: 12, color: P.textSec, marginTop: 6 }}>
+                    Main ML stays above Ultra Safe so you can inspect the raw/original ML flow separately from preset-filtered scopes.
+                  </div>
+                </div>
+
+                <span className="inline-flex items-center gap-1 rounded-md px-2.5 py-1" style={{ background: `${P.accent}10`, border: `1px solid ${P.accent}18` }}>
+                  <span style={{ fontFamily: FONT, fontSize: 10, color: P.muted }}>Active Scope</span>
+                  <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: P.accent }}>
+                    {selectedStrategyScope ? getScopeLabel(selectedStrategyScope) : "All Scopes"}
+                  </span>
+                </span>
+              </div>
+
+              <div data-testid="signal-scope-tabs" className="flex flex-wrap gap-2">
+                <button
+                  aria-label="All Scopes Tab"
+                  onClick={() => setSelectedStrategyScope(undefined)}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 transition-all"
+                  style={{
+                    background: selectedStrategyScope ? P.bg : `${P.accent}18`,
+                    border: `1px solid ${selectedStrategyScope ? P.border : `${P.accent}30`}`,
+                    color: selectedStrategyScope ? P.textSec : P.accent,
+                  }}
+                >
+                  <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700 }}>All Scopes</span>
+                </button>
+
+                {orderedScopes.map((scope) => {
+                  const config = STRATEGY_CONFIG[scope] || STRATEGY_CONFIG.main;
+                  const Icon = config.icon;
+                  const isActive = selectedStrategyScope === scope;
+                  const hasSelectedSymbolHistory = !selectedSymbol || selectedSymbolScopes.includes(scope);
+
+                  return (
+                    <button
+                      key={scope}
+                      aria-label={`${getScopeLabel(scope)} Scope Tab`}
+                      onClick={() => setSelectedStrategyScope(scope)}
+                      className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 transition-all"
+                      style={{
+                        background: isActive ? `${config.color}18` : P.bg,
+                        border: `1px solid ${isActive ? `${config.color}35` : P.border}`,
+                        color: isActive ? config.color : P.textSec,
+                        opacity: hasSelectedSymbolHistory ? 1 : 0.7,
+                      }}
+                    >
+                      <Icon className="w-3.5 h-3.5" style={{ color: isActive ? config.color : P.textSec }} />
+                      <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700 }}>{getScopeLabel(scope)}</span>
+                      {scope === "main" ? (
+                        <span className="rounded px-1.5 py-0.5" style={{ fontFamily: FONT, fontSize: 9, fontWeight: 700, color: config.color, background: `${config.color}12` }}>
+                          RAW
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>
+                {selectedStrategyScope
+                  ? `${getScopeLabel(selectedStrategyScope)} — ${selectedScopeDescription || "Resolved scope filter is applied to recent ML signals."}${selectedSymbol && !selectedSymbolScopes.includes(selectedStrategyScope) ? " Current symbol has no recorded history for this scope yet." : ""}`
+                  : "Showing recent ML signals across all resolved scopes. Use Main ML to inspect the raw/original signal flow."}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
               <select
+                aria-label="Signal Symbol Filter"
                 value={selectedSymbol || ""}
                 onChange={(e) => setSelectedSymbol(e.target.value || undefined)}
                 className="rounded-lg appearance-none cursor-pointer"
@@ -550,43 +757,62 @@ export default function StrategyPerformancePanel() {
                   <option key={key} value={key}>{label}</option>
                 ))}
               </select>
+
+              <select
+                aria-label="Strategy Scope Filter"
+                value={selectedStrategyScope || ""}
+                onChange={(e) => setSelectedStrategyScope(e.target.value || undefined)}
+                className="rounded-lg appearance-none cursor-pointer"
+                style={{ fontFamily: FONT, fontSize: 11, padding: "6px 10px", background: P.surface, color: P.textSec, border: `1px solid ${P.border}` }}
+              >
+                <option value="">All Scopes</option>
+                {orderedScopes.map((scope) => (
+                  <option key={scope} value={scope}>{getScopeLabel(scope)}</option>
+                ))}
+              </select>
+
+              <span style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>Recent ML signals only · grouped by resolved strategy scope</span>
             </div>
 
-            {/* Signals Table */}
             <div className="overflow-x-auto rounded-lg" style={{ border: `1px solid ${P.border}` }}>
-              <table className="w-full">
+              <table className="w-full" style={{ minWidth: 820 }}>
                 <thead>
                   <tr style={{ background: P.surface }}>
-                    {["Signal", "Status", "Result", "Time"].map((h, i) => (
-                      <th key={h} style={{
-                        padding: "10px 14px",
-                        textAlign: i >= 2 ? "right" as const : "left" as const,
-                        fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted,
-                        letterSpacing: "0.08em", textTransform: "uppercase" as const,
-                        borderBottom: `1px solid ${P.border}`,
-                      }}>{h}</th>
+                    {["Signal", "Scope", "Status", "Result", "Duration", "Time"].map((header, index) => (
+                      <th
+                        key={header}
+                        style={{
+                          padding: "10px 14px",
+                          textAlign: index >= 3 ? "right" as const : "left" as const,
+                          fontFamily: FONT,
+                          fontSize: 10,
+                          fontWeight: 500,
+                          color: P.muted,
+                          letterSpacing: "0.08em",
+                          textTransform: "uppercase",
+                          borderBottom: `1px solid ${P.border}`,
+                        }}
+                      >
+                        {header}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {signalsLoading ? (
                     <tr>
-                      <td colSpan={4} className="text-center py-8">
+                      <td colSpan={6} className="text-center py-8">
                         <RefreshCw className="w-5 h-5 animate-spin mx-auto" style={{ color: P.accent }} />
                       </td>
                     </tr>
-                  ) : signalsData && signalsData.length > 0 ? (
-                    signalsData.map((signal) => (
-                      <SignalRow
-                        key={signal.id}
-                        signal={signal}
-                        onClick={() => handleSignalClick(signal.id)}
-                      />
+                  ) : signalsData?.signals && signalsData.signals.length > 0 ? (
+                    signalsData.signals.map((signal) => (
+                      <SignalRow key={signal.id} signal={signal} onClick={() => handleSignalClick(signal.id)} />
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="text-center py-8" style={{ color: P.muted, fontFamily: FONT, fontSize: 13 }}>
-                        No signals found
+                      <td colSpan={6} className="text-center py-8" style={{ color: P.muted, fontFamily: FONT, fontSize: 13 }}>
+                        No ML signals found for the selected filters.
                       </td>
                     </tr>
                   )}
@@ -594,8 +820,8 @@ export default function StrategyPerformancePanel() {
               </table>
             </div>
 
-            <p className="mt-3 text-xs" style={{ color: P.muted, fontFamily: FONT }}>
-              Click on any signal to view detailed information including entry/exit prices, TP/SL levels, and failure analysis.
+            <p className="text-xs" style={{ color: P.muted, fontFamily: FONT }}>
+              Click any signal to inspect lifecycle details, TP/SL structure and post-trade diagnostics.
             </p>
           </div>
         ) : (
@@ -605,16 +831,10 @@ export default function StrategyPerformancePanel() {
         )}
       </div>
 
-      {/* Signal Detail Modal */}
       <Suspense fallback={null}>
-        <SignalDetailModal
-          signalId={selectedSignalId}
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-        />
+        <SignalDetailModal signalId={selectedSignalId} isOpen={isModalOpen} onClose={handleCloseModal} />
       </Suspense>
 
-      {/* Model Performance Modal */}
       <ModelPerformanceModal
         isOpen={isModelPerformanceModalOpen}
         onClose={() => setIsModelPerformanceModalOpen(false)}

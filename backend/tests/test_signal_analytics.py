@@ -40,3 +40,8 @@ def test_normalize_model_type_maps_order_block_aliases_to_smc():
     signal = {"model_type": "order_blocks", "strategy": None}
 
     assert normalize_model_type(signal) == "smc"
+
+
+def test_normalize_model_type_collapses_scoped_ml_model_types_to_ml():
+    assert normalize_model_type({"model_type": "ml:main", "strategy": "main"}) == "ml"
+    assert normalize_model_type({"model_type": "ml:balanced", "strategy": "balanced"}) == "ml"
