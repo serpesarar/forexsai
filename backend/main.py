@@ -282,7 +282,6 @@ try:
         claude_sentiment,
         order_blocks,
         rtyhiim,
-        news,
         ta,
         data,
         prediction,
@@ -290,9 +289,7 @@ try:
         learning,
         fvg,
         auth,
-        live_news,
         mtf_analysis,
-        earnings,
         trading_engine_test,
         emel_pulse,
         admin,
@@ -323,7 +320,6 @@ try:
     app.include_router(claude_sentiment.router)
     app.include_router(order_blocks.router)
     app.include_router(rtyhiim.router)
-    app.include_router(news.router)
     app.include_router(ta.router)
     app.include_router(data.router)
     app.include_router(prediction.router)
@@ -331,9 +327,7 @@ try:
     app.include_router(learning.router)
     app.include_router(fvg.router)
     app.include_router(auth.router)
-    app.include_router(live_news.router)
     app.include_router(mtf_analysis.router)
-    app.include_router(earnings.router)
     app.include_router(trading_engine_test.router)
     app.include_router(emel_pulse.router)
     app.include_router(admin.router)

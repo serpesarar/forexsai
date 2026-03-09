@@ -75,7 +75,7 @@ export interface EnrichedNews extends RawNews {
 // Chart marker for news events
 export interface NewsMarker {
   time: number; // Unix timestamp (seconds)
-  position: "aboveBar" | "belowBar";
+  position: "aboveBar" | "belowBar" | "inBar";
   color: string;
   shape: "circle" | "square" | "arrowUp" | "arrowDown";
   size: number;

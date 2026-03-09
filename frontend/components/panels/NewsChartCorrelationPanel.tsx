@@ -8,6 +8,7 @@ import { Filter, Newspaper, BarChart2, Maximize2 } from "lucide-react";
 import { useNewsCorrelationStore } from "@/lib/stores/newsCorrelationStore";
 import type { EnrichedNews } from "@/types/news-correlation";
 import { fetcher } from "@/lib/api";
+import { useNewsMarkers, convertToChartMarkers } from "@/hooks/useNewsMarkers";
 
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -259,14 +260,14 @@ export default function NewsChartCorrelationPanel() {
           </div>
         )}
 
-        {/* Open Full News Feed Page */}
+        {/* Open canonical News AI page */}
         {activeTab === "feed" && (
           <Link
-            href="/news-feed"
+            href="/news-correlation"
             className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg text-sm font-medium hover:bg-purple-500/30 transition-colors"
           >
             <Maximize2 className="w-4 h-4" />
-            Full Page View
+            Open News AI
           </Link>
         )}
       </div>
@@ -311,7 +312,7 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const markersRef = useRef<any[]>([]);
+  const { markers: newsMarkers } = useNewsMarkers(symbol, 72, 5);
 
   // Initialize chart
   useEffect(() => {
@@ -390,39 +391,25 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
 
   // Add news markers
   useEffect(() => {
-    if (!candlestickSeriesRef.current || events.length === 0 || chartData.length === 0) return;
+    if (!candlestickSeriesRef.current) return;
 
-    // Clear existing markers
-    markersRef.current.forEach((marker) => {
-      // Note: Lightweight Charts doesn't have a direct removeMarker method
-      // We need to clear and reset all markers
-    });
+    if (chartData.length === 0) {
+      candlestickSeriesRef.current.setMarkers([] as any);
+      return;
+    }
 
     const chartStartTime = chartData[0]?.time || 0;
     const chartEndTime = chartData[chartData.length - 1]?.time || 0;
 
-    const markers = events
-      .filter((event) => {
-        const eventTime = Math.floor(new Date(event.timestamp).getTime() / 1000);
+    const markers = newsMarkers
+      .filter((marker) => {
+        const eventTime = Math.floor(new Date(marker.time).getTime() / 1000);
         return eventTime >= chartStartTime && eventTime <= chartEndTime;
       })
-      .slice(0, 10) // Limit to 10 markers
-      .map((event) => {
-        const eventTime = Math.floor(new Date(event.timestamp).getTime() / 1000);
-        const marker: any = {
-          time: eventTime as Time,
-          position: "aboveBar",
-          color: event.urgency === "breaking" ? "#ef4444" : event.urgency === "high" ? "#f97316" : "#eab308",
-          shape: event.urgency === "breaking" ? "arrowDown" : "circle",
-          size: event.urgency === "breaking" ? 2 : 1,
-          text: event.urgency === "breaking" ? "!" : "",
-        };
-        return marker;
-      });
+      .slice(0, 10);
 
-    candlestickSeriesRef.current.setMarkers(markers);
-    markersRef.current = markers;
-  }, [events, chartData]);
+    candlestickSeriesRef.current.setMarkers(convertToChartMarkers(markers) as any);
+  }, [newsMarkers, chartData]);
 
   if (loading) {
     return (

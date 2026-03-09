@@ -4,15 +4,15 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time, type CandlestickData } from "lightweight-charts";
 import { format, isWithinInterval, subMinutes, addMinutes } from "date-fns";
 import {
-  Bell, Star, Wallet, Calendar, FileText, MessageSquare, Newspaper,
-  Building2, LineChart, BookOpen, Filter, ChevronLeft, ChevronRight,
-  TrendingUp, TrendingDown, Sparkles, Camera, Settings,
-  Clock, AlertTriangle, RefreshCw, X, ArrowUp, ArrowDown, Brain,
-  Minus, Zap
+  Bell, Star, Wallet, Calendar, MessageSquare, Newspaper,
+  Building2, LineChart, BookOpen, ChevronLeft,
+  TrendingUp, TrendingDown, Sparkles,
+  AlertTriangle, RefreshCw, X, ArrowUp, ArrowDown, Brain
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/api";
 import { fetchNewsForCandle, MatchedNewsItem } from "@/lib/api/rssNews";
+import { useNewsMarkers, convertToChartMarkers } from "@/hooks/useNewsMarkers";
 import Link from "next/link";
 import type { EnrichedNews } from "@/types/news-correlation";
 import NewsDetailModal from "@/components/NewsDetailModal";
@@ -49,19 +49,22 @@ interface OHLCVResponse {
   }>;
 }
 
+type EventDirection = "bullish" | "bearish" | "neutral" | "volatile";
+type ImportanceLevel = "critical" | "high" | "medium" | "low";
+type EarningsTime = "after_market" | "before_market";
+
 interface CandleNews {
   candle: ChartCandle;
   news: MatchedNewsItem[];
   hasBigMove: boolean;
-  moveType: 'up' | 'down' | 'none';
+  moveType: "up" | "down" | "none";
   movePercent: number;
   isLoadingNews?: boolean;
 }
 
-// Economic Calendar types (matching backend API)
 interface ScenarioImpact {
   symbol: string;
-  direction: "bullish" | "bearish" | "neutral";
+  direction: EventDirection;
   magnitude: string;
 }
 
@@ -90,7 +93,16 @@ interface Scenarios {
   inline?: Scenario;
 }
 
-interface EconomicEvent {
+interface AIAnnotatedEvent {
+  ai_analyzed?: boolean;
+  ai_model?: string | null;
+  importance_level?: ImportanceLevel | null;
+  importance_score?: number | null;
+  importance_reason?: string | null;
+  confidence?: number | null;
+}
+
+interface EconomicEvent extends AIAnnotatedEvent {
   id: string;
   timestamp: string;
   title: string;
@@ -100,7 +112,7 @@ interface EconomicEvent {
   actual?: string;
   forecast?: string;
   previous?: string;
-  predicted_direction: "bullish" | "bearish" | "neutral";
+  predicted_direction: EventDirection;
   affected_symbols: string[];
   impact_analysis: string;
   impact_analysis_tr: string;
@@ -114,17 +126,16 @@ interface EconomicEvent {
   minutes_until?: number;
   scenarios?: Scenarios;
   trading_tips?: string;
-  confidence?: number;
 }
 
-interface EarningsEvent {
+interface EarningsEvent extends AIAnnotatedEvent {
   id: string;
   company: string;
   company_tr?: string;
   ticker: string;
   sector: string;
   date: string;
-  time: "after_market" | "before_market";
+  time: EarningsTime;
   eps_forecast?: string;
   revenue_forecast?: string;
   previous_eps?: string;
@@ -137,11 +148,12 @@ interface EarningsEvent {
   timestamp: string;
   is_upcoming: boolean;
   minutes_until: number;
-  confidence: number;
-  predicted_direction: "bullish" | "bearish" | "neutral";
+  predicted_direction: EventDirection;
   scenarios?: Scenarios;
   trading_tips?: string;
 }
+
+type CalendarEventDetail = Partial<EconomicEvent & EarningsEvent>;
 
 interface WSPriceData {
   symbol: string;
@@ -161,17 +173,6 @@ const INITIAL_SYMBOLS: SymbolData[] = [
   { symbol: "DXY", name: "Dollar Index", price: 0, change: 0, changePercent: 0 },
 ];
 
-// Big move thresholds by symbol AND timeframe (percentage)
-// Lower thresholds for shorter timeframes
-const BIG_MOVE_THRESHOLDS: Record<string, Record<string, number>> = {
-  XAUUSD: { "1m": 0.05, "5m": 0.08, "15m": 0.10, "30m": 0.15, "1h": 0.20, "4h": 0.30, "1d": 0.50 },
-  NDX: { "1m": 0.05, "5m": 0.08, "15m": 0.10, "30m": 0.15, "1h": 0.20, "4h": 0.30, "1d": 0.50 },
-  DAX: { "1m": 0.05, "5m": 0.08, "15m": 0.10, "30m": 0.15, "1h": 0.20, "4h": 0.30, "1d": 0.50 },
-  USOIL: { "1m": 0.08, "5m": 0.12, "15m": 0.15, "30m": 0.20, "1h": 0.30, "4h": 0.50, "1d": 1.00 },
-  VIX: { "1m": 0.50, "5m": 0.80, "15m": 1.00, "30m": 1.50, "1h": 2.00, "4h": 3.00, "1d": 5.00 },
-  DXY: { "1m": 0.03, "5m": 0.05, "15m": 0.08, "30m": 0.10, "1h": 0.15, "4h": 0.20, "1d": 0.30 },
-};
-
 const TIMEFRAMES = [
   { value: "1m", label: "1m" },
   { value: "5m", label: "5m" },
@@ -187,13 +188,95 @@ const sidebarItems = [
   { icon: Star, label: "Watchlist", href: "/watchlist", badge: null },
   { icon: Wallet, label: "Smart Trades", href: "/news-correlation", badge: null, active: true },
   { icon: Calendar, label: "Economic Calendar", href: "/calendar", badge: null },
-  { icon: FileText, label: "News Analysis", href: "/news-analysis", badge: null },
   { icon: MessageSquare, label: "Chat AI", href: "/chat", badge: null },
   { icon: Newspaper, label: "Research Reports", href: "/research", badge: null },
   { icon: BookOpen, label: "Docs", href: "/docs", badge: null },
   { icon: Building2, label: "Brokers", href: "/brokers", badge: null },
   { icon: LineChart, label: "My Trades", href: "/trades", badge: null },
 ];
+
+const getDirectionBadgeClass = (direction?: EventDirection | null) => cn(
+  "text-[10px] px-2 py-0.5 rounded-full border font-medium",
+  direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
+  direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
+  direction === "volatile" && "bg-purple-500/10 text-purple-300 border-purple-500/20",
+  (!direction || direction === "neutral") && "bg-gray-700/50 text-gray-400 border-gray-600"
+);
+
+const getDirectionArrow = (direction?: EventDirection | null) => {
+  if (direction === "bullish") return "↗";
+  if (direction === "bearish") return "↘";
+  if (direction === "volatile") return "⚡";
+  return "→";
+};
+
+const getImportanceBadgeClass = (level?: ImportanceLevel | null) => cn(
+  "text-[10px] px-2 py-0.5 rounded-full border font-medium uppercase tracking-wide",
+  level === "critical" && "bg-red-500/10 text-red-300 border-red-500/20",
+  level === "high" && "bg-amber-500/10 text-amber-300 border-amber-500/20",
+  level === "medium" && "bg-yellow-500/10 text-yellow-300 border-yellow-500/20",
+  (!level || level === "low") && "bg-gray-700/50 text-gray-400 border-gray-600"
+);
+
+const formatImportanceLabel = (level?: ImportanceLevel | null) => {
+  if (!level) return "Scored";
+  return `${level.charAt(0).toUpperCase()}${level.slice(1)}`;
+};
+
+const formatAIModelLabel = (aiModel?: string | null) =>
+  aiModel?.replace(/[_-]/g, " ") || "DeepSeek";
+
+const ImpactChip = ({ impact }: { impact: { symbol: string; direction?: EventDirection | null; magnitude?: string } }) => (
+  <span className={cn(
+    "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
+    impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
+    impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
+    impact.direction === "volatile" && "bg-purple-500/10 text-purple-300 border-purple-500/20",
+    (!impact.direction || impact.direction === "neutral") && "bg-gray-700/50 text-gray-400 border-gray-600"
+  )}>
+    {getDirectionArrow(impact.direction)}
+    {impact.symbol}
+    {impact.magnitude ? ` ${impact.magnitude}` : ""}
+  </span>
+);
+
+const EventAIMetadata = ({ event, compact = false }: { event: AIAnnotatedEvent; compact?: boolean }) => {
+  const hasImportance = !!event.importance_level || typeof event.importance_score === "number";
+
+  return (
+    <div className={cn("space-y-2", compact && "mt-3")}>
+      <div className="flex flex-wrap gap-2">
+        {hasImportance && (
+          <span className={getImportanceBadgeClass(event.importance_level)}>
+            {formatImportanceLabel(event.importance_level)} Importance
+            {typeof event.importance_score === "number" ? ` • ${event.importance_score}/100` : ""}
+          </span>
+        )}
+        <span className={cn(
+          "text-[10px] px-2 py-0.5 rounded-full border font-medium",
+          event.ai_analyzed
+            ? "bg-cyan-500/10 text-cyan-300 border-cyan-500/20"
+            : "bg-gray-700/50 text-gray-400 border-gray-600"
+        )}>
+          {event.ai_analyzed ? `${formatAIModelLabel(event.ai_model)} AI` : "Fallback Analysis"}
+        </span>
+        {typeof event.confidence === "number" && (
+          <span className="text-[10px] px-2 py-0.5 rounded-full border font-medium bg-blue-500/10 text-blue-300 border-blue-500/20">
+            Confidence • {event.confidence}%
+          </span>
+        )}
+      </div>
+      {event.importance_reason && (
+        <p className={cn(
+          "text-gray-500 leading-relaxed",
+          compact ? "text-[11px] line-clamp-2" : "text-xs"
+        )}>
+          {event.importance_reason}
+        </p>
+      )}
+    </div>
+  );
+};
 
 // ==================== COMPONENTS ====================
 const SidebarItem = ({ icon: Icon, label, href, active = false, badge, collapsed }: any) => (
@@ -275,16 +358,7 @@ const NewsCard = ({ news, onClick, locale }: { news: EnrichedNews, onClick: () =
 
       <div className="flex flex-wrap gap-1.5">
         {news.impacts?.slice(0, 6).map((impact, idx) => (
-          <span key={idx} className={cn(
-            "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
-            impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
-            impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
-            impact.direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
-          )}>
-            {impact.direction === "bullish" && <TrendingUp className="w-3 h-3" />}
-            {impact.direction === "bearish" && <TrendingDown className="w-3 h-3" />}
-            {impact.symbol} {impact.direction === "bullish" ? "↑" : impact.direction === "bearish" ? "↓" : "→"}
-          </span>
+          <ImpactChip key={idx} impact={impact} />
         ))}
       </div>
     </div>
@@ -328,6 +402,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   // Selected event modals
   const [selectedEconomicEvent, setSelectedEconomicEvent] = useState<EconomicEvent | null>(null);
   const [selectedEarningsEvent, setSelectedEarningsEvent] = useState<EarningsEvent | null>(null);
+  const { markers: newsMarkers } = useNewsMarkers(selectedSymbol, 72, 5);
   const [isEconomicModalOpen, setIsEconomicModalOpen] = useState(false);
   const [isEarningsModalOpen, setIsEarningsModalOpen] = useState(false);
   const [loadingEventDetail, setLoadingEventDetail] = useState(false);
@@ -875,71 +950,29 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       }));
       candlestickSeriesRef.current.setData(formattedData);
 
-      // ALGORITHM: Only show markers on BIG MOVES that have NEWS CORRELATION
-      // NO more % labels on every candle — only meaningful news markers
-      const markers: any[] = [];
-      const symbolThresholds = BIG_MOVE_THRESHOLDS[selectedSymbol] || BIG_MOVE_THRESHOLDS["NDX"];
-      const threshold = symbolThresholds[timeframe as string] || 0.1;
-
-      // Find candles with big moves (significant body size)
-      const bigMoveCandles = chartData.filter(c => Math.abs(c.priceChange || 0) >= threshold);
-
-      bigMoveCandles.forEach(candle => {
-        const candleTime = candle.time;
-        const candleDate = new Date(candleTime * 1000);
-
-        // Dynamic time window based on timeframe
-        const timeWindowMap: Record<string, number> = {
-          "1m": 15, "5m": 15, "15m": 30, "30m": 45,
-          "1h": 120, "4h": 480, "1d": 1440,
-        };
-        const timeWindowMinutes = timeWindowMap[timeframe as string] || 30;
-        const windowStart = new Date(candleDate.getTime() - timeWindowMinutes * 60000);
-        const windowEnd = new Date(candleDate.getTime() + timeWindowMinutes * 60000);
-
-        // Find news that affects this symbol in this time window
-        const correlatedNews = news.filter(n => {
-          const newsDate = new Date(n.timestamp);
-          const isInTimeWindow = newsDate >= windowStart && newsDate <= windowEnd;
-          // Accept medium, high, and breaking urgency — not just high/breaking
-          const isRelevantUrgency = n.urgency === "breaking" || n.urgency === "high" || n.urgency === "medium";
-          const affectsSymbol = n.impacts?.some(imp => {
-            const sym = imp.symbol?.toUpperCase();
-            return sym === selectedSymbol ||
-              (selectedSymbol === "NDX" && (sym === "NDX" || sym === "NASDAQ")) ||
-              (selectedSymbol === "XAUUSD" && (sym === "XAUUSD" || sym === "XAU" || sym === "GOLD")) ||
-              (selectedSymbol === "DAX" && (sym === "DAX" || sym === "GDAXI")) ||
-              (selectedSymbol === "USOIL" && (sym === "USOIL" || sym === "WTI" || sym === "CL" || sym === "OIL")) ||
-              (selectedSymbol === "VIX" && sym === "VIX") ||
-              (selectedSymbol === "DXY" && (sym === "DXY" || sym === "DOLLAR" || sym === "USD"));
-          });
-
-          return isInTimeWindow && isRelevantUrgency && affectsSymbol;
-        });
-
-        // ONLY show marker if there IS correlated news — no orphan % labels
-        if (correlatedNews.length > 0) {
-          const topNews = correlatedNews[0];
-          const isBullish = (candle.priceChange || 0) > 0;
-
-          // News marker — shows which news caused this move
-          markers.push({
-            time: candleTime as Time,
-            position: isBullish ? "belowBar" as const : "aboveBar" as const,
-            color: topNews.urgency === "breaking" ? "#ef4444" : topNews.urgency === "high" ? "#f97316" : "#4F8CFF",
-            shape: isBullish ? "arrowUp" as const : "arrowDown" as const,
-            size: topNews.urgency === "breaking" ? 3 : 2,
-            text: topNews.urgency === "breaking" ? "⚡" : "📰",
-          });
-        }
-      });
-
-      // Sort markers by time (lightweight-charts requirement)
-      markers.sort((a, b) => (a.time as number) - (b.time as number));
-      candlestickSeriesRef.current.setMarkers(markers);
       chartRef.current?.timeScale().fitContent();
     }
-  }, [chartData, news, selectedSymbol, timeframe]);
+  }, [chartData]);
+
+  useEffect(() => {
+    if (!candlestickSeriesRef.current) {
+      return;
+    }
+
+    if (chartData.length === 0) {
+      candlestickSeriesRef.current.setMarkers([] as any);
+      return;
+    }
+
+    const chartStartTime = chartData[0]?.time || 0;
+    const chartEndTime = chartData[chartData.length - 1]?.time || 0;
+    const filteredMarkers = newsMarkers.filter((marker) => {
+      const markerTime = Math.floor(new Date(marker.time).getTime() / 1000);
+      return markerTime >= chartStartTime && markerTime <= chartEndTime;
+    });
+
+    candlestickSeriesRef.current.setMarkers(convertToChartMarkers(filteredMarkers) as any);
+  }, [chartData, newsMarkers]);
 
   const handleNewsClick = (newsItem: EnrichedNews | MatchedNewsItem) => {
     const item = newsItem as any;
@@ -1001,7 +1034,8 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       const response = await fetcher<{
         success: boolean;
         data?: {
-          explanation: string;
+          explanation?: string | null;
+          ai_explanation?: string | null;
           related_news: any[];
           confidence: number;
         };
@@ -1009,7 +1043,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       }>(`/api/news-correlation/explain-move?symbol=${apiSymbol}&timestamp=${candle.time}&ai_explain=true`);
 
       if (response?.success && response.data) {
-        setAiExplanation(response.data.explanation);
+        setAiExplanation(response.data.explanation || response.data.ai_explanation || null);
       } else {
         setAiExplanation(null);
       }
@@ -1558,19 +1592,24 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                           setIsEconomicModalOpen(true);
                           setLoadingEventDetail(true);
                           // Fetch full event detail with scenarios from DeepSeek
-                          fetcher<{ success: boolean; event: any }>(
+                          fetcher<{ success: boolean; event: CalendarEventDetail }>(
                             `/api/calendar/event/${event.id}`
                           ).then((detailRes) => {
                             if (detailRes.success && detailRes.event) {
                               // Merge scenarios and additional analysis into selected event
                               setSelectedEconomicEvent(prev => prev ? {
                                 ...prev,
-                                scenarios: detailRes.event.scenarios,
-                                confidence: detailRes.event.confidence || prev.confidence,
-                                impact_analysis: detailRes.event.impact_analysis || prev.impact_analysis,
-                                impact_analysis_tr: detailRes.event.impact_analysis_tr || prev.impact_analysis_tr,
-                                predicted_direction: detailRes.event.predicted_direction || prev.predicted_direction,
-                                trading_tips: detailRes.event.trading_tips,
+                                scenarios: detailRes.event.scenarios ?? prev.scenarios,
+                                confidence: detailRes.event.confidence ?? prev.confidence,
+                                impact_analysis: detailRes.event.impact_analysis ?? prev.impact_analysis,
+                                impact_analysis_tr: detailRes.event.impact_analysis_tr ?? prev.impact_analysis_tr,
+                                predicted_direction: detailRes.event.predicted_direction ?? prev.predicted_direction,
+                                trading_tips: detailRes.event.trading_tips ?? prev.trading_tips,
+                                ai_analyzed: detailRes.event.ai_analyzed ?? prev.ai_analyzed,
+                                ai_model: detailRes.event.ai_model ?? prev.ai_model,
+                                importance_level: detailRes.event.importance_level ?? prev.importance_level,
+                                importance_score: detailRes.event.importance_score ?? prev.importance_score,
+                                importance_reason: detailRes.event.importance_reason ?? prev.importance_reason,
                               } : prev);
                             }
                           }).catch((err) => {
@@ -1610,15 +1649,11 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                                 {format(new Date(event.timestamp), "MMM d, HH:mm")}
                               </span>
                             </div>
-                            <span className={cn(
-                              "text-[10px] px-2 py-0.5 rounded-full border font-medium",
-                              event.predicted_direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
-                              event.predicted_direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
-                              event.predicted_direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
-                            )}>
+                            <span className={getDirectionBadgeClass(event.predicted_direction)}>
                               {event.predicted_direction === "bullish" && "📈 Bullish"}
                               {event.predicted_direction === "bearish" && "📉 Bearish"}
                               {event.predicted_direction === "neutral" && "➖ Neutral"}
+                              {event.predicted_direction === "volatile" && "⚡ Volatile"}
                             </span>
                           </div>
                           <h4 className="text-sm font-semibold text-white mb-2 tracking-wide">
@@ -1637,6 +1672,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                               )}
                             </div>
                           )}
+                          <EventAIMetadata event={event} compact />
                           {/* Click hint */}
                           <div className="absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
                             <span className="text-[10px] text-gray-600">Click for details →</span>
@@ -1682,6 +1718,33 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                         onClick={() => {
                           setSelectedEarningsEvent(event);
                           setIsEarningsModalOpen(true);
+                          setLoadingEventDetail(true);
+                          fetcher<{ success: boolean; event: CalendarEventDetail }>(
+                            `/api/calendar/event/${event.id}`
+                          ).then((detailRes) => {
+                            if (detailRes.success && detailRes.event) {
+                              setSelectedEarningsEvent(prev => prev ? {
+                                ...prev,
+                                confidence: detailRes.event.confidence ?? prev.confidence,
+                                predicted_direction: detailRes.event.predicted_direction ?? prev.predicted_direction,
+                                analysis: detailRes.event.analysis ?? prev.analysis,
+                                analysis_tr: detailRes.event.analysis_tr ?? prev.analysis_tr,
+                                key_metrics: detailRes.event.key_metrics ?? prev.key_metrics,
+                                key_metrics_tr: detailRes.event.key_metrics_tr ?? prev.key_metrics_tr,
+                                scenarios: detailRes.event.scenarios ?? prev.scenarios,
+                                trading_tips: detailRes.event.trading_tips ?? prev.trading_tips,
+                                ai_analyzed: detailRes.event.ai_analyzed ?? prev.ai_analyzed,
+                                ai_model: detailRes.event.ai_model ?? prev.ai_model,
+                                importance_level: detailRes.event.importance_level ?? prev.importance_level,
+                                importance_score: detailRes.event.importance_score ?? prev.importance_score,
+                                importance_reason: detailRes.event.importance_reason ?? prev.importance_reason,
+                              } : prev);
+                            }
+                          }).catch((err) => {
+                            console.error("Error fetching earnings detail:", err);
+                          }).finally(() => {
+                            setLoadingEventDetail(false);
+                          });
                         }}
                         className="group relative p-4 rounded-xl border border-gray-800 bg-gradient-to-r from-blue-950/30 via-indigo-950/20 to-transparent hover:border-blue-500/50 transition-all cursor-pointer overflow-hidden"
                       >
@@ -1704,15 +1767,11 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                                 {event.time === "after_market" ? "After" : "Pre"}
                               </span>
                             </div>
-                            <span className={cn(
-                              "text-[10px] px-2 py-0.5 rounded-full border font-medium",
-                              event.predicted_direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
-                              event.predicted_direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
-                              event.predicted_direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
-                            )}>
+                            <span className={getDirectionBadgeClass(event.predicted_direction)}>
                               {event.predicted_direction === "bullish" && "📈 Bull"}
                               {event.predicted_direction === "bearish" && "📉 Bear"}
                               {event.predicted_direction === "neutral" && "➖ Neutral"}
+                              {event.predicted_direction === "volatile" && "⚡ Volatile"}
                             </span>
                           </div>
                           <h4 className="text-sm font-semibold text-white mb-2 tracking-wide">
@@ -1729,10 +1788,8 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                                 Rev: <span className="text-gray-300 font-mono">{event.revenue_forecast}</span>
                               </span>
                             )}
-                            <span className="text-gray-500">
-                              AI: <span className="text-blue-400 font-mono">{event.confidence}%</span>
-                            </span>
                           </div>
+                          <EventAIMetadata event={event} compact />
                           <p className="text-[10px] text-gray-600 mt-2 uppercase tracking-wider">{event.sector}</p>
                           {/* Click hint */}
                           <div className="absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1793,6 +1850,8 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                 {currentLocale === "tr" && selectedEconomicEvent.title_tr ? selectedEconomicEvent.title_tr : selectedEconomicEvent.title}
               </h2>
 
+              <EventAIMetadata event={selectedEconomicEvent} />
+
               {(selectedEconomicEvent.previous || selectedEconomicEvent.forecast) && (
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   {selectedEconomicEvent.previous && (
@@ -1816,17 +1875,27 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     <TrendingUp className="w-4 h-4 text-amber-500" />
                     Expected Direction
                   </h4>
-                  <p className={cn(
-                    "text-sm p-3 rounded-xl border",
-                    selectedEconomicEvent.predicted_direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
-                    selectedEconomicEvent.predicted_direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
-                    selectedEconomicEvent.predicted_direction === "neutral" && "bg-gray-700/30 text-gray-400 border-gray-600"
-                  )}>
+                  <p className={cn("text-sm p-3 rounded-xl border", getDirectionBadgeClass(selectedEconomicEvent.predicted_direction))}>
                     {selectedEconomicEvent.predicted_direction === "bullish" && "📈 Bullish - Expected positive market reaction"}
                     {selectedEconomicEvent.predicted_direction === "bearish" && "📉 Bearish - Expected negative market reaction"}
                     {selectedEconomicEvent.predicted_direction === "neutral" && "➖ Neutral - Limited market impact expected"}
+                    {selectedEconomicEvent.predicted_direction === "volatile" && "⚡ Volatile - Expect sharp two-way price swings"}
                   </p>
                 </div>
+
+                {selectedEconomicEvent.impact_analysis && (
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-950/20 to-transparent border border-cyan-900/30">
+                    <h4 className="text-sm font-semibold text-cyan-300 mb-2 flex items-center gap-2">
+                      <Brain className="w-4 h-4" />
+                      DeepSeek Analysis
+                    </h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                      {currentLocale === "tr" && selectedEconomicEvent.impact_analysis_tr
+                        ? selectedEconomicEvent.impact_analysis_tr
+                        : selectedEconomicEvent.impact_analysis}
+                    </p>
+                  </div>
+                )}
 
                 <div>
                   <h4 className="text-sm font-semibold text-gray-300 mb-2">Description</h4>
@@ -1884,15 +1953,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     {/* Impacts - News Card Style */}
                     <div className="flex flex-wrap gap-1.5 mb-3">
                       {selectedEconomicEvent.scenarios?.better_than_expected?.impacts?.map((impact: any, idx: number) => (
-                        <span key={idx} className={cn(
-                          "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
-                          impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
-                          impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
-                          impact.direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
-                        )}>
-                          {impact.direction === "bullish" ? "↗" : impact.direction === "bearish" ? "↘" : "→"}
-                          {impact.symbol} {impact.magnitude}
-                        </span>
+                        <ImpactChip key={idx} impact={impact} />
                       )) || (
                           <>
                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-green-500/10 text-green-400 border-green-500/20">
@@ -1936,15 +1997,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     {/* Impacts - News Card Style */}
                     <div className="flex flex-wrap gap-1.5 mb-3">
                       {selectedEconomicEvent.scenarios?.worse_than_expected?.impacts?.map((impact: any, idx: number) => (
-                        <span key={idx} className={cn(
-                          "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
-                          impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
-                          impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
-                          impact.direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
-                        )}>
-                          {impact.direction === "bullish" ? "↗" : impact.direction === "bearish" ? "↘" : "→"}
-                          {impact.symbol} {impact.magnitude}
-                        </span>
+                        <ImpactChip key={idx} impact={impact} />
                       )) || (
                           <>
                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-red-500/10 text-red-400 border-red-500/20">
@@ -2052,6 +2105,8 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                 <h2 className="text-xl font-bold text-white mb-2">{selectedEarningsEvent.company}</h2>
                 <p className="text-sm text-gray-500 mb-6">{selectedEarningsEvent.sector}</p>
 
+                <EventAIMetadata event={selectedEarningsEvent} />
+
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="p-3 rounded-xl bg-gray-900/50 border border-gray-800">
                     <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">EPS Estimate</p>
@@ -2082,15 +2137,11 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       AI Prediction
                     </h4>
                     <div className="flex items-center gap-4">
-                      <p className={cn(
-                        "text-sm px-4 py-2 rounded-xl border flex-1",
-                        selectedEarningsEvent.predicted_direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
-                        selectedEarningsEvent.predicted_direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
-                        selectedEarningsEvent.predicted_direction === "neutral" && "bg-gray-700/30 text-gray-400 border-gray-600"
-                      )}>
+                      <p className={cn("text-sm px-4 py-2 rounded-xl border flex-1", getDirectionBadgeClass(selectedEarningsEvent.predicted_direction))}>
                         {selectedEarningsEvent.predicted_direction === "bullish" && "📈 Beat Expected"}
                         {selectedEarningsEvent.predicted_direction === "bearish" && "📉 Miss Expected"}
                         {selectedEarningsEvent.predicted_direction === "neutral" && "➖ In Line Expected"}
+                        {selectedEarningsEvent.predicted_direction === "volatile" && "⚡ High Volatility Expected"}
                       </p>
                       <div className="text-center">
                         <p className="text-2xl font-mono text-blue-400">{selectedEarningsEvent.confidence}%</p>
@@ -2150,15 +2201,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       {/* Impacts - News Card Style */}
                       <div className="flex flex-wrap gap-1.5 mb-3">
                         {selectedEarningsEvent.scenarios?.beat?.impacts?.map((impact: any, idx: number) => (
-                          <span key={idx} className={cn(
-                            "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
-                            impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
-                            impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
-                            impact.direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
-                          )}>
-                            {impact.direction === "bullish" ? "↗" : impact.direction === "bearish" ? "↘" : "→"}
-                            {impact.symbol} {impact.magnitude}
-                          </span>
+                          <ImpactChip key={idx} impact={impact} />
                         )) || (
                             <>
                               <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-green-500/10 text-green-400 border-green-500/20">
@@ -2202,15 +2245,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       {/* Impacts - News Card Style */}
                       <div className="flex flex-wrap gap-1.5 mb-3">
                         {selectedEarningsEvent.scenarios?.miss?.impacts?.map((impact: any, idx: number) => (
-                          <span key={idx} className={cn(
-                            "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
-                            impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
-                            impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
-                            impact.direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
-                          )}>
-                            {impact.direction === "bullish" ? "↗" : impact.direction === "bearish" ? "↘" : "→"}
-                            {impact.symbol} {impact.magnitude}
-                          </span>
+                          <ImpactChip key={idx} impact={impact} />
                         )) || (
                             <>
                               <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-red-500/10 text-red-400 border-red-500/20">
@@ -2254,15 +2289,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       {/* Impacts - News Card Style */}
                       <div className="flex flex-wrap gap-1.5 mb-3">
                         {selectedEarningsEvent.scenarios?.mixed?.impacts?.map((impact: any, idx: number) => (
-                          <span key={idx} className={cn(
-                            "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
-                            impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
-                            impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
-                            impact.direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
-                          )}>
-                            {impact.direction === "bullish" ? "↗" : impact.direction === "bearish" ? "↘" : "→"}
-                            {impact.symbol} {impact.magnitude}
-                          </span>
+                          <ImpactChip key={idx} impact={impact} />
                         )) || (
                             <>
                               <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-amber-500/10 text-amber-400 border-amber-500/20">
@@ -2299,15 +2326,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       {/* Impacts - News Card Style */}
                       <div className="flex flex-wrap gap-1.5 mb-3">
                         {selectedEarningsEvent.scenarios?.inline?.impacts?.map((impact: any, idx: number) => (
-                          <span key={idx} className={cn(
-                            "inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border",
-                            impact.direction === "bullish" && "bg-green-500/10 text-green-400 border-green-500/20",
-                            impact.direction === "bearish" && "bg-red-500/10 text-red-400 border-red-500/20",
-                            impact.direction === "neutral" && "bg-gray-700/50 text-gray-400 border-gray-600"
-                          )}>
-                            {impact.direction === "bullish" ? "↗" : impact.direction === "bearish" ? "↘" : "→"}
-                            {impact.symbol} {impact.magnitude}
-                          </span>
+                          <ImpactChip key={idx} impact={impact} />
                         )) || (
                             <>
                               <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium border bg-gray-700/50 text-gray-400 border-gray-600">

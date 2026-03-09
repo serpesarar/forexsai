@@ -57,7 +57,6 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "pulse-ml", title: "PULSE 2 - ML Hybrid", column: "left", order: 2, visible: true, size: "large", collapsed: false },
     { id: "pulse-v3", title: "PULSE 3 - Hybrid Scalp", column: "left", order: 3, visible: true, size: "large", collapsed: false },
     { id: "emel-panel", title: "EMEL Panel - 9 Checkpoints", column: "left", order: 4, visible: true, size: "large", collapsed: false },
-    { id: "news", title: "Market News", column: "left", order: 5, visible: true, size: "medium", collapsed: false },
     { id: "learning-dashboard", title: "Learning Dashboard", column: "left", order: 7, visible: true, size: "large", collapsed: false },
     { id: "cot-whale", title: "COT & Whale Intelligence", column: "left", order: 8, visible: true, size: "large", collapsed: false },
 
@@ -68,7 +67,6 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "pattern-engine", title: "Pattern Engine V2", column: "right", order: 3, visible: true, size: "large", collapsed: false },
     { id: "harmonic-visualizer", title: "Harmonic Visualizer", column: "center", order: -0.5, visible: true, size: "full", collapsed: false },
     { id: "sentiment", title: "AI Sentiment", column: "right", order: 4, visible: true, size: "medium", collapsed: false },
-    { id: "comex-news", title: "COMEX News", column: "right", order: 5, visible: true, size: "medium", collapsed: false },
     { id: "whale-tracker", title: "Whale Tracker", column: "right", order: 6, visible: true, size: "medium", collapsed: false },
     { id: "candlestick-patterns", title: "Candlestick Patterns", column: "right", order: 7, visible: true, size: "medium", collapsed: false },
     { id: "strategy-performance", title: "Strategy Performance", column: "right", order: 8, visible: true, size: "large", collapsed: false },
@@ -91,7 +89,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "charts", title: "Trading Charts", column: "center", order: 24, visible: true, size: "full", collapsed: false },
     { id: "news-correlation", title: "News-Chart Correlation", column: "center", order: 25, visible: true, size: "full", collapsed: false },
   ],
-  version: 25,
+  version: 26,
 };
 
 const LAYOUT_STORAGE_KEY = "dashboard-layout-v7";

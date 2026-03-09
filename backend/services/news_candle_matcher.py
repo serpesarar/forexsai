@@ -6,15 +6,118 @@ Algoritma:
 1. Mum hareketinin büyüklüğünü ve volatilitesini analiz et
 2. Mum zaman aralığına denk düşen haberleri getir
 3. Haberlerin impact score'unu ve urgency'sini değerlendir
-4. Sadece anlamlı eşleşmeleri döndür (max 5 haber)
+4. Heuristic adayları DeepSeek ile yeniden sırala
+5. Sadece anlamlı eşleşmeleri döndür (max 5 haber)
 """
 
-from datetime import datetime, timedelta
-from typing import List, Dict, Optional, Any, Tuple
+import logging
 from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Set
 import statistics
 
 from database.supabase_client import get_supabase_client
+from services.deepseek_json_client import call_deepseek_json
+
+
+logger = logging.getLogger(__name__)
+
+GLOBAL_IMPACT_SYMBOLS = {"*", "ALL"}
+
+SYMBOL_FAMILIES = {
+    "NDX": {"NDX", "NDX.INDX", "NASDAQ", "QQQ"},
+    "DAX": {"DAX", "GDAXI", "GDAXI.INDX", "DE40"},
+    "XAUUSD": {"XAUUSD", "XAU", "GOLD", "GC"},
+    "USOIL": {"USOIL", "USOIL.FOREX", "WTI", "CL", "OIL", "CL.COMM"},
+    "VIX": {"VIX", "VIX.INDX"},
+    "DXY": {"DXY", "DXY.INDX", "DOLLAR", "USD"},
+}
+
+SYMBOL_CANONICAL_MAP = {
+    alias: canonical
+    for canonical, aliases in SYMBOL_FAMILIES.items()
+    for alias in aliases
+}
+
+
+def normalize_symbol(symbol: Optional[str]) -> str:
+    """Normalize symbol aliases into a canonical symbol family."""
+    if not symbol:
+        return ""
+
+    cleaned = str(symbol).upper().replace("/", "").strip()
+    for suffix in (".INDX", ".FOREX", ".COMM"):
+        if cleaned.endswith(suffix):
+            cleaned = cleaned[: -len(suffix)]
+            break
+
+    return SYMBOL_CANONICAL_MAP.get(cleaned, cleaned)
+
+
+def get_symbol_variants(symbol: Optional[str]) -> List[str]:
+    """Return all known aliases for a symbol family."""
+    if not symbol:
+        return []
+
+    raw = str(symbol).upper().replace("/", "").strip()
+    normalized = normalize_symbol(raw)
+    variants: Set[str] = {raw, normalized}
+
+    for suffix in (".INDX", ".FOREX", ".COMM"):
+        if raw.endswith(suffix):
+            variants.add(raw[: -len(suffix)])
+
+    family = SYMBOL_FAMILIES.get(normalized)
+    if family:
+        variants.update(family)
+
+    return sorted(v for v in variants if v)
+
+
+def symbols_match(target_symbol: Optional[str], impact_symbol: Optional[str]) -> bool:
+    """Check whether an impact symbol belongs to the requested symbol family."""
+    if not target_symbol or not impact_symbol:
+        return False
+
+    impact_clean = str(impact_symbol).upper().replace("/", "").strip()
+    if impact_clean in GLOBAL_IMPACT_SYMBOLS:
+        return True
+
+    return normalize_symbol(target_symbol) == normalize_symbol(impact_clean)
+
+
+def get_matching_impact(
+    impacts: Optional[List[Dict[str, Any]]],
+    symbol: Optional[str],
+    include_global: bool = True,
+) -> Optional[Dict[str, Any]]:
+    """Find the best impact for a symbol, preferring direct family matches over global impacts."""
+    if not impacts or not symbol:
+        return None
+
+    direct_matches: List[Dict[str, Any]] = []
+    global_match: Optional[Dict[str, Any]] = None
+
+    for impact in impacts:
+        impact_symbol = impact.get("symbol", "")
+        impact_clean = str(impact_symbol).upper().replace("/", "").strip()
+
+        if impact_clean in GLOBAL_IMPACT_SYMBOLS:
+            if include_global and global_match is None:
+                global_match = impact
+            continue
+
+        if symbols_match(symbol, impact_clean):
+            direct_matches.append(impact)
+
+    if direct_matches:
+        return max(direct_matches, key=lambda impact: impact.get("score", 0))
+
+    return global_match
+
+
+def _parse_iso_timestamp(value: str) -> datetime:
+    return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
 
 
 @dataclass
@@ -79,6 +182,172 @@ class NewsCandleMatcher:
     
     def __init__(self):
         self.supabase = get_supabase_client()
+
+    def _build_candle(self,
+                      candle_timestamp: str,
+                      candle_open: float,
+                      candle_close: float,
+                      candle_high: float,
+                      candle_low: float) -> CandleInfo:
+        return CandleInfo(
+            timestamp=_parse_iso_timestamp(candle_timestamp),
+            open=candle_open,
+            high=candle_high,
+            low=candle_low,
+            close=candle_close,
+            volume=0,
+        )
+
+    def _collect_matches(self, symbol: str, candle: CandleInfo, news_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        matched: List[Dict[str, Any]] = []
+
+        for news in news_items:
+            relevance = self.calculate_relevance(news, candle, symbol)
+            if relevance < 0.3:
+                continue
+
+            symbol_impact = get_matching_impact(news.get("impacts", []), symbol)
+            if not symbol_impact:
+                continue
+
+            news_time = _parse_iso_timestamp(news.get("timestamp", ""))
+            time_diff = (news_time - candle.timestamp).total_seconds() / 60
+
+            matched.append(
+                {
+                    **news,
+                    "relevance_score": relevance,
+                    "symbol_impact": symbol_impact,
+                    "time_diff_minutes": time_diff,
+                }
+            )
+
+        matched.sort(key=lambda x: x["relevance_score"], reverse=True)
+        return matched
+
+    def _select_top_matches(self, matched: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        high_news = [n for n in matched if n.get("urgency") in ["breaking", "high"]]
+        return (high_news[:5] if len(high_news) >= 2 else matched[:5])
+
+    async def _rerank_with_ai(
+        self,
+        symbol: str,
+        candle: CandleInfo,
+        timeframe: str,
+        significance: Dict[str, Any],
+        candidates: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        if not candidates:
+            return []
+
+        serialized_candidates = []
+        for item in candidates[:5]:
+            impact = item.get("symbol_impact") or {}
+            serialized_candidates.append(
+                {
+                    "id": item.get("id"),
+                    "headline": item.get("headline_tr") or item.get("headline"),
+                    "timestamp": item.get("timestamp"),
+                    "urgency": item.get("urgency"),
+                    "heuristic_relevance": round(float(item.get("relevance_score", 0)), 4),
+                    "time_diff_minutes": round(float(item.get("time_diff_minutes", 0)), 2),
+                    "impact_direction": impact.get("direction", "neutral"),
+                    "impact_score": impact.get("score", 0),
+                    "impact_reasoning_tr": impact.get("reasoning_tr") or impact.get("reasoning") or "",
+                }
+            )
+
+        prompt = f"""You are matching already AI-analyzed news to a specific market candle. Return ONLY valid JSON.
+
+JSON schema:
+{{
+  "confidence": 0-100,
+  "matches": [
+    {{
+      "id": "candidate-id",
+      "reasoning_tr": "Bu haberin bu mumu neden açıkladığını kısa Türkçe açıkla",
+      "importance_level": "critical|high|medium|low",
+      "importance_score": 0-100
+    }}
+  ]
+}}
+
+Rules:
+- Sadece aşağıdaki candidate id'lerini kullan.
+- Sıralama en güçlü eşleşmeden en zayıfa doğru olsun.
+- Haber ile mum yönü uyumsuzsa reasoning_tr içinde bunu açıkça belirt.
+- Eğer hiçbir haber ikna edici değilse matches boş olsun.
+
+CANDLE:
+{{
+  "symbol": "{symbol}",
+  "timeframe": "{timeframe}",
+  "timestamp": "{candle.timestamp.isoformat()}",
+  "open": {candle.open},
+  "high": {candle.high},
+  "low": {candle.low},
+  "close": {candle.close},
+  "change_pct": {round(candle.change_pct, 4)},
+  "range_pct": {round(candle.range_pct, 4)},
+  "movement_type": "{significance.get('movement_type', 'unknown')}"
+}}
+
+CANDIDATES:
+{serialized_candidates}
+"""
+
+        ai_payload = await call_deepseek_json(prompt, max_tokens=900, temperature=0.2, timeout_seconds=30)
+        ai_matches = (ai_payload or {}).get("matches")
+        if not isinstance(ai_matches, list):
+            return candidates[:5]
+
+        candidate_map = {str(item.get("id")): dict(item) for item in candidates if item.get("id")}
+        ordered: List[Dict[str, Any]] = []
+        used_ids: Set[str] = set()
+        ai_confidence = (ai_payload or {}).get("confidence")
+
+        for index, ai_match in enumerate(ai_matches):
+            if not isinstance(ai_match, dict):
+                continue
+
+            news_id = str(ai_match.get("id") or "").strip()
+            if not news_id or news_id in used_ids or news_id not in candidate_map:
+                continue
+
+            item = dict(candidate_map[news_id])
+            rank_bonus = max(0.0, 1.0 - (index * 0.18))
+            item["relevance_score"] = round(min(1.0, item.get("relevance_score", 0) * 0.7 + rank_bonus * 0.3), 4)
+            item["ai_reasoning_tr"] = str(ai_match.get("reasoning_tr") or "").strip()
+            item["importance_level"] = ai_match.get("importance_level")
+            item["importance_score"] = ai_match.get("importance_score")
+            item["ai_match_confidence"] = ai_confidence
+            ordered.append(item)
+            used_ids.add(news_id)
+
+        for candidate in candidates:
+            candidate_id = str(candidate.get("id") or "")
+            if candidate_id and candidate_id not in used_ids:
+                ordered.append(candidate)
+
+        return ordered[:5]
+
+    def _prepare_candidates(self, symbol: str, candle: CandleInfo) -> tuple[Dict[str, Any], List[Dict[str, Any]]]:
+        atr = candle.range_pct * 0.5
+        significance = self.calculate_candle_significance(candle, atr, atr)
+        if not significance["is_significant"]:
+            return significance, []
+
+        news_items = self.fetch_relevant_news(
+            symbol=symbol,
+            candle_time=candle.timestamp,
+            time_window_minutes=significance["time_window_minutes"],
+            min_impact_score=significance["min_impact_score"],
+            expected_urgency=significance["expected_news_urgency"],
+        )
+        if not news_items:
+            return significance, []
+
+        return significance, self._select_top_matches(self._collect_matches(symbol, candle, news_items))
     
     def calculate_candle_significance(self, candle: CandleInfo, 
                                      avg_range: float, 
@@ -176,11 +445,7 @@ class NewsCandleMatcher:
                 # Skor filtresi uygula
                 filtered = []
                 for item in items_all:
-                    impacts = item.get("impacts", [])
-                    symbol_impact = next(
-                        (imp for imp in impacts if imp.get("symbol") == symbol),
-                        None
-                    )
+                    symbol_impact = get_matching_impact(item.get("impacts", []), symbol)
                     if symbol_impact and symbol_impact.get("score", 0) >= min_impact_score:
                         filtered.append(item)
                 
@@ -189,7 +454,7 @@ class NewsCandleMatcher:
             return items or []
             
         except Exception as e:
-            print(f"[NewsCandleMatcher] Error fetching news: {e}")
+            logger.exception("[NewsCandleMatcher] Error fetching news")
             return []
     
     def calculate_relevance(self, 
@@ -206,11 +471,7 @@ class NewsCandleMatcher:
         - Urgency seviyesi
         - Confidence
         """
-        impacts = news.get("impacts", [])
-        symbol_impact = next(
-            (imp for imp in impacts if imp.get("symbol") == symbol),
-            None
-        )
+        symbol_impact = get_matching_impact(news.get("impacts", []), symbol)
         
         if not symbol_impact:
             return 0
@@ -246,7 +507,7 @@ class NewsCandleMatcher:
         
         # 5. Zaman faktörü (0-0.1)
         # Haber mumdan hemen önceyse daha iyi
-        news_time = datetime.fromisoformat(news.get("timestamp", "").replace('Z', '+00:00'))
+        news_time = _parse_iso_timestamp(news.get("timestamp", ""))
         time_diff = abs((news_time - candle.timestamp).total_seconds() / 60)
         if time_diff < 15:
             relevance += 0.1
@@ -277,13 +538,16 @@ class NewsCandleMatcher:
         # Mum önemini analiz et
         significance = self.calculate_candle_significance(candle, avg_range, atr)
         
-        print(f"[NewsCandleMatcher] Candle significance: {significance['movement_type']}, "
-              f"score: {significance['significance_score']:.1f}, "
-              f"expected urgency: {significance['expected_news_urgency']}")
+        logger.info(
+            "[NewsCandleMatcher] Candle significance=%s score=%.1f urgency=%s",
+            significance["movement_type"],
+            significance["significance_score"],
+            significance["expected_news_urgency"],
+        )
         
         # Önemsiz mumlar için az haber döndür
         if not significance["is_significant"]:
-            print(f"[NewsCandleMatcher] Insignificant candle, returning empty")
+            logger.info("[NewsCandleMatcher] Insignificant candle, returning empty")
             return []
         
         # Haberleri getir
@@ -296,7 +560,7 @@ class NewsCandleMatcher:
         )
         
         if not news_items:
-            print(f"[NewsCandleMatcher] No news found for this candle")
+            logger.info("[NewsCandleMatcher] No news found for this candle")
             return []
         
         # Her haber için relevance hesapla
@@ -308,16 +572,12 @@ class NewsCandleMatcher:
             if relevance < 0.3:
                 continue
             
-            impacts = news.get("impacts", [])
-            symbol_impact = next(
-                (imp for imp in impacts if imp.get("symbol") == symbol),
-                None
-            )
+            symbol_impact = get_matching_impact(news.get("impacts", []), symbol)
             
             if not symbol_impact:
                 continue
             
-            news_time = datetime.fromisoformat(news.get("timestamp", "").replace('Z', '+00:00'))
+            news_time = _parse_iso_timestamp(news.get("timestamp", ""))
             time_diff = (news_time - candle.timestamp).total_seconds() / 60
             
             matched.append(MatchedNews(
@@ -348,10 +608,44 @@ class NewsCandleMatcher:
             # High + en iyi medium haberleri
             result = matched[:5]
         
-        print(f"[NewsCandleMatcher] Found {len(result)} relevant news items "
-              f"(filtered from {len(matched)} matches)")
+        logger.info(
+            "[NewsCandleMatcher] Found %s relevant news items (filtered from %s matches)",
+            len(result),
+            len(matched),
+        )
         
         return result
+
+    async def match_news_to_candle_simple_ai(self,
+                                             symbol: str,
+                                             candle_timestamp: str,
+                                             candle_open: float,
+                                             candle_close: float,
+                                             candle_high: float,
+                                             candle_low: float,
+                                             timeframe: str = "1h") -> List[Dict[str, Any]]:
+        try:
+            candle = self._build_candle(
+                candle_timestamp=candle_timestamp,
+                candle_open=candle_open,
+                candle_close=candle_close,
+                candle_high=candle_high,
+                candle_low=candle_low,
+            )
+            significance, candidates = self._prepare_candidates(symbol, candle)
+            if not significance["is_significant"] or not candidates:
+                return []
+            return await self._rerank_with_ai(symbol, candle, timeframe, significance, candidates)
+        except Exception:
+            logger.exception("[NewsCandleMatcher] Error in AI-assisted simple match")
+            return self.match_news_to_candle_simple(
+                symbol=symbol,
+                candle_timestamp=candle_timestamp,
+                candle_open=candle_open,
+                candle_close=candle_close,
+                candle_high=candle_high,
+                candle_low=candle_low,
+            )
     
     def match_news_to_candle_simple(self,
                                    symbol: str,
@@ -364,54 +658,19 @@ class NewsCandleMatcher:
         Basit API versiyonu - direkt değerlerle çalışır
         """
         try:
-            candle = CandleInfo(
-                timestamp=datetime.fromisoformat(candle_timestamp.replace('Z', '+00:00')),
-                open=candle_open,
-                high=candle_high,
-                low=candle_low,
-                close=candle_close,
-                volume=0
+            candle = self._build_candle(
+                candle_timestamp=candle_timestamp,
+                candle_open=candle_open,
+                candle_close=candle_close,
+                candle_high=candle_high,
+                candle_low=candle_low,
             )
-            
-            # Basit ATR hesapla (tek mum için)
-            atr = candle.range_pct * 0.5
-            
-            significance = self.calculate_candle_significance(candle, atr, atr)
-            
+            significance, candidates = self._prepare_candidates(symbol, candle)
             if not significance["is_significant"]:
                 return []
-            
-            # Haberleri getir
-            news_items = self.fetch_relevant_news(
-                symbol=symbol,
-                candle_time=candle.timestamp,
-                time_window_minutes=significance["time_window_minutes"],
-                min_impact_score=significance["min_impact_score"],
-                expected_urgency=significance["expected_news_urgency"]
-            )
-            
-            # Relevance hesapla ve sırala
-            matched = []
-            for news in news_items:
-                relevance = self.calculate_relevance(news, candle, symbol)
-                if relevance >= 0.3:
-                    impacts = news.get("impacts", [])
-                    symbol_impact = next(
-                        (imp for imp in impacts if imp.get("symbol") == symbol),
-                        None
-                    )
-                    if symbol_impact:
-                        matched.append({
-                            **news,
-                            "relevance_score": relevance,
-                            "symbol_impact": symbol_impact
-                        })
-            
-            matched.sort(key=lambda x: x["relevance_score"], reverse=True)
-            return matched[:5]
-            
-        except Exception as e:
-            print(f"[NewsCandleMatcher] Error in simple match: {e}")
+            return candidates
+        except Exception:
+            logger.exception("[NewsCandleMatcher] Error in simple match")
             return []
 
 

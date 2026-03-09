@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel
 
 from services.rss_aggregator import get_rss_aggregator, RSS_SOURCES
+from services.news_candle_matcher import get_matching_impact
 from database.supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/rss", tags=["rss"])
@@ -275,60 +276,19 @@ async def get_chart_news_markers(
             impacts = item.get("impacts", [])
             urgency = item.get("urgency", "medium")
             ai_confidence = item.get("ai_confidence", 0)
-            
+
             # Check if this news affects the requested symbol
-            symbol_impact = None
-            for imp in impacts:
-                imp_score = imp.get("score", 0)
-                imp_symbol = imp.get("symbol", "")
-                
-                # Symbol matching with variations - COMPREHENSIVE MAPPING
-                symbol_variations = [symbol]
-                
-                # Add base symbol without suffix
-                if ".INDX" in symbol:
-                    symbol_variations.append(symbol.replace(".INDX", ""))
-                elif ".FOREX" in symbol:
-                    symbol_variations.append(symbol.replace(".FOREX", ""))
-                elif ".COMM" in symbol:
-                    symbol_variations.append(symbol.replace(".COMM", ""))
-                
-                # Common symbol aliases
-                symbol_aliases = {
-                    "NDX.INDX": ["NDX", "NASDAQ", "QQQ"],
-                    "NDX": ["NDX.INDX", "NASDAQ", "QQQ"],
-                    "GDAXI.INDX": ["GDAXI", "DAX"],
-                    "DAX": ["GDAXI", "GDAXI.INDX"],
-                    "XAUUSD": ["GOLD", "XAU", "GC"],
-                    "GOLD": ["XAUUSD", "XAU"],
-                    "USOIL.FOREX": ["USOIL", "OIL", "WTI", "CL"],
-                    "USOIL": ["USOIL.FOREX", "OIL", "WTI", "CL"],
-                    "VIX.INDX": ["VIX"],
-                    "VIX": ["VIX.INDX"],
-                    "DXY.INDX": ["DXY", "DOLLAR"],
-                    "DXY": ["DXY.INDX", "DOLLAR"],
-                }
-                
-                if symbol in symbol_aliases:
-                    symbol_variations.extend(symbol_aliases[symbol])
-                
-                if imp_symbol in symbol_variations:
-                    # STRICT FILTERING based on urgency
-                    if urgency == "breaking":
-                        # Breaking news: accept score >= 6
-                        if imp_score >= 6:
-                            symbol_impact = imp
-                            break
-                    elif urgency == "high":
-                        # High urgency: accept score >= min_impact_score
-                        if imp_score >= min_impact_score and ai_confidence >= 50:
-                            symbol_impact = imp
-                            break
-                    elif urgency == "medium":
-                        # Medium urgency: only high confidence AND high score
-                        if imp_score >= 8 and ai_confidence >= 70:
-                            symbol_impact = imp
-                            break
+            symbol_impact = get_matching_impact(impacts, symbol)
+            if symbol_impact:
+                imp_score = symbol_impact.get("score", 0)
+
+                # STRICT FILTERING based on urgency
+                if urgency == "breaking" and imp_score < 6:
+                    symbol_impact = None
+                elif urgency == "high" and (imp_score < min_impact_score or ai_confidence < 50):
+                    symbol_impact = None
+                elif urgency == "medium" and (imp_score < 8 or ai_confidence < 70):
+                    symbol_impact = None
             
             if not symbol_impact:
                 continue
@@ -420,13 +380,14 @@ async def get_news_for_candle(
         
         matcher = get_news_candle_matcher()
         
-        matched_news = matcher.match_news_to_candle_simple(
+        matched_news = await matcher.match_news_to_candle_simple_ai(
             symbol=symbol,
             candle_timestamp=candle_timestamp,
             candle_open=candle_open,
             candle_close=candle_close,
             candle_high=candle_high,
-            candle_low=candle_low
+            candle_low=candle_low,
+            timeframe=timeframe,
         )
         
         # Format response
@@ -442,8 +403,11 @@ async def get_news_for_candle(
                 "urgency": news.get("urgency"),
                 "score": symbol_impact.get("score", 5),
                 "direction": symbol_impact.get("direction", "neutral"),
-                "reasoning_tr": symbol_impact.get("reasoning_tr", ""),
+                "reasoning_tr": news.get("ai_reasoning_tr") or symbol_impact.get("reasoning_tr", ""),
                 "relevance_score": round(news.get("relevance_score", 0), 2),
+                "importance_level": news.get("importance_level"),
+                "importance_score": news.get("importance_score"),
+                "ai_match_confidence": news.get("ai_match_confidence"),
                 "url": news.get("url", ""),
             })
         
@@ -811,7 +775,7 @@ async def test_ai_analysis(
             "traceback": traceback.format_exc(),
             "api_keys": {
                 "anthropic": bool(os.getenv("ANTHROPIC_API_KEY", "")),
-                "deepseek": bool(os.getenv("DEEPSEEK_API_KEY", ""))
+                "deepseek": bool(os.getenv("DEEP_SEEKR1", ""))
             }
         }
 

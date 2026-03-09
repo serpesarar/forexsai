@@ -54,62 +54,25 @@ Response:
 }
 ```
 
-## News Feed
+## News AI Correlation
 
-**Component**: `frontend/components/NewsFeed.tsx`
+**Frontend**: `frontend/app/news-correlation/page.tsx`
 
-### Usage
+### Canonical APIs
+- `GET /api/rss/news`
+- `GET /api/rss/candle-news/{symbol}`
+- `POST /api/news-correlation/explain-move`
+- `GET /api/calendar/economic`
+- `GET /api/calendar/earnings`
 
-```tsx
-import NewsFeed from "../components/NewsFeed";
-
-<NewsFeed />
-```
-
-### Features
-- Unified economic + market news feed.
-- Filters for impact and category (Fed, inflation, jobs).
-- Auto-refresh every 60s.
-- Sentiment labels and impact badges.
-
-### Key Files
-- `frontend/components/NewsFeed.tsx`
-- `frontend/components/NewsCard.tsx`
-- `frontend/components/NewsFilters.tsx`
-- `frontend/components/useNews.ts`
-
-### API
-**Endpoint**: `GET /api/news/feed`
-
-Query params:
-- `limit`: 5-100
-- `impact`: `high | medium | low`
-- `category`: `fed | inflation | jobs`
-
-Response:
-```json
-{
-  "total": 2,
-  "news": [
-    {
-      "type": "economic_event",
-      "id": "event_2024-05-01_Fed",
-      "timestamp": "2024-05-01T12:00:00Z",
-      "title": "Fed Interest Rate Decision",
-      "impact": "High",
-      "sentiment": "neutral",
-      "actual": "5.50%",
-      "expected": "5.50%",
-      "previous": "5.25%",
-      "market_reaction": "Muted reaction expected"
-    }
-  ]
-}
-```
+### Notes
+- News, economic, and earnings items are surfaced through the unified News AI flow.
+- Chart markers and candle correlation are sourced from the backend News AI contracts.
+- Legacy `GET /api/news/feed` documentation was removed because the canonical panel no longer depends on it.
 
 ## Integration Notes
 
-- `frontend/app/page.tsx` places the chart and news feed at the top of the dashboard layout.
+- `frontend/app/page.tsx` links users into the canonical News AI experience via the News Correlation surface.
 - Zustand store additions are in `frontend/lib/store.ts` for chart + news state.
 - Backend routers are registered in `backend/main.py` and `backend/routers/__init__.py`.
 

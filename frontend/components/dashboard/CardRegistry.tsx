@@ -74,16 +74,6 @@ export const CARD_REGISTRY: CardDefinition[] = [
     component: null,
     gridSpan: { small: 1, medium: 1, large: 1, full: 3 },
   },
-  {
-    id: "news",
-    title: "Market News",
-    defaultColumn: "right",
-    defaultOrder: 1,
-    defaultSize: "medium",
-    minSize: "small",
-    component: null,
-    gridSpan: { small: 1, medium: 1, large: 1, full: 3 },
-  },
   
   // Full Width Cards
   {

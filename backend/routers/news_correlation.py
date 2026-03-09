@@ -3,14 +3,157 @@ News-Chart Correlation API
 Endpoints for matching news events with candlestick data
 """
 
-from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
-import os
+import logging
+from datetime import datetime, timedelta, timezone
+from fastapi import APIRouter, HTTPException
+from typing import Any, Dict, List, Optional
 
 from database.supabase_client import get_supabase_client
+from services.deepseek_json_client import call_deepseek_json
+from services.news_candle_matcher import get_matching_impact, get_symbol_variants
 
 router = APIRouter(prefix="/api/news-correlation", tags=["news-correlation"])
+logger = logging.getLogger(__name__)
+
+URGENCY_PRIORITY = {"breaking": 4, "high": 3, "medium": 2, "low": 1}
+
+
+def _extract_rows(result: Any) -> List[Dict[str, Any]]:
+    if hasattr(result, "data"):
+        return result.data or []
+    if isinstance(result, dict):
+        return result.get("data", []) or []
+    return []
+
+
+def _build_symbol_filter(symbol: str) -> str:
+    variants = get_symbol_variants(symbol)
+    return ",".join(f"symbol.eq.{variant}" for variant in variants)
+
+
+def _attach_symbol_impacts(news_items: List[Dict[str, Any]], symbol: str) -> List[Dict[str, Any]]:
+    related_news: List[Dict[str, Any]] = []
+
+    for news in news_items:
+        symbol_impact = get_matching_impact(news.get("impacts", []), symbol)
+        if symbol_impact:
+            related_news.append({**news, "symbol_impact": symbol_impact})
+
+    related_news.sort(
+        key=lambda item: (
+            URGENCY_PRIORITY.get(item.get("urgency", "low"), 0),
+            (item.get("symbol_impact") or {}).get("score", 0),
+            item.get("ai_confidence", 0),
+            item.get("timestamp", ""),
+        ),
+        reverse=True,
+    )
+    return related_news
+
+
+def _build_move_explanation(symbol: str, change_percent: float, news_item: Dict[str, Any]) -> str:
+    symbol_impact = news_item.get("symbol_impact") or {}
+    headline = news_item.get("headline_tr") or news_item.get("headline") or "this news item"
+    reasoning = symbol_impact.get("reasoning_tr") or symbol_impact.get("reasoning") or ""
+    sentiment = news_item.get("sentiment")
+    volatility = news_item.get("volatility_expectation")
+
+    move_label = "yükseliş" if change_percent > 0 else "düşüş" if change_percent < 0 else "hareket"
+    prefix = f"{symbol} fiyatındaki %{abs(change_percent):.2f} {move_label}"
+
+    if reasoning:
+        explanation = f"{prefix}, '{headline}' haberi için '{reasoning}' gerekçesiyle ilişkilendirildi."
+    else:
+        explanation = f"{prefix}, '{headline}' haberi ile zamanlama ve etki skoruna göre eşleşti."
+
+    meta_parts = []
+    if sentiment:
+        meta_parts.append(f"sentiment: {sentiment}")
+    if volatility:
+        meta_parts.append(f"beklenen volatilite: {volatility}")
+
+    if meta_parts:
+        explanation = f"{explanation} ({', '.join(meta_parts)})"
+
+    return explanation
+
+
+def _serialize_news_for_ai(news_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    serialized: List[Dict[str, Any]] = []
+    for news in news_items[:5]:
+        symbol_impact = news.get("symbol_impact") or {}
+        serialized.append(
+            {
+                "id": news.get("id"),
+                "timestamp": news.get("timestamp"),
+                "headline": news.get("headline_tr") or news.get("headline"),
+                "urgency": news.get("urgency"),
+                "ai_confidence": news.get("ai_confidence", 0),
+                "impact_direction": symbol_impact.get("direction", "neutral"),
+                "impact_score": symbol_impact.get("score", 0),
+                "impact_reasoning_tr": symbol_impact.get("reasoning_tr") or symbol_impact.get("reasoning") or "",
+            }
+        )
+    return serialized
+
+
+async def _generate_move_explanation(
+    symbol: str,
+    candle: Dict[str, Any],
+    candle_time: datetime,
+    change_percent: float,
+    related_news: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    if not related_news:
+        return {
+            "explanation": f"{symbol} için bu mumun çevresindeki 30 dakikalık pencerede güçlü bir haber eşleşmesi bulunamadı.",
+            "confidence": 0,
+        }
+
+    fallback_explanation = _build_move_explanation(symbol, change_percent, related_news[0])
+    fallback_confidence = int((related_news[0].get("ai_confidence") or 0))
+
+    prompt = f"""You are explaining a specific candle move to a trader. Return ONLY valid JSON.
+
+JSON schema:
+{{
+  "explanation": "2-4 cümlelik Türkçe açıklama",
+  "confidence": 0-100,
+  "primary_news_id": "string veya null"
+}}
+
+Rules:
+- Sadece verilen haber adaylarını kullan.
+- Haberler zayıfsa bunu açıkça söyle; kesin neden uydurma.
+- Mum yönü ve haber yönü çelişiyorsa bunu belirt.
+- Açıklama kısa, somut ve trader odaklı olsun.
+
+CANDLE:
+{{
+  "symbol": "{symbol}",
+  "timestamp": "{candle_time.isoformat()}",
+  "open": {candle.get("open", 0)},
+  "high": {candle.get("high", 0)},
+  "low": {candle.get("low", 0)},
+  "close": {candle.get("close", 0)},
+  "change_percent": {round(change_percent, 4)},
+  "direction": "{"up" if change_percent > 0 else "down" if change_percent < 0 else "flat"}"
+}}
+
+RELATED_NEWS:
+{_serialize_news_for_ai(related_news)}
+"""
+
+    ai_payload = await call_deepseek_json(prompt, max_tokens=700, temperature=0.2, timeout_seconds=30)
+    explanation = str((ai_payload or {}).get("explanation") or "").strip()
+
+    if explanation:
+        return {
+            "explanation": explanation,
+            "confidence": int((ai_payload or {}).get("confidence") or fallback_confidence),
+        }
+
+    return {"explanation": fallback_explanation, "confidence": fallback_confidence}
 
 
 @router.get("/candle-news/{symbol}")
@@ -33,7 +176,7 @@ async def get_candle_news(
         supabase = get_supabase_client()
         
         # Calculate time range
-        candle_time = datetime.fromtimestamp(timestamp)
+        candle_time = datetime.fromtimestamp(timestamp, tz=timezone.utc)
         start_time = candle_time - timedelta(minutes=window_minutes)
         end_time = candle_time + timedelta(minutes=window_minutes)
         
@@ -44,21 +187,8 @@ async def get_candle_news(
             .lte("timestamp", end_time.isoformat())\
             .order("timestamp", desc=True)\
             .execute()
-        
-        # Filter news that impacts this symbol
-        related_news = []
-        for news in result.data:
-            impacts = news.get("impacts", [])
-            # Check if symbol is directly mentioned
-            symbol_impact = next((i for i in impacts if i.get("symbol") == symbol), None)
-            # Or check for global impacts (all symbols affected)
-            global_impact = next((i for i in impacts if i.get("symbol") in ["*", "ALL"]), None)
-            
-            if symbol_impact or global_impact:
-                related_news.append({
-                    **news,
-                    "symbol_impact": symbol_impact or global_impact
-                })
+
+        related_news = _attach_symbol_impacts(_extract_rows(result), symbol)
         
         return {
             "success": True,
@@ -72,7 +202,7 @@ async def get_candle_news(
         }
         
     except Exception as e:
-        print(f"Error fetching candle news: {e}")
+        logger.exception("Error fetching candle news for %s at %s", symbol, timestamp)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -100,14 +230,14 @@ async def get_big_moves(
         
         result = supabase.table("candle_cache")\
             .select("*")\
-            .eq("symbol", symbol)\
+            .or_(_build_symbol_filter(symbol))\
             .eq("timeframe", timeframe)\
             .gte("timestamp", from_time.isoformat())\
             .order("timestamp", desc=True)\
             .execute()
-        
+
         big_moves = []
-        for candle in result.data:
+        for candle in _extract_rows(result):
             open_price = candle.get("open", 0)
             close_price = candle.get("close", 0)
             
@@ -124,12 +254,8 @@ async def get_big_moves(
                     .gte("timestamp", (candle_time - timedelta(minutes=30)).isoformat())\
                     .lte("timestamp", (candle_time + timedelta(minutes=30)).isoformat())\
                     .execute()
-                
-                # Filter relevant news
-                related_news = [
-                    n for n in news_result.data
-                    if any(i.get("symbol") == symbol for i in n.get("impacts", []))
-                ]
+
+                related_news = _attach_symbol_impacts(_extract_rows(news_result), symbol)
                 
                 big_moves.append({
                     "timestamp": candle["timestamp"],
@@ -156,7 +282,7 @@ async def get_big_moves(
         }
         
     except Exception as e:
-        print(f"Error fetching big moves: {e}")
+        logger.exception("Error fetching big moves for %s", symbol)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -177,24 +303,25 @@ async def explain_price_move(
     try:
         # First get the candle data
         supabase = get_supabase_client()
-        candle_time = datetime.fromtimestamp(timestamp)
+        candle_time = datetime.fromtimestamp(timestamp, tz=timezone.utc)
         
         # Get candle
         candle_result = supabase.table("candle_cache")\
             .select("*")\
-            .eq("symbol", symbol)\
+            .or_(_build_symbol_filter(symbol))\
             .gte("timestamp", candle_time.isoformat())\
             .lte("timestamp", (candle_time + timedelta(minutes=1)).isoformat())\
             .limit(1)\
             .execute()
-        
-        if not candle_result.data:
+
+        candle_rows = _extract_rows(candle_result)
+        if not candle_rows:
             return {
                 "success": False,
                 "error": "Candle not found"
             }
-        
-        candle = candle_result.data[0]
+
+        candle = candle_rows[0]
         
         # Get related news
         news_result = supabase.table("enriched_news")\
@@ -203,32 +330,19 @@ async def explain_price_move(
             .lte("timestamp", (candle_time + timedelta(minutes=30)).isoformat())\
             .order("urgency")\
             .execute()
-        
-        # Filter relevant news
-        relevant_news = [
-            n for n in news_result.data
-            if any(i.get("symbol") == symbol for i in n.get("impacts", []))
-        ]
+
+        relevant_news = _attach_symbol_impacts(_extract_rows(news_result), symbol)
         
         # Calculate price change
         change_percent = ((candle["close"] - candle["open"]) / candle["open"]) * 100
         
         # Generate AI explanation
         explanation = ""
-        if ai_explain and relevant_news:
-            top_news = relevant_news[0]
-            impact = next((i for i in top_news.get("impacts", []) if i.get("symbol") == symbol), None)
-            
-            if change_percent > 0:
-                explanation = f"The {change_percent:.2f}% surge in {symbol} was primarily driven by: {top_news.get('headline')}. "
-                if impact:
-                    explanation += f"AI analysis indicates {impact.get('reasoning', 'positive sentiment')}. "
-            else:
-                explanation = f"The {abs(change_percent):.2f}% decline in {symbol} was influenced by: {top_news.get('headline')}. "
-                if impact:
-                    explanation += f"AI analysis suggests {impact.get('reasoning', 'negative sentiment')}. "
-            
-            explanation += f"Market sentiment was {top_news.get('sentiment', 'neutral')} with {top_news.get('volatility_expectation', 'medium')} volatility expected."
+        confidence = 0
+        if ai_explain:
+            ai_result = await _generate_move_explanation(symbol, candle, candle_time, change_percent, relevant_news)
+            explanation = ai_result.get("explanation", "")
+            confidence = ai_result.get("confidence", 0)
         
         return {
             "success": True,
@@ -239,12 +353,14 @@ async def explain_price_move(
                 "change_percent": round(change_percent, 2),
                 "direction": "up" if change_percent > 0 else "down",
                 "related_news": relevant_news,
+                "confidence": confidence,
+                "explanation": explanation if ai_explain else None,
                 "ai_explanation": explanation if ai_explain else None
             }
         }
         
     except Exception as e:
-        print(f"Error explaining move: {e}")
+        logger.exception("Error explaining move for %s at %s", symbol, timestamp)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -316,5 +432,5 @@ async def get_economic_events(
         }
         
     except Exception as e:
-        print(f"Error fetching economic events: {e}")
+        logger.exception("Error fetching economic events for %s", symbol)
         raise HTTPException(status_code=500, detail=str(e))

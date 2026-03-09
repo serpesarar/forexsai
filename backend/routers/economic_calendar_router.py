@@ -5,16 +5,23 @@ Ekonomik takvim ve kazanç takvimi API endpointleri
 """
 
 import os
-import json
-from datetime import datetime, timedelta
-from typing import List, Dict, Optional, Literal
+import asyncio
+import logging
+from datetime import datetime, timedelta, timezone
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Literal
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
-import aiohttp
+from pydantic import BaseModel, Field
+
+from services.deepseek_json_client import DEEPSEEK_MODEL, call_deepseek_json
 
 router = APIRouter(prefix="/api/calendar", tags=["calendar"])
+logger = logging.getLogger(__name__)
 
 DEEP_SEEKR1 = os.getenv("DEEP_SEEKR1", "")
+
+LIST_AI_CACHE_TTL_SECONDS = 900
+LIST_AI_ENRICHMENT_CONCURRENCY = 4
+_LIST_AI_CACHE: Dict[str, Dict[str, Any]] = {}
 
 # =============================================================================
 # DATA MODELS
@@ -32,10 +39,16 @@ class EconomicEventDetail(BaseModel):
     previous: Optional[str] = None
     
     # AI Analizi
-    predicted_direction: Literal["bullish", "bearish", "neutral"]
+    predicted_direction: Literal["bullish", "bearish", "neutral", "volatile"]
+    confidence: Optional[int] = None
     affected_symbols: List[str]
     impact_analysis: str
     impact_analysis_tr: str
+    ai_analyzed: bool = False
+    ai_model: Optional[str] = None
+    importance_level: Optional[Literal["critical", "high", "medium", "low"]] = None
+    importance_score: Optional[int] = None
+    importance_reason: Optional[str] = None
     
     # Veri açıklaması
     description: str
@@ -66,15 +79,20 @@ class EarningsEventDetail(BaseModel):
     previous_revenue: Optional[str] = None
     
     # AI Analizi
-    predicted_direction: Literal["bullish", "bearish", "neutral"]
+    predicted_direction: Literal["bullish", "bearish", "neutral", "volatile"]
     confidence: int  # 1-100
     affected_symbols: List[str]  # NDX, SPY, etc.
+    ai_analyzed: bool = False
+    ai_model: Optional[str] = None
+    importance_level: Optional[Literal["critical", "high", "medium", "low"]] = None
+    importance_score: Optional[int] = None
+    importance_reason: Optional[str] = None
     
     # Analiz
     analysis: str
     analysis_tr: str
-    key_metrics_to_watch: List[str]
-    key_metrics_to_watch_tr: List[str]
+    key_metrics: List[str] = Field(default_factory=list)
+    key_metrics_tr: List[str] = Field(default_factory=list)
     
     # Tarih bilgisi
     is_upcoming: bool
@@ -357,6 +375,9 @@ EARNINGS_DB = [
 # HELPER FUNCTIONS
 # =============================================================================
 
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
 def get_next_event_date(schedule: str, base_date: datetime) -> datetime:
     """Calculate next event date based on schedule pattern"""
     if schedule == "first_friday":
@@ -366,6 +387,13 @@ def get_next_event_date(schedule: str, base_date: datetime) -> datetime:
         days_until_friday = (4 - weekday) % 7
         return first_day + timedelta(days=days_until_friday)
     
+    elif schedule == "monthly":
+        # Ayın ilk iş günü
+        monthly_date = base_date.replace(day=1)
+        while monthly_date.weekday() >= 5:
+            monthly_date += timedelta(days=1)
+        return monthly_date
+
     elif schedule == "monthly_mid":
         # Ayın ortası (genellikle 10-15 arası)
         return base_date.replace(day=12)
@@ -397,42 +425,263 @@ def get_next_event_date(schedule: str, base_date: datetime) -> datetime:
     return base_date
 
 
+def _resolve_next_economic_event_date(schedule: str, now: datetime) -> datetime:
+    """Resolve next scheduled economic event date consistently for list/detail."""
+    next_date = get_next_event_date(schedule, now)
+
+    if next_date < now:
+        if schedule == "first_friday":
+            next_date = get_next_event_date(schedule, now + timedelta(days=32))
+        elif schedule.startswith("weekly"):
+            next_date = next_date + timedelta(days=7)
+        elif schedule in {"monthly", "monthly_mid"}:
+            next_date = get_next_event_date(schedule, now + timedelta(days=32))
+        elif schedule == "quarterly":
+            next_date = get_next_event_date(schedule, now + timedelta(days=95))
+
+    return next_date
+
+
+def _resolve_earnings_event_date(template: Dict[str, Any], now: datetime) -> datetime:
+    """Resolve next earnings event timestamp consistently for list/detail."""
+    event_date = datetime.strptime(template["date"], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    if template["time"] == "after_market":
+        event_date = event_date.replace(hour=21, minute=0)
+    else:
+        event_date = event_date.replace(hour=13, minute=30)
+
+    if event_date < now:
+        event_date = event_date + timedelta(days=90)
+
+    return event_date
+
+
+def _build_economic_event_from_template(template: Dict[str, Any], now: Optional[datetime] = None) -> Dict[str, Any]:
+    now = now or _utc_now()
+    next_date = _resolve_next_economic_event_date(template["schedule"], now)
+    minutes_until = int((next_date - now).total_seconds() / 60)
+
+    return {
+        **template,
+        "timestamp": next_date.isoformat(),
+        "is_upcoming": True,
+        "minutes_until": max(0, minutes_until),
+        "predicted_direction": "volatile" if template.get("impact") == "High" else "neutral",
+    }
+
+
+def _build_earnings_event_from_template(template: Dict[str, Any], now: Optional[datetime] = None) -> Dict[str, Any]:
+    now = now or _utc_now()
+    event_date = _resolve_earnings_event_date(template, now)
+    minutes_until = int((event_date - now).total_seconds() / 60)
+
+    confidence = 70
+    if template["ticker"] in ["AAPL", "MSFT", "GOOGL", "NVDA", "AMZN", "META"]:
+        confidence = 80
+    elif template["ticker"] == "TSLA":
+        confidence = 50
+
+    predicted_direction = "neutral"
+    if template.get("eps_forecast") and template.get("previous_eps"):
+        try:
+            forecast = float(template["eps_forecast"].replace("$", ""))
+            previous = float(template["previous_eps"].replace("$", ""))
+            if forecast > previous:
+                predicted_direction = "bullish"
+            elif forecast < previous:
+                predicted_direction = "bearish"
+        except Exception:
+            pass
+
+    return {
+        **template,
+        "timestamp": event_date.isoformat(),
+        "is_upcoming": True,
+        "minutes_until": max(0, minutes_until),
+        "confidence": confidence,
+        "predicted_direction": predicted_direction,
+    }
+
+
+def _clamp_score(value: Any, default: int = 50) -> int:
+    try:
+        numeric = int(float(value))
+    except (TypeError, ValueError):
+        numeric = default
+    return max(0, min(100, numeric))
+
+
+def _normalize_importance_level(value: Any, fallback: str) -> str:
+    normalized = str(value or "").strip().lower()
+    if normalized in {"critical", "high", "medium", "low"}:
+        return normalized
+    return fallback
+
+
+def _default_importance_fields(event_type: str, event_data: Dict[str, Any]) -> Dict[str, Any]:
+    if event_type == "economic":
+        impact = event_data.get("impact", "Medium")
+        mapping = {
+            "High": ("critical", 90),
+            "Medium": ("medium", 65),
+            "Low": ("low", 40),
+        }
+        level, score = mapping.get(impact, ("medium", 60))
+        reason = event_data.get("why_it_matters") or f"{event_data.get('title', 'This event')} can move multiple correlated assets."
+        return {
+            "importance_level": level,
+            "importance_score": score,
+            "importance_reason": reason,
+        }
+
+    ticker = event_data.get("ticker", "UNKNOWN")
+    affected_symbols = event_data.get("affected_symbols", [])
+    if ticker in {"AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA"}:
+        level, score = "high", 80
+    elif "NDX" in affected_symbols or "SPY" in affected_symbols:
+        level, score = "medium", 68
+    else:
+        level, score = "low", 48
+
+    reason = event_data.get("analysis") or f"{ticker} earnings can spill over into index and sector sentiment."
+    return {
+        "importance_level": level,
+        "importance_score": score,
+        "importance_reason": reason,
+    }
+
+
+def _normalize_direction(value: Any, fallback: str = "neutral") -> str:
+    direction = str(value or fallback).strip().lower()
+    if direction in {"bullish", "bearish", "neutral", "volatile"}:
+        return direction
+    return fallback
+
+
+def _normalize_ai_payload(event_type: str, event_data: Dict[str, Any], ai_payload: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    payload = dict(ai_payload or {})
+    defaults = _default_importance_fields(event_type, event_data)
+    fallback_direction = event_data.get("predicted_direction") or ("volatile" if event_type == "economic" and event_data.get("impact") == "High" else "neutral")
+
+    normalized = {
+        **payload,
+        "predicted_direction": _normalize_direction(payload.get("predicted_direction"), fallback_direction),
+        "confidence": _clamp_score(payload.get("confidence"), event_data.get("confidence", 70 if event_type == "earnings" else 65)),
+        "ai_analyzed": bool(payload.get("ai_analyzed", False)),
+        "ai_model": payload.get("ai_model") or "fallback",
+        "importance_level": _normalize_importance_level(payload.get("importance_level"), defaults["importance_level"]),
+        "importance_score": _clamp_score(payload.get("importance_score"), defaults["importance_score"]),
+        "importance_reason": str(payload.get("importance_reason") or defaults["importance_reason"]),
+    }
+
+    if event_type == "economic":
+        normalized["impact_analysis"] = str(
+            payload.get("impact_analysis")
+            or event_data.get("impact_analysis")
+            or event_data.get("why_it_matters")
+            or ""
+        )
+        normalized["impact_analysis_tr"] = str(
+            payload.get("impact_analysis_tr")
+            or event_data.get("impact_analysis_tr")
+            or event_data.get("why_it_matters_tr")
+            or normalized["impact_analysis"]
+        )
+    else:
+        normalized["analysis"] = str(
+            payload.get("analysis")
+            or event_data.get("analysis")
+            or f"{event_data.get('ticker', 'This company')} earnings are being evaluated for broader market spillover."
+        )
+        normalized["analysis_tr"] = str(
+            payload.get("analysis_tr")
+            or event_data.get("analysis_tr")
+            or normalized["analysis"]
+        )
+        normalized["key_metrics"] = list(payload.get("key_metrics") or event_data.get("key_metrics") or [])
+        normalized["key_metrics_tr"] = list(payload.get("key_metrics_tr") or event_data.get("key_metrics_tr") or normalized["key_metrics"])
+
+    return normalized
+
+
+def _get_list_cache_key(event_type: str, event_data: Dict[str, Any]) -> str:
+    return f"{event_type}:{event_data.get('id', 'unknown')}:{event_data.get('timestamp', '')}"
+
+
+def _get_cached_ai_analysis(cache_key: str) -> Optional[Dict[str, Any]]:
+    cached = _LIST_AI_CACHE.get(cache_key)
+    if not cached:
+        return None
+
+    if (_utc_now() - cached["cached_at"]).total_seconds() > LIST_AI_CACHE_TTL_SECONDS:
+        _LIST_AI_CACHE.pop(cache_key, None)
+        return None
+
+    return cached["payload"]
+
+
+def _build_list_payload(event_type: str, event_data: Dict[str, Any], ai_payload: Dict[str, Any]) -> Dict[str, Any]:
+    normalized = _normalize_ai_payload(event_type, event_data, ai_payload)
+    base = dict(event_data)
+    fields = [
+        "predicted_direction",
+        "confidence",
+        "ai_analyzed",
+        "ai_model",
+        "importance_level",
+        "importance_score",
+        "importance_reason",
+    ]
+
+    if event_type == "economic":
+        fields.extend(["impact_analysis", "impact_analysis_tr"])
+    else:
+        fields.extend(["analysis", "analysis_tr", "key_metrics", "key_metrics_tr"])
+
+    for field in fields:
+        if field in normalized:
+            base[field] = normalized[field]
+
+    return base
+
+
+async def _enrich_list_items(
+    event_type: str,
+    items: List[Dict[str, Any]],
+    analyzer: Callable[[Dict[str, Any]], Awaitable[Dict[str, Any]]],
+) -> List[Dict[str, Any]]:
+    if not items:
+        return items
+
+    semaphore = asyncio.Semaphore(LIST_AI_ENRICHMENT_CONCURRENCY)
+
+    async def _enrich_single(item: Dict[str, Any]) -> Dict[str, Any]:
+        cache_key = _get_list_cache_key(event_type, item)
+        cached = _get_cached_ai_analysis(cache_key)
+        if cached is not None:
+            return _build_list_payload(event_type, item, cached)
+
+        async with semaphore:
+            ai_payload = await analyzer(item)
+
+        _LIST_AI_CACHE[cache_key] = {
+            "cached_at": _utc_now(),
+            "payload": ai_payload,
+        }
+        return _build_list_payload(event_type, item, ai_payload)
+
+    return await asyncio.gather(*[_enrich_single(item) for item in items])
+
+
 def generate_upcoming_events(days_ahead: int = 30) -> List[Dict]:
     """Generate upcoming economic events for next X days"""
     events = []
-    now = datetime.utcnow()
+    now = _utc_now()
     
     for event_template in ECONOMIC_EVENTS_DB:
-        next_date = get_next_event_date(event_template["schedule"], now)
-        
-        # Eğer tarih geçmişse, bir sonraki periyoda atla
-        if next_date < now:
-            if event_template["schedule"] == "first_friday":
-                next_date = get_next_event_date(event_template["schedule"], now + timedelta(days=32))
-            elif event_template["schedule"].startswith("weekly"):
-                next_date = next_date + timedelta(days=7)
-            elif event_template["schedule"] == "monthly" or event_template["schedule"] == "monthly_mid":
-                next_date = get_next_event_date(event_template["schedule"], now + timedelta(days=32))
-            elif event_template["schedule"] == "quarterly":
-                next_date = get_next_event_date(event_template["schedule"], now + timedelta(days=95))
-        
-        # Belirtilen gün aralığında mı?
-        if (next_date - now).days <= days_ahead:
-            minutes_until = int((next_date - now).total_seconds() / 60)
-            
-            # Basit bir yön tahmini (gerçekte AI veya analizle yapılmalı)
-            predicted_direction = "neutral"
-            if event_template["impact"] == "High":
-                # Yüksek etkili verilerde volatilite yüksek
-                predicted_direction = "volatile"
-            
-            events.append({
-                **event_template,
-                "timestamp": next_date.isoformat(),
-                "is_upcoming": True,
-                "minutes_until": max(0, minutes_until),
-                "predicted_direction": predicted_direction,
-            })
+        event = _build_economic_event_from_template(event_template, now)
+        if (datetime.fromisoformat(event["timestamp"]) - now).days <= days_ahead:
+            events.append(event)
     
     # Tarihe göre sırala
     events.sort(key=lambda x: x["timestamp"])
@@ -442,55 +691,12 @@ def generate_upcoming_events(days_ahead: int = 30) -> List[Dict]:
 def generate_upcoming_earnings(days_ahead: int = 30) -> List[Dict]:
     """Generate upcoming earnings events"""
     earnings = []
-    now = datetime.utcnow()
+    now = _utc_now()
     
     for earnings_template in EARNINGS_DB:
-        # Tarihi parse et
-        event_date = datetime.strptime(earnings_template["date"], "%Y-%m-%d")
-        event_time = earnings_template["time"]
-        
-        # Saati ayarla (after_market = 21:00, before_market = 13:30 UTC)
-        if event_time == "after_market":
-            event_date = event_date.replace(hour=21, minute=0)
-        else:
-            event_date = event_date.replace(hour=13, minute=30)
-        
-        # Tarih geçmiş mi kontrol et
-        if event_date < now:
-            # Çeyreklik kazançları simüle et
-            event_date = event_date + timedelta(days=90)
-        
-        if (event_date - now).days <= days_ahead:
-            minutes_until = int((event_date - now).total_seconds() / 60)
-            
-            # Kazanç tahmini (basit kurallar)
-            confidence = 70
-            if earnings_template["ticker"] in ["AAPL", "MSFT", "GOOGL"]:
-                confidence = 80
-            elif earnings_template["ticker"] == "TSLA":
-                confidence = 50  # Tesla daha volatil
-            
-            # EPS tahmin vs önceki
-            predicted_direction = "neutral"
-            if earnings_template.get("eps_forecast") and earnings_template.get("previous_eps"):
-                try:
-                    forecast = float(earnings_template["eps_forecast"].replace("$", ""))
-                    previous = float(earnings_template["previous_eps"].replace("$", ""))
-                    if forecast > previous:
-                        predicted_direction = "bullish"
-                    elif forecast < previous:
-                        predicted_direction = "bearish"
-                except:
-                    pass
-            
-            earnings.append({
-                **earnings_template,
-                "timestamp": event_date.isoformat(),
-                "is_upcoming": True,
-                "minutes_until": max(0, minutes_until),
-                "confidence": confidence,
-                "predicted_direction": predicted_direction,
-            })
+        event = _build_earnings_event_from_template(earnings_template, now)
+        if (datetime.fromisoformat(event["timestamp"]) - now).days <= days_ahead:
+            earnings.append(event)
     
     earnings.sort(key=lambda x: x["timestamp"])
     return earnings
@@ -513,6 +719,8 @@ async def get_economic_calendar(
         
         if currency:
             events = [e for e in events if e["currency"].upper() == currency.upper()]
+        
+        events = await _enrich_list_items("economic", events, analyze_economic_event_with_deepseek)
         
         return {
             "success": True,
@@ -539,6 +747,8 @@ async def get_earnings_calendar(
         if sector:
             earnings = [e for e in earnings if e["sector"].lower() == sector.lower()]
         
+        earnings = await _enrich_list_items("earnings", earnings, analyze_earnings_with_deepseek)
+        
         return {
             "success": True,
             "count": len(earnings),
@@ -556,9 +766,9 @@ async def get_today_events():
     Get all events happening today
     """
     try:
-        now = datetime.utcnow()
-        today_start = now.replace(hour=0, minute=0, second=0)
-        today_end = now.replace(hour=23, minute=59, second=59)
+        now = _utc_now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
         
         economic = generate_upcoming_events(days_ahead=1)
         earnings = generate_upcoming_earnings(days_ahead=1)
@@ -573,6 +783,9 @@ async def get_today_events():
             e for e in earnings
             if today_start <= datetime.fromisoformat(e["timestamp"]) <= today_end
         ]
+
+        economic_today = await _enrich_list_items("economic", economic_today, analyze_economic_event_with_deepseek)
+        earnings_today = await _enrich_list_items("earnings", earnings_today, analyze_earnings_with_deepseek)
         
         return {
             "success": True,
@@ -596,19 +809,8 @@ async def get_event_details(event_id: str):
         # Ekonomik olayları kontrol et
         for template in ECONOMIC_EVENTS_DB:
             if template["id"] == event_id:
-                now = datetime.utcnow()
-                next_date = get_next_event_date(template["schedule"], now)
-                minutes_until = int((next_date - now).total_seconds() / 60)
-                
-                # DeepSeek AI Analysis
-                event_data = {
-                    **template,
-                    "timestamp": next_date.isoformat(),
-                    "is_upcoming": True,
-                    "minutes_until": max(0, minutes_until),
-                }
-                
-                ai_analysis = await analyze_economic_event_with_deepseek(event_data)
+                event_data = _build_economic_event_from_template(template)
+                ai_analysis = _normalize_ai_payload("economic", event_data, await analyze_economic_event_with_deepseek(event_data))
                 
                 return {
                     "success": True,
@@ -621,26 +823,8 @@ async def get_event_details(event_id: str):
         # Kazançları kontrol et
         for template in EARNINGS_DB:
             if template["id"] == event_id:
-                event_date = datetime.strptime(template["date"], "%Y-%m-%d")
-                if template["time"] == "after_market":
-                    event_date = event_date.replace(hour=21, minute=0)
-                else:
-                    event_date = event_date.replace(hour=13, minute=30)
-                
-                if event_date < datetime.utcnow():
-                    event_date = event_date + timedelta(days=90)
-                
-                minutes_until = int((event_date - datetime.utcnow()).total_seconds() / 60)
-                
-                # DeepSeek AI Analysis
-                event_data = {
-                    **template,
-                    "timestamp": event_date.isoformat(),
-                    "is_upcoming": True,
-                    "minutes_until": max(0, minutes_until),
-                }
-                
-                ai_analysis = await analyze_earnings_with_deepseek(event_data)
+                event_data = _build_earnings_event_from_template(template)
+                ai_analysis = _normalize_ai_payload("earnings", event_data, await analyze_earnings_with_deepseek(event_data))
                 
                 return {
                     "success": True,
@@ -683,6 +867,9 @@ Provide analysis in JSON format:
 {{
     "predicted_direction": "bullish|bearish|neutral|volatile",
     "confidence": 0-100,
+    "importance_level": "critical|high|medium|low",
+    "importance_score": 0-100,
+    "importance_reason": "Short explanation of why this event matters right now",
     "impact_analysis": "Detailed impact analysis in English",
     "impact_analysis_tr": "Detaylı etki analizi Türkçe",
     "scenarios": {{
@@ -725,50 +912,22 @@ IMPORTANT: Include "impacts" array with affected symbols, their direction (bulli
 """
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                "https://api.deepseek.com/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {DEEP_SEEKR1}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": "deepseek-reasoner",
-                    "messages": [
-                        {"role": "system", "content": "You are an expert financial analyst specializing in macroeconomic events and market impact prediction. Always respond in valid JSON format."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    "temperature": 0.3,
-                    "max_tokens": 1500
-                },
-                timeout=aiohttp.ClientTimeout(total=30)
-            ) as response:
-                if response.status != 200:
-                    print(f"[EconomicAI] DeepSeek error: {response.status}")
-                    return _fallback_economic_analysis(event_data)
-                
-                data = await response.json()
-                content = data["choices"][0]["message"]["content"]
-                
-                # Extract JSON from response
-                try:
-                    # Try to find JSON in the response
-                    json_start = content.find('{')
-                    json_end = content.rfind('}') + 1
-                    if json_start >= 0 and json_end > json_start:
-                        json_str = content[json_start:json_end]
-                        ai_result = json.loads(json_str)
-                        ai_result["ai_analyzed"] = True
-                        ai_result["ai_model"] = "deepseek-reasoner"
-                        return ai_result
-                    else:
-                        return _fallback_economic_analysis(event_data)
-                except json.JSONDecodeError:
-                    print(f"[EconomicAI] JSON parse error")
-                    return _fallback_economic_analysis(event_data)
-                    
-    except Exception as e:
-        print(f"[EconomicAI] Error: {e}")
+        ai_result = await call_deepseek_json(
+            "You are an expert financial analyst specializing in macroeconomic events and market impact prediction. "
+            "Respond ONLY with valid JSON.\n\n" + prompt,
+            api_key=DEEP_SEEKR1,
+            max_tokens=1500,
+            temperature=0.3,
+            timeout_seconds=30,
+        )
+        if not ai_result:
+            return _fallback_economic_analysis(event_data)
+
+        ai_result["ai_analyzed"] = True
+        ai_result["ai_model"] = ai_result.get("ai_model") or DEEPSEEK_MODEL
+        return _normalize_ai_payload("economic", event_data, ai_result)
+    except Exception:
+        logger.exception("[EconomicAI] Error during DeepSeek analysis")
         return _fallback_economic_analysis(event_data)
 
 
@@ -782,6 +941,9 @@ def _fallback_economic_analysis(event_data: Dict) -> Dict:
         return {
             "predicted_direction": "volatile",
             "confidence": 75,
+            "importance_level": "critical",
+            "importance_score": 88,
+            "importance_reason": event_data.get("why_it_matters") or "High-impact macro release with cross-asset volatility risk.",
             "impact_analysis": "High-impact event expected to cause significant market volatility. Multiple asset classes will be affected.",
             "impact_analysis_tr": "Yüksek etkili olay önemli piyasa volatilitesine neden olması bekleniyor. Birden fazla varlık sınıfı etkilenecek.",
             "scenarios": {
@@ -814,6 +976,9 @@ def _fallback_economic_analysis(event_data: Dict) -> Dict:
         return {
             "predicted_direction": "neutral",
             "confidence": 60,
+            "importance_level": "medium" if impact == "Medium" else "low",
+            "importance_score": 62 if impact == "Medium" else 38,
+            "importance_reason": event_data.get("why_it_matters") or "Event is less likely to reset the broader market trend by itself.",
             "impact_analysis": "Medium-impact event with limited market reaction expected.",
             "impact_analysis_tr": "Sınırlı piyasa reaksiyonu beklenen orta etkili olay.",
             "scenarios": {
@@ -864,8 +1029,11 @@ AFFECTED SYMBOLS: {', '.join(event_data.get('affected_symbols', []))}
 
 Provide analysis in JSON format:
 {{
-    "predicted_direction": "bullish|bearish|neutral",
+    "predicted_direction": "bullish|bearish|neutral|volatile",
     "confidence": 0-100,
+    "importance_level": "critical|high|medium|low",
+    "importance_score": 0-100,
+    "importance_reason": "Short explanation of why this earnings event matters now",
     "analysis": "Detailed analysis in English",
     "analysis_tr": "Detaylı analiz Türkçe",
     "scenarios": {{
@@ -913,6 +1081,7 @@ Provide analysis in JSON format:
         }}
     }},
     "key_metrics": ["Most important metrics to watch"],
+    "key_metrics_tr": ["İzlenecek en önemli metrikler"],
     "trading_tips": "Key trading strategy tips"
 }}
 
@@ -920,46 +1089,22 @@ Consider: Company weight in indices, sector correlations, market sentiment, opti
 """
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                "https://api.deepseek.com/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {DEEP_SEEKR1}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": "deepseek-reasoner",
-                    "messages": [
-                        {"role": "system", "content": "You are an expert equity analyst specializing in earnings analysis and market impact prediction. Always respond in valid JSON format."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    "temperature": 0.3,
-                    "max_tokens": 1500
-                },
-                timeout=aiohttp.ClientTimeout(total=30)
-            ) as response:
-                if response.status != 200:
-                    return _fallback_earnings_analysis(event_data)
-                
-                data = await response.json()
-                content = data["choices"][0]["message"]["content"]
-                
-                try:
-                    json_start = content.find('{')
-                    json_end = content.rfind('}') + 1
-                    if json_start >= 0 and json_end > json_start:
-                        json_str = content[json_start:json_end]
-                        ai_result = json.loads(json_str)
-                        ai_result["ai_analyzed"] = True
-                        ai_result["ai_model"] = "deepseek-reasoner"
-                        return ai_result
-                    else:
-                        return _fallback_earnings_analysis(event_data)
-                except json.JSONDecodeError:
-                    return _fallback_earnings_analysis(event_data)
-                    
-    except Exception as e:
-        print(f"[EarningsAI] Error: {e}")
+        ai_result = await call_deepseek_json(
+            "You are an expert equity analyst specializing in earnings analysis and market impact prediction. "
+            "Respond ONLY with valid JSON.\n\n" + prompt,
+            api_key=DEEP_SEEKR1,
+            max_tokens=1500,
+            temperature=0.3,
+            timeout_seconds=30,
+        )
+        if not ai_result:
+            return _fallback_earnings_analysis(event_data)
+
+        ai_result["ai_analyzed"] = True
+        ai_result["ai_model"] = ai_result.get("ai_model") or DEEPSEEK_MODEL
+        return _normalize_ai_payload("earnings", event_data, ai_result)
+    except Exception:
+        logger.exception("[EarningsAI] Error during DeepSeek analysis")
         return _fallback_earnings_analysis(event_data)
 
 
@@ -971,6 +1116,9 @@ def _fallback_earnings_analysis(event_data: Dict) -> Dict:
     return {
         "predicted_direction": "neutral",
         "confidence": 70,
+        "importance_level": "high" if ticker in {"AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA"} else "medium",
+        "importance_score": 80 if ticker in {"AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA"} else 64,
+        "importance_reason": event_data.get("analysis") or f"{ticker} earnings can influence index and sector sentiment.",
         "analysis": f"Standard earnings analysis for {ticker}. Watch for EPS and revenue surprises vs estimates.",
         "analysis_tr": f"{ticker} için standart kazanç analizi. EPS ve gelir tahminlere karşı sürprizleri izleyin.",
         "scenarios": {
@@ -1001,6 +1149,7 @@ def _fallback_earnings_analysis(event_data: Dict) -> Dict:
             }
         },
         "key_metrics": ["EPS vs Estimate", "Revenue vs Estimate", "Forward Guidance", "Gross Margin"],
+        "key_metrics_tr": ["Beklentiye Karşı EPS", "Beklentiye Karşı Gelir", "İleriye Dönük Tahminler", "Brüt Kar Marjı"],
         "trading_tips": f"For {event_data.get('time', 'after-hours')} earnings, liquidity is lower. Consider waiting for regular session open.",
         "ai_analyzed": False,
         "ai_model": "fallback"

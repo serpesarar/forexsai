@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { GripVertical, Calendar, Building2, Newspaper, TrendingUp, TrendingDown, Minus, Clock, AlertCircle } from "lucide-react";
+import { GripVertical } from "lucide-react";
 import {
   EmelIcon, PulseIcon, SignalsIcon, LoadingIcon,
   ThemeSunIcon, ThemeMoonIcon, NasdaqIcon, GoldIcon,
@@ -13,7 +13,6 @@ import { useAuthStore, useIsAuthenticated, waitForHydration } from "../lib/auth/
 import CircularProgress from "../components/CircularProgress";
 import DetailPanel from "../components/DetailPanel";
 import { useDashboardStore, useDetailPanelStore } from "../lib/store";
-import { getApiBase } from "../lib/api/base";
 import { fetcher } from "../lib/api";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { useI18nStore } from "../lib/i18n/store";
@@ -21,7 +20,6 @@ import SharedNavHeader from "../components/SharedNavHeader";
 import Sidebar from "../components/Sidebar";
 // Critical / lightweight - static imports
 import MLFactorPanel from "../components/MLFactorPanel";
-import { NasdaqEarningsPanel } from "../components/EarningsPanel";
 import UserMenu from "../components/UserMenu";
 import { TradingBackground } from "../components/TradingBackground";
 import { LazyPanel } from "../components/LazyPanel";
@@ -42,12 +40,9 @@ const EmelPanel = lazy(() => import("../components/panels/EmelPanel"));
 const PulsePanel = lazy(() => import("../components/panels/PulsePanel"));
 const PulseV3Panel = lazy(() => import("../components/panels/PulseV3Panel"));
 const PulseMLPanel = lazy(() => import("../components/panels/PulseMLPanel"));
-const ClearTrendPanel = lazy(() => import("../components/panels/ClearTrendPanelV3"));
 const CyberpunkTrendPanel = lazy(() => import("../components/panels/CyberpunkTrendPanel"));
-const LearningDashboardPanel = lazy(() => import("../components/LearningDashboardPanel"));
 const LearningDashboardV2 = lazy(() => import("../components/panels/LearningDashboardV2"));
 const ModelAnalysisPanel = lazy(() => import("../components/panels/ModelAnalysisPanel"));
-const COMEXNewsPanel = lazy(() => import("../components/COMEXNewsPanel"));
 const WhaleTrackerPanel = lazy(() => import("../components/WhaleTrackerPanel"));
 const PredictionHistoryTable = lazy(() => import("../components/PredictionHistoryTable"));
 const SMCPanel = lazy(() => import("../components/panels/SMCPanel"));
@@ -60,7 +55,6 @@ const HarmonicVisualizerPanel = lazy(() => import("../components/panels/Harmonic
 const StrategyOptimizerPanel = lazy(() => import("../components/panels/StrategyOptimizerPanel"));
 const NewsChartCorrelationPanel = lazy(() => import("../components/panels/NewsChartCorrelationPanel"));
 const NewsCorrelationDashboard = lazy(() => import("./news-correlation/page"));
-const NewsFeedAI = lazy(() => import("../components/NewsFeedAI"));
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
 import { useLivePrices } from "../hooks/useLivePrices";
@@ -324,77 +318,6 @@ const timeframePatterns: Record<
   ],
 };
 
-const initialNewsItems = [
-  {
-    title: "NASDAQ futures climb after soft CPI print",
-    source: "MarketAux",
-    sentiment: "bullish",
-    time: "12m ago",
-  },
-  {
-    title: "Gold steadies as yields dip ahead of Fed minutes",
-    source: "Bloomberg",
-    sentiment: "neutral",
-    time: "28m ago",
-  },
-  {
-    title: "Tech earnings beat expectations; guidance mixed",
-    source: "Reuters",
-    sentiment: "bullish",
-    time: "1h ago",
-  },
-  {
-    title: "Dollar index firms as risk appetite cools",
-    source: "WSJ",
-    sentiment: "bearish",
-    time: "2h ago",
-  },
-  {
-    title: "Macro calendar: ISM, jobless claims due",
-    source: "MarketAux",
-    sentiment: "neutral",
-    time: "4h ago",
-  },
-];
-
-// Economic Calendar Types
-interface EconomicEvent {
-  id: string;
-  timestamp: string;
-  title: string;
-  title_tr: string;
-  currency: string;
-  impact: "High" | "Medium" | "Low";
-  actual: string | null;
-  forecast: string | null;
-  previous: string | null;
-  predicted_direction: "bullish" | "bearish" | "neutral" | "volatile";
-  affected_symbols: string[];
-  description: string;
-  description_tr: string;
-  why_it_matters: string;
-  why_it_matters_tr: string;
-  typical_market_reaction: string;
-  typical_market_reaction_tr: string;
-}
-
-interface EarningsEvent {
-  id: string;
-  timestamp: string;
-  company: string;
-  ticker: string;
-  sector: string;
-  eps_forecast: string | null;
-  revenue_forecast: string | null;
-  previous_eps: string | null;
-  previous_revenue: string | null;
-  predicted_direction: "bullish" | "bearish" | "neutral";
-  confidence: number;
-  affected_symbols: string[];
-  analysis: string;
-  analysis_tr: string;
-}
-
 const miniSeries = [
   [12, 16, 14, 20, 22, 21, 28, 32, 29, 35],
   [24, 20, 18, 17, 19, 16, 15, 14, 18, 16],
@@ -513,10 +436,6 @@ export default function HomePage() {
       });
     }
   }, [hasCachedData, cachedNasdaq, cachedXauusd]);
-  const [newsItems, setNewsItems] = useState(initialNewsItems);
-  const [economicEvents, setEconomicEvents] = useState<EconomicEvent[]>([]);
-  const [earningsEvents, setEarningsEvents] = useState<EarningsEvent[]>([]);
-  const [calendarLoading, setCalendarLoading] = useState(false);
   const [claudeSentiments, setClaudeSentiments] = useState<{ nasdaq?: any; xauusd?: any }>({});
   const [claudePatterns, setClaudePatterns] = useState<{ nasdaq?: any; xauusd?: any }>({});
   const [claudePatternsLoading, setClaudePatternsLoading] = useState(false);
@@ -547,7 +466,6 @@ export default function HomePage() {
         fetcher<any>("/api/run/xauusd", { method: "POST", body: "{}" }),
         fetcher<any>("/api/run/usoil", { method: "POST", body: "{}" }),
         fetcher<any>("/api/run/dax", { method: "POST", body: "{}" }),
-        fetcher<any>(`/api/news/feed?lang=${lang}`),
         fetcher<any>("/api/ta/snapshot?symbol=NDX.INDX"),
         fetcher<any>("/api/ta/snapshot?symbol=XAUUSD"),
         fetcher<any>("/api/ta/snapshot?symbol=USOIL.FOREX"),
@@ -557,11 +475,10 @@ export default function HomePage() {
       const xauusd = results[1].status === "fulfilled" ? results[1].value : null;
       const usoil = results[2].status === "fulfilled" ? results[2].value : null;
       const dax = results[3].status === "fulfilled" ? results[3].value : null;
-      const news = results[4].status === "fulfilled" ? results[4].value : null;
-      const taNasdaq = results[5].status === "fulfilled" ? results[5].value : null;
-      const taXau = results[6].status === "fulfilled" ? results[6].value : null;
-      const taUsOil = results[7].status === "fulfilled" ? results[7].value : null;
-      const taDax = results[8].status === "fulfilled" ? results[8].value : null;
+      const taNasdaq = results[4].status === "fulfilled" ? results[4].value : null;
+      const taXau = results[5].status === "fulfilled" ? results[5].value : null;
+      const taUsOil = results[6].status === "fulfilled" ? results[6].value : null;
+      const taDax = results[7].status === "fulfilled" ? results[7].value : null;
       // Claude sentiment + patterns per asset (live, not mock)
       const settled = await Promise.allSettled([
         fetcher<any>(`/api/claude/analyze-sentiment?symbol=NDX.INDX&lang=${lang}`, { method: "POST", body: "{}" }),
@@ -714,26 +631,6 @@ export default function HomePage() {
           return card;
         })
       );
-
-      const apiNews = (news?.news ?? []).slice(0, 10).map((n: any) => ({
-        title: n.title,
-        source: "MarketAux",
-        sentiment: "neutral",
-        time: locale === "tr" ? t("news.emptyTime") : "now",
-      }));
-      if (apiNews.length) {
-        setNewsItems(apiNews);
-      } else {
-        // Ensure Turkish UI doesn't show English fallback headlines
-        setNewsItems([
-          {
-            title: t("news.emptyTitle"),
-            source: t("news.emptySource"),
-            sentiment: "neutral",
-            time: t("news.emptyTime"),
-          },
-        ]);
-      }
     } catch {
       // keep existing UI values on error
     }
@@ -794,43 +691,6 @@ export default function HomePage() {
       document.documentElement.removeAttribute("data-theme");
     }
   }, [theme]);
-
-  // Fetch Economic Calendar and Earnings data
-  useEffect(() => {
-    const fetchCalendarData = async () => {
-      try {
-        setCalendarLoading(true);
-
-        const apiBase = getApiBase();
-        // Fetch economic calendar
-        const econResponse = await fetch(`${apiBase}/api/calendar/economic?days=30`);
-        if (econResponse.ok) {
-          const econData = await econResponse.json();
-          if (econData.success) {
-            setEconomicEvents(econData.events.slice(0, 10)); // Show only first 10
-          }
-        }
-
-        // Fetch earnings calendar
-        const earnResponse = await fetch(`${apiBase}/api/calendar/earnings?days=30`);
-        if (earnResponse.ok) {
-          const earnData = await earnResponse.json();
-          if (earnData.success) {
-            setEarningsEvents(earnData.earnings.slice(0, 10)); // Show only first 10
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch calendar data:", err);
-      } finally {
-        setCalendarLoading(false);
-      }
-    };
-
-    fetchCalendarData();
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchCalendarData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   const formatPctShort = (value: number) => {
     const v = Number(value);
@@ -992,10 +852,6 @@ export default function HomePage() {
         return <PatternEngineV2 />;
       case "sentiment":
         return renderSentimentCard();
-      case "news":
-        return renderNewsCard();
-      case "comex-news":
-        return <COMEXNewsPanel />;
       case "mtf-advanced":
       case "advanced-nasdaq":
       case "advanced-xauusd":
@@ -1352,21 +1208,6 @@ export default function HomePage() {
     </div>
   );
 
-  // News card renderer - Using new AI-powered NewsFeedAI component
-  const renderNewsCard = () => {
-    return (
-      <Suspense fallback={
-        <div className="glass-premium rounded-2xl p-5">
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full" />
-          </div>
-        </div>
-      }>
-        <NewsFeedAI />
-      </Suspense>
-    );
-  };
-
   // Cards that are always visible (top of page) - skip LazyPanel for these
   const alwaysVisibleCards = new Set(["signal-nasdaq", "signal-xauusd"]);
 
@@ -1473,14 +1314,13 @@ export default function HomePage() {
             <div className="animate-in fade-in duration-300">
               <DraggableDashboard>
                 <main className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-20 md:pb-8">
-                  {/* ML Factor + Earnings - Inline row above grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  {/* ML Factor row above grid */}
+                  <div className="grid grid-cols-1 gap-4 mb-6">
                     <MLFactorPanel
                       baseConfidence={signalCards[0]?.confidence || 60}
                       applyToSymbols={["NDX.INDX", "XAUUSD"]}
                       locale={locale}
                     />
-                    <NasdaqEarningsPanel />
                   </div>
                   {/* ═══ CLEAR TREND — Full-width hero panel ═══ */}
                   {getCard("clear-trend")?.visible !== false && (
@@ -1538,21 +1378,6 @@ export default function HomePage() {
                       </LazyPanel>
                     </div>
                   )}
-
-                  {/* ═══ AI NEWS FEED - Fixed at bottom ═══ */}
-                  <div className="mb-6 w-full">
-                    <Suspense fallback={
-                      <div className="glass-premium rounded-2xl p-5 animate-pulse">
-                        <div className="h-8 bg-white/10 rounded mb-4"></div>
-                        <div className="space-y-3">
-                          <div className="h-16 bg-white/5 rounded"></div>
-                          <div className="h-16 bg-white/5 rounded"></div>
-                        </div>
-                      </div>
-                    }>
-                      <NewsFeedAI />
-                    </Suspense>
-                  </div>
 
                 </main>
               </DraggableDashboard>
