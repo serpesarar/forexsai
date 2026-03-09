@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import StrategyPerformancePanel from "../StrategyPerformancePanel";
@@ -207,6 +207,28 @@ describe("StrategyPerformancePanel", () => {
       const recentCalls = fetchMock.mock.calls.map((call) => String(call[0])).filter((url) => url.includes("/api/learning/signals/recent"));
       expect(recentCalls.some((url) => url.includes("strategy_scope=balanced"))).toBe(true);
     });
+  });
+
+  it("renders the full ordered scope stack for symbols even when no scopes are marked available", async () => {
+    const { container } = renderPanel();
+
+    await screen.findByText("Best Signal Quality");
+
+    const daxHeading = Array.from(container.querySelectorAll("h4")).find((node) => node.textContent === "DAX");
+    expect(daxHeading).toBeTruthy();
+
+    const daxSection = daxHeading?.closest(".space-y-3") as HTMLElement | null;
+    expect(daxSection).toBeTruthy();
+
+    const daxText = daxSection?.textContent || "";
+    expect(daxText.indexOf("Ham ML")).toBeGreaterThanOrEqual(0);
+    expect(daxText.indexOf("Ultra Güvenli")).toBeGreaterThan(daxText.indexOf("Ham ML"));
+    expect(daxText.indexOf("Dengeli")).toBeGreaterThan(daxText.indexOf("Ultra Güvenli"));
+    expect(daxText.indexOf("Full Power")).toBeGreaterThan(daxText.indexOf("Dengeli"));
+    expect(daxText.indexOf("Agresif")).toBeGreaterThan(daxText.indexOf("Full Power"));
+    expect(daxText.indexOf("NASDAQ Precision")).toBeGreaterThan(daxText.indexOf("Agresif"));
+
+    expect(within(daxSection as HTMLElement).getAllByText("0 signals · 0 resolved · 0 expired · 0 active").length).toBe(6);
   });
 
   it("applies symbol and day filters to recent signal requests", async () => {

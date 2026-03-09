@@ -197,6 +197,38 @@ function getOrderedScopes(scopes?: string[]) {
   });
 }
 
+function getEmptyStrategyData(scope: string): StrategyData {
+  return {
+    scope,
+    total_predictions: 0,
+    scored_signals: 0,
+    resolved_signals: 0,
+    with_outcome: 0,
+    correct: 0,
+    completed: 0,
+    stopped: 0,
+    expired: 0,
+    active: 0,
+    accuracy: 0,
+    win_rate: 0,
+    target_hits: 0,
+    stop_hits: 0,
+    target_hit_rate: null,
+    stop_hit_rate: null,
+    avg_confidence: 0,
+    net_pips: 0,
+    avg_pips: 0,
+    tp_breakdown: { TP1: 0, TP2: 0, TP3: 0, TP4: 0 },
+    tp_hit_rates: { TP1: null, TP2: null, TP3: null, TP4: null },
+    avg_duration_minutes: null,
+    avg_win_duration_minutes: null,
+    avg_loss_duration_minutes: null,
+    quality_score: 0,
+    scalp_score: 0,
+    long_term_score: 0,
+  };
+}
+
 function scoreColor(value: number) {
   if (value >= 70) return P.green;
   if (value >= 45) return P.warn;
@@ -457,7 +489,7 @@ export default function StrategyPerformancePanel() {
     return () => window.removeEventListener("dashboard-refresh", handleRefresh);
   }, [handleRefresh]);
 
-  const orderedScopes = getOrderedScopes(data?.strategy_order);
+  const allOrderedScopes = getOrderedScopes(data?.strategy_order);
   const selectedSymbolScopes = selectedSymbol ? data?.symbols?.[selectedSymbol]?.available_scopes || [] : [];
   const selectedScopeDescription = selectedStrategyScope ? data?.strategy_descriptions?.[selectedStrategyScope] : undefined;
 
@@ -564,7 +596,7 @@ export default function StrategyPerformancePanel() {
             {SYMBOL_META.map(({ key: symKey, label, icon }) => {
               const symbolSummary = data.symbols?.[symKey];
               const symbolStrategies = data.strategies?.[symKey] || {};
-              const orderedScopes = (data.strategy_order || []).filter((scope) => symbolSummary?.available_scopes?.includes(scope));
+              const orderedScopes = allOrderedScopes;
 
               return (
                 <div key={symKey} className="space-y-3">
@@ -623,7 +655,7 @@ export default function StrategyPerformancePanel() {
                       <tbody>
                         {orderedScopes.length > 0 ? (
                           orderedScopes.map((scope) => {
-                            const strategyData = symbolStrategies[scope];
+                            const strategyData = symbolStrategies[scope] || getEmptyStrategyData(scope);
                             const leaderBadges = (["quality", "scalping", "long_term"] as LeaderKey[]).filter(
                               (leaderKey) => symbolSummary?.leaders?.[leaderKey]?.scope === scope
                             );
@@ -706,7 +738,7 @@ export default function StrategyPerformancePanel() {
                   <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700 }}>All Scopes</span>
                 </button>
 
-                {orderedScopes.map((scope) => {
+                {allOrderedScopes.map((scope) => {
                   const config = STRATEGY_CONFIG[scope] || STRATEGY_CONFIG.main;
                   const Icon = config.icon;
                   const isActive = selectedStrategyScope === scope;
@@ -766,7 +798,7 @@ export default function StrategyPerformancePanel() {
                 style={{ fontFamily: FONT, fontSize: 11, padding: "6px 10px", background: P.surface, color: P.textSec, border: `1px solid ${P.border}` }}
               >
                 <option value="">All Scopes</option>
-                {orderedScopes.map((scope) => (
+                {allOrderedScopes.map((scope) => (
                   <option key={scope} value={scope}>{getScopeLabel(scope)}</option>
                 ))}
               </select>
