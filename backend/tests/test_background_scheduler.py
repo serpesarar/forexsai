@@ -75,3 +75,90 @@ async def test_log_pulse_signals_respects_interval_guard_after_first_run():
         await scheduler.log_pulse_signals_if_needed()
 
     assert check_and_log.await_count == 4
+
+
+@pytest.mark.asyncio
+async def test_log_predictions_logs_main_and_all_strategy_scopes_for_nasdaq_family():
+    scheduler = _load_background_scheduler_module("test_background_scheduler_ml_scopes")
+    scheduler.TRACKED_SYMBOLS = ["NDX.INDX"]
+    scheduler._last_prediction_log.clear()
+
+    ml_prediction = SimpleNamespace(
+        direction="BUY",
+        confidence=71.2,
+        probability_up=71.2,
+        probability_down=28.8,
+        entry_price=100.0,
+        target_price=110.0,
+        stop_price=95.0,
+        model_version="test-model",
+    )
+    get_prediction = AsyncMock(return_value=ml_prediction)
+    log_prediction = AsyncMock(side_effect=[f"pred-{idx}" for idx in range(6)])
+
+    with patch.object(scheduler, "get_ml_prediction", get_prediction), patch.dict(
+        sys.modules,
+        {
+            "services.prediction_logger": SimpleNamespace(log_prediction=log_prediction),
+            "database.supabase_client": SimpleNamespace(is_db_available=lambda: True),
+        },
+    ):
+        await scheduler.log_predictions_if_needed()
+
+    assert [args.kwargs["strategy"] for args in log_prediction.await_args_list] == [
+        "main",
+        "ultra_safe",
+        "balanced",
+        "full_power",
+        "aggressive",
+        "nasdaq_precision",
+    ]
+    assert [args.kwargs["model_type"] for args in log_prediction.await_args_list] == [
+        "ml:main",
+        "ml:ultra_safe",
+        "ml:balanced",
+        "ml:full_power",
+        "ml:aggressive",
+        "ml:nasdaq_precision",
+    ]
+    assert [args.kwargs["strategy"] for args in get_prediction.await_args_list] == [
+        "main",
+        "ultra_safe",
+        "balanced",
+        "full_power",
+        "aggressive",
+        "nasdaq_precision",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_log_predictions_respects_interval_guard_after_first_run():
+    scheduler = _load_background_scheduler_module("test_background_scheduler_ml_interval")
+    scheduler.TRACKED_SYMBOLS = ["XAUUSD"]
+    scheduler._last_prediction_log.clear()
+
+    ml_prediction = SimpleNamespace(
+        direction="SELL",
+        confidence=68.0,
+        probability_up=32.0,
+        probability_down=68.0,
+        entry_price=200.0,
+        target_price=190.0,
+        stop_price=205.0,
+        model_version="test-model",
+    )
+    get_prediction = AsyncMock(return_value=ml_prediction)
+    log_prediction = AsyncMock(side_effect=[f"pred-{idx}" for idx in range(5)])
+
+    with patch.object(scheduler, "get_ml_prediction", get_prediction), patch.dict(
+        sys.modules,
+        {
+            "services.prediction_logger": SimpleNamespace(log_prediction=log_prediction),
+            "database.supabase_client": SimpleNamespace(is_db_available=lambda: True),
+        },
+    ):
+        await scheduler.log_predictions_if_needed()
+        await scheduler.log_predictions_if_needed()
+
+    assert get_prediction.await_count == 5
+    assert log_prediction.await_count == 5

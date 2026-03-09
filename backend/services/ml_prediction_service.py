@@ -1,6 +1,6 @@
 """
 ML Prediction Service - Loads trained models and generates trading predictions.
-Supports NASDAQ and XAUUSD with direction prediction and pip targets.
+Supports family-routed predictions for NASDAQ/DAX and XAUUSD/USOIL with direction prediction and pip targets.
 
 OPTIMIZATIONS:
 1. Parallel async calls (asyncio.gather) - 2-3s -> 800ms latency
@@ -129,6 +129,13 @@ CONFIDENCE_LAYERS = {
 
 # Preset stratejiler
 STRATEGY_PRESETS = {
+    "main": {
+        "name": "Main",
+        "description": "Raw ML output without preset confidence layering",
+        "enabled_layers": [],
+        "threshold": 0.55,
+        "floor_ratio": 1.0
+    },
     "ultra_safe": {
         "name": "Ultra Güvenli",
         "description": "Yüksek win rate, az trade",
@@ -165,6 +172,68 @@ STRATEGY_PRESETS = {
         "floor_ratio": 0.65
     }
 }
+
+ALL_CONFIDENCE_FACTORS = [
+    "trend",
+    "confluence",
+    "session",
+    "pattern",
+    "candle",
+    "cot",
+    "sr",
+    "news",
+    "regime",
+]
+
+
+ML_MARKET_SYMBOL_ALIASES = {
+    "NASDAQ": "NDX.INDX",
+    "NDX": "NDX.INDX",
+    "NDX.INDX": "NDX.INDX",
+    "DAX": "GDAXI.INDX",
+    "GDAXI": "GDAXI.INDX",
+    "GDAXI.INDX": "GDAXI.INDX",
+    "XAUUSD": "XAUUSD",
+    "XAUUSD.FOREX": "XAUUSD",
+    "XAU.FOREX": "XAUUSD",
+    "GOLD": "XAUUSD",
+    "USOIL": "USOIL.FOREX",
+    "USOIL.FOREX": "USOIL.FOREX",
+    "WTI": "USOIL.FOREX",
+    "CL.COMM": "USOIL.FOREX",
+}
+
+ML_MODEL_FAMILY_BY_SYMBOL = {
+    "NDX.INDX": "NDX.INDX",
+    "GDAXI.INDX": "NDX.INDX",
+    "XAUUSD": "XAUUSD",
+    "USOIL.FOREX": "XAUUSD",
+}
+
+ML_MODEL_FILES = {
+    "NDX.INDX": "model_lgbm_nasdaq.joblib",
+    "XAUUSD": "model_lgbm_xauusd.joblib",
+}
+
+
+def normalize_ml_market_symbol(symbol: str) -> str:
+    """Normalize incoming symbol aliases to the tracked market symbol."""
+    symbol_key = (symbol or "").upper().strip()
+    return ML_MARKET_SYMBOL_ALIASES.get(symbol_key, symbol_key)
+
+
+def resolve_ml_model_symbol(symbol: str) -> Optional[str]:
+    """Resolve which model family should serve the requested market symbol."""
+    normalized_symbol = normalize_ml_market_symbol(symbol)
+    return ML_MODEL_FAMILY_BY_SYMBOL.get(normalized_symbol)
+
+
+def get_ml_model_filename(symbol: str) -> Optional[str]:
+    """Return the model filename for the requested symbol's model family."""
+    model_symbol = resolve_ml_model_symbol(symbol)
+    if model_symbol is None:
+        return None
+    return ML_MODEL_FILES.get(model_symbol)
 
 
 def _harmonic_mean(values: List[float]) -> float:
@@ -362,36 +431,44 @@ class PredictionResult:
 def _load_model(symbol: str):
     """Load model for symbol if not already cached."""
     global _models, _model_features
+    normalized_symbol = normalize_ml_market_symbol(symbol)
+    model_symbol = resolve_ml_model_symbol(normalized_symbol)
+
+    if model_symbol is None:
+        logger.warning(f"No model for symbol: {symbol}")
+        return None
     
-    if symbol in _models:
-        return _models[symbol]
+    if model_symbol in _models:
+        return _models[model_symbol]
     
     try:
         import joblib
         
         model_path = Path(__file__).parent.parent / "models"
-        
-        if symbol == "NDX.INDX" or symbol == "NASDAQ":
-            path = model_path / "model_lgbm_nasdaq.joblib"
-        elif symbol == "XAUUSD":
-            path = model_path / "model_lgbm_xauusd.joblib"
-        else:
-            logger.warning(f"No model for symbol: {symbol}")
+
+        model_filename = get_ml_model_filename(model_symbol)
+        if not model_filename:
             return None
+        path = model_path / model_filename
             
         if not path.exists():
             logger.error(f"Model file not found: {path}")
             return None
             
         model = joblib.load(path)
-        _models[symbol] = model
-        _model_features[symbol] = list(model.feature_names_in_) if hasattr(model, 'feature_names_in_') else []
+        _models[model_symbol] = model
+        _model_features[model_symbol] = list(model.feature_names_in_) if hasattr(model, 'feature_names_in_') else []
         
-        logger.info(f"Loaded model for {symbol} with {len(_model_features.get(symbol, []))} features")
+        logger.info(
+            "Loaded ML model family %s for requested symbol %s with %s features",
+            model_symbol,
+            normalized_symbol,
+            len(_model_features.get(model_symbol, [])),
+        )
         return model
         
     except Exception as e:
-        logger.error(f"Error loading model for {symbol}: {e}")
+        logger.error(f"Error loading model for {normalized_symbol}: {e}")
         return None
 
 
@@ -595,11 +672,16 @@ def _build_feature_vector(symbol: str, ta: dict, candles: list, ta_1h: dict = No
         ta_4h: Technical indicators from 4H timeframe (optional, falls back to ta)
     """
     
+    model_symbol = resolve_ml_model_symbol(symbol)
+    if model_symbol is None:
+        logger.warning(f"No model family available for symbol: {symbol}")
+        return None
+
     model = _load_model(symbol)
     if model is None:
         return None
     
-    features = _model_features.get(symbol, [])
+    features = _model_features.get(model_symbol, [])
     if not features:
         return None
     
@@ -862,30 +944,46 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
         symbol: Trading symbol (e.g. 'XAUUSD', 'NDX.INDX')
         enabled_factors: Optional list of factor IDs to apply (trend,confluence,session,pattern,candle,cot,sr,news,regime)
                         If None, factors are determined by strategy preset.
-        strategy: Preset strategy (ultra_safe, balanced, full_power, aggressive)
+        strategy: Preset strategy (main, ultra_safe, balanced, full_power, aggressive, nasdaq_precision)
     """
     from services.data_fetcher import fetch_eod_candles, fetch_30m_candles, fetch_latest_price
+    strategy = (strategy or "balanced").lower().strip()
+    is_main_strategy = strategy == "main"
+    preset_strategy = strategy if strategy in STRATEGY_PRESETS else "balanced"
+    engine_strategy = "balanced" if is_main_strategy else preset_strategy
     
-    # Normalize symbol
-    normalized_symbol = "NDX.INDX" if symbol.upper() in ["NASDAQ", "NDX.INDX", "NDX"] else symbol.upper()
+    # Normalize market symbol while resolving the model family separately.
+    normalized_symbol = normalize_ml_market_symbol(symbol)
+    model_symbol = resolve_ml_model_symbol(normalized_symbol)
+    if model_symbol:
+        logger.info(
+            "ML routing resolved: requested=%s market=%s model_family=%s strategy=%s",
+            symbol,
+            normalized_symbol,
+            model_symbol,
+            strategy,
+        )
     
     # ═══════════════════════════════════════════════════════════════════
     # STRATEGY-BASED FACTOR SELECTION
     # Different strategies enable different factors for confidence calculation
     # ═══════════════════════════════════════════════════════════════════
     if enabled_factors is None:
-        # Get factors based on strategy preset
-        preset = STRATEGY_PRESETS.get(strategy, STRATEGY_PRESETS["balanced"])
-        enabled_layers = preset["enabled_layers"]
-        
-        # Map layers to factors
-        strategy_factors = []
-        for layer_name in enabled_layers:
-            layer_config = CONFIDENCE_LAYERS.get(layer_name, {})
-            strategy_factors.extend(layer_config.get("factors", []))
-        
-        enabled_factors = strategy_factors if strategy_factors else ['trend', 'confluence', 'session', 'pattern', 'candle', 'cot', 'sr', 'news', 'regime']
-        logger.info(f"Strategy '{strategy}' enabled factors: {enabled_factors}")
+        if is_main_strategy:
+            enabled_factors = ALL_CONFIDENCE_FACTORS.copy()
+            logger.info("Strategy 'main' using raw/base ML factor set: %s", enabled_factors)
+        else:
+            preset = STRATEGY_PRESETS.get(preset_strategy, STRATEGY_PRESETS["balanced"])
+            enabled_layers = preset["enabled_layers"]
+
+            # Map layers to factors
+            strategy_factors = []
+            for layer_name in enabled_layers:
+                layer_config = CONFIDENCE_LAYERS.get(layer_name, {})
+                strategy_factors.extend(layer_config.get("factors", []))
+
+            enabled_factors = strategy_factors if strategy_factors else ALL_CONFIDENCE_FACTORS.copy()
+            logger.info(f"Strategy '{strategy}' enabled factors: {enabled_factors}")
     
     # For XAUUSD, get news impact analysis
     news_sentiment = 0.0
@@ -1467,9 +1565,15 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
         # Apply layered confidence with strategy preset
         # This prevents over-optimization (0.6 × 0.7 × 1.15 × 0.85 = 0.47 problem)
         if confidence_adjustments:
-            confidence, layer_details = _apply_layered_confidence(confidence, confidence_adjustments, strategy)
-            logger.info(f"Layered confidence ({strategy}): {len(confidence_adjustments)} factors -> {confidence:.1f}%")
-            logger.debug(f"Layer details: {layer_details}")
+            if is_main_strategy:
+                logger.info(
+                    "Raw main strategy: skipping layered confidence over %s collected adjustments",
+                    len(confidence_adjustments),
+                )
+            else:
+                confidence, layer_details = _apply_layered_confidence(confidence, confidence_adjustments, preset_strategy)
+                logger.info(f"Layered confidence ({strategy}): {len(confidence_adjustments)} factors -> {confidence:.1f}%")
+                logger.debug(f"Layer details: {layer_details}")
         
         confidence = max(30, min(95, confidence))  # Clamp 30-95%
         
@@ -1651,8 +1755,6 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
             sync_learning_check, NULL_SIGNAL_REASONS
         )
         
-        strategy = strategy if 'strategy' in dir() else 'balanced'
-        
         # ═══════════════════════════════════════════════════════════════
         # EKSİK #1, #3: State Machine + Minimum Duration Check
         # ═══════════════════════════════════════════════════════════════
@@ -1661,7 +1763,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
             new_direction=direction,
             new_confidence=confidence,
             current_price=current_price,
-            strategy=strategy
+            strategy=engine_strategy
         )
         
         if not validity_check['valid']:
@@ -1756,7 +1858,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
             except:
                 perf_data = None
             
-            threshold_info = get_adaptive_threshold(normalized_symbol, strategy, perf_data)
+            threshold_info = get_adaptive_threshold(normalized_symbol, engine_strategy, perf_data)
             adaptive_min = threshold_info['threshold'] * 100
             
             if confidence < adaptive_min:

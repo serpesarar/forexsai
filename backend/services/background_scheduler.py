@@ -55,6 +55,25 @@ LEGACY_PULSE_LOG_TIMEFRAMES: Dict[str, str] = {
     "pulse3": "5m",
 }
 
+ML_AUTO_LOG_SCOPES: List[tuple[str, str]] = [
+    ("main", "ml:main"),
+    ("ultra_safe", "ml:ultra_safe"),
+    ("balanced", "ml:balanced"),
+    ("full_power", "ml:full_power"),
+    ("aggressive", "ml:aggressive"),
+]
+NASDAQ_FAMILY_ML_AUTO_LOG_SCOPES: List[tuple[str, str]] = [
+    ("nasdaq_precision", "ml:nasdaq_precision"),
+]
+NASDAQ_FAMILY_SYMBOLS = {"NDX.INDX", "GDAXI.INDX"}
+
+
+def _get_ml_auto_log_scopes(symbol: str) -> List[tuple[str, str]]:
+    scopes = list(ML_AUTO_LOG_SCOPES)
+    if (symbol or "").upper().strip() in NASDAQ_FAMILY_SYMBOLS:
+        scopes.extend(NASDAQ_FAMILY_ML_AUTO_LOG_SCOPES)
+    return scopes
+
 # Scheduler running flag
 _scheduler_running = False
 
@@ -456,46 +475,51 @@ async def log_predictions_if_needed():
             if not is_db_available():
                 continue
             
-            # Get ML prediction
-            ml_prediction = await get_ml_prediction(symbol, strategy="balanced")
-            
-            # Build context for logging
-            context = {
-                "symbol": symbol,
-                "ml_prediction": {
-                    "direction": ml_prediction.direction,
+            for strategy_scope, scoped_model_type in _get_ml_auto_log_scopes(symbol):
+                ml_prediction = await get_ml_prediction(symbol, strategy=strategy_scope)
+
+                context = {
+                    "symbol": symbol,
+                    "ml_prediction": {
+                        "direction": ml_prediction.direction,
+                        "confidence": ml_prediction.confidence,
+                        "probability_up": ml_prediction.probability_up,
+                        "probability_down": ml_prediction.probability_down,
+                        "entry_price": ml_prediction.entry_price,
+                        "target_price": ml_prediction.target_price,
+                        "stop_price": ml_prediction.stop_price,
+                    },
+                    "ta": {},
+                    "distances": {},
+                    "volume": {},
+                    "trend_channel": {},
+                    "macro": {},
+                    "news": {},
+                    "source": "ml_scheduler",
+                }
+
+                analysis = {
+                    "final_decision": ml_prediction.direction,
                     "confidence": ml_prediction.confidence,
-                    "probability_up": ml_prediction.probability_up,
-                    "probability_down": ml_prediction.probability_down,
-                    "entry_price": ml_prediction.entry_price,
-                    "target_price": ml_prediction.target_price,
-                    "stop_price": ml_prediction.stop_price,
-                },
-                "ta": {},
-                "distances": {},
-                "volume": {},
-                "trend_channel": {},
-                "macro": {},
-                "news": {},
-            }
-            
-            analysis = {
-                "final_decision": ml_prediction.direction,
-                "confidence": ml_prediction.confidence,
-                "model_used": ml_prediction.model_version,
-            }
-            
-            pred_id = await log_prediction(
-                symbol=symbol,
-                context=context,
-                analysis=analysis,
-                timeframe="1d",
-                strategy="balanced",
-                model_type="ml",
-            )
-            
-            if pred_id:
-                logger.info(f"Auto-logged prediction {pred_id[:8]} for {symbol}")
+                    "model_used": ml_prediction.model_version,
+                }
+
+                pred_id = await log_prediction(
+                    symbol=symbol,
+                    context=context,
+                    analysis=analysis,
+                    timeframe="1d",
+                    strategy=strategy_scope,
+                    model_type=scoped_model_type,
+                )
+
+                if pred_id:
+                    logger.info(
+                        "Auto-logged prediction %s for %s (%s)",
+                        pred_id[:8],
+                        symbol,
+                        scoped_model_type,
+                    )
                 
         except Exception as e:
             logger.error(f"Error auto-logging prediction for {symbol}: {e}")

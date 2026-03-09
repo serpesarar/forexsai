@@ -23,6 +23,31 @@ def _parse_iso(value):
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
+def _prediction_row(**overrides):
+    row = {
+        "id": "row-001",
+        "symbol": "NDX.INDX",
+        "strategy": None,
+        "ml_confidence": 60,
+        "status": "completed",
+        "targets_hit": {},
+        "targets": {},
+        "model_type": "ml",
+        "timeframe": "30m",
+        "created_at": _iso(datetime.now(timezone.utc)),
+        "highest_profit_pips": 10,
+        "lowest_drawdown_pips": -5,
+        "stop_loss_pips": 50,
+        "ml_entry_price": 100.0,
+        "exit_price": 105.0,
+        "exit_time": _iso(datetime.now(timezone.utc)),
+        "ml_direction": "BUY",
+        "factors": {},
+    }
+    row.update(overrides)
+    return row
+
+
 class _FilteringQuery:
     def __init__(self, rows):
         self._rows = list(rows)
@@ -108,61 +133,39 @@ def _load_learning_module(module_name: str):
 
 
 @pytest.mark.asyncio
-async def test_strategy_performance_uses_shared_signal_classification_semantics():
+async def test_strategy_performance_uses_main_scope_and_shared_signal_classification_semantics():
     learning_module = _load_learning_module("test_learning_strategy_router")
     now = datetime.now(timezone.utc)
     rows = [
-        {
-            "id": "strategy-win-001",
-            "symbol": "NDX.INDX",
-            "strategy": None,
-            "ml_confidence": 70,
-            "status": "stopped",
-            "targets_hit": '"{\\"TP1\\": true, \\"TP2\\": false, \\"TP3\\": false, \\"TP4\\": false}"',
-            "targets": '"{\\"TP1\\": 105.0, \\"TP2\\": 110.0, \\"TP3\\": 115.0, \\"TP4\\": 120.0}"',
-            "model_type": "ml",
-            "created_at": _iso(now - timedelta(hours=2)),
-            "highest_profit_pips": 2,
-            "lowest_drawdown_pips": -10,
-            "stop_loss_pips": 50,
-            "ml_entry_price": 100.0,
-            "exit_price": None,
-            "ml_direction": "BUY",
-        },
-        {
-            "id": "strategy-expired-002",
-            "symbol": "NDX.INDX",
-            "strategy": None,
-            "ml_confidence": 72,
-            "status": "expired",
-            "targets_hit": {},
-            "targets": {},
-            "model_type": "ml",
-            "created_at": _iso(now - timedelta(hours=3)),
-            "highest_profit_pips": 0,
-            "lowest_drawdown_pips": 0,
-            "stop_loss_pips": 50,
-            "ml_entry_price": 100.0,
-            "exit_price": None,
-            "ml_direction": "BUY",
-        },
-        {
-            "id": "strategy-loss-003",
-            "symbol": "NDX.INDX",
-            "strategy": None,
-            "ml_confidence": 69,
-            "status": "stopped",
-            "targets_hit": {},
-            "targets": {},
-            "model_type": "ml",
-            "created_at": _iso(now - timedelta(hours=4)),
-            "highest_profit_pips": 0,
-            "lowest_drawdown_pips": -50,
-            "stop_loss_pips": 50,
-            "ml_entry_price": 100.0,
-            "exit_price": None,
-            "ml_direction": "BUY",
-        },
+        _prediction_row(
+            id="main-win-001",
+            created_at=_iso(now - timedelta(hours=2)),
+            exit_time=_iso(now - timedelta(minutes=60)),
+            status="stopped",
+            targets_hit='{"TP1": true, "TP2": false, "TP3": false, "TP4": false}',
+            targets='{"TP1": 105.0, "TP2": 110.0, "TP3": 115.0, "TP4": 120.0}',
+            highest_profit_pips=2,
+            lowest_drawdown_pips=-10,
+            exit_price=None,
+        ),
+        _prediction_row(
+            id="main-expired-002",
+            created_at=_iso(now - timedelta(hours=3)),
+            exit_time=None,
+            status="expired",
+            highest_profit_pips=0,
+            lowest_drawdown_pips=0,
+            exit_price=None,
+        ),
+        _prediction_row(
+            id="main-loss-003",
+            created_at=_iso(now - timedelta(hours=4)),
+            exit_time=_iso(now - timedelta(hours=3, minutes=20)),
+            status="stopped",
+            highest_profit_pips=0,
+            lowest_drawdown_pips=-50,
+            exit_price=None,
+        ),
     ]
     client = _FakeClient(rows)
 
@@ -171,11 +174,13 @@ async def test_strategy_performance_uses_shared_signal_classification_semantics(
     ):
         payload = await learning_module.get_strategy_performance(days=1)
 
-    stats = payload["strategies"]["NDX.INDX"]["ultra_safe"]
+    stats = payload["strategies"]["NDX.INDX"]["main"]
     assert payload["outcomes_count"] == 3
     assert payload["eligible_outcomes_count"] == 2
+    assert payload["ml_predictions_count"] == 3
     assert stats["total_predictions"] == 3
-    assert stats["with_outcome"] == 2
+    assert stats["resolved_signals"] == 2
+    assert stats["expired"] == 1
     assert stats["correct"] == 1
     assert stats["accuracy"] == pytest.approx(50.0, abs=0.1)
     assert stats["target_hits"] == 1
@@ -184,7 +189,53 @@ async def test_strategy_performance_uses_shared_signal_classification_semantics(
     assert stats["stop_hit_rate"] == pytest.approx(50.0, abs=0.1)
     assert stats["tp_breakdown"]["TP1"] == 1
     assert stats["tp_hit_rates"]["TP1"] == pytest.approx(50.0, abs=0.1)
-    assert stats["tp_hit_rates"]["TP2"] == 0.0
+    assert payload["symbols"]["NDX.INDX"]["leaders"]["quality"]["scope"] == "main"
+
+
+@pytest.mark.asyncio
+async def test_strategy_performance_resolves_real_strategy_scopes_from_strategy_and_factors():
+    learning_module = _load_learning_module("test_learning_strategy_router_scope_resolution")
+    now = datetime.now(timezone.utc)
+    rows = [
+        _prediction_row(
+            id="main-001",
+            created_at=_iso(now - timedelta(hours=1)),
+            exit_time=_iso(now - timedelta(minutes=20)),
+        ),
+        _prediction_row(
+            id="balanced-001",
+            strategy="balanced",
+            created_at=_iso(now - timedelta(hours=2)),
+            exit_time=_iso(now - timedelta(hours=1, minutes=20)),
+        ),
+        _prediction_row(
+            id="precision-001",
+            strategy=None,
+            factors='{"selected_strategy": "nasdaq_precision"}',
+            created_at=_iso(now - timedelta(hours=3)),
+            exit_time=_iso(now - timedelta(hours=2, minutes=15)),
+        ),
+        _prediction_row(
+            id="ignored-non-ml-001",
+            model_type="pulse2",
+            strategy="balanced",
+            created_at=_iso(now - timedelta(hours=4)),
+        ),
+    ]
+    client = _FakeClient(rows)
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ):
+        payload = await learning_module.get_strategy_performance(days=1)
+
+    ndx_scopes = payload["strategies"]["NDX.INDX"]
+    assert payload["predictions_count"] == 4
+    assert payload["ml_predictions_count"] == 3
+    assert ndx_scopes["main"]["total_predictions"] == 1
+    assert ndx_scopes["balanced"]["total_predictions"] == 1
+    assert ndx_scopes["nasdaq_precision"]["total_predictions"] == 1
+    assert payload["symbols"]["NDX.INDX"]["available_scopes"] == ["main", "balanced", "nasdaq_precision"]
 
 
 @pytest.mark.asyncio
@@ -192,91 +243,63 @@ async def test_strategy_performance_tp_rates_are_independent_and_exclude_expired
     learning_module = _load_learning_module("test_learning_strategy_router_independent_tp")
     now = datetime.now(timezone.utc)
     rows = [
-        {
-            "id": "balanced-win-001",
-            "symbol": "XAUUSD",
-            "strategy": None,
-            "ml_confidence": 60,
-            "status": "completed",
-            "targets_hit": {"TP1": True, "TP2": True, "TP3": True, "TP4": False},
-            "targets": {},
-            "model_type": "ml",
-            "created_at": _iso(now - timedelta(hours=1)),
-            "highest_profit_pips": 25,
-            "lowest_drawdown_pips": -5,
-            "stop_loss_pips": 50,
-            "ml_entry_price": 100.0,
-            "exit_price": 103.0,
-            "ml_direction": "BUY",
-        },
-        {
-            "id": "balanced-win-002",
-            "symbol": "XAUUSD",
-            "strategy": None,
-            "ml_confidence": 60,
-            "status": "completed",
-            "targets_hit": {"TP1": True, "TP2": True, "TP3": False, "TP4": False},
-            "targets": {},
-            "model_type": "ml",
-            "created_at": _iso(now - timedelta(hours=2)),
-            "highest_profit_pips": 20,
-            "lowest_drawdown_pips": -4,
-            "stop_loss_pips": 50,
-            "ml_entry_price": 100.0,
-            "exit_price": 102.0,
-            "ml_direction": "BUY",
-        },
-        {
-            "id": "balanced-win-003",
-            "symbol": "XAUUSD",
-            "strategy": None,
-            "ml_confidence": 60,
-            "status": "completed",
-            "targets_hit": {"TP1": True, "TP2": False, "TP3": False, "TP4": False},
-            "targets": {},
-            "model_type": "ml",
-            "created_at": _iso(now - timedelta(hours=3)),
-            "highest_profit_pips": 10,
-            "lowest_drawdown_pips": -3,
-            "stop_loss_pips": 50,
-            "ml_entry_price": 100.0,
-            "exit_price": 101.0,
-            "ml_direction": "BUY",
-        },
-        {
-            "id": "balanced-loss-004",
-            "symbol": "XAUUSD",
-            "strategy": None,
-            "ml_confidence": 60,
-            "status": "stopped",
-            "targets_hit": {},
-            "targets": {},
-            "model_type": "ml",
-            "created_at": _iso(now - timedelta(hours=4)),
-            "highest_profit_pips": 0,
-            "lowest_drawdown_pips": -50,
-            "stop_loss_pips": 50,
-            "ml_entry_price": 100.0,
-            "exit_price": None,
-            "ml_direction": "BUY",
-        },
-        {
-            "id": "balanced-expired-005",
-            "symbol": "XAUUSD",
-            "strategy": None,
-            "ml_confidence": 60,
-            "status": "expired",
-            "targets_hit": {"TP1": True, "TP2": True, "TP3": True, "TP4": True},
-            "targets": {},
-            "model_type": "ml",
-            "created_at": _iso(now - timedelta(hours=5)),
-            "highest_profit_pips": 0,
-            "lowest_drawdown_pips": 0,
-            "stop_loss_pips": 50,
-            "ml_entry_price": 100.0,
-            "exit_price": None,
-            "ml_direction": "BUY",
-        },
+        _prediction_row(
+            id="balanced-win-001",
+            symbol="XAUUSD",
+            strategy="balanced",
+            created_at=_iso(now - timedelta(hours=1)),
+            exit_time=_iso(now - timedelta(minutes=10)),
+            targets_hit={"TP1": True, "TP2": True, "TP3": True, "TP4": False},
+            highest_profit_pips=25,
+            lowest_drawdown_pips=-5,
+            exit_price=103.0,
+        ),
+        _prediction_row(
+            id="balanced-win-002",
+            symbol="XAUUSD",
+            strategy="balanced",
+            created_at=_iso(now - timedelta(hours=2)),
+            exit_time=_iso(now - timedelta(hours=1, minutes=10)),
+            targets_hit={"TP1": True, "TP2": True, "TP3": False, "TP4": False},
+            highest_profit_pips=20,
+            lowest_drawdown_pips=-4,
+            exit_price=102.0,
+        ),
+        _prediction_row(
+            id="balanced-win-003",
+            symbol="XAUUSD",
+            strategy="balanced",
+            created_at=_iso(now - timedelta(hours=3)),
+            exit_time=_iso(now - timedelta(hours=2, minutes=20)),
+            targets_hit={"TP1": True, "TP2": False, "TP3": False, "TP4": False},
+            highest_profit_pips=10,
+            lowest_drawdown_pips=-3,
+            exit_price=101.0,
+        ),
+        _prediction_row(
+            id="balanced-loss-004",
+            symbol="XAUUSD",
+            strategy="balanced",
+            created_at=_iso(now - timedelta(hours=4)),
+            exit_time=_iso(now - timedelta(hours=3, minutes=20)),
+            status="stopped",
+            targets_hit={},
+            highest_profit_pips=0,
+            lowest_drawdown_pips=-50,
+            exit_price=None,
+        ),
+        _prediction_row(
+            id="balanced-expired-005",
+            symbol="XAUUSD",
+            strategy="balanced",
+            created_at=_iso(now - timedelta(hours=5)),
+            exit_time=None,
+            status="expired",
+            targets_hit={"TP1": True, "TP2": True, "TP3": True, "TP4": True},
+            highest_profit_pips=0,
+            lowest_drawdown_pips=0,
+            exit_price=None,
+        ),
     ]
     client = _FakeClient(rows)
 
@@ -305,42 +328,32 @@ async def test_strategy_performance_infers_missing_tp1_from_profit_excursion():
     learning_module = _load_learning_module("test_learning_strategy_router_inferred_tp1")
     now = datetime.now(timezone.utc)
     rows = [
-        {
-            "id": "balanced-inferred-win-001",
-            "symbol": "XAUUSD",
-            "strategy": None,
-            "timeframe": "30m",
-            "ml_confidence": 60,
-            "status": "stopped",
-            "targets_hit": {},
-            "targets": {},
-            "model_type": "ml",
-            "created_at": _iso(now - timedelta(hours=1)),
-            "highest_profit_pips": 8.3,
-            "lowest_drawdown_pips": -15,
-            "stop_loss_pips": 15,
-            "ml_entry_price": 100.0,
-            "exit_price": None,
-            "ml_direction": "BUY",
-        },
-        {
-            "id": "balanced-plain-loss-002",
-            "symbol": "XAUUSD",
-            "strategy": None,
-            "timeframe": "30m",
-            "ml_confidence": 60,
-            "status": "stopped",
-            "targets_hit": {},
-            "targets": {},
-            "model_type": "ml",
-            "created_at": _iso(now - timedelta(hours=2)),
-            "highest_profit_pips": 3.0,
-            "lowest_drawdown_pips": -15,
-            "stop_loss_pips": 15,
-            "ml_entry_price": 100.0,
-            "exit_price": None,
-            "ml_direction": "BUY",
-        },
+        _prediction_row(
+            id="balanced-inferred-win-001",
+            symbol="XAUUSD",
+            strategy="balanced",
+            created_at=_iso(now - timedelta(hours=1)),
+            exit_time=_iso(now - timedelta(minutes=15)),
+            status="stopped",
+            targets_hit={},
+            highest_profit_pips=8.3,
+            lowest_drawdown_pips=-15,
+            stop_loss_pips=15,
+            exit_price=None,
+        ),
+        _prediction_row(
+            id="balanced-plain-loss-002",
+            symbol="XAUUSD",
+            strategy="balanced",
+            created_at=_iso(now - timedelta(hours=2)),
+            exit_time=_iso(now - timedelta(hours=1, minutes=20)),
+            status="stopped",
+            targets_hit={},
+            highest_profit_pips=3.0,
+            lowest_drawdown_pips=-15,
+            stop_loss_pips=15,
+            exit_price=None,
+        ),
     ]
     client = _FakeClient(rows)
 
@@ -361,59 +374,46 @@ async def test_strategy_performance_infers_missing_tp1_from_profit_excursion():
 
 
 @pytest.mark.asyncio
-async def test_recent_signals_applies_days_filter_and_normalizes_status_and_pnl():
+async def test_recent_signals_applies_days_filter_and_returns_normalized_model_and_scope():
     learning_module = _load_learning_module("test_learning_recent_signals_router")
     now = datetime.now(timezone.utc)
     rows = [
-        {
-            "id": "recent-win-001",
-            "symbol": "NDX.INDX",
-            "timeframe": "30m",
-            "ml_direction": "BUY",
-            "ml_confidence": 67,
-            "ml_entry_price": 100.0,
-            "ml_target_price": 105.0,
-            "ml_stop_price": 50.0,
-            "model_type": "ml",
-            "strategy": "balanced",
-            "status": "stopped",
-            "targets_hit": '"{\\"TP1\\": true, \\"TP2\\": false, \\"TP3\\": false, \\"TP4\\": false}"',
-            "targets": '"{\\"TP1\\": 105.0, \\"TP2\\": 110.0, \\"TP3\\": 115.0, \\"TP4\\": 120.0}"',
-            "highest_profit_pips": 2,
-            "lowest_drawdown_pips": -10,
-            "stop_loss_pips": 50,
-            "exit_price": None,
-            "exit_time": _iso(now - timedelta(minutes=30)),
-            "created_at": _iso(now - timedelta(hours=1)),
-        },
-        {
-            "id": "stale-loss-002",
-            "symbol": "NDX.INDX",
-            "timeframe": "30m",
-            "ml_direction": "BUY",
-            "ml_confidence": 40,
-            "ml_entry_price": 100.0,
-            "ml_target_price": 110.0,
-            "ml_stop_price": 50.0,
-            "model_type": "ml",
-            "strategy": "aggressive",
-            "status": "stopped",
-            "targets_hit": {},
-            "targets": {},
-            "highest_profit_pips": 0,
-            "lowest_drawdown_pips": -50,
-            "stop_loss_pips": 50,
-            "exit_price": 50.0,
-            "exit_time": _iso(now - timedelta(days=2, minutes=10)),
-            "created_at": _iso(now - timedelta(days=2, hours=1)),
-        },
+        _prediction_row(
+            id="recent-win-001",
+            strategy="balanced",
+            created_at=_iso(now - timedelta(hours=1)),
+            exit_time=_iso(now - timedelta(minutes=30)),
+            status="stopped",
+            targets_hit='{"TP1": true, "TP2": false, "TP3": false, "TP4": false}',
+            targets='{"TP1": 105.0, "TP2": 110.0, "TP3": 115.0, "TP4": 120.0}',
+            highest_profit_pips=2,
+            lowest_drawdown_pips=-10,
+            exit_price=None,
+            ml_target_price=105.0,
+            ml_stop_price=50.0,
+            ml_confidence=67,
+        ),
+        _prediction_row(
+            id="stale-loss-002",
+            strategy="aggressive",
+            created_at=_iso(now - timedelta(days=2, hours=1)),
+            exit_time=_iso(now - timedelta(days=2, minutes=10)),
+            status="stopped",
+            targets_hit={},
+            highest_profit_pips=0,
+            lowest_drawdown_pips=-50,
+            exit_price=50.0,
+            ml_target_price=110.0,
+            ml_stop_price=50.0,
+            ml_confidence=40,
+        ),
     ]
     client = _FakeClient(rows)
 
     with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
         learning_module, "get_supabase_client", return_value=client
     ):
-        payload = await learning_module.get_recent_signals_endpoint(days=1, limit=10, include_active=True)
+        payload = await learning_module.get_recent_signals_endpoint(days=1, limit=10, include_active=True, model="ml")
 
     assert payload["count"] == 1
     signal = payload["signals"][0]
@@ -421,43 +421,50 @@ async def test_recent_signals_applies_days_filter_and_normalizes_status_and_pnl(
     assert signal["status"] == "completed"
     assert signal["pnl_pips"] == 5.0
     assert signal["duration_minutes"] == pytest.approx(30.0, abs=0.1)
+    assert signal["normalized_model"] == "ml"
+    assert signal["strategy_scope"] == "balanced"
 
 
 @pytest.mark.asyncio
-async def test_recent_signals_keeps_plain_stopped_losses_negative():
-    learning_module = _load_learning_module("test_learning_recent_signals_router_stopped")
+async def test_recent_signals_filters_by_strategy_scope_and_preserves_main_scope():
+    learning_module = _load_learning_module("test_learning_recent_signals_router_strategy_scope")
     now = datetime.now(timezone.utc)
     rows = [
-        {
-            "id": "recent-loss-001",
-            "symbol": "NDX.INDX",
-            "timeframe": "30m",
-            "ml_direction": "BUY",
-            "ml_confidence": 44,
-            "ml_entry_price": 100.0,
-            "ml_target_price": 110.0,
-            "ml_stop_price": 95.0,
-            "model_type": "ml",
-            "strategy": "aggressive",
-            "status": "stopped",
-            "targets_hit": {},
-            "targets": {},
-            "highest_profit_pips": 0,
-            "lowest_drawdown_pips": -50,
-            "stop_loss_pips": 50,
-            "exit_price": None,
-            "exit_time": _iso(now - timedelta(minutes=10)),
-            "created_at": _iso(now - timedelta(hours=1)),
-        },
+        _prediction_row(
+            id="main-001",
+            strategy=None,
+            created_at=_iso(now - timedelta(hours=1)),
+            exit_time=_iso(now - timedelta(minutes=20)),
+        ),
+        _prediction_row(
+            id="aggressive-001",
+            strategy="aggressive",
+            created_at=_iso(now - timedelta(hours=2)),
+            exit_time=_iso(now - timedelta(hours=1, minutes=10)),
+        ),
+        _prediction_row(
+            id="ignored-non-ml-001",
+            model_type="pulse3",
+            strategy="aggressive",
+            created_at=_iso(now - timedelta(hours=3)),
+        ),
     ]
     client = _FakeClient(rows)
 
     with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
         learning_module, "get_supabase_client", return_value=client
     ):
-        payload = await learning_module.get_recent_signals_endpoint(days=1, limit=10, include_active=True)
+        payload = await learning_module.get_recent_signals_endpoint(
+            days=1,
+            limit=10,
+            include_active=True,
+            model="ml",
+            strategy_scope="main",
+        )
 
     assert payload["count"] == 1
+    assert payload["strategy_scope"] == "main"
     signal = payload["signals"][0]
-    assert signal["status"] == "stopped"
-    assert signal["pnl_pips"] == -50.0
+    assert signal["id"] == "main-001"
+    assert signal["strategy_scope"] == "main"
+    assert signal["normalized_model"] == "ml"

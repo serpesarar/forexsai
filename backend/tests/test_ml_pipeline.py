@@ -241,6 +241,47 @@ class TestStrategyPresets:
             pytest.skip("STRATEGY_PRESETS not available")
 
 
+class TestMlFamilyRouting:
+    """Test model-family routing for supported market symbols."""
+
+    def test_market_symbol_aliases_normalize_to_tracked_symbols(self):
+        from services.ml_prediction_service import normalize_ml_market_symbol
+
+        assert normalize_ml_market_symbol("NASDAQ") == "NDX.INDX"
+        assert normalize_ml_market_symbol("GDAXI") == "GDAXI.INDX"
+        assert normalize_ml_market_symbol("CL.COMM") == "USOIL.FOREX"
+
+    def test_dax_and_oil_resolve_to_expected_model_families(self):
+        from services.ml_prediction_service import (
+            get_ml_model_filename,
+            resolve_ml_model_symbol,
+        )
+
+        assert resolve_ml_model_symbol("GDAXI.INDX") == "NDX.INDX"
+        assert get_ml_model_filename("GDAXI.INDX") == "model_lgbm_nasdaq.joblib"
+        assert resolve_ml_model_symbol("USOIL.FOREX") == "XAUUSD"
+        assert get_ml_model_filename("USOIL.FOREX") == "model_lgbm_xauusd.joblib"
+
+    def test_load_model_caches_by_family_symbol(self):
+        from services import ml_prediction_service
+
+        mock_model = MagicMock()
+        mock_model.feature_names_in_ = np.array(["f1", "f2"])
+        mock_joblib = MagicMock()
+        mock_joblib.load.return_value = mock_model
+
+        with patch.object(ml_prediction_service, "_models", {}), patch.object(
+            ml_prediction_service, "_model_features", {}
+        ), patch.dict(sys.modules, {"joblib": mock_joblib}), patch(
+            "pathlib.Path.exists", return_value=True
+        ):
+            loaded = ml_prediction_service._load_model("GDAXI.INDX")
+
+            assert loaded is mock_model
+            assert ml_prediction_service._models["NDX.INDX"] is mock_model
+            assert ml_prediction_service._model_features["NDX.INDX"] == ["f1", "f2"]
+
+
 class TestSignalStability:
     """Test signal stability system"""
     

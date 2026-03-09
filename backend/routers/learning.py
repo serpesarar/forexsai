@@ -4,10 +4,11 @@ Endpoints for prediction tracking, outcome checking, and learning insights.
 """
 from __future__ import annotations
 
+import logging
 from fastapi import APIRouter, Query
 from datetime import datetime, timedelta, timezone
 from utils.safe_supabase import safe_get_data, safe_get_error
-from typing import Optional, List
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 
 from database.supabase_client import is_db_available, get_init_error, get_supabase_client
@@ -37,6 +38,7 @@ from services.signal_analytics import (
     classify_signal,
     coerce_float as analytics_coerce_float,
     normalize_model_type,
+    parse_json_object,
     normalized_targets_hit,
     normalize_timeframe,
     realized_pips,
@@ -48,9 +50,34 @@ from services.multi_target_tracker import tracker as multi_target_tracker
 from services.telegram_service import telegram_notifier
 
 router = APIRouter(prefix="/api/learning", tags=["learning"])
+logger = logging.getLogger(__name__)
 
 
 _ALL_TIME_FLOOR = datetime(2000, 1, 1, tzinfo=timezone.utc)
+_TRACKED_STRATEGY_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]
+_ML_STRATEGY_ORDER = ["main", "ultra_safe", "balanced", "full_power", "aggressive", "nasdaq_precision"]
+_ML_STRATEGY_ALIASES = {
+    "main": "main",
+    "ml": "main",
+    "raw_ml": "main",
+    "base_ml": "main",
+    "ultra_safe": "ultra_safe",
+    "ultrasafe": "ultra_safe",
+    "balanced": "balanced",
+    "full_power": "full_power",
+    "fullpower": "full_power",
+    "aggressive": "aggressive",
+    "nasdaq_precision": "nasdaq_precision",
+    "nasdaqprecision": "nasdaq_precision",
+}
+_ML_STRATEGY_DESCRIPTIONS = {
+    "main": "Ham/orijinal ML akışı; preset filtre uygulanmadan loglanan ana model.",
+    "ultra_safe": "Kritik + teknik katmanlarla en seçici preset.",
+    "balanced": "Kritik + teknik + context dengeli preset.",
+    "full_power": "Daha geniş sinyal akışı için düşük eşikli preset.",
+    "aggressive": "En esnek preset; daha hızlı ve daha fazla sinyal arar.",
+    "nasdaq_precision": "NASDAQ odaklı yüksek doğruluk preset'i.",
+}
 
 
 def _as_utc(dt: datetime) -> datetime:
@@ -63,6 +90,188 @@ def _utc_now() -> datetime:
 
 def _utc_iso(dt: Optional[datetime] = None) -> str:
     return _as_utc(dt or _utc_now()).isoformat().replace("+00:00", "Z")
+
+
+def _parse_iso_datetime(value: Any) -> Optional[datetime]:
+    if isinstance(value, datetime):
+        return _as_utc(value)
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+    except ValueError:
+        return None
+
+
+def _average(values: List[float]) -> Optional[float]:
+    if not values:
+        return None
+    return round(sum(values) / len(values), 1)
+
+
+def _clamp01(value: float) -> float:
+    return max(0.0, min(1.0, value))
+
+
+def _duration_minutes(sig: dict) -> Optional[float]:
+    created_at = _parse_iso_datetime(sig.get("created_at"))
+    exit_time = _parse_iso_datetime(sig.get("exit_time"))
+    if created_at is None or exit_time is None:
+        return None
+    return round((exit_time - created_at).total_seconds() / 60.0, 1)
+
+
+def _resolve_ml_strategy_scope(sig: dict) -> Optional[str]:
+    if normalize_model_type(sig) != "ml":
+        return None
+
+    candidates: List[str] = []
+    for raw_value in (sig.get("strategy"), sig.get("model_type")):
+        if isinstance(raw_value, str):
+            normalized = raw_value.lower().strip()
+            if normalized:
+                candidates.append(normalized)
+
+    factors = parse_json_object(sig.get("factors"))
+    for key in ("strategy", "selected_strategy", "strategy_name", "preset", "preset_strategy"):
+        raw_value = factors.get(key)
+        if isinstance(raw_value, str):
+            normalized = raw_value.lower().strip()
+            if normalized:
+                candidates.append(normalized)
+
+    for candidate in candidates:
+        resolved = _ML_STRATEGY_ALIASES.get(candidate)
+        if resolved and resolved != "main":
+            return resolved
+
+    return "main"
+
+
+def _build_strategy_scope_metrics(scope: str, scope_signals: List[dict], *, symbol: Optional[str] = None) -> dict:
+    summary = summarize_scope(scope_signals, default_symbol=symbol)
+    resolved = summary["completed"] + summary["stopped"]
+    tp_breakdown = {"TP1": 0, "TP2": 0, "TP3": 0, "TP4": 0}
+    confidence_values: List[float] = []
+    duration_values: List[float] = []
+    win_durations: List[float] = []
+    loss_durations: List[float] = []
+
+    for sig in scope_signals:
+        confidence = analytics_coerce_float(sig.get("ml_confidence"))
+        if confidence is not None:
+            confidence_values.append(confidence)
+
+        classified_status, _, _ = classify_signal(sig, default_symbol=symbol)
+        if classified_status not in {"completed", "stopped"}:
+            continue
+
+        targets_hit = normalized_targets_hit(sig, default_symbol=symbol)
+        for tp_key in tp_breakdown:
+            if targets_hit.get(tp_key):
+                tp_breakdown[tp_key] += 1
+
+        duration = _duration_minutes(sig)
+        if duration is None:
+            continue
+        duration_values.append(duration)
+        if classified_status == "completed":
+            win_durations.append(duration)
+        else:
+            loss_durations.append(duration)
+
+    tp_depth_rate = (
+        (tp_breakdown["TP1"] + tp_breakdown["TP2"] * 2 + tp_breakdown["TP3"] * 3 + tp_breakdown["TP4"] * 4)
+        / (resolved * 4)
+        if resolved > 0
+        else 0.0
+    )
+    avg_duration = _average(duration_values)
+    tp1_rate = (tp_breakdown["TP1"] / resolved) if resolved > 0 else 0.0
+    profit_norm = _clamp01(max(summary["avg_pips"], 0.0) / 20.0)
+    win_rate_norm = (summary["win_rate"] or 0.0) / 100.0
+    speed_norm = 0.5 if avg_duration is None else _clamp01(1.0 - max(avg_duration - 20.0, 0.0) / 220.0)
+    endurance_norm = 0.35 if avg_duration is None else _clamp01(min(avg_duration, 480.0) / 480.0)
+    reliability = _clamp01(resolved / 8.0) if resolved > 0 else 0.0
+
+    quality_score = round(
+        100.0 * reliability * (0.45 * win_rate_norm + 0.30 * tp_depth_rate + 0.25 * profit_norm),
+        1,
+    )
+    scalp_score = round(
+        100.0 * reliability * (0.40 * win_rate_norm + 0.20 * tp1_rate + 0.15 * profit_norm + 0.25 * speed_norm),
+        1,
+    )
+    long_term_score = round(
+        100.0 * reliability * (0.35 * win_rate_norm + 0.30 * tp_depth_rate + 0.25 * profit_norm + 0.10 * endurance_norm),
+        1,
+    )
+
+    return {
+        "scope": scope,
+        "total_predictions": summary["total_signals"],
+        "scored_signals": summary["scored_signals"],
+        "resolved_signals": resolved,
+        "with_outcome": resolved,
+        "correct": summary["completed"],
+        "completed": summary["completed"],
+        "stopped": summary["stopped"],
+        "expired": summary["expired"],
+        "active": summary["active"],
+        "accuracy": summary["win_rate"],
+        "win_rate": summary["win_rate"],
+        "target_hits": summary["completed"],
+        "stop_hits": summary["stopped"],
+        "target_hit_rate": round((summary["completed"] / resolved) * 100, 1) if resolved > 0 else None,
+        "stop_hit_rate": round((summary["stopped"] / resolved) * 100, 1) if resolved > 0 else None,
+        "avg_confidence": round(sum(confidence_values) / len(confidence_values), 1) if confidence_values else 0.0,
+        "net_pips": summary["net_pips"],
+        "avg_pips": summary["avg_pips"],
+        "tp_breakdown": tp_breakdown,
+        "tp_hit_rates": {
+            tp_key: round((tp_count / resolved) * 100, 1) if resolved > 0 else None
+            for tp_key, tp_count in tp_breakdown.items()
+        },
+        "avg_duration_minutes": avg_duration,
+        "avg_win_duration_minutes": _average(win_durations),
+        "avg_loss_duration_minutes": _average(loss_durations),
+        "quality_score": quality_score,
+        "scalp_score": scalp_score,
+        "long_term_score": long_term_score,
+    }
+
+
+def _pick_scope_leader(scope_metrics: Dict[str, dict], score_key: str) -> dict:
+    candidates = [metrics for metrics in scope_metrics.values() if metrics["resolved_signals"] >= 3]
+    if not candidates:
+        candidates = [metrics for metrics in scope_metrics.values() if metrics["resolved_signals"] > 0]
+    if not candidates:
+        return {
+            "scope": None,
+            "score": None,
+            "resolved_signals": 0,
+            "win_rate": None,
+            "net_pips": None,
+            "avg_duration_minutes": None,
+        }
+
+    best = max(
+        candidates,
+        key=lambda metrics: (
+            metrics.get(score_key) or 0.0,
+            metrics.get("resolved_signals") or 0,
+            metrics.get("win_rate") or 0.0,
+            metrics.get("net_pips") or 0.0,
+        ),
+    )
+    return {
+        "scope": best["scope"],
+        "score": best.get(score_key),
+        "resolved_signals": best.get("resolved_signals", 0),
+        "win_rate": best.get("win_rate"),
+        "net_pips": best.get("net_pips"),
+        "avg_duration_minutes": best.get("avg_duration_minutes"),
+    }
 
 
 def _model_detail_hourly_contract(symbol: Optional[str], observed_hours: Optional[set[int]] = None) -> dict:
@@ -1365,12 +1574,7 @@ async def reset_strategy_performance(
 async def get_strategy_performance(
     days: int = Query(0, ge=0, le=1095, description="Number of days to analyze (0=all time)")
 ):
-    """Get performance statistics for each ML strategy.
-    
-    Uses TWO data sources for outcomes:
-    1. prediction_logs lifecycle data (status=completed/stopped, targets_hit)
-    2. outcome_results table (any check_interval)
-    """
+    """Get performance statistics for real ML strategy scopes plus raw main ML."""
     if not is_db_available():
         return {"error": "Database not available"}
     
@@ -1380,141 +1584,111 @@ async def get_strategy_performance(
     
     try:
         cutoff = (_utc_now() - timedelta(days=days)) if days > 0 else _ALL_TIME_FLOOR
-        
-        # Day-by-day pagination to bypass Supabase 1000-row cap
         predictions = []
-        start = cutoff
         end = _utc_now()
-        cur = start
+        cur = cutoff
+        window_days = 1 if 0 < days <= 90 else 7 if 90 < days <= 365 else 30
         while cur < end:
-            ds = cur.replace(hour=0,minute=0,second=0,microsecond=0)
-            de = ds + timedelta(days=1)
+            ds = cur.replace(hour=0, minute=0, second=0, microsecond=0)
+            de = min(ds + timedelta(days=window_days), end)
             batch = safe_get_data(client.table("prediction_logs").select(
                 "id, symbol, strategy, ml_confidence, status, targets_hit, targets, "
                 "model_type, timeframe, created_at, highest_profit_pips, lowest_drawdown_pips, "
-                "stop_loss_pips, ml_entry_price, exit_price, ml_direction"
+                "stop_loss_pips, ml_entry_price, exit_price, exit_time, ml_direction, factors"
             ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).order("created_at", desc=True).limit(1000).execute())
             if batch:
                 predictions.extend(batch)
             cur = de
-        
-        # Classify by confidence — thresholds adjusted for realistic ML output
-        # ML typically produces 45-70% confidence range
-        def classify(conf):
-            if conf >= 65: return "ultra_safe"
-            if conf >= 55: return "balanced"
-            if conf >= 48: return "full_power"
-            return "aggressive"
-        
-        # Initialize stats with per-target tracking - ALL 4 symbols
-        stats = {sym: {s: {
-            "total": 0, "with_outcome": 0, "correct": 0,
-            "target_hits": 0, "stop_hits": 0, "expired": 0, "conf_sum": 0,
-            "tp1_hits": 0, "tp2_hits": 0, "tp3_hits": 0, "tp4_hits": 0,
-        } for s in ["ultra_safe", "balanced", "full_power", "aggressive"]} 
-                 for sym in ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]}
+
+        grouped_signals = {
+            symbol: {scope: [] for scope in _ML_STRATEGY_ORDER}
+            for symbol in _TRACKED_STRATEGY_SYMBOLS
+        }
+        all_ml_signals: List[dict] = []
         
         outcomes_found = 0
         eligible_outcomes_found = 0
-        
-        # Process — use ONLY lifecycle status as single source of truth
+
         for p in predictions:
             sym = p.get("symbol")
-            if sym not in stats:
+            if sym not in grouped_signals:
                 continue
-            try:
-                conf = float(p.get("ml_confidence", 50) or 50)
-            except:
-                conf = 50
-            # Always use confidence-based classification (ignore stored strategy field
-            # which may contain model type names like "PULSE", "EMEL", etc.)
-            strat = classify(conf)
-            
-            stats[sym][strat]["total"] += 1
-            stats[sym][strat]["conf_sum"] += conf
-            
-            classified_status, is_win, _ = classify_signal(p, default_symbol=sym)
+
+            scope = _resolve_ml_strategy_scope(p)
+            if scope is None:
+                continue
+
+            grouped_signals[sym][scope].append(p)
+            all_ml_signals.append(p)
+
+            classified_status, _, _ = classify_signal(p, default_symbol=sym)
             if classified_status in {None, "active"}:
                 continue
 
             outcomes_found += 1
 
             if classified_status not in {"completed", "stopped"}:
-                if classified_status == "expired":
-                    stats[sym][strat]["expired"] += 1
                 continue
 
             eligible_outcomes_found += 1
-            stats[sym][strat]["with_outcome"] += 1
 
-            if is_win:
-                stats[sym][strat]["correct"] += 1
-                stats[sym][strat]["target_hits"] += 1
-            elif classified_status == "stopped":
-                stats[sym][strat]["stop_hits"] += 1
-
-            targets_hit = normalized_targets_hit(p, default_symbol=sym)
-            if targets_hit.get("TP1"):
-                stats[sym][strat]["tp1_hits"] += 1
-            if targets_hit.get("TP2"):
-                stats[sym][strat]["tp2_hits"] += 1
-            if targets_hit.get("TP3"):
-                stats[sym][strat]["tp3_hits"] += 1
-            if targets_hit.get("TP4"):
-                stats[sym][strat]["tp4_hits"] += 1
-        
-        # Build result
-        result_data = {}
-        for sym, sym_stats in stats.items():
-            result_data[sym] = {}
-            for strat, s in sym_stats.items():
-                wo = s["with_outcome"]
-                total = s["total"]
-                tp_breakdown = {
-                    "TP1": s["tp1_hits"],
-                    "TP2": s["tp2_hits"],
-                    "TP3": s["tp3_hits"],
-                    "TP4": s["tp4_hits"],
-                }
-                result_data[sym][strat] = {
-                    "total_predictions": total,
-                    "with_outcome": wo,
-                    "correct": s["correct"],
-                    "accuracy": round(s["correct"] / wo * 100, 1) if wo > 0 else None,
-                    "target_hit_rate": round(s["target_hits"] / wo * 100, 1) if wo > 0 else None,
-                    "stop_hit_rate": round(s["stop_hits"] / wo * 100, 1) if wo > 0 else None,
-                    "avg_confidence": round(s["conf_sum"] / total, 1) if total > 0 else 0,
-                    "target_hits": s["target_hits"],
-                    "stop_hits": s["stop_hits"],
-                    "tp_breakdown": tp_breakdown if wo > 0 else None,
-                    "tp_hit_rates": {
-                        tp_key: round(tp_count / wo * 100, 1)
-                        for tp_key, tp_count in tp_breakdown.items()
-                    } if wo > 0 else None,
-                }
-        
-        # Best strategy
+        result_data: Dict[str, Dict[str, dict]] = {}
+        symbol_analysis: Dict[str, dict] = {}
         best = {}
-        for sym, sd in result_data.items():
-            b, ba = None, -1
-            for st, d in sd.items():
-                if d["accuracy"] and d["accuracy"] > ba and d["with_outcome"] >= 3:
-                    ba, b = d["accuracy"], st
-            best[sym] = {"strategy": b, "accuracy": ba if b else None}
-        
+
+        for sym, scoped_signals in grouped_signals.items():
+            scope_metrics = {
+                scope: _build_strategy_scope_metrics(scope, scoped_signals[scope], symbol=sym)
+                for scope in _ML_STRATEGY_ORDER
+            }
+            quality_leader = _pick_scope_leader(scope_metrics, "quality_score")
+            scalping_leader = _pick_scope_leader(scope_metrics, "scalp_score")
+            long_term_leader = _pick_scope_leader(scope_metrics, "long_term_score")
+            result_data[sym] = scope_metrics
+            symbol_analysis[sym] = {
+                "available_scopes": [scope for scope in _ML_STRATEGY_ORDER if scope_metrics[scope]["total_predictions"] > 0],
+                "total_predictions": sum(metrics["total_predictions"] for metrics in scope_metrics.values()),
+                "resolved_signals": sum(metrics["resolved_signals"] for metrics in scope_metrics.values()),
+                "leaders": {
+                    "quality": quality_leader,
+                    "scalping": scalping_leader,
+                    "long_term": long_term_leader,
+                },
+            }
+            best_scope = quality_leader.get("scope")
+            best[sym] = {
+                "strategy": best_scope,
+                "accuracy": scope_metrics.get(best_scope, {}).get("win_rate") if best_scope else None,
+            }
+
+        overall_scope_metrics = {
+            scope: _build_strategy_scope_metrics(
+                scope,
+                [sig for sig in all_ml_signals if _resolve_ml_strategy_scope(sig) == scope],
+            )
+            for scope in _ML_STRATEGY_ORDER
+        }
+
         return {
             "period_days": days,
             "predictions_count": len(predictions),
+            "ml_predictions_count": len(all_ml_signals),
             "outcomes_count": outcomes_found,
             "eligible_outcomes_count": eligible_outcomes_found,
             "strategies": result_data,
+            "symbols": symbol_analysis,
             "best_strategies": best,
-            "strategy_descriptions": {
-                "ultra_safe": "Güven ≥65%, düşük risk",
-                "balanced": "Güven 55-65%, dengeli",
-                "full_power": "Güven 48-55%, güçlü sinyal",
-                "aggressive": "Güven <48%, agresif"
-            }
+            "strategy_order": _ML_STRATEGY_ORDER,
+            "strategy_descriptions": _ML_STRATEGY_DESCRIPTIONS,
+            "overall_summary": {
+                "total_predictions": len(all_ml_signals),
+                "resolved_signals": sum(metrics["resolved_signals"] for metrics in overall_scope_metrics.values()),
+                "leaders": {
+                    "quality": _pick_scope_leader(overall_scope_metrics, "quality_score"),
+                    "scalping": _pick_scope_leader(overall_scope_metrics, "scalp_score"),
+                    "long_term": _pick_scope_leader(overall_scope_metrics, "long_term_score"),
+                },
+            },
         }
     except Exception as e:
         import traceback
@@ -1751,7 +1925,8 @@ async def get_historical_signals_endpoint(
         "pulse2": ("pulse2_ml", "Pulse 2 — ML Hybrid"),
         "pulse3": ("pulse3_scalp", "Pulse 3 — Scalp"),
     }
-    model_id, model_name_label = MODEL_NAMES.get(model or "", ("all_models", "All Models"))
+    resolved_model = (model or "").lower().strip()
+    model_id, model_name_label = MODEL_NAMES.get(resolved_model, ("all_models", "All Models"))
         
     try:
         cutoff = (_utc_now() - timedelta(days=days)) if days > 0 else _ALL_TIME_FLOOR
@@ -1764,13 +1939,11 @@ async def get_historical_signals_endpoint(
             "model_type, exit_price, exit_time"
         ).eq("symbol", db_symbol).gte("created_at", cutoff_iso).order("created_at", desc=True).limit(500)
         
-        # Filter by model_type if specified
-        if model:
-            query = query.eq("model_type", model)
-        
         result = query.execute()
         
         signals = safe_get_data(result)
+        if resolved_model and resolved_model != "all":
+            signals = [sig for sig in signals if normalize_model_type(sig) == resolved_model]
         
         # 2. Extract Data
         time_series_data = []
@@ -2020,6 +2193,7 @@ async def get_signals_matrix(
 async def get_recent_signals_endpoint(
     symbol: Optional[str] = Query(None, description="Filter by symbol"),
     model: Optional[str] = Query(None, description="Filter by model type (ml, emel, pulse1, pulse2, pulse3, smc)"),
+    strategy_scope: Optional[str] = Query(None, description="Filter ML signals by resolved strategy scope (main, ultra_safe, balanced, full_power, aggressive, nasdaq_precision)"),
     days: int = Query(0, ge=0, le=1095, description="Days to look back (0=all available history)"),
     limit: int = Query(50, ge=1, le=200),
     include_active: bool = Query(True, description="Include active signals")
@@ -2032,6 +2206,8 @@ async def get_recent_signals_endpoint(
         symbol = None
     if not isinstance(model, str):
         model = None
+    if not isinstance(strategy_scope, str):
+        strategy_scope = None
 
     if not is_db_available():
         return {"error": "Database not available", "signals": [], "count": 0, "symbol": symbol}
@@ -2045,7 +2221,7 @@ async def get_recent_signals_endpoint(
             "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
             "ml_target_price, ml_stop_price, model_type, strategy, status, "
             "targets_hit, targets, highest_profit_pips, lowest_drawdown_pips, "
-            "stop_loss_pips, exit_price, exit_time, created_at"
+            "stop_loss_pips, exit_price, exit_time, created_at, factors"
         ).order("created_at", desc=True).limit(limit * 3)  # Fetch extra to allow for Python filtering
 
         if days > 0:
@@ -2061,34 +2237,23 @@ async def get_recent_signals_endpoint(
         result = query.execute()
         all_signals = safe_get_data(result)
         
-        # Filter by model in Python (no .or_() needed)
+        signals = list(all_signals)
+
         if model:
             model_lower = model.lower().strip()
-            signals = [s for s in all_signals if _normalize_model_type(s) == model_lower][:limit]
-        else:
-            signals = all_signals[:limit]
-        
-        # Enhance with calculated fields
+            signals = [s for s in signals if _normalize_model_type(s) == model_lower]
+
+        if strategy_scope:
+            strategy_scope = strategy_scope.lower().strip()
+            signals = [s for s in signals if _resolve_ml_strategy_scope(s) == strategy_scope]
+
+        signals = signals[:limit]
+
         enhanced = []
         for sig in signals:
             entry = dict(sig)
-            
-            # Calculate duration
-            created = sig.get("created_at")
-            exit_time = sig.get("exit_time")
-            
-            if exit_time and created:
-                try:
-                    from dateutil import parser
-                    created_dt = parser.parse(created)
-                    exit_dt = parser.parse(exit_time)
-                    duration_minutes = (exit_dt - created_dt).total_seconds() / 60
-                    entry["duration_minutes"] = round(duration_minutes, 1)
-                except:
-                    entry["duration_minutes"] = None
-            else:
-                entry["duration_minutes"] = None
-            
+
+            entry["duration_minutes"] = _duration_minutes(sig)
             raw_status = (sig.get("status") or "unknown").lower().strip()
             normalized_status, _, pnl_pips = classify_signal(
                 sig,
@@ -2096,13 +2261,16 @@ async def get_recent_signals_endpoint(
             )
             entry["status"] = normalized_status or raw_status or "unknown"
             entry["pnl_pips"] = round(pnl_pips, 2) if pnl_pips is not None else None
-            
+            entry["normalized_model"] = _normalize_model_type(sig)
+            entry["strategy_scope"] = _resolve_ml_strategy_scope(sig)
+
             enhanced.append(entry)
         
         return {
             "signals": enhanced,
             "count": len(enhanced),
-            "symbol": symbol
+            "symbol": symbol,
+            "strategy_scope": strategy_scope,
         }
         
     except Exception as e:

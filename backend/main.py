@@ -393,19 +393,31 @@ async def debug_info():
 async def debug_ml_model(symbol: str):
     """Debug ML model loading and prediction for a symbol."""
     from pathlib import Path
+    from services.ml_prediction_service import (
+        get_ml_model_filename,
+        normalize_ml_market_symbol,
+        resolve_ml_model_symbol,
+    )
+
     result = {"symbol": symbol, "errors": [], "info": []}
     
     # Check model file
     model_path = Path(__file__).parent / "models"
     result["model_dir"] = str(model_path)
     result["model_dir_exists"] = model_path.exists()
+    normalized_symbol = normalize_ml_market_symbol(symbol)
+    model_family_symbol = resolve_ml_model_symbol(symbol)
+    model_filename = get_ml_model_filename(symbol)
+
+    result["normalized_market_symbol"] = normalized_symbol
+    result["model_family_symbol"] = model_family_symbol
+    result["model_filename"] = model_filename
     
-    if symbol.upper() in ["NASDAQ", "NDX.INDX", "NDX"]:
-        model_file = model_path / "model_lgbm_nasdaq.joblib"
-    elif symbol.upper() == "XAUUSD":
-        model_file = model_path / "model_lgbm_xauusd.joblib"
+    if model_filename:
+        model_file = model_path / model_filename
     else:
         model_file = None
+        result["errors"].append(f"No model family mapped for symbol: {symbol}")
     
     if model_file:
         result["model_file"] = str(model_file)
@@ -430,7 +442,7 @@ async def debug_ml_model(symbol: str):
     # Check data fetching
     try:
         from services.data_fetcher import fetch_30m_candles, fetch_latest_price, fetch_eod_candles
-        normalized = "NDX.INDX" if symbol.upper() in ["NASDAQ", "NDX.INDX", "NDX"] else symbol.upper()
+        normalized = normalized_symbol
         
         candles_30m = await fetch_30m_candles(normalized, limit=50)
         result["candles_30m_count"] = len(candles_30m) if candles_30m else 0

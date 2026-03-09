@@ -45,7 +45,7 @@ async def get_prediction(
     ),
     strategy: Optional[str] = Query(
         default="balanced",
-        description="Preset strategy: ultra_safe, balanced, full_power, aggressive"
+        description="Preset strategy: main, ultra_safe, balanced, full_power, aggressive, nasdaq_precision"
     ),
     log_to_db: bool = Query(
         default=False,
@@ -57,7 +57,7 @@ async def get_prediction(
     
     Returns direction (BUY/SELL/HOLD), confidence, pip targets, and analysis.
     - enabled_factors: Filter which confidence factors are applied
-    - strategy: Preset layer configuration (ultra_safe, balanced, full_power, aggressive)
+    - strategy: Preset layer configuration (main, ultra_safe, balanced, full_power, aggressive, nasdaq_precision)
     - log_to_db: If true, logs prediction to database for learning system
     """
     from services.ml_prediction_service import get_ml_prediction
@@ -68,7 +68,7 @@ async def get_prediction(
         factor_list = [f.strip() for f in enabled_factors.split(",") if f.strip()]
     
     # Validate strategy
-    valid_strategies = ["ultra_safe", "balanced", "full_power", "aggressive"]
+    valid_strategies = ["main", "ultra_safe", "balanced", "full_power", "aggressive", "nasdaq_precision"]
     if strategy not in valid_strategies:
         strategy = "balanced"
     
