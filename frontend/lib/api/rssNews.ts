@@ -240,6 +240,17 @@ export interface CandleNewsResponse {
   news: MatchedNewsItem[];
 }
 
+interface LegacyCandleNewsResponse {
+  success: boolean;
+  data?: {
+    symbol?: string;
+    candle_time?: string;
+    timeframe?: string;
+    news_count?: number;
+    news?: MatchedNewsItem[];
+  };
+}
+
 export interface MatchedNewsItem {
   id: string;
   headline: string;
@@ -286,6 +297,7 @@ export async function fetchNewsForCandle(
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     const res = await fetch(url, {
+      method: "POST",
       signal: controller.signal,
       headers: { Accept: "application/json" },
     });
@@ -297,9 +309,24 @@ export async function fetchNewsForCandle(
       throw new Error(`Failed to fetch candle news: ${res.status}`);
     }
 
-    const data = await res.json();
-    console.log(`[fetchNewsForCandle] Found ${data.news?.length || 0} relevant news items`);
-    return data;
+    const data = await res.json() as CandleNewsResponse | LegacyCandleNewsResponse;
+    const normalized: CandleNewsResponse = "news" in data
+      ? data
+      : {
+          success: data.success,
+          symbol: data.data?.symbol || symbol,
+          candle: {
+            timestamp: data.data?.candle_time || candleTimestamp,
+            change_pct: 0,
+            range_pct: 0,
+            is_significant: false,
+          },
+          news_count: data.data?.news_count || 0,
+          news: data.data?.news || [],
+        };
+
+    console.log(`[fetchNewsForCandle] Found ${normalized.news.length || 0} relevant news items`);
+    return normalized;
   } catch (error) {
     console.error("[fetchNewsForCandle] Fetch error:", error);
     throw error;

@@ -89,6 +89,53 @@ def test_rss_news_response_accepts_bilingual_summary_and_analysis_fields():
 
 
 @pytest.mark.asyncio
+async def test_rss_candle_news_response_includes_bilingual_fields(monkeypatch):
+    rss_router = _load_module("test_rss_router_candle_news_module", "routers/rss_router.py")
+
+    class FakeMatcher:
+        async def match_news_to_candle_simple_ai(self, **_kwargs):
+            return [{
+                "id": "news-1",
+                "headline": "Gold rises after CPI",
+                "headline_tr": "TÜFE sonrası altın yükseldi",
+                "summary_en": "Gold gained after softer CPI data.",
+                "summary_tr": "Altın, yumuşak TÜFE verisi sonrası yükseldi.",
+                "analysis_en": "Softer inflation weakened the dollar.",
+                "analysis_tr": "Yumuşak enflasyon verisi doları zayıflattı.",
+                "content": "English content",
+                "content_tr": "Türkçe içerik",
+                "timestamp": "2026-03-10T12:00:00Z",
+                "source": "Reuters",
+                "urgency": "high",
+                "relevance_score": 0.91,
+                "url": "https://example.com/news-1",
+                "symbol_impact": {
+                    "score": 9,
+                    "direction": "bullish",
+                    "reasoning_tr": "Dolar zayıflığı altını destekledi",
+                },
+            }]
+
+    monkeypatch.setattr(matcher_module, "get_news_candle_matcher", lambda: FakeMatcher())
+
+    result = await rss_router.get_news_for_candle(
+        symbol="XAUUSD",
+        candle_timestamp="2026-03-10T12:00:00Z",
+        candle_open=2900.0,
+        candle_close=2912.0,
+        candle_high=2915.0,
+        candle_low=2898.0,
+        timeframe="1h",
+    )
+
+    assert result["success"] is True
+    assert result["news_count"] == 1
+    assert result["news"][0]["summary_tr"].startswith("Altın")
+    assert result["news"][0]["analysis_en"].startswith("Softer inflation")
+    assert result["news"][0]["headline"] == "TÜFE sonrası altın yükseldi"
+
+
+@pytest.mark.asyncio
 async def test_generate_move_explanation_falls_back_when_ai_response_missing(monkeypatch):
     async def fake_call(*args, **kwargs):
         return None

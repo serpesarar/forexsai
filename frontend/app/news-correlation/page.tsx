@@ -13,7 +13,8 @@ import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/api";
 import { fetchNewsForCandle, MatchedNewsItem } from "@/lib/api/rssNews";
 import { normalizeCandles } from "@/lib/chart/normalizeCandles";
-import { useNewsMarkers, convertToChartMarkers } from "@/hooks/useNewsMarkers";
+import { buildCompressedChartCandles, buildMappedChartMarkers } from "@/lib/chart/newsCorrelationTimeline";
+import { useNewsMarkers } from "@/hooks/useNewsMarkers";
 import Link from "next/link";
 import type { EnrichedNews } from "@/types/news-correlation";
 import NewsDetailModal from "@/components/NewsDetailModal";
@@ -21,6 +22,7 @@ import NewsDetailModal from "@/components/NewsDetailModal";
 // ==================== TYPES ====================
 interface ChartCandle {
   time: number;
+  actualTimestamp: number;
   open: number;
   high: number;
   low: number;
@@ -106,7 +108,7 @@ function isTurkishLocale(locale: string): boolean {
 
 function getLocalizedHeadline(item: EnrichedNews, locale: string): string {
   if (isTurkishLocale(locale)) {
-    return item.headline_tr || item.summary_tr || item.headline || item.summary_en || "";
+    return item.headline_tr || item.summary_tr || item.analysis_tr || item.content_tr || item.headline || item.summary_en || "";
   }
 
   return item.headline || item.summary_en || item.headline_tr || item.summary_tr || "";
@@ -114,7 +116,7 @@ function getLocalizedHeadline(item: EnrichedNews, locale: string): string {
 
 function getLocalizedSummary(item: EnrichedNews, locale: string): string {
   if (isTurkishLocale(locale)) {
-    return item.summary_tr || item.headline_tr || item.analysis_tr || item.summary_en || item.headline || "";
+    return item.summary_tr || item.analysis_tr || item.content_tr || item.headline_tr || item.summary_en || item.headline || "";
   }
 
   return item.summary_en || item.headline || item.analysis_en || item.summary_tr || item.headline_tr || "";
@@ -128,17 +130,33 @@ function getLocalizedAnalysis(item: EnrichedNews, locale: string): string {
   return item.analysis_en || item.content || item.summary_en || item.analysis_tr || item.content_tr || item.headline || "";
 }
 
+function getLocalizedMatchedHeadline(item: MatchedNewsItem, locale: string): string {
+  if (isTurkishLocale(locale)) {
+    return item.headline || item.summary_tr || item.analysis_tr || item.headline_en || "";
+  }
+
+  return item.headline_en || item.summary_en || item.headline || item.summary_tr || "";
+}
+
+function getLocalizedMatchedSummary(item: MatchedNewsItem, locale: string): string {
+  if (isTurkishLocale(locale)) {
+    return item.summary_tr || item.analysis_tr || item.reasoning_tr || item.headline || item.headline_en || "";
+  }
+
+  return item.summary_en || item.analysis_en || item.headline_en || item.reasoning_tr || item.headline || "";
+}
+
 function normalizeNewsItem(item: any): EnrichedNews {
   return {
     id: String(item.id ?? ""),
     timestamp: item.timestamp || item.published_at || new Date().toISOString(),
     source: item.source || "Unknown",
     headline: item.headline || item.headline_en || "",
-    headline_tr: item.headline_tr || item.summary_tr,
+    headline_tr: item.headline_tr || item.summary_tr || item.analysis_tr || item.content_tr || item.headline || item.headline_en || "",
     content: item.content || item.analysis_en || item.analysis || item.summary_en || item.summary || item.headline || "",
-    content_tr: item.content_tr || item.analysis_tr || item.summary_tr,
+    content_tr: item.content_tr || item.analysis_tr || item.summary_tr || item.headline_tr || item.headline || item.headline_en || "",
     summary_en: item.summary_en || item.summary || item.headline || item.headline_en || "",
-    summary_tr: item.summary_tr || item.headline_tr || item.summary_en || item.headline || item.headline_en || "",
+    summary_tr: item.summary_tr || item.analysis_tr || item.content_tr || item.headline_tr || item.headline || item.headline_en || "",
     analysis_en: item.analysis_en || item.analysis || item.content || item.summary_en || item.summary || item.headline || item.headline_en || "",
     analysis_tr: item.analysis_tr || item.content_tr || item.summary_tr || item.headline_tr || item.analysis_en || item.analysis || item.content || item.headline || item.headline_en || "",
     category: item.category || "general",
@@ -594,21 +612,10 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       }
 
       if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
-        const processedCandles: ChartCandle[] = normalizeCandles(response.data, requestedTimeframe, {
+        const normalizedCandles = normalizeCandles(response.data, requestedTimeframe, {
           fillSmallGaps: false,
-        }).map((row) => {
-          const timeInSeconds = Math.floor(row.timestamp / 1000);
-          const priceChange = ((row.close - row.open) / row.open) * 100;
-          return {
-            time: timeInSeconds,
-            open: row.open,
-            high: row.high,
-            low: row.low,
-            close: row.close,
-            volume: row.volume,
-            priceChange,
-          };
         });
+        const processedCandles: ChartCandle[] = buildCompressedChartCandles(normalizedCandles, requestedTimeframe);
 
         console.log(`[Chart] Loaded ${processedCandles.length} candles for ${requestedSymbol}`);
         setChartData(processedCandles);
@@ -975,7 +982,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           confidence: number;
         };
         error?: string;
-      }>(`/api/news-correlation/explain-move?symbol=${apiSymbol}&timestamp=${candle.time}&ai_explain=true`);
+      }>(`/api/news-correlation/explain-move?symbol=${apiSymbol}&timestamp=${candle.actualTimestamp}&ai_explain=true`);
 
       if (response?.success && response.data) {
         setAiExplanation(response.data.explanation || response.data.ai_explanation || null);
@@ -1029,6 +1036,20 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         fixRightEdge: false,
         rightOffset: 8,
         barSpacing: 6,
+        tickMarkFormatter: (time: Time) => {
+          const numericTime = typeof time === "number" ? time : Number(time);
+          const candle = chartDataRef.current.find((entry) => entry.time === numericTime);
+          const timestamp = candle?.actualTimestamp ?? numericTime;
+
+          if (!Number.isFinite(timestamp)) {
+            return "";
+          }
+
+          return format(
+            new Date(timestamp * 1000),
+            timeframeRef.current === "1d" ? "MMM d" : "MMM d, HH:mm"
+          );
+        },
       },
     });
 
@@ -1080,7 +1101,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         // AKILLI HABER EŞLEŞTİRME - Backend API'sini çağır
         fetchNewsForCandle(
           currentSymbol,
-          new Date(candle.time * 1000).toISOString(),
+          new Date(candle.actualTimestamp * 1000).toISOString(),
           candle.open,
           candle.close,
           candle.high,
@@ -1096,8 +1117,8 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           console.error("[CandleClick] Error fetching matched news:", error);
           // Fallback: Basit zaman bazlı eşleştirme
           const minutes = TIMEFRAME_TO_MINUTES[currentTimeframe] || 60;
-          const candleStart = subMinutes(new Date(candle.time * 1000), minutes / 2);
-          const candleEnd = addMinutes(new Date(candle.time * 1000), minutes / 2);
+          const candleStart = subMinutes(new Date(candle.actualTimestamp * 1000), minutes / 2);
+          const candleEnd = addMinutes(new Date(candle.actualTimestamp * 1000), minutes / 2);
 
           const relatedNews = newsRef.current.filter(n => {
             const newsTime = new Date(n.timestamp);
@@ -1171,14 +1192,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       return;
     }
 
-    const chartStartTime = chartData[0]?.time || 0;
-    const chartEndTime = chartData[chartData.length - 1]?.time || 0;
-    const filteredMarkers = newsMarkers.filter((marker) => {
-      const markerTime = Math.floor(new Date(marker.time).getTime() / 1000);
-      return markerTime >= chartStartTime && markerTime <= chartEndTime;
-    });
-
-    candlestickSeriesRef.current.setMarkers(convertToChartMarkers(filteredMarkers) as any);
+    candlestickSeriesRef.current.setMarkers(buildMappedChartMarkers(newsMarkers, chartData) as any);
   }, [chartData, newsMarkers]);
 
   const handleNewsClick = (newsItem: EnrichedNews | MatchedNewsItem) => {
@@ -1188,11 +1202,11 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           timestamp: newsItem.timestamp || new Date().toISOString(),
           source: newsItem.source || 'news',
           headline: newsItem.headline_en || newsItem.headline || '',
-          headline_tr: newsItem.headline || newsItem.headline_en || '',
+          headline_tr: newsItem.summary_tr || newsItem.analysis_tr || newsItem.headline || newsItem.headline_en || '',
           content: newsItem.analysis_en || newsItem.summary_en || newsItem.headline_en || newsItem.headline || '',
-          content_tr: newsItem.analysis_tr || newsItem.reasoning_tr || newsItem.summary_tr || newsItem.headline || newsItem.headline_en || '',
+          content_tr: newsItem.analysis_tr || newsItem.summary_tr || newsItem.reasoning_tr || newsItem.headline || newsItem.headline_en || '',
           summary_en: newsItem.summary_en || newsItem.headline_en || newsItem.headline || '',
-          summary_tr: newsItem.summary_tr || newsItem.headline || newsItem.headline_en || '',
+          summary_tr: newsItem.summary_tr || newsItem.analysis_tr || newsItem.reasoning_tr || newsItem.headline || newsItem.headline_en || '',
           analysis_en: newsItem.analysis_en || newsItem.summary_en || newsItem.headline_en || newsItem.headline || '',
           analysis_tr: newsItem.analysis_tr || newsItem.reasoning_tr || newsItem.summary_tr || newsItem.headline || newsItem.headline_en || '',
           category: 'matched_news',
@@ -1426,7 +1440,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   <div className="flex items-center justify-between p-4 border-b border-gray-800">
                     <div>
                       <h3 className="font-semibold">
-                        {format(new Date(selectedCandleNews.candle.time * 1000), "MMM d, HH:mm")}
+                        {format(new Date(selectedCandleNews.candle.actualTimestamp * 1000), "MMM d, HH:mm")}
                       </h3>
                       <p className="text-xs text-gray-500">Candle Analysis</p>
                     </div>
@@ -1539,7 +1553,10 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                               onClick={() => handleNewsClick(n)}
                             >
                               <div className="flex items-start justify-between gap-2">
-                                <p className="text-gray-300 line-clamp-2 flex-1">{n.headline}</p>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-gray-300 line-clamp-2">{getLocalizedMatchedHeadline(n, currentLocale)}</p>
+                                  <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{getLocalizedMatchedSummary(n, currentLocale)}</p>
+                                </div>
                                 {n.relevance_score > 0 && (
                                   <span className={cn(
                                     "text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0",
