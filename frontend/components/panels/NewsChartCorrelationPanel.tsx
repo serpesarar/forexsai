@@ -4,14 +4,13 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time } from "lightweight-charts";
 import { format, addSeconds, addMinutes, addHours, addDays, addMonths, addWeeks, subDays, subMonths } from "date-fns";
-import { Filter, Newspaper, BarChart2, Maximize2 } from "lucide-react";
+import { Filter, Newspaper, BarChart2 } from "lucide-react";
 import { useNewsCorrelationStore } from "@/lib/stores/newsCorrelationStore";
 import type { EnrichedNews } from "@/types/news-correlation";
 import { fetcher } from "@/lib/api";
 import { useNewsMarkers, convertToChartMarkers } from "@/hooks/useNewsMarkers";
 
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 
 
 
@@ -258,17 +257,6 @@ export default function NewsChartCorrelationPanel() {
               </button>
             ))}
           </div>
-        )}
-
-        {/* Open canonical News AI page */}
-        {activeTab === "feed" && (
-          <Link
-            href="/news-correlation"
-            className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg text-sm font-medium hover:bg-purple-500/30 transition-colors"
-          >
-            <Maximize2 className="w-4 h-4" />
-            Open News AI
-          </Link>
         )}
       </div>
 

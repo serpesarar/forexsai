@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time, type CandlestickData } from "lightweight-charts";
 import { format, isWithinInterval, subMinutes, addMinutes } from "date-fns";
+import { useRouter } from "next/navigation";
 import {
   Bell, Star, Wallet, Calendar, MessageSquare, Newspaper,
   Building2, LineChart, BookOpen, ChevronLeft,
@@ -509,6 +510,7 @@ interface NewsCorrelationDashboardProps {
 }
 
 export default function NewsCorrelationDashboard({ embedded = false }: NewsCorrelationDashboardProps) {
+  const router = useRouter();
   const [selectedSymbol, setSelectedSymbol] = useState("XAUUSD");
   const [timeframe, setTimeframe] = useState("1h");
   const [chartData, setChartData] = useState<ChartCandle[]>([]);
@@ -561,6 +563,12 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!embedded) {
+      router.replace("/");
+    }
+  }, [embedded, router]);
 
   useEffect(() => {
     chartDataRef.current = chartData;
@@ -1261,7 +1269,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     return <div className="min-h-screen bg-[#0a0a0a]" />;
   }
 
-  return (
+  return !embedded ? null : (
     <div className={cn("bg-[#0a0a0a] text-white flex", embedded ? "h-full" : "min-h-screen")}>
       {/* Sidebar - Hidden in embedded mode */}
       {!embedded && (
