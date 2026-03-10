@@ -25,6 +25,10 @@ export interface RSSNewsItem {
   headline_tr?: string;
   content?: string;
   content_tr?: string;
+  summary_en?: string;
+  summary_tr?: string;
+  analysis_en?: string;
+  analysis_tr?: string;
   category: string;
   url: string;
   impacts: NewsImpact[];
@@ -240,6 +244,10 @@ export interface MatchedNewsItem {
   id: string;
   headline: string;
   headline_en: string;
+  summary_en?: string;
+  summary_tr?: string;
+  analysis_en?: string;
+  analysis_tr?: string;
   timestamp: string;
   source: string;
   urgency: string;

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { X, Sparkles, Camera, TrendingUp, TrendingDown, Clock, ExternalLink, Brain, AlertCircle, Globe } from "lucide-react";
+import React, { useEffect } from "react";
+import { X, Sparkles, Camera, TrendingUp, TrendingDown, Clock, ExternalLink, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import type { EnrichedNews } from "@/types/news-correlation";
@@ -143,7 +143,6 @@ interface NewsDetailModalProps {
 
 export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }: NewsDetailModalProps) {
   const t = translations[locale] || translations.en;
-  const [showTranslation, setShowTranslation] = useState(false);
 
   // Close on escape key
   useEffect(() => {
@@ -161,6 +160,17 @@ export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }
   }, [isOpen, onClose]);
 
   if (!isOpen || !news) return null;
+
+  const isTurkish = locale === "tr";
+  const localizedHeadline = isTurkish
+    ? news.headline_tr || news.summary_tr || news.headline || news.summary_en || ""
+    : news.headline || news.summary_en || news.headline_tr || news.summary_tr || "";
+  const localizedSummary = isTurkish
+    ? news.summary_tr || news.headline_tr || news.summary_en || news.headline || ""
+    : news.summary_en || news.headline || news.summary_tr || news.headline_tr || "";
+  const localizedAnalysis = isTurkish
+    ? news.analysis_tr || news.content_tr || news.summary_tr || news.analysis_en || news.content || news.headline || ""
+    : news.analysis_en || news.content || news.summary_en || news.analysis_tr || news.content_tr || news.headline || "";
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
@@ -224,7 +234,7 @@ export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }
 
           {/* Headline - Localized */}
           <h2 className="text-xl font-bold text-white mb-4 leading-tight pr-8">
-            {locale === "tr" && news.headline_tr ? news.headline_tr : news.headline}
+            {localizedHeadline}
           </h2>
 
           {/* AI Analysis Section */}
@@ -235,20 +245,26 @@ export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }
               </div>
               <span className="font-semibold text-purple-400">{t.aiAnalysis}</span>
             </div>
-            
-            <p className="text-gray-300 text-sm leading-relaxed mb-4">
-              {locale === "tr" && news.content_tr ? news.content_tr : (news.content || news.headline)}
-            </p>
-            
-            {/* Translation Note */}
-            {locale !== "en" && (
-              <div className="flex items-center gap-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                <Globe className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                <p className="text-xs text-blue-300">
-                  {t.newsContent}
+
+            <div className="space-y-4 mb-4">
+              <div>
+                <span className="text-[11px] text-purple-300 uppercase tracking-wider block mb-2">
+                  {isTurkish ? "Özet" : "Summary"}
+                </span>
+                <p className="text-gray-200 text-sm leading-relaxed">
+                  {localizedSummary}
                 </p>
               </div>
-            )}
+
+              <div>
+                <span className="text-[11px] text-blue-300 uppercase tracking-wider block mb-2">
+                  {isTurkish ? "Analiz" : "Analysis"}
+                </span>
+                <p className="text-gray-300 text-sm leading-relaxed">
+                  {localizedAnalysis}
+                </p>
+              </div>
+            </div>
 
             {/* Affected Assets */}
             <div className="mb-4">

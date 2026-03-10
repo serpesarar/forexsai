@@ -70,6 +70,10 @@ export interface EnrichedNews extends RawNews {
   analysisTimestamp: string;
   headline_tr?: string; // Turkish translation
   content_tr?: string; // Turkish translation
+  summary_en?: string;
+  summary_tr?: string;
+  analysis_en?: string;
+  analysis_tr?: string;
 }
 
 // Chart marker for news events

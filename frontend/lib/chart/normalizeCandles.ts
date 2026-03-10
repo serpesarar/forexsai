@@ -14,7 +14,7 @@ interface NormalizeCandleOptions {
 }
 
 const DEFAULT_OPTIONS: Required<NormalizeCandleOptions> = {
-  fillSmallGaps: true,
+  fillSmallGaps: false,
   maxSyntheticCandles: 10,
   syntheticWickRatio: 0.0001,
 };

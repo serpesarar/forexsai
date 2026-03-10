@@ -6,17 +6,31 @@ from types import ModuleType
 
 import pytest
 
-if "aiohttp" not in sys.modules:
-    aiohttp_stub = ModuleType("aiohttp")
-    aiohttp_stub.ClientSession = object
-    aiohttp_stub.ClientTimeout = object
-    sys.modules["aiohttp"] = aiohttp_stub
+def _ensure_optional_dependency_stubs() -> None:
+    if "aiohttp" not in sys.modules:
+        aiohttp_stub = ModuleType("aiohttp")
+        setattr(aiohttp_stub, "ClientSession", object)
+        setattr(aiohttp_stub, "ClientTimeout", object)
+        sys.modules["aiohttp"] = aiohttp_stub
+
+    if "feedparser" not in sys.modules:
+        feedparser_stub = ModuleType("feedparser")
+
+        def _parse_date(*_args, **_kwargs):
+            return None
+
+        setattr(feedparser_stub, "_parse_date", _parse_date)
+        sys.modules["feedparser"] = feedparser_stub
+
+
+_ensure_optional_dependency_stubs()
 
 import services.news_candle_matcher as matcher_module
 from services.deepseek_json_client import extract_json_object
 
 
 def _load_module(name: str, relative_path: str):
+    _ensure_optional_dependency_stubs()
     spec = spec_from_file_location(name, Path(__file__).resolve().parents[1] / relative_path)
     assert spec and spec.loader
     module = module_from_spec(spec)
@@ -40,6 +54,38 @@ def test_extract_json_object_parses_fenced_incomplete_json():
         "explanation": "Altın CPI sonrası güçlendi",
         "confidence": 82,
     }
+
+
+def test_rss_news_response_accepts_bilingual_summary_and_analysis_fields():
+    rss_router = _load_module("test_rss_router_module", "routers/rss_router.py")
+
+    response = rss_router.RSSNewsResponse(
+        id="news-1",
+        timestamp="2026-03-10T12:00:00Z",
+        source="Reuters",
+        headline="Gold rises after softer CPI print",
+        headline_tr="Daha yumuşak TÜFE verisi sonrası altın yükseldi",
+        content="Gold moved higher after the inflation surprise.",
+        content_tr="Enflasyon sürprizi sonrası altın yükseldi.",
+        summary_en="Gold climbed after a softer CPI release.",
+        summary_tr="Altın, daha yumuşak gelen TÜFE verisi sonrası yükseldi.",
+        analysis_en="Lower inflation expectations weakened the dollar and supported gold.",
+        analysis_tr="Daha düşük enflasyon beklentisi doları zayıflattı ve altını destekledi.",
+        category="markets",
+        url="https://example.com/news-1",
+        impacts=[],
+        sentiment="neutral",
+        volatility_expectation="medium",
+        urgency="high",
+        ai_confidence=0.82,
+        duplicate_of=None,
+        sources=["Reuters"],
+    )
+
+    assert response.summary_en == "Gold climbed after a softer CPI release."
+    assert response.summary_tr == "Altın, daha yumuşak gelen TÜFE verisi sonrası yükseldi."
+    assert response.analysis_en.startswith("Lower inflation expectations")
+    assert response.analysis_tr.startswith("Daha düşük enflasyon beklentisi")
 
 
 @pytest.mark.asyncio

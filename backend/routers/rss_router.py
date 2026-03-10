@@ -22,6 +22,10 @@ class RSSNewsResponse(BaseModel):
     headline_tr: Optional[str] = None  # Turkish translation
     content: Optional[str]
     content_tr: Optional[str] = None  # Turkish translation
+    summary_en: Optional[str] = None
+    summary_tr: Optional[str] = None
+    analysis_en: Optional[str] = None
+    analysis_tr: Optional[str] = None
     category: str
     url: str
     impacts: List[dict]
@@ -152,6 +156,10 @@ async def get_rss_news(
                 headline_tr=item.get("headline_tr"),
                 content=item.get("content"),
                 content_tr=item.get("content_tr"),
+                summary_en=item.get("summary_en"),
+                summary_tr=item.get("summary_tr"),
+                analysis_en=item.get("analysis_en"),
+                analysis_tr=item.get("analysis_tr"),
                 category=item.get("category", "general"),
                 url=item.get("url", ""),
                 impacts=item.get("impacts", []),
@@ -746,6 +754,10 @@ async def test_ai_analysis(
                 "deepseek_module": bool(DEEPSEEK_API_KEY)
             },
             "analysis": {
+                "summary_en": result.summary_en,
+                "summary_tr": result.summary_tr,
+                "analysis_en": result.analysis_en,
+                "analysis_tr": result.analysis_tr,
                 "headline_tr": result.headline_tr,
                 "content_tr": result.content_tr,
                 "sentiment": result.sentiment,
@@ -1147,6 +1159,10 @@ async def re_analyze_fallback_news(
                         ]
                         
                         update_data = {
+                            "summary_en": result.summary_en,
+                            "summary_tr": result.summary_tr,
+                            "analysis_en": result.analysis_en,
+                            "analysis_tr": result.analysis_tr,
                             "headline_tr": result.headline_tr,
                             "content_tr": result.content_tr,
                             "impacts": new_impacts,

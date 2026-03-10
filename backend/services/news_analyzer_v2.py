@@ -32,6 +32,10 @@ class NewsAnalysisResult:
     volatility_expectation: str  # high, medium, low
     urgency: str  # breaking, high, medium, low
     confidence: float  # 0-100
+    summary_en: str = ""
+    summary_tr: str = ""
+    analysis_en: str = ""
+    analysis_tr: str = ""
     headline_tr: str = ""
     content_tr: str = ""
 
@@ -43,6 +47,15 @@ class RealNewsAnalyzer:
     
     def __init__(self):
         self.api_key = DEEPSEEK_API_KEY
+
+    def _coerce_text(self, value: Any, fallback: str = "") -> str:
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped:
+                return stripped
+        if isinstance(fallback, str):
+            return fallback.strip()
+        return ""
         
     async def analyze(self, headline: str, content: str = "", source: str = "") -> NewsAnalysisResult:
         """
@@ -61,7 +74,7 @@ class RealNewsAnalyzer:
         try:
             prompt = self._build_prompt(headline, content, source)
             logger.info(f"[RealAnalyzer] Prompt built, calling DeepSeek...")
-            result = await self._call_deepseek(prompt)
+            result = await self._call_deepseek(prompt, headline=headline, article_content=content)
             
             logger.info(f"[RealAnalyzer] AI analysis successful: confidence={result.confidence}")
             return result
@@ -148,8 +161,12 @@ Headline: "Goldman Sachs upgrades Apple to buy, raises target to $220"
 
 RESPONSE FORMAT (STRICT JSON - ALL FIELDS REQUIRED):
 {{
+            "summary_en": "English summary in 1-2 sentences",
+            "summary_tr": "Türkçe özet - 1-2 cümle",
+            "analysis_en": "English market analysis in 2-4 sentences",
+            "analysis_tr": "Türkçe piyasa analizi - 2-4 cümle",
     "headline_tr": "Türkçe çeviri - haber başlığı tam olarak çevrilmeli",
-    "content_tr": "Türkçe özet - haber içeriğinin kısa özeti Türkçe olmalı",
+            "content_tr": "Türkçe analiz - legacy compatibility için analysis_tr ile uyumlu olmalı",
     "urgency": "breaking|high|medium|low",
     "market_sentiment": "risk_on|risk_off|neutral",
     "volatility_expectation": "high|medium|low",
@@ -167,7 +184,8 @@ RESPONSE FORMAT (STRICT JSON - ALL FIELDS REQUIRED):
     "logic": "Brief explanation of your analysis logic"
 }}
 
-IMPORTANT: headline_tr and content_tr MUST be Turkish translations, NOT empty!
+        IMPORTANT: summary_en, summary_tr, analysis_en, analysis_tr, headline_tr and content_tr MUST NOT be empty.
+        IMPORTANT: summary_en/analysis_en MUST be English and summary_tr/analysis_tr MUST be Turkish.
 
 IMPORTANT RULES:
 - Be CONSERVATIVE with urgency - "breaking" should be RARE (<5% of news)
@@ -178,7 +196,7 @@ IMPORTANT RULES:
 
 Analyze this news NOW:"""
 
-    async def _call_deepseek(self, prompt: str) -> NewsAnalysisResult:
+    async def _call_deepseek(self, prompt: str, headline: str = "", article_content: str = "") -> NewsAnalysisResult:
         """DeepSeek AI çağrısı - Hata loglamalı ve robust"""
         import logging
         logger = logging.getLogger(__name__)
@@ -251,7 +269,23 @@ Analyze this news NOW:"""
                         else:
                             raise
                     
-                    logger.info(f"[DeepSeek] Parsed result: headline_tr={result.get('headline_tr', 'N/A')[:50]}...")
+                    summary_en = self._coerce_text(result.get("summary_en"), headline)
+                    headline_tr = self._coerce_text(
+                        result.get("headline_tr"),
+                        self._coerce_text(result.get("summary_tr"), self._simple_translate(headline or summary_en))
+                    )
+                    summary_tr = self._coerce_text(result.get("summary_tr"), headline_tr)
+                    analysis_en = self._coerce_text(
+                        result.get("analysis_en"),
+                        self._coerce_text(result.get("logic"), article_content[:280] if article_content else headline)
+                    )
+                    analysis_tr = self._coerce_text(
+                        result.get("analysis_tr"),
+                        self._coerce_text(result.get("content_tr"), self._simple_translate(analysis_en))
+                    )
+                    content_tr = self._coerce_text(result.get("content_tr"), analysis_tr)
+
+                    logger.info(f"[DeepSeek] Parsed result: headline_tr={headline_tr[:50]}...")
                     
                     # Parse impacts
                     impacts = []
@@ -284,8 +318,12 @@ Analyze this news NOW:"""
                         volatility_expectation=result.get("volatility_expectation", "medium"),
                         urgency=result.get("urgency", "medium"),
                         confidence=result.get("analysis_confidence", 70),
-                        headline_tr=result.get("headline_tr", ""),
-                        content_tr=result.get("content_tr", "")
+                        summary_en=summary_en,
+                        summary_tr=summary_tr,
+                        analysis_en=analysis_en,
+                        analysis_tr=analysis_tr,
+                        headline_tr=headline_tr,
+                        content_tr=content_tr,
                     )
                     
         except json.JSONDecodeError as e:
@@ -429,9 +467,20 @@ Analyze this news NOW:"""
                 reasoning_tr="Önemli piyasa etkisi tespit edilmedi"
             ))
         
-        # Fallback'de basitçe başlığın başına [TR] ekleyelim ve bazı kelimeleri çevirelim
+        impact_summary_en = "; ".join(
+            f"{imp.symbol}: {imp.reasoning}"
+            for imp in impacts[:3]
+            if imp.reasoning
+        )
+        summary_en = headline.strip() or "Market news update"
         headline_tr = self._simple_translate(headline)
-        content_tr = self._simple_translate(content[:200]) if content else headline_tr
+        summary_tr = headline_tr
+        analysis_seed = content[:240].strip() if content else summary_en
+        analysis_en = analysis_seed
+        if impact_summary_en:
+            analysis_en = f"{analysis_seed} Market impact: {impact_summary_en}".strip()
+        analysis_tr = self._simple_translate(analysis_en)
+        content_tr = analysis_tr
         
         return NewsAnalysisResult(
             impacts=impacts,
@@ -439,6 +488,10 @@ Analyze this news NOW:"""
             volatility_expectation="medium",
             urgency="medium",
             confidence=50,
+            summary_en=summary_en,
+            summary_tr=summary_tr,
+            analysis_en=analysis_en,
+            analysis_tr=analysis_tr,
             headline_tr=headline_tr,
             content_tr=content_tr
         )

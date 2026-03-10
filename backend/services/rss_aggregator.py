@@ -269,6 +269,10 @@ class RSSNewsItem:
     # Turkish translations
     title_tr: str = ""
     content_tr: str = ""
+    summary_en: str = ""
+    summary_tr: str = ""
+    analysis_en: str = ""
+    analysis_tr: str = ""
     
     @property
     def should_display(self) -> bool:
@@ -568,8 +572,12 @@ class RSSAggregator:
             print(f"[RSS] CACHE HIT for: {item.title[:50]}...")
             # Restore cached analysis
             item.impacts = cached_result.get("impacts", [])
-            item.title_tr = cached_result.get("title_tr", f"[TR] {item.title}")
-            item.content_tr = cached_result.get("content_tr", item.content)
+            item.title_tr = cached_result.get("title_tr", cached_result.get("summary_tr", f"[TR] {item.title}"))
+            item.content_tr = cached_result.get("content_tr", cached_result.get("analysis_tr", item.content))
+            item.summary_en = cached_result.get("summary_en", item.title)
+            item.summary_tr = cached_result.get("summary_tr", item.title_tr or item.title)
+            item.analysis_en = cached_result.get("analysis_en", item.content or item.title)
+            item.analysis_tr = cached_result.get("analysis_tr", item.content_tr or item.content or item.title)
             item.sentiment = cached_result.get("sentiment", "neutral")
             item.volatility_expectation = cached_result.get("volatility_expectation", "medium")
             item.urgency = cached_result.get("urgency", "medium")
@@ -611,8 +619,12 @@ class RSSAggregator:
                 for imp in result.impacts
             ]
             
-            item.title_tr = result.headline_tr if result.headline_tr else f"[TR] {item.title}"
-            item.content_tr = result.content_tr if result.content_tr else item.content
+            item.title_tr = result.headline_tr if result.headline_tr else result.summary_tr if result.summary_tr else f"[TR] {item.title}"
+            item.content_tr = result.content_tr if result.content_tr else result.analysis_tr if result.analysis_tr else item.content
+            item.summary_en = result.summary_en if result.summary_en else item.title
+            item.summary_tr = result.summary_tr if result.summary_tr else item.title_tr if item.title_tr else item.title
+            item.analysis_en = result.analysis_en if result.analysis_en else item.content or item.summary_en
+            item.analysis_tr = result.analysis_tr if result.analysis_tr else item.content_tr if item.content_tr else item.summary_tr
             item.sentiment = result.sentiment
             item.volatility_expectation = result.volatility_expectation
             item.ai_confidence = result.confidence / 100.0
@@ -625,6 +637,10 @@ class RSSAggregator:
                 "impacts": item.impacts,
                 "title_tr": item.title_tr,
                 "content_tr": item.content_tr,
+                "summary_en": item.summary_en,
+                "summary_tr": item.summary_tr,
+                "analysis_en": item.analysis_en,
+                "analysis_tr": item.analysis_tr,
                 "sentiment": item.sentiment,
                 "volatility_expectation": item.volatility_expectation,
                 "urgency": item.urgency,
@@ -738,6 +754,10 @@ class RSSAggregator:
             # Generate Turkish translations
             item.title_tr = self._quick_translate(item.title, translations)
             item.content_tr = self._quick_translate(item.content[:200] + "..." if len(item.content) > 200 else item.content, translations)
+            item.summary_en = item.title
+            item.summary_tr = item.title_tr or item.title
+            item.analysis_en = item.content[:200] + "..." if len(item.content) > 200 else item.content or item.title
+            item.analysis_tr = item.content_tr or item.summary_tr
             
             return item
         
@@ -750,6 +770,10 @@ class RSSAggregator:
         # Generate Turkish translations even for low urgency
         item.title_tr = self._quick_translate(item.title, translations)
         item.content_tr = self._quick_translate(item.content[:200] + "..." if len(item.content) > 200 else item.content, translations)
+        item.summary_en = item.title
+        item.summary_tr = item.title_tr or item.title
+        item.analysis_en = item.content[:200] + "..." if len(item.content) > 200 else item.content or item.title
+        item.analysis_tr = item.content_tr or item.summary_tr
         
         return item
     
@@ -894,7 +918,11 @@ class RSSAggregator:
                 "headline": item.title,
                 "headline_tr": item.title_tr if item.title_tr else item.title,
                 "content": item.content,
-                "content_tr": item.content_tr if item.content_tr else item.content[:300] + "..." if len(item.content) > 300 else item.content,
+                "content_tr": item.content_tr if item.content_tr else item.analysis_tr if item.analysis_tr else item.content[:300] + "..." if len(item.content) > 300 else item.content,
+                "summary_en": item.summary_en if item.summary_en else item.title,
+                "summary_tr": item.summary_tr if item.summary_tr else item.title_tr if item.title_tr else item.title,
+                "analysis_en": item.analysis_en if item.analysis_en else item.content,
+                "analysis_tr": item.analysis_tr if item.analysis_tr else item.content_tr if item.content_tr else item.content[:300] + "..." if len(item.content) > 300 else item.content,
                 "category": item.category,
                 "url": item.original_url,
                 "impacts": impacts_with_tr,

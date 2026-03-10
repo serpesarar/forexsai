@@ -80,6 +80,88 @@ function sortNewsByTimestamp(items: EnrichedNews[]): EnrichedNews[] {
   );
 }
 
+function normalizeAiConfidence(value: unknown): number {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return 0;
+  }
+
+  return value <= 1 ? Math.round(value * 100) : value;
+}
+
+function normalizeImpactDirection(value: unknown): EnrichedNews["impacts"][number]["direction"] {
+  return value === "bullish" || value === "bearish" || value === "neutral"
+    ? value
+    : "neutral";
+}
+
+function normalizeUrgency(value: unknown): EnrichedNews["urgency"] {
+  return value === "breaking" || value === "high" || value === "medium" || value === "low"
+    ? value
+    : "low";
+}
+
+function isTurkishLocale(locale: string): boolean {
+  return locale === "tr";
+}
+
+function getLocalizedHeadline(item: EnrichedNews, locale: string): string {
+  if (isTurkishLocale(locale)) {
+    return item.headline_tr || item.summary_tr || item.headline || item.summary_en || "";
+  }
+
+  return item.headline || item.summary_en || item.headline_tr || item.summary_tr || "";
+}
+
+function getLocalizedSummary(item: EnrichedNews, locale: string): string {
+  if (isTurkishLocale(locale)) {
+    return item.summary_tr || item.headline_tr || item.analysis_tr || item.summary_en || item.headline || "";
+  }
+
+  return item.summary_en || item.headline || item.analysis_en || item.summary_tr || item.headline_tr || "";
+}
+
+function getLocalizedAnalysis(item: EnrichedNews, locale: string): string {
+  if (isTurkishLocale(locale)) {
+    return item.analysis_tr || item.content_tr || item.summary_tr || item.analysis_en || item.content || item.headline || "";
+  }
+
+  return item.analysis_en || item.content || item.summary_en || item.analysis_tr || item.content_tr || item.headline || "";
+}
+
+function normalizeNewsItem(item: any): EnrichedNews {
+  return {
+    id: String(item.id ?? ""),
+    timestamp: item.timestamp || item.published_at || new Date().toISOString(),
+    source: item.source || "Unknown",
+    headline: item.headline || item.headline_en || "",
+    headline_tr: item.headline_tr || item.summary_tr,
+    content: item.content || item.analysis_en || item.analysis || item.summary_en || item.summary || item.headline || "",
+    content_tr: item.content_tr || item.analysis_tr || item.summary_tr,
+    summary_en: item.summary_en || item.summary || item.headline || item.headline_en || "",
+    summary_tr: item.summary_tr || item.headline_tr || item.summary_en || item.headline || item.headline_en || "",
+    analysis_en: item.analysis_en || item.analysis || item.content || item.summary_en || item.summary || item.headline || item.headline_en || "",
+    analysis_tr: item.analysis_tr || item.content_tr || item.summary_tr || item.headline_tr || item.analysis_en || item.analysis || item.content || item.headline || item.headline_en || "",
+    category: item.category || "general",
+    url: item.url || item.source_url || "",
+    impacts: Array.isArray(item.impacts) ? item.impacts : [],
+    sentiment: item.sentiment || "neutral",
+    volatilityExpectation: item.volatilityExpectation || item.volatility_expectation || "medium",
+    urgency: normalizeUrgency(item.urgency),
+    eventDuration: item.eventDuration || item.event_duration || "short_term",
+    affectedCandles: Array.isArray(item.affectedCandles)
+      ? item.affectedCandles
+      : Array.isArray(item.affected_candles)
+        ? item.affected_candles
+        : [],
+    aiConfidence: normalizeAiConfidence(item.aiConfidence ?? item.ai_confidence),
+    analysisTimestamp: item.analysisTimestamp || item.analysis_timestamp || item.timestamp || new Date().toISOString(),
+  };
+}
+
+function isMatchedNewsItem(item: EnrichedNews | MatchedNewsItem): item is MatchedNewsItem {
+  return "relevance_score" in item || "headline_en" in item;
+}
+
 type EventDirection = "bullish" | "bearish" | "neutral" | "volatile";
 type ImportanceLevel = "critical" | "high" | "medium" | "low";
 type EarningsTime = "after_market" | "before_market";
@@ -205,7 +287,6 @@ const INITIAL_SYMBOLS: SymbolData[] = [
 ];
 
 const TIMEFRAMES = [
-  { value: "1m", label: "1m" },
   { value: "5m", label: "5m" },
   { value: "15m", label: "15m" },
   { value: "30m", label: "30m" },
@@ -213,6 +294,15 @@ const TIMEFRAMES = [
   { value: "4h", label: "4h" },
   { value: "1d", label: "1D" },
 ];
+
+const TIMEFRAME_TO_MINUTES: Record<string, number> = {
+  "5m": 5,
+  "15m": 15,
+  "30m": 30,
+  "1h": 60,
+  "4h": 240,
+  "1d": 1440,
+};
 
 const sidebarItems = [
   { icon: Bell, label: "Alerts", href: "/alerts", badge: 3 },
@@ -348,9 +438,8 @@ const TimeAgo = ({ timestamp }: { timestamp: string }) => {
 const NewsCard = ({ news, onClick, locale }: { news: EnrichedNews, onClick: () => void, locale: string }) => {
   const isHighImpact = news.urgency === "breaking" || news.urgency === "high";
 
-  // Get localized content
-  const displayHeadline = locale === "tr" && news.headline_tr ? news.headline_tr : news.headline;
-  const displayContent = locale === "tr" && news.content_tr ? news.content_tr : (news.content || news.headline);
+  const displayHeadline = getLocalizedHeadline(news, locale);
+  const displayContent = getLocalizedSummary(news, locale) || getLocalizedAnalysis(news, locale);
 
   return (
     <div
@@ -442,14 +531,41 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const chartDataRef = useRef<ChartCandle[]>([]);
+  const newsRef = useRef<EnrichedNews[]>([]);
+  const selectedSymbolRef = useRef(selectedSymbol);
+  const timeframeRef = useRef(timeframe);
+  const chartRequestIdRef = useRef(0);
+  const lastAutoFitKeyRef = useRef("");
+  const fetchAIExplanationRef = useRef<(candle: ChartCandle) => Promise<void> | void>(() => undefined);
 
   // Mount effect
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    chartDataRef.current = chartData;
+  }, [chartData]);
+
+  useEffect(() => {
+    newsRef.current = news;
+  }, [news]);
+
+  useEffect(() => {
+    selectedSymbolRef.current = selectedSymbol;
+  }, [selectedSymbol]);
+
+  useEffect(() => {
+    timeframeRef.current = timeframe;
+  }, [timeframe]);
+
   // Fetch chart data
   const fetchChartData = useCallback(async () => {
+    const requestId = ++chartRequestIdRef.current;
+    const requestedSymbol = selectedSymbol;
+    const requestedTimeframe = timeframe;
+
     try {
       setLoading(true);
       setError(null);
@@ -462,14 +578,25 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         VIX: "VIX.INDX",
         DXY: "DXY.INDX",
       };
-      const apiSymbol = symbolMap[selectedSymbol] || selectedSymbol;
+      const apiSymbol = symbolMap[requestedSymbol] || requestedSymbol;
 
       const response = await fetcher<OHLCVResponse>(
-        `/api/data/ohlcv?symbol=${apiSymbol}&timeframe=${timeframe}&limit=200`
+        `/api/data/ohlcv?symbol=${apiSymbol}&timeframe=${requestedTimeframe}&limit=200`
       );
 
+      const isStaleRequest =
+        requestId !== chartRequestIdRef.current
+        || requestedSymbol !== selectedSymbolRef.current
+        || requestedTimeframe !== timeframeRef.current;
+
+      if (isStaleRequest) {
+        return;
+      }
+
       if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
-        const processedCandles: ChartCandle[] = normalizeCandles(response.data, timeframe).map((row) => {
+        const processedCandles: ChartCandle[] = normalizeCandles(response.data, requestedTimeframe, {
+          fillSmallGaps: false,
+        }).map((row) => {
           const timeInSeconds = Math.floor(row.timestamp / 1000);
           const priceChange = ((row.close - row.open) / row.open) * 100;
           return {
@@ -483,7 +610,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           };
         });
 
-        console.log(`[Chart] Loaded ${processedCandles.length} candles for ${selectedSymbol}`);
+        console.log(`[Chart] Loaded ${processedCandles.length} candles for ${requestedSymbol}`);
         setChartData(processedCandles);
       } else {
         setError("No chart data available");
@@ -494,7 +621,9 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       setError("Failed to load chart data");
       setChartData([]);
     } finally {
-      setLoading(false);
+      if (requestId === chartRequestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [selectedSymbol, timeframe]);
 
@@ -599,11 +728,11 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       }
 
       // Try multiple strategies to fetch news
-      let newsData: EnrichedNews[] = [];
+      let newsData: any[] = [];
 
       // Strategy 1: Fetch all news (no symbol filter for maximum results)
       try {
-        const response = await fetcher<EnrichedNews[] | { success: boolean; data: EnrichedNews[] }>(
+        const response = await fetcher<any[] | { success: boolean; data: any[] }>(
           `/api/rss/news?limit=100&hours=72&skip_ai_filtered=false`
         );
 
@@ -619,7 +748,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       // Strategy 2: If no news, try with longer time window
       if (newsData.length === 0) {
         try {
-          const response = await fetcher<EnrichedNews[] | { success: boolean; data: EnrichedNews[] }>(
+          const response = await fetcher<any[] | { success: boolean; data: any[] }>(
             `/api/rss/news?limit=100&hours=168&skip_ai_filtered=false`
           );
 
@@ -639,9 +768,11 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         newsData = getMockNews();
       }
 
+      const normalizedNews = newsData.map((item) => normalizeNewsItem(item));
+
       // Filter news for selected symbol if we have news
-      if (newsData.length > 0 && selectedSymbol) {
-        const filtered = newsData.filter((item: EnrichedNews) => {
+      if (normalizedNews.length > 0 && selectedSymbol) {
+        const filtered = normalizedNews.filter((item: EnrichedNews) => {
           if (item.impacts && item.impacts.length > 0) {
             return item.impacts.some((impact: any) =>
               matchesSelectedSymbol(impact.symbol, selectedSymbol)
@@ -650,9 +781,9 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           return true;
         });
 
-        setNews(sortNewsByTimestamp(filtered.length > 0 ? filtered : newsData));
+        setNews(sortNewsByTimestamp(filtered.length > 0 ? filtered : normalizedNews));
       } else {
-        setNews(sortNewsByTimestamp(newsData));
+        setNews(sortNewsByTimestamp(normalizedNews));
       }
     } catch (err) {
       console.error("Error fetching news:", err);
@@ -821,207 +952,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     }
   }, [fetchChartData, fetchNews, mounted]);
 
-  // Initialize chart
-  useEffect(() => {
-    if (!chartContainerRef.current || !mounted) return;
-
-    const chart = createChart(chartContainerRef.current, {
-      width: chartContainerRef.current.clientWidth,
-      height: chartContainerRef.current.clientHeight,
-      layout: {
-        background: { color: "#0a0a0a" },
-        textColor: "#6b7280",
-        fontFamily: "Inter, system-ui, sans-serif"
-      },
-      grid: {
-        vertLines: { color: "rgba(255, 255, 255, 0.03)" },
-        horzLines: { color: "rgba(255, 255, 255, 0.03)" }
-      },
-      crosshair: {
-        mode: CrosshairMode.Normal,
-        vertLine: { color: "rgba(255, 255, 255, 0.1)", labelBackgroundColor: "#374151" },
-        horzLine: { color: "rgba(255, 255, 255, 0.1)", labelBackgroundColor: "#374151" }
-      },
-      rightPriceScale: {
-        borderColor: "rgba(255, 255, 255, 0.1)",
-        scaleMargins: { top: 0.1, bottom: 0.1 }
-      },
-      timeScale: {
-        borderColor: "rgba(255, 255, 255, 0.1)",
-        timeVisible: true,
-        secondsVisible: false
-      },
-    });
-
-    const candlestickSeries = chart.addCandlestickSeries({
-      upColor: "#22c55e",
-      downColor: "#ef4444",
-      borderUpColor: "#22c55e",
-      borderDownColor: "#ef4444",
-      wickUpColor: "#22c55e",
-      wickDownColor: "#ef4444",
-    });
-
-    // Click handler for candles - AKILLI HABER EŞLEŞTİRME
-    chart.subscribeClick((param) => {
-      if (param.time && candlestickSeries) {
-        const time = param.time as number;
-        const candle = chartData.find(c => c.time === time);
-
-        if (candle) {
-          const priceChange = ((candle.close - candle.open) / candle.open) * 100;
-
-          // Önce temel bilgileri göster (haberler loading olacak)
-          setSelectedCandleNews({
-            candle,
-            news: [],
-            hasBigMove: Math.abs(priceChange) > 1.5,
-            moveType: priceChange > 0 ? 'up' : priceChange < 0 ? 'down' : 'none',
-            movePercent: priceChange,
-            isLoadingNews: true,
-          });
-
-          // Fetch AI explanation for big moves
-          if (Math.abs(priceChange) > 1.0) {
-            fetchAIExplanation(candle);
-          } else {
-            setAiExplanation(null);
-          }
-
-          // AKILLI HABER EŞLEŞTİRME - Backend API'sini çağır
-          fetchNewsForCandle(
-            selectedSymbol,
-            new Date(candle.time * 1000).toISOString(),
-            candle.open,
-            candle.close,
-            candle.high,
-            candle.low,
-            timeframe
-          ).then(response => {
-            setSelectedCandleNews(prev => prev ? {
-              ...prev,
-              news: response.news || [],
-              isLoadingNews: false,
-            } : null);
-          }).catch(error => {
-            console.error("[CandleClick] Error fetching matched news:", error);
-            // Fallback: Basit zaman bazlı eşleştirme
-            const tf = TIMEFRAMES.find(t => t.value === timeframe);
-            const minutes = tf ? { "1m": 1, "5m": 5, "15m": 15, "30m": 30, "1h": 60, "4h": 240, "1d": 1440 }[tf.value] || 60 : 60;
-            const candleStart = subMinutes(new Date(candle.time * 1000), minutes / 2);
-            const candleEnd = addMinutes(new Date(candle.time * 1000), minutes / 2);
-
-            const relatedNews = news.filter(n => {
-              const newsTime = new Date(n.timestamp);
-              return isWithinInterval(newsTime, { start: candleStart, end: candleEnd });
-            }).slice(0, 5); // Max 5
-
-            setSelectedCandleNews(prev => prev ? {
-              ...prev,
-              news: relatedNews as any,
-              isLoadingNews: false,
-            } : null);
-          });
-        }
-      }
-    });
-
-    candlestickSeriesRef.current = candlestickSeries;
-    chartRef.current = chart;
-
-    const handleResize = () => {
-      if (chartContainerRef.current && chartRef.current) {
-        chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      chart.remove();
-    };
-  }, [chartData, news, timeframe, mounted]);
-
-  // Update chart data
-  useEffect(() => {
-    if (candlestickSeriesRef.current && chartData.length > 0) {
-      const formattedData: CandlestickData<Time>[] = chartData.map(c => ({
-        time: c.time as Time,
-        open: c.open,
-        high: c.high,
-        low: c.low,
-        close: c.close,
-      }));
-      candlestickSeriesRef.current.setData(formattedData);
-
-      chartRef.current?.timeScale().fitContent();
-    }
-  }, [chartData]);
-
-  useEffect(() => {
-    if (!candlestickSeriesRef.current) {
-      return;
-    }
-
-    if (chartData.length === 0) {
-      candlestickSeriesRef.current.setMarkers([] as any);
-      return;
-    }
-
-    const chartStartTime = chartData[0]?.time || 0;
-    const chartEndTime = chartData[chartData.length - 1]?.time || 0;
-    const filteredMarkers = newsMarkers.filter((marker) => {
-      const markerTime = Math.floor(new Date(marker.time).getTime() / 1000);
-      return markerTime >= chartStartTime && markerTime <= chartEndTime;
-    });
-
-    candlestickSeriesRef.current.setMarkers(convertToChartMarkers(filteredMarkers) as any);
-  }, [chartData, newsMarkers]);
-
-  const handleNewsClick = (newsItem: EnrichedNews | MatchedNewsItem) => {
-    const item = newsItem as any;
-    const enrichedItem: EnrichedNews = item.source ? item : {
-      id: item.id || '',
-      headline: item.headline_en || item.headline || '',
-      headline_tr: item.headline || '',
-      summary: '',
-      source: 'news',
-      source_url: item.url || '',
-      published_at: item.timestamp || new Date().toISOString(),
-      timestamp: item.timestamp || new Date().toISOString(),
-      symbols: [selectedSymbol],
-      urgency: item.urgency || 'low',
-      sentiment: item.direction || 'neutral',
-      ai_confidence: 0.7,
-      is_economic_event: false,
-      translation_status: 'completed',
-      impacts: [{
-        symbol: selectedSymbol,
-        direction: item.direction || 'neutral',
-        score: item.score || 0,
-        confidence: 0.7,
-        reasoning: item.reasoning_tr || '',
-        reasoning_tr: item.reasoning_tr,
-      }],
-    };
-    setSelectedNewsForModal(enrichedItem);
-    setIsNewsModalOpen(true);
-  };
-
-  // Fetch calendar data when tabs change
-  useEffect(() => {
-    if (activeTab === "economic" && economicEvents.length === 0) {
-      fetchEconomicCalendar();
-    }
-  }, [activeTab, economicEvents.length, fetchEconomicCalendar]);
-
-  useEffect(() => {
-    if (activeTab === "earnings" && earningsEvents.length === 0) {
-      fetchEarningsCalendar();
-    }
-  }, [activeTab, earningsEvents.length, fetchEarningsCalendar]);
-
-  // Fetch AI explanation for price move  
+  // Fetch AI explanation for price move
   const fetchAIExplanation = useCallback(async (candle: ChartCandle) => {
     try {
       setLoadingExplanation(true);
@@ -1058,6 +989,249 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       setLoadingExplanation(false);
     }
   }, [selectedSymbol]);
+
+  useEffect(() => {
+    fetchAIExplanationRef.current = fetchAIExplanation;
+  }, [fetchAIExplanation]);
+
+  // Initialize chart
+  useEffect(() => {
+    if (!chartContainerRef.current || !mounted || chartRef.current) return;
+
+    const container = chartContainerRef.current;
+
+    const chart = createChart(container, {
+      width: container.clientWidth,
+      height: container.clientHeight || 420,
+      layout: {
+        background: { color: "#0a0a0a" },
+        textColor: "#6b7280",
+        fontFamily: "Inter, system-ui, sans-serif"
+      },
+      grid: {
+        vertLines: { color: "rgba(255, 255, 255, 0.03)" },
+        horzLines: { color: "rgba(255, 255, 255, 0.03)" }
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+        vertLine: { color: "rgba(255, 255, 255, 0.1)", labelBackgroundColor: "#374151" },
+        horzLine: { color: "rgba(255, 255, 255, 0.1)", labelBackgroundColor: "#374151" }
+      },
+      rightPriceScale: {
+        borderColor: "rgba(255, 255, 255, 0.1)",
+        scaleMargins: { top: 0.1, bottom: 0.1 }
+      },
+      timeScale: {
+        borderColor: "rgba(255, 255, 255, 0.1)",
+        timeVisible: true,
+        secondsVisible: false,
+        fixLeftEdge: false,
+        fixRightEdge: false,
+        rightOffset: 8,
+        barSpacing: 6,
+      },
+    });
+
+    const candlestickSeries = chart.addCandlestickSeries({
+      upColor: "#22c55e",
+      downColor: "#ef4444",
+      borderUpColor: "#22c55e",
+      borderDownColor: "#ef4444",
+      wickUpColor: "#22c55e",
+      wickDownColor: "#ef4444",
+    });
+
+    // Click handler for candles - AKILLI HABER EŞLEŞTİRME
+    chart.subscribeClick((param) => {
+      if (!param.time) {
+        return;
+      }
+
+      const time = typeof param.time === "number" ? param.time : Number(param.time);
+      if (!Number.isFinite(time)) {
+        return;
+      }
+
+      const candle = chartDataRef.current.find((entry) => entry.time === time);
+
+      if (candle) {
+        const priceChange = ((candle.close - candle.open) / candle.open) * 100;
+
+        // Önce temel bilgileri göster (haberler loading olacak)
+        setSelectedCandleNews({
+          candle,
+          news: [],
+          hasBigMove: Math.abs(priceChange) > 1.5,
+          moveType: priceChange > 0 ? 'up' : priceChange < 0 ? 'down' : 'none',
+          movePercent: priceChange,
+          isLoadingNews: true,
+        });
+
+        // Fetch AI explanation for big moves
+        if (Math.abs(priceChange) > 1.0) {
+          fetchAIExplanationRef.current(candle);
+        } else {
+          setAiExplanation(null);
+        }
+
+        const currentSymbol = selectedSymbolRef.current;
+        const currentTimeframe = timeframeRef.current;
+
+        // AKILLI HABER EŞLEŞTİRME - Backend API'sini çağır
+        fetchNewsForCandle(
+          currentSymbol,
+          new Date(candle.time * 1000).toISOString(),
+          candle.open,
+          candle.close,
+          candle.high,
+          candle.low,
+          currentTimeframe
+        ).then(response => {
+          setSelectedCandleNews(prev => prev ? {
+            ...prev,
+            news: response.news || [],
+            isLoadingNews: false,
+          } : null);
+        }).catch(error => {
+          console.error("[CandleClick] Error fetching matched news:", error);
+          // Fallback: Basit zaman bazlı eşleştirme
+          const minutes = TIMEFRAME_TO_MINUTES[currentTimeframe] || 60;
+          const candleStart = subMinutes(new Date(candle.time * 1000), minutes / 2);
+          const candleEnd = addMinutes(new Date(candle.time * 1000), minutes / 2);
+
+          const relatedNews = newsRef.current.filter(n => {
+            const newsTime = new Date(n.timestamp);
+            return isWithinInterval(newsTime, { start: candleStart, end: candleEnd });
+          }).slice(0, 5); // Max 5
+
+          setSelectedCandleNews(prev => prev ? {
+            ...prev,
+            news: relatedNews as any,
+            isLoadingNews: false,
+          } : null);
+        });
+      }
+    });
+
+    candlestickSeriesRef.current = candlestickSeries;
+    chartRef.current = chart;
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (chartRef.current) {
+        chartRef.current.applyOptions({ width: container.clientWidth, height: container.clientHeight || 420 });
+      }
+    });
+    resizeObserver.observe(container);
+
+    return () => {
+      resizeObserver.disconnect();
+      candlestickSeriesRef.current = null;
+      chartRef.current = null;
+      chart.remove();
+    };
+  }, [mounted]);
+
+  // Update chart data
+  useEffect(() => {
+    if (!candlestickSeriesRef.current || !chartRef.current) {
+      return;
+    }
+
+    if (chartData.length === 0) {
+      candlestickSeriesRef.current.setData([]);
+      lastAutoFitKeyRef.current = "";
+      return;
+    }
+
+    const formattedData: CandlestickData<Time>[] = chartData.map(c => ({
+      time: c.time as Time,
+      open: c.open,
+      high: c.high,
+      low: c.low,
+      close: c.close,
+    }));
+    candlestickSeriesRef.current.setData(formattedData);
+
+    const firstCandleTime = chartData[0]?.time ?? 0;
+    const lastCandleTime = chartData[chartData.length - 1]?.time ?? 0;
+    const fitKey = `${selectedSymbol}:${timeframe}:${chartData.length}:${firstCandleTime}:${lastCandleTime}`;
+    if (lastAutoFitKeyRef.current !== fitKey) {
+      chartRef.current.timeScale().fitContent();
+      lastAutoFitKeyRef.current = fitKey;
+    }
+  }, [chartData, selectedSymbol, timeframe]);
+
+  useEffect(() => {
+    if (!candlestickSeriesRef.current) {
+      return;
+    }
+
+    if (chartData.length === 0) {
+      candlestickSeriesRef.current.setMarkers([] as any);
+      return;
+    }
+
+    const chartStartTime = chartData[0]?.time || 0;
+    const chartEndTime = chartData[chartData.length - 1]?.time || 0;
+    const filteredMarkers = newsMarkers.filter((marker) => {
+      const markerTime = Math.floor(new Date(marker.time).getTime() / 1000);
+      return markerTime >= chartStartTime && markerTime <= chartEndTime;
+    });
+
+    candlestickSeriesRef.current.setMarkers(convertToChartMarkers(filteredMarkers) as any);
+  }, [chartData, newsMarkers]);
+
+  const handleNewsClick = (newsItem: EnrichedNews | MatchedNewsItem) => {
+    const enrichedItem: EnrichedNews = isMatchedNewsItem(newsItem)
+      ? news.find((item) => item.id === newsItem.id) || {
+          id: newsItem.id || '',
+          timestamp: newsItem.timestamp || new Date().toISOString(),
+          source: newsItem.source || 'news',
+          headline: newsItem.headline_en || newsItem.headline || '',
+          headline_tr: newsItem.headline || newsItem.headline_en || '',
+          content: newsItem.analysis_en || newsItem.summary_en || newsItem.headline_en || newsItem.headline || '',
+          content_tr: newsItem.analysis_tr || newsItem.reasoning_tr || newsItem.summary_tr || newsItem.headline || newsItem.headline_en || '',
+          summary_en: newsItem.summary_en || newsItem.headline_en || newsItem.headline || '',
+          summary_tr: newsItem.summary_tr || newsItem.headline || newsItem.headline_en || '',
+          analysis_en: newsItem.analysis_en || newsItem.summary_en || newsItem.headline_en || newsItem.headline || '',
+          analysis_tr: newsItem.analysis_tr || newsItem.reasoning_tr || newsItem.summary_tr || newsItem.headline || newsItem.headline_en || '',
+          category: 'matched_news',
+          url: newsItem.url || '',
+          impacts: [{
+            symbol: selectedSymbol,
+            direction: normalizeImpactDirection(newsItem.direction),
+            score: newsItem.score || 0,
+            confidence: 0.7,
+            reasoning: newsItem.reasoning_tr || '',
+            reasoning_tr: newsItem.reasoning_tr || '',
+            emoji: '📰',
+          }],
+          sentiment: 'neutral',
+          volatilityExpectation: 'medium',
+          urgency: normalizeUrgency(newsItem.urgency),
+          eventDuration: 'short_term',
+          affectedCandles: [],
+          aiConfidence: 70,
+          analysisTimestamp: newsItem.timestamp || new Date().toISOString(),
+        }
+      : newsItem;
+
+    setSelectedNewsForModal(enrichedItem);
+    setIsNewsModalOpen(true);
+  };
+
+  // Fetch calendar data when tabs change
+  useEffect(() => {
+    if (activeTab === "economic" && economicEvents.length === 0) {
+      fetchEconomicCalendar();
+    }
+  }, [activeTab, economicEvents.length, fetchEconomicCalendar]);
+
+  useEffect(() => {
+    if (activeTab === "earnings" && earningsEvents.length === 0) {
+      fetchEarningsCalendar();
+    }
+  }, [activeTab, earningsEvents.length, fetchEarningsCalendar]);
 
   const filteredNews = news.filter((n) => {
     if (newsFilter === "all") return true;
