@@ -12,6 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/api";
 import { fetchNewsForCandle, MatchedNewsItem } from "@/lib/api/rssNews";
+import { normalizeCandles } from "@/lib/chart/normalizeCandles";
 import { useNewsMarkers, convertToChartMarkers } from "@/hooks/useNewsMarkers";
 import Link from "next/link";
 import type { EnrichedNews } from "@/types/news-correlation";
@@ -47,6 +48,36 @@ interface OHLCVResponse {
     close: number;
     volume: number;
   }>;
+}
+
+const NEWS_SYMBOL_FAMILIES: Record<string, string[]> = {
+  XAUUSD: ["XAUUSD", "XAU/USD", "XAU", "GOLD", "GC"],
+  NDX: ["NDX", "NDX.INDX", "NASDAQ", "IXIC", "QQQ"],
+  DAX: ["DAX", "GDAXI", "GDAXI.INDX", "DE40"],
+  USOIL: ["USOIL", "USOIL.FOREX", "WTI", "CL", "CL.COMM", "OIL"],
+  VIX: ["VIX", "VIX.INDX", "VOLATILITY"],
+  DXY: ["DXY", "DXY.INDX", "DOLLAR", "USD"],
+};
+
+function normalizeImpactSymbol(symbol?: string | null): string {
+  return (symbol ?? "").toUpperCase().replace(/[^A-Z0-9.]/g, "");
+}
+
+function matchesSelectedSymbol(impactSymbol: string | undefined, selectedSymbol: string): boolean {
+  if (impactSymbol === "*") {
+    return true;
+  }
+
+  const normalizedImpact = normalizeImpactSymbol(impactSymbol);
+  const aliases = NEWS_SYMBOL_FAMILIES[selectedSymbol] ?? [selectedSymbol];
+
+  return aliases.some((alias) => normalizeImpactSymbol(alias) === normalizedImpact);
+}
+
+function sortNewsByTimestamp(items: EnrichedNews[]): EnrichedNews[] {
+  return [...items].sort(
+    (left, right) => new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime()
+  );
 }
 
 type EventDirection = "bullish" | "bearish" | "neutral" | "volatile";
@@ -379,7 +410,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   const [loading, setLoading] = useState(true);
   const [newsLoading, setNewsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newsFilter, setNewsFilter] = useState<"all" | "popular" | "high">("high");
+  const [newsFilter, setNewsFilter] = useState<"all" | "popular" | "high">("all");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedCandleNews, setSelectedCandleNews] = useState<CandleNews | null>(null);
   const [selectedNewsForModal, setSelectedNewsForModal] = useState<EnrichedNews | null>(null);
@@ -438,19 +469,8 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       );
 
       if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
-        // Sort candles by timestamp (ascending) and remove duplicates
-        const sortedData = [...response.data].sort((a, b) => a.timestamp - b.timestamp);
-
-        // Remove duplicates by timestamp
-        const uniqueData = sortedData.filter((row, index, self) =>
-          index === self.findIndex(r => r.timestamp === row.timestamp)
-        );
-
-        const processedCandles: ChartCandle[] = uniqueData.map((row) => {
-          // Handle both ms and seconds timestamp formats
-          const timestamp = row.timestamp;
-          // If timestamp is in milliseconds (13 digits), convert to seconds (10 digits)
-          const timeInSeconds = timestamp > 1_000_000_000_000 ? Math.floor(timestamp / 1000) : timestamp;
+        const processedCandles: ChartCandle[] = normalizeCandles(response.data, timeframe).map((row) => {
+          const timeInSeconds = Math.floor(row.timestamp / 1000);
           const priceChange = ((row.close - row.open) / row.open) * 100;
           return {
             time: timeInSeconds,
@@ -573,7 +593,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       // Use mock data if requested or if API fails
       if (useMock) {
         console.log("[News] Using mock data for testing");
-        setNews(getMockNews());
+        setNews(sortNewsByTimestamp(getMockNews()));
         setNewsLoading(false);
         return;
       }
@@ -621,40 +641,23 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
       // Filter news for selected symbol if we have news
       if (newsData.length > 0 && selectedSymbol) {
-        const symbolMappings: Record<string, string[]> = {
-          'XAUUSD': ['XAUUSD', 'XAU/USD', 'GOLD', 'GC'],
-          'NDX': ['NDX', 'NASDAQ', 'IXIC', 'NDX.INDX'],
-          'DAX': ['DAX', 'GDAXI', 'GDAXI.INDX', 'DE40'],
-          'USOIL': ['USOIL', 'WTI', 'CL', 'USOIL.FOREX', 'OIL'],
-          'VIX': ['VIX', 'VIX.INDX', 'VOLATILITY'],
-          'DXY': ['DXY', 'DXY.INDX', 'DOLLAR', 'USD'],
-        };
-
-        const relevantSymbols = symbolMappings[selectedSymbol] || [selectedSymbol];
-
         const filtered = newsData.filter((item: EnrichedNews) => {
-          // Check if news impacts contain relevant symbol
           if (item.impacts && item.impacts.length > 0) {
             return item.impacts.some((impact: any) =>
-              relevantSymbols.some(sym =>
-                impact.symbol?.toUpperCase() === sym.toUpperCase() ||
-                impact.symbol === '*'
-              )
+              matchesSelectedSymbol(impact.symbol, selectedSymbol)
             );
           }
-          // If no impacts, include all news (show everything)
           return true;
         });
 
-        // If filtered is empty but we have news, show all news
-        setNews(filtered.length > 0 ? filtered : newsData);
+        setNews(sortNewsByTimestamp(filtered.length > 0 ? filtered : newsData));
       } else {
-        setNews(newsData);
+        setNews(sortNewsByTimestamp(newsData));
       }
     } catch (err) {
       console.error("Error fetching news:", err);
       // On error, use mock data
-      setNews(getMockNews());
+      setNews(sortNewsByTimestamp(getMockNews()));
     } finally {
       setNewsLoading(false);
     }
@@ -722,6 +725,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
               changePercent: data.changePercent,
             };
           }
+
           return sym;
         }));
       }
@@ -1058,8 +1062,10 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   const filteredNews = news.filter((n) => {
     if (newsFilter === "all") return true;
     if (newsFilter === "high") return n.urgency === "breaking" || n.urgency === "high";
+    if (newsFilter === "popular") return n.aiConfidence >= 70 || n.urgency === "breaking" || n.urgency === "high";
     return true;
   });
+  const hasHiddenNewsByFilter = news.length > 0 && filteredNews.length === 0;
 
   const currentSymbol = symbols.find(s => s.symbol === selectedSymbol);
 
@@ -1531,16 +1537,29 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   ) : filteredNews.length === 0 ? (
                     <div className="text-center py-12">
                       <Newspaper className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                      <p className="text-gray-500 text-sm mb-2">No news available</p>
-                      <p className="text-gray-600 text-xs mb-4 px-4">
-                        Supabase enriched_news table may be empty or API is not responding
+                      <p className="text-gray-500 text-sm mb-2">
+                        {hasHiddenNewsByFilter ? "No news matches the current filter" : "No news available"}
                       </p>
-                      <button
-                        onClick={() => { fetchNews(true); }}
-                        className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors"
-                      >
-                        🧪 Load Test News
-                      </button>
+                      <p className="text-gray-600 text-xs mb-4 px-4">
+                        {hasHiddenNewsByFilter
+                          ? "DeepSeek-analyzed news exists, but the current filter is hiding it. Switch to All to see the full feed."
+                          : "Supabase enriched_news table may be empty or API is not responding"}
+                      </p>
+                      {hasHiddenNewsByFilter ? (
+                        <button
+                          onClick={() => setNewsFilter("all")}
+                          className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors"
+                        >
+                          Show all news
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => { fetchNews(true); }}
+                          className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors"
+                        >
+                          🧪 Load Test News
+                        </button>
+                      )}
                     </div>
                   ) : (
                     filteredNews.map((item) => (

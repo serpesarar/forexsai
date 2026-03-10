@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import TradingChart from "./TradingChart";
 import { useNewsMarkers, NewsMarker, convertToChartMarkers } from "../hooks/useNewsMarkers";
 import { Newspaper, X, ExternalLink, TrendingUp, TrendingDown, Minus, Flame } from "lucide-react";
+import { normalizeCandles } from "../lib/chart/normalizeCandles";
 
 interface CandleData {
   timestamp: number;
@@ -23,74 +24,14 @@ interface ChartDataResponse {
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
-// Fill gaps in chart data (for closed market periods like weekends)
-function fillChartGaps(data: CandleData[], timeframe: string): CandleData[] {
-  if (data.length < 2) return data;
-  
-  const result: CandleData[] = [];
-  const timeframeMs = getTimeframeMs(timeframe);
-  const maxGapMs = timeframeMs * 3; // Allow up to 3 candles gap
-  
-  for (let i = 0; i < data.length; i++) {
-    result.push(data[i]);
-    
-    if (i < data.length - 1) {
-      const currentTime = data[i].timestamp;
-      const nextTime = data[i + 1].timestamp;
-      const gap = nextTime - currentTime;
-      
-      // If gap is larger than expected, fill with connecting candles
-      if (gap > maxGapMs) {
-        const numFillCandles = Math.floor(gap / timeframeMs) - 1;
-        const fillStep = gap / (numFillCandles + 1);
-        
-        // Only fill small gaps (up to 10 candles), larger gaps are likely weekends
-        if (numFillCandles <= 10) {
-          for (let j = 1; j <= numFillCandles; j++) {
-            const fillTime = currentTime + (fillStep * j);
-            const prevClose = data[i].close;
-            
-            // Create a doji-like candle (minimal movement)
-            result.push({
-              timestamp: Math.round(fillTime),
-              open: prevClose,
-              high: prevClose * 1.0001,
-              low: prevClose * 0.9999,
-              close: prevClose,
-              volume: 0,
-            });
-          }
-        }
-      }
-    }
-  }
-  
-  return result;
-}
-
-function getTimeframeMs(timeframe: string): number {
-  const unit = timeframe.slice(-1);
-  const value = parseInt(timeframe.slice(0, -1)) || 1;
-  
-  switch (unit) {
-    case 'm': return value * 60 * 1000;
-    case 'h': return value * 60 * 60 * 1000;
-    case 'd': return value * 24 * 60 * 60 * 1000;
-    case 'w': return value * 7 * 24 * 60 * 60 * 1000;
-    default: return 60 * 60 * 1000; // Default 1h
-  }
-}
-
 async function fetchChartData(symbol: string, timeframe: string): Promise<CandleData[]> {
   const res = await fetch(
     `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=${timeframe}&limit=500`
   );
   if (!res.ok) throw new Error("Failed to fetch chart data");
   const data: ChartDataResponse = await res.json();
-  
-  // Fill gaps in data for smoother chart display
-  const filledData = fillChartGaps(data.data || [], timeframe);
-  return filledData;
+
+  return normalizeCandles(data.data || [], timeframe);
 }
 
 interface TradingChartWrapperProps {

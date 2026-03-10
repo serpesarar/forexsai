@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Activity, TrendingUp, TrendingDown, AlertTriangle, Zap, RefreshCw } from "lucide-react";
 import { calculateAllEMAs, detectProximity } from "../../lib/chart/calculateEMA";
 import type { ProximityAlert } from "../../lib/chart/calculateEMA";
+import { normalizeCandles } from "../../lib/chart/normalizeCandles";
 import styles from "./neon-chart.module.css";
 
 // ─── Types ────────────────────────────────────────────────────────
@@ -70,7 +71,7 @@ async function fetchChartData(symbol: string, timeframe: string): Promise<Candle
     if (candles.length === 0 && timeframe !== "1d") {
       return fetchChartData(symbol, "1d");
     }
-    return candles;
+    return normalizeCandles(candles, timeframe);
   } catch {
     return [];
   }

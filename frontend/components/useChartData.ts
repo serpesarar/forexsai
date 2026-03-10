@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetcher } from "../lib/api";
 import type { ChartTimeframe } from "../lib/store";
+import { normalizeCandles } from "../lib/chart/normalizeCandles";
 
 export interface CandleData {
   timestamp: number;
@@ -172,7 +173,7 @@ export function useChartData(symbol: string, timeframe: ChartTimeframe) {
   });
 
   const indicatorData = useMemo(() => {
-    const candles = ohlcvQuery.data?.data ?? [];
+    const candles = normalizeCandles(ohlcvQuery.data?.data ?? [], timeframe);
     const closes = candles.map((candle) => candle.close);
     const ema = EMA_PERIODS.reduce((acc, period) => {
       acc[period] = calculateEMA(closes, period);
@@ -181,7 +182,7 @@ export function useChartData(symbol: string, timeframe: ChartTimeframe) {
     const rsi = calculateRSI(closes, 14);
     const macd = calculateMACD(closes);
     return { candles, ema, rsi, macd };
-  }, [ohlcvQuery.data]);
+  }, [ohlcvQuery.data, timeframe]);
 
   const latestValues = useMemo(() => {
     const candles = indicatorData.candles;

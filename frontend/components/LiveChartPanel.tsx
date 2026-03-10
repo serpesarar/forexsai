@@ -13,6 +13,7 @@ import {
 import { Activity, RefreshCw, TrendingUp, TrendingDown, Newspaper, X, ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useNewsMarkers, NewsMarker, convertToChartMarkers } from "../hooks/useNewsMarkers";
+import { normalizeCandles } from "../lib/chart/normalizeCandles";
 
 interface CandleData {
   timestamp: number;
@@ -41,7 +42,7 @@ async function fetchChartData(symbol: string, timeframe: string): Promise<Candle
   );
   if (!res.ok) throw new Error("Failed to fetch chart data");
   const data = await res.json();
-  return data.data || [];
+  return normalizeCandles(data.data || [], timeframe);
 }
 
 async function fetchLivePrice(symbol: string): Promise<number | null> {

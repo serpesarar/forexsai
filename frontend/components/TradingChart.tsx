@@ -10,6 +10,7 @@ import {
   Time,
 } from "lightweight-charts";
 import { Maximize2, RefreshCw, Activity, X, TrendingUp } from "lucide-react";
+import { normalizeCandles } from "../lib/chart/normalizeCandles";
 
 interface CandleData {
   timestamp: number;
@@ -109,6 +110,7 @@ export default function TradingChart({
     c: number;
     time: string;
   } | null>(null);
+  const normalizedData = useMemo(() => normalizeCandles(data, currentTimeframe), [data, currentTimeframe]);
 
   useEffect(() => {
     const onResize = () => {
@@ -282,11 +284,11 @@ export default function TradingChart({
     const ema20Series = ema20SeriesRef.current;
     const ema50Series = ema50SeriesRef.current;
 
-    if (!chart || !candleSeries || !volumeSeries || !data.length) return;
+    if (!chart || !candleSeries || !volumeSeries || !normalizedData.length) return;
 
     try {
       // Format candle data
-      const candles = data.map((d) => ({
+      const candles = normalizedData.map((d) => ({
         time: (d.timestamp / 1000) as Time,
         open: d.open,
         high: d.high,
@@ -295,23 +297,23 @@ export default function TradingChart({
       }));
 
       // Format volume data
-      const volumes = data.map((d) => ({
+      const volumes = normalizedData.map((d) => ({
         time: (d.timestamp / 1000) as Time,
         value: d.volume,
         color: d.close >= d.open ? "rgba(34,197,94,0.4)" : "rgba(239,68,68,0.4)",
       }));
 
       // Calculate EMAs
-      const closes = data.map((d) => d.close);
+      const closes = normalizedData.map((d) => d.close);
       const ema20Values = calculateEMA(closes, 20);
       const ema50Values = calculateEMA(closes, 50);
 
-      const ema20Data = data.map((d, i) => ({
+      const ema20Data = normalizedData.map((d, i) => ({
         time: (d.timestamp / 1000) as Time,
         value: ema20Values[i],
       }));
 
-      const ema50Data = data.map((d, i) => ({
+      const ema50Data = normalizedData.map((d, i) => ({
         time: (d.timestamp / 1000) as Time,
         value: ema50Values[i],
       }));
@@ -327,7 +329,7 @@ export default function TradingChart({
     } catch (err) {
       console.error("Chart data update error:", err);
     }
-  }, [data, chartReady]);
+  }, [chartReady, normalizedData]);
 
   // Apply news markers when they change
   useEffect(() => {
@@ -343,8 +345,8 @@ export default function TradingChart({
       }
 
       // Filter markers to only show those within data range
-      const dataStartTime = data.length > 0 ? data[0].timestamp / 1000 : 0;
-      const dataEndTime = data.length > 0 ? data[data.length - 1].timestamp / 1000 : Infinity;
+      const dataStartTime = normalizedData.length > 0 ? normalizedData[0].timestamp / 1000 : 0;
+      const dataEndTime = normalizedData.length > 0 ? normalizedData[normalizedData.length - 1].timestamp / 1000 : Infinity;
       
       const visibleMarkers = newsMarkers.filter(m => 
         m.time >= dataStartTime && m.time <= dataEndTime
@@ -366,7 +368,7 @@ export default function TradingChart({
     } catch (err) {
       console.error("[TradingChart] Marker update error:", err);
     }
-  }, [newsMarkers, symbol, data]);
+  }, [newsMarkers, normalizedData, symbol]);
 
   // Handle marker clicks
   useEffect(() => {
@@ -397,8 +399,8 @@ export default function TradingChart({
   }, [newsMarkers, onMarkerClick]);
 
   // Calculate price info
-  const latestCandle = data[data.length - 1];
-  const prevCandle = data[data.length - 2];
+  const latestCandle = normalizedData[normalizedData.length - 1];
+  const prevCandle = normalizedData[normalizedData.length - 2];
   const priceChange = latestCandle && prevCandle ? latestCandle.close - prevCandle.close : 0;
   const priceChangePercent = prevCandle ? (priceChange / prevCandle.close) * 100 : 0;
 
