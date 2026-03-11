@@ -895,7 +895,18 @@ def get_candles(symbol: str, timeframe: str, limit: int = 300) -> List[Dict]:
                     data = val.get("candles", [])
                     break
     
-    return data[-limit:] if data else []
+    if not data:
+        return []
+    
+    # Filter out zero-volume candles (market closed periods / placeholder candles)
+    # This prevents chart gaps and horizontal lines in the frontend
+    filtered = [c for c in data if c.get("volume", 0) > 0]
+    
+    # If filtering removes everything (shouldn't happen with valid data), return original
+    if not filtered and data:
+        return data[-limit:]
+    
+    return filtered[-limit:]
 
 
 def get_macro() -> Dict[str, Any]:
