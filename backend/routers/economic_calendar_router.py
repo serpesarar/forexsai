@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from services.deepseek_json_client import DEEPSEEK_MODEL, call_deepseek_json
+from services.translation_service import translate_texts
 
 router = APIRouter(prefix="/api/calendar", tags=["calendar"])
 logger = logging.getLogger(__name__)
@@ -22,6 +23,124 @@ DEEP_SEEKR1 = os.getenv("DEEP_SEEKR1", "")
 LIST_AI_CACHE_TTL_SECONDS = 900
 LIST_AI_ENRICHMENT_CONCURRENCY = 4
 _LIST_AI_CACHE: Dict[str, Dict[str, Any]] = {}
+RUNTIME_TRANSLATION_BATCH_SIZE = 20
+
+
+def _normalize_lang(lang: Optional[str]) -> str:
+    return (lang or "en").strip().lower()
+
+
+def _needs_runtime_translation(lang: str) -> bool:
+    return lang not in {"", "en", "tr"}
+
+
+async def _translate_text_batch(texts: List[str], target_lang: str) -> List[str]:
+    if not texts:
+        return []
+
+    translated: List[str] = []
+    for start in range(0, len(texts), RUNTIME_TRANSLATION_BATCH_SIZE):
+        chunk = texts[start:start + RUNTIME_TRANSLATION_BATCH_SIZE]
+        translated.extend(await translate_texts(chunk, target_lang))
+    return translated
+
+
+def _flatten_string_paths(value: Any, path: tuple[Any, ...], items: List[tuple[tuple[Any, ...], str]]) -> None:
+    if isinstance(value, str):
+        if value.strip():
+            items.append((path, value))
+        return
+
+    if isinstance(value, list):
+        for index, item in enumerate(value):
+            _flatten_string_paths(item, (*path, index), items)
+        return
+
+    if isinstance(value, dict):
+        for key, item in value.items():
+            _flatten_string_paths(item, (*path, key), items)
+
+
+def _assign_path_value(container: Any, path: tuple[Any, ...], value: str) -> None:
+    target = container
+    for part in path[:-1]:
+        target = target[part]
+    target[path[-1]] = value
+
+
+async def _translate_nested_value(value: Any, target_lang: str) -> Any:
+    if not value:
+        return value
+
+    cloned = value.copy() if isinstance(value, dict) else list(value) if isinstance(value, list) else value
+    paths: List[tuple[tuple[Any, ...], str]] = []
+    _flatten_string_paths(cloned, tuple(), paths)
+    if not paths:
+        return cloned
+
+    translations = await _translate_text_batch([text for _, text in paths], target_lang)
+    for (path, _), translated in zip(paths, translations):
+        _assign_path_value(cloned, path, translated)
+    return cloned
+
+
+async def _localize_event_payload(event_type: str, payload: Dict[str, Any], lang: str) -> Dict[str, Any]:
+    normalized = _normalize_lang(lang)
+    if normalized in {"", "en"}:
+        return payload
+
+    localized = dict(payload)
+    direct_field_map = {
+        "economic": {
+            "title": "title_tr",
+            "impact_analysis": "impact_analysis_tr",
+            "description": "description_tr",
+            "why_it_matters": "why_it_matters_tr",
+            "typical_market_reaction": "typical_market_reaction_tr",
+        },
+        "earnings": {
+            "analysis": "analysis_tr",
+        },
+    }
+
+    if normalized == "tr":
+        for target_key, source_key in direct_field_map.get(event_type, {}).items():
+            if localized.get(source_key):
+                localized[target_key] = localized[source_key]
+        if event_type == "earnings" and localized.get("key_metrics_tr"):
+            localized["key_metrics"] = localized["key_metrics_tr"]
+    else:
+        direct_keys = list(direct_field_map.get(event_type, {}).keys())
+        direct_values = [str(localized.get(key) or "") for key in direct_keys]
+        translations = await _translate_text_batch(direct_values, normalized)
+        for key, translated in zip(direct_keys, translations):
+            if translated:
+                localized[key] = translated
+
+    if localized.get("importance_reason"):
+        localized["importance_reason"] = (
+            localized["importance_reason"]
+            if normalized == "tr" and localized.get("importance_reason") and localized.get("importance_reason", "").strip() != ""
+            else localized.get("importance_reason")
+        )
+        if normalized != "tr":
+            translated_reason = await _translate_text_batch([str(localized.get("importance_reason") or "")], normalized)
+            localized["importance_reason"] = translated_reason[0] if translated_reason else localized.get("importance_reason")
+        elif localized.get("importance_reason"):
+            translated_reason = await _translate_text_batch([str(localized.get("importance_reason") or "")], "tr")
+            localized["importance_reason"] = translated_reason[0] if translated_reason else localized.get("importance_reason")
+
+    if localized.get("key_metrics") and (normalized != "tr" or not localized.get("key_metrics_tr")):
+        localized["key_metrics"] = await _translate_nested_value(localized.get("key_metrics"), normalized)
+
+    if localized.get("scenarios"):
+        localized["scenarios"] = await _translate_nested_value(localized.get("scenarios"), normalized)
+
+    if localized.get("trading_tips"):
+        translated_tip = await _translate_text_batch([str(localized.get("trading_tips") or "")], normalized)
+        localized["trading_tips"] = translated_tip[0] if translated_tip else localized.get("trading_tips")
+
+    return localized
 
 # =============================================================================
 # DATA MODELS
@@ -709,7 +828,8 @@ def generate_upcoming_earnings(days_ahead: int = 30) -> List[Dict]:
 @router.get("/economic")
 async def get_economic_calendar(
     days: int = Query(30, ge=1, le=90, description="Days ahead to fetch"),
-    currency: Optional[str] = Query(None, description="Filter by currency (USD, EUR, etc.)")
+    currency: Optional[str] = Query(None, description="Filter by currency (USD, EUR, etc.)"),
+    lang: str = Query("en", description="Preferred response language"),
 ):
     """
     Get upcoming economic calendar events with detailed analysis
@@ -721,6 +841,7 @@ async def get_economic_calendar(
             events = [e for e in events if e["currency"].upper() == currency.upper()]
         
         events = await _enrich_list_items("economic", events, analyze_economic_event_with_deepseek)
+        events = [await _localize_event_payload("economic", event, lang) for event in events]
         
         return {
             "success": True,
@@ -736,7 +857,8 @@ async def get_economic_calendar(
 @router.get("/earnings")
 async def get_earnings_calendar(
     days: int = Query(30, ge=1, le=90, description="Days ahead to fetch"),
-    sector: Optional[str] = Query(None, description="Filter by sector")
+    sector: Optional[str] = Query(None, description="Filter by sector"),
+    lang: str = Query("en", description="Preferred response language"),
 ):
     """
     Get upcoming earnings calendar with AI analysis
@@ -748,6 +870,7 @@ async def get_earnings_calendar(
             earnings = [e for e in earnings if e["sector"].lower() == sector.lower()]
         
         earnings = await _enrich_list_items("earnings", earnings, analyze_earnings_with_deepseek)
+        earnings = [await _localize_event_payload("earnings", event, lang) for event in earnings]
         
         return {
             "success": True,
@@ -801,7 +924,10 @@ async def get_today_events():
 
 
 @router.get("/event/{event_id}")
-async def get_event_details(event_id: str):
+async def get_event_details(
+    event_id: str,
+    lang: str = Query("en", description="Preferred response language"),
+):
     """
     Get detailed information about a specific economic event with DeepSeek AI analysis
     """
@@ -812,12 +938,13 @@ async def get_event_details(event_id: str):
                 event_data = _build_economic_event_from_template(template)
                 ai_analysis = _normalize_ai_payload("economic", event_data, await analyze_economic_event_with_deepseek(event_data))
                 
+                payload = {
+                    **event_data,
+                    **ai_analysis
+                }
                 return {
                     "success": True,
-                    "event": {
-                        **event_data,
-                        **ai_analysis
-                    }
+                    "event": await _localize_event_payload("economic", payload, lang)
                 }
         
         # Kazançları kontrol et
@@ -826,12 +953,13 @@ async def get_event_details(event_id: str):
                 event_data = _build_earnings_event_from_template(template)
                 ai_analysis = _normalize_ai_payload("earnings", event_data, await analyze_earnings_with_deepseek(event_data))
                 
+                payload = {
+                    **event_data,
+                    **ai_analysis
+                }
                 return {
                     "success": True,
-                    "event": {
-                        **event_data,
-                        **ai_analysis
-                    }
+                    "event": await _localize_event_payload("earnings", payload, lang)
                 }
         
         raise HTTPException(status_code=404, detail="Event not found")

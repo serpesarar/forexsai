@@ -301,14 +301,7 @@ Analyze this news NOW:"""
                             ))
                     
                     if not impacts:
-                        impacts.append(SymbolImpact(
-                            symbol="NDX",
-                            direction="neutral",
-                            score=3,
-                            confidence=0.5,
-                            reasoning="News does not have significant market impact",
-                            reasoning_tr="Haberin önemli piyasa etkisi yok"
-                        ))
+                        logger.info("[DeepSeek] No tracked instruments were materially affected by this news item")
                     
                     logger.info(f"[DeepSeek] Successfully parsed result: confidence={result.get('analysis_confidence', 0)}, headline_tr={result.get('headline_tr', 'N/A')[:50]}...")
                     
@@ -457,15 +450,7 @@ Analyze this news NOW:"""
                 reasoning_tr="Kripto haberlerin geleneksel piyasalara doğrudan etkisi sınırlı"))
         
         if not impacts:
-            # Hiçbir eşleşme yoksa nötr
-            impacts.append(SymbolImpact(
-                symbol="NDX",
-                direction="neutral",
-                score=3,
-                confidence=0.4,
-                reasoning="No significant market impact detected",
-                reasoning_tr="Önemli piyasa etkisi tespit edilmedi"
-            ))
+            logger.info("[RealAnalyzer] Fallback analysis found no direct effect on tracked instruments")
         
         impact_summary_en = "; ".join(
             f"{imp.symbol}: {imp.reasoning}"
@@ -479,6 +464,8 @@ Analyze this news NOW:"""
         analysis_en = analysis_seed
         if impact_summary_en:
             analysis_en = f"{analysis_seed} Market impact: {impact_summary_en}".strip()
+        elif not analysis_en:
+            analysis_en = "No direct effect detected on tracked instruments from this headline."
         analysis_tr = self._simple_translate(analysis_en)
         content_tr = analysis_tr
         
@@ -486,8 +473,8 @@ Analyze this news NOW:"""
             impacts=impacts,
             sentiment="neutral",
             volatility_expectation="medium",
-            urgency="medium",
-            confidence=50,
+            urgency="medium" if impacts else "low",
+            confidence=50 if impacts else 35,
             summary_en=summary_en,
             summary_tr=summary_tr,
             analysis_en=analysis_en,

@@ -1,4 +1,5 @@
 const FALLBACK_API_BASE = "https://upbeat-flow-production.up.railway.app";
+const DEVELOPMENT_API_BASE = "http://localhost:8000";
 
 const LOCAL_HOST_PATTERN = /^(localhost|127(?:\.[0-9]+){3}|0\.0\.0\.0)(:\d+)?(\/.*)?$/i;
 
@@ -31,10 +32,32 @@ export function normalizeApiBase(rawValue?: string | null): string {
 }
 
 export function getApiBase(): string {
-  return normalizeApiBase(process.env.NEXT_PUBLIC_API_URL);
+  if ((process.env.NEXT_PUBLIC_API_URL ?? "").trim()) {
+    return normalizeApiBase(process.env.NEXT_PUBLIC_API_URL);
+  }
+
+  if (process.env.NODE_ENV === "development") {
+    return DEVELOPMENT_API_BASE;
+  }
+
+  return FALLBACK_API_BASE;
 }
 
 export function buildApiUrl(endpoint: string): string {
   const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   return `${getApiBase()}${normalizedEndpoint}`;
+}
+
+export function buildWebSocketUrl(endpoint: string): string {
+  const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const apiBase = getApiBase();
+
+  const absoluteBase = /^https?:\/\//i.test(apiBase)
+    ? apiBase
+    : typeof window !== "undefined"
+      ? new URL(apiBase, window.location.origin).toString().replace(/\/+$/, "")
+      : FALLBACK_API_BASE;
+
+  const websocketBase = absoluteBase.replace(/\/api\/?$/, "").replace(/^http/i, "ws");
+  return `${websocketBase}${normalizedEndpoint}`;
 }

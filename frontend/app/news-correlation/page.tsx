@@ -12,9 +12,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetcher } from "@/lib/api";
+import { buildWebSocketUrl } from "@/lib/api/base";
 import { fetchNewsForCandle, MatchedNewsItem } from "@/lib/api/rssNews";
 import { normalizeCandles } from "@/lib/chart/normalizeCandles";
-import { buildCompressedChartCandles, buildMappedChartMarkers } from "@/lib/chart/newsCorrelationTimeline";
+import { buildRenderableChartSeries, buildTimelineChartCandles, buildMappedChartMarkers, type TimelineRenderablePoint } from "@/lib/chart/newsCorrelationTimeline";
 import { useNewsMarkers } from "@/hooks/useNewsMarkers";
 import Link from "next/link";
 import type { EnrichedNews } from "@/types/news-correlation";
@@ -22,6 +23,7 @@ import NewsDetailModal from "@/components/NewsDetailModal";
 
 // ==================== TYPES ====================
 interface ChartCandle {
+  timestamp: number;
   time: number;
   actualTimestamp: number;
   open: number;
@@ -29,7 +31,7 @@ interface ChartCandle {
   low: number;
   close: number;
   volume?: number;
-  priceChange?: number;
+  priceChange: number;
 }
 
 interface SymbolData {
@@ -61,6 +63,8 @@ const NEWS_SYMBOL_FAMILIES: Record<string, string[]> = {
   VIX: ["VIX", "VIX.INDX", "VOLATILITY"],
   DXY: ["DXY", "DXY.INDX", "DOLLAR", "USD"],
 };
+
+const WS_BACKED_SYMBOLS = new Set(["XAUUSD", "NDX", "DAX", "USOIL"]);
 
 function normalizeImpactSymbol(symbol?: string | null): string {
   return (symbol ?? "").toUpperCase().replace(/[^A-Z0-9.]/g, "");
@@ -107,9 +111,21 @@ function isTurkishLocale(locale: string): boolean {
   return locale === "tr";
 }
 
+function isEnglishLocale(locale: string): boolean {
+  return locale === "en";
+}
+
+function usesRuntimeLocale(locale: string): boolean {
+  return !isTurkishLocale(locale) && !isEnglishLocale(locale);
+}
+
 function getLocalizedHeadline(item: EnrichedNews, locale: string): string {
   if (isTurkishLocale(locale)) {
     return item.headline_tr || item.summary_tr || item.analysis_tr || item.content_tr || item.headline || item.summary_en || "";
+  }
+
+  if (usesRuntimeLocale(locale)) {
+    return item.headline_locale || item.summary_locale || item.analysis_locale || item.headline || item.summary_en || item.headline_tr || item.summary_tr || "";
   }
 
   return item.headline || item.summary_en || item.headline_tr || item.summary_tr || "";
@@ -120,12 +136,20 @@ function getLocalizedSummary(item: EnrichedNews, locale: string): string {
     return item.summary_tr || item.analysis_tr || item.content_tr || item.headline_tr || item.summary_en || item.headline || "";
   }
 
+  if (usesRuntimeLocale(locale)) {
+    return item.summary_locale || item.analysis_locale || item.headline_locale || item.summary_en || item.headline || item.summary_tr || item.headline_tr || "";
+  }
+
   return item.summary_en || item.headline || item.analysis_en || item.summary_tr || item.headline_tr || "";
 }
 
 function getLocalizedAnalysis(item: EnrichedNews, locale: string): string {
   if (isTurkishLocale(locale)) {
     return item.analysis_tr || item.content_tr || item.summary_tr || item.analysis_en || item.content || item.headline || "";
+  }
+
+  if (usesRuntimeLocale(locale)) {
+    return item.analysis_locale || item.summary_locale || item.headline_locale || item.analysis_en || item.content || item.summary_en || item.analysis_tr || item.content_tr || item.headline || "";
   }
 
   return item.analysis_en || item.content || item.summary_en || item.analysis_tr || item.content_tr || item.headline || "";
@@ -136,6 +160,10 @@ function getLocalizedMatchedHeadline(item: MatchedNewsItem, locale: string): str
     return item.headline || item.summary_tr || item.analysis_tr || item.headline_en || "";
   }
 
+  if (usesRuntimeLocale(locale)) {
+    return item.headline_locale || item.summary_locale || item.analysis_locale || item.headline || item.headline_en || item.summary_en || "";
+  }
+
   return item.headline_en || item.summary_en || item.headline || item.summary_tr || "";
 }
 
@@ -144,7 +172,23 @@ function getLocalizedMatchedSummary(item: MatchedNewsItem, locale: string): stri
     return item.summary_tr || item.analysis_tr || item.reasoning_tr || item.headline || item.headline_en || "";
   }
 
+  if (usesRuntimeLocale(locale)) {
+    return item.summary_locale || item.analysis_locale || item.reasoning_locale || item.headline_locale || item.summary_en || item.analysis_en || item.headline || item.headline_en || "";
+  }
+
   return item.summary_en || item.analysis_en || item.headline_en || item.reasoning_tr || item.headline || "";
+}
+
+function getCatalystBadge(item: MatchedNewsItem, locale: string): string {
+  const labels = {
+    en: { news: "News", economic: "Economic", earnings: "Earnings", context: "Context" },
+    tr: { news: "Haber", economic: "Ekonomik", earnings: "Bilanço", context: "Bağlam" },
+  };
+
+  const language = isTurkishLocale(locale) ? "tr" : "en";
+  const labelSet = labels[language];
+  const catalystLabel = labelSet[item.catalyst_type || "news"] || labelSet.news;
+  return item.match_quality === "context" ? `${catalystLabel} · ${labelSet.context}` : catalystLabel;
 }
 
 function normalizeNewsItem(item: any): EnrichedNews {
@@ -160,9 +204,17 @@ function normalizeNewsItem(item: any): EnrichedNews {
     summary_tr: item.summary_tr || item.analysis_tr || item.content_tr || item.headline_tr || item.headline || item.headline_en || "",
     analysis_en: item.analysis_en || item.analysis || item.content || item.summary_en || item.summary || item.headline || item.headline_en || "",
     analysis_tr: item.analysis_tr || item.content_tr || item.summary_tr || item.headline_tr || item.analysis_en || item.analysis || item.content || item.headline || item.headline_en || "",
+    headline_locale: item.headline_locale || undefined,
+    summary_locale: item.summary_locale || undefined,
+    analysis_locale: item.analysis_locale || item.summary_locale || undefined,
     category: item.category || "general",
     url: item.url || item.source_url || "",
-    impacts: Array.isArray(item.impacts) ? item.impacts : [],
+    impacts: Array.isArray(item.impacts)
+      ? item.impacts.map((impact: any) => ({
+          ...impact,
+          reasoning_locale: impact?.reasoning_locale || undefined,
+        }))
+      : [],
     sentiment: item.sentiment || "neutral",
     volatilityExpectation: item.volatilityExpectation || item.volatility_expectation || "medium",
     urgency: normalizeUrgency(item.urgency),
@@ -518,6 +570,9 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   const [news, setNews] = useState<EnrichedNews[]>([]);
   const [loading, setLoading] = useState(true);
   const [newsLoading, setNewsLoading] = useState(true);
+  const [newsStatus, setNewsStatus] = useState<"idle" | "api" | "empty" | "mock" | "error">("idle");
+  const [newsStatusMessage, setNewsStatusMessage] = useState<string | null>(null);
+  const [newsLastUpdatedAt, setNewsLastUpdatedAt] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [newsFilter, setNewsFilter] = useState<"all" | "popular" | "high">("all");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -555,8 +610,11 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   const newsRef = useRef<EnrichedNews[]>([]);
   const selectedSymbolRef = useRef(selectedSymbol);
   const timeframeRef = useRef(timeframe);
+  const currentLocaleRef = useRef(currentLocale);
   const chartRequestIdRef = useRef(0);
   const lastAutoFitKeyRef = useRef("");
+  const economicDetailLocaleRef = useRef<string | null>(null);
+  const earningsDetailLocaleRef = useRef<string | null>(null);
   const fetchAIExplanationRef = useRef<(candle: ChartCandle) => Promise<void> | void>(() => undefined);
 
   // Mount effect
@@ -585,6 +643,15 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   useEffect(() => {
     timeframeRef.current = timeframe;
   }, [timeframe]);
+
+  useEffect(() => {
+    currentLocaleRef.current = currentLocale;
+  }, [currentLocale]);
+
+  useEffect(() => {
+    setSelectedCandleNews(null);
+    setAiExplanation(null);
+  }, [selectedSymbol, timeframe, currentLocale]);
 
   // Fetch chart data
   const fetchChartData = useCallback(async () => {
@@ -620,10 +687,8 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       }
 
       if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
-        const normalizedCandles = normalizeCandles(response.data, requestedTimeframe, {
-          fillSmallGaps: false,
-        });
-        const processedCandles: ChartCandle[] = buildCompressedChartCandles(normalizedCandles, requestedTimeframe);
+        const normalizedCandles = normalizeCandles(response.data, requestedTimeframe);
+        const processedCandles: ChartCandle[] = buildTimelineChartCandles(normalizedCandles);
 
         console.log(`[Chart] Loaded ${processedCandles.length} candles for ${requestedSymbol}`);
         setChartData(processedCandles);
@@ -734,10 +799,13 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     try {
       setNewsLoading(true);
 
-      // Use mock data if requested or if API fails
+      // Use mock data only when explicitly requested
       if (useMock) {
         console.log("[News] Using mock data for testing");
         setNews(sortNewsByTimestamp(getMockNews()));
+        setNewsStatus("mock");
+        setNewsStatusMessage("Showing manual test news data.");
+        setNewsLastUpdatedAt(new Date());
         setNewsLoading(false);
         return;
       }
@@ -748,7 +816,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       // Strategy 1: Fetch all news (no symbol filter for maximum results)
       try {
         const response = await fetcher<any[] | { success: boolean; data: any[] }>(
-          `/api/rss/news?limit=100&hours=72&skip_ai_filtered=false`
+          `/api/rss/news?limit=100&hours=72&skip_ai_filtered=false&lang=${encodeURIComponent(currentLocale)}`
         );
 
         if (Array.isArray(response)) {
@@ -764,7 +832,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       if (newsData.length === 0) {
         try {
           const response = await fetcher<any[] | { success: boolean; data: any[] }>(
-            `/api/rss/news?limit=100&hours=168&skip_ai_filtered=false`
+            `/api/rss/news?limit=100&hours=168&skip_ai_filtered=false&lang=${encodeURIComponent(currentLocale)}`
           );
 
           if (Array.isArray(response)) {
@@ -777,10 +845,13 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         }
       }
 
-      // If still no news, use mock data automatically
       if (newsData.length === 0) {
-        console.log("[News] API returned empty, falling back to mock data");
-        newsData = getMockNews();
+        console.log("[News] API returned no news for the current selection");
+        setNews([]);
+        setNewsStatus("empty");
+        setNewsStatusMessage("No API news returned for the selected symbol/time window.");
+        setNewsLastUpdatedAt(null);
+        return;
       }
 
       const normalizedNews = newsData.map((item) => normalizeNewsItem(item));
@@ -800,21 +871,27 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       } else {
         setNews(sortNewsByTimestamp(normalizedNews));
       }
+
+      setNewsStatus("api");
+      setNewsStatusMessage(null);
+      setNewsLastUpdatedAt(new Date());
     } catch (err) {
       console.error("Error fetching news:", err);
-      // On error, use mock data
-      setNews(sortNewsByTimestamp(getMockNews()));
+      setNews([]);
+      setNewsStatus("error");
+      setNewsStatusMessage(err instanceof Error ? err.message : "Unable to load news feed.");
+      setNewsLastUpdatedAt(null);
     } finally {
       setNewsLoading(false);
     }
-  }, [selectedSymbol, getMockNews]);
+  }, [selectedSymbol, getMockNews, currentLocale]);
 
   // Fetch economic calendar
   const fetchEconomicCalendar = useCallback(async () => {
     try {
       setEconomicLoading(true);
       const response = await fetcher<{ success: boolean; events: EconomicEvent[] }>(
-        `/api/calendar/economic?days=14`
+        `/api/calendar/economic?days=14&lang=${encodeURIComponent(currentLocale)}`
       );
       if (response.success) {
         setEconomicEvents(response.events);
@@ -825,14 +902,14 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     } finally {
       setEconomicLoading(false);
     }
-  }, []);
+  }, [currentLocale]);
 
   // Fetch earnings calendar
   const fetchEarningsCalendar = useCallback(async () => {
     try {
       setEarningsLoading(true);
       const response = await fetcher<{ success: boolean; earnings: EarningsEvent[] }>(
-        `/api/calendar/earnings?days=14`
+        `/api/calendar/earnings?days=14&lang=${encodeURIComponent(currentLocale)}`
       );
       if (response.success) {
         setEarningsEvents(response.earnings);
@@ -843,7 +920,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     } finally {
       setEarningsLoading(false);
     }
-  }, []);
+  }, [currentLocale]);
 
   // Fetch live prices via REST API
   const fetchLivePrices = useCallback(async () => {
@@ -889,7 +966,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
     const connectWebSocket = () => {
       try {
-        const wsUrl = `wss://upbeat-flow-production.up.railway.app/ws/all`;
+        const wsUrl = buildWebSocketUrl("/ws/all");
         const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
@@ -990,7 +1067,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           confidence: number;
         };
         error?: string;
-      }>(`/api/news-correlation/explain-move?symbol=${apiSymbol}&timestamp=${candle.actualTimestamp}&ai_explain=true`);
+      }>(`/api/news-correlation/explain-move?symbol=${apiSymbol}&timestamp=${candle.actualTimestamp}&timeframe=${encodeURIComponent(timeframe)}&ai_explain=true&lang=${encodeURIComponent(currentLocale)}`);
 
       if (response?.success && response.data) {
         setAiExplanation(response.data.explanation || response.data.ai_explanation || null);
@@ -1003,7 +1080,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     } finally {
       setLoadingExplanation(false);
     }
-  }, [selectedSymbol]);
+  }, [selectedSymbol, timeframe, currentLocale]);
 
   useEffect(() => {
     fetchAIExplanationRef.current = fetchAIExplanation;
@@ -1114,7 +1191,8 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           candle.close,
           candle.high,
           candle.low,
-          currentTimeframe
+          currentTimeframe,
+          currentLocaleRef.current
         ).then(response => {
           setSelectedCandleNews(prev => prev ? {
             ...prev,
@@ -1172,14 +1250,18 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       return;
     }
 
-    const formattedData: CandlestickData<Time>[] = chartData.map(c => ({
-      time: c.time as Time,
-      open: c.open,
-      high: c.high,
-      low: c.low,
-      close: c.close,
-    }));
-    candlestickSeriesRef.current.setData(formattedData);
+    const formattedData = buildRenderableChartSeries(chartData, timeframe, selectedSymbol).map((point: TimelineRenderablePoint) => (
+      "open" in point
+        ? {
+            time: point.time as Time,
+            open: point.open,
+            high: point.high,
+            low: point.low,
+            close: point.close,
+          }
+        : { time: point.time as Time }
+    ));
+    candlestickSeriesRef.current.setData(formattedData as CandlestickData<Time>[]);
 
     const firstCandleTime = chartData[0]?.time ?? 0;
     const lastCandleTime = chartData[chartData.length - 1]?.time ?? 0;
@@ -1203,7 +1285,92 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     candlestickSeriesRef.current.setMarkers(buildMappedChartMarkers(newsMarkers, chartData) as any);
   }, [chartData, newsMarkers]);
 
+  const openEconomicEvent = useCallback(async (event: EconomicEvent) => {
+    setSelectedEconomicEvent(event);
+    setIsEconomicModalOpen(true);
+    setLoadingEventDetail(true);
+    economicDetailLocaleRef.current = currentLocale;
+
+    try {
+      const detailRes = await fetcher<{ success: boolean; event: CalendarEventDetail }>(
+        `/api/calendar/event/${event.id}?lang=${encodeURIComponent(currentLocale)}`
+      );
+
+      if (detailRes.success && detailRes.event) {
+        setSelectedEconomicEvent((prev) => prev ? {
+          ...prev,
+          ...detailRes.event,
+          scenarios: detailRes.event.scenarios ?? prev.scenarios,
+          trading_tips: detailRes.event.trading_tips ?? prev.trading_tips,
+        } : prev);
+      }
+    } catch (err) {
+      console.error("Error fetching economic detail:", err);
+    } finally {
+      setLoadingEventDetail(false);
+    }
+  }, [currentLocale]);
+
+  const openEarningsEvent = useCallback(async (event: EarningsEvent) => {
+    setSelectedEarningsEvent(event);
+    setIsEarningsModalOpen(true);
+    setLoadingEventDetail(true);
+    earningsDetailLocaleRef.current = currentLocale;
+
+    try {
+      const detailRes = await fetcher<{ success: boolean; event: CalendarEventDetail }>(
+        `/api/calendar/event/${event.id}?lang=${encodeURIComponent(currentLocale)}`
+      );
+
+      if (detailRes.success && detailRes.event) {
+        setSelectedEarningsEvent((prev) => prev ? {
+          ...prev,
+          ...detailRes.event,
+          scenarios: detailRes.event.scenarios ?? prev.scenarios,
+          trading_tips: detailRes.event.trading_tips ?? prev.trading_tips,
+        } : prev);
+      }
+    } catch (err) {
+      console.error("Error fetching earnings detail:", err);
+    } finally {
+      setLoadingEventDetail(false);
+    }
+  }, [currentLocale]);
+
   const handleNewsClick = (newsItem: EnrichedNews | MatchedNewsItem) => {
+    if (isMatchedNewsItem(newsItem) && newsItem.catalyst_type === "economic") {
+      const matchedEvent = economicEvents.find((event) => event.id === newsItem.event_id || event.id === newsItem.id);
+      if (matchedEvent || newsItem.event_id) {
+        void openEconomicEvent(matchedEvent || {
+          id: newsItem.event_id || newsItem.id,
+          timestamp: newsItem.timestamp,
+          title: newsItem.headline_en || newsItem.headline,
+          title_tr: newsItem.headline,
+          impact: newsItem.urgency === "breaking" ? "High" : newsItem.urgency === "high" ? "Medium" : "Low",
+          currency: "GLOBAL",
+          predicted_direction: normalizeImpactDirection(newsItem.direction),
+          affected_symbols: newsItem.affected_symbols || [selectedSymbol],
+        } as EconomicEvent);
+        return;
+      }
+    }
+
+    if (isMatchedNewsItem(newsItem) && newsItem.catalyst_type === "earnings") {
+      const matchedEvent = earningsEvents.find((event) => event.id === newsItem.event_id || event.id === newsItem.id);
+      if (matchedEvent || newsItem.event_id) {
+        void openEarningsEvent(matchedEvent || {
+          id: newsItem.event_id || newsItem.id,
+          timestamp: newsItem.timestamp,
+          ticker: selectedSymbol,
+          company: newsItem.headline_en || newsItem.headline,
+          time: "after_market",
+          predicted_direction: normalizeImpactDirection(newsItem.direction),
+          affected_symbols: newsItem.affected_symbols || [selectedSymbol],
+        } as EarningsEvent);
+        return;
+      }
+    }
+
     const enrichedItem: EnrichedNews = isMatchedNewsItem(newsItem)
       ? news.find((item) => item.id === newsItem.id) || {
           id: newsItem.id || '',
@@ -1224,8 +1391,9 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
             direction: normalizeImpactDirection(newsItem.direction),
             score: newsItem.score || 0,
             confidence: 0.7,
-            reasoning: newsItem.reasoning_tr || '',
+            reasoning: newsItem.reasoning || newsItem.reasoning_tr || '',
             reasoning_tr: newsItem.reasoning_tr || '',
+            reasoning_locale: newsItem.reasoning_locale || undefined,
             emoji: '📰',
           }],
           sentiment: 'neutral',
@@ -1255,6 +1423,35 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     }
   }, [activeTab, earningsEvents.length, fetchEarningsCalendar]);
 
+  useEffect(() => {
+    if (activeTab === "economic" && economicEvents.length > 0) {
+      fetchEconomicCalendar();
+    }
+    if (activeTab === "earnings" && earningsEvents.length > 0) {
+      fetchEarningsCalendar();
+    }
+  }, [activeTab, currentLocale, economicEvents.length, earningsEvents.length, fetchEconomicCalendar, fetchEarningsCalendar]);
+
+  useEffect(() => {
+    if (
+      isEconomicModalOpen &&
+      selectedEconomicEvent &&
+      economicDetailLocaleRef.current !== currentLocale
+    ) {
+      void openEconomicEvent(selectedEconomicEvent);
+    }
+  }, [currentLocale, isEconomicModalOpen, openEconomicEvent, selectedEconomicEvent?.id]);
+
+  useEffect(() => {
+    if (
+      isEarningsModalOpen &&
+      selectedEarningsEvent &&
+      earningsDetailLocaleRef.current !== currentLocale
+    ) {
+      void openEarningsEvent(selectedEarningsEvent);
+    }
+  }, [currentLocale, isEarningsModalOpen, openEarningsEvent, selectedEarningsEvent?.id]);
+
   const filteredNews = news.filter((n) => {
     if (newsFilter === "all") return true;
     if (newsFilter === "high") return n.urgency === "breaking" || n.urgency === "high";
@@ -1262,6 +1459,9 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     return true;
   });
   const hasHiddenNewsByFilter = news.length > 0 && filteredNews.length === 0;
+  const newsFeedIsFresh = newsStatus === "api"
+    && !!newsLastUpdatedAt
+    && Date.now() - newsLastUpdatedAt.getTime() <= 15 * 60 * 1000;
 
   const currentSymbol = symbols.find(s => s.symbol === selectedSymbol);
 
@@ -1314,7 +1514,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                 )}>
                   ${sym.price > 0 ? sym.price.toLocaleString() : "-.--"}
                 </span>
-                {wsConnected && selectedSymbol === sym.symbol && (
+                {WS_BACKED_SYMBOLS.has(sym.symbol) && wsConnected && selectedSymbol === sym.symbol && (
                   <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                 )}
               </button>
@@ -1438,7 +1638,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
               {/* Candle click tip */}
               {!loading && !error && !selectedCandleNews && chartData.length > 0 && (
                 <div className="absolute bottom-16 left-4 z-10 bg-gray-900/80 backdrop-blur px-3 py-2 rounded-lg border border-gray-800 text-xs text-gray-400">
-                  💡 Click any candle to see related news
+                  💡 Click any candle to inspect related catalysts
                 </div>
               )}
 
@@ -1520,15 +1720,15 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                         <Newspaper className="w-4 h-4 text-purple-400" />
                         {selectedCandleNews.isLoadingNews ? (
                           <span className="flex items-center gap-2">
-                            Related News
+                            Related Catalysts
                             <span className="w-3 h-3 border-2 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
                           </span>
                         ) : (
                           <>
-                            Related News
+                            Related Catalysts
                             <span className="text-xs font-normal text-gray-400">
                               ({selectedCandleNews.news.length}
-                              {selectedCandleNews.news.some(n => n.relevance_score > 0) && ' matched'})
+                              {selectedCandleNews.news.some(n => n.match_quality !== 'context') && ' matched'})
                             </span>
                           </>
                         )}
@@ -1536,19 +1736,19 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
                       {selectedCandleNews.isLoadingNews ? (
                         <div className="flex items-center justify-center py-4">
-                          <span className="text-xs text-gray-500">Finding relevant news...</span>
+                          <span className="text-xs text-gray-500">Finding relevant catalysts...</span>
                         </div>
                       ) : selectedCandleNews.news.length === 0 ? (
                         <div className="p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
                           <p className="text-xs text-gray-500">
                             {selectedCandleNews.hasBigMove
-                              ? "No high-impact news found for this significant price movement."
-                              : "No major news correlated with this candle."
+                              ? "No strong catalyst was found for this significant price move."
+                              : "No nearby catalyst was matched to this candle."
                             }
                           </p>
                           {selectedCandleNews.hasBigMove && (
                             <p className="text-[10px] text-gray-600 mt-1">
-                              This could be technical trading or algorithmic activity.
+                              This move may have been driven by positioning, liquidity, or purely technical flow.
                             </p>
                           )}
                         </div>
@@ -1577,6 +1777,9 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                                 )}
                               </div>
                               <div className="flex items-center gap-2 mt-1.5">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300">
+                                  {getCatalystBadge(n, currentLocale)}
+                                </span>
                                 <span className={cn(
                                   "text-[10px] px-1.5 py-0.5 rounded",
                                   n.urgency === 'breaking' ? "bg-red-500/20 text-red-400" :
@@ -1597,9 +1800,9 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                                   {format(new Date(n.timestamp), "HH:mm")}
                                 </span>
                               </div>
-                              {n.reasoning_tr && (
+                              {(n.reasoning_locale || n.reasoning_tr) && (
                                 <p className="text-[10px] text-gray-500 mt-1.5 line-clamp-1">
-                                  💡 {n.reasoning_tr}
+                                  💡 {currentLocale === 'tr' ? n.reasoning_tr : n.reasoning_locale || n.reasoning_tr}
                                 </p>
                               )}
                             </div>
@@ -1682,7 +1885,27 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                 {/* News Toolbar */}
                 <div className="h-12 flex items-center justify-between px-4 border-b border-gray-800 bg-[#0a0a0a]">
                   <div className="flex items-center gap-2">
-                    {wsConnected && <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Live connected" />}
+                    <span
+                      className={cn(
+                        "w-2 h-2 rounded-full",
+                        newsFeedIsFresh
+                          ? "bg-green-500 animate-pulse"
+                          : newsStatus === "mock"
+                            ? "bg-amber-500"
+                            : newsStatus === "error"
+                              ? "bg-red-500"
+                              : "bg-gray-600"
+                      )}
+                      title={
+                        newsFeedIsFresh
+                          ? "News feed fresh"
+                          : newsStatus === "mock"
+                            ? "Showing manual test news"
+                            : newsStatus === "error"
+                              ? "News feed unavailable"
+                              : "News feed stale or empty"
+                      }
+                    />
                     <div className="flex items-center gap-1">
                       {["all", "popular", "high"].map((filter) => (
                         <button
@@ -1727,6 +1950,21 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   </div>
                 </div>
 
+                {newsStatus !== "api" && newsStatus !== "idle" && !newsLoading && (
+                  <div
+                    className={cn(
+                      "px-4 py-2 text-[11px] border-b",
+                      newsStatus === "error"
+                        ? "bg-red-500/10 text-red-300 border-red-500/20"
+                        : newsStatus === "mock"
+                          ? "bg-amber-500/10 text-amber-300 border-amber-500/20"
+                          : "bg-gray-900/70 text-gray-400 border-gray-800"
+                    )}
+                  >
+                    {newsStatusMessage || (newsStatus === "empty" ? "No news found." : "News feed status changed.")}
+                  </div>
+                )}
+
                 {/* News List */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {newsLoading ? (
@@ -1752,12 +1990,20 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                           Show all news
                         </button>
                       ) : (
-                        <button
-                          onClick={() => { fetchNews(true); }}
-                          className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors"
-                        >
-                          🧪 Load Test News
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => { fetchNews(false); }}
+                            className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-700 transition-colors"
+                          >
+                            Retry API
+                          </button>
+                          <button
+                            onClick={() => { fetchNews(true); }}
+                            className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors"
+                          >
+                            🧪 Load Test News
+                          </button>
+                        </div>
                       )}
                     </div>
                   ) : (
@@ -1804,38 +2050,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     economicEvents.slice(0, 20).map((event) => (
                       <div
                         key={event.id}
-                        onClick={() => {
-                          // Open modal immediately with basic data, then fetch scenarios
-                          setSelectedEconomicEvent(event);
-                          setIsEconomicModalOpen(true);
-                          setLoadingEventDetail(true);
-                          // Fetch full event detail with scenarios from DeepSeek
-                          fetcher<{ success: boolean; event: CalendarEventDetail }>(
-                            `/api/calendar/event/${event.id}`
-                          ).then((detailRes) => {
-                            if (detailRes.success && detailRes.event) {
-                              // Merge scenarios and additional analysis into selected event
-                              setSelectedEconomicEvent(prev => prev ? {
-                                ...prev,
-                                scenarios: detailRes.event.scenarios ?? prev.scenarios,
-                                confidence: detailRes.event.confidence ?? prev.confidence,
-                                impact_analysis: detailRes.event.impact_analysis ?? prev.impact_analysis,
-                                impact_analysis_tr: detailRes.event.impact_analysis_tr ?? prev.impact_analysis_tr,
-                                predicted_direction: detailRes.event.predicted_direction ?? prev.predicted_direction,
-                                trading_tips: detailRes.event.trading_tips ?? prev.trading_tips,
-                                ai_analyzed: detailRes.event.ai_analyzed ?? prev.ai_analyzed,
-                                ai_model: detailRes.event.ai_model ?? prev.ai_model,
-                                importance_level: detailRes.event.importance_level ?? prev.importance_level,
-                                importance_score: detailRes.event.importance_score ?? prev.importance_score,
-                                importance_reason: detailRes.event.importance_reason ?? prev.importance_reason,
-                              } : prev);
-                            }
-                          }).catch((err) => {
-                            console.error('Error fetching event detail:', err);
-                          }).finally(() => {
-                            setLoadingEventDetail(false);
-                          });
-                        }}
+                        onClick={() => void openEconomicEvent(event)}
                         className={cn(
                           "group relative p-4 rounded-xl border transition-all cursor-pointer overflow-hidden",
                           event.impact === "High"
@@ -1933,37 +2148,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     earningsEvents.slice(0, 20).map((event) => (
                       <div
                         key={event.id}
-                        onClick={() => {
-                          setSelectedEarningsEvent(event);
-                          setIsEarningsModalOpen(true);
-                          setLoadingEventDetail(true);
-                          fetcher<{ success: boolean; event: CalendarEventDetail }>(
-                            `/api/calendar/event/${event.id}`
-                          ).then((detailRes) => {
-                            if (detailRes.success && detailRes.event) {
-                              setSelectedEarningsEvent(prev => prev ? {
-                                ...prev,
-                                confidence: detailRes.event.confidence ?? prev.confidence,
-                                predicted_direction: detailRes.event.predicted_direction ?? prev.predicted_direction,
-                                analysis: detailRes.event.analysis ?? prev.analysis,
-                                analysis_tr: detailRes.event.analysis_tr ?? prev.analysis_tr,
-                                key_metrics: detailRes.event.key_metrics ?? prev.key_metrics,
-                                key_metrics_tr: detailRes.event.key_metrics_tr ?? prev.key_metrics_tr,
-                                scenarios: detailRes.event.scenarios ?? prev.scenarios,
-                                trading_tips: detailRes.event.trading_tips ?? prev.trading_tips,
-                                ai_analyzed: detailRes.event.ai_analyzed ?? prev.ai_analyzed,
-                                ai_model: detailRes.event.ai_model ?? prev.ai_model,
-                                importance_level: detailRes.event.importance_level ?? prev.importance_level,
-                                importance_score: detailRes.event.importance_score ?? prev.importance_score,
-                                importance_reason: detailRes.event.importance_reason ?? prev.importance_reason,
-                              } : prev);
-                            }
-                          }).catch((err) => {
-                            console.error("Error fetching earnings detail:", err);
-                          }).finally(() => {
-                            setLoadingEventDetail(false);
-                          });
-                        }}
+                        onClick={() => void openEarningsEvent(event)}
                         className="group relative p-4 rounded-xl border border-gray-800 bg-gradient-to-r from-blue-950/30 via-indigo-950/20 to-transparent hover:border-blue-500/50 transition-all cursor-pointer overflow-hidden"
                       >
                         {/* Glow effect */}

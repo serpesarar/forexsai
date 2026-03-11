@@ -5,17 +5,48 @@ Endpoints for matching news events with candlestick data
 
 import logging
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from typing import Any, Dict, List, Optional
 
 from database.supabase_client import get_supabase_client
 from services.deepseek_json_client import call_deepseek_json
-from services.news_candle_matcher import get_matching_impact, get_symbol_variants
+from services.news_candle_matcher import get_matching_impact, get_news_candle_matcher, get_symbol_variants
+from services.translation_service import translate_texts
 
 router = APIRouter(prefix="/api/news-correlation", tags=["news-correlation"])
 logger = logging.getLogger(__name__)
 
 URGENCY_PRIORITY = {"breaking": 4, "high": 3, "medium": 2, "low": 1}
+
+
+def _normalize_lang(lang: Optional[str]) -> str:
+    return (lang or "en").strip().lower()
+
+
+async def _localize_text(text: str, lang: str) -> str:
+    normalized = _normalize_lang(lang)
+    if not text or normalized in {"", "tr"}:
+        return text
+
+    translated = await translate_texts([text], normalized)
+    return translated[0] if translated else text
+
+
+def _timeframe_to_minutes(timeframe: str) -> int:
+    normalized = (timeframe or "1h").strip().lower()
+    try:
+        value = max(1, int(normalized[:-1]))
+    except (TypeError, ValueError):
+        value = 1
+
+    unit = normalized[-1:] or "h"
+    if unit == "m":
+        return value
+    if unit == "h":
+        return value * 60
+    if unit == "d":
+        return value * 24 * 60
+    return 60
 
 
 def _extract_rows(result: Any) -> List[Dict[str, Any]]:
@@ -103,10 +134,14 @@ async def _generate_move_explanation(
     candle_time: datetime,
     change_percent: float,
     related_news: List[Dict[str, Any]],
+    lang: str = "tr",
 ) -> Dict[str, Any]:
     if not related_news:
         return {
-            "explanation": f"{symbol} için bu mumun çevresindeki 30 dakikalık pencerede güçlü bir haber eşleşmesi bulunamadı.",
+            "explanation": await _localize_text(
+                f"{symbol} için bu mumun çevresinde fiyat hareketini güvenle açıklayan güçlü bir catalyst bulunamadı.",
+                lang,
+            ),
             "confidence": 0,
         }
 
@@ -148,12 +183,16 @@ RELATED_NEWS:
     explanation = str((ai_payload or {}).get("explanation") or "").strip()
 
     if explanation:
+        explanation = await _localize_text(explanation, lang)
         return {
             "explanation": explanation,
             "confidence": int((ai_payload or {}).get("confidence") or fallback_confidence),
         }
 
-    return {"explanation": fallback_explanation, "confidence": fallback_confidence}
+    return {
+        "explanation": await _localize_text(fallback_explanation, lang),
+        "confidence": fallback_confidence,
+    }
 
 
 @router.get("/candle-news/{symbol}")
@@ -290,7 +329,9 @@ async def get_big_moves(
 async def explain_price_move(
     symbol: str,
     timestamp: int,
-    ai_explain: bool = True
+    timeframe: str = "1h",
+    ai_explain: bool = True,
+    lang: str = Query("en", description="Preferred explanation language"),
 ):
     """
     Get AI explanation for a specific price movement
@@ -304,13 +345,15 @@ async def explain_price_move(
         # First get the candle data
         supabase = get_supabase_client()
         candle_time = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        timeframe_minutes = _timeframe_to_minutes(timeframe)
+        candle_end_time = candle_time + timedelta(minutes=timeframe_minutes)
         
         # Get candle
         candle_result = supabase.table("candle_cache")\
             .select("*")\
             .or_(_build_symbol_filter(symbol))\
             .gte("timestamp", candle_time.isoformat())\
-            .lte("timestamp", (candle_time + timedelta(minutes=1)).isoformat())\
+            .lt("timestamp", candle_end_time.isoformat())\
             .limit(1)\
             .execute()
 
@@ -323,15 +366,16 @@ async def explain_price_move(
 
         candle = candle_rows[0]
         
-        # Get related news
-        news_result = supabase.table("enriched_news")\
-            .select("*")\
-            .gte("timestamp", (candle_time - timedelta(minutes=30)).isoformat())\
-            .lte("timestamp", (candle_time + timedelta(minutes=30)).isoformat())\
-            .order("urgency")\
-            .execute()
-
-        relevant_news = _attach_symbol_impacts(_extract_rows(news_result), symbol)
+        matcher = get_news_candle_matcher()
+        relevant_news = await matcher.match_news_to_candle_simple_ai(
+            symbol=symbol,
+            candle_timestamp=candle_time.isoformat(),
+            candle_open=float(candle.get("open", 0)),
+            candle_close=float(candle.get("close", 0)),
+            candle_high=float(candle.get("high", 0)),
+            candle_low=float(candle.get("low", 0)),
+            timeframe=timeframe,
+        )
         
         # Calculate price change
         change_percent = ((candle["close"] - candle["open"]) / candle["open"]) * 100
@@ -340,7 +384,7 @@ async def explain_price_move(
         explanation = ""
         confidence = 0
         if ai_explain:
-            ai_result = await _generate_move_explanation(symbol, candle, candle_time, change_percent, relevant_news)
+            ai_result = await _generate_move_explanation(symbol, candle, candle_time, change_percent, relevant_news, lang=_normalize_lang(lang))
             explanation = ai_result.get("explanation", "")
             confidence = ai_result.get("confidence", 0)
         

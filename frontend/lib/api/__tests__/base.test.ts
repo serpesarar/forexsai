@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { buildApiUrl, getApiBase, normalizeApiBase } from "../base";
+import { buildApiUrl, buildWebSocketUrl, getApiBase, normalizeApiBase } from "../base";
 
 const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
 
@@ -28,5 +28,10 @@ describe("api base normalization", () => {
     expect(buildApiUrl("/api/learning/model-detail-analytics")).toBe(
       "https://upbeat-flow-production.up.railway.app/api/learning/model-detail-analytics"
     );
+  });
+
+  it("builds websocket urls from the normalized base", () => {
+    process.env.NEXT_PUBLIC_API_URL = "localhost:8000";
+    expect(buildWebSocketUrl("/ws/all")).toBe("ws://localhost:8000/ws/all");
   });
 });

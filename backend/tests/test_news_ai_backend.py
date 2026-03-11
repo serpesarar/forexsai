@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import sys
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -26,6 +26,7 @@ def _ensure_optional_dependency_stubs() -> None:
 _ensure_optional_dependency_stubs()
 
 import services.news_candle_matcher as matcher_module
+import services.sentiment_analyzer as sentiment_module
 from services.deepseek_json_client import extract_json_object
 
 
@@ -236,3 +237,158 @@ async def test_rerank_with_ai_applies_order_and_metadata(monkeypatch):
     assert ranked[0]["importance_level"] == "critical"
     assert ranked[0]["importance_score"] == 94
     assert ranked[0]["ai_match_confidence"] == 91
+
+
+@pytest.mark.asyncio
+async def test_run_claude_sentiment_fetches_marketaux_using_symbol_list(monkeypatch):
+    captured: dict[str, object] = {}
+
+    async def fake_fetch_latest_price(_symbol):
+        return 123.45
+
+    async def fake_fetch_marketaux_headlines(symbols):
+        captured["symbols"] = symbols
+        return [{"title": "Gold steady", "source": "Reuters"}]
+
+    async def fake_deepseek(prompt):
+        assert "Instrument: XAUUSD" in prompt
+        return {
+            "sentiment": "NEUTRAL",
+            "confidence": 0.61,
+            "probability_up": 33,
+            "probability_down": 31,
+            "probability_sideways": 36,
+            "key_factors": [],
+            "analysis": "ok",
+            "recommendation": "HOLD",
+        }
+
+    monkeypatch.setattr(sentiment_module, "fetch_latest_price", fake_fetch_latest_price)
+    monkeypatch.setattr(sentiment_module, "fetch_marketaux_headlines", fake_fetch_marketaux_headlines)
+    monkeypatch.setattr(sentiment_module, "_call_deepseek_sentiment", fake_deepseek)
+    monkeypatch.setattr(sentiment_module.settings, "anthropic_api_key", None, raising=False)
+    monkeypatch.setattr(sentiment_module.settings, "deepseek_api_key", "test-key", raising=False)
+
+    redis_module = SimpleNamespace(cache_get=lambda _key: {}, cache_set=lambda *_args, **_kwargs: None)
+    monkeypatch.setitem(sys.modules, "services.redis_client", redis_module)
+
+    result = await sentiment_module.run_claude_sentiment(symbol="XAUUSD", lang="en")
+
+    assert captured["symbols"] == ["XAUUSD"]
+    assert result["sentiment"] == "NEUTRAL"
+    assert result["market_data_summary"]["news_source"] == "marketaux+deepseek"
+
+
+@pytest.mark.asyncio
+async def test_rss_aggregator_store_in_database_executes_insert(monkeypatch):
+    rss_aggregator = _load_module("test_rss_aggregator_module", "services/rss_aggregator.py")
+
+    class FakeTable:
+        def __init__(self):
+            self.insert_executed = False
+            self.mode = None
+
+        def select(self, *_args, **_kwargs):
+            self.mode = "select"
+            return self
+
+        def eq(self, *_args, **_kwargs):
+            return self
+
+        def execute(self):
+            if self.mode == "insert":
+                self.insert_executed = True
+            return {"data": []}
+
+        def insert(self, payload):
+            self.mode = "insert"
+            self.payload = payload
+            return self
+
+    class FakeSupabase:
+        def __init__(self):
+            self.table_instance = FakeTable()
+
+        def table(self, _name):
+            return self.table_instance
+
+    fake_supabase = FakeSupabase()
+    monkeypatch.setattr(rss_aggregator, "get_supabase_client", lambda: fake_supabase)
+
+    aggregator = rss_aggregator.RSSAggregator()
+
+    async def passthrough(item):
+        return item
+
+    monkeypatch.setattr(aggregator, "_check_economic_calendar", passthrough)
+
+    item = rss_aggregator.RSSNewsItem(
+        id="news-123",
+        source="Reuters",
+        original_url="https://example.com/news-123",
+        published_at=datetime.now(timezone.utc),
+        fetched_at=datetime.now(timezone.utc),
+        title="Gold climbs",
+        content="Gold climbs after CPI.",
+        category="markets",
+        impacts=[{"symbol": "XAUUSD", "direction": "bullish", "score": 8}],
+        sentiment="bullish",
+        volatility_expectation="high",
+        urgency="high",
+        ai_confidence=0.91,
+        ai_processed=True,
+        processed_at=datetime.now(timezone.utc),
+        duplicate_of=None,
+        sources=["Reuters"],
+    )
+
+    stored = await aggregator.store_in_database(item)
+
+    assert stored is True
+    assert fake_supabase.table_instance.insert_executed is True
+
+
+@pytest.mark.asyncio
+async def test_claude_news_compat_analyze_uses_cached_rss_items(monkeypatch):
+    claude_news = _load_module("test_claude_news_module", "routers/claude_news.py")
+
+    class FakeQuery:
+        def select(self, *_args, **_kwargs):
+            return self
+
+        def gte(self, *_args, **_kwargs):
+            return self
+
+        def order(self, *_args, **_kwargs):
+            return self
+
+        def limit(self, *_args, **_kwargs):
+            return self
+
+        def execute(self):
+            return {
+                "data": [{
+                    "id": "n1",
+                    "timestamp": "2026-03-10T12:00:00Z",
+                    "source": "Reuters",
+                    "headline": "Gold rises after CPI",
+                    "impacts": [{"symbol": "XAUUSD", "direction": "bullish", "score": 9, "reasoning_tr": "Dolar zayıfladı"}],
+                    "sentiment": "bullish",
+                    "ai_confidence": 88,
+                    "category": "markets",
+                    "analysis_timestamp": "2026-03-10T12:05:00Z",
+                    "analysis_tr": "Altın için pozitif",
+                }]
+            }
+
+    class FakeSupabase:
+        def table(self, _name):
+            return FakeQuery()
+
+    monkeypatch.setattr(claude_news, "get_supabase_client", lambda: FakeSupabase())
+
+    result = await claude_news.analyze_news("XAUUSD", limit=15, hours_back=24)
+
+    assert result["news_count"] == 1
+    assert result["direction_bias"] == "bullish"
+    assert result["analyses"][0]["override_signal"] == "bullish"

@@ -259,12 +259,21 @@ export interface MatchedNewsItem {
   summary_tr?: string;
   analysis_en?: string;
   analysis_tr?: string;
+  headline_locale?: string;
+  summary_locale?: string;
+  analysis_locale?: string;
   timestamp: string;
   source: string;
+  catalyst_type?: "news" | "economic" | "earnings";
+  match_quality?: "matched" | "context";
   urgency: string;
   score: number;
   direction: string;
+  reasoning?: string;
   reasoning_tr: string;
+  reasoning_locale?: string;
+  event_id?: string;
+  affected_symbols?: string[];
   relevance_score: number;
   url: string;
 }
@@ -278,7 +287,8 @@ export async function fetchNewsForCandle(
   candleClose: number,
   candleHigh: number,
   candleLow: number,
-  timeframe: string = "1h"
+  timeframe: string = "1h",
+  locale?: string
 ): Promise<CandleNewsResponse> {
   const params = new URLSearchParams({
     candle_timestamp: candleTimestamp,
@@ -288,6 +298,10 @@ export async function fetchNewsForCandle(
     candle_low: candleLow.toString(),
     timeframe: timeframe,
   });
+
+  if (locale) {
+    params.append("lang", locale);
+  }
 
   const url = `${API_BASE}/api/rss/candle-news/${symbol}?${params}`;
   console.log("[fetchNewsForCandle] Fetching:", url);

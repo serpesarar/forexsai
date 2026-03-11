@@ -31,6 +31,33 @@ interface UseNewsCorrelationDataReturn {
   lastUpdated: Date | null;
 }
 
+function mapRssNewsToEnrichedNews(item: any): EnrichedNews {
+  const sentiment = String(item.sentiment || "neutral").toLowerCase();
+  return {
+    id: item.id,
+    timestamp: item.timestamp,
+    source: item.source,
+    headline: item.headline,
+    content: item.content,
+    category: item.category,
+    url: item.url,
+    impacts: Array.isArray(item.impacts) ? item.impacts : [],
+    urgency: item.urgency || "medium",
+    sentiment: sentiment === "bullish" ? "risk_on" : sentiment === "bearish" ? "risk_off" : "neutral",
+    volatilityExpectation: item.volatility_expectation || "medium",
+    eventDuration: item.event_duration || "short_term",
+    affectedCandles: [],
+    aiConfidence: Number(item.ai_confidence || 0),
+    analysisTimestamp: item.analysis_timestamp || item.timestamp,
+    headline_tr: item.headline_tr,
+    content_tr: item.content_tr,
+    summary_en: item.summary_en,
+    summary_tr: item.summary_tr,
+    analysis_en: item.analysis_en,
+    analysis_tr: item.analysis_tr,
+  };
+}
+
 export function useNewsCorrelationData({
   symbol,
   timeframe,
@@ -151,15 +178,15 @@ export function useNewsCorrelationData({
         const apiSymbol = symbolMap[symbol] || symbol;
         
         const [newsResponse, chartResponse] = await Promise.all([
-          fetcher<{ success: boolean; data: EnrichedNews[] }>(
-            `/api/news-correlation/correlated/${apiSymbol}?timeframe=${timeframe}`
+          fetcher<any[]>(
+            `/api/rss/news?symbol=${encodeURIComponent(apiSymbol)}&hours=48&limit=50&show_on_chart=true`
           ),
           fetcher<{ success: boolean; data: { candles: CandleData[] } }>(
             `/api/data/cached/${apiSymbol}?timeframe=${timeframe}&bars=${bars}`
           ),
         ]);
-        
-        newsData = newsResponse.success ? newsResponse.data : [];
+
+        newsData = Array.isArray(newsResponse) ? newsResponse.map(mapRssNewsToEnrichedNews) : [];
         candleData = chartResponse.success && chartResponse.data 
           ? chartResponse.data.candles.map((c: any) => ({
               time: typeof c.time === "string" ? new Date(c.time).getTime() / 1000 : c.time,

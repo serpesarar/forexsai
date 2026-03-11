@@ -36,6 +36,7 @@ export interface SymbolImpact {
   confidence: number; // 0-1
   reasoning: string;
   reasoning_tr?: string; // Turkish translation
+  reasoning_locale?: string;
   emoji: string;
 }
 
@@ -74,6 +75,9 @@ export interface EnrichedNews extends RawNews {
   summary_tr?: string;
   analysis_en?: string;
   analysis_tr?: string;
+  headline_locale?: string;
+  summary_locale?: string;
+  analysis_locale?: string;
 }
 
 // Chart marker for news events

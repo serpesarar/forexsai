@@ -7,8 +7,10 @@ from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel
 
+from services.marketaux_service import get_marketaux_health
 from services.rss_aggregator import get_rss_aggregator, RSS_SOURCES
 from services.news_candle_matcher import get_matching_impact
+from services.translation_service import translate_texts
 from database.supabase_client import get_supabase_client
 
 router = APIRouter(prefix="/api/rss", tags=["rss"])
@@ -26,6 +28,9 @@ class RSSNewsResponse(BaseModel):
     summary_tr: Optional[str] = None
     analysis_en: Optional[str] = None
     analysis_tr: Optional[str] = None
+    headline_locale: Optional[str] = None
+    summary_locale: Optional[str] = None
+    analysis_locale: Optional[str] = None
     category: str
     url: str
     impacts: List[dict]
@@ -55,6 +60,98 @@ class RSSSourceInfo(BaseModel):
     url: str
 
 
+RUNTIME_TRANSLATION_BATCH_SIZE = 20
+
+
+def _normalize_lang(lang: Optional[str]) -> str:
+    return (lang or "en").strip().lower()
+
+
+def _needs_runtime_translation(lang: str) -> bool:
+    return lang not in {"", "en", "tr"}
+
+
+async def _translate_in_batches(texts: List[str], target_lang: str) -> List[str]:
+    if not texts:
+        return []
+
+    translated: List[str] = []
+    for start in range(0, len(texts), RUNTIME_TRANSLATION_BATCH_SIZE):
+        chunk = texts[start:start + RUNTIME_TRANSLATION_BATCH_SIZE]
+        translated.extend(await translate_texts(chunk, target_lang))
+    return translated
+
+
+async def _localize_news_items(items: List[dict], lang: str) -> List[dict]:
+    if not _needs_runtime_translation(lang) or not items:
+        return items
+
+    headlines = [item.get("headline") or "" for item in items]
+    summaries = [item.get("summary_en") or item.get("headline") or "" for item in items]
+    analyses = [item.get("analysis_en") or item.get("summary_en") or item.get("headline") or "" for item in items]
+    impact_reasonings: List[str] = []
+    for item in items:
+        impacts = item.get("impacts") or []
+        for impact in impacts:
+            impact_reasonings.append(impact.get("reasoning") or impact.get("reasoning_tr") or "")
+
+    localized_headlines = await _translate_in_batches(headlines, lang)
+    localized_summaries = await _translate_in_batches(summaries, lang)
+    localized_analyses = await _translate_in_batches(analyses, lang)
+    localized_reasonings = await _translate_in_batches(impact_reasonings, lang)
+
+    localized_items: List[dict] = []
+    reasoning_index = 0
+    for item, headline_locale, summary_locale, analysis_locale in zip(items, localized_headlines, localized_summaries, localized_analyses):
+        localized = dict(item)
+        localized["headline_locale"] = headline_locale or localized.get("headline")
+        localized["summary_locale"] = summary_locale or localized.get("summary_en") or localized.get("headline")
+        localized["analysis_locale"] = analysis_locale or localized.get("analysis_en") or localized["summary_locale"]
+
+        localized_impacts: List[dict] = []
+        for impact in localized.get("impacts") or []:
+            localized_impact = dict(impact)
+            localized_impact["reasoning_locale"] = localized_reasonings[reasoning_index] if reasoning_index < len(localized_reasonings) else localized_impact.get("reasoning") or localized_impact.get("reasoning_tr")
+            localized_impacts.append(localized_impact)
+            reasoning_index += 1
+        localized["impacts"] = localized_impacts
+        localized_items.append(localized)
+
+    return localized_items
+
+
+async def _localize_candle_news_items(items: List[dict], lang: str) -> List[dict]:
+    if not _needs_runtime_translation(lang) or not items:
+        return items
+
+    headlines = [item.get("headline_en") or item.get("headline") or "" for item in items]
+    summaries = [item.get("summary_en") or item.get("headline_en") or item.get("headline") or "" for item in items]
+    analyses = [item.get("analysis_en") or item.get("summary_en") or item.get("headline_en") or item.get("headline") or "" for item in items]
+    reasonings = [item.get("reasoning") or item.get("reasoning_tr") or item.get("analysis_en") or item.get("summary_en") or "" for item in items]
+
+    localized_headlines = await _translate_in_batches(headlines, lang)
+    localized_summaries = await _translate_in_batches(summaries, lang)
+    localized_analyses = await _translate_in_batches(analyses, lang)
+    localized_reasonings = await _translate_in_batches(reasonings, lang)
+
+    localized_items: List[dict] = []
+    for item, headline_locale, summary_locale, analysis_locale, reasoning_locale in zip(
+        items,
+        localized_headlines,
+        localized_summaries,
+        localized_analyses,
+        localized_reasonings,
+    ):
+        localized = dict(item)
+        localized["headline_locale"] = headline_locale or localized.get("headline")
+        localized["summary_locale"] = summary_locale or localized.get("summary_en") or localized.get("headline")
+        localized["analysis_locale"] = analysis_locale or localized.get("analysis_en") or localized["summary_locale"]
+        localized["reasoning_locale"] = reasoning_locale or localized.get("reasoning_tr")
+        localized_items.append(localized)
+
+    return localized_items
+
+
 @router.get("/sources", response_model=List[RSSSourceInfo])
 async def get_rss_sources():
     """Get list of configured RSS sources"""
@@ -77,6 +174,7 @@ async def get_rss_news(
     sentiment: Optional[str] = Query(None, description="Filter by sentiment"),
     hours: int = Query(24, ge=1, le=168, description="Lookback period in hours"),
     limit: int = Query(50, ge=1, le=200, description="Max items to return"),
+    lang: str = Query("en", description="Preferred content language"),
     skip_ai_filtered: bool = Query(True, description="Skip low-priority non-AI analyzed items"),
     show_on_chart: Optional[bool] = Query(None, description="Filter by chart visibility")
 ):
@@ -145,8 +243,10 @@ async def get_rss_news(
                 if any(imp.get("symbol") == symbol or imp.get("symbol") == "*" 
                        for imp in item.get("impacts", []))
             ]
+
+        items = await _localize_news_items(items, _normalize_lang(lang))
         
-        # Format response - WITH TURKISH TRANSLATIONS & CHART MARKERS
+        # Format response - WITH TURKISH TRANSLATIONS & OPTIONAL RUNTIME LOCALIZATION
         return [
             RSSNewsResponse(
                 id=item["id"],
@@ -160,6 +260,9 @@ async def get_rss_news(
                 summary_tr=item.get("summary_tr"),
                 analysis_en=item.get("analysis_en"),
                 analysis_tr=item.get("analysis_tr"),
+                headline_locale=item.get("headline_locale"),
+                summary_locale=item.get("summary_locale"),
+                analysis_locale=item.get("analysis_locale"),
                 category=item.get("category", "general"),
                 url=item.get("url", ""),
                 impacts=item.get("impacts", []),
@@ -377,7 +480,8 @@ async def get_news_for_candle(
     candle_close: float = Query(..., description="Candle close price"),
     candle_high: float = Query(..., description="Candle high price"),
     candle_low: float = Query(..., description="Candle low price"),
-    timeframe: str = Query("1h", description="Candle timeframe")
+    timeframe: str = Query("1h", description="Candle timeframe"),
+    lang: str = Query("en", description="Preferred content language")
 ):
     """
     INTELLIGENT: Get news that likely caused a specific candle's movement.
@@ -402,6 +506,7 @@ async def get_news_for_candle(
         formatted_news = []
         for news in matched_news:
             symbol_impact = news.get("symbol_impact", {})
+            event_payload = news.get("event_payload") or {}
             formatted_news.append({
                 "id": news.get("id"),
                 "headline": news.get("headline_tr") or news.get("headline"),
@@ -412,16 +517,23 @@ async def get_news_for_candle(
                 "analysis_tr": news.get("analysis_tr") or news.get("content_tr") or news.get("summary_tr") or news.get("headline_tr") or news.get("headline"),
                 "timestamp": news.get("timestamp"),
                 "source": news.get("source"),
+                "catalyst_type": news.get("catalyst_type", "news"),
+                "match_quality": news.get("match_quality", "matched"),
                 "urgency": news.get("urgency"),
                 "score": symbol_impact.get("score", 5),
                 "direction": symbol_impact.get("direction", "neutral"),
+                "reasoning": news.get("ai_reasoning_tr") or symbol_impact.get("reasoning") or symbol_impact.get("reasoning_tr", ""),
                 "reasoning_tr": news.get("ai_reasoning_tr") or symbol_impact.get("reasoning_tr", ""),
                 "relevance_score": round(news.get("relevance_score", 0), 2),
                 "importance_level": news.get("importance_level"),
                 "importance_score": news.get("importance_score"),
                 "ai_match_confidence": news.get("ai_match_confidence"),
+                "event_id": event_payload.get("id"),
+                "affected_symbols": event_payload.get("affected_symbols") or [symbol],
                 "url": news.get("url", ""),
             })
+
+        formatted_news = await _localize_candle_news_items(formatted_news, _normalize_lang(lang))
         
         # Calculate candle stats
         change_pct = ((candle_close - candle_open) / candle_open) * 100 if candle_open != 0 else 0
@@ -1038,7 +1150,9 @@ async def get_rss_diagnostics():
             "api_keys": {
                 "DEEP_SEEKR1": "✅ SET" if deepseek_key else "❌ NOT SET",
                 "ANTHROPIC_API_KEY": "✅ SET" if anthropic_key else "❌ NOT SET",
+                "MARKETAUX_API_KEY": "✅ SET" if os.getenv("MARKETAUX_API_KEY", "") else "❌ NOT SET",
             },
+            "marketaux_health": get_marketaux_health(),
             "last_24h_stats": {
                 "total_news": len(items),
                 "ai_analyzed": ai_analyzed,
@@ -1073,7 +1187,9 @@ async def get_rss_diagnostics():
             "api_keys": {
                 "DEEP_SEEKR1": "✅ SET" if os.getenv("DEEP_SEEKR1", "") else "❌ NOT SET",
                 "ANTHROPIC_API_KEY": "✅ SET" if os.getenv("ANTHROPIC_API_KEY", "") else "❌ NOT SET",
+                "MARKETAUX_API_KEY": "✅ SET" if os.getenv("MARKETAUX_API_KEY", "") else "❌ NOT SET",
             },
+            "marketaux_health": get_marketaux_health(),
         }
 
 

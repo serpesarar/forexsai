@@ -162,15 +162,22 @@ export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }
   if (!isOpen || !news) return null;
 
   const isTurkish = locale === "tr";
+  const isEnglish = locale === "en";
   const localizedHeadline = isTurkish
     ? news.headline_tr || news.summary_tr || news.headline || news.summary_en || ""
-    : news.headline || news.summary_en || news.headline_tr || news.summary_tr || "";
+    : !isEnglish
+      ? news.headline_locale || news.summary_locale || news.analysis_locale || news.headline || news.summary_en || news.headline_tr || news.summary_tr || ""
+      : news.headline || news.summary_en || news.headline_tr || news.summary_tr || "";
   const localizedSummary = isTurkish
     ? news.summary_tr || news.headline_tr || news.summary_en || news.headline || ""
-    : news.summary_en || news.headline || news.summary_tr || news.headline_tr || "";
+    : !isEnglish
+      ? news.summary_locale || news.analysis_locale || news.headline_locale || news.summary_en || news.headline || news.summary_tr || news.headline_tr || ""
+      : news.summary_en || news.headline || news.summary_tr || news.headline_tr || "";
   const localizedAnalysis = isTurkish
     ? news.analysis_tr || news.content_tr || news.summary_tr || news.analysis_en || news.content || news.headline || ""
-    : news.analysis_en || news.content || news.summary_en || news.analysis_tr || news.content_tr || news.headline || "";
+    : !isEnglish
+      ? news.analysis_locale || news.summary_locale || news.headline_locale || news.analysis_en || news.content || news.summary_en || news.analysis_tr || news.content_tr || news.headline || ""
+      : news.analysis_en || news.content || news.summary_en || news.analysis_tr || news.content_tr || news.headline || "";
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
@@ -339,7 +346,9 @@ export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }
                         {impact.symbol}
                       </span>
                       <span className="text-xs text-gray-500">
-                        {locale === "tr" && impact.reasoning_tr ? impact.reasoning_tr : impact.reasoning}
+                        {locale === "tr"
+                          ? impact.reasoning_tr || impact.reasoning
+                          : impact.reasoning_locale || impact.reasoning}
                       </span>
                     </div>
                     <div className="flex items-center gap-1">

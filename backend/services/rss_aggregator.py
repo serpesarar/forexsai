@@ -873,10 +873,13 @@ class RSSAggregator:
             if existing_data:
                 # Update sources list if duplicate from another source
                 if item.duplicate_of:
-                    upd_result = supabase.table("enriched_news").update({
-                        "sources": item.sources
-                    }).eq("id", item.id)
-                    if upd_result.get("error"):
+                    upd_result = (
+                        supabase.table("enriched_news")
+                        .update({"sources": item.sources})
+                        .eq("id", item.id)
+                        .execute()
+                    )
+                    if isinstance(upd_result, dict) and upd_result.get("error"):
                         print(f"[RSS] Update error: {upd_result['error']}")
                 return False
             
@@ -942,8 +945,8 @@ class RSSAggregator:
             
             # Attempt insert with detailed error logging
             try:
-                result = supabase.table("enriched_news").insert(data)
-                if result.get("error"):
+                result = supabase.table("enriched_news").insert(data).execute()
+                if isinstance(result, dict) and result.get("error"):
                     raise Exception(result["error"])
                 print(f"[RSS] ✓ Saved to DB: {item.id[:40]}... - {item.title[:60]}...")
                 return True

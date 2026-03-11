@@ -493,11 +493,17 @@ export default function HomePage() {
         }),
       ]);
       const [s1, s2, p1, p2] = settled;
-      if (s1.status === "fulfilled" && s2.status === "fulfilled") {
-        setClaudeSentiments({ nasdaq: s1.value, xauusd: s2.value });
+      if (s1.status === "fulfilled" || s2.status === "fulfilled") {
+        setClaudeSentiments((prev) => ({
+          nasdaq: s1.status === "fulfilled" ? s1.value : prev.nasdaq,
+          xauusd: s2.status === "fulfilled" ? s2.value : prev.xauusd,
+        }));
       }
-      if (p1.status === "fulfilled" && p2.status === "fulfilled") {
-        setClaudePatterns({ nasdaq: p1.value, xauusd: p2.value });
+      if (p1.status === "fulfilled" || p2.status === "fulfilled") {
+        setClaudePatterns((prev) => ({
+          nasdaq: p1.status === "fulfilled" ? p1.value : prev.nasdaq,
+          xauusd: p2.status === "fulfilled" ? p2.value : prev.xauusd,
+        }));
       }
 
       const formatPrice = (value?: number | null) =>

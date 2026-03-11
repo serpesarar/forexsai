@@ -198,6 +198,212 @@ class NewsCandleMatcher:
             volume=0,
         )
 
+    def _timeframe_to_minutes(self, timeframe: str) -> int:
+        timeframe_value = str(timeframe or "1h").strip().lower()
+        try:
+            value = int(timeframe_value[:-1])
+        except (TypeError, ValueError):
+            return 60
+
+        unit = timeframe_value[-1:] or "h"
+        if unit == "m":
+            return max(1, value)
+        if unit == "h":
+            return max(1, value * 60)
+        if unit == "d":
+            return max(60, value * 24 * 60)
+        return 60
+
+    def _urgency_weight(self, urgency: Optional[str]) -> float:
+        return {
+            "breaking": 1.0,
+            "high": 0.8,
+            "medium": 0.45,
+            "low": 0.15,
+        }.get(str(urgency or "medium").lower(), 0.35)
+
+    def _normalize_confidence(self, value: Any) -> float:
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError):
+            return 0.0
+
+        if numeric <= 1:
+            return max(0.0, min(1.0, numeric))
+        return max(0.0, min(1.0, numeric / 100.0))
+
+    def _direction_alignment_score(self, expected_direction: Optional[str], candle: CandleInfo) -> float:
+        direction = str(expected_direction or "neutral").lower()
+        if direction == "bullish" and candle.is_bullish:
+            return 1.0
+        if direction == "bearish" and candle.is_bearish:
+            return 1.0
+        if direction in {"neutral", "volatile"}:
+            return 0.45
+        return 0.05
+
+    def _importance_level(self, score: float) -> str:
+        if score >= 85:
+            return "critical"
+        if score >= 70:
+            return "high"
+        if score >= 50:
+            return "medium"
+        return "low"
+
+    def _event_time_window_minutes(self, timeframe: str, significance: Dict[str, Any]) -> int:
+        timeframe_minutes = self._timeframe_to_minutes(timeframe)
+        return max(90, min(12 * 60, max(timeframe_minutes * 3, significance.get("time_window_minutes", 120) * 3)))
+
+    def _build_context_candidates(self, symbol: str, candle: CandleInfo, timeframe: str) -> List[Dict[str, Any]]:
+        context_window = max(90, self._timeframe_to_minutes(timeframe) * 2)
+        news_candidates = self._collect_matches(
+            symbol,
+            candle,
+            self.fetch_relevant_news(
+                symbol=symbol,
+                candle_time=candle.timestamp,
+                time_window_minutes=context_window,
+                min_impact_score=3,
+                expected_urgency=["breaking", "high", "medium", "low"],
+            ),
+        )
+        event_candidates = self._fetch_calendar_candidates(symbol, candle, timeframe, context_window)
+        merged = self._select_top_matches(news_candidates + event_candidates)
+        for item in merged:
+            item.setdefault("match_quality", "context")
+        return merged
+
+    def _build_event_candidate(
+        self,
+        symbol: str,
+        candle: CandleInfo,
+        raw_event: Dict[str, Any],
+        event_type: str,
+        time_window_minutes: int,
+    ) -> Optional[Dict[str, Any]]:
+        timestamp = raw_event.get("timestamp")
+        if not timestamp:
+            return None
+
+        try:
+            event_time = _parse_iso_timestamp(str(timestamp))
+        except Exception:
+            return None
+
+        time_diff_minutes = (event_time - candle.timestamp).total_seconds() / 60
+        if abs(time_diff_minutes) > time_window_minutes:
+            return None
+
+        affected_symbols = [normalize_symbol(item) for item in raw_event.get("affected_symbols", []) if item]
+        if affected_symbols and normalize_symbol(symbol) not in affected_symbols and "ALL" not in affected_symbols:
+            return None
+
+        importance_score = raw_event.get("importance_score")
+        if importance_score is None:
+            impact_label = str(raw_event.get("impact") or "Medium").lower()
+            importance_score = {"high": 85, "medium": 65, "low": 45}.get(impact_label, 60)
+
+        direction = raw_event.get("predicted_direction") or "volatile"
+        confidence = self._normalize_confidence(raw_event.get("confidence") or 65)
+        proximity_weight = max(0.0, 1.0 - (abs(time_diff_minutes) / max(30.0, float(time_window_minutes))))
+        relevance = min(
+            1.0,
+            (float(importance_score) / 100.0) * 0.45
+            + proximity_weight * 0.3
+            + self._direction_alignment_score(direction, candle) * 0.15
+            + confidence * 0.1,
+        )
+
+        reasoning_en = (
+            raw_event.get("impact_analysis")
+            or raw_event.get("analysis")
+            or raw_event.get("importance_reason")
+            or raw_event.get("why_it_matters")
+            or raw_event.get("description")
+            or raw_event.get("title")
+            or raw_event.get("company")
+            or ""
+        )
+        reasoning_tr = (
+            raw_event.get("impact_analysis_tr")
+            or raw_event.get("analysis_tr")
+            or raw_event.get("why_it_matters_tr")
+            or raw_event.get("description_tr")
+            or raw_event.get("title_tr")
+            or reasoning_en
+        )
+        headline = raw_event.get("title") or raw_event.get("company") or raw_event.get("ticker") or raw_event.get("id")
+        headline_tr = raw_event.get("title_tr") or raw_event.get("company_tr") or headline
+        urgency = "breaking" if float(importance_score) >= 85 else "high" if float(importance_score) >= 70 else "medium"
+
+        return {
+            "id": raw_event.get("id"),
+            "timestamp": timestamp,
+            "source": "economic_calendar" if event_type == "economic" else "earnings_calendar",
+            "headline": headline,
+            "headline_tr": headline_tr,
+            "summary_en": reasoning_en,
+            "summary_tr": reasoning_tr,
+            "analysis_en": reasoning_en,
+            "analysis_tr": reasoning_tr,
+            "url": raw_event.get("url") or "",
+            "urgency": urgency,
+            "relevance_score": round(relevance, 4),
+            "time_diff_minutes": time_diff_minutes,
+            "catalyst_type": event_type,
+            "match_quality": "matched" if relevance >= 0.45 else "context",
+            "importance_score": int(float(importance_score)),
+            "importance_level": raw_event.get("importance_level") or self._importance_level(float(importance_score)),
+            "event_payload": raw_event,
+            "symbol_impact": {
+                "symbol": normalize_symbol(symbol),
+                "direction": direction,
+                "score": max(4, min(10, round(float(importance_score) / 10))),
+                "confidence": confidence,
+                "reasoning": reasoning_en,
+                "reasoning_tr": reasoning_tr,
+            },
+        }
+
+    def _fetch_calendar_candidates(
+        self,
+        symbol: str,
+        candle: CandleInfo,
+        timeframe: str,
+        time_window_minutes: int,
+    ) -> List[Dict[str, Any]]:
+        try:
+            from routers.economic_calendar_router import generate_upcoming_earnings, generate_upcoming_events
+        except Exception:
+            logger.exception("[NewsCandleMatcher] Unable to import calendar generators")
+            return []
+
+        candidates: List[Dict[str, Any]] = []
+        try:
+            for event in generate_upcoming_events(days_ahead=7):
+                candidate = self._build_event_candidate(symbol, candle, event, "economic", time_window_minutes)
+                if candidate:
+                    candidates.append(candidate)
+
+            for event in generate_upcoming_earnings(days_ahead=14):
+                candidate = self._build_event_candidate(symbol, candle, event, "earnings", time_window_minutes)
+                if candidate:
+                    candidates.append(candidate)
+        except Exception:
+            logger.exception("[NewsCandleMatcher] Error building calendar candidates")
+            return []
+
+        candidates.sort(
+            key=lambda item: (
+                item.get("relevance_score", 0),
+                item.get("importance_score", 0),
+                -abs(float(item.get("time_diff_minutes", 0))),
+            ),
+            reverse=True,
+        )
+        return candidates[:8]
+
     def _collect_matches(self, symbol: str, candle: CandleInfo, news_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         matched: List[Dict[str, Any]] = []
 
@@ -216,6 +422,8 @@ class NewsCandleMatcher:
             matched.append(
                 {
                     **news,
+                    "catalyst_type": "news",
+                    "match_quality": "matched",
                     "relevance_score": relevance,
                     "symbol_impact": symbol_impact,
                     "time_diff_minutes": time_diff,
@@ -226,8 +434,17 @@ class NewsCandleMatcher:
         return matched
 
     def _select_top_matches(self, matched: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        high_news = [n for n in matched if n.get("urgency") in ["breaking", "high"]]
-        return (high_news[:5] if len(high_news) >= 2 else matched[:5])
+        ranked = sorted(
+            matched,
+            key=lambda item: (
+                item.get("relevance_score", 0),
+                item.get("importance_score", 0) or ((item.get("symbol_impact") or {}).get("score", 0) * 10),
+                self._urgency_weight(item.get("urgency")),
+                self._normalize_confidence((item.get("symbol_impact") or {}).get("confidence")),
+            ),
+            reverse=True,
+        )
+        return ranked[:5]
 
     async def _rerank_with_ai(
         self,
@@ -246,6 +463,8 @@ class NewsCandleMatcher:
             serialized_candidates.append(
                 {
                     "id": item.get("id"),
+                    "catalyst_type": item.get("catalyst_type", "news"),
+                    "source": item.get("source"),
                     "headline": item.get("headline_tr") or item.get("headline"),
                     "timestamp": item.get("timestamp"),
                     "urgency": item.get("urgency"),
@@ -257,7 +476,7 @@ class NewsCandleMatcher:
                 }
             )
 
-        prompt = f"""You are matching already AI-analyzed news to a specific market candle. Return ONLY valid JSON.
+        prompt = f"""You are matching already AI-analyzed market catalysts to a specific market candle. Return ONLY valid JSON.
 
 JSON schema:
 {{
@@ -265,7 +484,7 @@ JSON schema:
   "matches": [
     {{
       "id": "candidate-id",
-      "reasoning_tr": "Bu haberin bu mumu neden açıkladığını kısa Türkçe açıkla",
+      "reasoning_tr": "Bu catalystin bu mumu neden açıkladığını kısa Türkçe açıkla",
       "importance_level": "critical|high|medium|low",
       "importance_score": 0-100
     }}
@@ -276,7 +495,8 @@ Rules:
 - Sadece aşağıdaki candidate id'lerini kullan.
 - Sıralama en güçlü eşleşmeden en zayıfa doğru olsun.
 - Haber ile mum yönü uyumsuzsa reasoning_tr içinde bunu açıkça belirt.
-- Eğer hiçbir haber ikna edici değilse matches boş olsun.
+- Haber, ekonomik veri veya earnings olabilir.
+- Eğer hiçbir catalyst ikna edici değilse matches boş olsun.
 
 CANDLE:
 {{
@@ -331,11 +551,11 @@ CANDIDATES:
 
         return ordered[:5]
 
-    def _prepare_candidates(self, symbol: str, candle: CandleInfo) -> tuple[Dict[str, Any], List[Dict[str, Any]]]:
+    def _prepare_candidates(self, symbol: str, candle: CandleInfo, timeframe: str) -> tuple[Dict[str, Any], List[Dict[str, Any]]]:
         atr = candle.range_pct * 0.5
         significance = self.calculate_candle_significance(candle, atr, atr)
         if not significance["is_significant"]:
-            return significance, []
+            return significance, self._build_context_candidates(symbol, candle, timeframe)
 
         news_items = self.fetch_relevant_news(
             symbol=symbol,
@@ -344,10 +564,18 @@ CANDIDATES:
             min_impact_score=significance["min_impact_score"],
             expected_urgency=significance["expected_news_urgency"],
         )
-        if not news_items:
-            return significance, []
+        news_candidates = self._collect_matches(symbol, candle, news_items) if news_items else []
+        event_candidates = self._fetch_calendar_candidates(
+            symbol=symbol,
+            candle=candle,
+            timeframe=timeframe,
+            time_window_minutes=self._event_time_window_minutes(timeframe, significance),
+        )
+        merged = self._select_top_matches(news_candidates + event_candidates)
+        if merged:
+            return significance, merged
 
-        return significance, self._select_top_matches(self._collect_matches(symbol, candle, news_items))
+        return significance, self._build_context_candidates(symbol, candle, timeframe)
     
     def calculate_candle_significance(self, candle: CandleInfo, 
                                      avg_range: float, 
@@ -483,14 +711,8 @@ CANDIDATES:
         relevance += (impact_score / 10) * 0.3
         
         # 2. Urgency ağırlığı (0-0.25)
-        urgency_weights = {
-            "breaking": 1.0,
-            "high": 0.8,
-            "medium": 0.4,
-            "low": 0.1
-        }
         urgency = news.get("urgency", "medium")
-        relevance += urgency_weights.get(urgency, 0.4) * 0.25
+        relevance += self._urgency_weight(urgency) * 0.25
         
         # 3. Yön uyumu (0-0.25)
         news_direction = symbol_impact.get("direction", "neutral")
@@ -502,7 +724,7 @@ CANDIDATES:
             relevance += 0.1
         
         # 4. AI confidence (0-0.1)
-        ai_confidence = news.get("ai_confidence", 50) / 100
+        ai_confidence = self._normalize_confidence(news.get("ai_confidence", 50))
         relevance += ai_confidence * 0.1
         
         # 5. Zaman faktörü (0-0.1)
@@ -632,9 +854,11 @@ CANDIDATES:
                 candle_high=candle_high,
                 candle_low=candle_low,
             )
-            significance, candidates = self._prepare_candidates(symbol, candle)
-            if not significance["is_significant"] or not candidates:
+            significance, candidates = self._prepare_candidates(symbol, candle, timeframe)
+            if not candidates:
                 return []
+            if not significance["is_significant"]:
+                return candidates[:5]
             return await self._rerank_with_ai(symbol, candle, timeframe, significance, candidates)
         except Exception:
             logger.exception("[NewsCandleMatcher] Error in AI-assisted simple match")
@@ -665,8 +889,8 @@ CANDIDATES:
                 candle_high=candle_high,
                 candle_low=candle_low,
             )
-            significance, candidates = self._prepare_candidates(symbol, candle)
-            if not significance["is_significant"]:
+            significance, candidates = self._prepare_candidates(symbol, candle, "1h")
+            if not candidates:
                 return []
             return candidates
         except Exception:

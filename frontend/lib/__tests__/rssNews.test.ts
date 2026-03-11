@@ -33,6 +33,32 @@ describe("fetchNewsForCandle", () => {
     expect(response.news[0].headline).toBe("Altın yükseldi");
   });
 
+  it("passes the selected locale through to the candle-news endpoint", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        symbol: "XAUUSD",
+        candle: {
+          timestamp: "2026-03-10T19:00:00Z",
+          change_pct: 1.1,
+          range_pct: 1.6,
+          is_significant: true,
+        },
+        news_count: 0,
+        news: [],
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await fetchNewsForCandle("XAUUSD", "2026-03-10T19:00:00Z", 2900, 2910, 2915, 2898, "1h", "de");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("lang=de"),
+      expect.objectContaining({ method: "POST" })
+    );
+  });
+
   it("normalizes the legacy nested candle-news payload shape", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

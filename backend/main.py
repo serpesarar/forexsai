@@ -279,6 +279,7 @@ try:
         dax,
         pattern_engine,
         patterns_stub,
+        claude_news,
         claude_sentiment,
         order_blocks,
         rtyhiim,
@@ -317,6 +318,7 @@ try:
     app.include_router(usoil.router)
     app.include_router(dax.router)
     app.include_router(pattern_engine.router)
+    app.include_router(claude_news.router)
     app.include_router(claude_sentiment.router)
     app.include_router(order_blocks.router)
     app.include_router(rtyhiim.router)
