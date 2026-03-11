@@ -12,8 +12,13 @@ import {
 } from "lightweight-charts";
 import { Activity, RefreshCw, TrendingUp, TrendingDown, Newspaper, X, ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useNewsMarkers, NewsMarker, convertToChartMarkers } from "../hooks/useNewsMarkers";
+import { useNewsMarkers, NewsMarker } from "../hooks/useNewsMarkers";
 import { normalizeCandles } from "../lib/chart/normalizeCandles";
+import {
+  buildCompressedChartCandles,
+  findTimelineChartCandle,
+  mapActualTimestampToChartTime,
+} from "../lib/chart/newsCorrelationTimeline";
 
 interface CandleData {
   timestamp: number;
@@ -186,6 +191,43 @@ export default function LiveChartPanel({
     24,
     5
   );
+  const compressedChartData = useMemo(
+    () => buildCompressedChartCandles(chartData ?? [], timeframe),
+    [chartData, timeframe]
+  );
+  const compressedChartDataRef = useRef(compressedChartData);
+  const mappedNewsMarkers = useMemo(
+    () =>
+      newsMarkers.flatMap((marker) => {
+        const actualTimestamp = Math.floor(new Date(marker.time).getTime() / 1000);
+        const mappedTime = mapActualTimestampToChartTime(actualTimestamp, compressedChartData);
+        if (!Number.isFinite(mappedTime)) {
+          return [];
+        }
+
+        return [{
+          rawMarker: marker,
+          chartMarker: {
+            time: mappedTime as Time,
+            position: marker.position,
+            color: marker.color,
+            shape: marker.shape,
+            text: marker.is_economic_event ? "📊" : marker.urgency === "breaking" ? "🚨" : "📰",
+            size: marker.size,
+          },
+        }];
+      }),
+    [newsMarkers, compressedChartData]
+  );
+  const mappedNewsMarkersRef = useRef(mappedNewsMarkers);
+
+  useEffect(() => {
+    compressedChartDataRef.current = compressedChartData;
+  }, [compressedChartData]);
+
+  useEffect(() => {
+    mappedNewsMarkersRef.current = mappedNewsMarkers;
+  }, [mappedNewsMarkers]);
 
   // Fetch live price every 2 seconds
   useEffect(() => {
@@ -231,6 +273,22 @@ export default function LiveChartPanel({
         timeVisible: true,
         secondsVisible: true,
         borderColor: "rgba(255,255,255,0.1)",
+        tickMarkFormatter: (time: Time) => {
+          const numericTime = typeof time === "number" ? time : Number(time);
+          const candle = findTimelineChartCandle(numericTime, compressedChartDataRef.current);
+          const labelTimestamp = candle?.actualTimestamp ?? numericTime;
+
+          if (!Number.isFinite(labelTimestamp)) {
+            return "";
+          }
+
+          return new Date(labelTimestamp * 1000).toLocaleString("tr-TR", {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        },
       },
       rightPriceScale: {
         borderColor: "rgba(255,255,255,0.1)",
@@ -283,17 +341,21 @@ export default function LiveChartPanel({
     // Click handler for markers
     chart.subscribeClick((param: MouseEventParams) => {
       if (param.point && param.time) {
-        const clickedTime = new Date((param.time as number) * 1000);
-        const timeWindow = 5 * 60 * 1000; // 5 minutes window
+        const clickedTime = param.time as number;
+        const timeWindow = Math.max(
+          1,
+          Math.floor(
+            (compressedChartDataRef.current[1]?.time ?? clickedTime) -
+              (compressedChartDataRef.current[0]?.time ?? clickedTime)
+          )
+        );
 
-        const clickedMarker = newsMarkers.find((m) => {
-          const markerTime = new Date(m.time).getTime();
-          const clickTimeMs = clickedTime.getTime();
-          return Math.abs(markerTime - clickTimeMs) < timeWindow;
+        const clickedMarker = mappedNewsMarkersRef.current.find((m) => {
+          return Math.abs(Number(m.chartMarker.time) - clickedTime) <= timeWindow;
         });
 
         if (clickedMarker) {
-          setSelectedMarker(clickedMarker);
+          setSelectedMarker(clickedMarker.rawMarker);
           setTooltipPosition({ x: param.point.x, y: param.point.y });
         } else {
           setSelectedMarker(null);
@@ -312,7 +374,7 @@ export default function LiveChartPanel({
       chart.remove();
       chartInstanceRef.current = null;
     };
-  }, [height, newsMarkers]);
+  }, [height]);
 
   // Update chart data
   useEffect(() => {
@@ -322,34 +384,34 @@ export default function LiveChartPanel({
     const ema20Series = ema20SeriesRef.current;
     const ema50Series = ema50SeriesRef.current;
 
-    if (!chart || !candleSeries || !volumeSeries || !chartData?.length) return;
+    if (!chart || !candleSeries || !volumeSeries || !compressedChartData.length) return;
 
     try {
-      const candles = chartData.map((d) => ({
-        time: (d.timestamp / 1000) as Time,
+      const candles = compressedChartData.map((d) => ({
+        time: d.time as Time,
         open: d.open,
         high: d.high,
         low: d.low,
         close: d.close,
       }));
 
-      const volumes = chartData.map((d) => ({
-        time: (d.timestamp / 1000) as Time,
+      const volumes = compressedChartData.map((d) => ({
+        time: d.time as Time,
         value: d.volume,
         color: d.close >= d.open ? "rgba(34,197,94,0.4)" : "rgba(239,68,68,0.4)",
       }));
 
-      const closes = chartData.map((d) => d.close);
+      const closes = compressedChartData.map((d) => d.close);
       const ema20Values = calculateEMA(closes, 20);
       const ema50Values = calculateEMA(closes, 50);
 
-      const ema20Data = chartData.map((d, i) => ({
-        time: (d.timestamp / 1000) as Time,
+      const ema20Data = compressedChartData.map((d, i) => ({
+        time: d.time as Time,
         value: ema20Values[i],
       }));
 
-      const ema50Data = chartData.map((d, i) => ({
-        time: (d.timestamp / 1000) as Time,
+      const ema50Data = compressedChartData.map((d, i) => ({
+        time: d.time as Time,
         value: ema50Values[i],
       }));
 
@@ -360,17 +422,7 @@ export default function LiveChartPanel({
 
       // Add news markers
       if (candleSeries && showMarkers && newsMarkers.length > 0) {
-        const chartStartTime = chartData[0].timestamp;
-        const chartEndTime = chartData[chartData.length - 1].timestamp;
-
-        const visibleMarkers = newsMarkers
-          .filter((m) => {
-            const markerTime = new Date(m.time).getTime();
-            return markerTime >= chartStartTime && markerTime <= chartEndTime;
-          })
-          .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
-
-        candleSeries.setMarkers(convertToChartMarkers(visibleMarkers) as any[]);
+        candleSeries.setMarkers(mappedNewsMarkers.map((marker) => marker.chartMarker) as any[]);
       } else if (candleSeries) {
         candleSeries.setMarkers([]);
       }
@@ -379,7 +431,7 @@ export default function LiveChartPanel({
     } catch (err) {
       console.error("Chart data update error:", err);
     }
-  }, [chartData, newsMarkers, showMarkers]);
+  }, [compressedChartData, mappedNewsMarkers, newsMarkers.length, showMarkers]);
 
   // Calculate price change
   const firstCandle = chartData?.[0];

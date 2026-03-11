@@ -8,7 +8,7 @@ export interface TimelineChartCandle extends NormalizableCandle {
 
 export interface TimelineMarkerInput {
   id: string;
-  time: string;
+  time: string | number;
   position: "aboveBar" | "belowBar" | "inBar";
   color: string;
   shape: "circle" | "square" | "arrowUp" | "arrowDown";
@@ -83,12 +83,38 @@ export function mapActualTimestampToChartTime(
   }).time;
 }
 
+export function findTimelineChartCandle(
+  chartTime: number,
+  candles: Array<Pick<TimelineChartCandle, "time" | "actualTimestamp">>
+) {
+  return candles.find((candle) => candle.time === chartTime);
+}
+
+function toActualTimestampSeconds(timestamp: string | number): number | null {
+  if (typeof timestamp === "number") {
+    if (!Number.isFinite(timestamp)) {
+      return null;
+    }
+    return timestamp > 1_000_000_000_000 ? Math.floor(timestamp / 1000) : Math.floor(timestamp);
+  }
+
+  const parsed = new Date(timestamp).getTime();
+  if (!Number.isFinite(parsed)) {
+    return null;
+  }
+
+  return Math.floor(parsed / 1000);
+}
+
 export function buildMappedChartMarkers(
   markers: TimelineMarkerInput[],
   candles: Array<Pick<TimelineChartCandle, "time" | "actualTimestamp">>
 ) {
   return markers.flatMap((marker) => {
-    const actualTimestamp = Math.floor(new Date(marker.time).getTime() / 1000);
+    const actualTimestamp = toActualTimestampSeconds(marker.time);
+    if (!Number.isFinite(actualTimestamp)) {
+      return [];
+    }
     const mappedTime = mapActualTimestampToChartTime(actualTimestamp, candles);
 
     if (!Number.isFinite(mappedTime)) {

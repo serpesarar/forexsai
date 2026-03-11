@@ -15,6 +15,10 @@ import { Activity, TrendingUp, TrendingDown, AlertTriangle, Zap, RefreshCw } fro
 import { calculateAllEMAs, detectProximity } from "../../lib/chart/calculateEMA";
 import type { ProximityAlert } from "../../lib/chart/calculateEMA";
 import { normalizeCandles } from "../../lib/chart/normalizeCandles";
+import {
+  buildCompressedChartCandles,
+  findTimelineChartCandle,
+} from "../../lib/chart/newsCorrelationTimeline";
 import styles from "./neon-chart.module.css";
 
 // ─── Types ────────────────────────────────────────────────────────
@@ -153,6 +157,15 @@ export default function NeonChart({
     refetchInterval: 30000,
     staleTime: 15000,
   });
+  const compressedChartData = useMemo(
+    () => buildCompressedChartCandles(chartData || [], timeframe),
+    [chartData, timeframe]
+  );
+  const compressedChartDataRef = useRef(compressedChartData);
+
+  useEffect(() => {
+    compressedChartDataRef.current = compressedChartData;
+  }, [compressedChartData]);
 
   // ── Live price polling ──
   useEffect(() => {
@@ -266,6 +279,22 @@ export default function NeonChart({
         timeVisible: true,
         secondsVisible: false,
         borderColor: "rgba(0, 224, 198, 0.08)",
+        tickMarkFormatter: (time: Time) => {
+          const numericTime = typeof time === "number" ? time : Number(time);
+          const candle = findTimelineChartCandle(numericTime, compressedChartDataRef.current);
+          const labelTimestamp = candle?.actualTimestamp ?? numericTime;
+
+          if (!Number.isFinite(labelTimestamp)) {
+            return "";
+          }
+
+          return new Date(labelTimestamp * 1000).toLocaleString("tr-TR", {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        },
       },
       rightPriceScale: {
         borderColor: "rgba(0, 224, 198, 0.08)",
@@ -315,8 +344,12 @@ export default function NeonChart({
         | { open: number; high: number; low: number; close: number }
         | undefined;
       if (candle) {
+        const numericTime = typeof param.time === "number" ? param.time : Number(param.time);
+        const timelineCandle = findTimelineChartCandle(numericTime, compressedChartDataRef.current);
+        const displayTimestamp = timelineCandle?.actualTimestamp ?? numericTime;
+
         setOhlcLegend({
-          time: new Date(Number(param.time) * 1000).toLocaleDateString("tr-TR", {
+          time: new Date(displayTimestamp * 1000).toLocaleDateString("tr-TR", {
             day: "2-digit",
             month: "short",
             hour: "2-digit",
@@ -358,19 +391,19 @@ export default function NeonChart({
     const candleSeries = candleSeriesRef.current;
     const volumeSeries = volumeSeriesRef.current;
 
-    if (!chart || !candleSeries || !volumeSeries || !chartData?.length) return;
+    if (!chart || !candleSeries || !volumeSeries || !compressedChartData.length) return;
 
     try {
-      const candles = chartData.map((d) => ({
-        time: (d.timestamp / 1000) as Time,
+      const candles = compressedChartData.map((d) => ({
+        time: d.time as Time,
         open: d.open,
         high: d.high,
         low: d.low,
         close: d.close,
       }));
 
-      const volumes = chartData.map((d) => ({
-        time: (d.timestamp / 1000) as Time,
+      const volumes = compressedChartData.map((d) => ({
+        time: d.time as Time,
         value: d.volume,
         color: d.close >= d.open ? "var(--accent-positive-20)" : "var(--accent-negative-20)",
       }));
@@ -384,11 +417,11 @@ export default function NeonChart({
         const series = emaSeriesRefs.current[period];
         if (!series) continue;
 
-        const emaData = chartData
+        const emaData = compressedChartData
           .map((d, i) => {
             const val = emaResult.values[i];
             if (val === null) return null;
-            return { time: (d.timestamp / 1000) as Time, value: val };
+            return { time: d.time as Time, value: val };
           })
           .filter(Boolean) as { time: Time; value: number }[];
 
@@ -399,7 +432,7 @@ export default function NeonChart({
     } catch (err) {
       console.error("NeonChart data update error:", err);
     }
-  }, [chartData, emaResults, chartReady]);
+  }, [compressedChartData, emaResults, chartReady]);
 
   // ── Derived values ──
   const displayPrice = livePrice || priceInfo?.price || 0;

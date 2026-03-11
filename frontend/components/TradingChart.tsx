@@ -11,6 +11,11 @@ import {
 } from "lightweight-charts";
 import { Maximize2, RefreshCw, Activity, X, TrendingUp } from "lucide-react";
 import { normalizeCandles } from "../lib/chart/normalizeCandles";
+import {
+  buildCompressedChartCandles,
+  findTimelineChartCandle,
+  mapActualTimestampToChartTime,
+} from "../lib/chart/newsCorrelationTimeline";
 
 interface CandleData {
   timestamp: number;
@@ -111,6 +116,27 @@ export default function TradingChart({
     time: string;
   } | null>(null);
   const normalizedData = useMemo(() => normalizeCandles(data, currentTimeframe), [data, currentTimeframe]);
+  const compressedData = useMemo(
+    () => buildCompressedChartCandles(normalizedData, currentTimeframe),
+    [normalizedData, currentTimeframe]
+  );
+  const compressedDataRef = useRef(compressedData);
+  const mappedNewsMarkers = useMemo(
+    () =>
+      newsMarkers.flatMap((marker) => {
+        const mappedTime = mapActualTimestampToChartTime(marker.time, compressedData);
+        if (!Number.isFinite(mappedTime)) {
+          return [];
+        }
+
+        return [{ ...marker, time: mappedTime }];
+      }),
+    [newsMarkers, compressedData]
+  );
+
+  useEffect(() => {
+    compressedDataRef.current = compressedData;
+  }, [compressedData]);
 
   useEffect(() => {
     const onResize = () => {
@@ -161,6 +187,22 @@ export default function TradingChart({
         fixRightEdge: false,
         rightOffset: 12,
         barSpacing: 6,
+        tickMarkFormatter: (time: Time) => {
+          const numericTime = typeof time === "number" ? time : Number(time);
+          const candle = findTimelineChartCandle(numericTime, compressedDataRef.current);
+          const labelTimestamp = candle?.actualTimestamp ?? numericTime;
+
+          if (!Number.isFinite(labelTimestamp)) {
+            return "";
+          }
+
+          return new Date(labelTimestamp * 1000).toLocaleString("tr-TR", {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        },
       },
       rightPriceScale: {
         borderColor: "rgba(255,255,255,0.1)",
@@ -212,12 +254,16 @@ export default function TradingChart({
         | { open: number; high: number; low: number; close: number }
         | undefined;
       if (candle) {
+        const numericTime = typeof param.time === "number" ? param.time : Number(param.time);
+        const timelineCandle = findTimelineChartCandle(numericTime, compressedDataRef.current);
+        const displayTimestamp = timelineCandle?.actualTimestamp ?? numericTime;
+
         setOhlcLegend({
           o: candle.open,
           h: candle.high,
           l: candle.low,
           c: candle.close,
-          time: new Date(Number(param.time) * 1000).toLocaleDateString("tr-TR"),
+          time: new Date(displayTimestamp * 1000).toLocaleDateString("tr-TR"),
         });
       }
     });
@@ -284,12 +330,12 @@ export default function TradingChart({
     const ema20Series = ema20SeriesRef.current;
     const ema50Series = ema50SeriesRef.current;
 
-    if (!chart || !candleSeries || !volumeSeries || !normalizedData.length) return;
+    if (!chart || !candleSeries || !volumeSeries || !compressedData.length) return;
 
     try {
       // Format candle data
-      const candles = normalizedData.map((d) => ({
-        time: (d.timestamp / 1000) as Time,
+      const candles = compressedData.map((d) => ({
+        time: d.time as Time,
         open: d.open,
         high: d.high,
         low: d.low,
@@ -297,24 +343,24 @@ export default function TradingChart({
       }));
 
       // Format volume data
-      const volumes = normalizedData.map((d) => ({
-        time: (d.timestamp / 1000) as Time,
+      const volumes = compressedData.map((d) => ({
+        time: d.time as Time,
         value: d.volume,
         color: d.close >= d.open ? "rgba(34,197,94,0.4)" : "rgba(239,68,68,0.4)",
       }));
 
       // Calculate EMAs
-      const closes = normalizedData.map((d) => d.close);
+      const closes = compressedData.map((d) => d.close);
       const ema20Values = calculateEMA(closes, 20);
       const ema50Values = calculateEMA(closes, 50);
 
-      const ema20Data = normalizedData.map((d, i) => ({
-        time: (d.timestamp / 1000) as Time,
+      const ema20Data = compressedData.map((d, i) => ({
+        time: d.time as Time,
         value: ema20Values[i],
       }));
 
-      const ema50Data = normalizedData.map((d, i) => ({
-        time: (d.timestamp / 1000) as Time,
+      const ema50Data = compressedData.map((d, i) => ({
+        time: d.time as Time,
         value: ema50Values[i],
       }));
 
@@ -329,7 +375,7 @@ export default function TradingChart({
     } catch (err) {
       console.error("Chart data update error:", err);
     }
-  }, [chartReady, normalizedData]);
+  }, [chartReady, compressedData]);
 
   // Apply news markers when they change
   useEffect(() => {
@@ -339,21 +385,13 @@ export default function TradingChart({
 
     try {
       // Clear existing markers if none provided
-      if (!newsMarkers.length) {
+      if (!mappedNewsMarkers.length) {
         candleSeries.setMarkers([]);
         return;
       }
 
-      // Filter markers to only show those within data range
-      const dataStartTime = normalizedData.length > 0 ? normalizedData[0].timestamp / 1000 : 0;
-      const dataEndTime = normalizedData.length > 0 ? normalizedData[normalizedData.length - 1].timestamp / 1000 : Infinity;
-      
-      const visibleMarkers = newsMarkers.filter(m => 
-        m.time >= dataStartTime && m.time <= dataEndTime
-      );
-
       // Format markers for lightweight-charts
-      const formattedMarkers = visibleMarkers.map(m => ({
+      const formattedMarkers = mappedNewsMarkers.map(m => ({
         time: m.time as Time,
         position: m.position,
         color: m.color,
@@ -368,7 +406,7 @@ export default function TradingChart({
     } catch (err) {
       console.error("[TradingChart] Marker update error:", err);
     }
-  }, [newsMarkers, normalizedData, symbol]);
+  }, [mappedNewsMarkers, symbol]);
 
   // Handle marker clicks
   useEffect(() => {
@@ -376,13 +414,13 @@ export default function TradingChart({
     if (!chart || !onMarkerClick) return;
 
     const handleClick = (param: any) => {
-      if (!param.point || !param.time || !newsMarkers.length) return;
+      if (!param.point || !param.time || !mappedNewsMarkers.length) return;
       
       const clickedTime = param.time as number;
-      const timeWindow = 5 * 60; // 5 minutes in seconds
+      const timeWindow = Math.max(1, Math.floor((compressedData[1]?.time ?? clickedTime) - (compressedData[0]?.time ?? clickedTime)));
       
       // Find marker near click time
-      const clickedMarker = newsMarkers.find(m => 
+      const clickedMarker = mappedNewsMarkers.find(m => 
         Math.abs(m.time - clickedTime) < timeWindow
       );
       
@@ -396,7 +434,7 @@ export default function TradingChart({
     return () => {
       chart.unsubscribeClick(handleClick);
     };
-  }, [newsMarkers, onMarkerClick]);
+  }, [mappedNewsMarkers, onMarkerClick, compressedData]);
 
   // Calculate price info
   const latestCandle = normalizedData[normalizedData.length - 1];

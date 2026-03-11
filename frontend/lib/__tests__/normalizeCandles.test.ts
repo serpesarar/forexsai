@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeCandles, toTimestampMs } from "../chart/normalizeCandles";
+import { getTimeframeMs, normalizeCandles, toTimestampMs } from "../chart/normalizeCandles";
 
 describe("normalizeCandles", () => {
   it("normalizes second timestamps to milliseconds and sorts candles", () => {
@@ -66,5 +66,10 @@ describe("normalizeCandles", () => {
     );
 
     expect(candles).toHaveLength(2);
+  });
+
+  it("treats uppercase month timeframes distinctly from minutes", () => {
+    expect(getTimeframeMs("1M")).toBe(30 * 24 * 60 * 60 * 1000);
+    expect(getTimeframeMs("1m")).toBe(60 * 1000);
   });
 });

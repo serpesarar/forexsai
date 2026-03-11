@@ -4,6 +4,7 @@ import {
   buildMappedChartMarkers,
   buildRenderableChartSeries,
   buildTimelineChartCandles,
+  findTimelineChartCandle,
   mapActualTimestampToChartTime,
 } from "../chart/newsCorrelationTimeline";
 
@@ -56,5 +57,26 @@ describe("newsCorrelationTimeline", () => {
   it("returns null for timestamps outside the loaded candle range", () => {
     const mapped = mapActualTimestampToChartTime(Math.floor(Date.UTC(2026, 2, 10, 0, 0) / 1000), candles);
     expect(mapped).toBeNull();
+  });
+
+  it("maps numeric marker timestamps to compressed chart time", () => {
+    const mapped = buildMappedChartMarkers([
+      {
+        id: "news-2",
+        time: Math.floor(Date.UTC(2026, 2, 6, 20, 45) / 1000),
+        position: "belowBar",
+        color: "#0ff",
+        shape: "square",
+        size: 1,
+      },
+    ], candles);
+
+    expect(mapped).toHaveLength(1);
+    expect(mapped[0].time).toBe(candles[1].time);
+  });
+
+  it("can resolve the original candle from compressed chart time", () => {
+    const candle = findTimelineChartCandle(candles[2].time, candles);
+    expect(candle?.actualTimestamp).toBe(candles[2].actualTimestamp);
   });
 });

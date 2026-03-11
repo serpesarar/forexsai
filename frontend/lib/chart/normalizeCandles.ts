@@ -20,8 +20,13 @@ const DEFAULT_OPTIONS: Required<NormalizeCandleOptions> = {
 };
 
 export function getTimeframeMs(timeframe: string): number {
-  const unit = timeframe.slice(-1).toLowerCase();
+  const rawUnit = timeframe.slice(-1);
+  const unit = rawUnit.toLowerCase();
   const value = Number.parseInt(timeframe.slice(0, -1), 10) || 1;
+
+  if (rawUnit === "M") {
+    return value * 30 * 24 * 60 * 60 * 1000;
+  }
 
   switch (unit) {
     case "m":

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time } from "lightweight-charts";
 import { format, addSeconds, addMinutes, addHours, addDays, addMonths, addWeeks, subDays, subMonths } from "date-fns";
@@ -8,7 +8,13 @@ import { Filter, Newspaper, BarChart2 } from "lucide-react";
 import { useNewsCorrelationStore } from "@/lib/stores/newsCorrelationStore";
 import type { EnrichedNews } from "@/types/news-correlation";
 import { fetcher } from "@/lib/api";
-import { useNewsMarkers, convertToChartMarkers } from "@/hooks/useNewsMarkers";
+import { useNewsMarkers } from "@/hooks/useNewsMarkers";
+import { normalizeCandles } from "@/lib/chart/normalizeCandles";
+import {
+  buildCompressedChartCandles,
+  buildMappedChartMarkers,
+  findTimelineChartCandle,
+} from "@/lib/chart/newsCorrelationTimeline";
 
 import { cn } from "@/lib/utils";
 
@@ -16,11 +22,14 @@ import { cn } from "@/lib/utils";
 
 // Type definitions
 interface ChartCandle {
+  timestamp: number;
   time: number;
+  actualTimestamp: number;
   open: number;
   high: number;
   low: number;
   close: number;
+  volume?: number;
 }
 
 // Backend /api/data/ohlcv actual response format
@@ -99,17 +108,8 @@ export default function NewsChartCorrelationPanel() {
       );
 
       if (chartResponse?.data && Array.isArray(chartResponse.data) && chartResponse.data.length > 5) {
-        const processedCandles: ChartCandle[] = chartResponse.data.map((row) => {
-          // Convert timestamp from milliseconds to seconds for lightweight-charts
-          const timeInSeconds = row.timestamp > 1e12 ? Math.floor(row.timestamp / 1000) : row.timestamp;
-          return {
-            time: timeInSeconds,
-            open: row.open,
-            high: row.high,
-            low: row.low,
-            close: row.close,
-          };
-        });
+        const normalizedCandles = normalizeCandles(chartResponse.data, timeframe);
+        const processedCandles: ChartCandle[] = buildCompressedChartCandles(normalizedCandles, timeframe);
         setChartData(processedCandles);
       } else {
         setChartData([]);
@@ -301,6 +301,15 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const { markers: newsMarkers } = useNewsMarkers(symbol, 72, 5);
+  const chartDataRef = useRef(chartData);
+  const mappedNewsMarkers = useMemo(
+    () => buildMappedChartMarkers(newsMarkers, chartData).slice(0, 10),
+    [newsMarkers, chartData]
+  );
+
+  useEffect(() => {
+    chartDataRef.current = chartData;
+  }, [chartData]);
 
   // Initialize chart
   useEffect(() => {
@@ -335,6 +344,17 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
         borderColor: "#334155",
         timeVisible: true,
         secondsVisible: false,
+        tickMarkFormatter: (time: Time) => {
+          const numericTime = typeof time === "number" ? time : Number(time);
+          const candle = findTimelineChartCandle(numericTime, chartDataRef.current);
+          const labelTimestamp = candle?.actualTimestamp ?? numericTime;
+
+          if (!Number.isFinite(labelTimestamp)) {
+            return "";
+          }
+
+          return format(new Date(labelTimestamp * 1000), timeframe === "1d" || timeframe === "1w" || timeframe === "1M" ? "MMM d" : "MMM d, HH:mm");
+        },
       },
     });
 
@@ -386,18 +406,8 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
       return;
     }
 
-    const chartStartTime = chartData[0]?.time || 0;
-    const chartEndTime = chartData[chartData.length - 1]?.time || 0;
-
-    const markers = newsMarkers
-      .filter((marker) => {
-        const eventTime = Math.floor(new Date(marker.time).getTime() / 1000);
-        return eventTime >= chartStartTime && eventTime <= chartEndTime;
-      })
-      .slice(0, 10);
-
-    candlestickSeriesRef.current.setMarkers(convertToChartMarkers(markers) as any);
-  }, [newsMarkers, chartData]);
+    candlestickSeriesRef.current.setMarkers(mappedNewsMarkers as any);
+  }, [mappedNewsMarkers, chartData]);
 
   if (loading) {
     return (
