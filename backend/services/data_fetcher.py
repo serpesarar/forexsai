@@ -39,7 +39,7 @@ async def fetch_30m_candles(symbol: str, limit: int = 300) -> list[dict]:
         return []
 
 
-async def fetch_ohlc_data(symbol: str, timeframe: str = "1h", limit: int = 50) -> list[dict]:
+async def fetch_ohlc_data(symbol: str, timeframe: str = "1h", limit: int = 1500) -> list[dict]:
     """Get OHLC data for any timeframe from DataHub (0 API calls)."""
     try:
         from services.data_hub import get_candles
