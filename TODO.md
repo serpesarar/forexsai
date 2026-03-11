@@ -1,4 +1,9 @@
-- [x] Replace synthetic timeline candles with actual-time candles in News AI chart
-- [x] Keep tick/crosshair formatting aligned with actual timestamps
-- [x] Run critical-path verification for timeframe switches and gap behavior
-- [ ] Summarize results and next deployment steps
+# News AI Panel - Gap Fix & Data Limit
+
+## Tasks
+
+- [x] 1. Fix hardcoded `limit=200` in `page.tsx` → dynamic per timeframe
+- [x] 2. Fix `formatCompressedAxisTime` to use `actualTimestamp` for real dates on X-axis
+- [x] 3. Fix `formatActualChartDisplayTime` to consistently use `actualTimestamp` (already correct)
+- [x] 4. TypeScript build verification — PASS
+- [ ] 5. Commit and push changes

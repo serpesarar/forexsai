@@ -358,12 +358,12 @@ const INITIAL_SYMBOLS: SymbolData[] = [
 ];
 
 const TIMEFRAMES = [
-  { value: "5m", label: "5m" },
-  { value: "15m", label: "15m" },
-  { value: "30m", label: "30m" },
-  { value: "1h", label: "1h" },
-  { value: "4h", label: "4h" },
-  { value: "1d", label: "1D" },
+  { value: "5m", label: "5m", limit: 1000 },
+  { value: "15m", label: "15m", limit: 800 },
+  { value: "30m", label: "30m", limit: 800 },
+  { value: "1h", label: "1h", limit: 720 },
+  { value: "4h", label: "4h", limit: 360 },
+  { value: "1d", label: "1D", limit: 365 },
 ];
 
 const TIMEFRAME_TO_MINUTES: Record<string, number> = {
@@ -673,8 +673,11 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       };
       const apiSymbol = symbolMap[requestedSymbol] || requestedSymbol;
 
+      const tfConfig = TIMEFRAMES.find(t => t.value === requestedTimeframe);
+      const fetchLimit = tfConfig?.limit ?? 720;
+
       const response = await fetcher<OHLCVResponse>(
-        `/api/data/ohlcv?symbol=${apiSymbol}&timeframe=${requestedTimeframe}&limit=200`
+        `/api/data/ohlcv?symbol=${apiSymbol}&timeframe=${requestedTimeframe}&limit=${fetchLimit}`
       );
 
       const isStaleRequest =
@@ -1117,8 +1120,13 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         return "";
       }
 
+      // Look up the actual timestamp from the candle data to show real dates
+      // instead of synthetic evenly-spaced timestamps
+      const candle = findTimelineChartCandle(numericTime, chartDataRef.current);
+      const realTimestamp = candle?.actualTimestamp ?? numericTime;
+
       return format(
-        new Date(numericTime * 1000),
+        new Date(realTimestamp * 1000),
         timeframeRef.current === "1d" ? "MMM d" : "MMM d, HH:mm"
       );
     };
