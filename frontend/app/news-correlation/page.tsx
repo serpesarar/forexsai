@@ -1091,7 +1091,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     if (!chartContainerRef.current || !mounted || chartRef.current) return;
 
     const container = chartContainerRef.current;
-    const formatChartDisplayTime = (time: Time, includeYear = false) => {
+    const formatActualChartDisplayTime = (time: Time, includeYear = false) => {
       const numericTime = typeof time === "number" ? time : Number(time);
       const candle = Number.isFinite(numericTime)
         ? findTimelineChartCandle(numericTime, chartDataRef.current)
@@ -1107,6 +1107,19 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         timeframeRef.current === "1d"
           ? (includeYear ? "MMM d, yyyy" : "MMM d")
           : (includeYear ? "MMM d, yyyy HH:mm" : "MMM d, HH:mm")
+      );
+    };
+
+    const formatCompressedAxisTime = (time: Time) => {
+      const numericTime = typeof time === "number" ? time : Number(time);
+
+      if (!Number.isFinite(numericTime)) {
+        return "";
+      }
+
+      return format(
+        new Date(numericTime * 1000),
+        timeframeRef.current === "1d" ? "MMM d" : "MMM d, HH:mm"
       );
     };
 
@@ -1132,7 +1145,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         scaleMargins: { top: 0.1, bottom: 0.1 }
       },
       localization: {
-        timeFormatter: (time: Time) => formatChartDisplayTime(time, true),
+        timeFormatter: (time: Time) => formatActualChartDisplayTime(time, true),
       },
       timeScale: {
         borderColor: "rgba(255, 255, 255, 0.1)",
@@ -1143,7 +1156,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         rightOffset: 2,
         barSpacing: 8,
         minBarSpacing: 3,
-        tickMarkFormatter: (time: Time) => formatChartDisplayTime(time, false),
+        tickMarkFormatter: (time: Time) => formatCompressedAxisTime(time),
       },
     });
 
