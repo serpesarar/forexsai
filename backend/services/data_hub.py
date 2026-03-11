@@ -525,11 +525,11 @@ DELTA_LIMIT_EOD = 5       # ~5 days of EOD candles
 
 # Full seed limits — sized so EMA200 works on ALL derived timeframes:
 #   5m:  1500 → 15m=500, 30m=250
-#   30m: 800  → 1h=400, 4h=100 (XAUUSD: 30m fetched directly)
+#   30m: 1600 → 1h=800, 4h=200 (XAUUSD: 30m fetched directly)
 #   1h:  800  → 4h=200 (NDX: fetched directly)
 #   EOD: 365  → EMA200 with full year of data
 FULL_SEED_LIMIT_5M = 1500   # ~5.2 days of 5m candles
-FULL_SEED_LIMIT_30M = 800   # ~27 days of 30m candles (XAUUSD)
+FULL_SEED_LIMIT_30M = 1600  # ~54 days of 30m candles (XAUUSD max 1h limit capacity)
 FULL_SEED_LIMIT_1H = 800    # ~114 days of 1h candles
 FULL_SEED_LIMIT_EOD = 365   # ~1 year of daily candles
 
