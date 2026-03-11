@@ -922,11 +922,15 @@ def get_candles(symbol: str, timeframe: str, limit: int = 300) -> List[Dict]:
     if not data:
         return []
     
-    # Filter out zero-volume candles (market closed periods / placeholder candles)
-    # This prevents chart gaps and horizontal lines in the frontend
-    filtered = [c for c in data if c.get("volume", 0) > 0]
+    # Filter out completely invalid candles (all OHLC = 0) but keep zero-volume candles
+    # Zero-volume candles are valid (e.g., low-liquidity periods, weekends for forex)
+    # Removing them causes large data loss and limits visible history
+    filtered = [
+        c for c in data
+        if not (c.get("open", 0) == 0 and c.get("high", 0) == 0 and c.get("low", 0) == 0 and c.get("close", 0) == 0)
+    ]
     
-    # If filtering removes everything (shouldn't happen with valid data), return original
+    # If filtering removes everything, return original
     if not filtered and data:
         return data[-limit:]
     

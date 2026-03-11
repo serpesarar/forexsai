@@ -10,26 +10,19 @@ import type { EnrichedNews } from "@/types/news-correlation";
 import { fetcher } from "@/lib/api";
 import { useNewsMarkers } from "@/hooks/useNewsMarkers";
 import {
-  buildActualTimeChartCandles,
+  buildTimelineChartCandles,
   buildMappedChartMarkers,
   findTimelineChartCandle,
+  type TimelineChartCandle,
 } from "@/lib/chart/newsCorrelationTimeline";
+import NewsDetailModal from "@/components/NewsDetailModal";
 
 import { cn } from "@/lib/utils";
 
 
 
-// Type definitions
-interface ChartCandle {
-  timestamp: number;
-  time: number | string;
-  actualTimestamp: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume?: number;
-}
+// Type definitions — use TimelineChartCandle from the timeline lib
+type ChartCandle = TimelineChartCandle;
 
 // Backend /api/data/ohlcv actual response format
 interface OHLCVResponse {
@@ -103,9 +96,10 @@ export default function NewsChartCorrelationPanel() {
       );
 
       if (chartResponse?.data && Array.isArray(chartResponse.data) && chartResponse.data.length > 5) {
-        // Direct cast without timeline modification/normalization since backend data OHLCV is already 
-        // proper timeframe format. NormalizeCandles fills small gaps aggressively or rounds timestamps.
-        const processedCandles: ChartCandle[] = buildActualTimeChartCandles(chartResponse.data, timeframe);
+        // Use buildTimelineChartCandles to create evenly-spaced time values.
+        // This eliminates weekend/market-closed gaps while preserving actualTimestamp
+        // for correct date display via tickMarkFormatter.
+        const processedCandles: ChartCandle[] = buildTimelineChartCandles(chartResponse.data, timeframe);
         setChartData(processedCandles);
       } else {
         setChartData([]);
@@ -301,27 +295,30 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
   const [clickedNews, setClickedNews] = useState<EnrichedNews | null>(null);
 
   const mappedNewsMarkers = useMemo(() => {
-    return newsMarkers.map((marker) => {
-      const eventTime = typeof marker.time === 'number' ? marker.time : new Date(marker.time).getTime() / 1000;
-      let closestIndex = -1;
-      let minDiff = Infinity;
-      for (let i = 0; i < chartData.length; i++) {
-        const cTime = chartData[i].actualTimestamp || Math.floor(chartData[i].timestamp / 1000);
-        const diff = Math.abs(cTime - eventTime);
-        if (diff < minDiff) {
-          minDiff = diff;
-          closestIndex = i;
-        }
-      }
-      if (closestIndex !== -1) {
-        return {
-          ...marker,
-          time: closestIndex as Time,
-          text: marker.is_economic_event ? "📊" : marker.urgency === "breaking" ? "🚨" : "📰",
-        };
-      }
-      return null;
-    }).filter(Boolean).slice(0, 15);
+    if (!chartData.length || !newsMarkers.length) return [];
+    // Use the library's buildMappedChartMarkers which maps marker timestamps
+    // to the evenly-spaced timeline time values via closest-match on actualTimestamp
+    const mapped = buildMappedChartMarkers(
+      newsMarkers.map((m) => ({
+        id: m.id,
+        time: m.time,
+        position: m.position || "aboveBar",
+        color: m.color || "#a855f7",
+        shape: m.shape || "circle",
+        size: m.size || 1,
+        headline: m.headline,
+        headline_en: m.headline_en,
+        direction: m.direction,
+        score: m.score,
+        urgency: m.urgency,
+        is_economic_event: m.is_economic_event,
+        event_name: m.event_name,
+        reasoning_tr: m.reasoning_tr,
+        url: m.url,
+      })),
+      chartData
+    );
+    return mapped.slice(0, 20);
   }, [newsMarkers, chartData]);
 
   useEffect(() => {
@@ -362,10 +359,11 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
         timeVisible: true,
         secondsVisible: false,
         tickMarkFormatter: (time: Time) => {
-          const index = typeof time === "number" ? time : Number(time);
-          const candle = chartDataRef.current[index];
+          // Find the candle matching this timeline time value
+          const candle = chartDataRef.current.find((c) => c.time === time);
           if (!candle) return "";
-          return format(new Date(candle.timestamp), "MMM d, HH:mm");
+          // Use actualTimestamp (seconds) to display the real date
+          return format(new Date(candle.actualTimestamp * 1000), "MMM d, HH:mm");
         },
       },
     });
@@ -379,9 +377,10 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
       wickDownColor: "#ef4444",
     });
 
-    // Format data
-    const formattedData = chartData.map((candle, index) => ({
-      time: index as Time, // index bazli kesintisiz verisyon
+    // Format data — use the evenly-spaced `time` from buildTimelineChartCandles
+    // This eliminates gaps while keeping actualTimestamp for date display
+    const formattedData = chartData.map((candle) => ({
+      time: candle.time as Time,
       open: candle.open,
       high: candle.high,
       low: candle.low,
@@ -429,21 +428,20 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
       // Validate click event
       if (param.time === undefined || !param.point) return;
       
-      const index = param.time as number;
-      const clickedCandle = chartDataRef.current[index];
+      // Find the candle using findTimelineChartCandle (matches on timeline time)
+      const clickedCandle = findTimelineChartCandle(param.time, chartDataRef.current);
       if (!clickedCandle) return;
       
-      const clickedTimeMs = clickedCandle.timestamp;
+      // Use actualTimestamp (seconds) for news matching
+      const clickedTimeSec = clickedCandle.actualTimestamp;
       
-      // Look for a correlating event
+      // Look for a correlating event with ±45 minute tolerance
       const relatedEvent = events.find(e => {
-        const eventTimeMs = new Date(e.timestamp).getTime();
-        // Set tolerance for clicking a marker (e.g., 45 minutes)
-        return Math.abs(eventTimeMs - clickedTimeMs) < 45 * 60 * 1000;
+        const eventTimeSec = Math.floor(new Date(e.timestamp).getTime() / 1000);
+        return Math.abs(eventTimeSec - clickedTimeSec) < 45 * 60;
       });
       
       if (relatedEvent) {
-        console.log("Tıklanan mumdaki haber:", relatedEvent);
         setClickedNews(relatedEvent);
       }
     };
@@ -486,29 +484,12 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
       <div className="lg:col-span-2 relative">
         <div ref={chartContainerRef} className="w-full h-[500px]" />
         
-        {/* Clicked News Modal Overlay */}
-        {clickedNews && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 border border-purple-500/50 p-6 rounded-xl shadow-2xl z-50 max-w-md w-full">
-            <div className="flex justify-between items-start mb-4">
-              <h4 className="text-white font-bold">{clickedNews.headline}</h4>
-              <button onClick={() => setClickedNews(null)} className="text-slate-400 hover:text-white px-2">✕</button>
-            </div>
-            <p className="text-slate-300 text-sm mb-4 line-clamp-5">{clickedNews.content}</p>
-            <div className="flex items-center justify-between text-xs mt-2">
-              <span className="text-slate-500">{format(new Date(clickedNews.timestamp), "MMM d, HH:mm")}</span>
-              <div className="flex gap-2">
-                <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-400 rounded">
-                  AI Confidence: {Math.round(clickedNews.aiConfidence)}%
-                </span>
-                {clickedNews.url && (
-                  <a href={clickedNews.url} target="_blank" rel="noreferrer" className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30">
-                    Source
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* News Detail Modal (Mrktedge.ai style) */}
+        <NewsDetailModal
+          news={clickedNews}
+          isOpen={!!clickedNews}
+          onClose={() => setClickedNews(null)}
+        />
       </div>
 
       {/* News Sidebar */}
