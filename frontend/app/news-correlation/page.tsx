@@ -15,7 +15,7 @@ import { fetcher } from "@/lib/api";
 import { buildWebSocketUrl } from "@/lib/api/base";
 import { fetchNewsForCandle, MatchedNewsItem } from "@/lib/api/rssNews";
 import { normalizeCandles } from "@/lib/chart/normalizeCandles";
-import { buildTimelineChartCandles, buildRenderableChartSeries, buildMappedChartMarkers } from "@/lib/chart/newsCorrelationTimeline";
+import { buildTimelineChartCandles, buildRenderableChartSeries, buildMappedChartMarkers, findTimelineChartCandle } from "@/lib/chart/newsCorrelationTimeline";
 import { useNewsMarkers } from "@/hooks/useNewsMarkers";
 import Link from "next/link";
 import type { EnrichedNews } from "@/types/news-correlation";
@@ -1091,6 +1091,24 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     if (!chartContainerRef.current || !mounted || chartRef.current) return;
 
     const container = chartContainerRef.current;
+    const formatChartDisplayTime = (time: Time, includeYear = false) => {
+      const numericTime = typeof time === "number" ? time : Number(time);
+      const candle = Number.isFinite(numericTime)
+        ? findTimelineChartCandle(numericTime, chartDataRef.current)
+        : undefined;
+      const timestamp = candle?.actualTimestamp ?? numericTime;
+
+      if (!Number.isFinite(timestamp)) {
+        return "";
+      }
+
+      return format(
+        new Date(timestamp * 1000),
+        timeframeRef.current === "1d"
+          ? (includeYear ? "MMM d, yyyy" : "MMM d")
+          : (includeYear ? "MMM d, yyyy HH:mm" : "MMM d, HH:mm")
+      );
+    };
 
     const chart = createChart(container, {
       width: container.clientWidth,
@@ -1113,6 +1131,9 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         borderColor: "rgba(255, 255, 255, 0.1)",
         scaleMargins: { top: 0.1, bottom: 0.1 }
       },
+      localization: {
+        timeFormatter: (time: Time) => formatChartDisplayTime(time, true),
+      },
       timeScale: {
         borderColor: "rgba(255, 255, 255, 0.1)",
         timeVisible: true,
@@ -1122,20 +1143,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         rightOffset: 2,
         barSpacing: 8,
         minBarSpacing: 3,
-        tickMarkFormatter: (time: Time) => {
-          const numericTime = typeof time === "number" ? time : Number(time);
-          const candle = chartDataRef.current.find((entry) => entry.time === numericTime);
-          const timestamp = candle?.actualTimestamp ?? numericTime;
-
-          if (!Number.isFinite(timestamp)) {
-            return "";
-          }
-
-          return format(
-            new Date(timestamp * 1000),
-            timeframeRef.current === "1d" ? "MMM d" : "MMM d, HH:mm"
-          );
-        },
+        tickMarkFormatter: (time: Time) => formatChartDisplayTime(time, false),
       },
     });
 
@@ -1159,7 +1167,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         return;
       }
 
-      const candle = chartDataRef.current.find((entry) => entry.time === time);
+      const candle = findTimelineChartCandle(time, chartDataRef.current);
 
       if (candle) {
         const priceChange = ((candle.close - candle.open) / candle.open) * 100;

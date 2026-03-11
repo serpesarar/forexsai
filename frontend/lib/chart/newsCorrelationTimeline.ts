@@ -91,10 +91,10 @@ export function mapActualTimestampToChartTime(
   }).time;
 }
 
-export function findTimelineChartCandle(
+export function findTimelineChartCandle<T extends Pick<TimelineChartCandle, "time" | "actualTimestamp">>(
   chartTime: number,
-  candles: Array<Pick<TimelineChartCandle, "time" | "actualTimestamp">>
-) {
+  candles: T[]
+): T | undefined {
   return candles.find((candle) => candle.time === chartTime);
 }
 
