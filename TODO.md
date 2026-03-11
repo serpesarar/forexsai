@@ -6,4 +6,4 @@
 - [x] 2. Fix `formatCompressedAxisTime` to use `actualTimestamp` for real dates on X-axis
 - [x] 3. Fix `formatActualChartDisplayTime` to consistently use `actualTimestamp` (already correct)
 - [x] 4. TypeScript build verification — PASS
-- [ ] 5. Commit and push changes
+- [x] 5. Commit and push changes — merged to main
