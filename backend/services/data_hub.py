@@ -225,7 +225,8 @@ async def _fetch_yahoo_candles(yahoo_symbol: str, interval: str, limit: int) -> 
     elif interval in ("1d", "eod"): yf_interval = "1d"
     
     yf_range = "5d"
-    if yf_interval == "60m": yf_range = "1mo"
+    if yf_interval == "1m": yf_range = "7d"
+    elif yf_interval in ("5m", "15m", "30m", "60m"): yf_range = "60d"
     elif yf_interval == "1d": yf_range = "2y"
     
     headers = {'User-Agent': 'Mozilla/5.0'}
@@ -451,10 +452,31 @@ def _resample(candles: List[Dict], period: int) -> List[Dict]:
     if not candles or len(candles) < period:
         return []
     result = []
-    for i in range(0, len(candles) - period + 1, period):
+    
+    # Estimate base interval from first few candles
+    base_interval = 0
+    if len(candles) > 1:
+        base_interval = candles[1].get("timestamp", 0) - candles[0].get("timestamp", 0)
+        if base_interval <= 0:
+            base_interval = 5 * 60 * 1000 # Default to 5m
+
+    i = 0
+    while i <= len(candles) - period:
         group = candles[i:i + period]
-        if not group:
+        
+        # Prevent merging across weekends or large missing data gaps
+        has_gap = False
+        for j in range(len(group) - 1):
+            diff = group[j+1].get("timestamp", 0) - group[j].get("timestamp", 0)
+            if diff > base_interval * 4: # Gap larger than 4 missing candles is rejected
+                has_gap = True
+                break
+                
+        if has_gap:
+            # Step forward by 1 index so we decouple the gap border
+            i += 1
             continue
+
         result.append({
             "timestamp": group[0].get("timestamp", 0),
             "date": group[0].get("date", ""),
@@ -464,6 +486,8 @@ def _resample(candles: List[Dict], period: int) -> List[Dict]:
             "close": group[-1].get("close", 0),
             "volume": sum(c.get("volume", 0) for c in group),
         })
+        i += period
+
     return result
 
 

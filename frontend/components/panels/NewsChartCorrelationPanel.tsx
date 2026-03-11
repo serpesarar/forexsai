@@ -303,20 +303,20 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
   const mappedNewsMarkers = useMemo(() => {
     return newsMarkers.map((marker) => {
       const eventTime = typeof marker.time === 'number' ? marker.time : new Date(marker.time).getTime() / 1000;
-      let closestCandleTime: number | null = null;
+      let closestIndex = -1;
       let minDiff = Infinity;
       for (let i = 0; i < chartData.length; i++) {
         const cTime = chartData[i].actualTimestamp || Math.floor(chartData[i].timestamp / 1000);
         const diff = Math.abs(cTime - eventTime);
         if (diff < minDiff) {
           minDiff = diff;
-          closestCandleTime = cTime;
+          closestIndex = i;
         }
       }
-      if (closestCandleTime !== null) {
+      if (closestIndex !== -1) {
         return {
           ...marker,
-          time: closestCandleTime as Time,
+          time: closestIndex as Time,
           text: marker.is_economic_event ? "📊" : marker.urgency === "breaking" ? "🚨" : "📰",
         };
       }
@@ -362,9 +362,10 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
         timeVisible: true,
         secondsVisible: false,
         tickMarkFormatter: (time: Time) => {
-          const timestampNum = typeof time === "number" ? time : Number(time);
-          if (!Number.isFinite(timestampNum)) return "";
-          return format(new Date(timestampNum * 1000), "MMM d, HH:mm");
+          const index = typeof time === "number" ? time : Number(time);
+          const candle = chartDataRef.current[index];
+          if (!candle) return "";
+          return format(new Date(candle.timestamp), "MMM d, HH:mm");
         },
       },
     });
@@ -379,8 +380,8 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
     });
 
     // Format data
-    const formattedData = chartData.map((candle) => ({
-      time: Math.floor(candle.timestamp / 1000) as Time, // Gerçek UNIX timestamp'i
+    const formattedData = chartData.map((candle, index) => ({
+      time: index as Time, // index bazli kesintisiz verisyon
       open: candle.open,
       high: candle.high,
       low: candle.low,
@@ -428,7 +429,11 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
       // Validate click event
       if (param.time === undefined || !param.point) return;
       
-      const clickedTimeMs = (param.time as number) * 1000;
+      const index = param.time as number;
+      const clickedCandle = chartDataRef.current[index];
+      if (!clickedCandle) return;
+      
+      const clickedTimeMs = clickedCandle.timestamp;
       
       // Look for a correlating event
       const relatedEvent = events.find(e => {
