@@ -303,20 +303,20 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
   const mappedNewsMarkers = useMemo(() => {
     return newsMarkers.map((marker) => {
       const eventTime = typeof marker.time === 'number' ? marker.time : new Date(marker.time).getTime() / 1000;
-      let closestIndex = -1;
+      let closestCandleTime: number | null = null;
       let minDiff = Infinity;
       for (let i = 0; i < chartData.length; i++) {
         const cTime = chartData[i].actualTimestamp || Math.floor(chartData[i].timestamp / 1000);
         const diff = Math.abs(cTime - eventTime);
         if (diff < minDiff) {
           minDiff = diff;
-          closestIndex = i;
+          closestCandleTime = cTime;
         }
       }
-      if (closestIndex !== -1) {
+      if (closestCandleTime !== null) {
         return {
           ...marker,
-          time: closestIndex as Time,
+          time: closestCandleTime as Time,
           text: marker.is_economic_event ? "📊" : marker.urgency === "breaking" ? "🚨" : "📰",
         };
       }
@@ -362,10 +362,9 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
         timeVisible: true,
         secondsVisible: false,
         tickMarkFormatter: (time: Time) => {
-          const index = typeof time === "number" ? time : Number(time);
-          const candle = chartDataRef.current[index];
-          if (!candle) return "";
-          return format(new Date(candle.timestamp), "MMM d, HH:mm");
+          const timestampNum = typeof time === "number" ? time : Number(time);
+          if (!Number.isFinite(timestampNum)) return "";
+          return format(new Date(timestampNum * 1000), "MMM d, HH:mm");
         },
       },
     });
@@ -380,8 +379,8 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
     });
 
     // Format data
-    const formattedData = chartData.map((candle, index) => ({
-      time: index as Time, // index bazli kesintisiz verisyon
+    const formattedData = chartData.map((candle) => ({
+      time: Math.floor(candle.timestamp / 1000) as Time, // Gerçek UNIX timestamp'i
       open: candle.open,
       high: candle.high,
       low: candle.low,
@@ -429,11 +428,7 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
       // Validate click event
       if (param.time === undefined || !param.point) return;
       
-      const index = param.time as number;
-      const clickedCandle = chartDataRef.current[index];
-      if (!clickedCandle) return;
-      
-      const clickedTimeMs = clickedCandle.timestamp;
+      const clickedTimeMs = (param.time as number) * 1000;
       
       // Look for a correlating event
       const relatedEvent = events.find(e => {
