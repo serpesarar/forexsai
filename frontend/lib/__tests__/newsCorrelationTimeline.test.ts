@@ -18,8 +18,8 @@ const candles = buildTimelineChartCandles([
 describe("newsCorrelationTimeline", () => {
   it("keeps actual timestamps while compressing chart spacing", () => {
     expect(candles[0].time).toBe(Math.floor(Date.UTC(2026, 2, 6, 20, 0) / 1000));
-    expect(candles[1].time - candles[0].time).toBe(60 * 60);
-    expect(candles[2].time - candles[1].time).toBe(60 * 60);
+    expect(Number(candles[1].time) - Number(candles[0].time)).toBe(60 * 60);
+    expect(Number(candles[2].time) - Number(candles[1].time)).toBe(60 * 60);
     expect(candles[2].actualTimestamp).toBe(Math.floor(Date.UTC(2026, 2, 9, 13, 0) / 1000));
   });
 

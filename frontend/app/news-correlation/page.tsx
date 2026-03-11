@@ -688,7 +688,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
       if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
         const normalizedCandles = normalizeCandles(response.data, requestedTimeframe);
-        const processedCandles: ChartCandle[] = buildTimelineChartCandles(normalizedCandles, requestedTimeframe);
+        const processedCandles: ChartCandle[] = buildTimelineChartCandles(normalizedCandles, requestedTimeframe) as unknown as ChartCandle[];
 
         console.log(`[Chart] Loaded ${processedCandles.length} candles for ${requestedSymbol}`);
         setChartData(processedCandles);

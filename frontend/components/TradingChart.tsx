@@ -129,7 +129,7 @@ export default function TradingChart({
           return [];
         }
 
-        return [{ ...marker, time: mappedTime }];
+        return [{ ...marker, time: mappedTime as number }];
       }),
     [newsMarkers, compressedData]
   );
@@ -417,11 +417,11 @@ export default function TradingChart({
       if (!param.point || !param.time || !mappedNewsMarkers.length) return;
       
       const clickedTime = param.time as number;
-      const timeWindow = Math.max(1, Math.floor((compressedData[1]?.time ?? clickedTime) - (compressedData[0]?.time ?? clickedTime)));
+      const timeWindow = Math.max(1, Math.floor((Number(compressedData[1]?.time) || clickedTime) - (Number(compressedData[0]?.time) || clickedTime)));
       
       // Find marker near click time
       const clickedMarker = mappedNewsMarkers.find(m => 
-        Math.abs(m.time - clickedTime) < timeWindow
+        Math.abs(Number(m.time) - clickedTime) < timeWindow
       );
       
       if (clickedMarker) {

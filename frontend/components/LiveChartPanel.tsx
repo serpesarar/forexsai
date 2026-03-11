@@ -345,8 +345,8 @@ export default function LiveChartPanel({
         const timeWindow = Math.max(
           1,
           Math.floor(
-            (compressedChartDataRef.current[1]?.time ?? clickedTime) -
-              (compressedChartDataRef.current[0]?.time ?? clickedTime)
+            (Number(compressedChartDataRef.current[1]?.time) || clickedTime) -
+              (Number(compressedChartDataRef.current[0]?.time) || clickedTime)
           )
         );
 
