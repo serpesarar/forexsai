@@ -862,6 +862,9 @@ def get_candles(symbol: str, timeframe: str, limit: int = 300) -> List[Dict]:
     
     Supported timeframes: 1m, 5m, 15m, 30m, 1h, 4h, 1d/eod
     Also accepts: M1, M5, M15, M30, H1, H4, D1
+    
+    Note: Filters out zero-volume placeholder candles (market closed periods)
+    to prevent chart gaps in the frontend.
     """
     tf = timeframe.lower().strip()
     
@@ -895,7 +898,19 @@ def get_candles(symbol: str, timeframe: str, limit: int = 300) -> List[Dict]:
                     data = val.get("candles", [])
                     break
     
-    return data[-limit:] if data else []
+    if not data:
+        return []
+    
+    # Filter out zero-volume placeholder candles (market closed periods)
+    # This prevents chart gaps in the frontend
+    filtered_data = [c for c in data if c.get("volume", 0) > 0]
+    
+    # If filtering removes all data (shouldn't happen with real data),
+    # return original data to avoid breaking the chart
+    if not filtered_data and data:
+        return data[-limit:]
+    
+    return filtered_data[-limit:] if filtered_data else []
 
 
 def get_macro() -> Dict[str, Any]:

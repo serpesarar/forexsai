@@ -108,8 +108,15 @@ export default function NewsChartCorrelationPanel() {
       );
 
       if (chartResponse?.data && Array.isArray(chartResponse.data) && chartResponse.data.length > 5) {
-        const normalizedCandles = normalizeCandles(chartResponse.data, timeframe);
-        const processedCandles: ChartCandle[] = buildCompressedChartCandles(normalizedCandles, timeframe);
+        // Normalize candles with gap filling enabled to handle market closed periods
+        const normalizedCandles = normalizeCandles(chartResponse.data, timeframe, {
+          fillSmallGaps: true,
+          maxSyntheticCandles: 100,  // Handle overnight (17.5h) and weekend (64.5h) gaps
+          syntheticWickRatio: 0.0001,
+        });
+        // Filter out any remaining zero-volume candles (market closed periods)
+        const validCandles = normalizedCandles.filter(c => (c.volume ?? 0) > 0);
+        const processedCandles: ChartCandle[] = buildCompressedChartCandles(validCandles, timeframe);
         setChartData(processedCandles);
       } else {
         setChartData([]);
@@ -344,16 +351,14 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
         borderColor: "#334155",
         timeVisible: true,
         secondsVisible: false,
+        // Use simple time-based formatter to avoid gaps from market-closed periods
         tickMarkFormatter: (time: Time) => {
           const numericTime = typeof time === "number" ? time : Number(time);
-          const candle = findTimelineChartCandle(numericTime, chartDataRef.current);
-          const labelTimestamp = candle?.actualTimestamp ?? numericTime;
-
-          if (!Number.isFinite(labelTimestamp)) {
+          if (!Number.isFinite(numericTime)) {
             return "";
           }
-
-          return format(new Date(labelTimestamp * 1000), timeframe === "1d" || timeframe === "1w" || timeframe === "1M" ? "MMM d" : "MMM d, HH:mm");
+          // Use the chart time (compressed timeline) for consistent spacing
+          return format(new Date(numericTime * 1000), timeframe === "1d" || timeframe === "1w" || timeframe === "1M" ? "MMM d" : "MMM d, HH:mm");
         },
       },
     });
