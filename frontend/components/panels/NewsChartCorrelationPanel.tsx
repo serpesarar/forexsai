@@ -48,15 +48,11 @@ interface OHLCVResponse {
 
 // Timeframe configuration
 const timeframes = [
-  { value: "1m", label: "1m", getLimit: () => 200 },
-  { value: "5m", label: "5m", getLimit: () => 200 },
-  { value: "15m", label: "15m", getLimit: () => 200 },
-  { value: "30m", label: "30m", getLimit: () => 200 },
-  { value: "1h", label: "1h", getLimit: () => 200 },
-  { value: "4h", label: "4h", getLimit: () => 200 },
-  { value: "1d", label: "1D", getLimit: () => 365 },
-  { value: "1w", label: "1W", getLimit: () => 104 },
-  { value: "1M", label: "1M", getLimit: () => 60 },
+  { value: "5m", label: "5m", getLimit: () => 1000 },
+  { value: "15m", label: "15m", getLimit: () => 800 },
+  { value: "30m", label: "30m", getLimit: () => 800 },
+  { value: "1h", label: "1h", getLimit: () => 720 },
+  { value: "4h", label: "4h", getLimit: () => 360 },
 ] as const;
 
 type TimeframeValue = typeof timeframes[number]["value"];
@@ -302,10 +298,31 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const { markers: newsMarkers } = useNewsMarkers(symbol, 72, 5);
   const chartDataRef = useRef(chartData);
-  const mappedNewsMarkers = useMemo(
-    () => buildMappedChartMarkers(newsMarkers, chartData).slice(0, 10),
-    [newsMarkers, chartData]
-  );
+  const [clickedNews, setClickedNews] = useState<EnrichedNews | null>(null);
+
+  const mappedNewsMarkers = useMemo(() => {
+    return newsMarkers.map((marker) => {
+      const eventTime = typeof marker.time === 'number' ? marker.time : new Date(marker.time).getTime() / 1000;
+      let closestIndex = -1;
+      let minDiff = Infinity;
+      for (let i = 0; i < chartData.length; i++) {
+        const cTime = chartData[i].actualTimestamp || Math.floor(chartData[i].timestamp / 1000);
+        const diff = Math.abs(cTime - eventTime);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestIndex = i;
+        }
+      }
+      if (closestIndex !== -1) {
+        return {
+          ...marker,
+          time: closestIndex as Time,
+          text: marker.is_economic_event ? "📊" : marker.urgency === "breaking" ? "🚨" : "📰",
+        };
+      }
+      return null;
+    }).filter(Boolean).slice(0, 15);
+  }, [newsMarkers, chartData]);
 
   useEffect(() => {
     chartDataRef.current = chartData;
@@ -345,15 +362,10 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
         timeVisible: true,
         secondsVisible: false,
         tickMarkFormatter: (time: Time) => {
-          const numericTime = typeof time === "number" ? time : Number(time);
-          const candle = findTimelineChartCandle(numericTime, chartDataRef.current);
-          const labelTimestamp = candle?.actualTimestamp ?? numericTime;
-
-          if (!Number.isFinite(labelTimestamp)) {
-            return "";
-          }
-
-          return format(new Date(labelTimestamp * 1000), timeframe === "1d" || timeframe === "1w" || timeframe === "1M" ? "MMM d" : "MMM d, HH:mm");
+          const index = typeof time === "number" ? time : Number(time);
+          const candle = chartDataRef.current[index];
+          if (!candle) return "";
+          return format(new Date(candle.timestamp), "MMM d, HH:mm");
         },
       },
     });
@@ -368,8 +380,8 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
     });
 
     // Format data
-    const formattedData = chartData.map((candle) => ({
-      time: candle.time as Time,
+    const formattedData = chartData.map((candle, index) => ({
+      time: index as Time, // index bazli kesintisiz verisyon
       open: candle.open,
       high: candle.high,
       low: candle.low,
@@ -409,6 +421,40 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
     candlestickSeriesRef.current.setMarkers(mappedNewsMarkers as any);
   }, [mappedNewsMarkers, chartData]);
 
+  // Handle click events specifically for opening modals
+  useEffect(() => {
+    if (!chartRef.current || !candlestickSeriesRef.current || chartData.length === 0) return;
+
+    const handleClick = (param: any) => {
+      // Validate click event
+      if (param.time === undefined || !param.point) return;
+      
+      const index = param.time as number;
+      const clickedCandle = chartDataRef.current[index];
+      if (!clickedCandle) return;
+      
+      const clickedTimeMs = clickedCandle.timestamp;
+      
+      // Look for a correlating event
+      const relatedEvent = events.find(e => {
+        const eventTimeMs = new Date(e.timestamp).getTime();
+        // Set tolerance for clicking a marker (e.g., 45 minutes)
+        return Math.abs(eventTimeMs - clickedTimeMs) < 45 * 60 * 1000;
+      });
+      
+      if (relatedEvent) {
+        console.log("Tıklanan mumdaki haber:", relatedEvent);
+        setClickedNews(relatedEvent);
+      }
+    };
+
+    chartRef.current.subscribeClick(handleClick);
+    
+    return () => {
+      chartRef.current?.unsubscribeClick(handleClick);
+    };
+  }, [events, chartData]);
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -437,8 +483,32 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       {/* Chart */}
-      <div className="lg:col-span-2">
+      <div className="lg:col-span-2 relative">
         <div ref={chartContainerRef} className="w-full h-[500px]" />
+        
+        {/* Clicked News Modal Overlay */}
+        {clickedNews && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 border border-purple-500/50 p-6 rounded-xl shadow-2xl z-50 max-w-md w-full">
+            <div className="flex justify-between items-start mb-4">
+              <h4 className="text-white font-bold">{clickedNews.headline}</h4>
+              <button onClick={() => setClickedNews(null)} className="text-slate-400 hover:text-white px-2">✕</button>
+            </div>
+            <p className="text-slate-300 text-sm mb-4 line-clamp-5">{clickedNews.content}</p>
+            <div className="flex items-center justify-between text-xs mt-2">
+              <span className="text-slate-500">{format(new Date(clickedNews.timestamp), "MMM d, HH:mm")}</span>
+              <div className="flex gap-2">
+                <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-400 rounded">
+                  AI Confidence: {Math.round(clickedNews.aiConfidence)}%
+                </span>
+                {clickedNews.url && (
+                  <a href={clickedNews.url} target="_blank" rel="noreferrer" className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30">
+                    Source
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* News Sidebar */}
