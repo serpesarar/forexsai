@@ -16,8 +16,8 @@ interface NormalizeCandleOptions {
 const REMAINDER_GRANULARITY_MS = 60 * 1000;
 
 const DEFAULT_OPTIONS: Required<NormalizeCandleOptions> = {
-  fillSmallGaps: true,
-  maxSyntheticCandles: 50,  // Increased to handle overnight gaps (17.5h) and weekend gaps (64.5h)
+  fillSmallGaps: false,
+  maxSyntheticCandles: 10,
   syntheticWickRatio: 0.0001,
 };
 
