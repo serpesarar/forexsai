@@ -25,89 +25,41 @@ export interface TimelineMarkerInput {
 }
 
 export type TimelineRenderablePoint =
-  | Omit<TimelineChartCandle, "timestamp" | "actualTimestamp" | "priceChange" | "volume">
-  | { time: number };
+  Omit<TimelineChartCandle, "timestamp" | "actualTimestamp" | "priceChange" | "volume">;
 
-function isWeekendGap(previousTimestampMs: number, currentTimestampMs: number): boolean {
-  const previous = new Date(previousTimestampMs);
-  const current = new Date(currentTimestampMs);
-  const gapHours = (currentTimestampMs - previousTimestampMs) / (60 * 60 * 1000);
-  return gapHours >= 36 || previous.getUTCDay() > current.getUTCDay();
-}
-
-function usesSessionGaps(symbol: string): boolean {
-  return ["NDX", "DAX", "VIX"].includes(symbol.toUpperCase());
-}
-
-function shouldPreserveGap(symbol: string, previousTimestampMs: number, currentTimestampMs: number, timeframeMs: number): boolean {
-  const gapMs = currentTimestampMs - previousTimestampMs;
-  if (gapMs <= timeframeMs * 1.5) {
-    return false;
-  }
-  if (isWeekendGap(previousTimestampMs, currentTimestampMs)) {
-    return true;
-  }
-  if (!usesSessionGaps(symbol)) {
-    return false;
-  }
-  return gapMs >= Math.max(timeframeMs * 4, 8 * 60 * 60 * 1000);
-}
-
-export function buildTimelineChartCandles(candles: NormalizableCandle[]): TimelineChartCandle[] {
-  return candles.map((candle) => {
-    const actualTimestamp = Math.floor(candle.timestamp / 1000);
-    return {
-      timestamp: candle.timestamp,
-      time: actualTimestamp,
-      actualTimestamp,
-      open: candle.open,
-      high: candle.high,
-      low: candle.low,
-      close: candle.close,
-      volume: candle.volume,
-      priceChange: candle.open !== 0 ? ((candle.close - candle.open) / candle.open) * 100 : 0,
-    };
-  });
-}
-
-export function buildRenderableChartSeries(
-  candles: TimelineChartCandle[],
-  timeframe: string,
-  symbol: string
-): TimelineRenderablePoint[] {
+export function buildTimelineChartCandles(candles: NormalizableCandle[], timeframe: string): TimelineChartCandle[] {
   if (!candles.length) {
     return [];
   }
 
-  const timeframeMs = getTimeframeMs(timeframe);
-  const series: TimelineRenderablePoint[] = [];
+  const stepSeconds = Math.max(60, Math.floor(getTimeframeMs(timeframe) / 1000));
+  const firstActualTimestamp = Math.floor(candles[0].timestamp / 1000);
 
-  for (let index = 0; index < candles.length; index += 1) {
-    const candle = candles[index];
-    series.push({
-      time: candle.time,
-      open: candle.open,
-      high: candle.high,
-      low: candle.low,
-      close: candle.close,
-    });
+  return candles.map((candle, index) => ({
+    timestamp: candle.timestamp,
+    time: firstActualTimestamp + index * stepSeconds,
+    actualTimestamp: Math.floor(candle.timestamp / 1000),
+    open: candle.open,
+    high: candle.high,
+    low: candle.low,
+    close: candle.close,
+    volume: candle.volume,
+    priceChange: candle.open !== 0 ? ((candle.close - candle.open) / candle.open) * 100 : 0,
+  }));
+}
 
-    const next = candles[index + 1];
-    if (!next) {
-      continue;
-    }
-
-    if (!shouldPreserveGap(symbol, candle.timestamp, next.timestamp, timeframeMs)) {
-      continue;
-    }
-
-    const gapBars = Math.min(96, Math.max(0, Math.round((next.timestamp - candle.timestamp) / timeframeMs) - 1));
-    for (let gapIndex = 1; gapIndex <= gapBars; gapIndex += 1) {
-      series.push({ time: Math.floor((candle.timestamp + gapIndex * timeframeMs) / 1000) });
-    }
-  }
-
-  return series;
+export function buildRenderableChartSeries(
+  candles: TimelineChartCandle[],
+  _timeframe: string,
+  _symbol: string
+): TimelineRenderablePoint[] {
+  return candles.map((candle) => ({
+    time: candle.time,
+    open: candle.open,
+    high: candle.high,
+    low: candle.low,
+    close: candle.close,
+  }));
 }
 
 export function mapActualTimestampToChartTime(

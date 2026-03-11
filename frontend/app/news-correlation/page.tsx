@@ -15,7 +15,7 @@ import { fetcher } from "@/lib/api";
 import { buildWebSocketUrl } from "@/lib/api/base";
 import { fetchNewsForCandle, MatchedNewsItem } from "@/lib/api/rssNews";
 import { normalizeCandles } from "@/lib/chart/normalizeCandles";
-import { buildRenderableChartSeries, buildTimelineChartCandles, buildMappedChartMarkers, type TimelineRenderablePoint } from "@/lib/chart/newsCorrelationTimeline";
+import { buildRenderableChartSeries, buildTimelineChartCandles, buildMappedChartMarkers } from "@/lib/chart/newsCorrelationTimeline";
 import { useNewsMarkers } from "@/hooks/useNewsMarkers";
 import Link from "next/link";
 import type { EnrichedNews } from "@/types/news-correlation";
@@ -688,7 +688,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
       if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
         const normalizedCandles = normalizeCandles(response.data, requestedTimeframe);
-        const processedCandles: ChartCandle[] = buildTimelineChartCandles(normalizedCandles);
+        const processedCandles: ChartCandle[] = buildTimelineChartCandles(normalizedCandles, requestedTimeframe);
 
         console.log(`[Chart] Loaded ${processedCandles.length} candles for ${requestedSymbol}`);
         setChartData(processedCandles);
@@ -1250,17 +1250,13 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       return;
     }
 
-    const formattedData = buildRenderableChartSeries(chartData, timeframe, selectedSymbol).map((point: TimelineRenderablePoint) => (
-      "open" in point
-        ? {
-            time: point.time as Time,
-            open: point.open,
-            high: point.high,
-            low: point.low,
-            close: point.close,
-          }
-        : { time: point.time as Time }
-    ));
+    const formattedData = buildRenderableChartSeries(chartData, timeframe, selectedSymbol).map((point) => ({
+      time: point.time as Time,
+      open: point.open,
+      high: point.high,
+      low: point.low,
+      close: point.close,
+    }));
     candlestickSeriesRef.current.setData(formattedData as CandlestickData<Time>[]);
 
     const firstCandleTime = chartData[0]?.time ?? 0;
