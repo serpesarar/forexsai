@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildActualTimeChartCandles,
   buildMappedChartMarkers,
   buildRenderableChartSeries,
   buildTimelineChartCandles,
@@ -20,6 +21,16 @@ describe("newsCorrelationTimeline", () => {
     expect(candles[1].time - candles[0].time).toBe(60 * 60);
     expect(candles[2].time - candles[1].time).toBe(60 * 60);
     expect(candles[2].actualTimestamp).toBe(Math.floor(Date.UTC(2026, 2, 9, 13, 0) / 1000));
+  });
+
+  it("can keep real timestamps when the chart should use the native time axis", () => {
+    const actualTimeCandles = buildActualTimeChartCandles([
+      { timestamp: Date.UTC(2026, 2, 6, 20, 0), open: 100, high: 102, low: 99, close: 101 },
+      { timestamp: Date.UTC(2026, 2, 9, 13, 0), open: 103, high: 105, low: 102, close: 104 },
+    ]);
+
+    expect(actualTimeCandles[0].time).toBe(actualTimeCandles[0].actualTimestamp);
+    expect(actualTimeCandles[1].time).toBe(actualTimeCandles[1].actualTimestamp);
   });
 
   it("does not inject whitespace for session or weekend gaps", () => {

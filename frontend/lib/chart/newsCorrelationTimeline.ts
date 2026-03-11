@@ -6,6 +6,20 @@ export interface TimelineChartCandle extends NormalizableCandle {
   priceChange: number;
 }
 
+function toTimelineChartCandle(candle: NormalizableCandle, time: number): TimelineChartCandle {
+  return {
+    timestamp: candle.timestamp,
+    time,
+    actualTimestamp: Math.floor(candle.timestamp / 1000),
+    open: candle.open,
+    high: candle.high,
+    low: candle.low,
+    close: candle.close,
+    volume: candle.volume,
+    priceChange: candle.open !== 0 ? ((candle.close - candle.open) / candle.open) * 100 : 0,
+  };
+}
+
 export interface TimelineMarkerInput {
   id: string;
   time: string | number;
@@ -35,17 +49,11 @@ export function buildTimelineChartCandles(candles: NormalizableCandle[], timefra
   const stepSeconds = Math.max(60, Math.floor(getTimeframeMs(timeframe) / 1000));
   const firstActualTimestamp = Math.floor(candles[0].timestamp / 1000);
 
-  return candles.map((candle, index) => ({
-    timestamp: candle.timestamp,
-    time: firstActualTimestamp + index * stepSeconds,
-    actualTimestamp: Math.floor(candle.timestamp / 1000),
-    open: candle.open,
-    high: candle.high,
-    low: candle.low,
-    close: candle.close,
-    volume: candle.volume,
-    priceChange: candle.open !== 0 ? ((candle.close - candle.open) / candle.open) * 100 : 0,
-  }));
+  return candles.map((candle, index) => toTimelineChartCandle(candle, firstActualTimestamp + index * stepSeconds));
+}
+
+export function buildActualTimeChartCandles(candles: NormalizableCandle[]): TimelineChartCandle[] {
+  return candles.map((candle) => toTimelineChartCandle(candle, Math.floor(candle.timestamp / 1000)));
 }
 
 export function buildRenderableChartSeries(
