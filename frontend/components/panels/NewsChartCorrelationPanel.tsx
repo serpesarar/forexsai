@@ -9,7 +9,6 @@ import { useNewsCorrelationStore } from "@/lib/stores/newsCorrelationStore";
 import type { EnrichedNews } from "@/types/news-correlation";
 import { fetcher } from "@/lib/api";
 import { useNewsMarkers } from "@/hooks/useNewsMarkers";
-import { normalizeCandles } from "@/lib/chart/normalizeCandles";
 import {
   buildActualTimeChartCandles,
   buildMappedChartMarkers,
@@ -108,8 +107,9 @@ export default function NewsChartCorrelationPanel() {
       );
 
       if (chartResponse?.data && Array.isArray(chartResponse.data) && chartResponse.data.length > 5) {
-        const normalizedCandles = normalizeCandles(chartResponse.data, timeframe);
-        const processedCandles: ChartCandle[] = buildActualTimeChartCandles(normalizedCandles, timeframe);
+        // Direct cast without timeline modification/normalization since backend data OHLCV is already 
+        // proper timeframe format. NormalizeCandles fills small gaps aggressively or rounds timestamps.
+        const processedCandles: ChartCandle[] = buildActualTimeChartCandles(chartResponse.data, timeframe);
         setChartData(processedCandles);
       } else {
         setChartData([]);
