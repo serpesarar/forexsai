@@ -16,7 +16,7 @@ import { calculateAllEMAs, detectProximity } from "../../lib/chart/calculateEMA"
 import type { ProximityAlert } from "../../lib/chart/calculateEMA";
 import { normalizeCandles } from "../../lib/chart/normalizeCandles";
 import {
-  buildCompressedChartCandles,
+  buildActualTimeChartCandles,
   findTimelineChartCandle,
 } from "../../lib/chart/newsCorrelationTimeline";
 import styles from "./neon-chart.module.css";
@@ -157,15 +157,15 @@ export default function NeonChart({
     refetchInterval: 30000,
     staleTime: 15000,
   });
-  const compressedChartData = useMemo(
-    () => buildCompressedChartCandles(chartData || [], timeframe),
+  const timelineChartData = useMemo(
+    () => buildActualTimeChartCandles(chartData || [], timeframe),
     [chartData, timeframe]
   );
-  const compressedChartDataRef = useRef(compressedChartData);
+  const timelineChartDataRef = useRef(timelineChartData);
 
   useEffect(() => {
-    compressedChartDataRef.current = compressedChartData;
-  }, [compressedChartData]);
+    timelineChartDataRef.current = timelineChartData;
+  }, [timelineChartData]);
 
   // ── Live price polling ──
   useEffect(() => {
@@ -281,7 +281,7 @@ export default function NeonChart({
         borderColor: "rgba(0, 224, 198, 0.08)",
         tickMarkFormatter: (time: Time) => {
           const numericTime = typeof time === "number" ? time : Number(time);
-          const candle = findTimelineChartCandle(numericTime, compressedChartDataRef.current);
+          const candle = findTimelineChartCandle(numericTime, timelineChartDataRef.current);
           const labelTimestamp = candle?.actualTimestamp ?? numericTime;
 
           if (!Number.isFinite(labelTimestamp)) {
@@ -345,7 +345,7 @@ export default function NeonChart({
         | undefined;
       if (candle) {
         const numericTime = typeof param.time === "number" ? param.time : Number(param.time);
-        const timelineCandle = findTimelineChartCandle(numericTime, compressedChartDataRef.current);
+        const timelineCandle = findTimelineChartCandle(numericTime, timelineChartDataRef.current);
         const displayTimestamp = timelineCandle?.actualTimestamp ?? numericTime;
 
         setOhlcLegend({
@@ -391,10 +391,10 @@ export default function NeonChart({
     const candleSeries = candleSeriesRef.current;
     const volumeSeries = volumeSeriesRef.current;
 
-    if (!chart || !candleSeries || !volumeSeries || !compressedChartData.length) return;
+    if (!chart || !candleSeries || !volumeSeries || !timelineChartData.length) return;
 
     try {
-      const candles = compressedChartData.map((d) => ({
+      const candles = timelineChartData.map((d) => ({
         time: d.time as Time,
         open: d.open,
         high: d.high,
@@ -402,7 +402,7 @@ export default function NeonChart({
         close: d.close,
       }));
 
-      const volumes = compressedChartData.map((d) => ({
+      const volumes = timelineChartData.map((d) => ({
         time: d.time as Time,
         value: d.volume,
         color: d.close >= d.open ? "var(--accent-positive-20)" : "var(--accent-negative-20)",
@@ -417,7 +417,7 @@ export default function NeonChart({
         const series = emaSeriesRefs.current[period];
         if (!series) continue;
 
-        const emaData = compressedChartData
+        const emaData = timelineChartData
           .map((d, i) => {
             const val = emaResult.values[i];
             if (val === null) return null;
@@ -432,7 +432,7 @@ export default function NeonChart({
     } catch (err) {
       console.error("NeonChart data update error:", err);
     }
-  }, [compressedChartData, emaResults, chartReady]);
+  }, [timelineChartData, emaResults, chartReady]);
 
   // ── Derived values ──
   const displayPrice = livePrice || priceInfo?.price || 0;
