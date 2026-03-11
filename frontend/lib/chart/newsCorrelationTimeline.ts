@@ -1,12 +1,12 @@
 import { getTimeframeMs, type NormalizableCandle } from "./normalizeCandles";
 
 export interface TimelineChartCandle extends NormalizableCandle {
-  time: number;
+  time: number | string;
   actualTimestamp: number;
   priceChange: number;
 }
 
-function toTimelineChartCandle(candle: NormalizableCandle, time: number): TimelineChartCandle {
+function toTimelineChartCandle(candle: NormalizableCandle, time: number | string): TimelineChartCandle {
   return {
     timestamp: candle.timestamp,
     time,
@@ -52,8 +52,25 @@ export function buildTimelineChartCandles(candles: NormalizableCandle[], timefra
   return candles.map((candle, index) => toTimelineChartCandle(candle, firstActualTimestamp + index * stepSeconds));
 }
 
-export function buildActualTimeChartCandles(candles: NormalizableCandle[]): TimelineChartCandle[] {
-  return candles.map((candle) => toTimelineChartCandle(candle, Math.floor(candle.timestamp / 1000)));
+export function buildActualTimeChartCandles(
+  candles: NormalizableCandle[],
+  timeframe?: string
+): TimelineChartCandle[] {
+  return candles.map((candle) => {
+    const actualTimestamp = Math.floor(candle.timestamp / 1000);
+    let time: number | string = actualTimestamp;
+    
+    // For daily, weekly, monthly timeframes, lightweight-charts requires a string like "2021-01-01"
+    if (timeframe === "1d" || timeframe === "1w" || timeframe === "1M") {
+      const date = new Date(candle.timestamp);
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(date.getUTCDate()).padStart(2, "0");
+      time = `${year}-${month}-${day}`;
+    }
+
+    return toTimelineChartCandle(candle, time);
+  });
 }
 
 export function buildRenderableChartSeries(
@@ -73,7 +90,7 @@ export function buildRenderableChartSeries(
 export function mapActualTimestampToChartTime(
   actualTimestamp: number,
   candles: Array<Pick<TimelineChartCandle, "time" | "actualTimestamp">>
-): number | null {
+): number | string | null {
   if (!candles.length || !Number.isFinite(actualTimestamp)) {
     return null;
   }
@@ -92,7 +109,7 @@ export function mapActualTimestampToChartTime(
 }
 
 export function findTimelineChartCandle<T extends Pick<TimelineChartCandle, "time" | "actualTimestamp">>(
-  chartTime: number,
+  chartTime: number | string,
   candles: T[]
 ): T | undefined {
   return candles.find((candle) => candle.time === chartTime);
@@ -125,7 +142,7 @@ export function buildMappedChartMarkers(
     }
     const mappedTime = mapActualTimestampToChartTime(actualTimestamp, candles);
 
-    if (!Number.isFinite(mappedTime)) {
+    if (mappedTime === null) {
       return [];
     }
 
