@@ -15,6 +15,7 @@ import {
   findTimelineChartCandle,
   type TimelineChartCandle,
 } from "@/lib/chart/newsCorrelationTimeline";
+import { normalizeCandles } from "@/lib/chart/normalizeCandles";
 import NewsDetailModal from "@/components/NewsDetailModal";
 
 import { cn } from "@/lib/utils";
@@ -50,6 +51,40 @@ const timeframes = [
 
 type TimeframeValue = typeof timeframes[number]["value"];
 
+const SYMBOL_TO_OHLCV: Record<string, string> = {
+  XAUUSD: "XAUUSD",
+  NASDAQ: "NDX.INDX",
+  NDX: "NDX.INDX",
+  DAX: "GDAXI.INDX",
+  USOIL: "USOIL.FOREX",
+  VIX: "VIX.INDX",
+  DXY: "DXY.INDX",
+  EURUSD: "EURUSD",
+  GBPUSD: "GBPUSD",
+  BTCUSD: "BTCUSD",
+};
+
+const SYMBOL_TO_NEWS: Record<string, string> = {
+  XAUUSD: "XAUUSD",
+  NASDAQ: "NDX",
+  NDX: "NDX",
+  DAX: "DAX",
+  USOIL: "USOIL",
+  VIX: "VIX",
+  DXY: "DXY",
+  EURUSD: "EURUSD",
+  GBPUSD: "GBPUSD",
+  BTCUSD: "BTCUSD",
+};
+
+function resolveApiSymbol(symbol: string): string {
+  return SYMBOL_TO_OHLCV[symbol.replace("/", "")] || symbol.replace("/", "");
+}
+
+function resolveNewsSymbol(symbol: string): string {
+  return SYMBOL_TO_NEWS[symbol.replace("/", "")] || symbol.replace("/", "");
+}
+
 // Main Component
 export default function NewsChartCorrelationPanel() {
   const [mounted, setMounted] = useState(false);
@@ -73,20 +108,8 @@ export default function NewsChartCorrelationPanel() {
       setLoading(true);
       setError(null);
 
-      // Symbol mapping for backend API
-      const symbolMap: Record<string, string> = {
-        XAUUSD: "XAUUSD",
-        NASDAQ: "NDX.INDX",
-        NDX: "NDX.INDX",
-        DAX: "GDAXI.INDX",
-        USOIL: "USOIL.FOREX",
-        VIX: "VIX.INDX",
-        DXY: "DXY.INDX",
-        EURUSD: "EURUSD",
-        GBPUSD: "GBPUSD",
-        BTCUSD: "BTCUSD",
-      };
-      const apiSymbol = symbolMap[selectedSymbol.replace("/", "")] || selectedSymbol.replace("/", "");
+      const apiSymbol = resolveApiSymbol(selectedSymbol);
+      const newsSymbol = resolveNewsSymbol(selectedSymbol);
       const tf = timeframes.find((t) => t.value === timeframe);
       const limit = tf?.getLimit() || 200;
 
@@ -96,17 +119,15 @@ export default function NewsChartCorrelationPanel() {
       );
 
       if (chartResponse?.data && Array.isArray(chartResponse.data) && chartResponse.data.length > 5) {
+        const normalizedCandles = normalizeCandles(chartResponse.data, timeframe);
         // Use buildTimelineChartCandles to create evenly-spaced time values.
         // This eliminates weekend/market-closed gaps while preserving actualTimestamp
         // for correct date display via tickMarkFormatter.
-        const processedCandles: ChartCandle[] = buildTimelineChartCandles(chartResponse.data, timeframe);
+        const processedCandles: ChartCandle[] = buildTimelineChartCandles(normalizedCandles, timeframe);
         setChartData(processedCandles);
       } else {
         setChartData([]);
       }
-
-      // Fetch news events - use original symbol names for news impacts
-      const newsSymbol = selectedSymbol.replace("/", "");
 
       // Helper: parse news response
       const parseRes = (r: any): any[] => {
@@ -159,6 +180,7 @@ export default function NewsChartCorrelationPanel() {
             : (item.aiConfidence || 70),
           analysisTimestamp: item.analysis_timestamp || item.analysisTimestamp || new Date().toISOString(),
         }));
+        mapped.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         setEvents(mapped);
       } else {
         setEvents([]);
@@ -257,6 +279,7 @@ export default function NewsChartCorrelationPanel() {
             chartData={chartData}
             events={events}
             symbol={selectedSymbol}
+            newsSymbol={resolveNewsSymbol(selectedSymbol)}
             timeframe={timeframe}
             loading={loading}
             error={error}
@@ -280,17 +303,18 @@ interface ChartViewProps {
   chartData: ChartCandle[];
   events: EnrichedNews[];
   symbol: string;
+  newsSymbol: string;
   timeframe: TimeframeValue;
   loading: boolean;
   error: string | null;
   onRefresh: () => void;
 }
 
-function ChartView({ chartData, events, symbol, timeframe, loading, error, onRefresh }: ChartViewProps) {
+function ChartView({ chartData, events, symbol, newsSymbol, timeframe, loading, error, onRefresh }: ChartViewProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const { markers: newsMarkers } = useNewsMarkers(symbol, 72, 5);
+  const { markers: newsMarkers } = useNewsMarkers(newsSymbol, 72, 5);
   const chartDataRef = useRef(chartData);
   const [clickedNews, setClickedNews] = useState<EnrichedNews | null>(null);
 
@@ -359,8 +383,20 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
         timeVisible: true,
         secondsVisible: false,
         tickMarkFormatter: (time: Time) => {
-          // Find the candle matching this timeline time value
-          const candle = chartDataRef.current.find((c) => c.time === time);
+          const numericTime = typeof time === "number" ? time : Number(time);
+          if (!Number.isFinite(numericTime)) return "";
+
+          const candles = chartDataRef.current;
+          if (!candles.length) return "";
+
+          // Find exact timeline candle first, then fallback to nearest candle.
+          const exact = candles.find((c) => Number(c.time) === numericTime);
+          const candle = exact || candles.reduce((closest, current) => {
+            const currentDistance = Math.abs(Number(current.time) - numericTime);
+            const closestDistance = Math.abs(Number(closest.time) - numericTime);
+            return currentDistance < closestDistance ? current : closest;
+          });
+
           if (!candle) return "";
           // Use actualTimestamp (seconds) to display the real date
           return format(new Date(candle.actualTimestamp * 1000), "MMM d, HH:mm");
@@ -424,23 +460,62 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
   useEffect(() => {
     if (!chartRef.current || !candlestickSeriesRef.current || chartData.length === 0) return;
 
+    const toleranceMinutesByTimeframe: Record<TimeframeValue, number> = {
+      "5m": 5,
+      "15m": 10,
+      "30m": 12,
+      "1h": 15,
+      "4h": 15,
+    };
+    const toleranceSeconds = (toleranceMinutesByTimeframe[timeframe] ?? 15) * 60;
+
     const handleClick = (param: any) => {
       // Validate click event
       if (param.time === undefined || !param.point) return;
       
       // Find the candle using findTimelineChartCandle (matches on timeline time)
-      const clickedCandle = findTimelineChartCandle(param.time, chartDataRef.current);
+      let clickedCandle = findTimelineChartCandle(param.time, chartDataRef.current);
+      if (!clickedCandle) {
+        const numericTime = typeof param.time === "number" ? param.time : Number(param.time);
+        if (Number.isFinite(numericTime) && chartDataRef.current.length > 0) {
+          clickedCandle = chartDataRef.current.reduce((closest, current) => {
+            const currentDistance = Math.abs(Number(current.time) - numericTime);
+            const closestDistance = Math.abs(Number(closest.time) - numericTime);
+            return currentDistance < closestDistance ? current : closest;
+          });
+        }
+      }
+
       if (!clickedCandle) return;
       
       // Use actualTimestamp (seconds) for news matching
       const clickedTimeSec = clickedCandle.actualTimestamp;
-      
-      // Look for a correlating event with ±45 minute tolerance
-      const relatedEvent = events.find(e => {
-        const eventTimeSec = Math.floor(new Date(e.timestamp).getTime() / 1000);
-        return Math.abs(eventTimeSec - clickedTimeSec) < 45 * 60;
-      });
-      
+
+      // Find the closest event within adaptive tolerance.
+      const eventWithDistance = events
+        .map((event) => {
+          const eventMs = new Date(event.timestamp).getTime();
+          if (!Number.isFinite(eventMs)) return null;
+          const eventTimeSec = Math.floor(eventMs / 1000);
+          return {
+            event,
+            distance: Math.abs(eventTimeSec - clickedTimeSec),
+          };
+        })
+        .filter((entry): entry is { event: EnrichedNews; distance: number } => !!entry)
+        .filter((entry) => entry.distance <= toleranceSeconds)
+        .sort((left, right) => left.distance - right.distance);
+
+      let relatedEvent = eventWithDistance[0]?.event;
+
+      // Fallback: if marker exists exactly on candle time, resolve by marker id.
+      if (!relatedEvent) {
+        const marker = mappedNewsMarkers.find((m) => String(m.time) === String(clickedCandle.time));
+        if (marker?.id) {
+          relatedEvent = events.find((event) => event.id === marker.id);
+        }
+      }
+
       if (relatedEvent) {
         setClickedNews(relatedEvent);
       }
@@ -451,7 +526,7 @@ function ChartView({ chartData, events, symbol, timeframe, loading, error, onRef
     return () => {
       chartRef.current?.unsubscribeClick(handleClick);
     };
-  }, [events, chartData]);
+  }, [events, chartData, timeframe, mappedNewsMarkers]);
 
   if (loading) {
     return (
