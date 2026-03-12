@@ -179,6 +179,20 @@ export default function NewsChartCorrelationPanel() {
             ? (item.ai_confidence <= 1 ? item.ai_confidence * 100 : item.ai_confidence)
             : (item.aiConfidence || 70),
           analysisTimestamp: item.analysis_timestamp || item.analysisTimestamp || new Date().toISOString(),
+          // Localized fields required by NewsDetailModal
+          headline_tr: item.headline_tr,
+          content_tr: item.content_tr,
+          summary_en: item.summary_en,
+          summary_tr: item.summary_tr,
+          analysis_en: item.analysis_en,
+          analysis_tr: item.analysis_tr,
+          headline_locale: item.headline_locale,
+          summary_locale: item.summary_locale,
+          analysis_locale: item.analysis_locale,
+          importanceLevel: item.importance_level || item.importanceLevel,
+          importanceScore: item.importance_score || item.importanceScore,
+          importanceReason: item.importance_reason || item.importanceReason,
+          aiModel: item.ai_model || item.aiModel,
         }));
         mapped.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         setEvents(mapped);

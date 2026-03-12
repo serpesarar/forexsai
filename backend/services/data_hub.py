@@ -619,6 +619,42 @@ def _merge_candles(existing: List[Dict], new_candles: List[Dict], limit: int) ->
     return result[-limit:]
 
 
+def _has_required_seed_data(symbol: str) -> bool:
+    """Check whether a symbol has the minimum intraday caches required for seed completion.
+
+    Why this matters:
+    - Marking a symbol as "seeded" too early causes future cycles to fetch only small deltas.
+    - If 1h cache is thin (e.g. ~150 bars), frontend requests like limit=720 will never be satisfied.
+    """
+    has_5m = bool((_candles_5m.get(symbol) or {}).get("candles"))
+    has_30m = bool((_candles_30m.get(symbol) or {}).get("candles"))
+    has_1h = bool((_candles_1h.get(symbol) or {}).get("candles"))
+
+    # XAUUSD derives 1h/4h primarily from directly-fetched 30m candles.
+    if symbol in _30M_DIRECT_SYMBOLS:
+        return has_5m and (has_30m or has_1h)
+
+    # Index symbols rely on directly-fetched 1h candles.
+    return has_5m and has_1h
+
+
+def _has_sufficient_cached_history(
+    symbol: str,
+    cached_5m: Optional[List[Dict]],
+    cached_30m: Optional[List[Dict]],
+    cached_1h: Optional[List[Dict]],
+) -> bool:
+    """Determine if persistent cache is deep enough to skip a full seed."""
+    has_enough_5m = bool(cached_5m and len(cached_5m) >= int(FULL_SEED_LIMIT_5M * 0.5))
+    has_enough_30m = bool(cached_30m and len(cached_30m) >= int(FULL_SEED_LIMIT_30M * 0.5))
+    has_enough_1h = bool(cached_1h and len(cached_1h) >= int(FULL_SEED_LIMIT_1H * 0.5))
+
+    if symbol in _30M_DIRECT_SYMBOLS:
+        return has_enough_5m and (has_enough_30m or has_enough_1h)
+
+    return has_enough_5m and has_enough_1h
+
+
 async def _pump_cycle():
     """One pump cycle: fetch what's due, rebuild derived data."""
     now_ts = datetime.utcnow().timestamp()
@@ -715,14 +751,17 @@ async def _pump_cycle():
                 _mark_fetched(f"eod:{symbol}")
                 _persist_async(symbol, "eod", merged if is_seed else candles)
         
-        # Mark as seeded ONLY if we actually got data (avoid marking on 402/empty)
-        if not is_seeded:
-            has_5m = bool((_candles_5m.get(symbol) or {}).get("candles"))
-            has_1h = bool((_candles_1h.get(symbol) or {}).get("candles"))
-            has_eod = bool((_candles_eod.get(symbol) or {}).get("candles"))
-            if has_5m or has_1h or has_eod:
-                _initial_seed_done[seed_key] = True
-                logger.info(f"[DataHub] {symbol} seeded: 5m={has_5m}, 1h={has_1h}, eod={has_eod}")
+        # Mark as seeded only when required intraday caches are ready.
+        # This avoids switching to delta mode too early with shallow 1h history.
+        if not is_seeded and _has_required_seed_data(symbol):
+            has_5m = len((_candles_5m.get(symbol) or {}).get("candles", []))
+            has_30m = len((_candles_30m.get(symbol) or {}).get("candles", []))
+            has_1h = len((_candles_1h.get(symbol) or {}).get("candles", []))
+            _initial_seed_done[seed_key] = True
+            logger.info(
+                f"[DataHub] {symbol} seeded with intraday depth "
+                f"(5m={has_5m}, 30m={has_30m}, 1h={has_1h})"
+            )
     
     # ── Macro data (every 5min) ──
     if _should_fetch("macro", MACRO_INTERVAL):
@@ -781,21 +820,23 @@ def _load_from_persistent_cache():
             loaded_any = True
             logger.info(f"[DataHub] Loaded {len(cached_eod)} cached EOD candles for {symbol}")
         
-        # If we loaded cached data, check if we have ENOUGH data to skip full seed
-        # Fix for user issue: "only 166 candles" -> force full seed if cache is thin
-        has_enough_5m = bool(cached_5m and len(cached_5m) >= FULL_SEED_LIMIT_5M * 0.5)
-        has_enough_30m = bool(cached_30m and len(cached_30m) >= FULL_SEED_LIMIT_30M * 0.5)
-        has_enough_1h = bool(cached_1h and len(cached_1h) >= FULL_SEED_LIMIT_1H * 0.5)
-        
-        # XAUUSD relies on 30m, NDX on 5m/1h
-        is_enough = has_enough_5m or has_enough_30m or has_enough_1h
-        
+        # Check sufficiency per-symbol using required caches (not loose OR logic).
+        # This prevents symbols from being marked "seeded" when 1h history is still thin.
+        is_enough = _has_sufficient_cached_history(symbol, cached_5m, cached_30m, cached_1h)
+
         if is_enough:
             _initial_seed_done[symbol] = True
-            logger.info(f"[DataHub] Cache sufficient for {symbol} (skipping full seed)")
+            logger.info(
+                f"[DataHub] Cache sufficient for {symbol} "
+                f"(5m={len(cached_5m or [])}, 30m={len(cached_30m or [])}, 1h={len(cached_1h or [])})"
+            )
         else:
             _initial_seed_done[symbol] = False
-            logger.info(f"[DataHub] Cache INSUFFICIENT for {symbol} (forcing full seed on next pump)")
+            logger.info(
+                f"[DataHub] Cache insufficient for {symbol} "
+                f"(5m={len(cached_5m or [])}, 30m={len(cached_30m or [])}, 1h={len(cached_1h or [])}) "
+                f"→ full seed will run"
+            )
     
     if loaded_any:
         logger.info("[DataHub] Persistent cache loaded — will only fetch delta from EODHD")

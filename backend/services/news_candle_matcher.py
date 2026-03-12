@@ -39,6 +39,22 @@ SYMBOL_CANONICAL_MAP = {
     for alias in aliases
 }
 
+# Map canonical symbols → DataHub tracked symbol identifiers
+_CANONICAL_TO_DATAHUB: Dict[str, str] = {
+    "NDX": "NDX.INDX",
+    "DAX": "GDAXI.INDX",
+    "XAUUSD": "XAUUSD",
+    "USOIL": "USOIL.FOREX",
+    "VIX": "VIX.INDX",
+    "DXY": "DXY.INDX",
+}
+
+
+def _resolve_datahub_symbol(symbol: str) -> str:
+    """Convert any symbol alias to the DataHub tracked symbol string."""
+    canonical = normalize_symbol(symbol)
+    return _CANONICAL_TO_DATAHUB.get(canonical, symbol)
+
 
 def normalize_symbol(symbol: Optional[str]) -> str:
     """Normalize symbol aliases into a canonical symbol family."""
@@ -446,6 +462,40 @@ class NewsCandleMatcher:
         )
         return ranked[:5]
 
+    async def _fetch_preceding_candles(
+        self, symbol: str, candle: CandleInfo, timeframe: str, count: int = 7,
+    ) -> List[Dict[str, Any]]:
+        """Fetch the preceding candles from DataHub for price context."""
+        try:
+            from services.data_fetcher import fetch_ohlc_data
+            datahub_sym = _resolve_datahub_symbol(symbol)
+            raw = await fetch_ohlc_data(datahub_sym, timeframe=timeframe, limit=50)
+            if not raw:
+                return []
+
+            candle_ts = candle.timestamp.timestamp()
+            preceding = [c for c in raw if float(c.get("timestamp", 0)) < candle_ts]
+            preceding.sort(key=lambda c: float(c.get("timestamp", 0)))
+            return preceding[-count:]
+        except Exception:
+            logger.debug("[NewsCandleMatcher] Could not fetch preceding candles for context")
+            return []
+
+    @staticmethod
+    def _format_price_context(preceding: List[Dict[str, Any]]) -> str:
+        """Format preceding candles into a compact context block for the AI prompt."""
+        if not preceding:
+            return "No preceding candle data available."
+
+        lines: List[str] = []
+        for c in preceding:
+            o, h, l, cl = float(c.get("open", 0)), float(c.get("high", 0)), float(c.get("low", 0)), float(c.get("close", 0))
+            chg = round(((cl - o) / o) * 100, 3) if o else 0
+            vol = int(c.get("volume", 0))
+            ts = c.get("timestamp", "?")
+            lines.append(f"  ts={ts} O={o} H={h} L={l} C={cl} chg={chg}% vol={vol}")
+        return "\n".join(lines)
+
     async def _rerank_with_ai(
         self,
         symbol: str,
@@ -476,6 +526,10 @@ class NewsCandleMatcher:
                 }
             )
 
+        # Fetch preceding candle window for price context
+        preceding = await self._fetch_preceding_candles(symbol, candle, timeframe)
+        price_context_block = self._format_price_context(preceding)
+
         prompt = f"""You are matching already AI-analyzed market catalysts to a specific market candle. Return ONLY valid JSON.
 
 JSON schema:
@@ -497,8 +551,11 @@ Rules:
 - Haber ile mum yönü uyumsuzsa reasoning_tr içinde bunu açıkça belirt.
 - Haber, ekonomik veri veya earnings olabilir.
 - Eğer hiçbir catalyst ikna edici değilse matches boş olsun.
+- Önceki mumların yönü ve volatilitesi ile haberin etkisini karşılaştır.
+  Eğer fiyat zaten haber öncesinde aynı yönde hareket ediyorsa, haber etkisi daha düşük olabilir.
+  Ani yön değişikliği varsa haber etkisi daha yüksek olabilir.
 
-CANDLE:
+CANDLE (target):
 {{
   "symbol": "{symbol}",
   "timeframe": "{timeframe}",
@@ -511,6 +568,9 @@ CANDLE:
   "range_pct": {round(candle.range_pct, 4)},
   "movement_type": "{significance.get('movement_type', 'unknown')}"
 }}
+
+PRICE CONTEXT (preceding {len(preceding)} candles, oldest first):
+{price_context_block}
 
 CANDIDATES:
 {serialized_candidates}
