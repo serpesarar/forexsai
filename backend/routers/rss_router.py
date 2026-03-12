@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from services.marketaux_service import get_marketaux_health
 from services.rss_aggregator import get_rss_aggregator, RSS_SOURCES
-from services.news_candle_matcher import get_matching_impact
+from services.news_candle_matcher import get_matching_impact, symbols_match
 from services.translation_service import translate_texts
 from database.supabase_client import get_supabase_client
 
@@ -38,6 +38,10 @@ class RSSNewsResponse(BaseModel):
     volatility_expectation: str
     urgency: str
     ai_confidence: float
+    importance_level: Optional[str] = None
+    importance_score: Optional[int] = None
+    importance_reason: Optional[str] = None
+    ai_model: Optional[str] = None
     duplicate_of: Optional[str]
     sources: List[str]
     # Chart markers
@@ -240,8 +244,10 @@ async def get_rss_news(
         if symbol:
             items = [
                 item for item in items
-                if any(imp.get("symbol") == symbol or imp.get("symbol") == "*" 
-                       for imp in item.get("impacts", []))
+                if any(
+                    symbols_match(symbol, imp.get("symbol"))
+                    for imp in item.get("impacts", [])
+                )
             ]
 
         items = await _localize_news_items(items, _normalize_lang(lang))
@@ -270,6 +276,10 @@ async def get_rss_news(
                 volatility_expectation=item.get("volatility_expectation", "medium"),
                 urgency=item.get("urgency", "medium"),
                 ai_confidence=item.get("ai_confidence", 0) / 100,
+                importance_level=item.get("importance_level"),
+                importance_score=item.get("importance_score"),
+                importance_reason=item.get("importance_reason"),
+                ai_model=item.get("ai_model"),
                 duplicate_of=item.get("duplicate_of"),
                 sources=item.get("sources", [item["source"]]),
                 show_on_chart=item.get("show_on_chart", False),
@@ -346,9 +356,9 @@ async def get_chart_news_markers(
             supabase.table("enriched_news")
             .select("*")
             .gte("timestamp", start_time.isoformat())
-            .or_(f"urgency.eq.breaking,and(urgency.eq.high,ai_confidence.gte.60)")
+            .or_("show_on_chart.eq.true,urgency.eq.breaking,and(urgency.eq.high,ai_confidence.gte.60)")
             .order("timestamp", desc=True)
-            .limit(100)
+            .limit(150)
             .execute()
         )
         
@@ -387,18 +397,43 @@ async def get_chart_news_markers(
             impacts = item.get("impacts", [])
             urgency = item.get("urgency", "medium")
             ai_confidence = item.get("ai_confidence", 0)
+            importance_level = item.get("importance_level")
+            try:
+                importance_score = int(item.get("importance_score") or 0)
+            except (TypeError, ValueError):
+                importance_score = 0
 
             # Check if this news affects the requested symbol
             symbol_impact = get_matching_impact(impacts, symbol)
             if symbol_impact:
                 imp_score = symbol_impact.get("score", 0)
 
-                # STRICT FILTERING based on urgency
-                if urgency == "breaking" and imp_score < 6:
-                    symbol_impact = None
-                elif urgency == "high" and (imp_score < min_impact_score or ai_confidence < 50):
-                    symbol_impact = None
-                elif urgency == "medium" and (imp_score < 8 or ai_confidence < 70):
+                # Derive importance_score from urgency/impact when AI didn't set it
+                if importance_score <= 0:
+                    urgency_base = 85 if urgency == "breaking" else 72 if urgency == "high" else 58 if urgency == "medium" else 35
+                    importance_score = max(urgency_base, int(imp_score) * 10)
+
+                # Unified filtering: importance_score is the primary gate.
+                # If importance_score is high enough, bypass secondary checks.
+                passes_importance = (
+                    (urgency == "breaking" and importance_score >= 80)
+                    or (urgency == "high" and importance_score >= 75)
+                    or (urgency == "medium" and importance_score >= 70)
+                    or (urgency == "low" and importance_score >= 75)
+                )
+
+                if not passes_importance:
+                    # Secondary: fall back to legacy score/confidence checks
+                    if urgency == "breaking" and imp_score < 6:
+                        symbol_impact = None
+                    elif urgency == "high" and (imp_score < min_impact_score or ai_confidence < 50):
+                        symbol_impact = None
+                    elif urgency == "medium" and (imp_score < 8 or ai_confidence < 70):
+                        symbol_impact = None
+                    elif urgency == "low":
+                        symbol_impact = None  # low urgency must pass importance gate
+
+                if symbol_impact and not item.get("show_on_chart", True) and importance_score < 70:
                     symbol_impact = None
             
             if not symbol_impact:
@@ -447,6 +482,9 @@ async def get_chart_news_markers(
                 "is_economic_event": is_economic_event,
                 "event_name": symbol_impact.get("event_name"),
                 "reasoning_tr": symbol_impact.get("reasoning_tr", ""),
+                "importance_level": importance_level,
+                "importance_score": importance_score,
+                "importance_reason": item.get("importance_reason"),
                 "url": item.get("url", ""),
                 "ai_confidence": ai_confidence,
             }
@@ -527,6 +565,8 @@ async def get_news_for_candle(
                 "relevance_score": round(news.get("relevance_score", 0), 2),
                 "importance_level": news.get("importance_level"),
                 "importance_score": news.get("importance_score"),
+                "importance_reason": news.get("ai_reasoning_tr") or news.get("importance_reason") or symbol_impact.get("reasoning_tr", ""),
+                "ai_model": news.get("ai_model"),
                 "ai_match_confidence": news.get("ai_match_confidence"),
                 "event_id": event_payload.get("id"),
                 "affected_symbols": event_payload.get("affected_symbols") or [symbol],
@@ -879,6 +919,10 @@ async def test_ai_analysis(
                 "sentiment": result.sentiment,
                 "volatility_expectation": result.volatility_expectation,
                 "urgency": result.urgency,
+                "importance_level": result.importance_level,
+                "importance_score": result.importance_score,
+                "importance_reason": result.importance_reason,
+                "ai_model": result.ai_model,
                 "confidence": result.confidence,
                 "impacts": [
                     {
@@ -1098,7 +1142,7 @@ async def get_rss_diagnostics():
         
         result = (
             supabase.table("enriched_news")
-            .select("id, timestamp, headline_tr, ai_confidence, urgency, impacts, source")
+            .select("id, timestamp, headline_tr, ai_confidence, urgency, impacts, source, ai_model, importance_score")
             .gte("timestamp", start_time.isoformat())
             .order("timestamp", desc=True)
             .limit(100)
@@ -1125,9 +1169,10 @@ async def get_rss_diagnostics():
             headline_tr = item.get("headline_tr", "")
             confidence = item.get("ai_confidence", 0)
             impacts = item.get("impacts", [])
+            ai_model = str(item.get("ai_model", "") or "").lower()
             
             # Detect fallback: headline_tr starts with [TR] or low confidence
-            if headline_tr.startswith("[TR]") or confidence <= 50:
+            if ai_model == "fallback" or headline_tr.startswith("[TR]") or confidence <= 50:
                 fallback_analyzed += 1
             else:
                 ai_analyzed += 1
@@ -1171,9 +1216,13 @@ async def get_rss_diagnostics():
                     "headline": item.get("headline", "")[:80],
                     "headline_tr": item.get("headline_tr", "")[:80],
                     "confidence": item.get("ai_confidence", 0),
+                    "importance_score": item.get("importance_score"),
+                    "ai_model": item.get("ai_model"),
                     "impacts_count": len(item.get("impacts", [])),
                     "source": item.get("source", ""),
-                    "is_fallback": item.get("headline_tr", "").startswith("[TR]") or item.get("ai_confidence", 0) <= 50,
+                    "is_fallback": (str(item.get("ai_model", "") or "").lower() == "fallback")
+                                   or item.get("headline_tr", "").startswith("[TR]")
+                                   or item.get("ai_confidence", 0) <= 50,
                 }
                 for item in items[:5]
             ],
@@ -1242,6 +1291,7 @@ async def re_analyze_fallback_news(
             fallback_items = [
                 item for item in items
                 if (
+                    str(item.get("ai_model", "") or "").lower() == "fallback" or
                     item.get("headline_tr", "").startswith("[TR]") or
                     (item.get("ai_confidence", 0) <= 50) or
                     _has_identical_pattern(item.get("impacts", []))
@@ -1263,7 +1313,7 @@ async def re_analyze_fallback_news(
                     )
                     
                     # Check if result is real AI (not fallback)
-                    if result.confidence >= 60 and result.headline_tr and not result.headline_tr.startswith("["):
+                    if result.ai_model != "fallback" and result.confidence >= 60 and result.headline_tr and not result.headline_tr.startswith("["):
                         # Update in database
                         new_impacts = [
                             {
@@ -1289,9 +1339,17 @@ async def re_analyze_fallback_news(
                             "sentiment": result.sentiment,
                             "volatility_expectation": result.volatility_expectation,
                             "urgency": result.urgency,
+                            "importance_level": result.importance_level,
+                            "importance_score": result.importance_score,
+                            "importance_reason": result.importance_reason,
+                            "ai_model": result.ai_model,
                             "ai_confidence": result.confidence,
                             "analysis_timestamp": datetime.utcnow().isoformat(),
-                            "show_on_chart": result.urgency in ["high", "breaking"] or any(imp.score >= 6 for imp in result.impacts),
+                            "show_on_chart": (
+                                result.urgency in ["high", "breaking"]
+                                or result.importance_score >= 70
+                                or any(imp.score >= 6 for imp in result.impacts)
+                            ),
                         }
                         
                         supabase.table("enriched_news").update(update_data).eq("id", item["id"]).execute()

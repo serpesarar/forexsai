@@ -55,6 +55,8 @@ export interface RawNews {
 // News urgency levels
 export type NewsUrgency = "breaking" | "high" | "medium" | "low";
 
+export type ImportanceLevel = "critical" | "high" | "medium" | "low";
+
 // AI-enriched news with impact analysis
 export interface EnrichedNews extends RawNews {
   impacts: SymbolImpact[];
@@ -69,6 +71,10 @@ export interface EnrichedNews extends RawNews {
   affectedCandles: string[]; // ISO timestamps
   aiConfidence: number; // 0-100
   analysisTimestamp: string;
+  importanceLevel?: ImportanceLevel;
+  importanceScore?: number; // 0-100
+  importanceReason?: string;
+  aiModel?: string;
   headline_tr?: string; // Turkish translation
   content_tr?: string; // Turkish translation
   summary_en?: string;

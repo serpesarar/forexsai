@@ -11,7 +11,7 @@ import json
 import re
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Set, Any
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 import aiohttp
 import feedparser
 from difflib import SequenceMatcher
@@ -273,6 +273,10 @@ class RSSNewsItem:
     summary_tr: str = ""
     analysis_en: str = ""
     analysis_tr: str = ""
+    importance_level: str = "medium"
+    importance_score: int = 60
+    importance_reason: str = ""
+    ai_model: str = "fallback"
     
     @property
     def should_display(self) -> bool:
@@ -555,55 +559,83 @@ class RSSAggregator:
             print(f"[RSS] WARNING: DEEP_SEEKR1 not set! Using fallback for: {item.title[:50]}...")
             return self._fallback_analysis(item)
         
-        # STEP 1: Check if news is market-related (skip non-financial news)
-        if not self._is_market_related(item.title, item.content):
-            print(f"[RSS] SKIP (not market-related): {item.title[:50]}...")
-            item.urgency = "low"
-            item.ai_processed = True
-            item.processed_at = datetime.utcnow()
-            item.ai_confidence = 0.3
-            return item
-        
-        # STEP 2: Check Redis cache first
+        # STEP 1: Check Redis cache first
         cache_key = self._get_cache_key(item.title)
         cached_result = cache_get(cache_key)
         
         if cached_result:
-            print(f"[RSS] CACHE HIT for: {item.title[:50]}...")
-            # Restore cached analysis
-            item.impacts = cached_result.get("impacts", [])
-            item.title_tr = cached_result.get("title_tr", cached_result.get("summary_tr", f"[TR] {item.title}"))
-            item.content_tr = cached_result.get("content_tr", cached_result.get("analysis_tr", item.content))
-            item.summary_en = cached_result.get("summary_en", item.title)
-            item.summary_tr = cached_result.get("summary_tr", item.title_tr or item.title)
-            item.analysis_en = cached_result.get("analysis_en", item.content or item.title)
-            item.analysis_tr = cached_result.get("analysis_tr", item.content_tr or item.content or item.title)
-            item.sentiment = cached_result.get("sentiment", "neutral")
-            item.volatility_expectation = cached_result.get("volatility_expectation", "medium")
-            item.urgency = cached_result.get("urgency", "medium")
-            item.ai_confidence = cached_result.get("ai_confidence", 0.7)
-            item.ai_processed = True
-            item.processed_at = datetime.utcnow()
-            return item
+            cached_model = str(cached_result.get("ai_model", "fallback")).lower()
+            has_bilingual_payload = all(
+                bool(cached_result.get(key))
+                for key in ("summary_en", "summary_tr", "analysis_en", "analysis_tr")
+            )
+
+            if cached_model != "fallback" and has_bilingual_payload:
+                print(f"[RSS] CACHE HIT for: {item.title[:50]}...")
+                # Restore cached analysis
+                item.impacts = cached_result.get("impacts", [])
+                item.title_tr = cached_result.get("title_tr", cached_result.get("summary_tr", f"[TR] {item.title}"))
+                item.content_tr = cached_result.get("content_tr", cached_result.get("analysis_tr", item.content))
+                item.summary_en = cached_result.get("summary_en", item.title)
+                item.summary_tr = cached_result.get("summary_tr", item.title_tr or item.title)
+                item.analysis_en = cached_result.get("analysis_en", item.content or item.title)
+                item.analysis_tr = cached_result.get("analysis_tr", item.content_tr or item.content or item.title)
+                item.sentiment = cached_result.get("sentiment", "neutral")
+                item.volatility_expectation = cached_result.get("volatility_expectation", "medium")
+                item.urgency = cached_result.get("urgency", "medium")
+                item.ai_confidence = cached_result.get("ai_confidence", 0.7)
+                item.importance_level = cached_result.get("importance_level", "medium")
+                try:
+                    item.importance_score = int(cached_result.get("importance_score", 60) or 60)
+                except (TypeError, ValueError):
+                    item.importance_score = 60
+                item.importance_reason = cached_result.get("importance_reason", "")
+                item.ai_model = cached_result.get("ai_model", "deepseek-reasoner")
+                item.ai_processed = True
+                item.processed_at = datetime.utcnow()
+                return item
+            else:
+                print(f"[RSS] CACHE BYPASS (fallback/partial payload): {item.title[:50]}...")
         
-        # STEP 3: Call DeepSeek AI (cache miss)
+        # STEP 2: Call DeepSeek AI (cache miss / bypass)
         print(f"[RSS] CACHE MISS - Calling DeepSeek for: {item.title[:50]}...")
-        
+
         try:
             from services.news_analyzer_v2 import get_real_analyzer
             analyzer = get_real_analyzer()
-            
+
+            # Build lightweight market context from DataHub live prices
+            mkt_ctx: Optional[Dict[str, Any]] = None
+            try:
+                from services.data_hub import get_price
+                _ctx: Dict[str, Any] = {}
+                for sym in ("NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"):
+                    p = get_price(sym)
+                    if p is not None:
+                        _ctx[sym.split(".")[0]] = {"price": round(float(p), 2)}
+                if _ctx:
+                    mkt_ctx = _ctx
+            except Exception:
+                pass  # DataHub may not be ready yet
+
             result = await analyzer.analyze(
                 headline=item.title,
                 content=item.content,
-                source=item.source
+                source=item.source,
+                market_context=mkt_ctx,
             )
-            
-            # Check if any important symbol is affected
-            important_impacts = [
-                imp for imp in result.impacts 
-                if imp.symbol in IMPORTANT_SYMBOLS and imp.score >= 5
-            ]
+
+            # One retry if analyzer returned fallback while API key exists.
+            if getattr(result, "ai_model", "fallback") == "fallback" and api_key:
+                await asyncio.sleep(0.4)
+                retry_result = await analyzer.analyze(
+                    headline=item.title,
+                    content=item.content,
+                    source=item.source,
+                    market_context=mkt_ctx,
+                )
+                if getattr(retry_result, "ai_model", "fallback") != "fallback" or retry_result.confidence >= result.confidence:
+                    result = retry_result
             
             # Map to item
             item.impacts = [
@@ -629,10 +661,18 @@ class RSSAggregator:
             item.volatility_expectation = result.volatility_expectation
             item.ai_confidence = result.confidence / 100.0
             item.urgency = result.urgency
+            item.importance_level = getattr(result, "importance_level", "medium") or "medium"
+            item.importance_score = int(getattr(result, "importance_score", 60) or 60)
+            item.importance_reason = getattr(result, "importance_reason", "") or ""
+            item.ai_model = getattr(result, "ai_model", "fallback") or "fallback"
+
+            if item.urgency == "medium" and item.importance_level in ["critical", "high"]:
+                item.urgency = "high"
+
             item.ai_processed = True
             item.processed_at = datetime.utcnow()
             
-            # STEP 4: Store in cache (2 hours TTL)
+            # STEP 3: Store in cache (2 hours TTL)
             cache_data = {
                 "impacts": item.impacts,
                 "title_tr": item.title_tr,
@@ -645,6 +685,10 @@ class RSSAggregator:
                 "volatility_expectation": item.volatility_expectation,
                 "urgency": item.urgency,
                 "ai_confidence": item.ai_confidence,
+                "importance_level": item.importance_level,
+                "importance_score": item.importance_score,
+                "importance_reason": item.importance_reason,
+                "ai_model": item.ai_model,
             }
             cache_set(cache_key, cache_data, ttl=7200)  # 2 hours
             print(f"[RSS] Cached analysis for: {item.title[:50]}...")
@@ -750,6 +794,22 @@ class RSSAggregator:
             item.ai_confidence = 0.75
             item.ai_processed = True
             item.processed_at = datetime.utcnow()
+            max_rule_score = max((imp.get("score", 5) for imp in best_rule.get("impacts", [])), default=5)
+            base_importance_score = int(max_rule_score * 10)
+            if item.urgency == "high":
+                base_importance_score += 10
+            item.importance_score = max(40, min(95, base_importance_score))
+            item.importance_level = (
+                "critical" if item.importance_score >= 85
+                else "high" if item.importance_score >= 70
+                else "medium" if item.importance_score >= 50
+                else "low"
+            )
+            item.importance_reason = (
+                f"Fallback keyword-rule classification: {best_rule_name} matched "
+                f"({best_match_count} keyword hits) with max impact score {max_rule_score}/10."
+            )
+            item.ai_model = "fallback"
             
             # Generate Turkish translations
             item.title_tr = self._quick_translate(item.title, translations)
@@ -766,6 +826,10 @@ class RSSAggregator:
         item.processed_at = datetime.utcnow()
         item.urgency = "low"
         item.impacts = []
+        item.importance_level = "low"
+        item.importance_score = 35
+        item.importance_reason = "Fallback rule-based classification (DeepSeek unavailable)."
+        item.ai_model = "fallback"
         
         # Generate Turkish translations even for low urgency
         item.title_tr = self._quick_translate(item.title, translations)
@@ -808,9 +872,8 @@ class RSSAggregator:
                 # Parse event timestamp if it's a string
                 event_time = event.timestamp
                 if isinstance(event_time, str):
-                    from datetime import datetime as dt
                     try:
-                        event_time = dt.fromisoformat(event_time.replace('Z', '+00:00'))
+                        event_time = datetime.fromisoformat(str(event_time).replace('Z', '+00:00'))
                     except:
                         continue  # Skip events with invalid timestamps
                 
@@ -894,13 +957,26 @@ class RSSAggregator:
                 impacts_with_tr.append(imp_copy)
             
             # Determine marker type for chart
+            if not item.importance_level:
+                item.importance_level = "high" if item.urgency in ["high", "breaking"] else "medium"
+            try:
+                item.importance_score = int(item.importance_score or 0)
+            except (TypeError, ValueError):
+                item.importance_score = 0
+            if item.importance_score <= 0:
+                item.importance_score = 80 if item.urgency == "breaking" else 70 if item.urgency == "high" else 55 if item.urgency == "medium" else 35
+            if not item.importance_reason:
+                item.importance_reason = "Importance inferred from urgency and symbol impact strength."
+            if not item.ai_model:
+                item.ai_model = "fallback"
+
             marker_type = "news"
             marker_color = "#3B82F6"  # Blue for regular news
-            
-            if item.urgency == "breaking":
+
+            if item.importance_level == "critical" or item.urgency == "breaking":
                 marker_type = "breaking_news"
                 marker_color = "#EF4444"  # Red
-            elif item.urgency == "high":
+            elif item.urgency == "high" or item.importance_level == "high":
                 marker_type = "high_impact"
                 marker_color = "#F59E0B"  # Orange
             elif any(imp.get("is_economic_event") for imp in item.impacts):
@@ -911,6 +987,7 @@ class RSSAggregator:
             # Determine if this news should show on chart
             show_on_chart = (
                 item.urgency in ["high", "breaking"] or 
+                item.importance_score >= 70 or
                 any(imp.get("score", 0) >= 6 for imp in item.impacts)
             )
             
@@ -937,6 +1014,10 @@ class RSSAggregator:
                 "urgency": item.urgency,
                 "duplicate_of": item.duplicate_of,
                 "sources": item.sources,
+                "importance_level": item.importance_level,
+                "importance_score": item.importance_score,
+                "importance_reason": item.importance_reason,
+                "ai_model": item.ai_model,
                 # Chart marker data
                 "marker_type": marker_type,
                 "marker_color": marker_color,
@@ -944,6 +1025,7 @@ class RSSAggregator:
             }
             
             # Attempt insert with detailed error logging
+            optional_columns = ["importance_level", "importance_score", "importance_reason", "ai_model"]
             try:
                 result = supabase.table("enriched_news").insert(data).execute()
                 if isinstance(result, dict) and result.get("error"):
@@ -956,7 +1038,16 @@ class RSSAggregator:
                 print(f"[RSS]   Error: {error_msg}")
                 # Log which columns might be missing
                 if "column" in error_msg.lower() and "does not exist" in error_msg.lower():
-                    print(f"[RSS]   → Missing column error! Check migrations.")
+                    print(f"[RSS]   → Missing column error! Retrying without optional columns...")
+                    legacy_data = {k: v for k, v in data.items() if k not in optional_columns}
+                    try:
+                        legacy_result = supabase.table("enriched_news").insert(legacy_data).execute()
+                        if isinstance(legacy_result, dict) and legacy_result.get("error"):
+                            raise Exception(legacy_result["error"])
+                        print(f"[RSS] ✓ Saved to DB (legacy mode): {item.id[:40]}... - {item.title[:60]}...")
+                        return True
+                    except Exception as legacy_error:
+                        print(f"[RSS]   → Legacy insert failed: {legacy_error}")
                 elif "constraint" in error_msg.lower():
                     print(f"[RSS]   → Constraint violation!")
                 return False
@@ -1005,7 +1096,7 @@ class RSSAggregator:
                                 timeout=60.0
                             )
                             # Check if it was real AI analysis or fallback
-                            if item.ai_confidence >= 0.6 and item.title_tr and not item.title_tr.startswith("[TR]"):
+                            if item.ai_model != "fallback" and item.ai_confidence >= 0.6 and item.title_tr and not item.title_tr.startswith("[TR]"):
                                 stats["ai_analyzed"] += 1
                                 print(f"[RSS] ✓ Real DeepSeek analysis for: {item.title[:50]}...")
                             else:
