@@ -10,8 +10,9 @@ import type { EnrichedNews } from "@/types/news-correlation";
 import { fetcher } from "@/lib/api";
 import { useNewsMarkers } from "@/hooks/useNewsMarkers";
 import {
-  buildTimelineChartCandles,
+  buildActualTimeChartCandles,
   buildMappedChartMarkers,
+  chartTimeToTimestampSeconds,
   findTimelineChartCandle,
   type TimelineChartCandle,
 } from "@/lib/chart/newsCorrelationTimeline";
@@ -120,10 +121,7 @@ export default function NewsChartCorrelationPanel() {
 
       if (chartResponse?.data && Array.isArray(chartResponse.data) && chartResponse.data.length > 5) {
         const normalizedCandles = normalizeCandles(chartResponse.data, timeframe);
-        // Use buildTimelineChartCandles to create evenly-spaced time values.
-        // This eliminates weekend/market-closed gaps while preserving actualTimestamp
-        // for correct date display via tickMarkFormatter.
-        const processedCandles: ChartCandle[] = buildTimelineChartCandles(normalizedCandles, timeframe);
+        const processedCandles: ChartCandle[] = buildActualTimeChartCandles(normalizedCandles, timeframe);
         setChartData(processedCandles);
       } else {
         setChartData([]);
@@ -334,8 +332,8 @@ function ChartView({ chartData, events, symbol, newsSymbol, timeframe, loading, 
 
   const mappedNewsMarkers = useMemo(() => {
     if (!chartData.length || !newsMarkers.length) return [];
-    // Use the library's buildMappedChartMarkers which maps marker timestamps
-    // to the evenly-spaced timeline time values via closest-match on actualTimestamp
+    // Map marker timestamps onto the rendered candle times using the candle's
+    // actual timestamps, with edge tolerance for news arriving near the range boundary.
     const mapped = buildMappedChartMarkers(
       newsMarkers.map((m) => ({
         id: m.id,
@@ -397,15 +395,21 @@ function ChartView({ chartData, events, symbol, newsSymbol, timeframe, loading, 
         timeVisible: true,
         secondsVisible: false,
         tickMarkFormatter: (time: Time) => {
-          const numericTime = typeof time === "number" ? time : Number(time);
-          if (!Number.isFinite(numericTime)) return "";
-
           const candles = chartDataRef.current;
           if (!candles.length) return "";
 
-          // Find exact timeline candle first, then fallback to nearest candle.
-          const exact = candles.find((c) => Number(c.time) === numericTime);
-          const candle = exact || candles.reduce((closest, current) => {
+          const exact = findTimelineChartCandle(time as number | string, candles);
+          if (exact) {
+            return format(new Date(exact.actualTimestamp * 1000), "MMM d, HH:mm");
+          }
+
+          const numericTime = typeof time === "number" ? time : Number(time);
+          if (!Number.isFinite(numericTime)) {
+            const parsedTimestamp = chartTimeToTimestampSeconds(time as number | string);
+            return Number.isFinite(parsedTimestamp) ? format(new Date(parsedTimestamp * 1000), "MMM d, HH:mm") : "";
+          }
+
+          const candle = candles.reduce((closest, current) => {
             const currentDistance = Math.abs(Number(current.time) - numericTime);
             const closestDistance = Math.abs(Number(closest.time) - numericTime);
             return currentDistance < closestDistance ? current : closest;
@@ -427,8 +431,6 @@ function ChartView({ chartData, events, symbol, newsSymbol, timeframe, loading, 
       wickDownColor: "#ef4444",
     });
 
-    // Format data — use the evenly-spaced `time` from buildTimelineChartCandles
-    // This eliminates gaps while keeping actualTimestamp for date display
     const formattedData = chartData.map((candle) => ({
       time: candle.time as Time,
       open: candle.open,
@@ -487,7 +489,7 @@ function ChartView({ chartData, events, symbol, newsSymbol, timeframe, loading, 
       // Validate click event
       if (param.time === undefined || !param.point) return;
       
-      // Find the candle using findTimelineChartCandle (matches on timeline time)
+      // Resolve the clicked candle from the chart's rendered time representation.
       let clickedCandle = findTimelineChartCandle(param.time, chartDataRef.current);
       if (!clickedCandle) {
         const numericTime = typeof param.time === "number" ? param.time : Number(param.time);

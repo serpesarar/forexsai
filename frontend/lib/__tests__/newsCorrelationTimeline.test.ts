@@ -33,6 +33,16 @@ describe("newsCorrelationTimeline", () => {
     expect(actualTimeCandles[1].time).toBe(actualTimeCandles[1].actualTimestamp);
   });
 
+  it("supports business-day chart lookups for daily actual-time candles", () => {
+    const actualTimeCandles = buildActualTimeChartCandles([
+      { timestamp: Date.UTC(2026, 2, 6, 0, 0), open: 100, high: 102, low: 99, close: 101 },
+      { timestamp: Date.UTC(2026, 2, 9, 0, 0), open: 103, high: 105, low: 102, close: 104 },
+    ], "1d");
+
+    const candle = findTimelineChartCandle({ year: 2026, month: 3, day: 6 }, actualTimeCandles);
+    expect(candle?.actualTimestamp).toBe(Math.floor(Date.UTC(2026, 2, 6, 0, 0) / 1000));
+  });
+
   it("does not inject whitespace for session or weekend gaps", () => {
     const series = buildRenderableChartSeries(candles, "1h", "NDX");
 
@@ -68,6 +78,20 @@ describe("newsCorrelationTimeline", () => {
   it("returns null for timestamps outside the loaded candle range", () => {
     const mapped = mapActualTimestampToChartTime(Math.floor(Date.UTC(2026, 2, 10, 0, 0) / 1000), candles);
     expect(mapped).toBeNull();
+  });
+
+  it("maps timestamps slightly outside the loaded range to the nearest edge candle", () => {
+    const mappedBefore = mapActualTimestampToChartTime(
+      Math.floor(Date.UTC(2026, 2, 6, 19, 30) / 1000),
+      candles
+    );
+    const mappedAfter = mapActualTimestampToChartTime(
+      Math.floor(Date.UTC(2026, 2, 9, 13, 30) / 1000),
+      candles
+    );
+
+    expect(mappedBefore).toBe(candles[0].time);
+    expect(mappedAfter).toBe(candles[2].time);
   });
 
   it("maps numeric marker timestamps to compressed chart time", () => {

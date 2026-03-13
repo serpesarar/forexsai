@@ -113,6 +113,27 @@ describe("normalizeCandles", () => {
     expect(candles).toHaveLength(2);
   });
 
+  it("drops malformed candles and repairs invalid OHLC bounds before rendering", () => {
+    const candles = normalizeCandles(
+      [
+        { timestamp: 1710000000, open: 10, high: 9, low: 11, close: 12, volume: 5 },
+        { timestamp: Number.NaN, open: 12, high: 13, low: 11, close: 12.5, volume: 7 },
+        { timestamp: 1710003600, open: 12, high: 13, low: 11, close: Number.POSITIVE_INFINITY, volume: 7 },
+      ],
+      "1h"
+    );
+
+    expect(candles).toHaveLength(1);
+    expect(candles[0]).toMatchObject({
+      timestamp: 1710000000000,
+      open: 10,
+      high: 12,
+      low: 9,
+      close: 12,
+      volume: 5,
+    });
+  });
+
   it("treats uppercase month timeframes distinctly from minutes", () => {
     expect(getTimeframeMs("1M")).toBe(30 * 24 * 60 * 60 * 1000);
     expect(getTimeframeMs("1m")).toBe(60 * 1000);

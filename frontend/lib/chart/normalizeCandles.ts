@@ -68,6 +68,28 @@ function sumVolumes(left?: number, right?: number): number | undefined {
   return (safeLeft ?? 0) + (safeRight ?? 0);
 }
 
+function sanitizeCandle<T extends NormalizableCandle>(candle: T): T | null {
+  const timestamp = toTimestampMs(candle.timestamp);
+  const open = Number(candle.open);
+  const high = Number(candle.high);
+  const low = Number(candle.low);
+  const close = Number(candle.close);
+
+  if (![timestamp, open, high, low, close].every(Number.isFinite) || timestamp <= 0) {
+    return null;
+  }
+
+  return {
+    ...candle,
+    timestamp,
+    open,
+    high: Math.max(open, high, low, close),
+    low: Math.min(open, high, low, close),
+    close,
+    volume: Number.isFinite(candle.volume) ? Number(candle.volume) : undefined,
+  } as T;
+}
+
 function inferTimeframeOffsetMs<T extends NormalizableCandle>(candles: T[], timeframeMs: number): number {
   if (candles.length === 0) {
     return 0;
@@ -113,8 +135,8 @@ export function normalizeCandles<T extends NormalizableCandle>(
   const timeframeMs = getTimeframeMs(timeframe);
   const deduped: T[] = [];
   const preparedCandles = [...candles]
-    .filter((candle) => Number.isFinite(candle.timestamp))
-    .map((candle) => ({ ...candle, timestamp: toTimestampMs(candle.timestamp) } as T))
+    .map((candle) => sanitizeCandle(candle))
+    .filter((candle): candle is T => candle !== null)
     .sort((left, right) => left.timestamp - right.timestamp);
   const inferredOffsetMs = inferTimeframeOffsetMs(preparedCandles, timeframeMs);
 

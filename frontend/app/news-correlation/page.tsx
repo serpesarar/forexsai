@@ -15,7 +15,7 @@ import { fetcher } from "@/lib/api";
 import { buildWebSocketUrl } from "@/lib/api/base";
 import { fetchNewsForCandle, MatchedNewsItem } from "@/lib/api/rssNews";
 import { normalizeCandles } from "@/lib/chart/normalizeCandles";
-import { buildTimelineChartCandles, buildRenderableChartSeries, buildMappedChartMarkers, findTimelineChartCandle } from "@/lib/chart/newsCorrelationTimeline";
+import { buildActualTimeChartCandles, buildRenderableChartSeries, buildMappedChartMarkers, chartTimeToTimestampSeconds, findTimelineChartCandle } from "@/lib/chart/newsCorrelationTimeline";
 import { useNewsMarkers } from "@/hooks/useNewsMarkers";
 import Link from "next/link";
 import type { EnrichedNews } from "@/types/news-correlation";
@@ -24,7 +24,7 @@ import NewsDetailModal from "@/components/NewsDetailModal";
 // ==================== TYPES ====================
 interface ChartCandle {
   timestamp: number;
-  time: number;
+  time: number | string;
   actualTimestamp: number;
   open: number;
   high: number;
@@ -691,7 +691,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
       if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
         const normalizedCandles = normalizeCandles(response.data, requestedTimeframe);
-        const processedCandles: ChartCandle[] = buildTimelineChartCandles(normalizedCandles, requestedTimeframe) as unknown as ChartCandle[];
+        const processedCandles: ChartCandle[] = buildActualTimeChartCandles(normalizedCandles, requestedTimeframe) as unknown as ChartCandle[];
 
         console.log(`[Chart] Loaded ${processedCandles.length} candles for ${requestedSymbol}`);
         setChartData(processedCandles);
@@ -1095,11 +1095,8 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
     const container = chartContainerRef.current;
     const formatActualChartDisplayTime = (time: Time, includeYear = false) => {
-      const numericTime = typeof time === "number" ? time : Number(time);
-      const candle = Number.isFinite(numericTime)
-        ? findTimelineChartCandle(numericTime, chartDataRef.current)
-        : undefined;
-      const timestamp = candle?.actualTimestamp ?? numericTime;
+      const candle = findTimelineChartCandle(time as number | string, chartDataRef.current);
+      const timestamp = candle?.actualTimestamp ?? chartTimeToTimestampSeconds(time as number | string);
 
       if (!Number.isFinite(timestamp)) {
         return "";
@@ -1114,16 +1111,12 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     };
 
     const formatCompressedAxisTime = (time: Time) => {
-      const numericTime = typeof time === "number" ? time : Number(time);
+      const candle = findTimelineChartCandle(time as number | string, chartDataRef.current);
+      const realTimestamp = candle?.actualTimestamp ?? chartTimeToTimestampSeconds(time as number | string);
 
-      if (!Number.isFinite(numericTime)) {
+      if (!Number.isFinite(realTimestamp)) {
         return "";
       }
-
-      // Look up the actual timestamp from the candle data to show real dates
-      // instead of synthetic evenly-spaced timestamps
-      const candle = findTimelineChartCandle(numericTime, chartDataRef.current);
-      const realTimestamp = candle?.actualTimestamp ?? numericTime;
 
       return format(
         new Date(realTimestamp * 1000),
@@ -1183,12 +1176,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         return;
       }
 
-      const time = typeof param.time === "number" ? param.time : Number(param.time);
-      if (!Number.isFinite(time)) {
-        return;
-      }
-
-      const candle = findTimelineChartCandle(time, chartDataRef.current);
+      const candle = findTimelineChartCandle(param.time as number | string, chartDataRef.current);
 
       if (candle) {
         const priceChange = ((candle.close - candle.open) / candle.open) * 100;

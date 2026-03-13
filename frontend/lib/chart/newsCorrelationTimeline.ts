@@ -6,6 +6,12 @@ export interface TimelineChartCandle extends NormalizableCandle {
   priceChange: number;
 }
 
+interface BusinessDayLike {
+  year: number;
+  month: number;
+  day: number;
+}
+
 function toTimelineChartCandle(candle: NormalizableCandle, time: number | string): TimelineChartCandle {
   return {
     timestamp: candle.timestamp,
@@ -87,6 +93,48 @@ export function buildRenderableChartSeries(
   }));
 }
 
+function isBusinessDayLike(value: unknown): value is BusinessDayLike {
+  return typeof value === "object"
+    && value !== null
+    && Number.isFinite((value as BusinessDayLike).year)
+    && Number.isFinite((value as BusinessDayLike).month)
+    && Number.isFinite((value as BusinessDayLike).day);
+}
+
+function toBusinessDayString(value: BusinessDayLike): string {
+  return `${String(value.year).padStart(4, "0")}-${String(value.month).padStart(2, "0")}-${String(value.day).padStart(2, "0")}`;
+}
+
+function inferChartStepSeconds(candles: Array<Pick<TimelineChartCandle, "actualTimestamp">>): number {
+  if (candles.length < 2) {
+    return 0;
+  }
+
+  const counts = new Map<number, number>();
+
+  for (let index = 1; index < candles.length; index += 1) {
+    const diff = candles[index].actualTimestamp - candles[index - 1].actualTimestamp;
+    if (Number.isFinite(diff) && diff > 0) {
+      counts.set(diff, (counts.get(diff) ?? 0) + 1);
+    }
+  }
+
+  let bestStep = 0;
+  let bestCount = -1;
+  counts.forEach((count, step) => {
+    if (count > bestCount || (count === bestCount && step < bestStep)) {
+      bestStep = step;
+      bestCount = count;
+    }
+  });
+
+  return bestStep;
+}
+
+function normalizeChartTimeValue(chartTime: number | string | BusinessDayLike): number | string {
+  return isBusinessDayLike(chartTime) ? toBusinessDayString(chartTime) : chartTime;
+}
+
 export function mapActualTimestampToChartTime(
   actualTimestamp: number,
   candles: Array<Pick<TimelineChartCandle, "time" | "actualTimestamp">>
@@ -97,8 +145,19 @@ export function mapActualTimestampToChartTime(
 
   const firstTimestamp = candles[0].actualTimestamp;
   const lastTimestamp = candles[candles.length - 1].actualTimestamp;
-  if (actualTimestamp < firstTimestamp || actualTimestamp > lastTimestamp) {
+  if (!Number.isFinite(firstTimestamp) || !Number.isFinite(lastTimestamp)) {
     return null;
+  }
+
+  const stepSeconds = inferChartStepSeconds(candles);
+  const edgeToleranceSeconds = stepSeconds > 0 ? Math.max(60, stepSeconds) : 0;
+
+  if (actualTimestamp < firstTimestamp) {
+    return firstTimestamp - actualTimestamp <= edgeToleranceSeconds ? candles[0].time : null;
+  }
+
+  if (actualTimestamp > lastTimestamp) {
+    return actualTimestamp - lastTimestamp <= edgeToleranceSeconds ? candles[candles.length - 1].time : null;
   }
 
   return candles.reduce((closest, candle) => {
@@ -108,22 +167,19 @@ export function mapActualTimestampToChartTime(
   }).time;
 }
 
-export function findTimelineChartCandle<T extends Pick<TimelineChartCandle, "time" | "actualTimestamp">>(
-  chartTime: number | string,
-  candles: T[]
-): T | undefined {
-  return candles.find((candle) => candle.time === chartTime);
-}
-
-function toActualTimestampSeconds(timestamp: string | number): number | null {
-  if (typeof timestamp === "number") {
-    if (!Number.isFinite(timestamp)) {
-      return null;
-    }
-    return timestamp > 1_000_000_000_000 ? Math.floor(timestamp / 1000) : Math.floor(timestamp);
+export function chartTimeToTimestampSeconds(chartTime: number | string | BusinessDayLike): number | null {
+  if (isBusinessDayLike(chartTime)) {
+    return Math.floor(Date.UTC(chartTime.year, chartTime.month - 1, chartTime.day) / 1000);
   }
 
-  const parsed = new Date(timestamp).getTime();
+  if (typeof chartTime === "number") {
+    if (!Number.isFinite(chartTime)) {
+      return null;
+    }
+    return chartTime > 1_000_000_000_000 ? Math.floor(chartTime / 1000) : Math.floor(chartTime);
+  }
+
+  const parsed = new Date(chartTime).getTime();
   if (!Number.isFinite(parsed)) {
     return null;
   }
@@ -131,12 +187,20 @@ function toActualTimestampSeconds(timestamp: string | number): number | null {
   return Math.floor(parsed / 1000);
 }
 
+export function findTimelineChartCandle<T extends Pick<TimelineChartCandle, "time" | "actualTimestamp">>(
+  chartTime: number | string | BusinessDayLike,
+  candles: T[]
+): T | undefined {
+  const normalizedChartTime = normalizeChartTimeValue(chartTime);
+  return candles.find((candle) => candle.time === normalizedChartTime);
+}
+
 export function buildMappedChartMarkers(
   markers: TimelineMarkerInput[],
   candles: Array<Pick<TimelineChartCandle, "time" | "actualTimestamp">>
 ) {
   return markers.flatMap((marker) => {
-    const actualTimestamp = toActualTimestampSeconds(marker.time);
+    const actualTimestamp = chartTimeToTimestampSeconds(marker.time);
     if (!Number.isFinite(actualTimestamp)) {
       return [];
     }
