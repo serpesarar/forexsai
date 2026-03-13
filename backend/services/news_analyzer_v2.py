@@ -219,40 +219,51 @@ Headline: "Goldman Sachs upgrades Apple to buy, raises target to $220"
 
 RESPONSE FORMAT (STRICT JSON - ALL FIELDS REQUIRED):
 {{
-            "summary_en": "English summary in 1-2 sentences",
-            "summary_tr": "Türkçe özet - 1-2 cümle",
-            "analysis_en": "English market analysis in 2-4 sentences",
-            "analysis_tr": "Türkçe piyasa analizi - 2-4 cümle",
-    "headline_tr": "Türkçe çeviri - haber başlığı tam olarak çevrilmeli",
-            "content_tr": "Türkçe analiz - legacy compatibility için analysis_tr ile uyumlu olmalı",
+    "summary_en": "English summary of the news in 1-2 clear sentences",
+    "summary_tr": "Haberin Türkçe özeti - profesyonel finans Türkçesi ile 1-2 net cümle",
+    "analysis_en": "English market impact analysis in 2-4 sentences explaining WHY markets react",
+    "analysis_tr": "Piyasa etki analizi Türkçe olarak 2-4 cümle. Piyasaların NEDEN tepki verdiğini açıklayın.",
+    "headline_tr": "Haber başlığının tam ve doğru Türkçe çevirisi",
+    "content_tr": "Türkçe detaylı analiz içeriği - analysis_tr ile tutarlı olmalı",
     "urgency": "breaking|high|medium|low",
     "importance_level": "critical|high|medium|low",
-    "importance_score": 0-100,
+    "importance_score": "<integer 0-100: importance for markets RIGHT NOW>",
     "importance_reason": "Short explanation of why this news matters right now",
     "market_sentiment": "risk_on|risk_off|neutral",
     "volatility_expectation": "high|medium|low",
-    "analysis_confidence": 75,
+    "analysis_confidence": "<integer 0-100: your confidence - VARY per news>",
     "affected_instruments": [
         {{
             "symbol": "XAUUSD|NDX|DAX|USOIL|VIX|DXY",
             "direction": "bullish|bearish|neutral",
-            "impact_score": 8,
-            "confidence": 0.85,
-            "reasoning": "English explanation of why this instrument is affected",
-            "reasoning_tr": "Türkçe açıklama - neden etkilendiği"
+            "impact_score": "<integer 1-10>",
+            "confidence": "<float 0.0-1.0: MUST vary per instrument>",
+            "reasoning": "English: specific causal explanation for THIS instrument",
+            "reasoning_tr": "Türkçe: bu enstrümanın NEDEN etkilendiğinin spesifik açıklaması"
         }}
     ],
     "logic": "Brief explanation of your analysis logic"
 }}
 
-        IMPORTANT: summary_en, summary_tr, analysis_en, analysis_tr, headline_tr and content_tr MUST NOT be empty.
-        IMPORTANT: summary_en/analysis_en MUST be English and summary_tr/analysis_tr MUST be Turkish.
+CRITICAL RULES FOR TURKISH (TR) FIELDS:
+- headline_tr, summary_tr, analysis_tr, content_tr MUST be PURE Turkish. NO English words.
+- Do NOT add Turkish suffixes to English words. Write natural, fluent Turkish.
+- Do NOT prefix with "[TR]". Write as a native Turkish finance journalist would.
+- Use professional financial Turkish: "yükseliş" not "bullish", "düşüş" not "bearish".
+- reasoning_tr MUST be a complete Turkish sentence explaining the causal mechanism.
+
+CRITICAL RULES FOR CONFIDENCE VALUES:
+- analysis_confidence: 30-95 range. MUST NOT always be 75.
+- Per-instrument confidence MUST vary per instrument:
+  * Primary/direct impact: 0.80-0.95
+  * Secondary/indirect: 0.55-0.79
+  * Speculative/weak: 0.30-0.54
 
 IMPORTANT RULES:
-- Be CONSERVATIVE with urgency - "breaking" should be RARE (<5% of news)
-- "high" urgency should also be selective (<15% of news)  
-- Most routine news should be "medium" or "low"
-- Score and urgency should be CONSISTENT (high urgency = high score)
+- summary_en, summary_tr, analysis_en, analysis_tr, headline_tr, content_tr MUST NOT be empty.
+- summary_en/analysis_en MUST be English. summary_tr/analysis_tr MUST be Turkish.
+- Be CONSERVATIVE with urgency - "breaking" RARE (<5%), "high" selective (<15%)
+- Score and urgency CONSISTENT (high urgency = high score)
 - ONLY include instruments ACTUALLY affected by this specific news
 
 Analyze this news NOW:"""
@@ -351,20 +362,32 @@ Analyze this news NOW:"""
                     raw_impacts = result.get("affected_instruments", [])
                     impacts = []
                     for imp in raw_impacts:
-                        if imp.get("impact_score", 0) >= 4 or imp.get("confidence", 0) >= 0.6:
+                        try:
+                            imp_score = int(imp.get("impact_score", 0))
+                        except (TypeError, ValueError):
+                            imp_score = 0
+                        try:
+                            imp_conf = float(imp.get("confidence", 0))
+                        except (TypeError, ValueError):
+                            imp_conf = 0.5
+                        if imp_score >= 4 or imp_conf >= 0.6:
                             impacts.append(SymbolImpact(
                                 symbol=imp["symbol"],
                                 direction=imp["direction"],
-                                score=imp["impact_score"],
-                                confidence=imp["confidence"],
-                                reasoning=imp["reasoning"],
-                                reasoning_tr=imp.get("reasoning_tr", imp["reasoning"])
+                                score=imp_score,
+                                confidence=imp_conf,
+                                reasoning=imp.get("reasoning", ""),
+                                reasoning_tr=imp.get("reasoning_tr", imp.get("reasoning", ""))
                             ))
                     
                     if not impacts:
                         logger.info("[DeepSeek] No tracked instruments were materially affected by this news item")
 
-                    confidence = float(result.get("analysis_confidence", 70) or 70)
+                    raw_conf = result.get("analysis_confidence", 50)
+                    try:
+                        confidence = float(raw_conf)
+                    except (TypeError, ValueError):
+                        confidence = 50.0
                     importance_score_raw = result.get("importance_score", 0)
                     try:
                         importance_score = int(round(float(importance_score_raw)))

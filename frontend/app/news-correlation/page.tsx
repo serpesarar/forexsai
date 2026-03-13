@@ -1416,7 +1416,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
             symbol: selectedSymbol,
             direction: normalizeImpactDirection(newsItem.direction),
             score: newsItem.score || 0,
-            confidence: 0.7,
+            confidence: newsItem.ai_match_confidence ?? newsItem.relevance_score ?? 0.5,
             reasoning: newsItem.reasoning || newsItem.reasoning_tr || '',
             reasoning_tr: newsItem.reasoning_tr || '',
             reasoning_locale: newsItem.reasoning_locale || undefined,
@@ -1427,7 +1427,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           urgency: normalizeUrgency(newsItem.urgency),
           eventDuration: 'short_term',
           affectedCandles: [],
-          aiConfidence: 70,
+          aiConfidence: Math.round((newsItem.ai_match_confidence ?? newsItem.relevance_score ?? 0.5) * 100),
           analysisTimestamp: newsItem.timestamp || new Date().toISOString(),
         }
       : newsItem;

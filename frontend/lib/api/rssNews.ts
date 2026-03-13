@@ -275,6 +275,11 @@ export interface MatchedNewsItem {
   event_id?: string;
   affected_symbols?: string[];
   relevance_score: number;
+  importance_level?: string;
+  importance_score?: number;
+  importance_reason?: string;
+  ai_model?: string;
+  ai_match_confidence?: number;
   url: string;
 }
 
