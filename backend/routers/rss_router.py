@@ -130,49 +130,29 @@ def _normalize_marker_direction(value: Any) -> str:
 
 
 def _marker_position_for(direction: str, catalyst_type: str) -> str:
-    if catalyst_type == "economic":
-        return "inBar"
-    if direction == "bullish":
-        return "belowBar"
-    if direction == "bearish":
-        return "aboveBar"
-    return "inBar"
+    return "aboveBar"
 
 
 def _marker_shape_for(direction: str, catalyst_type: str, urgency: str) -> str:
-    if catalyst_type == "economic":
-        return "square"
-    if catalyst_type == "earnings":
-        return "circle"
-    if urgency == "breaking":
-        return "circle"
-    if direction == "bullish":
-        return "arrowUp"
-    if direction == "bearish":
-        return "arrowDown"
     return "circle"
 
 
 def _marker_text_for(catalyst_type: str, urgency: str) -> str:
     if catalyst_type == "economic":
-        return "📊"
+        return "�"
     if catalyst_type == "earnings":
-        return "💼"
+        return "�"
     return "🚨" if urgency == "breaking" else "📰"
 
 
 def _marker_color_for(direction: str, catalyst_type: str, urgency: str) -> str:
     if catalyst_type == "economic":
-        return "#A855F7"
+        return "#F59E0B"
     if catalyst_type == "earnings":
-        return "#3B82F6"
+        return "#38BDF8"
     if urgency == "breaking":
         return "#DC2626"
-    if direction == "bullish":
-        return "#22C55E"
-    if direction == "bearish":
-        return "#EF4444"
-    return "#F59E0B"
+    return "#F97316"
 
 
 def _marker_size_for(score: int, importance_score: int, catalyst_type: str, urgency: str) -> float:

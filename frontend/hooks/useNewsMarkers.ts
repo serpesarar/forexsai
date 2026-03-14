@@ -108,9 +108,9 @@ export function convertToChartMarkers(markers: NewsMarker[]) {
     color: marker.color,
     shape: marker.shape,
     text: marker.catalyst_type === 'economic'
-      ? '📊'
+      ? '�'
       : marker.catalyst_type === 'earnings'
-        ? '�'
+        ? '💰'
         : marker.urgency === 'breaking'
           ? '🚨'
           : '📰',

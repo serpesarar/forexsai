@@ -33,6 +33,7 @@ export interface TimelineMarkerInput {
   color: string;
   shape: "circle" | "square" | "arrowUp" | "arrowDown";
   size: number;
+  text?: string;
   headline?: string;
   headline_en?: string;
   direction?: string;
@@ -48,6 +49,7 @@ export interface TimelineMarkerInput {
   importance_score?: number;
   importance_reason?: string;
   ai_confidence?: number;
+  source_time?: string;
   url?: string;
 }
 
@@ -222,15 +224,16 @@ export function buildMappedChartMarkers(
       position: marker.position,
       color: marker.color,
       shape: marker.shape,
-      text: marker.catalyst_type === "economic"
-        ? "📊"
+      text: marker.text || (marker.catalyst_type === "economic"
+        ? "�"
         : marker.catalyst_type === "earnings"
-          ? "�"
+          ? "💰"
           : marker.urgency === "breaking"
             ? "🚨"
-            : "📰",
+            : "📰"),
       size: marker.size,
       id: marker.id,
+      source_time: typeof marker.time === "string" ? marker.time : String(marker.time),
       headline: marker.headline,
       headline_en: marker.headline_en,
       direction: marker.direction,

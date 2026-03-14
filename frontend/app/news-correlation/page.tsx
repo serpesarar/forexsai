@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createChart, CrosshairMode, type IChartApi, type ISeriesApi, type Time, type CandlestickData } from "lightweight-charts";
 import { format, isWithinInterval, subMinutes, addMinutes } from "date-fns";
 import { useRouter } from "next/navigation";
@@ -712,6 +712,56 @@ function toFallbackMatchedItem(item: EnrichedNews, selectedSymbol: string): Matc
   };
 }
 
+function markerToMatchedItem(
+  marker: {
+    id?: string;
+    headline?: string;
+    headline_en?: string;
+    event_name?: string;
+    reasoning_tr?: string;
+    source_time?: string;
+    time?: string;
+    catalyst_type?: "news" | "economic" | "earnings";
+    urgency?: string;
+    score?: number;
+    direction?: string;
+    event_id?: string | null;
+    ai_confidence?: number;
+    importance_level?: string;
+    importance_score?: number;
+    importance_reason?: string;
+    url?: string;
+  },
+  selectedSymbol: string
+): MatchedNewsItem {
+  return {
+    id: String(marker.id || ""),
+    headline: marker.headline || marker.headline_en || "",
+    headline_en: marker.headline_en || marker.headline || "",
+    summary_en: marker.event_name || marker.headline_en || marker.headline || "",
+    summary_tr: marker.headline || "",
+    analysis_en: marker.reasoning_tr || "",
+    analysis_tr: marker.reasoning_tr || "",
+    timestamp: marker.source_time || marker.time || new Date().toISOString(),
+    source: marker.catalyst_type || "marker",
+    catalyst_type: marker.catalyst_type || "news",
+    match_quality: "matched",
+    urgency: marker.urgency || "medium",
+    score: marker.score || 0,
+    direction: marker.direction || "neutral",
+    reasoning: marker.reasoning_tr || "",
+    reasoning_tr: marker.reasoning_tr || "",
+    event_id: marker.event_id || undefined,
+    affected_symbols: [selectedSymbol],
+    relevance_score: typeof marker.ai_confidence === "number" ? Math.max(0.3, Math.min(0.95, marker.ai_confidence / 100)) : 0.75,
+    importance_level: marker.importance_level,
+    importance_score: marker.importance_score,
+    importance_reason: marker.importance_reason,
+    ai_match_confidence: typeof marker.ai_confidence === "number" ? marker.ai_confidence / 100 : undefined,
+    url: marker.url || "",
+  };
+}
+
 interface AIAnnotatedEvent {
   ai_analyzed?: boolean;
   ai_model?: string | null;
@@ -1035,6 +1085,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   const markerLookbackHours = getMarkerLookbackHours(timeframe);
   const markerLimit = timeframe === "1d" ? 120 : timeframe === "4h" ? 90 : timeframe === "1h" ? 72 : 60;
   const { markers: newsMarkers, error: newsMarkersError } = useNewsMarkers(selectedSymbol, markerLookbackHours, 5, markerLimit);
+  const mappedChartMarkers = useMemo(() => buildMappedChartMarkers(newsMarkers, chartData), [newsMarkers, chartData]);
   const [isEconomicModalOpen, setIsEconomicModalOpen] = useState(false);
   const [isEarningsModalOpen, setIsEarningsModalOpen] = useState(false);
   const [loadingEventDetail, setLoadingEventDetail] = useState(false);
@@ -1045,6 +1096,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   const wsRef = useRef<WebSocket | null>(null);
   const chartDataRef = useRef<ChartCandle[]>([]);
   const newsRef = useRef<EnrichedNews[]>([]);
+  const mappedMarkersRef = useRef<any[]>([]);
   const selectedSymbolRef = useRef(selectedSymbol);
   const timeframeRef = useRef(timeframe);
   const currentLocaleRef = useRef(currentLocale);
@@ -1650,6 +1702,30 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           }).slice(0, 5).map((item) => toFallbackMatchedItem(item, currentSymbol));
         };
 
+        const buildMarkerFallback = () => {
+          return mappedMarkersRef.current
+            .filter((marker) => String(marker.time) === String(candle.time))
+            .map((marker) => markerToMatchedItem(marker, currentSymbol));
+        };
+
+        const mergeMatchedItems = (...lists: MatchedNewsItem[][]) => {
+          const merged: MatchedNewsItem[] = [];
+          const seen = new Set<string>();
+
+          for (const list of lists) {
+            for (const item of list) {
+              const key = `${item.catalyst_type || "news"}:${item.event_id || item.id}:${item.timestamp}`;
+              if (seen.has(key)) {
+                continue;
+              }
+              seen.add(key);
+              merged.push(item);
+            }
+          }
+
+          return merged;
+        };
+
         fetchNewsForCandle(
           currentSymbol,
           new Date(candle.actualTimestamp * 1000).toISOString(),
@@ -1661,7 +1737,11 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           currentLocaleRef.current
         ).then(response => {
           const matchedNews = Array.isArray(response.news) ? response.news : [];
-          const fallbackNews = matchedNews.length === 0 ? buildNearbyNewsFallback() : matchedNews;
+          const fallbackNews = mergeMatchedItems(
+            matchedNews,
+            buildMarkerFallback(),
+            matchedNews.length === 0 ? buildNearbyNewsFallback() : []
+          );
           setSelectedCandleNews(prev => prev ? {
             ...prev,
             news: fallbackNews,
@@ -1671,7 +1751,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           console.error("[CandleClick] Error fetching matched news:", error);
           setSelectedCandleNews(prev => prev ? {
             ...prev,
-            news: buildNearbyNewsFallback(),
+            news: mergeMatchedItems(buildMarkerFallback(), buildNearbyNewsFallback()),
             isLoadingNews: false,
           } : null);
         });
@@ -1733,11 +1813,13 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
     if (chartData.length === 0) {
       candlestickSeriesRef.current.setMarkers([] as any);
+      mappedMarkersRef.current = [];
       return;
     }
 
-    candlestickSeriesRef.current.setMarkers(buildMappedChartMarkers(newsMarkers, chartData) as any);
-  }, [chartData, newsMarkers]);
+    mappedMarkersRef.current = mappedChartMarkers;
+    candlestickSeriesRef.current.setMarkers(mappedChartMarkers as any);
+  }, [chartData, mappedChartMarkers]);
 
   const openEconomicEvent = useCallback(async (event: EconomicEvent) => {
     setSelectedEconomicEvent(event);
