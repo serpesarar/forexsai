@@ -286,7 +286,7 @@ Analyze this news NOW:"""
                     "messages": [
                         {"role": "user", "content": "You are an expert financial analyst. Analyze news precisely and only report ACTUAL impacts, not generic patterns. Respond ONLY with valid JSON.\n\n" + prompt}
                     ],
-                    "max_tokens": 800
+                    "max_tokens": 1500
                 }
                 
                 logger.info(f"[DeepSeek] Sending request to {DEEPSEEK_API_URL}")
@@ -320,41 +320,38 @@ Analyze this news NOW:"""
                         result = json.loads(content)
                     except json.JSONDecodeError as json_err:
                         # Try to fix common truncation issues
-                        if "Unterminated string" in str(json_err):
-                            logger.warning(f"[DeepSeek] Incomplete JSON, attempting to fix...")
-                            # Add closing braces/brackets
-                            open_braces = content.count('{') - content.count('}')
-                            open_brackets = content.count('[') - content.count(']')
-                            fixed_content = content
-                            for _ in range(open_brackets):
-                                fixed_content += "]"
-                            for _ in range(open_braces):
-                                fixed_content += "}"
-                            # Remove trailing commas before closing braces
-                            fixed_content = fixed_content.replace(',}', '}').replace(',]', ']')
-                            try:
-                                result = json.loads(fixed_content)
-                                logger.info("[DeepSeek] JSON fixed successfully!")
-                            except:
-                                raise json_err
-                        else:
-                            raise
+                        logger.warning(f"[DeepSeek] JSON parse error: {json_err}, attempting repair...")
+                        import re as _re
+                        fixed_content = content.rstrip()
+                        fixed_content = _re.sub(r',?\s*"[^"]*":\s*"[^"]*$', '', fixed_content)
+                        fixed_content = _re.sub(r',?\s*\{[^}]*$', '', fixed_content)
+                        open_brackets = fixed_content.count('[') - fixed_content.count(']')
+                        open_braces = fixed_content.count('{') - fixed_content.count('}')
+                        for _ in range(max(0, open_brackets)):
+                            fixed_content += "]"
+                        for _ in range(max(0, open_braces)):
+                            fixed_content += "}"
+                        fixed_content = _re.sub(r',\s*}', '}', fixed_content)
+                        fixed_content = _re.sub(r',\s*]', ']', fixed_content)
+                        try:
+                            result = json.loads(fixed_content)
+                            logger.info("[DeepSeek] JSON repaired successfully")
+                        except json.JSONDecodeError:
+                            raise json_err
                     
+                    # --- Text field extraction ---
+                    # RULE: Each field has its OWN fallback only.
+                    # Never cross-pollinate headline_tr with summary_tr.
+                    # Prefer empty string over broken _simple_translate output.
                     summary_en = self._coerce_text(result.get("summary_en"), headline)
-                    headline_tr = self._coerce_text(
-                        result.get("headline_tr"),
-                        self._coerce_text(result.get("summary_tr"), self._simple_translate(headline or summary_en))
-                    )
-                    summary_tr = self._coerce_text(result.get("summary_tr"), headline_tr)
+                    headline_tr = self._coerce_text(result.get("headline_tr"))
+                    summary_tr = self._coerce_text(result.get("summary_tr"))
                     analysis_en = self._coerce_text(
                         result.get("analysis_en"),
                         self._coerce_text(result.get("logic"), article_content[:280] if article_content else headline)
                     )
-                    analysis_tr = self._coerce_text(
-                        result.get("analysis_tr"),
-                        self._coerce_text(result.get("content_tr"), self._simple_translate(analysis_en))
-                    )
-                    content_tr = self._coerce_text(result.get("content_tr"), analysis_tr)
+                    analysis_tr = self._coerce_text(result.get("analysis_tr"))
+                    content_tr = self._coerce_text(result.get("content_tr"))
 
                     logger.info(f"[DeepSeek] Parsed result: headline_tr={headline_tr[:50]}...")
                     

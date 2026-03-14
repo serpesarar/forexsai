@@ -161,23 +161,25 @@ export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }
 
   if (!isOpen || !news) return null;
 
+  // Semantic boundaries: headline/summary/analysis are NOT interchangeable.
+  // Fall back only within the same semantic field across languages.
   const isTurkish = locale === "tr";
   const isEnglish = locale === "en";
   const localizedHeadline = isTurkish
-    ? news.headline_tr || news.summary_tr || news.headline || news.summary_en || ""
+    ? news.headline_tr || news.headline || ""
     : !isEnglish
-      ? news.headline_locale || news.summary_locale || news.analysis_locale || news.headline || news.summary_en || news.headline_tr || news.summary_tr || ""
-      : news.headline || news.summary_en || news.headline_tr || news.summary_tr || "";
+      ? news.headline_locale || news.headline || ""
+      : news.headline || "";
   const localizedSummary = isTurkish
-    ? news.summary_tr || news.headline_tr || news.summary_en || news.headline || ""
+    ? news.summary_tr || news.summary_en || ""
     : !isEnglish
-      ? news.summary_locale || news.analysis_locale || news.headline_locale || news.summary_en || news.headline || news.summary_tr || news.headline_tr || ""
-      : news.summary_en || news.headline || news.summary_tr || news.headline_tr || "";
+      ? news.summary_locale || news.summary_en || ""
+      : news.summary_en || "";
   const localizedAnalysis = isTurkish
-    ? news.analysis_tr || news.content_tr || news.summary_tr || news.analysis_en || news.content || news.headline || ""
+    ? news.analysis_tr || news.analysis_en || news.content || ""
     : !isEnglish
-      ? news.analysis_locale || news.summary_locale || news.headline_locale || news.analysis_en || news.content || news.summary_en || news.analysis_tr || news.content_tr || news.headline || ""
-      : news.analysis_en || news.content || news.summary_en || news.analysis_tr || news.content_tr || news.headline || "";
+      ? news.analysis_locale || news.analysis_en || news.content || ""
+      : news.analysis_en || news.content || "";
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {

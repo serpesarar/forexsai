@@ -92,7 +92,8 @@ function normalizeAiConfidence(value: unknown): number {
     return 0;
   }
 
-  return value <= 1 ? Math.round(value * 100) : value;
+  // Backend sends 0-100 scale directly. Clamp to valid range.
+  return Math.round(Math.max(0, Math.min(100, value)));
 }
 
 function normalizeImpactDirection(value: unknown): EnrichedNews["impacts"][number]["direction"] {
@@ -119,64 +120,61 @@ function usesRuntimeLocale(locale: string): boolean {
   return !isTurkishLocale(locale) && !isEnglishLocale(locale);
 }
 
+// --- Localization helpers ---
+// RULE: Each getter falls back ONLY to the same semantic field in another language.
+// headline → headline_tr → headline_locale → headline (EN) → ""
+// summary  → summary_tr  → summary_locale  → summary_en  → ""
+// analysis → analysis_tr → analysis_locale  → analysis_en → ""
+// NEVER cross headline↔summary↔analysis boundaries.
 function getLocalizedHeadline(item: EnrichedNews, locale: string): string {
   if (isTurkishLocale(locale)) {
-    return item.headline_tr || item.summary_tr || item.analysis_tr || item.content_tr || item.headline || item.summary_en || "";
+    return item.headline_tr || item.headline || "";
   }
-
   if (usesRuntimeLocale(locale)) {
-    return item.headline_locale || item.summary_locale || item.analysis_locale || item.headline || item.summary_en || item.headline_tr || item.summary_tr || "";
+    return item.headline_locale || item.headline || "";
   }
-
-  return item.headline || item.summary_en || item.headline_tr || item.summary_tr || "";
+  return item.headline || "";
 }
 
 function getLocalizedSummary(item: EnrichedNews, locale: string): string {
   if (isTurkishLocale(locale)) {
-    return item.summary_tr || item.analysis_tr || item.content_tr || item.headline_tr || item.summary_en || item.headline || "";
+    return item.summary_tr || item.summary_en || "";
   }
-
   if (usesRuntimeLocale(locale)) {
-    return item.summary_locale || item.analysis_locale || item.headline_locale || item.summary_en || item.headline || item.summary_tr || item.headline_tr || "";
+    return item.summary_locale || item.summary_en || "";
   }
-
-  return item.summary_en || item.headline || item.analysis_en || item.summary_tr || item.headline_tr || "";
+  return item.summary_en || "";
 }
 
 function getLocalizedAnalysis(item: EnrichedNews, locale: string): string {
   if (isTurkishLocale(locale)) {
-    return item.analysis_tr || item.content_tr || item.summary_tr || item.analysis_en || item.content || item.headline || "";
+    return item.analysis_tr || item.analysis_en || item.content || "";
   }
-
   if (usesRuntimeLocale(locale)) {
-    return item.analysis_locale || item.summary_locale || item.headline_locale || item.analysis_en || item.content || item.summary_en || item.analysis_tr || item.content_tr || item.headline || "";
+    return item.analysis_locale || item.analysis_en || item.content || "";
   }
-
-  return item.analysis_en || item.content || item.summary_en || item.analysis_tr || item.content_tr || item.headline || "";
+  return item.analysis_en || item.content || "";
 }
 
 function getLocalizedMatchedHeadline(item: MatchedNewsItem, locale: string): string {
+  // MatchedNewsItem.headline is the original headline (may be TR if source is TR)
   if (isTurkishLocale(locale)) {
-    return item.headline || item.summary_tr || item.analysis_tr || item.headline_en || "";
+    return item.headline || item.headline_en || "";
   }
-
   if (usesRuntimeLocale(locale)) {
-    return item.headline_locale || item.summary_locale || item.analysis_locale || item.headline || item.headline_en || item.summary_en || "";
+    return item.headline_locale || item.headline_en || item.headline || "";
   }
-
-  return item.headline_en || item.summary_en || item.headline || item.summary_tr || "";
+  return item.headline_en || item.headline || "";
 }
 
 function getLocalizedMatchedSummary(item: MatchedNewsItem, locale: string): string {
   if (isTurkishLocale(locale)) {
-    return item.summary_tr || item.analysis_tr || item.reasoning_tr || item.headline || item.headline_en || "";
+    return item.summary_tr || item.summary_en || "";
   }
-
   if (usesRuntimeLocale(locale)) {
-    return item.summary_locale || item.analysis_locale || item.reasoning_locale || item.headline_locale || item.summary_en || item.analysis_en || item.headline || item.headline_en || "";
+    return item.summary_locale || item.summary_en || "";
   }
-
-  return item.summary_en || item.analysis_en || item.headline_en || item.reasoning_tr || item.headline || "";
+  return item.summary_en || "";
 }
 
 function getCatalystBadge(item: MatchedNewsItem, locale: string): string {
@@ -196,17 +194,21 @@ function normalizeNewsItem(item: any): EnrichedNews {
     id: String(item.id ?? ""),
     timestamp: item.timestamp || item.published_at || new Date().toISOString(),
     source: item.source || "Unknown",
+    // Semantic boundaries: each field falls back ONLY within its own semantic category.
+    // headline → headline_en → ""  (NEVER summary or analysis)
+    // summary  → summary_en → ""  (NEVER headline or analysis)
+    // analysis → analysis_en → "" (NEVER headline or summary)
     headline: item.headline || item.headline_en || "",
-    headline_tr: item.headline_tr || item.summary_tr || item.analysis_tr || item.content_tr || item.headline || item.headline_en || "",
-    content: item.content || item.analysis_en || item.analysis || item.summary_en || item.summary || item.headline || "",
-    content_tr: item.content_tr || item.analysis_tr || item.summary_tr || item.headline_tr || item.headline || item.headline_en || "",
-    summary_en: item.summary_en || item.summary || item.headline || item.headline_en || "",
-    summary_tr: item.summary_tr || item.analysis_tr || item.content_tr || item.headline_tr || item.headline || item.headline_en || "",
-    analysis_en: item.analysis_en || item.analysis || item.content || item.summary_en || item.summary || item.headline || item.headline_en || "",
-    analysis_tr: item.analysis_tr || item.content_tr || item.summary_tr || item.headline_tr || item.analysis_en || item.analysis || item.content || item.headline || item.headline_en || "",
+    headline_tr: item.headline_tr || "",
+    content: item.content || item.analysis_en || "",
+    content_tr: item.content_tr || "",
+    summary_en: item.summary_en || "",
+    summary_tr: item.summary_tr || "",
+    analysis_en: item.analysis_en || item.analysis || item.content || "",
+    analysis_tr: item.analysis_tr || "",
     headline_locale: item.headline_locale || undefined,
     summary_locale: item.summary_locale || undefined,
-    analysis_locale: item.analysis_locale || item.summary_locale || undefined,
+    analysis_locale: item.analysis_locale || undefined,
     category: item.category || "general",
     url: item.url || item.source_url || "",
     impacts: Array.isArray(item.impacts)
@@ -1404,7 +1406,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
             symbol: selectedSymbol,
             direction: normalizeImpactDirection(newsItem.direction),
             score: newsItem.score || 0,
-            confidence: newsItem.ai_match_confidence ?? newsItem.relevance_score ?? 0.5,
+            confidence: newsItem.ai_match_confidence ?? newsItem.relevance_score ?? 0,
             reasoning: newsItem.reasoning || newsItem.reasoning_tr || '',
             reasoning_tr: newsItem.reasoning_tr || '',
             reasoning_locale: newsItem.reasoning_locale || undefined,
@@ -1415,7 +1417,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           urgency: normalizeUrgency(newsItem.urgency),
           eventDuration: 'short_term',
           affectedCandles: [],
-          aiConfidence: Math.round((newsItem.ai_match_confidence ?? newsItem.relevance_score ?? 0.5) * 100),
+          aiConfidence: Math.round((newsItem.ai_match_confidence ?? newsItem.relevance_score ?? 0) * 100),
           analysisTimestamp: newsItem.timestamp || new Date().toISOString(),
         }
       : newsItem;

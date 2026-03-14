@@ -275,7 +275,7 @@ async def get_rss_news(
                 sentiment=item.get("sentiment", "neutral"),
                 volatility_expectation=item.get("volatility_expectation", "medium"),
                 urgency=item.get("urgency", "medium"),
-                ai_confidence=item.get("ai_confidence", 0) / 100,
+                ai_confidence=item.get("ai_confidence", 0),  # 0-100 scale, no division
                 importance_level=item.get("importance_level"),
                 importance_score=item.get("importance_score"),
                 importance_reason=item.get("importance_reason"),
