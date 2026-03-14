@@ -2,7 +2,7 @@
 RSS Router - API endpoints for RSS news aggregation
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Any, Dict
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel
@@ -120,6 +120,73 @@ def _sanitize_news_item(item: Dict[str, Any]) -> Dict[str, Any]:
     sanitized["impacts"] = _sanitize_impacts(sanitized.get("impacts"))
     sanitized["ai_confidence"] = _normalize_article_confidence(sanitized.get("ai_confidence"))
     return sanitized
+
+
+def _normalize_marker_direction(value: Any) -> str:
+    direction = str(value or "neutral").strip().lower()
+    if direction in {"bullish", "bearish", "neutral"}:
+        return direction
+    return "neutral"
+
+
+def _marker_position_for(direction: str, catalyst_type: str) -> str:
+    if catalyst_type == "economic":
+        return "inBar"
+    if direction == "bullish":
+        return "belowBar"
+    if direction == "bearish":
+        return "aboveBar"
+    return "inBar"
+
+
+def _marker_shape_for(direction: str, catalyst_type: str, urgency: str) -> str:
+    if catalyst_type == "economic":
+        return "square"
+    if catalyst_type == "earnings":
+        return "circle"
+    if urgency == "breaking":
+        return "circle"
+    if direction == "bullish":
+        return "arrowUp"
+    if direction == "bearish":
+        return "arrowDown"
+    return "circle"
+
+
+def _marker_text_for(catalyst_type: str, urgency: str) -> str:
+    if catalyst_type == "economic":
+        return "📊"
+    if catalyst_type == "earnings":
+        return "💼"
+    return "🚨" if urgency == "breaking" else "📰"
+
+
+def _marker_color_for(direction: str, catalyst_type: str, urgency: str) -> str:
+    if catalyst_type == "economic":
+        return "#A855F7"
+    if catalyst_type == "earnings":
+        return "#3B82F6"
+    if urgency == "breaking":
+        return "#DC2626"
+    if direction == "bullish":
+        return "#22C55E"
+    if direction == "bearish":
+        return "#EF4444"
+    return "#F59E0B"
+
+
+def _marker_size_for(score: int, importance_score: int, catalyst_type: str, urgency: str) -> float:
+    if catalyst_type == "economic":
+        return 2.4 if importance_score >= 85 else 2.0 if importance_score >= 65 else 1.7
+    if catalyst_type == "earnings":
+        return 2.2 if importance_score >= 75 else 1.9 if importance_score >= 60 else 1.6
+    if urgency == "breaking":
+        return 2.5
+    if score >= 8 or importance_score >= 80:
+        return 2.0
+    if score >= 6 or importance_score >= 70:
+        return 1.6
+    return 1.2
 
 
 async def _translate_in_batches(texts: List[str], target_lang: str) -> List[str]:
@@ -382,9 +449,9 @@ async def get_latest_breaking(limit: int = Query(10, ge=1, le=50)):
 @router.get("/chart-markers/{symbol}")
 async def get_chart_news_markers(
     symbol: str,
-    hours: int = Query(24, ge=1, le=168, description="Lookback period in hours"),
+    hours: int = Query(72, ge=1, le=2160, description="Lookback period in hours"),
     min_impact_score: int = Query(6, ge=1, le=10, description="Minimum impact score to show on chart"),
-    max_markers: int = Query(15, ge=1, le=50, description="Maximum number of markers to return")
+    max_markers: int = Query(60, ge=1, le=200, description="Maximum number of markers to return")
 ):
     """
     Get news markers for chart display - INTELLIGENT FILTERING.
@@ -392,14 +459,11 @@ async def get_chart_news_markers(
     """
     try:
         supabase = get_supabase_client()
-        
+        from routers.economic_calendar_router import generate_economic_events_between, generate_earnings_events_between
+
         start_time = datetime.utcnow() - timedelta(hours=hours)
-        
-        # STRATEGY: Get only high-quality news markers
-        # Priority 1: Breaking news (always show)
-        # Priority 2: High urgency with score >= min_impact_score
-        # Priority 3: Medium urgency only if score >= 8
-        
+        end_time = datetime.now(timezone.utc)
+
         result = (
             supabase.table("enriched_news")
             .select("*")
@@ -417,8 +481,7 @@ async def get_chart_news_markers(
             items = result.get('data', []) or []
         else:
             items = []
-        
-        # Additional query for medium urgency but high impact
+
         if len(items) < max_markers:
             medium_result = (
                 supabase.table("enriched_news")
@@ -438,11 +501,9 @@ async def get_chart_news_markers(
             for item in medium_items:
                 if item["id"] not in existing_ids:
                     items.append(item)
-        
-        items = [_sanitize_news_item(item) for item in items]
 
-        # Filter for symbol-specific impacts with HIGH RELEVANCE
-        markers = []
+        items = [_sanitize_news_item(item) for item in items]
+        markers: List[Dict[str, Any]] = []
         for item in items:
             impacts = item.get("impacts", [])
             urgency = item.get("urgency", "medium")
@@ -457,14 +518,9 @@ async def get_chart_news_markers(
             symbol_impact = get_matching_impact(impacts, symbol)
             if symbol_impact:
                 imp_score = symbol_impact.get("score", 0)
-
-                # Derive importance_score from urgency/impact when AI didn't set it
                 if importance_score <= 0:
                     urgency_base = 85 if urgency == "breaking" else 72 if urgency == "high" else 58 if urgency == "medium" else 35
                     importance_score = max(urgency_base, int(imp_score) * 10)
-
-                # Unified filtering: importance_score is the primary gate.
-                # If importance_score is high enough, bypass secondary checks.
                 passes_importance = (
                     (urgency == "breaking" and importance_score >= 80)
                     or (urgency == "high" and importance_score >= 75)
@@ -473,7 +529,6 @@ async def get_chart_news_markers(
                 )
 
                 if not passes_importance:
-                    # Secondary: fall back to legacy score/confidence checks
                     if urgency == "breaking" and imp_score < 6:
                         symbol_impact = None
                     elif urgency == "high" and (imp_score < min_impact_score or ai_confidence < 50):
@@ -488,49 +543,27 @@ async def get_chart_news_markers(
             
             if not symbol_impact:
                 continue
-            
-            # Check for economic events
-            is_economic_event = any(imp.get("is_economic_event") for imp in impacts)
-            
-            # Determine marker appearance
-            direction = symbol_impact.get("direction", "neutral")
-            score = symbol_impact.get("score", 5)
-            
-            # Color based on urgency and direction
-            if urgency == "breaking":
-                color = "#DC2626"  # Red
-            elif urgency == "high":
-                color = "#F59E0B" if direction == "neutral" else "#22C55E" if direction == "bullish" else "#EF4444"
-            else:
-                color = "#3B82F6"  # Blue
-            
-            # Shape based on urgency
-            if urgency == "breaking":
-                shape = "circle"
-            elif is_economic_event:
-                shape = "square"
-            elif direction == "bullish":
-                shape = "arrowUp"
-            elif direction == "bearish":
-                shape = "arrowDown"
-            else:
-                shape = "circle"
-            
+
+            direction = _normalize_marker_direction(symbol_impact.get("direction", "neutral"))
+            score = int(symbol_impact.get("score", 5) or 5)
             marker = {
                 "id": item["id"],
                 "time": item["timestamp"],
-                "position": "aboveBar" if direction == "bullish" else "belowBar" if direction == "bearish" else "inBar",
-                "color": color,
-                "shape": shape,
-                "text": "🚨" if urgency == "breaking" else "📊" if is_economic_event else "📰",
-                "size": 2.5 if urgency == "breaking" else 2 if score >= 8 else 1.5 if score >= 6 else 1,
+                "position": _marker_position_for(direction, "news"),
+                "color": _marker_color_for(direction, "news", urgency),
+                "shape": _marker_shape_for(direction, "news", urgency),
+                "text": _marker_text_for("news", urgency),
+                "size": _marker_size_for(score, importance_score, "news", urgency),
                 "headline": item.get("headline_tr") or item["headline"],
                 "headline_en": item["headline"],
                 "direction": direction,
                 "score": score,
                 "urgency": urgency,
-                "is_economic_event": is_economic_event,
+                "catalyst_type": "news",
+                "is_economic_event": False,
+                "is_earnings_event": False,
                 "event_name": symbol_impact.get("event_name"),
+                "event_id": None,
                 "reasoning_tr": symbol_impact.get("reasoning_tr", ""),
                 "importance_level": importance_level,
                 "importance_score": importance_score,
@@ -539,21 +572,114 @@ async def get_chart_news_markers(
                 "ai_confidence": ai_confidence,
             }
             markers.append(marker)
-        
-        # Sort by timestamp and limit
-        markers.sort(key=lambda x: x["time"], reverse=False)
-        markers = markers[:max_markers]
+
+        economic_events = generate_economic_events_between(start_time.replace(tzinfo=timezone.utc), end_time)
+        for event in economic_events:
+            affected_symbols = event.get("affected_symbols") or []
+            if affected_symbols and not any(symbols_match(symbol, impacted) for impacted in affected_symbols):
+                continue
+
+            importance_score = int(event.get("importance_score") or 0)
+            if importance_score <= 0:
+                impact_label = str(event.get("impact") or "Medium").lower()
+                importance_score = {"high": 90, "medium": 68, "low": 45}.get(impact_label, 60)
+            if importance_score < 60:
+                continue
+
+            direction = _normalize_marker_direction(event.get("predicted_direction"))
+            score = max(4, min(10, round(importance_score / 10)))
+            urgency = "breaking" if importance_score >= 88 else "high" if importance_score >= 72 else "medium"
+            markers.append({
+                "id": f"{event.get('id')}:{event.get('timestamp')}",
+                "time": event.get("timestamp"),
+                "position": _marker_position_for(direction, "economic"),
+                "color": _marker_color_for(direction, "economic", urgency),
+                "shape": _marker_shape_for(direction, "economic", urgency),
+                "text": _marker_text_for("economic", urgency),
+                "size": _marker_size_for(score, importance_score, "economic", urgency),
+                "headline": event.get("title_tr") or event.get("title"),
+                "headline_en": event.get("title"),
+                "direction": direction,
+                "score": score,
+                "urgency": urgency,
+                "catalyst_type": "economic",
+                "is_economic_event": True,
+                "is_earnings_event": False,
+                "event_name": event.get("title"),
+                "event_id": event.get("id"),
+                "reasoning_tr": event.get("impact_analysis_tr") or event.get("why_it_matters_tr") or event.get("title_tr") or "",
+                "importance_level": event.get("importance_level"),
+                "importance_score": importance_score,
+                "importance_reason": event.get("importance_reason"),
+                "url": event.get("url", ""),
+                "ai_confidence": _normalize_article_confidence(event.get("confidence") or 0),
+            })
+
+        earnings_events = generate_earnings_events_between(start_time.replace(tzinfo=timezone.utc), end_time)
+        for event in earnings_events:
+            affected_symbols = event.get("affected_symbols") or []
+            if affected_symbols and not any(symbols_match(symbol, impacted) for impacted in affected_symbols):
+                continue
+
+            importance_score = int(event.get("importance_score") or 0)
+            if importance_score <= 0:
+                ticker = str(event.get("ticker") or "").upper()
+                importance_score = 80 if ticker in {"AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA"} else 68
+            if importance_score < 58:
+                continue
+
+            direction = _normalize_marker_direction(event.get("predicted_direction"))
+            score = max(4, min(10, round(importance_score / 10)))
+            urgency = "high" if importance_score >= 72 else "medium"
+            markers.append({
+                "id": f"{event.get('id')}:{event.get('timestamp')}",
+                "time": event.get("timestamp"),
+                "position": _marker_position_for(direction, "earnings"),
+                "color": _marker_color_for(direction, "earnings", urgency),
+                "shape": _marker_shape_for(direction, "earnings", urgency),
+                "text": _marker_text_for("earnings", urgency),
+                "size": _marker_size_for(score, importance_score, "earnings", urgency),
+                "headline": event.get("company") or event.get("ticker"),
+                "headline_en": event.get("company") or event.get("ticker"),
+                "direction": direction,
+                "score": score,
+                "urgency": urgency,
+                "catalyst_type": "earnings",
+                "is_economic_event": False,
+                "is_earnings_event": True,
+                "event_name": event.get("company"),
+                "event_id": event.get("id"),
+                "reasoning_tr": event.get("analysis_tr") or event.get("analysis") or "",
+                "importance_level": event.get("importance_level"),
+                "importance_score": importance_score,
+                "importance_reason": event.get("importance_reason"),
+                "url": event.get("url", ""),
+                "ai_confidence": _normalize_article_confidence(event.get("confidence") or 0),
+            })
+
+        deduped_markers: List[Dict[str, Any]] = []
+        seen_keys = set()
+        for marker in markers:
+            marker_key = (marker.get("id"), marker.get("time"), marker.get("catalyst_type"))
+            if marker_key in seen_keys:
+                continue
+            seen_keys.add(marker_key)
+            deduped_markers.append(marker)
+
+        deduped_markers.sort(key=lambda x: x["time"], reverse=True)
+        deduped_markers = deduped_markers[:max_markers]
+        deduped_markers.sort(key=lambda x: x["time"], reverse=False)
         
         return {
             "success": True,
             "symbol": symbol,
-            "count": len(markers),
+            "count": len(deduped_markers),
             "filters_applied": {
                 "min_impact_score": min_impact_score,
                 "max_markers": max_markers,
-                "urgency_filter": "breaking + high (medium only if score>=8)"
+                "urgency_filter": "news + economic + earnings"
             },
-            "markers": markers
+            "markers": deduped_markers
         }
     
     except Exception as e:

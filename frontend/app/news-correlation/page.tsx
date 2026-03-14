@@ -505,8 +505,10 @@ function getLocalizedAnalysis(item: EnrichedNews, locale: string): string {
   return item.analysis_en || "";
 }
 
-function getLocalizedMatchedHeadline(item: MatchedNewsItem, locale: string): string {
-  // MatchedNewsItem.headline is the original headline (may be TR if source is TR)
+function getLocalizedMatchedHeadline(item: MatchedNewsItem | EnrichedNews, locale: string): string {
+  if (!isMatchedNewsItem(item)) {
+    return getLocalizedHeadline(item, locale);
+  }
   if (isTurkishLocale(locale)) {
     return item.headline || item.headline_en || "";
   }
@@ -516,7 +518,10 @@ function getLocalizedMatchedHeadline(item: MatchedNewsItem, locale: string): str
   return item.headline_en || item.headline || "";
 }
 
-function getLocalizedMatchedSummary(item: MatchedNewsItem, locale: string): string {
+function getLocalizedMatchedSummary(item: MatchedNewsItem | EnrichedNews, locale: string): string {
+  if (!isMatchedNewsItem(item)) {
+    return getLocalizedSummary(item, locale);
+  }
   if (isTurkishLocale(locale)) {
     return item.summary_tr || item.summary_en || "";
   }
@@ -526,7 +531,11 @@ function getLocalizedMatchedSummary(item: MatchedNewsItem, locale: string): stri
   return item.summary_en || "";
 }
 
-function getCatalystBadge(item: MatchedNewsItem, locale: string): string {
+function getMatchedCatalystType(item: MatchedNewsItem | EnrichedNews): "news" | "economic" | "earnings" {
+  return isMatchedNewsItem(item) ? item.catalyst_type || "news" : "news";
+}
+
+function getCatalystBadge(item: MatchedNewsItem | EnrichedNews, locale: string): string {
   const labels = {
     en: { news: "News", economic: "Economic", earnings: "Earnings", context: "Context" },
     tr: { news: "Haber", economic: "Ekonomik", earnings: "Bilanço", context: "Bağlam" },
@@ -534,8 +543,8 @@ function getCatalystBadge(item: MatchedNewsItem, locale: string): string {
 
   const language = isTurkishLocale(locale) ? "tr" : "en";
   const labelSet = labels[language];
-  const catalystLabel = labelSet[item.catalyst_type || "news"] || labelSet.news;
-  return item.match_quality === "context" ? `${catalystLabel} · ${labelSet.context}` : catalystLabel;
+  const catalystLabel = labelSet[getMatchedCatalystType(item)] || labelSet.news;
+  return isMatchedNewsItem(item) && item.match_quality === "context" ? `${catalystLabel} · ${labelSet.context}` : catalystLabel;
 }
 
 function normalizeNewsItem(item: any): EnrichedNews {
@@ -626,6 +635,81 @@ interface Scenarios {
   miss?: Scenario;
   mixed?: Scenario;
   inline?: Scenario;
+}
+
+function getMarkerLookbackHours(timeframe: string): number {
+  if (timeframe === "1d") return 24 * 90;
+  if (timeframe === "4h") return 24 * 45;
+  if (timeframe === "1h") return 24 * 21;
+  return 72;
+}
+
+function getCatalystSectionMeta(
+  catalystType: "news" | "economic" | "earnings",
+  locale: string
+): { icon: string; title: string; accentClass: string } {
+  const t = getT(locale);
+  if (catalystType === "economic") {
+    return {
+      icon: "📊",
+      title: t.economicEvents,
+      accentClass: "bg-amber-500/15 text-amber-300 border-amber-500/20",
+    };
+  }
+  if (catalystType === "earnings") {
+    return {
+      icon: "💼",
+      title: t.earningsReports,
+      accentClass: "bg-blue-500/15 text-blue-300 border-blue-500/20",
+    };
+  }
+  return {
+    icon: "📰",
+    title: t.news,
+    accentClass: "bg-purple-500/15 text-purple-300 border-purple-500/20",
+  };
+}
+
+function groupCatalystsByType(items: MatchedNewsItem[]) {
+  return {
+    news: items.filter((item) => getMatchedCatalystType(item) === "news"),
+    economic: items.filter((item) => getMatchedCatalystType(item) === "economic"),
+    earnings: items.filter((item) => getMatchedCatalystType(item) === "earnings"),
+  };
+}
+
+function toFallbackMatchedItem(item: EnrichedNews, selectedSymbol: string): MatchedNewsItem {
+  const primaryImpact = item.impacts.find((impact) => matchesSelectedSymbol(impact.symbol, selectedSymbol)) || item.impacts[0];
+  return {
+    id: item.id,
+    headline: item.headline || "",
+    headline_en: item.headline || "",
+    summary_en: item.summary_en || "",
+    summary_tr: item.summary_tr || "",
+    analysis_en: item.analysis_en || "",
+    analysis_tr: item.analysis_tr || "",
+    headline_locale: item.headline_locale,
+    summary_locale: item.summary_locale,
+    analysis_locale: item.analysis_locale,
+    timestamp: item.timestamp,
+    source: item.source,
+    catalyst_type: "news",
+    match_quality: "context",
+    urgency: item.urgency,
+    score: primaryImpact?.score || 0,
+    direction: primaryImpact?.direction || "neutral",
+    reasoning: primaryImpact?.reasoning || "",
+    reasoning_tr: primaryImpact?.reasoning_tr || "",
+    reasoning_locale: primaryImpact?.reasoning_locale,
+    affected_symbols: item.impacts.map((impact) => impact.symbol),
+    relevance_score: 0.25,
+    importance_level: item.importanceLevel,
+    importance_score: item.importanceScore,
+    importance_reason: item.importanceReason,
+    ai_model: item.aiModel,
+    ai_match_confidence: item.aiConfidence ? item.aiConfidence / 100 : 0,
+    url: item.url || "",
+  };
 }
 
 interface AIAnnotatedEvent {
@@ -948,7 +1032,9 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   // Selected event modals
   const [selectedEconomicEvent, setSelectedEconomicEvent] = useState<EconomicEvent | null>(null);
   const [selectedEarningsEvent, setSelectedEarningsEvent] = useState<EarningsEvent | null>(null);
-  const { markers: newsMarkers, error: newsMarkersError } = useNewsMarkers(selectedSymbol, 72, 5);
+  const markerLookbackHours = getMarkerLookbackHours(timeframe);
+  const markerLimit = timeframe === "1d" ? 120 : timeframe === "4h" ? 90 : timeframe === "1h" ? 72 : 60;
+  const { markers: newsMarkers, error: newsMarkersError } = useNewsMarkers(selectedSymbol, markerLookbackHours, 5, markerLimit);
   const [isEconomicModalOpen, setIsEconomicModalOpen] = useState(false);
   const [isEarningsModalOpen, setIsEarningsModalOpen] = useState(false);
   const [loadingEventDetail, setLoadingEventDetail] = useState(false);
@@ -1561,7 +1647,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           return newsRef.current.filter(n => {
             const newsTime = new Date(n.timestamp);
             return isWithinInterval(newsTime, { start: candleStart, end: candleEnd });
-          }).slice(0, 5) as any;
+          }).slice(0, 5).map((item) => toFallbackMatchedItem(item, currentSymbol));
         };
 
         fetchNewsForCandle(
@@ -1835,6 +1921,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
   const currentSymbol = symbols.find(s => s.symbol === selectedSymbol);
   const sidebarItems = getSidebarItems(currentLocale);
+  const groupedSelectedCatalysts = selectedCandleNews ? groupCatalystsByType(selectedCandleNews.news) : null;
 
   if (!mounted) {
     return <div className="min-h-screen bg-[#0a0a0a]" />;
@@ -2132,60 +2219,77 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                           )}
                         </div>
                       ) : (
-                        <div className="space-y-2 max-h-48 overflow-y-auto">
-                          {selectedCandleNews.news.map((n, i) => (
-                            <div
-                              key={i}
-                              className="p-2.5 bg-gray-800/50 rounded-lg text-xs cursor-pointer hover:bg-gray-800 border border-transparent hover:border-gray-700 transition-all"
-                              onClick={() => handleNewsClick(n)}
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-gray-300 line-clamp-2">{getLocalizedMatchedHeadline(n, currentLocale)}</p>
-                                  <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{getLocalizedMatchedSummary(n, currentLocale)}</p>
-                                </div>
-                                {n.relevance_score > 0 && (
-                                  <span className={cn(
-                                    "text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0",
-                                    n.relevance_score >= 0.7 ? "bg-green-500/20 text-green-400" :
-                                      n.relevance_score >= 0.5 ? "bg-yellow-500/20 text-yellow-400" :
-                                        "bg-gray-500/20 text-gray-400"
-                                  )}>
-                                    {Math.round(n.relevance_score * 100)}%
+                        <div className="space-y-3 max-h-56 overflow-y-auto">
+                          {(["news", "economic", "earnings"] as const).map((sectionType) => {
+                            const sectionItems = groupedSelectedCatalysts?.[sectionType] || [];
+                            if (sectionItems.length === 0) {
+                              return null;
+                            }
+                            const sectionMeta = getCatalystSectionMeta(sectionType, currentLocale);
+                            return (
+                              <div key={sectionType} className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <span className={cn("text-[10px] px-2 py-1 rounded-md border", sectionMeta.accentClass)}>
+                                    {sectionMeta.icon} {sectionMeta.title}
                                   </span>
-                                )}
+                                  <span className="text-[10px] text-gray-500">{sectionItems.length}</span>
+                                </div>
+                                {sectionItems.map((n, i) => (
+                                  <div
+                                    key={`${sectionType}-${n.id}-${i}`}
+                                    className="p-2.5 bg-gray-800/50 rounded-lg text-xs cursor-pointer hover:bg-gray-800 border border-transparent hover:border-gray-700 transition-all"
+                                    onClick={() => handleNewsClick(n)}
+                                  >
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-gray-300 line-clamp-2">{getLocalizedMatchedHeadline(n, currentLocale)}</p>
+                                        <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{getLocalizedMatchedSummary(n, currentLocale)}</p>
+                                      </div>
+                                      {n.relevance_score > 0 && (
+                                        <span className={cn(
+                                          "text-[10px] px-1.5 py-0.5 rounded-full flex-shrink-0",
+                                          n.relevance_score >= 0.7 ? "bg-green-500/20 text-green-400" :
+                                            n.relevance_score >= 0.5 ? "bg-yellow-500/20 text-yellow-400" :
+                                              "bg-gray-500/20 text-gray-400"
+                                        )}>
+                                          {Math.round(n.relevance_score * 100)}%
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300">
+                                        {getCatalystBadge(n, currentLocale)}
+                                      </span>
+                                      <span className={cn(
+                                        "text-[10px] px-1.5 py-0.5 rounded",
+                                        n.urgency === 'breaking' ? "bg-red-500/20 text-red-400" :
+                                          n.urgency === 'high' ? "bg-orange-500/20 text-orange-400" :
+                                            "bg-gray-500/20 text-gray-400"
+                                      )}>
+                                        {formatUrgencyLabel(n.urgency, currentLocale)}
+                                      </span>
+                                      <span className={cn(
+                                        "text-[10px] px-1.5 py-0.5 rounded",
+                                        n.direction === 'bullish' ? "bg-green-500/20 text-green-400" :
+                                          n.direction === 'bearish' ? "bg-red-500/20 text-red-400" :
+                                            "bg-gray-500/20 text-gray-400"
+                                      )}>
+                                        {formatDirectionLabel((n.direction as EventDirection) || "neutral", currentLocale)} {n.score}/10
+                                      </span>
+                                      <span className="text-[10px] text-gray-500">
+                                        {format(new Date(n.timestamp), "HH:mm")}
+                                      </span>
+                                    </div>
+                                    {(n.reasoning_locale || n.reasoning_tr) && (
+                                      <p className="text-[10px] text-gray-500 mt-1.5 line-clamp-1">
+                                        💡 {currentLocale === 'tr' ? n.reasoning_tr : n.reasoning_locale || n.reasoning_tr}
+                                      </p>
+                                    )}
+                                  </div>
+                                ))}
                               </div>
-                              <div className="flex items-center gap-2 mt-1.5">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300">
-                                  {getCatalystBadge(n, currentLocale)}
-                                </span>
-                                <span className={cn(
-                                  "text-[10px] px-1.5 py-0.5 rounded",
-                                  n.urgency === 'breaking' ? "bg-red-500/20 text-red-400" :
-                                    n.urgency === 'high' ? "bg-orange-500/20 text-orange-400" :
-                                      "bg-gray-500/20 text-gray-400"
-                                )}>
-                                  {n.urgency}
-                                </span>
-                                <span className={cn(
-                                  "text-[10px] px-1.5 py-0.5 rounded",
-                                  n.direction === 'bullish' ? "bg-green-500/20 text-green-400" :
-                                    n.direction === 'bearish' ? "bg-red-500/20 text-red-400" :
-                                      "bg-gray-500/20 text-gray-400"
-                                )}>
-                                  {n.direction} {n.score}/10
-                                </span>
-                                <span className="text-[10px] text-gray-500">
-                                  {format(new Date(n.timestamp), "HH:mm")}
-                                </span>
-                              </div>
-                              {(n.reasoning_locale || n.reasoning_tr) && (
-                                <p className="text-[10px] text-gray-500 mt-1.5 line-clamp-1">
-                                  💡 {currentLocale === 'tr' ? n.reasoning_tr : n.reasoning_locale || n.reasoning_tr}
-                                </p>
-                              )}
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>

@@ -19,9 +19,16 @@ export interface NewsMarker {
   direction: 'bullish' | 'bearish' | 'neutral';
   score: number;
   urgency: 'breaking' | 'high' | 'medium' | 'low';
+  catalyst_type?: 'news' | 'economic' | 'earnings';
   is_economic_event: boolean;
+  is_earnings_event?: boolean;
   event_name?: string;
+  event_id?: string | null;
   reasoning_tr?: string;
+  importance_level?: string;
+  importance_score?: number;
+  importance_reason?: string;
+  ai_confidence?: number;
   url: string;
 }
 
@@ -37,7 +44,8 @@ const API_URL = getApiBase();
 export function useNewsMarkers(
   symbol: string,
   hours: number = 24,
-  minImpactScore: number = 5
+  minImpactScore: number = 5,
+  maxMarkers: number = 60
 ): UseNewsMarkersReturn {
   const [markers, setMarkers] = useState<NewsMarker[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +59,7 @@ export function useNewsMarkers(
 
     try {
       const response = await fetch(
-        `${API_URL}/api/rss/chart-markers/${symbol}?hours=${hours}&min_impact_score=${minImpactScore}`
+        `${API_URL}/api/rss/chart-markers/${symbol}?hours=${hours}&min_impact_score=${minImpactScore}&max_markers=${maxMarkers}`
       );
 
       if (!response.ok) {
@@ -73,7 +81,7 @@ export function useNewsMarkers(
     } finally {
       setLoading(false);
     }
-  }, [symbol, hours, minImpactScore]);
+  }, [symbol, hours, minImpactScore, maxMarkers]);
 
   useEffect(() => {
     fetchMarkers();
@@ -99,7 +107,13 @@ export function convertToChartMarkers(markers: NewsMarker[]) {
     position: marker.position,
     color: marker.color,
     shape: marker.shape,
-    text: marker.is_economic_event ? '📊' : marker.urgency === 'breaking' ? '🚨' : '📰',
+    text: marker.catalyst_type === 'economic'
+      ? '📊'
+      : marker.catalyst_type === 'earnings'
+        ? '�'
+        : marker.urgency === 'breaking'
+          ? '🚨'
+          : '📰',
     size: marker.size,
     // Custom data for tooltip
     id: marker.id,
@@ -108,9 +122,16 @@ export function convertToChartMarkers(markers: NewsMarker[]) {
     direction: marker.direction,
     score: marker.score,
     urgency: marker.urgency,
+    catalyst_type: marker.catalyst_type,
     is_economic_event: marker.is_economic_event,
+    is_earnings_event: marker.is_earnings_event,
     event_name: marker.event_name,
+    event_id: marker.event_id,
     reasoning_tr: marker.reasoning_tr,
+    importance_level: marker.importance_level,
+    importance_score: marker.importance_score,
+    importance_reason: marker.importance_reason,
+    ai_confidence: marker.ai_confidence,
     url: marker.url,
   }));
 }

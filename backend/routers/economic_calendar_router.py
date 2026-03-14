@@ -575,24 +575,123 @@ def _resolve_earnings_event_date(template: Dict[str, Any], now: datetime) -> dat
     return event_date
 
 
-def _build_economic_event_from_template(template: Dict[str, Any], now: Optional[datetime] = None) -> Dict[str, Any]:
-    now = now or _utc_now()
-    next_date = _resolve_next_economic_event_date(template["schedule"], now)
-    minutes_until = int((next_date - now).total_seconds() / 60)
+def _event_time_for_template(template: Dict[str, Any]) -> tuple[int, int]:
+    title = str(template.get("title") or template.get("company") or "").lower()
+    schedule = str(template.get("schedule") or "").lower()
+    if str(template.get("time") or "").lower() == "after_market":
+        return 21, 0
+    if str(template.get("time") or "").lower() == "before_market":
+        return 13, 30
+    if "fomc" in title:
+        return 18, 0
+    if "oil inventories" in title or schedule == "weekly_wednesday":
+        return 14, 30
+    return 13, 30
 
+
+def _apply_template_time(event_date: datetime, template: Dict[str, Any]) -> datetime:
+    hour, minute = _event_time_for_template(template)
+    return event_date.astimezone(timezone.utc).replace(hour=hour, minute=minute, second=0, microsecond=0)
+
+
+def _month_start_cursor(value: datetime) -> datetime:
+    return value.astimezone(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+
+def _shift_month(value: datetime, months: int) -> datetime:
+    year = value.year + (value.month - 1 + months) // 12
+    month = (value.month - 1 + months) % 12 + 1
+    return value.replace(year=year, month=month, day=1)
+
+
+def _iter_month_starts(start: datetime, end: datetime) -> List[datetime]:
+    current = _month_start_cursor(start)
+    limit = _month_start_cursor(end)
+    months: List[datetime] = []
+    while current <= limit:
+        months.append(current)
+        current = _shift_month(current, 1)
+    return months
+
+
+def _quarter_release_date(year: int, month: int) -> datetime:
+    quarter_days = {3: 20, 6: 19, 9: 18, 12: 18}
+    return datetime(year, month, quarter_days[month], tzinfo=timezone.utc)
+
+
+def _economic_occurrences_between(template: Dict[str, Any], start: datetime, end: datetime) -> List[datetime]:
+    schedule = str(template.get("schedule") or "").lower()
+    occurrences: List[datetime] = []
+    start_utc = start.astimezone(timezone.utc)
+    end_utc = end.astimezone(timezone.utc)
+
+    if schedule in {"weekly", "weekly_wednesday"}:
+        target_weekday = 3 if schedule == "weekly" else 2
+        current = start_utc.replace(hour=0, minute=0, second=0, microsecond=0)
+        while current <= end_utc:
+            if current.weekday() == target_weekday:
+                event_dt = _apply_template_time(current, template)
+                if start_utc <= event_dt <= end_utc:
+                    occurrences.append(event_dt)
+            current += timedelta(days=1)
+        return occurrences
+
+    for month_start in _iter_month_starts(start_utc - timedelta(days=31), end_utc + timedelta(days=31)):
+        if schedule == "first_friday":
+            first_day = month_start
+            days_until_friday = (4 - first_day.weekday()) % 7
+            candidate = first_day + timedelta(days=days_until_friday)
+        elif schedule == "monthly":
+            candidate = month_start
+            while candidate.weekday() >= 5:
+                candidate += timedelta(days=1)
+        elif schedule == "monthly_mid":
+            candidate = month_start.replace(day=12)
+        elif schedule == "quarterly":
+            if month_start.month not in {3, 6, 9, 12}:
+                continue
+            candidate = _quarter_release_date(month_start.year, month_start.month)
+        else:
+            continue
+
+        event_dt = _apply_template_time(candidate, template)
+        if start_utc <= event_dt <= end_utc:
+            occurrences.append(event_dt)
+
+    return sorted(occurrences)
+
+
+def _build_economic_event_at(template: Dict[str, Any], event_time: datetime, now: Optional[datetime] = None) -> Dict[str, Any]:
+    now_utc = (now or _utc_now()).astimezone(timezone.utc)
+    minutes_until = int((event_time - now_utc).total_seconds() / 60)
     return {
         **template,
-        "timestamp": next_date.isoformat(),
-        "is_upcoming": True,
-        "minutes_until": max(0, minutes_until),
+        "timestamp": event_time.isoformat(),
+        "is_upcoming": event_time >= now_utc,
+        "minutes_until": max(0, minutes_until) if event_time >= now_utc else None,
         "predicted_direction": "volatile" if template.get("impact") == "High" else "neutral",
     }
 
 
-def _build_earnings_event_from_template(template: Dict[str, Any], now: Optional[datetime] = None) -> Dict[str, Any]:
-    now = now or _utc_now()
-    event_date = _resolve_earnings_event_date(template, now)
-    minutes_until = int((event_date - now).total_seconds() / 60)
+def _earnings_occurrences_between(template: Dict[str, Any], start: datetime, end: datetime) -> List[datetime]:
+    start_utc = start.astimezone(timezone.utc)
+    end_utc = end.astimezone(timezone.utc)
+    event_time = datetime.strptime(template["date"], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    event_time = _apply_template_time(event_time, template)
+
+    while event_time < start_utc:
+        event_time += timedelta(days=90)
+
+    occurrences: List[datetime] = []
+    while event_time <= end_utc:
+        occurrences.append(event_time)
+        event_time += timedelta(days=90)
+    return occurrences
+
+
+def _build_earnings_event_at(template: Dict[str, Any], event_time: datetime, now: Optional[datetime] = None) -> Dict[str, Any]:
+    now_utc = (now or _utc_now()).astimezone(timezone.utc)
+    minutes_until = int((event_time - now_utc).total_seconds() / 60)
 
     confidence = 70
     if template["ticker"] in ["AAPL", "MSFT", "GOOGL", "NVDA", "AMZN", "META"]:
@@ -614,12 +713,44 @@ def _build_earnings_event_from_template(template: Dict[str, Any], now: Optional[
 
     return {
         **template,
-        "timestamp": event_date.isoformat(),
-        "is_upcoming": True,
-        "minutes_until": max(0, minutes_until),
+        "timestamp": event_time.isoformat(),
+        "is_upcoming": event_time >= now_utc,
+        "minutes_until": max(0, minutes_until) if event_time >= now_utc else None,
         "confidence": confidence,
         "predicted_direction": predicted_direction,
     }
+
+
+def _build_economic_event_from_template(template: Dict[str, Any], now: Optional[datetime] = None) -> Dict[str, Any]:
+    now = now or _utc_now()
+    next_date = _resolve_next_economic_event_date(template["schedule"], now)
+    return _build_economic_event_at(template, _apply_template_time(next_date, template), now)
+
+
+def _build_earnings_event_from_template(template: Dict[str, Any], now: Optional[datetime] = None) -> Dict[str, Any]:
+    now = now or _utc_now()
+    event_date = _resolve_earnings_event_date(template, now)
+    return _build_earnings_event_at(template, event_date, now)
+
+
+def generate_economic_events_between(start: datetime, end: datetime) -> List[Dict[str, Any]]:
+    now = _utc_now()
+    events: List[Dict[str, Any]] = []
+    for template in ECONOMIC_EVENTS_DB:
+        for occurrence in _economic_occurrences_between(template, start, end):
+            events.append(_build_economic_event_at(template, occurrence, now))
+    events.sort(key=lambda item: item["timestamp"])
+    return events
+
+
+def generate_earnings_events_between(start: datetime, end: datetime) -> List[Dict[str, Any]]:
+    now = _utc_now()
+    earnings: List[Dict[str, Any]] = []
+    for template in EARNINGS_DB:
+        for occurrence in _earnings_occurrences_between(template, start, end):
+            earnings.append(_build_earnings_event_at(template, occurrence, now))
+    earnings.sort(key=lambda item: item["timestamp"])
+    return earnings
 
 
 def _clamp_score(value: Any, default: int = 50) -> int:

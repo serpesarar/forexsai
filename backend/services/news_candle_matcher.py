@@ -405,19 +405,22 @@ class NewsCandleMatcher:
         time_window_minutes: int,
     ) -> List[Dict[str, Any]]:
         try:
-            from routers.economic_calendar_router import generate_upcoming_earnings, generate_upcoming_events
+            from routers.economic_calendar_router import generate_economic_events_between, generate_earnings_events_between
         except Exception:
             logger.exception("[NewsCandleMatcher] Unable to import calendar generators")
             return []
 
         candidates: List[Dict[str, Any]] = []
         try:
-            for event in generate_upcoming_events(days_ahead=7):
+            window_start = candle.timestamp - timedelta(minutes=time_window_minutes)
+            window_end = candle.timestamp + timedelta(minutes=time_window_minutes)
+
+            for event in generate_economic_events_between(window_start, window_end):
                 candidate = self._build_event_candidate(symbol, candle, event, "economic", time_window_minutes)
                 if candidate:
                     candidates.append(candidate)
 
-            for event in generate_upcoming_earnings(days_ahead=14):
+            for event in generate_earnings_events_between(window_start, window_end):
                 candidate = self._build_event_candidate(symbol, candle, event, "earnings", time_window_minutes)
                 if candidate:
                     candidates.append(candidate)
