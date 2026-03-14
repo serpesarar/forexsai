@@ -12,7 +12,8 @@ from __future__ import annotations
 import os
 import time
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
+from urllib.parse import urlencode
 import httpx
 
 logger = logging.getLogger(__name__)
@@ -179,6 +180,16 @@ class TableQuery:
         self.filters.append(f"{column}=eq.{value}")
         return self
 
+    def in_(self, column: str, values: Any) -> "TableQuery":
+        serialized: List[str] = []
+        for value in values or []:
+            value_str = str(value)
+            if any(ch in value_str for ch in [",", "(", ")", " "]):
+                value_str = f"\"{value_str}\""
+            serialized.append(value_str)
+        self.filters.append(f"{column}=in.({','.join(serialized)})")
+        return self
+
     def gte(self, column: str, value: Any) -> "TableQuery":
         self.filters.append(f"{column}=gte.{value}")
         return self
@@ -203,6 +214,15 @@ class TableQuery:
         self.filters.append(f"{column}=is.{value}")
         return self
 
+    def or_(self, expression: str) -> "TableQuery":
+        raw_expression = str(expression or "").strip()
+        if not raw_expression:
+            return self
+        if not raw_expression.startswith("("):
+            raw_expression = f"({raw_expression})"
+        self.filters.append(f"or={raw_expression}")
+        return self
+
     def order(self, column: str, desc: bool = False) -> "TableQuery":
         direction = "desc" if desc else "asc"
         self.order_by = f"{column}.{direction}"
@@ -214,16 +234,20 @@ class TableQuery:
 
     def _build_url(self) -> str:
         url = f"{self.client.url}/rest/v1/{self.table_name}"
-        params = []
+        params: List[tuple[str, Any]] = []
         if hasattr(self, '_columns'):
-            params.append(f"select={self._columns}")
-        params.extend(self.filters)
+            params.append(("select", self._columns))
+        for raw_filter in self.filters:
+            if "=" not in raw_filter:
+                continue
+            key, value = raw_filter.split("=", 1)
+            params.append((key, value))
         if self.order_by:
-            params.append(f"order={self.order_by}")
+            params.append(("order", self.order_by))
         if self.limit_val:
-            params.append(f"limit={self.limit_val}")
+            params.append(("limit", self.limit_val))
         if params:
-            url += "?" + "&".join(params)
+            url += "?" + urlencode(params, doseq=True, safe="(),.*")
         return url
 
     def execute(self) -> Dict[str, Any]:

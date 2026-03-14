@@ -1,0 +1,40 @@
+[ ] NAME:Current Task List DESCRIPTION:Root task for conversation 1718d9c8-c37e-41b0-88ec-8cac101c88ef
+-[x] NAME:News AI Panel Audit & Stabilization DESCRIPTION:Comprehensive audit, gap analysis, and improvement of the News AI correlation system
+--[x] NAME:Fix AI reranking prompt - add rolling candle window context DESCRIPTION:The _rerank_with_ai prompt only receives the target candle OHLC but no surrounding candles. Add a rolling window of 5-10 preceding candles (OHLCV + change%) so the AI can assess whether a news item explains the move in context of recent price action.
+--[x] NAME:Fix symbol filtering in /api/rss/news endpoint DESCRIPTION:The symbol filter at line 244-249 does exact string match (imp.symbol == symbol) which fails for variant aliases. Use the existing symbols_match() or normalize_symbol() from news_candle_matcher to ensure NDX matches NASDAQ, GDAXI matches DAX, etc.
+--[x] NAME:Fix chart-markers symbol filtering to use normalize_symbol DESCRIPTION:Resolved by Task 2 - symbols_match is now used in /api/rss/news, making it consistent with chart-markers which already uses get_matching_impact.
+--[x] NAME:Stabilize EnrichedNews mapping in NewsChartCorrelationPanel DESCRIPTION:The mapped EnrichedNews at line 164-183 in the panel misses headline_tr, summary_en, summary_tr, analysis_en, analysis_tr, content_tr fields that are required by NewsDetailModal. This causes empty modal sections.
+--[x] NAME:Improve news_analyzer_v2 prompt with candle context window DESCRIPTION:The _build_prompt in news_analyzer_v2.py has no knowledge of current market prices or candle context. Add an optional candle_context parameter so the analyzer can incorporate price data when available.
+--[x] NAME:Add importance_score/importance_level to chart-markers filtering DESCRIPTION:Chart markers use ai_confidence thresholds but importance_score is often more reliable. Unify the filtering to prefer importance_score when available.
+-[x] NAME:Fix News Panel Critical Issues DESCRIPTION:All three critical bugs fixed: (1) DB schema + backfill for markers, (2) AI prompt improved for Turkish quality, (3) hardcoded confidence replaced with real values.
+--[x] NAME:Verify current marker pipeline end-to-end DESCRIPTION:Verified the frontend marker pipeline and applied a production-safe fix: switched the news correlation charts to actual-time candles, hardened timestamp mapping with edge tolerance, and added tests covering boundary mapping and daily-business-day lookup.
+--[x] NAME:Diagnose abnormal red chart rendering DESCRIPTION:Diagnosed the abnormal chart rendering as likely malformed/over-normalized OHLC input plus synthetic timeline artifacts; added candle sanitation in normalizeCandles and aligned both correlation charts to safer actual-time rendering.
+--[x] NAME:Validate locally before any push/deploy DESCRIPTION:Validated locally before any push/deploy: targeted Vitest suites passed and frontend TypeScript compilation succeeded with npx tsc --noEmit.
+-[x] NAME:Diagnose marker pipeline - why news markers don't appear on candles DESCRIPTION:FIXED: Added missing DB columns (importance_level, importance_score, importance_reason, ai_model). Backfilled existing records with appropriate scores based on urgency level.
+-[x] NAME:Fix Turkish locale - headlines/analysis showing English despite TR selection DESCRIPTION:FIXED: AI prompt now has explicit CRITICAL RULES FOR TURKISH fields requiring pure Turkish, no English mixing, no [TR] prefix, professional financial terminology. TR field descriptions in JSON template are now in Turkish. Confidence parsing no longer defaults to 70.
+-[x] NAME:Fix hardcoded 70% confidence on all symbol impacts DESCRIPTION:FIXED: (1) Frontend page.tsx no longer hardcodes confidence:0.7 and aiConfidence:70 - now uses real ai_match_confidence/relevance_score from backend. (2) AI prompt no longer has example values (75, 0.85, 8) - uses descriptive placeholders. (3) Confidence parsing is robust with try/except. (4) Added importance_level, importance_score, ai_match_confidence to MatchedNewsItem type.
+-[ ] NAME:Deep Audit: News AI Pipeline DESCRIPTION:Full diagnostic of backend DeepSeek pipeline and frontend rendering
+-[/] NAME:Phase 1: Read all relevant source files DESCRIPTION:Read news_analyzer_v2.py, page.tsx, rss_router.py, types, hooks end-to-end
+-[ ] NAME:Phase 2: Identify all root causes DESCRIPTION:Document exact bugs for identical confidence, broken Turkish, semantic field mixing
+-[ ] NAME:Phase 3: Fix backend DeepSeek pipeline DESCRIPTION:Harden prompt, increase max_tokens, fix JSON repair, add Turkish validation, separate confidence types
+-[ ] NAME:Phase 4: Fix frontend normalization & localization DESCRIPTION:Redesign normalizeNewsItem, localization helpers, confidence rendering, fallback chains
+-[ ] NAME:Phase 5: Verify downstream callers & types DESCRIPTION:Ensure all callers, types, API contracts are updated consistently
+-[ ] NAME:Phase 6: Run tests and validate DESCRIPTION:Run existing tests, check TypeScript compilation, summarize changes
+-[x] NAME:Deep Audit: Document Root Causes DESCRIPTION:Document all identified root causes from the end-to-end audit
+-[x] NAME:Fix Backend: DeepSeek prompt & parsing DESCRIPTION:Increase max_tokens, improve JSON repair, remove _simple_translate from AI path fallbacks
+-[x] NAME:Fix Frontend: normalizeNewsItem semantic blurring DESCRIPTION:Stop cross-pollinating headline/summary/analysis/content fields in normalizeNewsItem
+-[x] NAME:Fix Frontend: getLocalized* fallback chains DESCRIPTION:Fix all getLocalized functions and NewsDetailModal to respect semantic boundaries
+-[x] NAME:Fix Frontend: confidence value handling DESCRIPTION:Fix ai_confidence division bug in rss_router and normalizeAiConfidence double-conversion
+-[x] NAME:Verify downstream callers DESCRIPTION:Ensure all downstream components and types are consistent with the fixes
+-[x] NAME:Audit instrument-level vs article-level confidence rendering DESCRIPTION:Trace the exact UI path for multi-asset impact percentages. Confirm impact.confidence (per-instrument 0-1) vs aiConfidence (article-level 0-100) are not mixed.
+-[x] NAME:Add Turkish quality validation in backend DESCRIPTION:Strip [TR] prefixes, detect English-heavy Turkish fields, validate Turkish output quality before storing.
+-[/] NAME:Audit hardcoded English UI strings in Turkish locale DESCRIPTION:Find all hardcoded English strings that should be localized when locale=tr in page.tsx, NewsDetailModal, sidebar, etc.
+-[ ] NAME:Verify and test all changes DESCRIPTION:TypeScript compilation, review diffs, ensure no regressions.
+-[/] NAME:Apply PAGE_T translations to remaining UI strings DESCRIPTION:Replace all hardcoded English strings with getT(locale) calls across EventAIMetadata, header, tabs, loading/error states, candle panel, and empty states
+-[x] NAME:Add missing PAGE_T keys DESCRIPTION:Add all remaining translation keys to PAGE_T for en/tr covering tabs, related catalysts, empty states, modals, scenarios
+-[/] NAME:Localize tabs and empty states DESCRIPTION:Apply getT() to News/Economic/Earnings tabs and empty state messages
+-[ ] NAME:Localize Related Catalysts section DESCRIPTION:Apply getT() to Related Catalysts title, finding catalysts, no catalyst messages
+-[ ] NAME:Localize Economic modal DESCRIPTION:Apply getT() to Economic Event modal strings
+-[ ] NAME:Localize Earnings modal DESCRIPTION:Apply getT() to Earnings Report modal strings
+-[ ] NAME:Localize scenario sections DESCRIPTION:Apply getT() to scenario timeline labels in both economic and earnings modals
+-[ ] NAME:Verify TypeScript compiles DESCRIPTION:Run tsc --noEmit to verify no type errors after all changes

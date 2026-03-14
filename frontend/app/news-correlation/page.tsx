@@ -91,9 +91,8 @@ function normalizeAiConfidence(value: unknown): number {
   if (typeof value !== "number" || Number.isNaN(value)) {
     return 0;
   }
-
-  // Backend sends 0-100 scale directly. Clamp to valid range.
-  return Math.round(Math.max(0, Math.min(100, value)));
+  const normalized = value <= 1 ? value * 100 : value;
+  return Math.max(0, Math.min(100, normalized));
 }
 
 function normalizeImpactDirection(value: unknown): EnrichedNews["impacts"][number]["direction"] {
@@ -106,6 +105,356 @@ function normalizeUrgency(value: unknown): EnrichedNews["urgency"] {
   return value === "breaking" || value === "high" || value === "medium" || value === "low"
     ? value
     : "low";
+}
+
+// --- Page-level UI translations ---
+const PAGE_T: Record<string, Record<string, string>> = {
+  en: {
+    marketAnalysis: "Market Analysis",
+    swingTrading: "Swing Trading",
+    dayTrading: "Day Trading",
+    newsFeed: "News Feed",
+    highImpact: "High Impact",
+    bullish: "Bullish",
+    slightlyBearish: "Slightly Bearish",
+    breaking: "BREAKING",
+    impactSuffix: "IMPACT",
+    loadingChart: "Loading chart...",
+    retry: "Retry",
+    clickCandle: "💡 Click any candle to inspect related catalysts",
+    candleAnalysis: "Candle Analysis",
+    open: "Open",
+    close: "Close",
+    high: "High",
+    low: "Low",
+    bigSurge: "Big Surge",
+    bigDrop: "Big Drop",
+    aiAnalysis: "AI Analysis",
+    analyzingMove: "Analyzing price movement...",
+    news: "News",
+    economic: "Economic",
+    earnings: "Earnings",
+    all: "All",
+    popular: "Popular",
+    noNewsFilter: "No news matches the current filter",
+    noNewsAvailable: "No news available",
+    noNewsFilterDetail: "DeepSeek-analyzed news exists, but the current filter is hiding it. Switch to All to see the full feed.",
+    noNewsDetail: "Supabase enriched_news table may be empty or API is not responding",
+    showAllNews: "Show all news",
+    retryApi: "Retry API",
+    loadTestNews: "🧪 Load Test News",
+    importance: "Importance",
+    confidence: "Confidence",
+    fallbackAnalysis: "Fallback Analysis",
+    noStrongCatalyst: "No strong catalyst was found for this significant price move.",
+    noCatalyst: "No known news catalyst during this candle's timeframe.",
+    affectedSymbols: "Affected Symbols",
+    scenarioVariations: "Scenario Variations",
+    deepseekAnalysis: "DeepSeek Analysis",
+    scenarioUnavailable: "Scenario analysis unavailable. Check API key or try again later.",
+    analyzingAI: "Analyzing with AI...",
+    afterMarket: "After Market",
+    preMarket: "Pre Market",
+    preMarketShort: "After",
+    preMarketShortPre: "Pre",
+    proTip: "💡 Pro Tip:",
+    impact: "Impact",
+    matched: "matched",
+    relatedCatalysts: "Related Catalysts",
+    findingCatalysts: "Finding relevant catalysts...",
+    technicalFlow: "This move may have been driven by positioning, liquidity, or purely technical flow.",
+    economicEvents: "Economic Events",
+    earningsReports: "Earnings Reports",
+    noEconomicEvents: "No economic events scheduled",
+    noEarningsReports: "No earnings reports scheduled",
+    economicEvent: "Economic Event",
+    earningsReport: "Earnings Report",
+    previous: "Previous",
+    forecast: "Forecast",
+    prev: "Prev",
+    exp: "Exp",
+    expectedDirection: "Expected Direction",
+    bullishDirection: "📈 Bullish - Expected positive market reaction",
+    bearishDirection: "📉 Bearish - Expected negative market reaction",
+    neutralDirection: "➖ Neutral - Limited market impact expected",
+    volatileDirection: "⚡ Volatile - Expect sharp two-way price swings",
+    description: "Description",
+    whyItMatters: "Why It Matters",
+    clickDetails: "Click for details →",
+    betterThanExpected: "Better Than Expected",
+    worseThanExpected: "Worse Than Expected",
+    asExpected: "As Expected",
+    first5min: "First 5 min",
+    firstHour: "First hour",
+    dayClose: "Day close",
+    nextDay: "Next day",
+    restOfDay: "Rest of day",
+    epsEstimate: "EPS Estimate",
+    revenueEstimate: "Revenue Estimate",
+    previousEps: "Previous EPS",
+    previousRevenue: "Previous Revenue",
+    aiPrediction: "AI Prediction",
+    beatExpected: "📈 Beat Expected",
+    missExpected: "📉 Miss Expected",
+    inLineExpected: "➖ In Line Expected",
+    highVolExpected: "⚡ High Volatility Expected",
+    beatScenario: "Beat (EPS & Revenue)",
+    missScenario: "Miss (EPS or Revenue)",
+    mixedScenario: "Mixed (Beat EPS, Miss Revenue or vice versa)",
+    inLineScenario: "In Line (Meets Expectations)",
+    preMarketLabel: "Pre-market",
+    openLabel: "Open",
+    sectorLabel: "Sector",
+    guidanceLabel: "Guidance",
+    keyMetrics: "Key Metrics to Watch",
+    newsFeedFresh: "News feed fresh",
+    newsFeedMock: "Showing manual test news",
+    newsFeedError: "News feed unavailable",
+    newsFeedStale: "News feed stale or empty",
+    summaryLabel: "Summary",
+    analysisLabel: "Analysis",
+    labelHigh: "High",
+    labelMedium: "Medium",
+    labelLow: "Low",
+    labelCritical: "Critical",
+    labelNeutral: "Neutral",
+    labelVolatile: "Volatile",
+    currentPrice: "Current",
+    pullbackPrice: "Pullback",
+    targetPrice: "Target",
+    noNearbyCatalyst: "No nearby catalyst was matched to this candle.",
+    noNewsFound: "No news found.",
+    newsStatusChanged: "News feed status changed.",
+    loadTestNewsTitle: "Load test news data",
+    testLabel: "🧪 Test",
+    refreshLabel: "Refresh",
+    mon: "Mon",
+    tue: "Tue",
+    wed: "Wed",
+    thu: "Thu",
+    fri: "Fri",
+    alerts: "Alerts",
+    watchlist: "Watchlist",
+    smartTrades: "Smart Trades",
+    economicCalendar: "Economic Calendar",
+    chatAi: "Chat AI",
+    researchReports: "Research Reports",
+    docs: "Docs",
+    brokers: "Brokers",
+    myTrades: "My Trades",
+    secondsAgoSuffix: "s ago",
+    minutesAgoSuffix: "m ago",
+    hoursAgoSuffix: "h ago",
+    daysAgoSuffix: "d ago",
+    unknownTime: "...",
+  },
+  tr: {
+    marketAnalysis: "Piyasa Analizi",
+    swingTrading: "Swing Trading",
+    dayTrading: "Gün İçi Trading",
+    newsFeed: "Haber Akışı",
+    highImpact: "Yüksek Etki",
+    bullish: "Yükseliş",
+    slightlyBearish: "Hafif Düşüş",
+    breaking: "SON DAKİKA",
+    impactSuffix: "ETKİ",
+    loadingChart: "Grafik yükleniyor...",
+    retry: "Tekrar Dene",
+    clickCandle: "💡 Katalizör analizi için muma tıklayın",
+    candleAnalysis: "Mum Analizi",
+    open: "Açılış",
+    close: "Kapanış",
+    high: "Yüksek",
+    low: "Düşük",
+    bigSurge: "Büyük Yükseliş",
+    bigDrop: "Büyük Düşüş",
+    aiAnalysis: "AI Analizi",
+    analyzingMove: "Fiyat hareketi analiz ediliyor...",
+    news: "Haberler",
+    economic: "Ekonomik",
+    earnings: "Bilanço",
+    all: "Tümü",
+    popular: "Popüler",
+    noNewsFilter: "Mevcut filtreye uyan haber yok",
+    noNewsAvailable: "Haber bulunamadı",
+    noNewsFilterDetail: "DeepSeek analiz edilmiş haberler mevcut, ancak filtre bunları gizliyor. Tüm haberleri görmek için Tümü'ne geçin.",
+    noNewsDetail: "Supabase enriched_news tablosu boş olabilir veya API yanıt vermiyor",
+    showAllNews: "Tüm haberleri göster",
+    retryApi: "API Tekrar Dene",
+    loadTestNews: "🧪 Test Haberleri Yükle",
+    importance: "Önem",
+    confidence: "Güven",
+    fallbackAnalysis: "Yedek Analiz",
+    noStrongCatalyst: "Bu önemli fiyat hareketi için güçlü bir katalizör bulunamadı.",
+    noCatalyst: "Bu mumun zaman diliminde bilinen bir haber katalizörü yok.",
+    affectedSymbols: "Etkilenen Semboller",
+    scenarioVariations: "Senaryo Varyasyonları",
+    deepseekAnalysis: "DeepSeek Analizi",
+    scenarioUnavailable: "Senaryo analizi mevcut değil. API anahtarını kontrol edin veya tekrar deneyin.",
+    analyzingAI: "AI ile analiz ediliyor...",
+    afterMarket: "Piyasa Sonrası",
+    preMarket: "Piyasa Öncesi",
+    preMarketShort: "Sonra",
+    preMarketShortPre: "Önce",
+    proTip: "💡 İpucu:",
+    impact: "Etki",
+    matched: "eşleşen",
+    relatedCatalysts: "İlgili Katalizörler",
+    findingCatalysts: "İlgili katalizörler aranıyor...",
+    technicalFlow: "Bu hareket pozisyonlama, likidite veya tamamen teknik akıştan kaynaklanmış olabilir.",
+    economicEvents: "Ekonomik Olaylar",
+    earningsReports: "Bilanço Raporları",
+    noEconomicEvents: "Planlanmış ekonomik olay yok",
+    noEarningsReports: "Planlanmış bilanço raporu yok",
+    economicEvent: "Ekonomik Olay",
+    earningsReport: "Bilanço Raporu",
+    previous: "Önceki",
+    forecast: "Tahmin",
+    prev: "Önceki",
+    exp: "Bkl",
+    expectedDirection: "Beklenen Yön",
+    bullishDirection: "📈 Yükseliş - Pozitif piyasa tepkisi bekleniyor",
+    bearishDirection: "📉 Düşüş - Negatif piyasa tepkisi bekleniyor",
+    neutralDirection: "➖ Nötr - Sınırlı piyasa etkisi bekleniyor",
+    volatileDirection: "⚡ Volatil - İki yönlü sert fiyat hareketleri bekleniyor",
+    description: "Açıklama",
+    whyItMatters: "Neden Önemli",
+    clickDetails: "Detaylar için tıklayın →",
+    betterThanExpected: "Beklentiden İyi",
+    worseThanExpected: "Beklentiden Kötü",
+    asExpected: "Beklenen",
+    first5min: "İlk 5 dk",
+    firstHour: "İlk saat",
+    dayClose: "Gün kapanış",
+    nextDay: "Ertesi gün",
+    restOfDay: "Günün geri kalanı",
+    epsEstimate: "HBK Tahmini",
+    revenueEstimate: "Gelir Tahmini",
+    previousEps: "Önceki HBK",
+    previousRevenue: "Önceki Gelir",
+    aiPrediction: "AI Tahmini",
+    beatExpected: "📈 Beklentiyi Aşması Bekleniyor",
+    missExpected: "📉 Beklentinin Altı Bekleniyor",
+    inLineExpected: "➖ Beklentiye Uygun",
+    highVolExpected: "⚡ Yüksek Volatilite Bekleniyor",
+    beatScenario: "Beklentiyi Aşma (HBK & Gelir)",
+    missScenario: "Beklentinin Altı (HBK veya Gelir)",
+    mixedScenario: "Karışık (HBK iyi, Gelir kötü veya tersi)",
+    inLineScenario: "Beklentiye Uygun",
+    preMarketLabel: "Piyasa öncesi",
+    openLabel: "Açılış",
+    sectorLabel: "Sektör",
+    guidanceLabel: "Rehberlik",
+    keyMetrics: "İzlenecek Temel Metrikler",
+    newsFeedFresh: "Haber akışı güncel",
+    newsFeedMock: "Manuel test haberleri gösteriliyor",
+    newsFeedError: "Haber akışı kullanılamıyor",
+    newsFeedStale: "Haber akışı eski veya boş",
+    summaryLabel: "Özet",
+    analysisLabel: "Analiz",
+    labelHigh: "Yüksek",
+    labelMedium: "Orta",
+    labelLow: "Düşük",
+    labelCritical: "Kritik",
+    labelNeutral: "Nötr",
+    labelVolatile: "Volatil",
+    currentPrice: "Güncel",
+    pullbackPrice: "Geri Çekilme",
+    targetPrice: "Hedef",
+    noNearbyCatalyst: "Bu mum için yakın bir katalizör eşleşmedi.",
+    noNewsFound: "Haber bulunamadı.",
+    newsStatusChanged: "Haber akışı durumu değişti.",
+    loadTestNewsTitle: "Test haber verisini yükle",
+    testLabel: "🧪 Test",
+    refreshLabel: "Yenile",
+    mon: "Pzt",
+    tue: "Sal",
+    wed: "Çar",
+    thu: "Per",
+    fri: "Cum",
+    alerts: "Uyarılar",
+    watchlist: "İzleme Listesi",
+    smartTrades: "Akıllı İşlemler",
+    economicCalendar: "Ekonomik Takvim",
+    chatAi: "AI Sohbet",
+    researchReports: "Araştırma Raporları",
+    docs: "Dokümanlar",
+    brokers: "Brokerler",
+    myTrades: "İşlemlerim",
+    secondsAgoSuffix: " sn önce",
+    minutesAgoSuffix: " dk önce",
+    hoursAgoSuffix: " sa önce",
+    daysAgoSuffix: " g önce",
+    unknownTime: "...",
+  },
+};
+
+function getT(locale: string): Record<string, string> {
+  return PAGE_T[locale] || PAGE_T.en;
+}
+
+function formatImportanceLabel(level: ImportanceLevel | null | undefined, locale: string): string {
+  const t = getT(locale);
+  if (!level) return t.importance;
+  if (level === "critical") return t.labelCritical;
+  if (level === "high") return t.labelHigh;
+  if (level === "medium") return t.labelMedium;
+  return t.labelLow;
+}
+
+function formatUrgencyLabel(urgency: string | undefined, locale: string): string {
+  const t = getT(locale);
+  if (urgency === "breaking") return t.breaking;
+  if (urgency === "high") return t.labelHigh;
+  if (urgency === "medium") return t.labelMedium;
+  return t.labelLow;
+}
+
+function formatDirectionLabel(direction: EventDirection | undefined | null, locale: string): string {
+  const t = getT(locale);
+  if (direction === "bullish") return t.bullish;
+  if (direction === "bearish") return locale === "tr" ? "Düşüş" : "Bearish";
+  if (direction === "volatile") return t.labelVolatile;
+  return t.labelNeutral;
+}
+
+function formatImpactLevelLabel(impact: string | undefined, locale: string): string {
+  const normalized = String(impact || "").toLowerCase();
+  const t = getT(locale);
+  if (normalized === "high") return t.labelHigh;
+  if (normalized === "medium") return t.labelMedium;
+  if (normalized === "low") return t.labelLow;
+  return impact || "";
+}
+
+function formatDirectionSummary(direction: EventDirection | undefined | null, locale: string): string {
+  const t = getT(locale);
+  if (direction === "bullish") return t.bullishDirection;
+  if (direction === "bearish") return t.bearishDirection;
+  if (direction === "volatile") return t.volatileDirection;
+  return t.neutralDirection;
+}
+
+function formatSessionShort(time: string | undefined, locale: string): string {
+  const t = getT(locale);
+  return time === "after_market" ? t.preMarketShort : t.preMarketShortPre;
+}
+
+function formatSessionLabel(time: string | undefined, locale: string): string {
+  const t = getT(locale);
+  return time === "after_market" ? t.afterMarket : t.preMarket;
+}
+
+function normalizeDisplayConfidence(value: unknown): number {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return 0;
+  }
+  const normalized = value <= 1 ? value * 100 : value;
+  return Math.max(0, Math.min(100, normalized));
+}
+
+function localeCopy(locale: string, english: string, turkish: string): string {
+  return locale === "tr" ? turkish : english;
 }
 
 function isTurkishLocale(locale: string): boolean {
@@ -148,12 +497,12 @@ function getLocalizedSummary(item: EnrichedNews, locale: string): string {
 
 function getLocalizedAnalysis(item: EnrichedNews, locale: string): string {
   if (isTurkishLocale(locale)) {
-    return item.analysis_tr || item.analysis_en || item.content || "";
+    return item.analysis_tr || item.analysis_en || "";
   }
   if (usesRuntimeLocale(locale)) {
-    return item.analysis_locale || item.analysis_en || item.content || "";
+    return item.analysis_locale || item.analysis_en || "";
   }
-  return item.analysis_en || item.content || "";
+  return item.analysis_en || "";
 }
 
 function getLocalizedMatchedHeadline(item: MatchedNewsItem, locale: string): string {
@@ -200,11 +549,11 @@ function normalizeNewsItem(item: any): EnrichedNews {
     // analysis → analysis_en → "" (NEVER headline or summary)
     headline: item.headline || item.headline_en || "",
     headline_tr: item.headline_tr || "",
-    content: item.content || item.analysis_en || "",
+    content: item.content || "",
     content_tr: item.content_tr || "",
     summary_en: item.summary_en || "",
     summary_tr: item.summary_tr || "",
-    analysis_en: item.analysis_en || item.analysis || item.content || "",
+    analysis_en: item.analysis_en || item.analysis || "",
     analysis_tr: item.analysis_tr || "",
     headline_locale: item.headline_locale || undefined,
     summary_locale: item.summary_locale || undefined,
@@ -377,17 +726,20 @@ const TIMEFRAME_TO_MINUTES: Record<string, number> = {
   "1d": 1440,
 };
 
-const sidebarItems = [
-  { icon: Bell, label: "Alerts", href: "/alerts", badge: 3 },
-  { icon: Star, label: "Watchlist", href: "/watchlist", badge: null },
-  { icon: Wallet, label: "Smart Trades", href: "/news-correlation", badge: null, active: true },
-  { icon: Calendar, label: "Economic Calendar", href: "/calendar", badge: null },
-  { icon: MessageSquare, label: "Chat AI", href: "/chat", badge: null },
-  { icon: Newspaper, label: "Research Reports", href: "/research", badge: null },
-  { icon: BookOpen, label: "Docs", href: "/docs", badge: null },
-  { icon: Building2, label: "Brokers", href: "/brokers", badge: null },
-  { icon: LineChart, label: "My Trades", href: "/trades", badge: null },
-];
+function getSidebarItems(locale: string) {
+  const t = getT(locale);
+  return [
+    { icon: Bell, label: t.alerts, href: "/alerts", badge: 3 },
+    { icon: Star, label: t.watchlist, href: "/watchlist", badge: null },
+    { icon: Wallet, label: t.smartTrades, href: "/news-correlation", badge: null, active: true },
+    { icon: Calendar, label: t.economicCalendar, href: "/calendar", badge: null },
+    { icon: MessageSquare, label: t.chatAi, href: "/chat", badge: null },
+    { icon: Newspaper, label: t.researchReports, href: "/research", badge: null },
+    { icon: BookOpen, label: t.docs, href: "/docs", badge: null },
+    { icon: Building2, label: t.brokers, href: "/brokers", badge: null },
+    { icon: LineChart, label: t.myTrades, href: "/trades", badge: null },
+  ];
+}
 
 const getDirectionBadgeClass = (direction?: EventDirection | null) => cn(
   "text-[10px] px-2 py-0.5 rounded-full border font-medium",
@@ -412,11 +764,6 @@ const getImportanceBadgeClass = (level?: ImportanceLevel | null) => cn(
   (!level || level === "low") && "bg-gray-700/50 text-gray-400 border-gray-600"
 );
 
-const formatImportanceLabel = (level?: ImportanceLevel | null) => {
-  if (!level) return "Scored";
-  return `${level.charAt(0).toUpperCase()}${level.slice(1)}`;
-};
-
 const formatAIModelLabel = (aiModel?: string | null) =>
   aiModel?.replace(/[_-]/g, " ") || "DeepSeek";
 
@@ -434,15 +781,16 @@ const ImpactChip = ({ impact }: { impact: { symbol: string; direction?: EventDir
   </span>
 );
 
-const EventAIMetadata = ({ event, compact = false }: { event: AIAnnotatedEvent; compact?: boolean }) => {
+const EventAIMetadata = ({ event, compact = false, locale = "en" }: { event: AIAnnotatedEvent; compact?: boolean; locale?: string }) => {
   const hasImportance = !!event.importance_level || typeof event.importance_score === "number";
+  const t = getT(locale);
 
   return (
     <div className={cn("space-y-2", compact && "mt-3")}>
       <div className="flex flex-wrap gap-2">
         {hasImportance && (
           <span className={getImportanceBadgeClass(event.importance_level)}>
-            {formatImportanceLabel(event.importance_level)} Importance
+            {formatImportanceLabel(event.importance_level, locale)} {t.importance}
             {typeof event.importance_score === "number" ? ` • ${event.importance_score}/100` : ""}
           </span>
         )}
@@ -452,11 +800,11 @@ const EventAIMetadata = ({ event, compact = false }: { event: AIAnnotatedEvent; 
             ? "bg-cyan-500/10 text-cyan-300 border-cyan-500/20"
             : "bg-gray-700/50 text-gray-400 border-gray-600"
         )}>
-          {event.ai_analyzed ? `${formatAIModelLabel(event.ai_model)} AI` : "Fallback Analysis"}
+          {event.ai_analyzed ? `${formatAIModelLabel(event.ai_model)} AI` : t.fallbackAnalysis}
         </span>
         {typeof event.confidence === "number" && (
           <span className="text-[10px] px-2 py-0.5 rounded-full border font-medium bg-blue-500/10 text-blue-300 border-blue-500/20">
-            Confidence • {event.confidence}%
+            {t.confidence} • {Math.round(normalizeDisplayConfidence(event.confidence))}%
           </span>
         )}
       </div>
@@ -485,27 +833,28 @@ const SidebarItem = ({ icon: Icon, label, href, active = false, badge, collapsed
   </Link>
 );
 
-const TimeAgo = ({ timestamp }: { timestamp: string }) => {
+const TimeAgo = ({ timestamp, locale }: { timestamp: string; locale: string }) => {
   const [timeAgo, setTimeAgo] = useState<string>("");
 
   useEffect(() => {
     const update = () => {
+      const t = getT(locale);
       const date = new Date(timestamp);
       const now = new Date();
       const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-      if (diffInSeconds < 60) setTimeAgo(`${diffInSeconds}s ago`);
-      else if (diffInSeconds < 3600) setTimeAgo(`${Math.floor(diffInSeconds / 60)}m ago`);
-      else if (diffInSeconds < 86400) setTimeAgo(`${Math.floor(diffInSeconds / 3600)}h ago`);
-      else setTimeAgo(`${Math.floor(diffInSeconds / 86400)}d ago`);
+      if (diffInSeconds < 60) setTimeAgo(`${diffInSeconds}${t.secondsAgoSuffix}`);
+      else if (diffInSeconds < 3600) setTimeAgo(`${Math.floor(diffInSeconds / 60)}${t.minutesAgoSuffix}`);
+      else if (diffInSeconds < 86400) setTimeAgo(`${Math.floor(diffInSeconds / 3600)}${t.hoursAgoSuffix}`);
+      else setTimeAgo(`${Math.floor(diffInSeconds / 86400)}${t.daysAgoSuffix}`);
     };
 
     update();
     const interval = setInterval(update, 60000);
     return () => clearInterval(interval);
-  }, [timestamp]);
+  }, [timestamp, locale]);
 
-  return <span className="text-xs text-gray-500">{timeAgo || "..."}</span>;
+  return <span className="text-xs text-gray-500">{timeAgo || getT(locale).unknownTime}</span>;
 };
 
 const NewsCard = ({ news, onClick, locale }: { news: EnrichedNews, onClick: () => void, locale: string }) => {
@@ -532,13 +881,13 @@ const NewsCard = ({ news, onClick, locale }: { news: EnrichedNews, onClick: () =
           news.urgency === "medium" && "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
           news.urgency === "low" && "bg-gray-700 text-gray-400"
         )}>
-          {news.urgency === "breaking" ? "BREAKING" : `${news.urgency.toUpperCase()} IMPACT`}
+          {news.urgency === "breaking" ? getT(locale).breaking : `${formatUrgencyLabel(news.urgency, locale).toUpperCase()} ${getT(locale).impactSuffix}`}
         </span>
         <span className="text-xs text-gray-500 font-mono">
           {format(new Date(news.timestamp), "HH:mm")}
         </span>
         <span className="text-xs text-gray-600">•</span>
-        <TimeAgo timestamp={news.timestamp} />
+        <TimeAgo timestamp={news.timestamp} locale={locale} />
       </div>
 
       <h3 className="text-sm font-semibold text-white leading-snug mb-2 uppercase tracking-wide line-clamp-2">
@@ -599,7 +948,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   // Selected event modals
   const [selectedEconomicEvent, setSelectedEconomicEvent] = useState<EconomicEvent | null>(null);
   const [selectedEarningsEvent, setSelectedEarningsEvent] = useState<EarningsEvent | null>(null);
-  const { markers: newsMarkers } = useNewsMarkers(selectedSymbol, 72, 5);
+  const { markers: newsMarkers, error: newsMarkersError } = useNewsMarkers(selectedSymbol, 72, 5);
   const [isEconomicModalOpen, setIsEconomicModalOpen] = useState(false);
   const [isEarningsModalOpen, setIsEarningsModalOpen] = useState(false);
   const [loadingEventDetail, setLoadingEventDetail] = useState(false);
@@ -1204,6 +1553,17 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         const currentTimeframe = timeframeRef.current;
 
         // AKILLI HABER EŞLEŞTİRME - Backend API'sini çağır
+        const buildNearbyNewsFallback = () => {
+          const minutes = TIMEFRAME_TO_MINUTES[currentTimeframe] || 60;
+          const candleStart = subMinutes(new Date(candle.actualTimestamp * 1000), minutes / 2);
+          const candleEnd = addMinutes(new Date(candle.actualTimestamp * 1000), minutes / 2);
+
+          return newsRef.current.filter(n => {
+            const newsTime = new Date(n.timestamp);
+            return isWithinInterval(newsTime, { start: candleStart, end: candleEnd });
+          }).slice(0, 5) as any;
+        };
+
         fetchNewsForCandle(
           currentSymbol,
           new Date(candle.actualTimestamp * 1000).toISOString(),
@@ -1214,26 +1574,18 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           currentTimeframe,
           currentLocaleRef.current
         ).then(response => {
+          const matchedNews = Array.isArray(response.news) ? response.news : [];
+          const fallbackNews = matchedNews.length === 0 ? buildNearbyNewsFallback() : matchedNews;
           setSelectedCandleNews(prev => prev ? {
             ...prev,
-            news: response.news || [],
+            news: fallbackNews,
             isLoadingNews: false,
           } : null);
         }).catch(error => {
           console.error("[CandleClick] Error fetching matched news:", error);
-          // Fallback: Basit zaman bazlı eşleştirme
-          const minutes = TIMEFRAME_TO_MINUTES[currentTimeframe] || 60;
-          const candleStart = subMinutes(new Date(candle.actualTimestamp * 1000), minutes / 2);
-          const candleEnd = addMinutes(new Date(candle.actualTimestamp * 1000), minutes / 2);
-
-          const relatedNews = newsRef.current.filter(n => {
-            const newsTime = new Date(n.timestamp);
-            return isWithinInterval(newsTime, { start: candleStart, end: candleEnd });
-          }).slice(0, 5); // Max 5
-
           setSelectedCandleNews(prev => prev ? {
             ...prev,
-            news: relatedNews as any,
+            news: buildNearbyNewsFallback(),
             isLoadingNews: false,
           } : null);
         });
@@ -1392,14 +1744,16 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           id: newsItem.id || '',
           timestamp: newsItem.timestamp || new Date().toISOString(),
           source: newsItem.source || 'news',
+          // Semantic boundaries: each field stays in its own lane.
+          // headline → headline_en → "" (NEVER summary or analysis)
           headline: newsItem.headline_en || newsItem.headline || '',
-          headline_tr: newsItem.summary_tr || newsItem.analysis_tr || newsItem.headline || newsItem.headline_en || '',
-          content: newsItem.analysis_en || newsItem.summary_en || newsItem.headline_en || newsItem.headline || '',
-          content_tr: newsItem.analysis_tr || newsItem.summary_tr || newsItem.reasoning_tr || newsItem.headline || newsItem.headline_en || '',
-          summary_en: newsItem.summary_en || newsItem.headline_en || newsItem.headline || '',
-          summary_tr: newsItem.summary_tr || newsItem.analysis_tr || newsItem.reasoning_tr || newsItem.headline || newsItem.headline_en || '',
-          analysis_en: newsItem.analysis_en || newsItem.summary_en || newsItem.headline_en || newsItem.headline || '',
-          analysis_tr: newsItem.analysis_tr || newsItem.reasoning_tr || newsItem.summary_tr || newsItem.headline || newsItem.headline_en || '',
+          headline_tr: '',
+          content: '',
+          content_tr: '',
+          summary_en: newsItem.summary_en || '',
+          summary_tr: newsItem.summary_tr || '',
+          analysis_en: newsItem.analysis_en || '',
+          analysis_tr: newsItem.analysis_tr || '',
           category: 'matched_news',
           url: newsItem.url || '',
           impacts: [{
@@ -1480,6 +1834,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     && Date.now() - newsLastUpdatedAt.getTime() <= 15 * 60 * 1000;
 
   const currentSymbol = symbols.find(s => s.symbol === selectedSymbol);
+  const sidebarItems = getSidebarItems(currentLocale);
 
   if (!mounted) {
     return <div className="min-h-screen bg-[#0a0a0a]" />;
@@ -1544,31 +1899,31 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
             {/* Header */}
             <div className="p-6 border-b border-gray-800">
               <h1 className="text-xl font-bold text-white mb-4">
-                {selectedSymbol} - {currentSymbol?.name} Market Analysis
+                {selectedSymbol} - {currentSymbol?.name} {getT(currentLocale).marketAnalysis}
               </h1>
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-green-500/10 border-green-500/30">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 uppercase">Swing Trading</span>
+                    <span className="text-[10px] text-gray-500 uppercase">{getT(currentLocale).swingTrading}</span>
                     <span className="text-sm font-semibold text-green-400 flex items-center gap-1">
-                      Bullish <TrendingUp className="w-4 h-4" />
+                      {getT(currentLocale).bullish} <TrendingUp className="w-4 h-4" />
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-red-500/10 border-red-500/30">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 uppercase">Day Trading</span>
+                    <span className="text-[10px] text-gray-500 uppercase">{getT(currentLocale).dayTrading}</span>
                     <span className="text-sm font-semibold text-red-400 flex items-center gap-1">
-                      Slightly Bearish <TrendingDown className="w-4 h-4" />
+                      {getT(currentLocale).slightlyBearish} <TrendingDown className="w-4 h-4" />
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-purple-500/10 border-purple-500/30">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 uppercase">News Feed</span>
+                    <span className="text-[10px] text-gray-500 uppercase">{getT(currentLocale).newsFeed}</span>
                     <span className="text-sm font-semibold text-purple-400 flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                      High Impact
+                      {getT(currentLocale).highImpact}
                     </span>
                   </div>
                 </div>
@@ -1605,15 +1960,15 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
               {currentSymbol && currentSymbol.price > 0 && (
                 <div className="absolute top-4 right-4 z-10 space-y-2">
                   <div className="bg-gray-900/90 backdrop-blur px-3 py-2 rounded-lg border border-gray-800">
-                    <span className="text-xs text-gray-400">Current:</span>
+                    <span className="text-xs text-gray-400">{getT(currentLocale).currentPrice}:</span>
                     <span className="text-sm text-white ml-2 font-mono">${currentSymbol.price.toFixed(2)}</span>
                   </div>
                   <div className="bg-gray-900/90 backdrop-blur px-3 py-2 rounded-lg border border-gray-800">
-                    <span className="text-xs text-gray-400">Pullback:</span>
+                    <span className="text-xs text-gray-400">{getT(currentLocale).pullbackPrice}:</span>
                     <span className="text-sm text-white ml-2 font-mono">${(currentSymbol.price * 1.02).toFixed(2)}</span>
                   </div>
                   <div className="bg-gray-900/90 backdrop-blur px-3 py-2 rounded-lg border border-gray-800">
-                    <span className="text-xs text-gray-400">Target:</span>
+                    <span className="text-xs text-gray-400">{getT(currentLocale).targetPrice}:</span>
                     <span className="text-sm text-red-400 ml-2 font-mono">${(currentSymbol.price * 0.98).toFixed(2)}</span>
                   </div>
                 </div>
@@ -1624,7 +1979,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                 <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a]">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-8 h-8 border-2 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
-                    <span className="text-sm text-gray-500">Loading chart...</span>
+                    <span className="text-sm text-gray-500">{getT(currentLocale).loadingChart}</span>
                   </div>
                 </div>
               )}
@@ -1638,7 +1993,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       onClick={fetchChartData}
                       className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600"
                     >
-                      Retry
+                      {getT(currentLocale).retry}
                     </button>
                   </div>
                 </div>
@@ -1654,7 +2009,15 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
               {/* Candle click tip */}
               {!loading && !error && !selectedCandleNews && chartData.length > 0 && (
                 <div className="absolute bottom-16 left-4 z-10 bg-gray-900/80 backdrop-blur px-3 py-2 rounded-lg border border-gray-800 text-xs text-gray-400">
-                  💡 Click any candle to inspect related catalysts
+                  {getT(currentLocale).clickCandle}
+                </div>
+              )}
+
+              {!!newsMarkersError && !loading && !error && (
+                <div className="absolute top-4 right-4 z-10 max-w-xs bg-amber-500/10 backdrop-blur px-3 py-2 rounded-lg border border-amber-500/30 text-xs text-amber-200">
+                  {currentLocale === "tr"
+                    ? "Haber işaretçileri yüklenemedi. Grafik işaretleri geçici olarak devre dışı."
+                    : "News markers failed to load. Chart markers are temporarily unavailable."}
                 </div>
               )}
 
@@ -1666,7 +2029,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       <h3 className="font-semibold">
                         {format(new Date(selectedCandleNews.candle.actualTimestamp * 1000), "MMM d, HH:mm")}
                       </h3>
-                      <p className="text-xs text-gray-500">Candle Analysis</p>
+                      <p className="text-xs text-gray-500">{getT(currentLocale).candleAnalysis}</p>
                     </div>
                     <button
                       onClick={() => setSelectedCandleNews(null)}
@@ -1679,19 +2042,19 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   <div className="p-4 space-y-4">
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-gray-800/50 rounded-lg p-3">
-                        <span className="text-xs text-gray-500">Open</span>
+                        <span className="text-xs text-gray-500">{getT(currentLocale).open}</span>
                         <p className="font-mono text-sm">${selectedCandleNews.candle.open.toFixed(2)}</p>
                       </div>
                       <div className="bg-gray-800/50 rounded-lg p-3">
-                        <span className="text-xs text-gray-500">Close</span>
+                        <span className="text-xs text-gray-500">{getT(currentLocale).close}</span>
                         <p className="font-mono text-sm">${selectedCandleNews.candle.close.toFixed(2)}</p>
                       </div>
                       <div className="bg-gray-800/50 rounded-lg p-3">
-                        <span className="text-xs text-gray-500">High</span>
+                        <span className="text-xs text-gray-500">{getT(currentLocale).high}</span>
                         <p className="font-mono text-sm text-green-400">${selectedCandleNews.candle.high.toFixed(2)}</p>
                       </div>
                       <div className="bg-gray-800/50 rounded-lg p-3">
-                        <span className="text-xs text-gray-500">Low</span>
+                        <span className="text-xs text-gray-500">{getT(currentLocale).low}</span>
                         <p className="font-mono text-sm text-red-400">${selectedCandleNews.candle.low.toFixed(2)}</p>
                       </div>
                     </div>
@@ -1707,7 +2070,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                             <ArrowDown className="w-4 h-4 text-red-400" />
                           }
                           <span className={cn("font-semibold", selectedCandleNews.moveType === "up" ? "text-green-400" : "text-red-400")}>
-                            Big {selectedCandleNews.moveType === "up" ? "Surge" : "Drop"}: {selectedCandleNews.movePercent.toFixed(2)}%
+                            {selectedCandleNews.moveType === "up" ? getT(currentLocale).bigSurge : getT(currentLocale).bigDrop}: {selectedCandleNews.movePercent.toFixed(2)}%
                           </span>
                         </div>
                       </div>
@@ -1718,12 +2081,12 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       <div className="p-3 rounded-lg border bg-purple-500/10 border-purple-500/30">
                         <div className="flex items-center gap-2 mb-2">
                           <Brain className="w-4 h-4 text-purple-400" />
-                          <span className="font-semibold text-purple-400">AI Analysis</span>
+                          <span className="font-semibold text-purple-400">{getT(currentLocale).aiAnalysis}</span>
                         </div>
                         {loadingExplanation ? (
                           <div className="flex items-center gap-2">
                             <div className="w-4 h-4 border-2 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
-                            <span className="text-xs text-gray-400">Analyzing price movement...</span>
+                            <span className="text-xs text-gray-400">{getT(currentLocale).analyzingMove}</span>
                           </div>
                         ) : aiExplanation ? (
                           <p className="text-xs text-gray-300 leading-relaxed">{aiExplanation}</p>
@@ -1736,15 +2099,15 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                         <Newspaper className="w-4 h-4 text-purple-400" />
                         {selectedCandleNews.isLoadingNews ? (
                           <span className="flex items-center gap-2">
-                            Related Catalysts
+                            {getT(currentLocale).relatedCatalysts}
                             <span className="w-3 h-3 border-2 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
                           </span>
                         ) : (
                           <>
-                            Related Catalysts
+                            {getT(currentLocale).relatedCatalysts}
                             <span className="text-xs font-normal text-gray-400">
                               ({selectedCandleNews.news.length}
-                              {selectedCandleNews.news.some(n => n.match_quality !== 'context') && ' matched'})
+                              {selectedCandleNews.news.some(n => n.match_quality !== 'context') && ` ${getT(currentLocale).matched}`})
                             </span>
                           </>
                         )}
@@ -1752,19 +2115,19 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
                       {selectedCandleNews.isLoadingNews ? (
                         <div className="flex items-center justify-center py-4">
-                          <span className="text-xs text-gray-500">Finding relevant catalysts...</span>
+                          <span className="text-xs text-gray-500">{getT(currentLocale).findingCatalysts}</span>
                         </div>
                       ) : selectedCandleNews.news.length === 0 ? (
                         <div className="p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
                           <p className="text-xs text-gray-500">
                             {selectedCandleNews.hasBigMove
-                              ? "No strong catalyst was found for this significant price move."
-                              : "No nearby catalyst was matched to this candle."
+                              ? getT(currentLocale).noStrongCatalyst
+                              : getT(currentLocale).noNearbyCatalyst
                             }
                           </p>
                           {selectedCandleNews.hasBigMove && (
                             <p className="text-[10px] text-gray-600 mt-1">
-                              This move may have been driven by positioning, liquidity, or purely technical flow.
+                              {getT(currentLocale).technicalFlow}
                             </p>
                           )}
                         </div>
@@ -1857,7 +2220,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                 )}
               >
                 <Newspaper className="w-4 h-4" />
-                <span>News</span>
+                <span>{getT(currentLocale).news}</span>
                 {!newsLoading && news.length > 0 && activeTab === "news" && (
                   <span className="px-1.5 py-0.5 bg-purple-500/20 text-purple-400 text-[10px] rounded-full">
                     {news.length}
@@ -1875,7 +2238,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                 )}
               >
                 <Calendar className="w-4 h-4" />
-                <span>Economic</span>
+                <span>{getT(currentLocale).economic}</span>
                 {activeTab === "economic" && (
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500" />
                 )}
@@ -1888,7 +2251,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                 )}
               >
                 <Building2 className="w-4 h-4" />
-                <span>Earnings</span>
+                <span>{getT(currentLocale).earnings}</span>
                 {activeTab === "earnings" && (
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500" />
                 )}
@@ -1914,12 +2277,12 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       )}
                       title={
                         newsFeedIsFresh
-                          ? "News feed fresh"
+                          ? getT(currentLocale).newsFeedFresh
                           : newsStatus === "mock"
-                            ? "Showing manual test news"
+                            ? getT(currentLocale).newsFeedMock
                             : newsStatus === "error"
-                              ? "News feed unavailable"
-                              : "News feed stale or empty"
+                              ? getT(currentLocale).newsFeedError
+                              : getT(currentLocale).newsFeedStale
                       }
                     />
                     <div className="flex items-center gap-1">
@@ -1934,7 +2297,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                               : "text-gray-500 hover:text-gray-300 hover:bg-gray-800"
                           )}
                         >
-                          {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                          {getT(currentLocale)[filter] || (filter.charAt(0).toUpperCase() + filter.slice(1))}
                         </button>
                       ))}
                     </div>
@@ -1944,9 +2307,9 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       <button
                         onClick={() => { fetchNews(true); }}
                         className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded-md text-[10px] hover:bg-purple-500/30 transition-colors"
-                        title="Load test news data"
+                        title={getT(currentLocale).loadTestNewsTitle}
                       >
-                        🧪 Test
+                        {getT(currentLocale).testLabel}
                       </button>
                     )}
                     <select
@@ -1960,7 +2323,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       <option value="es">🇪🇸 ES</option>
                       <option value="fr">🇫🇷 FR</option>
                     </select>
-                    <button onClick={() => fetchNews(false)} className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-800 rounded-md">
+                    <button onClick={() => fetchNews(false)} title={getT(currentLocale).refreshLabel} className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-800 rounded-md">
                       <RefreshCw className={cn("w-3.5 h-3.5", newsLoading && "animate-spin")} />
                     </button>
                   </div>
@@ -1977,7 +2340,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                           : "bg-gray-900/70 text-gray-400 border-gray-800"
                     )}
                   >
-                    {newsStatusMessage || (newsStatus === "empty" ? "No news found." : "News feed status changed.")}
+                    {newsStatusMessage || (newsStatus === "empty" ? getT(currentLocale).noNewsFound : getT(currentLocale).newsStatusChanged)}
                   </div>
                 )}
 
@@ -1991,19 +2354,19 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     <div className="text-center py-12">
                       <Newspaper className="w-12 h-12 text-gray-600 mx-auto mb-4" />
                       <p className="text-gray-500 text-sm mb-2">
-                        {hasHiddenNewsByFilter ? "No news matches the current filter" : "No news available"}
+                        {hasHiddenNewsByFilter ? getT(currentLocale).noNewsFilter : getT(currentLocale).noNewsAvailable}
                       </p>
                       <p className="text-gray-600 text-xs mb-4 px-4">
                         {hasHiddenNewsByFilter
-                          ? "DeepSeek-analyzed news exists, but the current filter is hiding it. Switch to All to see the full feed."
-                          : "Supabase enriched_news table may be empty or API is not responding"}
+                          ? getT(currentLocale).noNewsFilterDetail
+                          : getT(currentLocale).noNewsDetail}
                       </p>
                       {hasHiddenNewsByFilter ? (
                         <button
                           onClick={() => setNewsFilter("all")}
                           className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors"
                         >
-                          Show all news
+                          {getT(currentLocale).showAllNews}
                         </button>
                       ) : (
                         <div className="flex items-center justify-center gap-2">
@@ -2011,13 +2374,13 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                             onClick={() => { fetchNews(false); }}
                             className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm hover:bg-gray-700 transition-colors"
                           >
-                            Retry API
+                            {getT(currentLocale).retryApi}
                           </button>
                           <button
                             onClick={() => { fetchNews(true); }}
                             className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm hover:bg-purple-600 transition-colors"
                           >
-                            🧪 Load Test News
+                            {getT(currentLocale).loadTestNews}
                           </button>
                         </div>
                       )}
@@ -2042,12 +2405,12 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                 <div className="h-12 flex items-center justify-between px-4 border-b border-gray-800 bg-[#0a0a0a]">
                   <h3 className="text-sm font-medium flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-amber-500" />
-                    Economic Events
+                    {getT(currentLocale).economicEvents}
                   </h3>
                   <button
                     onClick={() => fetchEconomicCalendar()}
                     className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-800 rounded-md"
-                    title="Refresh"
+                    title={getT(currentLocale).refreshLabel}
                   >
                     <RefreshCw className={cn("w-3.5 h-3.5", economicLoading && "animate-spin")} />
                   </button>
@@ -2060,7 +2423,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   ) : economicEvents.length === 0 ? (
                     <div className="text-center py-12">
                       <Calendar className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                      <p className="text-gray-500 text-sm">No economic events scheduled</p>
+                      <p className="text-gray-500 text-sm">{getT(currentLocale).noEconomicEvents}</p>
                     </div>
                   ) : (
                     economicEvents.slice(0, 20).map((event) => (
@@ -2092,17 +2455,14 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                                 event.impact === "Medium" && "bg-amber-500/20 text-amber-400 border border-amber-500/30",
                                 event.impact === "Low" && "bg-gray-700/50 text-gray-400 border border-gray-600"
                               )}>
-                                {event.impact}
+                                {formatImpactLevelLabel(event.impact, currentLocale)}
                               </span>
                               <span className="text-xs text-gray-500 font-mono">
                                 {format(new Date(event.timestamp), "MMM d, HH:mm")}
                               </span>
                             </div>
                             <span className={getDirectionBadgeClass(event.predicted_direction)}>
-                              {event.predicted_direction === "bullish" && "📈 Bullish"}
-                              {event.predicted_direction === "bearish" && "📉 Bearish"}
-                              {event.predicted_direction === "neutral" && "➖ Neutral"}
-                              {event.predicted_direction === "volatile" && "⚡ Volatile"}
+                              {getDirectionArrow(event.predicted_direction)} {formatDirectionLabel(event.predicted_direction, currentLocale)}
                             </span>
                           </div>
                           <h4 className="text-sm font-semibold text-white mb-2 tracking-wide">
@@ -2114,17 +2474,17 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                           {(event.previous || event.forecast) && (
                             <div className="flex items-center gap-4 text-[11px]">
                               {event.previous && (
-                                <span className="text-gray-500">Prev: <span className="text-gray-300 font-mono">{event.previous}</span></span>
+                                <span className="text-gray-500">{getT(currentLocale).prev}: <span className="text-gray-300 font-mono">{event.previous}</span></span>
                               )}
                               {event.forecast && (
-                                <span className="text-gray-500">Exp: <span className="text-amber-400 font-mono">{event.forecast}</span></span>
+                                <span className="text-gray-500">{getT(currentLocale).exp}: <span className="text-amber-400 font-mono">{event.forecast}</span></span>
                               )}
                             </div>
                           )}
-                          <EventAIMetadata event={event} compact />
+                          <EventAIMetadata event={event} compact locale={currentLocale} />
                           {/* Click hint */}
                           <div className="absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span className="text-[10px] text-gray-600">Click for details →</span>
+                            <span className="text-[10px] text-gray-600">{getT(currentLocale).clickDetails}</span>
                           </div>
                         </div>
                       </div>
@@ -2140,12 +2500,12 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                 <div className="h-12 flex items-center justify-between px-4 border-b border-gray-800 bg-[#0a0a0a]">
                   <h3 className="text-sm font-medium flex items-center gap-2">
                     <Building2 className="w-4 h-4 text-blue-500" />
-                    Earnings Reports
+                    {getT(currentLocale).earningsReports}
                   </h3>
                   <button
                     onClick={() => fetchEarningsCalendar()}
                     className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-800 rounded-md"
-                    title="Refresh"
+                    title={getT(currentLocale).refreshLabel}
                   >
                     <RefreshCw className={cn("w-3.5 h-3.5", earningsLoading && "animate-spin")} />
                   </button>
@@ -2158,7 +2518,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   ) : earningsEvents.length === 0 ? (
                     <div className="text-center py-12">
                       <Building2 className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                      <p className="text-gray-500 text-sm">No earnings reports scheduled</p>
+                      <p className="text-gray-500 text-sm">{getT(currentLocale).noEarningsReports}</p>
                     </div>
                   ) : (
                     earningsEvents.slice(0, 20).map((event) => (
@@ -2183,14 +2543,11 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                                 "text-[10px] px-1.5 py-0.5 rounded font-medium",
                                 event.time === "after_market" ? "bg-purple-500/20 text-purple-400 border border-purple-500/30" : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
                               )}>
-                                {event.time === "after_market" ? "After" : "Pre"}
+                                {formatSessionShort(event.time, currentLocale)}
                               </span>
                             </div>
                             <span className={getDirectionBadgeClass(event.predicted_direction)}>
-                              {event.predicted_direction === "bullish" && "📈 Bull"}
-                              {event.predicted_direction === "bearish" && "📉 Bear"}
-                              {event.predicted_direction === "neutral" && "➖ Neutral"}
-                              {event.predicted_direction === "volatile" && "⚡ Volatile"}
+                              {getDirectionArrow(event.predicted_direction)} {formatDirectionLabel(event.predicted_direction, currentLocale)}
                             </span>
                           </div>
                           <h4 className="text-sm font-semibold text-white mb-2 tracking-wide">
@@ -2199,20 +2556,20 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                           <div className="flex items-center gap-4 text-[11px]">
                             {event.eps_forecast && (
                               <span className="text-gray-500">
-                                EPS: <span className="text-gray-300 font-mono">{event.eps_forecast}</span>
+                                {getT(currentLocale).epsEstimate}: <span className="text-gray-300 font-mono">{event.eps_forecast}</span>
                               </span>
                             )}
                             {event.revenue_forecast && (
                               <span className="text-gray-500">
-                                Rev: <span className="text-gray-300 font-mono">{event.revenue_forecast}</span>
+                                {getT(currentLocale).revenueEstimate}: <span className="text-gray-300 font-mono">{event.revenue_forecast}</span>
                               </span>
                             )}
                           </div>
-                          <EventAIMetadata event={event} compact />
+                          <EventAIMetadata event={event} compact locale={currentLocale} />
                           <p className="text-[10px] text-gray-600 mt-2 uppercase tracking-wider">{event.sector}</p>
                           {/* Click hint */}
                           <div className="absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span className="text-[10px] text-gray-600">Click for details →</span>
+                            <span className="text-[10px] text-gray-600">{getT(currentLocale).clickDetails}</span>
                           </div>
                         </div>
                       </div>
@@ -2242,7 +2599,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   <Calendar className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white">Economic Event</h3>
+                  <h3 className="font-semibold text-white">{getT(currentLocale).economicEvent}</h3>
                   <p className="text-xs text-gray-500">{format(new Date(selectedEconomicEvent.timestamp), "MMM d, yyyy HH:mm")}</p>
                 </div>
               </div>
@@ -2261,7 +2618,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   selectedEconomicEvent.impact === "Medium" && "bg-amber-500/20 text-amber-400 border border-amber-500/30",
                   selectedEconomicEvent.impact === "Low" && "bg-gray-700/50 text-gray-400 border border-gray-600"
                 )}>
-                  {selectedEconomicEvent.impact} Impact
+                  {formatImpactLevelLabel(selectedEconomicEvent.impact, currentLocale)} {getT(currentLocale).impact}
                 </span>
                 <span className="text-xs text-gray-500">{selectedEconomicEvent.currency}</span>
               </div>
@@ -2269,19 +2626,19 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                 {currentLocale === "tr" && selectedEconomicEvent.title_tr ? selectedEconomicEvent.title_tr : selectedEconomicEvent.title}
               </h2>
 
-              <EventAIMetadata event={selectedEconomicEvent} />
+              <EventAIMetadata event={selectedEconomicEvent} locale={currentLocale} />
 
               {(selectedEconomicEvent.previous || selectedEconomicEvent.forecast) && (
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   {selectedEconomicEvent.previous && (
                     <div className="p-3 rounded-xl bg-gray-900/50 border border-gray-800">
-                      <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Previous</p>
+                      <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">{getT(currentLocale).previous}</p>
                       <p className="text-lg font-mono text-gray-300">{selectedEconomicEvent.previous}</p>
                     </div>
                   )}
                   {selectedEconomicEvent.forecast && (
                     <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-900/40">
-                      <p className="text-[10px] uppercase tracking-wider text-amber-500/70 mb-1">Forecast</p>
+                      <p className="text-[10px] uppercase tracking-wider text-amber-500/70 mb-1">{getT(currentLocale).forecast}</p>
                       <p className="text-lg font-mono text-amber-400">{selectedEconomicEvent.forecast}</p>
                     </div>
                   )}
@@ -2292,13 +2649,10 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                 <div>
                   <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-amber-500" />
-                    Expected Direction
+                    {getT(currentLocale).expectedDirection}
                   </h4>
                   <p className={cn("text-sm p-3 rounded-xl border", getDirectionBadgeClass(selectedEconomicEvent.predicted_direction))}>
-                    {selectedEconomicEvent.predicted_direction === "bullish" && "📈 Bullish - Expected positive market reaction"}
-                    {selectedEconomicEvent.predicted_direction === "bearish" && "📉 Bearish - Expected negative market reaction"}
-                    {selectedEconomicEvent.predicted_direction === "neutral" && "➖ Neutral - Limited market impact expected"}
-                    {selectedEconomicEvent.predicted_direction === "volatile" && "⚡ Volatile - Expect sharp two-way price swings"}
+                    {formatDirectionSummary(selectedEconomicEvent.predicted_direction, currentLocale)}
                   </p>
                 </div>
 
@@ -2306,7 +2660,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-950/20 to-transparent border border-cyan-900/30">
                     <h4 className="text-sm font-semibold text-cyan-300 mb-2 flex items-center gap-2">
                       <Brain className="w-4 h-4" />
-                      DeepSeek Analysis
+                      {getT(currentLocale).deepseekAnalysis}
                     </h4>
                     <p className="text-sm text-gray-400 leading-relaxed">
                       {currentLocale === "tr" && selectedEconomicEvent.impact_analysis_tr
@@ -2317,14 +2671,14 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                 )}
 
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-300 mb-2">Description</h4>
+                  <h4 className="text-sm font-semibold text-gray-300 mb-2">{getT(currentLocale).description}</h4>
                   <p className="text-sm text-gray-400 leading-relaxed">
                     {currentLocale === "tr" && selectedEconomicEvent.description_tr ? selectedEconomicEvent.description_tr : selectedEconomicEvent.description}
                   </p>
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-300 mb-2">Affected Symbols</h4>
+                  <h4 className="text-sm font-semibold text-gray-300 mb-2">{getT(currentLocale).affectedSymbols}</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedEconomicEvent.affected_symbols.map((symbol) => (
                       <span key={symbol} className="px-2 py-1 bg-gray-800 text-gray-400 rounded text-xs font-mono">
@@ -2336,7 +2690,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
                 {selectedEconomicEvent.why_it_matters && (
                   <div className="p-4 rounded-xl bg-gradient-to-r from-amber-950/20 to-transparent border border-amber-900/30">
-                    <h4 className="text-sm font-semibold text-amber-400 mb-2">Why It Matters</h4>
+                    <h4 className="text-sm font-semibold text-amber-400 mb-2">{getT(currentLocale).whyItMatters}</h4>
                     <p className="text-sm text-gray-400 leading-relaxed">
                       {currentLocale === "tr" && selectedEconomicEvent.why_it_matters_tr ? selectedEconomicEvent.why_it_matters_tr : selectedEconomicEvent.why_it_matters}
                     </p>
@@ -2347,9 +2701,9 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                 <div className="mt-6 border-t border-gray-800 pt-6">
                   <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-amber-500" />
-                    Scenario Variations
+                    {getT(currentLocale).scenarioVariations}
                     {loadingEventDetail && (
-                      <span className="ml-2 text-[10px] text-amber-400 animate-pulse">Analyzing with AI...</span>
+                      <span className="ml-2 text-[10px] text-amber-400 animate-pulse">{getT(currentLocale).analyzingAI}</span>
                     )}
                   </h4>
                   {loadingEventDetail && !selectedEconomicEvent.scenarios && (
@@ -2359,7 +2713,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     </div>
                   )}
                   {!loadingEventDetail && !selectedEconomicEvent.scenarios && (
-                    <p className="text-xs text-gray-500 italic">Scenario analysis unavailable. Check API key or try again later.</p>
+                    <p className="text-xs text-gray-500 italic">{getT(currentLocale).scenarioUnavailable}</p>
                   )}
 
 
@@ -2367,7 +2721,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-green-950/40 to-transparent border border-green-900/40">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xs">🟢</span>
-                      <h5 className="text-sm font-semibold text-green-400">Better Than Expected</h5>
+                      <h5 className="text-sm font-semibold text-green-400">{getT(currentLocale).betterThanExpected}</h5>
                     </div>
                     {/* Impacts - News Card Style */}
                     <div className="flex flex-wrap gap-1.5 mb-3">
@@ -2389,20 +2743,20 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 text-xs">
-                        <span className="text-gray-500 w-20">First 5 min</span>
-                        <span className="text-green-400">{selectedEconomicEvent.scenarios?.better_than_expected?.first_5min || "Sharp initial move"}</span>
+                        <span className="text-gray-500 w-20">{getT(currentLocale).first5min}</span>
+                        <span className="text-green-400">{selectedEconomicEvent.scenarios?.better_than_expected?.first_5min || localeCopy(currentLocale, "Sharp initial move", "İlk sert hareket")}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
-                        <span className="text-gray-500 w-20">First hour</span>
-                        <span className="text-green-400">{selectedEconomicEvent.scenarios?.better_than_expected?.first_hour || "Momentum continues"}</span>
+                        <span className="text-gray-500 w-20">{getT(currentLocale).firstHour}</span>
+                        <span className="text-green-400">{selectedEconomicEvent.scenarios?.better_than_expected?.first_hour || localeCopy(currentLocale, "Momentum continues", "Momentum devam eder")}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
-                        <span className="text-gray-500 w-20">Day close</span>
-                        <span className="text-amber-400">{selectedEconomicEvent.scenarios?.better_than_expected?.day_close || "Watch for profit taking"}</span>
+                        <span className="text-gray-500 w-20">{getT(currentLocale).dayClose}</span>
+                        <span className="text-amber-400">{selectedEconomicEvent.scenarios?.better_than_expected?.day_close || localeCopy(currentLocale, "Watch for profit taking", "Kâr satışlarına dikkat edin")}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
-                        <span className="text-gray-500 w-20">Next day</span>
-                        <span className="text-gray-400">{selectedEconomicEvent.scenarios?.better_than_expected?.next_day || "Follow-through or reversal"}</span>
+                        <span className="text-gray-500 w-20">{getT(currentLocale).nextDay}</span>
+                        <span className="text-gray-400">{selectedEconomicEvent.scenarios?.better_than_expected?.next_day || localeCopy(currentLocale, "Follow-through or reversal", "Devam hareketi veya tersine dönüş")}</span>
                       </div>
                     </div>
                   </div>
@@ -2411,7 +2765,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-red-950/40 to-transparent border border-red-900/40">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 text-xs">🔴</span>
-                      <h5 className="text-sm font-semibold text-red-400">Worse Than Expected</h5>
+                      <h5 className="text-sm font-semibold text-red-400">{getT(currentLocale).worseThanExpected}</h5>
                     </div>
                     {/* Impacts - News Card Style */}
                     <div className="flex flex-wrap gap-1.5 mb-3">
@@ -2433,20 +2787,20 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 text-xs">
-                        <span className="text-gray-500 w-20">First 5 min</span>
-                        <span className="text-red-400">{selectedEconomicEvent.scenarios?.worse_than_expected?.first_5min || "Sharp initial move"}</span>
+                        <span className="text-gray-500 w-20">{getT(currentLocale).first5min}</span>
+                        <span className="text-red-400">{selectedEconomicEvent.scenarios?.worse_than_expected?.first_5min || localeCopy(currentLocale, "Sharp initial move", "İlk sert hareket")}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
-                        <span className="text-gray-500 w-20">First hour</span>
-                        <span className="text-red-400">{selectedEconomicEvent.scenarios?.worse_than_expected?.first_hour || "Momentum continues"}</span>
+                        <span className="text-gray-500 w-20">{getT(currentLocale).firstHour}</span>
+                        <span className="text-red-400">{selectedEconomicEvent.scenarios?.worse_than_expected?.first_hour || localeCopy(currentLocale, "Momentum continues", "Momentum devam eder")}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
-                        <span className="text-gray-500 w-20">Day close</span>
-                        <span className="text-amber-400">{selectedEconomicEvent.scenarios?.worse_than_expected?.day_close || "Watch for reversals"}</span>
+                        <span className="text-gray-500 w-20">{getT(currentLocale).dayClose}</span>
+                        <span className="text-amber-400">{selectedEconomicEvent.scenarios?.worse_than_expected?.day_close || localeCopy(currentLocale, "Watch for reversals", "Tersine dönüşlere dikkat edin")}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
-                        <span className="text-gray-500 w-20">Next day</span>
-                        <span className="text-gray-400">{selectedEconomicEvent.scenarios?.worse_than_expected?.next_day || "Mean reversion possible"}</span>
+                        <span className="text-gray-500 w-20">{getT(currentLocale).nextDay}</span>
+                        <span className="text-gray-400">{selectedEconomicEvent.scenarios?.worse_than_expected?.next_day || localeCopy(currentLocale, "Mean reversion possible", "Ortalamaya dönüş mümkün")}</span>
                       </div>
                     </div>
                   </div>
@@ -2455,20 +2809,20 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   <div className="p-4 rounded-xl bg-gradient-to-r from-gray-900/50 to-transparent border border-gray-700/50">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-gray-400 text-xs">⚪</span>
-                      <h5 className="text-sm font-semibold text-gray-400">As Expected</h5>
+                      <h5 className="text-sm font-semibold text-gray-400">{getT(currentLocale).asExpected}</h5>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 text-xs">
-                        <span className="text-gray-500 w-20">First 5 min</span>
-                        <span className="text-gray-400">{selectedEconomicEvent.scenarios?.as_expected?.first_5min || "Minimal movement ±0.1%"}</span>
+                        <span className="text-gray-500 w-20">{getT(currentLocale).first5min}</span>
+                        <span className="text-gray-400">{selectedEconomicEvent.scenarios?.as_expected?.first_5min || localeCopy(currentLocale, "Minimal movement ±0.1%", "Sınırlı hareket ±0.1%")}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
-                        <span className="text-gray-500 w-20">First hour</span>
-                        <span className="text-gray-400">{selectedEconomicEvent.scenarios?.as_expected?.first_hour || "Range-bound, look for other catalysts"}</span>
+                        <span className="text-gray-500 w-20">{getT(currentLocale).firstHour}</span>
+                        <span className="text-gray-400">{selectedEconomicEvent.scenarios?.as_expected?.first_hour || localeCopy(currentLocale, "Range-bound, look for other catalysts", "Yatay seyir, diğer katalizörlere bakın")}</span>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
-                        <span className="text-gray-500 w-20">Rest of day</span>
-                        <span className="text-gray-400">{selectedEconomicEvent.scenarios?.as_expected?.day_close || "Focus shifts to technicals and other news"}</span>
+                        <span className="text-gray-500 w-20">{getT(currentLocale).restOfDay}</span>
+                        <span className="text-gray-400">{selectedEconomicEvent.scenarios?.as_expected?.day_close || localeCopy(currentLocale, "Focus shifts to technicals and other news", "Odak teknikler ve diğer haberlere kayar")}</span>
                       </div>
                     </div>
                   </div>
@@ -2476,7 +2830,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   {/* Trading Tips */}
                   <div className="mt-4 p-3 rounded-lg bg-blue-950/30 border border-blue-900/30">
                     <p className="text-[11px] text-blue-400">
-                      <span className="font-semibold">💡 Pro Tip:</span> {selectedEconomicEvent.trading_tips || "Wait 5 minutes after release for initial volatility to settle. Use limit orders, not market orders. Watch for reversals after the first hour."}
+                      <span className="font-semibold">{getT(currentLocale).proTip}</span> {selectedEconomicEvent.trading_tips || localeCopy(currentLocale, "Wait 5 minutes after release for initial volatility to settle. Use limit orders, not market orders. Watch for reversals after the first hour.", "İlk volatilitenin oturması için veri sonrası 5 dakika bekleyin. Piyasa emri yerine limit emir kullanın. İlk saatin ardından olası tersine dönüşleri izleyin.")}
                     </p>
                   </div>
                 </div>
@@ -2498,7 +2852,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     <Building2 className="w-5 h-5 text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white">Earnings Report</h3>
+                    <h3 className="font-semibold text-white">{getT(currentLocale).earningsReport}</h3>
                     <p className="text-xs text-gray-500">{format(new Date(selectedEarningsEvent.timestamp), "MMM d, yyyy")}</p>
                   </div>
                 </div>
@@ -2518,32 +2872,32 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     "text-[10px] px-2 py-0.5 rounded font-medium",
                     selectedEarningsEvent.time === "after_market" ? "bg-purple-500/20 text-purple-400" : "bg-amber-500/20 text-amber-400"
                   )}>
-                    {selectedEarningsEvent.time === "after_market" ? "After Market" : "Pre Market"}
+                    {formatSessionLabel(selectedEarningsEvent.time, currentLocale)}
                   </span>
                 </div>
                 <h2 className="text-xl font-bold text-white mb-2">{selectedEarningsEvent.company}</h2>
                 <p className="text-sm text-gray-500 mb-6">{selectedEarningsEvent.sector}</p>
 
-                <EventAIMetadata event={selectedEarningsEvent} />
+                <EventAIMetadata event={selectedEarningsEvent} locale={currentLocale} />
 
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="p-3 rounded-xl bg-gray-900/50 border border-gray-800">
-                    <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">EPS Estimate</p>
+                    <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">{getT(currentLocale).epsEstimate}</p>
                     <p className="text-lg font-mono text-gray-300">{selectedEarningsEvent.eps_forecast || "N/A"}</p>
                   </div>
                   <div className="p-3 rounded-xl bg-gray-900/50 border border-gray-800">
-                    <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Revenue Estimate</p>
+                    <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">{getT(currentLocale).revenueEstimate}</p>
                     <p className="text-lg font-mono text-gray-300">{selectedEarningsEvent.revenue_forecast || "N/A"}</p>
                   </div>
                   {selectedEarningsEvent.previous_eps && (
                     <div className="p-3 rounded-xl bg-gray-900/50 border border-gray-800">
-                      <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Previous EPS</p>
+                      <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">{getT(currentLocale).previousEps}</p>
                       <p className="text-lg font-mono text-gray-300">{selectedEarningsEvent.previous_eps}</p>
                     </div>
                   )}
                   {selectedEarningsEvent.previous_revenue && (
                     <div className="p-3 rounded-xl bg-gray-900/50 border border-gray-800">
-                      <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Previous Revenue</p>
+                      <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">{getT(currentLocale).previousRevenue}</p>
                       <p className="text-lg font-mono text-gray-300">{selectedEarningsEvent.previous_revenue}</p>
                     </div>
                   )}
@@ -2553,25 +2907,25 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   <div>
                     <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
                       <TrendingUp className="w-4 h-4 text-blue-500" />
-                      AI Prediction
+                      {getT(currentLocale).aiPrediction}
                     </h4>
                     <div className="flex items-center gap-4">
                       <p className={cn("text-sm px-4 py-2 rounded-xl border flex-1", getDirectionBadgeClass(selectedEarningsEvent.predicted_direction))}>
-                        {selectedEarningsEvent.predicted_direction === "bullish" && "📈 Beat Expected"}
-                        {selectedEarningsEvent.predicted_direction === "bearish" && "📉 Miss Expected"}
-                        {selectedEarningsEvent.predicted_direction === "neutral" && "➖ In Line Expected"}
-                        {selectedEarningsEvent.predicted_direction === "volatile" && "⚡ High Volatility Expected"}
+                        {selectedEarningsEvent.predicted_direction === "bullish" && getT(currentLocale).beatExpected}
+                        {selectedEarningsEvent.predicted_direction === "bearish" && getT(currentLocale).missExpected}
+                        {selectedEarningsEvent.predicted_direction === "neutral" && getT(currentLocale).inLineExpected}
+                        {selectedEarningsEvent.predicted_direction === "volatile" && getT(currentLocale).highVolExpected}
                       </p>
                       <div className="text-center">
-                        <p className="text-2xl font-mono text-blue-400">{selectedEarningsEvent.confidence}%</p>
-                        <p className="text-[10px] text-gray-500">Confidence</p>
+                        <p className="text-2xl font-mono text-blue-400">{Math.round(normalizeDisplayConfidence(selectedEarningsEvent.confidence))}%</p>
+                        <p className="text-[10px] text-gray-500">{getT(currentLocale).confidence}</p>
                       </div>
                     </div>
                   </div>
 
                   {selectedEarningsEvent.affected_symbols.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-300 mb-2">Affected Symbols</h4>
+                      <h4 className="text-sm font-semibold text-gray-300 mb-2">{getT(currentLocale).affectedSymbols}</h4>
                       <div className="flex flex-wrap gap-2">
                         {selectedEarningsEvent.affected_symbols.map((symbol) => (
                           <span key={symbol} className="px-2 py-1 bg-gray-800 text-gray-400 rounded text-xs font-mono">
@@ -2584,7 +2938,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
                   {selectedEarningsEvent.analysis && (
                     <div className="p-4 rounded-xl bg-gradient-to-r from-blue-950/20 to-transparent border border-blue-900/30">
-                      <h4 className="text-sm font-semibold text-blue-400 mb-2">AI Analysis</h4>
+                      <h4 className="text-sm font-semibold text-blue-400 mb-2">{getT(currentLocale).aiAnalysis}</h4>
                       <p className="text-sm text-gray-400 leading-relaxed">
                         {currentLocale === "tr" && selectedEarningsEvent.analysis_tr ? selectedEarningsEvent.analysis_tr : selectedEarningsEvent.analysis}
                       </p>
@@ -2593,7 +2947,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
                   {selectedEarningsEvent.key_metrics.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-300 mb-2">Key Metrics to Watch</h4>
+                      <h4 className="text-sm font-semibold text-gray-300 mb-2">{getT(currentLocale).keyMetrics}</h4>
                       <div className="flex flex-wrap gap-2">
                         {(currentLocale === "tr" && selectedEarningsEvent.key_metrics_tr ? selectedEarningsEvent.key_metrics_tr : selectedEarningsEvent.key_metrics).map((metric) => (
                           <span key={metric} className="px-3 py-1.5 bg-blue-950/30 text-blue-400 rounded-lg text-xs border border-blue-900/30">
@@ -2608,14 +2962,14 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                   <div className="mt-6 border-t border-gray-800 pt-6">
                     <h4 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-blue-500" />
-                      Scenario Variations
+                      {getT(currentLocale).scenarioVariations}
                     </h4>
 
                     {/* Beat Scenario */}
                     <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-green-950/40 to-transparent border border-green-900/40">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xs">✅</span>
-                        <h5 className="text-sm font-semibold text-green-400">Beat (EPS & Revenue)</h5>
+                        <h5 className="text-sm font-semibold text-green-400">{getT(currentLocale).beatScenario}</h5>
                       </div>
                       {/* Impacts - News Card Style */}
                       <div className="flex flex-wrap gap-1.5 mb-3">
@@ -2637,20 +2991,20 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-gray-500 w-20">Pre-market</span>
-                          <span className="text-green-400">{selectedEarningsEvent.scenarios?.beat?.pre_market || `Stock +3-5% • ${selectedEarningsEvent.ticker} calls spike`}</span>
+                          <span className="text-gray-500 w-20">{getT(currentLocale).preMarketLabel}</span>
+                          <span className="text-green-400">{selectedEarningsEvent.scenarios?.beat?.pre_market || localeCopy(currentLocale, `Stock +3-5% • ${selectedEarningsEvent.ticker} calls spike`, `Hisse +3-5% • ${selectedEarningsEvent.ticker} call hacmi artar`)}</span>
                         </div>
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-gray-500 w-20">Open</span>
-                          <span className="text-green-400">{selectedEarningsEvent.scenarios?.beat?.open || "Gap up, momentum buyers enter"}</span>
+                          <span className="text-gray-500 w-20">{getT(currentLocale).openLabel}</span>
+                          <span className="text-green-400">{selectedEarningsEvent.scenarios?.beat?.open || localeCopy(currentLocale, "Gap up, momentum buyers enter", "Gap yukarı açılır, momentum alıcıları devreye girer")}</span>
                         </div>
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-gray-500 w-20">First hour</span>
-                          <span className="text-amber-400">{selectedEarningsEvent.scenarios?.beat?.first_hour || "Watch for profit taking at highs"}</span>
+                          <span className="text-gray-500 w-20">{getT(currentLocale).firstHour}</span>
+                          <span className="text-amber-400">{selectedEarningsEvent.scenarios?.beat?.first_hour || localeCopy(currentLocale, "Watch for profit taking at highs", "Zirvelerde kâr satışlarına dikkat edin")}</span>
                         </div>
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-gray-500 w-20">Sector</span>
-                          <span className="text-blue-400">{selectedEarningsEvent.scenarios?.beat?.sector_effect || `${selectedEarningsEvent.sector} peers likely rally`}</span>
+                          <span className="text-gray-500 w-20">{getT(currentLocale).sectorLabel}</span>
+                          <span className="text-blue-400">{selectedEarningsEvent.scenarios?.beat?.sector_effect || localeCopy(currentLocale, `${selectedEarningsEvent.sector} peers likely rally`, `${selectedEarningsEvent.sector} benzerleri yükseliş gösterebilir`)}</span>
                         </div>
                       </div>
                     </div>
@@ -2659,7 +3013,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-red-950/40 to-transparent border border-red-900/40">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 text-xs">❌</span>
-                        <h5 className="text-sm font-semibold text-red-400">Miss (EPS or Revenue)</h5>
+                        <h5 className="text-sm font-semibold text-red-400">{getT(currentLocale).missScenario}</h5>
                       </div>
                       {/* Impacts - News Card Style */}
                       <div className="flex flex-wrap gap-1.5 mb-3">
@@ -2681,20 +3035,20 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-gray-500 w-20">Pre-market</span>
-                          <span className="text-red-400">{selectedEarningsEvent.scenarios?.miss?.pre_market || `Stock -4-7% • Put volume surges`}</span>
+                          <span className="text-gray-500 w-20">{getT(currentLocale).preMarketLabel}</span>
+                          <span className="text-red-400">{selectedEarningsEvent.scenarios?.miss?.pre_market || localeCopy(currentLocale, `Stock -4-7% • Put volume surges`, "Hisse -4-7% • Put hacmi yükselir")}</span>
                         </div>
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-gray-500 w-20">Open</span>
-                          <span className="text-red-400">{selectedEarningsEvent.scenarios?.miss?.open || "Gap down, stop losses trigger"}</span>
+                          <span className="text-gray-500 w-20">{getT(currentLocale).openLabel}</span>
+                          <span className="text-red-400">{selectedEarningsEvent.scenarios?.miss?.open || localeCopy(currentLocale, "Gap down, stop losses trigger", "Gap aşağı açılır, stoplar çalışır")}</span>
                         </div>
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-gray-500 w-20">First hour</span>
-                          <span className="text-amber-400">{selectedEarningsEvent.scenarios?.miss?.first_hour || "Dead cat bounce possible, then fade"}</span>
+                          <span className="text-gray-500 w-20">{getT(currentLocale).firstHour}</span>
+                          <span className="text-amber-400">{selectedEarningsEvent.scenarios?.miss?.first_hour || localeCopy(currentLocale, "Dead cat bounce possible, then fade", "Kısa tepki yükselişi görülebilir, ardından zayıflama")}</span>
                         </div>
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-gray-500 w-20">Sector</span>
-                          <span className="text-red-400">{selectedEarningsEvent.scenarios?.miss?.sector_effect || `${selectedEarningsEvent.sector} peers may decline`}</span>
+                          <span className="text-gray-500 w-20">{getT(currentLocale).sectorLabel}</span>
+                          <span className="text-red-400">{selectedEarningsEvent.scenarios?.miss?.sector_effect || localeCopy(currentLocale, `${selectedEarningsEvent.sector} peers may decline`, `${selectedEarningsEvent.sector} benzerleri düşebilir`)}</span>
                         </div>
                       </div>
                     </div>
@@ -2703,7 +3057,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-amber-950/40 to-transparent border border-amber-900/40">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 text-xs">⚠️</span>
-                        <h5 className="text-sm font-semibold text-amber-400">Mixed (Beat EPS, Miss Revenue or vice versa)</h5>
+                        <h5 className="text-sm font-semibold text-amber-400">{getT(currentLocale).mixedScenario}</h5>
                       </div>
                       {/* Impacts - News Card Style */}
                       <div className="flex flex-wrap gap-1.5 mb-3">
@@ -2722,16 +3076,16 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-gray-500 w-20">Pre-market</span>
-                          <span className="text-amber-400">{selectedEarningsEvent.scenarios?.mixed?.pre_market || "Volatile ±2% • Direction unclear"}</span>
+                          <span className="text-gray-500 w-20">{getT(currentLocale).preMarketLabel}</span>
+                          <span className="text-amber-400">{selectedEarningsEvent.scenarios?.mixed?.pre_market || localeCopy(currentLocale, "Volatile ±2% • Direction unclear", "Volatil ±2% • Yön belirsiz")}</span>
                         </div>
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-gray-500 w-20">Guidance</span>
-                          <span className="text-amber-400">{selectedEarningsEvent.scenarios?.mixed?.guidance_importance || "Forward guidance becomes key driver"}</span>
+                          <span className="text-gray-500 w-20">{getT(currentLocale).guidanceLabel}</span>
+                          <span className="text-amber-400">{selectedEarningsEvent.scenarios?.mixed?.guidance_importance || localeCopy(currentLocale, "Forward guidance becomes key driver", "İleriye dönük rehberlik ana belirleyici olur")}</span>
                         </div>
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-gray-500 w-20">First hour</span>
-                          <span className="text-gray-400">{selectedEarningsEvent.scenarios?.mixed?.trading_approach || "Wait for conference call clarity"}</span>
+                          <span className="text-gray-500 w-20">{getT(currentLocale).firstHour}</span>
+                          <span className="text-gray-400">{selectedEarningsEvent.scenarios?.mixed?.trading_approach || localeCopy(currentLocale, "Wait for conference call clarity", "Konferans görüşmesindeki netliği bekleyin")}</span>
                         </div>
                       </div>
                     </div>
@@ -2740,7 +3094,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     <div className="p-4 rounded-xl bg-gradient-to-r from-gray-900/50 to-transparent border border-gray-700/50">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-gray-400 text-xs">➖</span>
-                        <h5 className="text-sm font-semibold text-gray-400">In Line (Meets Expectations)</h5>
+                        <h5 className="text-sm font-semibold text-gray-400">{getT(currentLocale).inLineScenario}</h5>
                       </div>
                       {/* Impacts - News Card Style */}
                       <div className="flex flex-wrap gap-1.5 mb-3">
@@ -2759,12 +3113,12 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-gray-500 w-20">Pre-market</span>
-                          <span className="text-gray-400">{selectedEarningsEvent.scenarios?.inline?.pre_market || "±1% move • Options IV crush likely"}</span>
+                          <span className="text-gray-500 w-20">{getT(currentLocale).preMarketLabel}</span>
+                          <span className="text-gray-400">{selectedEarningsEvent.scenarios?.inline?.pre_market || localeCopy(currentLocale, "±1% move • Options IV crush likely", "±1% hareket • Opsiyon IV düşüşü olası")}</span>
                         </div>
                         <div className="flex items-center gap-3 text-xs">
-                          <span className="text-gray-500 w-20">Guidance</span>
-                          <span className="text-gray-400">{selectedEarningsEvent.scenarios?.inline?.guidance_focus || "Stock direction depends on forward outlook"}</span>
+                          <span className="text-gray-500 w-20">{getT(currentLocale).guidanceLabel}</span>
+                          <span className="text-gray-400">{selectedEarningsEvent.scenarios?.inline?.guidance_focus || localeCopy(currentLocale, "Stock direction depends on forward outlook", "Hissenin yönü ileriye dönük rehberliğe bağlıdır")}</span>
                         </div>
                       </div>
                     </div>
@@ -2772,7 +3126,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     {/* Trading Tips */}
                     <div className="mt-4 p-3 rounded-lg bg-purple-950/30 border border-purple-900/30">
                       <p className="text-[11px] text-purple-400">
-                        <span className="font-semibold">💡 Pro Tip:</span> {selectedEarningsEvent.trading_tips || `For ${selectedEarningsEvent.time === "after_market" ? "after-hours" : "pre-market"} earnings, liquidity is lower and spreads wider. Consider waiting for regular session open for better fills. Watch for post-earnings drift in following days.`}
+                        <span className="font-semibold">{getT(currentLocale).proTip}</span> {selectedEarningsEvent.trading_tips || localeCopy(currentLocale, `For ${selectedEarningsEvent.time === "after_market" ? "after-hours" : "pre-market"} earnings, liquidity is lower and spreads wider. Consider waiting for regular session open for better fills. Watch for post-earnings drift in following days.`, `${formatSessionLabel(selectedEarningsEvent.time, currentLocale)} açıklanan bilançolarda likidite daha düşüktür ve spreadler daha geniştir. Daha iyi dolum için normal seans açılışını beklemeyi değerlendirin. Sonraki günlerde bilanço sonrası sürüklenmeyi izleyin.`)}
                       </p>
                     </div>
                   </div>

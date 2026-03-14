@@ -6,10 +6,14 @@ Her haberi gerçekten analiz eden, içeriğe göre dinamik sonuç üreten sistem
 import json
 import os
 import logging
+import re
+import asyncio
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
-import aiohttp
+from anthropic import Anthropic
+
+from services.deepseek_json_client import call_deepseek_json, extract_json_object
 
 DEEPSEEK_API_KEY = os.getenv("DEEP_SEEKR1", "")
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
@@ -63,6 +67,57 @@ class RealNewsAnalyzer:
         if isinstance(fallback, str):
             return fallback.strip()
         return ""
+
+    @staticmethod
+    def _validate_turkish(text: str) -> str:
+        if not text or not isinstance(text, str):
+            return ""
+        cleaned = re.sub(r"^\s*\[(?:TR|TURKISH)\]\s*", "", text.strip(), flags=re.IGNORECASE)
+        cleaned = re.sub(r"^\s*(?:tr|turkish)\s*[:\-]\s*", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        if not cleaned:
+            return ""
+
+        turkish_chars = set("çÇğĞıİöÖşŞüÜ")
+        has_turkish_chars = any(c in turkish_chars for c in cleaned)
+        lower = cleaned.lower()
+
+        forbidden_english_terms = {
+            "bullish", "bearish", "neutral", "volatility", "confidence",
+            "summary", "analysis", "headline", "breaking", "impact",
+        }
+        tokens = re.findall(r"[A-Za-zÇĞİÖŞÜçğıöşü']+", cleaned)
+        lower_tokens = [token.lower() for token in tokens]
+        if any(token in forbidden_english_terms for token in lower_tokens):
+            return ""
+
+        turkish_markers = {
+            "için", "ile", "olan", "bir", "ve", "veya", "ancak", "ise", "olarak",
+            "üzerinde", "etki", "piyasa", "yükseliş", "düşüş", "beklenti",
+            "açıkladı", "artış", "azalış", "gösterge", "fiyat", "oran",
+            "faiz", "karar", "sonrası", "destekledi", "baskıladı", "veri",
+            "güçlü", "zayıf", "sınırlı", "bekleniyor", "nedeniyle", "çünkü",
+            "altın", "petrol", "dolar", "endeks", "hisse", "talep", "arz",
+        }
+        english_markers = {
+            "the", "and", "for", "with", "after", "before", "from", "this",
+            "that", "market", "price", "gold", "oil", "stock", "shares",
+            "rise", "fall", "higher", "lower", "expected", "guidance",
+        }
+
+        turkish_marker_count = sum(1 for token in lower_tokens if token in turkish_markers)
+        english_marker_count = sum(1 for token in lower_tokens if token in english_markers)
+
+        if not has_turkish_chars and turkish_marker_count == 0:
+            return ""
+
+        if len(lower_tokens) >= 5 and english_marker_count >= max(2, turkish_marker_count + 1):
+            return ""
+
+        if len(lower_tokens) >= 8 and english_marker_count > (len(lower_tokens) * 0.35):
+            return ""
+
+        return cleaned
 
     def _normalize_importance_level(self, value: Any, score: int) -> str:
         normalized = str(value or "").strip().lower()
@@ -129,6 +184,14 @@ class RealNewsAnalyzer:
             logger.error(f"[RealAnalyzer] Traceback: {traceback.format_exc()}")
             print(f"[RealAnalyzer] AI failed: {e}")
             print(f"[RealAnalyzer] Traceback: {traceback.format_exc()}")
+            if ANTHROPIC_API_KEY:
+                try:
+                    logger.info("[RealAnalyzer] Attempting Anthropic fallback")
+                    result = await self._call_anthropic(prompt, headline=headline, article_content=content)
+                    logger.info(f"[RealAnalyzer] Anthropic analysis successful: confidence={result.confidence}")
+                    return result
+                except Exception as anthropic_error:
+                    logger.error(f"[RealAnalyzer] Anthropic fallback failed: {anthropic_error}")
             return self._fallback_analysis(headline, content)
     
     @staticmethod
@@ -270,184 +333,221 @@ Analyze this news NOW:"""
 
     async def _call_deepseek(self, prompt: str, headline: str = "", article_content: str = "") -> NewsAnalysisResult:
         """DeepSeek AI çağrısı - Hata loglamalı ve robust"""
-        content = ""
-        
         logger.info(f"[DeepSeek] Calling API with key present: {bool(self.api_key)}")
         
         try:
-            async with aiohttp.ClientSession() as session:
-                headers = {
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json"
-                }
-                
-                payload = {
-                    "model": "deepseek-reasoner",
-                    "messages": [
-                        {"role": "user", "content": "You are an expert financial analyst. Analyze news precisely and only report ACTUAL impacts, not generic patterns. Respond ONLY with valid JSON.\n\n" + prompt}
-                    ],
-                    "max_tokens": 1500
-                }
-                
-                logger.info(f"[DeepSeek] Sending request to {DEEPSEEK_API_URL}")
-                
-                async with session.post(
-                    DEEPSEEK_API_URL,
-                    headers=headers,
-                    json=payload,
-                    timeout=aiohttp.ClientTimeout(total=60)
-                ) as response:
-                    logger.info(f"[DeepSeek] Response status: {response.status}")
-                    
-                    if response.status != 200:
-                        error_text = await response.text()
-                        logger.error(f"[DeepSeek] API error {response.status}: {error_text}")
-                        raise Exception(f"API error {response.status}: {error_text}")
-                    
-                    data = await response.json()
-                    content = data["choices"][0]["message"]["content"]
-                    
-                    logger.info(f"[DeepSeek] Raw response preview: {content[:200]}...")
-                    
-                    # Clean up response - sometimes DeepSeek adds markdown
-                    if "```json" in content:
-                        content = content.split("```json")[1].split("```")[0].strip()
-                    elif "```" in content:
-                        content = content.split("```")[1].split("```")[0].strip()
-                    
-                    # Try to fix incomplete JSON (truncated responses)
-                    try:
-                        result = json.loads(content)
-                    except json.JSONDecodeError as json_err:
-                        # Try to fix common truncation issues
-                        logger.warning(f"[DeepSeek] JSON parse error: {json_err}, attempting repair...")
-                        import re as _re
-                        fixed_content = content.rstrip()
-                        fixed_content = _re.sub(r',?\s*"[^"]*":\s*"[^"]*$', '', fixed_content)
-                        fixed_content = _re.sub(r',?\s*\{[^}]*$', '', fixed_content)
-                        open_brackets = fixed_content.count('[') - fixed_content.count(']')
-                        open_braces = fixed_content.count('{') - fixed_content.count('}')
-                        for _ in range(max(0, open_brackets)):
-                            fixed_content += "]"
-                        for _ in range(max(0, open_braces)):
-                            fixed_content += "}"
-                        fixed_content = _re.sub(r',\s*}', '}', fixed_content)
-                        fixed_content = _re.sub(r',\s*]', ']', fixed_content)
-                        try:
-                            result = json.loads(fixed_content)
-                            logger.info("[DeepSeek] JSON repaired successfully")
-                        except json.JSONDecodeError:
-                            raise json_err
-                    
-                    # --- Text field extraction ---
-                    # RULE: Each field has its OWN fallback only.
-                    # Never cross-pollinate headline_tr with summary_tr.
-                    # Prefer empty string over broken _simple_translate output.
-                    summary_en = self._coerce_text(result.get("summary_en"), headline)
-                    headline_tr = self._coerce_text(result.get("headline_tr"))
-                    summary_tr = self._coerce_text(result.get("summary_tr"))
-                    analysis_en = self._coerce_text(
-                        result.get("analysis_en"),
-                        self._coerce_text(result.get("logic"), article_content[:280] if article_content else headline)
-                    )
-                    analysis_tr = self._coerce_text(result.get("analysis_tr"))
-                    content_tr = self._coerce_text(result.get("content_tr"))
+            result = await call_deepseek_json(
+                "You are an expert financial analyst. Analyze news precisely and only report ACTUAL impacts, not generic patterns. Respond ONLY with valid JSON.\n\n" + prompt,
+                api_key=self.api_key,
+                max_tokens=1800,
+                temperature=0.1,
+                timeout_seconds=75,
+            )
+            if not isinstance(result, dict):
+                raise Exception("DeepSeek returned no parseable JSON payload")
 
-                    logger.info(f"[DeepSeek] Parsed result: headline_tr={headline_tr[:50]}...")
-                    
-                    # Parse impacts
-                    raw_impacts = result.get("affected_instruments", [])
-                    impacts = []
-                    for imp in raw_impacts:
-                        try:
-                            imp_score = int(imp.get("impact_score", 0))
-                        except (TypeError, ValueError):
-                            imp_score = 0
-                        try:
-                            imp_conf = float(imp.get("confidence", 0))
-                        except (TypeError, ValueError):
-                            imp_conf = 0.5
-                        if imp_score >= 4 or imp_conf >= 0.6:
-                            impacts.append(SymbolImpact(
-                                symbol=imp["symbol"],
-                                direction=imp["direction"],
-                                score=imp_score,
-                                confidence=imp_conf,
-                                reasoning=imp.get("reasoning", ""),
-                                reasoning_tr=imp.get("reasoning_tr", imp.get("reasoning", ""))
-                            ))
-                    
-                    if not impacts:
-                        logger.info("[DeepSeek] No tracked instruments were materially affected by this news item")
+            summary_en = self._coerce_text(result.get("summary_en"), headline)
+            headline_tr = self._validate_turkish(self._coerce_text(result.get("headline_tr")))
+            summary_tr = self._validate_turkish(self._coerce_text(result.get("summary_tr")))
+            analysis_en = self._coerce_text(
+                result.get("analysis_en"),
+                self._coerce_text(result.get("logic"), article_content[:280] if article_content else headline)
+            )
+            analysis_tr = self._validate_turkish(self._coerce_text(result.get("analysis_tr")))
+            content_tr = self._validate_turkish(self._coerce_text(result.get("content_tr")))
 
-                    raw_conf = result.get("analysis_confidence", 50)
-                    try:
-                        confidence = float(raw_conf)
-                    except (TypeError, ValueError):
-                        confidence = 50.0
-                    importance_score_raw = result.get("importance_score", 0)
-                    try:
-                        importance_score = int(round(float(importance_score_raw)))
-                    except (TypeError, ValueError):
-                        importance_score = 0
+            logger.info(f"[DeepSeek] Parsed result: headline_tr={headline_tr[:50]}...")
+            
+            raw_impacts = result.get("affected_instruments", [])
+            impacts = []
+            for imp in raw_impacts:
+                try:
+                    imp_score = int(imp.get("impact_score", 0))
+                except (TypeError, ValueError):
+                    imp_score = 0
+                try:
+                    imp_conf = float(imp.get("confidence", 0))
+                except (TypeError, ValueError):
+                    imp_conf = 0.5
+                if imp_score >= 4 or imp_conf >= 0.6:
+                    impacts.append(SymbolImpact(
+                        symbol=imp["symbol"],
+                        direction=imp["direction"],
+                        score=imp_score,
+                        confidence=imp_conf,
+                        reasoning=imp.get("reasoning", ""),
+                        reasoning_tr=self._validate_turkish(self._coerce_text(imp.get("reasoning_tr")))
+                    ))
+            
+            if not impacts:
+                logger.info("[DeepSeek] No tracked instruments were materially affected by this news item")
 
-                    if importance_score <= 0:
-                        max_impact = max((int(item.get("impact_score", 0)) for item in raw_impacts), default=0)
-                        confidence_component = int(max(0, min(100, confidence)))
-                        importance_score = int(
-                            round(
-                                max_impact * 6.5
-                                + confidence_component * 0.35
-                            )
-                        )
-                    importance_score = max(0, min(100, importance_score))
+            raw_conf = result.get("analysis_confidence", 50)
+            try:
+                confidence = float(raw_conf)
+            except (TypeError, ValueError):
+                confidence = 50.0
+            confidence = max(0.0, min(100.0, confidence))
+            importance_score_raw = result.get("importance_score", 0)
+            try:
+                importance_score = int(round(float(importance_score_raw)))
+            except (TypeError, ValueError):
+                importance_score = 0
 
-                    importance_level = self._normalize_importance_level(
-                        result.get("importance_level"),
-                        importance_score,
+            if importance_score <= 0:
+                max_impact = max((int(item.get("impact_score", 0)) for item in raw_impacts), default=0)
+                confidence_component = int(max(0, min(100, confidence)))
+                importance_score = int(
+                    round(
+                        max_impact * 6.5
+                        + confidence_component * 0.35
                     )
-                    importance_reason = self._coerce_text(
-                        result.get("importance_reason"),
-                        self._coerce_text(result.get("logic"), "AI classified this headline based on directional impact and confidence."),
-                    )
-                    urgency = self._normalize_urgency(
-                        result.get("urgency", "medium"),
-                        confidence,
-                        raw_impacts,
-                        importance_score,
-                    )
-                    
-                    logger.info(f"[DeepSeek] Successfully parsed result: confidence={result.get('analysis_confidence', 0)}, headline_tr={result.get('headline_tr', 'N/A')[:50]}...")
-                    
-                    return NewsAnalysisResult(
-                        impacts=impacts,
-                        sentiment=result.get("market_sentiment", "neutral"),
-                        volatility_expectation=result.get("volatility_expectation", "medium"),
-                        urgency=urgency,
-                        confidence=confidence,
-                        summary_en=summary_en,
-                        summary_tr=summary_tr,
-                        analysis_en=analysis_en,
-                        analysis_tr=analysis_tr,
-                        headline_tr=headline_tr,
-                        content_tr=content_tr,
-                        importance_level=importance_level,
-                        importance_score=importance_score,
-                        importance_reason=importance_reason,
-                        ai_model=result.get("ai_model") or "deepseek-reasoner",
-                    )
-                    
-        except json.JSONDecodeError as e:
-            import traceback
-            logger.error(f"[DeepSeek] JSON parse error: {e}")
-            logger.error(f"[DeepSeek] Failed content: {content[:500] if 'content' in locals() else 'N/A'}")
-            logger.error(f"[DeepSeek] Traceback: {traceback.format_exc()}")
-            raise
+                )
+            importance_score = max(0, min(100, importance_score))
+
+            importance_level = self._normalize_importance_level(
+                result.get("importance_level"),
+                importance_score,
+            )
+            importance_reason = self._coerce_text(
+                result.get("importance_reason"),
+                self._coerce_text(result.get("logic"), "AI classified this headline based on directional impact and confidence."),
+            )
+            urgency = self._normalize_urgency(
+                result.get("urgency", "medium"),
+                confidence,
+                raw_impacts,
+                importance_score,
+            )
+            
+            logger.info(f"[DeepSeek] Successfully parsed result: confidence={result.get('analysis_confidence', 0)}, headline_tr={result.get('headline_tr', 'N/A')[:50]}...")
+            
+            return NewsAnalysisResult(
+                impacts=impacts,
+                sentiment=result.get("market_sentiment", "neutral"),
+                volatility_expectation=result.get("volatility_expectation", "medium"),
+                urgency=urgency,
+                confidence=confidence,
+                summary_en=summary_en,
+                summary_tr=summary_tr,
+                analysis_en=analysis_en,
+                analysis_tr=analysis_tr,
+                headline_tr=headline_tr,
+                content_tr=content_tr,
+                importance_level=importance_level,
+                importance_score=importance_score,
+                importance_reason=importance_reason,
+                ai_model=result.get("ai_model") or "deepseek-reasoner",
+            )
         except Exception as e:
             import traceback
             logger.error(f"[DeepSeek] Exception during API call: {type(e).__name__}: {e}")
             logger.error(f"[DeepSeek] Full traceback: {traceback.format_exc()}")
             raise
+
+    async def _call_anthropic(self, prompt: str, headline: str = "", article_content: str = "") -> NewsAnalysisResult:
+        logger.info(f"[Anthropic] Calling API with key present: {bool(ANTHROPIC_API_KEY)}")
+        client = Anthropic(api_key=ANTHROPIC_API_KEY)
+
+        def _invoke():
+            return client.messages.create(
+                model="claude-3-haiku-20240307",
+                max_tokens=1800,
+                temperature=0.1,
+                system="You are an expert financial analyst. Analyze news precisely and only report ACTUAL impacts, not generic patterns. Respond ONLY with valid JSON.",
+                messages=[{"role": "user", "content": prompt}],
+            )
+
+        response = await asyncio.to_thread(_invoke)
+
+        text = ""
+        for block in getattr(response, "content", []) or []:
+            if getattr(block, "type", "") == "text":
+                text = str(getattr(block, "text", "") or "")
+                break
+
+        result = extract_json_object(text)
+        if not isinstance(result, dict):
+            raise Exception("Anthropic returned no parseable JSON payload")
+
+        summary_en = self._coerce_text(result.get("summary_en"), headline)
+        headline_tr = self._validate_turkish(self._coerce_text(result.get("headline_tr")))
+        summary_tr = self._validate_turkish(self._coerce_text(result.get("summary_tr")))
+        analysis_en = self._coerce_text(
+            result.get("analysis_en"),
+            self._coerce_text(result.get("logic"), article_content[:280] if article_content else headline)
+        )
+        analysis_tr = self._validate_turkish(self._coerce_text(result.get("analysis_tr")))
+        content_tr = self._validate_turkish(self._coerce_text(result.get("content_tr")))
+
+        raw_impacts = result.get("affected_instruments", [])
+        impacts = []
+        for imp in raw_impacts:
+            try:
+                imp_score = int(imp.get("impact_score", 0))
+            except (TypeError, ValueError):
+                imp_score = 0
+            try:
+                imp_conf = float(imp.get("confidence", 0))
+            except (TypeError, ValueError):
+                imp_conf = 0.5
+            if imp_score >= 4 or imp_conf >= 0.6:
+                impacts.append(SymbolImpact(
+                    symbol=imp["symbol"],
+                    direction=imp["direction"],
+                    score=imp_score,
+                    confidence=imp_conf,
+                    reasoning=imp.get("reasoning", ""),
+                    reasoning_tr=self._validate_turkish(self._coerce_text(imp.get("reasoning_tr")))
+                ))
+
+        try:
+            confidence = float(result.get("analysis_confidence", 50))
+        except (TypeError, ValueError):
+            confidence = 50.0
+        confidence = max(0.0, min(100.0, confidence))
+
+        try:
+            importance_score = int(round(float(result.get("importance_score", 0))))
+        except (TypeError, ValueError):
+            importance_score = 0
+        if importance_score <= 0:
+            max_impact = max((int(item.get("impact_score", 0)) for item in raw_impacts), default=0)
+            importance_score = int(round(max_impact * 6.5 + confidence * 0.35))
+        importance_score = max(0, min(100, importance_score))
+
+        importance_level = self._normalize_importance_level(
+            result.get("importance_level"),
+            importance_score,
+        )
+        importance_reason = self._coerce_text(
+            result.get("importance_reason"),
+            self._coerce_text(result.get("logic"), "AI classified this headline based on directional impact and confidence."),
+        )
+        urgency = self._normalize_urgency(
+            result.get("urgency", "medium"),
+            confidence,
+            raw_impacts,
+            importance_score,
+        )
+
+        return NewsAnalysisResult(
+            impacts=impacts,
+            sentiment=result.get("market_sentiment", "neutral"),
+            volatility_expectation=result.get("volatility_expectation", "medium"),
+            urgency=urgency,
+            confidence=confidence,
+            summary_en=summary_en,
+            summary_tr=summary_tr,
+            analysis_en=analysis_en,
+            analysis_tr=analysis_tr,
+            headline_tr=headline_tr,
+            content_tr=content_tr,
+            importance_level=importance_level,
+            importance_score=importance_score,
+            importance_reason=importance_reason,
+            ai_model=result.get("ai_model") or "claude-3-haiku-20240307",
+        )
     
     def _fallback_analysis(self, headline: str, content: str) -> NewsAnalysisResult:
         """
@@ -581,16 +681,18 @@ Analyze this news NOW:"""
             if imp.reasoning
         )
         summary_en = headline.strip() or "Market news update"
-        headline_tr = self._simple_translate(headline)
-        summary_tr = headline_tr
+        # Fallback path: prefer empty Turkish over fake _simple_translate output.
+        # The frontend will gracefully fall back to English when TR fields are empty.
+        headline_tr = ""
+        summary_tr = ""
         analysis_seed = content[:240].strip() if content else summary_en
         analysis_en = analysis_seed
         if impact_summary_en:
             analysis_en = f"{analysis_seed} Market impact: {impact_summary_en}".strip()
         elif not analysis_en:
             analysis_en = "No direct effect detected on tracked instruments from this headline."
-        analysis_tr = self._simple_translate(analysis_en)
-        content_tr = analysis_tr
+        analysis_tr = ""
+        content_tr = ""
         
         return NewsAnalysisResult(
             impacts=impacts,

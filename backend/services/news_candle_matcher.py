@@ -197,7 +197,14 @@ class NewsCandleMatcher:
     """Akıllı haber-mum eşleştirme servisi"""
     
     def __init__(self):
-        self.supabase = get_supabase_client()
+        self.supabase = None
+
+    def _get_supabase(self):
+        client = get_supabase_client()
+        if client is None:
+            raise RuntimeError("Supabase client is not available for news matching")
+        self.supabase = client
+        return client
 
     def _build_candle(self,
                       candle_timestamp: str,
@@ -247,6 +254,14 @@ class NewsCandleMatcher:
         if numeric <= 1:
             return max(0.0, min(1.0, numeric))
         return max(0.0, min(1.0, numeric / 100.0))
+
+    @staticmethod
+    def _extract_rows(result: Any) -> List[Dict[str, Any]]:
+        if hasattr(result, "data"):
+            return result.data or []
+        if isinstance(result, dict):
+            return result.get("data", []) or []
+        return []
 
     def _direction_alignment_score(self, expected_direction: Optional[str], candle: CandleInfo) -> float:
         direction = str(expected_direction or "neutral").lower()
@@ -447,6 +462,12 @@ class NewsCandleMatcher:
             )
 
         matched.sort(key=lambda x: x["relevance_score"], reverse=True)
+        logger.info(
+            "[NewsCandleMatcher] _collect_matches symbol=%s candidates=%s matched=%s",
+            symbol,
+            len(news_items),
+            len(matched),
+        )
         return matched
 
     def _select_top_matches(self, matched: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -584,7 +605,7 @@ CANDIDATES:
         candidate_map = {str(item.get("id")): dict(item) for item in candidates if item.get("id")}
         ordered: List[Dict[str, Any]] = []
         used_ids: Set[str] = set()
-        ai_confidence = (ai_payload or {}).get("confidence")
+        ai_confidence = self._normalize_confidence((ai_payload or {}).get("confidence"))
 
         for index, ai_match in enumerate(ai_matches):
             if not isinstance(ai_match, dict):
@@ -615,7 +636,13 @@ CANDIDATES:
         atr = candle.range_pct * 0.5
         significance = self.calculate_candle_significance(candle, atr, atr)
         if not significance["is_significant"]:
-            return significance, self._build_context_candidates(symbol, candle, timeframe)
+            candidates = self._build_context_candidates(symbol, candle, timeframe)
+            logger.info(
+                "[NewsCandleMatcher] _prepare_candidates symbol=%s insignificant context_candidates=%s",
+                symbol,
+                len(candidates),
+            )
+            return significance, candidates
 
         news_items = self.fetch_relevant_news(
             symbol=symbol,
@@ -633,9 +660,22 @@ CANDIDATES:
         )
         merged = self._select_top_matches(news_candidates + event_candidates)
         if merged:
+            logger.info(
+                "[NewsCandleMatcher] _prepare_candidates symbol=%s significant news_candidates=%s event_candidates=%s merged=%s",
+                symbol,
+                len(news_candidates),
+                len(event_candidates),
+                len(merged),
+            )
             return significance, merged
 
-        return significance, self._build_context_candidates(symbol, candle, timeframe)
+        fallback_candidates = self._build_context_candidates(symbol, candle, timeframe)
+        logger.info(
+            "[NewsCandleMatcher] _prepare_candidates symbol=%s significant fallback_context_candidates=%s",
+            symbol,
+            len(fallback_candidates),
+        )
+        return significance, fallback_candidates
     
     def calculate_candle_significance(self, candle: CandleInfo, 
                                      avg_range: float, 
@@ -703,43 +743,78 @@ CANDIDATES:
         end_time = candle_time + timedelta(minutes=time_window_minutes//2)
         
         try:
-            # Önce yüksek urgency haberleri dene
-            result = (
-                self.supabase.table("enriched_news")
+            supabase = self._get_supabase()
+            preferred_result = (
+                supabase.table("enriched_news")
                 .select("*")
                 .gte("timestamp", start_time.isoformat())
                 .lte("timestamp", end_time.isoformat())
                 .in_("urgency", expected_urgency)
                 .order("timestamp", desc=False)
-                .limit(20)
+                .limit(30)
                 .execute()
             )
-            
-            items = result.data if hasattr(result, 'data') else result.get('data', [])
-            
-            # Eğer yeterli haber yoksa, tüm haberleri dene ama skor filtresi uygula
-            if len(items) < 3:
+
+            merged_items: List[Dict[str, Any]] = []
+            seen_ids: Set[str] = set()
+
+            def merge_rows(rows: List[Dict[str, Any]]) -> None:
+                for row in rows:
+                    if not isinstance(row, dict):
+                        continue
+                    row_id = str(row.get("id") or "")
+                    if row_id and row_id in seen_ids:
+                        continue
+                    merged_items.append(row)
+                    if row_id:
+                        seen_ids.add(row_id)
+
+            merge_rows(self._extract_rows(preferred_result))
+
+            if len(merged_items) < 5:
+                relaxed_start = candle_time - timedelta(minutes=max(time_window_minutes, 180))
+                relaxed_end = candle_time + timedelta(minutes=max(45, time_window_minutes))
                 result_all = (
-                    self.supabase.table("enriched_news")
+                    supabase.table("enriched_news")
                     .select("*")
-                    .gte("timestamp", start_time.isoformat())
-                    .lte("timestamp", end_time.isoformat())
-                    .order("ai_confidence", desc=True)
-                    .limit(10)
+                    .gte("timestamp", relaxed_start.isoformat())
+                    .lte("timestamp", relaxed_end.isoformat())
+                    .order("timestamp", desc=False)
+                    .limit(40)
                     .execute()
                 )
-                items_all = result_all.data if hasattr(result_all, 'data') else result_all.get('data', [])
-                
-                # Skor filtresi uygula
-                filtered = []
-                for item in items_all:
-                    symbol_impact = get_matching_impact(item.get("impacts", []), symbol)
-                    if symbol_impact and symbol_impact.get("score", 0) >= min_impact_score:
-                        filtered.append(item)
-                
-                items = filtered
-            
-            return items or []
+                merge_rows(self._extract_rows(result_all))
+
+            filtered: List[Dict[str, Any]] = []
+            score_floor = max(2, min_impact_score - 1)
+            for item in merged_items:
+                symbol_impact = get_matching_impact(item.get("impacts", []), symbol)
+                if not symbol_impact:
+                    continue
+                impact_score = int(symbol_impact.get("score", 0) or 0)
+                if impact_score < score_floor and not item.get("show_on_chart"):
+                    continue
+                filtered.append(item)
+
+            logger.info(
+                "[NewsCandleMatcher] fetch_relevant_news symbol=%s window=%sm preferred=%s merged=%s filtered=%s score_floor=%s",
+                symbol,
+                time_window_minutes,
+                len(self._extract_rows(preferred_result)),
+                len(merged_items),
+                len(filtered),
+                score_floor,
+            )
+
+            filtered.sort(
+                key=lambda item: (
+                    abs((_parse_iso_timestamp(item.get("timestamp", "")) - candle_time).total_seconds()),
+                    -(int(item.get("importance_score") or 0)),
+                    -float(item.get("ai_confidence") or 0),
+                )
+            )
+
+            return filtered[:25]
             
         except Exception as e:
             logger.exception("[NewsCandleMatcher] Error fetching news")

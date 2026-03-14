@@ -175,7 +175,9 @@ export default function NewsChartCorrelationPanel() {
           affectedCandles: item.affected_candles || item.affectedCandles || [],
           aiConfidence: typeof item.ai_confidence === "number"
             ? (item.ai_confidence <= 1 ? item.ai_confidence * 100 : item.ai_confidence)
-            : (item.aiConfidence || 70),
+            : (typeof item.aiConfidence === "number"
+              ? (item.aiConfidence <= 1 ? item.aiConfidence * 100 : item.aiConfidence)
+              : 0),
           analysisTimestamp: item.analysis_timestamp || item.analysisTimestamp || new Date().toISOString(),
           // Localized fields required by NewsDetailModal
           headline_tr: item.headline_tr,

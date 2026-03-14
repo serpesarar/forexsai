@@ -63,10 +63,12 @@ export function useNewsMarkers(
       if (data.success) {
         setMarkers(data.markers);
       } else {
+        setMarkers([]);
         throw new Error(data.error || 'Failed to fetch markers');
       }
     } catch (err) {
       console.error('[useNewsMarkers] Error:', err);
+      setMarkers([]);
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);

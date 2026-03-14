@@ -3,7 +3,7 @@ RSS Router - API endpoints for RSS news aggregation
 """
 
 from datetime import datetime, timedelta
-from typing import Optional, List
+from typing import Optional, List, Any, Dict
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel
 
@@ -75,6 +75,53 @@ def _needs_runtime_translation(lang: str) -> bool:
     return lang not in {"", "en", "tr"}
 
 
+def _clean_turkish_text(value: Any) -> str:
+    if not value:
+        return ""
+    from services.news_analyzer_v2 import RealNewsAnalyzer
+
+    return RealNewsAnalyzer._validate_turkish(str(value))
+
+
+def _normalize_article_confidence(value: Any) -> float:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    if numeric <= 1:
+        numeric *= 100.0
+    return round(max(0.0, min(100.0, numeric)), 2)
+
+
+def _sanitize_impacts(impacts: Any) -> List[dict]:
+    sanitized: List[dict] = []
+    for raw_impact in impacts or []:
+        if not isinstance(raw_impact, dict):
+            continue
+        impact = dict(raw_impact)
+        impact["reasoning_tr"] = _clean_turkish_text(impact.get("reasoning_tr"))
+        sanitized.append(impact)
+    return sanitized
+
+
+def _sanitize_news_item(item: Dict[str, Any]) -> Dict[str, Any]:
+    sanitized = dict(item)
+    ai_model = str(sanitized.get("ai_model") or "").lower()
+    if ai_model == "fallback":
+        sanitized["headline_tr"] = ""
+        sanitized["content_tr"] = ""
+        sanitized["summary_tr"] = ""
+        sanitized["analysis_tr"] = ""
+    else:
+        sanitized["headline_tr"] = _clean_turkish_text(sanitized.get("headline_tr"))
+        sanitized["content_tr"] = _clean_turkish_text(sanitized.get("content_tr"))
+        sanitized["summary_tr"] = _clean_turkish_text(sanitized.get("summary_tr"))
+        sanitized["analysis_tr"] = _clean_turkish_text(sanitized.get("analysis_tr"))
+    sanitized["impacts"] = _sanitize_impacts(sanitized.get("impacts"))
+    sanitized["ai_confidence"] = _normalize_article_confidence(sanitized.get("ai_confidence"))
+    return sanitized
+
+
 async def _translate_in_batches(texts: List[str], target_lang: str) -> List[str]:
     if not texts:
         return []
@@ -91,8 +138,8 @@ async def _localize_news_items(items: List[dict], lang: str) -> List[dict]:
         return items
 
     headlines = [item.get("headline") or "" for item in items]
-    summaries = [item.get("summary_en") or item.get("headline") or "" for item in items]
-    analyses = [item.get("analysis_en") or item.get("summary_en") or item.get("headline") or "" for item in items]
+    summaries = [item.get("summary_en") or "" for item in items]
+    analyses = [item.get("analysis_en") or "" for item in items]
     impact_reasonings: List[str] = []
     for item in items:
         impacts = item.get("impacts") or []
@@ -129,8 +176,8 @@ async def _localize_candle_news_items(items: List[dict], lang: str) -> List[dict
         return items
 
     headlines = [item.get("headline_en") or item.get("headline") or "" for item in items]
-    summaries = [item.get("summary_en") or item.get("headline_en") or item.get("headline") or "" for item in items]
-    analyses = [item.get("analysis_en") or item.get("summary_en") or item.get("headline_en") or item.get("headline") or "" for item in items]
+    summaries = [item.get("summary_en") or "" for item in items]
+    analyses = [item.get("analysis_en") or "" for item in items]
     reasonings = [item.get("reasoning") or item.get("reasoning_tr") or item.get("analysis_en") or item.get("summary_en") or "" for item in items]
 
     localized_headlines = await _translate_in_batches(headlines, lang)
@@ -251,6 +298,7 @@ async def get_rss_news(
             ]
 
         items = await _localize_news_items(items, _normalize_lang(lang))
+        items = [_sanitize_news_item(item) for item in items]
         
         # Format response - WITH TURKISH TRANSLATIONS & OPTIONAL RUNTIME LOCALIZATION
         return [
@@ -391,12 +439,14 @@ async def get_chart_news_markers(
                 if item["id"] not in existing_ids:
                     items.append(item)
         
+        items = [_sanitize_news_item(item) for item in items]
+
         # Filter for symbol-specific impacts with HIGH RELEVANCE
         markers = []
         for item in items:
             impacts = item.get("impacts", [])
             urgency = item.get("urgency", "medium")
-            ai_confidence = item.get("ai_confidence", 0)
+            ai_confidence = _normalize_article_confidence(item.get("ai_confidence", 0))
             importance_level = item.get("importance_level")
             try:
                 importance_score = int(item.get("importance_score") or 0)
@@ -543,37 +593,40 @@ async def get_news_for_candle(
         # Format response
         formatted_news = []
         for news in matched_news:
+            cleaned_news = _sanitize_news_item(news)
             symbol_impact = news.get("symbol_impact", {})
             event_payload = news.get("event_payload") or {}
             formatted_news.append({
-                "id": news.get("id"),
-                "headline": news.get("headline_tr") or news.get("headline"),
-                "headline_en": news.get("headline"),
-                "summary_en": news.get("summary_en") or news.get("headline"),
-                "summary_tr": news.get("summary_tr") or news.get("headline_tr") or news.get("headline"),
-                "analysis_en": news.get("analysis_en") or news.get("content") or news.get("summary_en") or news.get("headline"),
-                "analysis_tr": news.get("analysis_tr") or news.get("content_tr") or news.get("summary_tr") or news.get("headline_tr") or news.get("headline"),
-                "timestamp": news.get("timestamp"),
-                "source": news.get("source"),
+                "id": cleaned_news.get("id"),
+                "headline": cleaned_news.get("headline_tr") or cleaned_news.get("headline"),
+                "headline_en": cleaned_news.get("headline") or "",
+                "summary_en": cleaned_news.get("summary_en") or cleaned_news.get("headline") or "",
+                "summary_tr": cleaned_news.get("summary_tr") or "",
+                "analysis_en": cleaned_news.get("analysis_en") or cleaned_news.get("summary_en") or cleaned_news.get("headline") or "",
+                "analysis_tr": cleaned_news.get("analysis_tr") or "",
+                "timestamp": cleaned_news.get("timestamp"),
+                "source": cleaned_news.get("source"),
                 "catalyst_type": news.get("catalyst_type", "news"),
                 "match_quality": news.get("match_quality", "matched"),
-                "urgency": news.get("urgency"),
+                "urgency": cleaned_news.get("urgency"),
                 "score": symbol_impact.get("score", 5),
                 "direction": symbol_impact.get("direction", "neutral"),
-                "reasoning": news.get("ai_reasoning_tr") or symbol_impact.get("reasoning") or symbol_impact.get("reasoning_tr", ""),
+                "reasoning": symbol_impact.get("reasoning") or news.get("importance_reason") or "",
                 "reasoning_tr": news.get("ai_reasoning_tr") or symbol_impact.get("reasoning_tr", ""),
                 "relevance_score": round(news.get("relevance_score", 0), 2),
-                "importance_level": news.get("importance_level"),
-                "importance_score": news.get("importance_score"),
+                "importance_level": cleaned_news.get("importance_level"),
+                "importance_score": cleaned_news.get("importance_score"),
                 "importance_reason": news.get("ai_reasoning_tr") or news.get("importance_reason") or symbol_impact.get("reasoning_tr", ""),
-                "ai_model": news.get("ai_model"),
+                "ai_model": cleaned_news.get("ai_model"),
+                "ai_confidence": cleaned_news.get("ai_confidence"),
                 "ai_match_confidence": news.get("ai_match_confidence"),
                 "event_id": event_payload.get("id"),
                 "affected_symbols": event_payload.get("affected_symbols") or [symbol],
-                "url": news.get("url", ""),
+                "url": cleaned_news.get("url", ""),
             })
 
         formatted_news = await _localize_candle_news_items(formatted_news, _normalize_lang(lang))
+        formatted_news = [_sanitize_news_item(item) for item in formatted_news]
         
         # Calculate candle stats
         change_pct = ((candle_close - candle_open) / candle_open) * 100 if candle_open != 0 else 0
@@ -829,15 +882,15 @@ async def backfill_turkish_translations(
                 impacts = item.get("impacts", [])
                 for imp in impacts:
                     if "reasoning_tr" not in imp or not imp["reasoning_tr"]:
-                        direction = imp.get("direction", "neutral")
-                        direction_tr = "yükseliş" if direction == "bullish" else "düşüş" if direction == "bearish" else "nötr"
-                        imp["reasoning_tr"] = f"{imp.get('symbol', 'Sembol')} için {direction_tr} etki"
+                        imp["reasoning_tr"] = ""
                 
-                supabase.table("enriched_news").update({
+                update_result = supabase.table("enriched_news").eq("id", item["id"]).update({
                     "headline_tr": headline_tr,
                     "content_tr": content_tr,
                     "impacts": impacts
-                }).eq("id", item["id"]).execute()
+                })
+                if isinstance(update_result, dict) and update_result.get("error"):
+                    raise Exception(update_result["error"])
                 
                 updated += 1
             except Exception as e:
@@ -1142,7 +1195,7 @@ async def get_rss_diagnostics():
         
         result = (
             supabase.table("enriched_news")
-            .select("id, timestamp, headline_tr, ai_confidence, urgency, impacts, source, ai_model, importance_score")
+            .select("id, headline, timestamp, headline_tr, ai_confidence, urgency, impacts, source, ai_model, importance_score")
             .gte("timestamp", start_time.isoformat())
             .order("timestamp", desc=True)
             .limit(100)
@@ -1166,10 +1219,11 @@ async def get_rss_diagnostics():
         impact_patterns = {}
         
         for item in items:
-            headline_tr = item.get("headline_tr", "")
-            confidence = item.get("ai_confidence", 0)
-            impacts = item.get("impacts", [])
-            ai_model = str(item.get("ai_model", "") or "").lower()
+            sanitized_item = _sanitize_news_item(item)
+            headline_tr = sanitized_item.get("headline_tr", "")
+            confidence = sanitized_item.get("ai_confidence", 0)
+            impacts = sanitized_item.get("impacts", [])
+            ai_model = str(sanitized_item.get("ai_model", "") or "").lower()
             
             # Detect fallback: headline_tr starts with [TR] or low confidence
             if ai_model == "fallback" or headline_tr.startswith("[TR]") or confidence <= 50:
@@ -1214,15 +1268,15 @@ async def get_rss_diagnostics():
             "latest_news_sample": [
                 {
                     "headline": item.get("headline", "")[:80],
-                    "headline_tr": item.get("headline_tr", "")[:80],
-                    "confidence": item.get("ai_confidence", 0),
+                    "headline_tr": _sanitize_news_item(item).get("headline_tr", "")[:80],
+                    "confidence": _sanitize_news_item(item).get("ai_confidence", 0),
                     "importance_score": item.get("importance_score"),
                     "ai_model": item.get("ai_model"),
-                    "impacts_count": len(item.get("impacts", [])),
+                    "impacts_count": len(_sanitize_news_item(item).get("impacts", [])),
                     "source": item.get("source", ""),
                     "is_fallback": (str(item.get("ai_model", "") or "").lower() == "fallback")
-                                   or item.get("headline_tr", "").startswith("[TR]")
-                                   or item.get("ai_confidence", 0) <= 50,
+                                   or _sanitize_news_item(item).get("headline_tr", "").startswith("[TR]")
+                                   or _sanitize_news_item(item).get("ai_confidence", 0) <= 50,
                 }
                 for item in items[:5]
             ],
@@ -1352,7 +1406,9 @@ async def re_analyze_fallback_news(
                             ),
                         }
                         
-                        supabase.table("enriched_news").update(update_data).eq("id", item["id"]).execute()
+                        update_result = supabase.table("enriched_news").eq("id", item["id"]).update(update_data)
+                        if isinstance(update_result, dict) and update_result.get("error"):
+                            raise Exception(update_result["error"])
                         re_analyzed += 1
                         print(f"[Re-analyze] ✅ Updated: {item.get('headline', '')[:60]}...")
                     else:

@@ -3,7 +3,6 @@
 import React, { useEffect } from "react";
 import { X, Sparkles, Camera, TrendingUp, TrendingDown, Clock, ExternalLink, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
 import type { EnrichedNews } from "@/types/news-correlation";
 
 // Translation keys for news modal
@@ -141,6 +140,32 @@ interface NewsDetailModalProps {
   locale?: keyof typeof translations;
 }
 
+function formatRelativeTime(timestamp: string, locale: string): string {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffInSeconds = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 1000));
+
+  if (locale === "tr") {
+    if (diffInSeconds < 60) return `${diffInSeconds} sn önce`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} dk önce`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} sa önce`;
+    return `${Math.floor(diffInSeconds / 86400)} g önce`;
+  }
+
+  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  return `${Math.floor(diffInSeconds / 86400)}d ago`;
+}
+
+function normalizeImpactConfidence(value: unknown): number {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return 0;
+  }
+  const normalized = value <= 1 ? value : value / 100;
+  return Math.max(0, Math.min(1, normalized));
+}
+
 export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }: NewsDetailModalProps) {
   const t = translations[locale] || translations.en;
 
@@ -176,10 +201,10 @@ export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }
       ? news.summary_locale || news.summary_en || ""
       : news.summary_en || "";
   const localizedAnalysis = isTurkish
-    ? news.analysis_tr || news.analysis_en || news.content || ""
+    ? news.analysis_tr || news.analysis_en || ""
     : !isEnglish
-      ? news.analysis_locale || news.analysis_en || news.content || ""
-      : news.analysis_en || news.content || "";
+      ? news.analysis_locale || news.analysis_en || ""
+      : news.analysis_en || "";
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
@@ -187,6 +212,19 @@ export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }
       case "high": return "text-orange-400";
       case "medium": return "text-yellow-400";
       default: return "text-gray-400";
+    }
+  };
+
+  const getUrgencyLabel = (urgency: string) => {
+    switch (urgency) {
+      case "breaking":
+        return locale === "tr" ? "SON DAKİKA" : "BREAKING";
+      case "high":
+        return t.high;
+      case "medium":
+        return t.medium;
+      default:
+        return t.low;
     }
   };
 
@@ -234,10 +272,10 @@ export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }
           <div className="flex items-center gap-2 mb-3">
             <Clock className="w-4 h-4 text-gray-500" />
             <span className="text-sm text-gray-500">
-              {formatDistanceToNow(new Date(news.timestamp), { addSuffix: true })}
+              {formatRelativeTime(news.timestamp, locale)}
             </span>
             <span className={cn("text-xs font-bold uppercase tracking-wider ml-2", getUrgencyColor(news.urgency))}>
-              {news.urgency}
+              {getUrgencyLabel(news.urgency)}
             </span>
           </div>
 
@@ -337,38 +375,41 @@ export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }
             <div className="mb-5">
               <span className="text-xs text-gray-500 uppercase tracking-wider mb-3 block">{t.marketImpact}</span>
               <div className="space-y-2">
-                {news.impacts.map((impact, idx) => (
-                  <div key={idx} className="flex items-center justify-between py-2 px-3 bg-gray-900/50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <span className={cn(
-                        "text-sm font-semibold",
-                        impact.direction === "bullish" ? "text-green-400" :
-                        impact.direction === "bearish" ? "text-red-400" : "text-gray-400"
-                      )}>
-                        {impact.symbol}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {locale === "tr"
-                          ? impact.reasoning_tr || impact.reasoning
-                          : impact.reasoning_locale || impact.reasoning}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="flex gap-0.5">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <div 
-                            key={i}
-                            className={cn(
-                              "w-1.5 h-1.5 rounded-full",
-                              i < Math.round((impact.confidence || 0.5) * 5) ? "bg-purple-500" : "bg-gray-700"
-                            )}
-                          />
-                        ))}
+                {news.impacts.map((impact, idx) => {
+                  const impactConfidence = normalizeImpactConfidence(impact.confidence);
+                  return (
+                    <div key={idx} className="flex items-center justify-between py-2 px-3 bg-gray-900/50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <span className={cn(
+                          "text-sm font-semibold",
+                          impact.direction === "bullish" ? "text-green-400" :
+                            impact.direction === "bearish" ? "text-red-400" : "text-gray-400"
+                        )}>
+                          {impact.symbol}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {locale === "tr"
+                            ? impact.reasoning_tr || impact.reasoning
+                            : impact.reasoning_locale || impact.reasoning}
+                        </span>
                       </div>
-                      <span className="text-xs text-gray-400 ml-2">{Math.round((impact.confidence || 0.5) * 100)}%</span>
+                      <div className="flex items-center gap-1">
+                        <div className="flex gap-0.5">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={cn(
+                                "w-1.5 h-1.5 rounded-full",
+                                i < Math.round(impactConfidence * 5) ? "bg-purple-500" : "bg-gray-700"
+                              )}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-xs text-gray-400 ml-2">{Math.round(impactConfidence * 100)}%</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

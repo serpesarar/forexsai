@@ -564,22 +564,32 @@ class RSSAggregator:
         cached_result = cache_get(cache_key)
         
         if cached_result:
+            from services.news_analyzer_v2 import RealNewsAnalyzer
+
+            validate_turkish = RealNewsAnalyzer._validate_turkish
             cached_model = str(cached_result.get("ai_model", "fallback")).lower()
-            has_bilingual_payload = all(
+            has_analysis_payload = all(
                 bool(cached_result.get(key))
-                for key in ("summary_en", "summary_tr", "analysis_en", "analysis_tr")
+                for key in ("summary_en", "analysis_en")
             )
 
-            if cached_model != "fallback" and has_bilingual_payload:
+            if cached_model != "fallback" and has_analysis_payload:
                 print(f"[RSS] CACHE HIT for: {item.title[:50]}...")
-                # Restore cached analysis
-                item.impacts = cached_result.get("impacts", [])
-                item.title_tr = cached_result.get("title_tr", cached_result.get("summary_tr", f"[TR] {item.title}"))
-                item.content_tr = cached_result.get("content_tr", cached_result.get("analysis_tr", item.content))
+                item.impacts = []
+                for raw_impact in cached_result.get("impacts", []) or []:
+                    impact_copy = dict(raw_impact)
+                    impact_copy["reasoning_tr"] = validate_turkish(str(impact_copy.get("reasoning_tr") or ""))
+                    item.impacts.append(impact_copy)
+                raw_title_tr = cached_result.get("title_tr", "")
+                item.title_tr = validate_turkish(str(raw_title_tr or ""))
+                raw_content_tr = cached_result.get("content_tr", "")
+                item.content_tr = validate_turkish(str(raw_content_tr or ""))
                 item.summary_en = cached_result.get("summary_en", item.title)
-                item.summary_tr = cached_result.get("summary_tr", item.title_tr or item.title)
+                raw_summary_tr = cached_result.get("summary_tr", "")
+                item.summary_tr = validate_turkish(str(raw_summary_tr or ""))
                 item.analysis_en = cached_result.get("analysis_en", item.content or item.title)
-                item.analysis_tr = cached_result.get("analysis_tr", item.content_tr or item.content or item.title)
+                raw_analysis_tr = cached_result.get("analysis_tr", "")
+                item.analysis_tr = validate_turkish(str(raw_analysis_tr or ""))
                 item.sentiment = cached_result.get("sentiment", "neutral")
                 item.volatility_expectation = cached_result.get("volatility_expectation", "medium")
                 item.urgency = cached_result.get("urgency", "medium")
@@ -626,7 +636,18 @@ class RSSAggregator:
             )
 
             # One retry if analyzer returned fallback while API key exists.
-            if getattr(result, "ai_model", "fallback") == "fallback" and api_key:
+            tr_coverage = sum(
+                1 for value in (
+                    getattr(result, "headline_tr", ""),
+                    getattr(result, "summary_tr", ""),
+                    getattr(result, "analysis_tr", ""),
+                )
+                if str(value or "").strip()
+            )
+            if api_key and (
+                getattr(result, "ai_model", "fallback") == "fallback"
+                or tr_coverage < 2
+            ):
                 await asyncio.sleep(0.4)
                 retry_result = await analyzer.analyze(
                     headline=item.title,
@@ -634,7 +655,18 @@ class RSSAggregator:
                     source=item.source,
                     market_context=mkt_ctx,
                 )
-                if getattr(retry_result, "ai_model", "fallback") != "fallback" or retry_result.confidence >= result.confidence:
+                retry_tr_coverage = sum(
+                    1 for value in (
+                        getattr(retry_result, "headline_tr", ""),
+                        getattr(retry_result, "summary_tr", ""),
+                        getattr(retry_result, "analysis_tr", ""),
+                    )
+                    if str(value or "").strip()
+                )
+                if (
+                    getattr(retry_result, "ai_model", "fallback") != "fallback"
+                    and retry_tr_coverage >= tr_coverage
+                ) or retry_tr_coverage > tr_coverage or retry_result.confidence >= result.confidence:
                     result = retry_result
             
             # Map to item
@@ -651,12 +683,14 @@ class RSSAggregator:
                 for imp in result.impacts
             ]
             
-            item.title_tr = result.headline_tr if result.headline_tr else result.summary_tr if result.summary_tr else f"[TR] {item.title}"
-            item.content_tr = result.content_tr if result.content_tr else result.analysis_tr if result.analysis_tr else item.content
-            item.summary_en = result.summary_en if result.summary_en else item.title
-            item.summary_tr = result.summary_tr if result.summary_tr else item.title_tr if item.title_tr else item.title
-            item.analysis_en = result.analysis_en if result.analysis_en else item.content or item.summary_en
-            item.analysis_tr = result.analysis_tr if result.analysis_tr else item.content_tr if item.content_tr else item.summary_tr
+            # Semantic boundaries: each field stays in its own lane.
+            # Prefer empty TR over cross-pollinated or [TR]-prefixed text.
+            item.title_tr = result.headline_tr or ""
+            item.content_tr = result.content_tr or ""
+            item.summary_en = result.summary_en or item.title
+            item.summary_tr = result.summary_tr or ""
+            item.analysis_en = result.analysis_en or item.content or item.title
+            item.analysis_tr = result.analysis_tr or ""
             item.sentiment = result.sentiment
             item.volatility_expectation = result.volatility_expectation
             item.ai_confidence = result.confidence / 100.0
@@ -781,20 +815,20 @@ class RSSAggregator:
                     "symbol": imp["symbol"],
                     "direction": imp["direction"],
                     "score": imp["score"],
-                    "confidence": 0.7,
+                    "confidence": min(0.62, max(0.38, 0.32 + (imp["score"] * 0.04))),
                     "reasoning": imp["reasoning"],
                     "reasoning_tr": f"{imp['symbol']} için {imp['direction'] == 'bullish' and 'yükseliş' or imp['direction'] == 'bearish' and 'düşüş' or 'nötr'} etki",
                     "emoji": "📈" if imp["direction"] == "bullish" else "📉" if imp["direction"] == "bearish" else "➡️",
                 }
                 for imp in best_rule["impacts"]
             ]
+            max_rule_score = max((imp.get("score", 5) for imp in best_rule.get("impacts", [])), default=5)
             item.sentiment = best_rule["sentiment"]
             item.volatility_expectation = best_rule["volatility"]
             item.urgency = "high" if best_rule["volatility"] == "high" else "medium"
-            item.ai_confidence = 0.75
+            item.ai_confidence = min(0.58, max(0.38, 0.3 + (max_rule_score * 0.03)))
             item.ai_processed = True
             item.processed_at = datetime.utcnow()
-            max_rule_score = max((imp.get("score", 5) for imp in best_rule.get("impacts", [])), default=5)
             base_importance_score = int(max_rule_score * 10)
             if item.urgency == "high":
                 base_importance_score += 10
@@ -811,17 +845,18 @@ class RSSAggregator:
             )
             item.ai_model = "fallback"
             
-            # Generate Turkish translations
-            item.title_tr = self._quick_translate(item.title, translations)
-            item.content_tr = self._quick_translate(item.content[:200] + "..." if len(item.content) > 200 else item.content, translations)
+            # Fallback: prefer empty TR over fake translation.
+            # _quick_translate now returns "" if no real translation was produced.
+            item.title_tr = ""
+            item.content_tr = ""
             item.summary_en = item.title
-            item.summary_tr = item.title_tr or item.title
+            item.summary_tr = ""  # No cross-field pollution
             item.analysis_en = item.content[:200] + "..." if len(item.content) > 200 else item.content or item.title
-            item.analysis_tr = item.content_tr or item.summary_tr
-            
+            item.analysis_tr = ""  # No cross-field pollution
+
             return item
-        
-        # No rules matched - STILL ADD TURKISH TRANSLATIONS
+
+        # No rules matched
         item.ai_processed = True
         item.processed_at = datetime.utcnow()
         item.urgency = "low"
@@ -830,30 +865,33 @@ class RSSAggregator:
         item.importance_score = 35
         item.importance_reason = "Fallback rule-based classification (DeepSeek unavailable)."
         item.ai_model = "fallback"
-        
-        # Generate Turkish translations even for low urgency
-        item.title_tr = self._quick_translate(item.title, translations)
-        item.content_tr = self._quick_translate(item.content[:200] + "..." if len(item.content) > 200 else item.content, translations)
+
+        # Prefer empty TR over fake translation
+        item.title_tr = ""
+        item.content_tr = ""
         item.summary_en = item.title
-        item.summary_tr = item.title_tr or item.title
+        item.summary_tr = ""
         item.analysis_en = item.content[:200] + "..." if len(item.content) > 200 else item.content or item.title
-        item.analysis_tr = item.content_tr or item.summary_tr
-        
+        item.analysis_tr = ""
+
         return item
     
     def _quick_translate(self, text: str, translations: dict) -> str:
-        """Quick keyword-based translation"""
+        """Quick keyword-based translation.
+        Returns empty string if no meaningful translation was produced.
+        Prefer empty over fake Turkish — the frontend falls back to English gracefully.
+        """
         if not text:
-            return text
-        
+            return ""
+
         translated = text
         for en, tr in translations.items():
             translated = translated.replace(en, tr).replace(en.capitalize(), tr.capitalize()).replace(en.upper(), tr.upper())
-        
-        # If no translation happened, add a marker
+
+        # If no translation happened, return empty — do NOT prefix with [TR]
         if translated == text:
-            return f"[TR] {text}"
-        
+            return ""
+
         return translated
     
     async def _check_economic_calendar(self, item: RSSNewsItem) -> RSSNewsItem:
@@ -934,14 +972,8 @@ class RSSAggregator:
                 existing_data = existing.data or []
             
             if existing_data:
-                # Update sources list if duplicate from another source
                 if item.duplicate_of:
-                    upd_result = (
-                        supabase.table("enriched_news")
-                        .update({"sources": item.sources})
-                        .eq("id", item.id)
-                        .execute()
-                    )
+                    upd_result = supabase.table("enriched_news").eq("id", item.id).update({"sources": item.sources})
                     if isinstance(upd_result, dict) and upd_result.get("error"):
                         print(f"[RSS] Update error: {upd_result['error']}")
                 return False
@@ -950,10 +982,7 @@ class RSSAggregator:
             impacts_with_tr = []
             for imp in item.impacts:
                 imp_copy = dict(imp)
-                # Ensure reasoning_tr exists
-                if "reasoning_tr" not in imp_copy or not imp_copy["reasoning_tr"]:
-                    direction_tr = "yükseliş" if imp.get("direction") == "bullish" else "düşüş" if imp.get("direction") == "bearish" else "nötr"
-                    imp_copy["reasoning_tr"] = f"{imp.get('symbol', 'Sembol')} için {direction_tr} etki"
+                imp_copy["reasoning_tr"] = str(imp_copy.get("reasoning_tr") or "").strip()
                 impacts_with_tr.append(imp_copy)
             
             # Determine marker type for chart
@@ -996,13 +1025,15 @@ class RSSAggregator:
                 "timestamp": item.published_at.isoformat(),
                 "source": item.source,
                 "headline": item.title,
-                "headline_tr": item.title_tr if item.title_tr else item.title,
+                # Semantic boundaries: TR fields are empty if no real translation exists.
+                # The frontend gracefully falls back to English.
+                "headline_tr": item.title_tr or "",
                 "content": item.content,
-                "content_tr": item.content_tr if item.content_tr else item.analysis_tr if item.analysis_tr else item.content[:300] + "..." if len(item.content) > 300 else item.content,
-                "summary_en": item.summary_en if item.summary_en else item.title,
-                "summary_tr": item.summary_tr if item.summary_tr else item.title_tr if item.title_tr else item.title,
-                "analysis_en": item.analysis_en if item.analysis_en else item.content,
-                "analysis_tr": item.analysis_tr if item.analysis_tr else item.content_tr if item.content_tr else item.content[:300] + "..." if len(item.content) > 300 else item.content,
+                "content_tr": item.content_tr or "",
+                "summary_en": item.summary_en or item.title,
+                "summary_tr": item.summary_tr or "",
+                "analysis_en": item.analysis_en or item.content or item.title,
+                "analysis_tr": item.analysis_tr or "",
                 "category": item.category,
                 "url": item.original_url,
                 "impacts": impacts_with_tr,
@@ -1027,7 +1058,7 @@ class RSSAggregator:
             # Attempt insert with detailed error logging
             optional_columns = ["importance_level", "importance_score", "importance_reason", "ai_model"]
             try:
-                result = supabase.table("enriched_news").insert(data).execute()
+                result = supabase.table("enriched_news").insert(data)
                 if isinstance(result, dict) and result.get("error"):
                     raise Exception(result["error"])
                 print(f"[RSS] ✓ Saved to DB: {item.id[:40]}... - {item.title[:60]}...")
@@ -1041,7 +1072,7 @@ class RSSAggregator:
                     print(f"[RSS]   → Missing column error! Retrying without optional columns...")
                     legacy_data = {k: v for k, v in data.items() if k not in optional_columns}
                     try:
-                        legacy_result = supabase.table("enriched_news").insert(legacy_data).execute()
+                        legacy_result = supabase.table("enriched_news").insert(legacy_data)
                         if isinstance(legacy_result, dict) and legacy_result.get("error"):
                             raise Exception(legacy_result["error"])
                         print(f"[RSS] ✓ Saved to DB (legacy mode): {item.id[:40]}... - {item.title[:60]}...")
