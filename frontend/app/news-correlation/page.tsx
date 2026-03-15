@@ -15,24 +15,24 @@ import { fetcher } from "@/lib/api";
 import { buildWebSocketUrl } from "@/lib/api/base";
 import { fetchNewsForCandle, MatchedNewsItem } from "@/lib/api/rssNews";
 import { normalizeCandles } from "@/lib/chart/normalizeCandles";
-import { buildActualTimeChartCandles, buildCompressedChartCandles, buildRenderableChartSeries, buildMappedChartMarkers, chartTimeToTimestampSeconds, findTimelineChartCandle } from "@/lib/chart/newsCorrelationTimeline";
+import {
+  buildActualTimeChartCandles,
+  buildCompressedChartCandles,
+  buildRenderableChartMarkers,
+  buildRenderableChartSeries,
+  buildMappedChartMarkers,
+  resolveTimelineActualTimestamp,
+  resolveTimelineChartCandle,
+  type TimelineChartCandle,
+  type TimelineMappedMarker,
+} from "@/lib/chart/newsCorrelationTimeline";
 import { useNewsMarkers } from "@/hooks/useNewsMarkers";
 import Link from "next/link";
 import type { EnrichedNews } from "@/types/news-correlation";
 import NewsDetailModal from "@/components/NewsDetailModal";
 
 // ==================== TYPES ====================
-interface ChartCandle {
-  timestamp: number;
-  time: number | string;
-  actualTimestamp: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume?: number;
-  priceChange: number;
-}
+type ChartCandle = TimelineChartCandle;
 
 interface SymbolData {
   symbol: string;
@@ -720,7 +720,8 @@ function markerToMatchedItem(
     event_name?: string;
     reasoning_tr?: string;
     source_time?: string;
-    time?: string;
+    time?: string | number;
+    actualTimestamp?: number;
     catalyst_type?: "news" | "economic" | "earnings";
     urgency?: string;
     score?: number;
@@ -734,6 +735,11 @@ function markerToMatchedItem(
   },
   selectedSymbol: string
 ): MatchedNewsItem {
+  const matchedTimestamp = marker.source_time
+    || (typeof marker.time === "string" ? marker.time : null)
+    || (Number.isFinite(marker.actualTimestamp) ? new Date(Number(marker.actualTimestamp) * 1000).toISOString() : null)
+    || new Date().toISOString();
+
   return {
     id: String(marker.id || ""),
     headline: marker.headline || marker.headline_en || "",
@@ -742,7 +748,7 @@ function markerToMatchedItem(
     summary_tr: marker.headline || "",
     analysis_en: marker.reasoning_tr || "",
     analysis_tr: marker.reasoning_tr || "",
-    timestamp: marker.source_time || marker.time || new Date().toISOString(),
+    timestamp: matchedTimestamp,
     source: marker.catalyst_type || "marker",
     catalyst_type: marker.catalyst_type || "news",
     match_quality: "matched",
@@ -1084,6 +1090,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   const markerLimit = timeframe === "1d" ? 120 : timeframe === "4h" ? 90 : timeframe === "1h" ? 72 : 60;
   const { markers: newsMarkers, error: newsMarkersError } = useNewsMarkers(selectedSymbol, markerLookbackHours, 5, markerLimit);
   const mappedChartMarkers = useMemo(() => buildMappedChartMarkers(newsMarkers, chartData), [newsMarkers, chartData]);
+  const renderableChartMarkers = useMemo(() => buildRenderableChartMarkers(mappedChartMarkers), [mappedChartMarkers]);
   const [isEconomicModalOpen, setIsEconomicModalOpen] = useState(false);
   const [isEarningsModalOpen, setIsEarningsModalOpen] = useState(false);
   const [loadingEventDetail, setLoadingEventDetail] = useState(false);
@@ -1094,7 +1101,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   const wsRef = useRef<WebSocket | null>(null);
   const chartDataRef = useRef<ChartCandle[]>([]);
   const newsRef = useRef<EnrichedNews[]>([]);
-  const mappedMarkersRef = useRef<any[]>([]);
+  const mappedMarkersRef = useRef<TimelineMappedMarker[]>([]);
   const selectedSymbolRef = useRef(selectedSymbol);
   const timeframeRef = useRef(timeframe);
   const currentLocaleRef = useRef(currentLocale);
@@ -1688,8 +1695,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
     const container = chartContainerRef.current;
     const formatActualChartDisplayTime = (time: Time, includeYear = false) => {
-      const candle = findTimelineChartCandle(time as number | string, chartDataRef.current);
-      const timestamp = candle?.actualTimestamp ?? chartTimeToTimestampSeconds(time as number | string);
+      const timestamp = resolveTimelineActualTimestamp(time as number | string, chartDataRef.current);
 
       if (!Number.isFinite(timestamp)) {
         return "";
@@ -1704,8 +1710,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     };
 
     const formatCompressedAxisTime = (time: Time) => {
-      const candle = findTimelineChartCandle(time as number | string, chartDataRef.current);
-      const realTimestamp = candle?.actualTimestamp ?? chartTimeToTimestampSeconds(time as number | string);
+      const realTimestamp = resolveTimelineActualTimestamp(time as number | string, chartDataRef.current);
 
       if (!Number.isFinite(realTimestamp)) {
         return "";
@@ -1768,7 +1773,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
         return;
       }
 
-      const candle = findTimelineChartCandle(param.time as number | string, chartDataRef.current);
+      const candle = resolveTimelineChartCandle(param.time as number | string, chartDataRef.current);
       if (candle) {
         handleChartCandleSelect(candle.actualTimestamp);
       }
@@ -1836,8 +1841,8 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     }
 
     mappedMarkersRef.current = mappedChartMarkers;
-    candlestickSeriesRef.current.setMarkers(mappedChartMarkers as any);
-  }, [chartData, mappedChartMarkers]);
+    candlestickSeriesRef.current.setMarkers(renderableChartMarkers as any);
+  }, [chartData, mappedChartMarkers, renderableChartMarkers]);
 
   const openEconomicEvent = useCallback(async (event: EconomicEvent) => {
     setSelectedEconomicEvent(event);

@@ -10,11 +10,11 @@ import type { EnrichedNews } from "@/types/news-correlation";
 import { fetcher } from "@/lib/api";
 import { useNewsMarkers } from "@/hooks/useNewsMarkers";
 import {
-  buildActualTimeChartCandles,
   buildCompressedChartCandles,
+  buildRenderableChartMarkers,
   buildMappedChartMarkers,
-  chartTimeToTimestampSeconds,
-  findTimelineChartCandle,
+  resolveTimelineActualTimestamp,
+  resolveTimelineChartCandle,
   type TimelineChartCandle,
 } from "@/lib/chart/newsCorrelationTimeline";
 import { normalizeCandles } from "@/lib/chart/normalizeCandles";
@@ -359,6 +359,7 @@ function ChartView({ chartData, events, symbol, newsSymbol, timeframe, loading, 
     );
     return mapped.slice(0, 20);
   }, [newsMarkers, chartData]);
+  const renderableNewsMarkers = useMemo(() => buildRenderableChartMarkers(mappedNewsMarkers), [mappedNewsMarkers]);
 
   useEffect(() => {
     chartDataRef.current = chartData;
@@ -400,27 +401,8 @@ function ChartView({ chartData, events, symbol, newsSymbol, timeframe, loading, 
         tickMarkFormatter: (time: Time) => {
           const candles = chartDataRef.current;
           if (!candles.length) return "";
-
-          const exact = findTimelineChartCandle(time as number | string, candles);
-          if (exact) {
-            return format(new Date(exact.actualTimestamp * 1000), "MMM d, HH:mm");
-          }
-
-          const numericTime = typeof time === "number" ? time : Number(time);
-          if (!Number.isFinite(numericTime)) {
-            const parsedTimestamp = chartTimeToTimestampSeconds(time as number | string);
-            return Number.isFinite(parsedTimestamp) ? format(new Date(parsedTimestamp * 1000), "MMM d, HH:mm") : "";
-          }
-
-          const candle = candles.reduce((closest, current) => {
-            const currentDistance = Math.abs(Number(current.time) - numericTime);
-            const closestDistance = Math.abs(Number(closest.time) - numericTime);
-            return currentDistance < closestDistance ? current : closest;
-          });
-
-          if (!candle) return "";
-          // Use actualTimestamp (seconds) to display the real date
-          return format(new Date(candle.actualTimestamp * 1000), "MMM d, HH:mm");
+          const actualTimestamp = resolveTimelineActualTimestamp(time as number | string, candles);
+          return Number.isFinite(actualTimestamp) ? format(new Date(Number(actualTimestamp) * 1000), "MMM d, HH:mm") : "";
         },
       },
     });
@@ -472,8 +454,8 @@ function ChartView({ chartData, events, symbol, newsSymbol, timeframe, loading, 
       return;
     }
 
-    candlestickSeriesRef.current.setMarkers(mappedNewsMarkers as any);
-  }, [mappedNewsMarkers, chartData]);
+    candlestickSeriesRef.current.setMarkers(renderableNewsMarkers as any);
+  }, [renderableNewsMarkers, chartData]);
 
   // Handle click events specifically for opening modals
   useEffect(() => {
@@ -493,17 +475,7 @@ function ChartView({ chartData, events, symbol, newsSymbol, timeframe, loading, 
       if (param.time === undefined || !param.point) return;
       
       // Resolve the clicked candle from the chart's rendered time representation.
-      let clickedCandle = findTimelineChartCandle(param.time, chartDataRef.current);
-      if (!clickedCandle) {
-        const numericTime = typeof param.time === "number" ? param.time : Number(param.time);
-        if (Number.isFinite(numericTime) && chartDataRef.current.length > 0) {
-          clickedCandle = chartDataRef.current.reduce((closest, current) => {
-            const currentDistance = Math.abs(Number(current.time) - numericTime);
-            const closestDistance = Math.abs(Number(closest.time) - numericTime);
-            return currentDistance < closestDistance ? current : closest;
-          });
-        }
-      }
+      const clickedCandle = resolveTimelineChartCandle(param.time, chartDataRef.current);
 
       if (!clickedCandle) return;
       
