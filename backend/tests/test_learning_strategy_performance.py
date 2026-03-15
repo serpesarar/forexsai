@@ -216,6 +216,14 @@ async def test_strategy_performance_resolves_real_strategy_scopes_from_strategy_
             exit_time=_iso(now - timedelta(hours=2, minutes=15)),
         ),
         _prediction_row(
+            id="aggressive-001",
+            strategy=None,
+            model_type="ml:aggressive",
+            factors={},
+            created_at=_iso(now - timedelta(hours=3, minutes=30)),
+            exit_time=_iso(now - timedelta(hours=2, minutes=45)),
+        ),
+        _prediction_row(
             id="ignored-non-ml-001",
             model_type="pulse2",
             strategy="balanced",
@@ -230,12 +238,13 @@ async def test_strategy_performance_resolves_real_strategy_scopes_from_strategy_
         payload = await learning_module.get_strategy_performance(days=1)
 
     ndx_scopes = payload["strategies"]["NDX.INDX"]
-    assert payload["predictions_count"] == 4
-    assert payload["ml_predictions_count"] == 3
+    assert payload["predictions_count"] == 5
+    assert payload["ml_predictions_count"] == 4
     assert ndx_scopes["main"]["total_predictions"] == 1
     assert ndx_scopes["balanced"]["total_predictions"] == 1
+    assert ndx_scopes["aggressive"]["total_predictions"] == 1
     assert ndx_scopes["nasdaq_precision"]["total_predictions"] == 1
-    assert payload["symbols"]["NDX.INDX"]["available_scopes"] == ["main", "balanced", "nasdaq_precision"]
+    assert payload["symbols"]["NDX.INDX"]["available_scopes"] == ["main", "balanced", "aggressive", "nasdaq_precision"]
 
 
 @pytest.mark.asyncio

@@ -15,12 +15,58 @@ from services.error_analysis_service import save_candle_snapshot
 
 logger = logging.getLogger(__name__)
 
+_ML_SCOPE_ALIASES = {
+    "main": "main",
+    "ml": "main",
+    "raw_ml": "main",
+    "base_ml": "main",
+    "ultra_safe": "ultra_safe",
+    "ultrasafe": "ultra_safe",
+    "balanced": "balanced",
+    "full_power": "full_power",
+    "fullpower": "full_power",
+    "aggressive": "aggressive",
+    "nasdaq_precision": "nasdaq_precision",
+    "nasdaqprecision": "nasdaq_precision",
+}
+
 # ─── Uses target_config.py as single source of truth for TP/SL levels ──────────
 
 
 def _normalize_timeframe(value: Optional[str]) -> str:
     normalized = (value or "").lower().strip()
     return normalized if normalized else "15m"
+
+
+def _normalize_ml_scope(value: Optional[str]) -> Optional[str]:
+    normalized = (value or "").lower().strip()
+    if not normalized:
+        return None
+    if normalized.startswith("ml:"):
+        normalized = normalized.split(":", 1)[1].strip()
+    return _ML_SCOPE_ALIASES.get(normalized)
+
+
+def _resolve_logging_identity(
+    model_type: Optional[str],
+    strategy: Optional[str],
+) -> Tuple[str, Optional[str]]:
+    normalized_model_type = (model_type or "").lower().strip()
+    normalized_strategy = _normalize_ml_scope(strategy)
+    scoped_from_model = _normalize_ml_scope(normalized_model_type)
+
+    if normalized_model_type.startswith("ml:") and scoped_from_model:
+        return f"ml:{scoped_from_model}", normalized_strategy or scoped_from_model
+
+    if normalized_model_type in {"", "ml"}:
+        if normalized_strategy:
+            return f"ml:{normalized_strategy}" if normalized_strategy != "main" else "ml:main", normalized_strategy
+        return "ml", strategy
+
+    if scoped_from_model:
+        return f"ml:{scoped_from_model}" if scoped_from_model != "main" else "ml:main", normalized_strategy or scoped_from_model
+
+    return normalized_model_type or (strategy.lower() if strategy else "ml"), strategy
 
 
 def _has_active_signal(
@@ -280,7 +326,7 @@ async def log_prediction(
             logger.debug(f"Skipping HOLD signal for {symbol} (model={model_type or strategy})")
             return None
         
-        effective_model_type = model_type or (strategy.lower() if strategy else "ml")
+        effective_model_type, resolved_strategy = _resolve_logging_identity(model_type, strategy)
         
         # ═══════════════════════════════════════════════════════════════════════
         # FILTERS: Session, Correlation, News
@@ -393,9 +439,10 @@ async def log_prediction(
             factors["correlation_warning"] = _correlation_tag
         
         # Store strategy in both the column and factors JSONB
-        if strategy:
-            factors["strategy"] = strategy
-            factors["source"] = context.get("source", strategy)
+        stored_strategy = resolved_strategy or strategy
+        if stored_strategy:
+            factors["strategy"] = stored_strategy
+            factors["source"] = context.get("source", stored_strategy)
 
         record = {
             "symbol": symbol,
@@ -419,14 +466,24 @@ async def log_prediction(
             "targets_hit": {tp: False for tp in targets_dict if tp != "SL"},
             "highest_profit_pips": 0,
             "lowest_drawdown_pips": 0,
-            "model_type": model_type or (strategy.lower() if strategy else "ml"),
+            "model_type": effective_model_type,
         }
         
-        # Add strategy column if provided (user has this column in Supabase)
-        if strategy:
-            record["strategy"] = strategy
+        if stored_strategy:
+            record["strategy"] = stored_strategy
         
         result = client.table("prediction_logs").insert_ignore(record)
+
+        if safe_get_error(result):
+            logger.error(
+                "prediction_logger.insert_error | symbol=%s model=%s strategy=%s dir=%s error=%s",
+                symbol,
+                effective_model_type,
+                stored_strategy,
+                direction,
+                result["error"],
+            )
+            return None
         
         # If a remote environment still has a stricter unique constraint, insert_ignore
         # may still reject overlaps. Local schema does not require that behavior.

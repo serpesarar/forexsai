@@ -59,16 +59,22 @@ _ML_STRATEGY_ORDER = ["main", "ultra_safe", "balanced", "full_power", "aggressiv
 _ML_STRATEGY_ALIASES = {
     "main": "main",
     "ml": "main",
+    "ml:main": "main",
     "raw_ml": "main",
     "base_ml": "main",
     "ultra_safe": "ultra_safe",
     "ultrasafe": "ultra_safe",
+    "ml:ultra_safe": "ultra_safe",
     "balanced": "balanced",
+    "ml:balanced": "balanced",
     "full_power": "full_power",
     "fullpower": "full_power",
+    "ml:full_power": "full_power",
     "aggressive": "aggressive",
+    "ml:aggressive": "aggressive",
     "nasdaq_precision": "nasdaq_precision",
     "nasdaqprecision": "nasdaq_precision",
+    "ml:nasdaq_precision": "nasdaq_precision",
 }
 _ML_STRATEGY_DESCRIPTIONS = {
     "main": "Ham/orijinal ML akışı; preset filtre uygulanmadan loglanan ana model.",
@@ -142,6 +148,8 @@ def _resolve_ml_strategy_scope(sig: dict) -> Optional[str]:
 
     for candidate in candidates:
         resolved = _ML_STRATEGY_ALIASES.get(candidate)
+        if not resolved and candidate.startswith("ml:"):
+            resolved = _ML_STRATEGY_ALIASES.get(candidate.split(":", 1)[1].strip())
         if resolved and resolved != "main":
             return resolved
 
