@@ -11,6 +11,7 @@ import { fetcher } from "@/lib/api";
 import { useNewsMarkers } from "@/hooks/useNewsMarkers";
 import {
   buildActualTimeChartCandles,
+  buildCompressedChartCandles,
   buildMappedChartMarkers,
   chartTimeToTimestampSeconds,
   findTimelineChartCandle,
@@ -121,7 +122,7 @@ export default function NewsChartCorrelationPanel() {
 
       if (chartResponse?.data && Array.isArray(chartResponse.data) && chartResponse.data.length > 5) {
         const normalizedCandles = normalizeCandles(chartResponse.data, timeframe);
-        const processedCandles: ChartCandle[] = buildActualTimeChartCandles(normalizedCandles, timeframe);
+        const processedCandles: ChartCandle[] = buildCompressedChartCandles(normalizedCandles, timeframe);
         setChartData(processedCandles);
       } else {
         setChartData([]);

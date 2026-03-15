@@ -15,7 +15,7 @@ import { fetcher } from "@/lib/api";
 import { buildWebSocketUrl } from "@/lib/api/base";
 import { fetchNewsForCandle, MatchedNewsItem } from "@/lib/api/rssNews";
 import { normalizeCandles } from "@/lib/chart/normalizeCandles";
-import { buildActualTimeChartCandles, buildRenderableChartSeries, buildMappedChartMarkers, chartTimeToTimestampSeconds, findTimelineChartCandle } from "@/lib/chart/newsCorrelationTimeline";
+import { buildActualTimeChartCandles, buildCompressedChartCandles, buildRenderableChartSeries, buildMappedChartMarkers, chartTimeToTimestampSeconds, findTimelineChartCandle } from "@/lib/chart/newsCorrelationTimeline";
 import { useNewsMarkers } from "@/hooks/useNewsMarkers";
 import Link from "next/link";
 import type { EnrichedNews } from "@/types/news-correlation";
@@ -1178,7 +1178,11 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
       if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
         const normalizedCandles = normalizeCandles(response.data, requestedTimeframe);
-        const processedCandles: ChartCandle[] = buildActualTimeChartCandles(normalizedCandles, requestedTimeframe) as unknown as ChartCandle[];
+        const processedCandles: ChartCandle[] = (
+          requestedTimeframe === "1d"
+            ? buildActualTimeChartCandles(normalizedCandles, requestedTimeframe)
+            : buildCompressedChartCandles(normalizedCandles, requestedTimeframe)
+        ) as unknown as ChartCandle[];
 
         console.log(`[Chart] Loaded ${processedCandles.length} candles for ${requestedSymbol}`);
         setChartData(processedCandles);
