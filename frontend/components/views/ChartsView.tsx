@@ -15,12 +15,6 @@ import { ChartsIcon, LoadingIcon, SignalsIcon, DashboardIcon } from "../ui/Custo
 import { useI18nStore } from "../../lib/i18n/store";
 import { NeonChart } from "../../components/NeonChart";
 
-declare global {
-  interface Window {
-    TradingView: any;
-  }
-}
-
 type ChartSymbol = {
   id: string;
   label: string;
