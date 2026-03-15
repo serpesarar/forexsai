@@ -159,7 +159,9 @@ export function mapActualTimestampToChartTime(
   }
 
   const stepSeconds = inferChartStepSeconds(candles);
-  const edgeToleranceSeconds = stepSeconds > 0 ? Math.max(60, stepSeconds) : 0;
+  const edgeToleranceSeconds = stepSeconds > 0
+    ? Math.max(60, Math.min(48 * 60 * 60, stepSeconds * 48))
+    : 0;
 
   if (actualTimestamp < firstTimestamp) {
     return firstTimestamp - actualTimestamp <= edgeToleranceSeconds ? candles[0].time : null;
@@ -225,9 +227,9 @@ export function buildMappedChartMarkers(
       color: marker.color,
       shape: marker.shape,
       text: marker.text || (marker.catalyst_type === "economic"
-        ? "�"
+        ? "📅"
         : marker.catalyst_type === "earnings"
-          ? "💰"
+          ? "�"
           : marker.urgency === "breaking"
             ? "🚨"
             : "📰"),

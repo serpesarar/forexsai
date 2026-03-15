@@ -13,11 +13,6 @@ const defaultSymbols = [
   "NASDAQ",
   "DAX",
   "USOIL",
-  "VIX",
-  "DXY",
-  "EURUSD",
-  "GBPUSD",
-  "BTCUSD",
 ];
 
 export const useNewsCorrelationStore = create<NewsCorrelationStoreState>((set) => ({

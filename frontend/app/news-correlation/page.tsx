@@ -838,8 +838,6 @@ const INITIAL_SYMBOLS: SymbolData[] = [
   { symbol: "NDX", name: "NASDAQ", price: 0, change: 0, changePercent: 0 },
   { symbol: "DAX", name: "DAX 40", price: 0, change: 0, changePercent: 0 },
   { symbol: "USOIL", name: "WTI Crude", price: 0, change: 0, changePercent: 0 },
-  { symbol: "VIX", name: "VIX", price: 0, change: 0, changePercent: 0 },
-  { symbol: "DXY", name: "Dollar Index", price: 0, change: 0, changePercent: 0 },
 ];
 
 const TIMEFRAMES = [
@@ -1578,7 +1576,109 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
     fetchAIExplanationRef.current = fetchAIExplanation;
   }, [fetchAIExplanation]);
 
-  // Initialize chart
+  const handleChartCandleSelect = useCallback((selectedTimestampSeconds: number) => {
+    if (!Number.isFinite(selectedTimestampSeconds) || chartDataRef.current.length === 0) {
+      return;
+    }
+
+    const currentTimeframe = timeframeRef.current;
+    const timeframeSeconds = (TIMEFRAME_TO_MINUTES[currentTimeframe] || 60) * 60;
+    const candle = chartDataRef.current.reduce<ChartCandle | null>((closest, candidate) => {
+      if (!closest) {
+        return candidate;
+      }
+      return Math.abs(candidate.actualTimestamp - selectedTimestampSeconds) < Math.abs(closest.actualTimestamp - selectedTimestampSeconds)
+        ? candidate
+        : closest;
+    }, null);
+
+    if (!candle || Math.abs(candle.actualTimestamp - selectedTimestampSeconds) > Math.max(60, Math.floor(timeframeSeconds / 2))) {
+      return;
+    }
+
+    const priceChange = ((candle.close - candle.open) / candle.open) * 100;
+    setSelectedCandleNews({
+      candle,
+      news: [],
+      hasBigMove: Math.abs(priceChange) > 1.5,
+      moveType: priceChange > 0 ? "up" : priceChange < 0 ? "down" : "none",
+      movePercent: priceChange,
+      isLoadingNews: true,
+    });
+
+    if (Math.abs(priceChange) > 1.0) {
+      fetchAIExplanationRef.current(candle);
+    } else {
+      setAiExplanation(null);
+    }
+
+    const currentSymbol = selectedSymbolRef.current;
+    const buildNearbyNewsFallback = () => {
+      const minutes = TIMEFRAME_TO_MINUTES[currentTimeframe] || 60;
+      const candleStart = subMinutes(new Date(candle.actualTimestamp * 1000), minutes / 2);
+      const candleEnd = addMinutes(new Date(candle.actualTimestamp * 1000), minutes / 2);
+
+      return newsRef.current.filter((item) => {
+        const newsTime = new Date(item.timestamp);
+        return isWithinInterval(newsTime, { start: candleStart, end: candleEnd });
+      }).slice(0, 5).map((item) => toFallbackMatchedItem(item, currentSymbol));
+    };
+
+    const buildMarkerFallback = () => {
+      return mappedMarkersRef.current
+        .filter((marker) => String(marker.time) === String(candle.time))
+        .map((marker) => markerToMatchedItem(marker, currentSymbol));
+    };
+
+    const mergeMatchedItems = (...lists: MatchedNewsItem[][]) => {
+      const merged: MatchedNewsItem[] = [];
+      const seen = new Set<string>();
+
+      for (const list of lists) {
+        for (const item of list) {
+          const key = `${item.catalyst_type || "news"}:${item.event_id || item.id}:${item.timestamp}`;
+          if (seen.has(key)) {
+            continue;
+          }
+          seen.add(key);
+          merged.push(item);
+        }
+      }
+
+      return merged;
+    };
+
+    fetchNewsForCandle(
+      currentSymbol,
+      new Date(candle.actualTimestamp * 1000).toISOString(),
+      candle.open,
+      candle.close,
+      candle.high,
+      candle.low,
+      currentTimeframe,
+      currentLocaleRef.current
+    ).then((response) => {
+      const matchedNews = Array.isArray(response.news) ? response.news : [];
+      const fallbackNews = mergeMatchedItems(
+        matchedNews,
+        buildMarkerFallback(),
+        matchedNews.length === 0 ? buildNearbyNewsFallback() : []
+      );
+      setSelectedCandleNews((prev) => prev ? {
+        ...prev,
+        news: fallbackNews,
+        isLoadingNews: false,
+      } : null);
+    }).catch((error) => {
+      console.error("[CandleClick] Error fetching matched news:", error);
+      setSelectedCandleNews((prev) => prev ? {
+        ...prev,
+        news: mergeMatchedItems(buildMarkerFallback(), buildNearbyNewsFallback()),
+        isLoadingNews: false,
+      } : null);
+    });
+  }, []);
+
   useEffect(() => {
     if (!chartContainerRef.current || !mounted || chartRef.current) return;
 
@@ -1592,7 +1692,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       }
 
       return format(
-        new Date(timestamp * 1000),
+        new Date(Number(timestamp) * 1000),
         timeframeRef.current === "1d"
           ? (includeYear ? "MMM d, yyyy" : "MMM d")
           : (includeYear ? "MMM d, yyyy HH:mm" : "MMM d, HH:mm")
@@ -1608,7 +1708,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       }
 
       return format(
-        new Date(realTimestamp * 1000),
+        new Date(Number(realTimestamp) * 1000),
         timeframeRef.current === "1d" ? "MMM d" : "MMM d, HH:mm"
       );
     };
@@ -1619,20 +1719,20 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       layout: {
         background: { color: "#0a0a0a" },
         textColor: "#6b7280",
-        fontFamily: "Inter, system-ui, sans-serif"
+        fontFamily: "Inter, system-ui, sans-serif",
       },
       grid: {
         vertLines: { color: "rgba(255, 255, 255, 0.03)" },
-        horzLines: { color: "rgba(255, 255, 255, 0.03)" }
+        horzLines: { color: "rgba(255, 255, 255, 0.03)" },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
         vertLine: { color: "rgba(255, 255, 255, 0.1)", labelBackgroundColor: "#374151" },
-        horzLine: { color: "rgba(255, 255, 255, 0.1)", labelBackgroundColor: "#374151" }
+        horzLine: { color: "rgba(255, 255, 255, 0.1)", labelBackgroundColor: "#374151" },
       },
       rightPriceScale: {
         borderColor: "rgba(255, 255, 255, 0.1)",
-        scaleMargins: { top: 0.1, bottom: 0.1 }
+        scaleMargins: { top: 0.1, bottom: 0.1 },
       },
       localization: {
         timeFormatter: (time: Time) => formatActualChartDisplayTime(time, true),
@@ -1659,104 +1759,18 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
       wickDownColor: "#ef4444",
     });
 
-    // Click handler for candles - AKILLI HABER EŞLEŞTİRME
-    chart.subscribeClick((param) => {
+    const handleChartClick = (param: { time?: Time }) => {
       if (!param.time) {
         return;
       }
 
       const candle = findTimelineChartCandle(param.time as number | string, chartDataRef.current);
-
       if (candle) {
-        const priceChange = ((candle.close - candle.open) / candle.open) * 100;
-
-        // Önce temel bilgileri göster (haberler loading olacak)
-        setSelectedCandleNews({
-          candle,
-          news: [],
-          hasBigMove: Math.abs(priceChange) > 1.5,
-          moveType: priceChange > 0 ? 'up' : priceChange < 0 ? 'down' : 'none',
-          movePercent: priceChange,
-          isLoadingNews: true,
-        });
-
-        // Fetch AI explanation for big moves
-        if (Math.abs(priceChange) > 1.0) {
-          fetchAIExplanationRef.current(candle);
-        } else {
-          setAiExplanation(null);
-        }
-
-        const currentSymbol = selectedSymbolRef.current;
-        const currentTimeframe = timeframeRef.current;
-
-        // AKILLI HABER EŞLEŞTİRME - Backend API'sini çağır
-        const buildNearbyNewsFallback = () => {
-          const minutes = TIMEFRAME_TO_MINUTES[currentTimeframe] || 60;
-          const candleStart = subMinutes(new Date(candle.actualTimestamp * 1000), minutes / 2);
-          const candleEnd = addMinutes(new Date(candle.actualTimestamp * 1000), minutes / 2);
-
-          return newsRef.current.filter(n => {
-            const newsTime = new Date(n.timestamp);
-            return isWithinInterval(newsTime, { start: candleStart, end: candleEnd });
-          }).slice(0, 5).map((item) => toFallbackMatchedItem(item, currentSymbol));
-        };
-
-        const buildMarkerFallback = () => {
-          return mappedMarkersRef.current
-            .filter((marker) => String(marker.time) === String(candle.time))
-            .map((marker) => markerToMatchedItem(marker, currentSymbol));
-        };
-
-        const mergeMatchedItems = (...lists: MatchedNewsItem[][]) => {
-          const merged: MatchedNewsItem[] = [];
-          const seen = new Set<string>();
-
-          for (const list of lists) {
-            for (const item of list) {
-              const key = `${item.catalyst_type || "news"}:${item.event_id || item.id}:${item.timestamp}`;
-              if (seen.has(key)) {
-                continue;
-              }
-              seen.add(key);
-              merged.push(item);
-            }
-          }
-
-          return merged;
-        };
-
-        fetchNewsForCandle(
-          currentSymbol,
-          new Date(candle.actualTimestamp * 1000).toISOString(),
-          candle.open,
-          candle.close,
-          candle.high,
-          candle.low,
-          currentTimeframe,
-          currentLocaleRef.current
-        ).then(response => {
-          const matchedNews = Array.isArray(response.news) ? response.news : [];
-          const fallbackNews = mergeMatchedItems(
-            matchedNews,
-            buildMarkerFallback(),
-            matchedNews.length === 0 ? buildNearbyNewsFallback() : []
-          );
-          setSelectedCandleNews(prev => prev ? {
-            ...prev,
-            news: fallbackNews,
-            isLoadingNews: false,
-          } : null);
-        }).catch(error => {
-          console.error("[CandleClick] Error fetching matched news:", error);
-          setSelectedCandleNews(prev => prev ? {
-            ...prev,
-            news: mergeMatchedItems(buildMarkerFallback(), buildNearbyNewsFallback()),
-            isLoadingNews: false,
-          } : null);
-        });
+        handleChartCandleSelect(candle.actualTimestamp);
       }
-    });
+    };
+
+    chart.subscribeClick(handleChartClick);
 
     candlestickSeriesRef.current = candlestickSeries;
     chartRef.current = chart;
@@ -1770,13 +1784,13 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
     return () => {
       resizeObserver.disconnect();
+      chart.unsubscribeClick(handleChartClick);
       candlestickSeriesRef.current = null;
       chartRef.current = null;
       chart.remove();
     };
-  }, [mounted]);
+  }, [handleChartCandleSelect, mounted]);
 
-  // Update chart data
   useEffect(() => {
     if (!candlestickSeriesRef.current || !chartRef.current) {
       return;
@@ -2172,7 +2186,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
               <div
                 ref={chartContainerRef}
                 className="w-full h-full"
-                style={{ visibility: loading || error ? 'hidden' : 'visible' }}
+                style={{ visibility: loading || error ? "hidden" : "visible" }}
               />
 
               {/* Candle click tip */}
