@@ -2,6 +2,7 @@ import { getTimeframeMs, type NormalizableCandle } from "./normalizeCandles";
 
 export interface TimelineChartCandle extends NormalizableCandle {
   time: number | string;
+  displayTime: number | string;
   actualTimestamp: number;
   priceChange: number;
   displayIndex: number;
@@ -70,7 +71,7 @@ export interface TimelineMappedMarker {
   url?: string;
 }
 
-const DISPLAY_TIME_ORIGIN_SECONDS = 946684800;
+const LARGE_GAP_MULTIPLIER = 1.5;
 const URGENCY_WEIGHT: Record<string, number> = {
   breaking: 4,
   high: 3,
@@ -78,10 +79,11 @@ const URGENCY_WEIGHT: Record<string, number> = {
   low: 1,
 };
 
-function toTimelineChartCandle(candle: NormalizableCandle, time: number | string, displayIndex: number): TimelineChartCandle {
+function toTimelineChartCandle(candle: NormalizableCandle, displayTime: number | string, displayIndex: number): TimelineChartCandle {
   return {
     timestamp: candle.timestamp,
-    time,
+    time: displayTime,
+    displayTime,
     actualTimestamp: Math.floor(candle.timestamp / 1000),
     open: candle.open,
     high: candle.high,
@@ -138,6 +140,18 @@ function inferChartStepSeconds(candles: Array<Pick<TimelineChartCandle, "actualT
   });
 
   return bestStep;
+}
+
+function collapseInactiveGapSeconds(actualGapSeconds: number, nominalStepSeconds: number): number {
+  if (!Number.isFinite(actualGapSeconds) || actualGapSeconds <= 0) {
+    return nominalStepSeconds;
+  }
+
+  if (actualGapSeconds > nominalStepSeconds * LARGE_GAP_MULTIPLIER) {
+    return nominalStepSeconds;
+  }
+
+  return actualGapSeconds;
 }
 
 function resolveActualTimestampToCandle<T extends Pick<TimelineChartCandle, "time" | "actualTimestamp">>(
@@ -208,12 +222,23 @@ export function buildTimelineChartCandles(candles: NormalizableCandle[], timefra
   }
 
   const stepSeconds = Math.max(60, Math.floor(getTimeframeMs(timeframe) / 1000));
+  let previousDisplayTimestamp = Math.floor(candles[0].timestamp / 1000);
 
-  return candles.map((candle, index) => toTimelineChartCandle(
-    candle,
-    DISPLAY_TIME_ORIGIN_SECONDS + index * stepSeconds,
-    index
-  ));
+  return candles.map((candle, index) => {
+    const actualTimestamp = Math.floor(candle.timestamp / 1000);
+
+    if (index === 0) {
+      previousDisplayTimestamp = actualTimestamp;
+      return toTimelineChartCandle(candle, previousDisplayTimestamp, index);
+    }
+
+    const previousActualTimestamp = Math.floor(candles[index - 1].timestamp / 1000);
+    const actualGapSeconds = actualTimestamp - previousActualTimestamp;
+    const displayGapSeconds = collapseInactiveGapSeconds(actualGapSeconds, stepSeconds);
+
+    previousDisplayTimestamp += Math.max(1, displayGapSeconds);
+    return toTimelineChartCandle(candle, previousDisplayTimestamp, index);
+  });
 }
 
 export function buildActualTimeChartCandles(
