@@ -212,9 +212,12 @@ def classify_signal(
     target_profit_floor = target_hit_profit_floor(sig, default_symbol=default_symbol)
 
     def resolved_success_pips() -> float:
-        if realized is not None and realized > 0:
-            return max(realized, 0.0)
-        return max(target_profit_floor or 0.0, profit_pips, 0.0)
+        candidates = [
+            max(realized or 0.0, 0.0),
+            max(target_profit_floor or 0.0, 0.0),
+            max(profit_pips, 0.0),
+        ]
+        return max(candidates)
 
     if status == "stopped" and resolution_reason == "direction_flip":
         return "direction_flip", None, None
@@ -272,5 +275,5 @@ def summarize_scope(scope_signals: List[dict], *, default_symbol: Optional[str] 
         "active": active,
         "win_rate": round((completed / resolved * 100) if resolved > 0 else 0, 1),
         "net_pips": round(net_pips, 1),
-        "avg_pips": round(net_pips / scored_signals, 1) if scored_signals > 0 else 0,
+        "avg_pips": round(net_pips / resolved, 1) if resolved > 0 else 0,
     }

@@ -115,6 +115,27 @@ interface StrategyPerformanceResponse {
   error?: string;
 }
 
+interface SmcPerformanceResponse {
+  period_days: number;
+  smc_predictions_count: number;
+  outcomes_count: number;
+  eligible_outcomes_count: number;
+  timeframes: Record<string, Record<string, StrategyData>>;
+  symbols: Record<string, SymbolSummary>;
+  timeframe_order: string[];
+  timeframe_descriptions: Record<string, string>;
+  overall_summary: {
+    total_predictions: number;
+    resolved_signals: number;
+    leaders: {
+      quality: LeaderData;
+      scalping: LeaderData;
+      long_term: LeaderData;
+    };
+  };
+  error?: string;
+}
+
 interface Signal {
   id: string;
   symbol: string;
@@ -143,6 +164,12 @@ const STRATEGY_CONFIG: Record<string, { name: string; nameEn: string; icon: Comp
   full_power: { name: "Full Power", nameEn: "Full Power", icon: Zap, color: P.warn },
   aggressive: { name: "Agresif", nameEn: "Aggressive", icon: Flame, color: P.red },
   nasdaq_precision: { name: "NASDAQ Precision", nameEn: "NASDAQ Precision", icon: Crosshair, color: "#22D3EE" },
+};
+const SMC_TIMEFRAME_CONFIG: Record<string, { name: string; nameEn: string; icon: ComponentType<any>; color: string }> = {
+  "5m": { name: "5m", nameEn: "5m", icon: Zap, color: "#A855F7" },
+  "15m": { name: "15m", nameEn: "15m", icon: Target, color: "#8B5CF6" },
+  "1h": { name: "1h", nameEn: "1h", icon: TrendingUp, color: "#60A5FA" },
+  "4h": { name: "4h", nameEn: "4h", icon: Crosshair, color: "#22D3EE" },
 };
 
 const LEADER_META: Record<LeaderKey, { label: string; color: string }> = {
@@ -184,6 +211,13 @@ function getScopeLabel(scope?: string | null, locale: "tr" | "en" = "tr") {
   if (!scope) return "—";
   const config = STRATEGY_CONFIG[scope];
   if (!config) return scope;
+  return locale === "en" ? config.nameEn : config.name;
+}
+
+function getSmcTimeframeLabel(timeframe?: string | null, locale: "tr" | "en" = "tr") {
+  if (!timeframe) return "—";
+  const config = SMC_TIMEFRAME_CONFIG[timeframe];
+  if (!config) return timeframe;
   return locale === "en" ? config.nameEn : config.name;
 }
 
@@ -241,6 +275,12 @@ async function fetchStrategyPerformance(days: number): Promise<StrategyPerforman
   return res.json();
 }
 
+async function fetchSmcPerformance(days: number): Promise<SmcPerformanceResponse> {
+  const res = await fetch(`${API_BASE}/api/learning/smc-performance?days=${days}`);
+  if (!res.ok) throw new Error("Failed to fetch SMC performance");
+  return res.json();
+}
+
 async function fetchRecentSignals(days: number, symbol?: string, strategyScope?: string): Promise<RecentSignalsResponse> {
   const params = new URLSearchParams();
   params.set("days", String(days));
@@ -279,14 +319,22 @@ function StatCard({ label, value, tone = P.text }: { label: string; value: strin
   );
 }
 
-function LeaderCard({ title, leader }: { title: string; leader: LeaderData }) {
+function LeaderCard({
+  title,
+  leader,
+  labelFormatter,
+}: {
+  title: string;
+  leader: LeaderData;
+  labelFormatter?: (scope?: string | null) => string;
+}) {
   return (
     <div className="rounded-xl p-4" style={{ background: P.surface, border: `1px solid ${P.border}` }}>
       <div className="flex items-center justify-between gap-3">
         <div>
           <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase" }}>{title}</div>
           <div style={{ fontFamily: FONT, fontSize: 16, fontWeight: 700, color: P.text, marginTop: 6 }}>
-            {getScopeLabel(leader.scope)}
+            {(labelFormatter || ((scope?: string | null) => getScopeLabel(scope)))(leader.scope)}
           </div>
         </div>
         <div className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1" style={{ background: `${P.accent}10`, border: `1px solid ${P.accent}18` }}>
@@ -334,6 +382,92 @@ function StrategyRow({
   leaderBadges: LeaderKey[];
 }) {
   const config = STRATEGY_CONFIG[strategy];
+  if (!config) return null;
+
+  const Icon = config.icon;
+  const accColor = data.accuracy !== null && data.accuracy >= 60 ? P.green : data.accuracy !== null && data.accuracy >= 50 ? P.warn : P.red;
+  const highlighted = leaderBadges.length > 0;
+
+  return (
+    <tr
+      style={{
+        borderBottom: `1px solid ${P.border}`,
+        background: highlighted ? `${config.color}06` : "transparent",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = highlighted ? `${config.color}10` : "rgba(255,255,255,0.015)")}
+      onMouseLeave={(e) => (e.currentTarget.style.background = highlighted ? `${config.color}06` : "transparent")}
+    >
+      <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+        <div className="flex items-start gap-3">
+          <div className="rounded-md flex items-center justify-center shrink-0" style={{ width: 30, height: 30, background: `${config.color}10`, border: `1px solid ${config.color}18` }}>
+            <Icon className="w-3.5 h-3.5" style={{ color: config.color }} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.text }}>{locale === "en" ? config.nameEn : config.name}</span>
+              {leaderBadges.map((badge) => (
+                <span key={badge} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5" style={{ background: `${LEADER_META[badge].color}14`, border: `1px solid ${LEADER_META[badge].color}22` }}>
+                  <span style={{ fontFamily: FONT, fontSize: 9, color: LEADER_META[badge].color, fontWeight: 700 }}>{LEADER_META[badge].label}</span>
+                </span>
+              ))}
+            </div>
+            <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted, marginTop: 4 }}>
+              {data.total_predictions} signals · {data.resolved_signals} resolved · {data.expired} expired · {data.active} active
+            </div>
+          </div>
+        </div>
+      </td>
+      <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+        <div className="space-y-2">
+          <AccuracyBar value={data.accuracy} color={accColor} />
+          <div style={{ fontFamily: FONT, fontSize: 11, color: P.textSec }}>
+            TP {formatPercent(data.target_hit_rate)} · SL {formatPercent(data.stop_hit_rate)}
+          </div>
+        </div>
+      </td>
+      <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+        <div className="flex flex-wrap gap-1.5">
+          <ScorePill label="Q" value={data.quality_score} />
+          <ScorePill label="S" value={data.scalp_score} />
+          <ScorePill label="L" value={data.long_term_score} />
+        </div>
+      </td>
+      <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+        <div style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: data.net_pips >= 0 ? P.green : P.red }}>{formatPips(data.net_pips)}</div>
+        <div style={{ fontFamily: FONT, fontSize: 11, color: P.textSec, marginTop: 4 }}>Avg {formatPips(data.avg_pips)}</div>
+        <div style={{ fontFamily: FONT, fontSize: 11, color: P.muted, marginTop: 2 }}>Duration {formatDuration(data.avg_duration_minutes)}</div>
+      </td>
+      <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+        <div className="flex flex-wrap gap-1.5" style={{ maxWidth: 290 }}>
+          {TARGET_LEVELS.map((tpKey) => (
+            <span key={tpKey} className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5" style={{ background: `${P.green}10`, border: `1px solid ${P.green}18` }}>
+              <span style={{ fontFamily: FONT, fontSize: 9, fontWeight: 700, color: P.green }}>{tpKey}</span>
+              <span style={{ fontFamily: FONT, fontSize: 10, fontWeight: 600, color: P.textSec }}>{formatPercent(data.tp_hit_rates?.[tpKey])}</span>
+              <span style={{ fontFamily: FONT, fontSize: 9, color: P.muted }}>({data.tp_breakdown?.[tpKey] ?? 0})</span>
+            </span>
+          ))}
+        </div>
+      </td>
+      <td style={{ padding: "12px 14px", textAlign: "right" as const, verticalAlign: "top" }}>
+        <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.textSec }}>{formatPercent(data.avg_confidence)}</div>
+        <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted, marginTop: 4 }}>{data.completed}W / {data.stopped}L</div>
+      </td>
+    </tr>
+  );
+}
+
+function SmcTimeframeRow({
+  timeframe,
+  data,
+  locale,
+  leaderBadges,
+}: {
+  timeframe: string;
+  data: StrategyData;
+  locale: "tr" | "en";
+  leaderBadges: LeaderKey[];
+}) {
+  const config = SMC_TIMEFRAME_CONFIG[timeframe];
   if (!config) return null;
 
   const Icon = config.icon;
@@ -466,6 +600,18 @@ export default function StrategyPerformancePanel() {
   });
 
   const {
+    data: smcData,
+    isLoading: smcLoading,
+    error: smcError,
+    refetch: refetchSmc,
+  } = useQuery({
+    queryKey: ["smc-performance", days],
+    queryFn: () => fetchSmcPerformance(days),
+    staleTime: 60000,
+    refetchInterval: 300000,
+  });
+
+  const {
     data: signalsData,
     isLoading: signalsLoading,
     refetch: refetchSignals,
@@ -479,10 +625,11 @@ export default function StrategyPerformancePanel() {
 
   const handleRefresh = useCallback(() => {
     refetch();
+    refetchSmc();
     if (activeTab === "signals") {
       refetchSignals();
     }
-  }, [activeTab, refetch, refetchSignals]);
+  }, [activeTab, refetch, refetchSignals, refetchSmc]);
 
   useEffect(() => {
     window.addEventListener("dashboard-refresh", handleRefresh);
@@ -578,7 +725,7 @@ export default function StrategyPerformancePanel() {
           </div>
         </div>
 
-        {isLoading && activeTab === "performance" ? (
+        {(isLoading || smcLoading) && activeTab === "performance" ? (
           <div className="p-16 flex items-center justify-center" style={{ background: P.bg }}>
             <RefreshCw className="w-5 h-5 animate-spin" style={{ color: P.accent }} />
           </div>
@@ -704,6 +851,139 @@ export default function StrategyPerformancePanel() {
                 })}
               </div>
             </div>
+
+            {smcData && !smcData.error ? (
+              <div className="space-y-6" style={{ paddingTop: 12, borderTop: `1px solid ${P.border}` }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: `#A855F712`, border: `1px solid #A855F720` }}>
+                    <Crosshair className="w-4.5 h-4.5" style={{ color: "#A855F7", width: 18, height: 18 }} />
+                  </div>
+                  <div>
+                    <h4 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text, letterSpacing: "-0.01em" }}>Smart Money Zones Performance</h4>
+                    <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>All Smart Money Zones symbols and timeframes with the same TP/SL and lifecycle scoring logic.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3">
+                  <StatCard label="SMC Predictions" value={smcData.smc_predictions_count} tone={P.text} />
+                  <StatCard label="Resolved Signals" value={smcData.overall_summary.resolved_signals} tone={P.accent} />
+                  <StatCard label="Eligible Outcomes" value={smcData.eligible_outcomes_count} tone={P.warn} />
+                  <LeaderCard title="Best Signal Quality" leader={smcData.overall_summary.leaders.quality} labelFormatter={(scope) => getSmcTimeframeLabel(scope, locale)} />
+                  <LeaderCard title="Best Scalping Timeframe" leader={smcData.overall_summary.leaders.scalping} labelFormatter={(scope) => getSmcTimeframeLabel(scope, locale)} />
+                  <LeaderCard title="Best Long-Term Timeframe" leader={smcData.overall_summary.leaders.long_term} labelFormatter={(scope) => getSmcTimeframeLabel(scope, locale)} />
+                </div>
+
+                {SYMBOL_META.map(({ key: symKey, label, icon }) => {
+                  const symbolSummary = smcData.symbols?.[symKey];
+                  const symbolTimeframes = smcData.timeframes?.[symKey] || {};
+                  const orderedTimeframes = smcData.timeframe_order || Object.keys(SMC_TIMEFRAME_CONFIG);
+
+                  return (
+                    <div key={`smc-${symKey}`} className="space-y-3">
+                      <div className="flex flex-wrap items-center gap-3 p-2 -mx-2 rounded-lg" style={{ background: "rgba(255,255,255,0.015)" }}>
+                        <span style={{ fontSize: 16 }}>{icon}</span>
+                        <div>
+                          <h4 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text }}>{label}</h4>
+                          <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted, marginTop: 2 }}>
+                            {symbolSummary?.total_predictions ?? 0} SMC signals · {symbolSummary?.resolved_signals ?? 0} resolved
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 ml-auto">
+                          {(["quality", "scalping", "long_term"] as LeaderKey[]).map((leaderKey) => {
+                            const leader = symbolSummary?.leaders?.[leaderKey];
+                            return (
+                              <span key={leaderKey} className="inline-flex items-center gap-1 rounded px-2 py-1" style={{ background: `${LEADER_META[leaderKey].color}10`, border: `1px solid ${LEADER_META[leaderKey].color}18` }}>
+                                <span style={{ fontFamily: FONT, fontSize: 9, fontWeight: 700, color: LEADER_META[leaderKey].color }}>{LEADER_META[leaderKey].label}</span>
+                                <span style={{ fontFamily: FONT, fontSize: 10, color: P.text }}>{getSmcTimeframeLabel(leader?.scope, locale)}</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="overflow-x-auto rounded-lg" style={{ border: `1px solid ${P.border}` }}>
+                        <table className="w-full" style={{ minWidth: 980 }}>
+                          <thead>
+                            <tr style={{ background: P.surface }}>
+                              {["Timeframe", "Win Rate", "Edge Scores", "Pips / Duration", "TP Ladder", "Confidence"].map((header, index) => (
+                                <th
+                                  key={`${symKey}-${header}`}
+                                  style={{
+                                    padding: "10px 14px",
+                                    textAlign: index === 5 ? "right" as const : "left" as const,
+                                    fontFamily: FONT,
+                                    fontSize: 10,
+                                    fontWeight: 500,
+                                    color: P.muted,
+                                    letterSpacing: "0.08em",
+                                    textTransform: "uppercase",
+                                    borderBottom: `1px solid ${P.border}`,
+                                  }}
+                                >
+                                  {header}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {orderedTimeframes.length > 0 ? (
+                              orderedTimeframes.map((timeframe) => {
+                                const timeframeData = symbolTimeframes[timeframe] || getEmptyStrategyData(timeframe);
+                                const leaderBadges = (["quality", "scalping", "long_term"] as LeaderKey[]).filter(
+                                  (leaderKey) => symbolSummary?.leaders?.[leaderKey]?.scope === timeframe
+                                );
+
+                                return (
+                                  <SmcTimeframeRow
+                                    key={`${symKey}-${timeframe}`}
+                                    timeframe={timeframe}
+                                    data={timeframeData}
+                                    locale={locale}
+                                    leaderBadges={leaderBadges}
+                                  />
+                                );
+                              })
+                            ) : (
+                              <tr>
+                                <td colSpan={6} className="text-center py-8" style={{ color: P.muted, fontFamily: FONT, fontSize: 13 }}>
+                                  No Smart Money Zones history found for this symbol yet.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                <div>
+                  <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
+                    Smart Money Zones Timeframe Descriptions
+                  </p>
+                  <div className="flex flex-wrap gap-x-6 gap-y-2">
+                    {(smcData.timeframe_order || []).map((key) => {
+                      const config = SMC_TIMEFRAME_CONFIG[key];
+                      const desc = smcData.timeframe_descriptions?.[key];
+                      if (!desc) return null;
+                      return (
+                        <div key={`smc-desc-${key}`} className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full" style={{ background: config?.color || P.muted }} />
+                          <span style={{ fontFamily: FONT, fontSize: 11, color: P.textSec }}>
+                            <strong style={{ color: P.text }}>{getSmcTimeframeLabel(key, locale)}</strong> — {desc}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ) : smcError ? (
+              <div className="rounded-xl px-4 py-3" style={{ background: P.surface, border: `1px solid ${P.border}` }}>
+                <span style={{ fontFamily: FONT, fontSize: 12, color: P.red }}>Smart Money Zones performance data unavailable.</span>
+              </div>
+            ) : null}
           </div>
         ) : activeTab === "signals" ? (
           <div className="p-5 space-y-4" style={{ background: P.bg }}>

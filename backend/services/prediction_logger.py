@@ -91,11 +91,13 @@ def _has_active_signal(
     independently.
     """
     try:
-        result = client.table("prediction_logs").select("id, ml_direction").eq(
+        query = client.table("prediction_logs").select("id, ml_direction").eq(
             "symbol", symbol
         ).eq("model_type", model_type
-        ).eq("status", "active"
-        ).order("created_at", desc=True).limit(1).execute()
+        ).eq("status", "active")
+        if model_type == "smc":
+            query = query.eq("timeframe", _normalize_timeframe(timeframe))
+        result = query.order("created_at", desc=True).limit(1).execute()
         
         data = safe_get_data(result) or []
         if data:

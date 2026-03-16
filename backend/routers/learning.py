@@ -84,6 +84,13 @@ _ML_STRATEGY_DESCRIPTIONS = {
     "aggressive": "En esnek preset; daha hızlı ve daha fazla sinyal arar.",
     "nasdaq_precision": "NASDAQ odaklı yüksek doğruluk preset'i.",
 }
+_SMC_TIMEFRAME_ORDER = ["5m", "15m", "1h", "4h"]
+_SMC_TIMEFRAME_DESCRIPTIONS = {
+    "5m": "En hızlı Smart Money Zones akışı; mikro yapı değişimlerini izler.",
+    "15m": "Dengeli Smart Money Zones görünümü; kısa vadeli yapı ve OB/FVG takibi.",
+    "1h": "Ana intraday Smart Money Zones görünümü; daha güçlü structure sinyalleri.",
+    "4h": "Daha yavaş Smart Money Zones görünümü; major zone ve trend devamı odaklı.",
+}
 
 
 def _as_utc(dt: datetime) -> datetime:
@@ -1701,6 +1708,122 @@ async def get_strategy_performance(
     except Exception as e:
         import traceback
         logger.error(f"Strategy performance error: {e}\n{traceback.format_exc()}")
+        return {"error": str(e)}
+
+
+@router.get("/smc-performance")
+async def get_smc_performance(
+    days: int = Query(0, ge=0, le=1095, description="Number of days to analyze (0=all time)")
+):
+    if not is_db_available():
+        return {"error": "Database not available"}
+
+    client = get_supabase_client()
+    if client is None:
+        return {"error": "Database client not available"}
+
+    try:
+        cutoff = (_utc_now() - timedelta(days=days)) if days > 0 else _ALL_TIME_FLOOR
+        predictions = []
+        end = _utc_now()
+        cur = cutoff
+        window_days = 1 if 0 < days <= 90 else 7 if 90 < days <= 365 else 30
+        while cur < end:
+            ds = cur.replace(hour=0, minute=0, second=0, microsecond=0)
+            de = min(ds + timedelta(days=window_days), end)
+            batch = safe_get_data(client.table("prediction_logs").select(
+                "id, symbol, timeframe, strategy, model_type, ml_confidence, status, targets_hit, targets, "
+                "highest_profit_pips, lowest_drawdown_pips, stop_loss_pips, ml_entry_price, exit_price, "
+                "exit_time, ml_direction, factors, created_at, resolution_reason"
+            ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).order("created_at", desc=True).limit(1000).execute())
+            if batch:
+                predictions.extend(batch)
+            cur = de
+
+        grouped_signals = {
+            symbol: {timeframe: [] for timeframe in _SMC_TIMEFRAME_ORDER}
+            for symbol in _TRACKED_STRATEGY_SYMBOLS
+        }
+        all_smc_signals: List[dict] = []
+        outcomes_found = 0
+        eligible_outcomes_found = 0
+
+        for p in predictions:
+            sym = p.get("symbol")
+            if sym not in grouped_signals or normalize_model_type(p) != "smc":
+                continue
+
+            timeframe = normalize_timeframe(p.get("timeframe"))
+            if timeframe not in _SMC_TIMEFRAME_ORDER:
+                continue
+
+            grouped_signals[sym][timeframe].append(p)
+            all_smc_signals.append(p)
+
+            classified_status, _, _ = classify_signal(p, default_symbol=sym)
+            if classified_status in {None, "active", "direction_flip"}:
+                continue
+
+            outcomes_found += 1
+
+            if classified_status not in {"completed", "stopped"}:
+                continue
+
+            eligible_outcomes_found += 1
+
+        result_data: Dict[str, Dict[str, dict]] = {}
+        symbol_analysis: Dict[str, dict] = {}
+
+        for sym, timeframe_signals in grouped_signals.items():
+            timeframe_metrics = {
+                timeframe: _build_strategy_scope_metrics(timeframe, timeframe_signals[timeframe], symbol=sym)
+                for timeframe in _SMC_TIMEFRAME_ORDER
+            }
+            quality_leader = _pick_scope_leader(timeframe_metrics, "quality_score")
+            scalping_leader = _pick_scope_leader(timeframe_metrics, "scalp_score")
+            long_term_leader = _pick_scope_leader(timeframe_metrics, "long_term_score")
+            result_data[sym] = timeframe_metrics
+            symbol_analysis[sym] = {
+                "available_scopes": [timeframe for timeframe in _SMC_TIMEFRAME_ORDER if timeframe_metrics[timeframe]["total_predictions"] > 0],
+                "total_predictions": sum(metrics["total_predictions"] for metrics in timeframe_metrics.values()),
+                "resolved_signals": sum(metrics["resolved_signals"] for metrics in timeframe_metrics.values()),
+                "leaders": {
+                    "quality": quality_leader,
+                    "scalping": scalping_leader,
+                    "long_term": long_term_leader,
+                },
+            }
+
+        overall_timeframe_metrics = {
+            timeframe: _build_strategy_scope_metrics(
+                timeframe,
+                [sig for sig in all_smc_signals if normalize_timeframe(sig.get("timeframe")) == timeframe],
+            )
+            for timeframe in _SMC_TIMEFRAME_ORDER
+        }
+
+        return {
+            "period_days": days,
+            "smc_predictions_count": len(all_smc_signals),
+            "outcomes_count": outcomes_found,
+            "eligible_outcomes_count": eligible_outcomes_found,
+            "timeframes": result_data,
+            "symbols": symbol_analysis,
+            "timeframe_order": _SMC_TIMEFRAME_ORDER,
+            "timeframe_descriptions": _SMC_TIMEFRAME_DESCRIPTIONS,
+            "overall_summary": {
+                "total_predictions": len(all_smc_signals),
+                "resolved_signals": sum(metrics["resolved_signals"] for metrics in overall_timeframe_metrics.values()),
+                "leaders": {
+                    "quality": _pick_scope_leader(overall_timeframe_metrics, "quality_score"),
+                    "scalping": _pick_scope_leader(overall_timeframe_metrics, "scalp_score"),
+                    "long_term": _pick_scope_leader(overall_timeframe_metrics, "long_term_score"),
+                },
+            },
+        }
+    except Exception as e:
+        import traceback
+        logger.error(f"SMC performance error: {e}\n{traceback.format_exc()}")
         return {"error": str(e)}
 
 

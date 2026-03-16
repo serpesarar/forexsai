@@ -11,8 +11,10 @@ from datetime import datetime, timedelta
 from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Dict, Any, Optional, List
 
+from order_block_detector import OrderBlockConfig
 from database.supabase_client import get_supabase_client, is_db_available
 from services.ml_prediction_service import get_ml_prediction
+from services.order_block_service import service as order_block_service
 from services.ta_service import compute_ta_snapshot
 from services.data_fetcher import fetch_eod_candles, fetch_latest_price
 from services.marketaux_service import fetch_marketaux_headlines
@@ -42,6 +44,8 @@ _last_error_analysis: Optional[datetime] = None
 _last_prediction_log: Dict[str, datetime] = {}  # Per symbol
 _last_pulse_log: Dict[str, datetime] = {}  # Per symbol, for Pulse signal logging
 PULSE_LOG_INTERVAL = 180  # Log Pulse/EMEL signals every 3 minutes (sync with lifecycle)
+_last_smc_log: Optional[datetime] = None
+SMC_LOG_INTERVAL = 180
 _last_macro_update: Optional[datetime] = None
 _cached_macro: Dict[str, Any] = {}  # Cached macro data
 
@@ -66,6 +70,7 @@ NASDAQ_FAMILY_ML_AUTO_LOG_SCOPES: List[tuple[str, str]] = [
     ("nasdaq_precision", "ml:nasdaq_precision"),
 ]
 NASDAQ_FAMILY_SYMBOLS = {"NDX.INDX", "GDAXI.INDX"}
+SMC_AUTO_LOG_TIMEFRAMES = ["5m", "15m", "1h", "4h"]
 
 
 def _get_ml_auto_log_scopes(symbol: str) -> List[tuple[str, str]]:
@@ -605,6 +610,32 @@ async def log_pulse_signals_if_needed():
                 logger.error(f"{model_type} {tf} log error {symbol}: {e}")
 
 
+async def log_smc_signals_if_needed():
+    global _last_smc_log
+
+    now = datetime.utcnow()
+    if _last_smc_log and (now - _last_smc_log).total_seconds() < SMC_LOG_INTERVAL:
+        return
+
+    _last_smc_log = now
+
+    config = OrderBlockConfig(
+        fractal_period=2,
+        min_displacement_atr=1.0,
+        min_score=45,
+        zone_type="wick",
+        max_tests=3,
+    )
+
+    for symbol in TRACKED_SYMBOLS:
+        for timeframe in SMC_AUTO_LOG_TIMEFRAMES:
+            try:
+                await order_block_service.detect(symbol, timeframe, 500, config)
+                await asyncio.sleep(0.15)
+            except Exception as e:
+                logger.error(f"smc {symbol} {timeframe} log error: {e}")
+
+
 async def _check_and_log_pulse(symbol: str, model_type: str, client, timeframe: str = "5m"):
     """Run one model's analysis for one symbol and log if BUY/SELL."""
     try:
@@ -721,6 +752,7 @@ async def background_scheduler_loop():
             await log_predictions_if_needed()
             # Log Pulse/EMEL signals every 15 min
             await log_pulse_signals_if_needed()
+            await log_smc_signals_if_needed()
         except Exception as e:
             logger.error(f"Scheduler error: {e}")
         
@@ -874,6 +906,7 @@ async def background_scheduler_loop_with_rss():
             await log_predictions_if_needed()
             # Log Pulse/EMEL signals every 15 min
             await log_pulse_signals_if_needed()
+            await log_smc_signals_if_needed()
             # RSS aggregation every 7 minutes (cost optimized)
             await run_rss_aggregation_if_needed()
             # Pattern analysis twice daily (US open +1h, close -2h)
