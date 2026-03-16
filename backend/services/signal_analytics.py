@@ -202,6 +202,7 @@ def classify_signal(
     default_symbol: Optional[str] = None,
 ) -> Tuple[Optional[str], Optional[bool], Optional[float]]:
     status = (sig.get("status") or "unknown").lower().strip()
+    resolution_reason = (sig.get("resolution_reason") or "").lower().strip()
     profit_pips = max(coerce_float(sig.get("highest_profit_pips"), 0.0) or 0.0, 0.0)
     loss_pips = abs(coerce_float(sig.get("lowest_drawdown_pips"), 0.0) or 0.0)
     stop_loss_pips = abs(coerce_float(sig.get("stop_loss_pips"), 0.0) or 0.0)
@@ -215,6 +216,8 @@ def classify_signal(
             return max(realized, 0.0)
         return max(target_profit_floor or 0.0, profit_pips, 0.0)
 
+    if status == "stopped" and resolution_reason == "direction_flip":
+        return "direction_flip", None, None
     if status == "completed" or (status == "stopped" and any_target_hit):
         actual_profit = resolved_success_pips()
         return "completed", True, actual_profit
@@ -245,7 +248,7 @@ def summarize_scope(scope_signals: List[dict], *, default_symbol: Optional[str] 
         if scoped_status == "active":
             active += 1
             continue
-        if scoped_status is None:
+        if scoped_status is None or scoped_status == "direction_flip":
             continue
 
         scored_signals += 1

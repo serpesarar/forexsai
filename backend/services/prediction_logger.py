@@ -15,6 +15,15 @@ from services.error_analysis_service import save_candle_snapshot
 
 logger = logging.getLogger(__name__)
 
+def _utc_iso(value: Optional[datetime] = None) -> str:
+    dt = value or datetime.now(timezone.utc)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    else:
+        dt = dt.astimezone(timezone.utc)
+    return dt.isoformat().replace("+00:00", "Z")
+
+
 _ML_SCOPE_ALIASES = {
     "main": "main",
     "ml": "main",
@@ -82,29 +91,24 @@ def _has_active_signal(
     independently.
     """
     try:
-        result = client.table("prediction_logs").select("id, ml_direction, timeframe").eq(
+        result = client.table("prediction_logs").select("id, ml_direction").eq(
             "symbol", symbol
         ).eq("model_type", model_type
         ).eq("status", "active"
-        ).limit(20).execute()
+        ).order("created_at", desc=True).limit(1).execute()
         
-        data = safe_get_data(result)
-        desired_timeframe = _normalize_timeframe(timeframe)
-        desired_direction = (direction or "").upper().strip()
-
-        for row in data:
+        data = safe_get_data(result) or []
+        if data:
+            row = data[0]
             row_direction = (row.get("ml_direction") or "").upper().strip()
-            row_timeframe = _normalize_timeframe(row.get("timeframe"))
-            if row_direction == desired_direction and row_timeframe == desired_timeframe:
-                signal_id = row.get("id")
-                logger.debug(
-                    "Active signal exists: %s %s %s dir=%s",
-                    symbol,
-                    model_type,
-                    desired_timeframe,
-                    desired_direction,
-                )
-                return True, signal_id, row_direction
+            signal_id = row.get("id")
+            logger.debug(
+                "Active signal exists: %s %s dir=%s",
+                symbol,
+                model_type,
+                row_direction,
+            )
+            return True, signal_id, row_direction
         
         return False, None, None
     except Exception as e:
@@ -112,21 +116,34 @@ def _has_active_signal(
         return False, None, None
 
 
-def _close_existing_signal(client, signal_id: str, new_direction: str, reason: str = "direction_change"):
+def _close_existing_signal(
+    client,
+    signal_id: str,
+    new_direction: str,
+    exit_price: Optional[float],
+    reason: str = "direction_flip",
+):
     """
     Close existing signal when direction changes.
     This allows new signals to open when model flips direction.
     """
     try:
-        from datetime import datetime
+        existing_factors: Dict[str, Any] = {}
+        existing_result = client.table("prediction_logs").select("factors").eq("id", signal_id).limit(1).execute()
+        existing_rows = safe_get_data(existing_result) or []
+        if existing_rows and isinstance(existing_rows[0].get("factors"), dict):
+            existing_factors = dict(existing_rows[0]["factors"])
+
+        existing_factors["close_reason"] = reason
+        existing_factors["replaced_by_direction"] = new_direction
+
         update_data = {
             "status": "stopped",
-            "exit_time": datetime.utcnow().isoformat() + "Z",
-            "exit_price": None,  # Will be filled by lifecycle
-            "factors": {
-                "close_reason": reason,
-                "replaced_by_direction": new_direction,
-            }
+            "resolution_reason": reason,
+            "reentry_unlocked": True,
+            "exit_time": _utc_iso(),
+            "exit_price": exit_price,
+            "factors": existing_factors,
         }
         result = client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
         if result and safe_get_data(result):
@@ -387,6 +404,8 @@ async def log_prediction(
         # ACTIVE SIGNAL HANDLING: Direction Change Logic
         # ═══════════════════════════════════════════════════════════════════════
         normalized_timeframe = _normalize_timeframe(timeframe)
+        new_signal_entry_price = ml.get("entry_price")
+        entry_price = new_signal_entry_price or 0
         has_active, active_signal_id, active_direction = _has_active_signal(
             client,
             symbol,
@@ -396,14 +415,38 @@ async def log_prediction(
         )
         
         if has_active:
-            logger.debug(
-                "Active %s signal already exists for %s %s %s",
+            if active_direction == direction:
+                logger.debug(
+                    "Active %s signal already exists for %s %s",
+                    direction,
+                    symbol,
+                    effective_model_type,
+                )
+                return None
+
+            if not active_signal_id:
+                logger.warning(
+                    "Active signal lookup for %s %s returned no id; skipping insert",
+                    symbol,
+                    effective_model_type,
+                )
+                return None
+
+            closed = _close_existing_signal(
+                client,
+                active_signal_id,
                 direction,
-                symbol,
-                effective_model_type,
-                normalized_timeframe,
+                new_signal_entry_price,
+                reason="direction_flip",
             )
-            return None
+            if not closed:
+                logger.warning(
+                    "Failed to close active signal %s for %s %s; skipping insert",
+                    active_signal_id[:8],
+                    symbol,
+                    effective_model_type,
+                )
+                return None
 
         # ═══════════════════════════════════════════════════════════════════════
         # STATIC TARGETS: Fixed pip-based TP/SL (Reverted from ATR)
@@ -417,7 +460,6 @@ async def log_prediction(
         )
         
         cfg = get_symbol_config(symbol)
-        entry_price = ml.get("entry_price") or 0
         
         # Calculate actual price targets for DB storage using fixed pip values
         if entry_price and entry_price > 0:

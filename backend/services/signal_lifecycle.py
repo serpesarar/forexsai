@@ -290,6 +290,86 @@ async def _get_session_high_low(symbol: str, minutes: int = 5) -> Dict[str, Opti
 
     return {"high": None, "low": None, "current": None}
 
+def _extract_candle_timestamp_ms(candle: Dict[str, Any]) -> Optional[float]:
+    for key in ("timestamp", "time"):
+        value = candle.get(key)
+        if isinstance(value, (int, float)):
+            return float(value)
+    for key in ("date", "datetime"):
+        value = candle.get(key)
+        if isinstance(value, str) and value.strip():
+            try:
+                return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp() * 1000
+            except Exception:
+                continue
+    return None
+
+
+async def _get_price_window_since_signal(
+    symbol: str,
+    created_dt: Optional[datetime],
+    evaluation_window: int,
+    fallback_current: Optional[float] = None,
+) -> Dict[str, Optional[float]]:
+    current = fallback_current
+    if current is None:
+        try:
+            price_val = await fetch_latest_price(symbol)
+            if price_val:
+                current = float(price_val)
+        except Exception as e:
+            logger.warning(f"lifecycle.price_error | symbol={symbol} error={e}")
+
+    try:
+        age_minutes = evaluation_window
+        if created_dt is not None:
+            age_minutes = max((_utc_now() - created_dt).total_seconds() / 60, 1)
+
+        candle_limit = max(12, min(72, int(max(age_minutes, evaluation_window) / 5) + 4))
+        candles = await fetch_intraday_candles(symbol, interval="5m", limit=candle_limit)
+
+        if candles:
+            relevant_candles = list(candles)
+
+            if created_dt is not None:
+                cutoff_ms = (created_dt - timedelta(minutes=5)).timestamp() * 1000
+                filtered = []
+                for candle in candles:
+                    candle_ts = _extract_candle_timestamp_ms(candle)
+                    if candle_ts is None or candle_ts >= cutoff_ms:
+                        filtered.append(candle)
+                if filtered:
+                    relevant_candles = filtered
+
+            highs = [float(c["high"]) for c in relevant_candles if c.get("high") is not None]
+            lows = [float(c["low"]) for c in relevant_candles if c.get("low") is not None]
+            closes = [float(c["close"]) for c in relevant_candles if c.get("close") is not None]
+
+            window_current = closes[-1] if closes else current
+            if window_current is not None:
+                current = window_current
+
+            if highs and lows:
+                return {
+                    "high": max(highs + ([current] if current is not None else [])),
+                    "low": min(lows + ([current] if current is not None else [])),
+                    "current": current,
+                }
+    except Exception as e:
+        logger.warning(f"lifecycle.price_window_error | symbol={symbol} error={e}")
+
+    if current is not None:
+        return {"high": current, "low": current, "current": current}
+
+    return {"high": None, "low": None, "current": None}
+
+
+def _is_favorable_vs_entry(entry_price: float, current_price: float, direction: str) -> bool:
+    if direction == "BUY":
+        return current_price > entry_price
+    if direction == "SELL":
+        return current_price < entry_price
+    return False
 
 # ─── Helper: capture current indicators for failure analysis ─────────────────
 
@@ -388,15 +468,23 @@ def _update_signal_status(client, signal_id: str, status: str, exit_price=None):
 async def _process_signal(client, signal: dict) -> Optional[str]:
     """
     Process one active signal:
-      1. Get session high/low (wick capture)
-      2. Calculate profit pips
-      3. Check target hits
-      4. Check stop loss
+      1. Get post-entry price window (high/low/current)
+      2. Calculate profit/drawdown
+      3. Check TP hits
+      4. Check SL
       5. Insert signal_check record
       6. Update prediction_logs
-      7. If stopped → create failure autopsy
+      7. If stopped -> create failure autopsy
 
-    Returns: new status if changed, None otherwise
+    Rules:
+      - TP1 / TP2 / TP3 hit => signal counts as successful
+      - If TP1/TP2/TP3 hit and later SL hits => still completed
+      - TP4 hit => completed
+      - At evaluation-window end, resolve by TP hit or entry-vs-current comparison
+      - Avoid blind expired outcomes where possible
+
+    Returns:
+      new status if changed, otherwise None
     """
     signal_id = signal["id"]
     symbol = signal["symbol"]
@@ -405,41 +493,275 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     timeframe = _normalize_timeframe(signal.get("timeframe"))
     evaluation_window = _evaluation_window_minutes(timeframe)
 
-    # Parse JSON string fields from DB (safe normalization)
     parse_json_fields(signal, ["targets", "targets_hit", "factors"])
 
+    # Invalid tradeable signal -> stopped, not expired
     if entry_price is None or direction not in {"BUY", "SELL"}:
-        # Can't track HOLD signals; mark expired
-        _update_signal_status(client, signal_id, "expired", entry_price)
-        return "expired"
+        _update_signal_status(client, signal_id, "stopped", entry_price)
+        logger.info(
+            f"lifecycle.invalid_signal | signal={signal_id[:8]} symbol={symbol} "
+            f"direction={direction} entry={entry_price} -> stopped"
+        )
+        return "stopped"
 
     created_dt = _parse_created_at(signal.get("created_at"))
 
-    # ── 1. Get current spot price (DataHub-backed canonical source) ──
-    current = None
-    try:
-        price_val = await fetch_latest_price(symbol)
-        if price_val:
-            current = float(price_val)
-    except Exception as e:
-        logger.warning(f"lifecycle.price_error | symbol={symbol} error={e}")
+    # ------------------------------------------------------------------
+    # Helper: target rank extraction (TP1 / TP2 / TP3 / TP4 ...)
+    # ------------------------------------------------------------------
+    def _target_rank(tp_name: str) -> Optional[int]:
+        if not tp_name:
+            return None
+        name = str(tp_name).upper().strip()
+        digits = "".join(ch for ch in name if ch.isdigit())
+        if not digits:
+            return None
+        try:
+            return int(digits)
+        except Exception:
+            return None
+
+    # ------------------------------------------------------------------
+    # 1. Post-entry price window (better than single latest price only)
+    # ------------------------------------------------------------------
+    price_window = await _get_price_window_since_signal(symbol, created_dt, evaluation_window)
+    current = _coerce_float(price_window.get("current"))
+    session_high = _coerce_float(price_window.get("high"))
+    session_low = _coerce_float(price_window.get("low"))
 
     if current is None or current <= 0:
         try:
             if created_dt is not None:
                 age_minutes = (_utc_now() - created_dt).total_seconds() / 60
                 if age_minutes >= evaluation_window:
-                    _update_signal_status(client, signal_id, "expired", entry_price)
-                    logger.info(
-                        f"⏰ Signal {signal_id[:8]} {symbol} expired without price update "
-                        f"(age={age_minutes:.0f}m)"
+                    targets_hit_raw = parse_json_field(signal.get("targets_hit"), {})
+                    if not isinstance(targets_hit_raw, dict):
+                        targets_hit_raw = {}
+
+                    tp1_3_hit_fallback = any(
+                        bool(hit) and (_target_rank(tp) in {1, 2, 3})
+                        for tp, hit in targets_hit_raw.items()
                     )
-                    return "expired"
+                    tp4_hit_fallback = any(
+                        bool(hit) and (_target_rank(tp) == 4)
+                        for tp, hit in targets_hit_raw.items()
+                    )
+
+                    fallback_status = "completed" if (tp1_3_hit_fallback or tp4_hit_fallback) else "stopped"
+                    _update_signal_status(client, signal_id, fallback_status, entry_price)
+
+                    logger.info(
+                        f"⏰ Signal {signal_id[:8]} {symbol} resolved without fresh price "
+                        f"(age={age_minutes:.0f}m) -> {fallback_status} "
+                        f"(tp1_3={tp1_3_hit_fallback}, tp4={tp4_hit_fallback})"
+                    )
+                    return fallback_status
         except Exception:
             pass
 
         logger.warning(f"No price for {symbol}, skipping signal {signal_id[:8]}")
         return None
+
+    is_stale = _is_price_stale(symbol, current)
+    if is_stale:
+        logger.info(
+            f"lifecycle.price_stale | signal={signal_id[:8]} symbol={symbol} "
+            f"price={current:.2f} unchanged for 1min+"
+        )
+
+    if session_high is None:
+        session_high = current
+    if session_low is None:
+        session_low = current
+
+    # ------------------------------------------------------------------
+    # 2. Profit / drawdown
+    # ------------------------------------------------------------------
+    if direction == "BUY":
+        profit_pips = pips_from_price_change(current - entry_price, symbol)
+    else:
+        profit_pips = pips_from_price_change(entry_price - current, symbol)
+
+    best_pips = max(profit_pips, 0)
+    worst_pips = min(profit_pips, 0)
+
+    prev_high = _coerce_float(signal.get("highest_profit_pips"), 0.0) or 0.0
+    prev_low = _coerce_float(signal.get("lowest_drawdown_pips"), 0.0) or 0.0
+    new_high = max(prev_high, best_pips)
+    new_low = min(prev_low, worst_pips)
+
+    # ------------------------------------------------------------------
+    # 3. Targets
+    # ------------------------------------------------------------------
+    target_prices = _resolve_target_prices(signal, entry_price, direction, symbol, timeframe)
+
+    targets_hit = signal.get("targets_hit") or {}
+    if not isinstance(targets_hit, dict):
+        targets_hit = {}
+
+    for tp_name, tp_price in target_prices.items():
+        if targets_hit.get(tp_name):
+            continue
+
+        if direction == "BUY" and session_high is not None and session_high >= tp_price:
+            targets_hit[tp_name] = True
+            logger.info(
+                f"✅ Signal {signal_id[:8]} {symbol} {direction}: "
+                f"{tp_name} HIT @ high={session_high:.2f} (target={tp_price:.2f})"
+            )
+        elif direction == "SELL" and session_low is not None and session_low <= tp_price:
+            targets_hit[tp_name] = True
+            logger.info(
+                f"✅ Signal {signal_id[:8]} {symbol} {direction}: "
+                f"{tp_name} HIT @ low={session_low:.2f} (target={tp_price:.2f})"
+            )
+
+    tp1_3_hit = any(
+        bool(hit) and (_target_rank(tp) in {1, 2, 3})
+        for tp, hit in targets_hit.items()
+    )
+    tp4_hit = any(
+        bool(hit) and (_target_rank(tp) == 4)
+        for tp, hit in targets_hit.items()
+    )
+    any_target_hit = any(bool(v) for v in targets_hit.values()) if targets_hit else False
+
+    # ------------------------------------------------------------------
+    # 4. Stop loss
+    # ------------------------------------------------------------------
+    sl_price = calculate_stoploss_price(entry_price, direction, symbol, timeframe)
+    resolved_sl_pips = abs(pips_from_price_change(abs(entry_price - sl_price), symbol))
+    hit_stop = False
+
+    if direction == "BUY" and session_low is not None and session_low <= sl_price:
+        hit_stop = True
+    elif direction == "SELL" and session_high is not None and session_high >= sl_price:
+        hit_stop = True
+
+    target_status = {tp_name: bool(targets_hit.get(tp_name)) for tp_name in target_prices}
+
+    # ------------------------------------------------------------------
+    # 5. signal_checks audit row
+    # ------------------------------------------------------------------
+    check_record = {
+        "signal_id": signal_id,
+        "check_time": _utc_iso(),
+        "current_price": round(current, 4),
+        "session_high": round(session_high, 4) if session_high is not None else None,
+        "session_low": round(session_low, 4) if session_low is not None else None,
+        "profit_pips": round(profit_pips, 2),
+        "cumulative_high_pips": round(new_high, 2),
+        "cumulative_low_pips": round(new_low, 2),
+        "target_status": json.dumps(target_status),
+    }
+    try:
+        client.table("signal_checks").insert(check_record).execute()
+    except Exception as e:
+        logger.error(f"Failed to insert signal_check for {signal_id[:8]}: {e}")
+
+    # ------------------------------------------------------------------
+    # 6. Resolution decision
+    # ------------------------------------------------------------------
+    new_status = None
+    exit_price = None
+    resolution_reason = None
+
+    # If TP4 hit, it's fully completed
+    if tp4_hit:
+        new_status = "completed"
+        exit_price = current
+        resolution_reason = "tp4_hit"
+        logger.info(
+            f"🎯 Signal {signal_id[:8]} {symbol} {direction} completed via TP4 hit"
+        )
+
+    # TP1/TP2/TP3 hit means success, even if SL is later touched
+    elif hit_stop and tp1_3_hit:
+        new_status = "completed"
+        exit_price = current
+        resolution_reason = "tp1_3_hit_then_sl"
+        logger.info(
+            f"✅ Signal {signal_id[:8]} {symbol} {direction} "
+            f"TP1/2/3 hit then SL -> completed"
+        )
+
+    # If all known targets are hit, also completed
+    elif target_prices and all(target_status.get(tp) for tp in target_prices):
+        new_status = "completed"
+        exit_price = current
+        resolution_reason = "all_targets_hit"
+        logger.info(f"🎯 Signal {signal_id[:8]} {symbol} {direction} ALL TARGETS HIT!")
+
+    # SL before any favorable target hit -> stopped
+    elif hit_stop:
+        new_status = "stopped"
+        exit_price = sl_price
+        resolution_reason = "sl_hit"
+        logger.info(f"🛑 Signal {signal_id[:8]} {symbol} {direction} STOPPED @ {sl_price:.2f}")
+
+    # Window-end resolution
+    else:
+        if created_dt is not None:
+            try:
+                age_minutes = (_utc_now() - created_dt).total_seconds() / 60
+                if age_minutes >= evaluation_window:
+                    favorable_vs_entry = _is_favorable_vs_entry(entry_price, current, direction)
+                    if tp1_3_hit or favorable_vs_entry:
+                        new_status = "completed"
+                        resolution_reason = "window_resolve_positive"
+                    else:
+                        new_status = "stopped"
+                        resolution_reason = "window_resolve_negative"
+
+                    exit_price = current
+                    logger.info(
+                        f"⏰ Signal {signal_id[:8]} {symbol} resolved after {age_minutes:.0f}m "
+                        f"-> {new_status} "
+                        f"(tp1_3={tp1_3_hit}, tp4={tp4_hit}, "
+                        f"favorable={favorable_vs_entry}, stale={is_stale})"
+                    )
+            except Exception as exp_err:
+                logger.warning(f"Failed to check signal age for {signal_id[:8]}: {exp_err}")
+
+    # ------------------------------------------------------------------
+    # 7. prediction_logs update
+    # ------------------------------------------------------------------
+    update_data: Dict[str, Any] = {
+    "highest_profit_pips": round(new_high, 2),
+    "lowest_drawdown_pips": round(new_low, 2),
+    "targets_hit": dict(targets_hit),
+    "targets": dict(target_prices),
+    "stop_loss_pips": round(resolved_sl_pips, 2),
+    "resolution_reason": resolution_reason,
+    }
+
+    # İstersen ve DB kolonun varsa bunu aç:
+    # if resolution_reason:
+    #     update_data["resolution_reason"] = resolution_reason
+
+    if new_status:
+        update_data["status"] = new_status
+        update_data["exit_price"] = round(exit_price, 4) if exit_price is not None else None
+        update_data["exit_time"] = _utc_iso()
+
+    try:
+        result = client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
+        if result and safe_get_data(result) and new_status:
+            logger.info(
+                f"✅ Signal {signal_id[:8]} updated: "
+                f"status={new_status}, reason={resolution_reason}, "
+                f"high={new_high:.1f}p, low={new_low:.1f}p"
+            )
+    except Exception as e:
+        logger.error(f"Failed to update signal {signal_id[:8]}: {e}")
+
+    # ------------------------------------------------------------------
+    # 8. Failure autopsy
+    # ------------------------------------------------------------------
+    if new_status == "stopped":
+        await _create_failure_autopsy(client, signal, targets_hit, current)
+
+    return new_status
 
     # ── 1b. Check if price is stale (market closed or EODHD returning old data)
     is_stale = _is_price_stale(symbol, current)
@@ -907,7 +1229,7 @@ def _record_job_state(client, job_name: str, summary: Dict[str, Any]):
 
 async def cleanup_old_signals():
     """
-    1. Force-expire active signals that exceed timeframe-aware cleanup grace
+    1. Resolve active signals that exceed timeframe-aware cleanup grace
     2. Keep signal_checks retention bounded
     """
     if not is_db_available():
@@ -918,44 +1240,40 @@ async def cleanup_old_signals():
         return
 
     try:
-        result = client.table("prediction_logs").select("id, created_at, symbol, timeframe").eq(
+        result = client.table("prediction_logs").select("*").eq(
             "status", "active"
         ).order("created_at", desc=False).limit(200).execute()
 
         stale = safe_get_data(result) or []
-        expired_count = 0
+        resolved_count = 0
+
         for s in stale:
             try:
                 created_dt = _parse_created_at(s.get("created_at"))
                 if created_dt is None:
                     continue
+
                 age_minutes = (_utc_now() - created_dt).total_seconds() / 60
                 if age_minutes < _cleanup_grace_minutes(s.get("timeframe")):
                     continue
-                upd_result = client.table("prediction_logs").eq("id", s["id"]).update({
-                    "status": "expired",
-                    "exit_time": _utc_iso(),
-                    "exit_price": None,
-                }).execute()
-                if upd_result and safe_get_data(upd_result):
-                    expired_count += 1
+
+                new_status = await _process_signal(client, s)
+                if new_status in {"completed", "stopped"}:
+                    resolved_count += 1
             except Exception as upd_err:
-                logger.warning(f"Failed to expire signal {s['id'][:8]}: {upd_err}")
+                logger.warning(f"Failed to resolve signal {s['id'][:8]}: {upd_err}")
 
-        if expired_count:
-            logger.info(f"🧹 Force-expired {expired_count} stale signals beyond cleanup grace")
+        if resolved_count:
+            logger.info(f"🧹 Resolved {resolved_count} stale active signals beyond cleanup grace")
 
-        # Delete signal_checks older than 30 days
         archive_cutoff = _utc_iso(_utc_now() - timedelta(days=ARCHIVE_AFTER_DAYS))
         client.table("signal_checks").select("id").lt(
             "created_at", archive_cutoff
         ).limit(500).execute()
-        # Note: actual deletion would need a delete call; for now just log
         logger.debug("Cleanup cycle completed")
 
     except Exception as e:
         logger.error(f"Cleanup error: {e}")
-
 
 # ═════════════════════════════════════════════════════════════════════════════
 #  Dashboard Data: aggregated stats per model
