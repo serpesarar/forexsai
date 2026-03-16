@@ -2455,7 +2455,7 @@ async def get_model_timeframe_analysis(
             "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
             "ml_target_price, ml_stop_price, model_type, strategy, status, "
             "targets_hit, highest_profit_pips, lowest_drawdown_pips, "
-            "exit_price, exit_time, stop_loss_pips, targets, created_at"
+            "exit_price, exit_time, stop_loss_pips, targets, created_at, resolution_reason"
         ).gte("created_at", cutoff_iso).neq("status", "active")
         
         # Optional filters (symbol and timeframe are safe — no .or_() needed)
@@ -3143,7 +3143,7 @@ async def get_model_detail_analytics(
             result = client.table("prediction_logs").select(
                 "id, symbol, timeframe, ml_direction, ml_confidence, status, "
                 "ml_entry_price, exit_price, stop_loss_pips, created_at, highest_profit_pips, "
-                "lowest_drawdown_pips, targets_hit, model_type, strategy"
+                "lowest_drawdown_pips, targets_hit, targets, model_type, strategy, resolution_reason"
             ).eq("symbol", symbol).gte(
                 "created_at", _utc_iso(day_start)
             ).lt(
@@ -3280,7 +3280,7 @@ async def get_model_detail_analytics(
             if status == "active":
                 active += 1
                 continue
-            if status is None:
+            if status is None or status == "direction_flip":
                 continue
 
             if status == "completed":

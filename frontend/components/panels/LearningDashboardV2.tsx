@@ -51,7 +51,7 @@ const LEGACY_MODEL_TIMEFRAMES: Record<string, string[]> = {
   emel_inverse: ["5m", "15m", "1h", "4h"],
   pulse1: ["5m", "15m"],
   pulse2: ["5m", "15m", "1h"],
-  pulse3: ["1h"],
+  pulse3: ["5m"],
 };
 
 function getTheme(model: string) {
@@ -342,7 +342,7 @@ function ModelCard({ model, stats, onSelectSymbol }: { model: string; stats: Mod
           {Object.keys(stats.symbols).length > 0 && (
             <div>
               <p style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>
-                Timeframe Breakdown (Live)
+                Latest Signal Snapshot
               </p>
               <div className="rounded-lg overflow-x-auto scrollbar-hide" style={{ background: "var(--bg-surface)", border: `1px solid var(--border-subtle)` }}>
                 {matrixLoading ? (
@@ -351,7 +351,7 @@ function ModelCard({ model, stats, onSelectSymbol }: { model: string; stats: Mod
                   </div>
                 ) : !matrixData || Object.keys(matrixData).length === 0 ? (
                   <div className="p-6 text-center text-[12px]" style={{ color: "var(--text-muted)" }}>
-                    No active signals found.
+                    No recent signals found.
                   </div>
                 ) : (
                   <table className="w-full text-left border-collapse min-w-[500px]">

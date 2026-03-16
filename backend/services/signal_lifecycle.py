@@ -32,7 +32,7 @@ from services.signal_analytics import (
     classify_signal,
     normalize_model_type,
     normalize_timeframe as normalize_analytics_timeframe,
-    parse_targets_hit,
+    normalized_targets_hit,
 )
 from utils.json_helpers import parse_json_field, parse_json_fields
 
@@ -1304,8 +1304,18 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
         if days > 0:
             start_date = _utc_now() - timedelta(days=days)
         else:
-            # All time: start from 90 days ago (covers all historical data)
-            start_date = _utc_now() - timedelta(days=90)
+            oldest_result = client.table("prediction_logs").select(
+                "created_at"
+            ).order("created_at", desc=False).limit(1).execute()
+            oldest_rows = safe_get_data(oldest_result) or []
+            oldest_created_at = oldest_rows[0].get("created_at") if oldest_rows else None
+            oldest_dt = None
+            if oldest_created_at:
+                try:
+                    oldest_dt = datetime.fromisoformat(str(oldest_created_at).replace("Z", "+00:00"))
+                except Exception:
+                    oldest_dt = None
+            start_date = _as_utc(oldest_dt) if oldest_dt else (_utc_now() - timedelta(days=90))
 
         end_date = _utc_now()
         current = start_date
@@ -1321,7 +1331,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                 "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
                 "model_type, status, targets_hit, highest_profit_pips, "
                 "lowest_drawdown_pips, exit_price, exit_time, stop_loss_pips, "
-                "targets, created_at, strategy"
+                "targets, created_at, strategy, resolution_reason"
             ).neq("status", "active").gte(
                 "created_at", day_start_iso
             ).lt(
@@ -1340,7 +1350,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
             "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
             "model_type, status, targets_hit, highest_profit_pips, "
             "lowest_drawdown_pips, exit_price, exit_time, stop_loss_pips, "
-            "targets, created_at, strategy"
+            "targets, created_at, strategy, resolution_reason"
         ).neq("status", "active").gte("created_at", today_start).limit(1000).execute()
         today_batch = safe_get_data(result)
         if today_batch:
@@ -1408,7 +1418,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                 if tf and tf in m["timeframes"]:
                     m["timeframes"][tf]["total_loss_pips"] += loss
 
-            th = parse_targets_hit(sig.get("targets_hit"))
+            th = normalized_targets_hit(sig, default_symbol=sym)
             if status in {"completed", "stopped"} and th:
                 for tp_name, hit in th.items():
                     if hit:
