@@ -108,7 +108,7 @@ async def get_prediction(
                     symbol=symbol,
                     context=context,
                     analysis=analysis,
-                    timeframe="1d",
+                    timeframe="30m",
                     strategy=strategy
                 )
         except Exception as e:

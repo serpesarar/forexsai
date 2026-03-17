@@ -513,7 +513,7 @@ async def log_predictions_if_needed():
                     symbol=symbol,
                     context=context,
                     analysis=analysis,
-                    timeframe="1d",
+                    timeframe="30m",
                     strategy=strategy_scope,
                     model_type=scoped_model_type,
                 )

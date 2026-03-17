@@ -885,7 +885,7 @@ async def get_detailed_analysis(symbol: str, log_to_db: bool = True) -> Dict[str
                 symbol=context.get("symbol", symbol),
                 context=context,
                 analysis=analysis,
-                timeframe="1d"
+                timeframe="30m"
             )
         except Exception as e:
             logger.warning(f"Failed to log prediction to database: {e}")

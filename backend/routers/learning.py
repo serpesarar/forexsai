@@ -1609,7 +1609,7 @@ async def get_strategy_performance(
             batch = safe_get_data(client.table("prediction_logs").select(
                 "id, symbol, strategy, ml_confidence, status, targets_hit, targets, "
                 "model_type, timeframe, created_at, highest_profit_pips, lowest_drawdown_pips, "
-                "stop_loss_pips, ml_entry_price, exit_price, exit_time, ml_direction, factors"
+                "stop_loss_pips, ml_entry_price, exit_price, exit_time, ml_direction, factors, resolution_reason"
             ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).order("created_at", desc=True).limit(1000).execute())
             if batch:
                 predictions.extend(batch)
