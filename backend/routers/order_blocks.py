@@ -17,7 +17,14 @@ router = APIRouter(prefix="/api/order-blocks", tags=["order_blocks"])
 @router.post("/detect", response_model=OrderBlockDetectResponse)
 async def detect_order_blocks(payload: OrderBlockDetectRequest) -> OrderBlockDetectResponse:
     config = OrderBlockConfig(**(payload.config.dict() if payload.config else {}))
-    result = await service.detect(payload.symbol, payload.timeframe, payload.limit, config)
+    result = await service.detect(
+        payload.symbol,
+        payload.timeframe,
+        payload.limit,
+        config,
+        use_cache=True,
+        log_signals=False,
+    )
     return OrderBlockDetectResponse(**result)
 
 

@@ -40,13 +40,23 @@ class OrderBlockService:
     def _utc_now() -> datetime:
         return datetime.now(UTC)
 
-    async def detect(self, symbol: str, timeframe: str, limit: int, config: OrderBlockConfig) -> dict:
+    async def detect(
+        self,
+        symbol: str,
+        timeframe: str,
+        limit: int,
+        config: OrderBlockConfig,
+        *,
+        use_cache: bool = True,
+        log_signals: bool = True,
+    ) -> dict:
         # bump cache version whenever detection inputs/logic changes
         cache_key = f"v4:{symbol}:{timeframe}:{limit}:{config}"  # noqa: S608 - cache key
-        with self._lock:
-            cached = self._cache.get(cache_key)
-            if cached and self._utc_now() - cached.timestamp < self.ttl:
-                return cached.payload
+        if use_cache:
+            with self._lock:
+                cached = self._cache.get(cache_key)
+                if cached and self._utc_now() - cached.timestamp < self.ttl:
+                    return cached.payload
 
         candles = await self._load_candles(symbol=symbol, timeframe=timeframe, limit=limit)
         
@@ -86,7 +96,8 @@ class OrderBlockService:
             "timestamp": self._utc_now().isoformat().replace("+00:00", "Z"),
         }
 
-        await self._log_smc_signal(symbol=symbol, timeframe=timeframe, candles=candles, combined_signal=combined_signal)
+        if log_signals:
+            await self._log_smc_signal(symbol=symbol, timeframe=timeframe, candles=candles, combined_signal=combined_signal)
 
         with self._lock:
             self._cache[cache_key] = CacheEntry(timestamp=self._utc_now(), payload=payload)

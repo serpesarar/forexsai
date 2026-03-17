@@ -23,7 +23,11 @@ def _load_background_scheduler_module(module_name: str):
             "services.data_fetcher": SimpleNamespace(fetch_eod_candles=AsyncMock(), fetch_latest_price=AsyncMock()),
             "services.marketaux_service": SimpleNamespace(fetch_marketaux_headlines=AsyncMock()),
             "services.outcome_tracker": SimpleNamespace(check_pending_outcomes=AsyncMock(), check_multi_target_outcome=AsyncMock()),
-            "services.error_analysis_service": SimpleNamespace(check_and_analyze_failed_predictions=AsyncMock()),
+            "services.error_analysis_service": SimpleNamespace(
+                check_and_analyze_failed_predictions=AsyncMock(),
+                save_candle_snapshot=AsyncMock(),
+            ),
+            "services.order_block_service": SimpleNamespace(service=SimpleNamespace(detect=AsyncMock())),
             "services.signal_lifecycle": SimpleNamespace(check_lifecycle_if_needed=AsyncMock()),
         },
     ):
@@ -75,6 +79,28 @@ async def test_log_pulse_signals_respects_interval_guard_after_first_run():
         await scheduler.log_pulse_signals_if_needed()
 
     assert check_and_log.await_count == 4
+
+
+@pytest.mark.asyncio
+async def test_log_smc_signals_bypasses_cache_and_enables_logging():
+    scheduler = _load_background_scheduler_module("test_background_scheduler_smc")
+    scheduler.TRACKED_SYMBOLS = ["XAUUSD"]
+    scheduler._last_smc_log = None
+
+    detect_mock = AsyncMock()
+    sleep_mock = AsyncMock()
+
+    with patch.object(scheduler, "order_block_service", SimpleNamespace(detect=detect_mock)), patch.object(
+        scheduler.asyncio, "sleep", sleep_mock
+    ):
+        await scheduler.log_smc_signals_if_needed()
+
+    assert detect_mock.await_count == len(scheduler.SMC_AUTO_LOG_TIMEFRAMES)
+    for args in detect_mock.await_args_list:
+        assert args.args[0] == "XAUUSD"
+        assert args.args[2] == 500
+        assert args.kwargs["use_cache"] is False
+        assert args.kwargs["log_signals"] is True
 
 
 @pytest.mark.asyncio

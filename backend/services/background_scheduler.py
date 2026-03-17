@@ -630,7 +630,14 @@ async def log_smc_signals_if_needed():
     for symbol in TRACKED_SYMBOLS:
         for timeframe in SMC_AUTO_LOG_TIMEFRAMES:
             try:
-                await order_block_service.detect(symbol, timeframe, 500, config)
+                await order_block_service.detect(
+                    symbol,
+                    timeframe,
+                    500,
+                    config,
+                    use_cache=False,
+                    log_signals=True,
+                )
                 await asyncio.sleep(0.15)
             except Exception as e:
                 logger.error(f"smc {symbol} {timeframe} log error: {e}")

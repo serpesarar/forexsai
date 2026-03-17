@@ -103,3 +103,58 @@ async def test_detect_skips_logging_for_neutral_smc_signal():
         await service.detect("NDX.INDX", "5m", 200, module.OrderBlockConfig())
 
     mock_log.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_detect_can_disable_signal_logging_for_read_only_panel_calls():
+    module = _load_order_block_service_module("test_order_block_service_read_only")
+    service = module.OrderBlockService(ttl_seconds=300)
+
+    with patch.object(service, "_load_candles", AsyncMock(return_value=[SimpleNamespace(close=2345.6)])), patch.object(
+        module.MarketStructureAnalyzer, "analyze", return_value=_FakeStructure("bullish")
+    ), patch.object(module.OrderBlockDetector, "detect", return_value=[]), patch.object(
+        service,
+        "_combine_signals",
+        AsyncMock(return_value={"action": "BUY", "confidence": 0.78, "reasoning": ["Bullish structure"]}),
+    ), patch.object(module, "log_prediction", AsyncMock(return_value="pred-1")) as mock_log:
+        payload = await service.detect(
+            "XAUUSD",
+            "15m",
+            200,
+            module.OrderBlockConfig(),
+            log_signals=False,
+        )
+
+    assert payload["combined_signal"]["action"] == "BUY"
+    mock_log.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_detect_can_bypass_cache_for_scheduler_logging():
+    module = _load_order_block_service_module("test_order_block_service_cache_bypass")
+    service = module.OrderBlockService(ttl_seconds=300)
+
+    with patch.object(service, "_load_candles", AsyncMock(return_value=[SimpleNamespace(close=2345.6)])), patch.object(
+        module.MarketStructureAnalyzer, "analyze", return_value=_FakeStructure("bullish")
+    ), patch.object(module.OrderBlockDetector, "detect", return_value=[]), patch.object(
+        service,
+        "_combine_signals",
+        AsyncMock(return_value={"action": "BUY", "confidence": 0.78, "reasoning": ["Bullish structure"]}),
+    ), patch.object(module, "log_prediction", AsyncMock(return_value="pred-1")) as mock_log:
+        await service.detect(
+            "XAUUSD",
+            "15m",
+            200,
+            module.OrderBlockConfig(),
+            log_signals=False,
+        )
+        await service.detect(
+            "XAUUSD",
+            "15m",
+            200,
+            module.OrderBlockConfig(),
+            use_cache=False,
+            log_signals=True,
+        )
+
+    mock_log.assert_awaited_once()
