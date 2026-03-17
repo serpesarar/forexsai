@@ -248,6 +248,51 @@ async def test_strategy_performance_resolves_real_strategy_scopes_from_strategy_
 
 
 @pytest.mark.asyncio
+async def test_strategy_performance_excludes_low_confidence_scoped_ml_rows_from_scope_metrics():
+    learning_module = _load_learning_module("test_learning_strategy_router_scope_thresholds")
+    now = datetime.now(timezone.utc)
+    rows = [
+        _prediction_row(
+            id="main-001",
+            strategy=None,
+            model_type="ml:main",
+            ml_confidence=51,
+            created_at=_iso(now - timedelta(hours=1)),
+            exit_time=_iso(now - timedelta(minutes=20)),
+        ),
+        _prediction_row(
+            id="balanced-low-001",
+            strategy="balanced",
+            model_type="ml:balanced",
+            ml_confidence=54.9,
+            created_at=_iso(now - timedelta(hours=2)),
+            exit_time=_iso(now - timedelta(hours=1, minutes=20)),
+        ),
+        _prediction_row(
+            id="balanced-good-002",
+            strategy="balanced",
+            model_type="ml:balanced",
+            ml_confidence=55.0,
+            created_at=_iso(now - timedelta(hours=3)),
+            exit_time=_iso(now - timedelta(hours=2, minutes=20)),
+        ),
+    ]
+    client = _FakeClient(rows)
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ):
+        payload = await learning_module.get_strategy_performance(days=1)
+
+    ndx_scopes = payload["strategies"]["NDX.INDX"]
+    assert payload["predictions_count"] == 3
+    assert payload["ml_predictions_count"] == 2
+    assert ndx_scopes["main"]["total_predictions"] == 1
+    assert ndx_scopes["balanced"]["total_predictions"] == 1
+    assert payload["symbols"]["NDX.INDX"]["available_scopes"] == ["main", "balanced"]
+
+
+@pytest.mark.asyncio
 async def test_strategy_performance_tp_rates_are_independent_and_exclude_expired_from_denominator():
     learning_module = _load_learning_module("test_learning_strategy_router_independent_tp")
     now = datetime.now(timezone.utc)

@@ -12,6 +12,7 @@ from uuid import UUID
 
 from database.supabase_client import get_supabase_client, is_db_available
 from services.error_analysis_service import save_candle_snapshot
+from services.ml_scope_policy import is_ml_scope_confidence_eligible, normalize_ml_scope
 
 logger = logging.getLogger(__name__)
 
@@ -24,36 +25,9 @@ def _utc_iso(value: Optional[datetime] = None) -> str:
     return dt.isoformat().replace("+00:00", "Z")
 
 
-_ML_SCOPE_ALIASES = {
-    "main": "main",
-    "ml": "main",
-    "raw_ml": "main",
-    "base_ml": "main",
-    "ultra_safe": "ultra_safe",
-    "ultrasafe": "ultra_safe",
-    "balanced": "balanced",
-    "full_power": "full_power",
-    "fullpower": "full_power",
-    "aggressive": "aggressive",
-    "nasdaq_precision": "nasdaq_precision",
-    "nasdaqprecision": "nasdaq_precision",
-}
-
-# ─── Uses target_config.py as single source of truth for TP/SL levels ──────────
-
-
 def _normalize_timeframe(value: Optional[str]) -> str:
     normalized = (value or "").lower().strip()
     return normalized if normalized else "15m"
-
-
-def _normalize_ml_scope(value: Optional[str]) -> Optional[str]:
-    normalized = (value or "").lower().strip()
-    if not normalized:
-        return None
-    if normalized.startswith("ml:"):
-        normalized = normalized.split(":", 1)[1].strip()
-    return _ML_SCOPE_ALIASES.get(normalized)
 
 
 def _resolve_logging_identity(
@@ -61,8 +35,8 @@ def _resolve_logging_identity(
     strategy: Optional[str],
 ) -> Tuple[str, Optional[str]]:
     normalized_model_type = (model_type or "").lower().strip()
-    normalized_strategy = _normalize_ml_scope(strategy)
-    scoped_from_model = _normalize_ml_scope(normalized_model_type)
+    normalized_strategy = normalize_ml_scope(strategy)
+    scoped_from_model = normalize_ml_scope(normalized_model_type)
 
     if normalized_model_type.startswith("ml:") and scoped_from_model:
         return f"ml:{scoped_from_model}", normalized_strategy or scoped_from_model
@@ -346,6 +320,16 @@ async def log_prediction(
             return None
         
         effective_model_type, resolved_strategy = _resolve_logging_identity(model_type, strategy)
+        raw_confidence = float(ml.get("confidence", 0.0))
+        scoped_strategy = normalize_ml_scope(resolved_strategy or effective_model_type)
+        if scoped_strategy and not is_ml_scope_confidence_eligible(scoped_strategy, raw_confidence):
+            logger.debug(
+                "Skipping low-confidence ML scope signal for %s (%s @ %.1f%%)",
+                symbol,
+                scoped_strategy,
+                raw_confidence,
+            )
+            return None
         
         # ═══════════════════════════════════════════════════════════════════════
         # FILTERS: Session, Correlation, News
@@ -492,7 +476,7 @@ async def log_prediction(
             "symbol": symbol,
             "timeframe": normalized_timeframe,
             "ml_direction": direction,
-            "ml_confidence": float(ml.get("confidence", 0.0)),
+            "ml_confidence": raw_confidence,
             "ml_probability_up": ml.get("probability_up"),
             "ml_probability_down": ml.get("probability_down"),
             "ml_target_price": ml.get("target_price"),

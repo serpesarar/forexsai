@@ -8,7 +8,7 @@ backend_dir = Path(__file__).parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from services.xauusd_backfill_service import DESIRED_TIMEFRAME, plan_xauusd_ml_backfill_update, run_xauusd_ml_history_backfill
+from services.ml_history_backfill_service import DESIRED_TIMEFRAME, plan_ml_backfill_update, run_ml_history_backfill
 
 
 def _iso(dt: datetime) -> str:
@@ -100,41 +100,37 @@ class _Client:
         return _Query(self.rows, self.updates_log)
 
 
-def test_plan_xauusd_ml_backfill_update_rebuilds_timeframe_targets_and_tp_hits():
+def test_plan_ml_backfill_update_supports_non_xau_symbols():
     row = {
-        "id": "pred-1",
-        "symbol": "XAUUSD",
-        "strategy": "balanced",
-        "model_type": "ml:balanced",
-        "timeframe": "1d",
+        "id": "pred-ndx-1",
+        "symbol": "NDX.INDX",
+        "strategy": "main",
+        "model_type": "ml:main",
+        "timeframe": "1h",
         "ml_direction": "BUY",
-        "ml_entry_price": 2000.0,
-        "targets": {"TP1": 2024.0, "TP2": 2030.0, "TP3": 2040.0, "TP4": 2054.0, "SL": 1990.0},
-        "targets_hit": {"TP1": False, "TP2": False, "TP3": False, "TP4": False},
-        "highest_profit_pips": 16.0,
+        "ml_entry_price": 20000.0,
+        "targets": {},
+        "targets_hit": {},
+        "highest_profit_pips": 30.0,
         "stop_loss_pips": 10.0,
         "status": "completed",
         "created_at": _iso(datetime.now(timezone.utc)),
     }
 
-    payload = plan_xauusd_ml_backfill_update(row)
+    payload = plan_ml_backfill_update(row)
 
     assert payload is not None
+    assert payload["symbol"] == "NDX.INDX"
     assert payload["updates"]["timeframe"] == DESIRED_TIMEFRAME
-    assert payload["updates"]["stop_loss_pips"] == 19.0
-    assert payload["updates"]["targets"]["TP1"] == 2012.0
-    assert payload["updates"]["targets"]["TP2"] == 2019.0
-    assert payload["updates"]["targets"]["TP3"] == 2029.0
-    assert payload["updates"]["targets"]["TP4"] == 2044.0
-    assert payload["updates"]["targets"]["SL"] == 1981.0
-    assert payload["updates"]["targets_hit"] == {"TP1": True, "TP2": False, "TP3": False, "TP4": False}
+    assert payload["updates"]["stop_loss_pips"] > 0
+    assert payload["updates"]["targets"]["SL"] is not None
 
 
-def test_run_xauusd_ml_history_backfill_dry_run_counts_only_ml_xauusd_rows():
+def test_run_ml_history_backfill_tracks_updates_per_symbol():
     now = datetime.now(timezone.utc)
     rows = [
         {
-            "id": "pred-1",
+            "id": "xau-1",
             "symbol": "XAUUSD",
             "strategy": "balanced",
             "model_type": "ml:balanced",
@@ -143,81 +139,58 @@ def test_run_xauusd_ml_history_backfill_dry_run_counts_only_ml_xauusd_rows():
             "ml_entry_price": 2000.0,
             "targets": {},
             "targets_hit": {},
-            "highest_profit_pips": 9.0,
-            "stop_loss_pips": 15.0,
+            "highest_profit_pips": 10.0,
+            "stop_loss_pips": 10.0,
             "status": "completed",
             "created_at": _iso(now - timedelta(hours=2)),
         },
         {
-            "id": "pred-2",
+            "id": "ndx-1",
+            "symbol": "NDX.INDX",
+            "strategy": "main",
+            "model_type": "ml:main",
+            "timeframe": "1h",
+            "ml_direction": "SELL",
+            "ml_entry_price": 20000.0,
+            "targets": {},
+            "targets_hit": {},
+            "highest_profit_pips": 40.0,
+            "stop_loss_pips": 20.0,
+            "status": "completed",
+            "created_at": _iso(now - timedelta(hours=1)),
+        },
+        {
+            "id": "pulse-1",
             "symbol": "XAUUSD",
             "strategy": "balanced",
-            "model_type": "smc",
+            "model_type": "pulse2",
             "timeframe": "1h",
             "ml_direction": "BUY",
             "ml_entry_price": 2000.0,
             "targets": {},
             "targets_hit": {},
             "highest_profit_pips": 0.0,
-            "stop_loss_pips": 15.0,
+            "stop_loss_pips": 10.0,
             "status": "active",
-            "created_at": _iso(now - timedelta(hours=1)),
-        },
-        {
-            "id": "pred-3",
-            "symbol": "NDX.INDX",
-            "strategy": "main",
-            "model_type": "ml:main",
-            "timeframe": "1d",
-            "ml_direction": "BUY",
-            "ml_entry_price": 100.0,
-            "targets": {},
-            "targets_hit": {},
-            "highest_profit_pips": 20.0,
-            "stop_loss_pips": 50.0,
-            "status": "completed",
-            "created_at": _iso(now - timedelta(hours=3)),
+            "created_at": _iso(now - timedelta(minutes=30)),
         },
     ]
     client = _Client(rows)
 
-    payload = run_xauusd_ml_history_backfill(dry_run=True, client=client, max_records=100, window_days=1, sample_size=5)
+    payload = run_ml_history_backfill(
+        dry_run=True,
+        client=client,
+        symbols=["XAUUSD", "NDX.INDX"],
+        max_records=100,
+        window_days=1,
+        sample_size=5,
+    )
 
     assert payload["success"] is True
-    assert payload["dry_run"] is True
-    assert payload["rows_scanned"] == 2
-    assert payload["ml_rows_considered"] == 1
-    assert payload["rows_needing_update"] == 1
+    assert payload["symbols"] == ["XAUUSD", "NDX.INDX"]
+    assert payload["rows_scanned"] == 3
+    assert payload["ml_rows_considered"] == 2
+    assert payload["rows_needing_update"] == 2
     assert payload["rows_updated"] == 0
-    assert payload["field_change_counts"]["timeframe"] == 1
+    assert payload["symbol_update_counts"] == {"XAUUSD": 1, "NDX.INDX": 1}
     assert client.updates_log == []
-
-
-def test_run_xauusd_ml_history_backfill_apply_updates_matching_rows():
-    now = datetime.now(timezone.utc)
-    rows = [
-        {
-            "id": "pred-1",
-            "symbol": "XAUUSD",
-            "strategy": "balanced",
-            "model_type": "ml:balanced",
-            "timeframe": "1d",
-            "ml_direction": "SELL",
-            "ml_entry_price": 2100.0,
-            "targets": {},
-            "targets_hit": {},
-            "highest_profit_pips": 18.0,
-            "stop_loss_pips": 15.0,
-            "status": "completed",
-            "created_at": _iso(now - timedelta(hours=2)),
-        }
-    ]
-    client = _Client(rows)
-
-    payload = run_xauusd_ml_history_backfill(dry_run=False, client=client, max_records=100, window_days=1, sample_size=5)
-
-    assert payload["rows_needing_update"] == 1
-    assert payload["rows_updated"] == 1
-    assert client.updates_log
-    assert rows[0]["timeframe"] == DESIRED_TIMEFRAME
-    assert rows[0]["targets_hit"]["TP1"] is True

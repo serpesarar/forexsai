@@ -27,6 +27,7 @@ from services.learning_analyzer import (
     save_insights_to_db,
     get_active_insights,
 )
+from services.ml_scope_policy import is_ml_scope_confidence_eligible, normalize_ml_scope
 from services.adaptive_tp_sl import (
     calculate_adaptive_tp_sl,
     get_learned_adjustments,
@@ -56,26 +57,6 @@ logger = logging.getLogger(__name__)
 _ALL_TIME_FLOOR = datetime(2000, 1, 1, tzinfo=timezone.utc)
 _TRACKED_STRATEGY_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]
 _ML_STRATEGY_ORDER = ["main", "ultra_safe", "balanced", "full_power", "aggressive", "nasdaq_precision"]
-_ML_STRATEGY_ALIASES = {
-    "main": "main",
-    "ml": "main",
-    "ml:main": "main",
-    "raw_ml": "main",
-    "base_ml": "main",
-    "ultra_safe": "ultra_safe",
-    "ultrasafe": "ultra_safe",
-    "ml:ultra_safe": "ultra_safe",
-    "balanced": "balanced",
-    "ml:balanced": "balanced",
-    "full_power": "full_power",
-    "fullpower": "full_power",
-    "ml:full_power": "full_power",
-    "aggressive": "aggressive",
-    "ml:aggressive": "aggressive",
-    "nasdaq_precision": "nasdaq_precision",
-    "nasdaqprecision": "nasdaq_precision",
-    "ml:nasdaq_precision": "nasdaq_precision",
-}
 _ML_STRATEGY_DESCRIPTIONS = {
     "main": "Ham/orijinal ML akışı; preset filtre uygulanmadan loglanan ana model.",
     "ultra_safe": "Kritik + teknik katmanlarla en seçici preset.",
@@ -154,13 +135,20 @@ def _resolve_ml_strategy_scope(sig: dict) -> Optional[str]:
                 candidates.append(normalized)
 
     for candidate in candidates:
-        resolved = _ML_STRATEGY_ALIASES.get(candidate)
-        if not resolved and candidate.startswith("ml:"):
-            resolved = _ML_STRATEGY_ALIASES.get(candidate.split(":", 1)[1].strip())
+        resolved = normalize_ml_scope(candidate)
         if resolved and resolved != "main":
             return resolved
 
     return "main"
+
+
+def _resolved_eligible_ml_strategy_scope(sig: dict) -> Optional[str]:
+    scope = _resolve_ml_strategy_scope(sig)
+    if scope is None:
+        return None
+    if not is_ml_scope_confidence_eligible(scope, sig.get("ml_confidence")):
+        return None
+    return scope
 
 
 def _build_strategy_scope_metrics(scope: str, scope_signals: List[dict], *, symbol: Optional[str] = None) -> dict:
@@ -1629,7 +1617,7 @@ async def get_strategy_performance(
             if sym not in grouped_signals:
                 continue
 
-            scope = _resolve_ml_strategy_scope(p)
+            scope = _resolved_eligible_ml_strategy_scope(p)
             if scope is None:
                 continue
 
@@ -1674,12 +1662,14 @@ async def get_strategy_performance(
             best[sym] = {
                 "strategy": best_scope,
                 "accuracy": scope_metrics.get(best_scope, {}).get("win_rate") if best_scope else None,
+                "total_predictions": scope_metrics.get(best_scope, {}).get("total_predictions") if best_scope else None,
+                "resolved_signals": scope_metrics.get(best_scope, {}).get("resolved_signals") if best_scope else None,
             }
 
         overall_scope_metrics = {
             scope: _build_strategy_scope_metrics(
                 scope,
-                [sig for sig in all_ml_signals if _resolve_ml_strategy_scope(sig) == scope],
+                [sig for sig in all_ml_signals if _resolved_eligible_ml_strategy_scope(sig) == scope],
             )
             for scope in _ML_STRATEGY_ORDER
         }
@@ -2376,7 +2366,7 @@ async def get_recent_signals_endpoint(
 
         if strategy_scope:
             strategy_scope = strategy_scope.lower().strip()
-            signals = [s for s in signals if _resolve_ml_strategy_scope(s) == strategy_scope]
+            signals = [s for s in signals if _resolved_eligible_ml_strategy_scope(s) == strategy_scope]
 
         signals = signals[:limit]
 
@@ -2393,7 +2383,7 @@ async def get_recent_signals_endpoint(
             entry["status"] = normalized_status or raw_status or "unknown"
             entry["pnl_pips"] = round(pnl_pips, 2) if pnl_pips is not None else None
             entry["normalized_model"] = _normalize_model_type(sig)
-            entry["strategy_scope"] = _resolve_ml_strategy_scope(sig)
+            entry["strategy_scope"] = _resolved_eligible_ml_strategy_scope(sig)
 
             enhanced.append(entry)
         
