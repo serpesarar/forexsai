@@ -11,6 +11,8 @@ import hashlib
 import time
 from typing import Literal, Optional, Dict, Any
 
+from utils.market_hours import is_new_york_market_open
+
 logger = logging.getLogger(__name__)
 
 # In-memory cache (TTL = 2 hours for cost optimization)
@@ -290,6 +292,14 @@ async def analyze_with_deepseek(
 
     if not settings.deepseek_api_key:
         return {"error": "DeepSeek API key not configured", "analysis_type": analysis_type}
+
+    if not is_new_york_market_open():
+        return {
+            "error": "DeepSeek disabled outside New York market hours",
+            "analysis_type": analysis_type,
+            "symbol": symbol,
+            "decision": {"direction": "NO_TRADE"},
+        }
 
     prompts = {
         "master": SYSTEM_PROMPT,

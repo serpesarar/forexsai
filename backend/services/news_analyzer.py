@@ -15,6 +15,8 @@ import aiohttp
 from functools import lru_cache
 import redis.asyncio as redis
 
+from utils.market_hours import is_new_york_market_open
+
 # Configuration
 DEEPSEEK_API_KEY = os.getenv("DEEP_SEEKR1", "")
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
@@ -282,6 +284,9 @@ class NewsAnalyzer:
         """Translate text using DeepSeek AI"""
         if not self.api_key or self.api_key == "":
             return text
+
+        if not is_new_york_market_open():
+            return text
             
         try:
             async with aiohttp.ClientSession() as session:
@@ -329,6 +334,9 @@ Just the translated text."""
         source: str = ""
     ) -> NewsAnalysisResult:
         """Analyze news using DeepSeek AI with multi-language support"""
+
+        if not is_new_york_market_open():
+            raise RuntimeError("DeepSeek disabled outside New York market hours")
         
         # Translate content to Turkish for analysis context
         headline_tr = await self._translate_with_ai(headline, "tr") if headline else ""

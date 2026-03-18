@@ -15,6 +15,7 @@ from services.data_fetcher import fetch_eod_candles, fetch_latest_price
 from services.marketaux_service import fetch_marketaux_headlines
 from services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
 from services.ta_service import compute_ta_snapshot
+from utils.market_hours import is_new_york_market_open
 
 logger = logging.getLogger(__name__)
 
@@ -807,6 +808,9 @@ def _fallback_detailed_analysis(context: Dict[str, Any]) -> Dict[str, Any]:
 async def analyze_detailed_with_claude(context: Dict[str, Any]) -> Dict[str, Any]:
     api_key = settings.deepseek_api_key
     if not api_key:
+        return _fallback_detailed_analysis(context)
+
+    if not is_new_york_market_open():
         return _fallback_detailed_analysis(context)
 
     user_prompt = f"""Analyze the following context pack and return ONLY valid JSON matching the schema in your instructions.

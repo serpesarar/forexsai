@@ -6,6 +6,8 @@ from typing import Any, Dict, Optional
 
 import aiohttp
 
+from utils.market_hours import get_new_york_market_hours_label, is_new_york_market_open
+
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +80,13 @@ async def call_deepseek_json(
 ) -> Optional[Dict[str, Any]]:
     key = api_key or os.getenv("DEEP_SEEKR1", "")
     if not key:
+        return None
+
+    if not is_new_york_market_open():
+        logger.info(
+            "DeepSeek request skipped outside New York market hours (%s)",
+            get_new_york_market_hours_label(),
+        )
         return None
 
     retry_instruction = "Return exactly one valid JSON object only. Do not use markdown fences, code blocks, or explanatory text. Ensure all strings are properly escaped and closed."

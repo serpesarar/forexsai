@@ -14,6 +14,7 @@ from typing import List, Optional, Literal, Dict, Any
 import httpx
 
 from config import settings
+from utils.market_hours import is_new_york_market_open
 
 logger = logging.getLogger(__name__)
 
@@ -210,6 +211,9 @@ async def analyze_signal_with_claude(prediction: dict, ta_data: dict) -> ClaudeA
     api_key = settings.deepseek_api_key
     if not api_key:
         logger.warning("DEEP_SEEKR1 not set, using fallback analysis")
+        return _fallback_analysis(prediction, ta_data)
+
+    if not is_new_york_market_open():
         return _fallback_analysis(prediction, ta_data)
     
     prompt = _build_analysis_prompt(prediction, ta_data)

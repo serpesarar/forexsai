@@ -5,6 +5,7 @@ from datetime import datetime
 from config import settings
 from services.marketaux_service import fetch_marketaux_headlines
 from services.data_fetcher import fetch_latest_price
+from utils.market_hours import is_new_york_market_open
 import httpx
 import json
 
@@ -106,6 +107,9 @@ async def _call_anthropic_sentiment(prompt: str) -> dict:
 
 
 async def _call_deepseek_sentiment(prompt: str) -> dict:
+    if not is_new_york_market_open():
+        raise RuntimeError("DeepSeek disabled outside New York market hours")
+
     async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.post(
             "https://api.deepseek.com/chat/completions",
