@@ -760,6 +760,8 @@ async def background_scheduler_loop():
             # Log Pulse/EMEL signals every 15 min
             await log_pulse_signals_if_needed()
             await log_smc_signals_if_needed()
+            from services.ai_panel_signal_logger import log_ai_panel_signals_if_needed
+            await log_ai_panel_signals_if_needed()
         except Exception as e:
             logger.error(f"Scheduler error: {e}")
         
@@ -914,6 +916,8 @@ async def background_scheduler_loop_with_rss():
             # Log Pulse/EMEL signals every 15 min
             await log_pulse_signals_if_needed()
             await log_smc_signals_if_needed()
+            from services.ai_panel_signal_logger import log_ai_panel_signals_if_needed
+            await log_ai_panel_signals_if_needed()
             # RSS aggregation every 7 minutes (cost optimized)
             await run_rss_aggregation_if_needed()
             # Pattern analysis twice daily (US open +1h, close -2h)

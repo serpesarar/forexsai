@@ -107,12 +107,15 @@ class _FilteringQuery:
 
 
 class _FakeClient:
-    def __init__(self, prediction_rows):
+    def __init__(self, prediction_rows, snapshot_rows=None):
         self._prediction_rows = list(prediction_rows)
+        self._snapshot_rows = list(snapshot_rows or [])
 
     def table(self, name):
         if name == "prediction_logs":
             return _FilteringQuery(self._prediction_rows)
+        if name == "ai_panel_signal_snapshots":
+            return _FilteringQuery(self._snapshot_rows)
         raise AssertionError(f"Unexpected table requested: {name}")
 
 
@@ -531,6 +534,79 @@ async def test_smc_performance_bootstraps_when_database_has_no_smc_history():
     assert payload["smc_predictions_count"] == 1
     assert payload["timeframes"]["XAUUSD"]["1h"]["active"] == 1
     assert payload["symbols"]["XAUUSD"]["total_predictions"] == 1
+
+
+@pytest.mark.asyncio
+async def test_ai_panel_performance_aggregates_hourly_panel_signals_and_snapshots():
+    learning_module = _load_learning_module("test_learning_ai_panel_performance")
+    now = datetime.now(timezone.utc)
+    rows = [
+        _prediction_row(
+            id="ai-panel-win-001",
+            symbol="NDX.INDX",
+            strategy="AI_PANEL_HOURLY",
+            model_type="ai_panel",
+            timeframe="1h",
+            created_at=_iso(now - timedelta(hours=3)),
+            exit_time=_iso(now - timedelta(hours=2, minutes=10)),
+            status="completed",
+            highest_profit_pips=18,
+            lowest_drawdown_pips=-4,
+            stop_loss_pips=9,
+            exit_price=110.0,
+            targets_hit={"TP1": True, "TP2": False, "TP3": False, "TP4": False},
+        ),
+        _prediction_row(
+            id="ai-panel-loss-002",
+            symbol="NDX.INDX",
+            strategy="AI_PANEL_HOURLY",
+            model_type="ai_panel",
+            timeframe="1h",
+            created_at=_iso(now - timedelta(hours=2)),
+            exit_time=_iso(now - timedelta(hours=1, minutes=5)),
+            status="stopped",
+            highest_profit_pips=3,
+            lowest_drawdown_pips=-11,
+            stop_loss_pips=9,
+            exit_price=None,
+            targets_hit={},
+        ),
+        _prediction_row(
+            id="non-ai-panel-003",
+            symbol="NDX.INDX",
+            strategy="balanced",
+            model_type="ml:balanced",
+            timeframe="30m",
+            created_at=_iso(now - timedelta(hours=1)),
+            exit_time=_iso(now - timedelta(minutes=20)),
+        ),
+    ]
+    snapshots = [
+        {"id": 1, "symbol": "NDX.INDX", "created_at": _iso(now - timedelta(hours=3))},
+        {"id": 2, "symbol": "NDX.INDX", "created_at": _iso(now - timedelta(hours=2))},
+        {"id": 3, "symbol": "XAUUSD", "created_at": _iso(now - timedelta(hours=1))},
+    ]
+    client = _FakeClient(rows, snapshots)
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ):
+        payload = await learning_module.get_ai_panel_performance(days=1)
+
+    assert payload["ai_panel_predictions_count"] == 2
+    assert payload["ai_panel_snapshots_count"] == 3
+    assert payload["eligible_outcomes_count"] == 2
+    ndx_scope = payload["strategies"]["NDX.INDX"]["hourly_panel"]
+    assert ndx_scope["total_predictions"] == 2
+    assert ndx_scope["resolved_signals"] == 2
+    assert ndx_scope["completed"] == 1
+    assert ndx_scope["stopped"] == 1
+    assert ndx_scope["target_hits"] == 1
+    assert ndx_scope["stop_hits"] == 1
+    assert ndx_scope["accuracy"] == pytest.approx(50.0, abs=0.1)
+    assert payload["symbols"]["NDX.INDX"]["snapshot_count"] == 2
+    assert payload["symbols"]["NDX.INDX"]["available_scopes"] == ["hourly_panel"]
+    assert payload["overall_summary"]["leaders"]["quality"]["scope"] == "hourly_panel"
 
 
 @pytest.mark.asyncio

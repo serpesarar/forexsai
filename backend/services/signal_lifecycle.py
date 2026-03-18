@@ -452,7 +452,7 @@ def _update_signal_status(client, signal_id: str, status: str, exit_price=None):
     if exit_price is not None:
         update_data["exit_price"] = round(float(exit_price), 4)
     try:
-        result = client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
+        result = client.table("prediction_logs").eq("id", signal_id).update(update_data)
         if result and safe_get_data(result):
             logger.info(f"✅ Signal {signal_id[:8]} status updated to {status}")
         return result
@@ -655,7 +655,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         "target_status": json.dumps(target_status),
     }
     try:
-        client.table("signal_checks").insert(check_record).execute()
+        client.table("signal_checks").insert(check_record)
     except Exception as e:
         logger.error(f"Failed to insert signal_check for {signal_id[:8]}: {e}")
 
@@ -745,7 +745,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         update_data["exit_time"] = _utc_iso()
 
     try:
-        result = client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
+        result = client.table("prediction_logs").eq("id", signal_id).update(update_data)
         if result and safe_get_data(result) and new_status:
             logger.info(
                 f"✅ Signal {signal_id[:8]} updated: "
@@ -872,7 +872,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         "target_status": json.dumps(target_status),
     }
     try:
-        client.table("signal_checks").insert(check_record).execute()
+        client.table("signal_checks").insert(check_record)
     except Exception as e:
         logger.error(f"Failed to insert signal_check for {signal_id[:8]}: {e}")
         # Continue to status determination even if check record insert fails
@@ -902,9 +902,8 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         if created_dt is not None:
             try:
                 age_minutes = (_utc_now() - created_dt).total_seconds() / 60
-                
                 max_age_for_symbol = effective_max_age
-                
+
                 if age_minutes >= max_age_for_symbol:
                     new_status = "completed" if any_target_hit else "expired"
                     exit_price = current
@@ -926,7 +925,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         update_data["exit_time"] = _utc_iso()
 
     try:
-        result = client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
+        result = client.table("prediction_logs").eq("id", signal_id).update(update_data)
         if result and safe_get_data(result) and new_status:
             logger.info(f"✅ Signal {signal_id[:8]} updated: status={new_status}, high={new_high:.1f}p, low={new_low:.1f}p")
     except Exception as e:
@@ -1010,7 +1009,7 @@ async def _create_failure_autopsy(
             "retrain_weight": 0.5,
         }
 
-        client.table("signal_failures").insert(failure_record).execute()
+        client.table("signal_failures").insert(failure_record)
         logger.info(f"📋 Failure autopsy saved for {signal_id[:8]}: type={failure_type}, regime={regime}, confluence={confluence}")
 
     except Exception as e:

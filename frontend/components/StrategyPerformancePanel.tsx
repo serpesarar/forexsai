@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, lazy, Suspense, type ComponentType } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { List, Crosshair } from "lucide-react";
+import { List, Crosshair, Bot } from "lucide-react";
 
 import { getApiBase } from "@/lib/api/base";
 import { PanelInfoButton } from "./PanelInfoButton";
@@ -92,6 +92,10 @@ interface SymbolSummary {
   };
 }
 
+interface AiPanelSymbolSummary extends SymbolSummary {
+  snapshot_count: number;
+}
+
 interface StrategyPerformanceResponse {
   period_days: number;
   predictions_count: number;
@@ -103,6 +107,28 @@ interface StrategyPerformanceResponse {
   best_strategies: Record<string, { strategy: string | null; accuracy: number | null }>;
   strategy_order: string[];
   strategy_descriptions: Record<string, string>;
+  overall_summary: {
+    total_predictions: number;
+    resolved_signals: number;
+    leaders: {
+      quality: LeaderData;
+      scalping: LeaderData;
+      long_term: LeaderData;
+    };
+  };
+  error?: string;
+}
+
+interface AiPanelPerformanceResponse {
+  period_days: number;
+  ai_panel_predictions_count: number;
+  ai_panel_snapshots_count: number;
+  outcomes_count: number;
+  eligible_outcomes_count: number;
+  strategies: Record<string, Record<string, StrategyData>>;
+  symbols: Record<string, AiPanelSymbolSummary>;
+  panel_scope_order: string[];
+  panel_descriptions: Record<string, string>;
   overall_summary: {
     total_predictions: number;
     resolved_signals: number;
@@ -165,6 +191,9 @@ const STRATEGY_CONFIG: Record<string, { name: string; nameEn: string; icon: Comp
   aggressive: { name: "Agresif", nameEn: "Aggressive", icon: Flame, color: P.red },
   nasdaq_precision: { name: "NASDAQ Precision", nameEn: "NASDAQ Precision", icon: Crosshair, color: "#22D3EE" },
 };
+const AI_PANEL_SCOPE_CONFIG: Record<string, { name: string; nameEn: string; icon: ComponentType<any>; color: string }> = {
+  hourly_panel: { name: "Saatlik Panel", nameEn: "Hourly Panel", icon: Bot, color: "#C084FC" },
+};
 const SMC_TIMEFRAME_CONFIG: Record<string, { name: string; nameEn: string; icon: ComponentType<any>; color: string }> = {
   "5m": { name: "5m", nameEn: "5m", icon: Zap, color: "#A855F7" },
   "15m": { name: "15m", nameEn: "15m", icon: Target, color: "#8B5CF6" },
@@ -218,6 +247,13 @@ function getSmcTimeframeLabel(timeframe?: string | null, locale: "tr" | "en" = "
   if (!timeframe) return "—";
   const config = SMC_TIMEFRAME_CONFIG[timeframe];
   if (!config) return timeframe;
+  return locale === "en" ? config.nameEn : config.name;
+}
+
+function getAiPanelScopeLabel(scope?: string | null, locale: "tr" | "en" = "tr") {
+  if (!scope) return "—";
+  const config = AI_PANEL_SCOPE_CONFIG[scope];
+  if (!config) return scope;
   return locale === "en" ? config.nameEn : config.name;
 }
 
@@ -278,6 +314,12 @@ async function fetchStrategyPerformance(days: number): Promise<StrategyPerforman
 async function fetchSmcPerformance(days: number): Promise<SmcPerformanceResponse> {
   const res = await fetch(`${API_BASE}/api/learning/smc-performance?days=${days}`);
   if (!res.ok) throw new Error("Failed to fetch SMC performance");
+  return res.json();
+}
+
+async function fetchAiPanelPerformance(days: number): Promise<AiPanelPerformanceResponse> {
+  const res = await fetch(`${API_BASE}/api/learning/ai-panel-performance?days=${days}`);
+  if (!res.ok) throw new Error("Failed to fetch AI panel performance");
   return res.json();
 }
 
@@ -375,13 +417,17 @@ function StrategyRow({
   data,
   locale,
   leaderBadges,
+  configMap = STRATEGY_CONFIG,
+  labelFormatter = getScopeLabel,
 }: {
   strategy: string;
   data: StrategyData;
   locale: "tr" | "en";
   leaderBadges: LeaderKey[];
+  configMap?: Record<string, { name: string; nameEn: string; icon: ComponentType<any>; color: string }>;
+  labelFormatter?: (scope?: string | null, locale?: "tr" | "en") => string;
 }) {
-  const config = STRATEGY_CONFIG[strategy];
+  const config = configMap[strategy];
   if (!config) return null;
 
   const Icon = config.icon;
@@ -404,7 +450,7 @@ function StrategyRow({
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.text }}>{locale === "en" ? config.nameEn : config.name}</span>
+              <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: P.text }}>{labelFormatter(strategy, locale)}</span>
               {leaderBadges.map((badge) => (
                 <span key={badge} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5" style={{ background: `${LEADER_META[badge].color}14`, border: `1px solid ${LEADER_META[badge].color}22` }}>
                   <span style={{ fontFamily: FONT, fontSize: 9, color: LEADER_META[badge].color, fontWeight: 700 }}>{LEADER_META[badge].label}</span>
@@ -612,6 +658,18 @@ export default function StrategyPerformancePanel() {
   });
 
   const {
+    data: aiPanelData,
+    isLoading: aiPanelLoading,
+    error: aiPanelError,
+    refetch: refetchAiPanel,
+  } = useQuery({
+    queryKey: ["ai-panel-performance", days],
+    queryFn: () => fetchAiPanelPerformance(days),
+    staleTime: 60000,
+    refetchInterval: 300000,
+  });
+
+  const {
     data: signalsData,
     isLoading: signalsLoading,
     refetch: refetchSignals,
@@ -626,10 +684,11 @@ export default function StrategyPerformancePanel() {
   const handleRefresh = useCallback(() => {
     refetch();
     refetchSmc();
+    refetchAiPanel();
     if (activeTab === "signals") {
       refetchSignals();
     }
-  }, [activeTab, refetch, refetchSignals, refetchSmc]);
+  }, [activeTab, refetch, refetchAiPanel, refetchSignals, refetchSmc]);
 
   useEffect(() => {
     window.addEventListener("dashboard-refresh", handleRefresh);
@@ -725,7 +784,7 @@ export default function StrategyPerformancePanel() {
           </div>
         </div>
 
-        {(isLoading || smcLoading) && activeTab === "performance" ? (
+        {(isLoading || smcLoading || aiPanelLoading) && activeTab === "performance" ? (
           <div className="p-16 flex items-center justify-center" style={{ background: P.bg }}>
             <RefreshCw className="w-5 h-5 animate-spin" style={{ color: P.accent }} />
           </div>
@@ -982,6 +1041,141 @@ export default function StrategyPerformancePanel() {
             ) : smcError ? (
               <div className="rounded-xl px-4 py-3" style={{ background: P.surface, border: `1px solid ${P.border}` }}>
                 <span style={{ fontFamily: FONT, fontSize: 12, color: P.red }}>Smart Money Zones performance data unavailable.</span>
+              </div>
+            ) : null}
+
+            {aiPanelData && !aiPanelData.error ? (
+              <div className="space-y-6" style={{ paddingTop: 12, borderTop: `1px solid ${P.border}` }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: `#C084FC12`, border: `1px solid #C084FC20` }}>
+                    <Bot className="w-4.5 h-4.5" style={{ color: "#C084FC", width: 18, height: 18 }} />
+                  </div>
+                  <div>
+                    <h4 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text, letterSpacing: "-0.01em" }}>AI Panel Signal Performance</h4>
+                    <p style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>Hourly CLAUDE AI ANALYSIS snapshots are recorded and actionable BUY/SELL calls are evaluated with the same lifecycle TP/SL logic.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3">
+                  <StatCard label="Hourly Snapshots" value={aiPanelData.ai_panel_snapshots_count} tone={P.text} />
+                  <StatCard label="Actionable Signals" value={aiPanelData.ai_panel_predictions_count} tone={"#C084FC"} />
+                  <StatCard label="Resolved Signals" value={aiPanelData.overall_summary.resolved_signals} tone={P.accent} />
+                  <LeaderCard title="Best Signal Quality" leader={aiPanelData.overall_summary.leaders.quality} labelFormatter={(scope) => getAiPanelScopeLabel(scope, locale)} />
+                  <LeaderCard title="Best Scalping Scope" leader={aiPanelData.overall_summary.leaders.scalping} labelFormatter={(scope) => getAiPanelScopeLabel(scope, locale)} />
+                  <LeaderCard title="Best Long-Term Scope" leader={aiPanelData.overall_summary.leaders.long_term} labelFormatter={(scope) => getAiPanelScopeLabel(scope, locale)} />
+                </div>
+
+                {SYMBOL_META.map(({ key: symKey, label, icon }) => {
+                  const symbolSummary = aiPanelData.symbols?.[symKey];
+                  const symbolStrategies = aiPanelData.strategies?.[symKey] || {};
+                  const orderedScopes = aiPanelData.panel_scope_order || Object.keys(AI_PANEL_SCOPE_CONFIG);
+
+                  return (
+                    <div key={`ai-panel-${symKey}`} className="space-y-3">
+                      <div className="flex flex-wrap items-center gap-3 p-2 -mx-2 rounded-lg" style={{ background: "rgba(255,255,255,0.015)" }}>
+                        <span style={{ fontSize: 16 }}>{icon}</span>
+                        <div>
+                          <h4 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text }}>{label}</h4>
+                          <div style={{ fontFamily: FONT, fontSize: 10, color: P.muted, marginTop: 2 }}>
+                            {symbolSummary?.snapshot_count ?? 0} hourly snapshots · {symbolSummary?.total_predictions ?? 0} actionable · {symbolSummary?.resolved_signals ?? 0} resolved
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 ml-auto">
+                          {(["quality", "scalping", "long_term"] as LeaderKey[]).map((leaderKey) => {
+                            const leader = symbolSummary?.leaders?.[leaderKey];
+                            return (
+                              <span key={leaderKey} className="inline-flex items-center gap-1 rounded px-2 py-1" style={{ background: `${LEADER_META[leaderKey].color}10`, border: `1px solid ${LEADER_META[leaderKey].color}18` }}>
+                                <span style={{ fontFamily: FONT, fontSize: 9, fontWeight: 700, color: LEADER_META[leaderKey].color }}>{LEADER_META[leaderKey].label}</span>
+                                <span style={{ fontFamily: FONT, fontSize: 10, color: P.text }}>{getAiPanelScopeLabel(leader?.scope, locale)}</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="overflow-x-auto rounded-lg" style={{ border: `1px solid ${P.border}` }}>
+                        <table className="w-full" style={{ minWidth: 980 }}>
+                          <thead>
+                            <tr style={{ background: P.surface }}>
+                              {["Scope", "Win Rate", "Edge Scores", "Pips / Duration", "TP Ladder", "Confidence"].map((header, index) => (
+                                <th
+                                  key={`${symKey}-ai-${header}`}
+                                  style={{
+                                    padding: "10px 14px",
+                                    textAlign: index === 5 ? "right" as const : "left" as const,
+                                    fontFamily: FONT,
+                                    fontSize: 10,
+                                    fontWeight: 500,
+                                    color: P.muted,
+                                    letterSpacing: "0.08em",
+                                    textTransform: "uppercase",
+                                    borderBottom: `1px solid ${P.border}`,
+                                  }}
+                                >
+                                  {header}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {orderedScopes.length > 0 ? (
+                              orderedScopes.map((scope) => {
+                                const strategyData = symbolStrategies[scope] || getEmptyStrategyData(scope);
+                                const leaderBadges = (["quality", "scalping", "long_term"] as LeaderKey[]).filter(
+                                  (leaderKey) => symbolSummary?.leaders?.[leaderKey]?.scope === scope
+                                );
+
+                                return (
+                                  <StrategyRow
+                                    key={`${symKey}-ai-${scope}`}
+                                    strategy={scope}
+                                    data={strategyData}
+                                    locale={locale}
+                                    leaderBadges={leaderBadges}
+                                    configMap={AI_PANEL_SCOPE_CONFIG}
+                                    labelFormatter={getAiPanelScopeLabel}
+                                  />
+                                );
+                              })
+                            ) : (
+                              <tr>
+                                <td colSpan={6} className="text-center py-8" style={{ color: P.muted, fontFamily: FONT, fontSize: 13 }}>
+                                  No AI panel history found for this symbol yet.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                <div>
+                  <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: P.muted, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
+                    AI Panel Scope Description
+                  </p>
+                  <div className="flex flex-wrap gap-x-6 gap-y-2">
+                    {(aiPanelData.panel_scope_order || []).map((key) => {
+                      const config = AI_PANEL_SCOPE_CONFIG[key];
+                      const desc = aiPanelData.panel_descriptions?.[key];
+                      if (!desc) return null;
+                      return (
+                        <div key={`ai-desc-${key}`} className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full" style={{ background: config?.color || P.muted }} />
+                          <span style={{ fontFamily: FONT, fontSize: 11, color: P.textSec }}>
+                            <strong style={{ color: P.text }}>{getAiPanelScopeLabel(key, locale)}</strong> — {desc}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ) : aiPanelError ? (
+              <div className="rounded-xl px-4 py-3" style={{ background: P.surface, border: `1px solid ${P.border}` }}>
+                <span style={{ fontFamily: FONT, fontSize: 12, color: P.red }}>AI panel performance data unavailable.</span>
               </div>
             ) : null}
           </div>

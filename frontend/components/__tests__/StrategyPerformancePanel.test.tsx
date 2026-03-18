@@ -118,6 +118,79 @@ const payload = {
   },
 };
 
+const aiPanelPayload = {
+  period_days: 30,
+  ai_panel_predictions_count: 4,
+  ai_panel_snapshots_count: 16,
+  outcomes_count: 3,
+  eligible_outcomes_count: 3,
+  strategies: {
+    "NDX.INDX": {
+      hourly_panel: {
+        scope: "hourly_panel",
+        total_predictions: 4,
+        scored_signals: 3,
+        resolved_signals: 3,
+        with_outcome: 3,
+        correct: 2,
+        completed: 2,
+        stopped: 1,
+        expired: 0,
+        active: 1,
+        accuracy: 66.7,
+        win_rate: 66.7,
+        target_hits: 2,
+        stop_hits: 1,
+        target_hit_rate: 66.7,
+        stop_hit_rate: 33.3,
+        avg_confidence: 64.5,
+        net_pips: 14.2,
+        avg_pips: 4.7,
+        tp_breakdown: { TP1: 2, TP2: 1, TP3: 0, TP4: 0 },
+        tp_hit_rates: { TP1: 66.7, TP2: 33.3, TP3: 0, TP4: 0 },
+        avg_duration_minutes: 74,
+        avg_win_duration_minutes: 62,
+        avg_loss_duration_minutes: 98,
+        quality_score: 52.4,
+        scalp_score: 47.1,
+        long_term_score: 55.8,
+      },
+    },
+    XAUUSD: {},
+    "GDAXI.INDX": {},
+    "USOIL.FOREX": {},
+  },
+  symbols: {
+    "NDX.INDX": {
+      available_scopes: ["hourly_panel"],
+      total_predictions: 4,
+      resolved_signals: 3,
+      snapshot_count: 16,
+      leaders: {
+        quality: { scope: "hourly_panel", score: 52.4, resolved_signals: 3, win_rate: 66.7, net_pips: 14.2, avg_duration_minutes: 74 },
+        scalping: { scope: "hourly_panel", score: 47.1, resolved_signals: 3, win_rate: 66.7, net_pips: 14.2, avg_duration_minutes: 74 },
+        long_term: { scope: "hourly_panel", score: 55.8, resolved_signals: 3, win_rate: 66.7, net_pips: 14.2, avg_duration_minutes: 74 },
+      },
+    },
+    XAUUSD: { available_scopes: [], total_predictions: 0, resolved_signals: 0, snapshot_count: 0, leaders: { quality: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null }, scalping: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null }, long_term: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null } } },
+    "GDAXI.INDX": { available_scopes: [], total_predictions: 0, resolved_signals: 0, snapshot_count: 0, leaders: { quality: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null }, scalping: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null }, long_term: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null } } },
+    "USOIL.FOREX": { available_scopes: [], total_predictions: 0, resolved_signals: 0, snapshot_count: 0, leaders: { quality: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null }, scalping: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null }, long_term: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null } } },
+  },
+  panel_scope_order: ["hourly_panel"],
+  panel_descriptions: {
+    hourly_panel: "CLAUDE AI ANALYSIS panelinden her saat force-refresh ile alınan actionable sinyaller.",
+  },
+  overall_summary: {
+    total_predictions: 4,
+    resolved_signals: 3,
+    leaders: {
+      quality: { scope: "hourly_panel", score: 52.4, resolved_signals: 3, win_rate: 66.7, net_pips: 14.2, avg_duration_minutes: 74 },
+      scalping: { scope: "hourly_panel", score: 47.1, resolved_signals: 3, win_rate: 66.7, net_pips: 14.2, avg_duration_minutes: 74 },
+      long_term: { scope: "hourly_panel", score: 55.8, resolved_signals: 3, win_rate: 66.7, net_pips: 14.2, avg_duration_minutes: 74 },
+    },
+  },
+};
+
 const signalsPayload = {
   signals: [
     {
@@ -319,6 +392,9 @@ describe("StrategyPerformancePanel", () => {
       if (url.includes("/api/learning/smc-performance")) {
         return Promise.resolve({ ok: true, json: async () => smcPayload });
       }
+      if (url.includes("/api/learning/ai-panel-performance")) {
+        return Promise.resolve({ ok: true, json: async () => aiPanelPayload });
+      }
       if (url.includes("/api/learning/signals/recent")) {
         return Promise.resolve({ ok: true, json: async () => signalsPayload });
       }
@@ -351,6 +427,19 @@ describe("StrategyPerformancePanel", () => {
     await waitFor(() => {
       const smcCalls = fetchMock.mock.calls.map((call) => String(call[0])).filter((url) => url.includes("/api/learning/smc-performance"));
       expect(smcCalls.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("renders AI panel performance from the hourly lifecycle endpoint", async () => {
+    renderPanel();
+
+    expect(await screen.findByText("AI Panel Signal Performance")).toBeInTheDocument();
+    expect(screen.getByText("Hourly Snapshots")).toBeInTheDocument();
+    expect(screen.getAllByText("Saatlik Panel").length).toBeGreaterThan(0);
+
+    await waitFor(() => {
+      const aiCalls = fetchMock.mock.calls.map((call) => String(call[0])).filter((url) => url.includes("/api/learning/ai-panel-performance"));
+      expect(aiCalls.length).toBeGreaterThan(0);
     });
   });
 
