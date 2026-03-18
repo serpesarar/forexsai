@@ -541,94 +541,11 @@ def _fallback_analysis(prediction: dict, ta_data: dict = None) -> ClaudeAnalysis
     )
 
 
-async def get_full_analysis(symbol: str) -> dict:
+async def get_full_analysis(symbol: str, force_refresh: bool = False) -> dict:
     """
     Get ML prediction and Claude analysis together.
     Cached for 5 minutes to prevent timeout issues.
     """
-    # Check cache first
-    cached = _get_cached_analysis(symbol)
-    if cached:
-        return cached
-    
-    from services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
-    from services.data_fetcher import fetch_eod_candles, fetch_latest_price
-    import numpy as np
-    
-    # Get ML prediction
-    ml_prediction = await get_ml_prediction(symbol)
-    prediction_dict = {
-        'symbol': ml_prediction.symbol,
-        'direction': ml_prediction.direction,
-        'confidence': ml_prediction.confidence,
-        'probability_up': ml_prediction.probability_up,
-        'probability_down': ml_prediction.probability_down,
-        'target_pips': ml_prediction.target_pips,
-        'stop_pips': ml_prediction.stop_pips,
-        'risk_reward': ml_prediction.risk_reward,
-        'entry_price': ml_prediction.entry_price,
-        'target_price': ml_prediction.target_price,
-        'stop_price': ml_prediction.stop_price,
-        'technical_score': ml_prediction.technical_score,
-        'momentum_score': ml_prediction.momentum_score,
-        'trend_score': ml_prediction.trend_score,
-        'volatility_regime': ml_prediction.volatility_regime,
-        'reasoning': ml_prediction.reasoning,
-        'key_levels': ml_prediction.key_levels,
-    }
-    
-    # Get TA data for Claude
-    normalized_symbol = "NDX.INDX" if symbol.upper() in ["NASDAQ", "NDX.INDX", "NDX"] else symbol.upper()
-    candles = await fetch_eod_candles(normalized_symbol, limit=250)
-    live_price = await fetch_latest_price(normalized_symbol)
-    
-    if candles:
-        closes = np.array([c["close"] for c in candles], dtype=float)
-        highs = np.array([c["high"] for c in candles], dtype=float)
-        lows = np.array([c["low"] for c in candles], dtype=float)
-        volumes = np.array([c.get("volume", 0) for c in candles], dtype=float)
-        
-        ta_data = _compute_technical_indicators(closes, highs, lows, volumes)
-        ta_data["close"] = float(live_price) if live_price else float(closes[-1])
-    else:
-        ta_data = {"close": 0}
-    
-    # Get Claude analysis
-    claude_result = await analyze_signal_with_claude(prediction_dict, ta_data)
-    
-    result = {
-        "ml_prediction": prediction_dict,
-        "claude_analysis": {
-            "symbol": claude_result.symbol,
-            "ml_direction": claude_result.ml_direction,
-            "claude_direction": claude_result.claude_direction,
-            "claude_confidence": claude_result.claude_confidence,
-            "agreement": claude_result.agreement,
-            "general_assessment": claude_result.general_assessment,
-            "strengths": claude_result.strengths,
-            "weaknesses": claude_result.weaknesses,
-            "recommended_entry": claude_result.recommended_entry,
-            "recommended_sl": claude_result.recommended_sl,
-            "recommended_tp": claude_result.recommended_tp,
-            "position_size_suggestion": claude_result.position_size_suggestion,
-            "key_observations": claude_result.key_observations,
-            "risk_factors": claude_result.risk_factors,
-            "timestamp": claude_result.timestamp,
-            "model_used": claude_result.model_used,
-        },
-        "ta_snapshot": {
-            "close": ta_data.get("close", 0),
-            "ema_20": ta_data.get("ema_20", 0),
-            "ema_50": ta_data.get("ema_50", 0),
-            "ema_200": ta_data.get("ema_200", 0),
-            "rsi_14": ta_data.get("rsi_14", 50),
-            "macd_hist": ta_data.get("macd_hist", 0),
-            "atr_14": ta_data.get("atr_14", 0),
-            "boll_zscore": ta_data.get("boll_zscore", 0),
-        }
-    }
-    
-    # Cache the result
-    _set_cached_analysis(symbol, result)
-    
-    return result
+    from services.ai_panel_analysis_service import get_ai_panel_analysis
+
+    return await get_ai_panel_analysis(symbol, force_refresh=force_refresh)

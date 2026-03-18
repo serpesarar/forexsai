@@ -30,7 +30,7 @@ const TradingChartWrapper = lazy(() => import("../components/TradingChartWrapper
 const OrderBlockPanelSimple = lazy(() => import("../components/OrderBlockPanelSimple"));
 const RhythmDetectorSimple = lazy(() => import("../components/RhythmDetectorSimple"));
 const MLPredictionPanel = lazy(() => import("../components/MLPredictionPanel"));
-const ClaudeAnalysisPanel = lazy(() => import("../components/ClaudeAnalysisPanel"));
+const ClaudeAnalysisPanel = lazy(() => import("../components/ClaudeAnalysisPanelV2"));
 const PatternEngineV2 = lazy(() => import("../components/PatternEngineV2"));
 const AdvancedAnalysisPanel = lazy(() => import("../components/AdvancedAnalysisPanel"));
 const InstitutionalDataPanel = lazy(() => import("../components/InstitutionalDataPanel"));

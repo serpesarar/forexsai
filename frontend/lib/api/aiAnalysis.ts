@@ -2,10 +2,111 @@ import { useQuery } from "@tanstack/react-query";
 
 const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
+export type PanelDirection = "BUY" | "SELL" | "HOLD" | "NO_TRADE";
+export type PanelBehavior = "uptrend" | "downtrend" | "range" | "mean_reversion" | "volatile";
+
 export interface KeyLevel {
   type: string;
   price: number;
   distance: string;
+}
+
+export interface PanelKeyLevel {
+  label: string;
+  price: number | null;
+  kind: string;
+  source: string;
+  distance: string;
+}
+
+export interface PanelBias {
+  direction: PanelDirection;
+  confidence: number;
+  expected_behavior: PanelBehavior;
+  summary: string;
+  time_horizon: string;
+  reasoning: string[];
+}
+
+export interface PanelEntryPlan {
+  strategy: string;
+  preferred_entry: number | null;
+  entry_zone: { low: number | null; high: number | null } | null;
+  stop_loss: number | null;
+  take_profit: number | null;
+  risk_reward: number | null;
+  invalidation: string;
+}
+
+export interface PanelEventRiskItem {
+  event_name: string;
+  impact: "LOW" | "MEDIUM" | "HIGH";
+  minutes_until: number | null;
+}
+
+export interface PanelSignal {
+  headline: string;
+  scalp_bias: PanelBias;
+  intraday_bias: PanelBias;
+  market_behavior: {
+    state: PanelBehavior;
+    summary: string;
+    expected_volatility: string;
+  };
+  entry_plan: PanelEntryPlan;
+  key_levels: PanelKeyLevel[];
+  bull_case: string[];
+  bear_case: string[];
+  macro_risk: {
+    level: "LOW" | "MEDIUM" | "HIGH";
+    summary: string;
+    drivers: string[];
+  };
+  event_risk: {
+    level: "LOW" | "MEDIUM" | "HIGH";
+    summary: string;
+    events: PanelEventRiskItem[];
+  };
+  invalidation: string[];
+  confidence_reasoning: string;
+  top_factors: string[];
+  counter_factors: string[];
+  data_quality: {
+    level: "LOW" | "MEDIUM" | "HIGH";
+    missing_inputs: string[];
+    notes: string[];
+  };
+}
+
+export interface AnalysisMeta {
+  analysis_version: string;
+  prompt_version: string;
+  provider: string;
+  model: string;
+  cache_hit: boolean;
+  market_open: boolean;
+  market_session: string;
+  generated_at: string;
+  expires_at: string;
+  context_pack_version?: string;
+}
+
+export interface MarketContext {
+  ny_time?: string;
+  phase?: string;
+  session_name?: string;
+  regime?: Record<string, any>;
+  event_risk_level?: string;
+  volatility_level?: string;
+}
+
+export interface DataSources {
+  context_pack?: boolean;
+  market_regime?: boolean;
+  unified_news?: boolean;
+  economic_calendar?: boolean;
+  comex_news?: boolean;
+  oil_analysis?: boolean;
 }
 
 export interface TASnapshot {
@@ -56,6 +157,12 @@ export interface ClaudeAnalysis {
   risk_factors: string[];
   timestamp: string;
   model_used: string;
+  panel_signal?: PanelSignal;
+  analysis_meta?: AnalysisMeta;
+  market_context?: MarketContext;
+  data_sources?: DataSources;
+  scalp_direction?: PanelDirection;
+  scalp_confidence?: number;
 }
 
 export interface FullAnalysisData {
@@ -64,12 +171,15 @@ export interface FullAnalysisData {
   ta_snapshot: TASnapshot;
 }
 
-async function fetchAIAnalysis(symbol: string): Promise<FullAnalysisData> {
+async function fetchAIAnalysis(symbol: string, forceRefresh: boolean = false): Promise<FullAnalysisData> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+  const timeoutId = setTimeout(() => controller.abort(), 55000);
   
   try {
-    const res = await fetch(`${API_BASE}/api/ai-analysis/${symbol}`, {
+    const url = forceRefresh
+      ? `${API_BASE}/api/ai-analysis/${symbol}?force_refresh=true`
+      : `${API_BASE}/api/ai-analysis/${symbol}`;
+    const res = await fetch(url, {
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
@@ -89,7 +199,7 @@ async function fetchAIAnalysis(symbol: string): Promise<FullAnalysisData> {
 
 async function fetchAllAIAnalysis(): Promise<FullAnalysisData[]> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+  const timeoutId = setTimeout(() => controller.abort(), 55000);
   
   try {
     const res = await fetch(`${API_BASE}/api/ai-analysis/`, {
@@ -110,10 +220,10 @@ async function fetchAllAIAnalysis(): Promise<FullAnalysisData[]> {
   }
 }
 
-export function useAIAnalysis(symbol: string, enabled: boolean = false) {
+export function useAIAnalysis(symbol: string, enabled: boolean = false, refreshNonce: number = 0) {
   return useQuery({
-    queryKey: ["ai-analysis", symbol],
-    queryFn: () => fetchAIAnalysis(symbol),
+    queryKey: ["ai-analysis", symbol, refreshNonce],
+    queryFn: () => fetchAIAnalysis(symbol, refreshNonce > 0),
     enabled, // Only fetch when explicitly enabled (button click)
     refetchInterval: false, // No auto-refresh - save API calls
     staleTime: 300000, // 5 minutes - data stays fresh longer

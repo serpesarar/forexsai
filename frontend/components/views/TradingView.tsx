@@ -5,11 +5,11 @@ import { ChevronDown, Moon } from "lucide-react";
 import {
   EmelIcon, PulseIcon, SignalsIcon, LearningIcon,
   ChartsIcon, TradingIcon, NasdaqIcon, GoldIcon,
-  ArrowUpIcon, ArrowDownIcon, AdvancedAnalysisIcon
+  ArrowUpIcon, ArrowDownIcon, AdvancedAnalysisIcon, OilIcon, DaxIcon
 } from "../ui/CustomIcons";
 import Image from "next/image";
 import MLPredictionPanel from "../../components/MLPredictionPanel";
-import ClaudeAnalysisPanel from "../../components/ClaudeAnalysisPanel";
+import ClaudeAnalysisPanel from "../../components/ClaudeAnalysisPanelV2";
 import DetailedAnalysisPanel from "../../components/DetailedAnalysisPanel";
 import LearningDashboardPanel from "../../components/LearningDashboardPanel";
 import PredictionHistoryTable from "../../components/PredictionHistoryTable";
@@ -40,6 +40,22 @@ const SYMBOLS = {
     color: "from-amber-500/20 to-yellow-500/20",
     accent: "text-amber-400",
     border: "border-amber-500/30",
+  },
+  "USOIL.FOREX": {
+    label: "US Oil (WTI)",
+    shortLabel: "USOIL",
+    icon: OilIcon,
+    color: "from-orange-500/20 to-amber-500/20",
+    accent: "text-orange-400",
+    border: "border-orange-500/30",
+  },
+  "GDAXI.INDX": {
+    label: "DAX",
+    shortLabel: "DAX",
+    icon: DaxIcon,
+    color: "from-sky-500/20 to-indigo-500/20",
+    accent: "text-sky-400",
+    border: "border-sky-500/30",
   },
 } as const;
 

@@ -2,14 +2,16 @@
 API Router for AI-powered Signal Analysis
 Combines ML predictions with Claude AI review
 """
+import asyncio
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Any, Dict, List, Optional
 
 router = APIRouter(prefix="/api/ai-analysis", tags=["ai-analysis"])
 
 
 class TASnapshot(BaseModel):
+    model_config = ConfigDict(extra="allow")
     close: float
     ema_20: float
     ema_50: float
@@ -21,12 +23,14 @@ class TASnapshot(BaseModel):
 
 
 class KeyLevel(BaseModel):
+    model_config = ConfigDict(extra="allow")
     type: str
     price: float
     distance: str
 
 
 class MLPrediction(BaseModel):
+    model_config = ConfigDict(extra="allow")
     symbol: str
     direction: str
     confidence: float
@@ -47,6 +51,7 @@ class MLPrediction(BaseModel):
 
 
 class ClaudeAnalysis(BaseModel):
+    model_config = ConfigDict(extra="allow")
     symbol: str
     ml_direction: str
     claude_direction: str
@@ -66,6 +71,7 @@ class ClaudeAnalysis(BaseModel):
 
 
 class FullAnalysisResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
     ml_prediction: MLPrediction
     claude_analysis: ClaudeAnalysis
     ta_snapshot: TASnapshot
@@ -78,7 +84,7 @@ class DetailedAnalysisResponse(BaseModel):
 
 
 @router.get("/{symbol}", response_model=FullAnalysisResponse)
-async def get_ai_analysis(symbol: str):
+async def get_ai_analysis(symbol: str, force_refresh: bool = False):
     """
     Get full AI analysis for a symbol.
     
@@ -88,36 +94,18 @@ async def get_ai_analysis(symbol: str):
     3. Technical analysis snapshot
     """
     from services.claude_signal_analyzer import get_full_analysis
-    
-    result = await get_full_analysis(symbol)
-    
-    return FullAnalysisResponse(
-        ml_prediction=MLPrediction(**result["ml_prediction"]),
-        claude_analysis=ClaudeAnalysis(**result["claude_analysis"]),
-        ta_snapshot=TASnapshot(**result["ta_snapshot"])
-    )
+
+    return await get_full_analysis(symbol, force_refresh=force_refresh)
 
 
 @router.get("/", response_model=List[FullAnalysisResponse])
 async def get_all_ai_analysis():
     """Get AI analysis for both NASDAQ and XAUUSD."""
+    from services.ai_panel_analysis_service import get_supported_ai_symbols
     from services.claude_signal_analyzer import get_full_analysis
-    
-    nasdaq = await get_full_analysis("NDX.INDX")
-    xauusd = await get_full_analysis("XAUUSD")
-    
-    return [
-        FullAnalysisResponse(
-            ml_prediction=MLPrediction(**nasdaq["ml_prediction"]),
-            claude_analysis=ClaudeAnalysis(**nasdaq["claude_analysis"]),
-            ta_snapshot=TASnapshot(**nasdaq["ta_snapshot"])
-        ),
-        FullAnalysisResponse(
-            ml_prediction=MLPrediction(**xauusd["ml_prediction"]),
-            claude_analysis=ClaudeAnalysis(**xauusd["claude_analysis"]),
-            ta_snapshot=TASnapshot(**xauusd["ta_snapshot"])
-        ),
-    ]
+
+    symbols = get_supported_ai_symbols()
+    return await asyncio.gather(*(get_full_analysis(symbol) for symbol in symbols))
 
 
 @router.get("/detailed/{symbol}")

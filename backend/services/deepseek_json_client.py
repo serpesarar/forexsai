@@ -80,44 +80,49 @@ async def call_deepseek_json(
     if not key:
         return None
 
-    payload: Dict[str, Any] = {
-        "model": DEEPSEEK_MODEL,
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": max_tokens,
-    }
-    if temperature is not None:
-        payload["temperature"] = temperature
+    retry_instruction = "Return exactly one valid JSON object only. Do not use markdown fences, code blocks, or explanatory text. Ensure all strings are properly escaped and closed."
+    prompt_attempts = [prompt, f"{prompt}\n\n{retry_instruction}"]
 
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                DEEPSEEK_API_URL,
-                headers={
-                    "Authorization": f"Bearer {key}",
-                    "Content-Type": "application/json",
-                },
-                json=payload,
-                timeout=aiohttp.ClientTimeout(total=timeout_seconds),
-            ) as response:
-                if response.status != 200:
-                    error_text = await response.text()
-                    logger.warning("DeepSeek request failed with status %s: %s", response.status, error_text[:400])
-                    return None
+    for attempt, prompt_text in enumerate(prompt_attempts, start=1):
+        payload: Dict[str, Any] = {
+            "model": DEEPSEEK_MODEL,
+            "messages": [{"role": "user", "content": prompt_text}],
+            "max_tokens": max_tokens,
+        }
+        if temperature is not None:
+            payload["temperature"] = temperature
 
-                data = await response.json()
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    DEEPSEEK_API_URL,
+                    headers={
+                        "Authorization": f"Bearer {key}",
+                        "Content-Type": "application/json",
+                    },
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=timeout_seconds),
+                ) as response:
+                    if response.status != 200:
+                        error_text = await response.text()
+                        logger.warning("DeepSeek request failed with status %s on attempt %s: %s", response.status, attempt, error_text[:400])
+                        continue
 
-        message = ((data.get("choices") or [{}])[0].get("message") or {})
-        content = str(message.get("content") or "")
-        parsed = extract_json_object(content)
-        if parsed is None:
-            logger.warning("DeepSeek response could not be parsed into JSON: %s", content[:400])
-            return None
+                    data = await response.json()
 
-        reasoning = message.get("reasoning_content")
-        if reasoning:
-            parsed.setdefault("_reasoning", reasoning)
-        parsed.setdefault("ai_model", DEEPSEEK_MODEL)
-        return parsed
-    except Exception:
-        logger.exception("DeepSeek JSON request failed")
-        return None
+            message = ((data.get("choices") or [{}])[0].get("message") or {})
+            content = str(message.get("content") or "")
+            parsed = extract_json_object(content)
+            if parsed is None:
+                logger.warning("DeepSeek response could not be parsed into JSON on attempt %s: %s", attempt, content[:400])
+                continue
+
+            reasoning = message.get("reasoning_content")
+            if reasoning:
+                parsed.setdefault("_reasoning", reasoning)
+            parsed.setdefault("ai_model", DEEPSEEK_MODEL)
+            return parsed
+        except Exception:
+            logger.exception("DeepSeek JSON request failed on attempt %s", attempt)
+
+    return None

@@ -67,6 +67,14 @@ class EconomicCalendarService:
     def __init__(self):
         self.cache_ttl = 300  # 5 minutes for upcoming events
         
+    @staticmethod
+    def _deserialize_event(payload: Dict[str, Any]) -> EconomicEvent:
+        event_payload = dict(payload)
+        timestamp = event_payload.get("timestamp")
+        if isinstance(timestamp, str):
+            event_payload["timestamp"] = datetime.fromisoformat(timestamp.replace("Z", "+00:00")).replace(tzinfo=None)
+        return EconomicEvent(**event_payload)
+        
     def _get_cache_key(self, date_str: str) -> str:
         return f"economic_calendar:{date_str}"
     
@@ -128,7 +136,7 @@ class EconomicCalendarService:
         # Try cache first
         cached = cache_get(cache_key)
         if cached:
-            return [EconomicEvent(**e) for e in cached]
+            return [self._deserialize_event(e) for e in cached]
         
         # In production, this would call an API like ForexFactory, Investing.com, or Bloomberg
         # For now, we'll create synthetic events based on known schedule

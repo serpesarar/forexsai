@@ -1,0 +1,610 @@
+{
+  "results": [
+    {
+      "symbol": "GDAXI.INDX",
+      "prompt_summary": {
+        "asset_class": "index",
+        "display_name": "DAX",
+        "short_label": "DAX",
+        "session_name": "Xetra cash",
+        "market_phase": "pre",
+        "is_primary_session_open": false,
+        "minutes_to_open": 130,
+        "minutes_to_close": null,
+        "unified_news_present": true,
+        "headline_count": 0,
+        "headline_titles": [],
+        "calendar_present": true,
+        "calendar_event_count": 0,
+        "calendar_risk_level": "LOW",
+        "calendar_flags": {
+          "high_impact_window": false,
+          "upcoming_events": [],
+          "market_moving_risk": "LOW",
+          "avoid_trading_window": false
+        },
+        "regime_present": true,
+        "comex_present": false,
+        "oil_engine_present": false,
+        "macro_present": true,
+        "levels_count": 3
+      },
+      "fresh_response_summary": {
+        "shape": {
+          "top_level_keys": [
+            "ml_prediction",
+            "claude_analysis",
+            "ta_snapshot"
+          ],
+          "claude_analysis_keys": [
+            "symbol",
+            "ml_direction",
+            "claude_direction",
+            "claude_confidence",
+            "agreement",
+            "general_assessment",
+            "strengths",
+            "weaknesses",
+            "recommended_entry",
+            "recommended_sl",
+            "recommended_tp",
+            "position_size_suggestion",
+            "key_observations",
+            "risk_factors",
+            "timestamp",
+            "model_used",
+            "panel_signal",
+            "analysis_meta",
+            "market_context",
+            "data_sources",
+            "scalp_direction",
+            "scalp_confidence"
+          ],
+          "panel_signal_keys": [
+            "headline",
+            "scalp_bias",
+            "intraday_bias",
+            "market_behavior",
+            "entry_plan",
+            "key_levels",
+            "bull_case",
+            "bear_case",
+            "macro_risk",
+            "event_risk",
+            "invalidation",
+            "confidence_reasoning",
+            "top_factors",
+            "counter_factors",
+            "data_quality"
+          ]
+        },
+        "ml_direction": "HOLD",
+        "claude_direction": "HOLD",
+        "claude_confidence": 0.0,
+        "headline": "NO DATA: DAX session closed, missing price & technical data",
+        "scalp_bias": {
+          "direction": "NO_TRADE",
+          "confidence": 0.0,
+          "expected_behavior": "volatile",
+          "summary": "Cannot generate scalp bias - missing current price and technical data",
+          "time_horizon": "15-90m",
+          "reasoning": [
+            "Primary Xetra session closed (130 minutes to open)",
+            "Current price shows 0.0 - data feed issue",
+            "ML prediction indicates 'No candle data available'"
+          ]
+        },
+        "intraday_bias": {
+          "direction": "NO_TRADE",
+          "confidence": 0.0,
+          "expected_behavior": "range",
+          "summary": "Insufficient data for intraday analysis - await session open",
+          "time_horizon": "rest_of_session",
+          "reasoning": [
+            "No price or trend data available",
+            "Regime shows 'TRANSITION' with low confidence",
+            "Market structure unknown due to data gaps"
+          ]
+        },
+        "market_behavior": {
+          "state": "range",
+          "summary": "Pre-market with no actionable data - volatility regime unknown",
+          "expected_volatility": "LOW"
+        },
+        "entry_plan": {
+          "strategy": "wait",
+          "preferred_entry": null,
+          "entry_zone": {
+            "low": 0.0,
+            "high": 0.0
+          },
+          "stop_loss": null,
+          "take_profit": null,
+          "risk_reward": null,
+          "invalidation": "Any analysis invalid until live price data available"
+        },
+        "key_levels_sample": [
+          {
+            "label": "NO DATA",
+            "price": 0.0,
+            "kind": "support",
+            "source": "technical",
+            "distance": "unknown"
+          },
+          {
+            "label": "NO DATA",
+            "price": 0.0,
+            "kind": "resistance",
+            "source": "technical",
+            "distance": "unknown"
+          }
+        ],
+        "macro_risk": {
+          "level": "LOW",
+          "summary": "No immediate scheduled catalysts, but macro data missing",
+          "drivers": [
+            "DXY data unavailable",
+            "VIX data unavailable",
+            "Economic calendar shows low risk"
+          ]
+        },
+        "event_risk": {
+          "level": "LOW",
+          "summary": "No high-impact events scheduled",
+          "events": []
+        },
+        "top_factors": [
+          "Primary session closed (Xetra)",
+          "Complete lack of price data",
+          "No technical levels identified"
+        ],
+        "counter_factors": [
+          "Economic calendar shows low event risk",
+          "No news headlines detected"
+        ],
+        "data_quality": {
+          "level": "LOW",
+          "missing_inputs": [
+            "current_price",
+            "last_close",
+            "prev_close",
+            "support_levels",
+            "resistance_levels",
+            "volume_data",
+            "macro_prices",
+            "market_structure"
+          ],
+          "notes": [
+            "Data feed appears disconnected - current price is 0.0",
+            "Technical analysis impossible without price data",
+            "Session closed reduces conviction"
+          ]
+        },
+        "analysis_meta": {
+          "analysis_version": "4.0.0",
+          "prompt_version": "ai_panel_v1_20260318",
+          "provider": "deepseek",
+          "model": "deepseek-reasoner",
+          "cache_hit": false,
+          "market_open": false,
+          "market_session": "Xetra cash",
+          "generated_at": "2026-03-18T04:51:42.104261+00:00",
+          "expires_at": "2026-03-18T04:59:42.104278+00:00",
+          "context_pack_version": "3.0.0"
+        },
+        "market_context": {
+          "ny_time": "2026-03-18T00:50:59.102141-04:00",
+          "phase": "pre",
+          "session_name": "Xetra cash",
+          "regime": {
+            "regime": "TRANSITION",
+            "adx": 20.0,
+            "confidence": null,
+            "trend_direction": null,
+            "session": "asia",
+            "allowed_directions": [
+              "BUY",
+              "SELL",
+              "HOLD"
+            ]
+          },
+          "event_risk_level": "LOW",
+          "volatility_level": "LOW"
+        },
+        "data_sources": {
+          "context_pack": true,
+          "market_regime": true,
+          "unified_news": true,
+          "economic_calendar": true,
+          "comex_news": false,
+          "oil_analysis": false
+        }
+      },
+      "cached_response_summary": {
+        "shape": {
+          "top_level_keys": [
+            "ml_prediction",
+            "claude_analysis",
+            "ta_snapshot"
+          ],
+          "claude_analysis_keys": [
+            "symbol",
+            "ml_direction",
+            "claude_direction",
+            "claude_confidence",
+            "agreement",
+            "general_assessment",
+            "strengths",
+            "weaknesses",
+            "recommended_entry",
+            "recommended_sl",
+            "recommended_tp",
+            "position_size_suggestion",
+            "key_observations",
+            "risk_factors",
+            "timestamp",
+            "model_used",
+            "panel_signal",
+            "analysis_meta",
+            "market_context",
+            "data_sources",
+            "scalp_direction",
+            "scalp_confidence"
+          ],
+          "panel_signal_keys": [
+            "headline",
+            "scalp_bias",
+            "intraday_bias",
+            "market_behavior",
+            "entry_plan",
+            "key_levels",
+            "bull_case",
+            "bear_case",
+            "macro_risk",
+            "event_risk",
+            "invalidation",
+            "confidence_reasoning",
+            "top_factors",
+            "counter_factors",
+            "data_quality"
+          ]
+        },
+        "ml_direction": "HOLD",
+        "claude_direction": "HOLD",
+        "claude_confidence": 0.0,
+        "headline": "NO DATA: DAX session closed, missing price & technical data",
+        "scalp_bias": {
+          "direction": "NO_TRADE",
+          "confidence": 0.0,
+          "expected_behavior": "volatile",
+          "summary": "Cannot generate scalp bias - missing current price and technical data",
+          "time_horizon": "15-90m",
+          "reasoning": [
+            "Primary Xetra session closed (130 minutes to open)",
+            "Current price shows 0.0 - data feed issue",
+            "ML prediction indicates 'No candle data available'"
+          ]
+        },
+        "intraday_bias": {
+          "direction": "NO_TRADE",
+          "confidence": 0.0,
+          "expected_behavior": "range",
+          "summary": "Insufficient data for intraday analysis - await session open",
+          "time_horizon": "rest_of_session",
+          "reasoning": [
+            "No price or trend data available",
+            "Regime shows 'TRANSITION' with low confidence",
+            "Market structure unknown due to data gaps"
+          ]
+        },
+        "market_behavior": {
+          "state": "range",
+          "summary": "Pre-market with no actionable data - volatility regime unknown",
+          "expected_volatility": "LOW"
+        },
+        "entry_plan": {
+          "strategy": "wait",
+          "preferred_entry": null,
+          "entry_zone": {
+            "low": 0.0,
+            "high": 0.0
+          },
+          "stop_loss": null,
+          "take_profit": null,
+          "risk_reward": null,
+          "invalidation": "Any analysis invalid until live price data available"
+        },
+        "key_levels_sample": [
+          {
+            "label": "NO DATA",
+            "price": 0.0,
+            "kind": "support",
+            "source": "technical",
+            "distance": "unknown"
+          },
+          {
+            "label": "NO DATA",
+            "price": 0.0,
+            "kind": "resistance",
+            "source": "technical",
+            "distance": "unknown"
+          }
+        ],
+        "macro_risk": {
+          "level": "LOW",
+          "summary": "No immediate scheduled catalysts, but macro data missing",
+          "drivers": [
+            "DXY data unavailable",
+            "VIX data unavailable",
+            "Economic calendar shows low risk"
+          ]
+        },
+        "event_risk": {
+          "level": "LOW",
+          "summary": "No high-impact events scheduled",
+          "events": []
+        },
+        "top_factors": [
+          "Primary session closed (Xetra)",
+          "Complete lack of price data",
+          "No technical levels identified"
+        ],
+        "counter_factors": [
+          "Economic calendar shows low event risk",
+          "No news headlines detected"
+        ],
+        "data_quality": {
+          "level": "LOW",
+          "missing_inputs": [
+            "current_price",
+            "last_close",
+            "prev_close",
+            "support_levels",
+            "resistance_levels",
+            "volume_data",
+            "macro_prices",
+            "market_structure"
+          ],
+          "notes": [
+            "Data feed appears disconnected - current price is 0.0",
+            "Technical analysis impossible without price data",
+            "Session closed reduces conviction"
+          ]
+        },
+        "analysis_meta": {
+          "analysis_version": "4.0.0",
+          "prompt_version": "ai_panel_v1_20260318",
+          "provider": "deepseek",
+          "model": "deepseek-reasoner",
+          "cache_hit": true,
+          "market_open": false,
+          "market_session": "Xetra cash",
+          "generated_at": "2026-03-18T04:51:42.104261+00:00",
+          "expires_at": "2026-03-18T04:59:42.104278+00:00",
+          "context_pack_version": "3.0.0"
+        },
+        "market_context": {
+          "ny_time": "2026-03-18T00:50:59.102141-04:00",
+          "phase": "pre",
+          "session_name": "Xetra cash",
+          "regime": {
+            "regime": "TRANSITION",
+            "adx": 20.0,
+            "confidence": null,
+            "trend_direction": null,
+            "session": "asia",
+            "allowed_directions": [
+              "BUY",
+              "SELL",
+              "HOLD"
+            ]
+          },
+          "event_risk_level": "LOW",
+          "volatility_level": "LOW"
+        },
+        "data_sources": {
+          "context_pack": true,
+          "market_regime": true,
+          "unified_news": true,
+          "economic_calendar": true,
+          "comex_news": false,
+          "oil_analysis": false
+        }
+      },
+      "refreshed_response_summary": {
+        "shape": {
+          "top_level_keys": [
+            "ml_prediction",
+            "claude_analysis",
+            "ta_snapshot"
+          ],
+          "claude_analysis_keys": [
+            "symbol",
+            "ml_direction",
+            "claude_direction",
+            "claude_confidence",
+            "agreement",
+            "general_assessment",
+            "strengths",
+            "weaknesses",
+            "recommended_entry",
+            "recommended_sl",
+            "recommended_tp",
+            "position_size_suggestion",
+            "key_observations",
+            "risk_factors",
+            "timestamp",
+            "model_used",
+            "panel_signal",
+            "analysis_meta",
+            "market_context",
+            "data_sources",
+            "scalp_direction",
+            "scalp_confidence"
+          ],
+          "panel_signal_keys": [
+            "headline",
+            "scalp_bias",
+            "intraday_bias",
+            "market_behavior",
+            "entry_plan",
+            "key_levels",
+            "bull_case",
+            "bear_case",
+            "macro_risk",
+            "event_risk",
+            "invalidation",
+            "confidence_reasoning",
+            "top_factors",
+            "counter_factors",
+            "data_quality"
+          ]
+        },
+        "ml_direction": "HOLD",
+        "claude_direction": "HOLD",
+        "claude_confidence": 10.0,
+        "headline": "Pre-market DAX - No price data. Session opens in 129m. Data quality low.",
+        "scalp_bias": {
+          "direction": "NO_TRADE",
+          "confidence": 0.0,
+          "expected_behavior": "volatile",
+          "summary": "No actionable price data for analysis. Await session open.",
+          "time_horizon": "15-90m",
+          "reasoning": [
+            "Market is in pre-market phase.",
+            "Current price, last close, and TA levels are unavailable.",
+            "ML prediction has no candle data."
+          ]
+        },
+        "intraday_bias": {
+          "direction": "HOLD",
+          "confidence": 10.0,
+          "expected_behavior": "volatile",
+          "summary": "Insufficient data for directional bias. Monitor initial auction.",
+          "time_horizon": "rest_of_session",
+          "reasoning": [
+            "Primary Xetra session is closed.",
+            "Critical market structure data is missing.",
+            "Regime is in TRANSITION with no clear trend."
+          ]
+        },
+        "market_behavior": {
+          "state": "range",
+          "summary": "Market state unknown due to missing price action. Await open for structure.",
+          "expected_volatility": "LOW"
+        },
+        "entry_plan": {
+          "strategy": "wait",
+          "preferred_entry": null,
+          "entry_zone": {
+            "low": 0.0,
+            "high": 0.0
+          },
+          "stop_loss": null,
+          "take_profit": null,
+          "risk_reward": null,
+          "invalidation": "Any trade taken without confirming session open price action."
+        },
+        "key_levels_sample": [],
+        "macro_risk": {
+          "level": "MEDIUM",
+          "summary": "Macro inputs (DXY, VIX) unavailable, creating unknown baseline risk.",
+          "drivers": [
+            "Missing Dollar and Volatility index data."
+          ]
+        },
+        "event_risk": {
+          "level": "LOW",
+          "summary": "No high-impact scheduled events in immediate window.",
+          "events": []
+        },
+        "top_factors": [
+          "Missing Price Data",
+          "Pre-Market Session",
+          "No Technical Structure"
+        ],
+        "counter_factors": [
+          "Low scheduled event risk",
+          "Transition regime allows for moves either way."
+        ],
+        "data_quality": {
+          "level": "LOW",
+          "missing_inputs": [
+            "current_price",
+            "last_close",
+            "support/resistance levels",
+            "volume data",
+            "macro data (DXY, VIX)",
+            "market structure swings"
+          ],
+          "notes": [
+            "All technical analysis is invalid without price. ML prediction failed due to no candle data."
+          ]
+        },
+        "analysis_meta": {
+          "analysis_version": "4.0.0",
+          "prompt_version": "ai_panel_v1_20260318",
+          "provider": "deepseek",
+          "model": "deepseek-reasoner",
+          "cache_hit": false,
+          "market_open": false,
+          "market_session": "Xetra cash",
+          "generated_at": "2026-03-18T04:53:13.607762+00:00",
+          "expires_at": "2026-03-18T05:01:13.607774+00:00",
+          "context_pack_version": "3.0.0"
+        },
+        "market_context": {
+          "ny_time": "2026-03-18T00:51:42.547640-04:00",
+          "phase": "pre",
+          "session_name": "Xetra cash",
+          "regime": {
+            "regime": "TRANSITION",
+            "adx": 20.0,
+            "confidence": null,
+            "trend_direction": null,
+            "session": "asia",
+            "allowed_directions": [
+              "BUY",
+              "SELL",
+              "HOLD"
+            ]
+          },
+          "event_risk_level": "LOW",
+          "volatility_level": "LOW"
+        },
+        "data_sources": {
+          "context_pack": true,
+          "market_regime": true,
+          "unified_news": true,
+          "economic_calendar": true,
+          "comex_news": false,
+          "oil_analysis": false
+        }
+      },
+      "cache_behavior": {
+        "fresh_cache_hit": false,
+        "cached_cache_hit": true,
+        "refreshed_cache_hit": false,
+        "fresh_generated_at": "2026-03-18T04:51:42.104261+00:00",
+        "cached_generated_at": "2026-03-18T04:51:42.104261+00:00",
+        "refreshed_generated_at": "2026-03-18T04:53:13.607762+00:00"
+      },
+      "persistence": {
+        "before": {
+          "cache_row_exists": true,
+          "history_count": 4,
+          "latest_cache_updated_at": "2026-03-18T04:48:48.189153+00:00",
+          "latest_history_created_at": "2026-03-18T04:48:48.189153+00:00",
+          "error": null
+        },
+        "after": {
+          "cache_row_exists": true,
+          "history_count": 6,
+          "latest_cache_updated_at": "2026-03-18T04:53:13.715996+00:00",
+          "latest_history_created_at": "2026-03-18T04:53:13.715996+00:00",
+          "error": null
+        }
+      }
+    }
+  ]
+}

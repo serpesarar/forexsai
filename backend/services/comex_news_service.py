@@ -15,7 +15,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 import xml.etree.ElementTree as ET
@@ -101,63 +101,42 @@ class COMEXNewsImpact:
     block_reason: str = ""
 
 
-# =============================================================================
-# KEYWORD ANALYSIS
-# =============================================================================
-
-# COMEX/CME için kritik kelimeler
 BEARISH_KEYWORDS = {
-    # Margin artışı = bearish (maliyet artar, long pozisyonlar kapanır)
     "margin increase": -0.8,
     "margin hike": -0.8,
     "margin requirement": -0.6,
     "margin raised": -0.7,
     "higher margin": -0.6,
-    
-    # Faiz artışı = bearish for gold
     "rate hike": -0.7,
     "rate increase": -0.6,
     "hawkish": -0.5,
     "tightening": -0.5,
     "higher rates": -0.5,
-    
-    # Dolar güçlenmesi = bearish
     "dollar strength": -0.4,
     "dollar rally": -0.4,
     "usd surge": -0.4,
-    
-    # Risk-on = bearish for gold
     "risk on": -0.3,
     "equity rally": -0.3,
     "stock surge": -0.3,
 }
 
 BULLISH_KEYWORDS = {
-    # Margin düşüşü = bullish
     "margin decrease": 0.6,
     "margin cut": 0.6,
     "margin reduced": 0.5,
     "lower margin": 0.5,
-    
-    # Faiz düşüşü = bullish for gold
     "rate cut": 0.7,
     "rate decrease": 0.6,
     "dovish": 0.5,
     "easing": 0.5,
     "lower rates": 0.5,
-    
-    # Güvenli liman = bullish
     "safe haven": 0.6,
     "gold surge": 0.5,
     "gold rally": 0.5,
     "flight to safety": 0.6,
-    
-    # Enflasyon = bullish for gold
     "inflation rise": 0.5,
     "inflation surge": 0.6,
     "cpi higher": 0.4,
-    
-    # Jeopolitik = bullish
     "geopolitical": 0.4,
     "tension": 0.3,
     "crisis": 0.5,
@@ -254,7 +233,10 @@ def parse_rss_date(date_str: str) -> datetime:
     
     for fmt in formats:
         try:
-            return datetime.strptime(date_str, fmt)
+            parsed = datetime.strptime(date_str, fmt)
+            if parsed.tzinfo is not None:
+                return parsed.astimezone(timezone.utc).replace(tzinfo=None)
+            return parsed
         except ValueError:
             continue
     
@@ -413,7 +395,17 @@ class COMEXNewsService:
         self._last_fetch: Optional[datetime] = None
         self._cache_duration = timedelta(minutes=2)
         self._seen_hashes: set = set()
-    
+
+    @staticmethod
+    def _normalize_news_datetime(value: Any) -> datetime:
+        if isinstance(value, datetime):
+            if value.tzinfo is not None:
+                return value.astimezone(timezone.utc).replace(tzinfo=None)
+            return value
+        if isinstance(value, str) and value:
+            return parse_rss_date(value)
+        return datetime.utcnow()
+
     def _generate_news_id(self, title: str, source: str) -> str:
         """Unique ID for deduplication"""
         content = f"{title}:{source}"
@@ -468,10 +460,10 @@ class COMEXNewsService:
                     self._seen_hashes.add(news_id)
                     
                     # Parse date
-                    pub_date = parse_rss_date(item.get("pub_date", ""))
+                    pub_date = self._normalize_news_datetime(item.get("pub_date", ""))
                     
                     # Filter old news (>24h)
-                    if datetime.utcnow() - pub_date.replace(tzinfo=None) > timedelta(hours=24):
+                    if datetime.utcnow() - pub_date > timedelta(hours=24):
                         continue
                     
                     # Create news item
@@ -488,7 +480,7 @@ class COMEXNewsService:
                     all_news.append(news_item)
         
         # Sort by date (newest first)
-        all_news.sort(key=lambda x: x.published_at, reverse=True)
+        all_news.sort(key=lambda x: self._normalize_news_datetime(x.published_at), reverse=True)
         
         # Update cache
         self._cache = {n.id: n for n in all_news[:50]}  # Keep last 50
@@ -567,8 +559,9 @@ class COMEXNewsService:
         high_impact_news = []
         
         for news in analyzed_news:
+            published_at = self._normalize_news_datetime(news.published_at)
             # Time decay (half-life = 30 minutes)
-            age_minutes = (now - news.published_at.replace(tzinfo=None)).total_seconds() / 60
+            age_minutes = (now - published_at).total_seconds() / 60
             decay = max(0.1, 1.0 - (age_minutes / 60))  # 1h = 0% decay
             
             # Weight by impact score
