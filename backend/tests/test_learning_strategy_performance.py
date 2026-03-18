@@ -3,7 +3,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -490,6 +490,47 @@ async def test_smc_performance_includes_smart_money_zone_rows_in_timeframe_analy
     assert payload["timeframes"]["NDX.INDX"]["15m"]["expired"] == 1
     assert payload["symbols"]["NDX.INDX"]["total_predictions"] == 2
     assert payload["overall_summary"]["resolved_signals"] == 1
+
+
+@pytest.mark.asyncio
+async def test_smc_performance_bootstraps_when_database_has_no_smc_history():
+    learning_module = _load_learning_module("test_learning_smc_performance_bootstrap")
+    now = datetime.now(timezone.utc)
+    bootstrap_rows = [
+        _prediction_row(
+            id="smc-bootstrap-001",
+            symbol="XAUUSD",
+            strategy="SMART_MONEY_ZONES",
+            model_type="smc",
+            timeframe="1h",
+            created_at=_iso(now - timedelta(minutes=20)),
+            exit_time=None,
+            status="active",
+            highest_profit_pips=0,
+            lowest_drawdown_pips=0,
+            targets_hit={},
+        )
+    ]
+    client = _FakeClient([])
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ), patch.object(
+        learning_module,
+        "_fetch_prediction_logs_window",
+        side_effect=[[], bootstrap_rows],
+    ) as mock_fetch, patch.object(
+        learning_module,
+        "_bootstrap_smc_predictions_if_empty",
+        new_callable=AsyncMock,
+    ) as mock_bootstrap:
+        payload = await learning_module.get_smc_performance(days=7)
+
+    assert mock_fetch.await_count == 2
+    mock_bootstrap.assert_awaited_once()
+    assert payload["smc_predictions_count"] == 1
+    assert payload["timeframes"]["XAUUSD"]["1h"]["active"] == 1
+    assert payload["symbols"]["XAUUSD"]["total_predictions"] == 1
 
 
 @pytest.mark.asyncio

@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 
 from database.supabase_client import is_db_available, get_init_error, get_supabase_client
+from order_block_detector import OrderBlockConfig
 from services.prediction_logger import get_recent_predictions
 from services.outcome_tracker import (
     check_pending_outcomes,
@@ -48,6 +49,7 @@ from services.signal_analytics import (
     summarize_scope,
 )
 from services.multi_target_tracker import tracker as multi_target_tracker
+from services.order_block_service import service as order_block_service
 from services.telegram_service import telegram_notifier
 
 router = APIRouter(prefix="/api/learning", tags=["learning"])
@@ -64,6 +66,10 @@ _ML_STRATEGY_DESCRIPTIONS = {
     "full_power": "Daha geniş sinyal akışı için düşük eşikli preset.",
     "aggressive": "En esnek preset; daha hızlı ve daha fazla sinyal arar.",
     "nasdaq_precision": "NASDAQ odaklı yüksek doğruluk preset'i.",
+}
+_AI_PANEL_SCOPE_ORDER = ["hourly_panel"]
+_AI_PANEL_SCOPE_DESCRIPTIONS = {
+    "hourly_panel": "CLAUDE AI ANALYSIS panelinden her saat force-refresh ile alınan actionable sinyaller.",
 }
 _SMC_TIMEFRAME_ORDER = ["5m", "15m", "1h", "4h"]
 _SMC_TIMEFRAME_DESCRIPTIONS = {
@@ -84,6 +90,57 @@ def _utc_now() -> datetime:
 
 def _utc_iso(dt: Optional[datetime] = None) -> str:
     return _as_utc(dt or _utc_now()).isoformat().replace("+00:00", "Z")
+
+
+async def _fetch_prediction_logs_window(
+    client,
+    cutoff: datetime,
+    *,
+    select_fields: str,
+) -> List[dict]:
+    predictions: List[dict] = []
+    end = _utc_now()
+    cur = cutoff
+    days_back = max(0, int((end - cutoff).total_seconds() // 86400))
+    window_days = 1 if 0 < days_back <= 90 else 7 if 90 < days_back <= 365 else 30
+
+    while cur < end:
+        ds = cur.replace(hour=0, minute=0, second=0, microsecond=0)
+        de = min(ds + timedelta(days=window_days), end)
+        batch = safe_get_data(
+            client.table("prediction_logs").select(select_fields).gte("created_at", _utc_iso(ds)).lt(
+                "created_at", _utc_iso(de)
+            ).order("created_at", desc=True).limit(1000).execute()
+        )
+        if batch:
+            predictions.extend(batch)
+        cur = de
+
+    return predictions
+
+
+async def _bootstrap_smc_predictions_if_empty() -> None:
+    config = OrderBlockConfig(
+        fractal_period=2,
+        min_displacement_atr=1.0,
+        min_score=45,
+        zone_type="wick",
+        max_tests=3,
+    )
+
+    for symbol in _TRACKED_STRATEGY_SYMBOLS:
+        for timeframe in _SMC_TIMEFRAME_ORDER:
+            try:
+                await order_block_service.detect(
+                    symbol,
+                    timeframe,
+                    500,
+                    config,
+                    use_cache=False,
+                    log_signals=True,
+                )
+            except Exception as exc:
+                logger.error("SMC bootstrap error for %s %s: %s", symbol, timeframe, exc)
 
 
 def _parse_iso_datetime(value: Any) -> Optional[datetime]:
@@ -1714,21 +1771,22 @@ async def get_smc_performance(
 
     try:
         cutoff = (_utc_now() - timedelta(days=days)) if days > 0 else _ALL_TIME_FLOOR
-        predictions = []
-        end = _utc_now()
-        cur = cutoff
-        window_days = 1 if 0 < days <= 90 else 7 if 90 < days <= 365 else 30
-        while cur < end:
-            ds = cur.replace(hour=0, minute=0, second=0, microsecond=0)
-            de = min(ds + timedelta(days=window_days), end)
-            batch = safe_get_data(client.table("prediction_logs").select(
-                "id, symbol, timeframe, strategy, model_type, ml_confidence, status, targets_hit, targets, "
-                "highest_profit_pips, lowest_drawdown_pips, stop_loss_pips, ml_entry_price, exit_price, "
-                "exit_time, ml_direction, factors, created_at, resolution_reason"
-            ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).order("created_at", desc=True).limit(1000).execute())
-            if batch:
-                predictions.extend(batch)
-            cur = de
+        select_fields = (
+            "id, symbol, timeframe, strategy, model_type, ml_confidence, status, targets_hit, targets, "
+            "highest_profit_pips, lowest_drawdown_pips, stop_loss_pips, ml_entry_price, exit_price, "
+            "exit_time, ml_direction, factors, created_at, resolution_reason"
+        )
+        predictions = await _fetch_prediction_logs_window(client, cutoff, select_fields=select_fields)
+
+        has_smc_history = any(
+            p.get("symbol") in _TRACKED_STRATEGY_SYMBOLS
+            and normalize_model_type(p) == "smc"
+            and normalize_timeframe(p.get("timeframe")) in _SMC_TIMEFRAME_ORDER
+            for p in predictions
+        )
+        if not has_smc_history:
+            await _bootstrap_smc_predictions_if_empty()
+            predictions = await _fetch_prediction_logs_window(client, cutoff, select_fields=select_fields)
 
         grouped_signals = {
             symbol: {timeframe: [] for timeframe in _SMC_TIMEFRAME_ORDER}
@@ -1814,6 +1872,140 @@ async def get_smc_performance(
     except Exception as e:
         import traceback
         logger.error(f"SMC performance error: {e}\n{traceback.format_exc()}")
+        return {"error": str(e)}
+
+
+@router.get("/ai-panel-performance")
+async def get_ai_panel_performance(
+    days: int = Query(0, ge=0, le=1095, description="Number of days to analyze (0=all time)")
+):
+    if not is_db_available():
+        return {"error": "Database not available"}
+
+    client = get_supabase_client()
+    if client is None:
+        return {"error": "Database client not available"}
+
+    try:
+        cutoff = (_utc_now() - timedelta(days=days)) if days > 0 else _ALL_TIME_FLOOR
+        predictions = []
+        end = _utc_now()
+        cur = cutoff
+        window_days = 1
+        while cur < end:
+            ds = cur.replace(hour=0, minute=0, second=0, microsecond=0)
+            de = min(ds + timedelta(days=window_days), end)
+            batch = safe_get_data(client.table("prediction_logs").select(
+                "id, symbol, strategy, ml_confidence, status, targets_hit, targets, "
+                "model_type, timeframe, created_at, highest_profit_pips, lowest_drawdown_pips, "
+                "stop_loss_pips, ml_entry_price, exit_price, exit_time, ml_direction, factors, resolution_reason"
+            ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).order("created_at", desc=True).limit(1000).execute())
+            if batch:
+                predictions.extend(batch)
+            cur = de
+
+        snapshot_counts = {symbol: 0 for symbol in _TRACKED_STRATEGY_SYMBOLS}
+        total_snapshots = 0
+        cur = cutoff
+        while cur < end:
+            ds = cur.replace(hour=0, minute=0, second=0, microsecond=0)
+            de = min(ds + timedelta(days=window_days), end)
+            try:
+                snapshot_batch = safe_get_data(client.table("ai_panel_signal_snapshots").select(
+                    "id, symbol"
+                ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).order("created_at", desc=True).limit(1000).execute()) or []
+            except Exception:
+                snapshot_batch = []
+            if snapshot_batch:
+                total_snapshots += len(snapshot_batch)
+                for row in snapshot_batch:
+                    symbol = row.get("symbol")
+                    if symbol in snapshot_counts:
+                        snapshot_counts[symbol] += 1
+            cur = de
+
+        grouped_signals = {
+            symbol: {scope: [] for scope in _AI_PANEL_SCOPE_ORDER}
+            for symbol in _TRACKED_STRATEGY_SYMBOLS
+        }
+        all_ai_signals: List[dict] = []
+        outcomes_found = 0
+        eligible_outcomes_found = 0
+
+        for p in predictions:
+            sym = p.get("symbol")
+            if sym not in grouped_signals or normalize_model_type(p) != "ai_panel":
+                continue
+
+            grouped_signals[sym]["hourly_panel"].append(p)
+            all_ai_signals.append(p)
+
+            classified_status, _, _ = classify_signal(p, default_symbol=sym)
+            if classified_status in {None, "active", "direction_flip"}:
+                continue
+
+            outcomes_found += 1
+
+            if classified_status not in {"completed", "stopped"}:
+                continue
+
+            eligible_outcomes_found += 1
+
+        result_data: Dict[str, Dict[str, dict]] = {}
+        symbol_analysis: Dict[str, dict] = {}
+
+        for sym, scoped_signals in grouped_signals.items():
+            scope_metrics = {
+                scope: _build_strategy_scope_metrics(scope, scoped_signals[scope], symbol=sym)
+                for scope in _AI_PANEL_SCOPE_ORDER
+            }
+            quality_leader = _pick_scope_leader(scope_metrics, "quality_score")
+            scalping_leader = _pick_scope_leader(scope_metrics, "scalp_score")
+            long_term_leader = _pick_scope_leader(scope_metrics, "long_term_score")
+            result_data[sym] = scope_metrics
+            symbol_analysis[sym] = {
+                "available_scopes": [scope for scope in _AI_PANEL_SCOPE_ORDER if scope_metrics[scope]["total_predictions"] > 0],
+                "total_predictions": sum(metrics["total_predictions"] for metrics in scope_metrics.values()),
+                "resolved_signals": sum(metrics["resolved_signals"] for metrics in scope_metrics.values()),
+                "snapshot_count": snapshot_counts.get(sym, 0),
+                "leaders": {
+                    "quality": quality_leader,
+                    "scalping": scalping_leader,
+                    "long_term": long_term_leader,
+                },
+            }
+
+        overall_scope_metrics = {
+            scope: _build_strategy_scope_metrics(
+                scope,
+                [sig for sig in all_ai_signals if scope == "hourly_panel"],
+            )
+            for scope in _AI_PANEL_SCOPE_ORDER
+        }
+
+        return {
+            "period_days": days,
+            "ai_panel_predictions_count": len(all_ai_signals),
+            "ai_panel_snapshots_count": total_snapshots,
+            "outcomes_count": outcomes_found,
+            "eligible_outcomes_count": eligible_outcomes_found,
+            "strategies": result_data,
+            "symbols": symbol_analysis,
+            "panel_scope_order": _AI_PANEL_SCOPE_ORDER,
+            "panel_descriptions": _AI_PANEL_SCOPE_DESCRIPTIONS,
+            "overall_summary": {
+                "total_predictions": len(all_ai_signals),
+                "resolved_signals": sum(metrics["resolved_signals"] for metrics in overall_scope_metrics.values()),
+                "leaders": {
+                    "quality": _pick_scope_leader(overall_scope_metrics, "quality_score"),
+                    "scalping": _pick_scope_leader(overall_scope_metrics, "scalp_score"),
+                    "long_term": _pick_scope_leader(overall_scope_metrics, "long_term_score"),
+                },
+            },
+        }
+    except Exception as e:
+        import traceback
+        logger.error(f"AI panel performance error: {e}\n{traceback.format_exc()}")
         return {"error": str(e)}
 
 
@@ -2669,7 +2861,7 @@ async def get_all_models_summary(
             cur = de
         
         # Initialize model structure
-        MODELS = ["ml", "emel", "emel_inverse", "pulse1", "pulse2", "pulse3", "smc"]
+        MODELS = ["ml", "ai_panel", "emel", "emel_inverse", "pulse1", "pulse2", "pulse3", "smc"]
         TIMEFRAMES = list(TIMEFRAME_ORDER)
         
         summary = {}
