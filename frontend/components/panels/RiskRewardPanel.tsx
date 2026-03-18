@@ -98,12 +98,12 @@ export default function RiskRewardPanel() {
       const response = await fetch(
         `${API_BASE}/api/deepseek/risk/${activeSymbol}?direction=${direction}&account_size=${accountSize}&risk_per_trade=${riskPerTrade}`
       );
-      
+      const result = await response.json().catch(() => null);
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const backendError = result?.error || result?.detail || `HTTP error! status: ${response.status}`;
+        throw new Error(backendError);
       }
-      
-      const result = await response.json();
       
       if (result.success) {
         setData(result.data);

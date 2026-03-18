@@ -19,6 +19,49 @@ class RiskParameters:
     kelly_fraction: float
 
 
+def _to_float(value: object, default: float = 0.0) -> float:
+    try:
+        if value is None:
+            return default
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _extract_levels(candles: list, current_price: float) -> Dict[str, List[float]]:
+    """Extract simple nearby support/resistance levels from recent candles."""
+    if not candles:
+        return {"support": [], "resistance": []}
+
+    recent = candles[-30:] if len(candles) >= 30 else candles
+    lows = sorted({_to_float(c.get("low")) for c in recent if _to_float(c.get("low")) > 0})
+    highs = sorted({_to_float(c.get("high")) for c in recent if _to_float(c.get("high")) > 0})
+
+    supports = [level for level in lows if level < current_price]
+    resistances = [level for level in highs if level > current_price]
+
+    return {
+        "support": supports[-3:],
+        "resistance": resistances[:3],
+    }
+
+
+def _resolve_position_fraction(kelly: Dict) -> float:
+    """Convert Kelly output into a safe execution fraction."""
+    recommendation = str(kelly.get("recommendation") or "insufficient_data")
+    fractional = max(0.0, _to_float(kelly.get("fractional_kelly")) / 100.0)
+
+    if recommendation in {"avoid", "insufficient_data"}:
+        return 0.0
+    if recommendation == "minimal":
+        return min(max(fractional, 0.03), 0.06)
+    if recommendation == "conservative":
+        return min(max(fractional, 0.05), 0.12)
+    if recommendation == "moderate":
+        return min(max(fractional, 0.08), 0.18)
+    return min(max(fractional, 0.10), 0.25)
+
+
 def calculate_atr(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, period: int = 14) -> float:
     """Calculate Average True Range."""
     if len(closes) < period + 1:
@@ -45,7 +88,13 @@ def calculate_kelly_criterion(
     Where: B = avg_win/avg_loss, P = win_rate, Q = 1-P
     """
     if avg_loss == 0 or win_rate <= 0 or win_rate >= 1:
-        return {"kelly_pct": 0, "fractional_kelly": 0, "recommendation": "insufficient_data"}
+        return {
+            "kelly_pct": 0.0,
+            "fractional_kelly": 0.0,
+            "recommendation": "insufficient_data",
+            "reason": "Win/loss history is insufficient for reliable Kelly sizing.",
+            "edge_ratio": 0.0,
+        }
     
     b = avg_win / avg_loss  # Average win/loss ratio
     p = win_rate
@@ -99,7 +148,10 @@ def calculate_stop_loss(
         distance = atr * atr_multiplier
         sl_price = current_price - distance if direction == "long" else current_price + distance
         
-    elif method == "support_resistance" and support_levels and resistance_levels:
+    elif method == "support_resistance" and (
+        (direction == "long" and support_levels) or
+        (direction == "short" and resistance_levels)
+    ):
         if direction == "long":
             # Find nearest support below current price
             valid_supports = [s for s in support_levels if s < current_price * 0.995]
@@ -167,9 +219,12 @@ def calculate_position_size(
     
     if risk_per_unit == 0:
         return {
+            "base_units": 0,
             "units": 0,
             "position_value": 0,
             "risk_amount": risk_amount,
+            "risk_pct": risk_per_trade_pct,
+            "kelly_applied": 0,
             "error": "Invalid stop-loss distance"
         }
     
@@ -177,7 +232,8 @@ def calculate_position_size(
     base_units = risk_amount / risk_per_unit
     
     # Apply Kelly fraction
-    kelly_adjusted_units = base_units * kelly_fraction
+    safe_kelly_fraction = max(0.0, min(0.25, kelly_fraction))
+    kelly_adjusted_units = base_units * safe_kelly_fraction
     
     position_value = kelly_adjusted_units * entry_price
     
@@ -189,11 +245,12 @@ def calculate_position_size(
         position_value = max_position_value
     
     return {
+        "base_units": round(base_units, 2),
         "units": round(kelly_adjusted_units, 2),
         "position_value": round(position_value, 2),
         "risk_amount": round(risk_amount, 2),
         "risk_pct": risk_per_trade_pct,
-        "kelly_applied": kelly_fraction
+        "kelly_applied": round(safe_kelly_fraction, 4)
     }
 
 
@@ -349,33 +406,46 @@ async def calculate_risk_analysis(
             "symbol": symbol,
             "timestamp": datetime.utcnow().isoformat()
         }
+
+    current_price = _to_float(current_price, _to_float(candles[-1].get("close")))
+    if current_price <= 0:
+        return {
+            "error": "Invalid current price",
+            "symbol": symbol,
+            "timestamp": datetime.utcnow().isoformat()
+        }
     
     # Convert to numpy arrays
-    highs = np.array([c["high"] for c in candles])
-    lows = np.array([c["low"] for c in candles])
-    closes = np.array([c["close"] for c in candles])
+    highs = np.array([_to_float(c.get("high")) for c in candles])
+    lows = np.array([_to_float(c.get("low")) for c in candles])
+    closes = np.array([_to_float(c.get("close")) for c in candles])
     
     # Calculate ATR
     atr = calculate_atr(highs, lows, closes)
     
     # Calculate Kelly Criterion
     kelly = calculate_kelly_criterion(win_rate, avg_win, avg_loss)
+    extracted_levels = _extract_levels(candles, current_price)
     
     # Calculate Stop Loss
     stop_loss = calculate_stop_loss(
-        current_price, direction, atr,
-        support_levels=[current_price * 0.99, current_price * 0.98],
-        resistance_levels=[current_price * 1.01, current_price * 1.02]
+        current_price,
+        direction,
+        atr,
+        method="support_resistance" if extracted_levels["support"] or extracted_levels["resistance"] else "atr",
+        support_levels=extracted_levels["support"],
+        resistance_levels=extracted_levels["resistance"],
     )
     
     # Calculate Take Profits
     take_profits = calculate_take_profits(current_price, stop_loss["price"], direction)
     
     # Calculate Position Size
+    position_fraction = _resolve_position_fraction(kelly)
     position = calculate_position_size(
         account_size, risk_per_trade_pct,
         current_price, stop_loss["price"],
-        kelly_fraction=kelly["fractional_kelly"] / 100 if kelly["fractional_kelly"] > 0 else 0.25
+        kelly_fraction=position_fraction,
     )
     
     # Calculate Trailing Stop
@@ -395,6 +465,15 @@ async def calculate_risk_analysis(
         "adjusted_units": round(position["units"] * vol_adj["adjustment"], 2),
         "volatility_adjustment": vol_adj["adjustment"]
     }
+
+    if adjusted_position["adjusted_units"] <= 0:
+        position_summary = "No trade size recommended until edge improves."
+    else:
+        position_summary = f"{adjusted_position['adjusted_units']} units"
+
+    primary_target = f"R:R {take_profits[0]['r_r_ratio'] if take_profits else 'N/A'}"
+    if take_profits:
+        primary_target = f"TP1 {take_profits[0]['price']} ({take_profits[0]['r_r_ratio']}:1)"
     
     return {
         "symbol": symbol,
@@ -409,10 +488,15 @@ async def calculate_risk_analysis(
         "trailing_stop": trailing,
         "volatility": vol_adj,
         "calculation_method": "pure_math",
+        "data_quality": {
+            "candles_used": len(candles),
+            "supports_found": len(extracted_levels["support"]),
+            "resistances_found": len(extracted_levels["resistance"]),
+        },
         "recommendations": {
-            "position_size": f"{adjusted_position['adjusted_units']} units",
+            "position_size": position_summary,
             "max_risk": f"{risk_per_trade_pct}% of account",
             "stop_loss": f"{stop_loss['distance_pct']}% away",
-            "primary_target": f"R:R {take_profits[0]['r_r_ratio'] if take_profits else 'N/A'}"
+            "primary_target": primary_target,
         }
     }

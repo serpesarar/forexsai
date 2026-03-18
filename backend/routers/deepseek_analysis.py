@@ -50,7 +50,7 @@ async def smc_analysis(symbol: str):
     """
     try:
         from services.smc_calculator_service import calculate_smc_with_gaps
-        from services.data_hub import data_hub
+        from services import data_hub
         
         # Get EOD candle data (daily) for gap analysis
         candles = data_hub.get_candles(symbol, "1d", limit=50)
@@ -86,11 +86,23 @@ async def risk_analysis(
     """
     try:
         from services.risk_calculator_service import calculate_risk_analysis
-        from services.data_hub import data_hub
+        from services import data_hub
         
         # Get candle data and current price
         candles = data_hub.get_candles(symbol, "1h", limit=50)
         current_price = data_hub.get_price(symbol)
+
+        if not candles or len(candles) < 14:
+            try:
+                candles = await data_hub._fetch_candles_from_api(symbol, "1h", limit=50)
+            except Exception:
+                candles = candles or []
+
+        if not current_price:
+            try:
+                current_price = await data_hub._fetch_price_from_api(symbol)
+            except Exception:
+                current_price = current_price or None
         
         if not candles or len(candles) < 14:
             return NumpySafeJSONResponse(
@@ -132,7 +144,7 @@ async def seasonality_analysis(symbol: str):
     """
     try:
         from services.seasonality_calculator_service import calculate_seasonality
-        from services.data_hub import data_hub
+        from services import data_hub
         
         # Get recent candles for anomaly detection
         candles = data_hub.get_candles(symbol, "1d", limit=30)
@@ -166,12 +178,28 @@ async def smart_setup_analysis(
         from services.smc_calculator_service import calculate_smc
         from services.risk_calculator_service import calculate_risk_analysis
         from services.seasonality_calculator_service import calculate_seasonality
-        from services.data_hub import data_hub
+        from services import data_hub
         
         # Get data
         candles_1h = data_hub.get_candles(symbol, "1h", limit=100)
         candles_1d = data_hub.get_candles(symbol, "1d", limit=30)
         current_price = data_hub.get_price(symbol)
+
+        if not candles_1h or len(candles_1h) < 20:
+            try:
+                candles_1h = await data_hub._fetch_candles_from_api(symbol, "1h", limit=100)
+            except Exception:
+                candles_1h = candles_1h or []
+        if not candles_1d or len(candles_1d) < 20:
+            try:
+                candles_1d = await data_hub._fetch_eod_from_api(symbol, limit=30)
+            except Exception:
+                candles_1d = candles_1d or []
+        if not current_price:
+            try:
+                current_price = await data_hub._fetch_price_from_api(symbol)
+            except Exception:
+                current_price = current_price or None
         
         if not candles_1h or len(candles_1h) < 20:
             return NumpySafeJSONResponse(
