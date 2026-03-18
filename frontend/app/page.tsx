@@ -14,9 +14,7 @@ import CircularProgress from "../components/CircularProgress";
 import DetailPanel from "../components/DetailPanel";
 import { useDashboardStore, useDetailPanelStore } from "../lib/store";
 import { fetcher } from "../lib/api";
-import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { useI18nStore } from "../lib/i18n/store";
-import SharedNavHeader from "../components/SharedNavHeader";
 import Sidebar from "../components/Sidebar";
 // Critical / lightweight - static imports
 import MLFactorPanel from "../components/MLFactorPanel";
@@ -26,7 +24,6 @@ import { LazyPanel } from "../components/LazyPanel";
 import WSStatusBadge from "../components/WSStatusBadge";
 
 // Heavy panels - dynamic imports (code-split into separate chunks)
-const TradingChartWrapper = lazy(() => import("../components/TradingChartWrapper"));
 const OrderBlockPanelSimple = lazy(() => import("../components/OrderBlockPanelSimple"));
 const RhythmDetectorSimple = lazy(() => import("../components/RhythmDetectorSimple"));
 const MLPredictionPanel = lazy(() => import("../components/MLPredictionPanel"));
@@ -63,7 +60,6 @@ import { useSingleTimeframeAnalysis, type Timeframe, type TimeframeAnalysis } fr
 
 // Import Navigation and Views
 import { useNavigationStore } from "../lib/store/navigation";
-import ChartsView from "../components/views/ChartsView";
 import TradingView from "../components/views/TradingView";
 import AnalysisView from "../components/views/AnalysisView";
 import SignalsView from "../components/views/SignalsView";
@@ -1389,7 +1385,6 @@ export default function HomePage() {
               </DraggableDashboard>
             </div>
           )}
-          {activeView === "charts" && <ChartsView />}
           {activeView === "trading" && <TradingView />}
           {activeView === "analysis" && <AnalysisView />}
           {activeView === "signals" && <SignalsView />}

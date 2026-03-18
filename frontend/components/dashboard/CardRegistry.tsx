@@ -6,7 +6,6 @@ import MLPredictionPanel from "../MLPredictionPanel";
 import ClaudeAnalysisPanel from "../ClaudeAnalysisPanelV2";
 import OrderBlockPanel from "../OrderBlockPanel";
 import RTYHIIMDetectorPanel from "../RTYHIIMDetectorPanel";
-import TradingChartWrapper from "../TradingChartWrapper";
 
 // Card size definitions
 export type CardSize = "small" | "medium" | "large" | "full";
@@ -119,20 +118,10 @@ export const CARD_REGISTRY: CardDefinition[] = [
     gridSpan: { small: 1, medium: 2, large: 3, full: 3 },
   },
   {
-    id: "charts",
-    title: "Trading Charts",
-    defaultColumn: "center",
-    defaultOrder: 6,
-    defaultSize: "full",
-    minSize: "large",
-    component: null,
-    gridSpan: { small: 1, medium: 2, large: 3, full: 3 },
-  },
-  {
     id: "news-correlation",
     title: "News-Chart Correlation",
     defaultColumn: "center",
-    defaultOrder: 7,
+    defaultOrder: 6,
     defaultSize: "full",
     minSize: "large",
     component: null,

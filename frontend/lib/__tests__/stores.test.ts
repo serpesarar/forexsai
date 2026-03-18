@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { act } from "@testing-library/react";
 import {
   useDashboardStore,
-  useChartStore,
   useMLStrategyStore,
   useNewsStore,
   useDetailPanelStore,
@@ -53,52 +52,6 @@ describe("Dashboard Store", () => {
     // Should not be loading after fetch
     expect(useDashboardStore.getState().isLoading).toBe(false);
     expect(useDashboardStore.getState().data).toEqual({});
-  });
-});
-
-describe("Chart Store", () => {
-  beforeEach(() => {
-    act(() => {
-      useChartStore.setState({
-        symbol: "NDX.INDX",
-        timeframe: "5m",
-      });
-    });
-  });
-
-  it("has correct default state", () => {
-    const state = useChartStore.getState();
-    
-    expect(state.symbol).toBe("NDX.INDX");
-    expect(state.timeframe).toBe("5m");
-  });
-
-  it("setSymbol updates symbol correctly", () => {
-    act(() => {
-      useChartStore.getState().setSymbol("XAUUSD");
-    });
-    
-    expect(useChartStore.getState().symbol).toBe("XAUUSD");
-  });
-
-  it("setTimeframe updates timeframe correctly", () => {
-    act(() => {
-      useChartStore.getState().setTimeframe("1h");
-    });
-    
-    expect(useChartStore.getState().timeframe).toBe("1h");
-  });
-
-  it("accepts all valid timeframes", () => {
-    const timeframes = ["5m", "15m", "1h", "4h", "1d"] as const;
-    
-    timeframes.forEach((tf) => {
-      act(() => {
-        useChartStore.getState().setTimeframe(tf);
-      });
-      
-      expect(useChartStore.getState().timeframe).toBe(tf);
-    });
   });
 });
 
@@ -291,19 +244,14 @@ describe("Store Isolation", () => {
   it("stores do not cross-contaminate between test runs", () => {
     // Set values in different stores
     act(() => {
-      useChartStore.getState().setSymbol("TEST_SYMBOL");
       useMLStrategyStore.getState().setPresetStrategy("TEST_SYMBOL", "aggressive");
       useNewsStore.getState().setImpactFilter("high");
     });
     
     // Verify each store has only its own data
-    expect(useChartStore.getState().symbol).toBe("TEST_SYMBOL");
     expect(useMLStrategyStore.getState().configs["TEST_SYMBOL"].strategy).toBe("aggressive");
     expect(useNewsStore.getState().impactFilter).toBe("high");
-    
-    // Chart store should not have ML data
-    expect((useChartStore.getState() as any).configs).toBeUndefined();
-    
+
     // ML store should not have chart data
     expect((useMLStrategyStore.getState() as any).symbol).toBeUndefined();
   });
@@ -311,17 +259,17 @@ describe("Store Isolation", () => {
   it("reset between tests works correctly", () => {
     // First test simulation
     act(() => {
-      useChartStore.getState().setSymbol("FIRST");
+      useNewsStore.getState().setImpactFilter("low");
     });
-    expect(useChartStore.getState().symbol).toBe("FIRST");
+    expect(useNewsStore.getState().impactFilter).toBe("low");
     
     // Reset (simulating beforeEach)
     act(() => {
-      useChartStore.setState({ symbol: "NDX.INDX", timeframe: "5m" });
+      useNewsStore.setState({ impactFilter: "all", categoryFilter: "all" });
     });
     
     // Verify reset worked
-    expect(useChartStore.getState().symbol).toBe("NDX.INDX");
-    expect(useChartStore.getState().timeframe).toBe("5m");
+    expect(useNewsStore.getState().impactFilter).toBe("all");
+    expect(useNewsStore.getState().categoryFilter).toBe("all");
   });
 });

@@ -1,7 +1,5 @@
 import { create } from "zustand";
 
-export type ChartTimeframe = "5m" | "15m" | "1h" | "4h" | "1d";
-
 type DetailPanelType = "support_resistance" | "ema_distance" | "trend_channel";
 
 interface DashboardState {
@@ -23,13 +21,6 @@ interface DetailPanelState {
   data: Record<string, any> | null;
   open: (type: DetailPanelType, data: Record<string, any>, symbol: "NASDAQ" | "XAUUSD", title: string) => void;
   close: () => void;
-}
-
-interface ChartState {
-  symbol: string;
-  timeframe: ChartTimeframe;
-  setSymbol: (value: string) => void;
-  setTimeframe: (value: ChartTimeframe) => void;
 }
 
 interface NewsState {
@@ -95,13 +86,6 @@ export const useDetailPanelStore = create<DetailPanelState>((set) => ({
   data: null,
   open: (type, data, symbol, title) => set({ isOpen: true, type, data, symbol, title }),
   close: () => set({ isOpen: false, type: null, data: null, symbol: null, title: "" }),
-}));
-
-export const useChartStore = create<ChartState>((set) => ({
-  symbol: "NDX.INDX",
-  timeframe: "5m",
-  setSymbol: (value) => set({ symbol: value }),
-  setTimeframe: (value) => set({ timeframe: value }),
 }));
 
 export const useNewsStore = create<NewsState>((set) => ({

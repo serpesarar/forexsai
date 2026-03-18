@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type ViewType = "dashboard" | "charts" | "trading" | "analysis" | "signals" | "news-correlation";
+type ViewType = "dashboard" | "trading" | "analysis" | "signals" | "news-correlation";
 
 interface NavigationState {
     activeView: ViewType;

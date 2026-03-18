@@ -86,10 +86,9 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "order-blocks-nasdaq", title: "Order Blocks NASDAQ", column: "center", order: 21, visible: true, size: "full", collapsed: false },
     { id: "order-blocks-xauusd", title: "Order Blocks XAUUSD", column: "center", order: 22, visible: true, size: "full", collapsed: false },
     { id: "rhythm-detectors", title: "Rhythm Detectors", column: "center", order: 23, visible: true, size: "full", collapsed: false },
-    { id: "charts", title: "Trading Charts", column: "center", order: 24, visible: true, size: "full", collapsed: false },
-    { id: "news-correlation", title: "News-Chart Correlation", column: "center", order: 25, visible: true, size: "full", collapsed: false },
+    { id: "news-correlation", title: "News-Chart Correlation", column: "center", order: 24, visible: true, size: "full", collapsed: false },
   ],
-  version: 26,
+  version: 27,
 };
 
 const LAYOUT_STORAGE_KEY = "dashboard-layout-v7";
@@ -111,12 +110,17 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
       const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
       if (saved) {
         const parsed: DashboardLayout = JSON.parse(saved);
-        if (parsed.version >= DEFAULT_LAYOUT.version) {
-          setLayout(parsed);
+        const validIds = new Set(DEFAULT_LAYOUT.cards.map((card) => card.id));
+        const sanitizedParsed: DashboardLayout = {
+          ...parsed,
+          cards: parsed.cards.filter((card: DashboardCard) => validIds.has(card.id)),
+        };
+        if (sanitizedParsed.version >= DEFAULT_LAYOUT.version) {
+          setLayout(sanitizedParsed);
         } else {
           // Merge: keep user visibility/collapse but update order/column from DEFAULT
           const defaultMap = new Map(DEFAULT_LAYOUT.cards.map(c => [c.id, c]));
-          const mergedCards = parsed.cards.map((c: DashboardCard) => {
+          const mergedCards = sanitizedParsed.cards.map((c: DashboardCard) => {
             const def = defaultMap.get(c.id);
             if (def) {
               return { ...c, order: def.order, column: def.column };
@@ -124,7 +128,7 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
             return c;
           });
           // Add any new cards from DEFAULT that don't exist in saved
-          const existingIds = new Set(parsed.cards.map((c: DashboardCard) => c.id));
+          const existingIds = new Set(sanitizedParsed.cards.map((c: DashboardCard) => c.id));
           const newCards = DEFAULT_LAYOUT.cards.filter(c => !existingIds.has(c.id));
           setLayout({
             cards: [...mergedCards, ...newCards],

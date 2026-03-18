@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 
-import { DashboardIcon, ChartsIcon, TradingIcon, AnalysisIcon, SignalsIcon, ForexsAILogoIcon } from "./ui/CustomIcons";
+import { DashboardIcon, TradingIcon, AnalysisIcon, SignalsIcon, ForexsAILogoIcon } from "./ui/CustomIcons";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import { useI18nStore } from "../lib/i18n/store";
 
 interface SharedNavHeaderProps {
-  activePage: "dashboard" | "charts" | "trading" | "analysis" | "signals";
+  activePage: "dashboard" | "trading" | "analysis" | "signals";
   /** Content rendered in center of top row (e.g. market tickers) */
   centerContent?: React.ReactNode;
   /** Content rendered on right side of top row (e.g. theme toggle, auto-refresh, user menu) */
@@ -17,11 +16,8 @@ interface SharedNavHeaderProps {
 }
 
 export default function SharedNavHeader({ activePage, centerContent, rightContent, bottomRightContent }: SharedNavHeaderProps) {
-  const { t } = useI18nStore();
-
   const navItems = [
     { href: "/", key: "dashboard" as const, label: "Dashboard", icon: DashboardIcon, iconColor: "text-blue-400" },
-    { href: "/charts", key: "charts" as const, label: t("nav.charts"), icon: ChartsIcon, iconColor: "text-emerald-400" },
     { href: "/trading", key: "trading" as const, label: "AI Trading", icon: TradingIcon, iconColor: "text-purple-400" },
     { href: "/analysis", key: "analysis" as const, label: "Analysis", icon: AnalysisIcon, iconColor: "text-amber-400" },
     { href: "/signals", key: "signals" as const, label: "Detailed Signals", icon: SignalsIcon, iconColor: "text-red-400" },

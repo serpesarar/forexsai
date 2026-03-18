@@ -15,8 +15,6 @@ import LearningDashboardPanel from "../../components/LearningDashboardPanel";
 import PredictionHistoryTable from "../../components/PredictionHistoryTable";
 import OrderBlockPanelSimple from "../../components/OrderBlockPanelSimple";
 import RhythmDetectorSimple from "../../components/RhythmDetectorSimple";
-import TradingChartWrapper from "../../components/TradingChartWrapper";
-import LiveChartPanel from "../../components/LiveChartPanel";
 import { useI18nStore } from "../../lib/i18n/store";
 import ErrorBoundary from "../ErrorBoundary";
 
@@ -243,41 +241,6 @@ export default function TradingView() {
             </section>
           </div>
         </div>
-
-        {/* Full-Width Charts Section */}
-        <section className="mt-6 md:mt-8">
-          <div className="mb-3 md:mb-4 flex items-center gap-2">
-            <ChartsIcon size={24} className="text-blue-400" />
-            <h2 className="text-base md:text-lg font-bold uppercase tracking-wider">
-              {t("tradingPage.livePriceCharts")}
-            </h2>
-            <span className="ml-2 flex items-center gap-1 text-xs text-success">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
-              </span>
-              {t("tradingPage.live")}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6">
-            {/* NASDAQ Chart with News Markers */}
-            <LiveChartPanel
-              symbol="NDX.INDX"
-              symbolLabel="NASDAQ-100"
-              height={350}
-              showNewsMarkers={true}
-            />
-
-            {/* XAUUSD Chart with News Markers */}
-            <LiveChartPanel
-              symbol="XAUUSD"
-              symbolLabel="Gold (XAU/USD)"
-              height={350}
-              showNewsMarkers={true}
-            />
-          </div>
-        </section>
       </main>
     </div>
   );

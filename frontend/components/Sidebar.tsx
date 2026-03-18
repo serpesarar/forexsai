@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useNavigationStore } from "../lib/store/navigation";
 import {
     DashboardIcon,
-    ChartsIcon,
     TradingIcon,
     AnalysisIcon,
     SignalsIcon,
@@ -39,13 +38,6 @@ const NAV_ITEMS: NavItem[] = [
         label: "Dashboard", 
         icon: DashboardIcon, 
         gradient: "from-cyan-500 to-blue-500" 
-    },
-    { 
-        href: "/charts", 
-        key: "charts", 
-        label: "Charts", 
-        icon: ChartsIcon, 
-        gradient: "from-blue-500 to-indigo-500" 
     },
     { 
         href: "/trading", 
