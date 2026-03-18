@@ -16,7 +16,8 @@ with patch.dict(
         "services.error_analysis_service": SimpleNamespace(save_candle_snapshot=None),
     },
 ):
-    from services.prediction_logger import _resolve_logging_identity, log_prediction
+    import services.prediction_logger as prediction_logger
+    from services.prediction_logger import _resolve_logging_identity, log_prediction, log_smc_prediction
 
 
 def test_resolve_logging_identity_maps_strategy_only_ml_scope_to_scoped_model_type():
@@ -58,8 +59,9 @@ async def test_log_prediction_skips_low_confidence_balanced_scope_before_insert(
         }
     }
 
-    with patch("services.prediction_logger.is_db_available", return_value=True), patch(
-        "services.prediction_logger.get_supabase_client",
+    with patch.object(prediction_logger, "is_db_available", return_value=True), patch.object(
+        prediction_logger,
+        "get_supabase_client",
         return_value=_Client(),
     ):
         prediction_id = await log_prediction(
@@ -72,3 +74,43 @@ async def test_log_prediction_skips_low_confidence_balanced_scope_before_insert(
         )
 
     assert prediction_id is None
+
+
+@pytest.mark.asyncio
+async def test_log_smc_prediction_inserts_without_ml_scope_filtering():
+    inserted_records = []
+
+    class _PredictionLogsTable:
+        def insert_ignore(self, record):
+            inserted_records.append(record)
+            return {"data": [{"id": "smc-001"}], "error": None, "duplicate": False}
+
+    class _Client:
+        def table(self, name):
+            assert name == "prediction_logs"
+            return _PredictionLogsTable()
+
+    with patch.object(prediction_logger, "is_db_available", return_value=True), patch.object(
+        prediction_logger,
+        "get_supabase_client",
+        return_value=_Client(),
+    ), patch.object(prediction_logger, "_has_active_signal", return_value=(False, None, None)):
+        prediction_id = await log_smc_prediction(
+            symbol="NDX.INDX",
+            timeframe="5m",
+            direction="BUY",
+            confidence=73.4,
+            entry_price=21500.0,
+            reasoning=["Bullish structure", "Liquidity sweep"],
+        )
+
+    assert prediction_id == "smc-001"
+    assert len(inserted_records) == 1
+    record = inserted_records[0]
+    assert record["model_type"] == "smc"
+    assert record["strategy"] == "SMART_MONEY_ZONES"
+    assert record["timeframe"] == "5m"
+    assert record["ml_direction"] == "BUY"
+    assert record["status"] == "active"
+    assert record["factors"]["source"] == "SMART_MONEY_ZONES"
+    assert record["factors"]["signal_reasoning"] == ["Bullish structure", "Liquidity sweep"]

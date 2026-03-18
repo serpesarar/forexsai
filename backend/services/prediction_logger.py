@@ -15,6 +15,8 @@ from services.error_analysis_service import save_candle_snapshot
 from services.ml_scope_policy import is_ml_scope_confidence_eligible, normalize_ml_scope
 
 logger = logging.getLogger(__name__)
+SMC_MODEL_TYPE = "smc"
+SMC_STRATEGY = "SMART_MONEY_ZONES"
 
 def _utc_iso(value: Optional[datetime] = None) -> str:
     dt = value or datetime.now(timezone.utc)
@@ -280,6 +282,168 @@ def _check_news_filter(context: Dict[str, Any]) -> Tuple[bool, str]:
     return False, ""
 
 
+async def log_smc_prediction(
+    symbol: str,
+    timeframe: str,
+    direction: str,
+    confidence: Any,
+    entry_price: Any,
+    *,
+    reasoning: Optional[list[Any]] = None,
+) -> Optional[str]:
+    if direction not in {"BUY", "SELL"}:
+        return None
+
+    normalized_timeframe = _normalize_timeframe(timeframe)
+
+    try:
+        parsed_entry_price = float(entry_price)
+    except (TypeError, ValueError):
+        return None
+    if parsed_entry_price <= 0:
+        return None
+
+    try:
+        raw_confidence = float(confidence)
+    except (TypeError, ValueError):
+        raw_confidence = 0.0
+    if raw_confidence <= 1.0:
+        raw_confidence *= 100.0
+    raw_confidence = round(raw_confidence, 1)
+
+    if not is_db_available():
+        logger.debug("Database not available, skipping SMC prediction log.")
+        return None
+
+    client = get_supabase_client()
+    if client is None:
+        return None
+
+    try:
+        has_active, active_signal_id, active_direction = _has_active_signal(
+            client,
+            symbol,
+            SMC_MODEL_TYPE,
+            normalized_timeframe,
+            direction,
+        )
+
+        if has_active:
+            if active_direction == direction:
+                logger.debug(
+                    "Active %s SMC signal already exists for %s %s",
+                    direction,
+                    symbol,
+                    normalized_timeframe,
+                )
+                return None
+
+            if not active_signal_id:
+                logger.warning(
+                    "Active SMC signal lookup for %s %s returned no id; skipping insert",
+                    symbol,
+                    normalized_timeframe,
+                )
+                return None
+
+            closed = _close_existing_signal(
+                client,
+                active_signal_id,
+                direction,
+                parsed_entry_price,
+                reason="direction_flip",
+            )
+            if not closed:
+                logger.warning(
+                    "Failed to close active SMC signal %s for %s %s; skipping insert",
+                    active_signal_id[:8],
+                    symbol,
+                    normalized_timeframe,
+                )
+                return None
+
+        from services.target_config import calculate_stoploss_price, calculate_target_prices, pips_from_price_change
+
+        target_prices = calculate_target_prices(parsed_entry_price, direction, symbol, normalized_timeframe)
+        sl_price = calculate_stoploss_price(parsed_entry_price, direction, symbol, normalized_timeframe)
+        targets_dict = dict(target_prices)
+        targets_dict["SL"] = round(sl_price, 4)
+        stop_loss_pips = abs(pips_from_price_change(abs(parsed_entry_price - sl_price), symbol))
+
+        factors: Dict[str, Any] = {
+            "session": _get_current_session(),
+            "target_type": "static_pips",
+            "strategy": SMC_STRATEGY,
+            "source": SMC_STRATEGY,
+        }
+        if reasoning:
+            factors["signal_reasoning"] = [str(item) for item in reasoning]
+
+        record = {
+            "symbol": symbol,
+            "timeframe": normalized_timeframe,
+            "ml_direction": direction,
+            "ml_confidence": raw_confidence,
+            "ml_entry_price": parsed_entry_price,
+            "claude_direction": direction,
+            "claude_confidence": raw_confidence,
+            "claude_model": SMC_STRATEGY,
+            "factors": factors,
+            "outcome_checked": False,
+            "strategy": SMC_STRATEGY,
+            "status": "active",
+            "targets": targets_dict,
+            "stop_loss_pips": stop_loss_pips,
+            "targets_hit": {tp: False for tp in targets_dict if tp != "SL"},
+            "highest_profit_pips": 0,
+            "lowest_drawdown_pips": 0,
+            "model_type": SMC_MODEL_TYPE,
+        }
+
+        result = client.table("prediction_logs").insert_ignore(record)
+
+        if safe_get_error(result):
+            logger.error(
+                "prediction_logger.smc_insert_error | symbol=%s timeframe=%s dir=%s error=%s",
+                symbol,
+                normalized_timeframe,
+                direction,
+                result["error"],
+            )
+            return None
+
+        if result.get("duplicate"):
+            logger.debug(
+                "DB dedup blocked active SMC %s %s %s signal",
+                symbol,
+                normalized_timeframe,
+                direction,
+            )
+            return None
+
+        if safe_get_data(result) and len(result["data"]) > 0:
+            prediction_id = result["data"][0].get("id")
+            logger.info(
+                "prediction_logger.smc_logged | id=%s symbol=%s timeframe=%s dir=%s",
+                prediction_id[:8] if prediction_id else "?",
+                symbol,
+                normalized_timeframe,
+                direction,
+            )
+            return prediction_id
+
+        return None
+
+    except Exception as e:
+        logger.error(
+            "Failed to log SMC prediction for %s %s: %s",
+            symbol,
+            normalized_timeframe,
+            e,
+        )
+        return None
+
+
 async def log_prediction(
     symbol: str,
     context: Dict[str, Any],
@@ -287,6 +451,7 @@ async def log_prediction(
     timeframe: str = "1d",
     strategy: Optional[str] = None,
     model_type: Optional[str] = None,
+    allow_parallel_active: bool = False,
 ) -> Optional[str]:
     """
     Log a prediction to the database with session, correlation and news filters.
@@ -392,47 +557,48 @@ async def log_prediction(
         normalized_timeframe = _normalize_timeframe(timeframe)
         new_signal_entry_price = ml.get("entry_price")
         entry_price = new_signal_entry_price or 0
-        has_active, active_signal_id, active_direction = _has_active_signal(
-            client,
-            symbol,
-            effective_model_type,
-            normalized_timeframe,
-            direction,
-        )
-        
-        if has_active:
-            if active_direction == direction:
-                logger.debug(
-                    "Active %s signal already exists for %s %s",
-                    direction,
-                    symbol,
-                    effective_model_type,
-                )
-                return None
-
-            if not active_signal_id:
-                logger.warning(
-                    "Active signal lookup for %s %s returned no id; skipping insert",
-                    symbol,
-                    effective_model_type,
-                )
-                return None
-
-            closed = _close_existing_signal(
+        if not allow_parallel_active:
+            has_active, active_signal_id, active_direction = _has_active_signal(
                 client,
-                active_signal_id,
+                symbol,
+                effective_model_type,
+                normalized_timeframe,
                 direction,
-                new_signal_entry_price,
-                reason="direction_flip",
             )
-            if not closed:
-                logger.warning(
-                    "Failed to close active signal %s for %s %s; skipping insert",
-                    active_signal_id[:8],
-                    symbol,
-                    effective_model_type,
+            
+            if has_active:
+                if active_direction == direction:
+                    logger.debug(
+                        "Active %s signal already exists for %s %s",
+                        direction,
+                        symbol,
+                        effective_model_type,
+                    )
+                    return None
+
+                if not active_signal_id:
+                    logger.warning(
+                        "Active signal lookup for %s %s returned no id; skipping insert",
+                        symbol,
+                        effective_model_type,
+                    )
+                    return None
+
+                closed = _close_existing_signal(
+                    client,
+                    active_signal_id,
+                    direction,
+                    new_signal_entry_price,
+                    reason="direction_flip",
                 )
-                return None
+                if not closed:
+                    logger.warning(
+                        "Failed to close active signal %s for %s %s; skipping insert",
+                        active_signal_id[:8],
+                        symbol,
+                        effective_model_type,
+                    )
+                    return None
 
         # ═══════════════════════════════════════════════════════════════════════
         # STATIC TARGETS: Fixed pip-based TP/SL (Reverted from ATR)
@@ -471,6 +637,8 @@ async def log_prediction(
         if stored_strategy:
             factors["strategy"] = stored_strategy
             factors["source"] = context.get("source", stored_strategy)
+        if allow_parallel_active:
+            factors["parallel_active_allowed"] = True
 
         record = {
             "symbol": symbol,

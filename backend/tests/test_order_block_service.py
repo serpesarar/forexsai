@@ -20,7 +20,7 @@ def _load_order_block_service_module(module_name: str):
             "services.sentiment_analyzer": SimpleNamespace(run_claude_sentiment=AsyncMock()),
             "services.rtyhiim_service": SimpleNamespace(run_rtyhiim_detector=AsyncMock()),
             "services.data_fetcher": SimpleNamespace(fetch_eod_candles=AsyncMock(return_value=[]), fetch_ohlc_data=AsyncMock(return_value=[])),
-            "services.prediction_logger": SimpleNamespace(log_prediction=AsyncMock(return_value="pred-1")),
+            "services.prediction_logger": SimpleNamespace(log_smc_prediction=AsyncMock(return_value="pred-1")),
         },
     ):
         module_path = backend_dir / "services" / "order_block_service.py"
@@ -73,7 +73,7 @@ async def test_detect_logs_smc_buy_signals_with_prediction_logger():
         service,
         "_combine_signals",
         AsyncMock(return_value={"action": "BUY", "confidence": 0.78, "reasoning": ["Bullish structure"]}),
-    ), patch.object(module, "log_prediction", AsyncMock(return_value="pred-1")) as mock_log:
+    ), patch.object(module, "log_smc_prediction", AsyncMock(return_value="pred-1")) as mock_log:
         payload = await service.detect("XAUUSD", "15m", 200, module.OrderBlockConfig())
 
     assert payload["combined_signal"]["action"] == "BUY"
@@ -81,11 +81,10 @@ async def test_detect_logs_smc_buy_signals_with_prediction_logger():
     kwargs = mock_log.await_args.kwargs
     assert kwargs["symbol"] == "XAUUSD"
     assert kwargs["timeframe"] == "15m"
-    assert kwargs["strategy"] == "SMART_MONEY_ZONES"
-    assert kwargs["model_type"] == "smc"
-    assert kwargs["context"]["ml_prediction"]["entry_price"] == 2345.6
-    assert kwargs["context"]["ml_prediction"]["confidence"] == 78.0
-    assert kwargs["analysis"]["model_used"] == "SMART_MONEY_ZONES"
+    assert kwargs["entry_price"] == 2345.6
+    assert kwargs["confidence"] == 78.0
+    assert kwargs["direction"] == "BUY"
+    assert kwargs["reasoning"] == ["Bullish structure"]
 
 
 @pytest.mark.asyncio
@@ -99,7 +98,7 @@ async def test_detect_skips_logging_for_neutral_smc_signal():
         service,
         "_combine_signals",
         AsyncMock(return_value={"action": "NEUTRAL", "confidence": 0.61, "reasoning": ["No edge"]}),
-    ), patch.object(module, "log_prediction", AsyncMock(return_value=None)) as mock_log:
+    ), patch.object(module, "log_smc_prediction", AsyncMock(return_value=None)) as mock_log:
         await service.detect("NDX.INDX", "5m", 200, module.OrderBlockConfig())
 
     mock_log.assert_not_awaited()
@@ -116,7 +115,7 @@ async def test_detect_can_disable_signal_logging_for_read_only_panel_calls():
         service,
         "_combine_signals",
         AsyncMock(return_value={"action": "BUY", "confidence": 0.78, "reasoning": ["Bullish structure"]}),
-    ), patch.object(module, "log_prediction", AsyncMock(return_value="pred-1")) as mock_log:
+    ), patch.object(module, "log_smc_prediction", AsyncMock(return_value="pred-1")) as mock_log:
         payload = await service.detect(
             "XAUUSD",
             "15m",
@@ -140,7 +139,7 @@ async def test_detect_can_bypass_cache_for_scheduler_logging():
         service,
         "_combine_signals",
         AsyncMock(return_value={"action": "BUY", "confidence": 0.78, "reasoning": ["Bullish structure"]}),
-    ), patch.object(module, "log_prediction", AsyncMock(return_value="pred-1")) as mock_log:
+    ), patch.object(module, "log_smc_prediction", AsyncMock(return_value="pred-1")) as mock_log:
         await service.detect(
             "XAUUSD",
             "15m",

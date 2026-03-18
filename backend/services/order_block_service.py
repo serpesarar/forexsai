@@ -11,7 +11,7 @@ import numpy as np
 from order_block_detector import Candle, OrderBlockConfig, OrderBlockDetector
 from order_block_detector_v2 import detect_all, MarketStructureAnalyzer, SwingDetector
 from services.ml_service import run_nasdaq_signal, run_xauusd_signal
-from services.prediction_logger import log_prediction
+from services.prediction_logger import log_smc_prediction
 from services.sentiment_analyzer import run_claude_sentiment
 from services.rtyhiim_service import run_rtyhiim_detector
 from services.data_fetcher import fetch_eod_candles, fetch_ohlc_data
@@ -122,25 +122,13 @@ class OrderBlockService:
         confidence = round(confidence, 1)
 
         try:
-            await log_prediction(
-                symbol=symbol,
-                context={
-                    "source": SMC_STRATEGY,
-                    "ml_prediction": {
-                        "direction": direction,
-                        "confidence": confidence,
-                        "entry_price": entry_price,
-                    },
-                    "signal_reasoning": (combined_signal or {}).get("reasoning") or [],
-                },
-                analysis={
-                    "final_decision": direction,
-                    "confidence": confidence,
-                    "model_used": SMC_STRATEGY,
-                },
+            await log_smc_prediction(
                 timeframe=timeframe,
-                strategy=SMC_STRATEGY,
-                model_type=SMC_MODEL_TYPE,
+                symbol=symbol,
+                direction=direction,
+                confidence=confidence,
+                entry_price=entry_price,
+                reasoning=(combined_signal or {}).get("reasoning") or [],
             )
         except Exception:
             logger.exception("Smart Money Zones signal logging failed for %s %s", symbol, timeframe)
