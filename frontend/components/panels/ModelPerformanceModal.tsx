@@ -62,6 +62,7 @@ interface RecentSignal {
   status: string;
   pips: number;
   timeframe: string;
+  entry_price?: number | null;
 }
 
 interface ModelComparisonRow {
@@ -164,6 +165,7 @@ const T = {
     tpHitRates: "Target hit rates",
     recentSignals: "Recent signals",
     date: "Date",
+    entryPrice: "Entry price",
     direction: "Direction",
     confidence: "Confidence",
     status: "Status",
@@ -231,6 +233,7 @@ const T = {
     tpHitRates: "Hedef isabet oranları",
     recentSignals: "Son sinyaller",
     date: "Tarih",
+    entryPrice: "Giriş fiyatı",
     direction: "Yön",
     confidence: "Güven",
     status: "Durum",
@@ -293,6 +296,8 @@ const MODEL_DISPLAY: Record<string, string> = {
   hybrid: "Hybrid",
 };
 
+const NY_TIMEZONE = "America/New_York";
+
 function getLanguage(): "en" | "tr" {
   if (typeof window === "undefined") return "en";
   const saved = localStorage.getItem("language");
@@ -327,6 +332,11 @@ function formatPips(value: number) {
   return `${value >= 0 ? "+" : ""}${value.toFixed(1)}p`;
 }
 
+function formatEntryPrice(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+  return value.toFixed(2);
+}
+
 function formatDateRange(start?: string | null, end?: string | null, lang: "en" | "tr" = "en") {
   if (!start || !end) return "—";
   const locale = lang === "tr" ? "tr-TR" : "en-US";
@@ -337,11 +347,27 @@ function formatDateRange(start?: string | null, end?: string | null, lang: "en" 
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone: NY_TIMEZONE,
   })} → ${endDate.toLocaleDateString(locale, {
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone: NY_TIMEZONE,
   })}`;
+}
+
+function formatSignalDate(value: string, lang: "en" | "tr" = "en") {
+  const locale = lang === "tr" ? "tr-TR" : "en-US";
+  const parsed = new Date(value || Date.now());
+  if (Number.isNaN(parsed.getTime())) return "—";
+  return parsed.toLocaleString(locale, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: NY_TIMEZONE,
+  });
 }
 
 function formatHour(hour: number) {
@@ -789,7 +815,7 @@ function OverviewPanel({
           label={copy.maxDrawdown}
           value={`-${ov.max_drawdown_pips.toFixed(1)}p`}
           accent="var(--accent-negative)"
-          sub={`${copy.expired}: ${ov.expired}`}
+          sub={`${copy.stopped}: ${ov.stopped}`}
         />
       </div>
 
@@ -948,7 +974,7 @@ function OverviewPanel({
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr>
-                  {[copy.date, copy.direction, copy.timeframe, copy.confidence, copy.status, copy.pips].map((header) => (
+                  {[copy.date, copy.direction, copy.timeframe, copy.entryPrice, copy.confidence, copy.status, copy.pips].map((header) => (
                     <th key={header} style={tableHeadStyle}>
                       {header}
                     </th>
@@ -959,12 +985,7 @@ function OverviewPanel({
                 {data.recent_signals.slice(0, 12).map((signal) => (
                   <tr key={`${signal.id}-${signal.date}`} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                     <td style={tableCellStyle}>
-                      {new Date(signal.date || Date.now()).toLocaleString(lang === "tr" ? "tr-TR" : "en-US", {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatSignalDate(signal.date, lang)}
                     </td>
                     <td
                       style={{
@@ -981,6 +1002,7 @@ function OverviewPanel({
                       {signal.direction}
                     </td>
                     <td style={tableCellStyle}>{signal.timeframe.toUpperCase()}</td>
+                    <td style={{ ...tableCellStyle, fontFamily: "monospace" }}>{formatEntryPrice(signal.entry_price)}</td>
                     <td style={tableCellStyle}>{signal.confidence.toFixed(1)}%</td>
                     <td style={tableCellStyle}>
                       <span

@@ -137,6 +137,167 @@ const signalsPayload = {
   count: 1,
 };
 
+const smcPayload = {
+  period_days: 30,
+  smc_predictions_count: 3,
+  outcomes_count: 2,
+  eligible_outcomes_count: 2,
+  timeframes: {
+    "NDX.INDX": {
+      "5m": {
+        scope: "5m",
+        total_predictions: 2,
+        scored_signals: 2,
+        resolved_signals: 2,
+        with_outcome: 2,
+        correct: 1,
+        completed: 1,
+        stopped: 1,
+        expired: 0,
+        active: 0,
+        accuracy: 50,
+        win_rate: 50,
+        target_hits: 1,
+        stop_hits: 1,
+        target_hit_rate: 50,
+        stop_hit_rate: 50,
+        avg_confidence: 71,
+        net_pips: 4,
+        avg_pips: 2,
+        tp_breakdown: { TP1: 1, TP2: 0, TP3: 0, TP4: 0 },
+        tp_hit_rates: { TP1: 50, TP2: 0, TP3: 0, TP4: 0 },
+        avg_duration_minutes: 35,
+        avg_win_duration_minutes: 20,
+        avg_loss_duration_minutes: 50,
+        quality_score: 51,
+        scalp_score: 49,
+        long_term_score: 40,
+      },
+      "15m": {
+        scope: "15m",
+        total_predictions: 1,
+        scored_signals: 0,
+        resolved_signals: 0,
+        with_outcome: 0,
+        correct: 0,
+        completed: 0,
+        stopped: 0,
+        expired: 0,
+        active: 1,
+        accuracy: 0,
+        win_rate: 0,
+        target_hits: 0,
+        stop_hits: 0,
+        target_hit_rate: null,
+        stop_hit_rate: null,
+        avg_confidence: 69,
+        net_pips: 0,
+        avg_pips: 0,
+        tp_breakdown: { TP1: 0, TP2: 0, TP3: 0, TP4: 0 },
+        tp_hit_rates: { TP1: null, TP2: null, TP3: null, TP4: null },
+        avg_duration_minutes: null,
+        avg_win_duration_minutes: null,
+        avg_loss_duration_minutes: null,
+        quality_score: 0,
+        scalp_score: 0,
+        long_term_score: 0,
+      },
+      "1h": {
+        scope: "1h",
+        total_predictions: 0,
+        scored_signals: 0,
+        resolved_signals: 0,
+        with_outcome: 0,
+        correct: 0,
+        completed: 0,
+        stopped: 0,
+        expired: 0,
+        active: 0,
+        accuracy: 0,
+        win_rate: 0,
+        target_hits: 0,
+        stop_hits: 0,
+        target_hit_rate: null,
+        stop_hit_rate: null,
+        avg_confidence: 0,
+        net_pips: 0,
+        avg_pips: 0,
+        tp_breakdown: { TP1: 0, TP2: 0, TP3: 0, TP4: 0 },
+        tp_hit_rates: { TP1: null, TP2: null, TP3: null, TP4: null },
+        avg_duration_minutes: null,
+        avg_win_duration_minutes: null,
+        avg_loss_duration_minutes: null,
+        quality_score: 0,
+        scalp_score: 0,
+        long_term_score: 0,
+      },
+      "4h": {
+        scope: "4h",
+        total_predictions: 0,
+        scored_signals: 0,
+        resolved_signals: 0,
+        with_outcome: 0,
+        correct: 0,
+        completed: 0,
+        stopped: 0,
+        expired: 0,
+        active: 0,
+        accuracy: 0,
+        win_rate: 0,
+        target_hits: 0,
+        stop_hits: 0,
+        target_hit_rate: null,
+        stop_hit_rate: null,
+        avg_confidence: 0,
+        net_pips: 0,
+        avg_pips: 0,
+        tp_breakdown: { TP1: 0, TP2: 0, TP3: 0, TP4: 0 },
+        tp_hit_rates: { TP1: null, TP2: null, TP3: null, TP4: null },
+        avg_duration_minutes: null,
+        avg_win_duration_minutes: null,
+        avg_loss_duration_minutes: null,
+        quality_score: 0,
+        scalp_score: 0,
+        long_term_score: 0,
+      },
+    },
+    XAUUSD: {},
+    "GDAXI.INDX": {},
+    "USOIL.FOREX": {},
+  },
+  symbols: {
+    "NDX.INDX": {
+      available_scopes: ["5m", "15m"],
+      total_predictions: 3,
+      resolved_signals: 2,
+      leaders: {
+        quality: { scope: "5m", score: 51, resolved_signals: 2, win_rate: 50, net_pips: 4, avg_duration_minutes: 35 },
+        scalping: { scope: "5m", score: 49, resolved_signals: 2, win_rate: 50, net_pips: 4, avg_duration_minutes: 35 },
+        long_term: { scope: "5m", score: 40, resolved_signals: 2, win_rate: 50, net_pips: 4, avg_duration_minutes: 35 },
+      },
+    },
+    XAUUSD: { available_scopes: [], total_predictions: 0, resolved_signals: 0, leaders: { quality: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null }, scalping: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null }, long_term: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null } } },
+    "GDAXI.INDX": { available_scopes: [], total_predictions: 0, resolved_signals: 0, leaders: { quality: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null }, scalping: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null }, long_term: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null } } },
+    "USOIL.FOREX": { available_scopes: [], total_predictions: 0, resolved_signals: 0, leaders: { quality: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null }, scalping: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null }, long_term: { scope: null, score: null, resolved_signals: 0, win_rate: null, net_pips: null, avg_duration_minutes: null } } },
+  },
+  timeframe_order: ["5m", "15m", "1h", "4h"],
+  timeframe_descriptions: {
+    "5m": "Fast Smart Money Zones flow.",
+    "15m": "Balanced Smart Money Zones flow.",
+    "1h": "Primary intraday Smart Money Zones flow.",
+    "4h": "Slow Smart Money Zones flow.",
+  },
+  overall_summary: {
+    total_predictions: 3,
+    resolved_signals: 2,
+    leaders: {
+      quality: { scope: "5m", score: 51, resolved_signals: 2, win_rate: 50, net_pips: 4, avg_duration_minutes: 35 },
+      scalping: { scope: "5m", score: 49, resolved_signals: 2, win_rate: 50, net_pips: 4, avg_duration_minutes: 35 },
+      long_term: { scope: "5m", score: 40, resolved_signals: 2, win_rate: 50, net_pips: 4, avg_duration_minutes: 35 },
+    },
+  },
+};
+
 function renderPanel() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -155,6 +316,9 @@ describe("StrategyPerformancePanel", () => {
       if (url.includes("/api/learning/strategy-performance")) {
         return Promise.resolve({ ok: true, json: async () => payload });
       }
+      if (url.includes("/api/learning/smc-performance")) {
+        return Promise.resolve({ ok: true, json: async () => smcPayload });
+      }
       if (url.includes("/api/learning/signals/recent")) {
         return Promise.resolve({ ok: true, json: async () => signalsPayload });
       }
@@ -171,10 +335,23 @@ describe("StrategyPerformancePanel", () => {
     renderPanel();
 
     await screen.findByText("Strategy Performance Analysis");
-    expect(await screen.findByText("Best Signal Quality")).toBeInTheDocument();
+    expect((await screen.findAllByText("Best Signal Quality")).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Ham ML").length).toBeGreaterThan(0);
     expect(screen.getByText(/Ham\/orijinal ML akışı/)).toBeInTheDocument();
     expect(screen.getAllByText("Agresif").length).toBeGreaterThan(0);
+  });
+
+  it("renders Smart Money Zones performance from the dedicated analytics endpoint", async () => {
+    renderPanel();
+
+    expect(await screen.findByText("Smart Money Zones Performance")).toBeInTheDocument();
+    expect(screen.getByText("SMC Predictions")).toBeInTheDocument();
+    expect(screen.getAllByText("5m").length).toBeGreaterThan(0);
+
+    await waitFor(() => {
+      const smcCalls = fetchMock.mock.calls.map((call) => String(call[0])).filter((url) => url.includes("/api/learning/smc-performance"));
+      expect(smcCalls.length).toBeGreaterThan(0);
+    });
   });
 
   it("shows the main scope tab before ultra safe and applies scope filters to recent signals", async () => {
@@ -212,7 +389,7 @@ describe("StrategyPerformancePanel", () => {
   it("renders the full ordered scope stack for symbols even when no scopes are marked available", async () => {
     const { container } = renderPanel();
 
-    await screen.findByText("Best Signal Quality");
+    expect((await screen.findAllByText("Best Signal Quality")).length).toBeGreaterThan(0);
 
     const daxHeading = Array.from(container.querySelectorAll("h4")).find((node) => node.textContent === "DAX");
     expect(daxHeading).toBeTruthy();

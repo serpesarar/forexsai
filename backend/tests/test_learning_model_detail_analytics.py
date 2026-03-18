@@ -132,8 +132,11 @@ async def test_model_detail_analytics_ignores_legacy_timeframes_and_uses_realize
     assert [row["tf"] for row in payload["timeframe_comparison"]] == ["15m"]
     assert payload["overview"]["net_pips"] == -15.0
     assert payload["recent_signals"][0]["confidence"] == 78.0
+    assert payload["recent_signals"][0]["date"] == "2026-03-06T11:00:00Z"
+    assert payload["recent_signals"][0]["entry_price"] == 100.0
     assert payload["recent_signals"][1]["confidence"] == 50.0
     assert payload["recent_signals"][1]["timeframe"] == "legacy"
+    assert payload["recent_signals"][1]["entry_price"] == 100.0
 
 
 @pytest.mark.asyncio
@@ -187,6 +190,7 @@ async def test_model_detail_analytics_repairs_target_hit_rows_with_bad_exit_pric
     ]
     assert payload["recent_signals"][0]["status"] == "completed"
     assert payload["recent_signals"][0]["pips"] == 25.0
+    assert payload["recent_signals"][0]["entry_price"] == 100.0
 
 
 @pytest.mark.asyncio

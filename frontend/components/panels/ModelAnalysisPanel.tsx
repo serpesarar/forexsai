@@ -86,6 +86,7 @@ const MODELS = [
   { id: "pulse1", label: "Pulse 1", icon: Zap, color: "#22D3EE", description: "Algorithmic scalping" },
   { id: "pulse2", label: "Pulse 2", icon: Activity, color: "#10B981", description: "ML-enhanced scalping" },
   { id: "pulse3", label: "Pulse 3", icon: Crosshair, color: "#F59E0B", description: "Multi-timeframe analysis" },
+  { id: "smc", label: "Smart Money Zones", icon: Crosshair, color: "#A855F7", description: "Order block and liquidity-based signals" },
 ];
 
 const TIMEFRAMES = [
@@ -110,6 +111,7 @@ const MODEL_TIMEFRAMES: Record<string, string[]> = {
   pulse1: ["5m", "15m"],
   pulse2: ["5m", "15m", "1h"],
   pulse3: ["1h"],
+  smc: ["5m", "15m", "1h", "4h"],
 };
 
 // ── API Functions ───────────────────────────────────────────────────────────
@@ -596,7 +598,7 @@ export default function ModelAnalysisPanel() {
         {/* ── Model Selection ── */}
         <div>
           <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">{t.selectModel}</h3>
-          <div className="grid grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-3">
             {MODELS.map(model => (
               <ModelCard
                 key={model.id}

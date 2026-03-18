@@ -428,6 +428,71 @@ async def test_strategy_performance_infers_missing_tp1_from_profit_excursion():
 
 
 @pytest.mark.asyncio
+async def test_smc_performance_includes_smart_money_zone_rows_in_timeframe_analytics():
+    learning_module = _load_learning_module("test_learning_smc_performance")
+    now = datetime.now(timezone.utc)
+    rows = [
+        _prediction_row(
+            id="smc-win-001",
+            symbol="NDX.INDX",
+            strategy="SMART_MONEY_ZONES",
+            model_type="smc",
+            timeframe="5m",
+            created_at=_iso(now - timedelta(hours=1)),
+            exit_time=_iso(now - timedelta(minutes=35)),
+            highest_profit_pips=12,
+            lowest_drawdown_pips=-3,
+            stop_loss_pips=8,
+            exit_price=110.0,
+            targets_hit={"TP1": True},
+        ),
+        _prediction_row(
+            id="smc-expired-002",
+            symbol="NDX.INDX",
+            strategy="SMART_MONEY_ZONES",
+            model_type="order_block",
+            timeframe="15m",
+            created_at=_iso(now - timedelta(hours=2)),
+            exit_time=None,
+            status="expired",
+            highest_profit_pips=4,
+            lowest_drawdown_pips=-2,
+            stop_loss_pips=8,
+            exit_price=None,
+            targets_hit={},
+        ),
+        _prediction_row(
+            id="non-smc-003",
+            symbol="NDX.INDX",
+            strategy=None,
+            model_type="ml",
+            timeframe="1h",
+            created_at=_iso(now - timedelta(hours=3)),
+            exit_time=_iso(now - timedelta(hours=2, minutes=20)),
+            status="stopped",
+            highest_profit_pips=1,
+            lowest_drawdown_pips=-6,
+            stop_loss_pips=6,
+            exit_price=None,
+            targets_hit={},
+        ),
+    ]
+    client = _FakeClient(rows)
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ):
+        payload = await learning_module.get_smc_performance(days=7)
+
+    assert payload["smc_predictions_count"] == 2
+    assert payload["eligible_outcomes_count"] == 1
+    assert payload["timeframes"]["NDX.INDX"]["5m"]["completed"] == 1
+    assert payload["timeframes"]["NDX.INDX"]["15m"]["expired"] == 1
+    assert payload["symbols"]["NDX.INDX"]["total_predictions"] == 2
+    assert payload["overall_summary"]["resolved_signals"] == 1
+
+
+@pytest.mark.asyncio
 async def test_recent_signals_applies_days_filter_and_returns_normalized_model_and_scope():
     learning_module = _load_learning_module("test_learning_recent_signals_router")
     now = datetime.now(timezone.utc)

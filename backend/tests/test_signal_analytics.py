@@ -1,12 +1,14 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 
 backend_dir = Path(__file__).parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from services.signal_analytics import classify_signal, normalize_model_type, parse_targets_hit
+from services.signal_analytics import classify_signal, normalize_model_type, parse_targets_hit, summarize_scope
 
 
 def test_parse_targets_hit_decodes_stringified_jsonb_payload():
@@ -28,6 +30,53 @@ def test_classify_signal_uses_hit_target_floor_when_realized_exit_is_negative():
     }
 
     assert classify_signal(signal) == ("completed", True, 25.0)
+
+
+def test_classify_signal_prefers_realized_exit_over_peak_excursion_for_completed_rows():
+    signal = {
+        "symbol": "NDX.INDX",
+        "ml_direction": "BUY",
+        "status": "completed",
+        "ml_entry_price": 100.0,
+        "exit_price": 110.0,
+        "highest_profit_pips": 150.0,
+        "targets_hit": {},
+        "targets": {},
+    }
+
+    assert classify_signal(signal) == ("completed", True, 10.0)
+
+
+def test_summarize_scope_excludes_expired_rows_from_scored_outcomes():
+    rows = [
+        {
+            "symbol": "NDX.INDX",
+            "ml_direction": "BUY",
+            "status": "completed",
+            "ml_entry_price": 100.0,
+            "exit_price": 110.0,
+            "highest_profit_pips": 10.0,
+            "targets_hit": {},
+            "targets": {},
+        },
+        {
+            "symbol": "NDX.INDX",
+            "ml_direction": "BUY",
+            "status": "expired",
+            "ml_entry_price": 100.0,
+            "exit_price": None,
+            "highest_profit_pips": 0.0,
+            "targets_hit": {},
+            "targets": {},
+        },
+    ]
+
+    summary = summarize_scope(rows)
+
+    assert summary["scored_signals"] == 1
+    assert summary["completed"] == 1
+    assert summary["expired"] == 1
+    assert summary["net_pips"] == pytest.approx(10.0, abs=0.1)
 
 
 def test_normalize_model_type_maps_smart_money_strategy_to_smc():

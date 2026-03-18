@@ -159,6 +159,37 @@ describe("ModelPerformanceModal", () => {
     expect(screen.getByText("Strong edge")).toBeInTheDocument();
     expect(screen.getByText("Best hour")).toBeInTheDocument();
     expect(screen.getByText("Best day")).toBeInTheDocument();
+    expect(screen.getByText("Losses: 5")).toBeInTheDocument();
+  });
+
+  it("renders recent signal dates in New York time and shows entry price", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          ...basePayload,
+          recent_signals: [
+            {
+              id: "sig-001",
+              date: "2026-03-07T10:15:00Z",
+              direction: "BUY",
+              confidence: 68.4,
+              status: "completed",
+              pips: 12.5,
+              timeframe: "15m",
+              entry_price: 2189.55,
+            },
+          ],
+        }),
+      })
+    );
+
+    renderModal();
+
+    expect(await screen.findByText("Entry price")).toBeInTheDocument();
+    expect(screen.getByText("2189.55")).toBeInTheDocument();
+    expect(screen.getByText("Mar 7, 05:15")).toBeInTheDocument();
   });
 
   it("uses backend session-hour visibility contract in the hourly tab", async () => {

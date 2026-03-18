@@ -2241,7 +2241,7 @@ async def get_historical_signals_endpoint(
 
 @router.get("/signals/matrix")
 async def get_signals_matrix(
-    model: str = Query("ml", description="Model type (ml, emel, pulse1, pulse2, pulse3)")
+    model: str = Query("ml", description="Model type (ml, emel, emel_inverse, pulse1, pulse2, pulse3, smc)")
 ):
     """
     Returns the latest signal for each symbol and timeframe to populate the Heatmap Matrix.
@@ -2411,7 +2411,7 @@ async def get_recent_signals_endpoint(
 
 @router.get("/model-analysis")
 async def get_model_timeframe_analysis(
-    model: str = Query(..., description="Model type: ml, emel, pulse1, pulse2, pulse3"),
+    model: str = Query(..., description="Model type: ml, emel, emel_inverse, pulse1, pulse2, pulse3, smc"),
     symbol: Optional[str] = Query(None, description="Symbol filter: XAUUSD, NDX.INDX, GDAXI.INDX, USOIL.FOREX"),
     timeframe: Optional[str] = Query(None, description="Timeframe: 5m, 15m, 30m, 1h, 4h, 1d"),
     days: int = Query(0, ge=0, le=1095)
@@ -2669,7 +2669,7 @@ async def get_all_models_summary(
             cur = de
         
         # Initialize model structure
-        MODELS = ["ml", "emel", "pulse1", "pulse2", "pulse3", "smc"]
+        MODELS = ["ml", "emel", "emel_inverse", "pulse1", "pulse2", "pulse3", "smc"]
         TIMEFRAMES = list(TIMEFRAME_ORDER)
         
         summary = {}
@@ -3283,6 +3283,7 @@ async def get_model_detail_analytics(
                 loss_pips_list.append(abs(pips_change or 0.0))
             elif status == "expired":
                 expired += 1
+                continue
 
             # Cumulative pips for Sharpe / drawdown
             cumulative_pips += pips_change or 0.0
@@ -3449,12 +3450,13 @@ async def get_model_detail_analytics(
             raw_status = (sig.get("status") or "unknown").lower().strip()
             recent_signals.append({
                 "id": (sig.get("id") or "")[:8],
-                "date": (sig.get("created_at") or "")[:16],
+                "date": sig.get("created_at") or "",
                 "direction": sig.get("ml_direction", "HOLD"),
                 "confidence": round(_coerce_float(sig.get("ml_confidence"), 50.0) or 50.0, 1),
                 "status": recent_status or raw_status or "unknown",
                 "pips": round(recent_pips or 0.0, 1),
                 "timeframe": sig.get("_timeframe") or "legacy",
+                "entry_price": _coerce_float(sig.get("ml_entry_price")),
             })
 
         return {

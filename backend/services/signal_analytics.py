@@ -212,12 +212,18 @@ def classify_signal(
     target_profit_floor = target_hit_profit_floor(sig, default_symbol=default_symbol)
 
     def resolved_success_pips() -> float:
-        candidates = [
-            max(realized or 0.0, 0.0),
-            max(target_profit_floor or 0.0, 0.0),
-            max(profit_pips, 0.0),
-        ]
-        return max(candidates)
+        realized_profit = max(realized, 0.0) if realized is not None else None
+        target_floor_profit = max(target_profit_floor, 0.0) if target_profit_floor is not None else None
+
+        if realized is not None:
+            if realized_profit is not None and realized_profit > 0:
+                return realized_profit
+            if target_floor_profit is not None:
+                return target_floor_profit
+            return 0.0
+        if target_floor_profit is not None:
+            return max(target_floor_profit, max(profit_pips, 0.0))
+        return max(profit_pips, 0.0)
 
     if status == "stopped" and resolution_reason == "direction_flip":
         return "direction_flip", None, None
@@ -253,6 +259,9 @@ def summarize_scope(scope_signals: List[dict], *, default_symbol: Optional[str] 
             continue
         if scoped_status is None or scoped_status == "direction_flip":
             continue
+        if scoped_status == "expired":
+            expired += 1
+            continue
 
         scored_signals += 1
         if scoped_status == "completed":
@@ -261,8 +270,6 @@ def summarize_scope(scope_signals: List[dict], *, default_symbol: Optional[str] 
         elif scoped_status == "stopped":
             stopped += 1
             total_loss += abs(scoped_pips or 0.0)
-        elif scoped_status == "expired":
-            expired += 1
 
     resolved = completed + stopped
     net_pips = total_profit - total_loss
