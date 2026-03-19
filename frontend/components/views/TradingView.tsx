@@ -72,6 +72,7 @@ export default function TradingView() {
 
   const currentSymbol = SYMBOLS[selectedSymbol];
   const SymbolIcon = currentSymbol.icon;
+  const allSymbols = Object.entries(SYMBOLS) as [SymbolKey, typeof SYMBOLS[SymbolKey]][];
 
   const symbolSelector = (
     <div className="relative z-50">
@@ -166,7 +167,15 @@ export default function TradingView() {
               </div>
               <div className="transform-gpu transition-all duration-300">
                 <ErrorBoundary>
-                  <ClaudeAnalysisPanelLarge symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                    {allSymbols.map(([symbolKey, sym]) => (
+                      <ClaudeAnalysisPanelLarge
+                        key={symbolKey}
+                        symbol={symbolKey}
+                        symbolLabel={sym.shortLabel}
+                      />
+                    ))}
+                  </div>
                 </ErrorBoundary>
               </div>
             </section>
