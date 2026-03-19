@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import {
   AlertTriangle,
   Brain,
@@ -69,6 +70,17 @@ function getDirectionIcon(direction: PanelDirection) {
 
 function getBiasNotes(bias: PanelBias, fallback: string[]) {
   return (bias.reasoning?.length ? bias.reasoning : fallback).filter(Boolean).slice(0, 2);
+}
+
+function clampStyle(lines: number): CSSProperties {
+  return {
+    display: "-webkit-box",
+    WebkitLineClamp: lines,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+    overflowWrap: "anywhere",
+    wordBreak: "break-word",
+  };
 }
 
 function legacyToPanel(data: FullAnalysisData): PanelSignal {
@@ -155,40 +167,51 @@ function IdeaCard({
 }) {
   const Icon = getDirectionIcon(bias.direction);
   const tone = directionTone[bias.direction];
+  const directionLabel = getDirectionLabel(bias.direction, t);
   return (
-    <div className="rounded-3xl p-5 md:p-6" style={{ background: tone.bg, border: `1px solid ${tone.border}` }}>
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: P.muted }}>{title}</p>
-          <div className="mt-3 flex items-center gap-3">
-            <Icon className="h-7 w-7" style={{ color: tone.color }} />
-            <p className="text-3xl font-black tracking-tight md:text-4xl" style={{ color: tone.color }}>
-              {getDirectionLabel(bias.direction, t)}
-            </p>
+    <div className="h-full min-w-0 overflow-hidden rounded-3xl p-5 md:p-6" style={{ background: tone.bg, border: `1px solid ${tone.border}` }}>
+      <div className="flex h-full flex-col">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: P.muted }}>{title}</p>
+            <div className="mt-4 flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${tone.border}` }}>
+                <Icon className="h-5 w-5" style={{ color: tone.color }} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[1.9rem] font-black leading-none tracking-tight md:text-[2.25rem]" style={{ ...clampStyle(2), color: tone.color }}>
+                  {directionLabel}
+                </p>
+                <p className="mt-3 text-sm font-medium leading-6 md:text-[15px]" style={{ ...clampStyle(3), color: P.text }}>
+                  {bias.summary || "—"}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold" style={{ color: P.muted }}>
-            <span className="rounded-full px-3 py-1" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${tone.border}` }}>
-              {bias.time_horizon}
-            </span>
-            <span className="rounded-full px-3 py-1" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${tone.border}` }}>
-              {bias.confidence.toFixed(0)}%
-            </span>
+          <div className="shrink-0 rounded-2xl px-3 py-2 text-right" style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${tone.border}` }}>
+            <p className="text-[10px] uppercase tracking-[0.18em]" style={{ color: P.muted }}>{t("claudeAnalysis.recommendation")}</p>
+            <p className="mt-1 text-lg font-black leading-none" style={{ color: tone.color }}>{bias.confidence.toFixed(0)}%</p>
           </div>
         </div>
-        <div className="rounded-2xl px-4 py-3 text-right" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${tone.border}` }}>
-          <p className="text-[10px] uppercase tracking-[0.18em]" style={{ color: P.muted }}>{t("claudeAnalysis.recommendation")}</p>
-          <p className="mt-1 text-base font-bold" style={{ color: tone.color }}>{getDirectionLabel(bias.direction, t)}</p>
-        </div>
-      </div>
 
-      <p className="text-base font-semibold leading-7 md:text-lg" style={{ color: P.text }}>{bias.summary || "—"}</p>
-
-      <div className="mt-4 space-y-2">
-        {notes.map((item, index) => (
-          <div key={`${title}-${index}`} className="rounded-2xl px-4 py-3 text-sm leading-6" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${tone.border}`, color: P.text }}>
-            {item}
+        <div className="mt-5 grid gap-2 sm:grid-cols-2">
+          <div className="rounded-2xl px-3 py-3" style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${tone.border}` }}>
+            <p className="text-[10px] uppercase tracking-[0.18em]" style={{ color: P.muted }}>{t("claudeAnalysis.recommendation")}</p>
+            <p className="mt-2 text-sm font-bold" style={{ ...clampStyle(2), color: tone.color }}>{directionLabel}</p>
           </div>
-        ))}
+          <div className="rounded-2xl px-3 py-3" style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${tone.border}` }}>
+            <p className="text-[10px] uppercase tracking-[0.18em]" style={{ color: P.muted }}>{t("claudeAnalysis.entryPlan")}</p>
+            <p className="mt-2 text-sm font-bold" style={{ ...clampStyle(2), color: P.text }}>{bias.time_horizon}</p>
+          </div>
+        </div>
+
+        <div className="mt-5 space-y-2">
+          {(notes.length ? notes : [bias.summary || "—"]).map((item, index) => (
+            <div key={`${title}-${index}`} className="min-w-0 rounded-2xl px-4 py-3 text-sm leading-6" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${tone.border}`, color: P.text }}>
+              <p style={clampStyle(3)}>{item}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -202,9 +225,9 @@ function LevelCard({
   value: string;
 }) {
   return (
-    <div className="rounded-3xl px-4 py-4" style={{ background: P.bg, border: `1px solid ${P.border}` }}>
+    <div className="min-w-0 rounded-3xl px-4 py-4" style={{ minHeight: 112, background: P.bg, border: `1px solid ${P.border}` }}>
       <p className="text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: P.muted }}>{label}</p>
-      <p className="mt-3 text-2xl font-black tracking-tight md:text-[2rem]" style={{ color: P.text }}>{value}</p>
+      <p className="mt-3 text-[1.65rem] font-black leading-tight tracking-tight md:text-[1.9rem]" style={{ ...clampStyle(2), color: P.text }}>{value}</p>
     </div>
   );
 }
@@ -253,6 +276,7 @@ export default function ClaudeAnalysisPanelV2({ symbol, symbolLabel }: Props) {
   const intradayNotes = panel ? getBiasNotes(panel.intraday_bias, panel.top_factors) : [];
   const visibleKeyLevels = (panel?.key_levels || []).slice(0, 4);
   const invalidationText = panel?.entry_plan.invalidation || panel?.invalidation[0] || "—";
+  const riskRewardValue = panel?.entry_plan.risk_reward ? panel.entry_plan.risk_reward.toFixed(2) : "—";
 
   const handleRefresh = () => {
     setRefreshNonce((current) => current + 1);
@@ -360,19 +384,19 @@ export default function ClaudeAnalysisPanelV2({ symbol, symbolLabel }: Props) {
         {data && panel && (
           <>
             <div className="rounded-3xl p-5 md:p-6" style={{ background: "var(--accent-purple-06)", border: "1px solid var(--accent-purple-12)" }}>
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div>
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
                   <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: P.muted }}>{t("claudeAnalysis.headline")}</p>
-                  <h4 className="mt-2 text-xl font-black tracking-tight md:text-[1.7rem]" style={{ color: P.text }}>{panel.headline}</h4>
+                  <h4 className="mt-2 text-xl font-black tracking-tight md:text-[1.7rem]" style={{ ...clampStyle(3), color: P.text }}>{panel.headline}</h4>
                 </div>
                 <div className="rounded-xl px-3 py-2 text-sm font-semibold" style={{ background: riskStyle.bg, border: `1px solid ${riskStyle.border}`, color: riskStyle.color }}>
                   {t("claudeAnalysis.eventRisk")}: {risk.level}
                 </div>
               </div>
-              <p className="text-base leading-7 md:text-lg" style={{ color: P.muted }}>{panel.confidence_reasoning}</p>
+              <p className="text-base leading-7 md:text-lg" style={{ ...clampStyle(4), color: P.muted }}>{panel.confidence_reasoning}</p>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
               <IdeaCard title={t("claudeAnalysis.scalpBias")} bias={panel.scalp_bias} notes={scalpNotes} t={t} />
               <IdeaCard title={t("claudeAnalysis.intradayBias")} bias={panel.intraday_bias} notes={intradayNotes} t={t} />
             </div>
@@ -382,27 +406,29 @@ export default function ClaudeAnalysisPanelV2({ symbol, symbolLabel }: Props) {
                   <Target className="h-4 w-4" style={{ color: P.accent }} />
                   <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: P.muted }}>{t("claudeAnalysis.entryPlan")}</p>
               </div>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
                 <LevelCard label={t("claudeAnalysis.preferredEntry")} value={formatPrice(panel.entry_plan.preferred_entry)} />
                 <LevelCard label={t("claudeAnalysis.stopLoss")} value={formatPrice(panel.entry_plan.stop_loss)} />
                 <LevelCard label={t("claudeAnalysis.takeProfit")} value={formatPrice(panel.entry_plan.take_profit)} />
+                <LevelCard label={t("claudeAnalysis.riskReward")} value={riskRewardValue} />
               </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[1.1fr_0.9fr]">
-                <div className="rounded-3xl px-4 py-4" style={{ background: P.bg, border: `1px solid ${P.border}` }}>
+              <div className="mt-4 grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                <div className="min-w-0 rounded-3xl px-4 py-4" style={{ background: P.bg, border: `1px solid ${P.border}` }}>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: P.muted }}>{t("claudeAnalysis.invalidation")}</p>
-                  <p className="mt-3 text-base font-semibold leading-7" style={{ color: P.text }}>{invalidationText}</p>
+                  <p className="mt-3 text-base font-semibold leading-7" style={{ ...clampStyle(4), color: P.text }}>{invalidationText}</p>
                 </div>
-                <div className="rounded-3xl px-4 py-4" style={{ background: P.bg, border: `1px solid ${P.border}` }}>
+                <div className="min-w-0 rounded-3xl px-4 py-4" style={{ background: P.bg, border: `1px solid ${P.border}` }}>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: P.muted }}>{t("claudeAnalysis.keyLevels")}</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))" }}>
                     {visibleKeyLevels.map((level, index) => (
-                      <div key={`${level.label}-${index}`} className="rounded-full px-3 py-2 text-sm font-semibold" style={{ background: P.hover, border: `1px solid ${P.border}`, color: P.text }}>
-                        {level.label}: {formatPrice(level.price)}
+                      <div key={`${level.label}-${index}`} className="min-w-0 rounded-2xl px-3 py-3 text-sm font-semibold" style={{ background: P.hover, border: `1px solid ${P.border}`, color: P.text }}>
+                        <p className="text-[10px] uppercase tracking-[0.18em]" style={{ ...clampStyle(1), color: P.muted }}>{level.label}</p>
+                        <p className="mt-2 text-base font-black tracking-tight" style={{ ...clampStyle(2), color: P.text }}>{formatPrice(level.price)}</p>
                       </div>
                     ))}
                     {!visibleKeyLevels.length && (
-                      <div className="rounded-full px-3 py-2 text-sm" style={{ background: P.hover, border: `1px solid ${P.border}`, color: P.muted }}>
+                      <div className="rounded-2xl px-3 py-3 text-sm" style={{ background: P.hover, border: `1px solid ${P.border}`, color: P.muted }}>
                         {t("claudeAnalysis.noLevels")}
                       </div>
                     )}
@@ -411,20 +437,20 @@ export default function ClaudeAnalysisPanelV2({ symbol, symbolLabel }: Props) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <div className="rounded-3xl p-5" style={{ background: P.hover, border: `1px solid ${P.border}` }}>
+            <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+              <div className="min-w-0 rounded-3xl p-5" style={{ background: P.hover, border: `1px solid ${P.border}` }}>
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: P.muted }}>{t("claudeAnalysis.eventRisk")}</p>
                   <div className="rounded-full px-3 py-1 text-xs font-bold" style={{ background: riskStyle.bg, border: `1px solid ${riskStyle.border}`, color: riskStyle.color }}>
                     {risk.level}
                   </div>
                 </div>
-                <p className="text-base leading-7" style={{ color: P.text }}>{risk.summary || "—"}</p>
+                <p className="text-base leading-7" style={{ ...clampStyle(4), color: P.text }}>{risk.summary || "—"}</p>
               </div>
 
-              <div className="rounded-3xl p-5" style={{ background: P.hover, border: `1px solid ${P.border}` }}>
+              <div className="min-w-0 rounded-3xl p-5" style={{ background: P.hover, border: `1px solid ${P.border}` }}>
                 <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: P.muted }}>{t("claudeAnalysis.reasoningSummary")}</p>
-                <p className="mt-3 text-base font-semibold leading-7" style={{ color: P.text }}>
+                <p className="mt-3 text-base font-semibold leading-7" style={{ ...clampStyle(3), color: P.text }}>
                   {marketContext?.session_name ? `${marketContext.session_name} · ${marketContext.phase || ""}` : analysisMeta?.market_session || symbolLabel}
                 </p>
                 {marketContext?.ny_time && (
