@@ -10,6 +10,8 @@
  */
 
 import { useState, useEffect } from "react";
+import { getApiBase } from "../lib/api/base";
+import { deriveSignalExitPrice, deriveSignalPnlPips } from "../lib/signalOutcome";
 import { 
   X, 
   TrendingUp, 
@@ -29,7 +31,7 @@ import {
   Layers
 } from "lucide-react";
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -60,14 +62,18 @@ interface SignalDetail {
     strategy?: string;
     timeframe?: string;
     status: "active" | "completed" | "stopped" | "expired";
+    targets?: Record<string, number>;
     targets_hit?: Record<string, boolean>;
     highest_profit_pips: number;
     lowest_drawdown_pips: number;
     stop_loss_pips?: number;
     exit_price?: number;
+    raw_exit_price?: number;
     exit_time?: string;
     created_at: string;
     factors?: Record<string, any>;
+    normalized_status?: string;
+    calculated_pnl_pips?: number | null;
   };
   checks: SignalCheck[];
   failure?: {
@@ -99,6 +105,17 @@ function formatDate(isoString: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatPrice(value?: number | null): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+  return value.toFixed(2);
+}
+
+function formatConfidence(value?: number | null): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+  const normalized = value > 1 ? value : value * 100;
+  return `${normalized.toFixed(1)}%`;
 }
 
 function getStatusConfig(status: string) {
@@ -186,7 +203,7 @@ export default function SignalDetailModal({ signalId, isOpen, onClose }: SignalD
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/learning/signal/${id}`);
+      const res = await fetch(`${API_BASE}/api/signals/detail/${id}`);
       const data = await res.json();
       if (data.error) {
         setError(data.error);
@@ -203,20 +220,15 @@ export default function SignalDetailModal({ signalId, isOpen, onClose }: SignalD
   if (!isOpen) return null;
 
   const signal = detail?.signal;
-  const statusConfig = signal ? getStatusConfig(signal.status) : null;
+  const displayStatus = signal?.normalized_status || signal?.status;
+  const statusConfig = displayStatus ? getStatusConfig(displayStatus) : null;
   const StatusIcon = statusConfig?.icon;
+  const derivedExitPrice = signal ? deriveSignalExitPrice(signal) : null;
 
-  // Calculate PNL
   let pnlPips: number | null = null;
   let pnlClass = "text-gray-400";
   if (signal) {
-    const diff = signal.status === "completed"
-      ? Math.max(signal.highest_profit_pips || 0, 0)
-      : signal.status === "stopped"
-      ? -Math.abs(signal.stop_loss_pips || signal.lowest_drawdown_pips || 0)
-      : signal.status === "expired"
-      ? 0
-      : null;
+    const diff = deriveSignalPnlPips(signal);
     if (diff !== null) {
       pnlPips = diff;
       pnlClass = diff > 0 ? "text-green-400" : diff < 0 ? "text-red-400" : "text-gray-400";
@@ -360,7 +372,7 @@ export default function SignalDetailModal({ signalId, isOpen, onClose }: SignalD
                         <span className="text-xs uppercase tracking-wider">Confidence</span>
                       </div>
                       <p className="text-white font-medium">
-                        {signal.ml_confidence ? `${(signal.ml_confidence * 100).toFixed(1)}%` : "—"}
+                        {formatConfidence(signal.ml_confidence)}
                       </p>
                     </div>
 
@@ -396,11 +408,11 @@ export default function SignalDetailModal({ signalId, isOpen, onClose }: SignalD
                       <div className="space-y-3">
                         <div className="flex justify-between">
                           <span className="text-gray-400">Entry Price</span>
-                          <span className="text-white font-mono">{signal.ml_entry_price?.toFixed(2) || "—"}</span>
+                          <span className="text-white font-mono">{formatPrice(signal.ml_entry_price)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-400">Exit Price</span>
-                          <span className="text-white font-mono">{signal.exit_price?.toFixed(2) || "—"}</span>
+                          <span className="text-white font-mono">{formatPrice(derivedExitPrice)}</span>
                         </div>
                         {signal.exit_time && (
                           <div className="flex justify-between">
@@ -461,7 +473,7 @@ export default function SignalDetailModal({ signalId, isOpen, onClose }: SignalD
                         <div className="flex justify-between">
                           <span className="text-gray-400">Confidence</span>
                           <span className="text-white">
-                            {signal.claude_confidence ? `${(signal.claude_confidence * 100).toFixed(1)}%` : "—"}
+                            {formatConfidence(signal.claude_confidence)}
                           </span>
                         </div>
                       </div>
@@ -578,7 +590,7 @@ export default function SignalDetailModal({ signalId, isOpen, onClose }: SignalD
                     </>
                   ) : (
                     <div className="text-center py-12 text-gray-400">
-                      {signal.status === "completed" ? (
+                      {displayStatus === "completed" ? (
                         <div className="space-y-2">
                           <CheckCircle2 className="w-12 h-12 mx-auto text-green-500" />
                           <p>Signal completed successfully</p>
@@ -586,7 +598,7 @@ export default function SignalDetailModal({ signalId, isOpen, onClose }: SignalD
                             <p className="text-sm text-gray-500">Hit {hitTargetsList.join(", ")}</p>
                           )}
                         </div>
-                      ) : signal.status === "active" ? (
+                      ) : displayStatus === "active" ? (
                         <div className="space-y-2">
                           <Activity className="w-12 h-12 mx-auto text-blue-500" />
                           <p>Signal is still active</p>

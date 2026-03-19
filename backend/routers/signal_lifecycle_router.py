@@ -194,6 +194,31 @@ async def backfill_existing_records():
         return {"error": str(e)}
 
 
+@router.post("/api/signals/repair-outcomes")
+async def repair_signal_outcomes(
+    dry_run: bool = True,
+    symbols: str = "",
+    max_records: int = 50000,
+    window_days: int = 1,
+    sample_size: int = 20,
+):
+    from services.signal_history_repair_service import run_signal_history_repair
+
+    requested_symbols = [part.strip().upper() for part in symbols.split(",") if part.strip()]
+
+    try:
+        return run_signal_history_repair(
+            dry_run=dry_run,
+            symbols=requested_symbols or None,
+            max_records=max_records,
+            window_days=window_days,
+            sample_size=sample_size,
+        )
+    except Exception as e:
+        logger.error(f"repair_signal_outcomes error: {e}")
+        return {"error": str(e)}
+
+
 @router.get("/api/signals/metrics")
 async def get_lifecycle_metrics():
     """Return lifecycle processing metrics and scheduler state for observability."""

@@ -8,7 +8,7 @@ backend_dir = Path(__file__).parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from services.signal_analytics import classify_signal, normalize_model_type, parse_targets_hit, summarize_scope
+from services.signal_analytics import classify_signal, normalize_model_type, parse_targets_hit, resolved_exit_price, summarize_scope
 
 
 def test_parse_targets_hit_decodes_stringified_jsonb_payload():
@@ -45,6 +45,36 @@ def test_classify_signal_prefers_realized_exit_over_peak_excursion_for_completed
     }
 
     assert classify_signal(signal) == ("completed", True, 10.0)
+
+
+def test_classify_signal_uses_highest_hit_target_floor_for_completed_target_rows():
+    signal = {
+        "symbol": "GDAXI.INDX",
+        "ml_direction": "BUY",
+        "status": "completed",
+        "ml_entry_price": 23000.0,
+        "exit_price": 23703.3,
+        "highest_profit_pips": 703.3,
+        "targets_hit": {"TP1": True, "TP2": True, "TP3": False, "TP4": False},
+        "targets": {"TP1": 23015.0, "TP2": 23025.0, "TP3": 23035.0, "TP4": 23050.0},
+    }
+
+    assert classify_signal(signal) == ("completed", True, 25.0)
+
+
+def test_resolved_exit_price_prefers_highest_hit_target_for_completed_rows():
+    signal = {
+        "symbol": "GDAXI.INDX",
+        "ml_direction": "BUY",
+        "status": "completed",
+        "ml_entry_price": 23000.0,
+        "exit_price": 23703.3,
+        "highest_profit_pips": 703.3,
+        "targets_hit": {"TP1": True, "TP2": True, "TP3": False, "TP4": False},
+        "targets": {"TP1": 23015.0, "TP2": 23025.0, "TP3": 23035.0, "TP4": 23050.0},
+    }
+
+    assert resolved_exit_price(signal) == pytest.approx(23025.0, abs=0.0001)
 
 
 def test_summarize_scope_excludes_expired_rows_from_scored_outcomes():

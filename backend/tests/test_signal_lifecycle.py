@@ -294,11 +294,23 @@ class RecordingQuery:
     def insert(self, payload):
         self.operation = "insert"
         self.payload = payload
+        self.client.operations.append({
+            "table": self.table_name,
+            "op": self.operation,
+            "payload": self.payload,
+            "filters": list(self.filters),
+        })
         return self
 
     def update(self, payload):
         self.operation = "update"
         self.payload = payload
+        self.client.operations.append({
+            "table": self.table_name,
+            "op": self.operation,
+            "payload": self.payload,
+            "filters": list(self.filters),
+        })
         return self
 
     def eq(self, column, value):
@@ -306,12 +318,13 @@ class RecordingQuery:
         return self
 
     def execute(self):
-        self.client.operations.append({
-            "table": self.table_name,
-            "op": self.operation,
-            "payload": self.payload,
-            "filters": list(self.filters),
-        })
+        if self.operation == "select":
+            self.client.operations.append({
+                "table": self.table_name,
+                "op": self.operation,
+                "payload": self.payload,
+                "filters": list(self.filters),
+            })
         data = [] if self.operation == "select" else [self.payload]
         return {"data": data, "error": None}
 
@@ -531,7 +544,7 @@ async def test_dashboard_target_rates_use_common_resolved_denominator_for_models
     assert ml_stats["completed"] == 3
     assert ml_stats["stopped"] == 1
     assert ml_stats["expired"] == 1
-    assert ml_stats["target_rates"] == {"TP1": 50.0, "TP2": 50.0, "TP3": 0, "TP4": 0}
+    assert ml_stats["target_rates"] == {"TP1": 75.0, "TP2": 50.0, "TP3": 0, "TP4": 0}
     assert ml_stats["symbols"]["NDX.INDX"]["target_rates"] == {
         "TP1": 66.7,
         "TP2": 33.3,
@@ -539,7 +552,7 @@ async def test_dashboard_target_rates_use_common_resolved_denominator_for_models
         "TP4": 0,
     }
     assert ml_stats["symbols"]["XAUUSD"]["target_rates"] == {
-        "TP1": 0.0,
+        "TP1": 100.0,
         "TP2": 100.0,
         "TP3": 0.0,
         "TP4": 0.0,

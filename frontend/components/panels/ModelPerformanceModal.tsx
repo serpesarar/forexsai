@@ -16,6 +16,7 @@ import {
   YAxis,
 } from "recharts";
 import { getApiBase } from "../../lib/api/base";
+import { deriveSummaryExitPrice } from "../../lib/signalOutcome";
 
 const API_BASE = getApiBase();
 const TF_ORDER = ["all", "5m", "15m", "30m", "1h", "4h", "1d"];
@@ -63,6 +64,7 @@ interface RecentSignal {
   pips: number;
   timeframe: string;
   entry_price?: number | null;
+  exit_price?: number | null;
 }
 
 interface ModelComparisonRow {
@@ -166,6 +168,7 @@ const T = {
     recentSignals: "Recent signals",
     date: "Date",
     entryPrice: "Entry price",
+    exitPrice: "Exit price",
     direction: "Direction",
     confidence: "Confidence",
     status: "Status",
@@ -234,6 +237,7 @@ const T = {
     recentSignals: "Son sinyaller",
     date: "Tarih",
     entryPrice: "Giriş fiyatı",
+    exitPrice: "Çıkış fiyatı",
     direction: "Yön",
     confidence: "Güven",
     status: "Durum",
@@ -333,6 +337,11 @@ function formatPips(value: number) {
 }
 
 function formatEntryPrice(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+  return value.toFixed(2);
+}
+
+function formatExitPrice(value?: number | null) {
   if (typeof value !== "number" || !Number.isFinite(value)) return "—";
   return value.toFixed(2);
 }
@@ -974,7 +983,7 @@ function OverviewPanel({
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr>
-                  {[copy.date, copy.direction, copy.timeframe, copy.entryPrice, copy.confidence, copy.status, copy.pips].map((header) => (
+                  {[copy.date, copy.direction, copy.timeframe, copy.entryPrice, copy.exitPrice, copy.confidence, copy.status, copy.pips].map((header) => (
                     <th key={header} style={tableHeadStyle}>
                       {header}
                     </th>
@@ -1003,6 +1012,7 @@ function OverviewPanel({
                     </td>
                     <td style={tableCellStyle}>{signal.timeframe.toUpperCase()}</td>
                     <td style={{ ...tableCellStyle, fontFamily: "monospace" }}>{formatEntryPrice(signal.entry_price)}</td>
+                    <td style={{ ...tableCellStyle, fontFamily: "monospace" }}>{formatExitPrice(deriveSummaryExitPrice(signal))}</td>
                     <td style={tableCellStyle}>{signal.confidence.toFixed(1)}%</td>
                     <td style={tableCellStyle}>
                       <span

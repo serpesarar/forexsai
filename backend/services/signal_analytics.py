@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from services.target_config import calculate_target_prices, pips_from_price_change
+from services.target_config import calculate_stoploss_price, calculate_target_prices, pips_from_price_change
 
 TIMEFRAME_ORDER = ["5m", "15m", "30m", "1h", "4h", "1d"]
 VALID_TIMEFRAMES = set(TIMEFRAME_ORDER)
@@ -201,6 +201,38 @@ def target_hit_profit_floor(sig: dict, default_symbol: Optional[str] = None) -> 
     return max(derived_pips) if derived_pips else None
 
 
+def resolved_exit_price(sig: dict, default_symbol: Optional[str] = None) -> Optional[float]:
+    entry_price = coerce_float(sig.get("ml_entry_price"))
+    direction = (sig.get("ml_direction") or "").upper().strip()
+    symbol = sig.get("symbol") or default_symbol
+    timeframe = normalize_timeframe(sig.get("timeframe")) or "15m"
+    raw_exit_price = coerce_float(sig.get("exit_price"))
+    targets = resolved_targets(sig, default_symbol=default_symbol)
+    targets_hit = normalized_targets_hit(sig, default_symbol=default_symbol)
+    normalized_status, _, _ = classify_signal(sig, default_symbol=default_symbol)
+
+    target_exit_price = None
+    for target_name in TP_LEVEL_ORDER:
+        if not targets_hit.get(target_name):
+            continue
+        target_exit_price = coerce_float(targets.get(target_name))
+
+    if normalized_status == "completed" and target_exit_price is not None:
+        return round(target_exit_price, 4)
+
+    if normalized_status == "stopped" and entry_price is not None and direction in {"BUY", "SELL"} and symbol:
+        stop_price = coerce_float(sig.get("ml_stop_price"))
+        if stop_price is None:
+            try:
+                stop_price = calculate_stoploss_price(entry_price, direction, symbol, timeframe)
+            except Exception:
+                stop_price = None
+        if stop_price is not None:
+            return round(stop_price, 4)
+
+    return round(raw_exit_price, 4) if raw_exit_price is not None else None
+
+
 def classify_signal(
     sig: dict,
     *,
@@ -212,13 +244,20 @@ def classify_signal(
     loss_pips = abs(coerce_float(sig.get("lowest_drawdown_pips"), 0.0) or 0.0)
     stop_loss_pips = abs(coerce_float(sig.get("stop_loss_pips"), 0.0) or 0.0)
     realized = realized_pips(sig, default_symbol=default_symbol)
+    explicit_targets_hit = parse_targets_hit(sig.get("targets_hit"))
     targets_hit = normalized_targets_hit(sig, default_symbol=default_symbol)
+    explicit_any_target_hit = any(explicit_targets_hit.values()) if explicit_targets_hit else False
     any_target_hit = any(targets_hit.values()) if targets_hit else False
     target_profit_floor = target_hit_profit_floor(sig, default_symbol=default_symbol)
 
     def resolved_success_pips() -> float:
         realized_profit = max(realized, 0.0) if realized is not None else None
         target_floor_profit = max(target_profit_floor, 0.0) if target_profit_floor is not None else None
+
+        target_resolution = resolution_reason in {"tp4_hit", "tp1_3_hit_then_sl", "all_targets_hit"}
+
+        if target_floor_profit is not None and (explicit_any_target_hit or target_resolution or (status == "stopped" and any_target_hit)):
+            return target_floor_profit
 
         if realized is not None:
             if realized_profit is not None and realized_profit > 0:

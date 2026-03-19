@@ -33,6 +33,7 @@ from services.signal_analytics import (
     normalize_model_type,
     normalize_timeframe as normalize_analytics_timeframe,
     normalized_targets_hit,
+    resolved_exit_price,
 )
 from utils.json_helpers import parse_json_field, parse_json_fields
 
@@ -249,6 +250,39 @@ def _resolve_target_prices(
         else:
             resolved_targets[tp_name] = round(fallback_price, 4)
     return resolved_targets
+
+
+def _target_rank(tp_name: str) -> Optional[int]:
+    if not tp_name:
+        return None
+    name = str(tp_name).upper().strip()
+    digits = "".join(ch for ch in name if ch.isdigit())
+    if not digits:
+        return None
+    try:
+        return int(digits)
+    except Exception:
+        return None
+
+
+def _resolved_exit_price_from_targets(
+    target_prices: Dict[str, float],
+    targets_hit: Dict[str, Any],
+) -> Optional[float]:
+    ranked_hits = []
+    for tp_name, tp_price in target_prices.items():
+        if not targets_hit.get(tp_name):
+            continue
+        rank = _target_rank(tp_name)
+        if rank is None:
+            continue
+        ranked_hits.append((rank, tp_price))
+
+    if not ranked_hits:
+        return None
+
+    _, exit_price = max(ranked_hits, key=lambda item: item[0])
+    return round(float(exit_price), 4)
 
 
 async def _get_session_high_low(symbol: str, minutes: int = 5) -> Dict[str, Optional[float]]:
@@ -507,21 +541,6 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     created_dt = _parse_created_at(signal.get("created_at"))
 
     # ------------------------------------------------------------------
-    # Helper: target rank extraction (TP1 / TP2 / TP3 / TP4 ...)
-    # ------------------------------------------------------------------
-    def _target_rank(tp_name: str) -> Optional[int]:
-        if not tp_name:
-            return None
-        name = str(tp_name).upper().strip()
-        digits = "".join(ch for ch in name if ch.isdigit())
-        if not digits:
-            return None
-        try:
-            return int(digits)
-        except Exception:
-            return None
-
-    # ------------------------------------------------------------------
     # 1. Post-entry price window (better than single latest price only)
     # ------------------------------------------------------------------
     price_window = await _get_price_window_since_signal(symbol, created_dt, evaluation_window)
@@ -548,7 +567,14 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
                     )
 
                     fallback_status = "completed" if (tp1_3_hit_fallback or tp4_hit_fallback) else "stopped"
-                    _update_signal_status(client, signal_id, fallback_status, entry_price)
+                    fallback_targets = _resolve_target_prices(signal, entry_price, direction, symbol, timeframe)
+                    fallback_exit_price = _resolved_exit_price_from_targets(fallback_targets, targets_hit_raw)
+                    _update_signal_status(
+                        client,
+                        signal_id,
+                        fallback_status,
+                        fallback_exit_price if fallback_status == "completed" else None,
+                    )
 
                     logger.info(
                         f"⏰ Signal {signal_id[:8]} {symbol} resolved without fresh price "
@@ -639,6 +665,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         hit_stop = True
 
     target_status = {tp_name: bool(targets_hit.get(tp_name)) for tp_name in target_prices}
+    resolved_target_exit_price = _resolved_exit_price_from_targets(target_prices, targets_hit)
 
     # ------------------------------------------------------------------
     # 5. signal_checks audit row
@@ -669,7 +696,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     # If TP4 hit, it's fully completed
     if tp4_hit:
         new_status = "completed"
-        exit_price = current
+        exit_price = resolved_target_exit_price or target_prices.get("TP4") or current
         resolution_reason = "tp4_hit"
         logger.info(
             f"🎯 Signal {signal_id[:8]} {symbol} {direction} completed via TP4 hit"
@@ -678,7 +705,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     # TP1/TP2/TP3 hit means success, even if SL is later touched
     elif hit_stop and tp1_3_hit:
         new_status = "completed"
-        exit_price = current
+        exit_price = resolved_target_exit_price or current
         resolution_reason = "tp1_3_hit_then_sl"
         logger.info(
             f"✅ Signal {signal_id[:8]} {symbol} {direction} "
@@ -688,7 +715,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     # If all known targets are hit, also completed
     elif target_prices and all(target_status.get(tp) for tp in target_prices):
         new_status = "completed"
-        exit_price = current
+        exit_price = resolved_target_exit_price or current
         resolution_reason = "all_targets_hit"
         logger.info(f"🎯 Signal {signal_id[:8]} {symbol} {direction} ALL TARGETS HIT!")
 
@@ -1582,6 +1609,19 @@ async def get_signal_detail(signal_id: str) -> Dict[str, Any]:
                 "entry_indicators", "failure_indicators", "price_action_context",
                 "correlation_context", "contradiction_flags",
             ])
+
+        classified_status, _, classified_pnl = classify_signal(
+            signal,
+            default_symbol=signal.get("symbol"),
+        )
+        corrected_exit_price = resolved_exit_price(
+            signal,
+            default_symbol=signal.get("symbol"),
+        )
+        signal["normalized_status"] = classified_status or signal.get("status")
+        signal["calculated_pnl_pips"] = round(classified_pnl, 2) if classified_pnl is not None else None
+        signal["raw_exit_price"] = signal.get("exit_price")
+        signal["exit_price"] = corrected_exit_price
 
         return {
             "signal": signal,

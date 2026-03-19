@@ -28,6 +28,7 @@ import {
   triggerLifecycleCheck, type ModelStats, type ActiveSignal, type SignalCheck,
 } from "../../lib/api/learning";
 import { getApiBase } from "../../lib/api/base";
+import { deriveSignalExitPrice, deriveSignalPnlPips } from "../../lib/signalOutcome";
 import { ModelPerformanceModal } from "./ModelPerformanceModal";
 
 // ── Theme-aware Color Palette (CSS Variables) ───────────────────────────────
@@ -666,6 +667,7 @@ function ActiveSignalCard({ signal, onSelect }: { signal: ActiveSignal; onSelect
   const targetsHit = signal.targets_hit ? Object.values(signal.targets_hit).filter(Boolean).length : 0;
   const totalTargets = signal.targets ? Object.keys(signal.targets).length : 0;
   const profitPos = (signal.highest_profit_pips ?? 0) > 0;
+  const peakProfit = signal.highest_profit_pips ?? 0;
 
   return (
     <button
@@ -726,7 +728,7 @@ function ActiveSignalCard({ signal, onSelect }: { signal: ActiveSignal; onSelect
               color: profitPos ? "var(--accent-positive)" : "var(--text-muted)",
               letterSpacing: "-0.3px"
             }}>
-              {profitPos ? "+" : ""}{(signal.highest_profit_pips ?? 0).toFixed(1)}p
+              Peak {profitPos ? "+" : ""}{peakProfit.toFixed(1)}p
             </span>
             <div className="flex items-center gap-1">
               {Array.from({ length: totalTargets }).map((_, i) => (
@@ -891,6 +893,9 @@ function SignalDetailModal({ signalId, onClose }: { signalId: string; onClose: (
 
   const targetsConfig = sig.targets || {};
   const targetsHit = sig.targets_hit || {};
+  const displayStatus = sig.normalized_status || sig.status;
+  const resolvedPnl = deriveSignalPnlPips(sig) ?? 0;
+  const resolvedExitPrice = deriveSignalExitPrice(sig);
 
   return (
     <div ref={overlayRef} className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -925,20 +930,26 @@ function SignalDetailModal({ signalId, onClose }: { signalId: string; onClose: (
         </div>
 
         <div className="p-5 space-y-5">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="rounded-lg" style={{ background: "var(--bg-surface)", padding: "12px", border: `1px solid var(--border-subtle)` }}>
               <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 4 }}>Entry</p>
               <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>{sig.ml_entry_price?.toFixed(2)}</p>
             </div>
             <div className="rounded-lg" style={{ background: "var(--bg-surface)", padding: "12px", border: `1px solid var(--border-subtle)` }}>
-              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 4 }}>Best P/L</p>
-              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: (sig.highest_profit_pips ?? 0) > 0 ? "var(--accent-positive)" : "var(--text-muted)" }}>
-                {(sig.highest_profit_pips ?? 0) > 0 ? "+" : ""}{(sig.highest_profit_pips ?? 0).toFixed(1)}p
+              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 4 }}>Exit</p>
+              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>
+                {typeof resolvedExitPrice === "number" ? resolvedExitPrice.toFixed(2) : "—"}
+              </p>
+            </div>
+            <div className="rounded-lg" style={{ background: "var(--bg-surface)", padding: "12px", border: `1px solid var(--border-subtle)` }}>
+              <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 4 }}>Result</p>
+              <p style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: resolvedPnl > 0 ? "var(--accent-positive)" : resolvedPnl < 0 ? "var(--accent-negative)" : "var(--text-muted)" }}>
+                {resolvedPnl > 0 ? "+" : ""}{resolvedPnl.toFixed(1)}p
               </p>
             </div>
             <div className="rounded-lg" style={{ background: "var(--bg-surface)", padding: "12px", border: `1px solid var(--border-subtle)` }}>
               <p style={{ fontFamily: FONT, fontSize: 10, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 4 }}>Status</p>
-              <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: sig.status === "completed" ? "var(--accent-positive)" : sig.status === "stopped" ? "var(--accent-negative)" : "var(--accent-warning)", textTransform: "capitalize" as const }}>{sig.status}</p>
+              <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: displayStatus === "completed" ? "var(--accent-positive)" : displayStatus === "stopped" ? "var(--accent-negative)" : displayStatus === "active" ? "var(--accent-info)" : "var(--accent-warning)", textTransform: "capitalize" as const }}>{displayStatus}</p>
             </div>
           </div>
 

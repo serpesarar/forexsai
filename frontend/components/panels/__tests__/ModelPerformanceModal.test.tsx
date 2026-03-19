@@ -179,6 +179,7 @@ describe("ModelPerformanceModal", () => {
               pips: 12.5,
               timeframe: "15m",
               entry_price: 2189.55,
+              exit_price: 2189.55,
             },
           ],
         }),
@@ -188,7 +189,9 @@ describe("ModelPerformanceModal", () => {
     renderModal();
 
     expect(await screen.findByText("Entry price")).toBeInTheDocument();
+    expect(screen.getByText("Exit price")).toBeInTheDocument();
     expect(screen.getByText("2189.55")).toBeInTheDocument();
+    expect(screen.getByText("2202.05")).toBeInTheDocument();
     expect(screen.getByText("Mar 7, 05:15")).toBeInTheDocument();
   });
 

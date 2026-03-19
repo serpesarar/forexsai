@@ -44,6 +44,7 @@ from services.signal_analytics import (
     normalized_targets_hit,
     normalize_timeframe,
     realized_pips,
+    resolved_exit_price,
     sort_models,
     sort_timeframes,
     summarize_scope,
@@ -2576,6 +2577,7 @@ async def get_recent_signals_endpoint(
             entry["pnl_pips"] = round(pnl_pips, 2) if pnl_pips is not None else None
             entry["normalized_model"] = _normalize_model_type(sig)
             entry["strategy_scope"] = _resolved_eligible_ml_strategy_scope(sig)
+            entry["exit_price"] = resolved_exit_price(sig, default_symbol=sig.get("symbol") or symbol)
 
             enhanced.append(entry)
         
@@ -3323,9 +3325,10 @@ async def get_model_detail_analytics(
             day_end = day_start + timedelta(days=1)
 
             result = client.table("prediction_logs").select(
-                "id, symbol, timeframe, ml_direction, ml_confidence, status, "
-                "ml_entry_price, exit_price, stop_loss_pips, created_at, highest_profit_pips, "
-                "lowest_drawdown_pips, targets_hit, targets, model_type, strategy, resolution_reason"
+                "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
+                "ml_target_price, ml_stop_price, model_type, strategy, status, "
+                "targets_hit, highest_profit_pips, lowest_drawdown_pips, "
+                "exit_price, exit_time, stop_loss_pips, targets, created_at, resolution_reason"
             ).eq("symbol", symbol).gte(
                 "created_at", _utc_iso(day_start)
             ).lt(
@@ -3457,8 +3460,7 @@ async def get_model_detail_analytics(
             hour = created_dt.hour
             dow = created_dt.weekday()
             date_key = created_dt.strftime("%Y-%m-%d")
-            tf = sig.get("_timeframe")
-
+            
             if status == "active":
                 active += 1
                 continue
@@ -3490,13 +3492,13 @@ async def get_model_detail_analytics(
             hourly_stats[hour]["pips"] += pips_change or 0.0
 
             # Timeframe bucket
-            if tf:
-                if tf not in tf_stats:
-                    tf_stats[tf] = {"total": 0, "wins": 0, "pips": 0.0}
-                tf_stats[tf]["total"] += 1
+            if sig["_timeframe"]:
+                if sig["_timeframe"] not in tf_stats:
+                    tf_stats[sig["_timeframe"]] = {"total": 0, "wins": 0, "pips": 0.0}
+                tf_stats[sig["_timeframe"]]["total"] += 1
                 if is_win:
-                    tf_stats[tf]["wins"] += 1
-                tf_stats[tf]["pips"] += pips_change or 0.0
+                    tf_stats[sig["_timeframe"]]["wins"] += 1
+                tf_stats[sig["_timeframe"]]["pips"] += pips_change or 0.0
 
             # Daily bucket
             if date_key not in daily_stats:
@@ -3649,6 +3651,7 @@ async def get_model_detail_analytics(
                 "pips": round(recent_pips or 0.0, 1),
                 "timeframe": sig.get("_timeframe") or "legacy",
                 "entry_price": _coerce_float(sig.get("ml_entry_price")),
+                "exit_price": resolved_exit_price(sig, default_symbol=symbol),
             })
 
         return {
