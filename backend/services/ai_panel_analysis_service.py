@@ -21,12 +21,13 @@ from services.market_regime_service import detect_regime
 from services.oil_analysis_service import generate_oil_analysis
 from services.unified_news_analyzer import get_unified_analyzer
 from utils.json_helpers import parse_json_field
+from utils.market_hours import is_new_york_market_open
 
 logger = logging.getLogger(__name__)
 
 ANALYSIS_VERSION = "4.0.0"
 PROMPT_VERSION = "ai_panel_v1_20260318"
-CACHE_TTL_SECONDS = 480
+CACHE_TTL_SECONDS = 3600
 NY_TZ = ZoneInfo("America/New_York")
 
 SYMBOL_PROFILES: Dict[str, Dict[str, Any]] = {
@@ -1132,12 +1133,25 @@ def _with_cache_hit(result: Dict[str, Any], cache_hit: bool) -> Dict[str, Any]:
 
 
 
-def _get_memory_cached(symbol: str) -> Optional[Dict[str, Any]]:
+def _mark_served_from_stale_cache(result: Dict[str, Any]) -> Dict[str, Any]:
+    cloned = _with_cache_hit(result, True)
+    claude_analysis = cloned.get("claude_analysis") or {}
+    analysis_meta = claude_analysis.get("analysis_meta") or {}
+    analysis_meta["stale_cache"] = True
+    claude_analysis["analysis_meta"] = analysis_meta
+    cloned["claude_analysis"] = claude_analysis
+    return cloned
+
+
+
+def _get_memory_cached(symbol: str, allow_stale: bool = False) -> Optional[Dict[str, Any]]:
     cached = _ANALYSIS_CACHE.get(symbol)
     if not cached:
         return None
     expires_at, payload = cached
     if expires_at <= datetime.now(timezone.utc):
+        if allow_stale:
+            return _mark_served_from_stale_cache(payload)
         _ANALYSIS_CACHE.pop(symbol, None)
         return None
     return _with_cache_hit(payload, True)
@@ -1152,7 +1166,7 @@ def _set_memory_cached(symbol: str, payload: Dict[str, Any]) -> None:
 
 
 
-def _read_db_cache(symbol: str) -> Optional[Dict[str, Any]]:
+def _read_db_cache(symbol: str, allow_stale: bool = False) -> Optional[Dict[str, Any]]:
     client = get_supabase_client()
     if client is None:
         return None
@@ -1166,10 +1180,15 @@ def _read_db_cache(symbol: str) -> Optional[Dict[str, Any]]:
         if expires_at_raw:
             expires_at = datetime.fromisoformat(str(expires_at_raw).replace("Z", "+00:00"))
             if expires_at <= datetime.now(timezone.utc):
-                return None
+                if not allow_stale:
+                    return None
         payload = parse_json_field(row.get("response_payload"), {})
         if isinstance(payload, dict) and payload.get("ml_prediction") and payload.get("claude_analysis"):
             _set_memory_cached(symbol, payload)
+            if expires_at_raw and allow_stale:
+                expires_at = datetime.fromisoformat(str(expires_at_raw).replace("Z", "+00:00"))
+                if expires_at <= datetime.now(timezone.utc):
+                    return _mark_served_from_stale_cache(payload)
             return _with_cache_hit(payload, True)
     except Exception as exc:
         logger.debug("AI panel DB cache read skipped for %s: %s", symbol, exc)
@@ -1357,27 +1376,54 @@ async def get_ai_panel_analysis(symbol: str, force_refresh: bool = False) -> Dic
     if normalized_symbol not in SYMBOL_PROFILES:
         raise ValueError(f"Unsupported AI analysis symbol: {symbol}")
 
+    market_open = is_new_york_market_open()
+
+    fresh_memory = _get_memory_cached(normalized_symbol)
+    fresh_db = None if fresh_memory is not None else _read_db_cache(normalized_symbol)
+
     if not force_refresh:
-        memory_cached = _get_memory_cached(normalized_symbol)
-        if memory_cached is not None:
-            return memory_cached
-        db_cached = _read_db_cache(normalized_symbol)
-        if db_cached is not None:
-            return db_cached
+        if fresh_memory is not None:
+            return fresh_memory
+        if fresh_db is not None:
+            return fresh_db
+        if not market_open:
+            stale_memory = _get_memory_cached(normalized_symbol, allow_stale=True)
+            if stale_memory is not None:
+                return stale_memory
+            stale_db = _read_db_cache(normalized_symbol, allow_stale=True)
+            if stale_db is not None:
+                return stale_db
+    elif not market_open:
+        stale_memory = fresh_memory or _get_memory_cached(normalized_symbol, allow_stale=True)
+        if stale_memory is not None:
+            return stale_memory
+        stale_db = fresh_db or _read_db_cache(normalized_symbol, allow_stale=True)
+        if stale_db is not None:
+            return stale_db
 
-    context = await build_context_pack(normalized_symbol)
-    extras = await _collect_symbol_extras(normalized_symbol, context)
-    prompt_payload = _build_prompt_payload(context, extras)
-    raw_panel_signal = await _request_panel_signal(prompt_payload)
-    panel_signal = _normalize_panel_signal(raw_panel_signal, context, extras)
-    model_used = str((raw_panel_signal or {}).get("ai_model") or DEEPSEEK_MODEL if raw_panel_signal else "panel-fallback-engine")
+    try:
+        context = await build_context_pack(normalized_symbol)
+        extras = await _collect_symbol_extras(normalized_symbol, context)
+        prompt_payload = _build_prompt_payload(context, extras)
+        raw_panel_signal = await _request_panel_signal(prompt_payload)
+        panel_signal = _normalize_panel_signal(raw_panel_signal, context, extras)
+        model_used = str((raw_panel_signal or {}).get("ai_model") or DEEPSEEK_MODEL if raw_panel_signal else "panel-fallback-engine")
 
-    result = {
-        "ml_prediction": context.get("ml_prediction") or {},
-        "claude_analysis": _build_compatibility_result(normalized_symbol, context, panel_signal, model_used, extras),
-        "ta_snapshot": context.get("ta_snapshot") or {},
-    }
+        result = {
+            "ml_prediction": context.get("ml_prediction") or {},
+            "claude_analysis": _build_compatibility_result(normalized_symbol, context, panel_signal, model_used, extras),
+            "ta_snapshot": context.get("ta_snapshot") or {},
+        }
 
-    _set_memory_cached(normalized_symbol, result)
-    _persist_result(normalized_symbol, result, context, extras)
-    return result
+        _set_memory_cached(normalized_symbol, result)
+        _persist_result(normalized_symbol, result, context, extras)
+        return result
+    except Exception as exc:
+        logger.exception("AI panel analysis refresh failed for %s", normalized_symbol)
+        stale_memory = _get_memory_cached(normalized_symbol, allow_stale=True)
+        if stale_memory is not None:
+            return stale_memory
+        stale_db = _read_db_cache(normalized_symbol, allow_stale=True)
+        if stale_db is not None:
+            return stale_db
+        raise exc

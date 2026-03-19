@@ -225,7 +225,7 @@ export function useAIAnalysis(symbol: string, enabled: boolean = false, refreshN
     queryKey: ["ai-analysis", symbol, refreshNonce],
     queryFn: () => fetchAIAnalysis(symbol, refreshNonce > 0),
     enabled, // Only fetch when explicitly enabled (button click)
-    refetchInterval: false, // No auto-refresh - save API calls
+    refetchInterval: 3600000,
     staleTime: 300000, // 5 minutes - data stays fresh longer
     gcTime: 600000, // 10 minutes cache
   });

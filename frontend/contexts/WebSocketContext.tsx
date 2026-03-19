@@ -37,6 +37,23 @@ export interface SymbolData {
 
 type WSStatus = "connecting" | "connected" | "disconnected" | "error";
 
+function parseWsTimestamp(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value > 1_000_000_000_000 ? Math.floor(value) : Math.floor(value * 1000);
+  }
+
+  if (typeof value === "string") {
+    const numeric = Number(value);
+    if (Number.isFinite(numeric) && value.trim() !== "") {
+      return numeric > 1_000_000_000_000 ? Math.floor(numeric) : Math.floor(numeric * 1000);
+    }
+    const parsed = new Date(value).getTime();
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
 interface WebSocketContextValue {
   /** Current connection status */
   status: WSStatus;
@@ -175,9 +192,9 @@ export function WebSocketProvider({ children }: Props) {
 
           // Tracking lag for debugging
           if (msg.timestamp || msg?.data?.updated_at) {
-            const msgTime = new Date(msg.timestamp || msg.data?.updated_at).getTime();
-            const lag = receiveTime - msgTime;
-            if (lag > 5000) {
+            const msgTime = parseWsTimestamp(msg.timestamp || msg.data?.updated_at);
+            const lag = msgTime == null ? null : receiveTime - msgTime;
+            if (lag !== null && lag > 5000) {
               console.warn(`[WS] HIGH LAG DETECTED: ${lag}ms - Message timestamp: ${msg.timestamp}`);
             }
           }
