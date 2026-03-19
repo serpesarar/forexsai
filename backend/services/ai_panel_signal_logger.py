@@ -5,9 +5,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from database.supabase_client import get_supabase_client, is_db_available
-from services.ai_panel_analysis_service import get_ai_panel_analysis
+from services.ai_panel_analysis_service import _get_market_state, get_ai_panel_analysis
 from services.prediction_logger import log_prediction
-from utils.market_hours import is_new_york_market_open
 from utils.safe_supabase import safe_get_data
 
 logger = logging.getLogger(__name__)
@@ -234,10 +233,11 @@ async def log_ai_panel_signal(symbol: str) -> Optional[str]:
 async def log_ai_panel_signals_if_needed() -> None:
     now = _utc_now()
 
-    if not is_new_york_market_open():
-        return
-
     for symbol in AI_PANEL_TRACKED_SYMBOLS:
+        market_state = _get_market_state(symbol)
+        if not market_state.get("is_primary_session_open"):
+            continue
+
         last_log = _resolve_last_log_time(symbol)
         if last_log and (now - last_log).total_seconds() < AI_PANEL_LOG_INTERVAL:
             continue

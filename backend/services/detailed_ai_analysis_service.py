@@ -583,7 +583,13 @@ async def build_context_pack(symbol: str) -> Dict[str, Any]:
         price = await fetch_latest_price(sym)
         macro[k] = {"symbol": sym, "price": float(price) if price is not None else None}
 
-    news_symbols = ["XAUUSD", "GOLD", "DXY", "USD"] if "XAU" in normalized_symbol else ["NDX", "NASDAQ", "VIX", "DXY"]
+    news_symbol_map = {
+        "NDX.INDX": ["NDX", "NASDAQ", "QQQ", "VIX", "DXY"],
+        "GDAXI.INDX": ["DAX", "GDAXI", "GER40", "EUR", "ECB"],
+        "XAUUSD": ["XAUUSD", "GOLD", "FED", "DXY", "USD", "YIELDS"],
+        "USOIL.FOREX": ["WTI", "USOIL", "CRUDE OIL", "OPEC", "EIA", "DXY"],
+    }
+    news_symbols = news_symbol_map.get(normalized_symbol, [normalized_symbol, "DXY"])
     headlines = await fetch_marketaux_headlines(news_symbols)
 
     prediction_dict = {

@@ -21,12 +21,11 @@ from services.market_regime_service import detect_regime
 from services.oil_analysis_service import generate_oil_analysis
 from services.unified_news_analyzer import get_unified_analyzer
 from utils.json_helpers import parse_json_field
-from utils.market_hours import is_new_york_market_open
 
 logger = logging.getLogger(__name__)
 
-ANALYSIS_VERSION = "4.0.0"
-PROMPT_VERSION = "ai_panel_v1_20260318"
+ANALYSIS_VERSION = "4.1.0"
+PROMPT_VERSION = "ai_panel_v2_20260318"
 CACHE_TTL_SECONDS = 3600
 NY_TZ = ZoneInfo("America/New_York")
 
@@ -39,6 +38,7 @@ SYMBOL_PROFILES: Dict[str, Dict[str, Any]] = {
         "session_name": "NYSE cash",
         "ny_session_start": 9 * 60 + 30,
         "ny_session_end": 16 * 60,
+        "prompt_focus": "opening drive, index breadth proxies, volatility regime, breakout continuation versus mean reversion",
     },
     "XAUUSD": {
         "display_name": "Gold (XAU/USD)",
@@ -48,6 +48,7 @@ SYMBOL_PROFILES: Dict[str, Dict[str, Any]] = {
         "session_name": "NY metals",
         "ny_session_start": 8 * 60 + 20,
         "ny_session_end": 16 * 60,
+        "prompt_focus": "dollar sensitivity, yields, safe-haven flow, COMEX catalysts, macro headline shock risk",
     },
     "USOIL.FOREX": {
         "display_name": "US Oil (WTI)",
@@ -57,6 +58,7 @@ SYMBOL_PROFILES: Dict[str, Dict[str, Any]] = {
         "session_name": "NYMEX core",
         "ny_session_start": 9 * 60,
         "ny_session_end": 14 * 60 + 30,
+        "prompt_focus": "inventory and EIA timing, OPEC and geopolitical supply risk, dollar pressure, oil microstructure",
     },
     "GDAXI.INDX": {
         "display_name": "DAX",
@@ -66,6 +68,7 @@ SYMBOL_PROFILES: Dict[str, Dict[str, Any]] = {
         "session_name": "Xetra cash",
         "ny_session_start": 3 * 60,
         "ny_session_end": 11 * 60 + 30,
+        "prompt_focus": "European equity flow, Xetra cash momentum, macro sentiment spillover, trend continuation versus fade setups",
     },
 }
 
@@ -93,6 +96,9 @@ Analyze only the supplied market pack. Do not invent data. If any data is missin
 - XAUUSD: prioritize dollar/macro regime, safe-haven flow, COMEX-style event sensitivity, headline risk.
 - USOIL.FOREX: prioritize inventory/OPEC/geopolitical risk, dollar impact, oil microstructure, EIA event timing.
 - If the symbol's New York-time primary session is closed, reduce conviction by one notch and avoid overstating trend persistence.
+- Produce two distinct decisions from the same market pack: one for scalp execution (15-90m) and one for intraday execution (rest_of_session). They may disagree if the data supports that.
+- Use the exact symbol profile, session state, ml_prediction, ta_snapshot, ta_summary, support/resistance, news, calendar, regime, and asset-specific extras provided in the market pack.
+- If the evidence is mixed, explain the conflict in confidence_reasoning and lower confidence instead of forcing a trend call.
 
 Return ONLY valid JSON with this exact shape:
 {
@@ -1008,6 +1014,34 @@ def _build_prompt_payload(context: Dict[str, Any], extras: Dict[str, Any]) -> Di
     }
 
 
+
+def _build_prompt_execution_brief(prompt_payload: Dict[str, Any]) -> str:
+    profile = prompt_payload.get("symbol_profile") or {}
+    market_state = prompt_payload.get("market_state") or {}
+    ml_prediction = prompt_payload.get("ml_prediction") or {}
+    ta_snapshot = prompt_payload.get("ta_snapshot") or {}
+    ta_summary = prompt_payload.get("ta_summary") or {}
+    levels = prompt_payload.get("levels") or {}
+    volume = prompt_payload.get("volume") or {}
+    volatility = prompt_payload.get("volatility") or {}
+    regime = prompt_payload.get("regime") or {}
+    event_risk = ((prompt_payload.get("economic_calendar") or {}).get("risk") or {})
+
+    return "\n".join([
+        f"Symbol under analysis: {profile.get('display_name')} ({profile.get('short_label')}) [{profile.get('asset_class')}].",
+        f"Symbol-specific focus: {profile.get('prompt_focus')}.",
+        f"Primary session: {market_state.get('session_name')} | phase={market_state.get('phase')} | primary_open={market_state.get('is_primary_session_open')} | minutes_to_open={market_state.get('minutes_to_open')} | minutes_to_close={market_state.get('minutes_to_close')}.",
+        f"ML baseline: direction={ml_prediction.get('direction')} confidence={ml_prediction.get('confidence')} entry={ml_prediction.get('entry_price')} target={ml_prediction.get('target_price')} stop={ml_prediction.get('stop_price')}.",
+        f"Technical snapshot: close={ta_snapshot.get('close')} ema20={ta_snapshot.get('ema_20')} ema50={ta_snapshot.get('ema_50')} ema200={ta_snapshot.get('ema_200')} rsi14={ta_snapshot.get('rsi_14')} macd_hist={ta_snapshot.get('macd_hist')} atr14={ta_snapshot.get('atr_14')} boll_z={ta_snapshot.get('boll_zscore')}.",
+        f"Technical summary: atr_pct={ta_summary.get('atr_pct')} bollinger_width={ta_summary.get('bollinger_width')} adx={ta_summary.get('adx')} stoch_k={ta_summary.get('stoch_k')}.",
+        f"Structure and levels: nearest_support={levels.get('nearest_support')} nearest_resistance={levels.get('nearest_resistance')} ml_key_levels={levels.get('ml_key_levels')}.",
+        f"Flow context: volume_status={volume.get('status')} volume_ratio={volume.get('ratio')} volatility_level={volatility.get('level')} regime={regime.get('regime')} regime_trend={regime.get('trend_direction')}.",
+        f"Catalyst map: event_risk={event_risk.get('level')} event_summary={event_risk.get('summary')}.",
+        "Task: produce symbol-specific scalp_bias and intraday_bias using the supplied technical and macro evidence only, and keep the reasoning actionable for a live dashboard.",
+    ])
+
+
+
 async def _collect_oil_analysis(symbol: str, market_state: Dict[str, Any]) -> Dict[str, Any]:
     candles_task = fetch_intraday_candles(symbol, "5m", 240)
     dxy_task = fetch_intraday_candles("DXY.INDX", "5m", 240)
@@ -1092,10 +1126,12 @@ async def _collect_symbol_extras(symbol: str, context: Dict[str, Any]) -> Dict[s
 
 
 async def _request_panel_signal(prompt_payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    full_prompt = f"{PANEL_PROMPT}\n\nMarket pack:\n{json.dumps(prompt_payload, ensure_ascii=False, indent=2)}"
+    execution_brief = _build_prompt_execution_brief(prompt_payload)
+    full_prompt = f"{PANEL_PROMPT}\n\nExecution brief:\n{execution_brief}\n\nMarket pack:\n{json.dumps(prompt_payload, ensure_ascii=False, indent=2)}"
     return await call_deepseek_json(
         full_prompt,
         api_key=getattr(settings, "deepseek_api_key", None) or None,
+        enforce_market_hours=False,
         max_tokens=1600,
         timeout_seconds=55,
     )
@@ -1376,7 +1412,8 @@ async def get_ai_panel_analysis(symbol: str, force_refresh: bool = False) -> Dic
     if normalized_symbol not in SYMBOL_PROFILES:
         raise ValueError(f"Unsupported AI analysis symbol: {symbol}")
 
-    market_open = is_new_york_market_open()
+    market_state = _get_market_state(normalized_symbol)
+    market_open = bool(market_state.get("is_primary_session_open"))
 
     fresh_memory = _get_memory_cached(normalized_symbol)
     fresh_db = None if fresh_memory is not None else _read_db_cache(normalized_symbol)

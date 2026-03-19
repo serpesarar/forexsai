@@ -74,6 +74,7 @@ async def call_deepseek_json(
     prompt: str,
     *,
     api_key: Optional[str] = None,
+    enforce_market_hours: bool = True,
     max_tokens: int = 1000,
     temperature: Optional[float] = None,
     timeout_seconds: int = 45,
@@ -82,7 +83,7 @@ async def call_deepseek_json(
     if not key:
         return None
 
-    if not is_new_york_market_open():
+    if enforce_market_hours and not is_new_york_market_open():
         logger.info(
             "DeepSeek request skipped outside New York market hours (%s)",
             get_new_york_market_hours_label(),
