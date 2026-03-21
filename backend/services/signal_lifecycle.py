@@ -29,11 +29,13 @@ from services.target_config import (
     pips_from_price_change,
 )
 from services.signal_analytics import (
+    canonical_stop_loss_pips,
     classify_signal,
     normalize_model_type,
     normalize_timeframe as normalize_analytics_timeframe,
     normalized_targets_hit,
     resolved_exit_price,
+    resolved_targets,
 )
 from utils.json_helpers import parse_json_field, parse_json_fields
 
@@ -227,7 +229,7 @@ def _is_reasonable_price_level(
         return False
 
     ratio = candidate_distance / fallback_distance
-    return 0.2 <= ratio <= 5.0
+    return 0.85 <= ratio <= 1.15
 
 
 def _resolve_target_prices(
@@ -1614,12 +1616,27 @@ async def get_signal_detail(signal_id: str) -> Dict[str, Any]:
             signal,
             default_symbol=signal.get("symbol"),
         )
+        corrected_targets = resolved_targets(
+            signal,
+            default_symbol=signal.get("symbol"),
+        )
+        corrected_targets_hit = normalized_targets_hit(
+            signal,
+            default_symbol=signal.get("symbol"),
+        )
         corrected_exit_price = resolved_exit_price(
+            signal,
+            default_symbol=signal.get("symbol"),
+        )
+        corrected_stop_loss_pips = canonical_stop_loss_pips(
             signal,
             default_symbol=signal.get("symbol"),
         )
         signal["normalized_status"] = classified_status or signal.get("status")
         signal["calculated_pnl_pips"] = round(classified_pnl, 2) if classified_pnl is not None else None
+        signal["targets"] = {key: round(float(value), 4) for key, value in corrected_targets.items()}
+        signal["targets_hit"] = {key: bool(corrected_targets_hit.get(key)) for key in corrected_targets.keys()}
+        signal["stop_loss_pips"] = round(corrected_stop_loss_pips, 2) if corrected_stop_loss_pips is not None else signal.get("stop_loss_pips")
         signal["raw_exit_price"] = signal.get("exit_price")
         signal["exit_price"] = corrected_exit_price
 

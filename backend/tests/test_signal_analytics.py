@@ -77,6 +77,43 @@ def test_resolved_exit_price_prefers_highest_hit_target_for_completed_rows():
     assert resolved_exit_price(signal) == pytest.approx(23025.0, abs=0.0001)
 
 
+def test_hourly_completed_rows_use_canonical_fixed_targets_when_stored_geometry_is_inflated():
+    signal = {
+        "symbol": "GDAXI.INDX",
+        "timeframe": "1h",
+        "ml_direction": "BUY",
+        "status": "completed",
+        "resolution_reason": "tp4_hit",
+        "ml_entry_price": 23591.8,
+        "exit_price": 23736.1562,
+        "highest_profit_pips": 144.4,
+        "targets_hit": {"TP1": True, "TP2": True, "TP3": True, "TP4": True},
+        "targets": {"TP1": 23656.1562, "TP2": 23666.1562, "TP3": 23676.1562, "TP4": 23736.1562},
+    }
+
+    assert classify_signal(signal) == ("completed", True, 50.0)
+    assert resolved_exit_price(signal) == pytest.approx(23641.8, abs=0.0001)
+
+
+def test_hourly_stopped_rows_use_canonical_fixed_stop_loss_when_stored_loss_is_inflated():
+    signal = {
+        "symbol": "GDAXI.INDX",
+        "timeframe": "1h",
+        "ml_direction": "BUY",
+        "status": "stopped",
+        "ml_entry_price": 23591.8,
+        "exit_price": 23447.4328,
+        "stop_loss_pips": 144.4,
+        "highest_profit_pips": 0.0,
+        "lowest_drawdown_pips": -144.4,
+        "targets_hit": {},
+        "targets": {"TP1": 23656.1562, "TP2": 23666.1562, "TP3": 23676.1562, "TP4": 23736.1562},
+    }
+
+    assert classify_signal(signal) == ("stopped", False, -50.0)
+    assert resolved_exit_price(signal) == pytest.approx(23541.8, abs=0.0001)
+
+
 def test_summarize_scope_excludes_expired_rows_from_scored_outcomes():
     rows = [
         {

@@ -194,6 +194,49 @@ async def test_model_detail_analytics_repairs_target_hit_rows_with_bad_exit_pric
 
 
 @pytest.mark.asyncio
+async def test_model_detail_analytics_uses_canonical_fixed_hourly_geometry_when_stored_targets_are_inflated():
+    learning_module = _load_learning_module("test_learning_hourly_fixed_geometry")
+    get_model_detail_analytics = learning_module.get_model_detail_analytics
+
+    signal_rows = [
+        {
+            "id": "dax-hourly-win-001",
+            "symbol": "GDAXI.INDX",
+            "timeframe": "1h",
+            "ml_direction": "BUY",
+            "ml_confidence": 74,
+            "status": "completed",
+            "resolution_reason": "tp4_hit",
+            "ml_entry_price": 23591.8,
+            "exit_price": 23736.1562,
+            "stop_loss_pips": 144.4,
+            "created_at": "2026-03-19T07:21:10.530689Z",
+            "highest_profit_pips": 144.4,
+            "lowest_drawdown_pips": -12,
+            "targets_hit": {"TP1": True, "TP2": True, "TP3": True, "TP4": True},
+            "targets": {"TP1": 23656.1562, "TP2": 23666.1562, "TP3": 23676.1562, "TP4": 23736.1562},
+            "model_type": "emel",
+            "strategy": "EMEL",
+        },
+    ]
+
+    client = _FakeClient([[], signal_rows])
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ):
+        payload = await get_model_detail_analytics(model="emel", symbol="GDAXI.INDX", days=1, timeframe="1h")
+
+    assert payload["overview"]["completed"] == 1
+    assert payload["overview"]["net_pips"] == 50.0
+    assert payload["timeframe_comparison"] == [
+        {"tf": "1h", "total": 1, "active": 0, "win_rate": 100.0, "net_pips": 50.0, "avg_pips": 50.0}
+    ]
+    assert payload["recent_signals"][0]["pips"] == 50.0
+    assert payload["recent_signals"][0]["exit_price"] == 23641.8
+
+
+@pytest.mark.asyncio
 async def test_historical_signals_endpoint_includes_scoped_ml_records_for_ml_filter():
     learning_module = _load_learning_module("test_learning_historical_scoped_ml")
     get_historical_signals_endpoint = learning_module.get_historical_signals_endpoint

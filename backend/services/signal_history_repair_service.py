@@ -5,17 +5,16 @@ from typing import Any, Dict, Iterable, List, Optional
 
 from database.supabase_client import get_supabase_client, is_db_available
 from services.signal_analytics import (
+    canonical_stop_loss_pips,
+    canonical_targets,
     classify_signal,
     coerce_float,
     normalize_model_type,
-    normalize_timeframe,
     normalized_targets_hit,
     parse_targets,
     parse_targets_hit,
     resolved_exit_price,
-    resolved_targets,
 )
-from services.target_config import calculate_stoploss_price, pips_from_price_change
 
 TP_LEVELS = ("TP1", "TP2", "TP3", "TP4")
 DEFAULT_SIGNAL_REPAIR_SYMBOLS = ("NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX")
@@ -80,25 +79,8 @@ def _highest_hit_target_name(targets_hit: Dict[str, bool]) -> Optional[str]:
 
 
 def _resolved_stop_loss_pips(row: Dict[str, Any], *, default_symbol: Optional[str] = None) -> Optional[float]:
-    symbol = (row.get("symbol") or default_symbol or "").upper().strip()
-    direction = (row.get("ml_direction") or "").upper().strip()
-    entry_price = coerce_float(row.get("ml_entry_price"))
-    timeframe = normalize_timeframe(row.get("timeframe")) or "15m"
-
-    if not symbol or direction not in {"BUY", "SELL"} or entry_price is None or entry_price <= 0:
-        return None
-
-    stop_price = coerce_float(row.get("ml_stop_price"))
-    if stop_price is None:
-        try:
-            stop_price = calculate_stoploss_price(entry_price, direction, symbol, timeframe)
-        except Exception:
-            stop_price = None
-
-    if stop_price is None:
-        return None
-
-    return round(abs(pips_from_price_change(abs(entry_price - stop_price), symbol)), 2)
+    resolved = canonical_stop_loss_pips(row, default_symbol=default_symbol)
+    return round(resolved, 2) if resolved is not None else None
 
 
 def _infer_resolution_reason(
@@ -154,7 +136,7 @@ def plan_signal_history_repair(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         return None
 
     normalized_status, _, calculated_pnl = classify_signal(row, default_symbol=symbol)
-    if normalized_status in {None, "active", "direction_flip"}:
+    if normalized_status in {None, "direction_flip"}:
         return None
 
     explicit_targets_available = any(coerce_float(raw_targets.get(tp_name)) is not None for tp_name in TP_LEVELS)
@@ -164,7 +146,7 @@ def plan_signal_history_repair(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
     corrected_targets_hit = _normalized_targets_hit_payload(row, default_symbol=symbol)
     corrected_exit_price = resolved_exit_price(row, default_symbol=symbol)
-    corrected_targets = _rounded_targets(resolved_targets(row, default_symbol=symbol))
+    corrected_targets = _rounded_targets(canonical_targets(row, default_symbol=symbol))
     corrected_stop_loss_pips = _resolved_stop_loss_pips(row, default_symbol=symbol)
     inferred_resolution_reason = _infer_resolution_reason(
         row,
@@ -183,24 +165,20 @@ def plan_signal_history_repair(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             updates["status"] = normalized_status
             changes["status"] = {"from": raw_status, "to": normalized_status}
 
-    if corrected_stop_loss_pips is not None and (raw_status == "stopped" or normalized_status == "stopped"):
+    if corrected_stop_loss_pips is not None:
         raw_stop_loss_pips = coerce_float(row.get("stop_loss_pips"))
         if not _same_number(raw_stop_loss_pips, corrected_stop_loss_pips, tolerance=1e-2):
             updates["stop_loss_pips"] = corrected_stop_loss_pips
             changes["stop_loss_pips"] = {"from": raw_stop_loss_pips, "to": corrected_stop_loss_pips}
 
-    if explicit_targets_available and explicit_target_semantics:
+    if corrected_targets:
         comparable_existing_targets = {tp_name: coerce_float(raw_targets.get(tp_name)) for tp_name in TP_LEVELS}
         comparable_corrected_targets = {tp_name: corrected_targets.get(tp_name) for tp_name in TP_LEVELS}
         if comparable_existing_targets != comparable_corrected_targets:
             updates["targets"] = corrected_targets
             changes["targets"] = {"from": comparable_existing_targets, "to": comparable_corrected_targets}
 
-        comparable_existing_targets_hit = {tp_name: bool(raw_targets_hit.get(tp_name)) for tp_name in TP_LEVELS}
-        if comparable_existing_targets_hit != corrected_targets_hit:
-            updates["targets_hit"] = corrected_targets_hit
-            changes["targets_hit"] = {"from": comparable_existing_targets_hit, "to": corrected_targets_hit}
-    elif explicit_target_semantics:
+    if explicit_targets_available or explicit_target_semantics or normalized_status == "active":
         comparable_existing_targets_hit = {tp_name: bool(raw_targets_hit.get(tp_name)) for tp_name in TP_LEVELS}
         if comparable_existing_targets_hit != corrected_targets_hit:
             updates["targets_hit"] = corrected_targets_hit

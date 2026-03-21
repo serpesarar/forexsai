@@ -113,11 +113,7 @@ def parse_targets(raw_value: Any) -> Dict[str, Any]:
     return parse_json_object(raw_value)
 
 
-def resolved_targets(sig: dict, default_symbol: Optional[str] = None) -> Dict[str, Any]:
-    targets = parse_targets(sig.get("targets"))
-    if targets:
-        return targets
-
+def canonical_targets(sig: dict, default_symbol: Optional[str] = None) -> Dict[str, Any]:
     entry_price = coerce_float(sig.get("ml_entry_price"))
     direction = (sig.get("ml_direction") or "").upper().strip()
     symbol = sig.get("symbol") or default_symbol
@@ -130,6 +126,39 @@ def resolved_targets(sig: dict, default_symbol: Optional[str] = None) -> Dict[st
         return calculate_target_prices(entry_price, direction, symbol, timeframe)
     except Exception:
         return {}
+
+
+def canonical_stop_price(sig: dict, default_symbol: Optional[str] = None) -> Optional[float]:
+    entry_price = coerce_float(sig.get("ml_entry_price"))
+    direction = (sig.get("ml_direction") or "").upper().strip()
+    symbol = sig.get("symbol") or default_symbol
+    timeframe = normalize_timeframe(sig.get("timeframe")) or "15m"
+
+    if entry_price is None or direction not in {"BUY", "SELL"} or not symbol:
+        return coerce_float(sig.get("ml_stop_price"))
+
+    try:
+        return calculate_stoploss_price(entry_price, direction, symbol, timeframe)
+    except Exception:
+        return coerce_float(sig.get("ml_stop_price"))
+
+
+def canonical_stop_loss_pips(sig: dict, default_symbol: Optional[str] = None) -> Optional[float]:
+    entry_price = coerce_float(sig.get("ml_entry_price"))
+    symbol = sig.get("symbol") or default_symbol
+    stop_price = canonical_stop_price(sig, default_symbol=default_symbol)
+
+    if entry_price is None or stop_price is None or not symbol:
+        return abs(coerce_float(sig.get("stop_loss_pips"), 0.0) or 0.0)
+
+    return abs(pips_from_price_change(abs(entry_price - stop_price), symbol))
+
+
+def resolved_targets(sig: dict, default_symbol: Optional[str] = None) -> Dict[str, Any]:
+    targets = canonical_targets(sig, default_symbol=default_symbol)
+    if targets:
+        return targets
+    return parse_targets(sig.get("targets"))
 
 
 def first_target_profit_floor(sig: dict, default_symbol: Optional[str] = None) -> Optional[float]:
@@ -202,10 +231,6 @@ def target_hit_profit_floor(sig: dict, default_symbol: Optional[str] = None) -> 
 
 
 def resolved_exit_price(sig: dict, default_symbol: Optional[str] = None) -> Optional[float]:
-    entry_price = coerce_float(sig.get("ml_entry_price"))
-    direction = (sig.get("ml_direction") or "").upper().strip()
-    symbol = sig.get("symbol") or default_symbol
-    timeframe = normalize_timeframe(sig.get("timeframe")) or "15m"
     raw_exit_price = coerce_float(sig.get("exit_price"))
     targets = resolved_targets(sig, default_symbol=default_symbol)
     targets_hit = normalized_targets_hit(sig, default_symbol=default_symbol)
@@ -220,13 +245,8 @@ def resolved_exit_price(sig: dict, default_symbol: Optional[str] = None) -> Opti
     if normalized_status == "completed" and target_exit_price is not None:
         return round(target_exit_price, 4)
 
-    if normalized_status == "stopped" and entry_price is not None and direction in {"BUY", "SELL"} and symbol:
-        stop_price = coerce_float(sig.get("ml_stop_price"))
-        if stop_price is None:
-            try:
-                stop_price = calculate_stoploss_price(entry_price, direction, symbol, timeframe)
-            except Exception:
-                stop_price = None
+    if normalized_status == "stopped":
+        stop_price = canonical_stop_price(sig, default_symbol=default_symbol)
         if stop_price is not None:
             return round(stop_price, 4)
 
@@ -242,7 +262,7 @@ def classify_signal(
     resolution_reason = (sig.get("resolution_reason") or "").lower().strip()
     profit_pips = max(coerce_float(sig.get("highest_profit_pips"), 0.0) or 0.0, 0.0)
     loss_pips = abs(coerce_float(sig.get("lowest_drawdown_pips"), 0.0) or 0.0)
-    stop_loss_pips = abs(coerce_float(sig.get("stop_loss_pips"), 0.0) or 0.0)
+    stop_loss_pips = canonical_stop_loss_pips(sig, default_symbol=default_symbol)
     realized = realized_pips(sig, default_symbol=default_symbol)
     explicit_targets_hit = parse_targets_hit(sig.get("targets_hit"))
     targets_hit = normalized_targets_hit(sig, default_symbol=default_symbol)

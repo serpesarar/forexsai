@@ -157,6 +157,35 @@ def test_plan_signal_history_repair_reclassifies_stopped_target_hit_rows():
     assert plan["updates"]["resolution_reason"] == "tp1_3_hit_then_sl"
 
 
+def test_plan_signal_history_repair_repairs_active_hourly_target_geometry():
+    row = {
+        "id": "pred-active-3",
+        "symbol": "GDAXI.INDX",
+        "strategy": "PULSE_V3",
+        "model_type": "pulse3",
+        "timeframe": "1h",
+        "ml_direction": "BUY",
+        "ml_entry_price": 23591.8,
+        "targets": {"TP1": 23656.1562, "TP2": 23666.1562, "TP3": 23676.1562, "TP4": 23736.1562},
+        "targets_hit": {},
+        "highest_profit_pips": 18.0,
+        "lowest_drawdown_pips": -5.0,
+        "stop_loss_pips": 144.4,
+        "status": "active",
+        "exit_price": None,
+        "exit_time": None,
+        "resolution_reason": None,
+        "created_at": _iso(datetime.now(timezone.utc) - timedelta(minutes=15)),
+    }
+
+    plan = plan_signal_history_repair(row)
+
+    assert plan is not None
+    assert plan["updates"]["targets"] == {"TP1": 23606.8, "TP2": 23616.8, "TP3": 23626.8, "TP4": 23641.8}
+    assert plan["updates"]["stop_loss_pips"] == 50.0
+    assert plan["updates"]["targets_hit"] == {"TP1": True, "TP2": False, "TP3": False, "TP4": False}
+
+
 def test_run_signal_history_repair_counts_and_applies_updates():
     now = datetime.now(timezone.utc)
     rows = [
