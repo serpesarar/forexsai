@@ -114,6 +114,131 @@ def test_hourly_stopped_rows_use_canonical_fixed_stop_loss_when_stored_loss_is_i
     assert resolved_exit_price(signal) == pytest.approx(23541.8, abs=0.0001)
 
 
+@pytest.mark.parametrize(
+    ("signal", "expected_profit", "expected_exit_price"),
+    [
+        (
+            {
+                "symbol": "NDX.INDX",
+                "timeframe": "1h",
+                "ml_direction": "BUY",
+                "status": "completed",
+                "resolution_reason": "tp4_hit",
+                "ml_entry_price": 25000.0,
+                "exit_price": 25150.0,
+                "highest_profit_pips": 150.0,
+                "targets_hit": {"TP1": True, "TP2": True, "TP3": True, "TP4": True},
+                "targets": {"TP1": 25115.0, "TP2": 25125.0, "TP3": 25135.0, "TP4": 25150.0},
+            },
+            50.0,
+            25050.0,
+        ),
+        (
+            {
+                "symbol": "XAUUSD",
+                "timeframe": "1h",
+                "ml_direction": "BUY",
+                "status": "completed",
+                "resolution_reason": "tp4_hit",
+                "ml_entry_price": 2900.0,
+                "exit_price": 2951.6,
+                "highest_profit_pips": 51.6,
+                "targets_hit": {"TP1": True, "TP2": True, "TP3": True, "TP4": True},
+                "targets": {"TP1": 2919.6, "TP2": 2926.6, "TP3": 2936.6, "TP4": 2951.6},
+            },
+            40.0,
+            2940.0,
+        ),
+        (
+            {
+                "symbol": "USOIL.FOREX",
+                "timeframe": "1h",
+                "ml_direction": "BUY",
+                "status": "completed",
+                "resolution_reason": "tp4_hit",
+                "ml_entry_price": 70.0,
+                "exit_price": 70.35,
+                "highest_profit_pips": 0.35,
+                "targets_hit": {"TP1": True, "TP2": True, "TP3": True, "TP4": True},
+                "targets": {"TP1": 70.294, "TP2": 70.308, "TP3": 70.322, "TP4": 70.35},
+            },
+            0.07,
+            70.07,
+        ),
+    ],
+)
+def test_hourly_completed_rows_use_canonical_fixed_targets_for_all_symbols(signal, expected_profit, expected_exit_price):
+    classified_status, win, pnl = classify_signal(signal)
+
+    assert (classified_status, win) == ("completed", True)
+    assert pnl == pytest.approx(expected_profit, abs=0.0001)
+    assert resolved_exit_price(signal) == pytest.approx(expected_exit_price, abs=0.0001)
+
+
+@pytest.mark.parametrize(
+    ("signal", "expected_loss", "expected_exit_price"),
+    [
+        (
+            {
+                "symbol": "NDX.INDX",
+                "timeframe": "1h",
+                "ml_direction": "BUY",
+                "status": "stopped",
+                "ml_entry_price": 25000.0,
+                "exit_price": 24850.0,
+                "stop_loss_pips": 150.0,
+                "highest_profit_pips": 0.0,
+                "lowest_drawdown_pips": -150.0,
+                "targets_hit": {},
+                "targets": {"TP1": 25115.0, "TP2": 25125.0, "TP3": 25135.0, "TP4": 25150.0},
+            },
+            -50.0,
+            24950.0,
+        ),
+        (
+            {
+                "symbol": "XAUUSD",
+                "timeframe": "1h",
+                "ml_direction": "BUY",
+                "status": "stopped",
+                "ml_entry_price": 2900.0,
+                "exit_price": 2873.4,
+                "stop_loss_pips": 26.6,
+                "highest_profit_pips": 0.0,
+                "lowest_drawdown_pips": -26.6,
+                "targets_hit": {},
+                "targets": {"TP1": 2919.6, "TP2": 2926.6, "TP3": 2936.6, "TP4": 2951.6},
+            },
+            -15.0,
+            2885.0,
+        ),
+        (
+            {
+                "symbol": "USOIL.FOREX",
+                "timeframe": "1h",
+                "ml_direction": "BUY",
+                "status": "stopped",
+                "ml_entry_price": 70.0,
+                "exit_price": 69.685,
+                "stop_loss_pips": 0.315,
+                "highest_profit_pips": 0.0,
+                "lowest_drawdown_pips": -0.315,
+                "targets_hit": {},
+                "targets": {"TP1": 70.294, "TP2": 70.308, "TP3": 70.322, "TP4": 70.35},
+            },
+            -0.035,
+            69.965,
+        ),
+    ],
+)
+def test_hourly_stopped_rows_use_canonical_fixed_stop_loss_for_all_symbols(signal, expected_loss, expected_exit_price):
+    classified_status, win, pnl = classify_signal(signal)
+
+    assert (classified_status, win) == ("stopped", False)
+    assert pnl == pytest.approx(expected_loss, abs=0.0001)
+    assert resolved_exit_price(signal) == pytest.approx(expected_exit_price, abs=0.0001)
+
+
 def test_summarize_scope_excludes_expired_rows_from_scored_outcomes():
     rows = [
         {

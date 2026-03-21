@@ -2249,8 +2249,8 @@ async def get_historical_signals_endpoint(
         # 1. Fetch signal records
         query = client.table("prediction_logs").select(
             "id, symbol, ml_direction, ml_confidence, strategy, status, "
-            "targets_hit, highest_profit_pips, lowest_drawdown_pips, created_at, "
-            "model_type, exit_price, exit_time"
+            "targets_hit, targets, highest_profit_pips, lowest_drawdown_pips, created_at, "
+            "model_type, exit_price, exit_time, stop_loss_pips, ml_entry_price, timeframe, resolution_reason"
         ).eq("symbol", db_symbol).gte("created_at", cutoff_iso).order("created_at", desc=True).limit(500)
         
         result = query.execute()
@@ -2284,30 +2284,17 @@ async def get_historical_signals_endpoint(
             if direction not in ["buy", "sell"]:
                 direction = "hold"
                 
-            p_status = p.get("status")
+            classified_status, _, classified_pips = classify_signal(p, default_symbol=db_symbol)
             is_win = False
             is_loss = False
             profit = 0.0
             
-            if p_status == "completed":
+            if classified_status == "completed":
                 is_win = True
-                profit = p.get("highest_profit_pips", 0) or 20.0 # fallback approximation
-            elif p_status == "stopped":
+                profit = float(classified_pips or 0.0)
+            elif classified_status == "stopped":
                 is_loss = True
-                profit = -(p.get("lowest_drawdown_pips", 0) or 40.0) # fallback
-            else:
-                # Signal still active or expired - check targets_hit field
-                try:
-                    import json as _json
-                    targets_hit_raw = p.get("targets_hit")
-                    if isinstance(targets_hit_raw, str):
-                        targets_hit_raw = _json.loads(targets_hit_raw)
-                    if isinstance(targets_hit_raw, dict):
-                        if any(targets_hit_raw.values()):
-                            is_win = True
-                            profit = 20.0
-                except:
-                    pass
+                profit = float(classified_pips or 0.0)
             
             # Metrics
             if is_win or is_loss:
@@ -2342,36 +2329,16 @@ async def get_historical_signals_endpoint(
             direction = str(p.get("ml_direction", "")).lower()
             if direction not in ["buy", "sell"]: direction = "hold"
             
-            p_status = p.get("status")
+            classified_status, _, classified_pips = classify_signal(p, default_symbol=db_symbol)
             profit = 0.0
             result_state = "pending"
             
-            if p_status == "completed":
+            if classified_status == "completed":
                 result_state = "win"
-                profit = p.get("highest_profit_pips", 0) or 20.0
-            elif p_status == "stopped":
+                profit = float(classified_pips or 0.0)
+            elif classified_status == "stopped":
                 result_state = "loss"
-                profit = -(p.get("lowest_drawdown_pips", 0) or 40.0)
-            else:
-                # Check targets_hit field
-                try:
-                    import json as _json
-                    targets_hit_raw = p.get("targets_hit")
-                    if isinstance(targets_hit_raw, str):
-                        targets_hit_raw = _json.loads(targets_hit_raw)
-                    if isinstance(targets_hit_raw, dict) and any(targets_hit_raw.values()):
-                        result_state = "win"
-                        profit = 20.0
-                except:
-                    pass
-                primary = None
-                if primary:
-                    if primary.get("hit_target") or primary.get("ml_correct"):
-                        result_state = "win"
-                        profit = 20.0
-                    elif primary.get("hit_stop"):
-                        result_state = "loss"
-                        profit = -40.0
+                profit = float(classified_pips or 0.0)
             
             recent_signals.append({
                 "id": p.get("id"),

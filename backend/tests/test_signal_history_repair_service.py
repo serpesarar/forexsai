@@ -186,6 +186,91 @@ def test_plan_signal_history_repair_repairs_active_hourly_target_geometry():
     assert plan["updates"]["targets_hit"] == {"TP1": True, "TP2": False, "TP3": False, "TP4": False}
 
 
+def test_plan_signal_history_repair_repairs_active_hourly_target_geometry_for_all_symbols():
+    rows = [
+        (
+            {
+                "id": "pred-active-ndx",
+                "symbol": "NDX.INDX",
+                "strategy": "PULSE",
+                "model_type": "pulse1",
+                "timeframe": "1h",
+                "ml_direction": "BUY",
+                "ml_entry_price": 25000.0,
+                "targets": {"TP1": 25115.0, "TP2": 25125.0, "TP3": 25135.0, "TP4": 25150.0},
+                "targets_hit": {},
+                "highest_profit_pips": 18.0,
+                "lowest_drawdown_pips": -5.0,
+                "stop_loss_pips": 150.0,
+                "status": "active",
+                "exit_price": None,
+                "exit_time": None,
+                "resolution_reason": None,
+                "created_at": _iso(datetime.now(timezone.utc) - timedelta(minutes=15)),
+            },
+            {"TP1": 25015.0, "TP2": 25025.0, "TP3": 25035.0, "TP4": 25050.0},
+            50.0,
+            {"TP1": True, "TP2": False, "TP3": False, "TP4": False},
+        ),
+        (
+            {
+                "id": "pred-active-xau",
+                "symbol": "XAUUSD",
+                "strategy": "balanced",
+                "model_type": "ml:balanced",
+                "timeframe": "1h",
+                "ml_direction": "BUY",
+                "ml_entry_price": 2900.0,
+                "targets": {"TP1": 2919.6, "TP2": 2926.6, "TP3": 2936.6, "TP4": 2951.6},
+                "targets_hit": {},
+                "highest_profit_pips": 9.0,
+                "lowest_drawdown_pips": -3.0,
+                "stop_loss_pips": 26.6,
+                "status": "active",
+                "exit_price": None,
+                "exit_time": None,
+                "resolution_reason": None,
+                "created_at": _iso(datetime.now(timezone.utc) - timedelta(minutes=15)),
+            },
+            {"TP1": 2908.0, "TP2": 2915.0, "TP3": 2925.0, "TP4": 2940.0},
+            15.0,
+            {"TP1": True, "TP2": False, "TP3": False, "TP4": False},
+        ),
+        (
+            {
+                "id": "pred-active-oil",
+                "symbol": "USOIL.FOREX",
+                "strategy": "balanced",
+                "model_type": "ml:balanced",
+                "timeframe": "1h",
+                "ml_direction": "BUY",
+                "ml_entry_price": 70.0,
+                "targets": {"TP1": 70.294, "TP2": 70.308, "TP3": 70.322, "TP4": 70.35},
+                "targets_hit": {},
+                "highest_profit_pips": 0.02,
+                "lowest_drawdown_pips": -0.01,
+                "stop_loss_pips": 0.315,
+                "status": "active",
+                "exit_price": None,
+                "exit_time": None,
+                "resolution_reason": None,
+                "created_at": _iso(datetime.now(timezone.utc) - timedelta(minutes=15)),
+            },
+            {"TP1": 70.014, "TP2": 70.028, "TP3": 70.042, "TP4": 70.07},
+            0.03,
+            {"TP1": True, "TP2": False, "TP3": False, "TP4": False},
+        ),
+    ]
+
+    for row, expected_targets, expected_stop_loss_pips, expected_targets_hit in rows:
+        plan = plan_signal_history_repair(row)
+
+        assert plan is not None
+        assert plan["updates"]["targets"] == expected_targets
+        assert plan["updates"]["stop_loss_pips"] == expected_stop_loss_pips
+        assert plan["updates"]["targets_hit"] == expected_targets_hit
+
+
 def test_run_signal_history_repair_counts_and_applies_updates():
     now = datetime.now(timezone.utc)
     rows = [

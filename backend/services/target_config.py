@@ -134,7 +134,7 @@ def calculate_target_prices(entry_price: float, direction: str, symbol: str, tim
             # Pip-based: distance = pips * pip_value
             base_distance = target.pips * config.pip_value
 
-        total_distance = base_distance + tf_addition_distance
+        total_distance = base_distance
 
         if direction == "BUY":
             targets[target.name] = entry_price + total_distance
@@ -165,7 +165,7 @@ def calculate_stoploss_price(entry_price: float, direction: str, symbol: str, ti
     tf_addition_distance = entry_price * (tf_addition_pct / 100.0)
     
     # 3. Total Distance
-    total_sl_distance = base_sl_distance + tf_addition_distance
+    total_sl_distance = base_sl_distance
 
     if direction == "BUY":
         return entry_price - total_sl_distance

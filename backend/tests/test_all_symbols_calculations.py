@@ -99,7 +99,7 @@ class TestXAUUSDCalculations:
         config = get_symbol_config("XAUUSD")
         assert config.pip_value == 1.0  # 1 pip = $1.00
         assert config.is_percentage == False
-        assert config.stoploss_pips == 8  # $8
+        assert config.stoploss_pips == 15  # $8
 
     def test_buy_target_prices(self):
         """BUY sinyali için TP fiyatları doğru hesaplanıyor mu?"""
@@ -107,32 +107,32 @@ class TestXAUUSDCalculations:
         targets = calculate_target_prices(entry, "BUY", "XAUUSD")
         
         # 1 pip = $1.00
-        assert targets["TP1"] == 2904.00  # +4 pips = +$4
-        assert targets["TP2"] == 2907.00  # +7 pips = +$7
-        assert targets["TP3"] == 2910.00  # +10 pips = +$10
-        assert targets["TP4"] == 2917.00  # +17 pips = +$17
+        assert targets["TP1"] == 2908.00  # +4 pips = +$4
+        assert targets["TP2"] == 2915.00  # +7 pips = +$7
+        assert targets["TP3"] == 2925.00  # +10 pips = +$10
+        assert targets["TP4"] == 2940.00  # +17 pips = +$17
 
     def test_sell_target_prices(self):
         """SELL sinyali için TP fiyatları doğru hesaplanıyor mu?"""
         entry = 2900.00
         targets = calculate_target_prices(entry, "SELL", "XAUUSD")
         
-        assert targets["TP1"] == 2896.00  # -4 pips = -$4
-        assert targets["TP2"] == 2893.00  # -7 pips = -$7
-        assert targets["TP3"] == 2890.00  # -10 pips = -$10
-        assert targets["TP4"] == 2883.00  # -17 pips = -$17
+        assert targets["TP1"] == 2892.00  # -4 pips = -$4
+        assert targets["TP2"] == 2885.00  # -7 pips = -$7
+        assert targets["TP3"] == 2875.00  # -10 pips = -$10
+        assert targets["TP4"] == 2860.00  # -17 pips = -$17
 
     def test_buy_stoploss(self):
         """BUY sinyali için SL fiyatı doğru hesaplanıyor mu?"""
         entry = 2900.00
         sl = calculate_stoploss_price(entry, "BUY", "XAUUSD")
-        assert sl == 2892.00  # -8 pips = -$8
+        assert sl == 2885.00  # -8 pips = -$8
 
     def test_sell_stoploss(self):
         """SELL sinyali için SL fiyatı doğru hesaplanıyor mu?"""
         entry = 2900.00
         sl = calculate_stoploss_price(entry, "SELL", "XAUUSD")
-        assert sl == 2908.00  # +8 pips = +$8
+        assert sl == 2915.00  # +8 pips = +$8
 
     def test_pips_from_price_change(self):
         """Fiyat değişiminden pip hesaplaması doğru mu?"""
@@ -148,7 +148,7 @@ class TestCLFCalculations:
     """US Oil (CL.F) hesaplama testleri - Percentage-based"""
 
     def test_config(self):
-        config = get_symbol_config("CL.F")
+        config = get_symbol_config("USOIL.FOREX")
         assert config.pip_value == 1.0  # placeholder
         assert config.is_percentage == True  # Önemli: percentage-based!
         assert config.stoploss_pips == 0.05  # 0.05%
@@ -156,7 +156,7 @@ class TestCLFCalculations:
     def test_buy_target_prices(self):
         """BUY sinyali için TP fiyatları doğru hesaplanıyor mu?"""
         entry = 70.00  # $70 varil
-        targets = calculate_target_prices(entry, "BUY", "CL.F")
+        targets = calculate_target_prices(entry, "BUY", "USOIL.FOREX")
         
         # Percentage-based: distance = entry * (pct / 100)
         # TP1: 0.02% of $70 = $0.014
@@ -169,7 +169,7 @@ class TestCLFCalculations:
     def test_sell_target_prices(self):
         """SELL sinyali için TP fiyatları doğru hesaplanıyor mu?"""
         entry = 70.00
-        targets = calculate_target_prices(entry, "SELL", "CL.F")
+        targets = calculate_target_prices(entry, "SELL", "USOIL.FOREX")
         
         assert abs(targets["TP1"] - 69.986) < 0.001  # -0.02%
         assert abs(targets["TP4"] - 69.93) < 0.001   # -0.10%
@@ -177,15 +177,15 @@ class TestCLFCalculations:
     def test_buy_stoploss(self):
         """BUY sinyali için SL fiyatı doğru hesaplanıyor mu?"""
         entry = 70.00
-        sl = calculate_stoploss_price(entry, "BUY", "CL.F")
+        sl = calculate_stoploss_price(entry, "BUY", "USOIL.FOREX")
         # 0.05% of $70 = $0.035
         assert abs(sl - 69.965) < 0.001
 
     def test_pips_from_price_change(self):
         """Percentage-based semboller için pip = price change (raw)"""
         # Percentage-based sembollerde pip = fiyat değişimi (ham değer)
-        assert pips_from_price_change(0.5, "CL.F") == 0.5
-        assert pips_from_price_change(-0.25, "CL.F") == -0.25
+        assert pips_from_price_change(0.5, "USOIL.FOREX") == 0.5
+        assert pips_from_price_change(-0.25, "USOIL.FOREX") == -0.25
 
 
 class TestEdgeCases:
