@@ -393,7 +393,7 @@ async def test_process_signal_persists_targets_as_dicts():
         "created_at": (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat(),
     }
 
-    with patch("services.signal_lifecycle.fetch_latest_price", new=AsyncMock(return_value=2006.0)):
+    with patch("services.signal_lifecycle.is_symbol_market_open", return_value=True), patch("services.signal_lifecycle.fetch_latest_price", new=AsyncMock(return_value=2006.0)):
         with patch("services.signal_lifecycle.fetch_intraday_candles", new=AsyncMock(return_value=[
             {"high": 2006.0, "low": 2001.0, "close": 2006.0}
         ])):
@@ -411,6 +411,79 @@ async def test_process_signal_persists_targets_as_dicts():
     assert isinstance(prediction_update["payload"]["targets"], dict)
     assert prediction_update["payload"]["targets_hit"]["TP1"] is True
     assert prediction_update["payload"]["targets"]["TP1"] == 2005.0
+
+
+@pytest.mark.asyncio
+async def test_process_signal_expires_records_created_while_market_was_closed():
+    from services.signal_lifecycle import _process_signal
+
+    client = RecordingClient()
+    signal = {
+        "id": "weekend-invalid-1",
+        "symbol": "NDX.INDX",
+        "ml_direction": "BUY",
+        "ml_entry_price": 20000.0,
+        "timeframe": "30m",
+        "status": "active",
+        "targets_hit": {},
+        "created_at": "2026-03-22T15:30:00Z",
+    }
+
+    new_status = await _process_signal(client, signal)
+
+    assert new_status == "expired"
+    prediction_update = next(
+        op for op in client.operations
+        if op["table"] == "prediction_logs" and op["op"] == "update"
+    )
+    assert prediction_update["payload"]["status"] == "expired"
+    assert prediction_update["payload"]["resolution_reason"] == "market_closed_invalid"
+
+
+@pytest.mark.asyncio
+async def test_process_signal_does_not_use_pre_entry_candles_for_tp_hits():
+    from services.signal_lifecycle import _process_signal
+
+    client = RecordingClient()
+    created_at = datetime.now(timezone.utc) - timedelta(minutes=8)
+    stale_candle_time = created_at - timedelta(minutes=25)
+    signal = {
+        "id": "stale-pre-entry-1",
+        "symbol": "XAUUSD",
+        "ml_direction": "BUY",
+        "ml_entry_price": 2000.0,
+        "timeframe": "15m",
+        "status": "active",
+        "targets_hit": {},
+        "created_at": created_at.isoformat().replace("+00:00", "Z"),
+    }
+
+    with patch("services.signal_lifecycle.is_symbol_market_open", return_value=True), patch(
+        "services.signal_lifecycle.fetch_latest_price",
+        new=AsyncMock(return_value=2001.0),
+    ), patch(
+        "services.signal_lifecycle.fetch_intraday_candles",
+        new=AsyncMock(return_value=[
+            {
+                "timestamp": stale_candle_time.timestamp() * 1000,
+                "date": stale_candle_time.isoformat().replace("+00:00", "Z"),
+                "high": 2050.0,
+                "low": 1998.0,
+                "close": 2048.0,
+            }
+        ]),
+    ), patch("services.signal_lifecycle._resolve_target_prices", return_value={"TP1": 2005.0}), patch(
+        "services.signal_lifecycle.calculate_stoploss_price",
+        return_value=1990.0,
+    ):
+        new_status = await _process_signal(client, signal)
+
+    assert new_status is None
+    prediction_updates = [
+        op for op in client.operations
+        if op["table"] == "prediction_logs" and op["op"] == "update"
+    ]
+    assert prediction_updates == []
 
 
 @pytest.mark.asyncio
@@ -514,6 +587,26 @@ async def test_dashboard_target_rates_use_common_resolved_denominator_for_models
             "created_at": "2026-03-07T13:00:00Z",
             "strategy": None,
         },
+        {
+            "id": "invalid-weekend-006",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "SELL",
+            "ml_confidence": 88,
+            "ml_entry_price": 100.0,
+            "model_type": "pulse2",
+            "status": "expired",
+            "targets_hit": {},
+            "highest_profit_pips": 0,
+            "lowest_drawdown_pips": 0,
+            "exit_price": None,
+            "exit_time": "2026-03-08T00:00:00Z",
+            "stop_loss_pips": None,
+            "targets": {},
+            "created_at": "2026-03-08T00:00:00Z",
+            "strategy": "PULSE_ML",
+            "resolution_reason": "market_closed_invalid",
+        },
     ]
 
     client = SequenceClient(
@@ -557,6 +650,7 @@ async def test_dashboard_target_rates_use_common_resolved_denominator_for_models
         "TP3": 0.0,
         "TP4": 0.0,
     }
+    assert payload["model_stats"]["pulse2"]["total_signals"] == 0
 
 
 if __name__ == "__main__":

@@ -14,6 +14,7 @@ from dataclasses import dataclass, asdict
 
 from database.supabase_client import get_supabase_client, is_db_available
 from services.prediction_logger import log_prediction
+from services.signal_analytics import filter_market_closed_invalid_signals
 
 logger = logging.getLogger(__name__)
 
@@ -185,9 +186,9 @@ async def get_model_performance_stats(days: int = 7) -> Dict[str, Any]:
         # Helper to fetch stats
         async def fetch_stats(strategy_name):
             res = client.table("prediction_logs").select(
-                "id, symbol, ml_direction, ml_confidence, actual_outcome, outcome_checked"
+                "id, symbol, ml_direction, ml_confidence, actual_outcome, outcome_checked, resolution_reason"
             ).eq("strategy", strategy_name).gte("created_at", cutoff_iso).execute()
-            return res.get("data", [])
+            return filter_market_closed_invalid_signals(res.get("data", []))
 
         emel_data = await fetch_stats("EMEL")
         pulse_algo_data = await fetch_stats("PULSE") # Old pulse logs

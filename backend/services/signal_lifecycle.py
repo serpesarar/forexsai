@@ -31,6 +31,7 @@ from services.target_config import (
 from services.signal_analytics import (
     canonical_stop_loss_pips,
     classify_signal,
+    filter_market_closed_invalid_signals,
     normalize_model_type,
     normalize_timeframe as normalize_analytics_timeframe,
     normalized_targets_hit,
@@ -38,6 +39,7 @@ from services.signal_analytics import (
     resolved_targets,
 )
 from utils.json_helpers import parse_json_field, parse_json_fields
+from utils.market_hours import is_symbol_market_open
 
 logger = logging.getLogger(__name__)
 
@@ -133,6 +135,7 @@ PRICE_CIRCUIT_BREAKER_RESET = 60     # Reset after N seconds
 _price_last_seen: Dict[str, float] = {}  # symbol -> price
 _price_last_seen_time: Dict[str, datetime] = {}  # symbol -> timestamp
 PRICE_STALENESS_THRESHOLD_MINUTES = 1  # 1 minute - if price unchanged for 1min, consider market closed
+MARKET_DATA_FRESHNESS_THRESHOLD_MINUTES = 20
 
 
 def _is_price_stale(symbol: str, current_price: float) -> bool:
@@ -348,6 +351,8 @@ async def _get_price_window_since_signal(
     fallback_current: Optional[float] = None,
 ) -> Dict[str, Optional[float]]:
     current = fallback_current
+    latest_candle_at: Optional[datetime] = None
+    has_post_entry_candles = created_dt is None
     if current is None:
         try:
             price_val = await fetch_latest_price(symbol)
@@ -365,6 +370,11 @@ async def _get_price_window_since_signal(
         candles = await fetch_intraday_candles(symbol, interval="5m", limit=candle_limit)
 
         if candles:
+            timestamps = [_extract_candle_timestamp_ms(candle) for candle in candles]
+            valid_timestamps = [ts for ts in timestamps if ts is not None]
+            if valid_timestamps:
+                latest_candle_at = datetime.fromtimestamp(max(valid_timestamps) / 1000.0, tz=timezone.utc)
+
             relevant_candles = list(candles)
 
             if created_dt is not None:
@@ -376,6 +386,19 @@ async def _get_price_window_since_signal(
                         filtered.append(candle)
                 if filtered:
                     relevant_candles = filtered
+                    has_post_entry_candles = True
+                else:
+                    freshness = False
+                    if latest_candle_at is not None:
+                        freshness = (_utc_now() - latest_candle_at).total_seconds() / 60.0 <= MARKET_DATA_FRESHNESS_THRESHOLD_MINUTES
+                    return {
+                        "high": current,
+                        "low": current,
+                        "current": current,
+                        "has_post_entry_candles": False,
+                        "market_data_fresh": freshness,
+                        "latest_candle_at": _utc_iso(latest_candle_at) if latest_candle_at else None,
+                    }
 
             highs = [float(c["high"]) for c in relevant_candles if c.get("high") is not None]
             lows = [float(c["low"]) for c in relevant_candles if c.get("low") is not None]
@@ -386,18 +409,38 @@ async def _get_price_window_since_signal(
                 current = window_current
 
             if highs and lows:
+                freshness = False
+                if latest_candle_at is not None:
+                    freshness = (_utc_now() - latest_candle_at).total_seconds() / 60.0 <= MARKET_DATA_FRESHNESS_THRESHOLD_MINUTES
                 return {
                     "high": max(highs + ([current] if current is not None else [])),
                     "low": min(lows + ([current] if current is not None else [])),
                     "current": current,
+                    "has_post_entry_candles": has_post_entry_candles,
+                    "market_data_fresh": freshness,
+                    "latest_candle_at": _utc_iso(latest_candle_at) if latest_candle_at else None,
                 }
     except Exception as e:
         logger.warning(f"lifecycle.price_window_error | symbol={symbol} error={e}")
 
     if current is not None:
-        return {"high": current, "low": current, "current": current}
+        return {
+            "high": current,
+            "low": current,
+            "current": current,
+            "has_post_entry_candles": has_post_entry_candles,
+            "market_data_fresh": False,
+            "latest_candle_at": _utc_iso(latest_candle_at) if latest_candle_at else None,
+        }
 
-    return {"high": None, "low": None, "current": None}
+    return {
+        "high": None,
+        "low": None,
+        "current": None,
+        "has_post_entry_candles": has_post_entry_candles,
+        "market_data_fresh": False,
+        "latest_candle_at": _utc_iso(latest_candle_at) if latest_candle_at else None,
+    }
 
 
 def _is_favorable_vs_entry(entry_price: float, current_price: float, direction: str) -> bool:
@@ -482,11 +525,13 @@ async def _get_market_context() -> Dict[str, Any]:
     return ctx
 
 
-def _update_signal_status(client, signal_id: str, status: str, exit_price=None):
+def _update_signal_status(client, signal_id: str, status: str, exit_price=None, resolution_reason: Optional[str] = None):
     """Helper to update a signal's status in prediction_logs."""
     update_data = {"status": status, "exit_time": _utc_iso()}
     if exit_price is not None:
         update_data["exit_price"] = round(float(exit_price), 4)
+    if resolution_reason:
+        update_data["resolution_reason"] = resolution_reason
     try:
         result = client.table("prediction_logs").eq("id", signal_id).update(update_data)
         if result and safe_get_data(result):
@@ -541,6 +586,18 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         return "stopped"
 
     created_dt = _parse_created_at(signal.get("created_at"))
+    if created_dt is not None and not is_symbol_market_open(symbol, created_dt):
+        _update_signal_status(
+            client,
+            signal_id,
+            "expired",
+            None,
+            resolution_reason="market_closed_invalid",
+        )
+        logger.warning(
+            f"lifecycle.invalid_market_closed_signal | signal={signal_id[:8]} symbol={symbol} created_at={signal.get('created_at')}"
+        )
+        return "expired"
 
     # ------------------------------------------------------------------
     # 1. Post-entry price window (better than single latest price only)
@@ -549,6 +606,14 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     current = _coerce_float(price_window.get("current"))
     session_high = _coerce_float(price_window.get("high"))
     session_low = _coerce_float(price_window.get("low"))
+    has_post_entry_candles = bool(price_window.get("has_post_entry_candles", created_dt is None))
+    market_data_fresh = bool(price_window.get("market_data_fresh", False))
+
+    if created_dt is not None and not has_post_entry_candles:
+        logger.info(
+            f"lifecycle.defer_no_post_entry_candles | signal={signal_id[:8]} symbol={symbol} latest_candle={price_window.get('latest_candle_at')}"
+        )
+        return None
 
     if current is None or current <= 0:
         try:
@@ -568,7 +633,13 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
                         for tp, hit in targets_hit_raw.items()
                     )
 
-                    fallback_status = "completed" if (tp1_3_hit_fallback or tp4_hit_fallback) else "stopped"
+                    if not (tp1_3_hit_fallback or tp4_hit_fallback):
+                        logger.info(
+                            f"lifecycle.defer_no_price | signal={signal_id[:8]} symbol={symbol} age={age_minutes:.0f}m"
+                        )
+                        return None
+
+                    fallback_status = "completed"
                     fallback_targets = _resolve_target_prices(signal, entry_price, direction, symbol, timeframe)
                     fallback_exit_price = _resolved_exit_price_from_targets(fallback_targets, targets_hit_raw)
                     _update_signal_status(
@@ -734,6 +805,12 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
             try:
                 age_minutes = (_utc_now() - created_dt).total_seconds() / 60
                 if age_minutes >= evaluation_window:
+                    if not market_data_fresh:
+                        logger.info(
+                            f"lifecycle.defer_window_resolution | signal={signal_id[:8]} symbol={symbol} age={age_minutes:.0f}m latest_candle={price_window.get('latest_candle_at')}"
+                        )
+                        return None
+
                     favorable_vs_entry = _is_favorable_vs_entry(entry_price, current, direction)
                     if tp1_3_hit or favorable_vs_entry:
                         new_status = "completed"
@@ -1387,6 +1464,8 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
             for s in today_batch:
                 if s.get("id") not in existing_ids:
                     signals.append(s)
+
+        signals = filter_market_closed_invalid_signals(signals)
 
         logger.info(f"Dashboard: fetched {len(signals)} total signals via day-by-day pagination")
 

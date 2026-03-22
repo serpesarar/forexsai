@@ -13,6 +13,7 @@ from uuid import UUID
 from database.supabase_client import get_supabase_client, is_db_available
 from services.error_analysis_service import save_candle_snapshot
 from services.ml_scope_policy import normalize_ml_scope
+from utils.market_hours import get_symbol_market_hours_label, is_symbol_market_open
 
 logger = logging.getLogger(__name__)
 SMC_MODEL_TYPE = "smc"
@@ -30,6 +31,39 @@ def _utc_iso(value: Optional[datetime] = None) -> str:
 def _normalize_timeframe(value: Optional[str]) -> str:
     normalized = (value or "").lower().strip()
     return normalized if normalized else "15m"
+
+
+def _extract_candle_timestamp(value: Any) -> Optional[datetime]:
+    if isinstance(value, dict):
+        timestamp_ms = value.get("timestamp") or value.get("time")
+        if isinstance(timestamp_ms, (int, float)):
+            return datetime.fromtimestamp(float(timestamp_ms) / 1000.0, tz=timezone.utc)
+        date_text = value.get("date") or value.get("datetime")
+        if isinstance(date_text, str) and date_text.strip():
+            try:
+                return datetime.fromisoformat(date_text.replace("Z", "+00:00")).astimezone(timezone.utc)
+            except Exception:
+                return None
+    return None
+
+
+def _has_fresh_intraday_market_data(symbol: str, *, now: Optional[datetime] = None, max_age_minutes: int = 20) -> Tuple[bool, Optional[float]]:
+    try:
+        from services.data_hub import get_candles
+
+        candles = get_candles(symbol, "5m", limit=1)
+        if not candles:
+            return False, None
+
+        latest_dt = _extract_candle_timestamp(candles[-1])
+        if latest_dt is None:
+            return False, None
+
+        reference = now.astimezone(timezone.utc) if now is not None else datetime.now(timezone.utc)
+        age_minutes = max((reference - latest_dt).total_seconds() / 60.0, 0.0)
+        return age_minutes <= max_age_minutes, age_minutes
+    except Exception:
+        return False, None
 
 
 def _resolve_logging_identity(
@@ -214,14 +248,18 @@ def _check_session_filter(symbol: str) -> Tuple[bool, str]:
     """
     Check if signal should be filtered based on session.
     Returns: (should_filter, reason)
-    
-    NOTE: Session filter is now LOG-ONLY — signals are always recorded
-    so model performance can be measured. The filter info is tagged in
-    factors for analysis. Signals only stop when data flow stops.
     """
-    # No longer blocking any signals based on session.
-    # Signal recording should happen whenever price data is flowing.
-    # The lifecycle system handles expiration via stale-price detection.
+    now = datetime.now(timezone.utc)
+
+    if not is_symbol_market_open(symbol, now):
+        return True, f"Filtered: {symbol} market closed ({get_symbol_market_hours_label(symbol)})"
+
+    has_fresh_data, age_minutes = _has_fresh_intraday_market_data(symbol, now=now)
+    if not has_fresh_data:
+        if age_minutes is None:
+            return True, f"Filtered: stale intraday data for {symbol} (no recent 5m candle)"
+        return True, f"Filtered: stale intraday data for {symbol} ({age_minutes:.1f}m old)"
+
     return False, ""
 
 
@@ -292,6 +330,11 @@ async def log_smc_prediction(
     reasoning: Optional[list[Any]] = None,
 ) -> Optional[str]:
     if direction not in {"BUY", "SELL"}:
+        return None
+
+    should_filter, reason = _check_session_filter(symbol)
+    if should_filter:
+        logger.info(reason)
         return None
 
     normalized_timeframe = _normalize_timeframe(timeframe)

@@ -357,6 +357,26 @@ async def test_historical_signals_endpoint_includes_scoped_ml_records_for_ml_fil
             "exit_time": "2026-03-06T10:30:00Z",
             "resolution_reason": None,
         },
+        {
+            "id": "invalid-history-003",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "SELL",
+            "ml_confidence": 95,
+            "ml_entry_price": 100.0,
+            "strategy": "balanced",
+            "status": "expired",
+            "targets_hit": {},
+            "targets": {},
+            "highest_profit_pips": 0,
+            "lowest_drawdown_pips": 0,
+            "stop_loss_pips": 50.0,
+            "created_at": "2026-03-06T13:00:00Z",
+            "model_type": "ml:balanced",
+            "exit_price": None,
+            "exit_time": "2026-03-06T13:00:00Z",
+            "resolution_reason": "market_closed_invalid",
+        },
     ]
 
     client = _FakeClient([signal_rows])
@@ -832,6 +852,18 @@ async def test_model_analysis_target_rates_use_common_resolved_denominator_per_s
             "strategy": None,
             "created_at": "2026-03-07T14:00:00Z",
         },
+        {
+            "id": "invalid-ml-007",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "SELL",
+            "status": "expired",
+            "targets_hit": {},
+            "model_type": "ml",
+            "strategy": None,
+            "created_at": "2026-03-08T00:00:00Z",
+            "resolution_reason": "market_closed_invalid",
+        },
     ]
 
     client = _FakeClient([signal_rows])
@@ -870,6 +902,7 @@ async def test_model_analysis_target_rates_use_common_resolved_denominator_per_s
         "TP3": 0.0,
         "TP4": 0.0,
     }
+    assert all(sig.get("resolution_reason") != "market_closed_invalid" for sig in payload["signals"])
 
 
 @pytest.mark.asyncio

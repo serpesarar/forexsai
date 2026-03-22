@@ -71,7 +71,11 @@ async def test_log_prediction_persists_low_confidence_balanced_scope_once_genera
         prediction_logger,
         "get_supabase_client",
         return_value=_Client(),
-    ), patch.object(prediction_logger, "_has_active_signal", return_value=(False, None, None)), patch.dict(
+    ), patch.object(prediction_logger, "_has_active_signal", return_value=(False, None, None)), patch.object(
+        prediction_logger,
+        "_check_session_filter",
+        return_value=(False, ""),
+    ), patch.dict(
         sys.modules,
         {"services.mtf_confirmation": SimpleNamespace(confirm_signal_mtf=AsyncMock(return_value=(True, "", {})))},
     ):
@@ -110,7 +114,11 @@ async def test_log_smc_prediction_inserts_without_ml_scope_filtering():
         prediction_logger,
         "get_supabase_client",
         return_value=_Client(),
-    ), patch.object(prediction_logger, "_has_active_signal", return_value=(False, None, None)):
+    ), patch.object(prediction_logger, "_has_active_signal", return_value=(False, None, None)), patch.object(
+        prediction_logger,
+        "_check_session_filter",
+        return_value=(False, ""),
+    ):
         prediction_id = await log_smc_prediction(
             symbol="NDX.INDX",
             timeframe="5m",
@@ -130,3 +138,54 @@ async def test_log_smc_prediction_inserts_without_ml_scope_filtering():
     assert record["status"] == "active"
     assert record["factors"]["source"] == "SMART_MONEY_ZONES"
     assert record["factors"]["signal_reasoning"] == ["Bullish structure", "Liquidity sweep"]
+
+
+@pytest.mark.asyncio
+async def test_log_prediction_skips_when_market_is_closed():
+    inserted_records = []
+
+    class _PredictionLogsTable:
+        def insert_ignore(self, record):
+            inserted_records.append(record)
+            return {"data": [{"id": "ml-closed-001"}], "error": None, "duplicate": False}
+
+    class _Client:
+        def table(self, name):
+            assert name == "prediction_logs"
+            return _PredictionLogsTable()
+
+    context = {
+        "ml_prediction": {
+            "direction": "BUY",
+            "confidence": 61.0,
+            "probability_up": 61.0,
+            "probability_down": 39.0,
+            "entry_price": 2000.0,
+            "target_price": 2012.0,
+            "stop_price": 1981.0,
+        }
+    }
+
+    with patch.object(prediction_logger, "is_db_available", return_value=True), patch.object(
+        prediction_logger,
+        "get_supabase_client",
+        return_value=_Client(),
+    ), patch.object(prediction_logger, "_has_active_signal", return_value=(False, None, None)), patch.object(
+        prediction_logger,
+        "_check_session_filter",
+        return_value=(True, "Filtered: NDX.INDX market closed"),
+    ), patch.dict(
+        sys.modules,
+        {"services.mtf_confirmation": SimpleNamespace(confirm_signal_mtf=AsyncMock(return_value=(True, "", {})))},
+    ):
+        prediction_id = await log_prediction(
+            "NDX.INDX",
+            context,
+            analysis={},
+            timeframe="30m",
+            strategy="main",
+            model_type="ml:main",
+        )
+
+    assert prediction_id is None
+    assert inserted_records == []

@@ -622,6 +622,17 @@ async def test_ai_panel_performance_aggregates_hourly_panel_signals_and_snapshot
             created_at=_iso(now - timedelta(hours=1)),
             exit_time=_iso(now - timedelta(minutes=20)),
         ),
+        _prediction_row(
+            id="invalid-ai-panel-004",
+            symbol="NDX.INDX",
+            strategy="AI_PANEL_HOURLY",
+            model_type="ai_panel",
+            timeframe="1h",
+            created_at=_iso(now - timedelta(minutes=30)),
+            exit_time=_iso(now - timedelta(minutes=5)),
+            status="expired",
+            resolution_reason="market_closed_invalid",
+        ),
     ]
     snapshots = [
         {"id": 1, "symbol": "NDX.INDX", "created_at": _iso(now - timedelta(hours=3))},
@@ -649,6 +660,55 @@ async def test_ai_panel_performance_aggregates_hourly_panel_signals_and_snapshot
     assert payload["symbols"]["NDX.INDX"]["snapshot_count"] == 2
     assert payload["symbols"]["NDX.INDX"]["available_scopes"] == ["hourly_panel"]
     assert payload["overall_summary"]["leaders"]["quality"]["scope"] == "hourly_panel"
+
+
+@pytest.mark.asyncio
+async def test_signals_matrix_skips_market_closed_invalid_latest_rows():
+    learning_module = _load_learning_module("test_learning_signals_matrix_invalid_filter")
+    now = datetime.now(timezone.utc)
+    rows = [
+        _prediction_row(
+            id="invalid-latest-001",
+            symbol="NDX.INDX",
+            timeframe="1h",
+            strategy="PULSE_ML",
+            model_type="pulse2",
+            ml_direction="SELL",
+            ml_confidence=91,
+            created_at=_iso(now - timedelta(minutes=10)),
+            resolution_reason="market_closed_invalid",
+        ),
+        _prediction_row(
+            id="valid-older-002",
+            symbol="NDX.INDX",
+            timeframe="1h",
+            strategy="PULSE_ML",
+            model_type="pulse2",
+            ml_direction="BUY",
+            ml_confidence=63,
+            created_at=_iso(now - timedelta(hours=2)),
+        ),
+        _prediction_row(
+            id="valid-other-003",
+            symbol="XAUUSD",
+            timeframe="15m",
+            strategy="PULSE_ML",
+            model_type="pulse2",
+            ml_direction="SELL",
+            ml_confidence=58,
+            created_at=_iso(now - timedelta(hours=1)),
+        ),
+    ]
+    client = _FakeClient(rows)
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ):
+        payload = await learning_module.get_signals_matrix(model="pulse2")
+
+    assert payload["matrix"]["NDX.INDX"]["1h"]["direction"] == "BUY"
+    assert payload["matrix"]["NDX.INDX"]["1h"]["confidence"] == 63
+    assert payload["matrix"]["XAUUSD"]["15m"]["direction"] == "SELL"
 
 
 @pytest.mark.asyncio

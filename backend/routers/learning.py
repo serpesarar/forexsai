@@ -39,6 +39,7 @@ from services.signal_analytics import (
     MODEL_ORDER,
     classify_signal,
     coerce_float as analytics_coerce_float,
+    filter_market_closed_invalid_signals,
     normalize_model_type,
     parse_json_object,
     normalized_targets_hit,
@@ -500,7 +501,7 @@ async def get_accuracy_by_model(
             ds = cur.replace(hour=0,minute=0,second=0,microsecond=0)
             de = ds + timedelta(days=1)
             q = client.table("prediction_logs").select(
-                "id, strategy, model_type, ml_direction, claude_direction, factors, status, targets_hit, created_at"
+                "id, strategy, model_type, ml_direction, claude_direction, factors, status, targets_hit, created_at, resolution_reason"
             ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).neq("status", "active")
             if symbol:
                 q = q.eq("symbol", symbol)
@@ -508,6 +509,7 @@ async def get_accuracy_by_model(
             if batch:
                 predictions.extend(batch)
             cur = de
+        predictions = filter_market_closed_invalid_signals(predictions)
         
         if not predictions:
             return {"models": [], "total": 0, "days": days, "note": "No completed signals found"}
@@ -1249,7 +1251,7 @@ async def get_prediction_history(
         
         # Get predictions (no PostgREST join - custom httpx client doesn't support it)
         query = client.table("prediction_logs").select(
-            "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, ml_target_price, ml_stop_price, claude_direction, claude_confidence, created_at, status, targets_hit, highest_profit_pips, lowest_drawdown_pips, exit_price, exit_time"
+            "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, ml_target_price, ml_stop_price, claude_direction, claude_confidence, created_at, status, targets_hit, highest_profit_pips, lowest_drawdown_pips, exit_price, exit_time, resolution_reason"
         ).gte("created_at", cutoff_iso).order("created_at", desc=True).limit(limit)
         
         if symbol:
@@ -1257,7 +1259,8 @@ async def get_prediction_history(
         
         result = query.execute()
         predictions = safe_get_data(result)
-        
+        predictions = filter_market_closed_invalid_signals(predictions)
+
         # Format for frontend - use lifecycle status + targets_hit instead of outcome_results join
         formatted = []
         for pred in predictions:
@@ -1665,6 +1668,7 @@ async def get_strategy_performance(
             "stop_loss_pips, ml_entry_price, exit_price, exit_time, ml_direction, factors, resolution_reason"
         )
         predictions = await _fetch_prediction_logs_window(client, cutoff, select_fields=select_fields)
+        predictions = filter_market_closed_invalid_signals(predictions)
 
         grouped_signals = {
             symbol: {scope: [] for scope in _ML_STRATEGY_ORDER}
@@ -1783,6 +1787,7 @@ async def get_smc_performance(
             "exit_time, ml_direction, factors, created_at, resolution_reason"
         )
         predictions = await _fetch_prediction_logs_window(client, cutoff, select_fields=select_fields)
+        predictions = filter_market_closed_invalid_signals(predictions)
 
         has_smc_history = any(
             p.get("symbol") in _TRACKED_STRATEGY_SYMBOLS
@@ -1793,6 +1798,7 @@ async def get_smc_performance(
         if not has_smc_history:
             await _bootstrap_smc_predictions_if_empty()
             predictions = await _fetch_prediction_logs_window(client, cutoff, select_fields=select_fields)
+            predictions = filter_market_closed_invalid_signals(predictions)
 
         grouped_signals = {
             symbol: {timeframe: [] for timeframe in _SMC_TIMEFRAME_ORDER}
@@ -1909,6 +1915,7 @@ async def get_ai_panel_performance(
             if batch:
                 predictions.extend(batch)
             cur = de
+        predictions = filter_market_closed_invalid_signals(predictions)
 
         snapshot_counts = {symbol: 0 for symbol in _TRACKED_STRATEGY_SYMBOLS}
         total_snapshots = 0
@@ -2422,10 +2429,10 @@ async def get_signals_matrix(
     try:
         # Fetch all recent signals (no model filter at DB level)
         result = client.table("prediction_logs").select(
-            "symbol, timeframe, ml_direction, ml_confidence, created_at, status, model_type, strategy"
+            "symbol, timeframe, ml_direction, ml_confidence, created_at, status, model_type, strategy, resolution_reason"
         ).order("created_at", desc=True).limit(1000).execute()
         
-        all_signals = safe_get_data(result)
+        all_signals = filter_market_closed_invalid_signals(safe_get_data(result))
         
         # Filter by model type in Python
         model_lower = model.lower().strip()
@@ -2549,7 +2556,7 @@ async def get_recent_signals_endpoint(
                 break
             page_before = last_created_at
 
-        signals = list(all_signals)
+        signals = filter_market_closed_invalid_signals(list(all_signals))
 
         if model:
             model_lower = model.lower().strip()
@@ -2670,7 +2677,7 @@ async def get_model_timeframe_analysis(
             }
 
         result = query.order("created_at", desc=True).limit(1000).execute()
-        all_signals = safe_get_data(result)
+        all_signals = filter_market_closed_invalid_signals(safe_get_data(result))
         
         # Filter by model in Python
         signals = [s for s in all_signals if _normalize_model_type(s) == model_lower]
@@ -2864,7 +2871,7 @@ async def get_all_models_summary(
             de = ds + timedelta(days=1)
             q = client.table("prediction_logs").select(
                 "symbol, timeframe, model_type, strategy, status, "
-                "highest_profit_pips, lowest_drawdown_pips, stop_loss_pips, targets_hit, created_at"
+                "highest_profit_pips, lowest_drawdown_pips, stop_loss_pips, targets_hit, created_at, resolution_reason"
             ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).neq("status", "active")
             if symbol:
                 q = q.eq("symbol", symbol)
@@ -2872,6 +2879,7 @@ async def get_all_models_summary(
             if batch:
                 signals.extend(batch)
             cur = de
+        signals = filter_market_closed_invalid_signals(signals)
         
         # Initialize model structure
         MODELS = ["ml", "ai_panel", "emel", "emel_inverse", "pulse1", "pulse2", "pulse3", "smc"]
@@ -2958,9 +2966,9 @@ async def get_model_timeframes(model: str):
         model_lower = model.lower().strip()
         
         result = client.table("prediction_logs").select(
-            "timeframe, model_type, strategy"
+            "timeframe, model_type, strategy, resolution_reason"
         ).limit(1000).execute()
-        all_signals = safe_get_data(result)
+        all_signals = filter_market_closed_invalid_signals(safe_get_data(result))
         
         # Filter by model in Python
         signals = [s for s in all_signals if _normalize_model_type(s) == model_lower]
@@ -3388,7 +3396,7 @@ async def get_model_detail_analytics(
             )
 
         prepared_signals = []
-        for sig in all_signals:
+        for sig in filter_market_closed_invalid_signals(all_signals):
             created_dt = _parse_datetime(sig.get("created_at")) or _utc_now()
             prepared_signals.append({
                 **sig,

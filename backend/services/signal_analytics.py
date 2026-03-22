@@ -65,6 +65,14 @@ def normalize_model_type(sig: dict) -> str:
     return "ml"
 
 
+def is_market_closed_invalid_signal(sig: dict) -> bool:
+    return (sig.get("resolution_reason") or "").lower().strip() == "market_closed_invalid"
+
+
+def filter_market_closed_invalid_signals(signals: Iterable[dict]) -> List[dict]:
+    return [sig for sig in signals if not is_market_closed_invalid_signal(sig)]
+
+
 def coerce_float(value: Any, default: Optional[float] = None) -> Optional[float]:
     if value in (None, ""):
         return default
