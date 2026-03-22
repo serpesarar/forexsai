@@ -215,6 +215,8 @@ ML_MODEL_FILES = {
     "XAUUSD": "model_lgbm_xauusd.joblib",
 }
 
+NASDAQ_FAMILY_SCOPE_SYMBOLS = {"NDX.INDX", "GDAXI.INDX"}
+
 
 def normalize_ml_market_symbol(symbol: str) -> str:
     """Normalize incoming symbol aliases to the tracked market symbol."""
@@ -426,6 +428,132 @@ class PredictionResult:
     # Pattern & MTF data (for EMEL panel)
     active_patterns: List[dict] = field(default_factory=list)
     mtf_data: Dict[str, Any] = field(default_factory=dict)
+
+
+def _scope_metric(value: Any, default: float) -> float:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return default
+    if math.isnan(parsed) or math.isinf(parsed):
+        return default
+    return parsed
+
+
+def _apply_strategy_specific_gate(
+    strategy: str,
+    symbol: str,
+    direction: str,
+    confidence: float,
+    *,
+    trend_score: float,
+    bullish_momentum: bool,
+    bearish_momentum: bool,
+    strong_bullish_trend: bool,
+    strong_bearish_trend: bool,
+    rsi_14: float,
+    mtf_adjustments: Dict[str, Any],
+    sr_features: Dict[str, Any],
+    pattern_data: Dict[str, Any],
+    candlestick_data: Dict[str, Any],
+) -> tuple[str, float, List[str]]:
+    normalized_strategy = (strategy or "").lower().strip()
+    if normalized_strategy not in {"ultra_safe", "aggressive", "nasdaq_precision"}:
+        return direction, confidence, []
+    if direction not in {"BUY", "SELL"}:
+        return direction, confidence, []
+
+    regime = str((mtf_adjustments or {}).get("regime") or "UNKNOWN").upper()
+    high_impact_event = (mtf_adjustments or {}).get("high_impact_event")
+    liquidity_sweep = bool((mtf_adjustments or {}).get("liquidity_sweep"))
+    pattern_recommendation = str((pattern_data or {}).get("recommendation") or "HOLD").upper()
+    candle_signal = str((candlestick_data or {}).get("strongest_signal") or "NEUTRAL").upper()
+
+    directional_trend = (
+        direction == "BUY" and trend_score >= 0.25 and bullish_momentum
+    ) or (
+        direction == "SELL" and trend_score <= -0.25 and bearish_momentum
+    )
+    strong_directional_trend = (
+        direction == "BUY" and strong_bullish_trend and bullish_momentum
+    ) or (
+        direction == "SELL" and strong_bearish_trend and bearish_momentum
+    )
+    pattern_confirmed = (
+        direction == "BUY" and pattern_recommendation == "BUY"
+    ) or (
+        direction == "SELL" and pattern_recommendation == "SELL"
+    )
+    candle_confirmed = (
+        direction == "BUY" and candle_signal == "BULLISH"
+    ) or (
+        direction == "SELL" and candle_signal == "BEARISH"
+    )
+
+    sr_confluence = _scope_metric((sr_features or {}).get("sr_timeframe_confluence"), 0.0)
+    sr_weight = _scope_metric((sr_features or {}).get("sr_dynamic_weight"), 0.0)
+    resistance_distance = _scope_metric((sr_features or {}).get("sr_nearest_resistance_distance"), 999.0)
+    resistance_strength = _scope_metric((sr_features or {}).get("sr_nearest_resistance_strength"), 0.0)
+    support_distance = _scope_metric((sr_features or {}).get("sr_nearest_support_distance"), 999.0)
+    support_strength = _scope_metric((sr_features or {}).get("sr_nearest_support_strength"), 0.0)
+
+    if direction == "BUY":
+        directional_sr_confirmation = (
+            (support_distance <= 25 and support_strength >= 55)
+            or (sr_confluence >= 0.55 and sr_weight >= 0.55)
+        )
+        sr_blocked = resistance_distance <= 20 and resistance_strength >= 70
+        overextended = rsi_14 >= 72
+    else:
+        directional_sr_confirmation = (
+            (resistance_distance <= 25 and resistance_strength >= 55)
+            or (sr_confluence >= 0.55 and sr_weight >= 0.55)
+        )
+        sr_blocked = support_distance <= 20 and support_strength >= 70
+        overextended = rsi_14 <= 28
+
+    technical_confirmation = directional_sr_confirmation or pattern_confirmed or candle_confirmed
+    reasons: List[str] = []
+
+    if normalized_strategy == "ultra_safe":
+        if not strong_directional_trend:
+            reasons.append("strong trend alignment missing")
+        if regime in {"RANGING", "UNKNOWN"}:
+            reasons.append("regime quality insufficient")
+        if not technical_confirmation:
+            reasons.append("technical confirmation missing")
+        if sr_blocked:
+            reasons.append("opposing S/R too close")
+        if liquidity_sweep:
+            reasons.append("liquidity sweep detected")
+        if high_impact_event:
+            reasons.append("high impact event active")
+    elif normalized_strategy == "aggressive":
+        if not directional_trend:
+            reasons.append("critical trend/regime alignment missing")
+        if sr_blocked:
+            reasons.append("opposing S/R too close")
+        if overextended and not (pattern_confirmed or candle_confirmed):
+            reasons.append("rsi extension lacks reversal confirmation")
+    elif normalized_strategy == "nasdaq_precision":
+        if symbol not in NASDAQ_FAMILY_SCOPE_SYMBOLS:
+            reasons.append("unsupported outside nasdaq family")
+        if not directional_trend:
+            reasons.append("trend alignment missing")
+        if regime in {"RANGING", "UNKNOWN"}:
+            reasons.append("regime quality insufficient")
+        if not technical_confirmation:
+            reasons.append("precision confirmation missing")
+        if liquidity_sweep:
+            reasons.append("liquidity sweep detected")
+        if high_impact_event:
+            reasons.append("high impact event active")
+
+    if reasons:
+        capped_confidence = min(confidence, 48.0 if normalized_strategy == "aggressive" else 45.0)
+        return "HOLD", capped_confidence, [f"{normalized_strategy}:{reason}" for reason in reasons]
+
+    return direction, confidence, []
 
 
 def _load_model(symbol: str):
@@ -1489,7 +1617,8 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
         
         # Determine direction with TREND CONFIRMATION
         # Gold needs higher threshold (more volatile), NASDAQ can be lower
-        direction_threshold = 0.53 if is_gold else 0.52
+        preset_threshold = STRATEGY_PRESETS.get(preset_strategy, STRATEGY_PRESETS["balanced"]).get("threshold", 0.55)
+        direction_threshold = (0.53 if is_gold else 0.52) if is_main_strategy else float(preset_threshold)
         
         # Model says BUY
         if prob_up > direction_threshold:
@@ -2007,6 +2136,25 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
 
     except Exception as regime_err:
         logger.debug(f"Market regime overlay skipped: {regime_err}")
+
+    direction, confidence, strategy_gate_reasons = _apply_strategy_specific_gate(
+        preset_strategy,
+        normalized_symbol,
+        direction,
+        confidence,
+        trend_score=trend_score,
+        bullish_momentum=bullish_momentum,
+        bearish_momentum=bearish_momentum,
+        strong_bullish_trend=strong_bullish_trend,
+        strong_bearish_trend=strong_bearish_trend,
+        rsi_14=ta.get("rsi_14", 50),
+        mtf_adjustments=mtf_adjustments,
+        sr_features=sr_features,
+        pattern_data=pattern_data,
+        candlestick_data=candlestick_data,
+    )
+    if strategy_gate_reasons:
+        reasoning.extend([f"⚙️ Scope Filter: {reason}" for reason in strategy_gate_reasons])
 
     # Build active_patterns list from pattern_data for EMEL panel
     _active_patterns = []

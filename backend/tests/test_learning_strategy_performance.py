@@ -251,7 +251,7 @@ async def test_strategy_performance_resolves_real_strategy_scopes_from_strategy_
 
 
 @pytest.mark.asyncio
-async def test_strategy_performance_excludes_low_confidence_scoped_ml_rows_from_scope_metrics():
+async def test_strategy_performance_includes_logged_scoped_ml_rows_even_below_old_confidence_floor():
     learning_module = _load_learning_module("test_learning_strategy_router_scope_thresholds")
     now = datetime.now(timezone.utc)
     rows = [
@@ -289,9 +289,10 @@ async def test_strategy_performance_excludes_low_confidence_scoped_ml_rows_from_
 
     ndx_scopes = payload["strategies"]["NDX.INDX"]
     assert payload["predictions_count"] == 3
-    assert payload["ml_predictions_count"] == 2
+    assert payload["ml_predictions_count"] == 3
     assert ndx_scopes["main"]["total_predictions"] == 1
-    assert ndx_scopes["balanced"]["total_predictions"] == 1
+    assert ndx_scopes["balanced"]["total_predictions"] == 2
+    assert ndx_scopes["balanced"]["resolved_signals"] == 2
     assert payload["symbols"]["NDX.INDX"]["available_scopes"] == ["main", "balanced"]
 
 

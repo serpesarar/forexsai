@@ -1,7 +1,7 @@
 import os
 import sys
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -42,10 +42,18 @@ def test_resolve_logging_identity_keeps_non_ml_model_types_unchanged():
 
 
 @pytest.mark.asyncio
-async def test_log_prediction_skips_low_confidence_balanced_scope_before_insert():
+async def test_log_prediction_persists_low_confidence_balanced_scope_once_generated():
+    inserted_records = []
+
+    class _PredictionLogsTable:
+        def insert_ignore(self, record):
+            inserted_records.append(record)
+            return {"data": [{"id": "ml-001"}], "error": None, "duplicate": False}
+
     class _Client:
-        def table(self, _name):
-            raise AssertionError("DB insert path should not be reached for low-confidence scoped ML signals")
+        def table(self, name):
+            assert name == "prediction_logs"
+            return _PredictionLogsTable()
 
     context = {
         "ml_prediction": {
@@ -63,6 +71,9 @@ async def test_log_prediction_skips_low_confidence_balanced_scope_before_insert(
         prediction_logger,
         "get_supabase_client",
         return_value=_Client(),
+    ), patch.object(prediction_logger, "_has_active_signal", return_value=(False, None, None)), patch.dict(
+        sys.modules,
+        {"services.mtf_confirmation": SimpleNamespace(confirm_signal_mtf=AsyncMock(return_value=(True, "", {})))},
     ):
         prediction_id = await log_prediction(
             "XAUUSD",
@@ -73,7 +84,12 @@ async def test_log_prediction_skips_low_confidence_balanced_scope_before_insert(
             model_type="ml:balanced",
         )
 
-    assert prediction_id is None
+    assert prediction_id == "ml-001"
+    assert len(inserted_records) == 1
+    record = inserted_records[0]
+    assert record["strategy"] == "balanced"
+    assert record["model_type"] == "ml:balanced"
+    assert record["ml_confidence"] == 54.9
 
 
 @pytest.mark.asyncio

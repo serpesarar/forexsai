@@ -227,6 +227,81 @@ class TestStrategyPresets:
                     assert 'enabled_layers' in preset
         except ImportError:
             pytest.skip("STRATEGY_PRESETS not available")
+
+
+class TestStrategyScopeSpecificGates:
+    def test_ultra_safe_requires_trend_and_technical_confirmation(self):
+        from services.ml_prediction_service import _apply_strategy_specific_gate
+
+        direction, confidence, reasons = _apply_strategy_specific_gate(
+            "ultra_safe",
+            "XAUUSD",
+            "BUY",
+            61.0,
+            trend_score=0.15,
+            bullish_momentum=True,
+            bearish_momentum=False,
+            strong_bullish_trend=False,
+            strong_bearish_trend=False,
+            rsi_14=58.0,
+            mtf_adjustments={"regime": "RANGING", "liquidity_sweep": False, "high_impact_event": None},
+            sr_features={},
+            pattern_data={"recommendation": "HOLD"},
+            candlestick_data={"strongest_signal": "NEUTRAL"},
+        )
+
+        assert direction == "HOLD"
+        assert confidence == 45.0
+        assert any("strong trend alignment missing" in reason for reason in reasons)
+        assert any("technical confirmation missing" in reason for reason in reasons)
+
+    def test_aggressive_blocks_overextended_entry_without_reversal_confirmation(self):
+        from services.ml_prediction_service import _apply_strategy_specific_gate
+
+        direction, confidence, reasons = _apply_strategy_specific_gate(
+            "aggressive",
+            "NDX.INDX",
+            "BUY",
+            57.0,
+            trend_score=0.45,
+            bullish_momentum=True,
+            bearish_momentum=False,
+            strong_bullish_trend=False,
+            strong_bearish_trend=False,
+            rsi_14=78.0,
+            mtf_adjustments={"regime": "TRENDING", "liquidity_sweep": False, "high_impact_event": None},
+            sr_features={},
+            pattern_data={"recommendation": "HOLD"},
+            candlestick_data={"strongest_signal": "NEUTRAL"},
+        )
+
+        assert direction == "HOLD"
+        assert confidence == 48.0
+        assert any("rsi extension lacks reversal confirmation" in reason for reason in reasons)
+
+    def test_nasdaq_precision_rejects_non_nasdaq_family_symbols(self):
+        from services.ml_prediction_service import _apply_strategy_specific_gate
+
+        direction, confidence, reasons = _apply_strategy_specific_gate(
+            "nasdaq_precision",
+            "XAUUSD",
+            "BUY",
+            66.0,
+            trend_score=0.55,
+            bullish_momentum=True,
+            bearish_momentum=False,
+            strong_bullish_trend=True,
+            strong_bearish_trend=False,
+            rsi_14=60.0,
+            mtf_adjustments={"regime": "TRENDING", "liquidity_sweep": False, "high_impact_event": None},
+            sr_features={"sr_timeframe_confluence": 0.8, "sr_dynamic_weight": 0.8},
+            pattern_data={"recommendation": "BUY"},
+            candlestick_data={"strongest_signal": "BULLISH"},
+        )
+
+        assert direction == "HOLD"
+        assert confidence == 45.0
+        assert any("unsupported outside nasdaq family" in reason for reason in reasons)
     
     def test_strategy_thresholds_in_valid_range(self):
         """Strategy thresholds should be between 0 and 1"""

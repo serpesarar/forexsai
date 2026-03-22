@@ -12,7 +12,7 @@ from uuid import UUID
 
 from database.supabase_client import get_supabase_client, is_db_available
 from services.error_analysis_service import save_candle_snapshot
-from services.ml_scope_policy import is_ml_scope_confidence_eligible, normalize_ml_scope
+from services.ml_scope_policy import normalize_ml_scope
 
 logger = logging.getLogger(__name__)
 SMC_MODEL_TYPE = "smc"
@@ -486,15 +486,6 @@ async def log_prediction(
         
         effective_model_type, resolved_strategy = _resolve_logging_identity(model_type, strategy)
         raw_confidence = float(ml.get("confidence", 0.0))
-        scoped_strategy = normalize_ml_scope(resolved_strategy or effective_model_type)
-        if scoped_strategy and not is_ml_scope_confidence_eligible(scoped_strategy, raw_confidence):
-            logger.debug(
-                "Skipping low-confidence ML scope signal for %s (%s @ %.1f%%)",
-                symbol,
-                scoped_strategy,
-                raw_confidence,
-            )
-            return None
         
         # ═══════════════════════════════════════════════════════════════════════
         # FILTERS: Session, Correlation, News

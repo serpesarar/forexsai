@@ -28,7 +28,7 @@ from services.learning_analyzer import (
     save_insights_to_db,
     get_active_insights,
 )
-from services.ml_scope_policy import is_ml_scope_confidence_eligible, normalize_ml_scope
+from services.ml_scope_policy import normalize_ml_scope
 from services.adaptive_tp_sl import (
     calculate_adaptive_tp_sl,
     get_learned_adjustments,
@@ -220,10 +220,6 @@ def _resolve_ml_strategy_scope(sig: dict) -> Optional[str]:
 
 def _resolved_eligible_ml_strategy_scope(sig: dict) -> Optional[str]:
     scope = _resolve_ml_strategy_scope(sig)
-    if scope is None:
-        return None
-    if not is_ml_scope_confidence_eligible(scope, sig.get("ml_confidence")):
-        return None
     return scope
 
 
