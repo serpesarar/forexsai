@@ -20,6 +20,7 @@ import { deriveSummaryExitPrice } from "../../lib/signalOutcome";
 
 const API_BASE = getApiBase();
 const TF_ORDER = ["all", "5m", "15m", "30m", "1h", "4h", "1d"];
+const RECENT_SIGNALS_PAGE_SIZE = 20;
 
 interface HourlyData {
   hour: number;
@@ -27,6 +28,14 @@ interface HourlyData {
   wins: number;
   win_rate: number;
   avg_pips: number;
+}
+
+function buildPageItems(currentPage: number, totalPages: number) {
+  if (totalPages <= 0) return [] as number[];
+  const start = Math.max(1, currentPage - 2);
+  const end = Math.min(totalPages, start + 4);
+  const adjustedStart = Math.max(1, end - 4);
+  return Array.from({ length: end - adjustedStart + 1 }, (_, index) => adjustedStart + index);
 }
 
 interface TFData {
@@ -92,6 +101,10 @@ interface AnalyticsMeta {
   all_time?: boolean;
   date_from?: string | null;
   date_to?: string | null;
+  recent_signals_page?: number;
+  recent_signals_page_size?: number;
+  recent_signals_total?: number;
+  recent_signals_total_pages?: number;
   scope_total_signals?: number;
   filtered_total_signals?: number;
   hourly_visible_hours?: number[];
@@ -428,6 +441,10 @@ function emptyAnalytics(symbol: string, model?: string, days?: number): Analytic
       selected_timeframe: "all",
       days,
       all_time: days === 0,
+      recent_signals_page: 1,
+      recent_signals_page_size: RECENT_SIGNALS_PAGE_SIZE,
+      recent_signals_total: 0,
+      recent_signals_total_pages: 0,
       filtered_total_signals: 0,
       scope_total_signals: 0,
       hourly_visible_hours: [],
@@ -483,6 +500,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
     "overview"
   );
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>("all");
+  const [recentSignalsPage, setRecentSignalsPage] = useState(1);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -506,16 +524,23 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
     if (!isOpen) return;
     setActiveTab("overview");
     setSelectedTimeframe("all");
+    setRecentSignalsPage(1);
   }, [isOpen, model, strategyScope, symbol]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    setRecentSignalsPage(1);
+  }, [isOpen, selectedTimeframe]);
+
   const { data, isLoading, isFetching, error, refetch } = useQuery<AnalyticsData>({
-    queryKey: ["model-detail-analytics", model || "all", strategyScope || "all", symbol, selectedTimeframe, days ?? null],
+    queryKey: ["model-detail-analytics", model || "all", strategyScope || "all", symbol, selectedTimeframe, recentSignalsPage, days ?? null],
     queryFn: async () => {
       const params = new URLSearchParams({ symbol });
       if (model) params.set("model", model);
       if (strategyScope) params.set("strategy_scope", strategyScope);
       if (typeof days === "number") params.set("days", String(days));
       if (selectedTimeframe !== "all") params.set("timeframe", selectedTimeframe);
+      params.set("recent_signals_page", String(recentSignalsPage));
 
       const response = await fetch(`${API_BASE}/api/learning/model-detail-analytics?${params.toString()}`);
       const payload = (await response.json().catch(() => null)) as AnalyticsData | null;
@@ -557,6 +582,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
   const overview = data?.overview;
   const hasData = hasAnalyticsContent(data);
   const meta = data?.meta;
+  const recentSignalPageItems = buildPageItems(meta?.recent_signals_page || recentSignalsPage, meta?.recent_signals_total_pages || 0);
 
   const tabs = [
     { key: "overview" as const, label: copy.overview },
@@ -741,6 +767,9 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                 lang={lang}
                 effectiveModel={effectiveModel}
                 selectedTimeframe={effectiveTimeframe}
+                recentSignalsPage={recentSignalsPage}
+                onRecentSignalsPageChange={setRecentSignalsPage}
+                recentSignalPageItems={recentSignalPageItems}
               />
             ) : activeTab === "timeframes" ? (
               <TimeframesPanel data={data.timeframe_comparison} copy={copy} />
@@ -762,15 +791,22 @@ function OverviewPanel({
   lang,
   effectiveModel,
   selectedTimeframe,
+  recentSignalsPage,
+  onRecentSignalsPageChange,
+  recentSignalPageItems,
 }: {
   data: AnalyticsData;
   copy: LocaleCopy;
   lang: "en" | "tr";
   effectiveModel: string;
   selectedTimeframe: string;
+  recentSignalsPage: number;
+  onRecentSignalsPageChange: (page: number) => void;
+  recentSignalPageItems: number[];
 }) {
   const ov = data.overview;
   const resolved = ov.completed + ov.stopped;
+  const meta = data.meta;
   const modelRows = (data.model_comparison || []).filter((row) => (row.total || 0) > 0);
   const bestTimeframe = [...data.timeframe_comparison]
     .filter((row) => row.total > 0)
@@ -998,69 +1034,102 @@ function OverviewPanel({
 
       <SectionCard title={copy.recentSignals}>
         {data.recent_signals.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr>
-                  {[copy.date, copy.direction, copy.timeframe, copy.entryPrice, copy.exitPrice, copy.confidence, copy.status, copy.pips].map((header) => (
-                    <th key={header} style={tableHeadStyle}>
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {data.recent_signals.slice(0, 12).map((signal) => (
-                  <tr key={`${signal.id}-${signal.date}`} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                    <td style={tableCellStyle}>
-                      {formatSignalDate(signal.date, lang)}
-                    </td>
-                    <td
-                      style={{
-                        ...tableCellStyle,
-                        color:
-                          signal.direction === "BUY"
-                            ? "var(--accent-positive)"
-                            : signal.direction === "SELL"
-                              ? "var(--accent-negative)"
-                              : "var(--text-muted)",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {signal.direction}
-                    </td>
-                    <td style={tableCellStyle}>{signal.timeframe.toUpperCase()}</td>
-                    <td style={{ ...tableCellStyle, fontFamily: "monospace" }}>{formatEntryPrice(signal.entry_price)}</td>
-                    <td style={{ ...tableCellStyle, fontFamily: "monospace" }}>{formatExitPrice(deriveSummaryExitPrice(signal))}</td>
-                    <td style={tableCellStyle}>{signal.confidence.toFixed(1)}%</td>
-                    <td style={tableCellStyle}>
-                      <span
+          <div className="space-y-4">
+            <div className="overflow-x-auto">
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    {[copy.date, copy.direction, copy.timeframe, copy.entryPrice, copy.exitPrice, copy.confidence, copy.status, copy.pips].map((header) => (
+                      <th key={header} style={tableHeadStyle}>
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.recent_signals.map((signal) => (
+                    <tr key={`${signal.id}-${signal.date}`} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                      <td style={tableCellStyle}>
+                        {formatSignalDate(signal.date, lang)}
+                      </td>
+                      <td
                         style={{
-                          background: "var(--bg-primary)",
-                          border: "1px solid var(--border-subtle)",
-                          color: statusColor(signal.status),
-                          borderRadius: 999,
-                          padding: "4px 10px",
-                          fontSize: 11,
+                          ...tableCellStyle,
+                          color:
+                            signal.direction === "BUY"
+                              ? "var(--accent-positive)"
+                              : signal.direction === "SELL"
+                                ? "var(--accent-negative)"
+                                : "var(--text-muted)",
                           fontWeight: 700,
                         }}
                       >
-                        {signal.status.toUpperCase()}
-                      </span>
-                    </td>
-                    <td
-                      style={{
-                        ...tableCellStyle,
-                        color: signal.pips >= 0 ? "var(--accent-positive)" : "var(--accent-negative)",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {formatPips(signal.pips)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        {signal.direction}
+                      </td>
+                      <td style={tableCellStyle}>{signal.timeframe.toUpperCase()}</td>
+                      <td style={{ ...tableCellStyle, fontFamily: "monospace" }}>{formatEntryPrice(signal.entry_price)}</td>
+                      <td style={{ ...tableCellStyle, fontFamily: "monospace" }}>{formatExitPrice(deriveSummaryExitPrice(signal))}</td>
+                      <td style={tableCellStyle}>{signal.confidence.toFixed(1)}%</td>
+                      <td style={tableCellStyle}>
+                        <span
+                          style={{
+                            background: "var(--bg-primary)",
+                            border: "1px solid var(--border-subtle)",
+                            color: statusColor(signal.status),
+                            borderRadius: 999,
+                            padding: "4px 10px",
+                            fontSize: 11,
+                            fontWeight: 700,
+                          }}
+                        >
+                          {signal.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td
+                        style={{
+                          ...tableCellStyle,
+                          color: signal.pips >= 0 ? "var(--accent-positive)" : "var(--accent-negative)",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {formatPips(signal.pips)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {(meta?.recent_signals_total_pages || 0) > 1 ? (
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                  {(meta?.recent_signals_total || 0).toLocaleString(lang === "tr" ? "tr-TR" : "en-US")} total · {(meta?.recent_signals_page || recentSignalsPage)} / {meta?.recent_signals_total_pages || 0}
+                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  {recentSignalPageItems.map((pageNumber) => {
+                    const selected = (meta?.recent_signals_page || recentSignalsPage) === pageNumber;
+                    return (
+                      <button
+                        key={`recent-signal-page-${pageNumber}`}
+                        onClick={() => onRecentSignalsPageChange(pageNumber)}
+                        className="rounded-lg px-3 py-1.5 transition-all"
+                        style={{
+                          background: selected ? "rgba(79,140,255,0.14)" : "var(--bg-card)",
+                          border: selected
+                            ? "1px solid rgba(79,140,255,0.35)"
+                            : "1px solid var(--border-subtle)",
+                          color: selected ? "var(--accent-info)" : "var(--text-muted)",
+                          fontSize: 12,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
           </div>
         ) : (
           <MutedEmpty>{copy.noData}</MutedEmpty>

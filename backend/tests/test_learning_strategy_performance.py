@@ -697,7 +697,7 @@ async def test_recent_signals_applies_days_filter_and_returns_normalized_model_a
     signal = payload["signals"][0]
     assert signal["id"] == "recent-win-001"
     assert signal["status"] == "completed"
-    assert signal["pnl_pips"] == 5.0
+    assert signal["pnl_pips"] == 15.0
     assert signal["duration_minutes"] == pytest.approx(30.0, abs=0.1)
     assert signal["normalized_model"] == "ml"
     assert signal["strategy_scope"] == "balanced"

@@ -2482,6 +2482,7 @@ async def get_recent_signals_endpoint(
     strategy_scope: Optional[str] = Query(None, description="Filter ML signals by resolved strategy scope (main, ultra_safe, balanced, full_power, aggressive, nasdaq_precision)"),
     days: int = Query(0, ge=0, le=1095, description="Days to look back (0=all available history)"),
     limit: int = Query(50, ge=1, le=200),
+    page: int = Query(1, ge=1, le=500),
     include_active: bool = Query(True, description="Include active signals")
 ):
     """
@@ -2494,35 +2495,60 @@ async def get_recent_signals_endpoint(
         model = None
     if not isinstance(strategy_scope, str):
         strategy_scope = None
+    try:
+        limit = max(1, min(int(limit), 200))
+    except (TypeError, ValueError):
+        limit = 50
+    try:
+        current_page = max(1, int(page))
+    except (TypeError, ValueError):
+        current_page = 1
+    try:
+        days = max(0, int(days))
+    except (TypeError, ValueError):
+        days = 0
 
     if not is_db_available():
-        return {"error": "Database not available", "signals": [], "count": 0, "symbol": symbol}
+        return {"error": "Database not available", "signals": [], "count": 0, "total_count": 0, "page": current_page, "page_size": limit, "total_pages": 0, "symbol": symbol}
     
     client = get_supabase_client()
     if not client:
-        return {"error": "Database client not available", "signals": [], "count": 0, "symbol": symbol}
+        return {"error": "Database client not available", "signals": [], "count": 0, "total_count": 0, "page": current_page, "page_size": limit, "total_pages": 0, "symbol": symbol}
     
     try:
-        query = client.table("prediction_logs").select(
+        select_fields = (
             "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
             "ml_target_price, ml_stop_price, model_type, strategy, status, "
             "targets_hit, targets, highest_profit_pips, lowest_drawdown_pips, "
             "stop_loss_pips, exit_price, exit_time, created_at, factors"
-        ).order("created_at", desc=True).limit(limit * 3)  # Fetch extra to allow for Python filtering
+        )
+        cutoff_iso = _utc_iso(_utc_now() - timedelta(days=days)) if days > 0 else None
+        all_signals = []
+        page_before: Optional[str] = None
+        while True:
+            query = client.table("prediction_logs").select(select_fields)
+            if cutoff_iso:
+                query = query.gte("created_at", cutoff_iso)
+            if symbol:
+                query = query.eq("symbol", symbol)
+            if not include_active:
+                query = query.neq("status", "active")
+            if page_before:
+                query = query.lt("created_at", page_before)
 
-        if days > 0:
-            cutoff = _utc_iso(_utc_now() - timedelta(days=days))
-            query = query.gte("created_at", cutoff)
-        
-        if symbol:
-            query = query.eq("symbol", symbol)
-        
-        if not include_active:
-            query = query.neq("status", "active")
-        
-        result = query.execute()
-        all_signals = safe_get_data(result)
-        
+            batch = safe_get_data(query.order("created_at", desc=True).limit(1000).execute()) or []
+            if not batch:
+                break
+
+            all_signals.extend(batch)
+            if len(batch) < 1000:
+                break
+
+            last_created_at = batch[-1].get("created_at")
+            if not isinstance(last_created_at, str) or not last_created_at or last_created_at == page_before:
+                break
+            page_before = last_created_at
+
         signals = list(all_signals)
 
         if model:
@@ -2533,7 +2559,12 @@ async def get_recent_signals_endpoint(
             strategy_scope = strategy_scope.lower().strip()
             signals = [s for s in signals if _resolved_eligible_ml_strategy_scope(s) == strategy_scope]
 
-        signals = signals[:limit]
+        total_count = len(signals)
+        total_pages = (total_count + limit - 1) // limit if total_count > 0 else 0
+        current_page = min(current_page, total_pages) if total_pages > 0 else 1
+        start_index = (current_page - 1) * limit
+        end_index = start_index + limit
+        signals = signals[start_index:end_index]
 
         enhanced = []
         for sig in signals:
@@ -2556,6 +2587,10 @@ async def get_recent_signals_endpoint(
         return {
             "signals": enhanced,
             "count": len(enhanced),
+            "total_count": total_count,
+            "page": current_page,
+            "page_size": limit,
+            "total_pages": total_pages,
             "symbol": symbol,
             "strategy_scope": strategy_scope,
         }
@@ -2567,6 +2602,10 @@ async def get_recent_signals_endpoint(
             "traceback": traceback.format_exc()[:300],
             "signals": [],
             "count": 0,
+            "total_count": 0,
+            "page": current_page,
+            "page_size": limit,
+            "total_pages": 0,
             "symbol": symbol,
         }
 
@@ -3148,6 +3187,7 @@ async def get_model_detail_analytics(
     symbol: str = Query(..., description="Symbol (NDX.INDX, XAUUSD, GDAXI.INDX, USOIL.FOREX, CL.F)"),
     days: int = Query(0, ge=0, le=3650, description="Days to look back (0 = all available history)"),
     strategy_scope: Optional[str] = Query(None, description="Optional ML strategy scope filter (main, ultra_safe, balanced, full_power, aggressive, nasdaq_precision)"),
+    recent_signals_page: int = Query(1, ge=1, le=500, description="Recent signals page number (20 rows per page)"),
     timeframe: Optional[str] = Query(None, description="Optional timeframe filter (5m, 15m, 30m, 1h, 4h, 1d, or 'all')")
 ):
     """
@@ -3155,11 +3195,28 @@ async def get_model_detail_analytics(
     Backward-compatible response with richer metadata for all-model and
     timeframe-aware drilldowns.
     """
+    if not isinstance(model, str):
+        model = None
+    if not isinstance(strategy_scope, str):
+        strategy_scope = None
+    if not isinstance(timeframe, str):
+        timeframe = None
+    try:
+        days = max(0, int(days))
+    except (TypeError, ValueError):
+        days = 0
+    try:
+        recent_signals_page = max(1, int(recent_signals_page))
+    except (TypeError, ValueError):
+        recent_signals_page = 1
+
     requested_model = (model or "all").lower().strip() or "all"
     resolved_model = "all" if requested_model in {"all", "*"} else requested_model
     requested_scope = normalize_ml_scope(strategy_scope)
     if requested_scope in {"all", "*"}:
         requested_scope = None
+    recent_signals_page_size = 20
+    requested_recent_signals_page = max(1, int(recent_signals_page or 1))
     selected_timeframe = (timeframe or "all").lower().strip() or "all"
     if selected_timeframe in {"*", "all"}:
         selected_timeframe = "all"
@@ -3213,6 +3270,10 @@ async def get_model_detail_analytics(
                 "all_time": days == 0,
                 "date_from": None,
                 "date_to": None,
+                "recent_signals_page": requested_recent_signals_page,
+                "recent_signals_page_size": recent_signals_page_size,
+                "recent_signals_total": 0,
+                "recent_signals_total_pages": 0,
                 "scope_total_signals": 0,
                 "filtered_total_signals": 0,
                 "hourly_visible_hours": default_hourly_contract["hours"],
@@ -3629,8 +3690,14 @@ async def get_model_detail_analytics(
                 (tp_counts[tp_key] / resolved * 100) if resolved > 0 else 0, 1
             )
 
+        total_recent_signals = len(recent_signals_source)
+        total_recent_signal_pages = (total_recent_signals + recent_signals_page_size - 1) // recent_signals_page_size if total_recent_signals > 0 else 0
+        selected_recent_signals_page = min(requested_recent_signals_page, total_recent_signal_pages) if total_recent_signal_pages > 0 else 1
+        recent_start = (selected_recent_signals_page - 1) * recent_signals_page_size
+        recent_end = recent_start + recent_signals_page_size
+
         recent_signals = []
-        for sig in recent_signals_source[:30]:
+        for sig in recent_signals_source[recent_start:recent_end]:
             recent_status, _, recent_pips = _classify_signal(sig)
             raw_status = (sig.get("status") or "unknown").lower().strip()
             recent_signals.append({
@@ -3685,6 +3752,10 @@ async def get_model_detail_analytics(
                 "all_time": days == 0,
                 "date_from": _utc_iso(start_date),
                 "date_to": _utc_iso(end_date),
+                "recent_signals_page": selected_recent_signals_page,
+                "recent_signals_page_size": recent_signals_page_size,
+                "recent_signals_total": total_recent_signals,
+                "recent_signals_total_pages": total_recent_signal_pages,
                 "scope_total_signals": len(model_scope_signals),
                 "filtered_total_signals": len(filtered_signals),
                 "hourly_visible_hours": hourly_contract["hours"],

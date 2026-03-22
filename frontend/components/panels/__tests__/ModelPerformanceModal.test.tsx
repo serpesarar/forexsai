@@ -68,6 +68,10 @@ const basePayload = {
     selected_model: "all",
     selected_timeframe: "all",
     all_time: true,
+    recent_signals_page: 1,
+    recent_signals_page_size: 20,
+    recent_signals_total: 0,
+    recent_signals_total_pages: 0,
     filtered_total_signals: 12,
     scope_total_signals: 12,
     date_from: "2026-01-01T00:00:00Z",
@@ -114,6 +118,9 @@ describe("ModelPerformanceModal", () => {
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining("days=30")
     );
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining("recent_signals_page=1")
+    );
 
     fireEvent.click(await screen.findByRole("button", { name: "15M" }));
 
@@ -123,6 +130,9 @@ describe("ModelPerformanceModal", () => {
       );
       expect(fetch).toHaveBeenCalledWith(
         expect.stringContaining("days=30")
+      );
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining("recent_signals_page=1")
       );
     });
   });
@@ -193,6 +203,76 @@ describe("ModelPerformanceModal", () => {
     expect(screen.getByText("2189.55")).toBeInTheDocument();
     expect(screen.getByText("2202.05")).toBeInTheDocument();
     expect(screen.getByText("Mar 7, 05:15")).toBeInTheDocument();
+  });
+
+  it("requests the selected recent signals page from numbered pagination", async () => {
+    const pageOnePayload = {
+      ...basePayload,
+      recent_signals: Array.from({ length: 20 }, (_, index) => ({
+        id: `sig-${index + 1}`,
+        date: `2026-03-07T${String(index).padStart(2, "0")}:15:00Z`,
+        direction: "BUY",
+        confidence: 60 + index,
+        status: "completed",
+        pips: 5 + index,
+        timeframe: "15m",
+        entry_price: 2100 + index,
+        exit_price: 2105 + index,
+      })),
+      meta: {
+        ...basePayload.meta,
+        recent_signals_page: 1,
+        recent_signals_page_size: 20,
+        recent_signals_total: 21,
+        recent_signals_total_pages: 2,
+      },
+    };
+    const pageTwoPayload = {
+      ...basePayload,
+      recent_signals: [
+        {
+          id: "sig-021",
+          date: "2026-03-08T01:15:00Z",
+          direction: "SELL",
+          confidence: 55.5,
+          status: "stopped",
+          pips: -3.5,
+          timeframe: "30m",
+          entry_price: 2150.5,
+          exit_price: 2147.0,
+        },
+      ],
+      meta: {
+        ...basePayload.meta,
+        recent_signals_page: 2,
+        recent_signals_page_size: 20,
+        recent_signals_total: 21,
+        recent_signals_total_pages: 2,
+      },
+    };
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((input: string | URL) => {
+        const url = String(input);
+        return Promise.resolve({
+          ok: true,
+          json: async () => (url.includes("recent_signals_page=2") ? pageTwoPayload : pageOnePayload),
+        });
+      })
+    );
+
+    renderModal();
+
+    expect(await screen.findByText("Recent signals")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "2" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining("recent_signals_page=2"));
+    });
+
+    expect(await screen.findByText("SELL")).toBeInTheDocument();
+    expect(screen.getByText("30M")).toBeInTheDocument();
   });
 
   it("uses backend session-hour visibility contract in the hourly tab", async () => {

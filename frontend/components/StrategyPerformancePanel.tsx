@@ -25,6 +25,8 @@ const SignalDetailModal = lazy(() => import("./SignalDetailModal"));
 const API_BASE = getApiBase();
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 const TARGET_LEVELS = ["TP1", "TP2", "TP3", "TP4"] as const;
+const NY_TIMEZONE = "America/New_York";
+const SIGNALS_PAGE_SIZE = 20;
 
 const P = {
   bg: "var(--bg-primary)",
@@ -179,6 +181,10 @@ interface Signal {
 interface RecentSignalsResponse {
   signals: Signal[];
   count: number;
+  total_count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
   symbol?: string;
   strategy_scope?: string;
 }
@@ -234,6 +240,28 @@ function formatDuration(value: number | null | undefined) {
 function formatScore(value: number | null | undefined) {
   if (value === null || value === undefined) return "—";
   return value.toFixed(1);
+}
+
+function formatSignalTimestamp(value: string, locale: "tr" | "en" = "tr") {
+  const parsed = new Date(value || Date.now());
+  if (Number.isNaN(parsed.getTime())) return "—";
+  const resolvedLocale = locale === "tr" ? "tr-TR" : "en-US";
+  return parsed.toLocaleString(resolvedLocale, {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: NY_TIMEZONE,
+  });
+}
+
+function buildPageItems(currentPage: number, totalPages: number) {
+  if (totalPages <= 0) return [] as number[];
+  const start = Math.max(1, currentPage - 2);
+  const end = Math.min(totalPages, start + 4);
+  const adjustedStart = Math.max(1, end - 4);
+  return Array.from({ length: end - adjustedStart + 1 }, (_, index) => adjustedStart + index);
 }
 
 function getScopeLabel(scope?: string | null, locale: "tr" | "en" = "tr") {
@@ -323,10 +351,11 @@ async function fetchAiPanelPerformance(days: number): Promise<AiPanelPerformance
   return res.json();
 }
 
-async function fetchRecentSignals(days: number, symbol?: string, strategyScope?: string): Promise<RecentSignalsResponse> {
+async function fetchRecentSignals(days: number, page: number, symbol?: string, strategyScope?: string): Promise<RecentSignalsResponse> {
   const params = new URLSearchParams();
   params.set("days", String(days));
-  params.set("limit", "20");
+  params.set("limit", String(SIGNALS_PAGE_SIZE));
+  params.set("page", String(page));
   params.set("include_active", "true");
   params.set("model", "ml");
   if (symbol) params.set("symbol", symbol);
@@ -635,7 +664,7 @@ function SignalRow({ signal, onClick }: { signal: Signal; onClick: () => void })
         <span style={{ fontFamily: FONT, fontSize: 11, color: P.textSec }}>{formatDuration(signal.duration_minutes)}</span>
       </td>
       <td style={{ padding: "12px 14px", textAlign: "right" }}>
-        <span style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>{new Date(signal.created_at).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+        <span style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>{formatSignalTimestamp(signal.created_at, "tr")}</span>
       </td>
     </tr>
   );
@@ -646,6 +675,7 @@ export default function StrategyPerformancePanel() {
   const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>();
   const [selectedStrategyScope, setSelectedStrategyScope] = useState<string | undefined>();
   const [selectedSignalId, setSelectedSignalId] = useState<string | null>(null);
+  const [signalsPage, setSignalsPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModelPerformanceModalOpen, setIsModelPerformanceModalOpen] = useState(false);
   const [selectedModelPerformanceSymbol, setSelectedModelPerformanceSymbol] = useState<string>("");
@@ -690,12 +720,16 @@ export default function StrategyPerformancePanel() {
     isLoading: signalsLoading,
     refetch: refetchSignals,
   } = useQuery({
-    queryKey: ["recent-signals", days, selectedSymbol, selectedStrategyScope],
-    queryFn: () => fetchRecentSignals(days, selectedSymbol, selectedStrategyScope),
+    queryKey: ["recent-signals", days, signalsPage, selectedSymbol, selectedStrategyScope],
+    queryFn: () => fetchRecentSignals(days, signalsPage, selectedSymbol, selectedStrategyScope),
     staleTime: 30000,
     refetchInterval: 60000,
     enabled: activeTab === "signals",
   });
+
+  useEffect(() => {
+    setSignalsPage(1);
+  }, [days, selectedSymbol, selectedStrategyScope]);
 
   const handleRefresh = useCallback(() => {
     refetch();
@@ -714,6 +748,7 @@ export default function StrategyPerformancePanel() {
   const allOrderedScopes = getOrderedScopes(data?.strategy_order);
   const selectedSymbolScopes = selectedSymbol ? data?.symbols?.[selectedSymbol]?.available_scopes || [] : [];
   const selectedScopeDescription = selectedStrategyScope ? data?.strategy_descriptions?.[selectedStrategyScope] : undefined;
+  const signalPageItems = buildPageItems(signalsData?.page || signalsPage, signalsData?.total_pages || 0);
 
   const handleSignalClick = (signalId: string) => {
     setSelectedSignalId(signalId);
@@ -1314,7 +1349,9 @@ export default function StrategyPerformancePanel() {
                 ))}
               </select>
 
-              <span style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>Recent ML signals only · grouped by resolved strategy scope</span>
+              <span style={{ fontFamily: FONT, fontSize: 11, color: P.muted }}>
+                Recent ML signals only · grouped by resolved strategy scope · {signalsData?.total_count ?? 0} total
+              </span>
             </div>
 
             <div className="overflow-x-auto rounded-lg" style={{ border: `1px solid ${P.border}` }}>
@@ -1362,6 +1399,31 @@ export default function StrategyPerformancePanel() {
                 </tbody>
               </table>
             </div>
+
+            {(signalsData?.total_pages || 0) > 1 ? (
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {signalPageItems.map((pageNumber) => {
+                  const selected = (signalsData?.page || signalsPage) === pageNumber;
+                  return (
+                    <button
+                      key={`signal-page-${pageNumber}`}
+                      onClick={() => setSignalsPage(pageNumber)}
+                      className="rounded-lg px-3 py-1.5 transition-all"
+                      style={{
+                        background: selected ? `${P.accent}18` : P.surface,
+                        border: `1px solid ${selected ? `${P.accent}35` : P.border}`,
+                        color: selected ? P.accent : P.textSec,
+                        fontFamily: FONT,
+                        fontSize: 11,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
 
             <p className="text-xs" style={{ color: P.muted, fontFamily: FONT }}>
               Click any signal to inspect lifecycle details, TP/SL structure and post-trade diagnostics.

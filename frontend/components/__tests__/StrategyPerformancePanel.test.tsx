@@ -225,6 +225,33 @@ const signalsPayload = {
     },
   ],
   count: 1,
+  total_count: 21,
+  page: 1,
+  page_size: 20,
+  total_pages: 2,
+};
+
+const signalsPage2Payload = {
+  signals: [
+    {
+      id: "signal-021",
+      symbol: "NDX.INDX",
+      timeframe: "15m",
+      ml_direction: "SELL",
+      ml_confidence: 55,
+      status: "stopped",
+      created_at: "2026-03-06T23:00:00Z",
+      pnl_pips: -3,
+      duration_minutes: 45,
+      normalized_model: "ml",
+      strategy_scope: "aggressive",
+    },
+  ],
+  count: 1,
+  total_count: 21,
+  page: 2,
+  page_size: 20,
+  total_pages: 2,
 };
 
 const smcPayload = {
@@ -414,7 +441,10 @@ describe("StrategyPerformancePanel", () => {
         return Promise.resolve({ ok: true, json: async () => aiPanelPayload });
       }
       if (url.includes("/api/learning/signals/recent")) {
-        return Promise.resolve({ ok: true, json: async () => signalsPayload });
+        return Promise.resolve({
+          ok: true,
+          json: async () => (url.includes("page=2") ? signalsPage2Payload : signalsPayload),
+        });
       }
       return Promise.resolve({ ok: false, json: async () => ({ error: "unexpected" }) });
     });
@@ -560,5 +590,23 @@ describe("StrategyPerformancePanel", () => {
       const recentCalls = fetchMock.mock.calls.map((call) => String(call[0])).filter((url) => url.includes("/api/learning/signals/recent"));
       expect(recentCalls.some((url) => url.includes("days=60"))).toBe(true);
     });
+  });
+
+  it("requests the selected recent signals page when numbered pagination is clicked", async () => {
+    renderPanel();
+
+    await screen.findByText("Strategy Performance Analysis");
+    fireEvent.click(screen.getByRole("button", { name: "Signals Tab" }));
+
+    const pageTwoButton = await screen.findByRole("button", { name: "2" });
+    fireEvent.click(pageTwoButton);
+
+    await waitFor(() => {
+      const recentCalls = fetchMock.mock.calls.map((call) => String(call[0])).filter((url) => url.includes("/api/learning/signals/recent"));
+      expect(recentCalls.some((url) => url.includes("page=2"))).toBe(true);
+    });
+
+    expect(await screen.findByText("NDX.INDX")).toBeInTheDocument();
+    expect(screen.getByText("stopped")).toBeInTheDocument();
   });
 });
