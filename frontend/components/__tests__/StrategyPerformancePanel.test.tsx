@@ -5,9 +5,26 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import StrategyPerformancePanel from "../StrategyPerformancePanel";
 
+const { modelPerformanceModalMock } = vi.hoisted(() => ({
+  modelPerformanceModalMock: vi.fn(),
+}));
+
 vi.mock("@/lib/api/base", () => ({ getApiBase: () => "" }));
 vi.mock("../PanelInfoButton", () => ({ PanelInfoButton: () => <div data-testid="panel-info" /> }));
-vi.mock("../panels/ModelPerformanceModal", () => ({ ModelPerformanceModal: () => null }));
+vi.mock("../panels/ModelPerformanceModal", () => ({
+  ModelPerformanceModal: (props: any) => {
+    modelPerformanceModalMock(props);
+    if (!props.isOpen) return null;
+    return (
+      <div
+        data-testid="model-performance-modal"
+        data-symbol={props.symbol || ""}
+        data-model={props.model || ""}
+        data-scope={props.strategyScope || ""}
+      />
+    );
+  },
+}));
 vi.mock("../SignalDetailModal", () => ({ default: () => null }));
 
 const payload = {
@@ -384,6 +401,7 @@ describe("StrategyPerformancePanel", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    modelPerformanceModalMock.mockClear();
     fetchMock = vi.fn().mockImplementation((input: string | URL) => {
       const url = String(input);
       if (url.includes("/api/learning/strategy-performance")) {
@@ -495,6 +513,32 @@ describe("StrategyPerformancePanel", () => {
     expect(daxText.indexOf("NASDAQ Precision")).toBeGreaterThan(daxText.indexOf("Agresif"));
 
     expect(within(daxSection as HTMLElement).getAllByText("0 signals · 0 resolved · 0 expired · 0 active").length).toBe(6);
+  });
+
+  it("opens symbol-wide analytics from the symbol header and scope-specific analytics from strategy rows", async () => {
+    const { container } = renderPanel();
+
+    await screen.findByText("Strategy Performance Analysis");
+    await screen.findAllByText("Agresif");
+
+    const symbolTrigger = container.querySelector('[aria-label="NASDAQ Symbol Analytics"]');
+    expect(symbolTrigger).toBeTruthy();
+    const nasdaqSection = symbolTrigger?.closest(".space-y-3") as HTMLElement | null;
+    expect(nasdaqSection).toBeTruthy();
+
+    fireEvent.click(symbolTrigger as HTMLElement);
+
+    let modal = await screen.findByTestId("model-performance-modal");
+    expect(modal).toHaveAttribute("data-symbol", "NDX.INDX");
+    expect(modal).toHaveAttribute("data-model", "all");
+    expect(modal).toHaveAttribute("data-scope", "");
+
+    fireEvent.click(within(nasdaqSection as HTMLElement).getByRole("button", { name: "Agresif Detail Row" }));
+
+    modal = await screen.findByTestId("model-performance-modal");
+    expect(modal).toHaveAttribute("data-symbol", "NDX.INDX");
+    expect(modal).toHaveAttribute("data-model", "ml");
+    expect(modal).toHaveAttribute("data-scope", "aggressive");
   });
 
   it("applies symbol and day filters to recent signal requests", async () => {

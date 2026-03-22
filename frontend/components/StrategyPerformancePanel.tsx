@@ -419,6 +419,7 @@ function StrategyRow({
   leaderBadges,
   configMap = STRATEGY_CONFIG,
   labelFormatter = getScopeLabel,
+  onClick,
 }: {
   strategy: string;
   data: StrategyData;
@@ -426,6 +427,7 @@ function StrategyRow({
   leaderBadges: LeaderKey[];
   configMap?: Record<string, { name: string; nameEn: string; icon: ComponentType<any>; color: string }>;
   labelFormatter?: (scope?: string | null, locale?: "tr" | "en") => string;
+  onClick?: () => void;
 }) {
   const config = configMap[strategy];
   if (!config) return null;
@@ -433,13 +435,25 @@ function StrategyRow({
   const Icon = config.icon;
   const accColor = data.accuracy !== null && data.accuracy >= 60 ? P.green : data.accuracy !== null && data.accuracy >= 50 ? P.warn : P.red;
   const highlighted = leaderBadges.length > 0;
+  const interactive = typeof onClick === "function";
 
   return (
     <tr
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? `${labelFormatter(strategy, locale)} Detail Row` : undefined}
       style={{
         borderBottom: `1px solid ${P.border}`,
         background: highlighted ? `${config.color}06` : "transparent",
+        cursor: interactive ? "pointer" : "default",
       }}
+      onClick={onClick}
+      onKeyDown={interactive ? (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick?.();
+        }
+      } : undefined}
       onMouseEnter={(e) => (e.currentTarget.style.background = highlighted ? `${config.color}10` : "rgba(255,255,255,0.015)")}
       onMouseLeave={(e) => (e.currentTarget.style.background = highlighted ? `${config.color}06` : "transparent")}
     >
@@ -635,6 +649,8 @@ export default function StrategyPerformancePanel() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModelPerformanceModalOpen, setIsModelPerformanceModalOpen] = useState(false);
   const [selectedModelPerformanceSymbol, setSelectedModelPerformanceSymbol] = useState<string>("");
+  const [selectedModelPerformanceModel, setSelectedModelPerformanceModel] = useState<string | undefined>(undefined);
+  const [selectedModelPerformanceScope, setSelectedModelPerformanceScope] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<"performance" | "signals">("performance");
   const locale: "tr" | "en" = "tr";
 
@@ -707,6 +723,20 @@ export default function StrategyPerformancePanel() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedSignalId(null);
+  };
+
+  const handleOpenSymbolPerformance = (symbol: string) => {
+    setSelectedModelPerformanceSymbol(symbol);
+    setSelectedModelPerformanceModel("all");
+    setSelectedModelPerformanceScope(undefined);
+    setIsModelPerformanceModalOpen(true);
+  };
+
+  const handleOpenScopePerformance = (symbol: string, scope: string) => {
+    setSelectedModelPerformanceSymbol(symbol);
+    setSelectedModelPerformanceModel("ml");
+    setSelectedModelPerformanceScope(scope);
+    setIsModelPerformanceModalOpen(true);
   };
 
   if (error) {
@@ -807,10 +837,16 @@ export default function StrategyPerformancePanel() {
               return (
                 <div key={symKey} className="space-y-3">
                   <div
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${label} Symbol Analytics`}
                     className="flex flex-wrap items-center gap-3 cursor-pointer group hover:bg-white/5 p-2 -mx-2 rounded-lg transition-colors border border-transparent hover:border-white/5"
-                    onClick={() => {
-                      setSelectedModelPerformanceSymbol(symKey);
-                      setIsModelPerformanceModalOpen(true);
+                    onClick={() => handleOpenSymbolPerformance(symKey)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        handleOpenSymbolPerformance(symKey);
+                      }
                     }}
                   >
                     <span style={{ fontSize: 16 }}>{icon}</span>
@@ -873,6 +909,7 @@ export default function StrategyPerformancePanel() {
                                 data={strategyData}
                                 locale={locale}
                                 leaderBadges={leaderBadges}
+                                onClick={() => handleOpenScopePerformance(symKey, scope)}
                               />
                             );
                           })
@@ -1345,7 +1382,8 @@ export default function StrategyPerformancePanel() {
         isOpen={isModelPerformanceModalOpen}
         onClose={() => setIsModelPerformanceModalOpen(false)}
         symbol={selectedModelPerformanceSymbol}
-        model="all"
+        model={selectedModelPerformanceModel}
+        strategyScope={selectedModelPerformanceScope}
         days={days}
       />
     </>

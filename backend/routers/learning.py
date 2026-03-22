@@ -3147,6 +3147,7 @@ async def get_model_detail_analytics(
     model: Optional[str] = Query(None, description="Model type (ml, emel, pulse1, pulse2, pulse3, emel_inverse, smc, hybrid) or 'all'"),
     symbol: str = Query(..., description="Symbol (NDX.INDX, XAUUSD, GDAXI.INDX, USOIL.FOREX, CL.F)"),
     days: int = Query(0, ge=0, le=3650, description="Days to look back (0 = all available history)"),
+    strategy_scope: Optional[str] = Query(None, description="Optional ML strategy scope filter (main, ultra_safe, balanced, full_power, aggressive, nasdaq_precision)"),
     timeframe: Optional[str] = Query(None, description="Optional timeframe filter (5m, 15m, 30m, 1h, 4h, 1d, or 'all')")
 ):
     """
@@ -3156,6 +3157,9 @@ async def get_model_detail_analytics(
     """
     requested_model = (model or "all").lower().strip() or "all"
     resolved_model = "all" if requested_model in {"all", "*"} else requested_model
+    requested_scope = normalize_ml_scope(strategy_scope)
+    if requested_scope in {"all", "*"}:
+        requested_scope = None
     selected_timeframe = (timeframe or "all").lower().strip() or "all"
     if selected_timeframe in {"*", "all"}:
         selected_timeframe = "all"
@@ -3200,6 +3204,8 @@ async def get_model_detail_analytics(
             "meta": {
                 "requested_model": requested_model,
                 "selected_model": resolved_model,
+                "requested_scope": strategy_scope,
+                "selected_scope": requested_scope,
                 "selected_timeframe": selected_timeframe,
                 "available_timeframes": available_timeframes or [],
                 "available_models": available_models or [],
@@ -3328,18 +3334,31 @@ async def get_model_detail_analytics(
                 "_created_dt": created_dt,
                 "_timeframe": _normalize_timeframe(sig.get("timeframe")),
                 "_normalized_model": _normalize_model_type(sig),
+                "_strategy_scope": _resolved_eligible_ml_strategy_scope(sig),
             })
 
         comparison_model_source = prepared_signals if selected_timeframe == "all" else [
             sig for sig in prepared_signals if sig["_timeframe"] == selected_timeframe
         ]
+        if requested_scope:
+            comparison_model_source = [
+                sig for sig in comparison_model_source if sig.get("_strategy_scope") == requested_scope
+            ]
         available_models = _sort_models(list({
             sig["_normalized_model"] for sig in comparison_model_source if sig.get("_normalized_model")
         }))
 
-        model_scope_signals = prepared_signals if resolved_model == "all" else [
+        scoped_signals = prepared_signals if requested_scope is None else [
+            sig for sig in prepared_signals if sig.get("_strategy_scope") == requested_scope
+        ]
+
+        model_scope_signals = scoped_signals if resolved_model == "all" else [
             sig for sig in prepared_signals if sig["_normalized_model"] == resolved_model
         ]
+        if resolved_model != "all":
+            model_scope_signals = [
+                sig for sig in model_scope_signals if requested_scope is None or sig.get("_strategy_scope") == requested_scope
+            ]
         available_timeframes = _sort_timeframes(list({
             sig["_timeframe"] for sig in model_scope_signals if sig.get("_timeframe")
         }))
@@ -3657,6 +3676,8 @@ async def get_model_detail_analytics(
             "meta": {
                 "requested_model": requested_model,
                 "selected_model": resolved_model,
+                "requested_scope": strategy_scope,
+                "selected_scope": requested_scope,
                 "selected_timeframe": selected_timeframe,
                 "available_timeframes": available_timeframes,
                 "available_models": available_models,

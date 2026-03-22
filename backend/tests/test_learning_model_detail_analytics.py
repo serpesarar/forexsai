@@ -194,6 +194,81 @@ async def test_model_detail_analytics_repairs_target_hit_rows_with_bad_exit_pric
 
 
 @pytest.mark.asyncio
+async def test_model_detail_analytics_filters_ml_rows_by_strategy_scope():
+    learning_module = _load_learning_module("test_learning_model_detail_scope_filter")
+    get_model_detail_analytics = learning_module.get_model_detail_analytics
+
+    signal_rows = [
+        {
+            "id": "main-win-001",
+            "symbol": "NDX.INDX",
+            "timeframe": "30m",
+            "ml_direction": "BUY",
+            "ml_confidence": 61,
+            "status": "completed",
+            "ml_entry_price": 100.0,
+            "exit_price": 110.0,
+            "stop_loss_pips": 20,
+            "created_at": "2026-03-06T09:00:00Z",
+            "highest_profit_pips": 10,
+            "lowest_drawdown_pips": 0,
+            "targets_hit": {"TP1": True},
+            "model_type": "ml:main",
+            "strategy": "main",
+        },
+        {
+            "id": "aggressive-win-002",
+            "symbol": "NDX.INDX",
+            "timeframe": "15m",
+            "ml_direction": "SELL",
+            "ml_confidence": 49,
+            "status": "completed",
+            "ml_entry_price": 100.0,
+            "exit_price": 90.0,
+            "stop_loss_pips": 20,
+            "created_at": "2026-03-06T10:00:00Z",
+            "highest_profit_pips": 10,
+            "lowest_drawdown_pips": 0,
+            "targets_hit": {"TP1": True, "TP2": True},
+            "model_type": "ml:aggressive",
+            "strategy": "aggressive",
+        },
+    ]
+
+    client = _FakeClient([[], signal_rows])
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ):
+        payload = await get_model_detail_analytics(
+            model="ml",
+            symbol="NDX.INDX",
+            days=1,
+            strategy_scope="aggressive",
+            timeframe="all",
+        )
+
+    assert payload["meta"]["selected_model"] == "ml"
+    assert payload["meta"]["selected_scope"] == "aggressive"
+    assert payload["overview"]["total_signals"] == 1
+    assert payload["overview"]["completed"] == 1
+    assert payload["overview"]["net_pips"] == 25.0
+    assert payload["available_models"] == ["ml"]
+    assert payload["available_timeframes"] == ["15m"]
+    assert len(payload["recent_signals"]) == 1
+    signal = payload["recent_signals"][0]
+    assert signal["id"] == "aggressi"
+    assert signal["date"] == "2026-03-06T10:00:00Z"
+    assert signal["direction"] == "SELL"
+    assert signal["confidence"] == 49.0
+    assert signal["status"] == "completed"
+    assert signal["pips"] == 25.0
+    assert signal["timeframe"] == "15m"
+    assert signal["entry_price"] == 100.0
+    assert signal["exit_price"] == 75.0
+
+
+@pytest.mark.asyncio
 async def test_model_detail_analytics_uses_canonical_fixed_hourly_geometry_when_stored_targets_are_inflated():
     learning_module = _load_learning_module("test_learning_hourly_fixed_geometry")
     get_model_detail_analytics = learning_module.get_model_detail_analytics

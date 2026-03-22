@@ -83,6 +83,8 @@ interface ModelComparisonRow {
 interface AnalyticsMeta {
   requested_model?: string;
   selected_model?: string;
+  requested_scope?: string | null;
+  selected_scope?: string | null;
   selected_timeframe?: string;
   available_timeframes?: string[];
   available_models?: string[];
@@ -135,6 +137,7 @@ interface ModelPerformanceModalProps {
   onClose: () => void;
   symbol: string;
   model?: string;
+  strategyScope?: string;
   days?: number;
 }
 
@@ -300,6 +303,15 @@ const MODEL_DISPLAY: Record<string, string> = {
   hybrid: "Hybrid",
 };
 
+const ML_SCOPE_DISPLAY: Record<string, { en: string; tr: string }> = {
+  main: { en: "Main ML", tr: "Ham ML" },
+  ultra_safe: { en: "Ultra Safe", tr: "Ultra Güvenli" },
+  balanced: { en: "Balanced", tr: "Dengeli" },
+  full_power: { en: "Full Power", tr: "Full Power" },
+  aggressive: { en: "Aggressive", tr: "Agresif" },
+  nasdaq_precision: { en: "NASDAQ Precision", tr: "NASDAQ Precision" },
+};
+
 const NY_TIMEZONE = "America/New_York";
 
 function getLanguage(): "en" | "tr" {
@@ -462,6 +474,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
   onClose,
   symbol,
   model,
+  strategyScope,
   days,
 }) => {
   const lang = useMemo(() => getLanguage(), [isOpen]);
@@ -493,13 +506,14 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
     if (!isOpen) return;
     setActiveTab("overview");
     setSelectedTimeframe("all");
-  }, [isOpen, model, symbol]);
+  }, [isOpen, model, strategyScope, symbol]);
 
   const { data, isLoading, isFetching, error, refetch } = useQuery<AnalyticsData>({
-    queryKey: ["model-detail-analytics", model || "all", symbol, selectedTimeframe, days ?? null],
+    queryKey: ["model-detail-analytics", model || "all", strategyScope || "all", symbol, selectedTimeframe, days ?? null],
     queryFn: async () => {
       const params = new URLSearchParams({ symbol });
       if (model) params.set("model", model);
+      if (strategyScope) params.set("strategy_scope", strategyScope);
       if (typeof days === "number") params.set("days", String(days));
       if (selectedTimeframe !== "all") params.set("timeframe", selectedTimeframe);
 
@@ -525,6 +539,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
   if (!isOpen) return null;
 
   const effectiveModel = data?.meta?.selected_model || data?.model || model || "all";
+  const effectiveScope = data?.meta?.selected_scope || strategyScope || undefined;
   const effectiveTimeframe = data?.selected_timeframe || data?.meta?.selected_timeframe || selectedTimeframe;
   const availableTimeframes = sortTimeframes([
     "all",
@@ -533,6 +548,9 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
   ]);
   const headerModelLabel =
     effectiveModel === "all" ? copy.allModels : MODEL_DISPLAY[effectiveModel] || effectiveModel;
+  const headerScopeLabel = effectiveScope
+    ? ML_SCOPE_DISPLAY[effectiveScope]?.[lang] || effectiveScope
+    : null;
   const headerSymbolLabel = SYM_DISPLAY[symbol] || symbol;
   const queryError = error instanceof Error ? error.message : undefined;
   const displayWarning = queryError ? undefined : data?.error;
@@ -583,6 +601,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
                 <div>
                   <div className="flex flex-wrap items-center gap-2 mb-3">
                     <ScopeBadge label={headerModelLabel} tone="info" />
+                    {headerScopeLabel ? <ScopeBadge label={headerScopeLabel} tone="warning" /> : null}
                     <ScopeBadge
                       label={effectiveTimeframe === "all" ? copy.allTimeframes : effectiveTimeframe.toUpperCase()}
                       tone="neutral"
@@ -680,7 +699,7 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
               />
               <InfoPill
                 label={copy.selectedScope}
-                value={`${headerModelLabel} · ${
+                value={`${headerModelLabel}${headerScopeLabel ? ` · ${headerScopeLabel}` : ""} · ${
                   effectiveTimeframe === "all" ? copy.allTimeframes : effectiveTimeframe.toUpperCase()
                 }`}
               />
