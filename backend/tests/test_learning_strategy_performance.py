@@ -296,6 +296,47 @@ async def test_strategy_performance_excludes_low_confidence_scoped_ml_rows_from_
 
 
 @pytest.mark.asyncio
+async def test_strategy_performance_paginates_prediction_log_windows_before_scope_aggregation():
+    learning_module = _load_learning_module("test_learning_strategy_router_pagination")
+    now = datetime.now(timezone.utc)
+    rows = [
+        _prediction_row(
+            id=f"main-{index:04d}",
+            strategy=None,
+            model_type="ml:main",
+            ml_confidence=51,
+            created_at=_iso(now - timedelta(minutes=index)),
+            exit_time=_iso(now - timedelta(minutes=index - 1)),
+        )
+        for index in range(1, 1006)
+    ]
+    rows.append(
+        _prediction_row(
+            id="aggressive-paginated-001",
+            strategy="aggressive",
+            model_type="ml:aggressive",
+            ml_confidence=50.6,
+            created_at=_iso(now - timedelta(minutes=1006)),
+            exit_time=_iso(now - timedelta(minutes=1005)),
+        )
+    )
+    client = _FakeClient(rows)
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ):
+        payload = await learning_module.get_strategy_performance(days=1)
+
+    ndx_scopes = payload["strategies"]["NDX.INDX"]
+    assert payload["predictions_count"] == 1006
+    assert payload["ml_predictions_count"] == 1006
+    assert ndx_scopes["main"]["total_predictions"] == 1005
+    assert ndx_scopes["aggressive"]["total_predictions"] == 1
+    assert ndx_scopes["aggressive"]["resolved_signals"] == 1
+    assert payload["symbols"]["NDX.INDX"]["available_scopes"] == ["main", "aggressive"]
+
+
+@pytest.mark.asyncio
 async def test_strategy_performance_tp_rates_are_independent_and_exclude_expired_from_denominator():
     learning_module = _load_learning_module("test_learning_strategy_router_independent_tp")
     now = datetime.now(timezone.utc)

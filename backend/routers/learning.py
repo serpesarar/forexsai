@@ -108,13 +108,31 @@ async def _fetch_prediction_logs_window(
     while cur < end:
         ds = cur.replace(hour=0, minute=0, second=0, microsecond=0)
         de = min(ds + timedelta(days=window_days), end)
-        batch = safe_get_data(
-            client.table("prediction_logs").select(select_fields).gte("created_at", _utc_iso(ds)).lt(
+        page_before: Optional[str] = None
+        while True:
+            query = client.table("prediction_logs").select(select_fields).gte("created_at", _utc_iso(ds)).lt(
                 "created_at", _utc_iso(de)
-            ).order("created_at", desc=True).limit(1000).execute()
-        )
-        if batch:
+            )
+            if page_before:
+                query = query.lt("created_at", page_before)
+
+            batch = safe_get_data(query.order("created_at", desc=True).limit(1000).execute()) or []
+            if not batch:
+                break
+
             predictions.extend(batch)
+            if len(batch) < 1000:
+                break
+
+            last_created_at = batch[-1].get("created_at")
+            if not isinstance(last_created_at, str) or not last_created_at:
+                logger.warning("Prediction log pagination cursor missing for %s - %s", _utc_iso(ds), _utc_iso(de))
+                break
+            if page_before == last_created_at:
+                logger.warning("Prediction log pagination stalled for %s - %s at %s", _utc_iso(ds), _utc_iso(de), last_created_at)
+                break
+
+            page_before = last_created_at
         cur = de
 
     return predictions
@@ -1645,21 +1663,12 @@ async def get_strategy_performance(
     
     try:
         cutoff = (_utc_now() - timedelta(days=days)) if days > 0 else _ALL_TIME_FLOOR
-        predictions = []
-        end = _utc_now()
-        cur = cutoff
-        window_days = 1 if 0 < days <= 90 else 7 if 90 < days <= 365 else 30
-        while cur < end:
-            ds = cur.replace(hour=0, minute=0, second=0, microsecond=0)
-            de = min(ds + timedelta(days=window_days), end)
-            batch = safe_get_data(client.table("prediction_logs").select(
-                "id, symbol, strategy, ml_confidence, status, targets_hit, targets, "
-                "model_type, timeframe, created_at, highest_profit_pips, lowest_drawdown_pips, "
-                "stop_loss_pips, ml_entry_price, exit_price, exit_time, ml_direction, factors, resolution_reason"
-            ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).order("created_at", desc=True).limit(1000).execute())
-            if batch:
-                predictions.extend(batch)
-            cur = de
+        select_fields = (
+            "id, symbol, strategy, ml_confidence, status, targets_hit, targets, "
+            "model_type, timeframe, created_at, highest_profit_pips, lowest_drawdown_pips, "
+            "stop_loss_pips, ml_entry_price, exit_price, exit_time, ml_direction, factors, resolution_reason"
+        )
+        predictions = await _fetch_prediction_logs_window(client, cutoff, select_fields=select_fields)
 
         grouped_signals = {
             symbol: {scope: [] for scope in _ML_STRATEGY_ORDER}
