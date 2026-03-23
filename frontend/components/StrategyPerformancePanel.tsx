@@ -333,6 +333,8 @@ function scoreColor(value: number) {
   return P.textSec;
 }
 
+const STRATEGY_PERFORMANCE_ALL_TIME_DAYS = 0;
+
 async function fetchStrategyPerformance(days: number): Promise<StrategyPerformanceResponse> {
   const res = await fetch(`${API_BASE}/api/learning/strategy-performance?days=${days}`);
   if (!res.ok) throw new Error("Failed to fetch strategy performance");
@@ -685,9 +687,8 @@ function SignalRow({ signal, onClick }: { signal: Signal; onClick: () => void })
 }
 
 export default function StrategyPerformancePanel() {
-  const [days, setDays] = useState(30);
   const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>();
-  const [selectedStrategyScope, setSelectedStrategyScope] = useState<string | undefined>();
+  const [selectedStrategyScope, setSelectedStrategyScope] = useState<string | undefined>(undefined);
   const [selectedSignalId, setSelectedSignalId] = useState<string | null>(null);
   const [signalsPage, setSignalsPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -700,8 +701,8 @@ export default function StrategyPerformancePanel() {
   const locale: "tr" | "en" = "tr";
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["strategy-performance", days],
-    queryFn: () => fetchStrategyPerformance(days),
+    queryKey: ["strategy-performance", "all-time"],
+    queryFn: () => fetchStrategyPerformance(STRATEGY_PERFORMANCE_ALL_TIME_DAYS),
     staleTime: 60000,
     refetchInterval: 300000,
   });
@@ -712,8 +713,8 @@ export default function StrategyPerformancePanel() {
     error: smcError,
     refetch: refetchSmc,
   } = useQuery({
-    queryKey: ["smc-performance", days],
-    queryFn: () => fetchSmcPerformance(days),
+    queryKey: ["smc-performance", "all-time"],
+    queryFn: () => fetchSmcPerformance(STRATEGY_PERFORMANCE_ALL_TIME_DAYS),
     staleTime: 60000,
     refetchInterval: 300000,
   });
@@ -724,8 +725,8 @@ export default function StrategyPerformancePanel() {
     error: aiPanelError,
     refetch: refetchAiPanel,
   } = useQuery({
-    queryKey: ["ai-panel-performance", days],
-    queryFn: () => fetchAiPanelPerformance(days),
+    queryKey: ["ai-panel-performance", "all-time"],
+    queryFn: () => fetchAiPanelPerformance(STRATEGY_PERFORMANCE_ALL_TIME_DAYS),
     staleTime: 60000,
     refetchInterval: 300000,
   });
@@ -735,8 +736,8 @@ export default function StrategyPerformancePanel() {
     isLoading: signalsLoading,
     refetch: refetchSignals,
   } = useQuery({
-    queryKey: ["recent-signals", days, signalsPage, selectedSymbol, selectedStrategyScope],
-    queryFn: () => fetchRecentSignals(days, signalsPage, selectedSymbol, selectedStrategyScope),
+    queryKey: ["recent-signals", "all-time", signalsPage, selectedSymbol, selectedStrategyScope],
+    queryFn: () => fetchRecentSignals(STRATEGY_PERFORMANCE_ALL_TIME_DAYS, signalsPage, selectedSymbol, selectedStrategyScope),
     staleTime: 30000,
     refetchInterval: 60000,
     enabled: activeTab === "signals",
@@ -744,7 +745,7 @@ export default function StrategyPerformancePanel() {
 
   useEffect(() => {
     setSignalsPage(1);
-  }, [days, selectedSymbol, selectedStrategyScope]);
+  }, [selectedSymbol, selectedStrategyScope]);
 
   const handleRefresh = useCallback(() => {
     refetch();
@@ -853,21 +854,6 @@ export default function StrategyPerformancePanel() {
                 Signals
               </button>
             </div>
-
-            <select
-              aria-label="Days Filter"
-              value={days}
-              onChange={(e) => setDays(Number(e.target.value))}
-              className="rounded-lg appearance-none cursor-pointer"
-              style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, padding: "6px 10px", background: P.surface, color: P.textSec, border: `1px solid ${P.border}` }}
-            >
-              <option value={7}>7 days</option>
-              <option value={14}>14 days</option>
-              <option value={30}>30 days</option>
-              <option value={60}>60 days</option>
-              <option value={90}>90 days</option>
-              <option value={0}>All time</option>
-            </select>
 
             <button
               onClick={handleRefresh}
@@ -1508,7 +1494,7 @@ export default function StrategyPerformancePanel() {
         model={selectedModelPerformanceModel}
         strategyScope={selectedModelPerformanceScope}
         initialTimeframe={selectedModelPerformanceInitialTimeframe}
-        days={days}
+        days={STRATEGY_PERFORMANCE_ALL_TIME_DAYS}
       />
     </>
   );
