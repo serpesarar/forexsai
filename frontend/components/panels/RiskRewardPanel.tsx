@@ -8,15 +8,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
-
-const SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"];
-const SYMBOL_LABELS: Record<string, string> = {
-  "NDX.INDX": "NASDAQ",
-  "XAUUSD": "XAU/USD",
-  "GDAXI.INDX": "DAX",
-  "USOIL.FOREX": "US OIL"
-};
+import { fetcher } from '../../lib/api';
 import { 
   Shield, 
   TrendingUp, 
@@ -27,6 +19,14 @@ import {
   Target,
   Percent
 } from 'lucide-react';
+
+const SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"];
+const SYMBOL_LABELS: Record<string, string> = {
+  "NDX.INDX": "NASDAQ",
+  "XAUUSD": "XAU/USD",
+  "GDAXI.INDX": "DAX",
+  "USOIL.FOREX": "US OIL"
+};
 
 interface RiskData {
   symbol: string;
@@ -95,18 +95,12 @@ export default function RiskRewardPanel() {
     setError(null);
     
     try {
-      const response = await fetch(
-        `${API_BASE}/api/deepseek/risk/${activeSymbol}?direction=${direction}&account_size=${accountSize}&risk_per_trade=${riskPerTrade}`
+      const result = await fetcher<{ success?: boolean; data?: RiskData; error?: string }>(
+        `/api/deepseek/risk/${activeSymbol}?direction=${direction}&account_size=${accountSize}&risk_per_trade=${riskPerTrade}`
       );
-      const result = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        const backendError = result?.error || result?.detail || `HTTP error! status: ${response.status}`;
-        throw new Error(backendError);
-      }
       
       if (result.success) {
-        setData(result.data);
+        setData(result.data || null);
       } else {
         setError(result.error || 'Failed to fetch risk data');
       }

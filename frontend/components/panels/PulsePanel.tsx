@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { fetcher } from "../../lib/api";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useRefreshAge } from "../../hooks/useRefreshAge";
 import { PanelHeader } from "../PanelHeader";
@@ -10,8 +11,6 @@ import {
   ArrowUpRightIcon as TrendingUp,
   ArrowDownRightIcon as TrendingDown,
 } from "../ui/CustomIcons";
-
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 
 interface PulseData {
@@ -96,8 +95,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
     try {
       if (showLoading) setLoading(true);
       setError(null);
-      const res = await fetch(`${API_BASE}/api/panel/pulse/${activeSymbol}?timeframe=${timeframe}`);
-      const json = await res.json();
+      const json = await fetcher<PulseData & { error?: string }>(`/api/panel/pulse/${activeSymbol}?timeframe=${timeframe}`);
       if (json.error) {
         setError(json.error);
         setData(null);
@@ -107,7 +105,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
       }
     } catch (e) {
       console.error("PULSE fetch error:", e);
-      setError("fetch_error");
+      setError(e instanceof Error ? e.message : "fetch_error");
       setData(null);
     } finally {
       if (showLoading) setLoading(false);

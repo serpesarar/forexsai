@@ -552,7 +552,21 @@ export const ModelPerformanceModal: React.FC<{
       if (selectedTimeframe !== "all") params.set("timeframe", selectedTimeframe);
       params.set("recent_signals_page", String(recentSignalsPage));
 
-      const response = await fetch(`${API_BASE}/api/learning/model-detail-analytics?${params.toString()}`);
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+      let response: Response;
+      try {
+        response = await fetch(`${API_BASE}/api/learning/model-detail-analytics?${params.toString()}`, {
+          signal: controller.signal,
+        });
+      } catch (requestError) {
+        if (requestError instanceof Error && requestError.name === "AbortError") {
+          throw new Error("Analytics request timed out");
+        }
+        throw requestError;
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
       const payload = (await response.json().catch(() => null)) as AnalyticsData | null;
 
       if (!response.ok) {

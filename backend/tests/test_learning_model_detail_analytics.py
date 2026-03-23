@@ -959,3 +959,59 @@ async def test_model_detail_analytics_includes_smc_in_available_models_and_compa
     assert payload["available_timeframes"] == ["5m"]
     assert [row["model"] for row in payload["model_comparison"]] == ["ml", "smc"]
     assert payload["recent_signals"][0]["timeframe"] == "5m"
+
+
+@pytest.mark.asyncio
+async def test_model_detail_analytics_includes_pulse_variants_in_available_models_and_selected_model():
+    learning_module = _load_learning_module("test_learning_router_pulse_variants")
+    get_model_detail_analytics = learning_module.get_model_detail_analytics
+
+    signal_rows = [
+        {
+            "id": "pulse1-win-001",
+            "symbol": "NDX.INDX",
+            "timeframe": "5m",
+            "ml_direction": "BUY",
+            "ml_confidence": 74,
+            "status": "completed",
+            "ml_entry_price": 100.0,
+            "exit_price": 108.0,
+            "stop_loss_pips": 6,
+            "created_at": "2026-03-06T12:00:00Z",
+            "highest_profit_pips": 9,
+            "lowest_drawdown_pips": -2,
+            "targets_hit": {"TP1": True},
+            "model_type": "pulse1",
+            "strategy": "PULSE",
+        },
+        {
+            "id": "pulse3-stop-002",
+            "symbol": "NDX.INDX",
+            "timeframe": "1h",
+            "ml_direction": "SELL",
+            "ml_confidence": 68,
+            "status": "stopped",
+            "ml_entry_price": 100.0,
+            "exit_price": 104.0,
+            "stop_loss_pips": 4,
+            "created_at": "2026-03-06T11:00:00Z",
+            "highest_profit_pips": 1,
+            "lowest_drawdown_pips": -4,
+            "targets_hit": {},
+            "model_type": "pulse3",
+            "strategy": "PULSE_V3",
+        },
+    ]
+
+    client = _FakeClient([signal_rows])
+
+    with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
+        learning_module, "get_supabase_client", return_value=client
+    ):
+        payload = await get_model_detail_analytics(model="pulse1", symbol="NDX.INDX", days=1, timeframe="all")
+
+    assert payload["meta"]["selected_model"] == "pulse1"
+    assert payload["available_models"] == ["pulse1", "pulse3"]
+    assert payload["available_timeframes"] == ["5m"]
+    assert [row["model"] for row in payload["model_comparison"]] == ["pulse1", "pulse3"]
+    assert payload["recent_signals"][0]["timeframe"] == "5m"

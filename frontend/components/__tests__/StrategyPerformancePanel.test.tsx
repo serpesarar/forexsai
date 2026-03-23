@@ -577,18 +577,14 @@ describe("StrategyPerformancePanel", () => {
     await screen.findByText("Strategy Performance Analysis");
     fireEvent.click(screen.getByRole("button", { name: "Signals Tab" }));
 
+    expect(screen.queryByLabelText("Days Filter")).not.toBeInTheDocument();
+
     fireEvent.change(screen.getByLabelText("Signal Symbol Filter"), { target: { value: "NDX.INDX" } });
 
     await waitFor(() => {
       const recentCalls = fetchMock.mock.calls.map((call) => String(call[0])).filter((url) => url.includes("/api/learning/signals/recent"));
       expect(recentCalls.some((url) => url.includes("symbol=NDX.INDX"))).toBe(true);
-    });
-
-    fireEvent.change(screen.getByLabelText("Days Filter"), { target: { value: "60" } });
-
-    await waitFor(() => {
-      const recentCalls = fetchMock.mock.calls.map((call) => String(call[0])).filter((url) => url.includes("/api/learning/signals/recent"));
-      expect(recentCalls.some((url) => url.includes("days=60"))).toBe(true);
+      expect(recentCalls.every((url) => url.includes("days=0"))).toBe(true);
     });
   });
 

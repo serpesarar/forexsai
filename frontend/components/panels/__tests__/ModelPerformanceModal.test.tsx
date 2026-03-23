@@ -112,28 +112,16 @@ describe("ModelPerformanceModal", () => {
     renderModal({ days: 30 });
 
     await screen.findByText("Performance analytics");
-    expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining("model=all")
-    );
-    expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining("days=30")
-    );
-    expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining("recent_signals_page=1")
-    );
+    expect((fetch as any).mock.calls.some(([url]: [string]) => String(url).includes("model=all"))).toBe(true);
+    expect((fetch as any).mock.calls.some(([url]: [string]) => String(url).includes("days=30"))).toBe(true);
+    expect((fetch as any).mock.calls.some(([url]: [string]) => String(url).includes("recent_signals_page=1"))).toBe(true);
 
     fireEvent.click(await screen.findByRole("button", { name: "15M" }));
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining("timeframe=15m")
-      );
-      expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining("days=30")
-      );
-      expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining("recent_signals_page=1")
-      );
+      expect((fetch as any).mock.calls.some(([url]: [string]) => String(url).includes("timeframe=15m"))).toBe(true);
+      expect((fetch as any).mock.calls.some(([url]: [string]) => String(url).includes("days=30"))).toBe(true);
+      expect((fetch as any).mock.calls.some(([url]: [string]) => String(url).includes("recent_signals_page=1"))).toBe(true);
     });
   });
 
@@ -268,7 +256,7 @@ describe("ModelPerformanceModal", () => {
     fireEvent.click(screen.getByRole("button", { name: "2" }));
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(expect.stringContaining("recent_signals_page=2"));
+      expect((fetch as any).mock.calls.some(([url]: [string]) => String(url).includes("recent_signals_page=2"))).toBe(true);
     });
 
     expect(await screen.findByText("SELL")).toBeInTheDocument();
