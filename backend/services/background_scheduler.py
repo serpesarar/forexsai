@@ -15,12 +15,14 @@ from order_block_detector import OrderBlockConfig
 from database.supabase_client import get_supabase_client, is_db_available
 from services.ml_prediction_service import get_ml_prediction
 from services.order_block_service import service as order_block_service
+from services.signal_analytics import parse_datetime, timeframe_cadence_minutes
 from services.ta_service import compute_ta_snapshot
 from services.data_fetcher import fetch_eod_candles, fetch_latest_price
 from services.marketaux_service import fetch_marketaux_headlines
 from services.outcome_tracker import check_pending_outcomes, check_multi_target_outcome
 from services.error_analysis_service import check_and_analyze_failed_predictions
 from services.signal_lifecycle import check_lifecycle_if_needed
+from utils.market_hours import is_symbol_market_open
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +47,7 @@ _last_prediction_log: Dict[str, datetime] = {}  # Per symbol
 _last_pulse_log: Dict[str, datetime] = {}  # Per symbol, for Pulse signal logging
 PULSE_LOG_INTERVAL = 180  # Log Pulse/EMEL signals every 3 minutes (sync with lifecycle)
 _last_smc_log: Optional[datetime] = None
+_last_smc_scope_log: Dict[tuple[str, str], datetime] = {}
 SMC_LOG_INTERVAL = 180
 _last_macro_update: Optional[datetime] = None
 _cached_macro: Dict[str, Any] = {}  # Cached macro data
@@ -78,6 +81,44 @@ def _get_ml_auto_log_scopes(symbol: str) -> List[tuple[str, str]]:
     if (symbol or "").upper().strip() in NASDAQ_FAMILY_SYMBOLS:
         scopes.extend(NASDAQ_FAMILY_ML_AUTO_LOG_SCOPES)
     return scopes
+
+
+def _get_last_persisted_smc_log_time(symbol: str, timeframe: str) -> Optional[datetime]:
+    if not is_db_available():
+        return None
+
+    client = get_supabase_client()
+    if client is None:
+        return None
+
+    try:
+        result = client.table("prediction_logs").select(
+            "created_at"
+        ).eq(
+            "symbol", symbol
+        ).eq(
+            "model_type", "smc"
+        ).eq(
+            "timeframe", timeframe
+        ).order(
+            "created_at", desc=True
+        ).limit(1).execute()
+        rows = safe_get_data(result) or []
+        if not rows:
+            return None
+        return parse_datetime(rows[0].get("created_at"))
+    except Exception as exc:
+        logger.debug("smc last persisted lookup failed for %s %s: %s", symbol, timeframe, exc)
+        return None
+
+
+def _resolve_last_smc_log_time(symbol: str, timeframe: str) -> Optional[datetime]:
+    memory_last = _last_smc_scope_log.get((symbol, timeframe))
+    db_last = _get_last_persisted_smc_log_time(symbol, timeframe)
+    if memory_last and db_last:
+        return max(memory_last, db_last)
+    return memory_last or db_last
+
 
 # Scheduler running flag
 _scheduler_running = False
@@ -628,7 +669,13 @@ async def log_smc_signals_if_needed():
     )
 
     for symbol in TRACKED_SYMBOLS:
+        if not is_symbol_market_open(symbol, now):
+            continue
         for timeframe in SMC_AUTO_LOG_TIMEFRAMES:
+            cadence_minutes = timeframe_cadence_minutes(timeframe) or max(int(SMC_LOG_INTERVAL / 60), 1)
+            last_scope_log = _resolve_last_smc_log_time(symbol, timeframe)
+            if last_scope_log and (now - last_scope_log).total_seconds() < cadence_minutes * 60:
+                continue
             try:
                 await order_block_service.detect(
                     symbol,
@@ -638,6 +685,7 @@ async def log_smc_signals_if_needed():
                     use_cache=False,
                     log_signals=True,
                 )
+                _last_smc_scope_log[(symbol, timeframe)] = now
                 await asyncio.sleep(0.15)
             except Exception as e:
                 logger.error(f"smc {symbol} {timeframe} log error: {e}")

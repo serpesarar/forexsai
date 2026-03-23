@@ -550,11 +550,13 @@ function SmcTimeframeRow({
   data,
   locale,
   leaderBadges,
+  onClick,
 }: {
   timeframe: string;
   data: StrategyData;
   locale: "tr" | "en";
   leaderBadges: LeaderKey[];
+  onClick?: () => void;
 }) {
   const config = SMC_TIMEFRAME_CONFIG[timeframe];
   if (!config) return null;
@@ -562,13 +564,25 @@ function SmcTimeframeRow({
   const Icon = config.icon;
   const accColor = data.accuracy !== null && data.accuracy >= 60 ? P.green : data.accuracy !== null && data.accuracy >= 50 ? P.warn : P.red;
   const highlighted = leaderBadges.length > 0;
+  const interactive = typeof onClick === "function";
 
   return (
     <tr
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? `${getSmcTimeframeLabel(timeframe, locale)} Detail Row` : undefined}
       style={{
         borderBottom: `1px solid ${P.border}`,
         background: highlighted ? `${config.color}06` : "transparent",
+        cursor: interactive ? "pointer" : "default",
       }}
+      onClick={onClick}
+      onKeyDown={interactive ? (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick?.();
+        }
+      } : undefined}
       onMouseEnter={(e) => (e.currentTarget.style.background = highlighted ? `${config.color}10` : "rgba(255,255,255,0.015)")}
       onMouseLeave={(e) => (e.currentTarget.style.background = highlighted ? `${config.color}06` : "transparent")}
     >
@@ -681,6 +695,7 @@ export default function StrategyPerformancePanel() {
   const [selectedModelPerformanceSymbol, setSelectedModelPerformanceSymbol] = useState<string>("");
   const [selectedModelPerformanceModel, setSelectedModelPerformanceModel] = useState<string | undefined>(undefined);
   const [selectedModelPerformanceScope, setSelectedModelPerformanceScope] = useState<string | undefined>(undefined);
+  const [selectedModelPerformanceInitialTimeframe, setSelectedModelPerformanceInitialTimeframe] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<"performance" | "signals">("performance");
   const locale: "tr" | "en" = "tr";
 
@@ -764,6 +779,7 @@ export default function StrategyPerformancePanel() {
     setSelectedModelPerformanceSymbol(symbol);
     setSelectedModelPerformanceModel("all");
     setSelectedModelPerformanceScope(undefined);
+    setSelectedModelPerformanceInitialTimeframe(undefined);
     setIsModelPerformanceModalOpen(true);
   };
 
@@ -771,6 +787,23 @@ export default function StrategyPerformancePanel() {
     setSelectedModelPerformanceSymbol(symbol);
     setSelectedModelPerformanceModel("ml");
     setSelectedModelPerformanceScope(scope);
+    setSelectedModelPerformanceInitialTimeframe(undefined);
+    setIsModelPerformanceModalOpen(true);
+  };
+
+  const handleOpenSmcPerformance = (symbol: string, timeframe?: string) => {
+    setSelectedModelPerformanceSymbol(symbol);
+    setSelectedModelPerformanceModel("smc");
+    setSelectedModelPerformanceScope(undefined);
+    setSelectedModelPerformanceInitialTimeframe(timeframe);
+    setIsModelPerformanceModalOpen(true);
+  };
+
+  const handleOpenAiPanelPerformance = (symbol: string) => {
+    setSelectedModelPerformanceSymbol(symbol);
+    setSelectedModelPerformanceModel("ai_panel");
+    setSelectedModelPerformanceScope(undefined);
+    setSelectedModelPerformanceInitialTimeframe(undefined);
     setIsModelPerformanceModalOpen(true);
   };
 
@@ -1011,7 +1044,20 @@ export default function StrategyPerformancePanel() {
 
                   return (
                     <div key={`smc-${symKey}`} className="space-y-3">
-                      <div className="flex flex-wrap items-center gap-3 p-2 -mx-2 rounded-lg" style={{ background: "rgba(255,255,255,0.015)" }}>
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`${label} Smart Money Analytics`}
+                        className="flex flex-wrap items-center gap-3 p-2 -mx-2 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-white/5 hover:bg-white/5"
+                        style={{ background: "rgba(255,255,255,0.015)" }}
+                        onClick={() => handleOpenSmcPerformance(symKey)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            handleOpenSmcPerformance(symKey);
+                          }
+                        }}
+                      >
                         <span style={{ fontSize: 16 }}>{icon}</span>
                         <div>
                           <h4 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text }}>{label}</h4>
@@ -1072,6 +1118,7 @@ export default function StrategyPerformancePanel() {
                                     data={timeframeData}
                                     locale={locale}
                                     leaderBadges={leaderBadges}
+                                    onClick={() => handleOpenSmcPerformance(symKey, timeframe)}
                                   />
                                 );
                               })
@@ -1144,7 +1191,20 @@ export default function StrategyPerformancePanel() {
 
                   return (
                     <div key={`ai-panel-${symKey}`} className="space-y-3">
-                      <div className="flex flex-wrap items-center gap-3 p-2 -mx-2 rounded-lg" style={{ background: "rgba(255,255,255,0.015)" }}>
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`${label} AI Panel Analytics`}
+                        className="flex flex-wrap items-center gap-3 p-2 -mx-2 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-white/5 hover:bg-white/5"
+                        style={{ background: "rgba(255,255,255,0.015)" }}
+                        onClick={() => handleOpenAiPanelPerformance(symKey)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            handleOpenAiPanelPerformance(symKey);
+                          }
+                        }}
+                      >
                         <span style={{ fontSize: 16 }}>{icon}</span>
                         <div>
                           <h4 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: P.text }}>{label}</h4>
@@ -1207,6 +1267,7 @@ export default function StrategyPerformancePanel() {
                                     leaderBadges={leaderBadges}
                                     configMap={AI_PANEL_SCOPE_CONFIG}
                                     labelFormatter={getAiPanelScopeLabel}
+                                    onClick={() => handleOpenAiPanelPerformance(symKey)}
                                   />
                                 );
                               })
@@ -1446,6 +1507,7 @@ export default function StrategyPerformancePanel() {
         symbol={selectedModelPerformanceSymbol}
         model={selectedModelPerformanceModel}
         strategyScope={selectedModelPerformanceScope}
+        initialTimeframe={selectedModelPerformanceInitialTimeframe}
         days={days}
       />
     </>

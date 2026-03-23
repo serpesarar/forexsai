@@ -145,13 +145,14 @@ interface AnalyticsData {
   error?: string;
 }
 
-interface ModelPerformanceModalProps {
+export interface ModelPerformanceModalProps {
   isOpen: boolean;
   onClose: () => void;
   symbol: string;
   model?: string;
   strategyScope?: string;
   days?: number;
+  initialTimeframe?: string;
 }
 
 const T = {
@@ -486,12 +487,21 @@ function AnalyticsTooltip({ active, payload, label }: any) {
   );
 }
 
-export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
+export const ModelPerformanceModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  symbol: string;
+  model?: string;
+  strategyScope?: string;
+  initialTimeframe?: string;
+  days?: number;
+}> = ({
   isOpen,
   onClose,
   symbol,
   model,
   strategyScope,
+  initialTimeframe,
   days,
 }) => {
   const lang = useMemo(() => getLanguage(), [isOpen]);
@@ -523,9 +533,9 @@ export const ModelPerformanceModal: React.FC<ModelPerformanceModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     setActiveTab("overview");
-    setSelectedTimeframe("all");
+    setSelectedTimeframe((initialTimeframe || "all").trim() || "all");
     setRecentSignalsPage(1);
-  }, [isOpen, model, strategyScope, symbol]);
+  }, [initialTimeframe, isOpen, model, strategyScope, symbol]);
 
   useEffect(() => {
     if (!isOpen) return;

@@ -38,6 +38,7 @@ from services.signal_analytics import (
     TIMEFRAME_ORDER,
     MODEL_ORDER,
     classify_signal,
+    collapse_smc_cadence_signals,
     coerce_float as analytics_coerce_float,
     filter_market_closed_invalid_signals,
     normalize_model_type,
@@ -99,6 +100,7 @@ async def _fetch_prediction_logs_window(
     cutoff: datetime,
     *,
     select_fields: str,
+    symbol: Optional[str] = None,
 ) -> List[dict]:
     predictions: List[dict] = []
     end = _utc_now()
@@ -111,9 +113,10 @@ async def _fetch_prediction_logs_window(
         de = min(ds + timedelta(days=window_days), end)
         page_before: Optional[str] = None
         while True:
-            query = client.table("prediction_logs").select(select_fields).gte("created_at", _utc_iso(ds)).lt(
-                "created_at", _utc_iso(de)
-            )
+            query = client.table("prediction_logs").select(select_fields)
+            if symbol:
+                query = query.eq("symbol", symbol)
+            query = query.gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de))
             if page_before:
                 query = query.lt("created_at", page_before)
 
@@ -1787,7 +1790,7 @@ async def get_smc_performance(
             "exit_time, ml_direction, factors, created_at, resolution_reason"
         )
         predictions = await _fetch_prediction_logs_window(client, cutoff, select_fields=select_fields)
-        predictions = filter_market_closed_invalid_signals(predictions)
+        predictions = collapse_smc_cadence_signals(filter_market_closed_invalid_signals(predictions))
 
         has_smc_history = any(
             p.get("symbol") in _TRACKED_STRATEGY_SYMBOLS
@@ -1798,7 +1801,7 @@ async def get_smc_performance(
         if not has_smc_history:
             await _bootstrap_smc_predictions_if_empty()
             predictions = await _fetch_prediction_logs_window(client, cutoff, select_fields=select_fields)
-            predictions = filter_market_closed_invalid_signals(predictions)
+            predictions = collapse_smc_cadence_signals(filter_market_closed_invalid_signals(predictions))
 
         grouped_signals = {
             symbol: {timeframe: [] for timeframe in _SMC_TIMEFRAME_ORDER}
@@ -1900,26 +1903,22 @@ async def get_ai_panel_performance(
 
     try:
         cutoff = (_utc_now() - timedelta(days=days)) if days > 0 else _ALL_TIME_FLOOR
-        predictions = []
-        end = _utc_now()
-        cur = cutoff
-        window_days = 1
-        while cur < end:
-            ds = cur.replace(hour=0, minute=0, second=0, microsecond=0)
-            de = min(ds + timedelta(days=window_days), end)
-            batch = safe_get_data(client.table("prediction_logs").select(
+        predictions = await _fetch_prediction_logs_window(
+            client,
+            cutoff,
+            select_fields=(
                 "id, symbol, strategy, ml_confidence, status, targets_hit, targets, "
                 "model_type, timeframe, created_at, highest_profit_pips, lowest_drawdown_pips, "
                 "stop_loss_pips, ml_entry_price, exit_price, exit_time, ml_direction, factors, resolution_reason"
-            ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).order("created_at", desc=True).limit(1000).execute())
-            if batch:
-                predictions.extend(batch)
-            cur = de
+            ),
+        )
         predictions = filter_market_closed_invalid_signals(predictions)
 
         snapshot_counts = {symbol: 0 for symbol in _TRACKED_STRATEGY_SYMBOLS}
         total_snapshots = 0
+        end = _utc_now()
         cur = cutoff
+        window_days = 1
         while cur < end:
             ds = cur.replace(hour=0, minute=0, second=0, microsecond=0)
             de = min(ds + timedelta(days=window_days), end)
@@ -3364,28 +3363,17 @@ async def get_model_detail_analytics(
             start_date = _as_utc(oldest_dt)
 
         end_date = _utc_now()
-        all_signals = []
-        current = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        while current < end_date:
-            day_start = current.replace(hour=0, minute=0, second=0, microsecond=0)
-            day_end = day_start + timedelta(days=1)
-
-            result = client.table("prediction_logs").select(
+        all_signals = await _fetch_prediction_logs_window(
+            client,
+            start_date,
+            select_fields=(
                 "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
                 "ml_target_price, ml_stop_price, model_type, strategy, status, "
                 "targets_hit, highest_profit_pips, lowest_drawdown_pips, "
                 "exit_price, exit_time, stop_loss_pips, targets, created_at, resolution_reason"
-            ).eq("symbol", symbol).gte(
-                "created_at", _utc_iso(day_start)
-            ).lt(
-                "created_at", _utc_iso(day_end)
-            ).order("created_at", desc=True).limit(1000).execute()
-
-            batch = safe_get_data(result)
-            if batch:
-                all_signals.extend(batch)
-            current = day_end
+            ),
+            symbol=symbol,
+        )
 
         if not all_signals:
             return _empty_payload(
@@ -3396,7 +3384,7 @@ async def get_model_detail_analytics(
             )
 
         prepared_signals = []
-        for sig in filter_market_closed_invalid_signals(all_signals):
+        for sig in collapse_smc_cadence_signals(filter_market_closed_invalid_signals(all_signals)):
             created_dt = _parse_datetime(sig.get("created_at")) or _utc_now()
             prepared_signals.append({
                 **sig,

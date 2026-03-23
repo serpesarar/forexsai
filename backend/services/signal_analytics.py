@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import json
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -9,6 +10,7 @@ TIMEFRAME_ORDER = ["5m", "15m", "30m", "1h", "4h", "1d"]
 VALID_TIMEFRAMES = set(TIMEFRAME_ORDER)
 MODEL_ORDER = ["ml", "ai_panel", "pulse1", "pulse2", "pulse3", "emel", "emel_inverse", "smc", "hybrid"]
 TP_LEVEL_ORDER = ("TP1", "TP2", "TP3", "TP4")
+SMC_CADENCE_MINUTES = {"5m": 5, "15m": 15, "30m": 30, "1h": 60, "4h": 240, "1d": 1440}
 
 
 def sort_timeframes(values: Iterable[str]) -> List[str]:
@@ -71,6 +73,55 @@ def is_market_closed_invalid_signal(sig: dict) -> bool:
 
 def filter_market_closed_invalid_signals(signals: Iterable[dict]) -> List[dict]:
     return [sig for sig in signals if not is_market_closed_invalid_signal(sig)]
+
+
+def timeframe_cadence_minutes(value: Optional[str]) -> Optional[int]:
+    normalized = normalize_timeframe(value)
+    if not normalized:
+        return None
+    return SMC_CADENCE_MINUTES.get(normalized)
+
+
+def parse_datetime(value: Any) -> Optional[datetime]:
+    if isinstance(value, datetime):
+        return value.astimezone(timezone.utc) if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed.astimezone(timezone.utc) if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def collapse_smc_cadence_signals(signals: Iterable[dict]) -> List[dict]:
+    signal_list = list(signals)
+    if not signal_list:
+        return []
+
+    keep_indexes = set(range(len(signal_list)))
+    ranked_rows = []
+    for index, sig in enumerate(signal_list):
+        if normalize_model_type(sig) != "smc":
+            continue
+        cadence_minutes = timeframe_cadence_minutes(sig.get("timeframe"))
+        created_dt = parse_datetime(sig.get("created_at"))
+        symbol = str(sig.get("symbol") or "").upper().strip()
+        if cadence_minutes is None or created_dt is None or not symbol:
+            continue
+        ranked_rows.append((created_dt, index, symbol, normalize_timeframe(sig.get("timeframe")), cadence_minutes))
+
+    ranked_rows.sort(reverse=True)
+    seen_buckets = set()
+    for created_dt, index, symbol, timeframe, cadence_minutes in ranked_rows:
+        bucket = int(created_dt.timestamp()) // (cadence_minutes * 60)
+        bucket_key = (symbol, timeframe, bucket)
+        if bucket_key in seen_buckets:
+            keep_indexes.discard(index)
+            continue
+        seen_buckets.add(bucket_key)
+
+    return [sig for index, sig in enumerate(signal_list) if index in keep_indexes]
 
 
 def coerce_float(value: Any, default: Optional[float] = None) -> Optional[float]:
