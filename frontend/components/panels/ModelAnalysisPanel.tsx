@@ -8,18 +8,14 @@
  * - Per-model, per-timeframe, per-symbol analysis
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
-  TrendingUp,
-  TrendingDown,
-  Clock,
   Target,
   Activity,
   ChevronDown,
   ChevronUp,
-  Filter,
   Layers,
   Brain,
   Zap,
@@ -27,9 +23,9 @@ import {
 } from "lucide-react";
 import { ModelPerformanceModal } from "./ModelPerformanceModal";
 import { getApiBase } from "../../lib/api/base";
+import { useRefreshAge } from "../../hooks/useRefreshAge";
 
 const API_BASE = getApiBase();
-const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -509,6 +505,7 @@ function TimeframeMatrix({
 
 export default function ModelAnalysisPanel() {
   const t = useModelTranslations();
+  const { refreshAge, markRefreshed } = useRefreshAge();
 
   const [selectedModel, setSelectedModel] = useState<string>("emel");
   const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>();
@@ -520,14 +517,15 @@ export default function ModelAnalysisPanel() {
   const [modalSymbol, setModalSymbol] = useState<string>("NDX.INDX");
 
   // Fetch models summary
-  const { data: modelsSummary, isLoading: summaryLoading } = useQuery({
+  const { data: modelsSummary, isLoading: summaryLoading, dataUpdatedAt: summaryUpdatedAt } = useQuery({
     queryKey: ["models-summary", days, selectedSymbol],
     queryFn: () => fetchModelsSummary(days, selectedSymbol),
     staleTime: 60000,
+    refetchInterval: 60000,
   });
 
   // Fetch matrix data (current cross-timeframe signals)
-  const { data: matrixData, isLoading: matrixLoading } = useQuery({
+  const { data: matrixData, isLoading: matrixLoading, dataUpdatedAt: matrixUpdatedAt } = useQuery({
     queryKey: ["signals-matrix", selectedModel],
     queryFn: async () => {
       const res = await fetch(`${API_BASE}/api/learning/signals/matrix?model=${selectedModel}`);
@@ -536,14 +534,23 @@ export default function ModelAnalysisPanel() {
       return data.matrix;
     },
     staleTime: 30000,
+    refetchInterval: 60000,
   });
 
   // Fetch detailed analysis for selected model (aggregated across all timeframes since matrix shows current state)
-  const { data: analysis, isLoading: analysisLoading } = useQuery({
+  const { data: analysis, isLoading: analysisLoading, dataUpdatedAt: analysisUpdatedAt } = useQuery({
     queryKey: ["model-analysis", selectedModel, selectedSymbol, undefined, days],
     queryFn: () => fetchModelAnalysis(selectedModel, selectedSymbol, undefined, days),
     staleTime: 60000,
+    refetchInterval: 60000,
   });
+
+  useEffect(() => {
+    const latestRefreshAt = Math.max(summaryUpdatedAt || 0, matrixUpdatedAt || 0, analysisUpdatedAt || 0);
+    if (latestRefreshAt > 0) {
+      markRefreshed(latestRefreshAt);
+    }
+  }, [summaryUpdatedAt, matrixUpdatedAt, analysisUpdatedAt, markRefreshed]);
 
   const isLoading = summaryLoading || analysisLoading;
   const matrixTimeframes = MODEL_TIMEFRAMES[selectedModel] || ["1h"];
@@ -564,6 +571,18 @@ export default function ModelAnalysisPanel() {
           </div>
 
           <div className="flex items-center gap-3">
+            <div
+              className="flex items-center gap-2 rounded-xl border px-3.5 py-2 text-[12px] font-mono font-bold tracking-wide"
+              style={{
+                background: "color-mix(in srgb, var(--accent-info) 12%, rgba(255,255,255,0.04))",
+                borderColor: "color-mix(in srgb, var(--accent-info) 35%, rgba(255,255,255,0.08))",
+                color: "var(--text-primary)",
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.02) inset, 0 8px 18px rgba(0,0,0,0.22)",
+              }}
+            >
+              <div className="w-2 h-2 rounded-full bg-success" style={{ boxShadow: "0 0 10px var(--accent-positive)" }} />
+              {refreshAge}
+            </div>
             {/* Period Selector */}
             <select
               value={days}

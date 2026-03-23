@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
+import { useRefreshAge } from "../../hooks/useRefreshAge";
 import { PanelHeader } from "../PanelHeader";
 import {
   ArrowUpIcon as TrendingUp,
@@ -95,9 +96,7 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const [data, setData] = useState<PulseMLData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [signalAge, setSignalAge] = useState<string>("0s");
-  const [signalTimestamp, setSignalTimestamp] = useState<Date | null>(new Date());
+  const { refreshAge: signalAge, markRefreshed } = useRefreshAge();
 
 
   const fetchData = useCallback(async (showLoading = false) => {
@@ -111,14 +110,7 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         setData(null);
       } else {
         setData(json);
-        setLastUpdate(new Date());
-        if (json.signal_timestamp) {
-          const ts = new Date(json.signal_timestamp);
-          console.log(`[Pulse2] signal_timestamp: ${json.signal_timestamp}, parsed: ${ts.toISOString()}`);
-          setSignalTimestamp(ts);
-        } else {
-          setSignalTimestamp(new Date());
-        }
+        markRefreshed();
       }
     } catch (e) {
       console.error("PULSE ML fetch error:", e);
@@ -127,41 +119,17 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
     } finally {
       if (showLoading) setLoading(false);
     }
-  }, [activeSymbol, timeframe]);
+  }, [activeSymbol, timeframe, markRefreshed]);
 
   // Fetch when symbol or timeframe changes
   useEffect(() => {
     fetchData(true);
-  }, [activeSymbol, timeframe]);
+  }, [fetchData]);
 
   useEffect(() => {
     const interval = setInterval(() => fetchData(false), 60000); // Background refresh without loading
     return () => clearInterval(interval);
   }, [fetchData]);
-
-  // Signal age timer - updates every second
-  useEffect(() => {
-    if (!signalTimestamp) return;
-    const tick = () => {
-      const now = Date.now();
-      const ts = signalTimestamp.getTime();
-      let diff = Math.floor((now - ts) / 1000);
-      
-      // Prevent negative values (clock skew or timezone issues)
-      if (diff < 0) diff = 0;
-      
-      if (diff < 60) {
-        setSignalAge(`${diff}s`);
-      } else {
-        const mins = Math.floor(diff / 60);
-        const secs = diff % 60;
-        setSignalAge(`${mins}m ${secs}s`);
-      }
-    };
-    tick();
-    const timer = setInterval(tick, 1000);
-    return () => clearInterval(timer);
-  }, [signalTimestamp]);
 
   // Listen for global refresh event from header button
   useEffect(() => {

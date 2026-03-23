@@ -13,10 +13,11 @@ import {
   TargetIcon,
   AggressiveIcon,
 } from "./ui/CustomIcons";
-import { fetchPredictionWithStrategy } from "../lib/api/prediction";
+import { fetchPredictionWithStrategy, fetchPredictionWithFactors } from "../lib/api/prediction";
 import { useI18nStore } from "../lib/i18n/store";
 import { useMLStrategyStore } from "../lib/store";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRefreshAge } from "../hooks/useRefreshAge";
 
 // Katman tabanlı yapılandırma
 type Layer = {
@@ -135,6 +136,7 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
   const queryClient = useQueryClient();
   const setPresetStrategy = useMLStrategyStore((s) => s.setPresetStrategy);
   const setCustomFactors = useMLStrategyStore((s) => s.setCustomFactors);
+  const { refreshAge, markRefreshed } = useRefreshAge();
 
   const applyKey = (applyToSymbols && applyToSymbols.length > 0) ? applyToSymbols.join(",") : "";
   const targetSymbols = useMemo(() => {
@@ -147,6 +149,33 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
   const [selectedStrategy, setSelectedStrategy] = useState<string>("balanced");
   const [liveConfidence, setLiveConfidence] = useState(baseConfidence);
   const [isLoading, setIsLoading] = useState(false);
+
+  const getEnabledFactors = useCallback((activeLayers: Layer[]) => {
+    return activeLayers
+      .filter((layer) => layer.enabled)
+      .flatMap((layer) => layer.factors);
+  }, []);
+
+  const refreshConfidence = useCallback(async (strategyId: string | undefined, nextLayers: Layer[]) => {
+    setIsLoading(true);
+    const effectiveStrategy = strategyId;
+
+    try {
+      const prediction = effectiveStrategy
+        ? await fetchPredictionWithStrategy(symbol, effectiveStrategy)
+        : await fetchPredictionWithFactors(symbol, getEnabledFactors(nextLayers));
+
+      setLiveConfidence(prediction.confidence);
+      onStrategyChange?.(effectiveStrategy || "custom", prediction.confidence);
+      markRefreshed();
+    } catch (err) {
+      console.error("Strategy prediction fetch failed:", err);
+      setLiveConfidence(baseConfidence);
+      onStrategyChange?.(effectiveStrategy || "custom", baseConfidence);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [symbol, getEnabledFactors, onStrategyChange, markRefreshed, baseConfidence]);
 
   // Strateji seçildiğinde katmanları güncelle ve backend'den veri çek
   const selectStrategy = useCallback(async (strategyId: string) => {
@@ -162,66 +191,48 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
     });
 
     setSelectedStrategy(strategyId);
-    setLayers(prev => prev.map(layer => ({
+    const nextLayers = LAYERS.map(layer => ({
       ...layer,
       enabled: strategy.enabledLayers.includes(layer.id)
-    })));
+    }));
+    setLayers(nextLayers);
 
-    // Immediately fetch new prediction with selected strategy
-    setIsLoading(true);
-    try {
-      const prediction = await fetchPredictionWithStrategy(symbol, strategyId);
-      setLiveConfidence(prediction.confidence);
-      onStrategyChange?.(strategyId, prediction.confidence);
-    } catch (err) {
-      console.error("Strategy prediction fetch failed:", err);
-      setLiveConfidence(baseConfidence);
-      onStrategyChange?.(strategyId, baseConfidence);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [targetSymbols, setPresetStrategy, queryClient, symbol, baseConfidence, onStrategyChange]);
+    await refreshConfidence(strategyId, nextLayers);
+  }, [targetSymbols, setPresetStrategy, queryClient, refreshConfidence]);
 
   // Initial fetch on mount
   useEffect(() => {
-    selectStrategy(selectedStrategy);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    void selectStrategy("balanced");
+  }, [selectStrategy]);
 
   // Backend'den gerçek confidence al
   const fetchWithStrategy = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const prediction = await fetchPredictionWithStrategy(symbol, selectedStrategy);
-      setLiveConfidence(prediction.confidence);
-      onStrategyChange?.(selectedStrategy, prediction.confidence);
-    } catch (err) {
-      console.error("Strategy prediction fetch failed:", err);
-      setLiveConfidence(baseConfidence);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [symbol, selectedStrategy, baseConfidence, onStrategyChange]);
+    await refreshConfidence(selectedStrategy || undefined, layers);
+  }, [refreshConfidence, selectedStrategy, layers]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      void refreshConfidence(selectedStrategy || undefined, layers);
+    }, 60000);
+
+    return () => window.clearInterval(interval);
+  }, [refreshConfidence, selectedStrategy, layers]);
 
   // Katman toggle
   const toggleLayer = (layerId: string) => {
-    setLayers(prev => {
-      const next = prev.map(l => (l.id === layerId ? { ...l, enabled: !l.enabled } : l));
+    const next = layers.map((layer) => (layer.id === layerId ? { ...layer, enabled: !layer.enabled } : layer));
+    const enabledFactors = getEnabledFactors(next);
 
-      // Custom mode: derive enabled factors from enabled layers
-      const enabledFactors = next
-        .filter(l => l.enabled)
-        .flatMap(l => l.factors);
+    setLayers(next);
 
-      targetSymbols.forEach((sym) => setCustomFactors(sym, enabledFactors));
+    targetSymbols.forEach((sym) => setCustomFactors(sym, enabledFactors));
 
-      // Force refetch of prediction queries for all affected symbols
-      targetSymbols.forEach((sym) => {
-        queryClient.invalidateQueries({ queryKey: ["prediction", sym] });
-      });
-      return next;
+    targetSymbols.forEach((sym) => {
+      queryClient.invalidateQueries({ queryKey: ["prediction", sym] });
     });
+
     setSelectedStrategy(""); // Custom mode
+    void refreshConfidence(undefined, next);
   };
 
   const resetToBalanced = () => {
@@ -262,6 +273,18 @@ export default function MLFactorPanel({ baseConfidence, symbol = "NDX.INDX", app
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <div
+              className="flex items-center gap-2 rounded-xl border px-3 py-1.5 text-[11px] font-mono font-bold tracking-wide"
+              style={{
+                background: "color-mix(in srgb, var(--accent-info) 12%, rgba(255,255,255,0.04))",
+                borderColor: "color-mix(in srgb, var(--accent-info) 35%, rgba(255,255,255,0.08))",
+                color: "var(--text-primary)",
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.02) inset, 0 8px 18px rgba(0,0,0,0.18)",
+              }}
+            >
+              <div className="w-2 h-2 rounded-full bg-success" style={{ boxShadow: "0 0 10px var(--accent-positive)" }} />
+              {refreshAge}
+            </div>
             <button
               onClick={fetchWithStrategy}
               disabled={isLoading}

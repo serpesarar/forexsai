@@ -222,14 +222,15 @@ export function PanelHeader({
         {/* Signal Age Badge */}
         {signalAge && (
           <div
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-mono font-semibold"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-[12px] font-mono font-bold tracking-wide"
             style={{
-              background: "var(--bg-input)",
-              border: "1px solid var(--border-subtle)",
-              color: "var(--text-muted)",
+              background: "color-mix(in srgb, var(--accent-info) 12%, var(--bg-input))",
+              border: "1px solid color-mix(in srgb, var(--accent-info) 35%, var(--border-subtle))",
+              color: "var(--text-primary)",
+              boxShadow: "0 0 0 1px rgba(255,255,255,0.02) inset, 0 8px 18px rgba(0,0,0,0.22)",
             }}
           >
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--accent-positive)", animation: "pulse 2s infinite" }} />
+            <div className="w-2 h-2 rounded-full" style={{ background: "var(--accent-positive)", animation: "pulse 2s infinite", boxShadow: "0 0 10px var(--accent-positive)" }} />
             {signalAge}
           </div>
         )}
@@ -327,14 +328,15 @@ export function PanelHeaderCompact({
         {/* Signal Age Badge */}
         {signalAge && (
           <div
-            className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-mono font-semibold"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold tracking-wide"
             style={{
-              background: "var(--bg-input)",
-              border: "1px solid var(--border-subtle)",
-              color: "var(--text-muted)",
+              background: "color-mix(in srgb, var(--accent-info) 12%, var(--bg-input))",
+              border: "1px solid color-mix(in srgb, var(--accent-info) 35%, var(--border-subtle))",
+              color: "var(--text-primary)",
+              boxShadow: "0 0 0 1px rgba(255,255,255,0.02) inset, 0 6px 14px rgba(0,0,0,0.2)",
             }}
           >
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--accent-positive)", animation: "pulse 2s infinite" }} />
+            <div className="w-2 h-2 rounded-full" style={{ background: "var(--accent-positive)", animation: "pulse 2s infinite", boxShadow: "0 0 10px var(--accent-positive)" }} />
             {signalAge}
           </div>
         )}

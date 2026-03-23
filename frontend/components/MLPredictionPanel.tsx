@@ -1,14 +1,11 @@
 "use client";
 
-import { usePrediction } from "../lib/api/prediction";
 import { TrendingUp, TrendingDown, Minus, Target, AlertTriangle, Activity, RefreshCw, HelpCircle, X, Zap } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useI18nStore } from "../lib/i18n/store";
 import { useMLStrategyStore } from "../lib/store";
 import { usePredictionWithConfig } from "../lib/api/prediction";
-
-// Golden Ratio
-const PHI = 1.618;
+import { useRefreshAge } from "../hooks/useRefreshAge";
 
 // Reasoning translation map - Turkish to English
 const REASONING_MAP: Record<string, string> = {
@@ -130,10 +127,17 @@ function PriceTarget({ label, price, pips, type }: { label: string; price: numbe
 
 export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
   const config = useMLStrategyStore((s) => s.getConfig(symbol));
-  const { data, isLoading, isFetching, error, refetch } = usePredictionWithConfig(symbol, config);
+  const { data, isLoading, isFetching, error, refetch, dataUpdatedAt } = usePredictionWithConfig(symbol, config);
   const [showGuide, setShowGuide] = useState(false);
   const t = useI18nStore((s) => s.t);
   const locale = useI18nStore((s) => s.locale);
+  const { refreshAge, markRefreshed } = useRefreshAge();
+
+  useEffect(() => {
+    if (dataUpdatedAt > 0) {
+      markRefreshed(dataUpdatedAt);
+    }
+  }, [dataUpdatedAt, markRefreshed]);
 
   return (
     <>
@@ -169,7 +173,18 @@ export default function MLPredictionPanel({ symbol, symbolLabel }: Props) {
               <h3 className="mt-1 text-xl font-bold">{symbolLabel}</h3>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 rounded-xl border px-3.5 py-2 text-[12px] font-mono font-bold tracking-wide"
+              style={{
+                background: "color-mix(in srgb, var(--accent-info) 12%, rgba(255,255,255,0.04))",
+                borderColor: "color-mix(in srgb, var(--accent-info) 35%, rgba(255,255,255,0.08))",
+                color: "var(--text-primary)",
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.02) inset, 0 8px 18px rgba(0,0,0,0.22)",
+              }}
+            >
+              <div className="w-2 h-2 rounded-full bg-success" style={{ boxShadow: "0 0 10px var(--accent-positive)" }} />
+              {refreshAge}
+            </div>
             <button
               onClick={() => setShowGuide(true)}
               className="p-2 rounded-full hover:bg-white/10 transition"
