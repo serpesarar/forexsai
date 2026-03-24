@@ -21,6 +21,10 @@ logger = logging.getLogger(__name__)
 _init_error: Optional[str] = None
 _initialized: bool = False
 
+
+def _resolve_supabase_key() -> Optional[str]:
+    return os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY")
+
 # ── Retry config ──────────────────────────────────────────────────────────────
 MAX_RETRIES = 3
 RETRY_BASE_WAIT = 1.5          # seconds
@@ -58,9 +62,12 @@ def _retry_request(fn, label: str = "supabase", client: "SupabaseRestClient | No
                 if client:
                     client.record_error()
                 raise
-        except httpx.HTTPStatusError:
+        except httpx.HTTPStatusError as exc:
             if client:
                 client.record_error()
+                status_code = exc.response.status_code if exc.response is not None else None
+                if status_code in {401, 403}:
+                    client.mark_auth_failed(status_code)
             raise  # 4xx client errors — don't retry
     raise last_exc  # pragma: no cover
 
@@ -93,6 +100,8 @@ class SupabaseRestClient:
             "last_request_at": 0.0,
             "last_error_at": 0.0,
         }
+        self._auth_failed = False
+        self._auth_error_message: Optional[str] = None
 
     def record_request(self):
         self._stats["total_requests"] += 1
@@ -104,6 +113,22 @@ class SupabaseRestClient:
 
     def record_retry(self):
         self._stats["total_retries"] += 1
+
+    def mark_auth_failed(self, status_code: Optional[int] = None):
+        if self._auth_failed:
+            return
+        self._auth_failed = True
+        self._auth_error_message = (
+            f"Supabase authentication failed with HTTP {status_code or 'unknown'}. "
+            "Check SUPABASE_SERVICE_ROLE_KEY or SUPABASE_KEY."
+        )
+        logger.error(self._auth_error_message)
+
+    def get_auth_error(self) -> Optional[str]:
+        return self._auth_error_message
+
+    def is_auth_failed(self) -> bool:
+        return self._auth_failed
 
     def get_stats(self) -> Dict[str, Any]:
         """Return connection pool stats for observability."""
@@ -251,6 +276,8 @@ class TableQuery:
         return url
 
     def execute(self) -> Dict[str, Any]:
+        if self.client.is_auth_failed():
+            return {"data": None, "error": self.client.get_auth_error()}
         try:
             resp = _retry_request(
                 lambda: self.client.http.get(self._build_url()),
@@ -264,6 +291,8 @@ class TableQuery:
 
     def insert(self, data: Dict[str, Any]) -> Dict[str, Any]:
         url = f"{self.client.url}/rest/v1/{self.table_name}"
+        if self.client.is_auth_failed():
+            return {"data": None, "error": self.client.get_auth_error()}
         try:
             resp = _retry_request(
                 lambda: self.client.http.post(url, json=data),
@@ -279,8 +308,14 @@ class TableQuery:
         """Insert a row, returning {\"data\":None,\"duplicate\":True} on unique-constraint violation instead of raising."""
         url = f"{self.client.url}/rest/v1/{self.table_name}"
         headers = {"Prefer": "return=representation"}
+        if self.client.is_auth_failed():
+            return {"data": None, "error": self.client.get_auth_error(), "duplicate": False}
         try:
             resp = self.client.http.post(url, json=data, headers=headers)
+            if resp.status_code in {401, 403}:
+                self.client.record_error()
+                self.client.mark_auth_failed(resp.status_code)
+                return {"data": None, "error": self.client.get_auth_error(), "duplicate": False}
             if resp.status_code == 409 or (resp.status_code == 400 and "23505" in resp.text):
                 logger.debug(f"insert_ignore: duplicate detected in {self.table_name}")
                 return {"data": None, "error": None, "duplicate": True}
@@ -301,6 +336,8 @@ class TableQuery:
             url += f"?on_conflict={on_conflict}"
         headers = {"Prefer": "return=representation,resolution=merge-duplicates"}
         payload = data if isinstance(data, list) else [data]
+        if self.client.is_auth_failed():
+            return {"data": None, "error": self.client.get_auth_error()}
         try:
             resp = _retry_request(
                 lambda: self.client.http.post(url, json=payload, headers=headers),
@@ -313,6 +350,8 @@ class TableQuery:
             return {"data": None, "error": str(e)}
 
     def update(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        if self.client.is_auth_failed():
+            return {"data": None, "error": self.client.get_auth_error()}
         try:
             resp = _retry_request(
                 lambda: self.client.http.patch(self._build_url(), json=data),
@@ -325,6 +364,8 @@ class TableQuery:
             return {"data": None, "error": str(e)}
 
     def delete(self) -> Dict[str, Any]:
+        if self.client.is_auth_failed():
+            return {"data": None, "error": self.client.get_auth_error()}
         try:
             resp = _retry_request(
                 lambda: self.client.http.delete(self._build_url()),
@@ -351,10 +392,15 @@ def get_supabase_client() -> Optional[SupabaseRestClient]:
         return _client
 
     url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_KEY")
+    key = _resolve_supabase_key()
 
     if not url or not key:
-        _init_error = f"Missing env vars: SUPABASE_URL={'set' if url else 'not set'}, SUPABASE_KEY={'set' if key else 'not set'}"
+        _init_error = (
+            "Missing env vars: "
+            f"SUPABASE_URL={'set' if url else 'not set'}, "
+            f"SUPABASE_SERVICE_ROLE_KEY={'set' if os.environ.get('SUPABASE_SERVICE_ROLE_KEY') else 'not set'}, "
+            f"SUPABASE_KEY={'set' if os.environ.get('SUPABASE_KEY') else 'not set'}"
+        )
         logger.warning(_init_error)
         _initialized = True
         return None
@@ -383,3 +429,17 @@ def is_db_available() -> bool:
     """Check if database is configured and available."""
     client = get_supabase_client()
     return client is not None
+
+
+def get_auth_error() -> Optional[str]:
+    client = get_supabase_client()
+    if client is None:
+        return None
+    return client.get_auth_error()
+
+
+def is_auth_failed() -> bool:
+    client = get_supabase_client()
+    if client is None:
+        return False
+    return client.is_auth_failed()

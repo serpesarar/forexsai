@@ -1341,7 +1341,7 @@ async def fix_ml_correct_in_database():
     try:
         # Use direct RPC call for bulk update
         url = os.environ.get("SUPABASE_URL", "").rstrip('/')
-        key = os.environ.get("SUPABASE_KEY", "")
+        key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY", "")
         
         if not url or not key:
             return {"error": "Supabase credentials not configured"}
@@ -1404,7 +1404,7 @@ async def reset_ui_stats(
     
     try:
         url = os.environ.get("SUPABASE_URL", "").rstrip('/')
-        key = os.environ.get("SUPABASE_KEY", "")
+        key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY", "")
         
         if not url or not key:
             return {"error": "Supabase credentials not configured"}

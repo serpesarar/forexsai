@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     oil_baltic_sync_autostart: bool = Field(default=True, validation_alias="OIL_BALTIC_SYNC_AUTOSTART")
     oil_baltic_sync_interval_seconds: int = Field(default=3600, validation_alias="OIL_BALTIC_SYNC_INTERVAL_SECONDS")
     supabase_url: str | None = Field(default=None, validation_alias="SUPABASE_URL")
-    supabase_key: str | None = Field(default=None, validation_alias="SUPABASE_KEY")
+    supabase_key: str | None = Field(default=None, validation_alias=AliasChoices("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_KEY"))
     resend_api_key: str | None = Field(default=None, validation_alias="RESEND_API_KEY")
     turnstile_secret_key: str | None = Field(default=None, validation_alias="TURNSTILE_SECRET_KEY")
     ob_fractal_period: int = Field(default=2, validation_alias="OB_FRACTAL_PERIOD")

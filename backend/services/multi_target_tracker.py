@@ -41,7 +41,7 @@ class MultiTargetTracker:
         if self._supabase is None:
             from config import settings
             from supabase import create_client
-            self._supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+            self._supabase = create_client(settings.supabase_url, settings.supabase_key)
         return self._supabase
     
     def calculate_targets(self, symbol: str, direction: str, entry_price: float) -> TargetConfig:

@@ -6,7 +6,7 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from database.supabase_client import get_supabase_client
+from database.supabase_client import get_auth_error, get_supabase_client, is_auth_failed
 
 logger = logging.getLogger(__name__)
 
@@ -248,6 +248,8 @@ def get_tanker_state(mmsi: int) -> Optional[Dict[str, Any]]:
     client = get_supabase_client()
     if client is None:
         return None
+    if is_auth_failed():
+        return None
     result = client.table("tanker_state").select("*").eq("mmsi", mmsi).limit(1).execute()
     return _safe_row(result)
 
@@ -256,6 +258,8 @@ def persist_tanker_observation(observation: Dict[str, Any]) -> Dict[str, Any]:
     client = get_supabase_client()
     if client is None:
         return {"ok": False, "error": "supabase_unavailable"}
+    if is_auth_failed():
+        return {"ok": False, "error": get_auth_error() or "supabase_auth_failed"}
 
     try:
         mmsi = int(observation["mmsi"])
@@ -319,8 +323,11 @@ def persist_tanker_observation(observation: Dict[str, Any]) -> Dict[str, Any]:
             "updated_at": _now().isoformat(),
         }
 
-        client.table("tanker_positions").insert_ignore(position_row)
-        client.table("tanker_state").upsert(state_row, on_conflict="mmsi")
+        position_result = client.table("tanker_positions").insert_ignore(position_row)
+        state_result = client.table("tanker_state").upsert(state_row, on_conflict="mmsi")
+        write_error = position_result.get("error") or state_result.get("error")
+        if write_error:
+            return {"ok": False, "error": write_error}
         return {
             "ok": True,
             "region": region,
@@ -337,6 +344,8 @@ def persist_tanker_observation(observation: Dict[str, Any]) -> Dict[str, Any]:
 def refresh_chokepoint_metrics() -> List[Dict[str, Any]]:
     client = get_supabase_client()
     if client is None:
+        return []
+    if is_auth_failed():
         return []
 
     result = client.table("tanker_state").select("region,status,speed_knots,estimated_barrels,movement_bias,last_seen_at").execute()
@@ -398,7 +407,9 @@ def refresh_chokepoint_metrics() -> List[Dict[str, Any]]:
                 "anchored_vessels": anchored_vessels,
             },
         }
-        client.table("chokepoint_metrics").upsert(row, on_conflict="region")
+        upsert_result = client.table("chokepoint_metrics").upsert(row, on_conflict="region")
+        if upsert_result.get("error"):
+            return aggregated
         aggregated.append(row)
 
     return aggregated
@@ -407,6 +418,8 @@ def refresh_chokepoint_metrics() -> List[Dict[str, Any]]:
 def get_chokepoint_metrics() -> Dict[str, Dict[str, Any]]:
     client = get_supabase_client()
     if client is None:
+        return {}
+    if is_auth_failed():
         return {}
     result = client.table("chokepoint_metrics").select("*").execute()
     rows = _safe_rows(result)

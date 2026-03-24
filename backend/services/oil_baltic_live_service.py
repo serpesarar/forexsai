@@ -9,6 +9,7 @@ from services.data_fetcher import fetch_eod_candles, fetch_intraday_candles, fet
 from services.market_regime_service import detect_regime
 from services.oil_analysis_service import generate_oil_analysis
 from services.oil_maritime_data_service import get_chokepoint_metrics, refresh_chokepoint_metrics
+from database.supabase_client import get_auth_error, is_auth_failed
 
 CHOKEPOINT_LAYOUT = {
     "strait_of_hormuz": {"id": "hormuz", "label": "Strait of Hormuz", "x": 75, "y": 38, "lat": 26.5, "lon": 56.5},
@@ -261,7 +262,7 @@ async def build_oil_baltic_intelligence() -> Dict[str, Any]:
     td3c_score = td3c_live_score if td3c_live_score is not None else td3c_proxy
 
     metrics_map = get_chokepoint_metrics()
-    if not metrics_map:
+    if not metrics_map and not is_auth_failed():
         refresh_chokepoint_metrics()
         metrics_map = get_chokepoint_metrics()
 
@@ -347,7 +348,8 @@ async def build_oil_baltic_intelligence() -> Dict[str, Any]:
 
     baltic_status = "live" if bdti_row or bcti_row else "proxy"
     td3c_status = "live" if td3c_row else "proxy"
-    ais_status = "live" if metrics_map else "planned"
+    ais_status = "unavailable" if is_auth_failed() else ("live" if metrics_map else "planned")
+    ais_note = get_auth_error() or "Collector needs AISSTREAM_API_KEY and database cache access."
 
     terminal_log = [
         f"[{generated_at[11:19]}] WTI {current_price:.2f} | 1D {change_1d:+.2f}% | 5D {change_5d:+.2f}%",
@@ -429,7 +431,7 @@ async def build_oil_baltic_intelligence() -> Dict[str, Any]:
             {"name": "EIA inventories", "status": "live" if eia else "partial", "mode": "EOD economic calendar", "note": "Inventory surprise feeds the physical demand layer when present."},
             {"name": "Baltic indices", "status": baltic_status, "mode": "public web/cache", "note": "BDTI/BCTI sync from public source when available, otherwise cached or fallback-normalized."},
             {"name": "TD3C route", "status": td3c_status, "mode": "configured source/cache", "note": "TD3C stays optional until a stable free source is configured."},
-            {"name": "AIS floating storage", "status": ais_status, "mode": "aisstream", "note": "Chokepoint metrics are derived from tanker observations when collector is running."},
+            {"name": "AIS floating storage", "status": "live" if metrics_map else ("error" if is_auth_failed() else "planned"), "mode": "aisstream", "note": ais_note if is_auth_failed() else "Anchorage congestion upgrades the storage layer when collector data is present."},
         ],
         "algorithm_notes": [
             "The panel now reads Baltic index cache and chokepoint metrics from Supabase when available.",

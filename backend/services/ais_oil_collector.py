@@ -112,6 +112,12 @@ class AISOilCollector:
         result = persist_tanker_observation(normalized)
         if result.get("ok"):
             refresh_chokepoint_metrics()
+            return
+
+        error_text = str(result.get("error") or "")
+        if "authentication failed" in error_text.lower() or "supabase_auth_failed" in error_text.lower():
+            logger.error("AIS collector stopping because Supabase authentication failed")
+            self.running = False
 
     async def run_forever(self) -> None:
         if not self.api_key:

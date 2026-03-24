@@ -261,10 +261,10 @@ async def health_liveness():
 async def health_readiness():
     """Readiness probe — checks DB connectivity with a 2s timeout.
     Returns 503 if DB is unreachable so load balancer stops sending traffic."""
-    checks = {"db": False, "db_latency_ms": None}
+    checks = {"db": False, "db_latency_ms": None, "degraded": False}
 
     try:
-        from database.supabase_client import get_supabase_client
+        from database.supabase_client import get_auth_error, get_supabase_client, is_auth_failed
         client = get_supabase_client()
         if client:
             start = time.time()
@@ -272,10 +272,17 @@ async def health_readiness():
             latency = (time.time() - start) * 1000
             checks["db"] = result.get("error") is None
             checks["db_latency_ms"] = round(latency, 1)
+            if is_auth_failed():
+                checks["degraded"] = True
+                checks["db_auth_error"] = get_auth_error()
+                checks["db"] = False
+        elif is_auth_failed():
+            checks["degraded"] = True
+            checks["db_auth_error"] = get_auth_error()
     except Exception as e:
         checks["db_error"] = str(e)[:100]
 
-    all_ok = checks["db"]
+    all_ok = checks["db"] or checks["degraded"]
     status_code = 200 if all_ok else 503
 
     from fastapi.responses import JSONResponse
@@ -283,7 +290,7 @@ async def health_readiness():
         status_code=status_code,
         content={
             "ok": all_ok,
-            "status": "ready" if all_ok else "not_ready",
+            "status": "degraded_ready" if checks["degraded"] else ("ready" if all_ok else "not_ready"),
             "checks": checks,
             "uptime_seconds": round(time.time() - _APP_START_TIME, 1),
         },
