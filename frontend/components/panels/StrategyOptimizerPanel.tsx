@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { fetcher } from "../../lib/api";
 import {
   Cpu,
   Shield,
@@ -30,8 +31,6 @@ import {
 import { useFullscreen } from "../../hooks/useFullscreen";
 import { PanelHeaderCompact } from "../PanelHeader";
 import styles from "./strategy-optimizer.module.css";
-
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 // ── Theme-aware Color Palette (CSS Variables) ───────────────────────────────
 const P = {
@@ -433,9 +432,7 @@ function SymbolRiskCard({ data, strategyScores }: { data: SymbolData; strategySc
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function fetchOptimizer(days: number): Promise<OptimizerResponse> {
-  const res = await fetch(`${API_BASE}/api/optimizer/run?days=${days}`);
-  if (!res.ok) throw new Error("Failed to fetch optimizer data");
-  return res.json();
+  return fetcher<OptimizerResponse>(`/api/optimizer/run?days=${days}`);
 }
 
 export default function StrategyOptimizerPanel() {

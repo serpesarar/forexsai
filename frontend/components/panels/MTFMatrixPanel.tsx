@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { fetcher } from "../../lib/api";
 import { PanelHeader } from "../PanelHeader";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
@@ -13,8 +14,6 @@ import {
   CloseIcon as XCircle,
 } from "../ui/CustomIcons";
 import { LayoutGrid } from "lucide-react";
-
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 const P = { bg: "var(--bg-primary)", card: "var(--bg-card)", surface: "var(--bg-surface)", border: "var(--border-subtle)", text: "var(--text-primary)", muted: "var(--text-muted)", green: "var(--accent-positive)", red: "var(--accent-negative)", warn: "var(--accent-warning)", accent: "var(--accent-info)" };
 
@@ -96,8 +95,7 @@ export default function MTFMatrixPanel() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/api/mtf/analysis?symbol=${symbol}`);
-      const json: MTFData = await res.json();
+      const json = await fetcher<MTFData>(`/api/mtf/analysis?symbol=${symbol}`);
       setData(json);
       if (json.success) setLastUpdate(new Date());
     } catch (e) {
