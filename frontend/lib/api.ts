@@ -3,27 +3,14 @@ import { getApiBase } from "./api/base";
 
 const API_BASE = getApiBase();
 
-type FetcherOptions = RequestInit & {
-  timeoutMs?: number;
-};
-
-export function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException
-    ? error.name === "AbortError"
-    : error instanceof Error && error.name === "AbortError";
-}
-
-export async function fetcher<T>(endpoint: string, options?: FetcherOptions): Promise<T> {
+export async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const controller = new AbortController();
-  const timeoutMs = options?.timeoutMs ?? 45000;
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  const { timeoutMs: _timeoutMs, ...requestOptions } = options || {};
+  const timeout = setTimeout(() => controller.abort(), 15000);
 
   try {
     const response = await fetch(`${API_BASE}${endpoint}`, {
       headers: { "Content-Type": "application/json" },
-      ...requestOptions,
+      ...options,
       signal: controller.signal,
     });
     if (!response.ok) {
@@ -31,11 +18,6 @@ export async function fetcher<T>(endpoint: string, options?: FetcherOptions): Pr
       throw new Error(message || "Request failed");
     }
     return response.json() as Promise<T>;
-  } catch (error) {
-    if (isAbortError(error)) {
-      throw new Error(`Request timed out after ${Math.round(timeoutMs / 1000)}s`);
-    }
-    throw error;
   } finally {
     clearTimeout(timeout);
   }

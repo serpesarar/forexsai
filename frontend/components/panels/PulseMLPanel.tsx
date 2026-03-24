@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { fetcher } from "../../lib/api";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useRefreshAge } from "../../hooks/useRefreshAge";
 import { PanelHeader } from "../PanelHeader";
@@ -22,6 +21,7 @@ import {
   MountainIcon as Mountain,
 } from "../ui/CustomIcons";
 import { Brain } from "lucide-react";
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 
 interface ScoreBreakdown {
@@ -102,7 +102,8 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
     try {
       if (showLoading) setLoading(true);
       setError(null);
-      const json = await fetcher<PulseMLData & { error?: string }>(`/api/panel/pulse-ml/${activeSymbol}?timeframe=${timeframe}`, { timeoutMs: 45000 });
+      const res = await fetch(`${API_BASE}/api/panel/pulse-ml/${activeSymbol}?timeframe=${timeframe}`);
+      const json = await res.json();
       if (json.error) {
         setError(json.error);
         setData(null);
@@ -112,7 +113,7 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       }
     } catch (e) {
       console.error("PULSE ML fetch error:", e);
-      setError(e instanceof Error ? e.message : "fetch_error");
+      setError("fetch_error");
       setData(null);
     } finally {
       if (showLoading) setLoading(false);

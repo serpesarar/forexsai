@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { fetcher } from "../../lib/api";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useRefreshAge } from "../../hooks/useRefreshAge";
 import { PanelHeaderCompact } from "../PanelHeader";
@@ -23,6 +22,7 @@ import {
   MountainIcon as Mountain,
   TargetIcon as Crosshair,
 } from "../ui/CustomIcons";
+const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 const P = { bg: "var(--bg-primary)", card: "var(--bg-card)", surface: "var(--bg-surface)", border: "var(--border-subtle)", text: "var(--text-primary)", muted: "var(--text-muted)", green: "var(--accent-positive)", red: "var(--accent-negative)", warn: "var(--accent-warning)", accent: "var(--accent-info)", cyan: "var(--accent-info)", gold: "var(--accent-warning)" };
 
@@ -108,7 +108,8 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
     try {
       if (showLoading) setLoading(true);
       setError(null);
-      const json = await fetcher<PulseV3Data & { error?: string }>(`/api/panel/pulse-v3/${activeSymbol}`, { timeoutMs: 45000 });
+      const res = await fetch(`${API_BASE}/api/panel/pulse-v3/${activeSymbol}`);
+      const json = await res.json();
       if (json.error) {
         setError(json.error);
         setData(null);
@@ -118,7 +119,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       }
     } catch (e) {
       console.error("PULSE V3 fetch error:", e);
-      setError(e instanceof Error ? e.message : "fetch_error");
+      setError("fetch_error");
       setData(null);
     } finally {
       if (showLoading) setLoading(false);
