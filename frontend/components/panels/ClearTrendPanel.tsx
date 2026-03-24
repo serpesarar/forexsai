@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getApiBase } from "../../lib/api/base";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
@@ -15,7 +16,7 @@ import {
 import TrendChannelChart from "./TrendChannelChart";
 import PanelHeader from "../PanelHeader";
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 interface LevelData {
   type: "resistance" | "current" | "support";

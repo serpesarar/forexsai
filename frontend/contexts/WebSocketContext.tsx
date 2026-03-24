@@ -1,8 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useCallback, useEffect, useRef, useState } from "react";
-
-const WS_BASE = "wss://upbeat-flow-production.up.railway.app";
+import { buildWebSocketUrl } from "../lib/api/base";
 
 // Aggressive reconnection for real-time data
 const RECONNECT_BASE_MS = 500; // Start with 500ms (was 2000ms)
@@ -148,8 +147,7 @@ export function WebSocketProvider({ children }: Props) {
     cleanup();
     setStatus("connecting");
 
-    // Connect to /ws/all to receive updates for all symbols in one connection
-    const url = `${WS_BASE}/ws/all`;
+    const url = buildWebSocketUrl("/ws/all");
 
     try {
       const ws = new WebSocket(url);

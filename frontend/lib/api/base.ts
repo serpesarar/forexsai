@@ -40,6 +40,10 @@ export function getApiBase(): string {
     return DEVELOPMENT_API_BASE;
   }
 
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return trimTrailingSlash(window.location.origin);
+  }
+
   return FALLBACK_API_BASE;
 }
 

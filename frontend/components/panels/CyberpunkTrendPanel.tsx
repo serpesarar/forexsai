@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getApiBase } from "../../lib/api/base";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
   LoadingIcon,
@@ -29,7 +30,7 @@ import TrendChannelChart from "./TrendChannelChart";
 import { useFullscreen } from "../../hooks/useFullscreen";
 import { Cpu } from "lucide-react";
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 // ── Theme-aware Color Palette (CSS Variables) ───────────────────────────────
 const P = {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { getApiBase } from "../../lib/api/base";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useRefreshAge } from "../../hooks/useRefreshAge";
 import { PanelHeaderCompact } from "../PanelHeader";
@@ -22,7 +23,7 @@ import {
   MountainIcon as Mountain,
   TargetIcon as Crosshair,
 } from "../ui/CustomIcons";
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 const P = { bg: "var(--bg-primary)", card: "var(--bg-card)", surface: "var(--bg-surface)", border: "var(--border-subtle)", text: "var(--text-primary)", muted: "var(--text-muted)", green: "var(--accent-positive)", red: "var(--accent-negative)", warn: "var(--accent-warning)", accent: "var(--accent-info)", cyan: "var(--accent-info)", gold: "var(--accent-warning)" };
 

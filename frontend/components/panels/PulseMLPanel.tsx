@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { getApiBase } from "../../lib/api/base";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useRefreshAge } from "../../hooks/useRefreshAge";
 import { PanelHeader } from "../PanelHeader";
@@ -21,7 +22,7 @@ import {
   MountainIcon as Mountain,
 } from "../ui/CustomIcons";
 import { Brain } from "lucide-react";
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 
 interface ScoreBreakdown {

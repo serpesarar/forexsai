@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getApiBase } from "../../lib/api/base";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
@@ -16,7 +17,7 @@ import {
 import { LineChart } from "lucide-react";
 import PanelHeader from "../PanelHeader";
 import TrendChannelChart from "./TrendChannelChart";
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 const P = {
   bg: "var(--bg-primary)",

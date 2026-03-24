@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { getApiBase } from "../../lib/api/base";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useRefreshAge } from "../../hooks/useRefreshAge";
 import { PanelHeader } from "../PanelHeader";
@@ -25,7 +26,7 @@ import {
 import { EmelIcon, PulseIcon, SignalsIcon } from "../ui/CustomIcons";
 import { ShieldCheck } from "lucide-react";
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 interface CheckItem {
   id: number; name: string; subtitle: string;
