@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import re
 from datetime import datetime, timedelta, timezone
@@ -113,6 +114,15 @@ def _table_value(frame: pd.DataFrame) -> Optional[Dict[str, Any]]:
     }
 
 
+def _extract_first_table_value(html: str) -> Optional[Dict[str, Any]]:
+    tables = pd.read_html(StringIO(html))
+    for table in tables:
+        parsed = _table_value(table)
+        if parsed and parsed.get("value") is not None:
+            return parsed
+    return None
+
+
 async def _fetch_html(url: str) -> str:
     async with httpx.AsyncClient(timeout=15.0, headers={"User-Agent": "Mozilla/5.0 ForexSAI Baltic Collector"}) as client:
         response = await client.get(url)
@@ -126,19 +136,17 @@ async def _fetch_from_stockq(index_type: str) -> Optional[Dict[str, Any]]:
         return None
     try:
         html = await _fetch_html(url)
-        tables = pd.read_html(StringIO(html))
-        for table in tables:
-            parsed = _table_value(table)
-            if parsed and parsed.get("value") is not None:
-                return {
-                    "index_type": index_type,
-                    "source": "stockq",
-                    **parsed,
-                    "fetched_at": _now().isoformat(),
-                    "status": "live",
-                    "note": "Parsed from StockQ public tanker index page.",
-                    "raw_payload": {"url": url},
-                }
+        parsed = await asyncio.to_thread(_extract_first_table_value, html)
+        if parsed and parsed.get("value") is not None:
+            return {
+                "index_type": index_type,
+                "source": "stockq",
+                **parsed,
+                "fetched_at": _now().isoformat(),
+                "status": "live",
+                "note": "Parsed from StockQ public tanker index page.",
+                "raw_payload": {"url": url},
+            }
     except Exception as exc:
         logger.warning("StockQ fetch failed for %s: %s", index_type, exc)
     return None
@@ -148,7 +156,7 @@ async def _fetch_from_manual_url(index_type: str, url: str) -> Optional[Dict[str
     try:
         html = await _fetch_html(url)
         try:
-            payload = httpx.Response(200, text=html).json()
+            payload = json.loads(html)
         except Exception:
             payload = None
         if isinstance(payload, dict):
@@ -173,19 +181,17 @@ async def _fetch_from_manual_url(index_type: str, url: str) -> Optional[Dict[str
                     "note": "Fetched from configured manual Baltic source.",
                     "raw_payload": payload,
                 }
-        tables = pd.read_html(StringIO(html))
-        for table in tables:
-            parsed = _table_value(table)
-            if parsed and parsed.get("value") is not None:
-                return {
-                    "index_type": index_type,
-                    "source": url,
-                    **parsed,
-                    "fetched_at": _now().isoformat(),
-                    "status": "live",
-                    "note": "Parsed from configured manual Baltic page.",
-                    "raw_payload": {"url": url},
-                }
+        parsed = await asyncio.to_thread(_extract_first_table_value, html)
+        if parsed and parsed.get("value") is not None:
+            return {
+                "index_type": index_type,
+                "source": url,
+                **parsed,
+                "fetched_at": _now().isoformat(),
+                "status": "live",
+                "note": "Parsed from configured manual Baltic page.",
+                "raw_payload": {"url": url},
+            }
     except Exception as exc:
         logger.warning("Manual Baltic source failed for %s: %s", index_type, exc)
     return None
@@ -212,6 +218,10 @@ def _upsert_cache_row(row: Dict[str, Any]) -> None:
     client.table("baltic_index_cache").upsert(row, on_conflict="index_type")
 
 
+async def _upsert_cache_row_async(row: Dict[str, Any]) -> None:
+    await asyncio.to_thread(_upsert_cache_row, row)
+
+
 def _read_cached_row(index_type: str) -> Optional[Dict[str, Any]]:
     client = get_supabase_client()
     if client is None:
@@ -221,6 +231,10 @@ def _read_cached_row(index_type: str) -> Optional[Dict[str, Any]]:
     if isinstance(rows, list) and rows:
         return rows[0]
     return None
+
+
+async def _read_cached_row_async(index_type: str) -> Optional[Dict[str, Any]]:
+    return await asyncio.to_thread(_read_cached_row, index_type)
 
 
 async def fetch_baltic_index(index_type: str, force_refresh: bool = False) -> Optional[Dict[str, Any]]:
@@ -245,11 +259,11 @@ async def fetch_baltic_index(index_type: str, force_refresh: bool = False) -> Op
         payload = await _fetch_from_stockq(index_type)
 
     if payload is not None:
-        _upsert_cache_row(payload)
+        await _upsert_cache_row_async(payload)
         _cache_put(index_type, payload)
         return payload
 
-    db_row = _read_cached_row(index_type)
+    db_row = await _read_cached_row_async(index_type)
     if db_row:
         db_row["status"] = db_row.get("status") or "stale"
         _cache_put(index_type, db_row)
