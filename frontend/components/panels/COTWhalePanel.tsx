@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { fetcher } from "../../lib/api";
 import { PanelHeader } from "../PanelHeader";
 import {
   Fish,
@@ -13,8 +14,6 @@ import {
   Building,
   User,
 } from "lucide-react";
-
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 // ── Theme-aware Color Palette (CSS Variables) ───────────────────────────────
 const P = {
@@ -90,8 +89,8 @@ export default function COTWhalePanel() {
     try {
       setLoading(true);
       const [cotRes, whaleRes] = await Promise.all([
-        fetch(`${API_BASE}/api/cot/${symbol}`).then(r => r.json()).catch(() => ({ success: false })),
-        fetch(`${API_BASE}/api/whale/${symbol}`).then(r => r.json()).catch(() => ({ success: false })),
+        fetcher<COTData>(`/api/cot/${symbol}`).catch(() => ({ success: false })),
+        fetcher<WhaleData>(`/api/whale/${symbol}`).catch(() => ({ success: false })),
       ]);
       setCotData(cotRes);
       setWhaleData(whaleRes);

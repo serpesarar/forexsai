@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { fetcher } from "../../lib/api";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
   LoadingIcon,
@@ -28,8 +29,6 @@ import { PanelHeader } from "../PanelHeader";
 import TrendChannelChart from "./TrendChannelChart";
 import { useFullscreen } from "../../hooks/useFullscreen";
 import { Cpu } from "lucide-react";
-
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 // ── Theme-aware Color Palette (CSS Variables) ───────────────────────────────
 const P = {
@@ -213,8 +212,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/clear-trend/${activeSymbol}?timeframe=${timeframe}`);
-      const json = await res.json();
+      const json = await fetcher<ClearTrendData & { error?: string }>(`/api/clear-trend/${activeSymbol}?timeframe=${timeframe}`);
       if (!json.error) {
         if (data && json.price?.current !== data.price?.current) {
           setPriceFlash(true);

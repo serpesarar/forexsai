@@ -36,12 +36,12 @@ import {
     detectHarmonicPatterns,
     detectClassicPatterns,
 } from "../../utils/harmonicPatternDetector";
+import { fetcher } from "../../lib/api";
 import { useFullscreen } from "../../hooks/useFullscreen";
 import styles from "./harmonic-visualizer.module.css";
 
 // ─── CONFIG ──────────────────────────────────────────────────────────
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
 const P = { bg: "var(--bg-primary)", card: "var(--bg-card)", surface: "var(--bg-surface)", border: "var(--border-subtle)", text: "var(--text-primary)", muted: "var(--text-muted)", green: "var(--accent-positive)", red: "var(--accent-negative)", warn: "var(--accent-warning)", accent: "var(--accent-info)", purple: "var(--accent-purple)" };
 
 const SYMBOLS: { key: string; label: string }[] = [
@@ -70,13 +70,9 @@ async function fetchOHLCV(
     symbol: string,
     timeframe: string
 ): Promise<CandleData[]> {
-    const res = await fetch(
-        `${API_BASE}/api/data/ohlcv?symbol=${encodeURIComponent(
-            symbol
-        )}&timeframe=${timeframe}&limit=300`
+    const data = await fetcher<{ data?: any[] }>(
+        `/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=${timeframe}&limit=300`
     );
-    if (!res.ok) throw new Error("Failed to fetch OHLCV data");
-    const data = await res.json();
     const raw: any[] = data.data || [];
     return raw.map((d) => ({
         time: Math.floor(d.timestamp / 1000),
