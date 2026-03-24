@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { fetcher } from "../../lib/api";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
@@ -14,8 +15,6 @@ import {
 } from "lucide-react";
 import TrendChannelChart from "./TrendChannelChart";
 import PanelHeader from "../PanelHeader";
-
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 interface LevelData {
   type: "resistance" | "current" | "support";
@@ -105,8 +104,7 @@ export default function ClearTrendPanel({ symbol: initialSymbol = "NDX.INDX" }: 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/clear-trend/${activeSymbol}?timeframe=${timeframe}`);
-      const json = await res.json();
+      const json = await fetcher<ClearTrendData & { error?: string }>(`/api/clear-trend/${activeSymbol}?timeframe=${timeframe}`);
       if (!json.error) {
         setData(json);
       }
