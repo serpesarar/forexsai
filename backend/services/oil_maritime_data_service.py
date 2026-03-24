@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
+import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
@@ -45,10 +46,62 @@ def _parse_dt(value: Any) -> datetime:
         return value.astimezone(timezone.utc)
     if not value:
         return _now()
-    parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+
+    text = str(value).strip().replace("Z", "+00:00")
+    text = re.sub(r"^(\d{4}-\d{2}-\d{2})T(?=\d{2}:\d{2}:\d{2})", r"\1 ", text)
+    text = re.sub(r"\s+UTC$", "", text)
+
+    explicit_match = re.match(
+        r"^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})(?:\.(\d+))?(?:\s*([+-]\d{2}):?(\d{2}))?$",
+        text,
+    )
+    if explicit_match:
+        date_part, time_part, fraction_part, tz_hours, tz_minutes = explicit_match.groups()
+        normalized = f"{date_part}T{time_part}"
+        if fraction_part:
+            normalized += f".{fraction_part[:6].ljust(6, '0')}"
+        if tz_hours and tz_minutes:
+            normalized += f"{tz_hours}:{tz_minutes}"
+        else:
+            normalized += "+00:00"
+        try:
+            return datetime.fromisoformat(normalized).astimezone(timezone.utc)
+        except ValueError:
+            pass
+
+    text = re.sub(r"([+-]\d{2})(\d{2})$", r"\1:\2", text)
+    text = re.sub(r"\.(\d{6})\d+(?=(?:\s?[+-]\d{2}:\d{2})?$)", r".\1", text)
+    text = re.sub(r"\s+([+-]\d{2}:\d{2})$", r"\1", text)
+
+    candidates = [text]
+    if " " in text:
+        candidates.append(text.replace(" ", "T", 1))
+
+    for candidate in candidates:
+        try:
+            parsed = datetime.fromisoformat(candidate)
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc)
+        except ValueError:
+            continue
+
+    for fmt in (
+        "%Y-%m-%d %H:%M:%S.%f%z",
+        "%Y-%m-%d %H:%M:%S%z",
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%Y-%m-%d %H:%M:%S",
+    ):
+        try:
+            parsed = datetime.strptime(text, fmt)
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc)
+        except ValueError:
+            continue
+
+    logger.warning("AIS timestamp parse failed for value=%r", value)
+    return _now()
 
 
 def _safe_rows(result: Dict[str, Any]) -> List[Dict[str, Any]]:
