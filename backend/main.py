@@ -175,6 +175,12 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Error stopping AIS oil collector: {e}")
 
+    try:
+        from services.rss_aggregator import close_rss_aggregator
+        await close_rss_aggregator()
+    except Exception as e:
+        print(f"Error closing RSS aggregator: {e}")
+
     # Close Supabase HTTP client gracefully
     try:
         from database.supabase_client import get_supabase_client

@@ -311,6 +311,11 @@ class RSSAggregator:
                 timeout=aiohttp.ClientTimeout(total=10),
             )
         return self.session
+
+    async def close(self) -> None:
+        if self.session is not None and not self.session.closed:
+            await self.session.close()
+        self.session = None
     
     def _clean_html(self, text: str) -> str:
         """Clean HTML entities and tags from text"""
@@ -1170,3 +1175,10 @@ def get_rss_aggregator() -> RSSAggregator:
     if _aggregator is None:
         _aggregator = RSSAggregator()
     return _aggregator
+
+
+async def close_rss_aggregator() -> None:
+    global _aggregator
+    if _aggregator is not None:
+        await _aggregator.close()
+        _aggregator = None
