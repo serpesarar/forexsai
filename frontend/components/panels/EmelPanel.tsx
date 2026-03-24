@@ -145,7 +145,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
   const fetchData = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
-      const json = await fetcher<EmelData & { error?: string }>(`/api/panel/emel/${activeSymbol}?timeframe=${timeframe}`);
+      const json = await fetcher<EmelData & { error?: string }>(`/api/panel/emel/${activeSymbol}?timeframe=${timeframe}`, { timeoutMs: 45000 });
       if (!json.error) {
         setData(json);
         markRefreshed();

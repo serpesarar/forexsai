@@ -102,7 +102,7 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
     try {
       if (showLoading) setLoading(true);
       setError(null);
-      const json = await fetcher<PulseMLData & { error?: string }>(`/api/panel/pulse-ml/${activeSymbol}?timeframe=${timeframe}`);
+      const json = await fetcher<PulseMLData & { error?: string }>(`/api/panel/pulse-ml/${activeSymbol}?timeframe=${timeframe}`, { timeoutMs: 45000 });
       if (json.error) {
         setError(json.error);
         setData(null);

@@ -108,7 +108,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
     try {
       if (showLoading) setLoading(true);
       setError(null);
-      const json = await fetcher<PulseV3Data & { error?: string }>(`/api/panel/pulse-v3/${activeSymbol}`);
+      const json = await fetcher<PulseV3Data & { error?: string }>(`/api/panel/pulse-v3/${activeSymbol}`, { timeoutMs: 45000 });
       if (json.error) {
         setError(json.error);
         setData(null);

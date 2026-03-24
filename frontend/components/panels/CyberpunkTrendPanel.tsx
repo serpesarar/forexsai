@@ -212,7 +212,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const json = await fetcher<ClearTrendData & { error?: string }>(`/api/clear-trend/${activeSymbol}?timeframe=${timeframe}`);
+      const json = await fetcher<ClearTrendData & { error?: string }>(`/api/clear-trend/${activeSymbol}?timeframe=${timeframe}`, { timeoutMs: 45000 });
       if (!json.error) {
         if (data && json.price?.current !== data.price?.current) {
           setPriceFlash(true);

@@ -121,7 +121,7 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
   const fetchData = async () => {
     setLoading(true);
     try {
-      const json = await fetcher<ClearTrendData & { error?: string }>(`/api/clear-trend/${activeSymbol}?timeframe=${timeframe}`);
+      const json = await fetcher<ClearTrendData & { error?: string }>(`/api/clear-trend/${activeSymbol}?timeframe=${timeframe}`, { timeoutMs: 45000 });
       if (!json.error) {
         setData(json);
       }

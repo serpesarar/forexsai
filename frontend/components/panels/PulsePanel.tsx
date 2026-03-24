@@ -95,7 +95,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
     try {
       if (showLoading) setLoading(true);
       setError(null);
-      const json = await fetcher<PulseData & { error?: string }>(`/api/panel/pulse/${activeSymbol}?timeframe=${timeframe}`);
+      const json = await fetcher<PulseData & { error?: string }>(`/api/panel/pulse/${activeSymbol}?timeframe=${timeframe}`, { timeoutMs: 45000 });
       if (json.error) {
         setError(json.error);
         setData(null);
