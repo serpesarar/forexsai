@@ -23,8 +23,9 @@ import {
 } from "lucide-react";
 import { useAuthStore, useUser, useIsAuthenticated } from "../../lib/auth/store";
 import AuthGuard from "../../components/AuthGuard";
+import { getApiBase } from "../../lib/api/base";
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 const TIER_CONFIG = {
   free: { name: "Free", color: "text-gray-400", bgColor: "bg-gray-500/20" },

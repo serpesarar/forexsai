@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+import { buildApiUrl } from "./base";
 
 export type PanelDirection = "BUY" | "SELL" | "HOLD" | "NO_TRADE";
 export type PanelBehavior = "uptrend" | "downtrend" | "range" | "mean_reversion" | "volatile";
@@ -177,8 +176,8 @@ async function fetchAIAnalysis(symbol: string, forceRefresh: boolean = false): P
   
   try {
     const url = forceRefresh
-      ? `${API_BASE}/api/ai-analysis/${symbol}?force_refresh=true`
-      : `${API_BASE}/api/ai-analysis/${symbol}`;
+      ? `${buildApiUrl(`/api/ai-analysis/${symbol}`)}?force_refresh=true`
+      : buildApiUrl(`/api/ai-analysis/${symbol}`);
     const res = await fetch(url, {
       signal: controller.signal,
     });
@@ -202,7 +201,7 @@ async function fetchAllAIAnalysis(): Promise<FullAnalysisData[]> {
   const timeoutId = setTimeout(() => controller.abort(), 55000);
   
   try {
-    const res = await fetch(`${API_BASE}/api/ai-analysis/`, {
+    const res = await fetch(buildApiUrl("/api/ai-analysis/"), {
       signal: controller.signal,
     });
     clearTimeout(timeoutId);

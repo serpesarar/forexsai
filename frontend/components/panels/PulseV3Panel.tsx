@@ -30,6 +30,7 @@ const P = { bg: "var(--bg-primary)", card: "var(--bg-card)", surface: "var(--bg-
 interface PulseV3Data {
   symbol: string;
   timestamp: string;
+  signal_timestamp?: string;
   pulse_score: number;
   max_score: number;
   signal_type: "CONFIRM" | "SCOUT" | "HOLD";
@@ -105,18 +106,21 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const { refreshAge: signalAge, markRefreshed } = useRefreshAge();
 
 
-  const fetchData = useCallback(async (showLoading = false) => {
+  const fetchData = useCallback(async (showLoading = false, forceRefresh = false) => {
     try {
       if (showLoading) setLoading(true);
       setError(null);
-      const res = await fetch(`${API_BASE}/api/panel/pulse-v3/${activeSymbol}`);
+      const params = new URLSearchParams();
+      if (forceRefresh) params.set("refresh", "true");
+      const query = params.toString();
+      const res = await fetch(`${API_BASE}/api/panel/pulse-v3/${activeSymbol}${query ? `?${query}` : ""}`);
       const json = await res.json();
       if (json.error) {
         setError(json.error);
         setData(null);
       } else {
         setData(json);
-        markRefreshed();
+        markRefreshed(json.signal_timestamp || json.timestamp);
       }
     } catch (e) {
       console.error("PULSE V3 fetch error:", e);
@@ -140,7 +144,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
 
   // Listen for global refresh event from header button
   useEffect(() => {
-    const handler = () => fetchData(true);
+    const handler = () => fetchData(true, true);
     window.addEventListener("pulse-refresh", handler);
     window.addEventListener("dashboard-refresh", handler);
     return () => {

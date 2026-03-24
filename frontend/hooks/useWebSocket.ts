@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-
-const WS_BASE = "wss://upbeat-flow-production.up.railway.app";
+import { buildWebSocketUrl } from "../lib/api/base";
 
 // Reconnect with exponential backoff
 const RECONNECT_BASE_MS = 2000;
@@ -74,7 +73,7 @@ export function useWebSocket({
     cleanup();
     setStatus("connecting");
 
-    const url = `${WS_BASE}/ws/${encodeURIComponent(symbolRef.current)}`;
+    const url = buildWebSocketUrl(`/ws/${encodeURIComponent(symbolRef.current)}`);
     
     try {
       const ws = new WebSocket(url);

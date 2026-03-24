@@ -53,6 +53,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     // ─── LEFT COLUMN ──────────────────────────────────────────────
     { id: "strategy-optimizer", title: "Strategy Auto-Optimization Loop", column: "center", order: -2, visible: true, size: "full", collapsed: false },
     { id: "clear-trend", title: "Clear Trend Analysis", column: "center", order: -1, visible: true, size: "full", collapsed: false },
+    { id: "oil-baltic", title: "Baltic Oil Command Center", column: "center", order: -0.75, visible: true, size: "full", collapsed: false },
     { id: "pulse-panel", title: "PULSE 1 - Algoritmik Scalp", column: "left", order: 1, visible: true, size: "large", collapsed: false },
     { id: "pulse-ml", title: "PULSE 2 - ML Hybrid", column: "left", order: 2, visible: true, size: "large", collapsed: false },
     { id: "pulse-v3", title: "PULSE 3 - Hybrid Scalp", column: "left", order: 3, visible: true, size: "large", collapsed: false },
@@ -88,7 +89,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "rhythm-detectors", title: "Rhythm Detectors", column: "center", order: 23, visible: true, size: "full", collapsed: false },
     { id: "news-correlation", title: "News-Chart Correlation", column: "center", order: 24, visible: true, size: "full", collapsed: false },
   ],
-  version: 27,
+  version: 28,
 };
 
 const LAYOUT_STORAGE_KEY = "dashboard-layout-v7";

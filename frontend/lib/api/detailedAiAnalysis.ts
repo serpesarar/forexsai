@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+import { buildApiUrl } from "./base";
 
 export type DetailedDecision = "BUY" | "SELL" | "HOLD";
 
@@ -11,7 +10,7 @@ export interface DetailedAnalysisPayload {
 }
 
 async function fetchDetailedAIAnalysis(symbol: string): Promise<DetailedAnalysisPayload> {
-  const res = await fetch(`${API_BASE}/api/ai-analysis/detailed/${symbol}`);
+  const res = await fetch(buildApiUrl(`/api/ai-analysis/detailed/${symbol}`));
   if (!res.ok) {
     throw new Error(`Failed to fetch detailed AI analysis for ${symbol}`);
   }

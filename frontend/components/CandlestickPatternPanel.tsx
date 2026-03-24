@@ -14,6 +14,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { useI18nStore } from "../lib/i18n/store";
+import { getApiBase } from "../lib/api/base";
 
 interface CandlestickPattern {
   id: string;
@@ -52,7 +53,7 @@ interface CandlestickPatternPanelProps {
   className?: string;
 }
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 const TIMEFRAME_LABELS: Record<string, string> = {
   "15m": "M15",

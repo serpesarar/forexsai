@@ -4,10 +4,11 @@ import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useI18n } from "@/lib/i18n";
+import { getApiBase } from "@/lib/api/base";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import Turnstile from "react-turnstile";
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 // Confetti effect using canvas
 function triggerConfetti() {

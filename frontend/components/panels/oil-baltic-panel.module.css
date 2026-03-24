@@ -1,0 +1,666 @@
+.shell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid rgba(43, 255, 149, 0.14);
+  background:
+    radial-gradient(circle at 20% 15%, rgba(38, 188, 112, 0.12), transparent 30%),
+    radial-gradient(circle at 80% 10%, rgba(14, 113, 90, 0.16), transparent 28%),
+    linear-gradient(180deg, rgba(2, 17, 12, 0.96), rgba(2, 11, 9, 0.98));
+  box-shadow:
+    0 0 0 1px rgba(0, 255, 145, 0.04) inset,
+    0 18px 46px rgba(0, 0, 0, 0.42),
+    0 0 42px rgba(0, 255, 145, 0.08);
+}
+
+.shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(0, 255, 145, 0.02) 50%, rgba(0, 0, 0, 0.04) 50%),
+    linear-gradient(90deg, rgba(0, 255, 145, 0.02), rgba(0, 0, 0, 0));
+  background-size: 100% 4px, 3px 100%;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(20, 99, 61, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 99, 61, 0.22) 1px, transparent 1px);
+  background-size: 30px 30px;
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+.header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid rgba(56, 161, 105, 0.14);
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eyebrow {
+  color: rgba(133, 255, 185, 0.72);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.title {
+  color: #d9ffea;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  max-width: 860px;
+  color: rgba(197, 255, 222, 0.78);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.headerMetrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(110px, 1fr));
+  gap: 10px;
+  min-width: min(100%, 420px);
+}
+
+.metricChip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid rgba(73, 206, 137, 0.14);
+  background: rgba(4, 21, 14, 0.78);
+  border-radius: 16px;
+  padding: 12px 14px;
+}
+
+.metricLabel {
+  color: rgba(150, 218, 175, 0.64);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.metricValue {
+  color: #ebfff3;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.metricSub {
+  color: rgba(189, 255, 213, 0.68);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.body {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 18px;
+  padding: 18px 24px 24px;
+}
+
+.topGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 16px;
+}
+
+.card {
+  position: relative;
+  border-radius: 20px;
+  border: 1px solid rgba(73, 206, 137, 0.14);
+  background: linear-gradient(180deg, rgba(5, 19, 13, 0.92), rgba(3, 13, 9, 0.96));
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  padding: 16px;
+}
+
+.cardTitle {
+  color: rgba(136, 255, 185, 0.86);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.signalDirection {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bullish {
+  color: #7dffb2;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.22);
+}
+
+.bearish {
+  color: #ff8d88;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+}
+
+.neutral {
+  color: #ffd77a;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.statBox {
+  border-radius: 16px;
+  border: 1px solid rgba(73, 206, 137, 0.12);
+  background: rgba(5, 27, 18, 0.65);
+  padding: 12px;
+}
+
+.statBoxLabel {
+  color: rgba(150, 218, 175, 0.58);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.statBoxValue {
+  margin-top: 8px;
+  color: #f3fff7;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.statBoxHint {
+  margin-top: 6px;
+  color: rgba(193, 255, 217, 0.68);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.mainGrid {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: stretch;
+}
+
+.stack {
+  display: grid;
+  gap: 14px;
+}
+
+.metricRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(73, 206, 137, 0.08);
+}
+
+.metricRow:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.metricRow:first-child {
+  padding-top: 0;
+}
+
+.metricRowLabel {
+  color: rgba(184, 247, 208, 0.76);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.metricRowValue {
+  color: #effff4;
+  font-size: 15px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.metricRowStatus {
+  color: rgba(140, 255, 184, 0.62);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.mapShell {
+  position: relative;
+  min-height: 520px;
+  border-radius: 24px;
+  border: 1px solid rgba(73, 206, 137, 0.16);
+  background:
+    radial-gradient(circle at 32% 43%, rgba(36, 167, 107, 0.15), transparent 28%),
+    radial-gradient(circle at 66% 38%, rgba(50, 92, 83, 0.28), transparent 24%),
+    linear-gradient(180deg, rgba(2, 19, 14, 0.95), rgba(1, 11, 9, 0.98));
+  overflow: hidden;
+}
+
+.worldMap {
+  position: absolute;
+  inset: 0;
+  opacity: 0.38;
+  background-image:
+    radial-gradient(circle at 22% 46%, rgba(78, 255, 171, 0.16) 0 8%, transparent 8.5%),
+    radial-gradient(circle at 32% 38%, rgba(78, 255, 171, 0.12) 0 8%, transparent 8.5%),
+    radial-gradient(circle at 50% 30%, rgba(78, 255, 171, 0.14) 0 10%, transparent 10.5%),
+    radial-gradient(circle at 52% 50%, rgba(78, 255, 171, 0.12) 0 8%, transparent 8.5%),
+    radial-gradient(circle at 70% 44%, rgba(78, 255, 171, 0.16) 0 11%, transparent 11.5%),
+    radial-gradient(circle at 82% 62%, rgba(78, 255, 171, 0.16) 0 10%, transparent 10.5%);
+  filter: blur(18px);
+}
+
+.mapGrid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 255, 145, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 145, 0.08) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.18;
+}
+
+.radarSweep {
+  position: absolute;
+  inset: -20%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(88, 255, 177, 0.16) 42deg, transparent 80deg);
+  animation: sweep 5.5s linear infinite;
+  opacity: 0.6;
+}
+
+.orbit {
+  position: absolute;
+  width: 70%;
+  aspect-ratio: 1;
+  left: 15%;
+  top: 8%;
+  border-radius: 999px;
+  border: 1px solid rgba(108, 255, 180, 0.12);
+}
+
+.orbit::before,
+.orbit::after {
+  content: "";
+  position: absolute;
+  inset: 14%;
+  border-radius: 999px;
+  border: 1px solid rgba(108, 255, 180, 0.08);
+}
+
+.orbit::after {
+  inset: 28%;
+}
+
+.mapOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px;
+}
+
+.mapTopBar,
+.mapBottomBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.mapLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(82, 193, 130, 0.18);
+  background: rgba(2, 17, 12, 0.78);
+  color: rgba(207, 255, 226, 0.82);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-width: 132px;
+}
+
+.markerDot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 8px rgba(84, 255, 170, 0.08), 0 0 16px rgba(84, 255, 170, 0.36);
+  animation: pulse 2.6s ease-in-out infinite;
+}
+
+.markerCard {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid rgba(73, 206, 137, 0.16);
+  background: rgba(3, 16, 11, 0.86);
+  backdrop-filter: blur(10px);
+  padding: 12px 12px 10px;
+}
+
+.markerName {
+  color: #effff4;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.markerSignal {
+  margin-top: 4px;
+  color: rgba(188, 255, 214, 0.74);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.markerNarrative {
+  margin-top: 8px;
+  color: rgba(197, 255, 221, 0.76);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.markerIntensity {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.barTrack {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(124, 255, 191, 0.12);
+  overflow: hidden;
+}
+
+.barFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(60, 255, 164, 0.35), rgba(95, 255, 194, 0.9));
+}
+
+.barFillBearish {
+  background: linear-gradient(90deg, rgba(255, 122, 115, 0.35), rgba(255, 95, 95, 0.92));
+}
+
+.barValue {
+  color: #ecfff4;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.healthList,
+.noteList,
+.logList {
+  display: grid;
+  gap: 10px;
+}
+
+.healthItem,
+.noteItem,
+.logItem {
+  border-radius: 14px;
+  border: 1px solid rgba(73, 206, 137, 0.12);
+  background: rgba(5, 23, 16, 0.62);
+  padding: 11px 12px;
+}
+
+.healthHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.healthName {
+  color: #effff4;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.healthStatus {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.statusLive {
+  color: #6ef2a7;
+}
+
+.statusProxy,
+.statusPartial,
+.statusPlanned {
+  color: #ffd16f;
+}
+
+.statusError,
+.statusOffline {
+  color: #ff8781;
+}
+
+.healthMode,
+.healthNote,
+.noteText,
+.logText {
+  color: rgba(194, 255, 218, 0.72);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.healthMode {
+  margin-top: 6px;
+  color: rgba(138, 255, 188, 0.58);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bottomGrid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 18px;
+}
+
+.tradeBox {
+  border-radius: 18px;
+  border: 1px solid rgba(73, 206, 137, 0.14);
+  background: rgba(5, 24, 16, 0.74);
+  padding: 14px;
+}
+
+.tradeGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.tradeMetric {
+  border-radius: 14px;
+  border: 1px solid rgba(73, 206, 137, 0.1);
+  background: rgba(4, 19, 13, 0.76);
+  padding: 10px;
+}
+
+.tradeMetricLabel {
+  color: rgba(149, 219, 176, 0.6);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.tradeMetricValue {
+  margin-top: 8px;
+  color: #effff4;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.tradeRationale {
+  margin-top: 12px;
+  color: rgba(204, 255, 225, 0.76);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.loader,
+.empty {
+  position: relative;
+  z-index: 1;
+  padding: 46px 24px;
+  display: grid;
+  place-items: center;
+  min-height: 340px;
+  color: #dfffea;
+}
+
+.spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 3px solid rgba(74, 222, 128, 0.16);
+  border-top-color: rgba(74, 222, 128, 0.9);
+  animation: spin 0.9s linear infinite;
+}
+
+.errorText {
+  color: #ff9188;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mutedText {
+  color: rgba(203, 255, 223, 0.68);
+  font-size: 12px;
+  line-height: 1.65;
+  text-align: center;
+  max-width: 720px;
+}
+
+@keyframes sweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.72;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.18);
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1200px) {
+  .topGrid,
+  .mainGrid,
+  .bottomGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .mapShell {
+    min-height: 460px;
+  }
+}
+
+@media (max-width: 840px) {
+  .header {
+    flex-direction: column;
+  }
+
+  .headerMetrics,
+  .summaryGrid,
+  .tradeGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .mapShell {
+    min-height: 560px;
+  }
+
+  .marker {
+    min-width: 112px;
+  }
+}

@@ -20,8 +20,9 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { useI18nStore } from "../lib/i18n/store";
+import { getApiBase } from "../lib/api/base";
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 // ═══════════════════════════════════════════════════════════════════
 // Types

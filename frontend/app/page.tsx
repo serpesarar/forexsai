@@ -50,6 +50,7 @@ const SeasonalityPanel = lazy(() => import("../components/panels/SeasonalityPane
 const SmartSetupPanel = lazy(() => import("../components/panels/SmartSetupPanel"));
 const HarmonicVisualizerPanel = lazy(() => import("../components/panels/HarmonicVisualizerPanel"));
 const StrategyOptimizerPanel = lazy(() => import("../components/panels/StrategyOptimizerPanel"));
+const OilBalticPanel = lazy(() => import("../components/panels/OilBalticPanel"));
 const NewsChartCorrelationPanel = lazy(() => import("../components/panels/NewsChartCorrelationPanel"));
 const NewsCorrelationDashboard = lazy(() => import("./news-correlation/page"));
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
@@ -896,6 +897,8 @@ export default function HomePage() {
         return <HarmonicVisualizerPanel />;
       case "strategy-optimizer":
         return <StrategyOptimizerPanel />;
+      case "oil-baltic":
+        return <OilBalticPanel />;
       case "news-correlation":
         return <NewsChartCorrelationPanel />;
       default:
@@ -1329,6 +1332,14 @@ export default function HomePage() {
                     <div className="mb-6 w-full">
                       <LazyPanel fallbackHeight={300}>
                         <CyberpunkTrendPanel />
+                      </LazyPanel>
+                    </div>
+                  )}
+
+                  {getCard("oil-baltic")?.visible !== false && (
+                    <div className="mb-6 w-full">
+                      <LazyPanel fallbackHeight={620}>
+                        <OilBalticPanel />
                       </LazyPanel>
                     </div>
                   )}

@@ -33,6 +33,15 @@ class Settings(BaseSettings):
         default="https://api.marketaux.com/v1/news/all",
         validation_alias="MARKETAUX_BASE_URL",
     )
+    aisstream_api_key: str | None = Field(default=None, validation_alias="AISSTREAM_API_KEY")
+    aisstream_ws_url: str = Field(default="wss://stream.aisstream.io/v0/stream", validation_alias="AISSTREAM_WS_URL")
+    oil_ais_autostart: bool = Field(default=False, validation_alias="OIL_AIS_AUTOSTART")
+    baltic_bdti_url: str | None = Field(default=None, validation_alias="BALTIC_BDTI_URL")
+    baltic_bcti_url: str | None = Field(default=None, validation_alias="BALTIC_BCTI_URL")
+    baltic_td3c_url: str | None = Field(default=None, validation_alias="BALTIC_TD3C_URL")
+    baltic_stockq_enabled: bool = Field(default=True, validation_alias="BALTIC_STOCKQ_ENABLED")
+    oil_baltic_sync_autostart: bool = Field(default=True, validation_alias="OIL_BALTIC_SYNC_AUTOSTART")
+    oil_baltic_sync_interval_seconds: int = Field(default=3600, validation_alias="OIL_BALTIC_SYNC_INTERVAL_SECONDS")
     supabase_url: str | None = Field(default=None, validation_alias="SUPABASE_URL")
     supabase_key: str | None = Field(default=None, validation_alias="SUPABASE_KEY")
     resend_api_key: str | None = Field(default=None, validation_alias="RESEND_API_KEY")

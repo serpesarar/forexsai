@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { InfoBadge } from "./InfoTooltip";
 import { useI18nStore } from "../lib/i18n/store";
+import { getApiBase } from "../lib/api/base";
 
 interface MTFAdvancedData {
   market_regime: {
@@ -74,14 +75,14 @@ interface MTFAdvancedData {
 }
 
 // Sembol tanımları - API key ve görünen isim
-const SYMBOLS = [
+const SYMBOL_OPTIONS = [
   { key: "NDX.INDX", label: "NASDAQ", display: "NASDAQ" },
   { key: "XAUUSD", label: "XAUUSD", display: "XAU/USD" },
   { key: "GDAXI.INDX", label: "DAX", display: "DAX" },
   { key: "USOIL.FOREX", label: "US Oil", display: "WTI Oil" },
 ];
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 // Kullanım Kılavuzu Modalı
 function UserGuideModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -435,7 +436,7 @@ export default function AdvancedAnalysisPanel({ className = "" }: { className?: 
         ? "text-cyan-400"
         : "text-gray-400";
 
-  const activeSymbolLabel = SYMBOLS.find(s => s.key === symbol)?.display || symbol;
+  const activeSymbolLabel = SYMBOL_OPTIONS.find(s => s.key === symbol)?.display || symbol;
 
   return (
     <div className={`bg-gray-900/80 backdrop-blur-sm rounded-xl border border-gray-700/50 overflow-hidden ${className}`}>
@@ -456,7 +457,7 @@ export default function AdvancedAnalysisPanel({ className = "" }: { className?: 
                 onChange={(e) => setSymbol(e.target.value)}
                 className="appearance-none bg-gray-800/80 border border-gray-600/50 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500/50 cursor-pointer min-w-[100px]"
               >
-                {SYMBOLS.map((s) => (
+                {SYMBOL_OPTIONS.map((s) => (
                   <option key={s.key} value={s.key}>{s.display}</option>
                 ))}
               </select>

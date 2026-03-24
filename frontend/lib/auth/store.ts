@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+import { buildApiUrl } from "../api/base";
 
 // Track hydration state
 let hasHydrated = false;
@@ -82,7 +81,7 @@ export const useAuthStore = create<AuthState>()(
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 20000);
           
-          const res = await fetch(`${API_BASE}/api/auth/login`, {
+          const res = await fetch(buildApiUrl("/api/auth/login"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password }),
@@ -136,7 +135,7 @@ export const useAuthStore = create<AuthState>()(
         
         if (token) {
           try {
-            await fetch(`${API_BASE}/api/auth/logout`, {
+            await fetch(buildApiUrl("/api/auth/logout"), {
               method: "POST",
               headers: { Authorization: `Bearer ${token}` },
             });
@@ -153,7 +152,7 @@ export const useAuthStore = create<AuthState>()(
         if (!token) return;
 
         try {
-          const res = await fetch(`${API_BASE}/api/auth/me`, {
+          const res = await fetch(buildApiUrl("/api/auth/me"), {
             headers: { Authorization: `Bearer ${token}` },
           });
 

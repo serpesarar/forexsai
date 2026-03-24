@@ -425,6 +425,25 @@ def _get_cached_panel_data(symbol: str) -> Dict[str, Any]:
     return panels
 
 
+async def _warm_pulse_panel_cache(symbol: str) -> None:
+    from routers.emel_pulse import get_pulse_analysis, get_pulse_ml_analysis, get_pulse_v3_analysis
+
+    try:
+        await get_pulse_analysis(symbol, timeframe="5m")
+    except Exception as e:
+        logger.debug(f"Pulse 1 warm cache skipped for {symbol}: {e}")
+
+    try:
+        await get_pulse_ml_analysis(symbol, timeframe="15m")
+    except Exception as e:
+        logger.debug(f"Pulse 2 warm cache skipped for {symbol}: {e}")
+
+    try:
+        await get_pulse_v3_analysis(symbol, timeframe="5m")
+    except Exception as e:
+        logger.debug(f"Pulse 3 warm cache skipped for {symbol}: {e}")
+
+
 async def run_update_cycle():
     """Run one update cycle for all symbols."""
     broadcast_batch = {}
@@ -439,6 +458,8 @@ async def run_update_cycle():
                 
                 # Save to Supabase cache (legacy)
                 await save_to_cache(symbol, data, news)
+
+                await _warm_pulse_panel_cache(symbol)
 
                 # Read cached panel data for broadcast (panels cache their responses via HTTP)
                 panel_data = _get_cached_panel_data(symbol)

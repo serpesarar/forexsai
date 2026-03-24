@@ -3,9 +3,8 @@
 import React, { createContext, useContext, useCallback, useEffect, useRef, useState } from "react";
 import { buildWebSocketUrl } from "../lib/api/base";
 
-// Aggressive reconnection for real-time data
-const RECONNECT_BASE_MS = 500; // Start with 500ms (was 2000ms)
-const RECONNECT_MAX_MS = 10000; // Max 10s (was 30s)
+const RECONNECT_BASE_MS = 2000;
+const RECONNECT_MAX_MS = 30000;
 const HEARTBEAT_INTERVAL_MS = 15000; // Send ping every 15s
 const HEARTBEAT_TIMEOUT_MS = 30000; // Consider dead if no pong in 30s
 
@@ -277,10 +276,8 @@ export function WebSocketProvider({ children }: Props) {
 
         if (event.code === 1000) return; // intentional close
 
-        // Aggressive exponential backoff for faster reconnection
-        // First retry: 500ms, Second: 750ms, Third: 1125ms, Max: 10s
         const delay = Math.min(
-          RECONNECT_BASE_MS * Math.pow(1.3, reconnectAttempt.current),
+          RECONNECT_BASE_MS * Math.pow(1.5, reconnectAttempt.current),
           RECONNECT_MAX_MS
         );
         reconnectAttempt.current += 1;

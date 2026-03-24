@@ -1,14 +1,12 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { getApiBase } from "./api/base";
-
-const API_BASE = getApiBase();
+import { buildApiUrl } from "./api/base";
 
 export async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
 
   try {
-    const response = await fetch(`${API_BASE}${endpoint}`, {
+    const response = await fetch(buildApiUrl(endpoint), {
       headers: { "Content-Type": "application/json" },
       ...options,
       signal: controller.signal,

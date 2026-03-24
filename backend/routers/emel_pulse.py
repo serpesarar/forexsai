@@ -24,6 +24,42 @@ SCALP_DISTANCES = {
     "USOIL.FOREX":  {"tp": 0.50, "sl": 0.30}, # dollars
 }
 
+PULSE_PANEL_CACHE_TTL = 60
+
+
+def _panel_analysis_cache_key(panel_name: str, symbol: str, timeframe: str) -> str:
+    return f"panel_analysis:{panel_name}:{symbol.upper()}:{timeframe.lower()}"
+
+
+def _get_cached_panel_analysis(panel_name: str, symbol: str, timeframe: str) -> Optional[Dict[str, Any]]:
+    from services.redis_client import cache_get
+
+    cached = cache_get(_panel_analysis_cache_key(panel_name, symbol, timeframe))
+    if isinstance(cached, dict) and not cached.get("error"):
+        return cached
+    return None
+
+
+def _set_cached_panel_analysis(panel_name: str, symbol: str, timeframe: str, payload: Dict[str, Any]) -> None:
+    from services.redis_client import cache_set
+
+    cache_set(_panel_analysis_cache_key(panel_name, symbol, timeframe), payload, ttl=PULSE_PANEL_CACHE_TTL)
+
+
+def _get_latest_market_timestamp(symbol: str) -> Optional[str]:
+    from services.redis_client import cache_get
+
+    cached_broadcast = cache_get(f"broadcast:{symbol.upper()}")
+    if isinstance(cached_broadcast, dict):
+        timestamp = cached_broadcast.get("timestamp")
+        if isinstance(timestamp, str) and timestamp:
+            return timestamp
+    return None
+
+
+def _resolve_signal_timestamp(symbol: str, fallback: str) -> str:
+    return _get_latest_market_timestamp(symbol) or fallback
+
 def _calc_ema(values, period):
     """Calculate true Exponential Moving Average (matching TradingView)."""
     if len(values) < period:
@@ -872,7 +908,7 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/pulse/{symbol}")
-async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
+async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool = False):
     """
     PULSE 1 - Geliştirilmiş Algoritmik Scalp Analizi
     İki kademeli sinyal: SCOUT (izle) + CONFIRM (işlem yap)
@@ -881,6 +917,13 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
     Sadece RANGING ve TRANSITION rejimlerinde aktif çalışır.
     """
     try:
+        cached_response = None if refresh else _get_cached_panel_analysis("pulse1", symbol, timeframe)
+        if cached_response:
+            return cached_response
+
+        response_timestamp = datetime.utcnow().isoformat()
+        signal_timestamp = _resolve_signal_timestamp(symbol, response_timestamp)
+
         from services.ml_prediction_service import _compute_technical_indicators
         from services.market_data_service import get_ohlcv_data
         from services.market_regime_service import detect_regime, filter_signal_by_regime, interpret_rsi, check_fake_signal_timeout
@@ -889,10 +932,11 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         regime = await detect_regime(symbol)
         
         if regime.model_weights.get("pulse1", 0) == 0:
-            return {
+            payload = {
                 "symbol": symbol,
                 "timeframe": timeframe,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": response_timestamp,
+                "signal_timestamp": signal_timestamp,
                 "signal": "HOLD",
                 "signal_type": "REGIME_DISABLED",
                 "pulse_score": 0,
@@ -912,12 +956,15 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
                 "decision_notes": [f"Pulse 1 kapalı: {regime.regime} rejimi"],
                 "suggestion": {"text": f"⛔ Pulse 1 {regime.regime} rejiminde devre dışı. ML ve Pulse 2/3 kullanın.", "target": regime.current_price or 0, "stop": regime.current_price or 0, "target_distance": 0, "stop_distance": 0, "rr_ratio": 0, "timeframe_estimate": "N/A"}
             }
+            _set_cached_panel_analysis("pulse1", symbol, timeframe, payload)
+            return payload
         
         # ─── FAKE SIGNAL TIMEOUT CHECK ──────────────────────────────────
         is_timed_out, timeout_until, timeout_reason = await check_fake_signal_timeout(symbol)
         if is_timed_out:
-            return {
-                "symbol": symbol, "timeframe": timeframe, "timestamp": datetime.now().isoformat(),
+            payload = {
+                "symbol": symbol, "timeframe": timeframe, "timestamp": response_timestamp,
+                "signal_timestamp": signal_timestamp,
                 "signal": "HOLD", "signal_type": "TIMEOUT",
                 "pulse_score": 0,
                 "regime": {"type": regime.regime, "reason": timeout_reason},
@@ -930,6 +977,8 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
                 "volume": {"status": "unknown", "label": "N/A", "ratio": 0, "available": False},
                 "score_breakdown": {},
             }
+            _set_cached_panel_analysis("pulse1", symbol, timeframe, payload)
+            return payload
         
         # Get market data - 100 bar (EMA20 için yeterli)
         # XAUUSD: 1H derives from 30m in DataHub — fallback to 5m if insufficient
@@ -1228,11 +1277,11 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
         # Last 5 candles for frontend (backward compat)
         last_5 = last_10[-5:]
         
-        return {
+        payload = {
             "symbol": symbol,
             "timeframe": timeframe,
-            "timestamp": datetime.now().isoformat(),
-            "signal_timestamp": datetime.now().isoformat(),
+            "timestamp": response_timestamp,
+            "signal_timestamp": signal_timestamp,
             "signal": pulse_signal,
             "signal_type": signal_type,
             "pulse_score": round(score, 1),
@@ -1304,7 +1353,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m"):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/pulse-ml/{symbol}")
-async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
+async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bool = False):
     """
     PULSE 2 - Geliştirilmiş ML + TA Hibrit Scalp (REGIME-AWARE)
     ML modelini kullanır, EMA20+EMA50+MACD ile trend onayı yapar.
@@ -1317,6 +1366,13 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
     - Fake signal timeout koruması
     """
     try:
+        cached_response = None if refresh else _get_cached_panel_analysis("pulse2", symbol, timeframe)
+        if cached_response:
+            return cached_response
+
+        response_timestamp = datetime.utcnow().isoformat()
+        signal_timestamp = _resolve_signal_timestamp(symbol, response_timestamp)
+
         from services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
         from services.market_data_service import get_ohlcv_data
         from services.market_regime_service import detect_regime, filter_signal_by_regime, interpret_rsi, check_fake_signal_timeout
@@ -1631,11 +1687,11 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
             except Exception as log_err:
                 logger.warning(f"Failed to log PULSE-ML prediction: {log_err}")
 
-        return {
+        payload = {
             "symbol": symbol,
             "timeframe": timeframe,
-            "timestamp": datetime.now().isoformat(),
-            "signal_timestamp": datetime.now().isoformat(),
+            "timestamp": response_timestamp,
+            "signal_timestamp": signal_timestamp,
             "signal": signal,
             "signal_type": signal_type,
             "pulse_score": round(score, 1),
@@ -1673,6 +1729,8 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m"):
             },
             "suggestion": suggestion
         }
+        _set_cached_panel_analysis("pulse2", symbol, timeframe, payload)
+        return payload
             
     except Exception as e:
         logger.error(f"PULSE-ML analysis error: {e}")
@@ -1941,7 +1999,7 @@ def _analyze_4h(closes, ta) -> Dict:
 
 
 @router.get("/pulse-v3/{symbol}")
-async def get_pulse_v3_analysis(symbol: str, timeframe: str = "5m"):
+async def get_pulse_v3_analysis(symbol: str, timeframe: str = "5m", refresh: bool = False):
     """
     PULSE 3 - Hybrid Scalp: 3 Zamanlı, 3 Filtreli, Hızlı Karar (REGIME-AWARE)
     
@@ -1949,6 +2007,13 @@ async def get_pulse_v3_analysis(symbol: str, timeframe: str = "5m"):
     Sinyal Tipleri: SCOUT (40-65) / CONFIRM (65+) / HOLD (<40)
     """
     try:
+        cached_response = None if refresh else _get_cached_panel_analysis("pulse3", symbol, timeframe)
+        if cached_response:
+            return cached_response
+
+        response_timestamp = datetime.utcnow().isoformat()
+        signal_timestamp = _resolve_signal_timestamp(symbol, response_timestamp)
+
         from services.ml_prediction_service import _compute_technical_indicators
         from services.market_regime_service import detect_regime, filter_signal_by_regime, interpret_rsi, check_fake_signal_timeout, detect_order_blocks
         import asyncio
@@ -2248,10 +2313,10 @@ async def get_pulse_v3_analysis(symbol: str, timeframe: str = "5m"):
             except Exception as oil_err:
                 logger.warning(f"Oil analysis error for CL.COMM: {oil_err}")
 
-        return {
+        payload = {
             "symbol": symbol,
-            "timestamp": datetime.now().isoformat(),
-            "signal_timestamp": datetime.now().isoformat(),
+            "timestamp": response_timestamp,
+            "signal_timestamp": signal_timestamp,
             "pulse_score": round(total_score, 1),
             "max_score": 100,
             "signal_type": signal_type,
@@ -2298,6 +2363,8 @@ async def get_pulse_v3_analysis(symbol: str, timeframe: str = "5m"):
                 "risks": oil_analysis["risks"],
             }} if oil_analysis else {}),
         }
+        _set_cached_panel_analysis("pulse3", symbol, timeframe, payload)
+        return payload
         
     except Exception as e:
         logger.error(f"PULSE V3 analysis error: {e}")

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { InfoClickable, InfoBadge } from "./InfoTooltip";
 import { useI18nStore } from "../lib/i18n/store";
+import { getApiBase } from "../lib/api/base";
 
 // ═══════════════════════════════════════════════════════════════════
 // Types
@@ -65,7 +66,7 @@ const SYMBOLS = [
   { key: "USOIL", label: "WTI OIL", icon: "🛢️", color: "red" },
 ];
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 // ═══════════════════════════════════════════════════════════════════
 // Helper Functions

@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+import { buildApiUrl } from "./base";
 
 export interface KeyLevel {
   type: string;
@@ -47,7 +46,7 @@ async function fetchPrediction(
     params.append("log_to_db", "true");
   }
   const queryString = params.toString();
-  const url = `${API_BASE}/api/prediction/${symbol}${queryString ? `?${queryString}` : ""}`;
+  const url = buildApiUrl(`/api/prediction/${symbol}${queryString ? `?${queryString}` : ""}`);
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Failed to fetch prediction for ${symbol}`);
@@ -62,7 +61,7 @@ export async function fetchPredictionWithFactors(symbol: string, enabledFactors:
 
 // Fetch with strategy preset (for layer panel) - logs to DB for learning
 export async function fetchPredictionWithStrategy(symbol: string, strategy: string): Promise<PredictionData> {
-  const url = `${API_BASE}/api/prediction/${symbol}?strategy=${strategy}&log_to_db=true`;
+  const url = buildApiUrl(`/api/prediction/${symbol}?strategy=${strategy}&log_to_db=true`);
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Failed to fetch prediction for ${symbol} with strategy ${strategy}`);
@@ -71,7 +70,7 @@ export async function fetchPredictionWithStrategy(symbol: string, strategy: stri
 }
 
 async function fetchAllPredictions(): Promise<PredictionData[]> {
-  const res = await fetch(`${API_BASE}/api/prediction/`);
+  const res = await fetch(buildApiUrl("/api/prediction/"));
   if (!res.ok) {
     throw new Error("Failed to fetch predictions");
   }

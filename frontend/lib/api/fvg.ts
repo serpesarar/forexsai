@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+import { buildApiUrl } from "./base";
 
 export interface FVG {
   index: number;
@@ -41,7 +40,7 @@ export interface FVGDetectRequest {
 }
 
 async function detectFVGs(request: FVGDetectRequest): Promise<FVGDetectResponse> {
-  const res = await fetch(`${API_BASE}/api/fvg/detect`, {
+  const res = await fetch(buildApiUrl("/api/fvg/detect"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
@@ -56,7 +55,7 @@ async function getUnfilledFVGs(symbol: string, limit: number = 100): Promise<{
   unfilled_fvgs: FVG[];
   count: number;
 }> {
-  const res = await fetch(`${API_BASE}/api/fvg/unfilled/${symbol}?limit=${limit}`);
+  const res = await fetch(buildApiUrl(`/api/fvg/unfilled/${symbol}?limit=${limit}`));
   if (!res.ok) throw new Error("Failed to get unfilled FVGs");
   return res.json();
 }

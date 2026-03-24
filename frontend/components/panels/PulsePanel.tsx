@@ -18,6 +18,7 @@ interface PulseData {
   symbol: string;
   timeframe: string;
   timestamp: string;
+  signal_timestamp?: string;
   trend: {
     direction: "up" | "down" | "neutral";
     strength: number;
@@ -92,18 +93,20 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
   const [timeframe, setTimeframe] = useState("5m");
   const { refreshAge: signalAge, markRefreshed } = useRefreshAge();
 
-  const fetchData = useCallback(async (showLoading = false) => {
+  const fetchData = useCallback(async (showLoading = false, forceRefresh = false) => {
     try {
       if (showLoading) setLoading(true);
       setError(null);
-      const res = await fetch(`${API_BASE}/api/panel/pulse/${activeSymbol}?timeframe=${timeframe}`);
+      const params = new URLSearchParams({ timeframe });
+      if (forceRefresh) params.set("refresh", "true");
+      const res = await fetch(`${API_BASE}/api/panel/pulse/${activeSymbol}?${params.toString()}`);
       const json = await res.json();
       if (json.error) {
         setError(json.error);
         setData(null);
       } else {
         setData(json);
-        markRefreshed();
+        markRefreshed(json.signal_timestamp || json.timestamp);
       }
     } catch (e) {
       console.error("PULSE fetch error:", e);
@@ -127,7 +130,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
 
   // Listen for global refresh event from header button
   useEffect(() => {
-    const handler = () => fetchData(true);
+    const handler = () => fetchData(true, true);
     window.addEventListener("pulse-refresh", handler);
     window.addEventListener("dashboard-refresh", handler);
     return () => {

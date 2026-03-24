@@ -37,6 +37,7 @@ interface PulseMLData {
   symbol: string;
   timeframe: string;
   timestamp: string;
+  signal_timestamp?: string;
   signal: "BUY" | "SELL" | "HOLD";
   signal_type: "CONFIRM" | "SCOUT" | "HOLD";
   pulse_score: number;
@@ -99,18 +100,20 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const { refreshAge: signalAge, markRefreshed } = useRefreshAge();
 
 
-  const fetchData = useCallback(async (showLoading = false) => {
+  const fetchData = useCallback(async (showLoading = false, forceRefresh = false) => {
     try {
       if (showLoading) setLoading(true);
       setError(null);
-      const res = await fetch(`${API_BASE}/api/panel/pulse-ml/${activeSymbol}?timeframe=${timeframe}`);
+      const params = new URLSearchParams({ timeframe });
+      if (forceRefresh) params.set("refresh", "true");
+      const res = await fetch(`${API_BASE}/api/panel/pulse-ml/${activeSymbol}?${params.toString()}`);
       const json = await res.json();
       if (json.error) {
         setError(json.error);
         setData(null);
       } else {
         setData(json);
-        markRefreshed();
+        markRefreshed(json.signal_timestamp || json.timestamp);
       }
     } catch (e) {
       console.error("PULSE ML fetch error:", e);
@@ -133,7 +136,7 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
 
   // Listen for global refresh event from header button
   useEffect(() => {
-    const handler = () => fetchData(true);
+    const handler = () => fetchData(true, true);
     window.addEventListener("pulse-refresh", handler);
     window.addEventListener("dashboard-refresh", handler);
     return () => {

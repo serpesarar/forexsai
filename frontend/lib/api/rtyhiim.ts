@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+import { buildApiUrl } from "./base";
 
 async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await fetch(buildApiUrl(endpoint), {
     headers: { "Content-Type": "application/json" },
     ...options
   });

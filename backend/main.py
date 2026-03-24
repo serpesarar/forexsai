@@ -20,6 +20,8 @@ for env_path in env_paths:
         load_dotenv(env_path)
         break
 
+from config import settings
+
 import json
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -120,6 +122,22 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Failed to start scheduler: {e}")
 
+    try:
+        if settings.oil_baltic_sync_autostart:
+            from services.baltic_index_service import baltic_sync_loop
+            asyncio.create_task(baltic_sync_loop(settings.oil_baltic_sync_interval_seconds))
+            print("Oil Baltic sync started")
+    except Exception as e:
+        print(f"Failed to start Oil Baltic sync: {e}")
+
+    try:
+        if settings.oil_ais_autostart and settings.aisstream_api_key:
+            from services.ais_oil_collector import start_ais_oil_collector
+            start_ais_oil_collector()
+            print("AIS oil collector started")
+    except Exception as e:
+        print(f"Failed to start AIS oil collector: {e}")
+
     # 6. Connection stats logger (every 60s)
     _conn_logger_task = asyncio.create_task(_connection_stats_logger())
 
@@ -144,6 +162,18 @@ async def lifespan(app: FastAPI):
         print("Background scheduler stopped")
     except Exception as e:
         print(f"Error stopping scheduler: {e}")
+
+    try:
+        from services.baltic_index_service import stop_baltic_sync
+        stop_baltic_sync()
+    except Exception as e:
+        print(f"Error stopping Oil Baltic sync: {e}")
+
+    try:
+        from services.ais_oil_collector import stop_ais_oil_collector
+        stop_ais_oil_collector()
+    except Exception as e:
+        print(f"Error stopping AIS oil collector: {e}")
 
     # Close Supabase HTTP client gracefully
     try:
@@ -277,6 +307,7 @@ try:
         xauusd,
         usoil,
         dax,
+        oil_baltic_intelligence,
         pattern_engine,
         patterns_stub,
         claude_news,
@@ -317,6 +348,7 @@ try:
     app.include_router(xauusd.router)
     app.include_router(usoil.router)
     app.include_router(dax.router)
+    app.include_router(oil_baltic_intelligence.router)
     app.include_router(pattern_engine.router)
     app.include_router(claude_news.router)
     app.include_router(claude_sentiment.router)

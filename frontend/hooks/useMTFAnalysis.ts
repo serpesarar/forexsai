@@ -6,8 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+import { buildApiUrl } from "../lib/api/base";
 
 export type Timeframe = "M1" | "M5" | "M15" | "M30" | "H1" | "H4" | "D1";
 export type Signal = "STRONG_BUY" | "BUY" | "NEUTRAL" | "SELL" | "STRONG_SELL";
@@ -214,7 +213,7 @@ export function useMTFAnalysis(symbol: string, refreshInterval: number = 30000) 
 
   const fetchData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/mtf/analysis?symbol=${encodeURIComponent(symbol)}`);
+      const response = await fetch(buildApiUrl(`/api/mtf/analysis?symbol=${encodeURIComponent(symbol)}`));
       
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
@@ -261,7 +260,7 @@ export function useSingleTimeframeAnalysis(
       const timeout = setTimeout(() => controller.abort(), 10000);
       
       const response = await fetch(
-        `${API_BASE}/api/mtf/timeframe/${encodeURIComponent(symbol)}/${timeframe}`,
+        buildApiUrl(`/api/mtf/timeframe/${encodeURIComponent(symbol)}/${timeframe}`),
         { signal: controller.signal }
       );
       clearTimeout(timeout);
@@ -308,7 +307,7 @@ export function useConfluence(symbol: string, refreshInterval: number = 30000) {
 
   const fetchData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/mtf/confluence/${encodeURIComponent(symbol)}`);
+      const response = await fetch(buildApiUrl(`/api/mtf/confluence/${encodeURIComponent(symbol)}`));
       
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);

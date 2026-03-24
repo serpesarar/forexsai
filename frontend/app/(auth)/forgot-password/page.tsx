@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Mail, ArrowLeft, Loader2, CheckCircle2, AlertCircle, TrendingUp } from "lucide-react";
+import { getApiBase } from "@/lib/api/base";
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");

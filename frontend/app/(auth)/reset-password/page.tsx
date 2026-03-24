@@ -4,8 +4,9 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Lock, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle, TrendingUp } from "lucide-react";
+import { getApiBase } from "@/lib/api/base";
 
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+const API_BASE = getApiBase();
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();

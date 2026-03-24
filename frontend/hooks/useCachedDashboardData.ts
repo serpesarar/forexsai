@@ -2,8 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useWSData, type SymbolData } from "../contexts/WebSocketContext";
-
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
+import { buildApiUrl } from "../lib/api/base";
 
 interface CachedSymbolData {
   symbol: string;
@@ -66,7 +65,7 @@ function wsDataToCached(ws: SymbolData): CachedSymbolData {
 
 async function fetchCachedData(symbol: string): Promise<CachedSymbolData | null> {
   try {
-    const res = await fetch(`${API_BASE}/api/data/cached/${encodeURIComponent(symbol)}`);
+    const res = await fetch(buildApiUrl(`/api/data/cached/${encodeURIComponent(symbol)}`));
     if (!res.ok) return null;
     const json = await res.json();
     if (json.success && json.data) {
