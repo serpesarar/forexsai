@@ -8,15 +8,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
-
-const SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"];
-const SYMBOL_LABELS: Record<string, string> = {
-  "NDX.INDX": "NASDAQ",
-  "XAUUSD": "XAU/USD",
-  "GDAXI.INDX": "DAX",
-  "USOIL.FOREX": "US OIL"
-};
+import { fetcher } from '../../lib/api';
 import { 
   Calendar, 
   TrendingUp, 
@@ -27,6 +19,14 @@ import {
   Moon,
   Activity
 } from 'lucide-react';
+
+const SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"];
+const SYMBOL_LABELS: Record<string, string> = {
+  "NDX.INDX": "NASDAQ",
+  "XAUUSD": "XAU/USD",
+  "GDAXI.INDX": "DAX",
+  "USOIL.FOREX": "US OIL"
+};
 
 interface SeasonalityData {
   symbol: string;
@@ -103,16 +103,10 @@ export default function SeasonalityPanel() {
     setError(null);
     
     try {
-      const response = await fetch(`${API_BASE}/api/deepseek/seasonality/${activeSymbol}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const result = await response.json();
+      const result = await fetcher<{ success?: boolean; data?: SeasonalityData; error?: string }>(`/api/deepseek/seasonality/${activeSymbol}`);
       
       if (result.success) {
-        setData(result.data);
+        setData(result.data || null);
       } else {
         setError(result.error || 'Failed to fetch seasonality data');
       }

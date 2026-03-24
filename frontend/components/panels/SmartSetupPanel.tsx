@@ -9,15 +9,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDashboardStore } from "@/lib/store";
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
-
-const SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"];
-const SYMBOL_LABELS: Record<string, string> = {
-  "NDX.INDX": "NASDAQ",
-  "XAUUSD": "XAU/USD",
-  "GDAXI.INDX": "DAX",
-  "USOIL.FOREX": "US OIL"
-};
+import { fetcher } from '../../lib/api';
 import { 
   Target, 
   TrendingUp, 
@@ -36,6 +28,14 @@ import {
   ChevronUp,
   Info
 } from 'lucide-react';
+
+const SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"];
+const SYMBOL_LABELS: Record<string, string> = {
+  "NDX.INDX": "NASDAQ",
+  "XAUUSD": "XAU/USD",
+  "GDAXI.INDX": "DAX",
+  "USOIL.FOREX": "US OIL"
+};
 
 interface SmartSetupData {
   symbol: string;
@@ -161,18 +161,12 @@ export default function SmartSetupPanel() {
     setError(null);
     
     try {
-      const response = await fetch(
-        `${API_BASE}/api/deepseek/smart-setup/${activeSymbol}?direction=${direction}&account_size=10000&risk_per_trade=1.0`
+      const result = await fetcher<{ success?: boolean; data?: SmartSetupData; error?: string }>(
+        `/api/deepseek/smart-setup/${activeSymbol}?direction=${direction}&account_size=10000&risk_per_trade=1.0`
       );
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
       if (result.success) {
-        setData(result.data);
+        setData(result.data || null);
       } else {
         setError(result.error || 'Failed to fetch data');
       }

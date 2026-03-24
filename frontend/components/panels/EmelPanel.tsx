@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { fetcher } from "../../lib/api";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useRefreshAge } from "../../hooks/useRefreshAge";
 import { PanelHeader } from "../PanelHeader";
@@ -24,8 +25,6 @@ import {
 } from "../ui/CustomIcons";
 import { EmelIcon, PulseIcon, SignalsIcon } from "../ui/CustomIcons";
 import { ShieldCheck } from "lucide-react";
-
-const API_BASE = "https://upbeat-flow-production.up.railway.app";
 
 interface CheckItem {
   id: number; name: string; subtitle: string;
@@ -146,8 +145,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
   const fetchData = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
-      const res = await fetch(`${API_BASE}/api/panel/emel/${activeSymbol}?timeframe=${timeframe}`);
-      const json = await res.json();
+      const json = await fetcher<EmelData & { error?: string }>(`/api/panel/emel/${activeSymbol}?timeframe=${timeframe}`);
       if (!json.error) {
         setData(json);
         markRefreshed();
