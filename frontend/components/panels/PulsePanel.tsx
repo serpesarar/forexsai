@@ -100,13 +100,19 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
       const params = new URLSearchParams({ timeframe });
       if (forceRefresh) params.set("refresh", "true");
       const res = await fetch(`${API_BASE}/api/panel/pulse/${activeSymbol}?${params.toString()}`);
-      const json = await res.json();
-      if (json.error) {
-        setError(json.error);
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setError((json && typeof json === "object" && "error" in json && typeof json.error === "string") ? json.error : `http_${res.status}`);
+        setData(null);
+      } else if (!json || typeof json !== "object") {
+        setError("invalid_response");
+        setData(null);
+      } else if ("error" in json && json.error) {
+        setError(typeof json.error === "string" ? json.error : "panel_error");
         setData(null);
       } else {
-        setData(json);
-        markRefreshed(json.signal_timestamp || json.timestamp);
+        setData(json as PulseData);
+        markRefreshed((json as PulseData).signal_timestamp || (json as PulseData).timestamp);
       }
     } catch (e) {
       console.error("PULSE fetch error:", e);

@@ -186,13 +186,15 @@ export function WebSocketProvider({ children }: Props) {
         try {
           const msg = JSON.parse(event.data);
           const receiveTime = Date.now(); // The moment we received the message
+          lastPongTime.current = receiveTime;
 
           // Tracking lag for debugging
-          if (msg.timestamp || msg?.data?.updated_at) {
-            const msgTime = parseWsTimestamp(msg.timestamp || msg.data?.updated_at);
+          const rawTimestamp = msg.timestamp || msg?.data?.updated_at;
+          if (rawTimestamp) {
+            const msgTime = parseWsTimestamp(rawTimestamp);
             const lag = msgTime == null ? null : receiveTime - msgTime;
-            if (lag !== null && lag > 5000) {
-              console.warn(`[WS] HIGH LAG DETECTED: ${lag}ms - Message timestamp: ${msg.timestamp}`);
+            if (lag !== null && lag > 5000 && lag < 300000) {
+              console.warn(`[WS] HIGH LAG DETECTED: ${lag}ms - Message timestamp: ${rawTimestamp}`);
             }
           }
 
@@ -206,7 +208,6 @@ export function WebSocketProvider({ children }: Props) {
             return;
           }
           if (msg.type === "pong") {
-            lastPongTime.current = Date.now();
             return;
           }
 
