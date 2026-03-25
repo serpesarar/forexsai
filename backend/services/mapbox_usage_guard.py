@@ -54,7 +54,7 @@ def _day_key(now: datetime) -> str:
 def _budget_config(now: Optional[datetime] = None) -> Dict[str, Any]:
     ts = now or _now()
     reserve_ratio = _float_env("MAPBOX_WEB_MONTHLY_RESERVE_RATIO", 0.10)
-    vendor_free_limit = _int_env("MAPBOX_VENDOR_FREE_WEB_LIMIT", 50_000_000_000)
+    vendor_free_limit = _int_env("MAPBOX_VENDOR_FREE_WEB_LIMIT", 50_000)
     automatic_month_limit = max(1, math.floor(vendor_free_limit * (1.0 - reserve_ratio)))
     requested_month_limit = _int_env("MAPBOX_WEB_MONTHLY_HARD_LIMIT", automatic_month_limit)
     days_in_month = calendar.monthrange(ts.year, ts.month)[1]
