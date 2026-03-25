@@ -66,14 +66,14 @@ export default function SignalsView() {
                 </LazyPanel>
 
                 {/* Strategy Performance */}
-                <LazyPanel fallbackHeight={350}>
+                <LazyPanel fallbackHeight={350} rootMargin="0px">
                     <Suspense fallback={<PanelLoader />}>
                         <StrategyPerformancePanel />
                     </Suspense>
                 </LazyPanel>
 
                 {/* Learning Dashboard */}
-                <LazyPanel fallbackHeight={400}>
+                <LazyPanel fallbackHeight={400} rootMargin="0px">
                     <Suspense fallback={<PanelLoader />}>
                         <LearningDashboardV2 />
                     </Suspense>

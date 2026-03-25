@@ -147,7 +147,7 @@ function SymbolCard({ sym, d }: { sym: string; d: any }) {
 }
 
 function ModelCard({ model, stats, onSelectSymbol }: { model: string; stats: ModelStats; onSelectSymbol: (symbol: string, model: string) => void }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const theme = getTheme(model);
   const Icon = theme.Icon;
   const wr = stats.win_rate;
@@ -417,7 +417,7 @@ function ModelCard({ model, stats, onSelectSymbol }: { model: string; stats: Mod
 // MAIN COMPONENT — SIGNAL PERFORMANCE DASHBOARD
 // ════════════════════════════════════════════════════════════════════════════
 export default function LearningDashboardV2() {
-  const [days, setDays] = useState(0);
+  const [days, setDays] = useState(30);
   const [checking, setChecking] = useState(false);
   const [selectedSignal, setSelectedSignal] = useState<string | null>(null);
   const [signalListFilter, setSignalListFilter] = useState<{ model?: string; symbol?: string } | null>(null);

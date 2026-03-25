@@ -327,13 +327,16 @@ function getEmptyStrategyData(scope: string): StrategyData {
   };
 }
 
-function scoreColor(value: number) {
-  if (value >= 70) return P.green;
-  if (value >= 45) return P.warn;
+function getScoreColor(score?: number | null) {
+  if (score == null) return P.textSec;
+  if (score >= 75) return P.green;
+  if (score >= 55) return P.accent;
+  if (score >= 40) return P.warn;
   return P.textSec;
 }
 
-const STRATEGY_PERFORMANCE_ALL_TIME_DAYS = 0;
+const STRATEGY_PERFORMANCE_SUMMARY_DAYS = 90;
+const STRATEGY_PERFORMANCE_SIGNALS_DAYS = 0;
 
 async function fetchStrategyPerformance(days: number): Promise<StrategyPerformanceResponse> {
   const res = await fetch(`${API_BASE}/api/learning/strategy-performance?days=${days}`);
@@ -434,7 +437,7 @@ function LeaderCard({
 }
 
 function ScorePill({ label, value }: { label: string; value: number }) {
-  const color = scoreColor(value);
+  const color = getScoreColor(value);
   return (
     <span className="inline-flex items-center gap-1 rounded-md px-2 py-1" style={{ background: `${color}12`, border: `1px solid ${color}20` }}>
       <span style={{ fontFamily: FONT, fontSize: 9, color, fontWeight: 700 }}>{label}</span>
@@ -699,10 +702,11 @@ export default function StrategyPerformancePanel() {
   const [selectedModelPerformanceInitialTimeframe, setSelectedModelPerformanceInitialTimeframe] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<"performance" | "signals">("performance");
   const locale: "tr" | "en" = "tr";
+  const performanceQueryEnabled = activeTab === "performance";
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["strategy-performance", "all-time"],
-    queryFn: () => fetchStrategyPerformance(STRATEGY_PERFORMANCE_ALL_TIME_DAYS),
+    queryKey: ["strategy-performance", STRATEGY_PERFORMANCE_SUMMARY_DAYS],
+    queryFn: () => fetchStrategyPerformance(STRATEGY_PERFORMANCE_SUMMARY_DAYS),
     staleTime: 60000,
     refetchInterval: 300000,
   });
@@ -713,10 +717,11 @@ export default function StrategyPerformancePanel() {
     error: smcError,
     refetch: refetchSmc,
   } = useQuery({
-    queryKey: ["smc-performance", "all-time"],
-    queryFn: () => fetchSmcPerformance(STRATEGY_PERFORMANCE_ALL_TIME_DAYS),
+    queryKey: ["smc-performance", STRATEGY_PERFORMANCE_SUMMARY_DAYS],
+    queryFn: () => fetchSmcPerformance(STRATEGY_PERFORMANCE_SUMMARY_DAYS),
     staleTime: 60000,
     refetchInterval: 300000,
+    enabled: performanceQueryEnabled && !!data && !data.error,
   });
 
   const {
@@ -725,10 +730,11 @@ export default function StrategyPerformancePanel() {
     error: aiPanelError,
     refetch: refetchAiPanel,
   } = useQuery({
-    queryKey: ["ai-panel-performance", "all-time"],
-    queryFn: () => fetchAiPanelPerformance(STRATEGY_PERFORMANCE_ALL_TIME_DAYS),
+    queryKey: ["ai-panel-performance", STRATEGY_PERFORMANCE_SUMMARY_DAYS],
+    queryFn: () => fetchAiPanelPerformance(STRATEGY_PERFORMANCE_SUMMARY_DAYS),
     staleTime: 60000,
     refetchInterval: 300000,
+    enabled: performanceQueryEnabled && !!data && !data.error,
   });
 
   const {
@@ -737,7 +743,7 @@ export default function StrategyPerformancePanel() {
     refetch: refetchSignals,
   } = useQuery({
     queryKey: ["recent-signals", "all-time", signalsPage, selectedSymbol, selectedStrategyScope],
-    queryFn: () => fetchRecentSignals(STRATEGY_PERFORMANCE_ALL_TIME_DAYS, signalsPage, selectedSymbol, selectedStrategyScope),
+    queryFn: () => fetchRecentSignals(STRATEGY_PERFORMANCE_SIGNALS_DAYS, signalsPage, selectedSymbol, selectedStrategyScope),
     staleTime: 30000,
     refetchInterval: 60000,
     enabled: activeTab === "signals",
@@ -862,13 +868,13 @@ export default function StrategyPerformancePanel() {
               onMouseEnter={(e) => (e.currentTarget.style.background = `${P.accent}15`)}
               onMouseLeave={(e) => (e.currentTarget.style.background = `${P.accent}08`)}
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} style={{ color: P.accent }} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading || smcLoading || aiPanelLoading ? "animate-spin" : ""}`} style={{ color: P.accent }} />
             </button>
             <PanelInfoButton panelId="strategy-performance" />
           </div>
         </div>
 
-        {(isLoading || smcLoading || aiPanelLoading) && activeTab === "performance" ? (
+        {isLoading && activeTab === "performance" ? (
           <div className="p-16 flex items-center justify-center" style={{ background: P.bg }}>
             <RefreshCw className="w-5 h-5 animate-spin" style={{ color: P.accent }} />
           </div>
@@ -1002,7 +1008,11 @@ export default function StrategyPerformancePanel() {
               </div>
             </div>
 
-            {smcData && !smcData.error ? (
+            {smcLoading && !smcData ? (
+              <div className="rounded-xl px-4 py-6 flex items-center justify-center" style={{ background: P.surface, border: `1px solid ${P.border}` }}>
+                <RefreshCw className="w-4 h-4 animate-spin" style={{ color: "#A855F7" }} />
+              </div>
+            ) : smcData && !smcData.error ? (
               <div className="space-y-6" style={{ paddingTop: 12, borderTop: `1px solid ${P.border}` }}>
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: `#A855F712`, border: `1px solid #A855F720` }}>
@@ -1149,7 +1159,11 @@ export default function StrategyPerformancePanel() {
               </div>
             ) : null}
 
-            {aiPanelData && !aiPanelData.error ? (
+            {aiPanelLoading && !aiPanelData ? (
+              <div className="rounded-xl px-4 py-6 flex items-center justify-center" style={{ background: P.surface, border: `1px solid ${P.border}` }}>
+                <RefreshCw className="w-4 h-4 animate-spin" style={{ color: "#C084FC" }} />
+              </div>
+            ) : aiPanelData && !aiPanelData.error ? (
               <div className="space-y-6" style={{ paddingTop: 12, borderTop: `1px solid ${P.border}` }}>
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: `#C084FC12`, border: `1px solid #C084FC20` }}>
@@ -1494,7 +1508,7 @@ export default function StrategyPerformancePanel() {
         model={selectedModelPerformanceModel}
         strategyScope={selectedModelPerformanceScope}
         initialTimeframe={selectedModelPerformanceInitialTimeframe}
-        days={STRATEGY_PERFORMANCE_ALL_TIME_DAYS}
+        days={STRATEGY_PERFORMANCE_SIGNALS_DAYS}
       />
     </>
   );

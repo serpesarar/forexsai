@@ -1337,6 +1337,9 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
                 "timeframe_estimate": "15-30 min"
             }
         }
+
+        _set_cached_panel_analysis("pulse1", symbol, timeframe, payload)
+        return payload
         
     except Exception as e:
         logger.error(f"PULSE analysis error: {e}")
