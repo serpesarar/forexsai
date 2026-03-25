@@ -8,7 +8,7 @@ from services.baltic_index_service import get_baltic_snapshot
 from services.data_fetcher import fetch_eod_candles, fetch_intraday_candles, fetch_ohlc_data
 from services.market_regime_service import detect_regime
 from services.oil_analysis_service import generate_oil_analysis
-from services.oil_maritime_data_service import get_chokepoint_metrics, refresh_chokepoint_metrics
+from services.oil_maritime_data_service import get_chokepoint_metrics, get_recent_tankers, refresh_chokepoint_metrics
 from database.supabase_client import get_auth_error, is_auth_failed
 
 CHOKEPOINT_LAYOUT = {
@@ -265,6 +265,7 @@ async def build_oil_baltic_intelligence() -> Dict[str, Any]:
     if not metrics_map and not is_auth_failed():
         refresh_chokepoint_metrics()
         metrics_map = get_chokepoint_metrics()
+    tankers = get_recent_tankers(limit=120, freshness_hours=72)
 
     storage_regions = [metrics_map.get("singapore_anchorage") or {}, metrics_map.get("rotterdam") or {}]
     floating_storage_vessels = sum(int(region.get("floating_storage_vessels") or 0) for region in storage_regions)
@@ -424,6 +425,7 @@ async def build_oil_baltic_intelligence() -> Dict[str, Any]:
             "ema50": _round(float(((micro.get("ema") or {}).get("ema50") or 0.0)), 2),
         },
         "chokepoints": chokepoints,
+        "tankers": tankers,
         "terminal_log": terminal_log,
         "source_health": [
             {"name": "WTI price tape", "status": "live", "mode": "DataHub", "note": "Realtime cached oil price and candles are active."},

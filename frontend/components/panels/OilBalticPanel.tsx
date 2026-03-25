@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Activity, Anchor, Droplets, Gauge, RefreshCw, Waves, Radar, Fuel, ShieldAlert } from "lucide-react";
 
 import { buildApiUrl } from "../../lib/api/base";
@@ -19,12 +19,29 @@ interface Chokepoint {
   label: string;
   x: number;
   y: number;
+  lat?: number;
+  lon?: number;
   signal: string;
   bias: "bullish" | "bearish" | "neutral";
   intensity: number;
   narrative: string;
   vessel_count?: number;
   storage_estimate_mm_bbl?: number;
+}
+
+interface Tanker {
+  mmsi: number;
+  vessel_name?: string | null;
+  lat: number;
+  lon: number;
+  speed_knots?: number | null;
+  heading?: number | null;
+  region?: string | null;
+  status?: string | null;
+  idle_days?: number | null;
+  last_seen_at?: string | null;
+  estimated_barrels?: number | null;
+  ship_category?: string | null;
 }
 
 interface TradeRecommendation {
@@ -104,6 +121,7 @@ interface OilBalticResponse {
   trade_recommendation?: TradeRecommendation;
   key_levels?: Record<string, number>;
   chokepoints?: Chokepoint[];
+  tankers?: Tanker[];
   source_health?: SourceHealthItem[];
   terminal_log?: string[];
   algorithm_notes?: string[];
@@ -127,7 +145,204 @@ interface OilBalticResponse {
   };
 }
 
+type MapboxRuntime = {
+  accessToken: string;
+  Map: new (options: Record<string, unknown>) => any;
+  Marker: new (options?: Record<string, unknown>) => any;
+  Popup: new (options?: Record<string, unknown>) => any;
+  NavigationControl: new (options?: Record<string, unknown>) => any;
+};
+
+declare global {
+  interface Window {
+    mapboxgl?: MapboxRuntime;
+  }
+}
+
 const ENDPOINT = "/api/panel/oil-baltic-intelligence";
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+const MAPBOX_SCRIPT_ID = "forexsai-mapbox-runtime-js";
+const MAPBOX_CSS_ID = "forexsai-mapbox-runtime-css";
+const MAPBOX_JS_URL = "https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.js";
+const MAPBOX_CSS_URL = "https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.css";
+const CHOKEPOINT_SOURCE_ID = "oil-baltic-chokepoints";
+const CHOKEPOINT_CIRCLE_LAYER_ID = "oil-baltic-chokepoint-circles";
+const CHOKEPOINT_STROKE_LAYER_ID = "oil-baltic-chokepoint-strokes";
+const CHOKEPOINT_LABEL_LAYER_ID = "oil-baltic-chokepoint-labels";
+
+let mapboxLoaderPromise: Promise<MapboxRuntime> | null = null;
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => {
+    if (char === "&") return "&amp;";
+    if (char === "<") return "&lt;";
+    if (char === ">") return "&gt;";
+    if (char === '"') return "&quot;";
+    return "&#39;";
+  });
+}
+
+function getChokepointColor(signal?: string, bias?: string): string {
+  const normalized = String(signal || "").toLowerCase();
+  if (normalized.includes("storage") || normalized.includes("stress") || bias === "bearish") return "#ff4d6d";
+  if (normalized.includes("rush") || normalized.includes("demand") || normalized.includes("drawdown") || bias === "bullish") return "#00ff88";
+  if (normalized.includes("calm") || normalized.includes("watch") || normalized.includes("balanced")) return "#ffaa00";
+  return "#00ff41";
+}
+
+function getTankerColor(status?: string): string {
+  const normalized = String(status || "").toLowerCase();
+  if (normalized === "floating_storage") return "#ff4d6d";
+  if (normalized === "transit") return "#00ff88";
+  if (normalized === "anchored" || normalized === "idle") return "#ffaa00";
+  return "#00ff41";
+}
+
+function buildPopupHtml(title: string, rows: Array<[string, string]>): string {
+  const content = rows
+    .map(
+      ([label, value]) =>
+        `<div style="display:flex;justify-content:space-between;gap:12px;margin-top:6px;"><span style="opacity:0.62;">${escapeHtml(label)}</span><span style="text-align:right;">${escapeHtml(value)}</span></div>`,
+    )
+    .join("");
+
+  return `<div style="min-width:190px;background:#03100b;color:#8effba;font-family:var(--font-jetbrains-mono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace);font-size:11px;line-height:1.45;"><div style="color:#ecfff4;font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;">${escapeHtml(title)}</div>${content}</div>`;
+}
+
+function ensureMapboxAssets(): Promise<MapboxRuntime> {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("Map can only initialize in the browser."));
+  }
+
+  if (!document.getElementById(MAPBOX_CSS_ID)) {
+    const link = document.createElement("link");
+    link.id = MAPBOX_CSS_ID;
+    link.rel = "stylesheet";
+    link.href = MAPBOX_CSS_URL;
+    document.head.appendChild(link);
+  }
+
+  if (window.mapboxgl) {
+    return Promise.resolve(window.mapboxgl);
+  }
+
+  if (mapboxLoaderPromise) {
+    return mapboxLoaderPromise;
+  }
+
+  mapboxLoaderPromise = new Promise<MapboxRuntime>((resolve, reject) => {
+    const fail = (message: string) => {
+      mapboxLoaderPromise = null;
+      reject(new Error(message));
+    };
+
+    const existing = document.getElementById(MAPBOX_SCRIPT_ID) as HTMLScriptElement | null;
+    if (existing) {
+      existing.addEventListener("load", () => {
+        if (window.mapboxgl) {
+          resolve(window.mapboxgl);
+          return;
+        }
+        fail("Mapbox runtime loaded but window.mapboxgl is unavailable.");
+      });
+      existing.addEventListener("error", () => fail("Mapbox script failed to load."));
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = MAPBOX_SCRIPT_ID;
+    script.src = MAPBOX_JS_URL;
+    script.async = true;
+    script.onload = () => {
+      if (window.mapboxgl) {
+        resolve(window.mapboxgl);
+        return;
+      }
+      fail("Mapbox runtime loaded but window.mapboxgl is unavailable.");
+    };
+    script.onerror = () => fail("Mapbox script failed to load.");
+    document.body.appendChild(script);
+  });
+
+  return mapboxLoaderPromise;
+}
+
+function syncChokepointLayer(map: any, chokepoints: Chokepoint[]): void {
+  const featureCollection = {
+    type: "FeatureCollection",
+    features: chokepoints
+      .filter((point) => typeof point.lon === "number" && typeof point.lat === "number")
+      .map((point) => ({
+        type: "Feature",
+        properties: {
+          label: point.label,
+          color: getChokepointColor(point.signal, point.bias),
+          intensity: point.intensity,
+        },
+        geometry: {
+          type: "Point",
+          coordinates: [point.lon, point.lat],
+        },
+      })),
+  };
+
+  const existingSource = map.getSource(CHOKEPOINT_SOURCE_ID);
+  if (existingSource) {
+    existingSource.setData(featureCollection);
+  } else {
+    map.addSource(CHOKEPOINT_SOURCE_ID, {
+      type: "geojson",
+      data: featureCollection,
+    });
+  }
+
+  if (!map.getLayer(CHOKEPOINT_CIRCLE_LAYER_ID)) {
+    map.addLayer({
+      id: CHOKEPOINT_CIRCLE_LAYER_ID,
+      type: "circle",
+      source: CHOKEPOINT_SOURCE_ID,
+      paint: {
+        "circle-radius": ["interpolate", ["linear"], ["get", "intensity"], 0, 16, 100, 34],
+        "circle-color": ["get", "color"],
+        "circle-opacity": 0.14,
+        "circle-blur": 0.4,
+      },
+    });
+  }
+
+  if (!map.getLayer(CHOKEPOINT_STROKE_LAYER_ID)) {
+    map.addLayer({
+      id: CHOKEPOINT_STROKE_LAYER_ID,
+      type: "circle",
+      source: CHOKEPOINT_SOURCE_ID,
+      paint: {
+        "circle-radius": ["interpolate", ["linear"], ["get", "intensity"], 0, 8, 100, 18],
+        "circle-color": "transparent",
+        "circle-stroke-width": 2,
+        "circle-stroke-color": ["get", "color"],
+        "circle-stroke-opacity": 0.85,
+      },
+    });
+  }
+
+  if (!map.getLayer(CHOKEPOINT_LABEL_LAYER_ID)) {
+    map.addLayer({
+      id: CHOKEPOINT_LABEL_LAYER_ID,
+      type: "symbol",
+      source: CHOKEPOINT_SOURCE_ID,
+      layout: {
+        "text-field": ["get", "label"],
+        "text-size": 11,
+        "text-offset": [0, 2.2],
+      },
+      paint: {
+        "text-color": "#d9ffea",
+        "text-halo-color": "rgba(2, 11, 9, 0.96)",
+        "text-halo-width": 1.2,
+      },
+    });
+  }
+}
 
 function pctColor(value: number): string {
   if (value > 0.05) return "#7dffb2";
@@ -201,6 +416,11 @@ export default function OilBalticPanel() {
   const [data, setData] = useState<OilBalticResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mapStatus, setMapStatus] = useState<string | null>(MAPBOX_TOKEN ? "Initializing map..." : "NEXT_PUBLIC_MAPBOX_TOKEN missing");
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<any>(null);
+  const tankerMarkersRef = useRef<any[]>([]);
+  const chokepointMarkersRef = useRef<any[]>([]);
   const { refreshAge, markRefreshed } = useRefreshAge();
 
   const fetchPanel = useCallback(async () => {
@@ -233,6 +453,172 @@ export default function OilBalticPanel() {
       window.removeEventListener("dashboard-refresh", refreshHandler);
     };
   }, [fetchPanel]);
+
+  const chokepoints = useMemo(() => data?.chokepoints || [], [data]);
+  const tankers = useMemo(() => data?.tankers || [], [data]);
+
+  useEffect(() => {
+    if (!MAPBOX_TOKEN) {
+      setMapStatus("NEXT_PUBLIC_MAPBOX_TOKEN missing");
+      return;
+    }
+
+    let cancelled = false;
+
+    const initMap = async () => {
+      if (!mapContainerRef.current || mapRef.current) {
+        return;
+      }
+
+      try {
+        const mapboxgl = await ensureMapboxAssets();
+        if (cancelled || !mapContainerRef.current) {
+          return;
+        }
+
+        mapboxgl.accessToken = MAPBOX_TOKEN;
+        const map = new mapboxgl.Map({
+          container: mapContainerRef.current,
+          style: "mapbox://styles/mapbox/dark-v10",
+          center: [20, 20],
+          zoom: 1.8,
+          projection: "globe",
+          attributionControl: false,
+        });
+
+        mapRef.current = map;
+        map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "top-right");
+
+        map.on("load", () => {
+          if (cancelled) {
+            return;
+          }
+          try {
+            map.setFog({
+              color: "rgb(5, 22, 16)",
+              "high-color": "rgb(9, 52, 40)",
+              "space-color": "rgb(2, 11, 9)",
+              "star-intensity": 0.08,
+            });
+          } catch {}
+          syncChokepointLayer(map, chokepoints);
+          window.setTimeout(() => map.resize(), 120);
+          setMapStatus(null);
+        });
+      } catch (mapError) {
+        if (!cancelled) {
+          setMapStatus(mapError instanceof Error ? mapError.message : "Map initialization failed.");
+        }
+      }
+    };
+
+    void initMap();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [chokepoints]);
+
+  useEffect(() => {
+    return () => {
+      tankerMarkersRef.current.forEach((marker) => marker.remove());
+      tankerMarkersRef.current = [];
+      chokepointMarkersRef.current.forEach((marker) => marker.remove());
+      chokepointMarkersRef.current = [];
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const mapboxgl = typeof window !== "undefined" ? window.mapboxgl : undefined;
+    if (!map || !mapboxgl) {
+      return;
+    }
+
+    const renderMapState = () => {
+      syncChokepointLayer(map, chokepoints);
+
+      tankerMarkersRef.current.forEach((marker) => marker.remove());
+      tankerMarkersRef.current = [];
+      chokepointMarkersRef.current.forEach((marker) => marker.remove());
+      chokepointMarkersRef.current = [];
+
+      chokepoints.forEach((point) => {
+        if (typeof point.lon !== "number" || typeof point.lat !== "number") {
+          return;
+        }
+
+        const color = getChokepointColor(point.signal, point.bias);
+        const element = document.createElement("div");
+        element.className = styles.chokepointPin;
+
+        const ring = document.createElement("div");
+        ring.className = styles.chokepointRing;
+        ring.style.borderColor = color;
+        ring.style.boxShadow = `0 0 22px ${color}33`;
+
+        const core = document.createElement("div");
+        core.className = styles.chokepointCore;
+        core.style.background = color;
+        core.style.boxShadow = `0 0 16px ${color}`;
+
+        element.appendChild(ring);
+        element.appendChild(core);
+
+        const popup = new mapboxgl.Popup({ offset: 18, closeButton: false }).setHTML(
+          buildPopupHtml(point.label, [
+            ["Signal", titleize(point.signal)],
+            ["Bias", titleize(point.bias)],
+            ["Intensity", fmt(point.intensity, 0)],
+            ["Flow", point.narrative],
+          ]),
+        );
+
+        const marker = new mapboxgl.Marker({ element, anchor: "center" })
+          .setLngLat([point.lon, point.lat])
+          .setPopup(popup)
+          .addTo(map);
+
+        chokepointMarkersRef.current.push(marker);
+      });
+
+      tankers.slice(0, 120).forEach((tanker) => {
+        const color = getTankerColor(tanker.status);
+        const element = document.createElement("div");
+        element.className = styles.tankerMarker;
+        element.style.background = color;
+        element.style.boxShadow = `0 0 12px ${color}, 0 0 22px ${color}66`;
+
+        const popup = new mapboxgl.Popup({ offset: 12 }).setHTML(
+          buildPopupHtml(tanker.vessel_name || `MMSI ${tanker.mmsi}`, [
+            ["MMSI", String(tanker.mmsi)],
+            ["Speed", `${fmt(tanker.speed_knots, 1)} kn`],
+            ["Status", titleize(tanker.status)],
+            ["Region", titleize(tanker.region)],
+          ]),
+        );
+
+        const marker = new mapboxgl.Marker({ element, anchor: "center" })
+          .setLngLat([tanker.lon, tanker.lat])
+          .setPopup(popup)
+          .addTo(map);
+
+        tankerMarkersRef.current.push(marker);
+      });
+    };
+
+    if (map.loaded() && map.isStyleLoaded()) {
+      renderMapState();
+      map.resize();
+      return;
+    }
+
+    map.once("load", renderMapState);
+  }, [chokepoints, tankers]);
 
   const summary = useMemo(() => {
     const signal = data?.signal;
@@ -380,7 +766,7 @@ export default function OilBalticPanel() {
           </div>
 
           <div className={styles.mapShell}>
-            <div className={styles.worldMap} />
+            <div ref={mapContainerRef} className={styles.mapCanvas} />
             <div className={styles.mapGrid} />
             <div className={styles.radarSweep} />
             <div className={styles.orbit} />
@@ -389,32 +775,13 @@ export default function OilBalticPanel() {
                 <div className={styles.mapLabel}><Anchor size={14} /> Satellite theater</div>
                 <div className={styles.mapLabel}><Waves size={14} /> Oil-only maritime watch</div>
                 <div className={styles.mapLabel}><Activity size={14} /> Baltic {titleize(data?.baltic?.source_mode || "proxy")}</div>
+                <div className={styles.mapLabel}><Radar size={14} /> {tankers.length} tankers</div>
                 <button className={styles.mapLabel} onClick={fetchPanel} disabled={loading}>
                   <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
                 </button>
               </div>
 
-              <div>
-                {(data?.chokepoints || []).map((point) => (
-                  <div key={point.id} className={styles.marker} style={{ left: `${point.x}%`, top: `${point.y}%` }}>
-                    <div className={styles.markerDot} style={{ background: point.bias === "bearish" ? "#ff8d88" : point.bias === "bullish" ? "#7dffb2" : "#ffd77a" }} />
-                    <div className={styles.markerCard}>
-                      <div className={styles.markerName}>{point.label}</div>
-                      <div className={styles.markerSignal}>{point.signal}</div>
-                      <div className={styles.markerNarrative}>{point.narrative}</div>
-                      <div className={styles.markerIntensity}>
-                        <div className={styles.barTrack}>
-                          <div
-                            className={`${styles.barFill} ${point.bias === "bearish" ? styles.barFillBearish : ""}`}
-                            style={{ width: `${Math.max(4, Math.min(100, point.intensity))}%` }}
-                          />
-                        </div>
-                        <div className={styles.barValue}>{fmt(point.intensity, 0)}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {mapStatus ? <div className={styles.mapStatus}>{mapStatus}</div> : null}
 
               <div className={styles.mapBottomBar}>
                 <div className={styles.mapLabel}><Gauge size={14} /> ATR {fmt(data?.price?.atr_pct, 2)}%</div>

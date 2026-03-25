@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import math
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from dateutil import parser as dateutil_parser
@@ -262,6 +262,49 @@ def get_tanker_state(mmsi: int) -> Optional[Dict[str, Any]]:
         return None
     result = client.table("tanker_state").select("*").eq("mmsi", mmsi).limit(1).execute()
     return _safe_row(result)
+
+
+def get_recent_tankers(limit: int = 80, freshness_hours: int = 48) -> List[Dict[str, Any]]:
+    client = get_supabase_client()
+    if client is None:
+        return []
+    if is_auth_failed():
+        return []
+
+    cutoff = (_now() - timedelta(hours=max(1, int(freshness_hours or 48)))).isoformat()
+    result = (
+        client.table("tanker_state")
+        .select("mmsi,vessel_name,lat,lon,speed_knots,heading,region,status,idle_days,last_seen_at,estimated_barrels,ship_category")
+        .gte("last_seen_at", cutoff)
+        .order("last_seen_at", desc=True)
+        .limit(max(1, min(int(limit or 80), 200)))
+        .execute()
+    )
+
+    items: List[Dict[str, Any]] = []
+    for row in _safe_rows(result):
+        try:
+            lat = float(row.get("lat"))
+            lon = float(row.get("lon"))
+        except (TypeError, ValueError):
+            continue
+        if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+            continue
+        items.append({
+            "mmsi": int(row.get("mmsi") or 0),
+            "vessel_name": row.get("vessel_name"),
+            "lat": lat,
+            "lon": lon,
+            "speed_knots": row.get("speed_knots"),
+            "heading": row.get("heading"),
+            "region": row.get("region") or detect_region(lat, lon),
+            "status": row.get("status") or "transit",
+            "idle_days": row.get("idle_days"),
+            "last_seen_at": row.get("last_seen_at"),
+            "estimated_barrels": row.get("estimated_barrels"),
+            "ship_category": row.get("ship_category"),
+        })
+    return items
 
 
 def persist_tanker_observation(observation: Dict[str, Any]) -> Dict[str, Any]:
