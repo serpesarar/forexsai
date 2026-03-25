@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, lazy, Suspense } from "react";
+import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { GripVertical } from "lucide-react";
 import {
@@ -354,6 +354,8 @@ export default function HomePage() {
   const { checkAuth } = useAuthStore();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const { activeView } = useNavigationStore();
+  const localeEffectInitialized = useRef(false);
+  const [heavyDataEnabled, setHeavyDataEnabled] = useState(false);
 
   const [activeTf, setActiveTf] = useState<(typeof timeframes)[number]>("15m");
   const [theme, setTheme] = useState<"evening" | "morning">("evening");
@@ -398,11 +400,11 @@ export default function HomePage() {
   const { tickers: liveTickers, isLoading: pricesLoading } = useLivePrices(15000);
 
   // Cache hook - loads pre-computed data from backend immediately
-  const { nasdaq: cachedNasdaq, xauusd: cachedXauusd, hasData: hasCachedData } = useCachedDashboardData();
+  const { nasdaq: cachedNasdaq, xauusd: cachedXauusd, hasData: hasCachedData } = useCachedDashboardData(2500);
 
   // MTF Analysis hooks - fetch real technical analysis per timeframe
-  const { data: nasdaqMTF, isLoading: nasdaqMTFLoading } = useSingleTimeframeAnalysis("NDX.INDX", trendTf, 30000);
-  const { data: xauusdMTF, isLoading: xauusdMTFLoading } = useSingleTimeframeAnalysis("XAUUSD", trendTf, 30000);
+  const { data: nasdaqMTF, isLoading: nasdaqMTFLoading } = useSingleTimeframeAnalysis("NDX.INDX", trendTf, 30000, heavyDataEnabled);
+  const { data: xauusdMTF, isLoading: xauusdMTFLoading } = useSingleTimeframeAnalysis("XAUUSD", trendTf, 30000, heavyDataEnabled);
 
   const [manualTickers, setMarketTickers] = useState(initialMarketTickers);
 
@@ -433,6 +435,20 @@ export default function HomePage() {
       });
     }
   }, [hasCachedData, cachedNasdaq, cachedXauusd]);
+
+  useEffect(() => {
+    if (isCheckingAuth || activeView !== "dashboard") {
+      setHeavyDataEnabled(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setHeavyDataEnabled(true);
+    }, 1500);
+
+    return () => window.clearTimeout(timer);
+  }, [activeView, isCheckingAuth]);
+
   const [claudeSentiments, setClaudeSentiments] = useState<{ nasdaq?: any; xauusd?: any }>({});
   const [claudePatterns, setClaudePatterns] = useState<{ nasdaq?: any; xauusd?: any }>({});
   const [claudePatternsLoading, setClaudePatternsLoading] = useState(false);
@@ -448,14 +464,16 @@ export default function HomePage() {
   const { isOpen, type, symbol, data, title, open, close } = useDetailPanelStore();
   const { t, locale } = useI18nStore();
 
-  const refreshLive = async () => {
+  const refreshLive = async ({ broadcast = true }: { broadcast?: boolean } = {}) => {
     try {
       const lang = locale;
 
-      // Trigger Pulse panel refreshes via custom event
-      window.dispatchEvent(new CustomEvent("pulse-refresh"));
-      // Trigger ALL dashboard panels refresh
-      window.dispatchEvent(new CustomEvent("dashboard-refresh"));
+      if (broadcast) {
+        // Trigger Pulse panel refreshes via custom event
+        window.dispatchEvent(new CustomEvent("pulse-refresh"));
+        // Trigger ALL dashboard panels refresh
+        window.dispatchEvent(new CustomEvent("dashboard-refresh"));
+      }
 
       // Use allSettled so one failing endpoint doesn't block all
       const results = await Promise.allSettled([
@@ -678,13 +696,17 @@ export default function HomePage() {
 
   // Defer heavy refreshLive so page renders instantly with cached data
   useEffect(() => {
-    const timer = setTimeout(() => refreshLive(), 3000);
+    const timer = setTimeout(() => refreshLive({ broadcast: false }), 3000);
     return () => clearTimeout(timer);
   }, []);
 
   // When language changes, refetch dynamic content in that language.
   useEffect(() => {
-    refreshLive();
+    if (!localeEffectInitialized.current) {
+      localeEffectInitialized.current = true;
+      return;
+    }
+    refreshLive({ broadcast: false });
   }, [locale]);
 
   useEffect(() => {

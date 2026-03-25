@@ -84,7 +84,7 @@ class ClaudeSentimentResponse(BaseModel):
     analysis: str
     recommendation: str
     market_data_summary: Dict[str, Any]
-    headlines: List[Dict[str, str]] = []
+    headlines: List[Dict[str, Any]] = []
 
 
 class RunAllResponse(BaseModel):

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useWSData, type SymbolData } from "../contexts/WebSocketContext";
 import { buildApiUrl } from "../lib/api/base";
@@ -91,10 +92,24 @@ async function fetchCachedData(symbol: string): Promise<CachedSymbolData | null>
   }
 }
 
-export function useCachedDashboardData() {
+export function useCachedDashboardData(httpFallbackDelayMs: number = 2500) {
   // Try WebSocket data first (real-time, no polling)
   const { status: wsStatus, symbolData: wsData } = useWSData();
   const wsConnected = wsStatus === "connected";
+  const [httpFallbackEnabled, setHttpFallbackEnabled] = useState(false);
+
+  useEffect(() => {
+    if (wsConnected) {
+      setHttpFallbackEnabled(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setHttpFallbackEnabled(true);
+    }, httpFallbackDelayMs);
+
+    return () => window.clearTimeout(timer);
+  }, [httpFallbackDelayMs, wsConnected]);
 
   // HTTP polling as fallback — only active when WebSocket is NOT connected
   // When WS is connected, polling interval is disabled (false)
@@ -102,6 +117,7 @@ export function useCachedDashboardData() {
     queryKey: ["cached-dashboard", "NDX.INDX"],
     queryFn: () => fetchCachedData("NDX.INDX"),
     staleTime: 60000,
+    enabled: httpFallbackEnabled && !wsConnected,
     refetchInterval: wsConnected ? false : 30000,
   });
 
@@ -109,6 +125,7 @@ export function useCachedDashboardData() {
     queryKey: ["cached-dashboard", "XAUUSD"],
     queryFn: () => fetchCachedData("XAUUSD"),
     staleTime: 60000,
+    enabled: httpFallbackEnabled && !wsConnected,
     refetchInterval: wsConnected ? false : 30000,
   });
 

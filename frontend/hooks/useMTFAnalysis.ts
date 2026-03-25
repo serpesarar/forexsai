@@ -248,13 +248,17 @@ export function useMTFAnalysis(symbol: string, refreshInterval: number = 30000) 
 export function useSingleTimeframeAnalysis(
   symbol: string, 
   timeframe: Timeframe,
-  refreshInterval: number = 30000
+  refreshInterval: number = 30000,
+  enabled: boolean = true
 ) {
   const [data, setData] = useState<TimeframeAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (!enabled) {
+      return;
+    }
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000);
@@ -287,15 +291,19 @@ export function useSingleTimeframeAnalysis(
     } finally {
       setIsLoading(false);
     }
-  }, [symbol, timeframe]);
+  }, [enabled, symbol, timeframe]);
 
   useEffect(() => {
+    if (!enabled) {
+      setIsLoading(false);
+      return;
+    }
     fetchData();
     
     const interval = setInterval(fetchData, refreshInterval);
     
     return () => clearInterval(interval);
-  }, [fetchData, refreshInterval]);
+  }, [enabled, fetchData, refreshInterval]);
 
   return { data, isLoading, error, refetch: fetchData };
 }

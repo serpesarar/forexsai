@@ -1084,7 +1084,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     normalized_symbol = normalize_ml_market_symbol(symbol)
     model_symbol = resolve_ml_model_symbol(normalized_symbol)
     if model_symbol:
-        logger.info(
+        logger.debug(
             "ML routing resolved: requested=%s market=%s model_family=%s strategy=%s",
             symbol,
             normalized_symbol,
@@ -1099,7 +1099,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     if enabled_factors is None:
         if is_main_strategy:
             enabled_factors = ALL_CONFIDENCE_FACTORS.copy()
-            logger.info("Strategy 'main' using raw/base ML factor set: %s", enabled_factors)
+            logger.debug("Strategy 'main' using raw/base ML factor set: %s", enabled_factors)
         else:
             preset = STRATEGY_PRESETS.get(preset_strategy, STRATEGY_PRESETS["balanced"])
             enabled_layers = preset["enabled_layers"]
@@ -1111,7 +1111,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
                 strategy_factors.extend(layer_config.get("factors", []))
 
             enabled_factors = strategy_factors if strategy_factors else ALL_CONFIDENCE_FACTORS.copy()
-            logger.info(f"Strategy '{strategy}' enabled factors: {enabled_factors}")
+            logger.debug(f"Strategy '{strategy}' enabled factors: {enabled_factors}")
     
     # For XAUUSD, get news impact analysis
     news_sentiment = 0.0
@@ -1137,7 +1137,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
             news_conflicts = unified_impact.conflicts
             
             # Log detailed analysis
-            logger.info(
+            logger.debug(
                 f"Unified News: sentiment={news_sentiment:.3f}, "
                 f"confidence={news_confidence:.0f}%, bias={unified_impact.direction_bias}, "
                 f"trump={unified_impact.trump_sentiment:.2f}, fed={unified_impact.fed_sentiment:.2f}"
@@ -1146,7 +1146,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
             # If major conflicts, reduce news impact
             if news_conflicts:
                 news_confidence *= 0.7
-                logger.info(f"Conflicts detected, reduced confidence to {news_confidence:.0f}%")
+                logger.debug(f"Conflicts detected, reduced confidence to {news_confidence:.0f}%")
                 
         except Exception as e:
             logger.warning(f"Unified news failed, trying V2: {e}")
@@ -1176,7 +1176,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
                 for cn in comex_result.high_impact_news[:2]:
                     news_factors.append(f"⚡ COMEX: {cn.title[:50]}...")
             
-            logger.info(
+            logger.debug(
                 f"COMEX News: impact={comex_impact:.3f}, score={comex_result.impact_score}, "
                 f"direction={comex_result.direction}, block={comex_should_block}"
             )
@@ -1185,7 +1185,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
             if abs(comex_impact) > 0.1:
                 # COMEX weight: 30% of total news sentiment
                 news_sentiment = news_sentiment * 0.7 + comex_impact * 0.3
-                logger.info(f"Blended news sentiment with COMEX: {news_sentiment:.3f}")
+                logger.debug(f"Blended news sentiment with COMEX: {news_sentiment:.3f}")
                 
         except Exception as e:
             logger.warning(f"COMEX news check failed: {e}")
@@ -1203,7 +1203,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     # Primary: Use 30-minute candles (model trained on M30)
     if candles_30m and len(candles_30m) >= 50:
         candles = candles_30m
-        logger.info(f"{normalized_symbol} using M30 data: {len(candles)} candles (30min)")
+        logger.debug(f"{normalized_symbol} using M30 data: {len(candles)} candles (30min)")
     else:
         # Fallback to EOD only if M30 unavailable
         eod_candles = await fetch_eod_candles(normalized_symbol, limit=250)
@@ -1228,7 +1228,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     # Compute real multi-timeframe indicators (falls back to ta if data unavailable)
     ta_1h = _compute_tf_indicators(candles_1h, current_price, fallback_ta=ta)
     ta_4h = _compute_tf_indicators(candles_4h, current_price, fallback_ta=ta)
-    logger.info(f"Multi-TF indicators: H1={len(candles_1h) if candles_1h else 0} candles (real={ta_1h is not ta}), H4={len(candles_4h) if candles_4h else 0} candles (real={ta_4h is not ta})")
+    logger.debug(f"Multi-TF indicators: H1={len(candles_1h) if candles_1h else 0} candles (real={ta_1h is not ta}), H4={len(candles_4h) if candles_4h else 0} candles (real={ta_4h is not ta})")
     
     # Build feature vector with real multi-TF data
     feature_df = _build_feature_vector(normalized_symbol, ta, candles, ta_1h=ta_1h, ta_4h=ta_4h)
@@ -1306,7 +1306,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     if isinstance(sr_features, Exception):
         sr_features = {}
     
-    logger.info(f"Parallel fetch complete: MTF={bool(mtf_data)}, COT={cot_data.get('signal')}, "
+    logger.debug(f"Parallel fetch complete: MTF={bool(mtf_data)}, COT={cot_data.get('signal')}, "
                f"Patterns={len(pattern_result.get('analyses', {}))}, SR={bool(sr_features)}")
     
     # ═══════════════════════════════════════════════════════════════════
@@ -1411,7 +1411,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
                     for sig in conflicting[:2]:
                         mtf_adjustments["warnings"].append(f"⚡ Korelasyon çelişkisi: {sig}")
             
-            logger.info(f"MTF processed: regime={regime_type}, session={session}, "
+            logger.debug(f"MTF processed: regime={regime_type}, session={session}, "
                        f"adjustments_collected={len(confidence_adjustments)}")
             
     except Exception as mtf_err:
@@ -1431,7 +1431,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
         if cot_data and cot_data.get("warning"):
             mtf_adjustments["warnings"].append(cot_data["warning"])
         
-        logger.info(f"COT processed: signal={cot_data.get('signal', 'N/A')}")
+        logger.debug(f"COT processed: signal={cot_data.get('signal', 'N/A')}")
     except Exception as cot_err:
         logger.debug(f"COT processing skipped: {cot_err}")
     
@@ -1476,7 +1476,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
                 add_adjustment('pattern', 0.9, 1, 'Pattern çelişkisi')
                 mtf_adjustments["warnings"].append(f"⚡ Pattern çelişkisi: {bullish_count} bullish vs {bearish_count} bearish")
         
-        logger.info(f"Pattern processed: {len(all_patterns)} patterns")
+        logger.debug(f"Pattern processed: {len(all_patterns)} patterns")
     except Exception as pattern_err:
         logger.debug(f"Pattern processing skipped: {pattern_err}")
     
@@ -1500,7 +1500,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
                 add_adjustment('candle', 0.9, 1, 'Candle çelişkisi')
                 mtf_adjustments["warnings"].append("⚡ Mum formasyonları çelişkili")
             
-            logger.info(f"Candlestick: {candlestick_data['bullish_count']} bullish, "
+            logger.debug(f"Candlestick: {candlestick_data['bullish_count']} bullish, "
                        f"{candlestick_data['bearish_count']} bearish, signal={signal}, adj={adjustment:+.0%}")
     except Exception as candle_err:
         logger.debug(f"Candlestick integration skipped: {candle_err}")
@@ -1547,7 +1547,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
             if alignment > 0.7:
                 mtf_adjustments["warnings"].append(f"🎯 Regime uyumlu: {regime}")
             
-            logger.info(f"S/R processed: weight={sr_weight:.2f}, confluence={confluence:.2f}")
+            logger.debug(f"S/R processed: weight={sr_weight:.2f}, confluence={confluence:.2f}")
     except Exception as sr_err:
         logger.debug(f"S/R processing skipped: {sr_err}")
     
@@ -1558,12 +1558,11 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
         prob_up = float(proba[1])
         
         # For XAUUSD: Incorporate news sentiment into probabilities
-        if is_gold and abs(news_sentiment) > 0.1:
-            # News sentiment adjustment (max 20% shift)
+        if is_gold and 'news' in all_factors and abs(news_sentiment) > 0.1:
             sentiment_boost = news_sentiment * 0.2 * (news_confidence / 100)
             prob_up = min(0.95, max(0.05, prob_up + sentiment_boost))
             prob_down = 1 - prob_up
-            logger.info(f"Gold probabilities adjusted by news: UP {prob_up:.2f}, DOWN {prob_down:.2f}")
+            logger.debug(f"Gold probabilities adjusted by news: UP {prob_up:.2f}, DOWN {prob_down:.2f}")
         
         # ═══════════════════════════════════════════════════════════════════
         # TREND CONFIRMATION - Check EMA alignment before making decision
@@ -1613,7 +1612,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
         else:
             trend_score -= 0.1
         
-        logger.info(f"Trend analysis: score={trend_score:.2f}, bullish={strong_bullish_trend}, bearish={strong_bearish_trend}")
+        logger.debug(f"Trend analysis: score={trend_score:.2f}, bullish={strong_bullish_trend}, bearish={strong_bearish_trend}")
         
         # Determine direction with TREND CONFIRMATION
         # Gold needs higher threshold (more volatile), NASDAQ can be lower

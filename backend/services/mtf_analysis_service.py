@@ -275,7 +275,7 @@ def _ema(values: np.ndarray, period: int) -> float:
     # Insufficient candles for this EMA period - use SMA of available data
     # This is more accurate than returning current price
     if len(values) > 0:
-        logger.warning(f"EMA{period}: only {len(values)} candles (need {period}), using SMA fallback")
+        logger.debug(f"EMA{period}: only {len(values)} candles (need {period}), using SMA fallback")
         return float(np.mean(values))
     return 0.0
 
@@ -1123,14 +1123,14 @@ def _analyze_timeframe(
     """Analyze a single timeframe"""
     
     # EMA calculations
-    logger.info(f"[EMA DEBUG] {symbol} {timeframe}: {len(closes)} candles, "
+    logger.debug(f"[EMA DEBUG] {symbol} {timeframe}: {len(closes)} candles, "
                 f"last_close={closes[-1]:.2f}, current_price={current_price:.2f}")
     
     ema20 = _ema(closes, 20)
     ema50 = _ema(closes, 50)
     ema200 = _ema(closes, 200)
     
-    logger.info(f"[EMA DEBUG] {symbol} {timeframe}: EMA20={ema20:.2f}, EMA50={ema50:.2f}, "
+    logger.debug(f"[EMA DEBUG] {symbol} {timeframe}: EMA20={ema20:.2f}, EMA50={ema50:.2f}, "
                 f"EMA200={ema200:.2f} (candles={len(closes)})")
     
     ema20_dist = (current_price - ema20) / pip_value
@@ -1443,22 +1443,22 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
             # M15 -> 15m, M30 -> 30m, H1 -> 1h, H4 -> 4h, D1 -> 1d
             candles = await fetch_ohlc_data(symbol, data_tf, config["candles"])
         except Exception as e:
-            logger.warning(f"Failed to fetch {tf} data: {e}")
+            logger.debug(f"Failed to fetch {tf} data: {e}")
         
         if not candles or len(candles) < 20:
             # For short timeframes (M1-M30), do NOT fall back to daily data
             # Daily EMA values are completely wrong for intraday timeframes
             if tf in intraday_only_tfs:
-                logger.warning(f"Insufficient intraday data for {tf} ({len(candles) if candles else 0} candles). NOT using EOD fallback.")
+                logger.debug(f"Insufficient intraday data for {tf} ({len(candles) if candles else 0} candles). NOT using EOD fallback.")
             else:
                 # Only H1, H4, D1 can fall back to EOD
                 try:
                     eod_candles = await fetch_eod_candles(symbol, limit=config["candles"])
                     if eod_candles:
                         candles = eod_candles
-                        logger.info(f"Using EOD fallback for {tf}: {len(candles)} candles")
+                        logger.debug(f"Using EOD fallback for {tf}: {len(candles)} candles")
                 except Exception as e:
-                    logger.warning(f"EOD fallback failed for {tf}: {e}")
+                    logger.debug(f"EOD fallback failed for {tf}: {e}")
         
         if not candles or len(candles) < 20:
             return None, None, None, None
@@ -1477,7 +1477,7 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
         if closes is None or len(closes) < 20:
             return {"success": False, "error": f"Could not fetch data for {timeframe}"}
         
-        logger.info(f"[MTF] {symbol} {timeframe}: Got {len(closes)} candles, "
+        logger.debug(f"[MTF] {symbol} {timeframe}: Got {len(closes)} candles, "
                      f"first_close={closes[0]:.2f}, last_close={closes[-1]:.2f}")
         
         # Pass ALL candles to _analyze_timeframe so EMA200 gets enough data.
