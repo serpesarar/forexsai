@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from services.baltic_index_service import get_baltic_snapshot
 from services.data_fetcher import fetch_eod_candles, fetch_intraday_candles, fetch_ohlc_data
+from services.mapbox_usage_guard import get_mapbox_web_load_status
 from services.market_regime_service import detect_regime
 from services.oil_analysis_service import generate_oil_analysis
 from services.oil_maritime_data_service import get_chokepoint_metrics, get_recent_tankers, refresh_chokepoint_metrics
@@ -266,6 +267,7 @@ async def build_oil_baltic_intelligence() -> Dict[str, Any]:
         refresh_chokepoint_metrics()
         metrics_map = get_chokepoint_metrics()
     tankers = get_recent_tankers(limit=120, freshness_hours=72)
+    mapbox_guard = get_mapbox_web_load_status()
 
     storage_regions = [metrics_map.get("singapore_anchorage") or {}, metrics_map.get("rotterdam") or {}]
     floating_storage_vessels = sum(int(region.get("floating_storage_vessels") or 0) for region in storage_regions)
@@ -426,6 +428,7 @@ async def build_oil_baltic_intelligence() -> Dict[str, Any]:
         },
         "chokepoints": chokepoints,
         "tankers": tankers,
+        "mapbox_guard": mapbox_guard,
         "terminal_log": terminal_log,
         "source_health": [
             {"name": "WTI price tape", "status": "live", "mode": "DataHub", "note": "Realtime cached oil price and candles are active."},
@@ -434,6 +437,7 @@ async def build_oil_baltic_intelligence() -> Dict[str, Any]:
             {"name": "Baltic indices", "status": baltic_status, "mode": "public web/cache", "note": "BDTI/BCTI sync from public source when available, otherwise cached or fallback-normalized."},
             {"name": "TD3C route", "status": td3c_status, "mode": "configured source/cache", "note": "TD3C stays optional until a stable free source is configured."},
             {"name": "AIS floating storage", "status": "live" if metrics_map else ("error" if is_auth_failed() else "planned"), "mode": "aisstream", "note": ais_note if is_auth_failed() else "Anchorage congestion upgrades the storage layer when collector data is present."},
+            {"name": "Mapbox web load guard", "status": "live" if mapbox_guard.get("allow_live_map") else "partial", "mode": "monthly+daily budget", "note": f"{mapbox_guard.get('reason')} | month {mapbox_guard.get('month_used')}/{mapbox_guard.get('month_limit')} | day {mapbox_guard.get('day_used')}/{mapbox_guard.get('day_limit')}"},
         ],
         "algorithm_notes": [
             "The panel now reads Baltic index cache and chokepoint metrics from Supabase when available.",

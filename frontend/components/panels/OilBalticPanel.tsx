@@ -44,6 +44,22 @@ interface Tanker {
   ship_category?: string | null;
 }
 
+interface MapboxGuard {
+  allow_live_map: boolean;
+  claimed?: boolean;
+  mode?: string;
+  reason?: string;
+  month_used: number;
+  month_limit: number;
+  remaining_month?: number;
+  day_used: number;
+  day_limit: number;
+  remaining_day?: number;
+  reserve_ratio?: number;
+  vendor_free_limit?: number;
+  metric?: string;
+}
+
 interface TradeRecommendation {
   direction: string;
   instrument: string;
@@ -122,6 +138,7 @@ interface OilBalticResponse {
   key_levels?: Record<string, number>;
   chokepoints?: Chokepoint[];
   tankers?: Tanker[];
+  mapbox_guard?: MapboxGuard;
   source_health?: SourceHealthItem[];
   terminal_log?: string[];
   algorithm_notes?: string[];
@@ -160,7 +177,7 @@ declare global {
 }
 
 const ENDPOINT = "/api/panel/oil-baltic-intelligence";
-const ENABLE_MAPBOX_OIL_PANEL = process.env.NEXT_PUBLIC_ENABLE_MAPBOX_OIL_PANEL === "true";
+const MAPBOX_CLAIM_ENDPOINT = "/api/panel/oil-baltic-intelligence/mapbox-claim";
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const MAPBOX_SCRIPT_ID = "forexsai-mapbox-runtime-js";
 const MAPBOX_CSS_ID = "forexsai-mapbox-runtime-css";
@@ -417,9 +434,11 @@ export default function OilBalticPanel() {
   const [data, setData] = useState<OilBalticResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mapStatus, setMapStatus] = useState<string | null>(
-    ENABLE_MAPBOX_OIL_PANEL ? (MAPBOX_TOKEN ? "Initializing map..." : "NEXT_PUBLIC_MAPBOX_TOKEN missing") : "Mapbox disabled (safe mode)"
-  );
+  const [mapStatus, setMapStatus] = useState<string | null>(MAPBOX_TOKEN ? "Checking live map budget..." : "NEXT_PUBLIC_MAPBOX_TOKEN missing");
+  const [mapboxGuard, setMapboxGuard] = useState<MapboxGuard | null>(null);
+  const [liveMapAuthorized, setLiveMapAuthorized] = useState(false);
+  const claimKeyRef = useRef(`oil-map-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
+  const claimStartedRef = useRef(false);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const tankerMarkersRef = useRef<any[]>([]);
@@ -437,6 +456,7 @@ export default function OilBalticPanel() {
       }
       const json = (await response.json()) as OilBalticResponse;
       setData(json);
+      setMapboxGuard(json.mapbox_guard || null);
       setError(json.available ? null : (json.error || null));
       markRefreshed(json.generated_at || new Date());
     } catch (fetchError) {
@@ -459,16 +479,80 @@ export default function OilBalticPanel() {
 
   const chokepoints = useMemo(() => data?.chokepoints || [], [data]);
   const tankers = useMemo(() => data?.tankers || [], [data]);
-  const mapboxEnabled = ENABLE_MAPBOX_OIL_PANEL && Boolean(MAPBOX_TOKEN);
+  const mapboxEnabled = Boolean(MAPBOX_TOKEN) && liveMapAuthorized;
 
   useEffect(() => {
-    if (!ENABLE_MAPBOX_OIL_PANEL) {
-      setMapStatus("Mapbox disabled (safe mode)");
+    if (!MAPBOX_TOKEN) {
+      setMapStatus("NEXT_PUBLIC_MAPBOX_TOKEN missing");
+      setLiveMapAuthorized(false);
       return;
     }
 
+    if (liveMapAuthorized && mapRef.current) {
+      setMapStatus(null);
+      return;
+    }
+
+    if (!mapboxGuard) {
+      setMapStatus("Checking live map budget...");
+      setLiveMapAuthorized(false);
+      return;
+    }
+
+    if (!mapboxGuard.allow_live_map) {
+      setMapStatus(`Fallback map active • ${titleize(mapboxGuard.reason || "budget locked")}`);
+      setLiveMapAuthorized(false);
+      return;
+    }
+
+    if (claimStartedRef.current) {
+      return;
+    }
+
+    let cancelled = false;
+    claimStartedRef.current = true;
+
+    const claimMapLoad = async () => {
+      try {
+        setMapStatus("Claiming live map budget...");
+        const response = await fetch(buildApiUrl(MAPBOX_CLAIM_ENDPOINT), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_key: claimKeyRef.current }),
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const claim = (await response.json()) as MapboxGuard;
+        if (cancelled) {
+          return;
+        }
+        setMapboxGuard(claim);
+        setLiveMapAuthorized(Boolean(claim.allow_live_map));
+        setMapStatus(claim.allow_live_map ? "Initializing live map..." : `Fallback map active • ${titleize(claim.reason || "budget locked")}`);
+      } catch (claimError) {
+        if (!cancelled) {
+          setLiveMapAuthorized(false);
+          setMapStatus(claimError instanceof Error ? `Fallback map active • ${claimError.message}` : "Fallback map active");
+        }
+        claimStartedRef.current = false;
+      }
+    };
+
+    void claimMapLoad();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [liveMapAuthorized, mapboxGuard?.allow_live_map, mapboxGuard?.reason]);
+
+  useEffect(() => {
     if (!MAPBOX_TOKEN) {
       setMapStatus("NEXT_PUBLIC_MAPBOX_TOKEN missing");
+      return;
+    }
+
+    if (!liveMapAuthorized) {
       return;
     }
 
@@ -526,7 +610,7 @@ export default function OilBalticPanel() {
     return () => {
       cancelled = true;
     };
-  }, [chokepoints]);
+  }, [chokepoints, liveMapAuthorized]);
 
   useEffect(() => {
     return () => {
@@ -789,7 +873,7 @@ export default function OilBalticPanel() {
                 <div className={styles.mapLabel}><Waves size={14} /> Oil-only maritime watch</div>
                 <div className={styles.mapLabel}><Activity size={14} /> Baltic {titleize(data?.baltic?.source_mode || "proxy")}</div>
                 <div className={styles.mapLabel}><Radar size={14} /> {tankers.length} tankers</div>
-                <div className={styles.mapLabel}><ShieldAlert size={14} /> {mapboxEnabled ? "Mapbox live" : "Mapbox off"}</div>
+                <div className={styles.mapLabel}><ShieldAlert size={14} /> {mapboxEnabled ? "Mapbox live" : "Fallback active"}</div>
                 <button className={styles.mapLabel} onClick={fetchPanel} disabled={loading}>
                   <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
                 </button>
