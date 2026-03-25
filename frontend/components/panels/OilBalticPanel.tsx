@@ -160,6 +160,7 @@ declare global {
 }
 
 const ENDPOINT = "/api/panel/oil-baltic-intelligence";
+const ENABLE_MAPBOX_OIL_PANEL = process.env.NEXT_PUBLIC_ENABLE_MAPBOX_OIL_PANEL === "true";
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const MAPBOX_SCRIPT_ID = "forexsai-mapbox-runtime-js";
 const MAPBOX_CSS_ID = "forexsai-mapbox-runtime-css";
@@ -416,7 +417,9 @@ export default function OilBalticPanel() {
   const [data, setData] = useState<OilBalticResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mapStatus, setMapStatus] = useState<string | null>(MAPBOX_TOKEN ? "Initializing map..." : "NEXT_PUBLIC_MAPBOX_TOKEN missing");
+  const [mapStatus, setMapStatus] = useState<string | null>(
+    ENABLE_MAPBOX_OIL_PANEL ? (MAPBOX_TOKEN ? "Initializing map..." : "NEXT_PUBLIC_MAPBOX_TOKEN missing") : "Mapbox disabled (safe mode)"
+  );
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const tankerMarkersRef = useRef<any[]>([]);
@@ -456,8 +459,14 @@ export default function OilBalticPanel() {
 
   const chokepoints = useMemo(() => data?.chokepoints || [], [data]);
   const tankers = useMemo(() => data?.tankers || [], [data]);
+  const mapboxEnabled = ENABLE_MAPBOX_OIL_PANEL && Boolean(MAPBOX_TOKEN);
 
   useEffect(() => {
+    if (!ENABLE_MAPBOX_OIL_PANEL) {
+      setMapStatus("Mapbox disabled (safe mode)");
+      return;
+    }
+
     if (!MAPBOX_TOKEN) {
       setMapStatus("NEXT_PUBLIC_MAPBOX_TOKEN missing");
       return;
@@ -533,6 +542,9 @@ export default function OilBalticPanel() {
   }, []);
 
   useEffect(() => {
+    if (!mapboxEnabled) {
+      return;
+    }
     const map = mapRef.current;
     const mapboxgl = typeof window !== "undefined" ? window.mapboxgl : undefined;
     if (!map || !mapboxgl) {
@@ -618,7 +630,7 @@ export default function OilBalticPanel() {
     }
 
     map.once("load", renderMapState);
-  }, [chokepoints, tankers]);
+  }, [chokepoints, tankers, mapboxEnabled]);
 
   const summary = useMemo(() => {
     const signal = data?.signal;
@@ -766,7 +778,8 @@ export default function OilBalticPanel() {
           </div>
 
           <div className={styles.mapShell}>
-            <div ref={mapContainerRef} className={styles.mapCanvas} />
+            {mapboxEnabled ? <div ref={mapContainerRef} className={styles.mapCanvas} /> : null}
+            {!mapboxEnabled ? <div className={styles.worldMap} /> : null}
             <div className={styles.mapGrid} />
             <div className={styles.radarSweep} />
             <div className={styles.orbit} />
@@ -776,6 +789,7 @@ export default function OilBalticPanel() {
                 <div className={styles.mapLabel}><Waves size={14} /> Oil-only maritime watch</div>
                 <div className={styles.mapLabel}><Activity size={14} /> Baltic {titleize(data?.baltic?.source_mode || "proxy")}</div>
                 <div className={styles.mapLabel}><Radar size={14} /> {tankers.length} tankers</div>
+                <div className={styles.mapLabel}><ShieldAlert size={14} /> {mapboxEnabled ? "Mapbox live" : "Mapbox off"}</div>
                 <button className={styles.mapLabel} onClick={fetchPanel} disabled={loading}>
                   <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
                 </button>
