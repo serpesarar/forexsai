@@ -6,6 +6,8 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from dateutil import parser as dateutil_parser
+
 from database.supabase_client import get_auth_error, get_supabase_client, is_auth_failed
 
 logger = logging.getLogger(__name__)
@@ -99,6 +101,14 @@ def _parse_dt(value: Any) -> datetime:
             return parsed.astimezone(timezone.utc)
         except ValueError:
             continue
+
+    try:
+        parsed = dateutil_parser.parse(text)
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+    except Exception:
+        pass
 
     logger.warning("AIS timestamp parse failed for value=%r", value)
     return _now()

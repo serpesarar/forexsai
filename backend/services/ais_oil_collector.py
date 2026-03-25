@@ -40,7 +40,10 @@ class AISOilCollector:
         if isinstance(value, str) and value:
             return value
         if isinstance(value, (int, float)):
-            return datetime.fromtimestamp(float(value), tz=timezone.utc).isoformat()
+            timestamp = float(value)
+            if timestamp > 10_000_000_000:
+                timestamp /= 1000.0
+            return datetime.fromtimestamp(timestamp, tz=timezone.utc).isoformat()
         return datetime.now(timezone.utc).isoformat()
 
     def _normalize_static(self, payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -144,12 +147,26 @@ _COLLECTOR_TASK: Optional[asyncio.Task] = None
 _COLLECTOR: Optional[AISOilCollector] = None
 
 
+def _log_collector_task_result(task: asyncio.Task) -> None:
+    try:
+        task.result()
+    except asyncio.CancelledError:
+        logger.info("AIS oil collector task cancelled")
+    except Exception as exc:
+        logger.error("AIS oil collector task crashed: %s", exc, exc_info=True)
+
+
 def start_ais_oil_collector() -> None:
     global _COLLECTOR, _COLLECTOR_TASK
     if _COLLECTOR_TASK and not _COLLECTOR_TASK.done():
         return
     _COLLECTOR = AISOilCollector()
+    if not _COLLECTOR.api_key:
+        logger.warning("AIS oil collector not started because AISSTREAM_API_KEY is not configured")
+        return
     _COLLECTOR_TASK = asyncio.create_task(_COLLECTOR.run_forever())
+    _COLLECTOR_TASK.add_done_callback(_log_collector_task_result)
+    logger.info("AIS oil collector background task created")
 
 
 def stop_ais_oil_collector() -> None:
