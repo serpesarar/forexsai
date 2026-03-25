@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
@@ -27,6 +28,8 @@ class AISOilCollector:
         self.api_key = settings.aisstream_api_key
         self.running = False
         self._static_cache: Dict[int, Dict[str, Any]] = {}
+        self._last_metrics_refresh_at = 0.0
+        self._metrics_refresh_interval_seconds = 30.0
 
     def _subscription(self) -> Dict[str, Any]:
         return {
@@ -112,15 +115,20 @@ class AISOilCollector:
         if normalized.get("lat") is None or normalized.get("lon") is None:
             return
 
-        result = persist_tanker_observation(normalized)
+        result = await asyncio.to_thread(persist_tanker_observation, normalized)
         if result.get("ok"):
-            refresh_chokepoint_metrics()
+            now = time.monotonic()
+            if now - self._last_metrics_refresh_at >= self._metrics_refresh_interval_seconds:
+                self._last_metrics_refresh_at = now
+                await asyncio.to_thread(refresh_chokepoint_metrics)
             return
 
         error_text = str(result.get("error") or "")
         if "authentication failed" in error_text.lower() or "supabase_auth_failed" in error_text.lower():
             logger.error("AIS collector stopping because Supabase authentication failed")
             self.running = False
+        elif error_text:
+            logger.warning("AIS persist failed: %s", error_text)
 
     async def run_forever(self) -> None:
         if not self.api_key:
