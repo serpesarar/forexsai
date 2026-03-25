@@ -2,17 +2,15 @@ import { afterEach, describe, expect, it } from "vitest";
 import { buildApiUrl, buildWebSocketUrl, getApiBase, normalizeApiBase } from "../base";
 
 const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
-const originalAllowCrossOriginApi = process.env.NEXT_PUBLIC_ALLOW_CROSS_ORIGIN_API;
 
 afterEach(() => {
   process.env.NEXT_PUBLIC_API_URL = originalApiBase;
-  process.env.NEXT_PUBLIC_ALLOW_CROSS_ORIGIN_API = originalAllowCrossOriginApi;
 });
 
 describe("api base normalization", () => {
-  it("falls back to same-origin when env is empty", () => {
+  it("falls back to Railway production host when env is empty", () => {
     process.env.NEXT_PUBLIC_API_URL = "";
-    expect(getApiBase()).toBe("");
+    expect(getApiBase()).toBe("https://upbeat-flow-production.up.railway.app");
   });
 
   it("adds https to protocol-less production hosts", () => {
@@ -37,7 +35,7 @@ describe("api base normalization", () => {
     expect(buildWebSocketUrl("/ws/all")).toBe("ws://localhost:8000/ws/all");
   });
 
-  it("keeps explicit cross-origin bases available for server-side helpers", () => {
+  it("keeps explicit cross-origin bases available", () => {
     process.env.NEXT_PUBLIC_API_URL = "https://upbeat-flow-production.up.railway.app";
     expect(getApiBase()).toBe("https://upbeat-flow-production.up.railway.app");
   });

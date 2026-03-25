@@ -1,32 +1,10 @@
-const FALLBACK_API_BASE = "";
+const FALLBACK_API_BASE = "https://upbeat-flow-production.up.railway.app";
 const DEVELOPMENT_API_BASE = "http://localhost:8000";
-const ALLOW_CROSS_ORIGIN_API = process.env.NEXT_PUBLIC_ALLOW_CROSS_ORIGIN_API === "true";
 
 const LOCAL_HOST_PATTERN = /^(localhost|127(?:\.[0-9]+){3}|0\.0\.0\.0)(:\d+)?(\/.*)?$/i;
 
 function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, "");
-}
-
-function shouldForceSameOrigin(apiBase: string): boolean {
-  if (ALLOW_CROSS_ORIGIN_API || typeof window === "undefined") {
-    return false;
-  }
-
-  const hostname = window.location.hostname;
-  if (LOCAL_HOST_PATTERN.test(hostname)) {
-    return false;
-  }
-
-  if (!/^https?:\/\//i.test(apiBase)) {
-    return false;
-  }
-
-  try {
-    return new URL(apiBase).origin !== window.location.origin;
-  } catch {
-    return false;
-  }
 }
 
 export function normalizeApiBase(rawValue?: string | null): string {
@@ -55,8 +33,7 @@ export function normalizeApiBase(rawValue?: string | null): string {
 
 export function getApiBase(): string {
   if ((process.env.NEXT_PUBLIC_API_URL ?? "").trim()) {
-    const normalizedBase = normalizeApiBase(process.env.NEXT_PUBLIC_API_URL);
-    return shouldForceSameOrigin(normalizedBase) ? FALLBACK_API_BASE : normalizedBase;
+    return normalizeApiBase(process.env.NEXT_PUBLIC_API_URL);
   }
 
   if (process.env.NODE_ENV === "development") {

@@ -14,11 +14,11 @@ describe("api base helpers", () => {
     expect(getApiBase()).toBe("http://localhost:8000");
   });
 
-  it("returns same-origin fallback when env is unset outside development", () => {
+  it("returns Railway fallback when env is unset outside development", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("NEXT_PUBLIC_API_URL", "");
 
-    expect(getApiBase()).toBe("");
+    expect(getApiBase()).toBe("https://upbeat-flow-production.up.railway.app");
   });
 
   it("normalizes localhost-like values to http", () => {
