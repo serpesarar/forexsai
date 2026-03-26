@@ -27,10 +27,21 @@ def _get_pip_value(symbol: str) -> float:
     """Get pip/point value for symbol."""
     symbol_upper = (symbol or "").upper()
     if "XAU" in symbol_upper:
-        return 0.1  # Gold moves in 0.1 increments
+        return 1.0   # Gold: 1 pip = $1.00
     elif "NDX" in symbol_upper or "NAS" in symbol_upper:
-        return 1.0  # NASDAQ moves in 1 point increments
-    return 0.01
+        return 1.0   # NASDAQ: 1 point
+    elif "GDAXI" in symbol_upper or "DAX" in symbol_upper:
+        return 1.0   # DAX: 1 point
+    elif "OIL" in symbol_upper or "USOIL" in symbol_upper or "CL" in symbol_upper:
+        return 0.01  # Oil: cents
+    return 1.0
+
+
+def _get_unit_label(symbol: str) -> str:
+    symbol_upper = (symbol or "").upper()
+    if "OIL" in symbol_upper or "USOIL" in symbol_upper:
+        return "pts"
+    return "pts"
 
 
 def _calculate_pips_distance(price1: float, price2: float, pip_value: float) -> float:
@@ -38,168 +49,278 @@ def _calculate_pips_distance(price1: float, price2: float, pip_value: float) -> 
     return abs(price1 - price2) / pip_value
 
 
+def _calc_atr(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, period: int = 14) -> float:
+    """Calculate Average True Range."""
+    n = len(closes)
+    if n < 2:
+        return float(closes[-1]) * 0.001
+    trs = []
+    for i in range(1, min(period + 1, n)):
+        tr = max(
+            float(highs[i]) - float(lows[i]),
+            abs(float(highs[i]) - float(closes[i - 1])),
+            abs(float(lows[i]) - float(closes[i - 1])),
+        )
+        trs.append(tr)
+    return float(np.mean(trs)) if trs else float(closes[-1]) * 0.001
+
+
 def _find_support_resistance_levels(
     highs: np.ndarray,
     lows: np.ndarray,
     closes: np.ndarray,
     current_price: float,
-    pip_value: float
+    pip_value: float,
+    symbol: str = "",
 ) -> Dict[str, Any]:
     """
-    Find clear support and resistance levels using swing highs/lows.
-    Returns levels with distances from current price.
+    Improved S/R detection using swing-high/low clustering + touch-count scoring.
+
+    Algorithm:
+    1. Detect all swing highs/lows via 3-bar fractal across full candle history
+    2. Cluster nearby swings within 0.7 × ATR (same price zone)
+    3. Score each cluster: touch_count + recency bonus
+    4. Pick the 3 closest resistance clusters above price and 3 support clusters below
+    5. Fall back to Fibonacci pivot levels when swing data is insufficient
     """
-    # Find swing highs and lows (fractal method)
-    swing_highs = []
-    swing_lows = []
+    n = len(closes)
+    atr = _calc_atr(highs, lows, closes, 14)
+    cluster_threshold = atr * 0.7
+
+    unit = _get_unit_label(symbol)
+
+    # ── 1. Fractal swing detection ──────────────────────────────────────────
     period = 3
-    
-    for i in range(period, len(closes) - period):
-        if highs[i] == max(highs[i-period:i+period+1]):
-            swing_highs.append(float(highs[i]))
-        if lows[i] == min(lows[i-period:i+period+1]):
-            swing_lows.append(float(lows[i]))
-    
-    # Get recent levels (last 5)
-    recent_highs = swing_highs[-5:] if len(swing_highs) >= 5 else swing_highs
-    recent_lows = swing_lows[-5:] if len(swing_lows) >= 5 else swing_lows
-    
-    # Calculate pivot point (classic)
-    high_20 = float(np.max(highs[-20:])) if len(highs) >= 20 else float(np.max(highs))
-    low_20 = float(np.min(lows[-20:])) if len(lows) >= 20 else float(np.min(lows))
-    pivot = (high_20 + low_20 + current_price) / 3
-    
-    # Calculate Fibonacci levels
-    range_20 = high_20 - low_20
-    r1 = pivot + (range_20 * 0.382)
-    r2 = pivot + (range_20 * 0.618)  # Strong resistance
-    r3 = high_20
-    s1 = pivot - (range_20 * 0.382)
-    s2 = pivot - (range_20 * 0.618)  # Strong support
-    s3 = low_20
-    
-    # Build levels list with distances
-    levels = []
-    
-    # Resistance levels (above current price)
-    for i, (price, name, strength) in enumerate([
-        (r3, "R3 (High)", "normal"),
-        (r2, "R2 (Strong)", "strong"),
-        (r1, "R1", "normal"),
-    ]):
-        if price > current_price:
-            distance = _calculate_pips_distance(price, current_price, pip_value)
-            levels.append({
-                "type": "resistance",
-                "name": name,
-                "price": round(price, 2),
-                "distance": round(distance, 1),
-                "distance_display": f"+{round(distance, 1)} pts" if pip_value == 1.0 else f"+{round(distance, 1)} pips",
-                "strength": strength,
-                "is_next": i == 1  # R2 is typically the next major level
-            })
-    
-    # Current price level
+    swing_highs: List[tuple] = []  # (price, candle_index)
+    swing_lows: List[tuple] = []
+
+    for i in range(period, n - period):
+        h_window = highs[i - period: i + period + 1]
+        l_window = lows[i - period: i + period + 1]
+        if float(highs[i]) >= float(np.max(h_window)):
+            swing_highs.append((float(highs[i]), i))
+        if float(lows[i]) <= float(np.min(l_window)):
+            swing_lows.append((float(lows[i]), i))
+
+    # ── 2. Cluster nearby swings ─────────────────────────────────────────────
+    def cluster_swings(swings: List[tuple]) -> List[dict]:
+        if not swings:
+            return []
+        sorted_swings = sorted(swings, key=lambda x: x[0])
+        clusters: List[dict] = []
+        for price, idx in sorted_swings:
+            placed = False
+            for c in clusters:
+                if abs(price - c["center"]) <= cluster_threshold:
+                    c["prices"].append(price)
+                    c["indices"].append(idx)
+                    c["center"] = float(np.mean(c["prices"]))
+                    c["latest_idx"] = max(c["indices"])
+                    placed = True
+                    break
+            if not placed:
+                clusters.append({
+                    "center": price,
+                    "prices": [price],
+                    "indices": [idx],
+                    "latest_idx": idx,
+                })
+        # Score: touches + recency factor
+        for c in clusters:
+            touches = len(c["prices"])
+            recency = c["latest_idx"] / max(n, 1)
+            c["score"] = touches + recency * 0.5
+            c["touch_count"] = touches
+        return clusters
+
+    res_swings = [(p, i) for p, i in swing_highs if p > current_price]
+    sup_swings = [(p, i) for p, i in swing_lows if p < current_price]
+
+    res_clusters = cluster_swings(res_swings)
+    sup_clusters = cluster_swings(sup_swings)
+
+    # Sort by proximity to current price, take top 3
+    res_nearest = sorted(res_clusters, key=lambda c: c["center"] - current_price)[:3]
+    sup_nearest = sorted(sup_clusters, key=lambda c: current_price - c["center"])[:3]
+
+    # ── 3. Fibonacci fallback when swing data thin ───────────────────────────
+    window = min(50, n)
+    high_ref = float(np.max(highs[-window:]))
+    low_ref = float(np.min(lows[-window:]))
+    pivot = (high_ref + low_ref + current_price) / 3
+    rng = high_ref - low_ref
+
+    def fib_res_levels() -> List[dict]:
+        out = []
+        for mult in (0.382, 0.618, 1.0):
+            p = pivot + rng * mult
+            if p > current_price:
+                out.append({"center": p, "touch_count": 1, "score": 0.5, "is_fib": True})
+        return sorted(out, key=lambda c: c["center"] - current_price)
+
+    def fib_sup_levels() -> List[dict]:
+        out = []
+        for mult in (0.382, 0.618, 1.0):
+            p = pivot - rng * mult
+            if p < current_price:
+                out.append({"center": p, "touch_count": 1, "score": 0.5, "is_fib": True})
+        return sorted(out, key=lambda c: current_price - c["center"])
+
+    if len(res_nearest) < 2:
+        existing_prices = {round(c["center"], 1) for c in res_nearest}
+        for fb in fib_res_levels():
+            if round(fb["center"], 1) not in existing_prices:
+                res_nearest.append(fb)
+            if len(res_nearest) >= 3:
+                break
+        res_nearest = sorted(res_nearest, key=lambda c: c["center"] - current_price)[:3]
+
+    if len(sup_nearest) < 2:
+        existing_prices = {round(c["center"], 1) for c in sup_nearest}
+        for fb in fib_sup_levels():
+            if round(fb["center"], 1) not in existing_prices:
+                sup_nearest.append(fb)
+            if len(sup_nearest) >= 3:
+                break
+        sup_nearest = sorted(sup_nearest, key=lambda c: current_price - c["center"])[:3]
+
+    # ── 4. Build output levels ───────────────────────────────────────────────
+    levels: List[dict] = []
+    res_names = ["R1", "R2", "R3"]
+
+    for i, c in enumerate(res_nearest):
+        price = round(c["center"], 2)
+        distance = abs(price - current_price) / pip_value
+        touches = c.get("touch_count", 1)
+        strength = "strong" if touches >= 2 else "normal"
+        touch_tag = f" (×{touches})" if touches >= 2 else ""
+        levels.append({
+            "type": "resistance",
+            "name": f"{res_names[i]}{touch_tag}",
+            "price": price,
+            "distance": round(distance, 1),
+            "distance_display": f"+{round(distance, 1)} {unit}",
+            "strength": strength,
+            "is_next": i == 0,
+            "touch_count": touches,
+        })
+
     levels.append({
         "type": "current",
         "name": "Current Price",
         "price": round(current_price, 2),
         "distance": 0,
         "distance_display": "HERE",
-        "strength": "current"
+        "strength": "current",
     })
-    
-    # Support levels (below current price)
-    for i, (price, name, strength) in enumerate([
-        (s1, "S1", "normal"),
-        (s2, "S2 (Strong)", "strong"),
-        (s3, "S3 (Low)", "normal"),
-    ]):
-        if price < current_price:
-            distance = _calculate_pips_distance(price, current_price, pip_value)
-            levels.append({
-                "type": "support",
-                "name": name,
-                "price": round(price, 2),
-                "distance": round(distance, 1),
-                "distance_display": f"-{round(distance, 1)} pts" if pip_value == 1.0 else f"-{round(distance, 1)} pips",
-                "strength": strength,
-                "is_next": i == 1  # S2 is typically the next major level
-            })
-    
-    # Find nearest support and resistance
+
+    sup_names = ["S1", "S2", "S3"]
+    for i, c in enumerate(sup_nearest):
+        price = round(c["center"], 2)
+        distance = abs(price - current_price) / pip_value
+        touches = c.get("touch_count", 1)
+        strength = "strong" if touches >= 2 else "normal"
+        touch_tag = f" (×{touches})" if touches >= 2 else ""
+        levels.append({
+            "type": "support",
+            "name": f"{sup_names[i]}{touch_tag}",
+            "price": price,
+            "distance": round(distance, 1),
+            "distance_display": f"-{round(distance, 1)} {unit}",
+            "strength": strength,
+            "is_next": i == 0,
+            "touch_count": touches,
+        })
+
     resistances = [l for l in levels if l["type"] == "resistance"]
     supports = [l for l in levels if l["type"] == "support"]
-    
     nearest_resistance = min(resistances, key=lambda x: x["distance"]) if resistances else None
     nearest_support = min(supports, key=lambda x: x["distance"]) if supports else None
-    
+
     return {
         "all_levels": sorted(levels, key=lambda x: x["price"], reverse=True),
         "nearest_resistance": nearest_resistance,
         "nearest_support": nearest_support,
         "pivot": round(pivot, 2),
-        "range_high": round(high_20, 2),
-        "range_low": round(low_20, 2),
+        "range_high": round(high_ref, 2),
+        "range_low": round(low_ref, 2),
     }
 
 
 def _calculate_trend(
     closes: np.ndarray,
     highs: np.ndarray,
-    lows: np.ndarray
+    lows: np.ndarray,
+    timeframe: str = "1H",
 ) -> Dict[str, Any]:
     """
-    Calculate simple trend direction and strength.
+    Calculate trend direction, strength, and a human-readable description.
+    Uses EMA alignment (20/50/200) and ATR-normalized distance for strength.
     """
-    if len(closes) < 50:
+    if len(closes) < 20:
         return {
             "direction": "NEUTRAL",
             "strength": 0,
             "strength_percent": 0,
-            "description": "Insufficient data"
+            "description": "Insufficient data",
         }
-    
-    # Calculate EMAs
-    ema_20 = calculate_ema(closes, 20) or closes[-1]
-    ema_50 = calculate_ema(closes, 50) or closes[-1]
-    ema_200 = calculate_ema(closes, 200) if len(closes) >= 200 else (calculate_ema(closes, len(closes)) if len(closes) >= 20 else float(closes[-1]))
-    
+
+    tf_label = {
+        "15M": "intraday", "15m": "intraday",
+        "1H": "hourly", "1h": "hourly",
+        "4H": "swing", "4h": "swing",
+        "1D": "daily", "1d": "daily",
+    }.get(timeframe, timeframe)
+
+    ema_20 = calculate_ema(closes, 20) or float(closes[-1])
+    ema_50 = calculate_ema(closes, 50) if len(closes) >= 50 else (calculate_ema(closes, len(closes)) or float(closes[-1]))
+    ema_200 = calculate_ema(closes, 200) if len(closes) >= 200 else (calculate_ema(closes, max(20, len(closes))) or float(closes[-1]))
+
     current_price = float(closes[-1])
-    
-    # Trend direction based on EMA position
-    if current_price > ema_20 > ema_50:
+    atr = calculate_atr(highs, lows, closes, 14) or (current_price * 0.001)
+
+    # Full EMA stack alignment
+    full_bull = current_price > ema_20 > ema_50 > ema_200
+    full_bear = current_price < ema_20 < ema_50 < ema_200
+    partial_bull = current_price > ema_20 > ema_50
+    partial_bear = current_price < ema_20 < ema_50
+
+    if full_bull:
         direction = "UP"
-        description = "Uptrend - Price above EMA20 and EMA50"
-    elif current_price < ema_20 < ema_50:
+        description = f"Strong uptrend — price above EMA20, EMA50 & EMA200 ({tf_label})"
+    elif full_bear:
         direction = "DOWN"
-        description = "Downtrend - Price below EMA20 and EMA50"
+        description = f"Strong downtrend — price below EMA20, EMA50 & EMA200 ({tf_label})"
+    elif partial_bull:
+        direction = "UP"
+        description = f"Uptrend — price above EMA20 & EMA50 ({tf_label})"
+    elif partial_bear:
+        direction = "DOWN"
+        description = f"Downtrend — price below EMA20 & EMA50 ({tf_label})"
     elif current_price > ema_20:
         direction = "UP"
-        description = "Weak uptrend - Price above EMA20 but mixed"
+        description = f"Weak uptrend — price above EMA20 only ({tf_label})"
     elif current_price < ema_20:
         direction = "DOWN"
-        description = "Weak downtrend - Price below EMA20 but mixed"
+        description = f"Weak downtrend — price below EMA20 only ({tf_label})"
     else:
         direction = "NEUTRAL"
-        description = "Neutral - Price near EMAs"
-    
-    # Calculate trend strength (0-100)
-    # Based on how far price is from EMA50 relative to recent volatility
-    atr = calculate_atr(highs, lows, closes, 14) or (current_price * 0.001)
-    distance_from_ema50 = abs(current_price - ema_50)
-    strength_raw = min(100, (distance_from_ema50 / (atr * 3)) * 100)
-    
-    # Adjust strength based on alignment
-    if direction == "UP" and ema_20 > ema_50:
-        strength = int(strength_raw * 1.2)
-    elif direction == "DOWN" and ema_20 < ema_50:
-        strength = int(strength_raw * 1.2)
+        description = f"Neutral — price consolidating near EMAs ({tf_label})"
+
+    # Strength: distance from EMA50 in ATR units (capped at 3 ATRs = 100%)
+    dist_ema50 = abs(current_price - ema_50)
+    strength_raw = min(100.0, (dist_ema50 / (atr * 3)) * 100)
+
+    # Bonus for full EMA alignment
+    if full_bull or full_bear:
+        strength = int(min(100, strength_raw * 1.3))
+    elif (partial_bull and direction == "UP") or (partial_bear and direction == "DOWN"):
+        strength = int(min(100, strength_raw * 1.1))
     else:
         strength = int(strength_raw * 0.7)
-    
-    strength = min(100, max(0, strength))
-    
+
+    strength = max(0, min(100, strength))
+
     return {
         "direction": direction,
         "strength": strength,
@@ -268,18 +389,18 @@ async def get_clear_trend(symbol: str, timeframe: str = "1H"):
     """
     try:
         # Validate symbol
-        valid_symbols = ["NDX.INDX", "XAUUSD", "XAUUSD.FOREX"]
+        valid_symbols = ["NDX.INDX", "XAUUSD", "XAUUSD.FOREX", "GDAXI.INDX", "USOIL.FOREX"]
         symbol_key = symbol.upper()
         if symbol_key not in [s.upper() for s in valid_symbols]:
             return {
                 "error": f"Symbol not supported. Use: {', '.join(valid_symbols)}"
             }
-        
+
         # Normalize symbol for data fetching
-        if symbol_key == "XAUUSD":
-            fetch_symbol = "XAUUSD.FOREX"
-        else:
-            fetch_symbol = symbol
+        FETCH_MAP = {
+            "XAUUSD": "XAUUSD.FOREX",
+        }
+        fetch_symbol = FETCH_MAP.get(symbol_key, symbol)
         
         # Get data
         candles = await fetch_ohlc_data(fetch_symbol, timeframe, limit=300)
@@ -411,10 +532,10 @@ async def get_clear_trend(symbol: str, timeframe: str = "1H"):
         pip_value = _get_pip_value(symbol)
         
         # Calculate trend
-        trend = _calculate_trend(closes, highs, lows)
+        trend = _calculate_trend(closes, highs, lows, timeframe)
         
         # Calculate support/resistance
-        levels_data = _find_support_resistance_levels(highs, lows, closes, current_price, pip_value)
+        levels_data = _find_support_resistance_levels(highs, lows, closes, current_price, pip_value, symbol)
         
         # Calculate trade zones
         trade_zones = _calculate_trade_zones(
@@ -425,7 +546,11 @@ async def get_clear_trend(symbol: str, timeframe: str = "1H"):
         )
         
         # Format price display
-        if symbol.upper() in ["XAUUSD", "XAUUSD.FOREX"]:
+        sym_up = symbol.upper()
+        if sym_up in ["XAUUSD", "XAUUSD.FOREX"]:
+            price_display = f"{current_price:.2f}"
+            price_decimals = 2
+        elif "OIL" in sym_up or "USOIL" in sym_up:
             price_display = f"{current_price:.2f}"
             price_decimals = 2
         else:

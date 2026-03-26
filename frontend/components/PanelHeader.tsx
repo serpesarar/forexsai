@@ -42,6 +42,10 @@ export interface PanelHeaderProps {
 
   // Signal age (seconds since last signal)
   signalAge?: string;
+
+  // Fullscreen toggle
+  onFullscreen?: () => void;
+  isFullscreen?: boolean;
 }
 
 // ── Component ──
@@ -63,6 +67,8 @@ export function PanelHeader({
   panelId,
   extraContent,
   signalAge,
+  onFullscreen,
+  isFullscreen = false,
 }: PanelHeaderProps) {
   return (
     <div
@@ -233,6 +239,32 @@ export function PanelHeader({
             <div className="w-2 h-2 rounded-full" style={{ background: "var(--accent-positive)", animation: "pulse 2s infinite", boxShadow: "0 0 10px var(--accent-positive)" }} />
             {signalAge}
           </div>
+        )}
+
+        {/* Fullscreen Toggle */}
+        {onFullscreen && (
+          <button
+            onClick={onFullscreen}
+            title={isFullscreen ? "Exit fullscreen (Esc)" : "Fullscreen"}
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-all hover:opacity-80"
+            style={{
+              background: isFullscreen
+                ? "color-mix(in srgb, var(--accent-cyan) 18%, var(--bg-input))"
+                : "var(--bg-input)",
+              border: `1px solid ${isFullscreen ? "var(--accent-cyan)" : "var(--border-subtle)"}`,
+              color: isFullscreen ? "var(--accent-cyan)" : "var(--text-muted)",
+            }}
+          >
+            {isFullscreen ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" /><line x1="10" y1="14" x2="3" y2="21" /><line x1="21" y1="3" x2="14" y2="10" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" />
+              </svg>
+            )}
+          </button>
         )}
 
         {/* Info Button */}

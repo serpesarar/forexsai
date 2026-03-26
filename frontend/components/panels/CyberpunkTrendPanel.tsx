@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getApiBase } from "../../lib/api/base";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
@@ -202,14 +202,9 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
   const [explanationModal, setExplanationModal] = useState<{ title: string; content: string } | null>(null);
   const [priceFlash, setPriceFlash] = useState(false);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
+  const prevPriceRef = useRef<number | null>(null);
 
   const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "clear_trend");
-
-  useEffect(() => {
-    const handler = () => fetchData();
-    window.addEventListener("dashboard-refresh", handler);
-    return () => window.removeEventListener("dashboard-refresh", handler);
-  }, [activeSymbol, timeframe]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -217,10 +212,12 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
       const res = await fetch(`${API_BASE}/api/clear-trend/${activeSymbol}?timeframe=${timeframe}`);
       const json = await res.json();
       if (!json.error) {
-        if (data && json.price?.current !== data.price?.current) {
+        const newPrice = json.price?.current;
+        if (prevPriceRef.current !== null && newPrice !== prevPriceRef.current) {
           setPriceFlash(true);
           setTimeout(() => setPriceFlash(false), 600);
         }
+        prevPriceRef.current = newPrice ?? null;
         setData(json);
       }
     } catch (e) {
@@ -228,33 +225,46 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
     } finally {
       setLoading(false);
     }
-  }, [activeSymbol, timeframe, data]);
+  }, [activeSymbol, timeframe]);
 
+  // Always re-fetch when symbol or timeframe changes (WS broadcasts default TF only)
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSymbol, timeframe]);
+
+  // WS data update
   useEffect(() => {
     if (wsData) {
-      if (data && wsData.price?.current !== data.price?.current) {
+      const newPrice = wsData.price?.current;
+      if (prevPriceRef.current !== null && newPrice !== prevPriceRef.current) {
         setPriceFlash(true);
         setTimeout(() => setPriceFlash(false), 600);
       }
+      prevPriceRef.current = newPrice ?? null;
       setData(wsData);
       setLoading(false);
     }
   }, [wsData]);
 
+  // Polling fallback when WS disconnected
   useEffect(() => {
-    if (!wsData) fetchData();
     if (!wsConnected) {
       const interval = setInterval(fetchData, 15000);
       return () => clearInterval(interval);
     }
-  }, [activeSymbol, timeframe, wsConnected]);
+  }, [wsConnected, fetchData]);
 
-  // Listen for global refresh event from header button
+  // Dashboard / pulse refresh events
   useEffect(() => {
     const handler = () => fetchData();
+    window.addEventListener("dashboard-refresh", handler);
     window.addEventListener("pulse-refresh", handler);
-    return () => window.removeEventListener("pulse-refresh", handler);
-  }, [activeSymbol, timeframe]);
+    return () => {
+      window.removeEventListener("dashboard-refresh", handler);
+      window.removeEventListener("pulse-refresh", handler);
+    };
+  }, [fetchData]);
 
   const openExplanation = (key: string, title: string) => {
     if (data?.explanations?.[key]) setExplanationModal({ title, content: data.explanations[key] });
@@ -340,6 +350,8 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
         timeframe={timeframe}
         onTimeframeChange={setTimeframe}
         timeframes={TIMEFRAMES}
+        onFullscreen={toggleFullscreen}
+        isFullscreen={isFullscreen}
       />
 
       {/* ═══ MAIN CONTENT: Chart (left) + Sidebar (right) ═══ */}
