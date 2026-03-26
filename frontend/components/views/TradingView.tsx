@@ -1,22 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { ChevronDown, Moon } from "lucide-react";
 import {
   EmelIcon, PulseIcon, SignalsIcon, LearningIcon,
   ChartsIcon, TradingIcon, NasdaqIcon, GoldIcon,
-  ArrowUpIcon, ArrowDownIcon, AdvancedAnalysisIcon, OilIcon, DaxIcon
+  ArrowUpIcon, ArrowDownIcon, AdvancedAnalysisIcon, OilIcon, DaxIcon,
+  LoadingIcon,
 } from "../ui/CustomIcons";
 import Image from "next/image";
-import MLPredictionPanel from "../../components/MLPredictionPanel";
-import ClaudeAnalysisPanel from "../../components/ClaudeAnalysisPanelV2";
-import DetailedAnalysisPanel from "../../components/DetailedAnalysisPanel";
-import LearningDashboardPanel from "../../components/LearningDashboardPanel";
-import PredictionHistoryTable from "../../components/PredictionHistoryTable";
-import OrderBlockPanelSimple from "../../components/OrderBlockPanelSimple";
-import RhythmDetectorSimple from "../../components/RhythmDetectorSimple";
 import { useI18nStore } from "../../lib/i18n/store";
 import ErrorBoundary from "../ErrorBoundary";
+
+const MLPredictionPanel = lazy(() => import("../../components/MLPredictionPanel"));
+const ClaudeAnalysisPanel = lazy(() => import("../../components/ClaudeAnalysisPanelV2"));
+const DetailedAnalysisPanel = lazy(() => import("../../components/DetailedAnalysisPanel"));
+const LearningDashboardPanel = lazy(() => import("../../components/LearningDashboardPanel"));
+const PredictionHistoryTable = lazy(() => import("../../components/PredictionHistoryTable"));
+const OrderBlockPanelSimple = lazy(() => import("../../components/OrderBlockPanelSimple"));
+const RhythmDetectorSimple = lazy(() => import("../../components/RhythmDetectorSimple"));
+
+const PanelLoader = () => (
+  <div className="flex items-center justify-center rounded-xl border border-white/5 bg-white/[0.02] min-h-[200px]">
+    <LoadingIcon size={24} className="animate-spin text-white/20" />
+  </div>
+);
 
 // Golden Ratio constant
 const PHI = 1.618;
@@ -153,7 +161,9 @@ export default function TradingView() {
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
-                <MLPredictionPanelLarge symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                <Suspense fallback={<PanelLoader />}>
+                  <MLPredictionPanelLarge symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                </Suspense>
               </div>
             </section>
 
@@ -166,17 +176,19 @@ export default function TradingView() {
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
-                <ErrorBoundary>
-                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                    {allSymbols.map(([symbolKey, sym]) => (
-                      <ClaudeAnalysisPanelLarge
-                        key={symbolKey}
-                        symbol={symbolKey}
-                        symbolLabel={sym.shortLabel}
-                      />
-                    ))}
-                  </div>
-                </ErrorBoundary>
+                <Suspense fallback={<PanelLoader />}>
+                  <ErrorBoundary>
+                    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                      {allSymbols.map(([symbolKey, sym]) => (
+                        <ClaudeAnalysisPanelLarge
+                          key={symbolKey}
+                          symbol={symbolKey}
+                          symbolLabel={sym.shortLabel}
+                        />
+                      ))}
+                    </div>
+                  </ErrorBoundary>
+                </Suspense>
               </div>
             </section>
 
@@ -193,7 +205,9 @@ export default function TradingView() {
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
-                <DetailedAnalysisPanel symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                <Suspense fallback={<PanelLoader />}>
+                  <DetailedAnalysisPanel symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                </Suspense>
               </div>
             </section>
 
@@ -206,7 +220,9 @@ export default function TradingView() {
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
-                <OrderBlockPanelSimple symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                <Suspense fallback={<PanelLoader />}>
+                  <OrderBlockPanelSimple symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                </Suspense>
               </div>
             </section>
 
@@ -219,7 +235,9 @@ export default function TradingView() {
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
-                <RhythmDetectorSimple symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                <Suspense fallback={<PanelLoader />}>
+                  <RhythmDetectorSimple symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                </Suspense>
               </div>
             </section>
 
@@ -232,7 +250,9 @@ export default function TradingView() {
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
-                <LearningDashboardPanel symbol={selectedSymbol} />
+                <Suspense fallback={<PanelLoader />}>
+                  <LearningDashboardPanel symbol={selectedSymbol} />
+                </Suspense>
               </div>
             </section>
 
@@ -245,7 +265,9 @@ export default function TradingView() {
                 </h2>
               </div>
               <div className="transform-gpu transition-all duration-300">
-                <PredictionHistoryTable symbol={selectedSymbol} />
+                <Suspense fallback={<PanelLoader />}>
+                  <PredictionHistoryTable symbol={selectedSymbol} />
+                </Suspense>
               </div>
             </section>
           </div>

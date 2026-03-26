@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { GripVertical } from "lucide-react";
 import {
@@ -59,11 +59,17 @@ import { useLivePrices } from "../hooks/useLivePrices";
 import { useCachedDashboardData, cachedToSignalCard } from "../hooks/useCachedDashboardData";
 import { useSingleTimeframeAnalysis, type Timeframe, type TimeframeAnalysis } from "../hooks/useMTFAnalysis";
 
-// Import Navigation and Views
+// Import Navigation and Views (lazy-loaded for code splitting)
 import { useNavigationStore } from "../lib/store/navigation";
-import TradingView from "../components/views/TradingView";
-import AnalysisView from "../components/views/AnalysisView";
-import SignalsView from "../components/views/SignalsView";
+const TradingView = lazy(() => import("../components/views/TradingView"));
+const AnalysisView = lazy(() => import("../components/views/AnalysisView"));
+const SignalsView = lazy(() => import("../components/views/SignalsView"));
+
+const ViewLoader = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <LoadingIcon size={32} className="animate-spin text-accent" />
+  </div>
+);
 
 const initialMarketTickers = [
   { label: "NASDAQ", price: "--", change: "--%", trend: "up" as const },
@@ -695,8 +701,9 @@ export default function HomePage() {
   }, [autoRefresh, fetchAll]);
 
   // Defer heavy refreshLive so page renders instantly with cached data
+  // 8s delay gives time for critical panels to load first
   useEffect(() => {
-    const timer = setTimeout(() => refreshLive({ broadcast: false }), 3000);
+    const timer = setTimeout(() => refreshLive({ broadcast: false }), 8000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -1335,9 +1342,12 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* ─── DYNAMIC VIEW RENDERING ─── */}
+        {/* ─── DYNAMIC VIEW RENDERING ───
+             Views stay mounted (display:none) so React Query cache,
+             component state, and scroll position survive tab switches.
+             Only news-correlation is conditionally rendered (heavy iframe). */}
         <div className="w-full relative min-h-screen pointer-events-auto">
-          {activeView === "dashboard" && (
+          <div style={{ display: activeView === "dashboard" ? "block" : "none" }}>
             <div className="animate-in fade-in duration-300">
               <DraggableDashboard>
                 <main className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-20 md:pb-8">
@@ -1417,10 +1427,22 @@ export default function HomePage() {
                 </main>
               </DraggableDashboard>
             </div>
-          )}
-          {activeView === "trading" && <TradingView />}
-          {activeView === "analysis" && <AnalysisView />}
-          {activeView === "signals" && <SignalsView />}
+          </div>
+          <div style={{ display: activeView === "trading" ? "block" : "none" }}>
+            <Suspense fallback={<ViewLoader />}>
+              <TradingView />
+            </Suspense>
+          </div>
+          <div style={{ display: activeView === "analysis" ? "block" : "none" }}>
+            <Suspense fallback={<ViewLoader />}>
+              <AnalysisView />
+            </Suspense>
+          </div>
+          <div style={{ display: activeView === "signals" ? "block" : "none" }}>
+            <Suspense fallback={<ViewLoader />}>
+              <SignalsView />
+            </Suspense>
+          </div>
           {activeView === "news-correlation" && (
             <div className="w-full h-[calc(100vh-64px)] overflow-hidden bg-[#0a0a0a]">
               <NewsCorrelationDashboard embedded={true} />
