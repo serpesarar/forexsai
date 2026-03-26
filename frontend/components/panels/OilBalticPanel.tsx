@@ -667,9 +667,11 @@ export default function OilBalticPanel() {
 
         const popup = new mapboxgl.Popup({ offset: 18, closeButton: false }).setHTML(
           buildPopupHtml(point.label, [
+            ["Vessels", point.vessel_count != null ? String(point.vessel_count) : "--"],
             ["Signal", titleize(point.signal)],
             ["Bias", titleize(point.bias)],
             ["Intensity", fmt(point.intensity, 0)],
+            ["Storage", point.storage_estimate_mm_bbl != null ? `${fmt(point.storage_estimate_mm_bbl, 2)}m bbl` : "--"],
             ["Flow", point.narrative],
           ]),
         );
@@ -689,13 +691,19 @@ export default function OilBalticPanel() {
         element.style.background = color;
         element.style.boxShadow = `0 0 12px ${color}, 0 0 22px ${color}66`;
 
+        const tankerRows: Array<[string, string]> = [
+          ["MMSI", String(tanker.mmsi)],
+          ["Speed", `${fmt(tanker.speed_knots, 1)} kn`],
+          ["Status", titleize(tanker.status)],
+          ["Region", titleize(tanker.region)],
+        ];
+        if (tanker.heading != null) tankerRows.push(["Heading", `${fmt(tanker.heading, 0)}°`]);
+        if (tanker.ship_category) tankerRows.push(["Category", titleize(tanker.ship_category)]);
+        if (tanker.estimated_barrels != null) tankerRows.push(["Est. Barrels", `${(tanker.estimated_barrels / 1_000_000).toFixed(2)}m`]);
+        if (tanker.idle_days != null && tanker.idle_days > 0) tankerRows.push(["Idle", `${fmt(tanker.idle_days, 1)} days`]);
+
         const popup = new mapboxgl.Popup({ offset: 12 }).setHTML(
-          buildPopupHtml(tanker.vessel_name || `MMSI ${tanker.mmsi}`, [
-            ["MMSI", String(tanker.mmsi)],
-            ["Speed", `${fmt(tanker.speed_knots, 1)} kn`],
-            ["Status", titleize(tanker.status)],
-            ["Region", titleize(tanker.region)],
-          ]),
+          buildPopupHtml(tanker.vessel_name || `MMSI ${tanker.mmsi}`, tankerRows),
         );
 
         const marker = new mapboxgl.Marker({ element, anchor: "center" })
@@ -886,6 +894,9 @@ export default function OilBalticPanel() {
                 <div className={styles.mapLabel}><Fuel size={14} /> 5D {signedPct(data?.price?.change_5d_pct)}</div>
                 <div className={styles.mapLabel}><Droplets size={14} /> Storage {fmt(data?.storage?.floating_storage_mm_bbl, 2)}m</div>
                 <div className={styles.mapLabel}><ShieldAlert size={14} /> EIA {data?.oil_engine?.temporal?.is_eia_day ? "active" : "clear"}</div>
+                {mapboxGuard ? (
+                  <div className={styles.mapLabel}><ShieldAlert size={14} /> Quota {mapboxGuard.month_used}/{mapboxGuard.month_limit}</div>
+                ) : null}
               </div>
             </div>
           </div>
@@ -919,6 +930,39 @@ export default function OilBalticPanel() {
             </div>
           </div>
         </div>
+
+        {chokepoints.length > 0 && (
+          <div className={styles.chokepointGrid}>
+            {chokepoints.map((cp) => {
+              const cpColor = getChokepointColor(cp.signal, cp.bias);
+              const biasCardClass = cp.bias === "bullish" ? styles.chokepointCardBullish : cp.bias === "bearish" ? styles.chokepointCardBearish : styles.chokepointCardNeutral;
+              return (
+                <div key={cp.id} className={`${styles.chokepointCard} ${biasCardClass}`}>
+                  <div className={styles.chokepointCardHeader}>
+                    <div className={styles.chokepointCardName}>{cp.label}</div>
+                    <div className={styles.chokepointCardSignal} style={{ color: cpColor, background: `${cpColor}18`, border: `1px solid ${cpColor}33` }}>
+                      {titleize(cp.signal)}
+                    </div>
+                  </div>
+                  <div className={styles.chokepointCardVessels}>
+                    <div className={styles.chokepointCardVesselCount}>{cp.vessel_count ?? 0}</div>
+                    <div className={styles.chokepointCardVesselLabel}>Active tankers</div>
+                  </div>
+                  <div className={styles.chokepointCardIntensity}>
+                    <div className={styles.chokepointCardIntensityTrack}>
+                      <div
+                        className={styles.chokepointCardIntensityFill}
+                        style={{ width: `${Math.min(cp.intensity, 100)}%`, background: `linear-gradient(90deg, ${cpColor}55, ${cpColor})` }}
+                      />
+                    </div>
+                    <div className={styles.chokepointCardIntensityValue}>{fmt(cp.intensity, 0)}</div>
+                  </div>
+                  <div className={styles.chokepointCardNarrative}>{cp.narrative}</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         <div className={styles.bottomGrid}>
           <div className={styles.card}>
