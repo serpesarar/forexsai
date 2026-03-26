@@ -502,6 +502,11 @@ export default function OilBalticPanel() {
     if (!mapboxGuard.allow_live_map) {
       setMapStatus(`Fallback map active • ${titleize(mapboxGuard.reason || "budget locked")}`);
       setLiveMapAuthorized(false);
+      claimStartedRef.current = false;
+      return;
+    }
+
+    if (liveMapAuthorized) {
       return;
     }
 
@@ -525,10 +530,12 @@ export default function OilBalticPanel() {
         }
         const claim = (await response.json()) as MapboxGuard;
         if (cancelled) {
+          claimStartedRef.current = false;
           return;
         }
         setMapboxGuard(claim);
         setLiveMapAuthorized(Boolean(claim.allow_live_map));
+        claimStartedRef.current = false;
         setMapStatus(claim.allow_live_map ? "Initializing live map..." : `Fallback map active • ${titleize(claim.reason || "budget locked")}`);
       } catch (claimError) {
         if (!cancelled) {
