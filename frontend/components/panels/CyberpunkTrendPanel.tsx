@@ -202,6 +202,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
   const [explanationModal, setExplanationModal] = useState<{ title: string; content: string } | null>(null);
   const [priceFlash, setPriceFlash] = useState(false);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const prevPriceRef = useRef<number | null>(null);
 
   const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "clear_trend");
@@ -314,6 +315,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
 
   return (
     <motion.div
+      ref={panelRef}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -350,7 +352,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
         timeframe={timeframe}
         onTimeframeChange={setTimeframe}
         timeframes={TIMEFRAMES}
-        onFullscreen={toggleFullscreen}
+        onFullscreen={() => void toggleFullscreen(panelRef.current)}
         isFullscreen={isFullscreen}
       />
 
