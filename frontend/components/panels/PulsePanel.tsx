@@ -146,6 +146,9 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
   }, [fetchData]);
 
   const nc = data ? getThemeColors(data.trend.direction) : getThemeColors("neutral");
+  const errorMessage = error === "Insufficient data" || error === "pulse.insufficientData"
+    ? t("pulse.insufficientData")
+    : error || t("pulse.insufficientData");
 
   const getDirColor = (dir: string) => {
     if (dir === "up" || dir === "BUY") return "var(--accent-positive)";
@@ -200,7 +203,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
         <div className="p-12 text-center flex flex-col items-center justify-center" style={{ background: "var(--bg-primary)" }}>
           <Activity className="w-10 h-10 mb-3 opacity-20" style={{ color: "var(--text-primary)" }} />
           <h3 className="text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>Data Unavailable</h3>
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>{t("pulse.insufficientData")}</p>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>{errorMessage}</p>
         </div>
       )}
 

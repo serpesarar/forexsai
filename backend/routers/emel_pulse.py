@@ -1263,6 +1263,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
         # ─── PUANLAMA SİSTEMİ (0-100) ─────────────────────────────────────
         score = 0.0
         score_details = {}
+        decision_notes = []
         
         # 1. Son 10 mum yönü (20 puan) - Eskiden 5 mumdu, artık 10
         last_10 = []
@@ -1343,9 +1344,9 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
         else:
             if regime.regime in ["STRONG_TREND_UP", "STRONG_TREND_DOWN"]:
                 macd_pts = 3
-                notes.append("MACD gecikmeli, trend güçlü devam ediyor")
+                decision_notes.append("MACD gecikmeli, trend güçlü devam ediyor")
             else:
-                notes.append("MACD yönü desteklemiyor")
+                decision_notes.append("MACD yönü desteklemiyor")
         score += macd_pts
         score_details["macd"] = {"hist": round(macd_hist, 4), "pts": macd_pts}
         
@@ -1411,7 +1412,6 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
         # İki kademeli sinyal sistemi
         signal_type = "HOLD"  # HOLD / SCOUT / CONFIRM
         pulse_signal = "HOLD"
-        decision_notes = []
         
         if score >= 56:  # 56'ya düşürüldü (threshold: 56)
             signal_type = "CONFIRM"
