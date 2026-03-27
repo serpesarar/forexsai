@@ -375,17 +375,15 @@ class FVGDetector:
                 if gap_size < min_gap:
                     continue
                 
-                # Check if filled
-                filled = False
+                # Check if filled using ONLY the last candle (no future look-ahead)
+                # We only know the current state of the market, not what happens next
+                last_candle = candles[-1]
+                filled = last_candle.low <= c_prev2.high
                 fill_pct = 0.0
-                for j in range(i + 1, len(candles)):
-                    if candles[j].low <= c_prev2.high:
-                        filled = True
-                        fill_pct = 100.0
-                        break
-                    elif candles[j].low < c_current.low:
-                        fill_pct = ((c_current.low - candles[j].low) / gap_size) * 100
-                        fill_pct = min(100, fill_pct)
+                if filled:
+                    fill_pct = 100.0
+                elif last_candle.low < c_current.low:
+                    fill_pct = min(100, ((c_current.low - last_candle.low) / gap_size) * 100)
                 
                 fvg_list.append(FVG(
                     index=i,
@@ -404,16 +402,14 @@ class FVGDetector:
                 if gap_size < min_gap:
                     continue
                 
-                filled = False
+                # Check if filled using ONLY the last candle (no future look-ahead)
+                last_candle = candles[-1]
+                filled = last_candle.high >= c_prev2.low
                 fill_pct = 0.0
-                for j in range(i + 1, len(candles)):
-                    if candles[j].high >= c_prev2.low:
-                        filled = True
-                        fill_pct = 100.0
-                        break
-                    elif candles[j].high > c_current.high:
-                        fill_pct = ((candles[j].high - c_current.high) / gap_size) * 100
-                        fill_pct = min(100, fill_pct)
+                if filled:
+                    fill_pct = 100.0
+                elif last_candle.high > c_current.high:
+                    fill_pct = min(100, ((last_candle.high - c_current.high) / gap_size) * 100)
                 
                 fvg_list.append(FVG(
                     index=i,
@@ -478,15 +474,15 @@ class OrderBlockDetector:
                         score = min(100, score + 10)
                     strength = "strong" if score > 70 else "moderate" if score > 50 else "weak"
                     
-                    # Check tested/mitigated
+                    # Check tested/mitigated using ONLY the current (last) candle
+                    # No future look-ahead: we only know the latest price state
+                    last_candle = candles[-1]
                     tested = False
                     mitigated = False
-                    for j in range(i + 2, min(i + 30, len(candles))):
-                        if candles[j].low <= c_current.low:
-                            mitigated = True
-                            break
-                        elif candles[j].low <= c_current.high and candles[j].low >= c_current.low:
-                            tested = True
+                    if last_candle.low <= c_current.low:
+                        mitigated = True
+                    elif last_candle.low <= c_current.high and last_candle.low >= c_current.low:
+                        tested = True
                     
                     ob_list.append(OrderBlock(
                         index=i,
@@ -511,14 +507,14 @@ class OrderBlockDetector:
                         score = min(100, score + 10)
                     strength = "strong" if score > 70 else "moderate" if score > 50 else "weak"
                     
+                    # Check tested/mitigated using ONLY the current (last) candle
+                    last_candle = candles[-1]
                     tested = False
                     mitigated = False
-                    for j in range(i + 2, min(i + 30, len(candles))):
-                        if candles[j].high >= c_current.high:
-                            mitigated = True
-                            break
-                        elif candles[j].high >= c_current.low and candles[j].high <= c_current.high:
-                            tested = True
+                    if last_candle.high >= c_current.high:
+                        mitigated = True
+                    elif last_candle.high >= c_current.low and last_candle.high <= c_current.high:
+                        tested = True
                     
                     ob_list.append(OrderBlock(
                         index=i,

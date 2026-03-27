@@ -685,14 +685,51 @@ def _compute_technical_indicators(closes: np.ndarray, highs: np.ndarray, lows: n
         return float(100 - (100 / (1 + pos_sum / neg_sum)))
     
     def adx(highs, lows, closes, period=14):
-        # Simplified ADX
-        if len(closes) < period * 2:
+        # Real ADX calculation using Wilder's smoothing
+        n = len(closes)
+        if n < period * 2 + 1:
             return 25.0
+        
+        # True Range, +DM, -DM
         tr = np.maximum(highs[1:] - lows[1:], 
                        np.maximum(np.abs(highs[1:] - closes[:-1]), 
                                   np.abs(lows[1:] - closes[:-1])))
-        atr_val = np.mean(tr[-period:])
-        return float(np.clip(25 + np.random.randn() * 10, 10, 60))  # Placeholder
+        
+        up_move = highs[1:] - highs[:-1]
+        down_move = lows[:-1] - lows[1:]
+        
+        plus_dm = np.where((up_move > down_move) & (up_move > 0), up_move, 0.0)
+        minus_dm = np.where((down_move > up_move) & (down_move > 0), down_move, 0.0)
+        
+        # Wilder's smoothing (exponential with alpha = 1/period)
+        alpha = 1.0 / period
+        
+        atr_smooth = float(np.mean(tr[:period]))
+        plus_dm_smooth = float(np.mean(plus_dm[:period]))
+        minus_dm_smooth = float(np.mean(minus_dm[:period]))
+        
+        dx_values = []
+        for i in range(period, len(tr)):
+            atr_smooth = atr_smooth * (1 - alpha) + float(tr[i]) * alpha
+            plus_dm_smooth = plus_dm_smooth * (1 - alpha) + float(plus_dm[i]) * alpha
+            minus_dm_smooth = minus_dm_smooth * (1 - alpha) + float(minus_dm[i]) * alpha
+            
+            if atr_smooth > 0:
+                plus_di = 100 * plus_dm_smooth / atr_smooth
+                minus_di = 100 * minus_dm_smooth / atr_smooth
+                di_sum = plus_di + minus_di
+                if di_sum > 0:
+                    dx_values.append(100 * abs(plus_di - minus_di) / di_sum)
+        
+        if len(dx_values) < period:
+            return 25.0
+        
+        # ADX = smoothed average of DX
+        adx_val = float(np.mean(dx_values[:period]))
+        for dx in dx_values[period:]:
+            adx_val = adx_val * (1 - alpha) + dx * alpha
+        
+        return float(np.clip(adx_val, 0, 100))
     
     current = float(closes[-1]) if len(closes) else 0.0
     

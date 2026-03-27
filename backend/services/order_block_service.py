@@ -162,13 +162,15 @@ class OrderBlockService:
         return signal.__dict__
 
     def backtest(self, symbol: str, timeframe: str) -> dict:
+        # Real backtesting not yet implemented — return zeros instead of fake metrics
         return {
-            "total_trades": 45,
-            "win_rate": 0.73,
-            "avg_risk_reward": 2.1,
-            "total_profit": 2850.0,
-            "max_drawdown": -450.0,
-            "sharpe_ratio": 1.8,
+            "total_trades": 0,
+            "win_rate": 0.0,
+            "avg_risk_reward": 0.0,
+            "total_profit": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe_ratio": 0.0,
+            "note": "Real backtesting not implemented. Use live signal tracking for performance data.",
         }
 
     async def _combine_signals(self, symbol: str, structure=None) -> dict:

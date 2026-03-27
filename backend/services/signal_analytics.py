@@ -349,7 +349,9 @@ def classify_signal(
         return max(profit_pips, 0.0)
 
     if status == "stopped" and resolution_reason == "direction_flip":
-        return "direction_flip", None, None
+        # Direction flip = model predicted wrong direction → this IS a loss, don't exclude
+        actual_loss = stop_loss_pips or loss_pips
+        return "stopped", False, -actual_loss
     if status == "completed" or (status == "stopped" and any_target_hit):
         actual_profit = resolved_success_pips()
         return "completed", True, actual_profit
@@ -380,7 +382,7 @@ def summarize_scope(scope_signals: List[dict], *, default_symbol: Optional[str] 
         if scoped_status == "active":
             active += 1
             continue
-        if scoped_status is None or scoped_status == "direction_flip":
+        if scoped_status is None:
             continue
         if scoped_status == "expired":
             expired += 1
