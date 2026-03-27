@@ -74,22 +74,23 @@ class Suggestion(BaseModel):
     timeframe_estimate: str
 
 class PulseResponse(BaseModel):
-    symbol: str
-    timeframe: str
-    timestamp: str
+    symbol: Optional[str] = None
+    timeframe: Optional[str] = None
+    timestamp: Optional[str] = None
     signal_timestamp: Optional[str] = None
-    signal: str
-    signal_type: str
-    pulse_score: float
-    trend: Trend
-    price: Dict[str, float]
-    levels: Levels
-    momentum: Momentum
-    volume: Volume
-    score_breakdown: Dict[str, Any]
-    decision_notes: List[str]
-    regime: Regime
-    suggestion: Suggestion
+    signal: Optional[str] = None
+    signal_type: Optional[str] = None
+    pulse_score: Optional[float] = None
+    trend: Optional[Trend] = None
+    price: Optional[Dict[str, float]] = None
+    levels: Optional[Levels] = None
+    momentum: Optional[Momentum] = None
+    volume: Optional[Volume] = None
+    score_breakdown: Optional[Dict[str, Any]] = None
+    decision_notes: Optional[List[str]] = None
+    regime: Optional[Regime] = None
+    suggestion: Optional[Suggestion] = None
+    error: Optional[str] = None
 
 class EMELCheck(BaseModel):
     name: str
@@ -106,17 +107,18 @@ class EMELRecommendation(BaseModel):
     timeframe: str
 
 class EMELResponse(BaseModel):
-    symbol: str
-    timeframe: str
-    timestamp: str
-    final_score: int
-    signal: str
-    signal_type: str
+    symbol: Optional[str] = None
+    timeframe: Optional[str] = None
+    timestamp: Optional[str] = None
+    final_score: Optional[int] = None
+    signal: Optional[str] = None
+    signal_type: Optional[str] = None
     regime: Optional[Regime] = None
-    checks: List[EMELCheck]
-    technical_summary: Dict[str, Any]
+    checks: Optional[List[EMELCheck]] = None
+    technical_summary: Optional[Dict[str, Any]] = None
     ml_context: Optional[Dict[str, Any]] = None
-    recommendation: EMELRecommendation
+    recommendation: Optional[EMELRecommendation] = None
+    error: Optional[str] = None
 
 class ScoreBreakdownML(BaseModel):
     pts: int
