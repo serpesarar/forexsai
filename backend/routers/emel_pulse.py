@@ -93,10 +93,15 @@ class PulseResponse(BaseModel):
     error: Optional[str] = None
 
 class EMELCheck(BaseModel):
+    id: Optional[int] = None
     name: Optional[str] = None
+    subtitle: Optional[str] = None
     status: Optional[str] = None
-    emoji: Optional[str] = None
-    score: Optional[int] = None
+    direction: Optional[str] = None
+    color: Optional[str] = None
+    label: Optional[str] = None
+    details: Optional[Dict[str, Any]] = None
+    comment: Optional[str] = None
 
 class EMELRecommendation(BaseModel):
     action: Optional[str] = None
@@ -110,14 +115,20 @@ class EMELResponse(BaseModel):
     symbol: Optional[str] = None
     timeframe: Optional[str] = None
     timestamp: Optional[str] = None
-    final_score: Optional[int] = None
+    signal_timestamp: Optional[str] = None
     signal: Optional[str] = None
+    confidence: Optional[float] = None
+    price: Optional[float] = None
+    checks: Optional[List[EMELCheck]] = None
+    confluence: Optional[Dict[str, Any]] = None
+    summary: Optional[Dict[str, Any]] = None
+    final_score: Optional[int] = None
     signal_type: Optional[str] = None
     regime: Optional[Regime] = None
-    checks: Optional[List[EMELCheck]] = None
     technical_summary: Optional[Dict[str, Any]] = None
     ml_context: Optional[Dict[str, Any]] = None
     recommendation: Optional[EMELRecommendation] = None
+    score_breakdown: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
 
 class ScoreBreakdownML(BaseModel):
@@ -1155,6 +1166,7 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
 # PULSE 1 (ALGORİTMİK) - GELİŞTİRİLMİŞ KURAL TABANLI SCALP
 # Sorun düzeltmeleri: 
 #   - Son 5 mum yetersiz → 10 mum + EMA stack + hacim eklendi
+@router.get("/pulse/{symbol}", response_model=PulseResponse)
 async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool = False):
     """
     PULSE 1 - Geliştirilmiş Algoritmik Scalp Analizi

@@ -13,52 +13,72 @@ import {
   TargetIcon as Target,
   AnalysisIcon as Layers,
   ChartsIcon as Gauge,
+  SignalsIcon,
   SignalsIcon as Volume2,
   SecurityShieldIcon as Shield,
-  RotateIcon as RefreshCw,
   AlertIcon as AlertTriangle,
   CheckCircleIcon as CheckCircle,
   CloseIcon as XCircle,
   ArrowUpRightIcon as ArrowUpRight,
   ArrowDownRightIcon as ArrowDownRight,
   MinusIcon as Minus,
+  PulseIcon,
 } from "../ui/CustomIcons";
-import { EmelIcon, PulseIcon, SignalsIcon } from "../ui/CustomIcons";
 import { ShieldCheck } from "lucide-react";
 
 const API_BASE = getApiBase();
 
 interface CheckItem {
-  id: number; name: string; subtitle: string;
-  status: "pass" | "warning" | "fail"; direction: "up" | "down" | "neutral";
-  color: "green" | "yellow" | "red"; label: string;
-  details: Record<string, any>; comment: string;
+  id?: number;
+  name?: string;
+  subtitle?: string;
+  status?: "pass" | "warning" | "fail" | string;
+  direction?: "up" | "down" | "neutral" | string;
+  color?: "green" | "yellow" | "red" | string;
+  label?: string;
+  details?: Record<string, any>;
+  comment?: string;
 }
 
 interface FactorContribution {
-  weight: number;
-  status: string;
-  contribution: number;
+  weight?: number;
+  status?: string;
+  contribution?: number;
 }
 
 interface ConfluenceData {
-  score: number;
-  raw_score: number;
-  ml_boost: number;
-  max_score: number;
-  min_signal_threshold: number;
-  strong_threshold: number;
-  weights_applied: Record<string, number>;
+  score?: number;
+  raw_score?: number;
+  ml_boost?: number;
+  max_score?: number;
+  min_signal_threshold?: number;
+  strong_threshold?: number;
+  weights_applied?: Record<string, number>;
   factor_contributions?: Record<string, FactorContribution>;
   bonuses?: Array<{ name: string; value: number }>;
-  calculation_method: string;
+  calculation_method?: string;
 }
 
 interface EmelData {
-  symbol: string; timeframe: string; signal: string; confidence: number; price: number;
-  checks: CheckItem[];
+  symbol?: string;
+  timeframe?: string;
+  signal?: string;
+  confidence?: number;
+  price?: number;
+  signal_timestamp?: string;
+  timestamp?: string;
+  checks?: CheckItem[];
   confluence?: ConfluenceData;
-  summary: { green_count: number; yellow_count: number; red_count: number; decision: string; decision_reason?: string; rejections: string[]; entry_conditions: string[]; };
+  summary?: {
+    green_count?: number;
+    yellow_count?: number;
+    red_count?: number;
+    decision?: string;
+    decision_reason?: string;
+    rejections?: string[];
+    entry_conditions?: string[];
+  };
+  error?: string;
 }
 
 interface EmelPanelProps { symbol?: string; onSwitchMode?: () => void; }
@@ -84,7 +104,7 @@ const theme = {
   purple: "var(--accent-purple)"
 };
 
-function cn(color: string) {
+function cn(color?: string) {
   return color === "green" ? { c: theme.green, bg: `color-mix(in srgb, ${theme.green} 5%, transparent)`, b: `color-mix(in srgb, ${theme.green} 15%, transparent)` }
     : color === "red" ? { c: theme.red, bg: `color-mix(in srgb, ${theme.red} 5%, transparent)`, b: `color-mix(in srgb, ${theme.red} 15%, transparent)` }
       : { c: theme.warn, bg: `color-mix(in srgb, ${theme.warn} 5%, transparent)`, b: `color-mix(in srgb, ${theme.warn} 15%, transparent)` };
@@ -128,7 +148,7 @@ function Badge({ n, color }: { n: number; color: string }) {
   );
 }
 
-function StatusIcon({ s }: { s: string }) {
+function StatusIcon({ s }: { s?: string }) {
   if (s === "pass") return <CheckCircle className="w-3.5 h-3.5" style={{ color: theme.green }} />;
   if (s === "warning") return <AlertTriangle className="w-3.5 h-3.5" style={{ color: theme.warn }} />;
   if (s === "fail") return <XCircle className="w-3.5 h-3.5" style={{ color: theme.red }} />;
@@ -148,39 +168,38 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
     try {
       if (showLoading) setLoading(true);
       const res = await fetch(`${API_BASE}/api/panel/emel/${activeSymbol}?timeframe=${timeframe}`);
-      const json = await res.json();
-      if (!json.error) {
-        setData(json);
-        markRefreshed();
+      const json = await res.json().catch(() => null);
+      if (res.ok && json && typeof json === "object" && !("error" in json && json.error)) {
+        setData(json as EmelData);
+        markRefreshed((json as any).signal_timestamp || (json as any).timestamp);
       }
-    } catch (e) { console.error("EMEL fetch error:", e); }
-    finally { if (showLoading) setLoading(false); }
+    } catch (e) {
+      console.error("EMEL fetch error:", e);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
   }, [activeSymbol, timeframe, markRefreshed]);
 
-  // Fetch when symbol or timeframe changes
   useEffect(() => {
     fetchData(true);
   }, [fetchData]);
 
-  // Interval polling every 60 seconds
   useEffect(() => {
-    const interval = setInterval(() => fetchData(false), 60000); // Background refresh without loading
+    const interval = setInterval(() => fetchData(false), 60000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  // Listen for global refresh event from header button
   useEffect(() => {
     const handler = () => fetchData(true);
     window.addEventListener("dashboard-refresh", handler);
     return () => window.removeEventListener("dashboard-refresh", handler);
   }, [fetchData]);
 
-  // WebSocket data handling - reset freshness when live payload arrives
   useEffect(() => {
-    if (wsData) {
-      setData(wsData);
+    if (wsData && typeof wsData === "object" && !("error" in (wsData as any) && (wsData as any).error)) {
+      setData(wsData as EmelData);
       setLoading(false);
-      markRefreshed();
+      markRefreshed((wsData as any).signal_timestamp || (wsData as any).timestamp);
     }
   }, [wsData, markRefreshed]);
 
@@ -193,26 +212,30 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
     );
   }
 
+  const summary = data?.summary;
+  const checks = data?.checks ?? [];
+  const confluence = data?.confluence;
+  const rejections = summary?.rejections ?? [];
+  const entryConditions = summary?.entry_conditions ?? [];
+  const confidence = data?.confidence ?? 0;
+
   const sigColor = data?.signal === "BUY" || data?.signal === "STRONG_BUY" || data?.signal === "BUY_SETUP"
     ? theme.green
     : data?.signal === "SELL" || data?.signal === "STRONG_SELL" || data?.signal === "SELL_SETUP"
       ? theme.red
       : theme.warn;
-  const gc = data?.summary?.green_count || 0;
-  const yc = data?.summary?.yellow_count || 0;
-  const rc = data?.summary?.red_count || 0;
+  const gc = summary?.green_count || 0;
+  const yc = summary?.yellow_count || 0;
+  const rc = summary?.red_count || 0;
   const tot = gc + yc + rc || 1;
 
-  // Confluence score
-  const confluenceScore = data?.confluence?.score ?? 0;
-  const confluenceMax = data?.confluence?.max_score ?? 100;
-  const confluenceThreshold = data?.confluence?.min_signal_threshold ?? 40;
-  const confluenceStrong = data?.confluence?.strong_threshold ?? 70;
+  const confluenceScore = confluence?.score ?? 0;
+  const confluenceMax = confluence?.max_score ?? 100;
+  const confluenceThreshold = confluence?.min_signal_threshold ?? 40;
+  const confluenceStrong = confluence?.strong_threshold ?? 70;
 
   return (
     <div className="flex flex-col rounded-xl overflow-hidden" style={{ background: theme.bg, border: `1px solid ${theme.border}`, fontFamily: FONT }}>
-
-      {/* ── HEADER (New Design) ── */}
       <PanelHeader
         title="EMEL"
         subtitle="ADVANCED ANALYSIS • 9 CHECKS"
@@ -232,7 +255,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
         extraContent={data ? (
           <div className="flex items-center gap-3">
             <div className="text-[26px] font-bold tracking-tighter leading-none font-mono" style={{ color: theme.text }}>
-              {data?.price?.toFixed(2)}
+              {typeof data.price === "number" ? data.price.toFixed(2) : "--"}
             </div>
             {onSwitchMode && (
               <button
@@ -247,22 +270,17 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
         ) : undefined}
       />
 
-      {/* ── MAIN CONTENT ── */}
       {data && (
         <div className="flex flex-col gap-[1px]" style={{ background: theme.border }}>
-
-          {/* HERO SIGNAL STRIP (Top Row) */}
           <div className="grid grid-cols-5 gap-[1px]" style={{ background: theme.border }}>
-            {/* Signal */}
             <div className="relative p-5 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
               <div className="absolute top-4 left-4 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: sigColor }}></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: sigColor }}></span>
               </div>
               <span className="text-[11px] uppercase tracking-widest font-bold mb-1.5" style={{ color: "rgba(255,255,255,0.7)" }}>Signal</span>
-              <span className="text-[28px] leading-none font-bold tracking-tight drop-shadow-sm" style={{ color: sigColor }}>{data.signal}</span>
+              <span className="text-[28px] leading-none font-bold tracking-tight drop-shadow-sm" style={{ color: sigColor }}>{data.signal || "HOLD"}</span>
             </div>
-            {/* Confluence Score - NEW */}
             <div className="p-5 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
               <span className="text-[11px] uppercase tracking-widest font-bold mb-1.5" style={{ color: "rgba(255,255,255,0.7)" }}>Confluence</span>
               <span className="text-[28px] leading-none font-bold tracking-tight font-mono drop-shadow-sm" style={{
@@ -280,12 +298,10 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
                 }} />
               </div>
             </div>
-            {/* Confidence */}
             <div className="p-5 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
               <span className="text-[11px] uppercase tracking-widest font-bold mb-1.5" style={{ color: "rgba(255,255,255,0.7)" }}>ML Conf</span>
-              <span className="text-[28px] leading-none font-bold tracking-tight font-mono drop-shadow-sm" style={{ color: theme.accent }}>{data.confidence.toFixed(0)}%</span>
+              <span className="text-[28px] leading-none font-bold tracking-tight font-mono drop-shadow-sm" style={{ color: theme.accent }}>{confidence.toFixed(0)}%</span>
             </div>
-            {/* Decision */}
             <div className="relative p-5 flex flex-col justify-center items-center" style={{ background: theme.bg }}>
               <div className="absolute top-4 left-4 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: sigColor }}></span>
@@ -293,10 +309,9 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
               </div>
               <span className="text-[11px] uppercase tracking-widest font-bold mb-2.5" style={{ color: "rgba(255,255,255,0.7)" }}>Action</span>
               <span className="text-[14px] font-bold px-3 py-1.5 rounded" style={{ color: sigColor, background: `${sigColor}15`, border: `1px solid ${sigColor}30` }}>
-                {data?.summary?.decision}
+                {summary?.decision || data.signal || "HOLD"}
               </span>
             </div>
-            {/* Score Breakdown */}
             <div className="p-5 flex flex-col justify-center" style={{ background: theme.bg }}>
               <span className="text-[11px] uppercase tracking-widest font-bold mb-2.5" style={{ color: "rgba(255,255,255,0.7)" }}>Checks</span>
               <div className="flex gap-0.5 rounded-full overflow-hidden mb-2.5" style={{ height: 8, background: "rgba(255,255,255,0.06)" }}>
@@ -313,40 +328,26 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px]" style={{ background: theme.border }}>
-
-            {/* 9 CHECKPOINTS GRID (8/12) */}
             <div className="col-span-12 md:col-span-8 grid grid-cols-3 gap-[1px]" style={{ background: theme.border }}>
-              {data?.checks?.map((check) => {
-                const Icon = CHECK_ICONS[check.id] || Activity;
+              {checks.map((check) => {
+                const checkId = check.id ?? 0;
+                const Icon = CHECK_ICONS[checkId] || Activity;
                 const cc = cn(check.color);
-                // Sol renk şeridi için gradyan
-                const leftBorderColor = check.color === "green" ? theme.green :
-                  check.color === "red" ? theme.red : theme.warn;
-                const leftBorderGradient = check.color === "green" ? `linear-gradient(180deg, ${theme.green}40 0%, ${theme.green}10 100%)` :
-                  check.color === "red" ? `linear-gradient(180deg, ${theme.red}40 0%, ${theme.red}10 100%)` :
-                    `linear-gradient(180deg, ${theme.warn}40 0%, ${theme.warn}10 100%)`;
-
-                const angle = check.id % 2 === 1 ? "135deg" : "45deg";
+                const leftBorderColor = check.color === "green" ? theme.green : check.color === "red" ? theme.red : theme.warn;
+                const leftBorderGradient = check.color === "green" ? `linear-gradient(180deg, ${theme.green}40 0%, ${theme.green}10 100%)` : check.color === "red" ? `linear-gradient(180deg, ${theme.red}40 0%, ${theme.red}10 100%)` : `linear-gradient(180deg, ${theme.warn}40 0%, ${theme.warn}10 100%)`;
+                const angle = checkId % 2 === 1 ? "135deg" : "45deg";
                 const stripeColor1 = `color-mix(in srgb, ${leftBorderColor} 6%, transparent)`;
                 const stripeColor2 = `color-mix(in srgb, ${leftBorderColor} 15%, transparent)`;
                 const stripeBg = `repeating-linear-gradient(${angle}, ${stripeColor1}, ${stripeColor1} 40px, ${stripeColor2} 40px, ${stripeColor2} 80px)`;
 
                 return (
-                  <div key={check.id} className="flex flex-col h-full transition-colors duration-500" style={{ background: stripeBg }}>
-                    {/* Sol renk şeridi + içerik */}
+                  <div key={checkId} className="flex flex-col h-full transition-colors duration-500" style={{ background: stripeBg }}>
                     <div className="flex flex-1">
-                      {/* Sol renk şeridi */}
-                      <div style={{
-                        width: 4,
-                        background: leftBorderGradient,
-                        minHeight: '100%'
-                      }} />
-                      {/* İçerik */}
+                      <div style={{ width: 4, background: leftBorderGradient, minHeight: "100%" }} />
                       <div className="flex-1 p-3">
-                        {/* Header */}
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex gap-2">
-                            <Badge n={check.id} color={cc.c} />
+                            <Badge n={checkId} color={cc.c} />
                             <div className="flex flex-col">
                               <span className="text-[11px] font-bold uppercase tracking-wider leading-none mb-1" style={{ color: theme.text }}>{check.name}</span>
                               <span className="text-[10px]" style={{ color: theme.text, opacity: 0.85 }}>{check.subtitle}</span>
@@ -354,17 +355,14 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
                           </div>
                           <StatusIcon s={check.status} />
                         </div>
-                        {/* Current State */}
                         <div className="text-[11px] font-bold font-mono px-2.5 py-1.5 rounded inline-flex items-center gap-2 self-start mb-3 mt-1" style={{ color: cc.c, background: cc.bg, border: `1px solid ${cc.b}` }}>
                           <Icon className="w-3.5 h-3.5" /> {check.label}
                         </div>
-                        {/* Metric Rows */}
                         <div className="flex flex-col gap-1 mb-2 font-mono">
-                          {Object.entries(check.details).slice(0, 2).map(([k, v]) => (
+                          {Object.entries(check.details || {}).slice(0, 2).map(([k, v]) => (
                             <DetailRow key={k} k={k} v={v} />
                           ))}
                         </div>
-                        {/* Description Footer */}
                         <div className="mt-auto pt-3 border-t text-[10px] font-medium leading-relaxed" style={{ borderColor: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>
                           {check.comment}
                         </div>
@@ -375,7 +373,6 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
               })}
             </div>
 
-            {/* DIAGNOSTICS LOG (4/12) */}
             <div className="col-span-12 md:col-span-4 p-5 flex flex-col h-full" style={{ background: theme.bg }}>
               <div className="text-[11px] font-bold uppercase tracking-widest mb-4 flex items-center justify-between" style={{ color: theme.muted }}>
                 <span>Diagnostic Logs</span>
@@ -383,8 +380,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
               </div>
 
               <div className="flex flex-col gap-4">
-                {/* Confluence Score Breakdown */}
-                {data.confluence && (
+                {confluence && (
                   <div className="p-3 rounded border" style={{ background: theme.surface, borderColor: theme.border }}>
                     <div className="text-[9px] uppercase tracking-widest font-bold mb-2 flex items-center gap-1.5" style={{ color: theme.accent }}>
                       <Gauge className="w-3 h-3" /> Confluence Breakdown
@@ -392,32 +388,29 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
                     <div className="flex flex-col gap-1 mb-2">
                       <div className="flex justify-between text-[10px]">
                         <span style={{ color: theme.muted }}>Raw Score</span>
-                        <span className="font-mono font-bold" style={{ color: theme.text }}>{data.confluence.raw_score > 0 ? "+" : ""}{data.confluence.raw_score.toFixed(1)}</span>
+                        <span className="font-mono font-bold" style={{ color: theme.text }}>{(confluence.raw_score ?? 0) > 0 ? "+" : ""}{(confluence.raw_score ?? 0).toFixed(1)}</span>
                       </div>
                       <div className="flex justify-between text-[10px]">
                         <span style={{ color: theme.muted }}>ML Boost</span>
-                        <span className="font-mono font-bold" style={{ color: data.confluence.ml_boost >= 0 ? theme.green : theme.red }}>
-                          {data.confluence.ml_boost > 0 ? "+" : ""}{data.confluence.ml_boost.toFixed(1)}
+                        <span className="font-mono font-bold" style={{ color: (confluence.ml_boost ?? 0) >= 0 ? theme.green : theme.red }}>
+                          {(confluence.ml_boost ?? 0) > 0 ? "+" : ""}{(confluence.ml_boost ?? 0).toFixed(1)}
                         </span>
                       </div>
                       <div className="flex justify-between text-[10px] pt-1 border-t" style={{ borderColor: theme.border }}>
                         <span style={{ color: theme.muted }}>Final Score</span>
                         <span className="font-mono font-bold" style={{ color: confluenceScore >= confluenceStrong ? theme.green : confluenceScore >= confluenceThreshold ? theme.warn : theme.red }}>
-                          {data.confluence.score > 0 ? "+" : ""}{data.confluence.score.toFixed(1)}
+                          {(confluence.score ?? 0) > 0 ? "+" : ""}{(confluence.score ?? 0).toFixed(1)}
                         </span>
                       </div>
                     </div>
-                    {/* Factor Contributions */}
-                    {data.confluence.factor_contributions && (
+                    {confluence.factor_contributions && (
                       <div className="mt-2 pt-2 border-t" style={{ borderColor: theme.border }}>
                         <div className="text-[8px] uppercase tracking-wider mb-1" style={{ color: theme.muted }}>Factor Weights</div>
                         <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
-                          {Object.entries(data.confluence.factor_contributions).slice(0, 6).map(([factor, info]: [string, any]) => (
+                          {Object.entries(confluence.factor_contributions).slice(0, 6).map(([factor, info]: [string, any]) => (
                             <div key={factor} className="flex justify-between text-[9px]">
                               <span style={{ color: theme.muted }}>{factor}</span>
-                              <span className="font-mono" style={{
-                                color: info.contribution > 0 ? theme.green : info.contribution < 0 ? theme.red : theme.warn
-                              }}>
+                              <span className="font-mono" style={{ color: info.contribution > 0 ? theme.green : info.contribution < 0 ? theme.red : theme.warn }}>
                                 {info.contribution > 0 ? "+" : ""}{info.contribution}
                               </span>
                             </div>
@@ -428,14 +421,13 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
                   </div>
                 )}
 
-                {/* Rejections */}
-                {data?.summary?.rejections?.length > 0 ? (
+                {rejections.length > 0 ? (
                   <div className="p-3 rounded border" style={{ background: `${theme.red}05`, borderColor: `${theme.red}15` }}>
                     <div className="text-[9px] uppercase tracking-widest font-bold mb-2 flex items-center gap-1.5" style={{ color: theme.red }}>
                       <XCircle className="w-3 h-3" /> Risk Factors
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      {data.summary.rejections.map((r, i) => (
+                      {rejections.map((r, i) => (
                         <div key={i} className="text-[10px] flex items-start gap-1.5" style={{ color: theme.red }}>
                           <span className="mt-0.5 opacity-50">•</span>
                           <span className="leading-relaxed opacity-90">{r}</span>
@@ -451,14 +443,13 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
                   </div>
                 )}
 
-                {/* Entry Conditions */}
-                {data?.summary?.entry_conditions?.length > 0 && (
+                {entryConditions.length > 0 && (
                   <div className="p-3 rounded border" style={{ background: theme.surface, borderColor: theme.border }}>
                     <div className="text-[9px] uppercase tracking-widest font-bold mb-2 flex items-center gap-1.5" style={{ color: theme.accent }}>
                       <Activity className="w-3 h-3" /> {t("emel.whenToTrade")}
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      {data.summary.entry_conditions.map((c, i) => (
+                      {entryConditions.map((c, i) => (
                         <div key={i} className="text-[10px] flex items-start gap-1.5" style={{ color: theme.text }}>
                           <span className="mt-0.5" style={{ color: theme.accent }}>→</span>
                           <span className="leading-relaxed opacity-80">{c}</span>
@@ -469,7 +460,6 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
                 )}
               </div>
             </div>
-
           </div>
         </div>
       )}
