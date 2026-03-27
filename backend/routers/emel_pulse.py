@@ -20,58 +20,58 @@ router = APIRouter(prefix="/api/panel", tags=["Panel Analysis"])
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class PriceLevel(BaseModel):
-    price: float
-    distance: float
-    alert: bool
+    price: Optional[float] = None
+    distance: Optional[float] = None
+    alert: Optional[bool] = None
 
 class Levels(BaseModel):
-    r2: float
-    r1: float
-    pivot: float
-    s1: PriceLevel
-    s2: float
-    nearest: str
-    nearest_distance: float
+    r2: Optional[float] = None
+    r1: Optional[float] = None
+    pivot: Optional[float] = None
+    s1: Optional[PriceLevel] = None
+    s2: Optional[float] = None
+    nearest: Optional[str] = None
+    nearest_distance: Optional[float] = None
 
 class MomentumIndicator(BaseModel):
-    value: float
-    trend: str
+    value: Optional[float] = None
+    trend: Optional[str] = None
 
 class Momentum(BaseModel):
-    rsi: MomentumIndicator
-    macd: MomentumIndicator
-    stochastic: MomentumIndicator
+    rsi: Optional[MomentumIndicator] = None
+    macd: Optional[MomentumIndicator] = None
+    stochastic: Optional[MomentumIndicator] = None
 
 class Volume(BaseModel):
-    status: str
-    label: str
+    status: Optional[str] = None
+    label: Optional[str] = None
     ratio: Optional[float] = None
-    available: bool
+    available: Optional[bool] = None
 
 class Trend(BaseModel):
-    direction: str
-    strength: float
-    label: str
-    strength_pct: int
-    last_5_candles: List[str]
+    direction: Optional[str] = None
+    strength: Optional[float] = None
+    label: Optional[str] = None
+    strength_pct: Optional[int] = None
+    last_5_candles: Optional[List[str]] = None
 
 class Regime(BaseModel):
-    type: str
-    adx: float
-    session: str
-    is_ath: bool
-    rsi_mode: str
-    allowed_directions: List[str]
-    min_rr: float
+    type: Optional[str] = None
+    adx: Optional[float] = None
+    session: Optional[str] = None
+    is_ath: Optional[bool] = None
+    rsi_mode: Optional[str] = None
+    allowed_directions: Optional[List[str]] = None
+    min_rr: Optional[float] = None
 
 class Suggestion(BaseModel):
-    text: str
-    target: float
-    stop: float
-    target_distance: float
-    stop_distance: float
-    rr_ratio: float
-    timeframe_estimate: str
+    text: Optional[str] = None
+    target: Optional[float] = None
+    stop: Optional[float] = None
+    target_distance: Optional[float] = None
+    stop_distance: Optional[float] = None
+    rr_ratio: Optional[float] = None
+    timeframe_estimate: Optional[str] = None
 
 class PulseResponse(BaseModel):
     symbol: Optional[str] = None
@@ -93,18 +93,18 @@ class PulseResponse(BaseModel):
     error: Optional[str] = None
 
 class EMELCheck(BaseModel):
-    name: str
-    status: str
-    emoji: str
-    score: int
+    name: Optional[str] = None
+    status: Optional[str] = None
+    emoji: Optional[str] = None
+    score: Optional[int] = None
 
 class EMELRecommendation(BaseModel):
-    action: str
+    action: Optional[str] = None
     entry: Optional[float] = None
     target: Optional[float] = None
     stop: Optional[float] = None
-    confidence: int
-    timeframe: str
+    confidence: Optional[int] = None
+    timeframe: Optional[str] = None
 
 class EMELResponse(BaseModel):
     symbol: Optional[str] = None
@@ -224,9 +224,10 @@ class PulseV3Response(BaseModel):
     order_blocks: Optional[List[OrderBlock]] = None
 
 class RegimeResponse(BaseModel):
-    symbol: str
-    timestamp: str
-    regime: Regime
+    symbol: Optional[str] = None
+    timestamp: Optional[str] = None
+    regime: Optional[Regime] = None
+    error: Optional[str] = None
 
 class PerformanceStatsResponse(BaseModel):
     symbol: str
