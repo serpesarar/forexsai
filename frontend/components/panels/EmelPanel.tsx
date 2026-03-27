@@ -198,9 +198,9 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
     : data?.signal === "SELL" || data?.signal === "STRONG_SELL" || data?.signal === "SELL_SETUP"
       ? theme.red
       : theme.warn;
-  const gc = data?.summary.green_count || 0;
-  const yc = data?.summary.yellow_count || 0;
-  const rc = data?.summary.red_count || 0;
+  const gc = data?.summary?.green_count || 0;
+  const yc = data?.summary?.yellow_count || 0;
+  const rc = data?.summary?.red_count || 0;
   const tot = gc + yc + rc || 1;
 
   // Confluence score
@@ -232,7 +232,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
         extraContent={data ? (
           <div className="flex items-center gap-3">
             <div className="text-[26px] font-bold tracking-tighter leading-none font-mono" style={{ color: theme.text }}>
-              {data.price.toFixed(2)}
+              {data?.price?.toFixed(2)}
             </div>
             {onSwitchMode && (
               <button
@@ -293,7 +293,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
               </div>
               <span className="text-[11px] uppercase tracking-widest font-bold mb-2.5" style={{ color: "rgba(255,255,255,0.7)" }}>Action</span>
               <span className="text-[14px] font-bold px-3 py-1.5 rounded" style={{ color: sigColor, background: `${sigColor}15`, border: `1px solid ${sigColor}30` }}>
-                {data.summary.decision}
+                {data?.summary?.decision}
               </span>
             </div>
             {/* Score Breakdown */}
@@ -316,7 +316,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
 
             {/* 9 CHECKPOINTS GRID (8/12) */}
             <div className="col-span-12 md:col-span-8 grid grid-cols-3 gap-[1px]" style={{ background: theme.border }}>
-              {data.checks.map((check) => {
+              {data?.checks?.map((check) => {
                 const Icon = CHECK_ICONS[check.id] || Activity;
                 const cc = cn(check.color);
                 // Sol renk şeridi için gradyan
@@ -429,7 +429,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
                 )}
 
                 {/* Rejections */}
-                {data.summary.rejections.length > 0 ? (
+                {data?.summary?.rejections?.length > 0 ? (
                   <div className="p-3 rounded border" style={{ background: `${theme.red}05`, borderColor: `${theme.red}15` }}>
                     <div className="text-[9px] uppercase tracking-widest font-bold mb-2 flex items-center gap-1.5" style={{ color: theme.red }}>
                       <XCircle className="w-3 h-3" /> Risk Factors
@@ -452,7 +452,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
                 )}
 
                 {/* Entry Conditions */}
-                {data.summary.entry_conditions.length > 0 && (
+                {data?.summary?.entry_conditions?.length > 0 && (
                   <div className="p-3 rounded border" style={{ background: theme.surface, borderColor: theme.border }}>
                     <div className="text-[9px] uppercase tracking-widest font-bold mb-2 flex items-center gap-1.5" style={{ color: theme.accent }}>
                       <Activity className="w-3 h-3" /> {t("emel.whenToTrade")}
