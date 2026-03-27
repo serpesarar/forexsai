@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List, Literal, Optional
+from pydantic import BaseModel
 
 from fastapi import APIRouter, Query
 
@@ -10,6 +11,50 @@ from services.ta_service import compute_ta_snapshot
 
 
 router = APIRouter(prefix="/api/data", tags=["data"])
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PYDANTIC RESPONSE MODELS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class OHLCVDataPoint(BaseModel):
+    timestamp: int
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
+
+class SupportResistanceLevel(BaseModel):
+    type: str
+    price: float
+    label: str
+
+class OHLCVResponse(BaseModel):
+    symbol: str
+    timeframe: str
+    data: List[OHLCVDataPoint]
+    support_resistance: List[SupportResistanceLevel]
+
+class CachedData(BaseModel):
+    symbol: str
+    updated_at: Optional[str] = None
+    ta_snapshot: Dict[str, Any]
+    current_price: float
+
+class CachedDataResponse(BaseModel):
+    success: bool
+    cached: bool
+    data: CachedData
+
+class CachedErrorResponse(BaseModel):
+    success: bool = False
+    error: str
+
+class SchedulerStatusResponse(BaseModel):
+    running: bool
+    tracked_symbols: List[str]
+    error: Optional[str] = None
 
 
 def _date_to_ms(date_str: str) -> int:
@@ -24,7 +69,7 @@ def _date_to_ms(date_str: str) -> int:
         return 0
 
 
-@router.get("/ohlcv")
+@router.get("/ohlcv", response_model=OHLCVResponse)
 async def ohlcv(
     symbol: str = Query(default="NDX.INDX"),
     timeframe: str = Query(default="1d"),
@@ -80,7 +125,7 @@ async def ohlcv(
     }
 
 
-@router.get("/cached/{symbol}")
+@router.get("/cached/{symbol}", response_model=CachedDataResponse)
 async def get_cached_data_endpoint(symbol: str) -> Dict[str, Any]:
     """
     Get cached live data — reads from DataHub (in-memory, updated every 30s).
@@ -134,7 +179,7 @@ async def get_cached_data_endpoint(symbol: str) -> Dict[str, Any]:
         }
 
 
-@router.get("/scheduler/status")
+@router.get("/scheduler/status", response_model=SchedulerStatusResponse)
 async def scheduler_status() -> Dict[str, Any]:
     """Check if background scheduler is running."""
     try:

@@ -396,6 +396,7 @@ def _model_detail_hourly_contract(symbol: Optional[str], observed_hours: Optiona
 class HealthResponse(BaseModel):
     db_available: bool
     message: str
+    init_error: Optional[str] = None
 
 
 class AccuracySummary(BaseModel):
@@ -411,7 +412,103 @@ class AccuracySummary(BaseModel):
     either_correct_rate: Optional[float]
 
 
-@router.get("/health")
+class PredictionsResponse(BaseModel):
+    predictions: List[Dict[str, Any]]
+    count: int
+    error: Optional[str] = None
+
+
+class OutcomeCheckResponse(BaseModel):
+    outcomes_checked: int
+    ml_correct: int
+    ml_incorrect: int
+    check_interval: str
+    error: Optional[str] = None
+
+
+class TargetConfigResponse(BaseModel):
+    symbol: str
+    pip_value: float
+    targets: List[Dict[str, Any]]
+    stoploss_pips: int
+
+
+class MultiTargetDashboardResponse(BaseModel):
+    db_available: bool
+    symbol: Optional[str]
+    period_days: int
+    config: Optional[Dict[str, Any]]
+    accuracy_1h: Optional[Dict[str, Any]]
+    accuracy_24h: Optional[Dict[str, Any]]
+    basic_accuracy: Optional[Dict[str, Any]]
+    message: Optional[str] = None
+
+
+class InsightsResponse(BaseModel):
+    insights: List[Dict[str, Any]]
+    count: int
+    error: Optional[str] = None
+
+
+class DashboardResponse(BaseModel):
+    db_available: bool
+    symbol: Optional[str]
+    period_days: int
+    accuracy: Dict[str, Any]
+    active_insights: List[Dict[str, Any]]
+    factor_analysis: Optional[Dict[str, Any]]
+    message: Optional[str] = None
+
+
+class SignalResponse(BaseModel):
+    id: str
+    symbol: str
+    direction: str
+    confidence: float
+    status: str
+    entry_price: Optional[float] = None
+    exit_price: Optional[float] = None
+    target_price: Optional[float] = None
+    stop_price: Optional[float] = None
+    pnl_pips: Optional[float] = None
+    created_at: str
+    timeframe: Optional[str] = None
+    model_type: Optional[str] = None
+
+
+class RecentSignalsResponse(BaseModel):
+    signals: List[SignalResponse]
+    total: int
+    page: int
+    page_size: int
+
+
+class ModelAnalysisResponse(BaseModel):
+    model: str
+    timeframe: Optional[str]
+    symbol: str
+    accuracy: float
+    total_signals: int
+    win_rate: float
+    profit_factor: float
+    error: Optional[str] = None
+
+
+class StrategyPerformanceResponse(BaseModel):
+    strategy: str
+    symbol: str
+    total_signals: int
+    completed: int
+    stopped: int
+    expired: int
+    active: int
+    win_rate: float
+    net_pips: float
+    avg_pips: float
+    score: Optional[float] = None
+
+
+@router.get("/health", response_model=HealthResponse)
 async def learning_health():
     """Check if learning system database is available."""
     available = is_db_available()
@@ -423,7 +520,7 @@ async def learning_health():
     }
 
 
-@router.get("/predictions")
+@router.get("/predictions", response_model=PredictionsResponse)
 async def get_predictions(
     symbol: Optional[str] = Query(None, description="Filter by symbol"),
     limit: int = Query(50, ge=1, le=200),
@@ -437,7 +534,7 @@ async def get_predictions(
     return {"predictions": predictions, "count": len(predictions)}
 
 
-@router.post("/check-outcomes")
+@router.post("/check-outcomes", response_model=OutcomeCheckResponse)
 async def trigger_outcome_check(
     check_interval: str = Query("24h", description="Interval to check: 1h, 4h, 24h, 48h, 7d")
 ):
@@ -460,7 +557,7 @@ async def trigger_outcome_check(
     }
 
 
-@router.get("/accuracy")
+@router.get("/accuracy", response_model=AccuracySummary)
 async def get_accuracy(
     symbol: Optional[str] = Query(None),
     days: int = Query(0, ge=0, le=1095),
@@ -643,7 +740,7 @@ async def trigger_insight_generation(
     }
 
 
-@router.get("/insights")
+@router.get("/insights", response_model=InsightsResponse)
 async def get_insights(symbol: Optional[str] = Query(None)):
     """Get active learning insights."""
     if not is_db_available():
@@ -653,7 +750,7 @@ async def get_insights(symbol: Optional[str] = Query(None)):
     return {"insights": insights, "count": len(insights)}
 
 
-@router.get("/dashboard")
+@router.get("/dashboard", response_model=DashboardResponse)
 async def get_learning_dashboard(
     symbol: Optional[str] = Query(None),
     days: int = Query(0, ge=0, le=1095)
@@ -684,7 +781,7 @@ async def get_learning_dashboard(
     }
 
 
-@router.get("/target-config/{symbol}")
+@router.get("/target-config/{symbol}", response_model=TargetConfigResponse)
 async def get_target_config(symbol: str):
     """Get target and stoploss configuration for a symbol."""
     config = get_symbol_config(symbol)
@@ -696,7 +793,7 @@ async def get_target_config(symbol: str):
     }
 
 
-@router.get("/target-configs")
+@router.get("/target-configs", response_model=Dict[str, TargetConfigResponse])
 async def get_all_target_configs():
     """Get target configurations for all symbols."""
     configs = {}
@@ -825,7 +922,7 @@ async def check_all_pending_outcomes():
         return {"error": str(e), "traceback": traceback.format_exc()[:500], "outcomes_checked": 0}
 
 
-@router.get("/multi-target-dashboard")
+@router.get("/multi-target-dashboard", response_model=MultiTargetDashboardResponse)
 async def get_multi_target_dashboard(
     symbol: Optional[str] = Query(None),
     days: int = Query(0, ge=0, le=1095)

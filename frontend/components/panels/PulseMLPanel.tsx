@@ -208,7 +208,7 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         extraContent={data ? (
           <div>
             <div className="text-[26px] font-bold tracking-tighter leading-none" style={{ color: "var(--text-primary)" }}>
-              {data.price.toFixed(2)}
+              {data?.price?.toFixed?.(2) ?? '--'}
             </div>
           </div>
         ) : undefined}
@@ -240,7 +240,7 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
               </div>
               <div className="flex items-center justify-between mt-2 font-mono text-[10px]">
                 <span style={{ color: "var(--text-muted)" }}>Score: {data.pulse_score}/{maxScore}</span>
-                <span style={{ color: "var(--text-secondary)" }}>Conf: {data.confidence.toFixed(1)}%</span>
+                <span style={{ color: "var(--text-secondary)" }}>Conf: {data?.confidence?.toFixed?.(1) ?? '--'}%</span>
               </div>
             </div>
 
@@ -260,7 +260,7 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
                   </div>
                   <div className="flex justify-between items-center py-1.5 px-3 rounded border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
                     <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>ADX Strength</span>
-                    <span className="text-[12px] font-semibold text-white/80 font-mono">{data.regime.adx}</span>
+                    <span className="text-[12px] font-semibold text-white/80 font-mono">{data?.regime?.adx ?? '--'}</span>
                   </div>
                   <div className="flex justify-between items-center py-1.5 px-3 rounded border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
                     <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>Session</span>
@@ -281,11 +281,11 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
               {bd && (
                 <div className="space-y-1">
                   {[
-                    { label: "ML Engine", pts: bd.ml.pts, max: 35, detail: bd.ml.direction },
-                    { label: "EMA Cross", pts: bd.ema.pts, max: 25, detail: bd.ema.status },
-                    { label: "MACD Hist", pts: bd.macd.pts, max: 15, detail: bd.macd.hist.toFixed(3) },
-                    { label: "RSI Flow", pts: bd.rsi.pts, max: 15, detail: bd.rsi.value.toFixed(1) },
-                    { label: "Volume Profile", pts: bd.volume.pts, max: 10, detail: `${bd.volume.pts}pts` },
+                    { label: "ML Engine", pts: bd?.ml?.pts ?? 0, max: 35, detail: bd?.ml?.direction ?? '--' },
+                    { label: "EMA Cross", pts: bd?.ema?.pts ?? 0, max: 25, detail: bd?.ema?.status ?? '--' },
+                    { label: "MACD Hist", pts: bd?.macd?.pts ?? 0, max: 15, detail: bd?.macd?.hist?.toFixed?.(3) ?? '--' },
+                    { label: "RSI Flow", pts: bd?.rsi?.pts ?? 0, max: 15, detail: bd?.rsi?.value?.toFixed?.(1) ?? '--' },
+                    { label: "Volume Profile", pts: bd?.volume?.pts ?? 0, max: 10, detail: `${bd?.volume?.pts ?? 0}pts` },
                   ].map((comp, i) => (
                     <div key={i} className="flex justify-between items-center py-2 px-3 rounded" style={{ background: "var(--bg-input)" }}>
                       <div className="flex flex-col">
@@ -314,18 +314,18 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
               {/* Target */}
               <div className="p-3 rounded border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
                 <div className="text-[10px] uppercase font-semibold mb-1 flex items-center gap-1.5" style={{ color: "var(--text-muted)" }}><Target className="w-3 h-3" style={{ color: "var(--accent-positive)" }} /> Target (TP)</div>
-                <div className="text-[18px] font-bold tracking-tight" style={{ color: "var(--accent-positive)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>{data.target.toFixed(2)}</div>
+                <div className="text-[18px] font-bold tracking-tight" style={{ color: "var(--accent-positive)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>{data?.target?.toFixed?.(2) ?? '--'}</div>
               </div>
               {/* Stop Loss */}
               <div className="p-3 rounded border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
                 <div className="text-[10px] uppercase font-semibold mb-1 flex items-center gap-1.5" style={{ color: "var(--text-muted)" }}><AlertTriangle className="w-3 h-3" style={{ color: "var(--accent-negative)" }} /> Stop (SL)</div>
-                <div className="text-[18px] font-bold tracking-tight" style={{ color: "var(--accent-negative)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>{data.stop.toFixed(2)}</div>
+                <div className="text-[18px] font-bold tracking-tight" style={{ color: "var(--accent-negative)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>{data?.stop?.toFixed?.(2) ?? '--'}</div>
               </div>
             </div>
 
             <div className="p-3 rounded border flex justify-between items-center mb-4" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
               <span className="text-[11px] font-medium uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>Reward / Risk Ratio</span>
-              <span className="text-[14px] font-bold" style={{ color: "var(--accent-info)" }}>{data.rr_ratio.toFixed(2)} <span className="text-[10px] text-[var(--text-disabled)]">x</span></span>
+              <span className="text-[14px] font-bold" style={{ color: "var(--accent-info)" }}>{data?.rr_ratio?.toFixed?.(2) ?? '--'} <span className="text-[10px] text-[var(--text-disabled)]">x</span></span>
             </div>
 
             {/* AI Log */}

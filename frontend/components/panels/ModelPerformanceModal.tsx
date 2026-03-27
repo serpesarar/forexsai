@@ -871,39 +871,39 @@ function OverviewPanel({
       <div className="grid grid-cols-2 xl:grid-cols-6 gap-3">
         <MetricCard
           label={copy.winRate}
-          value={`${ov.win_rate.toFixed(1)}%`}
-          accent={wrColor(ov.win_rate)}
+          value={`${ov?.win_rate?.toFixed?.(1) ?? '0.0'}%`}
+          accent={wrColor(ov?.win_rate ?? 0)}
           sub={`${resolved} ${copy.resolved.toLowerCase()}`}
         />
         <MetricCard
           label={copy.netPips}
-          value={formatPips(ov.net_pips)}
-          accent={ov.net_pips >= 0 ? "var(--accent-positive)" : "var(--accent-negative)"}
-          sub={`${copy.active}: ${ov.active}`}
+          value={formatPips(ov?.net_pips ?? 0)}
+          accent={(ov?.net_pips ?? 0) >= 0 ? "var(--accent-positive)" : "var(--accent-negative)"}
+          sub={`${copy.active}: ${ov?.active ?? 0}`}
         />
         <MetricCard
           label={copy.resolved}
           value={`${resolved}`}
           accent="var(--text-primary)"
-          sub={`${copy.completed}: ${ov.completed} · ${copy.stopped}: ${ov.stopped}`}
+          sub={`${copy.completed}: ${ov?.completed ?? 0} · ${copy.stopped}: ${ov?.stopped ?? 0}`}
         />
         <MetricCard
           label={copy.profitFactor}
-          value={ov.profit_factor.toFixed(2)}
+          value={(ov?.profit_factor ?? 0).toFixed(2)}
           accent="var(--accent-warning)"
-          sub={`R/R ${ov.risk_reward.toFixed(2)}`}
+          sub={`R/R ${(ov?.risk_reward ?? 0).toFixed(2)}`}
         />
         <MetricCard
           label={copy.sharpe}
-          value={ov.sharpe_ratio.toFixed(2)}
+          value={(ov?.sharpe_ratio ?? 0).toFixed(2)}
           accent="var(--accent-info)"
           sub={`${copy.timeframe}: ${selectedTimeframe === "all" ? copy.allTimeframes : selectedTimeframe.toUpperCase()}`}
         />
         <MetricCard
           label={copy.maxDrawdown}
-          value={`-${ov.max_drawdown_pips.toFixed(1)}p`}
+          value={`-${(ov?.max_drawdown_pips ?? 0).toFixed(1)}p`}
           accent="var(--accent-negative)"
-          sub={`${copy.stopped}: ${ov.stopped}`}
+          sub={`${copy.stopped}: ${ov?.stopped ?? 0}`}
         />
       </div>
 
@@ -913,19 +913,19 @@ function OverviewPanel({
           <InsightCard
             label={copy.bestTimeframe}
             value={bestTimeframe ? bestTimeframe.tf.toUpperCase() : "—"}
-            detail={bestTimeframe ? `${bestTimeframe.win_rate.toFixed(1)}% · ${formatPips(bestTimeframe.net_pips)}` : copy.noData}
+            detail={bestTimeframe ? `${bestTimeframe.win_rate?.toFixed?.(1) ?? '0.0'}% · ${formatPips(bestTimeframe?.net_pips ?? 0)}` : copy.noData}
             accent={bestTimeframe ? wrColor(bestTimeframe.win_rate) : "var(--text-muted)"}
           />
           <InsightCard
             label={copy.bestHour}
             value={bestHour ? formatHour(bestHour.hour) : "—"}
-            detail={bestHour ? `${bestHour.win_rate.toFixed(1)}% · ${bestHour.total} ${copy.signalsLower}` : copy.noData}
+            detail={bestHour ? `${bestHour.win_rate?.toFixed?.(1) ?? '0.0'}% · ${bestHour.total} ${copy.signalsLower}` : copy.noData}
             accent={bestHour ? wrColor(bestHour.win_rate) : "var(--text-muted)"}
           />
           <InsightCard
             label={copy.bestDay}
             value={bestDay ? bestDay.day_short : "—"}
-            detail={bestDay ? `${bestDay.win_rate.toFixed(1)}% · ${formatPips(bestDay.avg_pips)}` : copy.noData}
+            detail={bestDay ? `${bestDay.win_rate?.toFixed?.(1) ?? '0.0'}% · ${formatPips(bestDay?.avg_pips ?? 0)}` : copy.noData}
             accent={bestDay ? wrColor(bestDay.win_rate) : "var(--text-muted)"}
           />
         </div>
@@ -986,19 +986,19 @@ function OverviewPanel({
                         </span>
                       </td>
                       <td style={tableCellStyle}>{row.total}</td>
-                      <td style={{ ...tableCellStyle, color: wrColor(row.win_rate), fontWeight: 700 }}>
-                        {row.win_rate.toFixed(1)}%
+                      <td style={{ ...tableCellStyle, color: wrColor(row?.win_rate ?? 0), fontWeight: 700 }}>
+                        {row?.win_rate?.toFixed?.(1) ?? '0.0'}%
                       </td>
                       <td
                         style={{
                           ...tableCellStyle,
-                          color: row.net_pips >= 0 ? "var(--accent-positive)" : "var(--accent-negative)",
+                          color: (row?.net_pips ?? 0) >= 0 ? "var(--accent-positive)" : "var(--accent-negative)",
                           fontWeight: 700,
                         }}
                       >
-                        {formatPips(row.net_pips)}
+                        {formatPips(row?.net_pips ?? 0)}
                       </td>
-                      <td style={tableCellStyle}>{row.avg_pips.toFixed(1)}</td>
+                      <td style={tableCellStyle}>{row?.avg_pips?.toFixed?.(1) ?? '0.0'}</td>
                     </tr>
                   );
                 })}
@@ -1044,7 +1044,7 @@ function OverviewPanel({
                 <div key={tp}>
                   <div className="flex items-center justify-between mb-1.5">
                     <span style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 600 }}>{tp}</span>
-                    <span style={{ fontSize: 12, color: wrColor(rate), fontWeight: 700 }}>{rate.toFixed(1)}%</span>
+                    <span style={{ fontSize: 12, color: wrColor(rate ?? 0), fontWeight: 700 }}>{rate?.toFixed?.(1) ?? '0.0'}%</span>
                   </div>
                   <div style={{ height: 8, borderRadius: 999, background: "var(--bg-primary)", overflow: "hidden" }}>
                     <div style={{ width: `${rate}%`, height: "100%", borderRadius: 999, background: wrColor(rate) }} />
@@ -1093,7 +1093,7 @@ function OverviewPanel({
                       <td style={tableCellStyle}>{signal.timeframe.toUpperCase()}</td>
                       <td style={{ ...tableCellStyle, fontFamily: "monospace" }}>{formatEntryPrice(signal.entry_price)}</td>
                       <td style={{ ...tableCellStyle, fontFamily: "monospace" }}>{formatExitPrice(deriveSummaryExitPrice(signal))}</td>
-                      <td style={tableCellStyle}>{signal.confidence.toFixed(1)}%</td>
+                      <td style={tableCellStyle}>{signal?.confidence?.toFixed?.(1) ?? '0.0'}%</td>
                       <td style={tableCellStyle}>
                         <span
                           style={{
@@ -1176,7 +1176,7 @@ function TimeframesPanel({ data, copy }: { data: TFData[]; copy: LocaleCopy }) {
           label={copy.bestTimeframe}
           value={best.tf.toUpperCase()}
           accent={wrColor(best.win_rate)}
-          sub={`${best.win_rate.toFixed(1)}% · ${formatPips(best.net_pips)}`}
+          sub={`${best.win_rate?.toFixed?.(1) ?? '0.0'}% · ${formatPips(best?.net_pips ?? 0)}`}
         />
         <MetricCard
           label={copy.biggestSample}
@@ -1240,19 +1240,19 @@ function TimeframesPanel({ data, copy }: { data: TFData[]; copy: LocaleCopy }) {
                   </td>
                   <td style={tableCellStyle}>{row.total}</td>
                   <td style={tableCellStyle}>{row.active || 0}</td>
-                  <td style={{ ...tableCellStyle, color: wrColor(row.win_rate), fontWeight: 700 }}>
-                    {row.win_rate.toFixed(1)}%
+                  <td style={{ ...tableCellStyle, color: wrColor(row?.win_rate ?? 0), fontWeight: 700 }}>
+                    {row?.win_rate?.toFixed?.(1) ?? '0.0'}%
                   </td>
                   <td
                     style={{
                       ...tableCellStyle,
-                      color: row.net_pips >= 0 ? "var(--accent-positive)" : "var(--accent-negative)",
+                      color: (row?.net_pips ?? 0) >= 0 ? "var(--accent-positive)" : "var(--accent-negative)",
                       fontWeight: 700,
                     }}
                   >
-                    {formatPips(row.net_pips)}
+                    {formatPips(row?.net_pips ?? 0)}
                   </td>
-                  <td style={tableCellStyle}>{row.avg_pips.toFixed(1)}</td>
+                  <td style={tableCellStyle}>{row?.avg_pips?.toFixed?.(1) ?? '0.0'}</td>
                 </tr>
               ))}
             </tbody>
@@ -1337,7 +1337,7 @@ function HourlyPanel({
                     fontWeight: 700,
                   }}
                 >
-                  {row.total > 0 ? `${row.win_rate.toFixed(1)}%` : "—"}
+                  {row.total > 0 ? `${row?.win_rate?.toFixed?.(1) ?? '0.0'}%` : "—"}
                 </span>
               </div>
               <p style={{ marginTop: 10, fontSize: 11, color: "var(--text-muted)" }}>
@@ -1404,7 +1404,7 @@ function WeekdayPanel({ data, copy }: { data: DOWData[]; copy: LocaleCopy }) {
             <div className="flex items-center justify-between gap-3">
               <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>{row.day}</span>
               <span style={{ fontSize: 14, fontWeight: 700, color: wrColor(row.win_rate) }}>
-                {row.win_rate.toFixed(1)}%
+                {row?.win_rate?.toFixed?.(1) ?? '0.0'}%
               </span>
             </div>
             <div className="mt-3 flex items-center justify-between text-[12px]" style={{ color: "var(--text-muted)" }}>
@@ -1559,7 +1559,7 @@ function HourRow({ row, positive, copy }: { row: HourlyData; positive: boolean; 
       <span style={{ color: "var(--text-primary)", fontWeight: 700 }}>{formatHour(row.hour)}</span>
       <div className="text-right">
         <p style={{ color: positive ? "var(--accent-positive)" : "var(--accent-negative)", fontWeight: 700 }}>
-          {row.win_rate.toFixed(1)}%
+          {row?.win_rate?.toFixed?.(1) ?? '0.0'}%
         </p>
         <p style={{ color: "var(--text-muted)", fontSize: 12 }}>{row.total} {copy.signalsLower}</p>
       </div>

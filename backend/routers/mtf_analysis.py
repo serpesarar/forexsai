@@ -11,8 +11,9 @@ from __future__ import annotations
 
 import logging
 import traceback
-from typing import Optional, Literal
+from typing import Optional, Literal, Any, Dict, List
 from fastapi import APIRouter, Query, HTTPException
+from pydantic import BaseModel
 
 from services.mtf_analysis_service import get_mtf_analysis, Timeframe
 from utils.json_response import NumpySafeJSONResponse
@@ -23,7 +24,58 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/mtf", tags=["mtf-analysis"])
 
 
-@router.get("/analysis")
+# ═══════════════════════════════════════════════════════════════════════════════
+# PYDANTIC RESPONSE MODELS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TimeframeAnalysis(BaseModel):
+    timeframe: str
+    trend: str
+    ema20: float
+    ema50: float
+    rsi: float
+    macd_hist: float
+    atr: float
+    bb_upper: float
+    bb_lower: float
+    bb_percent_b: float
+    volume_ratio: float
+    candle_pattern: Optional[str] = None
+    ema_aligned: bool
+    momentum_score: float
+    signal: str
+
+class ConfluenceData(BaseModel):
+    score: int
+    alignment: str
+    dominant_tf: str
+    direction: str
+    confidence: str
+    signals: Dict[str, str]
+    score_breakdown: Dict[str, int]
+
+class MTFAnalysisResponse(BaseModel):
+    success: bool
+    symbol: str
+    timestamp: str
+    current_price: float
+    timeframe_analysis: Dict[str, TimeframeAnalysis]
+    confluence: ConfluenceData
+
+class MTFConfluenceResponse(BaseModel):
+    success: bool
+    symbol: str
+    timestamp: str
+    current_price: float
+    confluence: ConfluenceData
+
+class MTFErrorResponse(BaseModel):
+    success: bool = False
+    error: str
+
+
+
+@router.get("/analysis", response_model=MTFAnalysisResponse)
 async def mtf_analysis(
     symbol: str = Query(default="XAUUSD", description="Trading symbol"),
     timeframe: Optional[str] = Query(default=None, description="Specific timeframe (M1, M5, M15, M30, H1, H4, D1) or None for all")
@@ -56,7 +108,7 @@ async def mtf_analysis(
     return NumpySafeJSONResponse(content=result)
 
 
-@router.get("/confluence/{symbol}")
+@router.get("/confluence/{symbol}", response_model=MTFConfluenceResponse)
 async def mtf_confluence(symbol: str):
     """Get MTF Confluence score for a symbol."""
     try:
@@ -77,7 +129,7 @@ async def mtf_confluence(symbol: str):
     })
 
 
-@router.get("/timeframe/{symbol}/{timeframe}")
+@router.get("/timeframe/{symbol}/{timeframe}", response_model=MTFAnalysisResponse)
 async def single_timeframe(symbol: str, timeframe: str):
     """
     Get analysis for a specific timeframe.

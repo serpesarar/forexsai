@@ -278,7 +278,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         </div>
 
         <p className="text-sm font-mono mt-1.5" style={{ color: P.muted }}>
-          {t("pulseV3.priceLabel")} <span className="font-bold text-white/80">{typeof data.price === 'number' ? data.price.toFixed(2) : data.price}</span>
+          {t("pulseV3.priceLabel")} <span className="font-bold text-white/80">{typeof data?.price === 'number' ? data.price.toFixed(2) : (data?.price ?? '--')}</span>
         </p>
 
         {/* ── Regime Badge ── */}
@@ -303,7 +303,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
             {/* ADX */}
             <div className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold"
               style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.08)" }}>
-              ADX {data.regime.adx}
+              ADX {data?.regime?.adx ?? '--'}
             </div>
             {/* Session */}
             <div className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold"
@@ -355,23 +355,23 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
           <div className="space-y-1.5 text-sm font-mono">
             <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: `${P.red}06` }}>
               <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.red }}>R2</span>
-              <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.r2.toFixed(0)}</span>
+              <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data?.levels?.r2?.toFixed?.(0) ?? '--'}</span>
             </div>
             <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: `${P.red}06` }}>
               <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.red }}>R1</span>
-              <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.r1.toFixed(0)}</span>
+              <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data?.levels?.r1?.toFixed?.(0) ?? '--'}</span>
             </div>
             <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: `${P.green}08`, border: `1px solid ${P.green}20` }}>
               <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.green }}>Pivot</span>
-              <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.green }}>{data.levels.pivot.toFixed(0)}</span>
+              <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.green }}>{data?.levels?.pivot?.toFixed?.(0) ?? '--'}</span>
             </div>
             <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: `${P.accent}06` }}>
               <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.accent }}>S1</span>
-              <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.s1.toFixed(0)}</span>
+              <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data?.levels?.s1?.toFixed?.(0) ?? '--'}</span>
             </div>
             <div className="flex justify-between px-2 py-0.5 rounded-lg" style={{ background: `${P.accent}06` }}>
               <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 500, color: P.accent }}>S2</span>
-              <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data.levels.s2.toFixed(0)}</span>
+              <span style={{ fontFamily: FONT, fontSize: 12, color: P.text }}>{data?.levels?.s2?.toFixed?.(0) ?? '--'}</span>
             </div>
           </div>
         </div>
@@ -383,18 +383,18 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
           <div className="space-y-1.5 text-sm font-mono">
             <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: "var(--accent-positive-06)" }}>
               <span style={{ color: P.green }}>{t("pulseV3.target")}</span>
-              <span className="font-bold" style={{ color: P.green }}>{data.levels.target.toFixed(0)}</span>
+              <span className="font-bold" style={{ color: P.green }}>{data?.levels?.target?.toFixed?.(0) ?? '--'}</span>
             </div>
             <div className="flex justify-between px-2 py-1 rounded-lg" style={{ background: "var(--accent-negative-06)" }}>
               <span style={{ color: P.red }}>{t("pulseV3.stop")}</span>
-              <span className="font-bold" style={{ color: P.red }}>{data.levels.stop.toFixed(0)}</span>
+              <span className="font-bold" style={{ color: P.red }}>{data?.levels?.stop?.toFixed?.(0) ?? '--'}</span>
             </div>
             <div className="flex justify-between px-2 py-1.5 rounded-lg" style={{
-              background: data.rr_ratio >= 1.5 ? "var(--accent-positive-06)" : data.rr_ratio >= 1.2 ? "var(--accent-warning-06)" : "var(--accent-negative-06)",
-              border: `1px solid ${data.rr_ratio >= 1.5 ? "var(--accent-positive-15)" : data.rr_ratio >= 1.2 ? "var(--accent-warning-15)" : "var(--accent-negative-15)"}`,
+              background: data?.rr_ratio >= 1.5 ? "var(--accent-positive-06)" : data?.rr_ratio >= 1.2 ? "var(--accent-warning-06)" : "var(--accent-negative-06)",
+              border: `1px solid ${data?.rr_ratio >= 1.5 ? "var(--accent-positive-15)" : data?.rr_ratio >= 1.2 ? "var(--accent-warning-15)" : "var(--accent-negative-15)"}`,
             }}>
               <span style={{ color: P.muted }}>R/R</span>
-              <span className="font-bold" style={{ color: data.rr_ratio >= 1.5 ? P.green : data.rr_ratio >= 1.2 ? P.warn : P.red }}>{data.rr_ratio.toFixed(2)}</span>
+              <span className="font-bold" style={{ color: data?.rr_ratio >= 1.5 ? P.green : data?.rr_ratio >= 1.2 ? P.warn : P.red }}>{data?.rr_ratio?.toFixed?.(2) ?? '--'}</span>
             </div>
           </div>
         </div>
@@ -419,7 +419,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
             {data.entry_zones.map((zone, idx) => (
               <div key={idx} className="rounded-xl p-2.5 text-center font-mono" style={{ background: "var(--bg-hover)", border: "1px solid var(--border-subtle)" }}>
                 <p className="text-[9px]" style={{ color: P.muted }}>{zone.label}</p>
-                <p className="text-sm font-bold text-white/80">{zone.price}</p>
+                <span className="font-bold">{zone.price?.toFixed?.(0) ?? zone.price ?? '--'}</span>
                 <p className="text-[10px]" style={{ color: P.accent }}>%{zone.share}</p>
               </div>
             ))}
@@ -440,8 +440,8 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
                 border: `1px solid ${ob.type === "bullish" ? `${P.green}15` : `${P.red}15`}`,
                 color: ob.type === "bullish" ? P.green : P.red,
               }}>
-                <span className="font-bold">{ob.type === "bullish" ? "▲" : "▼"} {ob.low.toFixed(0)}–{ob.high.toFixed(0)}</span>
-                <span className="ml-2 opacity-60">str: {(ob.strength * 100).toFixed(0)}%</span>
+                <span className="font-bold">{ob.type === "bullish" ? "▲" : "▼"} {ob.low?.toFixed?.(0) ?? '--'}–{ob.high?.toFixed?.(0) ?? '--'}</span>
+                <span className="ml-2 opacity-60">str: {(ob.strength * 100)?.toFixed?.(0) ?? '--'}%</span>
               </div>
             ))}
             {data.order_blocks.filter(ob => ob.is_nearby).length === 0 && (
@@ -466,7 +466,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       <div className="px-2 py-2 text-center bg-transparent">
         <p className="text-[10px] font-mono" style={{ color: P.muted }}>
           {`${t("pulseV3.lastUpdate")} ${signalAge}`}{" "}
-          | {t("pulseV3.validity")} {(data.valid_for_seconds / 60).toFixed(0)} {t("pulseV3.min")}
+          | {t("pulseV3.validity")} {(data?.valid_for_seconds / 60)?.toFixed?.(0) ?? '--'} {t("pulseV3.min")}
         </p>
       </div>
     </div>

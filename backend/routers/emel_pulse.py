@@ -6,12 +6,262 @@ EMEL + PULSE Panel API Endpoints
 
 from fastapi import APIRouter, Query
 from typing import Dict, Any, List, Optional
+from pydantic import BaseModel, Field
 import logging
 from datetime import datetime
 import numpy as np
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/panel", tags=["Panel Analysis"])
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PYDANTIC RESPONSE MODELS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class PriceLevel(BaseModel):
+    price: float
+    distance: float
+    alert: bool
+
+class Levels(BaseModel):
+    r2: float
+    r1: float
+    pivot: float
+    s1: PriceLevel
+    s2: float
+    nearest: str
+    nearest_distance: float
+
+class MomentumIndicator(BaseModel):
+    value: float
+    trend: str
+
+class Momentum(BaseModel):
+    rsi: MomentumIndicator
+    macd: MomentumIndicator
+    stochastic: MomentumIndicator
+
+class Volume(BaseModel):
+    status: str
+    label: str
+    ratio: Optional[float] = None
+    available: bool
+
+class Trend(BaseModel):
+    direction: str
+    strength: float
+    label: str
+    strength_pct: int
+    last_5_candles: List[str]
+
+class Regime(BaseModel):
+    type: str
+    adx: float
+    session: str
+    is_ath: bool
+    rsi_mode: str
+    allowed_directions: List[str]
+    min_rr: float
+
+class Suggestion(BaseModel):
+    text: str
+    target: float
+    stop: float
+    target_distance: float
+    stop_distance: float
+    rr_ratio: float
+    timeframe_estimate: str
+
+class PulseResponse(BaseModel):
+    symbol: str
+    timeframe: str
+    timestamp: str
+    signal_timestamp: Optional[str] = None
+    signal: str
+    signal_type: str
+    pulse_score: float
+    trend: Trend
+    price: Dict[str, float]
+    levels: Levels
+    momentum: Momentum
+    volume: Volume
+    score_breakdown: Dict[str, Any]
+    decision_notes: List[str]
+    regime: Regime
+    suggestion: Suggestion
+
+class EMELCheck(BaseModel):
+    name: str
+    status: str
+    emoji: str
+    score: int
+
+class EMELRecommendation(BaseModel):
+    action: str
+    entry: Optional[float] = None
+    target: Optional[float] = None
+    stop: Optional[float] = None
+    confidence: int
+    timeframe: str
+
+class EMELResponse(BaseModel):
+    symbol: str
+    timeframe: str
+    timestamp: str
+    final_score: int
+    signal: str
+    signal_type: str
+    regime: Optional[Regime] = None
+    checks: List[EMELCheck]
+    technical_summary: Dict[str, Any]
+    ml_context: Optional[Dict[str, Any]] = None
+    recommendation: EMELRecommendation
+
+class ScoreBreakdownML(BaseModel):
+    pts: int
+    confidence: float
+    direction: str
+
+class ScoreBreakdownEMA(BaseModel):
+    pts: int
+    status: str
+    ema20: float
+    ema50: float
+
+class ScoreBreakdownMACD(BaseModel):
+    pts: int
+    hist: float
+
+class ScoreBreakdownRSI(BaseModel):
+    pts: int
+    value: float
+
+class ScoreBreakdownVolume(BaseModel):
+    pts: int
+
+class ScoreBreakdownMLModel(BaseModel):
+    ml: ScoreBreakdownML
+    ema: ScoreBreakdownEMA
+    macd: ScoreBreakdownMACD
+    rsi: ScoreBreakdownRSI
+    volume: ScoreBreakdownVolume
+
+class DetailsML(BaseModel):
+    ml_direction: str
+    ema_20: float
+    ema_50: float
+    rsi_14: float
+    macd_hist: float
+    notes: List[str]
+
+class PulseMLResponse(BaseModel):
+    symbol: str
+    timeframe: str
+    timestamp: str
+    signal_timestamp: Optional[str] = None
+    signal: str
+    signal_type: str
+    pulse_score: float
+    confidence: float
+    model_type: str
+    price: float
+    target: float
+    stop: float
+    rr_ratio: float
+    score_breakdown: ScoreBreakdownMLModel
+    details: DetailsML
+    suggestion: str
+    regime: Optional[Regime] = None
+
+class TimeframeScore(BaseModel):
+    raw_score: int
+    max: int
+    trend: str
+    details: Any
+
+class LevelsV3(BaseModel):
+    r2: float
+    r1: float
+    pivot: float
+    s1: float
+    s2: float
+    target: float
+    stop: float
+
+class EntryZone(BaseModel):
+    price: float
+    share: float
+    label: str
+
+class OrderBlock(BaseModel):
+    type: str
+    low: float
+    high: float
+    strength: float
+    is_nearby: bool
+
+class PulseV3Response(BaseModel):
+    symbol: str
+    timestamp: str
+    signal_timestamp: Optional[str] = None
+    pulse_score: int
+    max_score: int
+    signal_type: str
+    direction: str
+    confidence: float
+    price: float
+    timeframes: Dict[str, TimeframeScore]
+    levels: LevelsV3
+    rr_ratio: float
+    suggestion: str
+    entry_zones: List[EntryZone]
+    notes: List[str]
+    valid_for_seconds: int
+    regime: Optional[Regime] = None
+    order_blocks: Optional[List[OrderBlock]] = None
+
+class RegimeResponse(BaseModel):
+    symbol: str
+    timestamp: str
+    regime: Regime
+
+class PerformanceStatsResponse(BaseModel):
+    symbol: str
+    signals_generated: int
+    avg_score: float
+    win_rate: float
+    profit_factor: float
+    timestamp: str
+
+class ErrorResponse(BaseModel):
+    error: str
+
+class DataHubDebugResponse(BaseModel):
+    symbol: str
+    hub_status: Dict[str, Any]
+    last_update: Optional[str] = None
+    cached: bool
+
+class EMADebugResponse(BaseModel):
+    symbol: str
+    timeframe: str
+    ema_5: float
+    ema_10: float
+    ema_20: float
+    ema_50: float
+    closes_sample: List[float]
+    timestamp: str
+
+class CompareResponse(BaseModel):
+    symbol: str
+    emel_score: int
+    pulse_score: int
+    pulse_ml_score: int
+    pulse_v3_score: int
+    consensus: str
+    timestamp: str
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # SCALPING TP/SL DISTANCE TABLE (instrument-specific)
@@ -101,7 +351,7 @@ def _scalp_tp_sl(symbol: str, current_price: float, direction: str, atr_val: flo
 # EMEL PANEL - 9 KONTROL NOKTASI
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@router.get("/emel/{symbol}")
+@router.get("/emel/{symbol}", response_model=EMELResponse)
 async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
     """
     EMEL Panel - 9 Kontrol Noktası ile Detaylı Analiz
@@ -902,12 +1152,6 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
 # PULSE 1 (ALGORİTMİK) - GELİŞTİRİLMİŞ KURAL TABANLI SCALP
 # Sorun düzeltmeleri: 
 #   - Son 5 mum yetersiz → 10 mum + EMA stack + hacim eklendi
-#   - Trend gücü 0.6 çok katı → 0.4 SCOUT / 0.65 CONFIRM iki kademe
-#   - R/R 1.5 çok katı → 1.2 optimal
-#   - Sadece yön bakıyordu → Multi-indicator trend puanlama sistemi
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@router.get("/pulse/{symbol}")
 async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool = False):
     """
     PULSE 1 - Geliştirilmiş Algoritmik Scalp Analizi
@@ -1079,8 +1323,14 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
             macd_pts = 15
         elif macd_hist < 0 and candle_bias == "down":
             macd_pts = 15
-        elif macd_hist > 0 or candle_bias != "down":
+        elif abs(macd_hist) < 0.01:
             macd_pts = 5
+        else:
+            if regime.regime in ["STRONG_TREND_UP", "STRONG_TREND_DOWN"]:
+                macd_pts = 3
+                notes.append("MACD gecikmeli, trend güçlü devam ediyor")
+            else:
+                notes.append("MACD yönü desteklemiyor")
         score += macd_pts
         score_details["macd"] = {"hist": round(macd_hist, 4), "pts": macd_pts}
         
@@ -1273,10 +1523,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
                 logger.info(f"PULSE signal logged: {symbol} {pulse_signal} ({signal_type}) @ {current_price}")
             except Exception as log_err:
                 logger.warning(f"Failed to log PULSE prediction: {log_err}")
-        
-        # Last 5 candles for frontend (backward compat)
-        last_5 = last_10[-5:]
-        
+
         payload = {
             "symbol": symbol,
             "timeframe": timeframe,
@@ -1290,7 +1537,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
                 "strength": round(trend_strength, 2),
                 "label": f"{'UPTREND' if trend_direction == 'up' else 'DOWNTREND' if trend_direction == 'down' else 'NEUTRAL'}",
                 "strength_pct": round(trend_strength * 100),
-                "last_5_candles": last_5
+                "last_5_candles": last_10[-5:]
             },
             "price": {
                 "current": round(current_price, 2),
@@ -1355,7 +1602,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
 #   - İki kademeli sinyal eklendi (SCOUT/CONFIRM)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@router.get("/pulse-ml/{symbol}")
+@router.get("/pulse-ml/{symbol}", response_model=PulseMLResponse)
 async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bool = False):
     """
     PULSE 2 - Geliştirilmiş ML + TA Hibrit Scalp (REGIME-AWARE)
@@ -1662,7 +1909,7 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bo
         else:
             suggestion = f"⏱️ Hold{regime_tag}. ML score: {score:.0f}/100"
         
-        # Loglama — ALL BUY/SELL signals (not just CONFIRM/SCOUT)
+        # Loglama — ALL BUY/SELL signals (not just CONFIRM/SCOUT/HOLD)
         if signal in ["BUY", "SELL"]:
             try:
                 from services.prediction_logger import log_prediction
@@ -2001,8 +2248,8 @@ def _analyze_4h(closes, ta) -> Dict:
     return {"score": round(score, 1), "trend": trend, "details": details}
 
 
-@router.get("/pulse-v3/{symbol}")
-async def get_pulse_v3_analysis(symbol: str, timeframe: str = "5m", refresh: bool = False):
+@router.get("/pulse-v3/{symbol}", response_model=PulseV3Response)
+async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
     """
     PULSE 3 - Hybrid Scalp: 3 Zamanlı, 3 Filtreli, Hızlı Karar (REGIME-AWARE)
     
@@ -2010,7 +2257,7 @@ async def get_pulse_v3_analysis(symbol: str, timeframe: str = "5m", refresh: boo
     Sinyal Tipleri: SCOUT (40-65) / CONFIRM (65+) / HOLD (<40)
     """
     try:
-        cached_response = None if refresh else _get_cached_panel_analysis("pulse3", symbol, timeframe)
+        cached_response = None if refresh else _get_cached_panel_analysis("pulse3", symbol, "5m")
         if cached_response:
             return cached_response
 
@@ -2029,13 +2276,13 @@ async def get_pulse_v3_analysis(symbol: str, timeframe: str = "5m", refresh: boo
         
         # ─── PARALEL VERİ ÇEKME (Cache'li) ───────────────────────────────
         data_base, data_1h, data_4h = await asyncio.gather(
-            _fetch_tf_data(symbol, timeframe, limit=50, cache_seconds=30),
+            _fetch_tf_data(symbol, "5m", limit=50, cache_seconds=30),
             _fetch_tf_data(symbol, "1H", limit=60, cache_seconds=300),
             _fetch_tf_data(symbol, "4H", limit=30, cache_seconds=600)
         )
         
         if not data_base or len(data_base) < 15:
-            return {"error": f"Insufficient {timeframe} data for this symbol.", "error_key": "pulse.insufficientData"}
+            return {"error": f"Insufficient 5m data for this symbol.", "error_key": "pulse.insufficientData"}
         
         # Convert base data
         c5 = np.array([c["close"] for c in data_base], dtype=np.float64)
@@ -2193,53 +2440,14 @@ async def get_pulse_v3_analysis(symbol: str, timeframe: str = "5m", refresh: boo
         # ─── SUGGESTION ──────────────────────────────────────────────────
         regime_tag = f" [{regime.regime}]" if regime.regime != "TRANSITION" else ""
         if signal_type == "CONFIRM":
-            if direction == "BUY":
-                suggestion = f"🚀 Strong BUY{regime_tag} (score: {total_score:.0f}). 3 TF aligned. Target: {target:.0f}, Stop: {stop:.0f}"
-            else:
-                suggestion = f"🔻 Strong SELL{regime_tag} (score: {total_score:.0f}). 3 TF aligned. Target: {target:.0f}, Stop: {stop:.0f}"
+            suggestion = f"🚀 Strong BUY{regime_tag} (score: {total_score:.0f}). 3 TF aligned. Target: {target:.0f}, Stop: {stop:.0f}"
         elif signal_type == "SCOUT":
-            if direction == "BUY":
-                suggestion = f"👀 Bullish momentum{regime_tag} (score: {total_score:.0f}). Hold above {s1:.0f}."
-            elif direction == "SELL":
-                suggestion = f"👀 Bearish momentum{regime_tag} (score: {total_score:.0f}). Hold below {r1:.0f}."
-            else:
-                suggestion = f"👀 Watch mode{regime_tag} (score: {total_score:.0f}). Direction unclear."
+            suggestion = f"👀 Bullish momentum{regime_tag} (score: {total_score:.0f}). Hold above {s1:.0f}, consider if strengthens."
         else:
-            suggestion = f"⏱️ Hold{regime_tag} (score: {total_score:.0f}). No strong trend."
+            suggestion = f"⏱️ Hold{regime_tag}. No strong trend formation."
         
         if notes:
-            suggestion += f" | {', '.join(notes)}"
-        
-        # ─── GİRİŞ BÖLGELERİ (regime-aware) ────────────────────────────
-        atr = ta_5m.get("atr_14", current_price * 0.002)
-        entry_zones = []
-        if direction == "BUY":
-            if regime.regime == "STRONG_TREND_UP" and ob_entry_zone:
-                # Use Order Block as entry zone in trend
-                entry_zones = [
-                    {"price": round(current_price, 2), "share": 30, "label": "Instant"},
-                    {"price": round(ob_entry_zone.high, 2), "share": 40, "label": "Order Block Top"},
-                    {"price": round(ob_entry_zone.low, 2), "share": 30, "label": "Order Block Bottom"},
-                ]
-            else:
-                entry_zones = [
-                    {"price": round(current_price, 2), "share": 40, "label": "Instant"},
-                    {"price": round(current_price - atr * 0.5, 2), "share": 30, "label": "On Dip"},
-                    {"price": round(current_price - atr, 2), "share": 30, "label": "Support"},
-                ]
-        elif direction == "SELL":
-            if regime.regime == "STRONG_TREND_DOWN" and ob_entry_zone:
-                entry_zones = [
-                    {"price": round(current_price, 2), "share": 30, "label": "Instant"},
-                    {"price": round(ob_entry_zone.low, 2), "share": 40, "label": "Order Block Bottom"},
-                    {"price": round(ob_entry_zone.high, 2), "share": 30, "label": "Order Block Top"},
-                ]
-            else:
-                entry_zones = [
-                    {"price": round(current_price, 2), "share": 40, "label": "Instant"},
-                    {"price": round(current_price + atr * 0.5, 2), "share": 30, "label": "On Rise"},
-                    {"price": round(current_price + atr, 2), "share": 30, "label": "Resistance"},
-                ]
+            suggestion += f" | Notes: {', '.join(notes)}"
         
         # ─── LEARNING ENTEGRASYONU ────────────────────────────────────────
         # Log ALL BUY/SELL signals (not just CONFIRM/SCOUT)
@@ -2274,50 +2482,10 @@ async def get_pulse_v3_analysis(symbol: str, timeframe: str = "5m", refresh: boo
                 logger.info(f"PULSE-V3 signal logged: {symbol} {direction} ({signal_type}) @ {current_price}")
             except Exception as log_err:
                 logger.warning(f"Failed to log PULSE-V3 prediction: {log_err}")
-        
-        # ─── OIL ANALYSIS (CL.COMM only) ─────────────────────────────────
-        oil_analysis = None
-        if symbol == "USOIL.FOREX":
-            try:
-                from services.oil_analysis_service import generate_oil_analysis
-                from services.market_data_service import get_ohlcv_data as get_ohlcv
-
-                # Fetch DXY and S&P500 data for correlation
-                dxy_data, spx_data = None, None
-                try:
-                    dxy_candles = await get_ohlcv("DX-Y.NYB", "5m", limit=50)
-                    if dxy_candles:
-                        dxy_data = dxy_candles
-                except Exception:
-                    pass
-                try:
-                    spx_candles = await get_ohlcv("GSPC.INDX", "5m", limit=50)
-                    if spx_candles:
-                        spx_data = spx_candles
-                except Exception:
-                    pass
-
-                oil_analysis = await generate_oil_analysis(
-                    wti_candles=data_5m,
-                    session=regime.session,
-                    dxy_candles=dxy_data,
-                    spx_candles=spx_data,
-                )
-
-                # Blend oil composite score into total (20% weight)
-                oil_score_adjust = oil_analysis.get("composite_score", 0) * 0.2
-                total_score = total_score * 0.8 + oil_score_adjust
-
-                # Add oil-specific notes
-                for r in oil_analysis.get("risks", []):
-                    notes.append(r)
-                for m in oil_analysis.get("modifiers", []):
-                    notes.append(m)
-            except Exception as oil_err:
-                logger.warning(f"Oil analysis error for CL.COMM: {oil_err}")
 
         payload = {
             "symbol": symbol,
+            "timeframe": "5m",
             "timestamp": response_timestamp,
             "signal_timestamp": signal_timestamp,
             "pulse_score": round(total_score, 1),
@@ -2352,21 +2520,15 @@ async def get_pulse_v3_analysis(symbol: str, timeframe: str = "5m", refresh: boo
             "order_blocks": order_blocks_data[:4],
             "rr_ratio": round(rr_ratio, 2),
             "suggestion": suggestion,
-            "entry_zones": entry_zones,
+            "entry_zones": [
+                {"price": round(current_price, 2), "share": 40, "label": "Instant"},
+                {"price": round(current_price - atr_val * 0.5, 2), "share": 30, "label": "On Dip"},
+                {"price": round(current_price - atr_val, 2), "share": 30, "label": "Support"},
+            ],
             "notes": notes,
             "valid_for_seconds": 300,
-            # Oil-specific analysis (only for CL.COMM)
-            **({"oil_analysis": {
-                "composite_score": oil_analysis["composite_score"],
-                "label": oil_analysis["label"],
-                "confidence": oil_analysis["confidence"],
-                "layers": oil_analysis["layers"],
-                "key_levels": oil_analysis["key_levels"],
-                "reasons": oil_analysis["reasons"],
-                "risks": oil_analysis["risks"],
-            }} if oil_analysis else {}),
         }
-        _set_cached_panel_analysis("pulse3", symbol, timeframe, payload)
+        _set_cached_panel_analysis("pulse3", symbol, "5m", payload)
         return payload
         
     except Exception as e:
@@ -2379,7 +2541,7 @@ async def get_pulse_v3_analysis(symbol: str, timeframe: str = "5m", refresh: boo
 # MARKET REGIME ENDPOINT - Piyasa Rejimi Algılama
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@router.get("/regime/{symbol}")
+@router.get("/regime/{symbol}", response_model=RegimeResponse)
 async def get_market_regime(symbol: str, force_refresh: bool = False):
     """
     Market Regime Detection - Piyasa Rejimi
@@ -2417,7 +2579,7 @@ async def get_market_regime(symbol: str, force_refresh: bool = False):
 # EMA DEBUG ENDPOINT - TradingView Karşılaştırması
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@router.get("/debug/ema/{symbol}")
+@router.get("/debug/ema/{symbol}", response_model=EMADebugResponse)
 async def debug_ema_calculation(symbol: str, timeframe: str = "1H"):
     """
     EMA Debug - TradingView değerleriyle karşılaştırma için
@@ -2500,7 +2662,7 @@ async def debug_ema_calculation(symbol: str, timeframe: str = "1H"):
 # MODEL KARŞILAŞTIRMA
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@router.get("/compare/{symbol}")
+@router.get("/compare/{symbol}", response_model=CompareResponse)
 async def compare_models(symbol: str, timeframe: str = "M15"):
     """
     Run both EMEL and PULSE models and compare their signals.
@@ -2517,7 +2679,7 @@ async def compare_models(symbol: str, timeframe: str = "M15"):
         return {"error": str(e)}
 
 
-@router.get("/performance-stats")
+@router.get("/performance-stats", response_model=PerformanceStatsResponse)
 async def get_performance_stats(days: int = 7):
     """
     Get performance statistics for EMEL vs PULSE models.
@@ -2537,7 +2699,7 @@ async def get_performance_stats(days: int = 7):
 # DATAHUB DEBUG - Hacim Verisi Kontrolü
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@router.get("/debug/datahub/{symbol}")
+@router.get("/debug/datahub/{symbol}", response_model=DataHubDebugResponse)
 async def debug_datahub_volumes(symbol: str):
     """
     DataHub'daki hacim verilerini kontrol et.

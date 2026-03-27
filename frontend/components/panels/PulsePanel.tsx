@@ -185,11 +185,11 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
         extraContent={data ? (
           <div>
             <div className="text-[26px] font-bold tracking-tighter leading-none" style={{ color: "var(--text-primary)" }}>
-              {data.price.current.toFixed(2)}
+              {data?.price?.current?.toFixed?.(2) ?? '--'}
             </div>
-            <div className="text-[12px] font-medium mt-1 flex items-center gap-1" style={{ color: data.price.change_5 > 0 ? "var(--accent-positive)" : data.price.change_5 < 0 ? "var(--accent-negative)" : "var(--text-muted)" }}>
-              {data.price.change_5 > 0 ? "▲" : data.price.change_5 < 0 ? "▼" : ""}
-              {Math.abs(data.price.change_5).toFixed(2)}% <span style={{ color: "var(--text-muted)" }}>(5m)</span>
+            <div className="text-[12px] font-medium mt-1 flex items-center gap-1" style={{ color: data?.price?.change_5 > 0 ? "var(--accent-positive)" : data?.price?.change_5 < 0 ? "var(--accent-negative)" : "var(--text-muted)" }}>
+              {data?.price?.change_5 > 0 ? "▲" : data?.price?.change_5 < 0 ? "▼" : ""}
+              {Math.abs(data?.price?.change_5 ?? 0).toFixed(2)}% <span style={{ color: "var(--text-muted)" }}>(5m)</span>
             </div>
           </div>
         ) : undefined}
@@ -218,7 +218,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
                   {data.trend.label.toUpperCase()}
                 </span>
                 <span className="text-[13px] font-medium pb-1" style={{ color: getDirColor(data.trend.direction), opacity: 0.8 }}>
-                  {data.trend.strength_pct}%
+                  {data?.trend?.strength_pct ?? '--'}%
                 </span>
               </div>
               <div className="h-[6px] w-full rounded-full overflow-hidden" style={{ background: "var(--bg-input)" }}>
@@ -239,9 +239,9 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
               <div className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>Momentum (5m)</div>
               <div className="space-y-0.5">
                 {[
-                  { label: "RSI (14)", val: data.momentum.rsi.value.toFixed(1), t: data.momentum.rsi.trend },
-                  { label: "MACD", val: data.momentum.macd.value.toFixed(3), t: data.momentum.macd.trend },
-                  { label: "Stoch", val: data.momentum.stochastic.value.toFixed(1), t: data.momentum.stochastic.trend },
+                  { label: "RSI (14)", val: data?.momentum?.rsi?.value?.toFixed?.(1) ?? '--', t: data?.momentum?.rsi?.trend },
+                  { label: "MACD", val: data?.momentum?.macd?.value?.toFixed?.(3) ?? '--', t: data?.momentum?.macd?.trend },
+                  { label: "Stoch", val: data?.momentum?.stochastic?.value?.toFixed?.(1) ?? '--', t: data?.momentum?.stochastic?.trend },
                 ].map((item, i) => (
                   <div key={i} className="flex justify-between items-center py-2 px-3 rounded" style={{ background: "var(--bg-input)" }}>
                     <span className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>{item.label}</span>
@@ -262,11 +262,11 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
               <div className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--text-muted)" }}>Key Price Levels</div>
               <div className="space-y-1">
                 {[
-                  { lbl: "R2", val: data.levels.r2, type: "res" },
-                  { lbl: "R1", val: data.levels.r1, type: "res" },
-                  { lbl: "PX", val: data.price.current, type: "curr" },
-                  { lbl: "S1", val: data.levels.s1.price, type: "sup", alert: data.levels.s1.alert },
-                  { lbl: "S2", val: data.levels.s2, type: "sup" },
+                  { lbl: "R2", val: data?.levels?.r2, type: "res" },
+                  { lbl: "R1", val: data?.levels?.r1, type: "res" },
+                  { lbl: "PX", val: data?.price?.current, type: "curr" },
+                  { lbl: "S1", val: data?.levels?.s1?.price, type: "sup", alert: data?.levels?.s1?.alert },
+                  { lbl: "S2", val: data?.levels?.s2, type: "sup" },
                 ].map((lvl, i) => (
                   <div key={i} className="flex justify-between items-center py-1.5 px-3 rounded border"
                     style={{
@@ -279,7 +279,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
                     </div>
                     <span className={`text-[13px] ${lvl.type === "curr" ? "font-bold" : "font-medium"}`}
                       style={{ color: lvl.type === "curr" ? "var(--text-primary)" : "var(--text-muted)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>
-                      {lvl.val.toFixed(2)}
+                      {typeof lvl.val === 'number' ? lvl.val.toFixed(2) : '--'}
                     </span>
                   </div>
                 ))}
@@ -293,9 +293,9 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
                 <span className="text-[13px] font-bold" style={{ color: data.volume.status === "high" ? "var(--accent-positive)" : "var(--text-muted)" }}>
                   {data.volume.label.toUpperCase()}
                 </span>
-                {data.volume.ratio && (
+                {data?.volume?.ratio && (
                   <span className="text-[12px] font-medium" style={{ color: "var(--text-primary)" }}>
-                    {data.volume.ratio.toFixed(2)}x <span style={{ color: "var(--text-muted)" }}>Avg Vol</span>
+                    {(data.volume.ratio ?? 0).toFixed(2)}x <span style={{ color: "var(--text-muted)" }}>Avg Vol</span>
                   </span>
                 )}
               </div>
@@ -313,21 +313,21 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
               {/* Target */}
               <div className="p-3 rounded border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
                 <div className="text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--text-muted)" }}>Take Profit (TP)</div>
-                <div className="text-[18px] font-bold tracking-tight mb-0.5" style={{ color: "var(--accent-positive)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>{data.suggestion.target.toFixed(1)}</div>
-                <div className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>+{data.suggestion.target_distance.toFixed(1)} pts</div>
+                <div className="text-[18px] font-bold tracking-tight mb-0.5" style={{ color: "var(--accent-positive)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>{data?.suggestion?.target?.toFixed?.(1) ?? '--'}</div>
+                <div className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>+{data?.suggestion?.target_distance?.toFixed?.(1) ?? '--'} pts</div>
               </div>
               {/* Stop Loss */}
               <div className="p-3 rounded border" style={{ background: "var(--bg-surface)", borderColor: "var(--border-subtle)" }}>
                 <div className="text-[10px] uppercase font-semibold mb-1" style={{ color: "var(--text-muted)" }}>Stop Loss (SL)</div>
-                <div className="text-[18px] font-bold tracking-tight mb-0.5" style={{ color: "var(--accent-negative)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>{data.suggestion.stop.toFixed(1)}</div>
-                <div className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>-{data.suggestion.stop_distance.toFixed(1)} pts</div>
+                <div className="text-[18px] font-bold tracking-tight mb-0.5" style={{ color: "var(--accent-negative)", fontFamily: "var(--font-jetbrains-mono), monospace" }}>{data?.suggestion?.stop?.toFixed?.(1) ?? '--'}</div>
+                <div className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>-{data?.suggestion?.stop_distance?.toFixed?.(1) ?? '--'} pts</div>
               </div>
             </div>
 
             <div className="flex flex-col gap-2 mb-4">
               <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: "var(--border-subtle)" }}>
                 <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Reward / Risk Ratio</span>
-                <span className="text-[13px] font-bold" style={{ color: "var(--text-primary)" }}>{data.suggestion.rr_ratio.toFixed(2)}</span>
+                <span className="text-[13px] font-bold" style={{ color: "var(--text-primary)" }}>{data?.suggestion?.rr_ratio?.toFixed?.(2) ?? '--'}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: "var(--border-subtle)" }}>
                 <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>Est. Horizon</span>
