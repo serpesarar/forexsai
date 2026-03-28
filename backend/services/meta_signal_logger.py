@@ -216,9 +216,9 @@ async def backfill_combination_stats() -> Dict[str, Any]:
 
             symbol = group_signals[0]["symbol"]
 
-            # Group by direction
-            buy_models = [s["model_type"] for s in group_signals if s.get("ml_direction") == "BUY"]
-            sell_models = [s["model_type"] for s in group_signals if s.get("ml_direction") == "SELL"]
+            # Group by direction (UNIQUE models only for combinations)
+            buy_models = list(set([s["model_type"] for s in group_signals if s.get("ml_direction") == "BUY"]))
+            sell_models = list(set([s["model_type"] for s in group_signals if s.get("ml_direction") == "SELL"]))
 
             # Generate all 2+ model combinations that agree
             for models_list, direction in [(buy_models, "BUY"), (sell_models, "SELL")]:
@@ -248,6 +248,9 @@ async def backfill_combination_stats() -> Dict[str, Any]:
                             else:
                                 combo_results[stat_key]["losses"] += 1
                                 combo_results[stat_key]["loss_sum"] += loss
+
+            # Yield control back to event loop briefly so API stays responsive
+            await asyncio.sleep(0)
 
         # Collect rows to upsert
         rows_to_upsert = []
