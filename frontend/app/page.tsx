@@ -1354,6 +1354,15 @@ export default function HomePage() {
             <div className="animate-in fade-in duration-300">
               <DraggableDashboard>
                 <main className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-20 md:pb-8">
+                  {/* ═══ META-ENGINE — High Confidence Aggregator ═══ */}
+                  {getCard("meta-engine")?.visible !== false && (
+                    <div className="mb-6 w-full">
+                      <LazyPanel fallbackHeight={300}>
+                        <MetaEnginePanel />
+                      </LazyPanel>
+                    </div>
+                  )}
+
                   {/* ML Factor row above grid */}
                   <div className="grid grid-cols-1 gap-4 mb-6">
                     <MLFactorPanel
