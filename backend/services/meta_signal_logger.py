@@ -163,19 +163,24 @@ async def backfill_combination_stats() -> Dict[str, Any]:
 
         logger.info("[MetaSignalLogger] Starting backfill from prediction_logs...")
 
-        # Fetch all resolved signals with model_type
-        all_signals = []
-        for model_type in ['ml', 'pulse1', 'pulse2', 'pulse3', 'emel', 'smc']:
-            result = client.table("prediction_logs") \
-                .select("id,symbol,model_type,ml_direction,status,created_at,highest_profit_pips,lowest_drawdown_pips") \
-                .eq("model_type", model_type) \
-                .in_("status", ["completed", "stopped"]) \
-                .order("created_at", desc=True) \
-                .limit(2000) \
-                .execute()
+        # Fetch all resolved signals with model_type (Run safely in a thread to avoid blocking)
+        import asyncio
+        
+        def fetch_signals():
+            all_sigs = []
+            for model_type in ['ml', 'pulse1', 'pulse2', 'pulse3', 'emel', 'smc']:
+                res = client.table("prediction_logs") \
+                    .select("id,symbol,model_type,ml_direction,status,created_at,highest_profit_pips,lowest_drawdown_pips") \
+                    .eq("model_type", model_type) \
+                    .in_("status", ["completed", "stopped"]) \
+                    .order("created_at", desc=True) \
+                    .limit(2000) \
+                    .execute()
+                rows = res.get("data", []) if isinstance(res, dict) else (res.data if hasattr(res, "data") else [])
+                all_sigs.extend(rows or [])
+            return all_sigs
 
-            rows = result.get("data", []) if isinstance(result, dict) else (result.data if hasattr(result, "data") else [])
-            all_signals.extend(rows or [])
+        all_signals = await asyncio.to_thread(fetch_signals)
 
         logger.info(f"[MetaSignalLogger] Fetched {len(all_signals)} historical signals")
 
@@ -244,8 +249,8 @@ async def backfill_combination_stats() -> Dict[str, Any]:
                                 combo_results[stat_key]["losses"] += 1
                                 combo_results[stat_key]["loss_sum"] += loss
 
-        # Upsert to meta_combination_stats
-        inserted = 0
+        # Collect rows to upsert
+        rows_to_upsert = []
         for stat_key, stats in combo_results.items():
             parts = stat_key.split("|")
             if len(parts) != 3:
@@ -262,32 +267,40 @@ async def backfill_combination_stats() -> Dict[str, Any]:
             pf = (stats["wins"] * avg_profit) / max(1, stats["losses"] * avg_loss) if stats["losses"] > 0 else 0
             expectancy = (win_rate * avg_profit) - ((1 - win_rate) * avg_loss)
 
+            rows_to_upsert.append({
+                "combo_key": combo_key,
+                "symbol": symbol,
+                "regime": regime,
+                "total_signals": total,
+                "wins": stats["wins"],
+                "losses": stats["losses"],
+                "avg_profit_pips": round(avg_profit, 2),
+                "avg_loss_pips": round(avg_loss, 2),
+                "win_rate": round(win_rate, 4),
+                "profit_factor": round(pf, 2),
+                "expectancy": round(expectancy, 2),
+            })
+            
+        inserted = len(rows_to_upsert)
+        
+        # Upsert in bulk using thread to avoid blocking the event loop
+        def bulk_upsert(rows):
+            if not rows: return
             try:
-                # Upsert
-                row = {
-                    "combo_key": combo_key,
-                    "symbol": symbol,
-                    "regime": regime,
-                    "total_signals": total,
-                    "wins": stats["wins"],
-                    "losses": stats["losses"],
-                    "avg_profit_pips": round(avg_profit, 2),
-                    "avg_loss_pips": round(avg_loss, 2),
-                    "win_rate": round(win_rate, 4),
-                    "profit_factor": round(pf, 2),
-                    "expectancy": round(expectancy, 2),
-                }
-
-                client.table("meta_combination_stats").upsert(
-                    row,
-                    on_conflict="combo_key,symbol,regime"
-                ).execute()
-                inserted += 1
+                # Break into chunks of 500
+                for i in range(0, len(rows), 500):
+                    batch = rows[i:i+500]
+                    client.table("meta_combination_stats").upsert(
+                        batch,
+                        on_conflict="combo_key,symbol,regime"
+                    ).execute()
             except Exception as e:
-                logger.warning(f"[MetaSignalLogger] Upsert error for {combo_key}: {e}")
-                continue
+                logger.error(f"Bulk upsert error: {e}")
 
-        logger.info(f"[MetaSignalLogger] Backfill complete: {inserted} combos created/updated")
+        if rows_to_upsert:
+            await asyncio.to_thread(bulk_upsert, rows_to_upsert)
+
+        logger.info(f"[MetaSignalLogger] Backfill complete: {inserted} combos updated")
         return {
             "message": "Backfill complete",
             "total_signals_analyzed": len(all_signals),
