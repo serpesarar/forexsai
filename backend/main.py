@@ -114,6 +114,32 @@ async def lifespan(app: FastAPI):
     # except Exception as e:
     #     print(f"⚠️ EODHD WebSocket başlatılamadı: {e}")
 
+    # 5.5 META INTELLIGENCE ENGINE (Her dakika kontrol/log)
+    try:
+        from services.meta_analysis_engine import SUPPORTED_SYMBOLS, get_meta_signal
+        
+        async def meta_engine_loop():
+            # Wait a bit before starting to ensure other systems are ready
+            await asyncio.sleep(15)
+            logger.info("🤖 Meta-Intelligence Engine loop starting...")
+            while True:
+                try:
+                    for sym in SUPPORTED_SYMBOLS:
+                        # get_meta_signal also processes and logs the signal
+                        # We just need to call it periodically
+                        await get_meta_signal(sym)
+                    logger.debug("🤖 Meta-Engine check completed for all symbols")
+                except Exception as e:
+                    logger.error(f"Meta-Engine loop error: {e}")
+                
+                # Check every 60 seconds
+                await asyncio.sleep(60)
+
+        asyncio.create_task(meta_engine_loop())
+        print("✅ Meta-Intelligence Engine başlatıldı (60s check)")
+    except Exception as e:
+        print(f"❌ Meta-Engine başlatılamadı: {e}")
+
     # 6. Background scheduler (diğer görevler için)
     try:
         from services.background_scheduler import start_scheduler
@@ -347,6 +373,7 @@ try:
         rss_router,
         prices,
         economic_calendar_router,
+        meta_engine_router,
     )
     from services.data_fetcher import fetch_latest_price
     from services.ml_service import run_nasdaq_signal, run_xauusd_signal
@@ -387,6 +414,7 @@ try:
     app.include_router(rss_router.router)
     app.include_router(prices.router)
     app.include_router(economic_calendar_router.router)
+    app.include_router(meta_engine_router.router)
     
     ROUTERS_LOADED = True
 except Exception as e:

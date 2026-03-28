@@ -895,5 +895,20 @@
       "setAlert": "Alarm Kur",
       "compare": "Karşılaştırma Modu"
     }
+  },
+  "meta_engine": {
+    "title": "Meta-Zeka Motoru",
+    "subtitle": "6 model → 1 karar",
+    "analyzing": "Tüm modeller analiz ediliyor...",
+    "no_signal": "Yeterli model sinyali mevcut değil",
+    "agreement": "Uzlaşı",
+    "best_combo": "En İyi Kombinasyon",
+    "tech_validation": "Teknik Doğrulama",
+    "risk_params": "Risk Parametreleri",
+    "alt_combos": "Alternatif Kombinasyonlar",
+    "signals": "sinyal",
+    "regime": "Piyasa Rejimi",
+    "models_agree": "model hemfikir",
+    "conditions_passed": "koşul sağlandı"
   }
 }

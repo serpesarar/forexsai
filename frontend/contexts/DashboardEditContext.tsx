@@ -50,6 +50,8 @@ interface DashboardEditContextType {
 
 const DEFAULT_LAYOUT: DashboardLayout = {
   cards: [
+    // ─── META-ENGINE (TOP PRIORITY) ────────────────────────────
+    { id: "meta-engine", title: "Meta-Intelligence Engine", column: "center", order: -3, visible: true, size: "full", collapsed: false },
     // ─── LEFT COLUMN ──────────────────────────────────────────────
     { id: "strategy-optimizer", title: "Strategy Auto-Optimization Loop", column: "center", order: -2, visible: true, size: "full", collapsed: false },
     { id: "clear-trend", title: "Clear Trend Analysis", column: "center", order: -1, visible: true, size: "full", collapsed: false },
@@ -89,7 +91,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "rhythm-detectors", title: "Rhythm Detectors", column: "center", order: 23, visible: true, size: "full", collapsed: false },
     { id: "news-correlation", title: "News-Chart Correlation", column: "center", order: 24, visible: true, size: "full", collapsed: false },
   ],
-  version: 28,
+  version: 29,
 };
 
 const LAYOUT_STORAGE_KEY = "dashboard-layout-v7";

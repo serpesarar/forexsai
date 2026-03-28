@@ -52,6 +52,7 @@ const HarmonicVisualizerPanel = lazy(() => import("../components/panels/Harmonic
 const StrategyOptimizerPanel = lazy(() => import("../components/panels/StrategyOptimizerPanel"));
 const OilBalticPanel = lazy(() => import("../components/panels/OilBalticPanel"));
 const NewsChartCorrelationPanel = lazy(() => import("../components/panels/NewsChartCorrelationPanel"));
+const MetaEnginePanel = lazy(() => import("../components/panels/MetaEnginePanel"));
 const NewsCorrelationDashboard = lazy(() => import("./news-correlation/page"));
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
@@ -875,6 +876,8 @@ export default function HomePage() {
         if (!nasdaqSignal) return null;
         return renderSignalCard(nasdaqSignal);
       }
+      case "meta-engine":
+        return <MetaEnginePanel />;
       case "signal-xauusd": {
         const xauusdSignal = signalCards.find(s => s.symbol === "XAUUSD");
         if (!xauusdSignal) return null;

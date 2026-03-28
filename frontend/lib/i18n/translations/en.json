@@ -1042,5 +1042,20 @@
     "formation": "Formation",
     "price": "Price",
     "clickToView": "Click pattern for details"
+  },
+  "meta_engine": {
+    "title": "Meta-Intelligence Engine",
+    "subtitle": "6 models → 1 decision",
+    "analyzing": "Analyzing all models...",
+    "no_signal": "Not enough model signals available",
+    "agreement": "Agreement",
+    "best_combo": "Best Combo",
+    "tech_validation": "Technical Validation",
+    "risk_params": "Risk Parameters",
+    "alt_combos": "Alternative Combinations",
+    "signals": "signals",
+    "regime": "Market Regime",
+    "models_agree": "models agree",
+    "conditions_passed": "conditions passed"
   }
 }
