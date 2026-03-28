@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: str | None = Field(default=None, validation_alias="TELEGRAM_BOT_TOKEN")
     TELEGRAM_CHAT_ID: str | None = Field(default=None, validation_alias="TELEGRAM_CHAT_ID")
 
-    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
 
 settings = Settings()

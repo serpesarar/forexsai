@@ -261,43 +261,66 @@ class MetaAnalysisEngine:
     # ── Layer 1: Signal Collection ───────────────────────
     @staticmethod
     async def collect_signals(symbol: str) -> List[ModelSignal]:
-        """Fetch live signals from all 6 models in parallel."""
-        import httpx
+        """Fetch live signals from all 6 models in parallel using direct function calls."""
+        import json
+        from fastapi.responses import Response
 
-        # Use internal API calls (same process)
+        from services.ml_prediction_service import get_ml_prediction
+        from routers.emel_pulse import get_pulse_analysis, get_pulse_ml_analysis, get_pulse_v3_analysis, get_emel_analysis
+        from services.smc_calculator_service import calculate_smc_with_gaps
+        from services.data_hub import get_candles
+
         signals: List[ModelSignal] = []
 
-        # Map model_id → endpoint
-        endpoints = {
-            "ml":     f"/api/run/prediction/{symbol}",
-            "pulse1": f"/api/pulse/{symbol}",
-            "pulse2": f"/api/pulse-ml/{symbol}",
-            "pulse3": f"/api/pulse-v3/{symbol}",
-            "emel":   f"/api/emel/{symbol}",
-            "smc":    f"/api/smc/{symbol}",
-        }
-
-        async def fetch_signal(model_id: str, endpoint: str) -> ModelSignal:
+        async def fetch_signal_direct(model_id: str) -> ModelSignal:
             try:
-                async with httpx.AsyncClient(
-                    base_url="http://127.0.0.1:8000",
-                    timeout=15.0,
-                ) as client:
-                    if model_id == "ml":
-                        resp = await client.post(endpoint)
+                data = None
+                if model_id == "ml":
+                    # returns dataclass/dict
+                    resp = await get_ml_prediction(symbol, "balanced")
+                    from dataclasses import asdict
+                    data = asdict(resp) if hasattr(resp, '__dataclass_fields__') else (resp if isinstance(resp, dict) else {})
+                elif model_id == "pulse1":
+                    # returns Pydantic or dict
+                    resp = await get_pulse_analysis(symbol)
+                    data = resp.dict() if hasattr(resp, 'dict') else resp
+                elif model_id == "pulse2":
+                    resp = await get_pulse_ml_analysis(symbol)
+                    data = resp.dict() if hasattr(resp, 'dict') else resp
+                elif model_id == "pulse3":
+                    resp = await get_pulse_v3_analysis(symbol)
+                    data = resp.dict() if hasattr(resp, 'dict') else resp
+                elif model_id == "emel":
+                    resp = await get_emel_analysis(symbol)
+                    data = resp.dict() if hasattr(resp, 'dict') else resp
+                elif model_id == "smc":
+                    candles = get_candles(symbol, "1d", limit=50)
+                    if not candles or len(candles) < 20:
+                        from services.market_data_service import get_ohlcv_data
+                        candles = await get_ohlcv_data(symbol, "1D", limit=50)
+                    if candles and len(candles) >= 20:
+                        # return raw dict, wrap it to match standard
+                        resp = await calculate_smc_with_gaps(symbol, candles)
+                        data = {"data": resp} 
                     else:
-                        resp = await client.get(endpoint)
+                        data = {"error": "Insufficient data"}
 
-                    if resp.status_code != 200:
-                        return ModelSignal(
-                            model_id=model_id,
-                            direction="HOLD",
-                            confidence=0,
-                            is_available=False
-                        )
+                # Handle Pydantic V2 model_dump vs dict
+                if hasattr(data, "model_dump"):
+                    data = data.model_dump()
+                elif hasattr(data, "dict"):
+                    data = data.dict()
+                elif isinstance(data, Response):
+                    try:
+                        data = json.loads(data.body.decode('utf-8'))
+                    except Exception:
+                        data = {}
+                
+                if isinstance(data, dict) and ("error" in data or data.get("success") is False):
+                    return ModelSignal(model_id=model_id, direction="HOLD", confidence=0, is_available=False)
 
-                    data = resp.json()
-                    return _parse_model_response(model_id, data)
+                return _parse_model_response(model_id, data)
+                
             except Exception as e:
                 logger.warning(f"[MetaEngine] {model_id} fetch failed for {symbol}: {e}")
                 return ModelSignal(
@@ -307,14 +330,15 @@ class MetaAnalysisEngine:
                     is_available=False
                 )
 
-        tasks = [fetch_signal(mid, ep) for mid, ep in endpoints.items()]
+        model_ids = ["ml", "pulse1", "pulse2", "pulse3", "emel", "smc"]
+        tasks = [fetch_signal_direct(mid) for mid in model_ids]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         for r in results:
             if isinstance(r, ModelSignal):
                 signals.append(r)
             elif isinstance(r, Exception):
-                logger.error(f"[MetaEngine] Signal collection error: {r}")
+                logger.error(f"[MetaEngine] Signal collection loop error: {r}")
 
         return signals
 
