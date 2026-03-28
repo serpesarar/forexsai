@@ -274,6 +274,18 @@ async def _build_data_pack(symbol: str) -> dict:
     except Exception as e:
         logger.warning(f"ML prediction unavailable for {symbol}: {e}")
 
+    # Oil-specific physical intelligence
+    if "OIL" in symbol.upper() or "CL" in symbol.upper() or "WTI" in symbol.upper():
+        try:
+            from services.oil_baltic_live_service import build_oil_baltic_intelligence
+            from services.ai_panel_analysis_service import _summarize_physical_oil_context
+            raw = await build_oil_baltic_intelligence()
+            phys = _summarize_physical_oil_context(raw)
+            if phys:
+                pack["physical_oil_intelligence"] = phys
+        except Exception as e:
+            logger.warning(f"Physical oil intelligence unavailable for {symbol}: {e}")
+
     return pack
 
 

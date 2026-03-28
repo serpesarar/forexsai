@@ -106,6 +106,7 @@ export interface DataSources {
   economic_calendar?: boolean;
   comex_news?: boolean;
   oil_analysis?: boolean;
+  physical_oil?: boolean;
 }
 
 export interface TASnapshot {

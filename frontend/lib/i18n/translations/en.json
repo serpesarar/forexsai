@@ -463,6 +463,23 @@
       "large": "Large",
       "medium": "Medium",
       "small": "Small"
+    },
+    "physical": {
+      "title": "PHYSICAL OIL INTELLIGENCE",
+      "contextActive": "Physical Context",
+      "description": "Real-time physical oil logistics data feeding the AI analysis. Each metric shows whether it pushes oil price toward BUY or SELL.",
+      "bctiWeakness": "Product Demand",
+      "bctiDesc": "Refined product tanker demand",
+      "contangoPressure": "Contango",
+      "contangoDesc": "Forward curve storage incentive",
+      "storagePressure": "Storage",
+      "storageDesc": "Floating storage vessel pressure",
+      "recessionRisk": "Recession Risk",
+      "recessionDesc": "Physical demand destruction signal",
+      "refineryStress": "Refinery Stress",
+      "refineryDesc": "Refinery margin & throughput",
+      "chokepoints": "CHOKEPOINT CONGESTION",
+      "vessels": "vessels"
     }
   },
   "orderBlock": {

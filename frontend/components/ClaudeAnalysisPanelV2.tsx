@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import {
   AlertTriangle,
+  Anchor,
   Brain,
   Clock3,
   RefreshCw,
@@ -232,6 +233,120 @@ function LevelCard({
   );
 }
 
+function physicalBiasLabel(value: number | string | undefined | null, threshold: number, invertedLogic: boolean = false): { label: string; color: string; arrow: string } {
+  const num = typeof value === "number" ? value : parseFloat(String(value ?? "50"));
+  if (Number.isNaN(num)) return { label: "—", color: "var(--text-muted)", arrow: "" };
+  const high = invertedLogic ? num <= (100 - threshold) : num >= threshold;
+  const low = invertedLogic ? num >= threshold : num <= (100 - threshold);
+  if (high) return { label: "SELL", color: "var(--accent-negative)", arrow: "↘" };
+  if (low) return { label: "BUY", color: "var(--accent-positive)", arrow: "↗" };
+  return { label: "NEUTRAL", color: "var(--accent-warning)", arrow: "→" };
+}
+
+function PhysicalOilSummary({ data, t }: { data: any; t: (key: string) => string }) {
+  if (!data || !data.oil_bias) return null;
+
+  const overallBias = String(data.oil_bias || "").toLowerCase();
+  const overallColor = overallBias === "bullish" ? P.green : overallBias === "bearish" ? P.red : P.warn;
+  const overallLabel = overallBias === "bullish" ? "BUY" : overallBias === "bearish" ? "SELL" : "NEUTRAL";
+  const overallArrow = overallBias === "bullish" ? "↗" : overallBias === "bearish" ? "↘" : "→";
+
+  const metrics = [
+    {
+      key: "bcti_weakness",
+      label: t("claudeAnalysis.physical.bctiWeakness"),
+      desc: t("claudeAnalysis.physical.bctiDesc"),
+      ...physicalBiasLabel(data.bcti_weakness, 70),
+      raw: data.bcti_weakness,
+    },
+    {
+      key: "contango_pressure",
+      label: t("claudeAnalysis.physical.contangoPressure"),
+      desc: t("claudeAnalysis.physical.contangoDesc"),
+      ...physicalBiasLabel(data.contango_pressure, 65),
+      raw: data.contango_pressure,
+    },
+    {
+      key: "storage_pressure",
+      label: t("claudeAnalysis.physical.storagePressure"),
+      desc: t("claudeAnalysis.physical.storageDesc"),
+      ...physicalBiasLabel(data.storage_pressure, 65),
+      raw: data.storage_pressure,
+    },
+    {
+      key: "recession_probability",
+      label: t("claudeAnalysis.physical.recessionRisk"),
+      desc: t("claudeAnalysis.physical.recessionDesc"),
+      ...physicalBiasLabel(data.recession_probability, 60),
+      raw: data.recession_probability,
+    },
+    {
+      key: "refinery_stress",
+      label: t("claudeAnalysis.physical.refineryStress"),
+      desc: t("claudeAnalysis.physical.refineryDesc"),
+      ...physicalBiasLabel(data.refinery_stress, 65),
+      raw: data.refinery_stress,
+    },
+  ];
+
+  const chokepoints = (data.chokepoints || []).filter((cp: any) => cp && cp.label);
+
+  return (
+    <div className="rounded-3xl p-5 md:p-6" style={{ background: "var(--accent-info-06, rgba(79,140,255,0.06))", border: "1px solid var(--accent-info-12, rgba(79,140,255,0.12))" }}>
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Anchor className="h-4 w-4" style={{ color: P.accent }} />
+          <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: P.muted }}>{t("claudeAnalysis.physical.title")}</p>
+        </div>
+        <div className="flex items-center gap-2 rounded-full px-3 py-1" style={{ background: overallColor === P.green ? "var(--accent-positive-08)" : overallColor === P.red ? "var(--accent-negative-08)" : "var(--accent-warning-08)", border: `1px solid ${overallColor === P.green ? "var(--accent-positive-15)" : overallColor === P.red ? "var(--accent-negative-15)" : "var(--accent-warning-15)"}` }}>
+          <span className="text-lg font-black leading-none" style={{ color: overallColor }}>{overallArrow}</span>
+          <span className="text-[11px] font-bold" style={{ color: overallColor }}>{overallLabel}</span>
+          <span className="ml-1 text-[11px] font-semibold" style={{ color: P.muted }}>{typeof data.physical_score === "number" ? `${data.physical_score.toFixed(0)}%` : ""}</span>
+        </div>
+      </div>
+
+      <p className="mb-4 text-xs leading-5" style={{ color: P.muted }}>{t("claudeAnalysis.physical.description")}</p>
+
+      <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+        {metrics.map((m) => (
+          <div key={m.key} className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${P.border}` }}>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold" style={{ color: P.text }}>{m.label}</p>
+              <p className="mt-0.5 text-[10px]" style={{ color: P.muted }}>{m.desc}</p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <span className="text-[10px] font-medium" style={{ color: P.muted }}>{typeof m.raw === "number" ? m.raw.toFixed(0) : "—"}</span>
+              <span className="text-base font-black" style={{ color: m.color }}>{m.arrow}</span>
+              <span className="text-[11px] font-bold" style={{ color: m.color }}>{m.label === "—" ? "" : m.label}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {chokepoints.length > 0 && (
+        <div className="mt-3">
+          <p className="mb-2 text-[10px] uppercase tracking-[0.18em]" style={{ color: P.muted }}>{t("claudeAnalysis.physical.chokepoints")}</p>
+          <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
+            {chokepoints.map((cp: any) => {
+              const cpColor = cp.bias === "bullish" ? P.green : cp.bias === "bearish" ? P.red : P.warn;
+              const cpArrow = cp.bias === "bullish" ? "↗" : cp.bias === "bearish" ? "↘" : "→";
+              return (
+                <div key={cp.label} className="flex items-center justify-between gap-2 rounded-2xl px-3 py-2" style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${P.border}` }}>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold" style={{ color: P.text }}>{cp.label}</p>
+                    <p className="text-[10px]" style={{ color: P.muted }}>{cp.vessel_count ? `${cp.vessel_count} ${t("claudeAnalysis.physical.vessels")}` : cp.signal}</p>
+                  </div>
+                  <span className="text-base font-black" style={{ color: cpColor }}>{cpArrow}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ClaudeAnalysisPanelV2({ symbol, symbolLabel }: Props) {
   const { t, locale } = useI18nStore();
   const { getAnalysis, getLastUpdated, setAnalysis } = useClaudeAnalysisStore();
@@ -255,6 +370,20 @@ export default function ClaudeAnalysisPanelV2({ symbol, symbolLabel }: Props) {
 
   const analysisMeta = data?.claude_analysis.analysis_meta;
   const marketContext = data?.claude_analysis.market_context;
+  const dataSources = data?.claude_analysis.data_sources;
+  const hasPhysicalOil = Boolean(dataSources?.physical_oil);
+
+  // Extract physical oil context from the panel signal's prompt payload if available
+  const physicalOilData = useMemo(() => {
+    if (!data || !hasPhysicalOil) return null;
+    // Physical oil data comes through the panel_signal or directly
+    const ps = (data as any)?.physical_oil_intelligence;
+    if (ps && ps.oil_bias) return ps;
+    // Try from claude_analysis extended fields  
+    const ca = (data.claude_analysis as any)?.physical_oil_intelligence;
+    if (ca && ca.oil_bias) return ca;
+    return null;
+  }, [data, hasPhysicalOil]);
 
   const formatter = useMemo(
     () =>
@@ -327,6 +456,11 @@ export default function ClaudeAnalysisPanelV2({ symbol, symbolLabel }: Props) {
           <div className="rounded-full px-3 py-1 text-[11px] font-semibold" style={{ background: analysisMeta?.market_open ? "var(--accent-positive-08)" : "var(--accent-warning-08)", border: `1px solid ${analysisMeta?.market_open ? "var(--accent-positive-15)" : "var(--accent-warning-15)"}`, color: analysisMeta?.market_open ? P.green : P.warn }}>
             {analysisMeta?.market_open ? t("claudeAnalysis.sessionOpen") : t("claudeAnalysis.sessionClosed")}
           </div>
+          {hasPhysicalOil && (
+            <div className="rounded-full px-3 py-1 text-[11px] font-semibold" style={{ background: "var(--accent-info-08)", border: "1px solid var(--accent-info-15)", color: P.accent }}>
+              ⚓ {t("claudeAnalysis.physical.contextActive")}
+            </div>
+          )}
           <div className="rounded-full px-3 py-1 text-[11px] font-semibold" style={{ background: analysisMeta?.cache_hit ? "var(--accent-info-08)" : "var(--accent-purple-12)", border: `1px solid ${analysisMeta?.cache_hit ? "var(--accent-info-15)" : "var(--accent-purple-20)"}`, color: analysisMeta?.cache_hit ? P.accent : P.purple }}>
             {analysisMeta?.cache_hit ? t("claudeAnalysis.cached") : t("claudeAnalysis.fresh")}
           </div>
@@ -458,6 +592,10 @@ export default function ClaudeAnalysisPanelV2({ symbol, symbolLabel }: Props) {
                 )}
               </div>
             </div>
+
+            {physicalOilData && (
+              <PhysicalOilSummary data={physicalOilData} t={t} />
+            )}
           </>
         )}
       </div>

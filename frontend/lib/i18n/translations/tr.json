@@ -463,6 +463,23 @@
       "large": "Büyük",
       "medium": "Orta",
       "small": "Küçük"
+    },
+    "physical": {
+      "title": "FİZİKSEL PETROL İSTİHBARATI",
+      "contextActive": "Fiziksel Bağlam",
+      "description": "AI analizine beslenen gerçek zamanlı fiziksel petrol lojistik verileri. Her metrik, petrol fiyatını ALIŞ mı SATIŞ mı yönünde ittiğini gösterir.",
+      "bctiWeakness": "Ürün Talebi",
+      "bctiDesc": "Rafine ürün tanker talebi",
+      "contangoPressure": "Contango",
+      "contangoDesc": "Vadeli eğri depolama teşviki",
+      "storagePressure": "Depolama",
+      "storageDesc": "Yüzen depo gemi baskısı",
+      "recessionRisk": "Resesyon Riski",
+      "recessionDesc": "Fiziksel talep yıkımı sinyali",
+      "refineryStress": "Rafineri Stresi",
+      "refineryDesc": "Rafineri marjı ve üretim",
+      "chokepoints": "DAR BOĞAZ SIKIŞMASI",
+      "vessels": "gemi"
     }
   },
   "orderBlock": {

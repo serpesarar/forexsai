@@ -58,7 +58,7 @@ SYMBOL_PROFILES: Dict[str, Dict[str, Any]] = {
         "session_name": "NYMEX core",
         "ny_session_start": 9 * 60,
         "ny_session_end": 14 * 60 + 30,
-        "prompt_focus": "inventory and EIA timing, OPEC and geopolitical supply risk, dollar pressure, oil microstructure",
+        "prompt_focus": "inventory and EIA timing, OPEC and geopolitical supply risk, dollar pressure, oil microstructure, physical oil logistics intelligence (Baltic indices, tanker flows, chokepoint congestion, floating storage)",
     },
     "GDAXI.INDX": {
         "display_name": "DAX",
@@ -95,6 +95,15 @@ Analyze only the supplied market pack. Do not invent data. If any data is missin
 - NDX.INDX and GDAXI.INDX: prioritize index trend, opening drive, macro risk, volatility regime, breakout vs mean reversion.
 - XAUUSD: prioritize dollar/macro regime, safe-haven flow, COMEX-style event sensitivity, headline risk.
 - USOIL.FOREX: prioritize inventory/OPEC/geopolitical risk, dollar impact, oil microstructure, EIA event timing.
+- For USOIL.FOREX: When physical_oil_intelligence is present in the market pack, analyze the physical-financial divergence. Physical logistics data provides 30-60 day leading indicators. Key interpretation rules:
+  * BCTI weakness > 70 → refined product demand stress (bearish leading signal for oil price)
+  * Contango pressure > 65 → curve incentivizes floating storage (bearish structural)
+  * Chokepoint congestion in Singapore/Rotterdam with rising vessel counts → supply buildup risk (bearish)
+  * Strait of Hormuz low flow or geopolitical risk → supply shock potential (bullish risk premium)
+  * Physical score diverging from technical regime → potential trend reversal signal
+  * Recession probability > 60 combined with clean weakness → demand destruction warning (bearish)
+  * Dirty/clean spread widening → refinery margin stress, forward demand concern
+  Include a dedicated "physical_confirmation" note in your reasoning when this data materially affects direction or confidence. If physical and technical signals diverge, explain the divergence and how it impacts your conviction.
 - If the symbol's New York-time primary session is closed, reduce conviction by one notch and avoid overstating trend persistence.
 - Produce two distinct decisions from the same market pack: one for scalp execution (15-90m) and one for intraday execution (rest_of_session). They may disagree if the data supports that.
 - Use the exact symbol profile, session state, ml_prediction, ta_snapshot, ta_summary, support/resistance, news, calendar, regime, and asset-specific extras provided in the market pack.
@@ -481,6 +490,8 @@ def _collect_missing_inputs(context: Dict[str, Any], extras: Dict[str, Any]) -> 
         missing.append("comex_news")
     if extras.get("symbol") == "USOIL.FOREX" and not extras.get("oil_analysis"):
         missing.append("oil_analysis")
+    if extras.get("symbol") == "USOIL.FOREX" and not extras.get("physical_oil_context"):
+        missing.append("physical_oil_intelligence")
     return missing
 
 
@@ -675,6 +686,30 @@ def _fallback_panel_signal(context: Dict[str, Any], extras: Dict[str, Any]) -> D
         elif oil_direction not in {"HOLD", direction}:
             confidence -= 6
             counter_factors.append("Oil-specific engine is not aligned with the base bias.")
+
+    physical_oil = extras.get("physical_oil_context") or {}
+    if physical_oil:
+        phys_bias = str(physical_oil.get("oil_bias") or "").lower()
+        phys_score = _float_with_default(physical_oil.get("physical_score"), 50.0)
+        recession_risk = _float_with_default(physical_oil.get("recession_probability"), 50.0)
+        bcti_weakness = _float_with_default(physical_oil.get("bcti_weakness"), 50.0)
+        contango_pres = _float_with_default(physical_oil.get("contango_pressure"), 50.0)
+
+        phys_direction = "BUY" if phys_bias == "bullish" else ("SELL" if phys_bias == "bearish" else "HOLD")
+        if phys_direction == direction and phys_direction != "HOLD":
+            confidence += 5
+            top_factors.append(f"Physical oil intelligence confirms {direction.lower()} bias (score {phys_score:.0f}).")
+        elif phys_direction != "HOLD" and phys_direction != direction and direction not in {"HOLD", "NO_TRADE"}:
+            confidence -= 8
+            counter_factors.append(f"Physical oil intelligence diverges: physical bias is {phys_bias} vs technical {direction.lower()}.")
+
+        if recession_risk >= 60:
+            confidence -= 4
+            counter_factors.append(f"Physical market recession probability elevated at {recession_risk:.0f}%.")
+        if bcti_weakness >= 70:
+            bear_case.append(f"Refined product demand stress is severe (BCTI weakness {bcti_weakness:.0f}).")
+        if contango_pres >= 65:
+            bear_case.append(f"Contango pressure ({contango_pres:.0f}) incentivizes floating storage — bearish structural.")
 
     comex_news = extras.get("comex_news") or {}
     if comex_news:
@@ -1005,6 +1040,7 @@ def _build_prompt_payload(context: Dict[str, Any], extras: Dict[str, Any]) -> Di
             "comex": comex_news,
         },
         "oil_engine": oil_analysis,
+        "physical_oil_intelligence": extras.get("physical_oil_context") or {},
         "economic_calendar": {
             "flags": context.get("economic_calendar") or {},
             "recent_or_upcoming": extras.get("calendar_events") or [],
@@ -1037,9 +1073,88 @@ def _build_prompt_execution_brief(prompt_payload: Dict[str, Any]) -> str:
         f"Structure and levels: nearest_support={levels.get('nearest_support')} nearest_resistance={levels.get('nearest_resistance')} ml_key_levels={levels.get('ml_key_levels')}.",
         f"Flow context: volume_status={volume.get('status')} volume_ratio={volume.get('ratio')} volatility_level={volatility.get('level')} regime={regime.get('regime')} regime_trend={regime.get('trend_direction')}.",
         f"Catalyst map: event_risk={event_risk.get('level')} event_summary={event_risk.get('summary')}.",
+        _build_physical_oil_brief(prompt_payload.get("physical_oil_intelligence") or {}),
         "Task: produce symbol-specific scalp_bias and intraday_bias using the supplied technical and macro evidence only, and keep the reasoning actionable for a live dashboard.",
     ])
 
+
+
+def _build_physical_oil_brief(physical: Dict[str, Any]) -> str:
+    if not physical:
+        return ""
+    return (
+        f"Physical oil intelligence: physical_score={physical.get('physical_score', 'N/A')} "
+        f"oil_bias={physical.get('oil_bias', 'N/A')} "
+        f"recession_probability={physical.get('recession_probability', 'N/A')} "
+        f"bcti_weakness={physical.get('bcti_weakness', 'N/A')} "
+        f"contango_pressure={physical.get('contango_pressure', 'N/A')} "
+        f"storage_pressure={physical.get('storage_pressure', 'N/A')} "
+        f"dirty_clean_spread={physical.get('dirty_clean_spread', 'N/A')} "
+        f"chokepoint_alerts={physical.get('chokepoint_summary', 'none')}."
+    )
+
+
+def _summarize_physical_oil_context(raw: Dict[str, Any]) -> Dict[str, Any]:
+    """Extract compact physical oil signals for AI prompt context."""
+    if not raw or not raw.get("available"):
+        return {}
+
+    signal = raw.get("signal") or {}
+    baltic = raw.get("baltic") or {}
+    storage = raw.get("storage") or {}
+    demand = raw.get("demand") or {}
+    chokepoints = raw.get("chokepoints") or []
+
+    chokepoint_alerts = []
+    for cp in chokepoints:
+        if cp.get("bias") != "neutral" or float(cp.get("intensity") or 0) >= 60:
+            chokepoint_alerts.append(
+                f"{cp.get('label', '?')}: {cp.get('signal', 'watch')} ({cp.get('bias', 'neutral')}, intensity={cp.get('intensity', 0)})"
+            )
+
+    return {
+        "physical_score": signal.get("physical_score"),
+        "oil_bias": signal.get("oil_bias"),
+        "confidence": signal.get("confidence"),
+        "recession_probability": signal.get("recession_probability"),
+        "market_regime": signal.get("market_regime"),
+        "time_horizon": signal.get("time_horizon"),
+        "bdti_proxy": baltic.get("bdti_proxy"),
+        "bcti_weakness": baltic.get("bcti_weakness"),
+        "td3c_proxy": baltic.get("td3c_proxy"),
+        "dirty_clean_spread": baltic.get("dirty_clean_spread"),
+        "baltic_status": baltic.get("source_mode") or baltic.get("status"),
+        "storage_pressure": storage.get("floating_storage_proxy"),
+        "contango_pressure": storage.get("contango_pressure"),
+        "backwardation_pressure": storage.get("backwardation_pressure"),
+        "floating_storage_vessels": storage.get("floating_storage_vessels"),
+        "floating_storage_mm_bbl": storage.get("floating_storage_mm_bbl"),
+        "refinery_stress": demand.get("refinery_stress"),
+        "crack_spread_proxy": demand.get("crack_spread_proxy"),
+        "gasoline_demand_proxy": demand.get("gasoline_demand_proxy"),
+        "chokepoint_summary": "; ".join(chokepoint_alerts) if chokepoint_alerts else "all neutral",
+        "chokepoints": [
+            {
+                "label": cp.get("label"),
+                "signal": cp.get("signal"),
+                "bias": cp.get("bias"),
+                "intensity": cp.get("intensity"),
+                "vessel_count": cp.get("vessel_count"),
+            }
+            for cp in chokepoints
+        ],
+    }
+
+
+async def _collect_physical_oil_context() -> Dict[str, Any]:
+    """Collect physical oil market intelligence from Baltic panel for AI context."""
+    try:
+        from services.oil_baltic_live_service import build_oil_baltic_intelligence
+        raw = await build_oil_baltic_intelligence()
+        return _summarize_physical_oil_context(raw)
+    except Exception as exc:
+        logger.warning("Physical oil context collection failed: %s", exc)
+        return {}
 
 
 async def _collect_oil_analysis(symbol: str, market_state: Dict[str, Any]) -> Dict[str, Any]:
@@ -1090,6 +1205,7 @@ async def _collect_symbol_extras(symbol: str, context: Dict[str, Any]) -> Dict[s
         tasks.append(COMEXNewsService().get_comex_impact(use_ai=bool(getattr(settings, "groq_api_key", ""))))
     if needs_oil:
         tasks.append(_collect_oil_analysis(symbol, market_state))
+        tasks.append(_collect_physical_oil_context())
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
     regime_result = results[0] if not isinstance(results[0], Exception) else None
@@ -1106,11 +1222,14 @@ async def _collect_symbol_extras(symbol: str, context: Dict[str, Any]) -> Dict[s
     index = 3
     comex_summary: Dict[str, Any] = {}
     oil_summary: Dict[str, Any] = {}
+    physical_oil_context: Dict[str, Any] = {}
     if needs_comex:
         comex_summary = _summarize_comex(results[index] if not isinstance(results[index], Exception) else None)
         index += 1
     if needs_oil:
         oil_summary = results[index] if isinstance(results[index], dict) else {}
+        index += 1
+        physical_oil_context = results[index] if isinstance(results[index], dict) else {}
 
     return {
         "symbol": symbol,
@@ -1121,6 +1240,7 @@ async def _collect_symbol_extras(symbol: str, context: Dict[str, Any]) -> Dict[s
         "event_risk": event_risk,
         "comex_news": comex_summary,
         "oil_analysis": oil_summary,
+        "physical_oil_context": physical_oil_context,
     }
 
 
@@ -1152,6 +1272,7 @@ def _context_fingerprint(context: Dict[str, Any], extras: Dict[str, Any]) -> str
         "unified_news": extras.get("unified_news"),
         "comex_news": extras.get("comex_news"),
         "oil_analysis": extras.get("oil_analysis"),
+        "physical_oil_context": extras.get("physical_oil_context"),
     }
     encoded = json.dumps(source, default=_json_default, sort_keys=True).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()[:20]
@@ -1367,6 +1488,7 @@ def _build_compatibility_result(symbol: str, context: Dict[str, Any], panel_sign
         "economic_calendar": True,
         "comex_news": bool(extras.get("comex_news")),
         "oil_analysis": bool(extras.get("oil_analysis")),
+        "physical_oil": bool(extras.get("physical_oil_context")),
     }
 
     bull_case = [str(item) for item in _safe_list(panel_signal.get("bull_case"))[:5]]
@@ -1403,6 +1525,7 @@ def _build_compatibility_result(symbol: str, context: Dict[str, Any], panel_sign
         "data_sources": data_sources,
         "scalp_direction": scalp.get("direction"),
         "scalp_confidence": scalp.get("confidence"),
+        "physical_oil_intelligence": extras.get("physical_oil_context") or None,
     }
 
 
