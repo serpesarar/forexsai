@@ -15,7 +15,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 SUPPORTED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]
-SUPPORTED_MODELS = ['ml', 'pulse', 'pulse_ml', 'pulse_v3', 'emel', 'smc']
+SUPPORTED_MODELS = ['ml', 'pulse2', 'pulse3', 'emel', 'smc']
 
 # ---------------------------------------------------------
 # 1. MODEL COMBINATIONS ANALYSIS
@@ -40,10 +40,10 @@ async def analyze_model_permutations(
         cutoff_date = (datetime.utcnow() - pd.Timedelta(days=lookback_days)).isoformat()
         
         def fetch_model_signals():
-            # fetch strategy and inner join outcome_results to check hit_target / hit_stop
-            # If a prediction_log doesn't have an outcome_result yet, we won't get hit_target data.
+            # fetch model_type and strictly inner join outcome_results 
+            # to guarantee we only analyze completely resolved signals
             res = client.table("prediction_logs") \
-                .select("id, created_at, strategy, ml_direction, outcome_results(hit_target, hit_stop)") \
+                .select("id, created_at, model_type, ml_direction, outcome_results!inner(hit_target, hit_stop)") \
                 .eq("symbol", symbol) \
                 .eq("ml_direction", direction) \
                 .gte("created_at", cutoff_date) \
@@ -89,13 +89,12 @@ async def analyze_model_permutations(
         combo_stats = defaultdict(lambda: {"wins": 0, "losses": 0, "profit": 0.0, "loss": 0.0, "total": 0})
         
         for cluster in clusters:
-            # unique models (case-insensitive) using "strategy"
-            models_in_cluster = list(set([str(log.get("strategy", "")).lower() for log in cluster if log.get("strategy")]))
+            # unique models (case-insensitive) using "model_type"
+            models_in_cluster = list(set([str(log.get("model_type", "")).lower().strip() for log in cluster if log.get("model_type")]))
             if len(models_in_cluster) < 2:
                 continue
                 
             # Outcome Logic: Grab the outcome_results array from the first signal in the cluster
-            # Default to hit_stop = true if neither so we don't accidentally overcount wins
             rep_log = cluster[0]
             outcomes = rep_log.get("outcome_results", [])
             
