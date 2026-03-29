@@ -11,6 +11,7 @@ import {
   Clock,
   ChevronDown,
   Layers,
+  Info,
   ArrowUpRight,
   ArrowDownRight,
   AlertTriangle
@@ -44,6 +45,7 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
   const t = useTranslations("PermutationPanel");
   const [activeTab, setActiveTab] = useState<"models" | "indicators">("models");
   const [direction, setDirection] = useState<"BUY" | "SELL">("BUY");
+  const [showInfo, setShowInfo] = useState(false);
   
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -132,6 +134,13 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
           </div>
 
           <button 
+            onClick={() => setShowInfo(!showInfo)} 
+            className={`p-2 rounded-lg transition-colors ${showInfo ? "bg-blue-500/20 text-blue-400" : "bg-white/5 hover:bg-white/10 text-gray-400"}`}
+          >
+            <Info className="w-4 h-4" />
+          </button>
+          
+          <button 
             onClick={fetchPermutations} 
             disabled={isLoading}
             className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-400 transition-colors disabled:opacity-50"
@@ -175,6 +184,30 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
 
       {/* CONTENT ZONE */}
       <div className="p-4 min-h-[300px]">
+        {/* INFO BANNER */}
+        <AnimatePresence>
+          {showInfo && (
+            <motion.div
+              initial={{ height: 0, opacity: 0, marginBottom: 0 }}
+              animate={{ height: "auto", opacity: 1, marginBottom: 16 }}
+              exit={{ height: 0, opacity: 0, marginBottom: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-sm">
+                <div className="flex items-center gap-2 mb-2 text-blue-400 font-semibold">
+                  <Info className="w-4 h-4" />
+                  {t("info_title")}
+                </div>
+                <div className="space-y-3 text-[#9AA4B2] leading-relaxed">
+                  <p><strong className="text-white/80">{t("info_purpose").split(":")[0]}:</strong> {t("info_purpose").split(":").slice(1).join(":")}</p>
+                  <p><strong className="text-white/80">{t("info_how_it_works").split(":")[0]}:</strong> {t("info_how_it_works").split(":").slice(1).join(":")}</p>
+                  <p><strong className="text-white/80">{t("info_usage").split(":")[0]}:</strong> {t("info_usage").split(":").slice(1).join(":")}</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-48 space-y-4">
              <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />

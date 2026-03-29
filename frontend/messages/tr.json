@@ -921,6 +921,10 @@
     "col_winrate": "Kazanma Oranı",
     "col_profit_factor": "Kâr Faktörü",
     "insufficient_data_tooltip": "⚠️ Yetersiz Veri (Nadir Kombinasyon)",
+    "info_title": "Permütasyon Analizi Hakkında",
+    "info_purpose": "Amaç: Hangi yapay zeka modellerinin veya teknik gösterge kombinasyonlarının aynı anda sinyal ürettiğinde tarihsel olarak en yüksek başarıyı (Win Rate) sağladığını tespit etmektir.",
+    "info_how_it_works": "Nasıl Çalışır: Sistem, tüm geçmiş tahmin kayıtlarını ve mum verilerini 180 güne kadar dinamik olarak geriye dönük tarar. Bir sinyal sadece ve sadece Stop Loss (Zarar Kes) seviyesinden önce doğrudan Ana Hedefe (TP) ulaşmışsa resmi olarak 'Kazanç (Win)' sayılır.",
+    "info_usage": "Kullanım Tavsiyesi: Soluk renkli ve ⚠️ uyarı ikonuna sahip satırlar nadir görülen kombinasyonlardır (istatistiksel veri yetersizdir). Karar verirken her zaman yüksek Başarı Oranına (Win Rate) VE yeterli işlem (Signal) sayısına sahip kombinasyonlara öncelik verin.",
     "no_data": "Yeterli veri bulunamadı.",
     "loading": "Permütasyon matrisi hesaplanıyor...",
     "target_target": "Hedef"

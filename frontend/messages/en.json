@@ -921,6 +921,10 @@
     "col_winrate": "Win Rate",
     "col_profit_factor": "Profit Factor",
     "insufficient_data_tooltip": "⚠️ Insufficient Data (Rare combination)",
+    "info_title": "About Permutation Analysis",
+    "info_purpose": "Purpose: To dynamically uncover which specific combinations of AI models or technical conditions historically provide the most accurate signals.",
+    "info_how_it_works": "How It Works: The engine cross-references all historical prediction logs and candlestick data, searching backwards up to 180 days dynamically. A signal is designated a 'Win' ONLY if it officially hit the primary Take Profit (TP) target before reaching a Stop Loss.",
+    "info_usage": "Usage Tips: Faded rows with a ⚠️ icon indicate rarely occurring combinations. Always prioritize combinations with both high Win Rates and a solid number of occurrences (signals) to ensure statistical confidence.",
     "no_data": "Not enough data available.",
     "loading": "Calculating permutation matrix...",
     "target_target": "Target"
