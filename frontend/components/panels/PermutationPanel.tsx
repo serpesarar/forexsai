@@ -12,7 +12,8 @@ import {
   ChevronDown,
   Layers,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  AlertTriangle
 } from "lucide-react";
 import { buildApiUrl } from "@/lib/api/base";
 
@@ -28,6 +29,7 @@ interface ModelResult {
   win_rate: number;
   profit_factor: number;
   expectancy: number;
+  insufficient_data?: boolean;
 }
 
 interface IndicatorResult {
@@ -35,6 +37,7 @@ interface IndicatorResult {
   occurrences: number;
   wins: number;
   win_rate: number;
+  insufficient_data?: boolean;
 }
 
 export function PermutationPanel({ symbol }: PermutationPanelProps) {
@@ -46,7 +49,7 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [modelsData, setModelsData] = useState<ModelResult[]>([]);
   const [indicatorsData, setIndicatorsData] = useState<IndicatorResult[]>([]);
-  const [metaInfo, setMetaInfo] = useState({ tgt_pct: 0.3, fwd_candles: 5 });
+  const [metaInfo, setMetaInfo] = useState({ tgt_pct: 0.3, fwd_candles: 5, days_used: 30 });
 
   const fetchPermutations = async () => {
     setIsLoading(true);
@@ -60,11 +63,16 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
       if (json.success) {
         setModelsData(json.data.models_analysis?.results || []);
         setIndicatorsData(json.data.indicators_analysis?.results || []);
+        setMetaInfo(prev => ({
+          ...prev,
+          days_used: json.data.models_analysis?.lookback_days_used || 30
+        }));
         if (json.data.indicators_analysis?.target_move_pct) {
-          setMetaInfo({
+          setMetaInfo(prev => ({
+            ...prev,
             tgt_pct: json.data.indicators_analysis.target_move_pct,
             fwd_candles: json.data.indicators_analysis.lookforward_candles
-          });
+          }));
         }
       } else {
          setError(json.error || "Unknown error");
@@ -93,7 +101,7 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
           <div>
             <h3 className="text-white font-semibold text-[16px] tracking-tight">{t("title")}</h3>
             <p className="text-[#6B7280] text-[12px] uppercase font-medium tracking-wide">
-              {symbol} • {t("subtitle")}
+              {symbol} • Data: {metaInfo.days_used}D 
             </p>
           </div>
         </div>
@@ -200,9 +208,13 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                     </thead>
                     <tbody>
                       {modelsData.map((row, idx) => (
-                        <tr key={idx} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                        <tr key={idx} 
+                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${row.insufficient_data ? 'opacity-50 saturate-50' : ''}`}
+                            title={row.insufficient_data ? t("insufficient_data_tooltip") || "Yetersiz Veri (Son 180G)" : undefined}
+                        >
                           <td className="py-3 pl-2">
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className="flex flex-wrap gap-1.5 items-center">
+                              {row.insufficient_data && <AlertTriangle className="w-3.5 h-3.5 text-yellow-500 mr-1" />}
                               {row.combination.split('+').map((m, i) => (
                                 <span key={i} className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-xs font-semibold uppercase border border-blue-500/20 shadow-[0_0_8px_rgba(79,140,255,0.05)]">
                                   {m}

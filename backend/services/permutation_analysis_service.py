@@ -24,11 +24,12 @@ async def analyze_model_permutations(
     symbol: str, 
     direction: str = "BUY", 
     min_occurrences: int = 10,
-    lookback_days: int = 30
+    lookback_days: int = 30 # Deprecated as max limit, now starting point
 ) -> Dict[str, Any]:
     """
     Analyzes historical prediction_logs and groups them by concurrent triggers (±5 minutes).
     Generates all combinations of these concurrent models and calculates Win Rate.
+    Dynamically extends lookback from 30 to 180 days if combinations have insufficient samples.
     """
     try:
         from database.supabase_client import get_supabase_client
@@ -36,113 +37,138 @@ async def analyze_model_permutations(
         if not client:
             return {"error": "No database connection"}
         
-        # Calculate lookback
-        cutoff_date = (datetime.utcnow() - pd.Timedelta(days=lookback_days)).isoformat()
+        lookback_intervals = [30, 60, 90, 120, 180]
+        logs = []
+        last_cutoff = datetime.utcnow()
+        current_days_used = 0
         
-        def fetch_model_signals():
-            # fetch model_type and strictly inner join outcome_results 
-            # to guarantee we only analyze completely resolved signals
+        async def fetch_logs_chunk(end_date_iso: str, start_date_iso: str):
             res = client.table("prediction_logs") \
                 .select("id, created_at, model_type, ml_direction, outcome_results!inner(hit_target, hit_stop)") \
                 .eq("symbol", symbol) \
                 .eq("ml_direction", direction) \
-                .gte("created_at", cutoff_date) \
+                .gte("created_at", start_date_iso) \
+                .lt("created_at", end_date_iso) \
                 .execute()
-            
-            data = res.get("data", []) if isinstance(res, dict) else getattr(res, "data", [])
-            return data
-            
-        logs = await asyncio.to_thread(fetch_model_signals)
-        if not logs:
-            return {"symbol": symbol, "direction": direction, "results": [], "message": "No data found"}
-            
-        # Parse dates and sort by time
-        for log in logs:
-            if isinstance(log.get("created_at"), str):
-                try:
-                    date_str = log["created_at"].replace("Z", "+00:00")
-                    log["_ts"] = datetime.fromisoformat(date_str).timestamp()
-                except Exception:
-                    log["_ts"] = 0
-            else:
-                log["_ts"] = 0
-                
-        logs.sort(key=lambda x: x["_ts"])
+            return res.get("data", []) if isinstance(res, dict) else getattr(res, "data", [])
         
-        # Group into clusters of ±5 minutes (300 seconds)
-        clusters = []
-        current_cluster = []
-        
-        for log in logs:
-            if not current_cluster:
-                current_cluster.append(log)
-            else:
-                if log["_ts"] - current_cluster[0]["_ts"] <= 300:
+        def compute_combos(current_logs):
+            for log in current_logs:
+                if "_ts" not in log:
+                    if isinstance(log.get("created_at"), str):
+                        try:
+                            date_str = log["created_at"].replace("Z", "+00:00")
+                            log["_ts"] = datetime.fromisoformat(date_str).timestamp()
+                        except Exception:
+                            log["_ts"] = 0
+                    else:
+                        log["_ts"] = 0
+                        
+            current_logs.sort(key=lambda x: x["_ts"])
+            
+            clusters = []
+            current_cluster = []
+            
+            for log in current_logs:
+                if not current_cluster:
                     current_cluster.append(log)
                 else:
-                    clusters.append(current_cluster)
-                    current_cluster = [log]
-                    
-        if current_cluster:
-            clusters.append(current_cluster)
-            
-        combo_stats = defaultdict(lambda: {"wins": 0, "losses": 0, "profit": 0.0, "loss": 0.0, "total": 0})
-        
-        for cluster in clusters:
-            # unique models (case-insensitive) using "model_type"
-            models_in_cluster = list(set([str(log.get("model_type", "")).lower().strip() for log in cluster if log.get("model_type")]))
-            if len(models_in_cluster) < 2:
-                continue
-                
-            # Outcome Logic: Grab the outcome_results array from the first signal in the cluster
-            rep_log = cluster[0]
-            outcomes = rep_log.get("outcome_results", [])
-            
-            is_win = False
-            # Check the linked outcome
-            if outcomes and isinstance(outcomes, list) and len(outcomes) > 0:
-                is_win = outcomes[0].get("hit_target", False)
-                
-            profit_value = 15.0 if is_win else 0.0
-            loss_value = -15.0 if not is_win else 0.0
-            
-            for size in range(2, min(len(models_in_cluster) + 1, 7)):
-                for combo in combinations(sorted(models_in_cluster), size):
-                    combo_key = "+".join(combo)
-                    
-                    combo_stats[combo_key]["total"] += 1
-                    if is_win:
-                        combo_stats[combo_key]["wins"] += 1
-                        combo_stats[combo_key]["profit"] += profit_value
+                    if log["_ts"] - current_cluster[0]["_ts"] <= 300:
+                        current_cluster.append(log)
                     else:
-                        combo_stats[combo_key]["losses"] += 1
-                        combo_stats[combo_key]["loss"] += abs(loss_value)
+                        clusters.append(current_cluster)
+                        current_cluster = [log]
                         
+            if current_cluster:
+                clusters.append(current_cluster)
+                
+            combo_stats = defaultdict(lambda: {"wins": 0, "losses": 0, "profit": 0.0, "loss": 0.0, "total": 0})
+            
+            for cluster in clusters:
+                models_in_cluster = list(set([str(log.get("model_type", "")).lower().strip() for log in cluster if log.get("model_type")]))
+                if len(models_in_cluster) < 2:
+                    continue
+                    
+                rep_log = cluster[0]
+                outcomes = rep_log.get("outcome_results", [])
+                
+                is_win = False
+                if outcomes and isinstance(outcomes, list) and len(outcomes) > 0:
+                    is_win = outcomes[0].get("hit_target", False)
+                    
+                profit_value = 15.0 if is_win else 0.0
+                loss_value = -15.0 if not is_win else 0.0
+                
+                for size in range(2, min(len(models_in_cluster) + 1, 7)):
+                    for combo in combinations(sorted(models_in_cluster), size):
+                        combo_key = "+".join(combo)
+                        
+                        combo_stats[combo_key]["total"] += 1
+                        if is_win:
+                            combo_stats[combo_key]["wins"] += 1
+                            combo_stats[combo_key]["profit"] += profit_value
+                        else:
+                            combo_stats[combo_key]["losses"] += 1
+                            combo_stats[combo_key]["loss"] += abs(loss_value)
+                            
+            return combo_stats, len(clusters)
+
+        # Dynamic Fetch Loop
+        combo_stats = {}
+        total_clusters_analyzed = 0
+        
+        for idx, current_days in enumerate(lookback_intervals):
+            current_days_used = current_days
+            start_date = datetime.utcnow() - pd.Timedelta(days=current_days)
+            
+            # Fetch specifically the chunk missing (last_cutoff strictly backwards to start_date)
+            new_logs = await asyncio.to_thread(fetch_logs_chunk, last_cutoff.isoformat(), start_date.isoformat())
+            logs.extend(new_logs)
+            last_cutoff = start_date
+            
+            # Recompute all combinations with the appended logs
+            combo_stats, total_clusters_analyzed = compute_combos(logs)
+            
+            # Check if any generated combination has insufficient occurrences
+            needs_more_data = False
+            for stats in combo_stats.values():
+                if stats["total"] < min_occurrences:
+                    needs_more_data = True
+                    break
+                    
+            if not needs_more_data:
+                logger.info(f"[Permutations] Sufficient data reached at {current_days} days for {symbol} {direction}")
+                break
+            else:
+                if idx < len(lookback_intervals) - 1:
+                    logger.info(f"[Permutations] Extending lookback from {current_days} to {lookback_intervals[idx+1]} days for {symbol} {direction}")
+        
         results = []
         for combo, stats in combo_stats.items():
-            if stats["total"] >= min_occurrences:
-                win_rate = stats["wins"] / stats["total"]
-                pf = stats["profit"] / (stats["loss"] if stats["loss"] > 0 else 1.0)
-                exp = (win_rate * (stats["profit"] / max(1, stats["wins"]))) - ((1 - win_rate) * (stats["loss"] / max(1, stats["losses"])))
-                
-                results.append({
-                    "combination": combo,
-                    "symbol": symbol,
-                    "direction": direction,
-                    "total_signals": stats["total"],
-                    "wins": stats["wins"],
-                    "losses": stats["losses"],
-                    "win_rate": round(win_rate, 4),
-                    "profit_factor": round(pf, 2),
-                    "expectancy": round(exp, 2)
-                })
-                
+            win_rate = stats["wins"] / max(stats["total"], 1)
+            pf = stats["profit"] / (stats["loss"] if stats["loss"] > 0 else 1.0)
+            exp = (win_rate * (stats["profit"] / max(1, stats["wins"]))) - ((1 - win_rate) * (stats["loss"] / max(1, stats["losses"])))
+            
+            results.append({
+                "combination": combo,
+                "symbol": symbol,
+                "direction": direction,
+                "total_signals": stats["total"],
+                "wins": stats["wins"],
+                "losses": stats["losses"],
+                "win_rate": round(win_rate, 4),
+                "profit_factor": round(pf, 2),
+                "expectancy": round(exp, 2),
+                "insufficient_data": stats["total"] < min_occurrences
+            })
+            
         results.sort(key=lambda x: x["win_rate"], reverse=True)
         
         return {
             "symbol": symbol,
             "direction": direction,
-            "total_clusters_analyzed": len(clusters),
+            "total_clusters_analyzed": total_clusters_analyzed,
+            "lookback_days_used": current_days_used,
             "results": results
         }
     except Exception as e:

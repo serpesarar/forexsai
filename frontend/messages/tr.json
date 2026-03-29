@@ -920,6 +920,7 @@
     "col_signals": "Sinyal Sayısı",
     "col_winrate": "Kazanma Oranı",
     "col_profit_factor": "Kâr Faktörü",
+    "insufficient_data_tooltip": "⚠️ Yetersiz Veri (Nadir Kombinasyon)",
     "no_data": "Yeterli veri bulunamadı.",
     "loading": "Permütasyon matrisi hesaplanıyor...",
     "target_target": "Hedef"
