@@ -93,8 +93,11 @@ async def analyze_model_permutations(
                 outcomes = rep_log.get("outcome_results", [])
                 
                 is_win = False
-                if outcomes and isinstance(outcomes, list) and len(outcomes) > 0:
-                    is_win = outcomes[0].get("hit_target", False)
+                if outcomes:
+                    if isinstance(outcomes, list) and len(outcomes) > 0:
+                        is_win = outcomes[0].get("hit_target", False)
+                    elif isinstance(outcomes, dict):
+                        is_win = outcomes.get("hit_target", False)
                     
                 profit_value = 15.0 if is_win else 0.0
                 loss_value = -15.0 if not is_win else 0.0
