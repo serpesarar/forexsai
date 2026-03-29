@@ -415,6 +415,8 @@ try:
     app.include_router(prices.router)
     app.include_router(economic_calendar_router.router)
     app.include_router(meta_engine_router.router)
+    from routers import permutation_router
+    app.include_router(permutation_router.router)
     
     ROUTERS_LOADED = True
 except Exception as e:

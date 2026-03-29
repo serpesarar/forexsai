@@ -910,5 +910,18 @@
     "regime": "Market Regime",
     "models_agree": "models agree",
     "conditions_passed": "conditions passed"
+  },
+  "PermutationPanel": {
+    "title": "Permutation Analysis",
+    "subtitle": "Model and Technical Indicator Combination Performance",
+    "tab_models": "Model Combinations",
+    "tab_indicators": "Indicator Combinations",
+    "col_combo": "Combination",
+    "col_signals": "Total Signals",
+    "col_winrate": "Win Rate",
+    "col_profit_factor": "Profit Factor",
+    "no_data": "Not enough data available.",
+    "loading": "Calculating permutation matrix...",
+    "target_target": "Target"
   }
 }

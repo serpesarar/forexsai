@@ -53,6 +53,7 @@ const StrategyOptimizerPanel = lazy(() => import("../components/panels/StrategyO
 const OilBalticPanel = lazy(() => import("../components/panels/OilBalticPanel"));
 const NewsChartCorrelationPanel = lazy(() => import("../components/panels/NewsChartCorrelationPanel"));
 const MetaEnginePanel = lazy(() => import("../components/panels/MetaEnginePanel"));
+const PermutationPanel = lazy(() => import("../components/panels/PermutationPanel").then(mod => ({ default: mod.PermutationPanel })));
 const NewsCorrelationDashboard = lazy(() => import("./news-correlation/page"));
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
 import { EditModeButton, EditModeControls, DraggableDashboard, SortableCard } from "../components/DraggableDashboard";
@@ -1362,6 +1363,12 @@ export default function HomePage() {
                       </LazyPanel>
                     </div>
                   )}
+
+                  <div className="mb-6 w-full">
+                    <LazyPanel fallbackHeight={300}>
+                      <PermutationPanel symbol={signalCards[0]?.symbol || "NDX.INDX"} />
+                    </LazyPanel>
+                  </div>
 
                   {/* ML Factor row above grid */}
                   <div className="grid grid-cols-1 gap-4 mb-6">

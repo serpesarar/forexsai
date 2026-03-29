@@ -910,5 +910,18 @@
     "regime": "Piyasa Rejimi",
     "models_agree": "model hemfikir",
     "conditions_passed": "koşul sağlandı"
+  },
+  "PermutationPanel": {
+    "title": "Permütasyon Analizi",
+    "subtitle": "Modeller ve Teknik Göstergeler Kombinasyon Performansı",
+    "tab_models": "Model Kombinasyonları",
+    "tab_indicators": "Teknik Gösterge Kombinasyonları",
+    "col_combo": "Kombinasyon",
+    "col_signals": "Sinyal Sayısı",
+    "col_winrate": "Kazanma Oranı",
+    "col_profit_factor": "Kâr Faktörü",
+    "no_data": "Yeterli veri bulunamadı.",
+    "loading": "Permütasyon matrisi hesaplanıyor...",
+    "target_target": "Hedef"
   }
 }
