@@ -199,9 +199,9 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                   {t("info_title")}
                 </div>
                 <div className="space-y-3 text-[#9AA4B2] leading-relaxed">
-                  <p><strong className="text-white/80">{t("info_purpose").split(":")[0]}:</strong> {t("info_purpose").split(":").slice(1).join(":")}</p>
-                  <p><strong className="text-white/80">{t("info_how_it_works").split(":")[0]}:</strong> {t("info_how_it_works").split(":").slice(1).join(":")}</p>
-                  <p><strong className="text-white/80">{t("info_usage").split(":")[0]}:</strong> {t("info_usage").split(":").slice(1).join(":")}</p>
+                  <p><strong className="text-white/80">{(t("info_purpose") || "").split(":")[0]}:</strong> {(t("info_purpose") || "").split(":").slice(1).join(":")}</p>
+                  <p><strong className="text-white/80">{(t("info_how_it_works") || "").split(":")[0]}:</strong> {(t("info_how_it_works") || "").split(":").slice(1).join(":")}</p>
+                  <p><strong className="text-white/80">{(t("info_usage") || "").split(":")[0]}:</strong> {(t("info_usage") || "").split(":").slice(1).join(":")}</p>
                 </div>
               </div>
             </motion.div>
@@ -248,7 +248,7 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                           <td className="py-3 pl-2">
                             <div className="flex flex-wrap gap-1.5 items-center">
                               {row.insufficient_data && <TriangleAlert className="w-3.5 h-3.5 text-yellow-500 mr-1" />}
-                              {row.combination.split('+').map((m, i) => (
+                              {(row.combination || "").split('+').map((m: string, i: number) => (
                                 <span key={i} className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-xs font-semibold uppercase border border-blue-500/20 shadow-[0_0_8px_rgba(79,140,255,0.05)]">
                                   {m}
                                 </span>
@@ -265,20 +265,20 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                                 <div 
                                   className="h-full rounded-full"
                                   style={{ 
-                                    width: `${row.win_rate * 100}%`,
-                                    backgroundColor: row.win_rate >= 0.5 ? '#16C784' : '#EA3943',
+                                    width: `${(row.win_rate || 0) * 100}%`,
+                                    backgroundColor: (row.win_rate || 0) >= 0.5 ? '#16C784' : '#EA3943',
                                     opacity: 0.9
                                   }}
                                 />
                               </div>
-                              <span className={`text-sm font-bold w-12 text-right ${row.win_rate >= 0.5 ? "text-[#16C784]" : "text-[#EA3943]"}`}>
-                                {(row.win_rate * 100).toFixed(1)}%
+                              <span className={`text-sm font-bold w-12 text-right ${(row.win_rate || 0) >= 0.5 ? "text-[#16C784]" : "text-[#EA3943]"}`}>
+                                {((row.win_rate || 0) * 100).toFixed(1)}%
                               </span>
                             </div>
                           </td>
                           <td className="py-3 text-right pr-2">
-                           <span className={`text-sm font-bold ${row.profit_factor >= 1.5 ? "text-[#16C784]" : row.profit_factor >= 1.0 ? "text-white" : "text-[#EA3943]"}`}>
-                             {row.profit_factor.toFixed(2)}x
+                           <span className={`text-sm font-bold ${(row.profit_factor || 0) >= 1.5 ? "text-[#16C784]" : (row.profit_factor || 0) >= 1.0 ? "text-white" : "text-[#EA3943]"}`}>
+                             {(row.profit_factor === 999.0 || !row.profit_factor) ? "∞" : (row.profit_factor || 0).toFixed(2)}x
                            </span>
                           </td>
                         </tr>
@@ -325,7 +325,7 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                           <tr key={idx} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
                             <td className="py-3 pl-2">
                               <div className="flex flex-wrap gap-1.5">
-                                {row.indicator_combo.split(' AND ').map((cond, i) => {
+                                {(row.indicator_combo || "").split(' AND ').map((cond: string, i: number) => {
                                   let bgClass = "bg-white/5 text-gray-300 border-white/10";
                                   if (cond.includes("RSI>70") || cond.includes("EMA20Dist>+1%")) bgClass = "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
                                   if (cond.includes("RSI<30") || cond.includes("EMA20Dist<-1%")) bgClass = "bg-purple-500/10 text-purple-400 border-purple-500/20";
@@ -348,14 +348,14 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                                   <div 
                                     className="h-full rounded-full"
                                     style={{ 
-                                      width: `${row.win_rate * 100}%`,
-                                      backgroundColor: row.win_rate >= 0.55 ? '#16C784' : row.win_rate >= 0.45 ? '#F5A623' : '#EA3943',
+                                      width: `${(row.win_rate || 0) * 100}%`,
+                                      backgroundColor: (row.win_rate || 0) >= 0.55 ? '#16C784' : (row.win_rate || 0) >= 0.45 ? '#F5A623' : '#EA3943',
                                       opacity: 0.9
                                     }}
                                   />
                                 </div>
-                                <span className={`text-sm font-bold w-12 text-right ${row.win_rate >= 0.55 ? "text-[#16C784]" : row.win_rate >= 0.45 ? "text-[#F5A623]" : "text-[#EA3943]"}`}>
-                                  {(row.win_rate * 100).toFixed(1)}%
+                                <span className={`text-sm font-bold w-12 text-right ${(row.win_rate || 0) >= 0.55 ? "text-[#16C784]" : (row.win_rate || 0) >= 0.45 ? "text-[#F5A623]" : "text-[#EA3943]"}`}>
+                                  {((row.win_rate || 0) * 100).toFixed(1)}%
                                 </span>
                               </div>
                             </td>
