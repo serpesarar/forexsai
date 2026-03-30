@@ -41,8 +41,10 @@ export default class ErrorBoundary extends Component<Props, State> {
           <h3 className="text-sm font-medium text-white mb-2">
             Bir hata oluştu
           </h3>
-          <p className="text-xs text-slate-400 mb-3">
+          <p className="text-xs text-slate-400 mb-3 whitespace-pre-wrap">
             {this.state.error?.message || "Bilinmeyen hata"}
+            <br/><br/>
+            {this.state.error?.stack ? this.state.error.stack.substring(0, 200) + "..." : JSON.stringify(this.state.error)}
           </p>
           <button
             onClick={() => this.setState({ hasError: false })}
