@@ -1,12 +1,47 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+const translations: Record<string, Record<string, string>> = {
+  tr: {
+    title: "Permütasyon Analizi",
+    tab_models: "Yapay Zeka Modelleri",
+    tab_indicators: "Stratejik Formasyonlar",
+    info_title: "Permütasyon Analizi Nedir?",
+    info_purpose: "Amac: Her bir sinyalin gercekten ise yarayip yaramadigini 1500 mum geriye donuk olarak kanitlamak.",
+    info_how_it_works: "Nasil Calisir: O anki butun indikator kosullari toplanir, tek tek geriye test edilir.",
+    info_usage: "Kullanim: En yuksek kazanma orani (win rate) nerede ise ona guven.",
+    loading: "Permütasyon hesabı yapılıyor...",
+    col_combo: "Kombinasyon (Sinyal)",
+    col_signals: "Toplam Sinyal",
+    col_winrate: "Kazanma % (Win Rate)",
+    col_profit_factor: "Kâr Çarpanı (PF)",
+    no_data: "Yeterli sinyal bulunamadı.",
+    insufficient_data_tooltip: "Yetersiz Veri (Son 180G)",
+    target_target: "Hedef:"
+  },
+  en: {
+    title: "Permutation Analysis",
+    tab_models: "AI Models",
+    tab_indicators: "Strategic Patterns",
+    info_title: "What is Permutation Analysis?",
+    info_purpose: "Purpose: To backtest every current signal condition against the last 1500 candles.",
+    info_how_it_works: "How it Works: Collects all current conditions and backtests them individually.",
+    info_usage: "Usage: Trust the conditions with the highest win rate.",
+    loading: "Calculating permutations...",
+    col_combo: "Combination (Signal)",
+    col_signals: "Total Signals",
+    col_winrate: "Win Rate %",
+    col_profit_factor: "Profit Factor",
+    no_data: "Not enough signals found.",
+    insufficient_data_tooltip: "Insufficient Data (Last 180D)",
+    target_target: "Target:"
+  }
+};
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  BarChart2, 
-  Activity, 
-  RefreshCw, 
+import {
+  BarChart2,
+  Activity,
+  RefreshCw,
   Target,
   Clock,
   ChevronDown,
@@ -42,11 +77,11 @@ interface IndicatorResult {
 }
 
 export function PermutationPanel({ symbol }: PermutationPanelProps) {
-  const t = useTranslations("PermutationPanel");
+  const t = (key: keyof typeof translations.tr) => (translations.tr[key] || key) as string;
   const [activeTab, setActiveTab] = useState<"models" | "indicators">("models");
   const [direction, setDirection] = useState<"BUY" | "SELL">("BUY");
   const [showInfo, setShowInfo] = useState(false);
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modelsData, setModelsData] = useState<ModelResult[]>([]);
@@ -61,7 +96,7 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch permutation data");
       const json = await res.json();
-      
+
       if (json.success) {
         setModelsData(json.data.models_analysis?.results || []);
         setIndicatorsData(json.data.indicators_analysis?.results || []);
@@ -77,7 +112,7 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
           }));
         }
       } else {
-         setError(json.error || "Unknown error");
+        setError(json.error || "Unknown error");
       }
     } catch (err: any) {
       setError(err.message);
@@ -103,45 +138,43 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
           <div>
             <h3 className="text-white font-semibold text-[16px] tracking-tight">{t("title")}</h3>
             <p className="text-[#6B7280] text-[12px] uppercase font-medium tracking-wide">
-              {symbol} • Data: {metaInfo.days_used}D 
+              {symbol} • Data: {metaInfo.days_used}D
             </p>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-3">
           {/* Direction Toggle */}
           <div className="flex bg-[#0B0F17] rounded-lg p-1 border border-white/5">
             <button
               onClick={() => setDirection("BUY")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                direction === "BUY" 
-                ? "bg-emerald-500/20 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.15)]" 
-                : "text-gray-500 hover:text-gray-300"
-              }`}
+              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${direction === "BUY"
+                  ? "bg-emerald-500/20 text-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.15)]"
+                  : "text-gray-500 hover:text-gray-300"
+                }`}
             >
               BUY
             </button>
             <button
               onClick={() => setDirection("SELL")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                direction === "SELL" 
-                ? "bg-red-500/20 text-red-400 shadow-[0_0_8px_rgba(239,68,68,0.15)]" 
-                : "text-gray-500 hover:text-gray-300"
-              }`}
+              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${direction === "SELL"
+                  ? "bg-red-500/20 text-red-400 shadow-[0_0_8px_rgba(239,68,68,0.15)]"
+                  : "text-gray-500 hover:text-gray-300"
+                }`}
             >
               SELL
             </button>
           </div>
 
-          <button 
-            onClick={() => setShowInfo(!showInfo)} 
+          <button
+            onClick={() => setShowInfo(!showInfo)}
             className={`p-2 rounded-lg transition-colors ${showInfo ? "bg-blue-500/20 text-blue-400" : "bg-white/5 hover:bg-white/10 text-gray-400"}`}
           >
             <Info className="w-4 h-4" />
           </button>
-          
-          <button 
-            onClick={fetchPermutations} 
+
+          <button
+            onClick={fetchPermutations}
             disabled={isLoading}
             className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-400 transition-colors disabled:opacity-50"
           >
@@ -154,31 +187,29 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
       <div className="flex border-b border-white/5 bg-[#111827]">
         <button
           onClick={() => setActiveTab("models")}
-          className={`relative px-6 py-3 text-sm font-medium transition-colors ${
-            activeTab === "models" ? "text-blue-400" : "text-gray-400 hover:text-gray-200"
-          }`}
+          className={`relative px-6 py-3 text-sm font-medium transition-colors ${activeTab === "models" ? "text-blue-400" : "text-gray-400 hover:text-gray-200"
+            }`}
         >
-           <div className="flex items-center gap-2">
-             <Target className="w-4 h-4" />
-             {t("tab_models")}
-           </div>
-           {activeTab === "models" && (
-             <motion.div layoutId="perm-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500" />
-           )}
+          <div className="flex items-center gap-2">
+            <Target className="w-4 h-4" />
+            {t("tab_models")}
+          </div>
+          {activeTab === "models" && (
+            <motion.div layoutId="perm-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500" />
+          )}
         </button>
         <button
           onClick={() => setActiveTab("indicators")}
-          className={`relative px-6 py-3 text-sm font-medium transition-colors ${
-            activeTab === "indicators" ? "text-blue-400" : "text-gray-400 hover:text-gray-200"
-          }`}
+          className={`relative px-6 py-3 text-sm font-medium transition-colors ${activeTab === "indicators" ? "text-blue-400" : "text-gray-400 hover:text-gray-200"
+            }`}
         >
-           <div className="flex items-center gap-2">
-             <Activity className="w-4 h-4" />
-             {t("tab_indicators")}
-           </div>
-           {activeTab === "indicators" && (
-             <motion.div layoutId="perm-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500" />
-           )}
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4" />
+            {t("tab_indicators")}
+          </div>
+          {activeTab === "indicators" && (
+            <motion.div layoutId="perm-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500" />
+          )}
         </button>
       </div>
 
@@ -210,17 +241,17 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-48 space-y-4">
-             <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
-             <p className="text-gray-500 text-sm">{t("loading")}</p>
+            <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
+            <p className="text-gray-500 text-sm">{t("loading")}</p>
           </div>
         ) : error ? (
-           <div className="flex items-center justify-center h-48 text-red-400 text-sm">
-             {error}
-           </div>
+          <div className="flex items-center justify-center h-48 text-red-400 text-sm">
+            {error}
+          </div>
         ) : (
           <AnimatePresence mode="wait">
             {activeTab === "models" && (
-              <motion.div 
+              <motion.div
                 key="models-panel"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -240,12 +271,10 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {(Array.isArray(modelsData) ? modelsData : []).map((row, idx) => {
-                        if (!row) return null;
-                        return (
-                        <tr key={idx} 
-                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${row.insufficient_data ? 'opacity-50 saturate-50' : ''}`}
-                            title={row.insufficient_data ? t("insufficient_data_tooltip") || "Yetersiz Veri (Son 180G)" : undefined}
+                      {modelsData.map((row, idx) => (
+                        <tr key={idx}
+                          className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${row.insufficient_data ? 'opacity-50 saturate-50' : ''}`}
+                          title={row.insufficient_data ? t("insufficient_data_tooltip") || "Yetersiz Veri (Son 180G)" : undefined}
                         >
                           <td className="py-3 pl-2">
                             <div className="flex flex-wrap gap-1.5 items-center">
@@ -264,9 +293,9 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                             <div className="flex items-center justify-end gap-2">
                               {/* Small bar indicator */}
                               <div className="w-12 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                <div 
+                                <div
                                   className="h-full rounded-full"
-                                  style={{ 
+                                  style={{
                                     width: `${(row.win_rate || 0) * 100}%`,
                                     backgroundColor: (row.win_rate || 0) >= 0.5 ? '#16C784' : '#EA3943',
                                     opacity: 0.9
@@ -279,13 +308,12 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                             </div>
                           </td>
                           <td className="py-3 text-right pr-2">
-                           <span className={`text-sm font-bold ${(row.profit_factor || 0) >= 1.5 ? "text-[#16C784]" : (row.profit_factor || 0) >= 1.0 ? "text-white" : "text-[#EA3943]"}`}>
-                             {(row.profit_factor === 999.0 || !row.profit_factor) ? "∞" : (row.profit_factor || 0).toFixed(2)}x
-                           </span>
+                            <span className={`text-sm font-bold ${(row.profit_factor || 0) >= 1.5 ? "text-[#16C784]" : (row.profit_factor || 0) >= 1.0 ? "text-white" : "text-[#EA3943]"}`}>
+                              {(row.profit_factor === 999.0 || !row.profit_factor) ? "∞" : (row.profit_factor || 0).toFixed(2)}x
+                            </span>
                           </td>
                         </tr>
-                        );
-                      })}
+                      ))}
                     </tbody>
                   </table>
                 )}
@@ -293,7 +321,7 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
             )}
 
             {activeTab === "indicators" && (
-              <motion.div 
+              <motion.div
                 key="ind-panel"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -303,11 +331,11 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                 <div className="mb-4 text-xs text-[#9AA4B2] bg-white/5 p-3 rounded-lg border border-white/5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 opacity-70" />
-                     {metaInfo.fwd_candles} Candles Forward Look
+                    {metaInfo.fwd_candles} Candles Forward Look
                   </span>
                   <span className="flex items-center gap-1.5 text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded">
-                     {direction === "BUY" ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5"/>}
-                     {t("target_target")} {metaInfo.tgt_pct}% Move
+                    {direction === "BUY" ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                    {t("target_target")} {metaInfo.tgt_pct}% Move
                   </span>
                 </div>
 
@@ -320,13 +348,11 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                         <tr className="border-b border-white/5">
                           <th className="pb-3 text-xs uppercase tracking-wider text-[#6B7280] font-medium pl-2">{t("col_combo")} (Conditions)</th>
                           <th className="pb-3 text-xs uppercase tracking-wider text-[#6B7280] font-medium text-right">{t("col_signals")} (Occurrences)</th>
-                          <th className="pb-3 text-xs uppercase tracking-wider text-[#6B7280] font-medium text-right pr-2">{t("col_winrate")} <br/><span className="text-[10px] opacity-60">Hits TP</span></th>
+                          <th className="pb-3 text-xs uppercase tracking-wider text-[#6B7280] font-medium text-right pr-2">{t("col_winrate")} <br /><span className="text-[10px] opacity-60">Hits TP</span></th>
                         </tr>
                       </thead>
                       <tbody>
-                        {(Array.isArray(indicatorsData) ? indicatorsData : []).map((row, idx) => {
-                          if (!row) return null;
-                          return (
+                        {indicatorsData.map((row, idx) => (
                           <tr key={idx} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
                             <td className="py-3 pl-2">
                               <div className="flex flex-wrap gap-1.5">
@@ -335,7 +361,7 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                                   if (cond.includes("RSI>70") || cond.includes("EMA20Dist>+1%")) bgClass = "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
                                   if (cond.includes("RSI<30") || cond.includes("EMA20Dist<-1%")) bgClass = "bg-purple-500/10 text-purple-400 border-purple-500/20";
                                   if (cond.includes("Vol") && !cond.includes("<0.7")) bgClass = "bg-cyan-500/10 text-cyan-400 border-cyan-500/20";
-                                  
+
                                   return (
                                     <span key={i} className={`px-2 py-0.5 rounded text-xs font-semibold border ${bgClass}`}>
                                       {cond}
@@ -350,9 +376,9 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                             <td className="py-3 text-right pr-2">
                               <div className="flex items-center justify-end gap-2">
                                 <div className="w-12 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                  <div 
+                                  <div
                                     className="h-full rounded-full"
-                                    style={{ 
+                                    style={{
                                       width: `${(row.win_rate || 0) * 100}%`,
                                       backgroundColor: (row.win_rate || 0) >= 0.55 ? '#16C784' : (row.win_rate || 0) >= 0.45 ? '#F5A623' : '#EA3943',
                                       opacity: 0.9
@@ -365,8 +391,7 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                               </div>
                             </td>
                           </tr>
-                          );
-                        })}
+                        ))}
                       </tbody>
                     </table>
                   </div>
