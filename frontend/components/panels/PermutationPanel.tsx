@@ -14,7 +14,7 @@ import {
   Info,
   ArrowUpRight,
   ArrowDownRight,
-  AlertTriangle
+  TriangleAlert
 } from "lucide-react";
 import { buildApiUrl } from "@/lib/api/base";
 
@@ -247,7 +247,7 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                         >
                           <td className="py-3 pl-2">
                             <div className="flex flex-wrap gap-1.5 items-center">
-                              {row.insufficient_data && <AlertTriangle className="w-3.5 h-3.5 text-yellow-500 mr-1" />}
+                              {row.insufficient_data && <TriangleAlert className="w-3.5 h-3.5 text-yellow-500 mr-1" />}
                               {row.combination.split('+').map((m, i) => (
                                 <span key={i} className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-xs font-semibold uppercase border border-blue-500/20 shadow-[0_0_8px_rgba(79,140,255,0.05)]">
                                   {m}
