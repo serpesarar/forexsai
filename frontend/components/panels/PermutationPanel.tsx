@@ -240,7 +240,9 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {modelsData.map((row, idx) => (
+                      {(Array.isArray(modelsData) ? modelsData : []).map((row, idx) => {
+                        if (!row) return null;
+                        return (
                         <tr key={idx} 
                             className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${row.insufficient_data ? 'opacity-50 saturate-50' : ''}`}
                             title={row.insufficient_data ? t("insufficient_data_tooltip") || "Yetersiz Veri (Son 180G)" : undefined}
@@ -282,7 +284,8 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                            </span>
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 )}
@@ -321,7 +324,9 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                         </tr>
                       </thead>
                       <tbody>
-                        {indicatorsData.map((row, idx) => (
+                        {(Array.isArray(indicatorsData) ? indicatorsData : []).map((row, idx) => {
+                          if (!row) return null;
+                          return (
                           <tr key={idx} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
                             <td className="py-3 pl-2">
                               <div className="flex flex-wrap gap-1.5">
@@ -360,7 +365,8 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                               </div>
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
