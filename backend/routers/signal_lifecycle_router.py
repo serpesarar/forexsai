@@ -36,7 +36,7 @@ async def get_active_signals():
 
     try:
         result = client.table("prediction_logs").select(
-            "id, symbol, ml_direction, ml_confidence, ml_entry_price, "
+            "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
             "model_type, strategy, status, targets, targets_hit, "
             "highest_profit_pips, lowest_drawdown_pips, stop_loss_pips, "
             "created_at"

@@ -1361,7 +1361,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
                         )
 
         # Ensure all known model types exist in response (even with 0 signals)
-        KNOWN_MODELS = ["ml", "pulse1", "pulse2", "pulse3", "emel", "emel_inverse", "hybrid"]
+        KNOWN_MODELS = ["ml", "meta", "pulse1", "pulse2", "pulse3", "emel", "emel_inverse", "hybrid"]
         for km in KNOWN_MODELS:
             if km not in models:
                 models[km] = {

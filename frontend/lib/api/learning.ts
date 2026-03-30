@@ -644,6 +644,7 @@ export async function resetUiStats(symbol?: string): Promise<any> {
 export interface ActiveSignal {
   id: string;
   symbol: string;
+  timeframe: string;
   ml_direction: string;
   ml_confidence: number;
   ml_entry_price: number;

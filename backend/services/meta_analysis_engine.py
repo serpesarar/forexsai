@@ -818,6 +818,12 @@ class MetaAnalysisEngine:
         # Cache
         _meta_cache[symbol] = (time.time(), meta_signal)
 
+        try:
+            from services.meta_signal_logger import log_meta_prediction
+            await log_meta_prediction(asdict(meta_signal))
+        except Exception as e:
+            logger.warning(f"[MetaEngine] Meta prediction log failed for {symbol}: {e}")
+
         elapsed = (time.time() - start_ts) * 1000
         logger.info(
             f"[MetaEngine] {symbol}: {direction} ({confidence:.0f}%) "

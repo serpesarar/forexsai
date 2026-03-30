@@ -308,6 +308,7 @@ const SYM_DISPLAY: Record<string, string> = {
 const MODEL_DISPLAY: Record<string, string> = {
   all: "All Models",
   ml: "ML Model",
+  meta: "Meta Engine",
   emel: "EMEL 9-Check",
   pulse1: "Pulse 1 — Algo",
   pulse2: "Pulse 2 — ML",

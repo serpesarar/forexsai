@@ -8,7 +8,7 @@ from services.target_config import calculate_stoploss_price, calculate_target_pr
 
 TIMEFRAME_ORDER = ["5m", "15m", "30m", "1h", "4h", "1d"]
 VALID_TIMEFRAMES = set(TIMEFRAME_ORDER)
-MODEL_ORDER = ["ml", "ai_panel", "pulse1", "pulse2", "pulse3", "emel", "emel_inverse", "smc", "hybrid"]
+MODEL_ORDER = ["ml", "ai_panel", "meta", "pulse1", "pulse2", "pulse3", "emel", "emel_inverse", "smc", "hybrid"]
 TP_LEVEL_ORDER = ("TP1", "TP2", "TP3", "TP4")
 SMC_CADENCE_MINUTES = {"5m": 5, "15m": 15, "30m": 30, "1h": 60, "4h": 240, "1d": 1440}
 
@@ -43,6 +43,11 @@ def normalize_model_type(sig: dict) -> str:
     if strategy in {"AI_PANEL", "AI_PANEL_HOURLY"}:
         return "ai_panel"
 
+    if model_type in {"meta", "meta_engine", "meta-intelligence-engine", "meta_intelligence_engine"}:
+        return "meta"
+    if strategy in {"META", "META_ENGINE", "META_INTELLIGENCE_ENGINE"}:
+        return "meta"
+
     if strategy in {"SMART_MONEY_ZONES", "ORDER_BLOCK", "ORDER_BLOCKS", "SMC"}:
         return "smc"
 
@@ -62,7 +67,7 @@ def normalize_model_type(sig: dict) -> str:
             return "pulse1"
         return "ml"
 
-    if model_type in {"pulse2", "pulse3", "emel", "emel_inverse", "hybrid"}:
+    if model_type in {"pulse2", "pulse3", "emel", "emel_inverse", "hybrid", "meta"}:
         return model_type
     return "ml"
 

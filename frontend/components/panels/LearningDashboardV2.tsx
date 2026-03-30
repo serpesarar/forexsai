@@ -35,6 +35,7 @@ import { ModelPerformanceModal } from "./ModelPerformanceModal";
 
 const MODEL_THEME: Record<string, { label: string; color: string; Icon: any }> = {
   ml: { label: "ML_Model", color: "var(--accent-info)", Icon: SignalsIcon },
+  meta: { label: "Meta Engine", color: "#4F8CFF", Icon: LearningIcon },
   pulse1: { label: "Pulse 1 — Algo", color: "#22D3EE", Icon: PulseIcon },
   pulse2: { label: "Pulse 2 — ML", color: "var(--accent-purple)", Icon: SignalsIcon },
   pulse3: { label: "Pulse 3 — MTF", color: "var(--accent-positive)", Icon: PulseIcon },
@@ -536,7 +537,7 @@ export default function LearningDashboardV2() {
               <div className="space-y-3">
                 {Object.entries(models)
                   .sort(([a], [b]) => {
-                    const order: Record<string, number> = { ml: 0, pulse1: 1, pulse2: 2, pulse3: 3, pulse: 3.5, emel: 4, emel_inverse: 4.5, hybrid: 5 };
+                    const order: Record<string, number> = { ml: 0, meta: 0.5, pulse1: 1, pulse2: 2, pulse3: 3, pulse: 3.5, emel: 4, emel_inverse: 4.5, hybrid: 5 };
                     return (order[a] ?? 99) - (order[b] ?? 99);
                   })
                   .map(([model, stats]) => {

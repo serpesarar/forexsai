@@ -12,6 +12,129 @@ from typing import Dict, Any, Optional, List
 logger = logging.getLogger(__name__)
 
 
+async def log_meta_prediction(signal_data: Dict[str, Any], timeframe: str = "1h") -> Optional[str]:
+    try:
+        from database.supabase_client import get_supabase_client, is_db_available
+        from services.prediction_logger import _close_existing_signal, _get_current_session, _has_active_signal
+        from services.target_config import pips_from_price_change
+        from utils.safe_supabase import safe_get_data, safe_get_error
+
+        direction = str(signal_data.get("direction") or "").upper().strip()
+        symbol = str(signal_data.get("symbol") or "").upper().strip()
+        if direction not in {"BUY", "SELL"} or not symbol:
+            return None
+
+        try:
+            entry_price = float(signal_data.get("entry_price") or 0)
+            stop_loss = float(signal_data.get("stop_loss") or 0)
+            take_profit_1 = float(signal_data.get("take_profit_1") or 0)
+            take_profit_2 = float(signal_data.get("take_profit_2") or 0)
+            confidence = float(signal_data.get("confidence") or 0)
+        except (TypeError, ValueError):
+            return None
+
+        if entry_price <= 0 or stop_loss <= 0:
+            return None
+
+        if not is_db_available():
+            return None
+
+        client = get_supabase_client()
+        if not client:
+            return None
+
+        normalized_timeframe = (timeframe or "1h").lower().strip() or "1h"
+
+        has_active, active_signal_id, active_direction = _has_active_signal(
+            client,
+            symbol,
+            "meta",
+            normalized_timeframe,
+            direction,
+        )
+
+        if has_active:
+            if active_direction == direction:
+                return None
+            if not active_signal_id:
+                return None
+            closed = _close_existing_signal(
+                client,
+                active_signal_id,
+                direction,
+                entry_price,
+                reason="direction_flip",
+            )
+            if not closed:
+                return None
+
+        targets = {}
+        if take_profit_1 > 0:
+            targets["TP1"] = round(take_profit_1, 4)
+        if take_profit_2 > 0:
+            targets["TP2"] = round(take_profit_2, 4)
+        targets["SL"] = round(stop_loss, 4)
+
+        stop_loss_pips = abs(pips_from_price_change(abs(entry_price - stop_loss), symbol))
+        factors = {
+            "session": _get_current_session(),
+            "target_type": "meta_engine",
+            "strategy": "META_ENGINE",
+            "source": "META_ENGINE",
+            "source_combo": signal_data.get("source_combo"),
+            "regime": signal_data.get("regime"),
+            "agreement_ratio": signal_data.get("agreement_ratio"),
+            "technical_score": signal_data.get("technical_score"),
+            "passed_conditions": signal_data.get("passed_conditions", []),
+            "risk_reward": signal_data.get("risk_reward"),
+            "strength": signal_data.get("strength"),
+            "model_breakdown": signal_data.get("model_breakdown", {}),
+            "alternatives": signal_data.get("alternatives", []),
+        }
+        factors = {key: value for key, value in factors.items() if value not in (None, "", [], {})}
+
+        record = {
+            "symbol": symbol,
+            "timeframe": normalized_timeframe,
+            "ml_direction": direction,
+            "ml_confidence": round(confidence, 1),
+            "ml_target_price": take_profit_1 or None,
+            "ml_stop_price": stop_loss,
+            "ml_entry_price": entry_price,
+            "claude_direction": direction,
+            "claude_confidence": round(confidence, 1),
+            "claude_model": "META_ENGINE",
+            "factors": factors,
+            "outcome_checked": False,
+            "strategy": "META_ENGINE",
+            "status": "active",
+            "targets": targets,
+            "stop_loss_pips": round(stop_loss_pips, 2),
+            "targets_hit": {tp: False for tp in targets if tp != "SL"},
+            "highest_profit_pips": 0,
+            "lowest_drawdown_pips": 0,
+            "model_type": "meta",
+        }
+
+        result = client.table("prediction_logs").insert_ignore(record)
+        if safe_get_error(result):
+            logger.error("[MetaSignalLogger] prediction_logs insert error: %s", result["error"])
+            return None
+        if result.get("duplicate"):
+            return None
+
+        rows = safe_get_data(result) or []
+        if rows:
+            prediction_id = rows[0].get("id")
+            await log_meta_signal(signal_data)
+            logger.info("[MetaSignalLogger] Logged meta prediction %s for %s", prediction_id, symbol)
+            return prediction_id
+        return None
+    except Exception as e:
+        logger.error(f"[MetaSignalLogger] Prediction log error: {e}")
+        return None
+
+
 async def log_meta_signal(signal_data: Dict[str, Any]) -> Optional[str]:
     """Log a meta-signal to the meta_signals table. Returns the row ID."""
     try:
