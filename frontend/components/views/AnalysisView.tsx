@@ -8,7 +8,6 @@ import { LazyPanel } from "../../components/LazyPanel";
 import { useI18nStore } from "../../lib/i18n/store";
 import ErrorBoundary from "../ErrorBoundary";
 
-const SMCPanel = lazy(() => import("../../components/panels/SMCPanel"));
 const MTFMatrixPanel = lazy(() => import("../../components/panels/MTFMatrixPanel"));
 const COTWhalePanel = lazy(() => import("../../components/panels/COTWhalePanel"));
 const SeasonalityPanel = lazy(() => import("../../components/panels/SeasonalityPanel"));
@@ -39,15 +38,6 @@ export default function AnalysisView() {
                         <p className="text-xs text-textSecondary">SMC, Multi-Timeframe, COT & Market Structure</p>
                     </div>
                 </div>
-
-                {/* SMC Panel */}
-                <LazyPanel fallbackHeight={350}>
-                    <Suspense fallback={<PanelLoader />}>
-                        <ErrorBoundary>
-                            <SMCPanel />
-                        </ErrorBoundary>
-                    </Suspense>
-                </LazyPanel>
 
                 {/* MTF Matrix */}
                 <LazyPanel fallbackHeight={300}>

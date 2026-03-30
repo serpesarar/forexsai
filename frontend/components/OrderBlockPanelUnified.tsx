@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, XCircle, HelpCircle, X, Layers, Activity } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, XCircle, HelpCircle, X, Layers, Activity, Clock3, ChevronRight, Zap } from "lucide-react";
 import { useOrderBlockDetect } from "../lib/api/orderBlocks";
+import { useRefreshAge } from "../hooks/useRefreshAge";
 import { useI18nStore } from "../lib/i18n/store";
+import SMCPanel from "./panels/SMCPanel";
 
 const SYMBOLS = [
   { id: "NDX.INDX", label: "NASDAQ", flag: "🇺🇸" },
@@ -73,6 +75,27 @@ interface StructureData {
   };
 }
 
+interface SupportResistanceLevel {
+  type: string;
+  name: string;
+  price: number;
+  distance: number;
+  distance_display: string;
+  strength: string;
+  is_next?: boolean;
+  touch_count?: number;
+}
+
+interface SupportResistanceData {
+  all_levels?: SupportResistanceLevel[];
+  nearest_support?: SupportResistanceLevel | null;
+  nearest_resistance?: SupportResistanceLevel | null;
+  pivot?: number;
+  range_high?: number;
+  range_low?: number;
+  method?: string;
+}
+
 interface ApiResponse {
   symbol: string;
   order_blocks?: OrderBlock[];
@@ -82,9 +105,12 @@ interface ApiResponse {
   fvg_list?: FVG[];
   combined_signal?: { action: string; confidence: number; reasoning: string[] };
   trend?: string;
+  support_resistance?: SupportResistanceData;
+  timestamp?: string;
 }
 
 function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProps) {
+  const [showProfessional, setShowProfessional] = useState(false);
   const payload = useMemo(() => ({
     symbol,
     timeframe,
@@ -98,9 +124,17 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
     }
   }), [symbol, timeframe]);
 
-  const { data, isLoading, error } = useOrderBlockDetect(payload);
+  const { data, isLoading, isFetching, error, refetch } = useOrderBlockDetect(payload);
 
   const typedData = data as ApiResponse | undefined;
+  const analyzedAt = typedData?.timestamp || null;
+  const { refreshAge, markRefreshed } = useRefreshAge(analyzedAt ? new Date(analyzedAt) : null);
+
+  useEffect(() => {
+    if (analyzedAt) {
+      markRefreshed(analyzedAt);
+    }
+  }, [analyzedAt, markRefreshed]);
 
   // Extract data from new API structure
   const structure = typedData?.structure;
@@ -110,9 +144,12 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
   const fvgList = structure?.fvg ?? [];
   const trend = structure?.trend ?? typedData?.trend ?? "ranging";
   const signal = typedData?.combined_signal;
+  const supportResistance = typedData?.support_resistance;
 
   const nearestBullish = orderBlocks.find((ob: OrderBlock) => ob.type === "bullish");
   const nearestBearish = orderBlocks.find((ob: OrderBlock) => ob.type === "bearish");
+  const nearestSupport = supportResistance?.nearest_support ?? null;
+  const nearestResistance = supportResistance?.nearest_resistance ?? null;
 
   // Latest CHoCH and BOS
   const latestCHoCH = chochList[chochList.length - 1];
@@ -129,6 +166,9 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
 
   const signalStyle = signal ? getSignalStyle(signal.action) : null;
   const SignalIcon = signalStyle?.icon || AlertCircle;
+  const srMethodLabel = supportResistance?.method === "swing_cluster_fib"
+    ? "Clustered swings + Fib fallback"
+    : "Order block fallback";
 
   if (!isActive) return null;
 
@@ -142,7 +182,49 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
   }
 
   return (
-    <div className="space-y-3 animate-in fade-in duration-200">
+    <>
+      {showProfessional && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 backdrop-blur-sm md:items-center" onClick={() => setShowProfessional(false)}>
+          <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-white/10 bg-background shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+              <div>
+                <h3 className="text-base font-semibold text-white">Professional Smart Money Details</h3>
+                <p className="text-xs text-textSecondary">{symbolLabel} • Daily rule-based structure, liquidity, gaps and bias context</p>
+              </div>
+              <button onClick={() => setShowProfessional(false)} className="rounded-lg border border-white/10 bg-white/5 p-2 text-textSecondary transition hover:bg-white/10">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="max-h-[78vh] overflow-y-auto">
+              <SMCPanel lockedSymbol={symbol} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-3 animate-in fade-in duration-200">
+      {analyzedAt && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[11px] text-textSecondary">
+          <div className="flex flex-wrap items-center gap-2">
+            <Clock3 className="h-3.5 w-3.5" />
+            <span>
+              Last scan: {new Date(analyzedAt).toLocaleString()}
+            </span>
+            <span className="rounded-full border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 font-semibold text-purple-300">
+              {refreshAge}
+            </span>
+          </div>
+          <button
+            onClick={() => refetch()}
+            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[11px] font-medium text-textSecondary transition hover:bg-white/10"
+            disabled={isFetching}
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+        </div>
+      )}
+
       {/* Trend Indicator */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -187,15 +269,25 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4 text-emerald-400" />
-            <span className="text-xs font-medium text-emerald-400">Support Zone</span>
+            <span className="text-xs font-medium text-emerald-400">Nearest Support</span>
           </div>
-          {nearestBullish ? (
+          {nearestSupport ? (
+            <>
+              <p className="text-sm font-mono font-bold text-white">
+                {Number(nearestSupport.price).toFixed(2)}
+              </p>
+              <p className="text-[10px] text-textSecondary mt-1">
+                {nearestSupport.name} • {nearestSupport.distance_display} • {nearestSupport.strength}
+                {nearestSupport.touch_count ? ` • Touches: ${nearestSupport.touch_count}` : ""}
+              </p>
+            </>
+          ) : nearestBullish ? (
             <>
               <p className="text-sm font-mono font-bold text-white">
                 {Number(nearestBullish.zone_low).toFixed(2)} - {Number(nearestBullish.zone_high).toFixed(2)}
               </p>
               <p className="text-[10px] text-textSecondary mt-1">
-                Strength: {nearestBullish.strength} • Score: {nearestBullish.score}/100
+                OB fallback • Strength: {nearestBullish.strength} • Score: {nearestBullish.score}/100
               </p>
             </>
           ) : (
@@ -206,15 +298,25 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
         <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-2">
             <TrendingDown className="w-4 h-4 text-red-400" />
-            <span className="text-xs font-medium text-red-400">Resistance Zone</span>
+            <span className="text-xs font-medium text-red-400">Nearest Resistance</span>
           </div>
-          {nearestBearish ? (
+          {nearestResistance ? (
+            <>
+              <p className="text-sm font-mono font-bold text-white">
+                {Number(nearestResistance.price).toFixed(2)}
+              </p>
+              <p className="text-[10px] text-textSecondary mt-1">
+                {nearestResistance.name} • {nearestResistance.distance_display} • {nearestResistance.strength}
+                {nearestResistance.touch_count ? ` • Touches: ${nearestResistance.touch_count}` : ""}
+              </p>
+            </>
+          ) : nearestBearish ? (
             <>
               <p className="text-sm font-mono font-bold text-white">
                 {Number(nearestBearish.zone_low).toFixed(2)} - {Number(nearestBearish.zone_high).toFixed(2)}
               </p>
               <p className="text-[10px] text-textSecondary mt-1">
-                Strength: {nearestBearish.strength} • Score: {nearestBearish.score}/100
+                OB fallback • Strength: {nearestBearish.strength} • Score: {nearestBearish.score}/100
               </p>
             </>
           ) : (
@@ -222,6 +324,28 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
           )}
         </div>
       </div>
+
+      {(nearestSupport || nearestResistance) && (
+        <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[10px] text-textSecondary">
+          Method: {srMethodLabel}
+        </div>
+      )}
+
+      <button
+        onClick={() => setShowProfessional(true)}
+        className="flex w-full items-center justify-between rounded-xl border border-purple-500/20 bg-purple-500/10 px-4 py-3 text-left transition hover:bg-purple-500/15"
+      >
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-purple-500/15 p-2">
+            <Zap className="h-4 w-4 text-purple-300" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-white">Professional Details</p>
+            <p className="text-[11px] text-textSecondary">Open the legacy Smart Money analysis as a deeper, scrollable context panel</p>
+          </div>
+        </div>
+        <ChevronRight className="h-4 w-4 text-purple-300" />
+      </button>
 
       {/* CHoCH Detection */}
       {latestCHoCH && (
@@ -339,12 +463,13 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
         </div>
       </div>
 
-      {isLoading && (
+      {(isLoading || isFetching) && (
         <div className="text-center py-2">
           <p className="text-xs text-textSecondary animate-pulse">Analyzing...</p>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

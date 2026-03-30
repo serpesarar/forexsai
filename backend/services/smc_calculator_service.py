@@ -391,7 +391,15 @@ def determine_market_structure(
     last_sl = swing_lows[-1]["price"]
     prev_sh = swing_highs[-2]["price"] if len(swing_highs) > 1 else last_sh
     prev_sl = swing_lows[-2]["price"] if len(swing_lows) > 1 else last_sl
-    
+    prior_sh = swing_highs[-3]["price"] if len(swing_highs) > 2 else prev_sh
+    prior_sl = swing_lows[-3]["price"] if len(swing_lows) > 2 else prev_sl
+
+    prior_trend = "ranging"
+    if prev_sh > prior_sh and prev_sl > prior_sl:
+        prior_trend = "bullish"
+    elif prev_sh < prior_sh and prev_sl < prior_sl:
+        prior_trend = "bearish"
+
     # Trend determination
     if last_sh > prev_sh and last_sl > prev_sl:
         trend = "bullish"
@@ -406,14 +414,14 @@ def determine_market_structure(
         bos = {"direction": "up", "price": last_sh, "confirmed": True}
     elif last_sl < prev_sl:
         bos = {"direction": "down", "price": last_sl, "confirmed": True}
-    
-    # CHoCH detection (simplified)
+
+    # CHoCH detection based on prior structure transition
     choch = None
-    if trend == "bullish" and last_sl < prev_sl:
-        choch = {"direction": "down", "price": last_sl, "confirmed": False}
-    elif trend == "bearish" and last_sh > prev_sh:
-        choch = {"direction": "up", "price": last_sh, "confirmed": False}
-    
+    if prior_trend == "bullish" and last_sl < prev_sl:
+        choch = {"direction": "down", "price": round(last_sl, 2), "confirmed": True}
+    elif prior_trend == "bearish" and last_sh > prev_sh:
+        choch = {"direction": "up", "price": round(last_sh, 2), "confirmed": True}
+
     return {
         "current_trend": trend,
         "last_bos": bos,

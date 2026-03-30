@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 import logging
 from threading import Lock
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
@@ -40,6 +40,196 @@ class OrderBlockService:
     def _utc_now() -> datetime:
         return datetime.now(UTC)
 
+    @staticmethod
+    def _get_pip_value(symbol: str) -> float:
+        symbol_upper = (symbol or "").upper()
+        if "XAU" in symbol_upper:
+            return 1.0
+        if "OIL" in symbol_upper or "USOIL" in symbol_upper or "CL" in symbol_upper:
+            return 0.01
+        return 1.0
+
+    @staticmethod
+    def _get_unit_label(symbol: str) -> str:
+        return "pts"
+
+    @staticmethod
+    def _calc_atr(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, period: int = 14) -> float:
+        n = len(closes)
+        if n < 2:
+            return float(closes[-1]) * 0.001 if n else 1.0
+        trs = []
+        for i in range(1, min(period + 1, n)):
+            tr = max(
+                float(highs[i]) - float(lows[i]),
+                abs(float(highs[i]) - float(closes[i - 1])),
+                abs(float(lows[i]) - float(closes[i - 1])),
+            )
+            trs.append(tr)
+        return float(np.mean(trs)) if trs else (float(closes[-1]) * 0.001 if n else 1.0)
+
+    def _build_support_resistance(self, symbol: str, candles: List[Candle], current_price: float) -> Dict[str, Any]:
+        pip_value = self._get_pip_value(symbol)
+        unit = self._get_unit_label(symbol)
+
+        if not candles:
+            return {
+                "all_levels": [],
+                "nearest_resistance": None,
+                "nearest_support": None,
+                "pivot": round(current_price, 2),
+                "range_high": round(current_price, 2),
+                "range_low": round(current_price, 2),
+                "method": "swing_cluster_fib",
+            }
+
+        highs = np.array([float(getattr(c, "high", current_price) or current_price) for c in candles], dtype=np.float64)
+        lows = np.array([float(getattr(c, "low", current_price) or current_price) for c in candles], dtype=np.float64)
+        closes = np.array([float(getattr(c, "close", current_price) or current_price) for c in candles], dtype=np.float64)
+        n = len(closes)
+
+        atr = self._calc_atr(highs, lows, closes, 14)
+        cluster_threshold = max(atr * 0.7, current_price * 0.0015)
+        period = 3
+        swing_highs: List[tuple[float, int]] = []
+        swing_lows: List[tuple[float, int]] = []
+
+        for i in range(period, max(period, n - period)):
+            h_window = highs[i - period : i + period + 1]
+            l_window = lows[i - period : i + period + 1]
+            if len(h_window) and float(highs[i]) >= float(np.max(h_window)):
+                swing_highs.append((float(highs[i]), i))
+            if len(l_window) and float(lows[i]) <= float(np.min(l_window)):
+                swing_lows.append((float(lows[i]), i))
+
+        def cluster_swings(swings: List[tuple[float, int]]) -> List[Dict[str, Any]]:
+            if not swings:
+                return []
+            sorted_swings = sorted(swings, key=lambda item: item[0])
+            clusters: List[Dict[str, Any]] = []
+            for price, idx in sorted_swings:
+                placed = False
+                for cluster in clusters:
+                    if abs(price - cluster["center"]) <= cluster_threshold:
+                        cluster["prices"].append(price)
+                        cluster["indices"].append(idx)
+                        cluster["center"] = float(np.mean(cluster["prices"]))
+                        cluster["latest_idx"] = max(cluster["indices"])
+                        placed = True
+                        break
+                if not placed:
+                    clusters.append({
+                        "center": price,
+                        "prices": [price],
+                        "indices": [idx],
+                        "latest_idx": idx,
+                    })
+            for cluster in clusters:
+                touches = len(cluster["prices"])
+                recency = cluster["latest_idx"] / max(n, 1)
+                cluster["score"] = touches + recency * 0.5
+                cluster["touch_count"] = touches
+            return clusters
+
+        res_clusters = cluster_swings([(price, idx) for price, idx in swing_highs if price > current_price])
+        sup_clusters = cluster_swings([(price, idx) for price, idx in swing_lows if price < current_price])
+
+        res_nearest = sorted(res_clusters, key=lambda cluster: cluster["center"] - current_price)[:3]
+        sup_nearest = sorted(sup_clusters, key=lambda cluster: current_price - cluster["center"])[:3]
+
+        window = min(50, n)
+        high_ref = float(np.max(highs[-window:])) if window else current_price
+        low_ref = float(np.min(lows[-window:])) if window else current_price
+        pivot = (high_ref + low_ref + current_price) / 3
+        range_size = max(high_ref - low_ref, current_price * 0.002)
+
+        def fib_res_levels() -> List[Dict[str, Any]]:
+            out = []
+            for mult in (0.382, 0.618, 1.0):
+                price = pivot + range_size * mult
+                if price > current_price:
+                    out.append({"center": price, "touch_count": 1, "score": 0.5, "is_fib": True})
+            return sorted(out, key=lambda cluster: cluster["center"] - current_price)
+
+        def fib_sup_levels() -> List[Dict[str, Any]]:
+            out = []
+            for mult in (0.382, 0.618, 1.0):
+                price = pivot - range_size * mult
+                if price < current_price:
+                    out.append({"center": price, "touch_count": 1, "score": 0.5, "is_fib": True})
+            return sorted(out, key=lambda cluster: current_price - cluster["center"])
+
+        if len(res_nearest) < 2:
+            existing_prices = {round(cluster["center"], 1) for cluster in res_nearest}
+            for level in fib_res_levels():
+                if round(level["center"], 1) not in existing_prices:
+                    res_nearest.append(level)
+                if len(res_nearest) >= 3:
+                    break
+            res_nearest = sorted(res_nearest, key=lambda cluster: cluster["center"] - current_price)[:3]
+
+        if len(sup_nearest) < 2:
+            existing_prices = {round(cluster["center"], 1) for cluster in sup_nearest}
+            for level in fib_sup_levels():
+                if round(level["center"], 1) not in existing_prices:
+                    sup_nearest.append(level)
+                if len(sup_nearest) >= 3:
+                    break
+            sup_nearest = sorted(sup_nearest, key=lambda cluster: current_price - cluster["center"])[:3]
+
+        levels: List[Dict[str, Any]] = []
+        for idx, cluster in enumerate(res_nearest):
+            price = round(float(cluster["center"]), 2)
+            distance = abs(price - current_price) / pip_value
+            touches = int(cluster.get("touch_count", 1) or 1)
+            levels.append({
+                "type": "resistance",
+                "name": f"R{idx + 1}" + (f" (×{touches})" if touches >= 2 else ""),
+                "price": price,
+                "distance": round(distance, 1),
+                "distance_display": f"+{round(distance, 1)} {unit}",
+                "strength": "strong" if touches >= 2 else "normal",
+                "is_next": idx == 0,
+                "touch_count": touches,
+            })
+
+        levels.append({
+            "type": "current",
+            "name": "Current Price",
+            "price": round(current_price, 2),
+            "distance": 0,
+            "distance_display": "HERE",
+            "strength": "current",
+        })
+
+        for idx, cluster in enumerate(sup_nearest):
+            price = round(float(cluster["center"]), 2)
+            distance = abs(price - current_price) / pip_value
+            touches = int(cluster.get("touch_count", 1) or 1)
+            levels.append({
+                "type": "support",
+                "name": f"S{idx + 1}" + (f" (×{touches})" if touches >= 2 else ""),
+                "price": price,
+                "distance": round(distance, 1),
+                "distance_display": f"-{round(distance, 1)} {unit}",
+                "strength": "strong" if touches >= 2 else "normal",
+                "is_next": idx == 0,
+                "touch_count": touches,
+            })
+
+        resistances = [level for level in levels if level["type"] == "resistance"]
+        supports = [level for level in levels if level["type"] == "support"]
+
+        return {
+            "all_levels": sorted(levels, key=lambda level: level["price"], reverse=True),
+            "nearest_resistance": min(resistances, key=lambda level: level["distance"]) if resistances else None,
+            "nearest_support": min(supports, key=lambda level: level["distance"]) if supports else None,
+            "pivot": round(pivot, 2),
+            "range_high": round(high_ref, 2),
+            "range_low": round(low_ref, 2),
+            "method": "swing_cluster_fib",
+        }
+
     async def detect(
         self,
         symbol: str,
@@ -51,7 +241,7 @@ class OrderBlockService:
         log_signals: bool = True,
     ) -> dict:
         # bump cache version whenever detection inputs/logic changes
-        cache_key = f"v4:{symbol}:{timeframe}:{limit}:{config}"  # noqa: S608 - cache key
+        cache_key = f"v5:{symbol}:{timeframe}:{limit}:{config}"  # noqa: S608 - cache key
         if use_cache:
             with self._lock:
                 cached = self._cache.get(cache_key)
@@ -78,6 +268,16 @@ class OrderBlockService:
             enriched_obs.append(ob_dict)
 
         combined_signal = await self._combine_signals(symbol, structure)
+        current_price = float(getattr(candles[-1], "close", 0.0) or 0.0) if candles else 0.0
+        support_resistance = self._build_support_resistance(symbol, candles, current_price) if current_price > 0 else {
+            "all_levels": [],
+            "nearest_resistance": None,
+            "nearest_support": None,
+            "pivot": None,
+            "range_high": None,
+            "range_low": None,
+            "method": "swing_cluster_fib",
+        }
 
         payload = {
             "symbol": symbol,
@@ -93,6 +293,7 @@ class OrderBlockService:
             "active_signals": [],
             "combined_signal": combined_signal,
             "trend": structure.trend,
+            "support_resistance": support_resistance,
             "timestamp": self._utc_now().isoformat().replace("+00:00", "Z"),
         }
 

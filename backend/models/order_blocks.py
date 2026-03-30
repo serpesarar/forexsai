@@ -134,6 +134,33 @@ class StructureData(BaseModel):
         extra = "allow"
 
 
+class SupportResistanceLevel(BaseModel):
+    type: str
+    name: str
+    price: float
+    distance: float
+    distance_display: str
+    strength: str
+    is_next: Optional[bool] = None
+    touch_count: Optional[int] = None
+
+    class Config:
+        extra = "allow"
+
+
+class SupportResistanceData(BaseModel):
+    all_levels: Optional[List[SupportResistanceLevel]] = None
+    nearest_support: Optional[SupportResistanceLevel] = None
+    nearest_resistance: Optional[SupportResistanceLevel] = None
+    pivot: Optional[float] = None
+    range_high: Optional[float] = None
+    range_low: Optional[float] = None
+    method: Optional[str] = None
+
+    class Config:
+        extra = "allow"
+
+
 class OrderBlockDetectResponse(BaseModel):
     symbol: str
     timeframe: str
@@ -148,6 +175,7 @@ class OrderBlockDetectResponse(BaseModel):
     bos_list: Optional[List[BOSItem]] = None
     fvg_list: Optional[List[FVGItem]] = None
     trend: Optional[str] = None
+    support_resistance: Optional[SupportResistanceData] = None
     timestamp: str
 
     class Config:

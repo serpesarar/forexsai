@@ -157,3 +157,27 @@ async def test_detect_can_bypass_cache_for_scheduler_logging():
         )
 
     mock_log.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_detect_returns_support_resistance_payload_for_panel_rendering():
+    module = _load_order_block_service_module("test_order_block_service_support_resistance")
+    service = module.OrderBlockService(ttl_seconds=0)
+
+    candle = SimpleNamespace(close=21500.0, high=21540.0, low=21460.0)
+    candles = [candle for _ in range(80)]
+
+    with patch.object(service, "_load_candles", AsyncMock(return_value=candles)), patch.object(
+        module.MarketStructureAnalyzer, "analyze", return_value=_FakeStructure("bullish")
+    ), patch.object(module.OrderBlockDetector, "detect", return_value=[]), patch.object(
+        service,
+        "_combine_signals",
+        AsyncMock(return_value={"action": "BUY", "confidence": 0.78, "reasoning": ["Bullish structure"]}),
+    ), patch.object(module, "log_smc_prediction", AsyncMock(return_value=None)):
+        payload = await service.detect("NDX.INDX", "15m", 200, module.OrderBlockConfig(), log_signals=False)
+
+    support_resistance = payload["support_resistance"]
+    assert support_resistance["method"] == "swing_cluster_fib"
+    assert support_resistance["nearest_support"] is not None
+    assert support_resistance["nearest_resistance"] is not None
+    assert support_resistance["all_levels"]

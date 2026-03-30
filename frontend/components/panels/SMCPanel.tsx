@@ -9,13 +9,15 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { fetcher } from '../../lib/api';
+import { useRefreshAge } from '../../hooks/useRefreshAge';
 import { 
   Layers, 
   TrendingUp, 
   TrendingDown, 
   AlertCircle,
   RefreshCw,
-  Zap
+  Zap,
+  Clock3
 } from 'lucide-react';
 
 const SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"];
@@ -93,11 +95,28 @@ interface SMCData {
   calculation_method: string;
 }
 
-export default function SMCPanel() {
-  const [activeSymbol, setActiveSymbol] = useState("NDX.INDX");
+interface SMCPanelProps {
+  lockedSymbol?: string;
+}
+
+export default function SMCPanel({ lockedSymbol }: SMCPanelProps) {
+  const [activeSymbol, setActiveSymbol] = useState(lockedSymbol || "NDX.INDX");
   const [data, setData] = useState<SMCData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { refreshAge, markRefreshed } = useRefreshAge(data?.timestamp ? new Date(data.timestamp) : null);
+
+  useEffect(() => {
+    if (lockedSymbol) {
+      setActiveSymbol(lockedSymbol);
+    }
+  }, [lockedSymbol]);
+
+  useEffect(() => {
+    if (data?.timestamp) {
+      markRefreshed(data.timestamp);
+    }
+  }, [data?.timestamp, markRefreshed]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -170,15 +189,21 @@ export default function SMCPanel() {
           <span className="text-xs text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">FREE</span>
         </div>
         <div className="flex items-center gap-2">
-          <select
-            value={activeSymbol}
-            onChange={(e) => setActiveSymbol(e.target.value)}
-            className="bg-gray-800 text-xs text-white rounded px-2 py-1 border border-gray-700"
-          >
-            {SYMBOLS.map((s) => (
-              <option key={s} value={s}>{SYMBOL_LABELS[s]}</option>
-            ))}
-          </select>
+          {lockedSymbol ? (
+            <span className="bg-gray-800 text-xs text-white rounded px-2 py-1 border border-gray-700">
+              {SYMBOL_LABELS[activeSymbol] || activeSymbol}
+            </span>
+          ) : (
+            <select
+              value={activeSymbol}
+              onChange={(e) => setActiveSymbol(e.target.value)}
+              className="bg-gray-800 text-xs text-white rounded px-2 py-1 border border-gray-700"
+            >
+              {SYMBOLS.map((s) => (
+                <option key={s} value={s}>{SYMBOL_LABELS[s]}</option>
+              ))}
+            </select>
+          )}
           <button 
             onClick={fetchData}
             className="p-1 hover:bg-gray-700 rounded transition-colors"
@@ -188,6 +213,16 @@ export default function SMCPanel() {
           </button>
         </div>
       </div>
+
+      {data?.timestamp && (
+        <div className="mb-3 flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[11px] text-gray-400">
+          <div className="flex items-center gap-2">
+            <Clock3 className="h-3.5 w-3.5" />
+            <span>Last analysis: {new Date(data.timestamp).toLocaleString()}</span>
+          </div>
+          <span className="rounded-full bg-purple-500/10 px-2 py-0.5 font-medium text-purple-300">{refreshAge}</span>
+        </div>
+      )}
 
       {/* Market Structure */}
       <div className="bg-gray-800/30 rounded-lg p-3 mb-3">
