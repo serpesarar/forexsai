@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useDashboardStore } from "../../lib/store";
-import { fetcher } from "../../lib/api";
+import { buildApiUrl } from "../../lib/api/base";
 
 // ── Types ──────────────────────────────────────────────
 interface ModelBreakdown {
@@ -150,17 +150,32 @@ export default function MetaEnginePanel() {
   const fetchRef = useRef(false);
 
   const fetchDashboard = useCallback(async () => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 45000);
     try {
       setError(null);
-      const resp = await fetcher<any>("/api/meta/dashboard");
+      const response = await fetch(buildApiUrl("/api/meta/dashboard"), {
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Failed to load meta analysis");
+      }
+      const resp = await response.json();
       if (resp?.success && resp.data) {
         setSignals(resp.data);
       } else if (resp?.data) {
         setSignals(resp.data);
       }
     } catch (err: any) {
-      setError(err?.message || "Failed to load meta analysis");
+      if (err?.name === "AbortError") {
+        setError("Meta dashboard request timed out");
+      } else {
+        setError(err?.message || "Failed to load meta analysis");
+      }
     } finally {
+      window.clearTimeout(timeout);
       setLoading(false);
     }
   }, []);

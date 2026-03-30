@@ -1,0 +1,8 @@
+OK: Target
+OK: Activity
+OK: RefreshCw
+OK: Clock
+OK: Info
+OK: ArrowUpRight
+OK: ArrowDownRight
+OK: TriangleAlert

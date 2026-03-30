@@ -73,7 +73,18 @@ interface IndicatorResult {
   occurrences: number;
   wins: number;
   win_rate: number;
+  timeframe?: string;
+  profit_factor?: number;
   insufficient_data?: boolean;
+}
+
+interface MetaInfo {
+  tgt_pct: number;
+  fwd_candles: number;
+  days_used: number;
+  model_source: string;
+  indicator_source: string;
+  indicator_timeframe: string;
 }
 
 export function PermutationPanel({ symbol }: PermutationPanelProps) {
@@ -86,30 +97,47 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [modelsData, setModelsData] = useState<ModelResult[]>([]);
   const [indicatorsData, setIndicatorsData] = useState<IndicatorResult[]>([]);
-  const [metaInfo, setMetaInfo] = useState({ tgt_pct: 0.3, fwd_candles: 5, days_used: 30 });
+  const [metaInfo, setMetaInfo] = useState<MetaInfo>({
+    tgt_pct: 0.3,
+    fwd_candles: 5,
+    days_used: 30,
+    model_source: "live",
+    indicator_source: "live",
+    indicator_timeframe: "-"
+  });
 
   const fetchPermutations = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const url = buildApiUrl(`/api/permutation-analysis/${symbol}?direction=${direction}&analysis_type=both&min_occurrences=10&lookforward_candles=5&target_move_pct=0.3`);
+      const url = buildApiUrl(`/api/permutation-analysis/${symbol}?direction=${direction}&analysis_type=both&source=auto&min_occurrences=10&cluster_window_minutes=10&lookforward_candles=5&target_move_pct=0.3`);
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch permutation data");
       const json = await res.json();
 
       if (json.success) {
-        setModelsData(json.data.models_analysis?.results || []);
-        setIndicatorsData(json.data.indicators_analysis?.results || []);
-        setMetaInfo(prev => ({
-          ...prev,
-          days_used: json.data.models_analysis?.lookback_days_used || 30
-        }));
-        if (json.data.indicators_analysis?.target_move_pct) {
-          setMetaInfo(prev => ({
-            ...prev,
-            tgt_pct: json.data.indicators_analysis.target_move_pct,
-            fwd_candles: json.data.indicators_analysis.lookforward_candles
-          }));
+        const modelsAnalysis = json.data.models_analysis || {};
+        const indicatorsAnalysis = json.data.indicators_analysis || {};
+        const modelResults = modelsAnalysis.results || [];
+        const indicatorResults = indicatorsAnalysis.results || [];
+        const nestedErrors = [
+          modelsAnalysis.error,
+          indicatorsAnalysis.error,
+        ].filter(Boolean);
+        const firstIndicatorTimeframe = indicatorResults.find((row: IndicatorResult) => row?.timeframe)?.timeframe;
+
+        setModelsData(modelResults);
+        setIndicatorsData(indicatorResults);
+        setMetaInfo({
+          tgt_pct: indicatorsAnalysis.target_move_pct || 0.3,
+          fwd_candles: indicatorsAnalysis.lookforward_candles || 5,
+          days_used: modelsAnalysis.lookback_days_used || 30,
+          model_source: modelsAnalysis.source || "live",
+          indicator_source: indicatorsAnalysis.source || "live",
+          indicator_timeframe: indicatorsAnalysis.timeframe_used || firstIndicatorTimeframe || "-"
+        });
+        if (nestedErrors.length > 0 && modelResults.length === 0 && indicatorResults.length === 0) {
+          setError(nestedErrors.join(', '));
         }
       } else {
         setError(json.error || "Unknown error");
@@ -138,7 +166,7 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
           <div>
             <h3 className="text-white font-semibold text-[16px] tracking-tight">{t("title")}</h3>
             <p className="text-[#6B7280] text-[12px] uppercase font-medium tracking-wide">
-              {symbol} • Data: {metaInfo.days_used}D
+              {symbol} • Data: {metaInfo.days_used}D • Models: {metaInfo.model_source} • Indicators: {metaInfo.indicator_source}
             </p>
           </div>
         </div>
@@ -331,7 +359,7 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                 <div className="mb-4 text-xs text-[#9AA4B2] bg-white/5 p-3 rounded-lg border border-white/5 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 opacity-70" />
-                    {metaInfo.fwd_candles} Candles Forward Look
+                    {metaInfo.fwd_candles} Candles Forward Look • TF: {metaInfo.indicator_timeframe}
                   </span>
                   <span className="flex items-center gap-1.5 text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded">
                     {direction === "BUY" ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}

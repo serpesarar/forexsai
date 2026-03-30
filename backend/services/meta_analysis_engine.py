@@ -346,6 +346,7 @@ class MetaAnalysisEngine:
     @staticmethod
     async def get_best_combinations(
         symbol: str,
+        direction: str,
         regime: str,
         agreeing_models: List[str],
     ) -> List[CombinationInfo]:
@@ -366,25 +367,59 @@ class MetaAnalysisEngine:
                 .execute()
 
             rows = result.get("data", []) if isinstance(result, dict) else (result.data if hasattr(result, "data") else [])
-            if not rows:
+            combos = []
+            if rows:
+                for row in rows:
+                    combos.append(CombinationInfo(
+                        combo_key=row.get("combo_key", ""),
+                        symbol=row.get("symbol", symbol),
+                        regime=row.get("regime", regime),
+                        total_signals=row.get("total_signals", 0),
+                        wins=row.get("wins", 0),
+                        losses=row.get("losses", 0),
+                        win_rate=row.get("win_rate", 0),
+                        profit_factor=row.get("profit_factor", 0),
+                        expectancy=row.get("expectancy", 0),
+                        avg_profit_pips=row.get("avg_profit_pips", 0),
+                        avg_loss_pips=row.get("avg_loss_pips", 0),
+                    ))
+                return combos
+
+            from services.permutation_batch_service import get_latest_model_batch_results
+
+            batch_result = await asyncio.to_thread(get_latest_model_batch_results, symbol, direction, 10)
+            batch_rows = batch_result.get("results", []) if isinstance(batch_result, dict) and not batch_result.get("error") else []
+            if not batch_rows:
                 return []
 
-            combos = []
-            for row in rows:
+            agreeing_model_set = {model for model in agreeing_models if model}
+            for row in batch_rows:
+                combo_key = str(row.get("combination") or "").strip()
+                if not combo_key:
+                    continue
                 combos.append(CombinationInfo(
-                    combo_key=row.get("combo_key", ""),
-                    symbol=row.get("symbol", symbol),
-                    regime=row.get("regime", regime),
-                    total_signals=row.get("total_signals", 0),
-                    wins=row.get("wins", 0),
-                    losses=row.get("losses", 0),
-                    win_rate=row.get("win_rate", 0),
-                    profit_factor=row.get("profit_factor", 0),
-                    expectancy=row.get("expectancy", 0),
-                    avg_profit_pips=row.get("avg_profit_pips", 0),
-                    avg_loss_pips=row.get("avg_loss_pips", 0),
+                    combo_key=combo_key,
+                    symbol=symbol,
+                    regime=regime,
+                    total_signals=int(row.get("total_signals") or 0),
+                    wins=int(row.get("wins") or 0),
+                    losses=int(row.get("losses") or 0),
+                    win_rate=float(row.get("win_rate") or 0.0),
+                    profit_factor=float(row.get("profit_factor") or 0.0),
+                    expectancy=float(row.get("expectancy") or 0.0),
+                    avg_profit_pips=0.0,
+                    avg_loss_pips=0.0,
                 ))
-            return combos
+
+            combos.sort(
+                key=lambda combo: (
+                    -sum(1 for model in combo.combo_key.split("+") if model in agreeing_model_set),
+                    -combo.win_rate,
+                    -combo.total_signals,
+                    -combo.profit_factor,
+                )
+            )
+            return combos[:10]
         except Exception as e:
             logger.error(f"[MetaEngine] Combination fetch error: {e}")
             return []
@@ -671,7 +706,7 @@ class MetaAnalysisEngine:
             agreement_ratio = 0.5
 
         agreeing_models = [s.model_id for s in available_signals if s.direction == direction]
-        source_combo = "+".join(sorted(agreeing_models))
+        current_combo = "+".join(sorted(agreeing_models))
 
         # === Get market regime ===
         regime = "UNKNOWN"
@@ -686,17 +721,19 @@ class MetaAnalysisEngine:
             logger.warning(f"[MetaEngine] Regime detection failed: {e}")
 
         # === LAYER 2: Find best historical combination ===
-        combos = await self.get_best_combinations(symbol, regime, agreeing_models)
+        combos = await self.get_best_combinations(symbol, direction, regime, agreeing_models)
         best_combo = combos[0] if combos else None
 
         # If we have historical data and a better combo exists, prefer it
-        if best_combo and best_combo.combo_key != source_combo:
+        if best_combo and best_combo.combo_key != current_combo:
             # Check if current combo is in the list
             current_in_list = next(
-                (c for c in combos if c.combo_key == source_combo), None
+                (c for c in combos if c.combo_key == current_combo), None
             )
             if current_in_list and current_in_list.win_rate > 0.5:
                 best_combo = current_in_list
+
+        display_combo = best_combo.combo_key if best_combo and best_combo.combo_key else current_combo
 
         # === LAYER 3: Technical Validation ===
         tech = await self.get_technical_snapshot(symbol)
@@ -746,20 +783,24 @@ class MetaAnalysisEngine:
 
         # Build alternatives (other combos)
         alternatives = []
-        for combo in combos[1:4]:
+        for combo in combos:
+            if combo.combo_key == display_combo:
+                continue
             alternatives.append({
                 "combo_key": combo.combo_key,
                 "win_rate": combo.win_rate,
                 "total_signals": combo.total_signals,
                 "profit_factor": combo.profit_factor,
             })
+            if len(alternatives) >= 3:
+                break
 
         meta_signal = MetaSignal(
             symbol=symbol,
             direction=direction,
             confidence=confidence,
             strength=strength,
-            source_combo=source_combo,
+            source_combo=display_combo,
             regime=regime,
             agreement_ratio=round(agreement_ratio, 2),
             technical_score=round(tech_score, 2),
@@ -780,7 +821,7 @@ class MetaAnalysisEngine:
         elapsed = (time.time() - start_ts) * 1000
         logger.info(
             f"[MetaEngine] {symbol}: {direction} ({confidence:.0f}%) "
-            f"combo={source_combo} regime={regime} "
+            f"combo={display_combo} regime={regime} "
             f"tech={tech_score:.0%} in {elapsed:.0f}ms"
         )
 
