@@ -21,6 +21,7 @@ import {
   PanelSignal,
   useAIAnalysis,
 } from "../lib/api/aiAnalysis";
+import { useRefreshAge } from "../hooks/useRefreshAge";
 import { useClaudeAnalysisStore } from "../lib/claudeAnalysisStore";
 import { useI18nStore } from "../lib/i18n/store";
 
@@ -356,12 +357,32 @@ export default function ClaudeAnalysisPanelV2({ symbol, symbolLabel }: Props) {
   const persistedData = getAnalysis(symbol);
   const storedUpdatedAt = getLastUpdated(symbol);
   const data = fetchedData || persistedData;
+  const lastAnalysisAt =
+    data?.claude_analysis?.analysis_meta?.generated_at ||
+    data?.claude_analysis?.timestamp ||
+    storedUpdatedAt ||
+    null;
+  const { refreshAge, markRefreshed } = useRefreshAge(lastAnalysisAt ? new Date(lastAnalysisAt) : null);
+  const servedAt = data?.claude_analysis?.analysis_meta?.served_at || lastAnalysisAt || null;
+  const { refreshAge: servedAge, markRefreshed: markServed } = useRefreshAge(servedAt ? new Date(servedAt) : null);
 
   useEffect(() => {
     if (fetchedData) {
       setAnalysis(symbol, fetchedData);
     }
   }, [fetchedData, setAnalysis, symbol]);
+
+  useEffect(() => {
+    if (lastAnalysisAt) {
+      markRefreshed(lastAnalysisAt);
+    }
+  }, [lastAnalysisAt, markRefreshed]);
+
+  useEffect(() => {
+    if (servedAt) {
+      markServed(servedAt);
+    }
+  }, [servedAt, markServed]);
 
   const panel = useMemo(() => {
     if (!data) return null;
@@ -406,6 +427,19 @@ export default function ClaudeAnalysisPanelV2({ symbol, symbolLabel }: Props) {
   const visibleKeyLevels = (panel?.key_levels || []).slice(0, 4);
   const invalidationText = panel?.entry_plan.invalidation || panel?.invalidation[0] || "—";
   const riskRewardValue = panel?.entry_plan.risk_reward ? panel.entry_plan.risk_reward.toFixed(2) : "—";
+  const isStaleCache = Boolean(analysisMeta?.stale_cache);
+  const isCacheHit = Boolean(analysisMeta?.cache_hit);
+  const showServedAt = Boolean(servedAt && servedAt !== lastAnalysisAt);
+  const cacheBadgeStyle = isStaleCache
+    ? { background: "var(--accent-warning-08)", border: "1px solid var(--accent-warning-15)", color: P.warn }
+    : isCacheHit
+      ? { background: "var(--accent-info-08)", border: "1px solid var(--accent-info-15)", color: P.accent }
+      : { background: "var(--accent-purple-12)", border: "1px solid var(--accent-purple-20)", color: P.purple };
+  const cacheBadgeLabel = isStaleCache
+    ? t("claudeAnalysis.staleCached")
+    : isCacheHit
+      ? t("claudeAnalysis.cached")
+      : t("claudeAnalysis.fresh");
 
   const handleRefresh = () => {
     setRefreshNonce((current) => current + 1);
@@ -461,8 +495,8 @@ export default function ClaudeAnalysisPanelV2({ symbol, symbolLabel }: Props) {
               ⚓ {t("claudeAnalysis.physical.contextActive")}
             </div>
           )}
-          <div className="rounded-full px-3 py-1 text-[11px] font-semibold" style={{ background: analysisMeta?.cache_hit ? "var(--accent-info-08)" : "var(--accent-purple-12)", border: `1px solid ${analysisMeta?.cache_hit ? "var(--accent-info-15)" : "var(--accent-purple-20)"}`, color: analysisMeta?.cache_hit ? P.accent : P.purple }}>
-            {analysisMeta?.cache_hit ? t("claudeAnalysis.cached") : t("claudeAnalysis.fresh")}
+          <div className="rounded-full px-3 py-1 text-[11px] font-semibold" style={cacheBadgeStyle}>
+            {cacheBadgeLabel}
           </div>
           <button
             onClick={handleRefresh}
@@ -477,11 +511,26 @@ export default function ClaudeAnalysisPanelV2({ symbol, symbolLabel }: Props) {
       </div>
 
       <div className="space-y-4 p-5">
-        {storedUpdatedAt && data && (
+        {lastAnalysisAt && data && (
           <div className="flex flex-wrap items-center gap-2 text-[11px]" style={{ color: P.muted }}>
             <Clock3 className="h-3.5 w-3.5" />
             <span>
-              {t("claudeAnalysis.lastAnalysis")}: {new Date(storedUpdatedAt).toLocaleString(locale === "tr" ? "tr-TR" : "en-US")}
+              {t("claudeAnalysis.lastAnalysis")}: {new Date(lastAnalysisAt).toLocaleString(locale === "tr" ? "tr-TR" : "en-US")}
+            </span>
+            <span className="rounded-full px-2 py-0.5 font-semibold" style={{ background: "var(--accent-purple-06)", border: "1px solid var(--accent-purple-12)", color: P.purple }}>
+              {refreshAge}
+            </span>
+          </div>
+        )}
+
+        {showServedAt && data && (
+          <div className="flex flex-wrap items-center gap-2 text-[11px]" style={{ color: P.muted }}>
+            <Clock3 className="h-3.5 w-3.5" />
+            <span>
+              {t("claudeAnalysis.cacheServed")}: {new Date(servedAt!).toLocaleString(locale === "tr" ? "tr-TR" : "en-US")}
+            </span>
+            <span className="rounded-full px-2 py-0.5 font-semibold" style={{ background: "var(--accent-info-06)", border: "1px solid var(--accent-info-15)", color: P.accent }}>
+              {servedAge}
             </span>
           </div>
         )}

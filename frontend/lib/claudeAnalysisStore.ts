@@ -1,6 +1,28 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+function normalizeTimestamp(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) {
+    return null;
+  }
+
+  const parsed = new Date(value).getTime();
+  if (Number.isNaN(parsed)) {
+    return null;
+  }
+
+  return new Date(parsed).toISOString();
+}
+
+function resolveAnalysisTimestamp(data: any): string {
+  return (
+    normalizeTimestamp(data?.claude_analysis?.analysis_meta?.generated_at) ||
+    normalizeTimestamp(data?.claude_analysis?.timestamp) ||
+    normalizeTimestamp(data?.analysis?.timestamp) ||
+    new Date().toISOString()
+  );
+}
+
 interface ClaudeAnalysisState {
   analysisData: Record<string, any>;
   detailedData: Record<string, any>;
@@ -21,12 +43,12 @@ export const useClaudeAnalysisStore = create<ClaudeAnalysisState>()(
       
       setAnalysis: (symbol, data) => set((state) => ({
         analysisData: { ...state.analysisData, [symbol]: data },
-        lastUpdated: { ...state.lastUpdated, [symbol]: new Date().toISOString() }
+        lastUpdated: { ...state.lastUpdated, [symbol]: resolveAnalysisTimestamp(data) }
       })),
       
       setDetailed: (symbol, data) => set((state) => ({
         detailedData: { ...state.detailedData, [symbol]: data },
-        lastUpdated: { ...state.lastUpdated, [symbol]: new Date().toISOString() }
+        lastUpdated: { ...state.lastUpdated, [symbol]: resolveAnalysisTimestamp(data) }
       })),
       
       getAnalysis: (symbol) => get().analysisData[symbol] || null,

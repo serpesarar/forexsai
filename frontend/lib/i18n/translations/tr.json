@@ -421,6 +421,8 @@
     "sessionOpen": "Seans Açık",
     "sessionClosed": "Seans Kapalı",
     "cached": "Önbellek",
+    "staleCached": "Eski Önbellek",
+    "cacheServed": "Önbellekten Sunuldu",
     "fresh": "Yeni",
     "usingStored": "Yenileme alınamadığı için son kayıtlı analiz gösteriliyor",
     "headline": "Panel Özeti",

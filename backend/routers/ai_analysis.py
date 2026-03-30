@@ -9,6 +9,14 @@ from typing import Any, Dict, List
 router = APIRouter(prefix="/api/ai-analysis", tags=["ai-analysis"])
 
 
+@router.get("/status")
+async def get_ai_analysis_status():
+    """Expose hourly AI panel scheduler status for debugging and operations."""
+    from services.ai_panel_signal_logger import get_ai_panel_scheduler_status
+
+    return get_ai_panel_scheduler_status()
+
+
 @router.get("/{symbol}")
 async def get_ai_analysis(symbol: str, force_refresh: bool = False):
     """

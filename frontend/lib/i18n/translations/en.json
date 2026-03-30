@@ -421,6 +421,8 @@
     "sessionOpen": "Session Open",
     "sessionClosed": "Session Closed",
     "cached": "Cached",
+    "staleCached": "Stale Cached",
+    "cacheServed": "Cache Served",
     "fresh": "Fresh",
     "usingStored": "Showing the last saved analysis while refresh is unavailable",
     "headline": "Panel Summary",

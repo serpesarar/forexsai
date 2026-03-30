@@ -179,6 +179,10 @@ def get_supported_ai_symbols() -> List[str]:
     return list(SYMBOL_PROFILES.keys())
 
 
+def _can_refresh_during_current_window(market_state: Dict[str, Any]) -> bool:
+    return bool(market_state.get("is_primary_session_open") or market_state.get("is_us_cash_open"))
+
+
 def _json_default(value: Any) -> Any:
     if isinstance(value, datetime):
         if value.tzinfo is None:
@@ -195,15 +199,12 @@ def _json_default(value: Any) -> Any:
     return str(value)
 
 
-
 def _to_jsonable(value: Any) -> Any:
     return json.loads(json.dumps(value, default=_json_default))
 
 
-
 def _clone(value: Dict[str, Any]) -> Dict[str, Any]:
     return _to_jsonable(value)
-
 
 
 def _safe_list(value: Any) -> List[Any]:
@@ -212,7 +213,6 @@ def _safe_list(value: Any) -> List[Any]:
     if value is None:
         return []
     return [value]
-
 
 
 def _float_or_none(value: Any) -> Optional[float]:
@@ -224,17 +224,14 @@ def _float_or_none(value: Any) -> Optional[float]:
         return None
 
 
-
 def _float_with_default(value: Any, default: float) -> float:
     parsed = _float_or_none(value)
     return parsed if parsed is not None else default
 
 
-
 def _round_price(value: Any) -> Optional[float]:
     parsed = _float_or_none(value)
     return round(parsed, 2) if parsed is not None else None
-
 
 
 def _coerce_direction(value: Any, default: str) -> str:
@@ -243,19 +240,16 @@ def _coerce_direction(value: Any, default: str) -> str:
     return text if text in allowed else default
 
 
-
 def _coerce_behavior(value: Any, default: str) -> str:
     allowed = {"UPTREND", "DOWNTREND", "RANGE", "MEAN_REVERSION", "VOLATILE"}
     text = str(value or default).upper().strip().replace("-", "_").replace(" ", "_")
     return text.lower() if text in allowed else default
 
 
-
 def _coerce_risk_level(value: Any, default: str) -> str:
     allowed = {"LOW", "MEDIUM", "HIGH"}
     text = str(value or default).upper().strip()
     return text if text in allowed else default
-
 
 
 def _position_size_from_signal(direction: str, confidence: float, event_risk: str) -> str:
@@ -271,14 +265,12 @@ def _position_size_from_signal(direction: str, confidence: float, event_risk: st
     return "Small"
 
 
-
 def _minutes_until(timestamp: datetime) -> Optional[int]:
     if not isinstance(timestamp, datetime):
         return None
     now = datetime.now(timezone.utc)
     ts = timestamp if timestamp.tzinfo else timestamp.replace(tzinfo=timezone.utc)
     return int((ts - now).total_seconds() / 60)
-
 
 
 def _get_market_state(symbol: str) -> Dict[str, Any]:
@@ -316,7 +308,6 @@ def _get_market_state(symbol: str) -> Dict[str, Any]:
     }
 
 
-
 def _oil_session_from_market_state(market_state: Dict[str, Any]) -> str:
     ny_time_raw = market_state.get("ny_time")
     if not ny_time_raw:
@@ -330,7 +321,6 @@ def _oil_session_from_market_state(market_state: Dict[str, Any]) -> str:
     if 18 * 60 <= minutes_now or minutes_now <= 6 * 60:
         return "asia"
     return "nymex"
-
 
 
 def _event_to_dict(event: Any) -> Dict[str, Any]:
@@ -352,7 +342,6 @@ def _event_to_dict(event: Any) -> Dict[str, Any]:
         "minutes_until": minutes_until,
         "affected_symbols": _safe_list(payload.get("affected_symbols")),
     }
-
 
 
 def _build_event_risk(events: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -398,7 +387,6 @@ def _build_event_risk(events: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
-
 def _summarize_regime(regime: Any) -> Dict[str, Any]:
     if regime is None:
         return {}
@@ -411,7 +399,6 @@ def _summarize_regime(regime: Any) -> Dict[str, Any]:
         "session": payload.get("session"),
         "allowed_directions": _safe_list(payload.get("allowed_directions")),
     }
-
 
 
 def _summarize_unified_news(impact: Any) -> Dict[str, Any]:
@@ -427,7 +414,6 @@ def _summarize_unified_news(impact: Any) -> Dict[str, Any]:
         "high_impact_events": _safe_list(payload.get("high_impact_events"))[:4],
         "ml_features": payload.get("ml_features") or {},
     }
-
 
 
 def _summarize_comex(impact: Any) -> Dict[str, Any]:
@@ -454,7 +440,6 @@ def _summarize_comex(impact: Any) -> Dict[str, Any]:
     }
 
 
-
 def _summarize_oil_analysis(impact: Any) -> Dict[str, Any]:
     if impact is None:
         return {}
@@ -470,7 +455,6 @@ def _summarize_oil_analysis(impact: Any) -> Dict[str, Any]:
         "modifiers": _safe_list(payload.get("modifiers"))[:6],
         "key_levels": payload.get("key_levels") or {},
     }
-
 
 
 def _collect_missing_inputs(context: Dict[str, Any], extras: Dict[str, Any]) -> List[str]:
@@ -493,7 +477,6 @@ def _collect_missing_inputs(context: Dict[str, Any], extras: Dict[str, Any]) -> 
     if extras.get("symbol") == "USOIL.FOREX" and not extras.get("physical_oil_context"):
         missing.append("physical_oil_intelligence")
     return missing
-
 
 
 def _build_key_levels(context: Dict[str, Any], extras: Dict[str, Any], direction: str) -> List[Dict[str, Any]]:
@@ -550,7 +533,6 @@ def _build_key_levels(context: Dict[str, Any], extras: Dict[str, Any], direction
     return deduped[:8]
 
 
-
 def _behavior_from_context(context: Dict[str, Any], extras: Dict[str, Any]) -> str:
     regime = extras.get("regime") or {}
     regime_name = str(regime.get("regime") or "").upper()
@@ -572,7 +554,6 @@ def _behavior_from_context(context: Dict[str, Any], extras: Dict[str, Any]) -> s
     if abs(boll_z) > 1.7 or rsi >= 68 or rsi <= 32:
         return "mean_reversion"
     return "range"
-
 
 
 def _build_macro_risk(context: Dict[str, Any], extras: Dict[str, Any], behavior: str) -> Dict[str, Any]:
@@ -876,7 +857,6 @@ def _fallback_panel_signal(context: Dict[str, Any], extras: Dict[str, Any]) -> D
     }
 
 
-
 def _normalize_bias(raw: Any, fallback: Dict[str, Any], default_horizon: str) -> Dict[str, Any]:
     payload = raw if isinstance(raw, dict) else {}
     return {
@@ -887,7 +867,6 @@ def _normalize_bias(raw: Any, fallback: Dict[str, Any], default_horizon: str) ->
         "time_horizon": str(payload.get("time_horizon") or fallback.get("time_horizon") or default_horizon),
         "reasoning": [str(item) for item in _safe_list(payload.get("reasoning") or fallback.get("reasoning"))[:5]],
     }
-
 
 
 def _normalize_entry_plan(raw: Any, fallback: Dict[str, Any]) -> Dict[str, Any]:
@@ -910,7 +889,6 @@ def _normalize_entry_plan(raw: Any, fallback: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-
 def _normalize_key_levels(raw: Any, fallback: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     levels = raw if isinstance(raw, list) else fallback
     normalized: List[Dict[str, Any]] = []
@@ -927,7 +905,6 @@ def _normalize_key_levels(raw: Any, fallback: List[Dict[str, Any]]) -> List[Dict
     return normalized or fallback
 
 
-
 def _normalize_risk(raw: Any, fallback: Dict[str, Any]) -> Dict[str, Any]:
     payload = raw if isinstance(raw, dict) else {}
     return {
@@ -935,7 +912,6 @@ def _normalize_risk(raw: Any, fallback: Dict[str, Any]) -> Dict[str, Any]:
         "summary": str(payload.get("summary") or fallback.get("summary") or ""),
         "drivers": [str(item) for item in _safe_list(payload.get("drivers") or fallback.get("drivers"))[:5]],
     }
-
 
 
 def _normalize_event_risk(raw: Any, fallback: Dict[str, Any]) -> Dict[str, Any]:
@@ -957,7 +933,6 @@ def _normalize_event_risk(raw: Any, fallback: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-
 def _normalize_data_quality(raw: Any, fallback: Dict[str, Any]) -> Dict[str, Any]:
     payload = raw if isinstance(raw, dict) else {}
     return {
@@ -965,7 +940,6 @@ def _normalize_data_quality(raw: Any, fallback: Dict[str, Any]) -> Dict[str, Any
         "missing_inputs": [str(item) for item in _safe_list(payload.get("missing_inputs") or fallback.get("missing_inputs"))[:8]],
         "notes": [str(item) for item in _safe_list(payload.get("notes") or fallback.get("notes"))[:5]],
     }
-
 
 
 def _normalize_panel_signal(raw: Optional[Dict[str, Any]], context: Dict[str, Any], extras: Dict[str, Any]) -> Dict[str, Any]:
@@ -998,7 +972,6 @@ def _normalize_panel_signal(raw: Optional[Dict[str, Any]], context: Dict[str, An
         "counter_factors": [str(item) for item in _safe_list(payload.get("counter_factors") or fallback.get("counter_factors"))[:5]],
         "data_quality": _normalize_data_quality(payload.get("data_quality"), fallback.get("data_quality") or {}),
     }
-
 
 
 def _build_prompt_payload(context: Dict[str, Any], extras: Dict[str, Any]) -> Dict[str, Any]:
@@ -1050,7 +1023,6 @@ def _build_prompt_payload(context: Dict[str, Any], extras: Dict[str, Any]) -> Di
     }
 
 
-
 def _build_prompt_execution_brief(prompt_payload: Dict[str, Any]) -> str:
     profile = prompt_payload.get("symbol_profile") or {}
     market_state = prompt_payload.get("market_state") or {}
@@ -1076,7 +1048,6 @@ def _build_prompt_execution_brief(prompt_payload: Dict[str, Any]) -> str:
         _build_physical_oil_brief(prompt_payload.get("physical_oil_intelligence") or {}),
         "Task: produce symbol-specific scalp_bias and intraday_bias using the supplied technical and macro evidence only, and keep the reasoning actionable for a live dashboard.",
     ])
-
 
 
 def _build_physical_oil_brief(physical: Dict[str, Any]) -> str:
@@ -1186,7 +1157,6 @@ async def _collect_oil_analysis(symbol: str, market_state: Dict[str, Any]) -> Di
     return _summarize_oil_analysis(result)
 
 
-
 async def _collect_symbol_extras(symbol: str, context: Dict[str, Any]) -> Dict[str, Any]:
     market_state = _get_market_state(symbol)
     analyzer = get_unified_analyzer()
@@ -1244,7 +1214,6 @@ async def _collect_symbol_extras(symbol: str, context: Dict[str, Any]) -> Dict[s
     }
 
 
-
 async def _request_panel_signal(prompt_payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     execution_brief = _build_prompt_execution_brief(prompt_payload)
     full_prompt = f"{PANEL_PROMPT}\n\nExecution brief:\n{execution_brief}\n\nMarket pack:\n{json.dumps(prompt_payload, ensure_ascii=False, indent=2)}"
@@ -1255,7 +1224,6 @@ async def _request_panel_signal(prompt_payload: Dict[str, Any]) -> Optional[Dict
         max_tokens=1600,
         timeout_seconds=55,
     )
-
 
 
 def _context_fingerprint(context: Dict[str, Any], extras: Dict[str, Any]) -> str:
@@ -1278,27 +1246,31 @@ def _context_fingerprint(context: Dict[str, Any], extras: Dict[str, Any]) -> str
     return hashlib.sha256(encoded).hexdigest()[:20]
 
 
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
-def _with_cache_hit(result: Dict[str, Any], cache_hit: bool) -> Dict[str, Any]:
+
+def _with_cache_hit(result: Dict[str, Any], cache_hit: bool, cache_source: str = "memory") -> Dict[str, Any]:
     cloned = _clone(result)
     claude_analysis = cloned.get("claude_analysis") or {}
     analysis_meta = claude_analysis.get("analysis_meta") or {}
     analysis_meta["cache_hit"] = cache_hit
+    analysis_meta["stale_cache"] = bool(analysis_meta.get("stale_cache", False))
+    analysis_meta["cache_source"] = cache_source if cache_hit else "fresh"
+    analysis_meta["served_at"] = _now_iso() if cache_hit else (analysis_meta.get("generated_at") or _now_iso())
     claude_analysis["analysis_meta"] = analysis_meta
     cloned["claude_analysis"] = claude_analysis
     return cloned
 
 
-
-def _mark_served_from_stale_cache(result: Dict[str, Any]) -> Dict[str, Any]:
-    cloned = _with_cache_hit(result, True)
+def _mark_served_from_stale_cache(result: Dict[str, Any], cache_source: str = "memory") -> Dict[str, Any]:
+    cloned = _with_cache_hit(result, True, cache_source)
     claude_analysis = cloned.get("claude_analysis") or {}
     analysis_meta = claude_analysis.get("analysis_meta") or {}
     analysis_meta["stale_cache"] = True
     claude_analysis["analysis_meta"] = analysis_meta
     cloned["claude_analysis"] = claude_analysis
     return cloned
-
 
 
 def _get_memory_cached(symbol: str, allow_stale: bool = False) -> Optional[Dict[str, Any]]:
@@ -1308,11 +1280,10 @@ def _get_memory_cached(symbol: str, allow_stale: bool = False) -> Optional[Dict[
     expires_at, payload = cached
     if expires_at <= datetime.now(timezone.utc):
         if allow_stale:
-            return _mark_served_from_stale_cache(payload)
+            return _mark_served_from_stale_cache(payload, "memory")
         _ANALYSIS_CACHE.pop(symbol, None)
         return None
-    return _with_cache_hit(payload, True)
-
+    return _with_cache_hit(payload, True, "memory")
 
 
 def _set_memory_cached(symbol: str, payload: Dict[str, Any]) -> None:
@@ -1320,7 +1291,6 @@ def _set_memory_cached(symbol: str, payload: Dict[str, Any]) -> None:
         datetime.now(timezone.utc) + timedelta(seconds=CACHE_TTL_SECONDS),
         _clone(payload),
     )
-
 
 
 def _read_db_cache(symbol: str, allow_stale: bool = False) -> Optional[Dict[str, Any]]:
@@ -1345,12 +1315,11 @@ def _read_db_cache(symbol: str, allow_stale: bool = False) -> Optional[Dict[str,
             if expires_at_raw and allow_stale:
                 expires_at = datetime.fromisoformat(str(expires_at_raw).replace("Z", "+00:00"))
                 if expires_at <= datetime.now(timezone.utc):
-                    return _mark_served_from_stale_cache(payload)
-            return _with_cache_hit(payload, True)
+                    return _mark_served_from_stale_cache(payload, "database")
+            return _with_cache_hit(payload, True, "database")
     except Exception as exc:
         logger.debug("AI panel DB cache read skipped for %s: %s", symbol, exc)
     return None
-
 
 
 def _persist_prompt_version() -> None:
@@ -1368,7 +1337,6 @@ def _persist_prompt_version() -> None:
         client.table("ai_panel_prompt_versions").upsert(payload, on_conflict="version")
     except Exception as exc:
         logger.debug("AI panel prompt version persist skipped: %s", exc)
-
 
 
 def _persist_result(symbol: str, result: Dict[str, Any], context: Dict[str, Any], extras: Dict[str, Any]) -> None:
@@ -1446,7 +1414,6 @@ def _persist_result(symbol: str, result: Dict[str, Any], context: Dict[str, Any]
         logger.debug("AI panel history persist skipped for %s: %s", symbol, exc)
 
 
-
 def _build_compatibility_result(symbol: str, context: Dict[str, Any], panel_signal: Dict[str, Any], model_used: str, extras: Dict[str, Any]) -> Dict[str, Any]:
     intraday = panel_signal.get("intraday_bias") or {}
     scalp = panel_signal.get("scalp_bias") or {}
@@ -1465,9 +1432,12 @@ def _build_compatibility_result(symbol: str, context: Dict[str, Any], panel_sign
         "provider": "deepseek",
         "model": model_used,
         "cache_hit": False,
+        "stale_cache": False,
+        "cache_source": "fresh",
         "market_open": bool(market_state.get("is_primary_session_open")),
         "market_session": market_state.get("session_name"),
         "generated_at": generated_at,
+        "served_at": generated_at,
         "expires_at": (datetime.now(timezone.utc) + timedelta(seconds=CACHE_TTL_SECONDS)).isoformat(),
         "context_pack_version": context.get("context_pack_version"),
     }
@@ -1529,7 +1499,6 @@ def _build_compatibility_result(symbol: str, context: Dict[str, Any], panel_sign
     }
 
 
-
 async def get_ai_panel_analysis(symbol: str, force_refresh: bool = False) -> Dict[str, Any]:
     normalized_symbol = normalize_symbol(symbol)
     if normalized_symbol not in SYMBOL_PROFILES:
@@ -1537,6 +1506,7 @@ async def get_ai_panel_analysis(symbol: str, force_refresh: bool = False) -> Dic
 
     market_state = _get_market_state(normalized_symbol)
     market_open = bool(market_state.get("is_primary_session_open"))
+    refresh_window_open = _can_refresh_during_current_window(market_state)
 
     fresh_memory = _get_memory_cached(normalized_symbol)
     fresh_db = None if fresh_memory is not None else _read_db_cache(normalized_symbol)
@@ -1553,7 +1523,7 @@ async def get_ai_panel_analysis(symbol: str, force_refresh: bool = False) -> Dic
             stale_db = _read_db_cache(normalized_symbol, allow_stale=True)
             if stale_db is not None:
                 return stale_db
-    elif not market_open:
+    elif not refresh_window_open:
         stale_memory = fresh_memory or _get_memory_cached(normalized_symbol, allow_stale=True)
         if stale_memory is not None:
             return stale_memory

@@ -83,9 +83,12 @@ export interface AnalysisMeta {
   provider: string;
   model: string;
   cache_hit: boolean;
+  stale_cache?: boolean;
+  cache_source?: string;
   market_open: boolean;
   market_session: string;
   generated_at: string;
+  served_at?: string;
   expires_at: string;
   context_pack_version?: string;
 }

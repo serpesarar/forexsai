@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 from database.supabase_client import get_supabase_client, is_db_available
-from services.ai_panel_analysis_service import _get_market_state, get_ai_panel_analysis
+from services.ai_panel_analysis_service import NY_TZ, SYMBOL_PROFILES, _get_market_state, get_ai_panel_analysis
 from services.prediction_logger import log_prediction
 from utils.safe_supabase import safe_get_data
 
@@ -18,10 +18,20 @@ AI_PANEL_STRATEGY = "AI_PANEL_HOURLY"
 AI_PANEL_TIMEFRAME = "1h"
 
 _last_ai_panel_log: Dict[str, datetime] = {}
+_last_ai_panel_attempt: Dict[str, datetime] = {}
+_last_ai_panel_success: Dict[str, datetime] = {}
+_last_ai_panel_error: Dict[str, str] = {}
 
 
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _utc_iso(value: Optional[datetime]) -> Optional[str]:
+    if value is None:
+        return None
+    dt = value.astimezone(timezone.utc) if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    return dt.isoformat().replace("+00:00", "Z")
 
 
 def _parse_timestamp(value: Any) -> Optional[datetime]:
@@ -63,6 +73,86 @@ def _resolve_last_log_time(symbol: str) -> Optional[datetime]:
     if memory_last and db_last:
         return max(memory_last, db_last)
     return memory_last or db_last
+
+
+def _refresh_window_bounds(symbol: str) -> tuple[int, int]:
+    profile = SYMBOL_PROFILES.get(symbol) or {}
+    primary_start = int(profile.get("ny_session_start") or (9 * 60 + 30))
+    primary_end = int(profile.get("ny_session_end") or (16 * 60))
+    us_cash_start = 9 * 60 + 30
+    us_cash_end = 16 * 60
+    return min(primary_start, us_cash_start), max(primary_end, us_cash_end)
+
+
+def _align_to_refresh_window(symbol: str, candidate: datetime) -> datetime:
+    candidate_utc = candidate.astimezone(timezone.utc) if candidate.tzinfo else candidate.replace(tzinfo=timezone.utc)
+    candidate_ny = candidate_utc.astimezone(NY_TZ)
+    start_minutes, end_minutes = _refresh_window_bounds(symbol)
+    minutes_now = candidate_ny.hour * 60 + candidate_ny.minute
+
+    if candidate_ny.weekday() < 5 and start_minutes <= minutes_now <= end_minutes:
+        return candidate_utc
+
+    if candidate_ny.weekday() < 5 and minutes_now < start_minutes:
+        aligned = candidate_ny.replace(
+            hour=start_minutes // 60,
+            minute=start_minutes % 60,
+            second=0,
+            microsecond=0,
+        )
+        return aligned.astimezone(timezone.utc)
+
+    days_ahead = 1
+    while True:
+        next_day = candidate_ny + timedelta(days=days_ahead)
+        if next_day.weekday() < 5:
+            aligned = next_day.replace(
+                hour=start_minutes // 60,
+                minute=start_minutes % 60,
+                second=0,
+                microsecond=0,
+            )
+            return aligned.astimezone(timezone.utc)
+        days_ahead += 1
+
+
+def _next_eligible_run_at(symbol: str, *, now: Optional[datetime] = None) -> datetime:
+    current = now or _utc_now()
+    last_log = _resolve_last_log_time(symbol)
+    candidate = last_log + timedelta(seconds=AI_PANEL_LOG_INTERVAL) if last_log else current
+    return _align_to_refresh_window(symbol, candidate)
+
+
+def get_ai_panel_scheduler_status() -> Dict[str, Any]:
+    now = _utc_now()
+    symbols: list[Dict[str, Any]] = []
+
+    for symbol in AI_PANEL_TRACKED_SYMBOLS:
+        market_state = _get_market_state(symbol)
+        last_log = _resolve_last_log_time(symbol)
+        next_eligible = _next_eligible_run_at(symbol, now=now)
+        window_open = bool(market_state.get("is_primary_session_open") or market_state.get("is_us_cash_open"))
+        eligible_now = window_open and (last_log is None or (now - last_log).total_seconds() >= AI_PANEL_LOG_INTERVAL)
+
+        symbols.append({
+            "symbol": symbol,
+            "window_open": window_open,
+            "market_state": market_state,
+            "last_attempt_at": _utc_iso(_last_ai_panel_attempt.get(symbol)),
+            "last_success_at": _utc_iso(_last_ai_panel_success.get(symbol)),
+            "last_persisted_snapshot_at": _utc_iso(_get_last_persisted_snapshot_time(symbol)),
+            "last_resolved_run_at": _utc_iso(last_log),
+            "last_error": _last_ai_panel_error.get(symbol),
+            "next_eligible_at": _utc_iso(next_eligible),
+            "eligible_now": eligible_now,
+            "interval_seconds": AI_PANEL_LOG_INTERVAL,
+        })
+
+    return {
+        "current_time": _utc_iso(now),
+        "interval_seconds": AI_PANEL_LOG_INTERVAL,
+        "tracked_symbols": symbols,
+    }
 
 
 def _coerce_float(value: Any) -> Optional[float]:
@@ -235,7 +325,7 @@ async def log_ai_panel_signals_if_needed() -> None:
 
     for symbol in AI_PANEL_TRACKED_SYMBOLS:
         market_state = _get_market_state(symbol)
-        if not market_state.get("is_primary_session_open"):
+        if not (market_state.get("is_primary_session_open") or market_state.get("is_us_cash_open")):
             continue
 
         last_log = _resolve_last_log_time(symbol)
@@ -243,12 +333,16 @@ async def log_ai_panel_signals_if_needed() -> None:
             continue
 
         try:
+            _last_ai_panel_attempt[symbol] = now
             prediction_log_id = await log_ai_panel_signal(symbol)
             _last_ai_panel_log[symbol] = now
+            _last_ai_panel_success[symbol] = now
+            _last_ai_panel_error.pop(symbol, None)
             logger.info(
                 "AI panel hourly snapshot logged for %s (prediction=%s)",
                 symbol,
                 prediction_log_id[:8] if prediction_log_id else "none",
             )
         except Exception as exc:
+            _last_ai_panel_error[symbol] = str(exc)
             logger.error("AI panel hourly logger failed for %s: %s", symbol, exc)

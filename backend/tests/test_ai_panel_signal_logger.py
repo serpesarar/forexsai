@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from zoneinfo import ZoneInfo
 
 
 backend_dir = Path(__file__).parent.parent
@@ -95,7 +96,17 @@ def _sample_result(direction: str = "HOLD"):
 
 
 def _load_logger_module(module_name: str):
-    analysis_module = SimpleNamespace(get_ai_panel_analysis=AsyncMock())
+    analysis_module = SimpleNamespace(
+        get_ai_panel_analysis=AsyncMock(),
+        NY_TZ=ZoneInfo("America/New_York"),
+        SYMBOL_PROFILES={
+            "NDX.INDX": {"ny_session_start": 9 * 60 + 30, "ny_session_end": 16 * 60},
+            "XAUUSD": {"ny_session_start": 8 * 60 + 20, "ny_session_end": 16 * 60},
+            "GDAXI.INDX": {"ny_session_start": 3 * 60, "ny_session_end": 11 * 60 + 30},
+            "USOIL.FOREX": {"ny_session_start": 9 * 60, "ny_session_end": 14 * 60 + 30},
+        },
+        _get_market_state=lambda _symbol: {"is_primary_session_open": True, "is_us_cash_open": True},
+    )
     prediction_module = SimpleNamespace(log_prediction=AsyncMock())
 
     with patch.dict(
@@ -156,3 +167,52 @@ async def test_hourly_logger_retries_immediately_after_snapshot_persist_failure(
     assert mock_get_analysis.await_count == 2
     assert len(client.insert_calls) == 2
     assert logger_module._last_ai_panel_log["NDX.INDX"] == now
+
+
+@pytest.mark.asyncio
+async def test_hourly_logger_runs_during_us_cash_hours_even_if_primary_session_closed():
+    logger_module, mock_get_analysis, _mock_log_prediction = _load_logger_module("test_ai_panel_signal_logger_us_cash_window")
+    now = datetime(2026, 3, 18, 15, 0, tzinfo=timezone.utc)
+    client = _FakeClient(inserted_created_at=now.isoformat().replace("+00:00", "Z"))
+
+    mock_get_analysis.return_value = _sample_result()
+
+    with patch.object(logger_module, "AI_PANEL_TRACKED_SYMBOLS", ["GDAXI.INDX"]), patch.object(
+        logger_module, "is_db_available", return_value=True
+    ), patch.object(logger_module, "get_supabase_client", return_value=client), patch.object(
+        logger_module, "_utc_now", return_value=now
+    ), patch.object(
+        logger_module, "_get_market_state", return_value={"is_primary_session_open": False, "is_us_cash_open": True}
+    ):
+        await logger_module.log_ai_panel_signals_if_needed()
+
+    mock_get_analysis.assert_awaited_once()
+    assert len(client.insert_calls) == 1
+    assert logger_module._last_ai_panel_log["GDAXI.INDX"] == now
+
+
+def test_scheduler_status_exposes_symbol_observability_fields():
+    logger_module, _mock_get_analysis, _mock_log_prediction = _load_logger_module("test_ai_panel_signal_logger_status")
+    now = datetime(2026, 3, 18, 15, 0, tzinfo=timezone.utc)
+    recent_snapshot = (now - timedelta(minutes=5)).isoformat().replace("+00:00", "Z")
+    client = _FakeClient(snapshot_rows=[{"symbol": "NDX.INDX", "created_at": recent_snapshot}])
+
+    logger_module._last_ai_panel_attempt["NDX.INDX"] = now - timedelta(minutes=1)
+    logger_module._last_ai_panel_success["NDX.INDX"] = now - timedelta(minutes=2)
+    logger_module._last_ai_panel_error["NDX.INDX"] = "temporary failure"
+
+    with patch.object(logger_module, "AI_PANEL_TRACKED_SYMBOLS", ["NDX.INDX"]), patch.object(
+        logger_module, "is_db_available", return_value=True
+    ), patch.object(logger_module, "get_supabase_client", return_value=client), patch.object(
+        logger_module, "_utc_now", return_value=now
+    ), patch.object(
+        logger_module, "_get_market_state", return_value={"is_primary_session_open": False, "is_us_cash_open": True, "phase": "open"}
+    ):
+        status = logger_module.get_ai_panel_scheduler_status()
+
+    assert status["interval_seconds"] == logger_module.AI_PANEL_LOG_INTERVAL
+    assert status["tracked_symbols"][0]["symbol"] == "NDX.INDX"
+    assert status["tracked_symbols"][0]["window_open"] is True
+    assert status["tracked_symbols"][0]["last_error"] == "temporary failure"
+    assert status["tracked_symbols"][0]["last_persisted_snapshot_at"] == recent_snapshot
+    assert status["tracked_symbols"][0]["next_eligible_at"] is not None
