@@ -8,6 +8,7 @@ import { LazyPanel } from "../../components/LazyPanel";
 import { useI18nStore } from "../../lib/i18n/store";
 
 const EmelPanel = lazy(() => import("../../components/panels/EmelPanel"));
+const EmelInversePanel = lazy(() => import("../../components/panels/EmelInversePanel"));
 const MetaSignalAnalysisPanel = lazy(() => import("../../components/panels/MetaSignalAnalysisPanel"));
 const PulsePanel = lazy(() => import("../../components/panels/PulsePanel"));
 const PulseV3Panel = lazy(() => import("../../components/panels/PulseV3Panel"));
@@ -42,6 +43,11 @@ export default function SignalsView() {
                 <LazyPanel fallbackHeight={350}>
                     <Suspense fallback={<PanelLoader />}>
                         <EmelPanel />
+                    </Suspense>
+                </LazyPanel>
+                <LazyPanel fallbackHeight={320}>
+                    <Suspense fallback={<PanelLoader />}>
+                        <EmelInversePanel />
                     </Suspense>
                 </LazyPanel>
 

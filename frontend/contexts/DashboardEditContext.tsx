@@ -60,6 +60,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "pulse-ml", title: "PULSE 2 - ML Hybrid", column: "left", order: 2, visible: true, size: "large", collapsed: false },
     { id: "pulse-v3", title: "PULSE 3 - Hybrid Scalp", column: "left", order: 3, visible: true, size: "large", collapsed: false },
     { id: "emel-panel", title: "EMEL Panel - 9 Checkpoints", column: "left", order: 4, visible: true, size: "large", collapsed: false },
+    { id: "emel-inverse-panel", title: "EMEL Inverse Signals", column: "left", order: 4.5, visible: true, size: "large", collapsed: false },
     { id: "rebound-detection", title: "Rebound Detection", column: "left", order: 5, visible: true, size: "large", collapsed: false },
     { id: "learning-dashboard", title: "Learning Dashboard", column: "left", order: 7, visible: true, size: "large", collapsed: false },
     { id: "cot-whale", title: "COT & Whale Intelligence", column: "left", order: 8, visible: true, size: "large", collapsed: false },
@@ -92,7 +93,7 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: "rhythm-detectors", title: "Rhythm Detectors", column: "center", order: 23, visible: true, size: "full", collapsed: false },
     { id: "news-correlation", title: "News-Chart Correlation", column: "center", order: 24, visible: true, size: "full", collapsed: false },
   ],
-  version: 30,
+  version: 31,
 };
 
 const LAYOUT_STORAGE_KEY = "dashboard-layout-v7";

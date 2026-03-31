@@ -34,6 +34,7 @@ const InstitutionalDataPanel = lazy(() => import("../components/InstitutionalDat
 const CandlestickPatternPanel = lazy(() => import("../components/CandlestickPatternPanel"));
 const StrategyPerformancePanel = lazy(() => import("../components/StrategyPerformancePanel"));
 const EmelPanel = lazy(() => import("../components/panels/EmelPanel"));
+const EmelInversePanel = lazy(() => import("../components/panels/EmelInversePanel"));
 const PulsePanel = lazy(() => import("../components/panels/PulsePanel"));
 const PulseV3Panel = lazy(() => import("../components/panels/PulseV3Panel"));
 const PulseMLPanel = lazy(() => import("../components/panels/PulseMLPanel"));
@@ -903,6 +904,8 @@ export default function HomePage() {
         return <CyberpunkTrendPanel />;
       case "emel-panel":
         return <EmelPanel />;
+      case "emel-inverse-panel":
+        return <EmelInversePanel />;
       case "pulse-panel":
         return <PulsePanel />;
       case "pulse-v3":
@@ -1433,6 +1436,20 @@ export default function HomePage() {
                     <div className="mb-6 w-full">
                       <LazyPanel fallbackHeight={300}>
                         <EmelPanel />
+                      </LazyPanel>
+                    </div>
+                  )}
+                  {getCard("emel-inverse-panel")?.visible !== false && (
+                    <div className="mb-6 w-full">
+                      <LazyPanel fallbackHeight={300}>
+                        <EmelInversePanel />
+                      </LazyPanel>
+                    </div>
+                  )}
+                  {getCard("rebound-detection")?.visible !== false && (
+                    <div className="mb-6 w-full">
+                      <LazyPanel fallbackHeight={300}>
+                        <ReboundDetectionPanel />
                       </LazyPanel>
                     </div>
                   )}
