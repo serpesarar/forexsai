@@ -41,18 +41,18 @@ def _pip_value(symbol: str) -> float:
 
 def _normalize_timeframe(timeframe: str) -> str:
     tf = (timeframe or "5m").lower().strip()
-    mapping = {
-        "5m": "5m",
-        "15m": "15m",
-        "30m": "30m",
-        "1h": "1h",
-        "4h": "4h",
-        "1d": "1d",
-        "h1": "1h",
-        "h4": "4h",
-        "d1": "1d",
-    }
+    mapping = {"5m": "5m", "15m": "15m", "30m": "30m", "1h": "1h", "4h": "4h", "1d": "1d", "h1": "1h", "h4": "4h", "d1": "1d"}
     return mapping.get(tf, "5m")
+
+
+def _get_atr_multiplier(symbol: str) -> float:
+    """Symbol'e göre daha akıllı ATR buffer katsayısı"""
+    s = symbol.upper()
+    if "XAU" in s:
+        return 0.003
+    if "OIL" in s or "USOIL" in s or "CL" in s:
+        return 0.008
+    return 0.002  # NASDAQ, DAX vb.
 
 
 def _compute_ta(closes: np.ndarray, highs: np.ndarray, lows: np.ndarray, volumes: np.ndarray) -> Dict[str, float]:
@@ -297,15 +297,20 @@ def _obv_metrics(closes: np.ndarray, volumes: np.ndarray) -> Dict[str, Any]:
 
 
 def _derive_targets(current_price: float, support: Optional[Dict[str, Any]], resistance: Optional[Dict[str, Any]], atr_value: float, direction: str) -> Dict[str, float]:
+    """Güvenli hale getirildi"""
     atr_buffer = atr_value or max(current_price * 0.003, 1e-6)
     if direction == "BUY":
-        bounce_target = float((resistance or {}).get("price") or (current_price + atr_buffer * 2.2))
-        invalidation = float((support or {}).get("price") or current_price) - atr_buffer * 0.6
-        secondary_turn = bounce_target + atr_buffer * 0.4
+        support_price = float((support or {}).get("price") or current_price)
+        resistance_price = float((resistance or {}).get("price") or current_price + atr_buffer * 3)
+        bounce_target = resistance_price
+        invalidation = support_price - atr_buffer * 0.6
     else:
-        bounce_target = float((support or {}).get("price") or (current_price - atr_buffer * 2.2))
-        invalidation = float((resistance or {}).get("price") or current_price) + atr_buffer * 0.6
-        secondary_turn = bounce_target - atr_buffer * 0.4
+        resistance_price = float((resistance or {}).get("price") or current_price)
+        support_price = float((support or {}).get("price") or current_price - atr_buffer * 3)
+        bounce_target = support_price
+        invalidation = resistance_price + atr_buffer * 0.6
+
+    secondary_turn = bounce_target + (atr_buffer * 0.4 if direction == "BUY" else -atr_buffer * 0.4)
     return {
         "bounce_target": round(bounce_target, 2),
         "invalidation": round(invalidation, 2),
@@ -327,6 +332,11 @@ def _rr_progress(current_price: float, target: float, invalidation: float, price
 
 async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = True) -> Dict[str, Any]:
     normalized_tf = _normalize_timeframe(timeframe)
+    
+    # Dinamik Cache TTL
+    global _CACHE_TTL
+    _CACHE_TTL = timedelta(seconds=30 if normalized_tf in {"5m", "15m"} else 90)
+
     cache_key = f"{symbol}:{normalized_tf}"
     if use_cache:
         with _CACHE_LOCK:
@@ -423,10 +433,10 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
         long_reasons.append("Bullish order block zone active")
 
     bullish_divergence = rsi_divergence.type == "BULLISH_DIV"
-    oversold = base_ta["rsi_14"] < 40
+    oversold = base_ta["rsi_14"] < 42
     if oversold or bullish_divergence:
         long_mandatory_hits += 1
-        long_score += 16
+        long_score += 18
         long_reasons.append("RSI oversold/divergence support")
 
     if candle_signal["bullish"]:
@@ -451,10 +461,10 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
     if obv_data["trend"] == "BULLISH" or obv_data["spike"]:
         long_score += 8
         long_bonus_reasons.append("OBV rising / spike confirmation")
-    if regression_slope > 0 and regression_r2 > 0.75:
+    if regression_slope > 0 and regression_r2 > 0.65:
         long_score += 8
         long_bonus_reasons.append("Positive weighted regression slope")
-    if base_ta["atr_ratio"] < 1.5:
+    if base_ta["atr_ratio"] < 1.8:
         long_score += 6
         long_bonus_reasons.append("Volatility compression supports cleaner bounce")
     if regime.session in {"london", "newyork", "overlap_london_ny", "xetra_us_overlap", "nymex"}:
@@ -466,7 +476,7 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
 
     long_targets = _derive_targets(current_price, nearest_support, nearest_resistance, base_ta["atr_14"], "BUY")
     long_score = round(min(100.0, long_score), 1)
-    long_label = "HIGH_PROBABILITY" if long_mandatory_hits >= 3 and long_score >= 75 else "WATCH" if long_mandatory_hits >= 2 and long_score >= 60 else "NO_SIGNAL"
+    long_label = "HIGH_PROBABILITY" if long_mandatory_hits >= 2 and long_score >= 72 else "WATCH" if long_mandatory_hits >= 1 and long_score >= 55 else "NO_SIGNAL"
 
     exit_mandatory_hits = 0
     exit_reasons: List[str] = []
@@ -515,10 +525,16 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
 
     lookback = min(22, len(closes))
     chandelier_period_high = float(np.max(highs[-lookback:])) if lookback else current_price
+    chandelier_period_low = float(np.min(lows[-lookback:])) if lookback else current_price
     chandelier_exit_long = chandelier_period_high - (base_ta["atr_14"] * 3.0)
+    chandelier_exit_short = chandelier_period_low + (base_ta["atr_14"] * 3.0)
+
     if current_price < chandelier_exit_long:
-        exit_score += 10
+        exit_score += 12
         exit_bonus_reasons.append("Price slipped below chandelier long exit")
+    if current_price > chandelier_exit_short:
+        exit_score += 12
+        exit_bonus_reasons.append("Price broke above chandelier short exit")
 
     exit_targets = _derive_targets(current_price, nearest_support, nearest_resistance, base_ta["atr_14"], "SELL")
     rr_progress = _rr_progress(current_price, long_targets["bounce_target"], long_targets["invalidation"], float((nearest_support or {}).get("price") or current_price), "BUY")
@@ -530,7 +546,7 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
         exit_mandatory_hits = max(exit_mandatory_hits, 3)
 
     exit_score = round(min(100.0, exit_score), 1)
-    exit_label = "EXIT_OR_SHORT" if exit_mandatory_hits >= 2 and exit_score >= 60 else "WATCH_EXIT" if exit_mandatory_hits >= 1 and exit_score >= 45 else "HOLD_REBOUND"
+    exit_label = "EXIT_OR_SHORT" if exit_mandatory_hits >= 2 and exit_score >= 65 else "WATCH_EXIT" if exit_mandatory_hits >= 1 and exit_score >= 45 else "HOLD_REBOUND"
 
     payload = {
         "symbol": symbol,
@@ -541,9 +557,9 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
             "label": long_label,
             "is_high_probability": long_label == "HIGH_PROBABILITY",
             "score": long_score,
-            "threshold": 85,
+            "threshold": 72,
             "mandatory_hits": long_mandatory_hits,
-            "mandatory_required": 3,
+            "mandatory_required": 2,
             "zone": {
                 "type": "bullish_order_block" if bullish_ob_hit else ("support" if nearest_support else "none"),
                 "low": round(float((bullish_ob or {}).get("zone_low", 0.0) or float((nearest_support or {}).get("price", 0.0) or 0.0)), 2) if (bullish_ob or nearest_support) else None,
@@ -562,7 +578,7 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
             "label": exit_label,
             "is_exit_trigger": exit_label == "EXIT_OR_SHORT",
             "score": exit_score,
-            "threshold": 70,
+            "threshold": 65,
             "mandatory_hits": exit_mandatory_hits,
             "mandatory_required": 2,
             "reversal_zone": {
