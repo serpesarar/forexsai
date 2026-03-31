@@ -478,76 +478,83 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
     long_score = round(min(100.0, long_score), 1)
     long_label = "HIGH_PROBABILITY" if long_mandatory_hits >= 2 and long_score >= 72 else "WATCH" if long_mandatory_hits >= 1 and long_score >= 55 else "NO_SIGNAL"
 
-    exit_mandatory_hits = 0
-    exit_reasons: List[str] = []
-    exit_bonus_reasons: List[str] = []
-    exit_score = 0.0
+    # ====================== SHORT REBOUND (YUKARIDAN AŞAĞI SEKME) ======================
+    short_mandatory_hits = 0
+    short_reasons: List[str] = []
+    short_bonus_reasons: List[str] = []
+    short_score = 0.0
 
-    bearish_ob_hit = bool(
+    bearish_ob_hit_short = bool(
         bearish_ob
         and bearish_ob["proximity_score"] >= 0.35
         and (bearish_ob["is_fresh"] or bearish_ob["score_numeric"] >= 55)
+        and bearish_ob["touch_count"] >= 1
     )
-    if bearish_ob_hit:
-        exit_mandatory_hits += 1
-        exit_score += 20
-        exit_reasons.append("Bearish order block / breaker zone active")
+    if bearish_ob_hit_short:
+        short_mandatory_hits += 1
+        short_score += 22
+        short_reasons.append("Bearish order block / breaker zone active")
 
-    bearish_divergence = rsi_divergence.type == "BEARISH_DIV"
-    overbought = base_ta["rsi_14"] > 65
-    if overbought or bearish_divergence:
-        exit_mandatory_hits += 1
-        exit_score += 16
-        exit_reasons.append("RSI overbought/divergence warning")
+    bearish_divergence_short = rsi_divergence.type == "BEARISH_DIV"
+    overbought_short = base_ta["rsi_14"] > 68
+    if overbought_short or bearish_divergence_short:
+        short_mandatory_hits += 1
+        short_score += 18
+        short_reasons.append("RSI overbought / bearish divergence")
 
     if candle_signal["bearish"]:
-        exit_mandatory_hits += 1
-        exit_score += 14
-        exit_reasons.append(f"Bearish reversal candle: {candle_signal.get('name_tr') or candle_signal.get('name')}")
+        short_mandatory_hits += 1
+        short_score += 16
+        short_reasons.append(f"Bearish reversal candle: {candle_signal.get('name_tr') or candle_signal.get('name')}")
 
+    if mtf_bear_count >= 1 and mtf_bear_score >= 60:
+        short_mandatory_hits += 1
+        short_score += 18
+        short_reasons.append("1H + 4H bearish EMA stack alignment")
+
+    # Short bonuslar
     bearish_choch = any(str(item.get("type") or "").lower() == "bearish" for item in choch_list[-2:])
     bearish_bos = any(str(item.get("type") or "").lower() == "bearish" for item in bos_list[-2:])
     if bearish_choch:
-        exit_score += 20
-        exit_bonus_reasons.append("Bearish CHoCH detected")
+        short_score += 20
+        short_bonus_reasons.append("Bearish CHoCH detected")
     if bearish_bos:
-        exit_score += 15
-        exit_bonus_reasons.append("Bearish BOS detected")
-    if mtf_bear_count >= 1 or mtf_bear_score >= 60:
-        exit_score += 12
-        exit_bonus_reasons.append("Higher timeframe bearish alignment emerging")
+        short_score += 15
+        short_bonus_reasons.append("Bearish BOS detected")
     if _liquidity_sweep(base_ohlcv, "buy"):
-        exit_score += 10
-        exit_bonus_reasons.append("Buy-side liquidity sweep / high sweep detected")
+        short_score += 15
+        short_bonus_reasons.append("Buy-side liquidity sweep / high sweep detected")
+    if bearish_fvg and bearish_fvg["proximity_score"] >= 0.4:
+        short_score += 12
+        short_bonus_reasons.append("Bearish FVG nearby")
+    if base_ta["adx"] > 25 and base_ta["minus_di"] > base_ta["plus_di"]:
+        short_score += 10
+        short_bonus_reasons.append("ADX and -DI support bearish rebound")
     if obv_data["divergence"] or obv_data["trend"] == "BEARISH":
-        exit_score += 8
-        exit_bonus_reasons.append("OBV divergence / weakening participation")
+        short_score += 8
+        short_bonus_reasons.append("OBV divergence / weakening participation")
+    if regression_slope < 0 and regression_r2 > 0.65:
+        short_score += 8
+        short_bonus_reasons.append("Negative weighted regression slope")
+    if base_ta["atr_ratio"] < 1.8:
+        short_score += 6
+        short_bonus_reasons.append("Volatility compression supports cleaner drop")
+    if regime.session in {"london", "newyork", "overlap_london_ny", "xetra_us_overlap", "nymex"}:
+        short_score += 5
+        short_bonus_reasons.append(f"Active session: {regime.session}")
 
-    lookback = min(22, len(closes))
-    chandelier_period_high = float(np.max(highs[-lookback:])) if lookback else current_price
-    chandelier_period_low = float(np.min(lows[-lookback:])) if lookback else current_price
+    lookback_short = min(22, len(closes))
+    chandelier_period_high = float(np.max(highs[-lookback_short:])) if lookback_short else current_price
     chandelier_exit_long = chandelier_period_high - (base_ta["atr_14"] * 3.0)
-    chandelier_exit_short = chandelier_period_low + (base_ta["atr_14"] * 3.0)
-
     if current_price < chandelier_exit_long:
-        exit_score += 12
-        exit_bonus_reasons.append("Price slipped below chandelier long exit")
-    if current_price > chandelier_exit_short:
-        exit_score += 12
-        exit_bonus_reasons.append("Price broke above chandelier short exit")
+        short_score += 12
+        short_bonus_reasons.append("Price slipped below chandelier long exit")
 
-    exit_targets = _derive_targets(current_price, nearest_support, nearest_resistance, base_ta["atr_14"], "SELL")
-    rr_progress = _rr_progress(current_price, long_targets["bounce_target"], long_targets["invalidation"], float((nearest_support or {}).get("price") or current_price), "BUY")
-    if 0.7 <= rr_progress <= 1.05 and bearish_divergence:
-        exit_score += 8
-        exit_bonus_reasons.append("Bounce reached 70-80% objective with divergence")
+    short_targets = _derive_targets(current_price, nearest_support, nearest_resistance, base_ta["atr_14"], "SELL")
+    short_score = round(min(100.0, short_score), 1)
+    short_label = "HIGH_PROBABILITY" if short_mandatory_hits >= 2 and short_score >= 72 else "WATCH" if short_mandatory_hits >= 1 and short_score >= 55 else "NO_SIGNAL"
 
-    if bearish_ob_hit and (overbought or bearish_divergence) and candle_signal["bearish"]:
-        exit_mandatory_hits = max(exit_mandatory_hits, 3)
-
-    exit_score = round(min(100.0, exit_score), 1)
-    exit_label = "EXIT_OR_SHORT" if exit_mandatory_hits >= 2 and exit_score >= 65 else "WATCH_EXIT" if exit_mandatory_hits >= 1 and exit_score >= 45 else "HOLD_REBOUND"
-
+    # ====================== PAYLOAD ======================
     payload = {
         "symbol": symbol,
         "timeframe": normalized_tf,
@@ -574,22 +581,26 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
             "reasons": long_reasons,
             "bonus_confirmations": long_bonus_reasons,
         },
-        "rebound_exit": {
-            "label": exit_label,
-            "is_exit_trigger": exit_label == "EXIT_OR_SHORT",
-            "score": exit_score,
-            "threshold": 65,
-            "mandatory_hits": exit_mandatory_hits,
+        "rebound_short": {
+            "label": short_label,
+            "is_high_probability": short_label == "HIGH_PROBABILITY",
+            "score": short_score,
+            "threshold": 72,
+            "mandatory_hits": short_mandatory_hits,
             "mandatory_required": 2,
-            "reversal_zone": {
-                "type": "bearish_order_block" if bearish_ob_hit else ("resistance" if nearest_resistance else "none"),
+            "zone": {
+                "type": "bearish_order_block" if bearish_ob_hit_short else ("resistance" if nearest_resistance else "none"),
                 "low": round(float((bearish_ob or {}).get("zone_low", 0.0) or float((nearest_resistance or {}).get("price", 0.0) or 0.0)), 2) if (bearish_ob or nearest_resistance) else None,
                 "high": round(float((bearish_ob or {}).get("zone_high", 0.0) or float((nearest_resistance or {}).get("price", 0.0) or 0.0)), 2) if (bearish_ob or nearest_resistance) else None,
+                "touch_count": int((bearish_ob or {}).get("touch_count", 0) or 0),
+                "fresh": bool((bearish_ob or {}).get("is_fresh", False)),
+                "score": float((bearish_ob or {}).get("score_numeric", 0.0) or 0.0),
             },
-            "take_profit_zone": exit_targets["bounce_target"],
-            "short_invalidation": exit_targets["invalidation"],
-            "reasons": exit_reasons,
-            "bonus_confirmations": exit_bonus_reasons,
+            "expected_drop_to": short_targets["bounce_target"],
+            "secondary_turn_zone": short_targets["secondary_turn"],
+            "invalidation": short_targets["invalidation"],
+            "reasons": short_reasons,
+            "bonus_confirmations": short_bonus_reasons,
         },
         "context": {
             "regime": regime.regime,
