@@ -6,39 +6,32 @@ import { useRefreshAge } from "../../hooks/useRefreshAge";
 import { PanelHeader } from "../PanelHeader";
 import {
   TargetIcon as Target,
-  ArrowUpIcon as ArrowUp,
-  ArrowDownIcon as ArrowDown,
+  TrendingUpIcon as TrendUp,
+  TrendingDownIcon as TrendDown,
   ActivityIcon as Activity,
-  CheckCircleIcon as CheckCircle,
-  AlertIcon as AlertTriangle,
 } from "../ui/CustomIcons";
 
 const API_BASE = getApiBase();
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 
+// Types
 interface ReboundLeg {
   label?: string;
   is_high_probability?: boolean;
-  is_exit_trigger?: boolean;
   score?: number;
   threshold?: number;
   mandatory_hits?: number;
   mandatory_required?: number;
   expected_bounce_to?: number;
-  take_profit_zone?: number;
+  expected_drop_to?: number;
   invalidation?: number;
-  short_invalidation?: number;
   reasons?: string[];
   bonus_confirmations?: string[];
-}
-
-interface ReboundZone {
-  type?: string;
-  low?: number | null;
-  high?: number | null;
-  touch_count?: number;
-  fresh?: boolean;
-  score?: number;
+  zone?: {
+    type?: string;
+    low?: number | null;
+    high?: number | null;
+  };
 }
 
 interface ReboundResponse {
@@ -46,21 +39,16 @@ interface ReboundResponse {
   timeframe?: string;
   timestamp?: string;
   price?: number;
-  rebound_long?: ReboundLeg & { zone?: ReboundZone };
-  rebound_exit?: ReboundLeg & { reversal_zone?: ReboundZone };
+  rebound_long?: ReboundLeg;
+  rebound_short?: ReboundLeg;
   context?: {
     regime?: string;
     session?: string;
-    is_ath?: boolean;
     rsi?: number;
     adx?: number;
     divergence?: string;
   };
   error?: string;
-}
-
-interface ReboundDetectionPanelProps {
-  symbol?: string;
 }
 
 const SYMBOLS = [
@@ -72,134 +60,160 @@ const SYMBOLS = [
 
 const TIMEFRAMES = ["5m", "15m", "30m", "1H", "4H"];
 
-const theme = {
-  bg: "var(--bg-primary)",
-  surface: "var(--bg-surface)",
-  border: "var(--border-subtle)",
-  text: "var(--text-primary)",
-  muted: "var(--text-muted)",
-  green: "var(--accent-positive)",
-  red: "var(--accent-negative)",
-  warn: "var(--accent-warning)",
-  accent: "var(--accent-info)",
-};
-
-function scoreColor(score: number | undefined, threshold: number | undefined, positiveColor: string) {
-  if (typeof score !== "number") return theme.muted;
-  if (typeof threshold === "number" && score >= threshold) return positiveColor;
-  return theme.warn;
-}
-
-function MetricCard({
+// Signal Card Component
+function SignalCard({
   title,
-  value,
-  tone,
+  direction,
+  data,
 }: {
   title: string;
-  value: string;
-  tone: string;
+  direction: "up" | "down";
+  data?: ReboundLeg;
 }) {
+  const isGreen = direction === "up";
+  const colorClass = isGreen ? "#10b981" : "#ef4444";
+  const bgClass = isGreen ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)";
+  const borderClass = isGreen ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.25)";
+
+  const label = data?.label || "NO_SIGNAL";
+  const score = data?.score ?? 0;
+  const hits = data?.mandatory_hits ?? 0;
+  const required = data?.mandatory_required ?? 2;
+
+  const getStatusColor = () => {
+    if (label === "HIGH_PROBABILITY") return colorClass;
+    if (label === "WATCH") return "#f59e0b";
+    return "#6b7280";
+  };
+
+  const targetPrice = isGreen ? data?.expected_bounce_to : data?.expected_drop_to;
+  const invalidation = data?.invalidation;
+
   return (
     <div
-      className="rounded-lg px-3 py-2"
-      style={{ background: `${tone}10`, border: `1px solid ${tone}20` }}
+      style={{
+        background: "var(--bg-surface)",
+        border: `2px solid ${getStatusColor()}`,
+        borderRadius: "12px",
+        padding: "16px",
+        fontFamily: FONT,
+      }}
     >
-      <div className="text-[10px] uppercase tracking-wider" style={{ color: theme.muted }}>
-        {title}
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+        <div
+          style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "10px",
+            background: bgClass,
+            border: `1px solid ${borderClass}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: colorClass,
+          }}
+        >
+          {isGreen ? <TrendUp size={20} /> : <TrendDown size={20} />}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            {title}
+          </div>
+          <div style={{ fontSize: "16px", fontWeight: 700, color: getStatusColor() }}>
+            {label.replace(/_/g, " ")}
+          </div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontSize: "28px", fontWeight: 800, color: getStatusColor(), fontFamily: "monospace" }}>
+            {score.toFixed(0)}
+          </div>
+        </div>
       </div>
-      <div className="text-[12px] font-mono font-bold" style={{ color: tone }}>
-        {value}
-      </div>
-    </div>
-  );
-}
 
-function ReboundLegCard({
-  title,
-  leg,
-  isEntry,
-}: {
-  title: string;
-  leg?: ReboundResponse["rebound_long"] | ReboundResponse["rebound_exit"];
-  isEntry: boolean;
-}) {
-  const isPositive = isEntry ? leg?.is_high_probability : leg?.is_exit_trigger;
-  const tone = isEntry ? (isPositive ? theme.green : theme.warn) : (isPositive ? theme.red : theme.warn);
-  const primaryTarget = isEntry ? leg?.expected_bounce_to : leg?.take_profit_zone;
-  const invalidation = isEntry ? leg?.invalidation : leg?.short_invalidation;
-  const Icon = isEntry ? ArrowUp : ArrowDown;
-
-  return (
-    <div className="rounded-xl p-4" style={{ background: theme.surface, border: `1px solid ${theme.border}` }}>
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2">
+      {/* Progress bar */}
+      <div style={{ marginBottom: "12px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "var(--text-muted)", marginBottom: "4px" }}>
+          <span>Checks</span>
+          <span>{hits}/{required}</span>
+        </div>
+        <div style={{ height: "6px", background: "rgba(255,255,255,0.1)", borderRadius: "3px", overflow: "hidden" }}>
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
-            style={{ background: `${tone}12`, border: `1px solid ${tone}20`, color: tone }}
-          >
-            <Icon className="w-4 h-4" />
+            style={{
+              height: "100%",
+              width: `${Math.min(100, (hits / required) * 100)}%`,
+              background: getStatusColor(),
+              borderRadius: "3px",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Prices */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "12px" }}>
+        <div style={{ background: "rgba(255,255,255,0.03)", padding: "10px", borderRadius: "8px", textAlign: "center" }}>
+          <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase" }}>
+            {isGreen ? "Bounce To" : "Drop To"}
           </div>
-          <div>
-            <div className="text-[11px] uppercase tracking-widest font-bold" style={{ color: theme.muted }}>
-              {title}
-            </div>
-            <div className="text-sm font-semibold" style={{ color: theme.text }}>
-              {leg?.label || "NO_SIGNAL"}
-            </div>
+          <div style={{ fontSize: "14px", fontWeight: 700, color: colorClass, fontFamily: "monospace" }}>
+            {targetPrice?.toFixed(2) ?? "--"}
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-[10px] uppercase tracking-wider" style={{ color: theme.muted }}>
-            Score
-          </div>
-          <div className="text-[26px] leading-none font-bold font-mono" style={{ color: scoreColor(leg?.score, leg?.threshold, tone) }}>
-            {typeof leg?.score === "number" ? leg.score.toFixed(0) : "--"}
+        <div style={{ background: "rgba(255,255,255,0.03)", padding: "10px", borderRadius: "8px", textAlign: "center" }}>
+          <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase" }}>Stop</div>
+          <div style={{ fontSize: "14px", fontWeight: 700, color: "#f59e0b", fontFamily: "monospace" }}>
+            {invalidation?.toFixed(2) ?? "--"}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mb-3">
-        <MetricCard
-          title="Threshold"
-          value={typeof leg?.threshold === "number" ? leg.threshold.toFixed(0) : "--"}
-          tone={theme.accent}
-        />
-        <MetricCard
-          title="Hits"
-          value={typeof leg?.mandatory_hits === "number" && typeof leg?.mandatory_required === "number" ? `${leg.mandatory_hits}/${leg.mandatory_required}` : "--"}
-          tone={tone}
-        />
-        <MetricCard
-          title={isEntry ? "Bounce Target" : "Take Profit"}
-          value={typeof primaryTarget === "number" ? primaryTarget.toFixed(2) : "--"}
-          tone={isEntry ? theme.green : theme.red}
-        />
-        <MetricCard
-          title="Invalidation"
-          value={typeof invalidation === "number" ? invalidation.toFixed(2) : "--"}
-          tone={theme.warn}
-        />
-      </div>
+      {/* Zone */}
+      {data?.zone && data.zone.type !== "none" && (
+        <div style={{ background: bgClass, border: `1px solid ${borderClass}`, padding: "8px 12px", borderRadius: "8px", marginBottom: "10px", fontSize: "11px" }}>
+          <span style={{ color: "var(--text-muted)" }}>Zone: </span>
+          <span style={{ color: colorClass, fontWeight: 600 }}>
+            {data.zone.type?.replace(/_/g, " ")}
+          </span>
+          {data.zone.low && data.zone.high && (
+            <span style={{ color: "var(--text-muted)", marginLeft: "8px" }}>
+              {data.zone.low.toFixed(1)} - {data.zone.high.toFixed(1)}
+            </span>
+          )}
+        </div>
+      )}
 
-      <div className="space-y-1.5">
-        {(leg?.reasons || []).slice(0, 3).map((reason, index) => (
-          <div key={index} className="flex items-start gap-2 text-[11px]" style={{ color: theme.text }}>
-            <CheckCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: tone }} />
-            <span className="opacity-85">{reason}</span>
-          </div>
-        ))}
-        {(!leg?.reasons || leg.reasons.length === 0) && (
-          <div className="flex items-start gap-2 text-[11px]" style={{ color: theme.muted }}>
-            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            <span>No confluence reasons returned yet.</span>
-          </div>
-        )}
-      </div>
+      {/* Reasons */}
+      {data?.reasons && data.reasons.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          {data.reasons.slice(0, 2).map((reason, i) => (
+            <div key={i} style={{ fontSize: "11px", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ color: colorClass }}>●</span>
+              {reason}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {(!data?.reasons || data.reasons.length === 0) && (
+        <div style={{ fontSize: "12px", color: "var(--text-muted)", textAlign: "center", padding: "8px" }}>
+          Waiting for setup...
+        </div>
+      )}
     </div>
   );
 }
 
-export default function ReboundDetectionPanel({ symbol: initialSymbol = "NDX.INDX" }: ReboundDetectionPanelProps) {
+// Context pill
+function ContextPill({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ background: "rgba(255,255,255,0.05)", padding: "6px 12px", borderRadius: "20px", fontSize: "11px", display: "flex", alignItems: "center", gap: "6px" }}>
+      <span style={{ color: "var(--text-muted)" }}>{label}</span>
+      <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{value}</span>
+    </div>
+  );
+}
+
+export default function ReboundDetectionPanel({ symbol: initialSymbol = "NDX.INDX" }: { symbol?: string }) {
   const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
   const [timeframe, setTimeframe] = useState("5m");
   const [data, setData] = useState<ReboundResponse | null>(null);
@@ -217,37 +231,25 @@ export default function ReboundDetectionPanel({ symbol: initialSymbol = "NDX.IND
       const json = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setError((json && typeof json === "object" && "error" in json && typeof json.error === "string") ? json.error : `http_${res.status}`);
+        setError(json?.error || `HTTP ${res.status}`);
         setData(null);
-      } else if (!json || typeof json !== "object") {
-        setError("invalid_response");
-        setData(null);
-      } else if ("error" in json && json.error) {
-        setError(typeof json.error === "string" ? json.error : "panel_error");
+      } else if (json?.error) {
+        setError(json.error);
         setData(null);
       } else {
-        const payload = json as ReboundResponse;
-        setData(payload);
-        markRefreshed(payload.timestamp);
+        setData(json as ReboundResponse);
+        markRefreshed(json.timestamp);
       }
     } catch (err) {
-      console.error("Rebound panel fetch error:", err);
-      setError("fetch_error");
+      setError("Network error");
       setData(null);
     } finally {
       if (showLoading) setLoading(false);
     }
   }, [activeSymbol, timeframe, markRefreshed]);
 
-  useEffect(() => {
-    fetchData(true);
-  }, [fetchData]);
-
-  useEffect(() => {
-    const interval = setInterval(() => fetchData(false), 60000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
-
+  useEffect(() => { fetchData(true); }, [fetchData]);
+  useEffect(() => { const interval = setInterval(() => fetchData(false), 60000); return () => clearInterval(interval); }, [fetchData]);
   useEffect(() => {
     const handler = () => fetchData(true, true);
     window.addEventListener("dashboard-refresh", handler);
@@ -256,22 +258,18 @@ export default function ReboundDetectionPanel({ symbol: initialSymbol = "NDX.IND
 
   if (loading && !data) {
     return (
-      <div className="animate-pulse p-6 rounded-xl" style={{ background: theme.bg, border: `1px solid ${theme.border}` }}>
-        <div className="h-12 w-1/3 rounded-lg mb-6" style={{ background: "rgba(255,255,255,0.05)" }} />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="h-52 rounded-xl" style={{ background: "rgba(255,255,255,0.05)" }} />
-          <div className="h-52 rounded-xl" style={{ background: "rgba(255,255,255,0.05)" }} />
-        </div>
+      <div className="animate-pulse" style={{ background: "var(--bg-primary)", border: "1px solid var(--border-subtle)", borderRadius: "12px", padding: "20px" }}>
+        <div style={{ height: "200px", background: "rgba(255,255,255,0.05)", borderRadius: "8px" }} />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col rounded-xl overflow-hidden" style={{ background: theme.bg, border: `1px solid ${theme.border}`, fontFamily: FONT }}>
+    <div style={{ background: "var(--bg-primary)", border: "1px solid var(--border-subtle)", borderRadius: "12px", overflow: "hidden", fontFamily: FONT }}>
       <PanelHeader
         title="REBOUND"
-        subtitle="ENTRY / EXIT CONFLUENCE"
-        icon={<Target size={24} strokeWidth={2.5} />}
+        subtitle="DIP & PEAK BOUNCE DETECTOR"
+        icon={<Target size={22} />}
         iconBg="var(--accent-cyan-08)"
         iconBorder="var(--accent-cyan-15)"
         iconColor="var(--accent-cyan)"
@@ -284,38 +282,38 @@ export default function ReboundDetectionPanel({ symbol: initialSymbol = "NDX.IND
         loading={loading}
         panelId="rebound-detection"
         signalAge={signalAge}
-        extraContent={data ? (
-          <div className="text-right">
-            <div className="text-[11px] uppercase tracking-widest" style={{ color: theme.muted }}>Price</div>
-            <div className="text-[24px] font-bold tracking-tight font-mono" style={{ color: theme.text }}>
-              {typeof data.price === "number" ? data.price.toFixed(2) : "--"}
+        extraContent={data?.price ? (
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase" }}>Price</div>
+            <div style={{ fontSize: "22px", fontWeight: 700, fontFamily: "monospace", color: "var(--text-primary)" }}>
+              {data.price.toFixed(2)}
             </div>
           </div>
         ) : undefined}
       />
 
-      <div className="p-4 space-y-4">
+      <div style={{ padding: "16px" }}>
         {error && !data && (
-          <div className="rounded-xl p-6 text-center" style={{ background: theme.surface, border: `1px solid ${theme.border}` }}>
-            <Activity className="w-10 h-10 mx-auto mb-3" style={{ color: theme.warn, opacity: 0.5 }} />
-            <div className="text-sm font-semibold mb-1" style={{ color: theme.text }}>Rebound data unavailable</div>
-            <div className="text-xs" style={{ color: theme.muted }}>{error}</div>
+          <div style={{ background: "var(--bg-surface)", border: "1px solid var(--border-subtle)", borderRadius: "12px", padding: "24px", textAlign: "center" }}>
+            <Activity size={32} style={{ color: "var(--accent-warning)", opacity: 0.5, marginBottom: "12px" }} />
+            <div style={{ color: "var(--text-primary)", fontWeight: 600, marginBottom: "4px" }}>Rebound data unavailable</div>
+            <div style={{ color: "var(--text-muted)", fontSize: "12px" }}>{error}</div>
           </div>
         )}
 
         {data && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <ReboundLegCard title="Rebound Entry" leg={data.rebound_long} isEntry />
-              <ReboundLegCard title="Rebound Exit" leg={data.rebound_exit} isEntry={false} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+              <SignalCard title="Bounce Up (Long)" direction="up" data={data.rebound_long} />
+              <SignalCard title="Bounce Down (Short)" direction="down" data={data.rebound_short} />
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-              <MetricCard title="Regime" value={data.context?.regime || "--"} tone={theme.accent} />
-              <MetricCard title="Session" value={data.context?.session || "--"} tone={theme.warn} />
-              <MetricCard title="RSI" value={typeof data.context?.rsi === "number" ? data.context.rsi.toFixed(1) : "--"} tone={theme.accent} />
-              <MetricCard title="ADX" value={typeof data.context?.adx === "number" ? data.context.adx.toFixed(1) : "--"} tone={theme.accent} />
-              <MetricCard title="Divergence" value={data.context?.divergence || "--"} tone={theme.warn} />
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>
+              <ContextPill label="Regime" value={data.context?.regime || "--"} />
+              <ContextPill label="Session" value={data.context?.session || "--"} />
+              <ContextPill label="RSI" value={data.context?.rsi?.toFixed(1) || "--"} />
+              <ContextPill label="ADX" value={data.context?.adx?.toFixed(1) || "--"} />
+              <ContextPill label="Div" value={data.context?.divergence || "None"} />
             </div>
           </>
         )}
