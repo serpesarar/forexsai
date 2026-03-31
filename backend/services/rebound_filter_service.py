@@ -413,9 +413,9 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
 
     bullish_ob_hit = bool(
         bullish_ob
-        and bullish_ob["proximity_score"] >= 0.45
-        and (bullish_ob["is_fresh"] or bullish_ob["score_numeric"] >= 70)
-        and bullish_ob["touch_count"] >= 2
+        and bullish_ob["proximity_score"] >= 0.35
+        and (bullish_ob["is_fresh"] or bullish_ob["score_numeric"] >= 60)
+        and bullish_ob["touch_count"] >= 1
     )
     if bullish_ob_hit:
         long_mandatory_hits += 1
@@ -423,7 +423,7 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
         long_reasons.append("Bullish order block zone active")
 
     bullish_divergence = rsi_divergence.type == "BULLISH_DIV"
-    oversold = base_ta["rsi_14"] < 30
+    oversold = base_ta["rsi_14"] < 40
     if oversold or bullish_divergence:
         long_mandatory_hits += 1
         long_score += 16
@@ -434,7 +434,7 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
         long_score += 16
         long_reasons.append(f"Bullish reversal candle: {candle_signal.get('name_tr') or candle_signal.get('name')}")
 
-    if mtf_bull_count >= 2 and mtf_bull_score >= 70:
+    if mtf_bull_count >= 1 and mtf_bull_score >= 60:
         long_mandatory_hits += 1
         long_score += 18
         long_reasons.append("1H + 4H bullish EMA stack alignment")
@@ -454,8 +454,8 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
     if regression_slope > 0 and regression_r2 > 0.75:
         long_score += 8
         long_bonus_reasons.append("Positive weighted regression slope")
-    if base_ta["atr_ratio"] < 1.2:
-        long_score += 7
+    if base_ta["atr_ratio"] < 1.5:
+        long_score += 6
         long_bonus_reasons.append("Volatility compression supports cleaner bounce")
     if regime.session in {"london", "newyork", "overlap_london_ny", "xetra_us_overlap", "nymex"}:
         long_score += 5
@@ -466,7 +466,7 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
 
     long_targets = _derive_targets(current_price, nearest_support, nearest_resistance, base_ta["atr_14"], "BUY")
     long_score = round(min(100.0, long_score), 1)
-    long_label = "HIGH_PROBABILITY" if long_mandatory_hits >= 4 and long_score >= 85 else "WATCH" if long_mandatory_hits >= 3 and long_score >= 70 else "NO_SIGNAL"
+    long_label = "HIGH_PROBABILITY" if long_mandatory_hits >= 3 and long_score >= 75 else "WATCH" if long_mandatory_hits >= 2 and long_score >= 60 else "NO_SIGNAL"
 
     exit_mandatory_hits = 0
     exit_reasons: List[str] = []
@@ -475,8 +475,8 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
 
     bearish_ob_hit = bool(
         bearish_ob
-        and bearish_ob["proximity_score"] >= 0.45
-        and (bearish_ob["is_fresh"] or bearish_ob["score_numeric"] >= 65)
+        and bearish_ob["proximity_score"] >= 0.35
+        and (bearish_ob["is_fresh"] or bearish_ob["score_numeric"] >= 55)
     )
     if bearish_ob_hit:
         exit_mandatory_hits += 1
@@ -484,7 +484,7 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
         exit_reasons.append("Bearish order block / breaker zone active")
 
     bearish_divergence = rsi_divergence.type == "BEARISH_DIV"
-    overbought = base_ta["rsi_14"] > 70
+    overbought = base_ta["rsi_14"] > 65
     if overbought or bearish_divergence:
         exit_mandatory_hits += 1
         exit_score += 16
@@ -503,7 +503,7 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
     if bearish_bos:
         exit_score += 15
         exit_bonus_reasons.append("Bearish BOS detected")
-    if mtf_bear_count >= 1 or mtf_bear_score >= 70:
+    if mtf_bear_count >= 1 or mtf_bear_score >= 60:
         exit_score += 12
         exit_bonus_reasons.append("Higher timeframe bearish alignment emerging")
     if _liquidity_sweep(base_ohlcv, "buy"):
@@ -530,7 +530,7 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
         exit_mandatory_hits = max(exit_mandatory_hits, 3)
 
     exit_score = round(min(100.0, exit_score), 1)
-    exit_label = "EXIT_OR_SHORT" if exit_mandatory_hits >= 3 and exit_score >= 70 else "WATCH_EXIT" if exit_mandatory_hits >= 2 and exit_score >= 55 else "HOLD_REBOUND"
+    exit_label = "EXIT_OR_SHORT" if exit_mandatory_hits >= 2 and exit_score >= 60 else "WATCH_EXIT" if exit_mandatory_hits >= 1 and exit_score >= 45 else "HOLD_REBOUND"
 
     payload = {
         "symbol": symbol,
@@ -543,7 +543,7 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
             "score": long_score,
             "threshold": 85,
             "mandatory_hits": long_mandatory_hits,
-            "mandatory_required": 4,
+            "mandatory_required": 3,
             "zone": {
                 "type": "bullish_order_block" if bullish_ob_hit else ("support" if nearest_support else "none"),
                 "low": round(float((bullish_ob or {}).get("zone_low", 0.0) or float((nearest_support or {}).get("price", 0.0) or 0.0)), 2) if (bullish_ob or nearest_support) else None,
@@ -564,7 +564,7 @@ async def analyze_rebound(symbol: str, timeframe: str = "5m", use_cache: bool = 
             "score": exit_score,
             "threshold": 70,
             "mandatory_hits": exit_mandatory_hits,
-            "mandatory_required": 3,
+            "mandatory_required": 2,
             "reversal_zone": {
                 "type": "bearish_order_block" if bearish_ob_hit else ("resistance" if nearest_resistance else "none"),
                 "low": round(float((bearish_ob or {}).get("zone_low", 0.0) or float((nearest_resistance or {}).get("price", 0.0) or 0.0)), 2) if (bearish_ob or nearest_resistance) else None,

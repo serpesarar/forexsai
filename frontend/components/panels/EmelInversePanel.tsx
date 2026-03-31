@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowRightLeft } from "lucide-react";
+import { ArrowRightLeft, Zap, TrendingUp, TrendingDown } from "lucide-react";
 import { getApiBase } from "../../lib/api/base";
 import { useRefreshAge } from "../../hooks/useRefreshAge";
 import { PanelHeader } from "../PanelHeader";
@@ -38,12 +38,41 @@ interface RecentSignalsResponse {
   error?: string;
 }
 
+interface LiveEmelData {
+  symbol?: string;
+  timeframe?: string;
+  signal?: string;
+  confidence?: number;
+  price?: number;
+  signal_timestamp?: string;
+  timestamp?: string;
+  ml_prediction?: {
+    direction?: string;
+    confidence?: number;
+    entry_price?: number;
+    target_price?: number;
+    stop_price?: number;
+  };
+  checks?: Array<{
+    id?: number;
+    status?: string;
+    color?: string;
+  }>;
+  summary?: {
+    green_count?: number;
+    yellow_count?: number;
+    red_count?: number;
+    decision?: string;
+  };
+  error?: string;
+}
+
 interface EmelInversePanelProps {
   symbol?: string;
 }
 
 const SYMBOLS = [{ key: "NDX.INDX", label: "NASDAQ" }];
-const TIMEFRAMES = ["ALL", "5m", "15m", "1h", "4h"];
+const TIMEFRAMES = ["15m", "1h", "4h", "1d"];
 
 const theme = {
   bg: "var(--bg-primary)",
@@ -135,11 +164,17 @@ function MetricCard({
 
 export default function EmelInversePanel({ symbol: initialSymbol = "NDX.INDX" }: EmelInversePanelProps) {
   const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
-  const [timeframe, setTimeframe] = useState("ALL");
+  const [timeframe, setTimeframe] = useState("1h");
   const [signals, setSignals] = useState<SignalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { refreshAge: signalAge, markRefreshed } = useRefreshAge();
+
+  // Live EMEL data state
+  const [liveData, setLiveData] = useState<LiveEmelData | null>(null);
+  const [liveLoading, setLiveLoading] = useState(false);
+  const [liveError, setLiveError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchData = useCallback(async (showLoading = false) => {
     try {
@@ -180,25 +215,96 @@ export default function EmelInversePanel({ symbol: initialSymbol = "NDX.INDX" }:
     }
   }, [activeSymbol, markRefreshed]);
 
+  // Live EMEL data fetch - invert the signal for display
+  const fetchLiveData = useCallback(async (showLoading = false) => {
+    try {
+      if (showLoading) setLiveLoading(true);
+      setLiveError(null);
+      
+      const res = await fetch(`${API_BASE}/api/panel/emel/${activeSymbol}?timeframe=${timeframe}`);
+      const json = (await res.json().catch(() => null)) as LiveEmelData | null;
+
+      if (!res.ok || !json || typeof json !== "object") {
+        setLiveError(`http_${res.status}`);
+        return;
+      }
+      if (json.error) {
+        setLiveError(json.error);
+        return;
+      }
+
+      setLiveData(json);
+      setLastUpdated(new Date());
+    } catch (err) {
+      console.error("EMEL Live fetch error:", err);
+      setLiveError("fetch_error");
+    } finally {
+      if (showLoading) setLiveLoading(false);
+    }
+  }, [activeSymbol, timeframe]);
+
+  // Inverse signal computation
+  const inverseSignal = useMemo(() => {
+    if (!liveData) return null;
+    
+    const originalSignal = liveData.signal || liveData.ml_prediction?.direction || "HOLD";
+    const originalConfidence = liveData.confidence || liveData.ml_prediction?.confidence || 0;
+    const price = liveData.price || liveData.ml_prediction?.entry_price || 0;
+    const targetPrice = liveData.ml_prediction?.target_price;
+    const stopPrice = liveData.ml_prediction?.stop_price;
+    
+    // Invert the signal
+    let invertedSignal: string;
+    if (originalSignal === "BUY" || originalSignal === "STRONG_BUY") {
+      invertedSignal = "SELL";
+    } else if (originalSignal === "SELL" || originalSignal === "STRONG_SELL") {
+      invertedSignal = "BUY";
+    } else {
+      invertedSignal = "HOLD";
+    }
+    
+    // Swap target and stop for inverse
+    return {
+      originalSignal,
+      invertedSignal,
+      confidence: originalConfidence,
+      price,
+      targetPrice: stopPrice, // Swapped
+      stopPrice: targetPrice, // Swapped
+      timestamp: liveData.signal_timestamp || liveData.timestamp,
+      checks: liveData.checks,
+      summary: liveData.summary,
+    };
+  }, [liveData]);
+
   useEffect(() => {
     fetchData(true);
-  }, [fetchData]);
+    fetchLiveData(true);
+  }, [fetchData, fetchLiveData]);
 
+  // Polling: every 60 seconds for both history and live data
   useEffect(() => {
-    const interval = setInterval(() => fetchData(false), 60000);
+    const interval = setInterval(() => {
+      fetchData(false);
+      fetchLiveData(false);
+    }, 60000);
     return () => clearInterval(interval);
-  }, [fetchData]);
+  }, [fetchData, fetchLiveData]);
 
   useEffect(() => {
-    const handler = () => fetchData(true);
+    const handler = () => {
+      fetchData(true);
+      fetchLiveData(true);
+    };
     window.addEventListener("dashboard-refresh", handler);
     return () => window.removeEventListener("dashboard-refresh", handler);
-  }, [fetchData]);
+  }, [fetchData, fetchLiveData]);
 
   const filteredSignals = useMemo(() => {
-    if (timeframe === "ALL") return signals;
-    return signals.filter((signal) => (signal.timeframe || "").toLowerCase() === timeframe.toLowerCase());
-  }, [signals, timeframe]);
+    // History shows all signals regardless of timeframe selection
+    // Timeframe selector only controls live analysis
+    return signals;
+  }, [signals]);
 
   const stats = useMemo(() => {
     const resolved = filteredSignals.filter((signal) => {
@@ -239,11 +345,18 @@ export default function EmelInversePanel({ symbol: initialSymbol = "NDX.INDX" }:
   const latestConfidence = normalizeConfidence(stats.latest?.ml_confidence);
   const LatestSignalIcon = latestSignalTone.Icon;
 
+  // Live inverse signal display values
+  const liveInverseTone = directionTone(inverseSignal?.invertedSignal);
+  const LiveInverseIcon = liveInverseTone.Icon;
+  const liveConfidence = normalizeConfidence(inverseSignal?.confidence);
+  const isLiveBuy = inverseSignal?.invertedSignal === "BUY";
+  const isLiveSell = inverseSignal?.invertedSignal === "SELL";
+
   return (
     <div className="flex flex-col rounded-xl overflow-hidden" style={{ background: theme.bg, border: `1px solid ${theme.border}`, fontFamily: FONT }}>
       <PanelHeader
         title="EMEL INVERSE"
-        subtitle="REVERSE SIGNAL FEED"
+        subtitle="LIVE REVERSE ANALYSIS"
         icon={<ArrowRightLeft size={22} strokeWidth={2.4} />}
         iconBg="color-mix(in srgb, var(--accent-purple) 16%, transparent)"
         iconBorder="color-mix(in srgb, var(--accent-purple) 30%, var(--border-subtle))"
@@ -254,23 +367,21 @@ export default function EmelInversePanel({ symbol: initialSymbol = "NDX.INDX" }:
         timeframe={timeframe}
         onTimeframeChange={setTimeframe}
         timeframes={TIMEFRAMES}
-        loading={loading}
+        loading={liveLoading}
         panelId="emel-inverse-panel"
         signalAge={signalAge}
-        extraContent={stats.latest ? (
+        extraContent={inverseSignal ? (
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: toneMix(latestSignalTone.color, 15), border: `1px solid ${toneMix(latestSignalTone.color, 30)}` }}>
-              <LatestSignalIcon className="w-4 h-4" style={{ color: latestSignalTone.color }} />
-              <span className="text-sm font-bold font-mono" style={{ color: latestSignalTone.color }}>
-                {stats.latest?.ml_direction || "--"}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: toneMix(liveInverseTone.color, 15), border: `1px solid ${toneMix(liveInverseTone.color, 30)}` }}>
+              <LiveInverseIcon className="w-4 h-4" style={{ color: liveInverseTone.color }} />
+              <span className="text-sm font-bold font-mono" style={{ color: liveInverseTone.color }}>
+                {inverseSignal.invertedSignal}
               </span>
             </div>
             <div className="text-right">
-              <div className="text-[10px] uppercase tracking-wider" style={{ color: theme.muted }}>
-                Last confidence
-              </div>
+              <div className="text-[10px] uppercase tracking-wider" style={{ color: theme.muted }}>Confidence</div>
               <div className="text-[24px] leading-none font-bold font-mono" style={{ color: theme.text }}>
-                {typeof latestConfidence === "number" ? `${latestConfidence.toFixed(0)}%` : "--"}
+                {typeof liveConfidence === "number" ? `${liveConfidence.toFixed(0)}%` : "--"}
               </div>
             </div>
           </div>
@@ -278,30 +389,127 @@ export default function EmelInversePanel({ symbol: initialSymbol = "NDX.INDX" }:
       />
 
       <div className="p-4 md:p-5 flex flex-col gap-4" style={{ background: theme.card }}>
+        {/* LIVE INVERSE SIGNAL CARD */}
+        <div className="rounded-xl p-4 md:p-5" style={{ background: theme.surface, border: `1px solid ${theme.border}` }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4" style={{ color: theme.purple }} />
+              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.purple }}>Live Inverse Signal</span>
+              {lastUpdated && (
+                <span className="text-[10px]" style={{ color: theme.muted }}>
+                  Updated {Math.round((Date.now() - lastUpdated.getTime()) / 1000)}s ago
+                </span>
+              )}
+            </div>
+            {liveError && (
+              <span className="text-[10px] px-2 py-1 rounded" style={{ background: toneMix(theme.red, 15), color: theme.red }}>
+                Error
+              </span>
+            )}
+          </div>
+
+          {inverseSignal ? (
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              {/* Signal Direction */}
+              <div className="flex flex-col items-center justify-center p-4 rounded-xl" style={{ background: toneMix(liveInverseTone.color, 8), border: `1px solid ${toneMix(liveInverseTone.color, 20)}` }}>
+                <span className="text-[10px] uppercase tracking-wider mb-2" style={{ color: theme.muted }}>Direction</span>
+                <div className="flex items-center gap-2">
+                  {isLiveBuy ? <TrendingUp className="w-6 h-6" style={{ color: theme.green }} /> : isLiveSell ? <TrendingDown className="w-6 h-6" style={{ color: theme.red }} /> : <Minus className="w-6 h-6" style={{ color: theme.warn }} />}
+                  <span className="text-[32px] font-bold font-mono" style={{ color: liveInverseTone.color }}>
+                    {inverseSignal.invertedSignal}
+                  </span>
+                </div>
+                <span className="text-[10px] mt-1" style={{ color: theme.muted }}>
+                  Original EMEL: {inverseSignal.originalSignal}
+                </span>
+              </div>
+
+              {/* Price */}
+              <div className="flex flex-col items-center justify-center p-4 rounded-xl" style={{ background: theme.bg, border: `1px solid ${theme.border}` }}>
+                <span className="text-[10px] uppercase tracking-wider mb-2" style={{ color: theme.muted }}>Current Price</span>
+                <span className="text-[28px] font-bold font-mono" style={{ color: theme.text }}>
+                  {formatPrice(inverseSignal.price)}
+                </span>
+              </div>
+
+              {/* Confidence */}
+              <div className="flex flex-col items-center justify-center p-4 rounded-xl" style={{ background: theme.bg, border: `1px solid ${theme.border}` }}>
+                <span className="text-[10px] uppercase tracking-wider mb-2" style={{ color: theme.muted }}>Confidence</span>
+                <span className="text-[28px] font-bold font-mono" style={{ color: typeof liveConfidence === "number" && liveConfidence >= 60 ? theme.green : typeof liveConfidence === "number" && liveConfidence >= 40 ? theme.warn : theme.red }}>
+                  {typeof liveConfidence === "number" ? `${liveConfidence.toFixed(0)}%` : "--"}
+                </span>
+              </div>
+
+              {/* Target (Swapped from Stop) */}
+              <div className="flex flex-col items-center justify-center p-4 rounded-xl" style={{ background: toneMix(theme.green, 8), border: `1px solid ${toneMix(theme.green, 20)}` }}>
+                <span className="text-[10px] uppercase tracking-wider mb-2" style={{ color: theme.muted }}>Target</span>
+                <span className="text-[24px] font-bold font-mono" style={{ color: theme.green }}>
+                  {formatPrice(inverseSignal.targetPrice)}
+                </span>
+                <span className="text-[9px]" style={{ color: theme.muted }}>Inverted SL → TP</span>
+              </div>
+
+              {/* Stop (Swapped from Target) */}
+              <div className="flex flex-col items-center justify-center p-4 rounded-xl" style={{ background: toneMix(theme.red, 8), border: `1px solid ${toneMix(theme.red, 20)}` }}>
+                <span className="text-[10px] uppercase tracking-wider mb-2" style={{ color: theme.muted }}>Stop Loss</span>
+                <span className="text-[24px] font-bold font-mono" style={{ color: theme.red }}>
+                  {formatPrice(inverseSignal.stopPrice)}
+                </span>
+                <span className="text-[9px]" style={{ color: theme.muted }}>Inverted TP → SL</span>
+              </div>
+            </div>
+          ) : liveLoading ? (
+            <div className="animate-pulse flex flex-col gap-3">
+              <div className="h-20 rounded-xl" style={{ background: "rgba(255,255,255,0.05)" }} />
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <div className="text-sm font-semibold mb-1" style={{ color: theme.text }}>No live inverse signal available</div>
+              <div className="text-xs" style={{ color: theme.muted }}>Waiting for EMEL analysis data...</div>
+            </div>
+          )}
+
+          {/* Auto-refresh indicator */}
+          <div className="flex items-center justify-between mt-4 pt-3" style={{ borderTop: `1px solid ${theme.border}` }}>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: theme.green }} />
+              <span className="text-[10px]" style={{ color: theme.muted }}>Auto-refresh every 60s (HTTP Polling)</span>
+            </div>
+            <button
+              onClick={() => { fetchData(true); fetchLiveData(true); }}
+              className="text-[10px] px-3 py-1.5 rounded-lg font-medium transition-opacity hover:opacity-80"
+              style={{ background: theme.purple, color: "white" }}
+            >
+              Refresh Now
+            </button>
+          </div>
+        </div>
+
+        {/* HISTORY STATS */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
           <MetricCard
-            label="Latest signal"
+            label="Latest logged signal"
             value={stats.latest?.ml_direction || "--"}
             tone={latestSignalTone.color}
             sublabel={stats.latest ? `${(stats.latest.timeframe || "--").toUpperCase()} • ${formatWhen(stats.latest.created_at)}` : "No recent inverse signal"}
           />
           <MetricCard
-            label="Win rate"
+            label="Win rate (history)"
             value={stats.resolved > 0 ? `${stats.winRate.toFixed(1)}%` : "--"}
             tone={stats.winRate >= 60 ? theme.green : stats.winRate >= 45 ? theme.warn : theme.red}
             sublabel={`Resolved: ${stats.resolved} • Wins: ${stats.wins}`}
           />
           <MetricCard
-            label="Net pips"
+            label="Net pips (history)"
             value={stats.total > 0 ? formatPips(stats.netPips) : "--"}
             tone={stats.netPips > 0 ? theme.green : stats.netPips < 0 ? theme.red : theme.warn}
             sublabel={`Active: ${stats.active} • Shown: ${stats.total}`}
           />
           <MetricCard
-            label="Signal scope"
-            value={timeframe === "ALL" ? "ALL" : timeframe.toUpperCase()}
+            label="Analysis timeframe"
+            value={timeframe.toUpperCase()}
             tone={theme.accent}
-            sublabel="Model: EMEL Inverse • Source: prediction_logs"
+            sublabel="Live: EMEL Inverse • History: prediction_logs"
           />
         </div>
 
@@ -311,7 +519,12 @@ export default function EmelInversePanel({ symbol: initialSymbol = "NDX.INDX" }:
           </div>
         ) : null}
 
+        {/* HISTORY TABLE */}
         <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${theme.border}`, background: theme.surface }}>
+          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${theme.border}` }}>
+            <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: theme.muted }}>Signal History (Last 30 Days)</span>
+            <span className="text-[10px]" style={{ color: theme.muted }}>From prediction_logs</span>
+          </div>
           <div className="grid grid-cols-[1.2fr,0.9fr,0.9fr,0.9fr,1fr,1fr,1fr] gap-3 px-4 py-3 text-[10px] uppercase tracking-[0.18em]" style={{ color: theme.muted, borderBottom: `1px solid ${theme.border}` }}>
             <div>Signal</div>
             <div>TF</div>
@@ -385,7 +598,7 @@ export default function EmelInversePanel({ symbol: initialSymbol = "NDX.INDX" }:
                 No EMEL Inverse signals in this filter
               </div>
               <div className="text-xs" style={{ color: theme.muted }}>
-                Current backend logging creates EMEL Inverse history from reversed EMEL signals.
+                History shows logged inverse signals from prediction_logs table.
               </div>
             </div>
           )}
