@@ -326,6 +326,79 @@ def _get_latest_market_timestamp(symbol: str) -> Optional[str]:
 def _resolve_signal_timestamp(symbol: str, fallback: str) -> str:
     return _get_latest_market_timestamp(symbol) or fallback
 
+
+def _pattern_signal_value(pattern: Dict[str, Any]) -> str:
+    raw = str(pattern.get("signal") or pattern.get("direction") or "neutral").strip().upper()
+    if raw in {"BULLISH", "BUY", "UP"}:
+        return "bullish"
+    if raw in {"BEARISH", "SELL", "DOWN"}:
+        return "bearish"
+    return "neutral"
+
+
+def _extract_shared_patterns(patterns: Any) -> List[Dict[str, Any]]:
+    items = [pattern for pattern in (patterns or []) if isinstance(pattern, dict)]
+    shared = [
+        pattern
+        for pattern in items
+        if str(pattern.get("pattern_source") or pattern.get("source") or "").lower() == "harmonic_visualizer_4h"
+        or str(pattern.get("timeframe") or "").lower() == "4h"
+    ]
+    return shared or items
+
+
+def _summarize_panel_patterns(patterns: Any, preferred_direction: Optional[str] = None) -> Dict[str, Any]:
+    selected = _extract_shared_patterns(patterns)
+    if not selected:
+        return {
+            "count": 0,
+            "selected": [],
+            "top_pattern": None,
+            "bullish_count": 0,
+            "bearish_count": 0,
+            "bias": "NEUTRAL",
+            "preferred_direction": (preferred_direction or "").upper(),
+            "aligned_count": 0,
+            "opposing_count": 0,
+        }
+
+    selected = sorted(
+        selected,
+        key=lambda pattern: (
+            0 if str(pattern.get("category") or "").lower() == "harmonic" else 1,
+            -float(pattern.get("confidence") or 0),
+        ),
+    )
+    bullish_count = sum(1 for pattern in selected if _pattern_signal_value(pattern) == "bullish")
+    bearish_count = sum(1 for pattern in selected if _pattern_signal_value(pattern) == "bearish")
+    bias = "NEUTRAL"
+    if bullish_count > bearish_count:
+        bias = "BUY"
+    elif bearish_count > bullish_count:
+        bias = "SELL"
+
+    preferred = (preferred_direction or "").upper()
+    aligned_count = 0
+    opposing_count = 0
+    if preferred == "BUY":
+        aligned_count = bullish_count
+        opposing_count = bearish_count
+    elif preferred == "SELL":
+        aligned_count = bearish_count
+        opposing_count = bullish_count
+
+    return {
+        "count": len(selected),
+        "selected": selected,
+        "top_pattern": selected[0],
+        "bullish_count": bullish_count,
+        "bearish_count": bearish_count,
+        "bias": bias,
+        "preferred_direction": preferred,
+        "aligned_count": aligned_count,
+        "opposing_count": opposing_count,
+    }
+
 def _calc_ema(values, period):
     """Calculate true Exponential Moving Average (matching TradingView)."""
     if len(values) < period:
@@ -562,56 +635,48 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         # 4️⃣ FORMASYON ANALİZİ (Gerçek Formasyon Bulucu)
         # ─────────────────────────────────────────────────────────────────────
         try:
-            from services.candlestick_pattern_service import detect_patterns_manual, PATTERN_INFO
-            
-            # OHLCV'den opens dizisini çıkar
-            opens = np.array([c["open"] for c in ohlcv], dtype=np.float64)
-            
-            # Formasyonları tespit et
-            detected_patterns = detect_patterns_manual(opens, highs, lows, closes, timeframe)
-            
-            if detected_patterns and len(detected_patterns) > 0:
-                # En güçlü formasyonu al
-                top_pattern = detected_patterns[0]
-                pattern_id = top_pattern.pattern_id
-                pattern_strength = top_pattern.strength
-                pattern_confidence = top_pattern.confidence
-                
-                # Formasyon bilgilerini al
-                pattern_info = PATTERN_INFO.get(pattern_id, {})
-                pattern_name_tr = pattern_info.get("name_tr", pattern_id.replace("_", " "))
-                pattern_signal = pattern_info.get("signal", "neutral")
-                
-                # Güç ve yöne göre durum belirle
-                if pattern_confidence >= 80 and pattern_strength >= 3:
+            from services.harmonic_pattern_service import get_pattern_adjustment
+
+            active_patterns = _extract_shared_patterns(prediction.get("active_patterns", []))
+            if not active_patterns:
+                pattern_result = await get_pattern_adjustment(symbol, timeframe="4h")
+                active_patterns = pattern_result.get("patterns", [])
+
+            pattern_context = _summarize_panel_patterns(active_patterns, prediction.get("direction"))
+            top_pattern = pattern_context.get("top_pattern") or {}
+            pattern_name_tr = top_pattern.get("name_tr") or top_pattern.get("name") or "Formasyon"
+            pattern_signal = _pattern_signal_value(top_pattern)
+            pattern_confidence = float(top_pattern.get("confidence") or 0)
+            pattern_strength = 3 if str(top_pattern.get("category") or "").lower() == "harmonic" else 2
+            patterns_found = pattern_context.get("count", 0)
+
+            if patterns_found > 0:
+                pattern_label = pattern_name_tr.upper()
+                signal_label = "boğa" if pattern_signal == "bullish" else "ayı" if pattern_signal == "bearish" else "nötr"
+                if pattern_context.get("preferred_direction") in {"BUY", "SELL"} and pattern_context.get("opposing_count", 0) > pattern_context.get("aligned_count", 0):
+                    pattern_status = "fail"
+                    pattern_color = "red"
+                    pattern_comment = f"4H {signal_label} formasyon ML yönüyle çelişiyor. {pattern_name_tr} dikkat gerektiriyor."
+                    red_count += 1
+                elif pattern_confidence >= 75:
                     pattern_status = "pass"
                     pattern_color = "green"
-                    pattern_label = f"{pattern_name_tr.upper()}"
-                    pattern_comment = f"Güçlü {pattern_signal} formasyonu tespit edildi. Onaylı."
+                    pattern_comment = f"4H {signal_label} formasyonu tespit edildi: {pattern_name_tr}. Analize dahil edildi."
                     green_count += 1
-                elif pattern_confidence >= 60:
-                    pattern_status = "warning"
-                    pattern_color = "yellow"
-                    pattern_label = f"{pattern_name_tr.upper()}"
-                    pattern_comment = f"{pattern_signal} formasyonu oluşuyor. Onay bekleniyor."
-                    yellow_count += 1
                 else:
                     pattern_status = "warning"
                     pattern_color = "yellow"
-                    pattern_label = f"{pattern_name_tr.upper()} (Zayıf)"
-                    pattern_comment = "Zayıf formasyon sinyali. Dikkatli olun."
+                    pattern_comment = f"4H {signal_label} formasyonu izleniyor: {pattern_name_tr}. Güven artarsa onaylanır."
                     yellow_count += 1
-                    
                 pattern_completion = pattern_confidence
-                patterns_found = len(detected_patterns)
             else:
                 pattern_status = "warning"
                 pattern_color = "yellow"
                 pattern_label = "FORMASYON YOK"
-                pattern_comment = "Aktif formasyon tespit edilmedi."
+                pattern_comment = "Harmonic 4H pattern feed üzerinde aktif formasyon yok."
                 yellow_count += 1
                 pattern_completion = 0
-                patterns_found = 0
+                pattern_strength = 0
                 
         except Exception as pattern_err:
             logger.warning(f"Pattern detection error: {pattern_err}")
@@ -1194,6 +1259,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
         signal_timestamp = _resolve_signal_timestamp(symbol, response_timestamp)
 
         from services.ml_prediction_service import _compute_technical_indicators
+        from services.harmonic_pattern_service import get_pattern_adjustment
         from services.market_data_service import get_ohlcv_data
         from services.market_regime_service import detect_regime, filter_signal_by_regime, interpret_rsi, check_fake_signal_timeout
         
@@ -1394,6 +1460,23 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
             stoch_pts = 5
         score += stoch_pts
         score_details["stochastic"] = {"k": round(stoch_k, 1), "pts": stoch_pts}
+
+        preferred_pattern_direction = "BUY" if candle_bias == "up" else "SELL" if candle_bias == "down" else None
+        pattern_result = await get_pattern_adjustment(symbol, timeframe="4h")
+        pattern_context = _summarize_panel_patterns(pattern_result.get("patterns", []), preferred_pattern_direction)
+        pattern_pts = 0
+        if pattern_context.get("count", 0) > 0:
+            top_pattern = pattern_context.get("top_pattern") or {}
+            top_name = top_pattern.get("name_tr") or top_pattern.get("name") or "Pattern"
+            if pattern_context.get("aligned_count", 0) > 0 and pattern_context.get("opposing_count", 0) == 0:
+                pattern_pts = 10 if str(top_pattern.get("category") or "").lower() == "harmonic" else 6
+                score += pattern_pts
+                decision_notes.append(f"4H pattern onayı: {top_name}")
+            elif preferred_pattern_direction and pattern_context.get("opposing_count", 0) > pattern_context.get("aligned_count", 0):
+                decision_notes.append(f"4H pattern çelişkisi: {top_name}")
+            else:
+                decision_notes.append(f"4H pattern tespit edildi: {top_name}")
+        score_details["pattern"] = {"count": pattern_context.get("count", 0), "bias": pattern_context.get("bias", "NEUTRAL"), "pts": pattern_pts}
         
         # ─── TOPLAM SKOR → SİNYAL TİPİ ───────────────────────────────────
         # Yönü belirle (dominant yön)
@@ -1432,6 +1515,14 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
         else:
             signal_type = "HOLD"
             pulse_signal = "HOLD"
+
+        if pattern_context.get("count", 0) > 0 and preferred_pattern_direction and pattern_context.get("opposing_count", 0) > pattern_context.get("aligned_count", 0):
+            if signal_type == "CONFIRM":
+                signal_type = "SCOUT"
+            elif signal_type == "SCOUT":
+                signal_type = "HOLD"
+                pulse_signal = "HOLD"
+        score = min(score, 100)
         
         # ─── SEVİYELER ────────────────────────────────────────────────────
         high_20 = float(np.max(highs[-20:]))
@@ -1656,6 +1747,7 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bo
         signal_timestamp = _resolve_signal_timestamp(symbol, response_timestamp)
 
         from services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
+        from services.harmonic_pattern_service import get_pattern_adjustment
         from services.market_data_service import get_ohlcv_data
         from services.market_regime_service import detect_regime, filter_signal_by_regime, interpret_rsi, check_fake_signal_timeout
         
@@ -1739,6 +1831,22 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bo
         is_ta_fallback = ml_direction == "HOLD" and ta_direction in ("BUY", "SELL")
         if is_ta_fallback:
             notes.append(f"ML HOLD → TA analiz yönü: {ta_direction} ({ta_votes} onay)")
+
+        shared_patterns = _extract_shared_patterns(prediction.get("active_patterns", []))
+        if not shared_patterns:
+            shared_patterns = (await get_pattern_adjustment(symbol, timeframe="4h")).get("patterns", [])
+        pattern_context = _summarize_panel_patterns(shared_patterns, active_direction if active_direction in ("BUY", "SELL") else None)
+        pattern_pts = 0
+        if pattern_context.get("count", 0) > 0:
+            top_pattern = pattern_context.get("top_pattern") or {}
+            top_name = top_pattern.get("name_tr") or top_pattern.get("name") or "Pattern"
+            if pattern_context.get("aligned_count", 0) > 0 and pattern_context.get("opposing_count", 0) == 0:
+                pattern_pts = 10 if str(top_pattern.get("category") or "").lower() == "harmonic" else 6
+                notes.append(f"4H pattern confirms bias: {top_name}")
+            elif pattern_context.get("preferred_direction") in {"BUY", "SELL"} and pattern_context.get("opposing_count", 0) > pattern_context.get("aligned_count", 0):
+                notes.append(f"4H pattern opposes bias: {top_name}")
+            else:
+                notes.append(f"4H pattern detected: {top_name}")
         
         # ─── ML Güven Puanı (40 puan max) ────────────────────────────────
         ml_pts = 0
@@ -1882,6 +1990,7 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bo
             else:
                 notes.append("Düşük hacim")
         score += vol_pts
+        score += pattern_pts
         
         # ─── SİNYAL BELİRLEME (İki kademe) - REGIME-AWARE ──────────────
         # For TA fallback mode, use lower thresholds (TA has already proven direction)
@@ -1899,6 +2008,14 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bo
         else:
             signal_type = "HOLD"
             signal = "HOLD"
+
+        if pattern_context.get("count", 0) > 0 and pattern_context.get("preferred_direction") in {"BUY", "SELL"} and pattern_context.get("opposing_count", 0) > pattern_context.get("aligned_count", 0):
+            if signal_type == "CONFIRM":
+                signal_type = "SCOUT"
+            elif signal_type == "SCOUT":
+                signal_type = "HOLD"
+                signal = "HOLD"
+        score = min(score, 100)
         
         # ─── DIRECTION FILTER (enforce regime rules) ────────────────────
         signal, was_filtered, filter_reason = filter_signal_by_regime(signal, regime)
@@ -2302,6 +2419,7 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
         signal_timestamp = _resolve_signal_timestamp(symbol, response_timestamp)
 
         from services.ml_prediction_service import _compute_technical_indicators
+        from services.harmonic_pattern_service import detect_chart_patterns_from_candles
         from services.market_regime_service import detect_regime, filter_signal_by_regime, interpret_rsi, check_fake_signal_timeout, detect_order_blocks
         from services.rebound_filter_service import analyze_rebound
         import asyncio
@@ -2381,6 +2499,23 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
             direction = "BUY" if result_5m["trend"] == "up" else "SELL"
         else:
             direction = "NEUTRAL"
+
+        pattern_context = _summarize_panel_patterns(
+            detect_chart_patterns_from_candles(data_4h or [], timeframe="4h").get("patterns", []),
+            direction if direction in ("BUY", "SELL") else None,
+        )
+        if pattern_context.get("count", 0) > 0:
+            top_pattern = pattern_context.get("top_pattern") or {}
+            top_name = top_pattern.get("name_tr") or top_pattern.get("name") or "Pattern"
+            if pattern_context.get("aligned_count", 0) > 0 and pattern_context.get("opposing_count", 0) == 0:
+                total_score += 10 if str(top_pattern.get("category") or "").lower() == "harmonic" else 6
+                notes = [f"4H pattern confirms bias: {top_name}"]
+            elif pattern_context.get("preferred_direction") in {"BUY", "SELL"} and pattern_context.get("opposing_count", 0) > pattern_context.get("aligned_count", 0):
+                notes = [f"4H pattern opposes bias: {top_name}"]
+            else:
+                notes = [f"4H pattern detected: {top_name}"]
+        else:
+            notes = []
         
         # ─── SİNYAL TİPİ ────────────────────────────────────────────────
         if total_score >= 56:  # 56'ya düşürüldü
@@ -2393,10 +2528,17 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
         
         # ─── DIRECTION FILTER (enforce regime rules) ────────────────────
         direction, was_filtered, filter_reason = filter_signal_by_regime(direction, regime)
-        notes = []
         if was_filtered:
             signal_type = "HOLD"
             notes.append(filter_reason)
+
+        if pattern_context.get("count", 0) > 0 and pattern_context.get("preferred_direction") in {"BUY", "SELL"} and pattern_context.get("opposing_count", 0) > pattern_context.get("aligned_count", 0):
+            if signal_type == "CONFIRM":
+                signal_type = "SCOUT"
+            elif signal_type == "SCOUT":
+                signal_type = "HOLD"
+                direction = "NEUTRAL"
+        total_score = min(total_score, 100)
         
         # ─── ORDER BLOCK DETECTION (4H) ─────────────────────────────────
         order_blocks_data = []

@@ -23,6 +23,205 @@ ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
 
 logger = logging.getLogger(__name__)
 
+_SYMBOL_ALIASES = {
+    "XAUUSD": "XAUUSD",
+    "GOLD": "XAUUSD",
+    "NDX": "NDX",
+    "NASDAQ": "NDX",
+    "DAX": "DAX",
+    "GDAXI": "DAX",
+    "USOIL": "USOIL",
+    "OIL": "USOIL",
+    "WTI": "USOIL",
+    "CL": "USOIL",
+    "VIX": "VIX",
+    "DXY": "DXY",
+    "USD": "DXY",
+}
+
+_GEOPOLITICAL_TERMS = {
+    "iran", "israel", "gaza", "hamas", "hezbollah", "middle east", "hormuz", "strait of hormuz",
+    "war", "conflict", "military", "attack", "strike", "missile", "ceasefire", "truce", "peace talks",
+    "savaş", "çatışma", "askeri", "saldırı", "füze", "ateşkes", "barış", "gerilim", "iran cumhurbaşkanı",
+}
+
+_DEESCALATION_TERMS = {
+    "does not want war", "doesn't want war", "not seeking war", "avoid war", "end the war", "end war",
+    "ready to end the war", "ready to end war", "open to a solution", "open to solution", "de-escalation",
+    "deescalation", "ceasefire", "truce", "peace talks", "wants peace", "seeking peace", "cooling tensions",
+    "savaş istemiyor", "savaşa son", "savaşı sonlandır", "çözümüne açıklık", "çözüme açıklık", "ateşkes",
+    "barış görüşmeleri", "gerilimin azalması", "gerilim azalıyor", "çatışmayı bitirmeye hazır",
+}
+
+_ESCALATION_TERMS = {
+    "war declaration", "escalation", "escalates", "retaliation", "retaliate", "airstrike", "missile strike",
+    "military strike", "attack", "attacks", "invasion", "troops", "bombing", "threatens", "supply disruption",
+    "tırmanma", "tırmanıyor", "misilleme", "hava saldırısı", "saldırı", "işgal", "bombardıman", "tehdit",
+}
+
+_OIL_SENSITIVE_GEO_TERMS = {
+    "iran", "hormuz", "strait of hormuz", "middle east", "oil", "crude", "petrol", "opec", "energy",
+}
+
+_USD_STRENGTH_TERMS = {
+    "hawkish fed", "rate hike", "higher rates", "strong dollar", "dollar strength", "fed sıkı", "faiz artışı",
+    "güçlü dolar", "şahin fed",
+}
+
+_EXPLICIT_DIRECTION_PHRASES = {
+    "USOIL": {
+        "bullish": {"oil rose", "oil rises", "oil rallied", "oil climbs", "crude rose", "crude rallied", "petrol yükseldi", "petrol arttı", "petrol tırmandı"},
+        "bearish": {"oil fell", "oil falls", "oil dropped", "oil drops", "oil slides", "crude fell", "crude dropped", "petrol düştü", "petrol geriledi", "petrol düștü"},
+    },
+    "VIX": {
+        "bullish": {"vix rose", "vix rises", "vix jumped", "vix spikes", "vix increased", "vix yükseldi", "vix arttı"},
+        "bearish": {"vix fell", "vix falls", "vix eased", "vix dropped", "vix declined", "vix düştü", "vix geriledi", "vix düștü"},
+    },
+    "NDX": {
+        "bullish": {"nasdaq rose", "nasdaq rises", "nasdaq rallied", "nasdaq jumps", "tech stocks rose", "nasdaq yükseldi", "nasdaq toparlandı", "nasdaq ralli"},
+        "bearish": {"nasdaq fell", "nasdaq falls", "nasdaq dropped", "nasdaq slides", "tech stocks fell", "nasdaq düştü", "nasdaq geriledi", "nasdaq düștü"},
+    },
+    "XAUUSD": {
+        "bullish": {"gold rose", "gold rises", "gold climbed", "gold gains", "bullion rose", "altın yükseldi", "altın arttı"},
+        "bearish": {"gold fell", "gold falls", "gold dropped", "gold slides", "bullion fell", "altın düştü", "altın geriledi", "altın düștü"},
+    },
+    "DXY": {
+        "bullish": {"dxy rose", "dxy rises", "dollar rose", "dollar strengthens", "usd strengthened", "dxy yükseldi", "dolar güçlendi", "dolar yükseldi"},
+        "bearish": {"dxy fell", "dxy falls", "dollar weakened", "usd weakened", "dxy düştü", "dolar zayıfladı", "dolar geriledi", "dxy düștü"},
+    },
+}
+
+
+def _normalize_symbol_alias(symbol: Any) -> str:
+    return _SYMBOL_ALIASES.get(str(symbol or "").strip().upper(), str(symbol or "").strip().upper())
+
+
+def _contains_any(text: str, phrases: set[str]) -> bool:
+    return any(phrase in text for phrase in phrases)
+
+
+def _safe_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(round(float(value)))
+    except (TypeError, ValueError):
+        return default
+
+
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _build_consistency_text(*parts: Any) -> str:
+    normalized_parts: List[str] = []
+    for part in parts:
+        if isinstance(part, str) and part.strip():
+            normalized_parts.append(part.strip().lower())
+    return "\n".join(normalized_parts)
+
+
+def _infer_explicit_direction(symbol: str, text: str) -> Optional[str]:
+    phrase_map = _EXPLICIT_DIRECTION_PHRASES.get(symbol)
+    if not phrase_map:
+        return None
+    if _contains_any(text, phrase_map["bearish"]):
+        return "bearish"
+    if _contains_any(text, phrase_map["bullish"]):
+        return "bullish"
+    return None
+
+
+def _override_reason(symbol: str, direction: str, cause: str, lang: str) -> str:
+    if cause == "explicit_price_move":
+        if lang == "tr":
+            return f"Metin {symbol} ile ilişkili varlığın fiyat yönünü açıkça {direction == 'bullish' and 'yukarı' or 'aşağı'} gösterdiği için etki {direction == 'bullish' and 'yükseliş' or 'düşüş'} olarak hizalandı."
+        return f"The article explicitly states a {direction} price move for {symbol}, so the impact was aligned to that direct move."
+    if cause == "geopolitical_deescalation":
+        if lang == "tr":
+            return f"Jeopolitik gerilimin azalması {symbol} üzerindeki güvenli liman/korku primini zayıflattığı için etki {direction == 'bullish' and 'yükseliş' or 'düşüş'} yönünde düzeltildi."
+        return f"Geopolitical de-escalation reduces the fear or safe-haven premium around {symbol}, so the impact was corrected to {direction}."
+    if cause == "geopolitical_escalation":
+        if lang == "tr":
+            return f"Jeopolitik tırmanma {symbol} üzerinde riskten kaçış ve arz primi yarattığı için etki {direction == 'bullish' and 'yükseliş' or 'düşüş'} yönünde düzeltildi."
+        return f"Geopolitical escalation increases fear, safe-haven demand, or supply risk around {symbol}, so the impact was corrected to {direction}."
+    if lang == "tr":
+        return f"Metindeki makro bağlam ile uyum için {symbol} etkisi {direction == 'bullish' and 'yükseliş' or 'düşüş'} yönüne düzeltildi."
+    return f"The {symbol} impact was corrected to {direction} to stay consistent with the article context."
+
+
+def enforce_news_analysis_consistency(
+    *,
+    headline: str = "",
+    content: str = "",
+    summary_en: str = "",
+    analysis_en: str = "",
+    summary_tr: str = "",
+    analysis_tr: str = "",
+    impacts: Optional[List[Dict[str, Any]]] = None,
+    sentiment: str = "neutral",
+) -> tuple[List[Dict[str, Any]], str]:
+    text = _build_consistency_text(headline, content, summary_en, analysis_en, summary_tr, analysis_tr)
+    has_geo_context = _contains_any(text, _GEOPOLITICAL_TERMS)
+    is_deescalation = has_geo_context and _contains_any(text, _DEESCALATION_TERMS)
+    is_escalation = has_geo_context and _contains_any(text, _ESCALATION_TERMS) and not is_deescalation
+    adjusted_impacts: List[Dict[str, Any]] = []
+
+    for raw_impact in impacts or []:
+        if not isinstance(raw_impact, dict):
+            continue
+        impact = dict(raw_impact)
+        symbol = _normalize_symbol_alias(impact.get("symbol"))
+        original_direction = str(impact.get("direction") or "neutral").strip().lower()
+        override_direction = _infer_explicit_direction(symbol, text)
+        override_cause: Optional[str] = "explicit_price_move" if override_direction else None
+
+        if override_direction is None and is_deescalation:
+            if symbol == "VIX":
+                override_direction = "bearish"
+            elif symbol == "NDX":
+                override_direction = "bullish"
+            elif symbol == "XAUUSD":
+                override_direction = "bearish"
+            elif symbol == "USOIL" and _contains_any(text, _OIL_SENSITIVE_GEO_TERMS):
+                override_direction = "bearish"
+            elif symbol == "DXY" and not _contains_any(text, _USD_STRENGTH_TERMS):
+                override_direction = "bearish"
+            if override_direction:
+                override_cause = "geopolitical_deescalation"
+        elif override_direction is None and is_escalation:
+            if symbol == "VIX":
+                override_direction = "bullish"
+            elif symbol == "NDX":
+                override_direction = "bearish"
+            elif symbol == "XAUUSD":
+                override_direction = "bullish"
+            elif symbol == "USOIL" and _contains_any(text, _OIL_SENSITIVE_GEO_TERMS):
+                override_direction = "bullish"
+            elif symbol == "DXY" and not _contains_any(text, {"dollar weakened", "usd weakened", "dolar zayıfladı"}):
+                override_direction = "bullish"
+            if override_direction:
+                override_cause = "geopolitical_escalation"
+
+        if override_direction and override_direction != original_direction:
+            score_key = "impact_score" if "impact_score" in impact else "score"
+            impact["direction"] = override_direction
+            impact[score_key] = max(_safe_int(impact.get(score_key), 0), 7 if override_cause == "explicit_price_move" else 6)
+            impact["confidence"] = round(max(_safe_float(impact.get("confidence"), 0.0), 0.74 if override_cause == "explicit_price_move" else 0.68), 2)
+            impact["reasoning"] = _override_reason(symbol, override_direction, override_cause or "context", "en")
+            impact["reasoning_tr"] = _override_reason(symbol, override_direction, override_cause or "context", "tr")
+
+        adjusted_impacts.append(impact)
+
+    normalized_sentiment = str(sentiment or "neutral").strip().lower()
+    if is_deescalation:
+        normalized_sentiment = "risk_on"
+    elif is_escalation:
+        normalized_sentiment = "risk_off"
+
+    return adjusted_impacts, normalized_sentiment
+
 @dataclass
 class SymbolImpact:
     symbol: str
@@ -280,6 +479,19 @@ Headline: "Goldman Sachs upgrades Apple to buy, raises target to $220"
 → NASDAQ (neutral, 3/10) - Minimal broad market impact
 → XAUUSD (neutral, 1/10) - No gold impact
 
+Example 5 - DE-ESCALATION:
+Headline: "Iran says it does not want war and is ready to end fighting if guarantees are met"
+→ Urgency: "high" or "medium" depending on immediacy
+→ VIX (bearish) - Fear premium eases
+→ NASDAQ (bullish) - Risk appetite improves
+→ XAUUSD (bearish) - Safe-haven demand eases
+→ USOIL (bearish if Middle East supply risk eases)
+
+Example 6 - EXPLICIT PRICE MOVE:
+Headline: "Oil falls on signs of diplomatic progress between the US and Iran"
+→ USOIL MUST be bearish, not bullish
+→ If the article explicitly says an asset fell/dropped/slid, do NOT return bullish for that same asset
+
 RESPONSE FORMAT (STRICT JSON - ALL FIELDS REQUIRED):
 {{
     "summary_en": "English summary of the news in 1-2 clear sentences",
@@ -359,6 +571,16 @@ Analyze this news NOW:"""
             logger.info(f"[DeepSeek] Parsed result: headline_tr={headline_tr[:50]}...")
             
             raw_impacts = result.get("affected_instruments", [])
+            raw_impacts, normalized_sentiment = enforce_news_analysis_consistency(
+                headline=headline,
+                content=article_content,
+                summary_en=summary_en,
+                analysis_en=analysis_en,
+                summary_tr=summary_tr,
+                analysis_tr=analysis_tr,
+                impacts=raw_impacts,
+                sentiment=result.get("market_sentiment", "neutral"),
+            )
             impacts = []
             for imp in raw_impacts:
                 try:
@@ -424,7 +646,7 @@ Analyze this news NOW:"""
             
             return NewsAnalysisResult(
                 impacts=impacts,
-                sentiment=result.get("market_sentiment", "neutral"),
+                sentiment=normalized_sentiment,
                 volatility_expectation=result.get("volatility_expectation", "medium"),
                 urgency=urgency,
                 confidence=confidence,
@@ -481,6 +703,16 @@ Analyze this news NOW:"""
         content_tr = self._validate_turkish(self._coerce_text(result.get("content_tr")))
 
         raw_impacts = result.get("affected_instruments", [])
+        raw_impacts, normalized_sentiment = enforce_news_analysis_consistency(
+            headline=headline,
+            content=article_content,
+            summary_en=summary_en,
+            analysis_en=analysis_en,
+            summary_tr=summary_tr,
+            analysis_tr=analysis_tr,
+            impacts=raw_impacts,
+            sentiment=result.get("market_sentiment", "neutral"),
+        )
         impacts = []
         for imp in raw_impacts:
             try:
@@ -533,7 +765,7 @@ Analyze this news NOW:"""
 
         return NewsAnalysisResult(
             impacts=impacts,
-            sentiment=result.get("market_sentiment", "neutral"),
+            sentiment=normalized_sentiment,
             volatility_expectation=result.get("volatility_expectation", "medium"),
             urgency=urgency,
             confidence=confidence,
@@ -693,10 +925,41 @@ Analyze this news NOW:"""
             analysis_en = "No direct effect detected on tracked instruments from this headline."
         analysis_tr = ""
         content_tr = ""
+        adjusted_impacts, adjusted_sentiment = enforce_news_analysis_consistency(
+            headline=headline,
+            content=content,
+            summary_en=summary_en,
+            analysis_en=analysis_en,
+            summary_tr=summary_tr,
+            analysis_tr=analysis_tr,
+            impacts=[
+                {
+                    "symbol": impact.symbol,
+                    "direction": impact.direction,
+                    "score": impact.score,
+                    "confidence": impact.confidence,
+                    "reasoning": impact.reasoning,
+                    "reasoning_tr": impact.reasoning_tr,
+                }
+                for impact in impacts
+            ],
+            sentiment="neutral",
+        )
+        impacts = [
+            SymbolImpact(
+                symbol=str(impact.get("symbol") or ""),
+                direction=str(impact.get("direction") or "neutral"),
+                score=_safe_int(impact.get("score"), 0),
+                confidence=_safe_float(impact.get("confidence"), 0.0),
+                reasoning=str(impact.get("reasoning") or ""),
+                reasoning_tr=str(impact.get("reasoning_tr") or ""),
+            )
+            for impact in adjusted_impacts
+        ]
         
         return NewsAnalysisResult(
             impacts=impacts,
-            sentiment="neutral",
+            sentiment=adjusted_sentiment,
             volatility_expectation="medium",
             urgency="medium" if impacts else "low",
             confidence=fallback_confidence,

@@ -1302,8 +1302,12 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
             return {"confidence_adjustment": 0, "signal": "NEUTRAL"}
     
     async def fetch_patterns():
-        # Pattern analyzer disabled - using empty result
-        return {"analyses": {}}
+        try:
+            from services.harmonic_pattern_service import get_pattern_adjustment
+            return await get_pattern_adjustment(normalized_symbol, timeframe="4h")
+        except Exception as e:
+            logger.debug(f"Shared pattern fetch failed: {e}")
+            return {"patterns": [], "recommendation": "HOLD", "confidence_adjustment": 0, "strongest_signal": "NEUTRAL"}
     
     async def fetch_candlestick():
         try:
@@ -1337,7 +1341,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     if isinstance(cot_data, Exception):
         cot_data = {"confidence_adjustment": 0, "signal": "NEUTRAL"}
     if isinstance(pattern_result, Exception):
-        pattern_result = {"analyses": {}}
+        pattern_result = {"patterns": [], "recommendation": "HOLD", "confidence_adjustment": 0, "strongest_signal": "NEUTRAL"}
     if isinstance(candlestick_data, Exception):
         candlestick_data = {"patterns": [], "signal": "NEUTRAL", "adjustment": 0}
     if isinstance(sr_features, Exception):
@@ -1475,7 +1479,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     # ═══════════════════════════════════════════════════════════════════
     # PROCESS PATTERN DATA (already fetched in parallel)
     # ═══════════════════════════════════════════════════════════════════
-    pattern_data = {"patterns": [], "recommendation": "HOLD", "confidence_boost": 0}
+    pattern_data = {"patterns": [], "recommendation": "HOLD", "confidence_boost": 0, "strongest_signal": "NEUTRAL", "source": "harmonic_visualizer_4h", "patterns_summary": []}
     try:
         all_patterns = []
         bullish_count = 0
@@ -1483,9 +1487,9 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
         total_confidence = 0
         
         if pattern_result and isinstance(pattern_result, dict):
-            for tf, analysis in pattern_result.get("analyses", {}).items():
-                patterns = analysis.get("detected_patterns", [])
-                for p in patterns:
+            direct_patterns = pattern_result.get("patterns", [])
+            if direct_patterns:
+                for p in direct_patterns:
                     all_patterns.append(p)
                     conf = p.get("confidence", 70)
                     total_confidence += conf
@@ -1493,8 +1497,22 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
                         bullish_count += 1
                     elif p.get("signal") == "bearish":
                         bearish_count += 1
+            else:
+                for tf, analysis in pattern_result.get("analyses", {}).items():
+                    patterns = analysis.get("detected_patterns", [])
+                    for p in patterns:
+                        all_patterns.append(p)
+                        conf = p.get("confidence", 70)
+                        total_confidence += conf
+                        if p.get("signal") == "bullish":
+                            bullish_count += 1
+                        elif p.get("signal") == "bearish":
+                            bearish_count += 1
         
         pattern_data["patterns"] = all_patterns
+        pattern_data["patterns_summary"] = pattern_result.get("patterns_summary", []) if isinstance(pattern_result, dict) else []
+        pattern_data["strongest_signal"] = pattern_result.get("strongest_signal", "NEUTRAL") if isinstance(pattern_result, dict) else "NEUTRAL"
+        pattern_data["source"] = pattern_result.get("source", "harmonic_visualizer_4h") if isinstance(pattern_result, dict) else "harmonic_visualizer_4h"
         
         if len(all_patterns) > 0:
             avg_confidence = total_confidence / len(all_patterns)
@@ -1502,11 +1520,13 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
             if bullish_count >= 2 and bearish_count == 0:
                 pattern_data["recommendation"] = "BUY"
                 boost = min(0.15, avg_confidence / 1000)
+                pattern_data["confidence_boost"] = boost
                 add_adjustment('pattern', 1 + boost, 1, 'Bullish patterns')
                 mtf_adjustments["warnings"].append(f"📊 Pattern: {bullish_count} bullish pattern tespit edildi")
             elif bearish_count >= 2 and bullish_count == 0:
                 pattern_data["recommendation"] = "SELL"
                 boost = min(0.15, avg_confidence / 1000)
+                pattern_data["confidence_boost"] = boost
                 add_adjustment('pattern', 1 + boost, 1, 'Bearish patterns')
                 mtf_adjustments["warnings"].append(f"📊 Pattern: {bearish_count} bearish pattern tespit edildi")
             elif bullish_count > 0 and bearish_count > 0:

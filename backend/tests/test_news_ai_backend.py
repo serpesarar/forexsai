@@ -22,10 +22,21 @@ def _ensure_optional_dependency_stubs() -> None:
         setattr(feedparser_stub, "_parse_date", _parse_date)
         sys.modules["feedparser"] = feedparser_stub
 
+    if "anthropic" not in sys.modules:
+        anthropic_stub = ModuleType("anthropic")
+
+        class _Anthropic:
+            def __init__(self, *args, **kwargs):
+                pass
+
+        setattr(anthropic_stub, "Anthropic", _Anthropic)
+        sys.modules["anthropic"] = anthropic_stub
+
 
 _ensure_optional_dependency_stubs()
 
 import services.news_candle_matcher as matcher_module
+import services.news_analyzer_v2 as news_analyzer_module
 import services.sentiment_analyzer as sentiment_module
 from services.deepseek_json_client import extract_json_object
 
@@ -87,6 +98,83 @@ def test_rss_news_response_accepts_bilingual_summary_and_analysis_fields():
     assert response.summary_tr == "Altın, daha yumuşak gelen TÜFE verisi sonrası yükseldi."
     assert response.analysis_en.startswith("Lower inflation expectations")
     assert response.analysis_tr.startswith("Daha düşük enflasyon beklentisi")
+
+
+def test_enforce_news_analysis_consistency_corrects_geopolitical_deescalation_impacts():
+    impacts = [
+        {"symbol": "XAUUSD", "direction": "bullish", "impact_score": 8, "confidence": 0.81, "reasoning": "safe haven", "reasoning_tr": "güvenli liman"},
+        {"symbol": "USOIL", "direction": "bullish", "impact_score": 8, "confidence": 0.79, "reasoning": "supply risk", "reasoning_tr": "arz riski"},
+        {"symbol": "VIX", "direction": "bullish", "impact_score": 8, "confidence": 0.84, "reasoning": "fear", "reasoning_tr": "korku"},
+        {"symbol": "NDX", "direction": "bearish", "impact_score": 7, "confidence": 0.76, "reasoning": "risk off", "reasoning_tr": "riskten kaçış"},
+        {"symbol": "DXY", "direction": "bullish", "impact_score": 6, "confidence": 0.7, "reasoning": "usd bid", "reasoning_tr": "dolar talebi"},
+    ]
+
+    adjusted_impacts, adjusted_sentiment = news_analyzer_module.enforce_news_analysis_consistency(
+        headline="Iran says it does not want war and is ready to end fighting if guarantees are met",
+        content="The Iranian president said the country does not want war and is ready to end the conflict if guarantees are provided.",
+        summary_en="Iran signaled willingness to end the conflict if guarantees are met.",
+        analysis_en="This is a geopolitical de-escalation signal that should reduce fear premiums across markets.",
+        impacts=impacts,
+        sentiment="risk_off",
+    )
+
+    impacts_by_symbol = {news_analyzer_module._normalize_symbol_alias(item["symbol"]): item for item in adjusted_impacts}
+
+    assert adjusted_sentiment == "risk_on"
+    assert impacts_by_symbol["VIX"]["direction"] == "bearish"
+    assert impacts_by_symbol["NDX"]["direction"] == "bullish"
+    assert impacts_by_symbol["XAUUSD"]["direction"] == "bearish"
+    assert impacts_by_symbol["USOIL"]["direction"] == "bearish"
+    assert impacts_by_symbol["DXY"]["direction"] == "bearish"
+
+
+def test_enforce_news_analysis_consistency_corrects_explicit_oil_drop_direction():
+    adjusted_impacts, adjusted_sentiment = news_analyzer_module.enforce_news_analysis_consistency(
+        headline="ABD ve İran'dan savaş çözümüne açıklık işaretleri üzerine petrol düştü",
+        content="Diplomatik ilerleme işaretleri sonrası petrol düştü ve bölgesel arz riski primi geriledi.",
+        summary_en="Oil fell after signs of diplomatic progress between the United States and Iran.",
+        analysis_en="The geopolitical risk premium eased as the market priced in lower supply disruption risk.",
+        summary_tr="ABD ile İran arasında diplomatik ilerleme sinyalleri sonrası petrol düştü.",
+        analysis_tr="Jeopolitik risk priminin azalması petrol üzerinde aşağı yönlü baskı yarattı.",
+        impacts=[
+            {"symbol": "USOIL", "direction": "bullish", "impact_score": 8, "confidence": 0.82, "reasoning": "oil should rise", "reasoning_tr": "petrol yükselişi"},
+            {"symbol": "VIX", "direction": "bullish", "impact_score": 7, "confidence": 0.74, "reasoning": "fear", "reasoning_tr": "korku"},
+        ],
+        sentiment="risk_off",
+    )
+
+    impacts_by_symbol = {news_analyzer_module._normalize_symbol_alias(item["symbol"]): item for item in adjusted_impacts}
+
+    assert adjusted_sentiment == "risk_on"
+    assert impacts_by_symbol["USOIL"]["direction"] == "bearish"
+    assert impacts_by_symbol["USOIL"]["confidence"] >= 0.74
+    assert impacts_by_symbol["VIX"]["direction"] == "bearish"
+
+
+def test_rss_sanitize_news_item_applies_consistency_guardrails_to_stored_rows():
+    rss_router = _load_module("test_rss_router_sanitize_module", "routers/rss_router.py")
+
+    sanitized = rss_router._sanitize_news_item({
+        "headline": "Iran says it does not want war and is ready to end fighting if guarantees are met",
+        "content": "Diplomatic progress reduces the immediate risk of wider regional conflict.",
+        "summary_en": "Iran signaled willingness to end the conflict.",
+        "analysis_en": "This is a de-escalation signal that should reduce fear and safe-haven demand.",
+        "summary_tr": "İran çatışmayı bitirmeye hazır olduğunu söyledi.",
+        "analysis_tr": "Gerilimin azalması korku primini düşürebilir.",
+        "sentiment": "risk_off",
+        "impacts": [
+            {"symbol": "VIX", "direction": "bullish", "score": 8, "confidence": 0.8, "reasoning": "fear bid", "reasoning_tr": "korku primi"},
+            {"symbol": "NDX", "direction": "bearish", "score": 7, "confidence": 0.76, "reasoning": "equities weaker", "reasoning_tr": "hisseler zayıf"},
+        ],
+        "ai_model": "deepseek-reasoner",
+        "ai_confidence": 0.82,
+    })
+
+    impacts_by_symbol = {item["symbol"]: item for item in sanitized["impacts"]}
+
+    assert sanitized["sentiment"] == "risk_on"
+    assert impacts_by_symbol["VIX"]["direction"] == "bearish"
+    assert impacts_by_symbol["NDX"]["direction"] == "bullish"
 
 
 @pytest.mark.asyncio

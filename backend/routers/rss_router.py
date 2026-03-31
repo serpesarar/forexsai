@@ -117,6 +117,20 @@ def _sanitize_news_item(item: Dict[str, Any]) -> Dict[str, Any]:
         sanitized["content_tr"] = _clean_turkish_text(sanitized.get("content_tr"))
         sanitized["summary_tr"] = _clean_turkish_text(sanitized.get("summary_tr"))
         sanitized["analysis_tr"] = _clean_turkish_text(sanitized.get("analysis_tr"))
+    from services.news_analyzer_v2 import enforce_news_analysis_consistency
+
+    adjusted_impacts, adjusted_sentiment = enforce_news_analysis_consistency(
+        headline=str(sanitized.get("headline") or ""),
+        content=str(sanitized.get("content") or ""),
+        summary_en=str(sanitized.get("summary_en") or ""),
+        analysis_en=str(sanitized.get("analysis_en") or ""),
+        summary_tr=str(sanitized.get("summary_tr") or ""),
+        analysis_tr=str(sanitized.get("analysis_tr") or ""),
+        impacts=sanitized.get("impacts"),
+        sentiment=str(sanitized.get("sentiment") or "neutral"),
+    )
+    sanitized["sentiment"] = adjusted_sentiment
+    sanitized["impacts"] = adjusted_impacts
     sanitized["impacts"] = _sanitize_impacts(sanitized.get("impacts"))
     sanitized["ai_confidence"] = _normalize_article_confidence(sanitized.get("ai_confidence"))
     return sanitized

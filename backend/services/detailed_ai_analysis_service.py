@@ -612,6 +612,40 @@ async def build_context_pack(symbol: str) -> Dict[str, Any]:
         "key_levels": ml_prediction.key_levels,
     }
 
+    ml_active_patterns = [pattern for pattern in (getattr(ml_prediction, "active_patterns", []) or []) if isinstance(pattern, dict)]
+    primary_patterns = [
+        pattern
+        for pattern in ml_active_patterns
+        if str(pattern.get("pattern_source") or pattern.get("source") or "").lower() == "harmonic_visualizer_4h"
+        or str(pattern.get("timeframe") or "").lower() == "4h"
+    ]
+    selected_patterns = primary_patterns or ml_active_patterns
+    bullish_pattern_count = sum(
+        1 for pattern in selected_patterns if str(pattern.get("signal") or pattern.get("direction") or "").upper() in {"BULLISH", "BUY", "UP"}
+    )
+    bearish_pattern_count = sum(
+        1 for pattern in selected_patterns if str(pattern.get("signal") or pattern.get("direction") or "").upper() in {"BEARISH", "SELL", "DOWN"}
+    )
+    pattern_signal = "NEUTRAL"
+    if bullish_pattern_count > bearish_pattern_count:
+        pattern_signal = "BULLISH"
+    elif bearish_pattern_count > bullish_pattern_count:
+        pattern_signal = "BEARISH"
+    elif bullish_pattern_count > 0 and bearish_pattern_count > 0:
+        pattern_signal = "MIXED"
+    pattern_context = {
+        "count": len(selected_patterns),
+        "bullish_count": bullish_pattern_count,
+        "bearish_count": bearish_pattern_count,
+        "strongest_signal": pattern_signal,
+        "patterns_summary": [
+            f"{pattern.get('name_tr') or pattern.get('name') or 'Pattern'} ({pattern.get('timeframe') or '4h'})"
+            for pattern in selected_patterns[:6]
+        ],
+        "top_patterns": selected_patterns[:6],
+        "source": "harmonic_visualizer_4h" if primary_patterns else "ml_active_patterns",
+    }
+
     # Session context (market hours)
     now_utc = datetime.utcnow()
     hour_utc = now_utc.hour
@@ -684,6 +718,7 @@ async def build_context_pack(symbol: str) -> Dict[str, Any]:
             "bollinger_width": boll_width,
             "atr_pct": atr_pct,
         },
+        "patterns": pattern_context,
         "trend_channel": channel,
         "session": {
             "current": session,

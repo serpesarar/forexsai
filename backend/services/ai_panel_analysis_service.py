@@ -978,6 +978,7 @@ def _build_prompt_payload(context: Dict[str, Any], extras: Dict[str, Any]) -> Di
     unified_news = extras.get("unified_news") or {}
     comex_news = extras.get("comex_news") or {}
     oil_analysis = extras.get("oil_analysis") or {}
+    patterns = context.get("patterns") or {}
     headlines = []
     for item in _safe_list(((context.get("news") or {}).get("headlines")))[:6]:
         if not isinstance(item, dict):
@@ -1005,6 +1006,7 @@ def _build_prompt_payload(context: Dict[str, Any], extras: Dict[str, Any]) -> Di
         "market_structure": context.get("market_structure") or {},
         "liquidity_zones": context.get("liquidity_zones") or {},
         "divergences": context.get("divergences") or {},
+        "patterns": patterns,
         "regime": extras.get("regime") or {},
         "news": {
             "headline_count": (context.get("news") or {}).get("count"),
@@ -1032,6 +1034,7 @@ def _build_prompt_execution_brief(prompt_payload: Dict[str, Any]) -> str:
     levels = prompt_payload.get("levels") or {}
     volume = prompt_payload.get("volume") or {}
     volatility = prompt_payload.get("volatility") or {}
+    patterns = prompt_payload.get("patterns") or {}
     regime = prompt_payload.get("regime") or {}
     event_risk = ((prompt_payload.get("economic_calendar") or {}).get("risk") or {})
 
@@ -1043,6 +1046,7 @@ def _build_prompt_execution_brief(prompt_payload: Dict[str, Any]) -> str:
         f"Technical snapshot: close={ta_snapshot.get('close')} ema20={ta_snapshot.get('ema_20')} ema50={ta_snapshot.get('ema_50')} ema200={ta_snapshot.get('ema_200')} rsi14={ta_snapshot.get('rsi_14')} macd_hist={ta_snapshot.get('macd_hist')} atr14={ta_snapshot.get('atr_14')} boll_z={ta_snapshot.get('boll_zscore')}.",
         f"Technical summary: atr_pct={ta_summary.get('atr_pct')} bollinger_width={ta_summary.get('bollinger_width')} adx={ta_summary.get('adx')} stoch_k={ta_summary.get('stoch_k')}.",
         f"Structure and levels: nearest_support={levels.get('nearest_support')} nearest_resistance={levels.get('nearest_resistance')} ml_key_levels={levels.get('ml_key_levels')}.",
+        f"Pattern context: count={patterns.get('count')} strongest_signal={patterns.get('strongest_signal')} summaries={patterns.get('patterns_summary')}.",
         f"Flow context: volume_status={volume.get('status')} volume_ratio={volume.get('ratio')} volatility_level={volatility.get('level')} regime={regime.get('regime')} regime_trend={regime.get('trend_direction')}.",
         f"Catalyst map: event_risk={event_risk.get('level')} event_summary={event_risk.get('summary')}.",
         _build_physical_oil_brief(prompt_payload.get("physical_oil_intelligence") or {}),
