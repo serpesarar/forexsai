@@ -37,6 +37,7 @@ const EmelPanel = lazy(() => import("../components/panels/EmelPanel"));
 const PulsePanel = lazy(() => import("../components/panels/PulsePanel"));
 const PulseV3Panel = lazy(() => import("../components/panels/PulseV3Panel"));
 const PulseMLPanel = lazy(() => import("../components/panels/PulseMLPanel"));
+const ReboundDetectionPanel = lazy(() => import("../components/panels/ReboundDetectionPanel"));
 const CyberpunkTrendPanel = lazy(() => import("../components/panels/CyberpunkTrendPanel"));
 const LearningDashboardV2 = lazy(() => import("../components/panels/LearningDashboardV2"));
 const ModelAnalysisPanel = lazy(() => import("../components/panels/ModelAnalysisPanel"));
@@ -908,6 +909,8 @@ export default function HomePage() {
         return <PulseV3Panel />;
       case "pulse-ml":
         return <PulseMLPanel />;
+      case "rebound-detection":
+        return <ReboundDetectionPanel />;
       case "learning-dashboard":
         return <LearningDashboardV2 />;
       case "strategy-performance":

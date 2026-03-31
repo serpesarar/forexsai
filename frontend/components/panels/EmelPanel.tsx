@@ -59,6 +59,25 @@ interface ConfluenceData {
   calculation_method?: string;
 }
 
+interface ReboundLeg {
+  label?: string;
+  is_high_probability?: boolean;
+  is_exit_trigger?: boolean;
+  score?: number;
+  threshold?: number;
+  expected_bounce_to?: number;
+  take_profit_zone?: number;
+  invalidation?: number;
+  short_invalidation?: number;
+  reasons?: string[];
+  bonus_confirmations?: string[];
+}
+
+interface ReboundData {
+  rebound_long?: ReboundLeg;
+  rebound_exit?: ReboundLeg;
+}
+
 interface EmelData {
   symbol?: string;
   timeframe?: string;
@@ -78,6 +97,7 @@ interface EmelData {
     rejections?: string[];
     entry_conditions?: string[];
   };
+  rebound?: ReboundData;
   error?: string;
 }
 
@@ -234,6 +254,9 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
   const confluenceThreshold = confluence?.min_signal_threshold ?? 40;
   const confluenceStrong = confluence?.strong_threshold ?? 70;
 
+  const reboundLong = data?.rebound?.rebound_long;
+  const reboundExit = data?.rebound?.rebound_exit;
+
   return (
     <div className="flex flex-col rounded-xl overflow-hidden" style={{ background: theme.bg, border: `1px solid ${theme.border}`, fontFamily: FONT }}>
       <PanelHeader
@@ -326,6 +349,79 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
               </div>
             </div>
           </div>
+
+          {(reboundLong || reboundExit) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-[1px]" style={{ background: theme.border }}>
+              <div className="p-5 flex flex-col gap-3" style={{ background: theme.bg }}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] uppercase tracking-widest font-bold" style={{ color: "rgba(255,255,255,0.7)" }}>Rebound Entry</span>
+                  <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded" style={{
+                    color: reboundLong?.is_high_probability ? theme.green : theme.warn,
+                    background: reboundLong?.is_high_probability ? `${theme.green}15` : `${theme.warn}15`,
+                    border: `1px solid ${reboundLong?.is_high_probability ? `${theme.green}30` : `${theme.warn}30`}`,
+                  }}>
+                    {reboundLong?.label || "NO_SIGNAL"}
+                  </span>
+                </div>
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider" style={{ color: theme.muted }}>Score</div>
+                    <div className="text-[28px] leading-none font-bold font-mono" style={{ color: reboundLong?.is_high_probability ? theme.green : theme.warn }}>
+                      {typeof reboundLong?.score === "number" ? reboundLong.score.toFixed(0) : "--"}
+                    </div>
+                  </div>
+                  <div className="text-right text-[11px] font-mono">
+                    <div style={{ color: theme.muted }}>Threshold</div>
+                    <div style={{ color: theme.text }}>{typeof reboundLong?.threshold === "number" ? reboundLong.threshold.toFixed(0) : "--"}</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                  <div className="rounded-lg px-3 py-2" style={{ background: `${theme.green}08`, border: `1px solid ${theme.green}15` }}>
+                    <div style={{ color: theme.muted }}>Bounce Target</div>
+                    <div style={{ color: theme.green }}>{typeof reboundLong?.expected_bounce_to === "number" ? reboundLong.expected_bounce_to.toFixed(2) : "--"}</div>
+                  </div>
+                  <div className="rounded-lg px-3 py-2" style={{ background: `${theme.red}08`, border: `1px solid ${theme.red}15` }}>
+                    <div style={{ color: theme.muted }}>Invalidation</div>
+                    <div style={{ color: theme.red }}>{typeof reboundLong?.invalidation === "number" ? reboundLong.invalidation.toFixed(2) : "--"}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="p-5 flex flex-col gap-3" style={{ background: theme.bg }}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] uppercase tracking-widest font-bold" style={{ color: "rgba(255,255,255,0.7)" }}>Rebound Exit</span>
+                  <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded" style={{
+                    color: reboundExit?.is_exit_trigger ? theme.red : theme.warn,
+                    background: reboundExit?.is_exit_trigger ? `${theme.red}15` : `${theme.warn}15`,
+                    border: `1px solid ${reboundExit?.is_exit_trigger ? `${theme.red}30` : `${theme.warn}30`}`,
+                  }}>
+                    {reboundExit?.label || "HOLD_REBOUND"}
+                  </span>
+                </div>
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider" style={{ color: theme.muted }}>Score</div>
+                    <div className="text-[28px] leading-none font-bold font-mono" style={{ color: reboundExit?.is_exit_trigger ? theme.red : theme.warn }}>
+                      {typeof reboundExit?.score === "number" ? reboundExit.score.toFixed(0) : "--"}
+                    </div>
+                  </div>
+                  <div className="text-right text-[11px] font-mono">
+                    <div style={{ color: theme.muted }}>Threshold</div>
+                    <div style={{ color: theme.text }}>{typeof reboundExit?.threshold === "number" ? reboundExit.threshold.toFixed(0) : "--"}</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                  <div className="rounded-lg px-3 py-2" style={{ background: `${theme.red}08`, border: `1px solid ${theme.red}15` }}>
+                    <div style={{ color: theme.muted }}>Take Profit Zone</div>
+                    <div style={{ color: theme.red }}>{typeof reboundExit?.take_profit_zone === "number" ? reboundExit.take_profit_zone.toFixed(2) : "--"}</div>
+                  </div>
+                  <div className="rounded-lg px-3 py-2" style={{ background: `${theme.warn}08`, border: `1px solid ${theme.warn}15` }}>
+                    <div style={{ color: theme.muted }}>Short Invalidation</div>
+                    <div style={{ color: theme.warn }}>{typeof reboundExit?.short_invalidation === "number" ? reboundExit.short_invalidation.toFixed(2) : "--"}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-[1px]" style={{ background: theme.border }}>
             <div className="col-span-12 md:col-span-8 grid grid-cols-3 gap-[1px]" style={{ background: theme.border }}>

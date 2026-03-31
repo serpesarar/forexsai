@@ -23,9 +23,40 @@ import {
   MountainIcon as Mountain,
   TargetIcon as Crosshair,
 } from "../ui/CustomIcons";
+
 const API_BASE = getApiBase();
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
-const P = { bg: "var(--bg-primary)", card: "var(--bg-card)", surface: "var(--bg-surface)", border: "var(--border-subtle)", text: "var(--text-primary)", muted: "var(--text-muted)", green: "var(--accent-positive)", red: "var(--accent-negative)", warn: "var(--accent-warning)", accent: "var(--accent-info)", cyan: "var(--accent-info)", gold: "var(--accent-warning)" };
+const P = {
+  bg: "var(--bg-primary)",
+  card: "var(--bg-card)",
+  surface: "var(--bg-surface)",
+  border: "var(--border-subtle)",
+  text: "var(--text-primary)",
+  muted: "var(--text-muted)",
+  green: "var(--accent-positive)",
+  red: "var(--accent-negative)",
+  warn: "var(--accent-warning)",
+  accent: "var(--accent-info)",
+  cyan: "var(--accent-info)",
+  gold: "var(--accent-warning)",
+};
+
+interface ReboundLeg {
+  label?: string;
+  is_high_probability?: boolean;
+  is_exit_trigger?: boolean;
+  score?: number;
+  threshold?: number;
+  expected_bounce_to?: number;
+  take_profit_zone?: number;
+  invalidation?: number;
+  short_invalidation?: number;
+}
+
+interface ReboundData {
+  rebound_long?: ReboundLeg;
+  rebound_exit?: ReboundLeg;
+}
 
 interface PulseV3Data {
   symbol: string;
@@ -75,6 +106,7 @@ interface PulseV3Data {
     strength: number;
     is_nearby: boolean;
   }>;
+  rebound?: ReboundData;
 }
 
 interface PulseV3PanelProps {
@@ -104,7 +136,6 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { refreshAge: signalAge, markRefreshed } = useRefreshAge();
-
 
   const fetchData = useCallback(async (showLoading = false, forceRefresh = false) => {
     try {
@@ -210,6 +241,9 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const scoreStroke = nc.accent;
   const scorePct = (data.pulse_score / 100) * 301.6;
 
+  const reboundLong = data.rebound?.rebound_long;
+  const reboundExit = data.rebound?.rebound_exit;
+
   return (
     <div className="overflow-hidden bg-transparent shadow-none border-0">
 
@@ -238,8 +272,6 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
           ))}
         </div>
       </PanelHeaderCompact>
-
-
 
       {/* ── Main Score + Signal ── */}
       <div className="p-2 text-center bg-transparent">
@@ -320,6 +352,79 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
           </div>
         )}
       </div>
+
+      {(reboundLong || reboundExit) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 mt-3 px-2">
+          <div className="rounded-xl p-3" style={{ background: "var(--bg-hover)", border: "1px solid var(--border-subtle)" }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] uppercase tracking-widest font-mono" style={{ color: P.muted }}>Rebound Entry</span>
+              <span className="px-2 py-1 rounded-full text-[10px] font-mono font-bold" style={{
+                background: reboundLong?.is_high_probability ? `${P.green}15` : `${P.warn}15`,
+                color: reboundLong?.is_high_probability ? P.green : P.warn,
+                border: `1px solid ${reboundLong?.is_high_probability ? `${P.green}25` : `${P.warn}25`}`,
+              }}>
+                {reboundLong?.label || "NO_SIGNAL"}
+              </span>
+            </div>
+            <div className="flex items-end justify-between mb-2">
+              <div>
+                <div className="text-[10px] font-mono" style={{ color: P.muted }}>Score</div>
+                <div className="text-[24px] font-bold font-mono" style={{ color: reboundLong?.is_high_probability ? P.green : P.warn }}>
+                  {typeof reboundLong?.score === "number" ? reboundLong.score.toFixed(0) : "--"}
+                </div>
+              </div>
+              <div className="text-right text-[10px] font-mono" style={{ color: P.muted }}>
+                <div>Threshold</div>
+                <div style={{ color: P.text }}>{typeof reboundLong?.threshold === "number" ? reboundLong.threshold.toFixed(0) : "--"}</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+              <div className="rounded-lg px-2 py-2" style={{ background: `${P.green}08`, border: `1px solid ${P.green}15` }}>
+                <div style={{ color: P.muted }}>Bounce</div>
+                <div style={{ color: P.green }}>{typeof reboundLong?.expected_bounce_to === "number" ? reboundLong.expected_bounce_to.toFixed(2) : "--"}</div>
+              </div>
+              <div className="rounded-lg px-2 py-2" style={{ background: `${P.red}08`, border: `1px solid ${P.red}15` }}>
+                <div style={{ color: P.muted }}>Invalidation</div>
+                <div style={{ color: P.red }}>{typeof reboundLong?.invalidation === "number" ? reboundLong.invalidation.toFixed(2) : "--"}</div>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl p-3" style={{ background: "var(--bg-hover)", border: "1px solid var(--border-subtle)" }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] uppercase tracking-widest font-mono" style={{ color: P.muted }}>Rebound Exit</span>
+              <span className="px-2 py-1 rounded-full text-[10px] font-mono font-bold" style={{
+                background: reboundExit?.is_exit_trigger ? `${P.red}15` : `${P.warn}15`,
+                color: reboundExit?.is_exit_trigger ? P.red : P.warn,
+                border: `1px solid ${reboundExit?.is_exit_trigger ? `${P.red}25` : `${P.warn}25`}`,
+              }}>
+                {reboundExit?.label || "HOLD_REBOUND"}
+              </span>
+            </div>
+            <div className="flex items-end justify-between mb-2">
+              <div>
+                <div className="text-[10px] font-mono" style={{ color: P.muted }}>Score</div>
+                <div className="text-[24px] font-bold font-mono" style={{ color: reboundExit?.is_exit_trigger ? P.red : P.warn }}>
+                  {typeof reboundExit?.score === "number" ? reboundExit.score.toFixed(0) : "--"}
+                </div>
+              </div>
+              <div className="text-right text-[10px] font-mono" style={{ color: P.muted }}>
+                <div>Threshold</div>
+                <div style={{ color: P.text }}>{typeof reboundExit?.threshold === "number" ? reboundExit.threshold.toFixed(0) : "--"}</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+              <div className="rounded-lg px-2 py-2" style={{ background: `${P.red}08`, border: `1px solid ${P.red}15` }}>
+                <div style={{ color: P.muted }}>Take Profit</div>
+                <div style={{ color: P.red }}>{typeof reboundExit?.take_profit_zone === "number" ? reboundExit.take_profit_zone.toFixed(2) : "--"}</div>
+              </div>
+              <div className="rounded-lg px-2 py-2" style={{ background: `${P.warn}08`, border: `1px solid ${P.warn}15` }}>
+                <div style={{ color: P.muted }}>Short Inv.</div>
+                <div style={{ color: P.warn }}>{typeof reboundExit?.short_invalidation === "number" ? reboundExit.short_invalidation.toFixed(2) : "--"}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── 3 Timeframe Scores ── */}
       <div className="grid grid-cols-3 gap-2.5 p-3">

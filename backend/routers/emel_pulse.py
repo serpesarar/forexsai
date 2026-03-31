@@ -129,6 +129,7 @@ class EMELResponse(BaseModel):
     ml_context: Optional[Dict[str, Any]] = None
     recommendation: Optional[EMELRecommendation] = None
     score_breakdown: Optional[Dict[str, Any]] = None
+    rebound: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
 
 class ScoreBreakdownML(BaseModel):
@@ -233,6 +234,7 @@ class PulseV3Response(BaseModel):
     valid_for_seconds: int
     regime: Optional[Regime] = None
     order_blocks: Optional[List[OrderBlock]] = None
+    rebound: Optional[Dict[str, Any]] = None
 
 class RegimeResponse(BaseModel):
     symbol: Optional[str] = None
@@ -373,6 +375,7 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
     try:
         from services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
         from services.market_data_service import get_ohlcv_data
+        from services.rebound_filter_service import analyze_rebound
         
         # Get market data — for XAUUSD, 1H is derived from 30m by DataHub.
         # If 30m not seeded yet, fall back to 5m or 30m to avoid "Insufficient data".
@@ -1124,6 +1127,12 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             except Exception as log_err:
                 logger.warning(f"Failed to log EMEL prediction: {log_err}")
         
+        rebound_summary = None
+        try:
+            rebound_summary = await analyze_rebound(symbol, timeframe=timeframe)
+        except Exception as rebound_err:
+            logger.warning(f"EMEL rebound integration failed: {rebound_err}")
+        
         return {
             "symbol": symbol,
             "timeframe": timeframe,
@@ -1154,7 +1163,8 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
                 "decision_reason": decision_reason,
                 "rejections": rejections,
                 "entry_conditions": conditions if decision in ["BUY_SETUP", "SELL_SETUP"] else []
-            }
+            },
+            "rebound": rebound_summary
         }
         
     except Exception as e:
@@ -1539,6 +1549,12 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
             except Exception as log_err:
                 logger.warning(f"Failed to log PULSE prediction: {log_err}")
 
+        rebound_summary = None
+        try:
+            rebound_summary = await analyze_rebound(symbol, timeframe=timeframe)
+        except Exception as rebound_err:
+            logger.warning(f"PULSE rebound integration failed: {rebound_err}")
+
         payload = {
             "symbol": symbol,
             "timeframe": timeframe,
@@ -1597,7 +1613,8 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
                 "stop_distance": round(potential_loss, 1),
                 "rr_ratio": round(rr_ratio, 2),
                 "timeframe_estimate": "15-30 min"
-            }
+            },
+            "rebound": rebound_summary
         }
 
         _set_cached_panel_analysis("pulse1", symbol, timeframe, payload)
@@ -1924,7 +1941,12 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bo
         else:
             suggestion = f"⏱️ Hold{regime_tag}. ML score: {score:.0f}/100"
         
-        # Loglama — ALL BUY/SELL signals (not just CONFIRM/SCOUT/HOLD)
+        if notes:
+            suggestion += f" | Notes: {', '.join(notes)}"
+        
+        # ─── LEARNING ENTEGRASYONU ────────────────────────────────────────
+        # Log ALL BUY/SELL signals (not just CONFIRM/SCOUT/HOLD)
+        # so Signal Performance panel tracks every directional signal from Pulse 1
         if signal in ["BUY", "SELL"]:
             try:
                 from services.prediction_logger import log_prediction
@@ -1992,7 +2014,7 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bo
                 "ml_confirm_floor": ml_confirm_floor,
                 "ml_scout_floor": ml_scout_floor,
             },
-            "suggestion": suggestion
+            "suggestion": suggestion,
         }
         _set_cached_panel_analysis("pulse2", symbol, timeframe, payload)
         return payload
@@ -2081,7 +2103,7 @@ def _analyze_5m(closes, highs, lows, volumes, ta) -> Dict:
     elif bearish == 3:
         candle_pts = 5
     score += candle_pts
-    details["candles"] = {"up": bullish, "down": bearish, "pts": candle_pts, "last_5": last_5_dirs}
+    details["candles"] = {"up": bullish, "down": bearish, "bias": "up" if bullish > bearish else "down" if bearish > bullish else "neutral", "pts": candle_pts}
     
     # 2. EMA Stack: SMA5 > SMA10 > EMA20 (20 puan)
     sma5 = float(np.mean(closes[-5:])) if len(closes) >= 5 else float(closes[-1])
@@ -2281,6 +2303,7 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
 
         from services.ml_prediction_service import _compute_technical_indicators
         from services.market_regime_service import detect_regime, filter_signal_by_regime, interpret_rsi, check_fake_signal_timeout, detect_order_blocks
+        from services.rebound_filter_service import analyze_rebound
         import asyncio
         
         # ─── REGIME DETECTION ───────────────────────────────────────────
@@ -2440,7 +2463,7 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
         # ─── FAKE SIGNAL TIMEOUT ────────────────────────────────────────
         if is_timed_out and signal_type == "CONFIRM":
             signal_type = "SCOUT"
-            notes.append(f"Timeout aktif: {timeout_reason}")
+            notes.append(f"Timeout aktif: CONFIRM→SCOUT")
         
         # ─── RSI REGIME CHECK ───────────────────────────────────────────
         rsi_5m = ta_5m.get("rsi_14", 50)
@@ -2498,6 +2521,12 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
             except Exception as log_err:
                 logger.warning(f"Failed to log PULSE-V3 prediction: {log_err}")
 
+        rebound_summary = None
+        try:
+            rebound_summary = await analyze_rebound(symbol, timeframe="5m", use_cache=not refresh)
+        except Exception as rebound_err:
+            logger.warning(f"PULSE-V3 rebound integration failed: {rebound_err}")
+
         payload = {
             "symbol": symbol,
             "timeframe": "5m",
@@ -2542,6 +2571,7 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
             ],
             "notes": notes,
             "valid_for_seconds": 300,
+            "rebound": rebound_summary,
         }
         _set_cached_panel_analysis("pulse3", symbol, "5m", payload)
         return payload
@@ -2550,6 +2580,17 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
         logger.error(f"PULSE V3 analysis error: {e}")
         import traceback
         return {"error": str(e), "traceback": traceback.format_exc()}
+
+
+@router.get("/rebound/{symbol}", response_model=Dict[str, Any])
+async def get_rebound_analysis(symbol: str, timeframe: str = Query("5m"), refresh: bool = False):
+    try:
+        from services.rebound_filter_service import analyze_rebound
+
+        return await analyze_rebound(symbol, timeframe=timeframe, use_cache=not refresh)
+    except Exception as e:
+        logger.error(f"Rebound analysis error: {e}")
+        return {"error": str(e)}
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
