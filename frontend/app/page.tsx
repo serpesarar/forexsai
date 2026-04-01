@@ -19,9 +19,10 @@ import Sidebar from "../components/Sidebar";
 // Critical / lightweight - static imports
 import MLFactorPanel from "../components/MLFactorPanel";
 import UserMenu from "../components/UserMenu";
-import { TradingBackground } from "../components/TradingBackground";
-import { LazyPanel } from "../components/LazyPanel";
-import WSStatusBadge from "../components/WSStatusBadge";
+import { TradingBackground } from "@/components/TradingBackground";
+import SymbolTopNav from "@/components/SymbolTopNav";
+import { LazyPanel } from "@/components/LazyPanel";
+import WSStatusBadge from "@/components/WSStatusBadge";
 
 // Heavy panels - dynamic imports (code-split into separate chunks)
 const OrderBlockPanelSimple = lazy(() => import("../components/OrderBlockPanelSimple"));
@@ -1307,50 +1308,27 @@ export default function HomePage() {
         {/* Animated Background with Star Particles */}
         <TradingBackground />
 
-        {/* ─── FLOATING PRICE STICKERS ─── */}
-        <div className="sticky top-0 z-40 py-2 px-4 md:px-6 pointer-events-none">
-          <div className="flex items-center justify-center relative">
-            <div className="flex items-center gap-6 overflow-x-auto scrollbar-none pointer-events-auto">
-              {marketTickers.map((ticker) => {
-                const isLoadingPrice = pricesLoading || ticker.price === "--" || ticker.price === "-";
-                const isUp = ticker.trend === "up";
-                const accent = ticker.label === "NASDAQ"
-                  ? { from: "#3b82f6", glow: "rgba(59,130,246,0.25)" }
-                  : ticker.label === "XAU/USD"
-                    ? { from: "#f59e0b", glow: "rgba(245,158,11,0.25)" }
-                    : ticker.label === "DAX"
-                      ? { from: "#10b981", glow: "rgba(16,185,129,0.25)" }
-                      : { from: "#ef4444", glow: "rgba(239,68,68,0.25)" };
-                const IconComponent = ticker.label === "NASDAQ" ? NasdaqIcon : ticker.label === "XAU/USD" ? GoldIcon : ticker.label === "DAX" ? DaxIcon : OilIcon;
-                return (
-                  <div key={ticker.label} className="flex items-center gap-2 px-2 py-1 flex-shrink-0 bg-transparent border-0 shadow-none rounded-none">
-                    <IconComponent size={20} style={{ color: accent.from }} />
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black uppercase tracking-[0.15em] opacity-90" style={{ color: accent.from }}>{ticker.label}</span>
-                      <div className="flex items-baseline gap-1.5 mt-0.5">
-                        <span className="font-mono text-sm font-black text-white">{isLoadingPrice ? "---" : `$${ticker.price}`}</span>
-                        {!isLoadingPrice && (
-                          <span className={`text-[10px] font-black tracking-tighter flex items-center gap-0.5 ${isUp ? "text-emerald-400" : "text-rose-400"}`} style={{ textShadow: `0 0 10px ${isUp ? 'rgba(52,211,153,0.5)' : 'rgba(251,113,133,0.5)'}` }}>
-                            {isUp ? <ArrowUpIcon size={10} /> : <ArrowDownIcon size={10} />} {ticker.change}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Top Right Controls (Theme Toggle & WS Status) */}
-            <div className="absolute right-0 flex items-center gap-3 pointer-events-auto">
+        {/* ─── SYMBOL TOP NAVIGATION ─── */}
+        <SymbolTopNav
+          prices={marketTickers.map((ticker) => ({
+            label: ticker.label,
+            price: ticker.price === "--" ? "---" : ticker.price,
+            change: ticker.change,
+            trend: ticker.trend === "up" ? "up" : "down",
+          }))}
+          rightSlot={
+            <>
+              <div className="h-6 w-px bg-slate-800" />
               <WSStatusBadge />
-              <button onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
-                className="flex h-8 w-8 items-center justify-center text-slate-400 hover:text-white transition-all bg-transparent border-0">
+              <button
+                onClick={() => setTheme(theme === "evening" ? "morning" : "evening")}
+                className="flex h-8 w-8 items-center justify-center text-slate-400 transition-all hover:text-white bg-transparent border-0"
+              >
                 {theme === "evening" ? <ThemeSunIcon size={18} /> : <ThemeMoonIcon size={18} />}
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         {/* ─── DYNAMIC VIEW RENDERING ───
              Views stay mounted (display:none) so React Query cache,

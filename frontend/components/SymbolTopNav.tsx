@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -73,10 +74,26 @@ const SYMBOLS = [
 interface SymbolTabProps {
   symbol: (typeof SYMBOLS)[number];
   isActive: boolean;
+  price?: SymbolTopNavPrice;
 }
 
-function SymbolTab({ symbol, isActive }: SymbolTabProps) {
+type SymbolTopNavPrice = {
+  label: string;
+  price: string | number;
+  change?: string;
+  trend?: "up" | "down";
+};
+
+interface SymbolTopNavProps {
+  prices?: SymbolTopNavPrice[];
+  rightSlot?: ReactNode;
+}
+
+function SymbolTab({ symbol, isActive, price }: SymbolTabProps) {
   const Icon = symbol.icon;
+  const isPriceReady = price && price.price !== "--" && price.price !== "-";
+  const formattedPrice = !isPriceReady ? "---" : typeof price?.price === "number" ? `$${price.price}` : `$${price?.price}`;
+  const isUp = price?.trend === "up" || (price?.change || "").startsWith("+");
 
   return (
     <Link href={symbol.path} className="relative flex-1">
@@ -115,15 +132,14 @@ function SymbolTab({ symbol, isActive }: SymbolTabProps) {
             className={`
               flex h-8 w-8 items-center justify-center rounded-xl
               transition-colors duration-200
-              ${isActive ? symbol.accent.bg : "bg-slate-800/50"}
-              group-hover:${symbol.accent.bg}
+              ${isActive ? symbol.accent.bg : "bg-slate-800/50 group-hover:bg-slate-800"}
             `}
           >
             <Icon
               className={`
                 h-4 w-4 transition-colors duration-200
                 ${isActive ? symbol.accent.text : "text-slate-400"}
-                group-hover:${symbol.accent.text}
+                group-hover:text-white
               `}
             />
           </div>
@@ -139,9 +155,12 @@ function SymbolTab({ symbol, isActive }: SymbolTabProps) {
           </span>
 
           {/* Opsiyonal fiyat gösterimi - şu an placeholder */}
-          <span className="text-[10px] font-medium text-slate-500">
-            ---
-          </span>
+          <div className="flex items-center gap-1 text-[10px] font-medium">
+            <span className={`${isPriceReady ? "text-slate-300" : "text-slate-500"}`}>{formattedPrice}</span>
+            {isPriceReady && price?.change && (
+              <span className={isUp ? "text-emerald-400" : "text-rose-400"}>{price.change}</span>
+            )}
+          </div>
         </div>
 
         {/* Aktif gösterge çizgisi (bottom border) */}
@@ -160,7 +179,7 @@ function SymbolTab({ symbol, isActive }: SymbolTabProps) {
   );
 }
 
-export default function SymbolTopNav() {
+export default function SymbolTopNav({ prices = [], rightSlot }: SymbolTopNavProps) {
   const pathname = usePathname();
 
   return (
@@ -181,16 +200,21 @@ export default function SymbolTopNav() {
               key={symbol.id}
               symbol={symbol}
               isActive={pathname === symbol.path}
+              price={prices.find((item) => item.label === symbol.label)}
             />
           ))}
         </div>
 
         {/* Sağ taraf opsiyonel alan */}
-        <div className="ml-4 hidden shrink-0 items-center gap-3 lg:flex">
-          <div className="h-6 w-px bg-slate-800" />
-          <span className="text-xs text-slate-500">Live Market</span>
-          <div className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-        </div>
+        {rightSlot ? (
+          <div className="ml-4 hidden shrink-0 items-center gap-3 lg:flex">{rightSlot}</div>
+        ) : (
+          <div className="ml-4 hidden shrink-0 items-center gap-3 lg:flex">
+            <div className="h-6 w-px bg-slate-800" />
+            <span className="text-xs text-slate-500">Live Market</span>
+            <div className="flex h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+          </div>
+        )}
       </div>
     </nav>
   );
