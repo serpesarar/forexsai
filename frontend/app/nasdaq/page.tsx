@@ -58,30 +58,27 @@ import OrderBlockPanelUnified from "@/components/OrderBlockPanelUnified";
 const SYMBOL = "NDX.INDX";
 const SYMBOL_LABEL = "NASDAQ";
 const PATTERN_SYMBOL = "NASDAQ" as const;
-const STORAGE_KEY = "nasdaq-dashboard-layout-v4";
+const STORAGE_KEY = "nasdaq-dashboard-layout-v5";
 
-// YENI GRID LAYOUT - v4
+// YENI GRID LAYOUT - v5
 const GRID_LAYOUT: DashboardLayout = {
   version: 4,
   cards: [
-    // SOL KOLON - Scalping (Rebound Detection kaldırıldı)
+    // SOL KOLON - Scalping
     { id: "pulse-panel", title: "Pulse 1 – Algo Scalp", column: "left", order: 1, visible: true, size: "large", collapsed: false },
     { id: "pulse-ml", title: "Pulse 2 – ML Hybrid", column: "left", order: 2, visible: true, size: "large", collapsed: false },
     { id: "pulse-v3", title: "Pulse 3 – Hybrid MTF", column: "left", order: 3, visible: true, size: "large", collapsed: false },
     { id: "emel-panel", title: "EMEL Panel", column: "left", order: 4, visible: true, size: "large", collapsed: false },
-    // EMEL Inverse kaldırıldı
-    // SAĞ KOLON - SMC & Teknik (Pattern Engine ve Seasonality kaldırıldı)
+    // SAĞ KOLON - SMC & Teknik
     { id: "smc-panel", title: "Smart Money Concepts", column: "right", order: 1, visible: true, size: "large", collapsed: false },
-    { id: "cot-whale", title: "Order Blocks (Unified)", column: "right", order: 2, visible: true, size: "large", collapsed: false },
+    { id: "order-block-unified", title: "Order Blocks (Unified)", column: "right", order: 2, visible: true, size: "large", collapsed: false },
     { id: "mtf-matrix", title: "MTF Confluence Matrix", column: "right", order: 3, visible: true, size: "large", collapsed: false },
     { id: "cot-whale-intel", title: "COT + Whale Intelligence", column: "right", order: 4, visible: true, size: "large", collapsed: false },
     { id: "risk-reward", title: "Risk/Reward Optimizer", column: "right", order: 5, visible: true, size: "large", collapsed: false },
-    // Pattern Engine V2 kaldırıldı
     { id: "harmonic-visualizer", title: "Harmonic Visualizer", column: "right", order: 6, visible: true, size: "large", collapsed: false },
     { id: "whale-tracker", title: "Whale Tracker", column: "right", order: 7, visible: true, size: "large", collapsed: false },
     { id: "candlestick-patterns", title: "Candlestick Patterns", column: "right", order: 8, visible: true, size: "large", collapsed: false },
-    { id: "smart-setup", title: "Smart Setup", column: "right", order: 9, visible: true, size: "large", collapsed: false },
-    // Seasonality kaldırıldı
+    { id: "smart-setup", title: "Smart Setup Generator", column: "right", order: 9, visible: true, size: "large", collapsed: false },
   ],
 };
 
@@ -91,7 +88,7 @@ const FALLBACK_HEIGHTS: Record<string, number> = {
   "pulse-v3": 440,
   "emel-panel": 480,
   "smc-panel": 520,
-  "cot-whale": 480,
+  "order-block-unified": 480,
   "mtf-matrix": 460,
   "cot-whale-intel": 460,
   "risk-reward": 420,
@@ -110,23 +107,19 @@ function frame(index: number) {
 }
 
 const PANEL_TOOLTIPS: Record<string, { tr: string; en: string }> = {
-  "rebound-detection": { tr: "Fiyat sekme noktalarını tespit eder.", en: "Detects price bounce points." },
   "pulse-panel": { tr: "6 bileşenli algoritmik scalp.", en: "6-component algorithmic scalp." },
   "pulse-ml": { tr: "ML destekli Pulse.", en: "ML-enhanced Pulse." },
   "pulse-v3": { tr: "Gelişmiş Pulse MTF.", en: "Advanced Pulse MTF." },
   "emel-panel": { tr: "9 checkpoint sinyal sistemi.", en: "9-checkpoint signal system." },
-  "emel-inverse-panel": { tr: "Ters yön EMEL analizi.", en: "Inverse EMEL analysis." },
   "smc-panel": { tr: "Smart Money Concepts.", en: "Smart Money Concepts." },
-  "cot-whale": { tr: "Order Blocks Unified.", en: "Order Blocks Unified." },
+  "order-block-unified": { tr: "Order Blocks Unified.", en: "Order Blocks Unified." },
   "mtf-matrix": { tr: "Multi-Timeframe Matrix.", en: "Multi-Timeframe Matrix." },
   "cot-whale-intel": { tr: "COT + Whale Intel.", en: "COT + Whale Intel." },
   "risk-reward": { tr: "Risk/Ödül hesaplayıcı.", en: "Risk/Reward calculator." },
-  "pattern-engine": { tr: "Pattern tanıma motoru.", en: "Pattern recognition engine." },
   "harmonic-visualizer": { tr: "Harmonik pattern görselleştirici.", en: "Harmonic pattern visualizer." },
   "whale-tracker": { tr: "Balina takip.", en: "Whale tracking." },
   "candlestick-patterns": { tr: "Mum desenleri.", en: "Candlestick patterns." },
   "smart-setup": { tr: "Akıllı setup.", en: "Smart setup." },
-  "seasonality": { tr: "Mevsimsellik.", en: "Seasonality." },
 };
 
 const TOP_SECTION_TOOLTIPS = {
@@ -209,9 +202,9 @@ function GridCardRenderer({
     case "pulse-ml": content = <PulseMLPanel symbol={SYMBOL} />; break;
     case "pulse-v3": content = <PulseV3Panel symbol={SYMBOL} />; break;
     case "emel-panel": content = <EmelPanel symbol={SYMBOL} />; break;
-    case "cot-whale": content = <COTWhalePanel symbol={SYMBOL} />; break;
-    case "cot-whale-intel": content = <COTWhalePanel symbol={SYMBOL} />; break;
+    case "order-block-unified": content = <OrderBlockPanelUnified symbol={SYMBOL} />; break;
     case "mtf-matrix": content = <MTFMatrixPanel symbol={SYMBOL} />; break;
+    case "cot-whale-intel": content = <COTWhalePanel symbol={SYMBOL} />; break;
     case "smc-panel": content = <SMCPanel lockedSymbol={SYMBOL} />; break;
     case "risk-reward": content = <RiskRewardPanel symbol={SYMBOL} />; break;
     case "harmonic-visualizer": content = <HarmonicVisualizerPanel />; break;
@@ -391,38 +384,15 @@ function NasdaqPageContent() {
             </LazyPanel>
           </motion.section>
 
-          {/* 3. Order Block & SMC Flow - Clear Trend hemen altına taşındı */}
-          <motion.section {...frame(2)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl backdrop-blur-xl md:p-6">
-            <div className="mb-5 flex items-center gap-3">
-              <BarChart3 className="h-5 w-5 text-fuchsia-400" />
-              <div>
-                <h2 className="text-lg font-bold text-white">{copy.orderBlocks}</h2>
-                <p className="text-sm text-slate-400">{locale === "tr" ? "Order block ve SMC akışı" : "Order block and SMC flow"}</p>
-              </div>
-            </div>
-            <LazyPanel fallbackHeight={620}>
-              <OrderBlockPanelUnified symbol={SYMBOL} />
-            </LazyPanel>
-          </motion.section>
-
           {/* 4. Meta + Strategy */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <TopSectionCard
               title={copy.metaTitle}
               tooltipText={locale === "tr" ? TOP_SECTION_TOOLTIPS.meta.tr : TOP_SECTION_TOOLTIPS.meta.en}
-              delay={3}
+              delay={2}
               isMaximized={maximizedTop === "meta"}
               onMaximize={() => setMaximizedTop(maximizedTop === "meta" ? null : "meta")}
             >
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10">
-                  <Activity className="h-5 w-5 text-emerald-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">{copy.metaTitle}</h3>
-                  <p className="text-sm text-slate-400">{locale === "tr" ? "Tüm modellerin konsensüs skoru" : "Consensus score of all models"}</p>
-                </div>
-              </div>
               <LazyPanel fallbackHeight={420}>
                 <MetaEnginePanel symbol={SYMBOL} />
               </LazyPanel>
@@ -431,27 +401,18 @@ function NasdaqPageContent() {
             <TopSectionCard
               title={copy.strategyTitle}
               tooltipText={locale === "tr" ? TOP_SECTION_TOOLTIPS.strategy.tr : TOP_SECTION_TOOLTIPS.strategy.en}
-              delay={3}
+              delay={2}
               isMaximized={maximizedTop === "strategy"}
               onMaximize={() => setMaximizedTop(maximizedTop === "strategy" ? null : "strategy")}
             >
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10">
-                  <BarChart3 className="h-5 w-5 text-cyan-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">{copy.strategyTitle}</h3>
-                  <p className="text-sm text-slate-400">{locale === "tr" ? "Risk skorlama ve pozisyon" : "Risk scoring and position"}</p>
-                </div>
-              </div>
               <LazyPanel fallbackHeight={420}>
                 <StrategyPerformanceDashboard symbol={SYMBOL} />
               </LazyPanel>
             </TopSectionCard>
           </div>
 
-          {/* 4. Draggable Grid */}
-          <motion.div {...frame(4)}>
+          {/* 5. Draggable Grid */}
+          <motion.div {...frame(3)}>
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <Grip className="h-5 w-5 text-fuchsia-400" />
@@ -464,8 +425,8 @@ function NasdaqPageContent() {
             <NasdaqEditableGrid locale={locale} maximizedCard={maximizedCard} onMaximize={setMaximizedCard} />
           </motion.div>
 
-          {/* 5. AI Stack */}
-          <motion.section {...frame(5)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl backdrop-blur-xl md:p-6">
+          {/* 6. AI Stack */}
+          <motion.section {...frame(4)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl backdrop-blur-xl md:p-6">
             <div className="mb-5 flex items-center gap-3">
               <BarChart3 className="h-5 w-5 text-cyan-400" />
               <div>
@@ -483,8 +444,8 @@ function NasdaqPageContent() {
             </div>
           </motion.section>
 
-          {/* 6. History */}
-          <motion.section {...frame(6)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl backdrop-blur-xl md:p-6">
+          {/* 7. History */}
+          <motion.section {...frame(5)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl backdrop-blur-xl md:p-6">
             <div className="mb-5 flex items-center gap-3">
               <LayoutDashboard className="h-5 w-5 text-emerald-400" />
               <div>
@@ -494,6 +455,20 @@ function NasdaqPageContent() {
             </div>
             <LazyPanel fallbackHeight={520}>
               <PredictionHistoryTable symbol={SYMBOL} />
+            </LazyPanel>
+          </motion.section>
+
+          {/* 8. Order Block & SMC Flow - En altta */}
+          <motion.section {...frame(6)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl backdrop-blur-xl md:p-6">
+            <div className="mb-5 flex items-center gap-3">
+              <BarChart3 className="h-5 w-5 text-fuchsia-400" />
+              <div>
+                <h2 className="text-lg font-bold text-white">{copy.orderBlocks}</h2>
+                <p className="text-sm text-slate-400">{locale === "tr" ? "Order block ve SMC akışı" : "Order block and SMC flow"}</p>
+              </div>
+            </div>
+            <LazyPanel fallbackHeight={620}>
+              <OrderBlockPanelUnified symbol={SYMBOL} />
             </LazyPanel>
           </motion.section>
         </div>
