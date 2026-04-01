@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import AuthGuard from "@/components/AuthGuard";
 import { TradingBackground } from "@/components/TradingBackground";
-import WSStatusBadge from "@/components/WSStatusBadge";
+import SymbolTopNav from "@/components/SymbolTopNav";
 import { LazyPanel } from "@/components/LazyPanel";
 import MLPredictionPanel from "@/components/MLPredictionPanel";
 import ClaudeAnalysisPanelV2 from "@/components/ClaudeAnalysisPanelV2";
@@ -566,6 +566,7 @@ function NasdaqPageContent() {
   return (
     <div className="relative min-h-screen overflow-x-hidden text-slate-100">
       <TradingBackground />
+      <SymbolTopNav />
       <DashboardEditProvider storageKey={STORAGE_KEY} defaultLayout={GRID_LAYOUT}>
         <div className="relative z-10 mx-auto flex w-full max-w-[1680px] flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
           <motion.div {...frame(0)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/30 backdrop-blur-xl md:p-6">
@@ -577,13 +578,7 @@ function NasdaqPageContent() {
                     {copy.back}
                   </Link>
                   <div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300">
-                        {SYMBOL_LABEL} • {SYMBOL}
-                      </span>
-                      <WSStatusBadge />
-                    </div>
-                    <h1 className="mt-3 text-3xl font-black tracking-tight text-white md:text-5xl">{copy.title}</h1>
+                    <h1 className="text-3xl font-black tracking-tight text-white md:text-5xl">{copy.title}</h1>
                     <p className="mt-2 max-w-3xl text-sm text-slate-400 md:text-base">{copy.subtitle}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
