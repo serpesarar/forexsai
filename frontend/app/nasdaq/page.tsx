@@ -47,14 +47,11 @@ import PulsePanel from "@/components/panels/PulsePanel";
 import PulseMLPanel from "@/components/panels/PulseMLPanel";
 import PulseV3Panel from "@/components/panels/PulseV3Panel";
 import EmelPanel from "@/components/panels/EmelPanel";
-import EmelInversePanel from "@/components/panels/EmelInversePanel";
-import ReboundDetectionPanel from "@/components/panels/ReboundDetectionPanel";
 import COTWhalePanel from "@/components/panels/COTWhalePanel";
 import MTFMatrixPanel from "@/components/panels/MTFMatrixPanel";
 import ClearTrendPanelV3 from "@/components/panels/ClearTrendPanelV3";
 import SMCPanel from "@/components/panels/SMCPanel";
 import RiskRewardPanel from "@/components/panels/RiskRewardPanel";
-import SeasonalityPanel from "@/components/panels/SeasonalityPanel";
 import SmartSetupPanel from "@/components/panels/SmartSetupPanel";
 import OrderBlockPanelUnified from "@/components/OrderBlockPanelUnified";
 
@@ -67,46 +64,41 @@ const STORAGE_KEY = "nasdaq-dashboard-layout-v4";
 const GRID_LAYOUT: DashboardLayout = {
   version: 4,
   cards: [
-    // SOL KOLON - Scalping & Rebound
-    { id: "rebound-detection", title: "Rebound Detection", column: "left", order: 1, visible: true, size: "large", collapsed: false },
-    { id: "pulse-panel", title: "Pulse 1 – Algo Scalp", column: "left", order: 2, visible: true, size: "large", collapsed: false },
-    { id: "pulse-ml", title: "Pulse 2 – ML Hybrid", column: "left", order: 3, visible: true, size: "large", collapsed: false },
-    { id: "pulse-v3", title: "Pulse 3 – Hybrid MTF", column: "left", order: 4, visible: true, size: "large", collapsed: false },
-    { id: "emel-panel", title: "EMEL Panel", column: "left", order: 5, visible: true, size: "large", collapsed: false },
-    { id: "emel-inverse-panel", title: "EMEL Inverse", column: "left", order: 6, visible: true, size: "large", collapsed: false },
-    // SAĞ KOLON - SMC & Teknik
+    // SOL KOLON - Scalping (Rebound Detection kaldırıldı)
+    { id: "pulse-panel", title: "Pulse 1 – Algo Scalp", column: "left", order: 1, visible: true, size: "large", collapsed: false },
+    { id: "pulse-ml", title: "Pulse 2 – ML Hybrid", column: "left", order: 2, visible: true, size: "large", collapsed: false },
+    { id: "pulse-v3", title: "Pulse 3 – Hybrid MTF", column: "left", order: 3, visible: true, size: "large", collapsed: false },
+    { id: "emel-panel", title: "EMEL Panel", column: "left", order: 4, visible: true, size: "large", collapsed: false },
+    // EMEL Inverse kaldırıldı
+    // SAĞ KOLON - SMC & Teknik (Pattern Engine ve Seasonality kaldırıldı)
     { id: "smc-panel", title: "Smart Money Concepts", column: "right", order: 1, visible: true, size: "large", collapsed: false },
     { id: "cot-whale", title: "Order Blocks (Unified)", column: "right", order: 2, visible: true, size: "large", collapsed: false },
     { id: "mtf-matrix", title: "MTF Confluence Matrix", column: "right", order: 3, visible: true, size: "large", collapsed: false },
     { id: "cot-whale-intel", title: "COT + Whale Intelligence", column: "right", order: 4, visible: true, size: "large", collapsed: false },
     { id: "risk-reward", title: "Risk/Reward Optimizer", column: "right", order: 5, visible: true, size: "large", collapsed: false },
-    { id: "pattern-engine", title: "Pattern Engine V2", column: "right", order: 6, visible: true, size: "large", collapsed: false },
-    { id: "harmonic-visualizer", title: "Harmonic Visualizer", column: "right", order: 7, visible: true, size: "large", collapsed: false },
-    { id: "whale-tracker", title: "Whale Tracker", column: "right", order: 8, visible: true, size: "large", collapsed: false },
-    { id: "candlestick-patterns", title: "Candlestick Patterns", column: "right", order: 9, visible: true, size: "large", collapsed: false },
-    { id: "smart-setup", title: "Smart Setup Generator", column: "right", order: 10, visible: true, size: "large", collapsed: false },
-    { id: "seasonality", title: "Seasonality", column: "right", order: 11, visible: true, size: "large", collapsed: false },
+    // Pattern Engine V2 kaldırıldı
+    { id: "harmonic-visualizer", title: "Harmonic Visualizer", column: "right", order: 6, visible: true, size: "large", collapsed: false },
+    { id: "whale-tracker", title: "Whale Tracker", column: "right", order: 7, visible: true, size: "large", collapsed: false },
+    { id: "candlestick-patterns", title: "Candlestick Patterns", column: "right", order: 8, visible: true, size: "large", collapsed: false },
+    { id: "smart-setup", title: "Smart Setup", column: "right", order: 9, visible: true, size: "large", collapsed: false },
+    // Seasonality kaldırıldı
   ],
 };
 
 const FALLBACK_HEIGHTS: Record<string, number> = {
-  "rebound-detection": 420,
   "pulse-panel": 440,
   "pulse-ml": 440,
   "pulse-v3": 440,
   "emel-panel": 480,
-  "emel-inverse-panel": 440,
   "smc-panel": 520,
   "cot-whale": 480,
   "mtf-matrix": 460,
   "cot-whale-intel": 460,
   "risk-reward": 420,
-  "pattern-engine": 460,
   "harmonic-visualizer": 520,
   "whale-tracker": 440,
   "candlestick-patterns": 440,
   "smart-setup": 440,
-  "seasonality": 420,
 };
 
 function frame(index: number) {
@@ -217,18 +209,14 @@ function GridCardRenderer({
     case "pulse-ml": content = <PulseMLPanel symbol={SYMBOL} />; break;
     case "pulse-v3": content = <PulseV3Panel symbol={SYMBOL} />; break;
     case "emel-panel": content = <EmelPanel symbol={SYMBOL} />; break;
-    case "emel-inverse-panel": content = <EmelInversePanel symbol={SYMBOL} />; break;
-    case "rebound-detection": content = <ReboundDetectionPanel symbol={SYMBOL} />; break;
     case "cot-whale": content = <COTWhalePanel symbol={SYMBOL} />; break;
     case "cot-whale-intel": content = <COTWhalePanel symbol={SYMBOL} />; break;
     case "mtf-matrix": content = <MTFMatrixPanel symbol={SYMBOL} />; break;
     case "smc-panel": content = <SMCPanel lockedSymbol={SYMBOL} />; break;
     case "risk-reward": content = <RiskRewardPanel symbol={SYMBOL} />; break;
-    case "pattern-engine": content = <PatternEngineV2 symbol={PATTERN_SYMBOL} />; break;
     case "harmonic-visualizer": content = <HarmonicVisualizerPanel />; break;
     case "whale-tracker": content = <WhaleTrackerPanel symbol={SYMBOL} />; break;
     case "candlestick-patterns": content = <CandlestickPatternPanel symbol={SYMBOL} />; break;
-    case "seasonality": content = <SeasonalityPanel symbol={SYMBOL} />; break;
     case "smart-setup": content = <SmartSetupPanel symbol={SYMBOL} />; break;
   }
 
@@ -403,12 +391,26 @@ function NasdaqPageContent() {
             </LazyPanel>
           </motion.section>
 
-          {/* 3. Meta + Strategy */}
+          {/* 3. Order Block & SMC Flow - Clear Trend hemen altına taşındı */}
+          <motion.section {...frame(2)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl backdrop-blur-xl md:p-6">
+            <div className="mb-5 flex items-center gap-3">
+              <BarChart3 className="h-5 w-5 text-fuchsia-400" />
+              <div>
+                <h2 className="text-lg font-bold text-white">{copy.orderBlocks}</h2>
+                <p className="text-sm text-slate-400">{locale === "tr" ? "Order block ve SMC akışı" : "Order block and SMC flow"}</p>
+              </div>
+            </div>
+            <LazyPanel fallbackHeight={620}>
+              <OrderBlockPanelUnified symbol={SYMBOL} />
+            </LazyPanel>
+          </motion.section>
+
+          {/* 4. Meta + Strategy */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <TopSectionCard
               title={copy.metaTitle}
               tooltipText={locale === "tr" ? TOP_SECTION_TOOLTIPS.meta.tr : TOP_SECTION_TOOLTIPS.meta.en}
-              delay={2}
+              delay={3}
               isMaximized={maximizedTop === "meta"}
               onMaximize={() => setMaximizedTop(maximizedTop === "meta" ? null : "meta")}
             >
@@ -492,20 +494,6 @@ function NasdaqPageContent() {
             </div>
             <LazyPanel fallbackHeight={520}>
               <PredictionHistoryTable symbol={SYMBOL} />
-            </LazyPanel>
-          </motion.section>
-
-          {/* 7. Order Block */}
-          <motion.section {...frame(7)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl backdrop-blur-xl md:p-6">
-            <div className="mb-5 flex items-center gap-3">
-              <BarChart3 className="h-5 w-5 text-fuchsia-400" />
-              <div>
-                <h2 className="text-lg font-bold text-white">{copy.orderBlocks}</h2>
-                <p className="text-sm text-slate-400">{locale === "tr" ? "Order block ve SMC akışı" : "Order block and SMC flow"}</p>
-              </div>
-            </div>
-            <LazyPanel fallbackHeight={620}>
-              <OrderBlockPanelUnified symbol={SYMBOL} />
             </LazyPanel>
           </motion.section>
         </div>
