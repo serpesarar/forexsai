@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import {
   TrendingUp,
@@ -95,36 +94,32 @@ function SymbolTab({
     price?.trend === "up" || (price?.change || "").startsWith("+");
 
   return (
-    <motion.button
+    <button
       onClick={onClick}
-      whileHover={{ y: -3, scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
+      type="button"
       className={`
-        group relative flex flex-1 flex-col items-center justify-center gap-1.5
-        rounded-2xl border px-4 py-3
-        transition-all duration-200
-        backdrop-blur-sm
-        ${isActive ? symbol.accent.bg : "bg-slate-900/60"}
-        ${isActive ? symbol.accent.border : "border-slate-800"}
+        relative flex flex-1 flex-col items-center justify-center gap-1
+        rounded-xl border px-3 py-2
+        transition-all duration-200 ease-out
+        pointer-events-auto cursor-pointer
+        hover:scale-[1.02] hover:-translate-y-0.5
+        active:scale-[0.98]
+        ${isActive ? symbol.accent.bg : "bg-slate-900/60 hover:bg-slate-800/80"}
+        ${isActive ? symbol.accent.border : "border-slate-700 hover:border-slate-600"}
         ${isActive ? symbol.accent.glow : ""}
         ${isActive ? "shadow-lg" : "shadow-none hover:shadow-md"}
-        hover:border-slate-600
-        cursor-pointer
       `}
     >
       {isActive && (
-        <motion.div
-          layoutId="activeGlow"
-          className={`absolute inset-0 rounded-2xl opacity-50 blur-xl ${symbol.accent.bg}`}
-          transition={{ duration: 0.3 }}
+        <div
+          className={`absolute inset-0 rounded-xl opacity-40 blur-lg ${symbol.accent.bg}`}
         />
       )}
 
-      <div className="relative z-10 flex flex-col items-center gap-1">
+      <div className="relative z-10 flex flex-col items-center gap-0.5">
         <div
-          className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors duration-200 ${
-            isActive ? symbol.accent.bg : "bg-slate-800/50"
+          className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors duration-200 ${
+            isActive ? symbol.accent.bg : "bg-slate-800/60"
           }`}
         >
           <Icon
@@ -155,13 +150,11 @@ function SymbolTab({
       </div>
 
       {isActive && (
-        <motion.div
-          layoutId="activeIndicator"
-          className={`absolute -bottom-px left-4 right-4 h-0.5 rounded-full bg-current ${symbol.accent.text}`}
-          transition={{ duration: 0.3 }}
+        <div
+          className={`absolute -bottom-px left-3 right-3 h-0.5 rounded-full ${symbol.accent.text.replace("text-", "bg-")}`}
         />
       )}
-    </motion.button>
+    </button>
   );
 }
 
@@ -174,7 +167,7 @@ export default function SymbolTopNav({
 
   return (
     <nav className="sticky top-0 z-[100] w-full border-b border-slate-800/50 bg-slate-950/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[1680px] items-center gap-2 px-4 py-2 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-[1680px] items-center gap-2 px-4 py-2 sm:px-6 lg:px-8 pointer-events-auto">
         <div className="mr-4 hidden shrink-0 items-center gap-2 md:flex">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500">
             <TrendingUp className="h-4 w-4 text-white" />
@@ -182,24 +175,27 @@ export default function SymbolTopNav({
           <span className="text-sm font-bold text-white">ForexSAI</span>
         </div>
 
-        <div className="flex flex-1 gap-2 sm:gap-3">
+        <div className="flex flex-1 gap-2 sm:gap-3 pointer-events-auto">
           {SYMBOLS.map((symbol) => (
             <SymbolTab
               key={symbol.id}
               symbol={symbol}
               isActive={pathname === symbol.path}
               price={prices.find((item) => item.label === symbol.label)}
-              onClick={() => router.push(symbol.path)}
+              onClick={() => {
+                console.log("Navigating to:", symbol.path);
+                router.push(symbol.path);
+              }}
             />
           ))}
         </div>
 
         {rightSlot ? (
-          <div className="ml-4 hidden shrink-0 items-center gap-3 lg:flex">
+          <div className="ml-4 hidden shrink-0 items-center gap-3 lg:flex pointer-events-auto">
             {rightSlot}
           </div>
         ) : (
-          <div className="ml-4 hidden shrink-0 items-center gap-3 lg:flex">
+          <div className="ml-4 hidden shrink-0 items-center gap-3 lg:flex pointer-events-auto">
             <div className="h-6 w-px bg-slate-800" />
             <span className="text-xs text-slate-500">Live Market</span>
             <div className="flex h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
