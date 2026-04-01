@@ -658,12 +658,30 @@ function NasdaqPageContent() {
             </div>
           </motion.div>
 
+          {/* ÜST BÖLÜM - Clear Trend (tam genişlik - anasayfadaki gibi) */}
+          <motion.section {...frame(2)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-6">
+            <div className="mb-5 flex items-center gap-3">
+              <TrendingUp className="h-5 w-5 text-emerald-400" />
+              <div>
+                <h2 className="text-lg font-bold text-white">
+                  {locale === "tr" ? "Clear Trend" : "Clear Trend"}
+                </h2>
+                <p className="text-sm text-slate-400">
+                  {locale === "tr" ? "ICT tabanlı trend analizi ve FVG" : "ICT-based trend analysis and FVG"}
+                </p>
+              </div>
+            </div>
+            <LazyPanel fallbackHeight={380}>
+              <ClearTrendPanelV3 symbol={SYMBOL} />
+            </LazyPanel>
+          </motion.section>
+
           {/* ÜST BÖLÜM - Meta Engine + Strategy Optimizer (yan yana tam genişlik) */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <TopSectionCard
               title={copy.metaTitle}
               tooltipText={locale === "tr" ? TOP_SECTION_TOOLTIPS.meta.tr : TOP_SECTION_TOOLTIPS.meta.en}
-              delay={2}
+              delay={3}
             >
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10">
@@ -684,7 +702,7 @@ function NasdaqPageContent() {
             <TopSectionCard
               title={copy.strategyTitle}
               tooltipText={locale === "tr" ? TOP_SECTION_TOOLTIPS.strategy.tr : TOP_SECTION_TOOLTIPS.strategy.en}
-              delay={3}
+              delay={4}
             >
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10">
@@ -704,12 +722,12 @@ function NasdaqPageContent() {
           </div>
 
           {/* DRAGGABLE GRID - 2 kolonlu sürüklenebilir grid */}
-          <motion.div {...frame(4)}>
+          <motion.div {...frame(5)}>
             <NasdaqEditableGrid locale={locale} />
           </motion.div>
 
           {/* AI PREDICTION STACK - ML + Claude yan yana */}
-          <motion.section {...frame(5)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-6">
+          <motion.section {...frame(6)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-6">
             <div className="mb-5 flex items-center gap-3">
               <BarChart3 className="h-5 w-5 text-cyan-400" />
               <div>
@@ -728,7 +746,7 @@ function NasdaqPageContent() {
           </motion.section>
 
           {/* PREDICTION HISTORY */}
-          <motion.section {...frame(6)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-6">
+          <motion.section {...frame(7)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-6">
             <div className="mb-5 flex items-center gap-3">
               <LayoutDashboard className="h-5 w-5 text-emerald-400" />
               <div>
@@ -742,7 +760,7 @@ function NasdaqPageContent() {
           </motion.section>
 
           {/* ORDER BLOCK & SMC FLOW (Unified) */}
-          <motion.section {...frame(7)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-6">
+          <motion.section {...frame(8)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-6">
             <div className="mb-5 flex items-center gap-3">
               <BarChart3 className="h-5 w-5 text-fuchsia-400" />
               <div>
