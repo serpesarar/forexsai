@@ -569,7 +569,26 @@ function NasdaqPageContent() {
       <SymbolTopNav />
       <DashboardEditProvider storageKey={STORAGE_KEY} defaultLayout={GRID_LAYOUT}>
         <div className="relative z-10 mx-auto flex w-full max-w-[1680px] flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
-          <motion.div {...frame(0)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/30 backdrop-blur-xl md:p-6">
+          {/* EN ÜST - Clear Trend (tam genişlik) */}
+          <motion.section {...frame(0)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-6">
+            <div className="mb-5 flex items-center gap-3">
+              <TrendingUp className="h-5 w-5 text-emerald-400" />
+              <div>
+                <h2 className="text-lg font-bold text-white">
+                  {locale === "tr" ? "Clear Trend" : "Clear Trend"}
+                </h2>
+                <p className="text-sm text-slate-400">
+                  {locale === "tr" ? "ICT tabanlı trend analizi ve FVG" : "ICT-based trend analysis and FVG"}
+                </p>
+              </div>
+            </div>
+            <LazyPanel fallbackHeight={380}>
+              <ClearTrendPanelV3 symbol={SYMBOL} />
+            </LazyPanel>
+          </motion.section>
+
+          {/* HEADER + HERO CHART */}
+          <motion.div {...frame(1)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/30 backdrop-blur-xl md:p-6">
             <div className="flex flex-col gap-6">
               <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div className="space-y-4">
@@ -657,24 +676,6 @@ function NasdaqPageContent() {
               </div>
             </div>
           </motion.div>
-
-          {/* ÜST BÖLÜM - Clear Trend (tam genişlik - anasayfadaki gibi) */}
-          <motion.section {...frame(2)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-6">
-            <div className="mb-5 flex items-center gap-3">
-              <TrendingUp className="h-5 w-5 text-emerald-400" />
-              <div>
-                <h2 className="text-lg font-bold text-white">
-                  {locale === "tr" ? "Clear Trend" : "Clear Trend"}
-                </h2>
-                <p className="text-sm text-slate-400">
-                  {locale === "tr" ? "ICT tabanlı trend analizi ve FVG" : "ICT-based trend analysis and FVG"}
-                </p>
-              </div>
-            </div>
-            <LazyPanel fallbackHeight={380}>
-              <ClearTrendPanelV3 symbol={SYMBOL} />
-            </LazyPanel>
-          </motion.section>
 
           {/* ÜST BÖLÜM - Meta Engine + Strategy Optimizer (yan yana tam genişlik) */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
