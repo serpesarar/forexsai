@@ -735,11 +735,21 @@ function FullscreenPatternModal({
 }
 
 // Main Pattern Engine V2 Component
-export default function PatternEngineV2() {
+interface PatternEngineV2Props {
+  symbol?: "NASDAQ" | "XAUUSD";
+}
+
+export default function PatternEngineV2({ symbol }: PatternEngineV2Props) {
   const { t } = useI18nStore();
-  const [selectedSymbol, setSelectedSymbol] = useState<"ALL" | "NASDAQ" | "XAUUSD">("ALL");
+  const initialSymbol = symbol ?? "ALL";
+  const isSymbolLocked = Boolean(symbol);
+  const [selectedSymbol, setSelectedSymbol] = useState<"ALL" | "NASDAQ" | "XAUUSD">(initialSymbol);
   const [selectedPattern, setSelectedPattern] = useState<Pattern | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    setSelectedSymbol(initialSymbol);
+  }, [initialSymbol]);
 
   // Get live prices for realistic pattern targets
   const { tickers } = useLivePrices();
@@ -769,10 +779,10 @@ export default function PatternEngineV2() {
         <div className="flex items-center gap-2">
           {/* Filter Tabs */}
           <div className="flex rounded-lg border border-white/10 bg-white/5 p-0.5">
-            {(["ALL", "NASDAQ", "XAUUSD"] as const).map((sym) => (
+            {(isSymbolLocked ? [selectedSymbol] : ["ALL", "NASDAQ", "XAUUSD"] as const).map((sym) => (
               <button
                 key={sym}
-                onClick={() => setSelectedSymbol(sym)}
+                onClick={() => !isSymbolLocked && setSelectedSymbol(sym)}
                 className={`rounded px-2 py-1 text-[10px] font-medium transition-all ${selectedSymbol === sym ? "bg-accent text-white" : "text-gray-400 hover:text-white"
                   }`}
               >

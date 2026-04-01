@@ -143,8 +143,14 @@ const RECOMMENDATION_COLORS: Record<string, string> = {
   avoid: 'text-red-400',
 };
 
-export default function SmartSetupPanel() {
-  const [activeSymbol, setActiveSymbol] = useState("NDX.INDX");
+interface SmartSetupPanelProps {
+  symbol?: string;
+}
+
+export default function SmartSetupPanel({ symbol }: SmartSetupPanelProps) {
+  const initialSymbol = symbol ?? "NDX.INDX";
+  const isSymbolLocked = Boolean(symbol);
+  const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
   
   const [data, setData] = useState<SmartSetupData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -155,6 +161,10 @@ export default function SmartSetupPanel() {
     risk: false,
     seasonality: false,
   });
+
+  useEffect(() => {
+    setActiveSymbol(initialSymbol);
+  }, [initialSymbol]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -234,15 +244,21 @@ export default function SmartSetupPanel() {
           <span className="text-xs text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">FREE</span>
         </div>
         <div className="flex items-center gap-2">
-          <select
-            value={activeSymbol}
-            onChange={(e) => setActiveSymbol(e.target.value)}
-            className="bg-gray-800 text-xs text-white rounded px-2 py-1 border border-gray-700"
-          >
-            {SYMBOLS.map((s) => (
-              <option key={s} value={s}>{SYMBOL_LABELS[s]}</option>
-            ))}
-          </select>
+          {isSymbolLocked ? (
+            <span className="bg-gray-800 text-xs text-white rounded px-2 py-1 border border-gray-700">
+              {SYMBOL_LABELS[activeSymbol] || activeSymbol}
+            </span>
+          ) : (
+            <select
+              value={activeSymbol}
+              onChange={(e) => setActiveSymbol(e.target.value)}
+              className="bg-gray-800 text-xs text-white rounded px-2 py-1 border border-gray-700"
+            >
+              {SYMBOLS.map((s) => (
+                <option key={s} value={s}>{SYMBOL_LABELS[s]}</option>
+              ))}
+            </select>
+          )}
           <div className="flex items-center gap-1 bg-gray-800/50 rounded p-0.5">
           <button
             onClick={() => setDirection('long')}

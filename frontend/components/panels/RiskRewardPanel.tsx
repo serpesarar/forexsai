@@ -81,14 +81,24 @@ interface RiskData {
   };
 }
 
-export default function RiskRewardPanel() {
-  const [activeSymbol, setActiveSymbol] = useState("NDX.INDX");
+interface RiskRewardPanelProps {
+  symbol?: string;
+}
+
+export default function RiskRewardPanel({ symbol }: RiskRewardPanelProps) {
+  const initialSymbol = symbol ?? "NDX.INDX";
+  const isSymbolLocked = Boolean(symbol);
+  const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
   const [data, setData] = useState<RiskData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [direction, setDirection] = useState<'long' | 'short'>('long');
   const [accountSize, setAccountSize] = useState(10000);
   const [riskPerTrade, setRiskPerTrade] = useState(1.0);
+
+  useEffect(() => {
+    setActiveSymbol(initialSymbol);
+  }, [initialSymbol]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -174,15 +184,21 @@ export default function RiskRewardPanel() {
           <span className="text-xs text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">FREE</span>
         </div>
         <div className="flex items-center gap-2">
-          <select
-            value={activeSymbol}
-            onChange={(e) => setActiveSymbol(e.target.value)}
-            className="bg-gray-800 text-xs text-white rounded px-2 py-1 border border-gray-700"
-          >
-            {SYMBOLS.map((s) => (
-              <option key={s} value={s}>{SYMBOL_LABELS[s]}</option>
-            ))}
-          </select>
+          {isSymbolLocked ? (
+            <span className="bg-gray-800 text-xs text-white rounded px-2 py-1 border border-gray-700">
+              {SYMBOL_LABELS[activeSymbol] || activeSymbol}
+            </span>
+          ) : (
+            <select
+              value={activeSymbol}
+              onChange={(e) => setActiveSymbol(e.target.value)}
+              className="bg-gray-800 text-xs text-white rounded px-2 py-1 border border-gray-700"
+            >
+              {SYMBOLS.map((s) => (
+                <option key={s} value={s}>{SYMBOL_LABELS[s]}</option>
+              ))}
+            </select>
+          )}
           <button 
             onClick={fetchData}
             className="p-1 hover:bg-gray-700 rounded transition-colors"

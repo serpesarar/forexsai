@@ -72,12 +72,22 @@ const SYMBOLS = [
   { key: "USOIL.FOREX", label: "US Oil" },
 ];
 
-export default function COTWhalePanel() {
-  const [symbol, setSymbol] = useState("XAUUSD");
+interface COTWhalePanelProps {
+  symbol?: string;
+}
+
+export default function COTWhalePanel({ symbol: lockedSymbol }: COTWhalePanelProps) {
+  const initialSymbol = lockedSymbol ?? "XAUUSD";
+  const isSymbolLocked = Boolean(lockedSymbol);
+  const [symbol, setSymbol] = useState(initialSymbol);
   const [cotData, setCotData] = useState<COTData | null>(null);
   const [whaleData, setWhaleData] = useState<WhaleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setSymbol(initialSymbol);
+  }, [initialSymbol]);
 
   useEffect(() => {
     const handler = () => fetchData();
@@ -162,14 +172,14 @@ export default function COTWhalePanel() {
         iconColor="var(--accent-cyan)"
         iconBg="var(--accent-cyan-08)"
         iconBorder="var(--accent-cyan-15)"
-        symbols={[
+        symbols={isSymbolLocked ? [{ key: symbol, label: SYMBOLS.find((item) => item.key === symbol)?.label || symbol }] : [
           { key: "NDX.INDX", label: "NASDAQ" },
           { key: "XAUUSD", label: "XAUUSD" },
           { key: "GDAXI.INDX", label: "DAX" },
           { key: "USOIL.FOREX", label: "US Oil" },
         ]}
         activeSymbol={symbol}
-        onSymbolChange={setSymbol}
+        onSymbolChange={isSymbolLocked ? () => { } : setSymbol}
         onRefresh={fetchData}
         loading={loading}
         panelId="cot-whale"

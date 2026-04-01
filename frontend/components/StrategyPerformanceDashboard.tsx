@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Target, TrendingUp, TrendingDown, AlertTriangle, BarChart3 } from "lucide-react";
+import { fetcher } from "../lib/api";
 
 interface StrategyData {
   total: number;
@@ -32,22 +33,25 @@ const SYMBOL_TARGETS: Record<string, Record<string, number>> = {
   "USOIL.FOREX": { TP1: 0.02, TP2: 0.04, TP3: 0.06, TP4: 0.10, SL: 0.05 },
 };
 
-export default function StrategyPerformanceDashboard({ symbol = "XAUUSD" }: StrategyPerformanceDashboardProps) {
+export default function StrategyPerformanceDashboard({ symbol: lockedSymbol }: StrategyPerformanceDashboardProps) {
+  const symbol = lockedSymbol ?? "XAUUSD";
+  const isSymbolLocked = lockedSymbol != null;
   const [selectedSymbol, setSelectedSymbol] = useState(symbol);
   const [selectedDirection, setSelectedDirection] = useState<"BUY" | "SELL" | "ALL">("ALL");
   const [days, setDays] = useState(30);
   const [data, setData] = useState<Record<string, StrategyData> | null>(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    setSelectedSymbol(symbol);
+  }, [symbol]);
+
   const targets = SYMBOL_TARGETS[selectedSymbol] || SYMBOL_TARGETS.XAUUSD;
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await fetch(
-        `/api/learning/strategy-performance/${selectedSymbol}?days=${days}`
-      );
-      const json = await res.json();
+      const json = await fetcher<any>(`/api/learning/strategy-performance/${selectedSymbol}?days=${days}`);
       if (json.strategies) {
         const processed: Record<string, StrategyData> = {};
         for (const strat of STRATEGIES) {
@@ -76,6 +80,10 @@ export default function StrategyPerformanceDashboard({ symbol = "XAUUSD" }: Stra
 
   const formatPercent = (value: number) => `${(value * 100).toFixed(1)}%`;
 
+  useEffect(() => {
+    fetchData();
+  }, [selectedSymbol, days]);
+
   const getRateColor = (rate: number, isSL = false) => {
     if (isSL) return rate > 0.3 ? "text-red-500" : rate > 0.2 ? "text-yellow-500" : "text-green-500";
     return rate > 0.6 ? "text-green-500" : rate > 0.4 ? "text-yellow-500" : "text-red-500";
@@ -90,16 +98,22 @@ export default function StrategyPerformanceDashboard({ symbol = "XAUUSD" }: Stra
         </div>
 
         <div className="flex items-center gap-3">
-          <select
-            value={selectedSymbol}
-            onChange={(e) => setSelectedSymbol(e.target.value)}
-            className="bg-gray-800 text-white text-sm rounded-lg px-3 py-1.5 border border-gray-700"
-          >
-            <option value="XAUUSD">XAUUSD</option>
-            <option value="NDX.INDX">NASDAQ</option>
-            <option value="GDAXI.INDX">DAX</option>
-            <option value="USOIL.FOREX">US Oil</option>
-          </select>
+          {isSymbolLocked ? (
+            <span className="bg-gray-800 text-white text-sm rounded-lg px-3 py-1.5 border border-gray-700">
+              {selectedSymbol === "NDX.INDX" ? "NASDAQ" : selectedSymbol}
+            </span>
+          ) : (
+            <select
+              value={selectedSymbol}
+              onChange={(e) => setSelectedSymbol(e.target.value)}
+              className="bg-gray-800 text-white text-sm rounded-lg px-3 py-1.5 border border-gray-700"
+            >
+              <option value="XAUUSD">XAUUSD</option>
+              <option value="NDX.INDX">NASDAQ</option>
+              <option value="GDAXI.INDX">DAX</option>
+              <option value="USOIL.FOREX">US Oil</option>
+            </select>
+          )}
 
           <select
             value={days}
@@ -116,7 +130,7 @@ export default function StrategyPerformanceDashboard({ symbol = "XAUUSD" }: Stra
             disabled={loading}
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5 rounded-lg disabled:opacity-50"
           >
-            {loading ? "Loading..." : "Analyze"}
+            {loading ? "Loading..." : "Refresh"}
           </button>
         </div>
       </div>
@@ -203,7 +217,7 @@ export default function StrategyPerformanceDashboard({ symbol = "XAUUSD" }: Stra
       ) : (
         <div className="text-center py-8 text-gray-500">
           <Target className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p>Click &quot;Analyze&quot; to load strategy performance data</p>
+          <p>Strategy performance data is loading.</p>
         </div>
       )}
 

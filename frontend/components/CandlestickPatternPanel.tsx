@@ -63,9 +63,11 @@ const TIMEFRAME_LABELS: Record<string, string> = {
 };
 
 export default function CandlestickPatternPanel({
-  symbol = "XAUUSD",
+  symbol: lockedSymbol,
   className = ""
 }: CandlestickPatternPanelProps) {
+  const initialSymbol = lockedSymbol ?? "XAUUSD";
+  const isSymbolLocked = Boolean(lockedSymbol);
   const { t, locale } = useI18nStore();
   const [data, setData] = useState<CandlestickData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,7 +75,11 @@ export default function CandlestickPatternPanel({
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>("all");
   const [expandedPattern, setExpandedPattern] = useState<string | null>(null);
-  const [activeSymbol, setActiveSymbol] = useState(symbol);
+  const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
+
+  useEffect(() => {
+    setActiveSymbol(initialSymbol);
+  }, [initialSymbol]);
 
   useEffect(() => {
     const handler = () => fetchData();
@@ -169,14 +175,22 @@ export default function CandlestickPatternPanel({
           </div>
           <div className="flex items-center gap-2">
             {/* Symbol Selector */}
-            <select
-              value={activeSymbol}
-              onChange={(e) => setActiveSymbol(e.target.value)}
-              className="bg-gray-800/50 text-xs text-gray-300 border border-gray-600/50 rounded px-2 py-1"
-            >
-              <option value="XAUUSD">GOLD</option>
-              <option value="NAS100">NASDAQ</option>
-            </select>
+            {isSymbolLocked ? (
+              <span className="bg-gray-800/50 text-xs text-gray-300 border border-gray-600/50 rounded px-2 py-1">
+                {activeSymbol === "NDX.INDX" ? "NASDAQ" : activeSymbol}
+              </span>
+            ) : (
+              <select
+                value={activeSymbol}
+                onChange={(e) => setActiveSymbol(e.target.value)}
+                className="bg-gray-800/50 text-xs text-gray-300 border border-gray-600/50 rounded px-2 py-1"
+              >
+                <option value="XAUUSD">GOLD</option>
+                <option value="NDX.INDX">NASDAQ</option>
+                <option value="GDAXI.INDX">DAX</option>
+                <option value="USOIL.FOREX">OIL</option>
+              </select>
+            )}
             {lastUpdate && (
               <span className="text-xs text-gray-500">
                 {lastUpdate.toLocaleTimeString()}

@@ -141,13 +141,23 @@ function TechConditionDot({ name, passed }: { name: string; passed: boolean }) {
 
 // ── Main Panel ─────────────────────────────────────────
 
-export default function MetaEnginePanel() {
+interface MetaEnginePanelProps {
+  symbol?: string;
+}
+
+export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
   const { t } = useI18nStore();
-  const [activeSymbol, setActiveSymbol] = useState("NDX.INDX");
+  const initialSymbol = symbol ?? "NDX.INDX";
+  const isSymbolLocked = Boolean(symbol);
+  const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
   const [signals, setSignals] = useState<Record<string, MetaSignalData>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const fetchRef = useRef(false);
+
+  useEffect(() => {
+    setActiveSymbol(initialSymbol);
+  }, [initialSymbol]);
 
   const fetchDashboard = useCallback(async () => {
     const controller = new AbortController();
@@ -232,7 +242,7 @@ export default function MetaEnginePanel() {
 
         {/* Symbol Tabs */}
         <div className="flex gap-1 mt-3">
-          {SYMBOLS.map((sym) => {
+          {(isSymbolLocked ? [activeSymbol] : SYMBOLS).map((sym) => {
             const sig = signals[sym] as MetaSignalData | undefined;
             const isActive = sym === activeSymbol;
             const dir = sig?.direction || "HOLD";
@@ -241,7 +251,7 @@ export default function MetaEnginePanel() {
             return (
               <button
                 key={sym}
-                onClick={() => setActiveSymbol(sym)}
+                onClick={() => !isSymbolLocked && setActiveSymbol(sym)}
                 className={`flex-1 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all flex items-center justify-center gap-1.5 ${
                   isActive ? "bg-white/[0.08] text-[#E6EDF3]" : "text-[#6B7280] hover:bg-white/[0.04] hover:text-[#9AA4B2]"
                 }`}

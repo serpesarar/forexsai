@@ -101,9 +101,19 @@ const MAX_HISTORY = 50;
 
 const DashboardEditContext = createContext<DashboardEditContextType | undefined>(undefined);
 
-export function DashboardEditProvider({ children }: { children: React.ReactNode }) {
+interface DashboardEditProviderProps {
+  children: React.ReactNode;
+  storageKey?: string;
+  defaultLayout?: DashboardLayout;
+}
+
+export function DashboardEditProvider({
+  children,
+  storageKey = LAYOUT_STORAGE_KEY,
+  defaultLayout = DEFAULT_LAYOUT,
+}: DashboardEditProviderProps) {
   const [isEditMode, setIsEditMode] = useState(false);
-  const [layout, setLayout] = useState<DashboardLayout>(DEFAULT_LAYOUT);
+  const [layout, setLayout] = useState<DashboardLayout>(defaultLayout);
   const [history, setHistory] = useState<HistoryState>({ past: [], future: [] });
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [dragOverCardId, setDragOverCardId] = useState<string | null>(null);
@@ -112,19 +122,19 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
   // Load layout from localStorage on mount, merge in any new panels from DEFAULT
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
+      const saved = localStorage.getItem(storageKey);
       if (saved) {
         const parsed: DashboardLayout = JSON.parse(saved);
-        const validIds = new Set(DEFAULT_LAYOUT.cards.map((card) => card.id));
+        const validIds = new Set(defaultLayout.cards.map((card) => card.id));
         const sanitizedParsed: DashboardLayout = {
           ...parsed,
           cards: parsed.cards.filter((card: DashboardCard) => validIds.has(card.id)),
         };
-        if (sanitizedParsed.version >= DEFAULT_LAYOUT.version) {
+        if (sanitizedParsed.version >= defaultLayout.version) {
           setLayout(sanitizedParsed);
         } else {
           // Merge: keep user visibility/collapse but update order/column from DEFAULT
-          const defaultMap = new Map(DEFAULT_LAYOUT.cards.map(c => [c.id, c]));
+          const defaultMap = new Map(defaultLayout.cards.map(c => [c.id, c]));
           const mergedCards = sanitizedParsed.cards.map((c: DashboardCard) => {
             const def = defaultMap.get(c.id);
             if (def) {
@@ -134,17 +144,17 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
           });
           // Add any new cards from DEFAULT that don't exist in saved
           const existingIds = new Set(sanitizedParsed.cards.map((c: DashboardCard) => c.id));
-          const newCards = DEFAULT_LAYOUT.cards.filter(c => !existingIds.has(c.id));
+          const newCards = defaultLayout.cards.filter(c => !existingIds.has(c.id));
           setLayout({
             cards: [...mergedCards, ...newCards],
-            version: DEFAULT_LAYOUT.version,
+            version: defaultLayout.version,
           });
         }
       }
     } catch (e) {
       console.warn("Failed to load dashboard layout:", e);
     }
-  }, []);
+  }, [defaultLayout, storageKey]);
 
   // Track history for undo/redo
   useEffect(() => {
@@ -278,17 +288,17 @@ export function DashboardEditProvider({ children }: { children: React.ReactNode 
 
   const saveLayout = useCallback(() => {
     try {
-      localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(layout));
+      localStorage.setItem(storageKey, JSON.stringify(layout));
     } catch (e) {
       console.warn("Failed to save dashboard layout:", e);
     }
     setIsEditMode(false);
-  }, [layout]);
+  }, [layout, storageKey]);
 
   const resetLayout = useCallback(() => {
-    setLayout(DEFAULT_LAYOUT);
-    localStorage.removeItem(LAYOUT_STORAGE_KEY);
-  }, []);
+    setLayout(defaultLayout);
+    localStorage.removeItem(storageKey);
+  }, [defaultLayout, storageKey]);
 
   const undo = useCallback(() => {
     setHistory((prev) => {

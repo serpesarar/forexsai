@@ -78,11 +78,21 @@ const SYMBOLS = [
 const TF_ORDER = ["M5", "M15", "M30", "H1", "H4", "D1"];
 const TF_LABELS: Record<string, string> = { M5: "5m", M15: "15m", M30: "30m", H1: "1H", H4: "4H", D1: "1D" };
 
-export default function MTFMatrixPanel() {
-  const [symbol, setSymbol] = useState("XAUUSD");
+interface MTFMatrixPanelProps {
+  symbol?: string;
+}
+
+export default function MTFMatrixPanel({ symbol: lockedSymbol }: MTFMatrixPanelProps) {
+  const initialSymbol = lockedSymbol ?? "XAUUSD";
+  const isSymbolLocked = Boolean(lockedSymbol);
+  const [symbol, setSymbol] = useState(initialSymbol);
   const [data, setData] = useState<MTFData | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setSymbol(initialSymbol);
+  }, [initialSymbol]);
 
   const { data: wsData, wsConnected } = useWSPanelData(symbol, "mtf");
 
@@ -195,9 +205,9 @@ export default function MTFMatrixPanel() {
         iconColor="var(--accent-cyan)"
         iconBg="var(--accent-cyan-08)"
         iconBorder="var(--accent-cyan-15)"
-        symbols={SYMBOLS}
+        symbols={isSymbolLocked ? [{ key: symbol, label: SYMBOLS.find((item) => item.key === symbol)?.label || symbol }] : SYMBOLS}
         activeSymbol={symbol}
-        onSymbolChange={setSymbol}
+        onSymbolChange={isSymbolLocked ? () => { } : setSymbol}
         onRefresh={fetchData}
         loading={loading}
         panelId="mtf-matrix"

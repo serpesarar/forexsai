@@ -109,6 +109,10 @@ interface ApiResponse {
   timestamp?: string;
 }
 
+interface OrderBlockPanelUnifiedProps {
+  symbol?: string;
+}
+
 function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProps) {
   const [showProfessional, setShowProfessional] = useState(false);
   const payload = useMemo(() => ({
@@ -473,13 +477,20 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
   );
 }
 
-export default function OrderBlockPanelUnified() {
+export default function OrderBlockPanelUnified({ symbol }: OrderBlockPanelUnifiedProps) {
   const { t } = useI18nStore();
+  const initialSymbol = symbol ?? "NDX.INDX";
+  const isSymbolLocked = Boolean(symbol);
   const [timeframe, setTimeframe] = useState<"5m" | "15m" | "1h" | "4h">("15m");
-  const [activeSymbol, setActiveSymbol] = useState("NDX.INDX");
+  const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
   const [showInfo, setShowInfo] = useState(false);
 
+  useEffect(() => {
+    setActiveSymbol(initialSymbol);
+  }, [initialSymbol]);
+
   const activeSymbolLabel = SYMBOLS.find(s => s.id === activeSymbol)?.label || "";
+  const visibleSymbols = isSymbolLocked ? SYMBOLS.filter((item) => item.id === activeSymbol) : SYMBOLS;
 
   return (
     <>
@@ -537,10 +548,10 @@ export default function OrderBlockPanelUnified() {
 
         {/* Symbol Selector - Tabs */}
         <div className="grid grid-cols-4 gap-1">
-          {SYMBOLS.map((sym) => (
+          {visibleSymbols.map((sym) => (
             <button
               key={sym.id}
-              onClick={() => setActiveSymbol(sym.id)}
+              onClick={() => !isSymbolLocked && setActiveSymbol(sym.id)}
               className={`py-2 px-1 rounded-lg text-xs font-medium transition ${activeSymbol === sym.id
                   ? "bg-purple-500 text-white"
                   : "bg-white/5 text-textSecondary hover:bg-white/10"
@@ -569,7 +580,7 @@ export default function OrderBlockPanelUnified() {
         </div>
 
         {/* Symbol Data */}
-        {SYMBOLS.map((sym) => (
+        {visibleSymbols.map((sym) => (
           <SymbolData
             key={sym.id}
             symbol={sym.id}

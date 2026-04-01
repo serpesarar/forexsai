@@ -132,6 +132,17 @@ function alertSeverityColor(severity: string): string {
   }
 }
 
+function getSymbolAliases(symbol?: string): string[] {
+  if (!symbol) return [];
+  const aliasMap: Record<string, string[]> = {
+    "NDX.INDX": ["NDX.INDX", "NASDAQ", "NASDAQ-100"],
+    "USOIL.FOREX": ["USOIL.FOREX", "USOIL", "CL", "WTI", "WTI Oil"],
+    "GDAXI.INDX": ["GDAXI.INDX", "DAX", "DAX 40"],
+    XAUUSD: ["XAUUSD", "GOLD", "Gold"],
+  };
+  return aliasMap[symbol] || [symbol];
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // Pressure Gauge Component
 // ═══════════════════════════════════════════════════════════════════
@@ -350,9 +361,10 @@ function SymbolCard({ snap }: { snap: SymbolSnapshot }) {
 
 interface WhaleTrackerPanelProps {
   className?: string;
+  symbol?: string;
 }
 
-export default function WhaleTrackerPanel({ className = "" }: WhaleTrackerPanelProps) {
+export default function WhaleTrackerPanel({ className = "", symbol }: WhaleTrackerPanelProps) {
   const { t } = useI18nStore();
   const [data, setData] = useState<WhaleDashboard | null>(null);
   const [loading, setLoading] = useState(true);
@@ -402,8 +414,16 @@ export default function WhaleTrackerPanel({ className = "" }: WhaleTrackerPanelP
     );
   }
 
-  const symbols = data?.symbols || {};
-  const alerts = data?.alerts || [];
+  const rawSymbols = data?.symbols || {};
+  const symbolAliases = getSymbolAliases(symbol);
+  const symbols = symbol
+    ? Object.fromEntries(
+        Object.entries(rawSymbols).filter(([key, snap]) => symbolAliases.includes(key) || symbolAliases.includes(snap.symbol))
+      )
+    : rawSymbols;
+  const alerts = symbol
+    ? (data?.alerts || []).filter((alert) => symbolAliases.includes(alert.symbol))
+    : (data?.alerts || []);
 
   return (
     <div className={`bg-gray-900/80 backdrop-blur-sm rounded-xl border border-gray-700/50 overflow-hidden ${className}`}>
