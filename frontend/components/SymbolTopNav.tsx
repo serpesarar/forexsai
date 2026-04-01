@@ -164,7 +164,7 @@ export default function SymbolTopNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-slate-800/50 bg-slate-950/80 backdrop-blur-xl">
+    <nav className="sticky top-0 z-[100] w-full border-b border-slate-800/50 bg-slate-950/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-[1680px] items-center gap-2 px-4 py-2 sm:px-6 lg:px-8">
         {/* Logo/Brand - Opsiyonel */}
         <div className="mr-4 hidden shrink-0 items-center gap-2 md:flex">
