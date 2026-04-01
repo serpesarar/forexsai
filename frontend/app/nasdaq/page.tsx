@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { createChart, ColorType, type CandlestickData, type Time } from "lightweight-charts";
+import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
   Activity,
@@ -11,9 +10,10 @@ import {
   Grip,
   Info,
   LayoutDashboard,
-  RefreshCw,
   TrendingDown,
   TrendingUp,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import AuthGuard from "@/components/AuthGuard";
 import { TradingBackground } from "@/components/TradingBackground";
@@ -21,12 +21,12 @@ import SymbolTopNav from "@/components/SymbolTopNav";
 import { LazyPanel } from "@/components/LazyPanel";
 import MLPredictionPanel from "@/components/MLPredictionPanel";
 import ClaudeAnalysisPanelV2 from "@/components/ClaudeAnalysisPanelV2";
-import LearningDashboardPanel from "@/components/LearningDashboardPanel";
 import PredictionHistoryTable from "@/components/PredictionHistoryTable";
 import StrategyPerformanceDashboard from "@/components/StrategyPerformanceDashboard";
 import WhaleTrackerPanel from "@/components/WhaleTrackerPanel";
 import PatternEngineV2 from "@/components/PatternEngineV2";
 import CandlestickPatternPanel from "@/components/CandlestickPatternPanel";
+import HarmonicVisualizerPanel from "@/components/panels/HarmonicVisualizerPanel";
 import {
   DraggableDashboard,
   DroppableColumn,
@@ -41,7 +41,6 @@ import {
   useColumnCards,
 } from "@/contexts/DashboardEditContext";
 import { useLivePrices } from "@/hooks/useLivePrices";
-import { fetcher } from "@/lib/api";
 import { useI18nStore } from "@/lib/i18n/store";
 import MetaEnginePanel from "@/components/panels/MetaEnginePanel";
 import PulsePanel from "@/components/panels/PulsePanel";
@@ -62,67 +61,54 @@ import OrderBlockPanelUnified from "@/components/OrderBlockPanelUnified";
 const SYMBOL = "NDX.INDX";
 const SYMBOL_LABEL = "NASDAQ";
 const PATTERN_SYMBOL = "NASDAQ" as const;
-const STORAGE_KEY = "nasdaq-dashboard-layout-v1";
+const STORAGE_KEY = "nasdaq-dashboard-layout-v4";
 
-type ChartTimeframe = "5m" | "15m" | "1h" | "4h";
-
-type OhlcvResponse = {
-  data?: Array<{
-    timestamp: number;
-    open: number;
-    high: number;
-    low: number;
-    close: number;
-    volume?: number;
-  }>;
-};
-
-// Dashboard layout yapılandırması - draggable grid için
+// YENI GRID LAYOUT - v4
 const GRID_LAYOUT: DashboardLayout = {
-  version: 1,
+  version: 4,
   cards: [
-    { id: "pulse-panel", title: "Pulse 1", column: "left", order: 1, visible: true, size: "large", collapsed: false },
-    { id: "pulse-ml", title: "Pulse 2", column: "left", order: 2, visible: true, size: "large", collapsed: false },
-    { id: "pulse-v3", title: "Pulse 3", column: "left", order: 3, visible: true, size: "large", collapsed: false },
-    { id: "emel-panel", title: "EMEL", column: "left", order: 4, visible: true, size: "large", collapsed: false },
-    { id: "emel-inverse-panel", title: "EMEL Inverse", column: "left", order: 5, visible: true, size: "large", collapsed: false },
-    { id: "rebound-detection", title: "Rebound Detection", column: "left", order: 6, visible: true, size: "large", collapsed: false },
-    { id: "learning-dashboard", title: "Learning Dashboard", column: "left", order: 7, visible: true, size: "large", collapsed: false },
-    { id: "cot-whale", title: "COT Whale", column: "left", order: 8, visible: true, size: "large", collapsed: false },
-    { id: "clear-trend", title: "Clear Trend", column: "right", order: 1, visible: true, size: "large", collapsed: false },
-    { id: "mtf-matrix", title: "MTF Matrix", column: "right", order: 2, visible: true, size: "large", collapsed: false },
-    { id: "smc-panel", title: "Smart Money Concepts", column: "right", order: 3, visible: true, size: "large", collapsed: false },
-    { id: "risk-reward", title: "Risk Reward", column: "right", order: 4, visible: true, size: "large", collapsed: false },
-    { id: "pattern-engine", title: "Pattern Engine", column: "right", order: 5, visible: true, size: "large", collapsed: false },
-    { id: "whale-tracker", title: "Whale Tracker", column: "right", order: 6, visible: true, size: "large", collapsed: false },
-    { id: "candlestick-patterns", title: "Candlestick Patterns", column: "right", order: 7, visible: true, size: "large", collapsed: false },
-    { id: "seasonality", title: "Seasonality", column: "right", order: 8, visible: true, size: "large", collapsed: false },
-    { id: "smart-setup", title: "Smart Setup", column: "right", order: 9, visible: true, size: "large", collapsed: false },
+    // SOL KOLON - Scalping & Rebound
+    { id: "rebound-detection", title: "Rebound Detection", column: "left", order: 1, visible: true, size: "large", collapsed: false },
+    { id: "pulse-panel", title: "Pulse 1 – Algo Scalp", column: "left", order: 2, visible: true, size: "large", collapsed: false },
+    { id: "pulse-ml", title: "Pulse 2 – ML Hybrid", column: "left", order: 3, visible: true, size: "large", collapsed: false },
+    { id: "pulse-v3", title: "Pulse 3 – Hybrid MTF", column: "left", order: 4, visible: true, size: "large", collapsed: false },
+    { id: "emel-panel", title: "EMEL Panel", column: "left", order: 5, visible: true, size: "large", collapsed: false },
+    { id: "emel-inverse-panel", title: "EMEL Inverse", column: "left", order: 6, visible: true, size: "large", collapsed: false },
+    // SAĞ KOLON - SMC & Teknik
+    { id: "smc-panel", title: "Smart Money Concepts", column: "right", order: 1, visible: true, size: "large", collapsed: false },
+    { id: "cot-whale", title: "Order Blocks (Unified)", column: "right", order: 2, visible: true, size: "large", collapsed: false },
+    { id: "mtf-matrix", title: "MTF Confluence Matrix", column: "right", order: 3, visible: true, size: "large", collapsed: false },
+    { id: "cot-whale-intel", title: "COT + Whale Intelligence", column: "right", order: 4, visible: true, size: "large", collapsed: false },
+    { id: "risk-reward", title: "Risk/Reward Optimizer", column: "right", order: 5, visible: true, size: "large", collapsed: false },
+    { id: "pattern-engine", title: "Pattern Engine V2", column: "right", order: 6, visible: true, size: "large", collapsed: false },
+    { id: "harmonic-visualizer", title: "Harmonic Visualizer", column: "right", order: 7, visible: true, size: "large", collapsed: false },
+    { id: "whale-tracker", title: "Whale Tracker", column: "right", order: 8, visible: true, size: "large", collapsed: false },
+    { id: "candlestick-patterns", title: "Candlestick Patterns", column: "right", order: 9, visible: true, size: "large", collapsed: false },
+    { id: "smart-setup", title: "Smart Setup Generator", column: "right", order: 10, visible: true, size: "large", collapsed: false },
+    { id: "seasonality", title: "Seasonality", column: "right", order: 11, visible: true, size: "large", collapsed: false },
   ],
 };
 
-// Her kart için fallback yükseklikleri (lazy loading için)
 const FALLBACK_HEIGHTS: Record<string, number> = {
-  "pulse-panel": 380,
-  "pulse-ml": 360,
-  "pulse-v3": 360,
-  "emel-panel": 420,
-  "emel-inverse-panel": 360,
-  "rebound-detection": 320,
-  "learning-dashboard": 420,
-  "cot-whale": 340,
-  "clear-trend": 380,
-  "mtf-matrix": 340,
-  "smc-panel": 420,
-  "risk-reward": 320,
-  "pattern-engine": 340,
-  "whale-tracker": 320,
-  "candlestick-patterns": 320,
-  "seasonality": 320,
-  "smart-setup": 340,
+  "rebound-detection": 420,
+  "pulse-panel": 440,
+  "pulse-ml": 440,
+  "pulse-v3": 440,
+  "emel-panel": 480,
+  "emel-inverse-panel": 440,
+  "smc-panel": 520,
+  "cot-whale": 480,
+  "mtf-matrix": 460,
+  "cot-whale-intel": 460,
+  "risk-reward": 420,
+  "pattern-engine": 460,
+  "harmonic-visualizer": 520,
+  "whale-tracker": 440,
+  "candlestick-patterns": 440,
+  "smart-setup": 440,
+  "seasonality": 420,
 };
 
-// Framer Motion animasyon ayarları
 function frame(index: number) {
   return {
     initial: { opacity: 0, y: 18 },
@@ -131,365 +117,181 @@ function frame(index: number) {
   };
 }
 
-// Küçük bilgi chip'i komponenti
-function InfoChip({ children }: { children: React.ReactNode }) {
-  return (
-    <motion.div
-      whileHover={{ y: -2, scale: 1.01 }}
-      className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-medium text-slate-300"
-    >
-      {children}
-    </motion.div>
-  );
-}
+const PANEL_TOOLTIPS: Record<string, { tr: string; en: string }> = {
+  "rebound-detection": { tr: "Fiyat sekme noktalarını tespit eder.", en: "Detects price bounce points." },
+  "pulse-panel": { tr: "6 bileşenli algoritmik scalp.", en: "6-component algorithmic scalp." },
+  "pulse-ml": { tr: "ML destekli Pulse.", en: "ML-enhanced Pulse." },
+  "pulse-v3": { tr: "Gelişmiş Pulse MTF.", en: "Advanced Pulse MTF." },
+  "emel-panel": { tr: "9 checkpoint sinyal sistemi.", en: "9-checkpoint signal system." },
+  "emel-inverse-panel": { tr: "Ters yön EMEL analizi.", en: "Inverse EMEL analysis." },
+  "smc-panel": { tr: "Smart Money Concepts.", en: "Smart Money Concepts." },
+  "cot-whale": { tr: "Order Blocks Unified.", en: "Order Blocks Unified." },
+  "mtf-matrix": { tr: "Multi-Timeframe Matrix.", en: "Multi-Timeframe Matrix." },
+  "cot-whale-intel": { tr: "COT + Whale Intel.", en: "COT + Whale Intel." },
+  "risk-reward": { tr: "Risk/Ödül hesaplayıcı.", en: "Risk/Reward calculator." },
+  "pattern-engine": { tr: "Pattern tanıma motoru.", en: "Pattern recognition engine." },
+  "harmonic-visualizer": { tr: "Harmonik pattern görselleştirici.", en: "Harmonic pattern visualizer." },
+  "whale-tracker": { tr: "Balina takip.", en: "Whale tracking." },
+  "candlestick-patterns": { tr: "Mum desenleri.", en: "Candlestick patterns." },
+  "smart-setup": { tr: "Akıllı setup.", en: "Smart setup." },
+  "seasonality": { tr: "Mevsimsellik.", en: "Seasonality." },
+};
 
-// Reusable TooltipWrapper - Her panel kartı için bilgi baloncuğu
-interface TooltipWrapperProps {
+const TOP_SECTION_TOOLTIPS = {
+  meta: { tr: "Tüm modellerin konsensüs skoru.", en: "All models consensus score." },
+  strategy: { tr: "Risk skorlama.", en: "Risk scoring." },
+  clearTrend: { tr: "ICT trend analizi.", en: "ICT trend analysis." },
+};
+
+// Maximize wrapper
+interface MaximizeWrapperProps {
   children: React.ReactNode;
-  tooltipText: string;
   title: string;
+  tooltipText: string;
+  isMaximized: boolean;
+  onMaximize: () => void;
 }
 
-function TooltipWrapper({ children, tooltipText, title }: TooltipWrapperProps) {
-  const [isHovered, setIsHovered] = useState(false);
+function MaximizeWrapper({ children, title, tooltipText, isMaximized, onMaximize }: MaximizeWrapperProps) {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  if (isMaximized) {
+    return (
+      <div className="fixed inset-4 z-50 rounded-3xl border border-slate-700 bg-slate-950 p-6 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h3 className="text-xl font-bold text-white">{title}</h3>
+            <span className="text-xs text-slate-400">{tooltipText}</span>
+          </div>
+          <button onClick={onMaximize} className="rounded-full bg-slate-800 p-2 hover:bg-slate-700">
+            <Minimize2 className="h-5 w-5 text-emerald-400" />
+          </button>
+        </div>
+        <div className="h-[calc(100%-80px)] overflow-auto">{children}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
-      {/* Bilgi ikonu - sağ üst köşe */}
+      <button
+        onClick={onMaximize}
+        className="absolute -top-3 right-6 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-slate-700 bg-slate-800 shadow-lg hover:border-emerald-500/50"
+      >
+        <Maximize2 className="h-3.5 w-3.5 text-emerald-400" />
+      </button>
       <div
-        className="absolute -top-3 -right-3 z-20 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-slate-700 bg-slate-800 shadow-lg transition-all hover:border-cyan-500/50 hover:bg-slate-700"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        className="absolute -top-3 -right-3 z-20 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-slate-700 bg-slate-800 shadow-lg hover:border-cyan-500/50"
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
       >
         <Info className="h-4 w-4 text-cyan-400" />
       </div>
-
-      {/* Framer Motion tooltip */}
-      <AnimatePresence>
-        {isHovered && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 10 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute -top-2 right-8 z-50 w-72 rounded-2xl border border-slate-700 bg-slate-900 p-4 shadow-2xl shadow-black/50"
-          >
-            <div className="mb-2 flex items-center gap-2">
-              <Info className="h-4 w-4 text-cyan-400" />
-              <span className="text-sm font-semibold text-slate-200">{title}</span>
-            </div>
-            <p className="text-xs leading-5 text-slate-400">{tooltipText}</p>
-            {/* Ok işareti */}
-            <div className="absolute -right-2 top-6 h-4 w-4 rotate-45 border-r border-t border-slate-700 bg-slate-900" />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Ana içerik */}
-      <div className="relative">
-        {children}
-      </div>
+      {showTooltip && (
+        <div className="absolute -top-2 right-8 z-50 w-64 rounded-xl border border-slate-700 bg-slate-900 p-3 shadow-xl">
+          <p className="text-xs text-slate-400">{tooltipText}</p>
+        </div>
+      )}
+      {children}
     </div>
   );
 }
 
-// Her panel için tooltip metinleri (Türkçe/İngilizce)
-const PANEL_TOOLTIPS: Record<string, { tr: string; en: string }> = {
-  "pulse-panel": {
-    tr: "6 bileşenli algoritmik scalp skorlaması (100 puan sistemi). Momentum, hacim ve volatilite faktörlerini birleştirir.",
-    en: "6-component algorithmic scalp scoring (100-point system). Combines momentum, volume and volatility factors.",
-  },
-  "pulse-ml": {
-    tr: "Makine öğrenimi destekli Pulse versiyonu. LSTM ve LightGBM modellerinin konsensüsü.",
-    en: "ML-enhanced Pulse version. Consensus of LSTM and LightGBM models.",
-  },
-  "pulse-v3": {
-    tr: "En gelişmiş Pulse versiyonu. Multi-timeframe analiz ve pattern recognition entegrasyonu.",
-    en: "Most advanced Pulse version. Multi-timeframe analysis and pattern recognition integration.",
-  },
-  "emel-panel": {
-    tr: "9 checkpoint sistemi ile güçlü sinyal üretimi. Eğilim, momentum ve yapısal dayanıklılık kontrolü.",
-    en: "Strong signal generation with 9-checkpoint system. Trend, momentum and structural resilience checks.",
-  },
-  "emel-inverse-panel": {
-    tr: "EMEL algoritmasının ters yön analizi. Düşüş eğilimlerini erken tespit için optimize edilmiştir.",
-    en: "Inverse direction analysis of EMEL algorithm. Optimized for early detection of downtrends.",
-  },
-  "rebound-detection": {
-    tr: "Fiyat sekme noktalarını tespit eder. Destek/direnç kırılmaları ve momentum dönüşleri.",
-    en: "Detects price bounce points. Support/resistance breaks and momentum reversals.",
-  },
-  "learning-dashboard": {
-    tr: "Öğrenme sistemi performans metrikleri. Model doğruluğu ve sinyal kalitesi geçmişi.",
-    en: "Learning system performance metrics. Model accuracy and signal quality history.",
-  },
-  "cot-whale": {
-    tr: "COT (Commitment of Traders) raporları ve balina pozisyonlama analizi. Kurumsal akış takibi.",
-    en: "COT (Commitment of Traders) reports and whale positioning analysis. Institutional flow tracking.",
-  },
-  "clear-trend": {
-    tr: "ICT tabanlı HTF bias + FVG + Swing Structure. Yüksek zaman dilimli trend yönü analizi.",
-    en: "ICT-based HTF bias + FVG + Swing Structure. High timeframe trend direction analysis.",
-  },
-  "mtf-matrix": {
-    tr: "Multi-Timeframe Matrix. 5m'den günlüğe kadar tüm zaman dilimlerinde sinyal konsensüsü.",
-    en: "Multi-Timeframe Matrix. Signal consensus across all timeframes from 5m to daily.",
-  },
-  "smc-panel": {
-    tr: "Smart Money Concepts: CHoCH, BOS, FVG, Order Block, Liquidity ve Market Structure tam analizi.",
-    en: "Smart Money Concepts: Full analysis of CHoCH, BOS, FVG, Order Block, Liquidity and Market Structure.",
-  },
-  "risk-reward": {
-    tr: "Risk/Ödül hesaplayıcı. Otomatik stop-loss ve take-profit seviyeleri önerisi.",
-    en: "Risk/Reward calculator. Automatic stop-loss and take-profit level suggestions.",
-  },
-  "pattern-engine": {
-    tr: "Harmonik ve klasik pattern tanıma motoru. AB=CD, Gartley, Bat, Butterfly ve daha fazlası.",
-    en: "Harmonic and classic pattern recognition engine. AB=CD, Gartley, Bat, Butterfly and more.",
-  },
-  "whale-tracker": {
-    tr: "Büyük oyuncu hareket takibi. Anormal hacim ve odaak hacim analizi.",
-    en: "Big player movement tracking. Abnormal volume and delta volume analysis.",
-  },
-  "candlestick-patterns": {
-    tr: "Japon mum bar desenleri tanıma. Doji, Engulfing, Hammer, Shooting Star ve 30+ pattern.",
-    en: "Japanese candlestick pattern recognition. Doji, Engulfing, Hammer, Shooting Star and 30+ patterns.",
-  },
-  "seasonality": {
-    tr: "Mevsimsellik analizi. Tarihsel performans istatistikleri ve aylık/getiri dağılımı.",
-    en: "Seasonality analysis. Historical performance statistics and monthly/return distribution.",
-  },
-  "smart-setup": {
-    tr: "Akıllı setup önerileri. Risk/ödül optimize edilmiş giriş noktaları.",
-    en: "Smart setup suggestions. Risk/reward optimized entry points.",
-  },
-};
-
-// Üst bölüm için özel tooltip'ler
-const TOP_SECTION_TOOLTIPS = {
-  meta: {
-    tr: "Tüm modellerin (Pulse, EMEL, SMC, ML) konsensüs skorunu gösterir. Büyük resim meta-sinyali üretir.",
-    en: "Shows consensus score of all models (Pulse, EMEL, SMC, ML). Generates big picture meta-signal.",
-  },
-  strategy: {
-    tr: "Risk skorlama + pozisyon büyüklüğü önerisi. VIX, ADX, Volatilite ve News Proximity dikkate alır.",
-    en: "Risk scoring + position size recommendation. Considers VIX, ADX, Volatility and News Proximity.",
-  },
-};
-
-function NasdaqHeroChart({ timeframe }: { timeframe: ChartTimeframe }) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [candles, setCandles] = useState<CandlestickData<Time>[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetcher<OhlcvResponse>(
-          `/api/data/ohlcv?symbol=${encodeURIComponent(SYMBOL)}&timeframe=${timeframe}&limit=180`
-        );
-        const nextCandles = (response.data || [])
-          .filter((item) => item && item.timestamp)
-          .map((item) => ({
-            time: Math.floor(item.timestamp / 1000) as Time,
-            open: item.open,
-            high: item.high,
-            low: item.low,
-            close: item.close,
-          }));
-        if (alive) {
-          setCandles(nextCandles);
-        }
-      } catch (err) {
-        if (alive) {
-          setError(err instanceof Error ? err.message : "Chart data unavailable");
-        }
-      } finally {
-        if (alive) {
-          setLoading(false);
-        }
-      }
-    };
-
-    load();
-    const timer = window.setInterval(load, 60_000);
-
-    return () => {
-      alive = false;
-      window.clearInterval(timer);
-    };
-  }, [timeframe]);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const chart = createChart(container, {
-      layout: {
-        background: { type: ColorType.Solid, color: "#0b1120" },
-        textColor: "#94a3b8",
-        fontSize: 11,
-      },
-      grid: {
-        vertLines: { color: "rgba(148,163,184,0.08)" },
-        horzLines: { color: "rgba(148,163,184,0.08)" },
-      },
-      rightPriceScale: {
-        borderColor: "rgba(148,163,184,0.15)",
-      },
-      timeScale: {
-        borderColor: "rgba(148,163,184,0.15)",
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      crosshair: {
-        mode: 1,
-      },
-      handleScroll: {
-        vertTouchDrag: false,
-      },
-    });
-
-    const series = chart.addCandlestickSeries({
-      upColor: "#10b981",
-      downColor: "#f43f5e",
-      wickUpColor: "#10b981",
-      wickDownColor: "#f43f5e",
-      borderUpColor: "#10b981",
-      borderDownColor: "#f43f5e",
-    });
-
-    if (candles.length > 0) {
-      series.setData(candles);
-      chart.timeScale().fitContent();
-    }
-
-    const resize = () => {
-      if (!container) return;
-      const { width, height } = container.getBoundingClientRect();
-      chart.applyOptions({ width, height });
-    };
-
-    resize();
-    window.addEventListener("resize", resize);
-
-    return () => {
-      window.removeEventListener("resize", resize);
-      chart.remove();
-    };
-  }, [candles]);
-
-  return (
-    <div className="relative h-[320px] overflow-hidden rounded-3xl border border-slate-800 bg-[#0b1120]">
-      <div ref={containerRef} className="h-full w-full" />
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/35 backdrop-blur-[1px]">
-          <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
-        </div>
-      )}
-      {!loading && error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/60 px-6 text-center text-sm text-slate-400">
-          {error}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function GridCardRenderer({ card, index, locale }: { card: DashboardCard; index: number; locale: string }) {
+function GridCardRenderer({
+  card,
+  index,
+  locale,
+  maximizedCard,
+  onMaximize,
+}: {
+  card: DashboardCard;
+  index: number;
+  locale: string;
+  maximizedCard: string | null;
+  onMaximize: (id: string | null) => void;
+}) {
   let content: React.ReactNode = null;
 
   switch (card.id) {
-    case "pulse-panel":
-      content = <PulsePanel symbol={SYMBOL} />;
-      break;
-    case "pulse-ml":
-      content = <PulseMLPanel symbol={SYMBOL} />;
-      break;
-    case "pulse-v3":
-      content = <PulseV3Panel symbol={SYMBOL} />;
-      break;
-    case "emel-panel":
-      content = <EmelPanel symbol={SYMBOL} />;
-      break;
-    case "emel-inverse-panel":
-      content = <EmelInversePanel symbol={SYMBOL} />;
-      break;
-    case "rebound-detection":
-      content = <ReboundDetectionPanel symbol={SYMBOL} />;
-      break;
-    case "learning-dashboard":
-      content = <LearningDashboardPanel symbol={SYMBOL} />;
-      break;
-    case "cot-whale":
-      content = <COTWhalePanel symbol={SYMBOL} />;
-      break;
-    case "clear-trend":
-      content = <ClearTrendPanelV3 symbol={SYMBOL} />;
-      break;
-    case "mtf-matrix":
-      content = <MTFMatrixPanel symbol={SYMBOL} />;
-      break;
-    case "smc-panel":
-      content = <SMCPanel lockedSymbol={SYMBOL} />;
-      break;
-    case "risk-reward":
-      content = <RiskRewardPanel symbol={SYMBOL} />;
-      break;
-    case "pattern-engine":
-      content = <PatternEngineV2 symbol={PATTERN_SYMBOL} />;
-      break;
-    case "whale-tracker":
-      content = <WhaleTrackerPanel symbol={SYMBOL} />;
-      break;
-    case "candlestick-patterns":
-      content = <CandlestickPatternPanel symbol={SYMBOL} />;
-      break;
-    case "seasonality":
-      content = <SeasonalityPanel symbol={SYMBOL} />;
-      break;
-    case "smart-setup":
-      content = <SmartSetupPanel symbol={SYMBOL} />;
-      break;
-    default:
-      content = null;
+    case "pulse-panel": content = <PulsePanel symbol={SYMBOL} />; break;
+    case "pulse-ml": content = <PulseMLPanel symbol={SYMBOL} />; break;
+    case "pulse-v3": content = <PulseV3Panel symbol={SYMBOL} />; break;
+    case "emel-panel": content = <EmelPanel symbol={SYMBOL} />; break;
+    case "emel-inverse-panel": content = <EmelInversePanel symbol={SYMBOL} />; break;
+    case "rebound-detection": content = <ReboundDetectionPanel symbol={SYMBOL} />; break;
+    case "cot-whale": content = <COTWhalePanel symbol={SYMBOL} />; break;
+    case "cot-whale-intel": content = <COTWhalePanel symbol={SYMBOL} />; break;
+    case "mtf-matrix": content = <MTFMatrixPanel symbol={SYMBOL} />; break;
+    case "smc-panel": content = <SMCPanel lockedSymbol={SYMBOL} />; break;
+    case "risk-reward": content = <RiskRewardPanel symbol={SYMBOL} />; break;
+    case "pattern-engine": content = <PatternEngineV2 symbol={PATTERN_SYMBOL} />; break;
+    case "harmonic-visualizer": content = <HarmonicVisualizerPanel />; break;
+    case "whale-tracker": content = <WhaleTrackerPanel symbol={SYMBOL} />; break;
+    case "candlestick-patterns": content = <CandlestickPatternPanel symbol={SYMBOL} />; break;
+    case "seasonality": content = <SeasonalityPanel symbol={SYMBOL} />; break;
+    case "smart-setup": content = <SmartSetupPanel symbol={SYMBOL} />; break;
   }
 
   if (!content) return null;
 
-  const tooltipText = PANEL_TOOLTIPS[card.id]?.[locale as "tr" | "en"] || PANEL_TOOLTIPS[card.id]?.en || "";
+  const tooltipText = PANEL_TOOLTIPS[card.id]?.[locale as "tr" | "en"] || "";
+  const isMaximized = maximizedCard === card.id;
 
   return (
     <SortableCard key={card.id} card={card}>
-      <TooltipWrapper tooltipText={tooltipText} title={card.title}>
-        <motion.div {...frame(index)}>
-          <LazyPanel fallbackHeight={FALLBACK_HEIGHTS[card.id] || 320}>{content}</LazyPanel>
+      <MaximizeWrapper
+        title={card.title}
+        tooltipText={tooltipText}
+        isMaximized={isMaximized}
+        onMaximize={() => onMaximize(isMaximized ? null : card.id)}
+      >
+        <motion.div {...frame(index)} className={isMaximized ? "hidden" : ""}>
+          <LazyPanel fallbackHeight={FALLBACK_HEIGHTS[card.id] || 420}>
+            {content}
+          </LazyPanel>
         </motion.div>
-      </TooltipWrapper>
+      </MaximizeWrapper>
     </SortableCard>
   );
 }
 
-function NasdaqEditableGrid({ locale }: { locale: string }) {
+function NasdaqEditableGrid({
+  locale,
+  maximizedCard,
+  onMaximize,
+}: {
+  locale: string;
+  maximizedCard: string | null;
+  onMaximize: (id: string | null) => void;
+}) {
   const leftCards = useColumnCards("left");
   const rightCards = useColumnCards("right");
 
   return (
     <DraggableDashboard>
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <DroppableColumn columnId="left">
           {leftCards.map((card, index) => (
-            <GridCardRenderer key={card.id} card={card} index={index} locale={locale} />
+            <GridCardRenderer
+              key={card.id}
+              card={card}
+              index={index}
+              locale={locale}
+              maximizedCard={maximizedCard}
+              onMaximize={onMaximize}
+            />
           ))}
         </DroppableColumn>
         <DroppableColumn columnId="right">
           {rightCards.map((card, index) => (
-            <GridCardRenderer key={card.id} card={card} index={index + leftCards.length} locale={locale} />
+            <GridCardRenderer
+              key={card.id}
+              card={card}
+              index={index + leftCards.length}
+              locale={locale}
+              maximizedCard={maximizedCard}
+              onMaximize={onMaximize}
+            />
           ))}
         </DroppableColumn>
       </div>
@@ -497,82 +299,75 @@ function NasdaqEditableGrid({ locale }: { locale: string }) {
   );
 }
 
-// Üst bölüm kartı - Meta Engine ve Strategy için tooltip'li kart
 function TopSectionCard({
   children,
   title,
   tooltipText,
   delay = 0,
+  isMaximized,
+  onMaximize,
 }: {
   children: React.ReactNode;
   title: string;
   tooltipText: string;
   delay?: number;
+  isMaximized?: boolean;
+  onMaximize?: () => void;
 }) {
   return (
     <motion.div {...frame(delay)} className="relative">
-      <TooltipWrapper tooltipText={tooltipText} title={title}>
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/30 backdrop-blur-xl md:p-6">
-          {children}
-        </div>
-      </TooltipWrapper>
+      <MaximizeWrapper
+        title={title}
+        tooltipText={tooltipText}
+        isMaximized={!!isMaximized}
+        onMaximize={() => onMaximize?.()}
+      >
+        {!isMaximized && (
+          <div className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl backdrop-blur-xl md:p-6 w-full">
+            {children}
+          </div>
+        )}
+      </MaximizeWrapper>
     </motion.div>
   );
 }
 
 function NasdaqPageContent() {
   const { locale } = useI18nStore();
-  const { tickers, isLoading, lastUpdate } = useLivePrices();
-  const [timeframe, setTimeframe] = useState<ChartTimeframe>("15m");
+  const { tickers, isLoading } = useLivePrices();
+  const [maximizedCard, setMaximizedCard] = useState<string | null>(null);
+  const [maximizedTop, setMaximizedTop] = useState<"meta" | "strategy" | null>(null);
+
   const nasdaqTicker = useMemo(() => tickers.find((item) => item.label === SYMBOL_LABEL), [tickers]);
   const isPositive = (nasdaqTicker?.change || "").startsWith("+");
 
-  const copy = locale === "tr"
-    ? {
-        title: "NASDAQ Komuta Merkezi",
-        subtitle: "NDX.INDX için tüm ana analiz panelleri tek ekranda.",
-        back: "Ana dashboard",
-        quick1: "Canlı WebSocket akışı",
-        quick2: "NASDAQ'a kilitli paneller",
-        quick3: "Sürükle bırak düzeni",
-        refresh: "Panelleri yenile",
-        overview: "Piyasa Özeti",
-        edit: "Düzeni özelleştir",
-        ai: "AI Prediction Stack",
-        history: "Prediction History",
-        orderBlocks: "Order Blocks & SMC Flow",
-        updated: "Son güncelleme",
-        metaTitle: "Meta-Intelligence Engine",
-        strategyTitle: "Strategy Optimizer",
-      }
-    : {
-        title: "NASDAQ Command Center",
-        subtitle: "All major NDX.INDX analysis panels in a single focused route.",
-        back: "Main dashboard",
-        quick1: "Live WebSocket stream",
-        quick2: "Panels locked to NASDAQ",
-        quick3: "Drag and drop layout",
-        refresh: "Refresh panels",
-        overview: "Market Overview",
-        edit: "Customize layout",
-        ai: "AI Prediction Stack",
-        history: "Prediction History",
-        orderBlocks: "Order Blocks & SMC Flow",
-        updated: "Last update",
-        metaTitle: "Meta-Intelligence Engine",
-        strategyTitle: "Strategy Optimizer",
-      };
+  const copy = {
+    title: locale === "tr" ? "NASDAQ Komuta Merkezi" : "NASDAQ Command Center",
+    subtitle: locale === "tr" ? "NDX.INDX için tüm ana analiz panelleri." : "All major NDX.INDX analysis panels.",
+    back: locale === "tr" ? "Ana dashboard" : "Main dashboard",
+    ai: locale === "tr" ? "AI Prediction Stack" : "AI Prediction Stack",
+    history: locale === "tr" ? "Prediction History" : "Prediction History",
+    orderBlocks: locale === "tr" ? "Order Blocks & SMC Flow" : "Order Blocks & SMC Flow",
+    metaTitle: locale === "tr" ? "Meta-Intelligence Engine" : "Meta-Intelligence Engine",
+    strategyTitle: locale === "tr" ? "Strategy Optimizer" : "Strategy Optimizer",
+    clearTrendTitle: locale === "tr" ? "Clear Trend Analysis" : "Clear Trend Analysis",
+  };
 
   return (
     <div className="relative min-h-screen overflow-x-hidden text-slate-100">
       <TradingBackground />
       <SymbolTopNav />
+
+      {maximizedCard && (
+        <div className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm" onClick={() => setMaximizedCard(null)} />
+      )}
+
       <DashboardEditProvider storageKey={STORAGE_KEY} defaultLayout={GRID_LAYOUT}>
-        <div className="relative z-10 mx-auto flex w-full max-w-[1680px] flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8">
-          {/* EN ÜST - NASDAQ Command Center Başlık */}
-          <motion.div {...frame(0)} className="flex items-center justify-between rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/30 backdrop-blur-xl md:p-6">
+        <div className="relative z-10 mx-auto flex w-full flex-col gap-4 px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6">
+          {/* 1. Header */}
+          <motion.div {...frame(0)} className="flex items-center justify-between rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl backdrop-blur-xl md:p-6">
             <div className="flex items-center gap-4">
-              <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900/80 px-3 py-2 text-sm text-slate-400 transition hover:text-white">
+              <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900/80 px-3 py-2 text-sm text-slate-400 hover:text-white">
                 <ArrowLeft className="h-4 w-4" />
                 {copy.back}
               </Link>
@@ -594,30 +389,28 @@ function NasdaqPageContent() {
             </div>
           </motion.div>
 
-          {/* Clear Trend (tam genişlik) */}
-          <motion.section {...frame(1)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-6">
+          {/* 2. Clear Trend */}
+          <motion.section {...frame(1)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl backdrop-blur-xl md:p-6">
             <div className="mb-5 flex items-center gap-3">
               <TrendingUp className="h-5 w-5 text-emerald-400" />
               <div>
-                <h2 className="text-lg font-bold text-white">
-                  {locale === "tr" ? "Clear Trend" : "Clear Trend"}
-                </h2>
-                <p className="text-sm text-slate-400">
-                  {locale === "tr" ? "ICT tabanlı trend analizi ve FVG" : "ICT-based trend analysis and FVG"}
-                </p>
+                <h2 className="text-xl font-bold text-white">{copy.clearTrendTitle}</h2>
+                <p className="text-sm text-slate-400">{locale === "tr" ? "ICT tabanlı trend analizi" : "ICT-based trend analysis"}</p>
               </div>
             </div>
-            <LazyPanel fallbackHeight={380}>
+            <LazyPanel fallbackHeight={480}>
               <ClearTrendPanelV3 symbol={SYMBOL} />
             </LazyPanel>
           </motion.section>
 
-          {/* Meta Engine + Strategy Optimizer (yan yana tam genişlik) */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* 3. Meta + Strategy */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <TopSectionCard
               title={copy.metaTitle}
               tooltipText={locale === "tr" ? TOP_SECTION_TOOLTIPS.meta.tr : TOP_SECTION_TOOLTIPS.meta.en}
               delay={2}
+              isMaximized={maximizedTop === "meta"}
+              onMaximize={() => setMaximizedTop(maximizedTop === "meta" ? null : "meta")}
             >
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10">
@@ -625,12 +418,10 @@ function NasdaqPageContent() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-white">{copy.metaTitle}</h3>
-                  <p className="text-sm text-slate-400">
-                    {locale === "tr" ? "Tüm modellerin konsensüs skoru" : "Consensus score of all models"}
-                  </p>
+                  <p className="text-sm text-slate-400">{locale === "tr" ? "Tüm modellerin konsensüs skoru" : "Consensus score of all models"}</p>
                 </div>
               </div>
-              <LazyPanel fallbackHeight={320}>
+              <LazyPanel fallbackHeight={420}>
                 <MetaEnginePanel symbol={SYMBOL} />
               </LazyPanel>
             </TopSectionCard>
@@ -639,6 +430,8 @@ function NasdaqPageContent() {
               title={copy.strategyTitle}
               tooltipText={locale === "tr" ? TOP_SECTION_TOOLTIPS.strategy.tr : TOP_SECTION_TOOLTIPS.strategy.en}
               delay={3}
+              isMaximized={maximizedTop === "strategy"}
+              onMaximize={() => setMaximizedTop(maximizedTop === "strategy" ? null : "strategy")}
             >
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10">
@@ -646,32 +439,39 @@ function NasdaqPageContent() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-white">{copy.strategyTitle}</h3>
-                  <p className="text-sm text-slate-400">
-                    {locale === "tr" ? "Risk skorlama ve pozisyon önerisi" : "Risk scoring and position suggestion"}
-                  </p>
+                  <p className="text-sm text-slate-400">{locale === "tr" ? "Risk skorlama ve pozisyon" : "Risk scoring and position"}</p>
                 </div>
               </div>
-              <LazyPanel fallbackHeight={320}>
+              <LazyPanel fallbackHeight={420}>
                 <StrategyPerformanceDashboard symbol={SYMBOL} />
               </LazyPanel>
             </TopSectionCard>
           </div>
 
-          {/* DRAGGABLE GRID - 2 kolonlu sürüklenebilir grid */}
+          {/* 4. Draggable Grid */}
           <motion.div {...frame(4)}>
-            <NasdaqEditableGrid locale={locale} />
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Grip className="h-5 w-5 text-fuchsia-400" />
+                Panel Grid
+              </h2>
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/80 px-2 py-2">
+                <EditModeButton />
+              </div>
+            </div>
+            <NasdaqEditableGrid locale={locale} maximizedCard={maximizedCard} onMaximize={setMaximizedCard} />
           </motion.div>
 
-          {/* AI PREDICTION STACK - ML + Claude yan yana */}
-          <motion.section {...frame(5)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-6">
+          {/* 5. AI Stack */}
+          <motion.section {...frame(5)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl backdrop-blur-xl md:p-6">
             <div className="mb-5 flex items-center gap-3">
               <BarChart3 className="h-5 w-5 text-cyan-400" />
               <div>
                 <h2 className="text-lg font-bold text-white">{copy.ai}</h2>
-                <p className="text-sm text-slate-400">{locale === "tr" ? "Model ve Claude analizi aynı bölümde." : "Model and Claude analysis in a single section."}</p>
+                <p className="text-sm text-slate-400">{locale === "tr" ? "Model ve Claude analizi" : "Model and Claude analysis"}</p>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-6 2xl:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 2xl:grid-cols-2">
               <LazyPanel fallbackHeight={520}>
                 <MLPredictionPanel symbol={SYMBOL} symbolLabel={SYMBOL_LABEL} />
               </LazyPanel>
@@ -681,13 +481,13 @@ function NasdaqPageContent() {
             </div>
           </motion.section>
 
-          {/* PREDICTION HISTORY */}
-          <motion.section {...frame(6)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-6">
+          {/* 6. History */}
+          <motion.section {...frame(6)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl backdrop-blur-xl md:p-6">
             <div className="mb-5 flex items-center gap-3">
               <LayoutDashboard className="h-5 w-5 text-emerald-400" />
               <div>
                 <h2 className="text-lg font-bold text-white">{copy.history}</h2>
-                <p className="text-sm text-slate-400">{locale === "tr" ? "NASDAQ tahmin geçmişi ve öğrenme çıktıları." : "NASDAQ prediction history and learning outcomes."}</p>
+                <p className="text-sm text-slate-400">{locale === "tr" ? "NASDAQ tahmin geçmişi" : "NASDAQ prediction history"}</p>
               </div>
             </div>
             <LazyPanel fallbackHeight={520}>
@@ -695,13 +495,13 @@ function NasdaqPageContent() {
             </LazyPanel>
           </motion.section>
 
-          {/* ORDER BLOCK & SMC FLOW (Unified) */}
-          <motion.section {...frame(7)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl md:p-6">
+          {/* 7. Order Block */}
+          <motion.section {...frame(7)} className="rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl backdrop-blur-xl md:p-6">
             <div className="mb-5 flex items-center gap-3">
               <BarChart3 className="h-5 w-5 text-fuchsia-400" />
               <div>
                 <h2 className="text-lg font-bold text-white">{copy.orderBlocks}</h2>
-                <p className="text-sm text-slate-400">{locale === "tr" ? "Order block ve smart money akışı tek panelde." : "Order block and smart money flow in one panel."}</p>
+                <p className="text-sm text-slate-400">{locale === "tr" ? "Order block ve SMC akışı" : "Order block and SMC flow"}</p>
               </div>
             </div>
             <LazyPanel fallbackHeight={620}>
