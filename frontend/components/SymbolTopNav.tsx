@@ -96,14 +96,18 @@ function SymbolTab({ symbol, isActive, price }: SymbolTabProps) {
   const isUp = price?.trend === "up" || (price?.change || "").startsWith("+");
 
   return (
-    <Link href={symbol.path} className="relative flex-1">
+    <Link 
+      href={symbol.path} 
+      className="relative flex-1 block"
+      style={{ textDecoration: 'none' }}
+    >
       <motion.div
         whileHover={{ y: -3, scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
         className={`
           group relative flex flex-col items-center justify-center gap-1.5
-          rounded-2xl border px-4 py-3
+          rounded-2xl border px-4 py-3 cursor-pointer
           transition-all duration-200
           backdrop-blur-sm
           ${isActive ? symbol.accent.bg : "bg-slate-900/60"}
