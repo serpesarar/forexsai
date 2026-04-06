@@ -184,7 +184,9 @@ async def analyze_model_permutations(
             return {"error": "No database connection"}
 
         minimum_start_days = max(30, int(lookback_days or 30))
-        lookback_intervals = sorted({minimum_start_days, *LOOKBACK_INTERVALS})
+        lookback_intervals = [days for days in LOOKBACK_INTERVALS if days >= minimum_start_days]
+        if minimum_start_days not in lookback_intervals:
+            lookback_intervals = [minimum_start_days, *lookback_intervals]
         logs: List[Dict[str, Any]] = []
         last_cutoff = datetime.utcnow()
         current_days_used = 0

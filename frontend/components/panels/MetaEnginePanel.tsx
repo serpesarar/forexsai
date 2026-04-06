@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import ConsensusComboBoard, { type ConsensusSymbolView } from "./ConsensusComboBoard";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useDashboardStore } from "../../lib/store";
 import { buildApiUrl } from "../../lib/api/base";
@@ -151,6 +152,7 @@ export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
   const isSymbolLocked = Boolean(symbol);
   const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
   const [signals, setSignals] = useState<Record<string, MetaSignalData>>({});
+  const [consensusViews, setConsensusViews] = useState<Record<string, ConsensusSymbolView>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const fetchRef = useRef(false);
@@ -190,6 +192,26 @@ export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
     }
   }, []);
 
+  const fetchConsensus = useCallback(async (targetSymbol: string) => {
+    try {
+      const response = await fetch(buildApiUrl(`/api/permutation-analysis/consensus/${targetSymbol}?top=4`), {
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        return;
+      }
+      const resp = await response.json();
+      if (resp?.success && resp.data) {
+        setConsensusViews((prev) => ({
+          ...prev,
+          [targetSymbol]: resp.data as ConsensusSymbolView,
+        }));
+      }
+    } catch {
+      return;
+    }
+  }, []);
+
   // Initial fetch + polling
   useEffect(() => {
     if (fetchRef.current) return;
@@ -208,7 +230,15 @@ export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
     };
   }, [fetchDashboard]);
 
+  useEffect(() => {
+    if (!activeSymbol || consensusViews[activeSymbol]) {
+      return;
+    }
+    fetchConsensus(activeSymbol);
+  }, [activeSymbol, consensusViews, fetchConsensus]);
+
   const currentSignal = signals[activeSymbol] as MetaSignalData | undefined;
+  const currentConsensus = consensusViews[activeSymbol] as ConsensusSymbolView | undefined;
 
   return (
     <div className="rounded-2xl border border-white/[0.06] bg-[#111827] overflow-hidden">
@@ -335,6 +365,20 @@ export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
                 </div>
               </div>
             </div>
+
+            {currentConsensus && (
+              <div className="rounded-xl bg-white/[0.03] border border-white/[0.04] p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] uppercase tracking-[0.15em] text-[#6B7280] font-medium">
+                    Directional combo map
+                  </span>
+                  <span className="text-[11px] text-[#6B7280]">
+                    {currentConsensus.parameters?.lookback_days || 0}D • {currentConsensus.parameters?.bucket_minutes || 0}m
+                  </span>
+                </div>
+                <ConsensusComboBoard data={currentConsensus} compact maxRows={2} />
+              </div>
+            )}
 
             {/* Row 2: Technical Score + Conditions */}
             <div className="rounded-xl bg-white/[0.03] border border-white/[0.04] p-3">

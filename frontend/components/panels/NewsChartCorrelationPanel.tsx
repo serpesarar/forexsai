@@ -87,6 +87,8 @@ function resolveNewsSymbol(symbol: string): string {
   return SYMBOL_TO_NEWS[symbol.replace("/", "")] || symbol.replace("/", "");
 }
 
+const NEWS_FLOW_ENABLED = false;
+
 // Main Component
 export default function NewsChartCorrelationPanel() {
   const [mounted, setMounted] = useState(false);
@@ -111,7 +113,6 @@ export default function NewsChartCorrelationPanel() {
       setError(null);
 
       const apiSymbol = resolveApiSymbol(selectedSymbol);
-      const newsSymbol = resolveNewsSymbol(selectedSymbol);
       const tf = timeframes.find((t) => t.value === timeframe);
       const limit = tf?.getLimit() || 200;
 
@@ -127,79 +128,7 @@ export default function NewsChartCorrelationPanel() {
       } else {
         setChartData([]);
       }
-
-      // Helper: parse news response
-      const parseRes = (r: any): any[] => {
-        if (Array.isArray(r)) return r;
-        if (r?.success && Array.isArray(r.data)) return r.data;
-        if (r?.data && Array.isArray(r.data)) return r.data;
-        return [];
-      };
-
-      // Strategy 1: Symbol-filtered news
-      let newsItems: any[] = [];
-      try {
-        const r1 = await fetcher<any>(`/api/rss/news?symbol=${newsSymbol}&limit=50&hours=48`);
-        newsItems = parseRes(r1);
-      } catch { /* continue */ }
-
-      // Strategy 2: All news if symbol-specific is empty
-      if (newsItems.length === 0) {
-        try {
-          const r2 = await fetcher<any>(`/api/rss/news?limit=50&hours=72`);
-          newsItems = parseRes(r2);
-        } catch { /* continue */ }
-      }
-
-      // Strategy 3: Include low-priority news
-      if (newsItems.length === 0) {
-        try {
-          const r3 = await fetcher<any>(`/api/rss/news?limit=50&hours=168&skip_ai_filtered=false`);
-          newsItems = parseRes(r3);
-        } catch { /* give up */ }
-      }
-
-      if (newsItems.length > 0) {
-        const mapped: EnrichedNews[] = newsItems.map((item: any) => ({
-          id: item.id,
-          timestamp: item.timestamp,
-          source: item.source,
-          headline: item.headline,
-          content: item.content || "",
-          category: item.category,
-          url: item.url,
-          impacts: item.impacts || [],
-          sentiment: item.sentiment || "neutral",
-          volatilityExpectation: item.volatility_expectation || item.volatilityExpectation || "medium",
-          urgency: item.urgency || "medium",
-          eventDuration: item.event_duration || item.eventDuration || "short_term",
-          affectedCandles: item.affected_candles || item.affectedCandles || [],
-          aiConfidence: typeof item.ai_confidence === "number"
-            ? (item.ai_confidence <= 1 ? item.ai_confidence * 100 : item.ai_confidence)
-            : (typeof item.aiConfidence === "number"
-              ? (item.aiConfidence <= 1 ? item.aiConfidence * 100 : item.aiConfidence)
-              : 0),
-          analysisTimestamp: item.analysis_timestamp || item.analysisTimestamp || new Date().toISOString(),
-          // Localized fields required by NewsDetailModal
-          headline_tr: item.headline_tr,
-          content_tr: item.content_tr,
-          summary_en: item.summary_en,
-          summary_tr: item.summary_tr,
-          analysis_en: item.analysis_en,
-          analysis_tr: item.analysis_tr,
-          headline_locale: item.headline_locale,
-          summary_locale: item.summary_locale,
-          analysis_locale: item.analysis_locale,
-          importanceLevel: item.importance_level || item.importanceLevel,
-          importanceScore: item.importance_score || item.importanceScore,
-          importanceReason: item.importance_reason || item.importanceReason,
-          aiModel: item.ai_model || item.aiModel,
-        }));
-        mapped.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-        setEvents(mapped);
-      } else {
-        setEvents([]);
-      }
+      setEvents([]);
     } catch (err) {
       console.error("Error fetching data:", err);
       setError("Failed to load data");
@@ -251,18 +180,20 @@ export default function NewsChartCorrelationPanel() {
               <BarChart2 className="w-4 h-4" />
               Chart View
             </button>
-            <button
-              onClick={() => setActiveTab("feed")}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
-                activeTab === "feed"
-                  ? "bg-purple-500 text-white"
-                  : "text-slate-400 hover:text-white"
-              )}
-            >
-              <Newspaper className="w-4 h-4" />
-              News Feed
-            </button>
+            {NEWS_FLOW_ENABLED && (
+              <button
+                onClick={() => setActiveTab("feed")}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
+                  activeTab === "feed"
+                    ? "bg-purple-500 text-white"
+                    : "text-slate-400 hover:text-white"
+                )}
+              >
+                <Newspaper className="w-4 h-4" />
+                News Feed
+              </button>
+            )}
           </div>
         </div>
 
@@ -329,7 +260,7 @@ function ChartView({ chartData, events, symbol, newsSymbol, timeframe, loading, 
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const { markers: newsMarkers } = useNewsMarkers(newsSymbol, 72, 5);
+  const { markers: newsMarkers } = useNewsMarkers(newsSymbol, 72, 5, 60, NEWS_FLOW_ENABLED);
   const chartDataRef = useRef(chartData);
   const [clickedNews, setClickedNews] = useState<EnrichedNews | null>(null);
 
@@ -459,6 +390,7 @@ function ChartView({ chartData, events, symbol, newsSymbol, timeframe, loading, 
 
   // Handle click events specifically for opening modals
   useEffect(() => {
+    if (!NEWS_FLOW_ENABLED) return;
     if (!chartRef.current || !candlestickSeriesRef.current || chartData.length === 0) return;
 
     const toleranceMinutesByTimeframe: Record<TimeframeValue, number> = {
@@ -565,7 +497,9 @@ function ChartView({ chartData, events, symbol, newsSymbol, timeframe, loading, 
           News Events
         </h3>
 
-        {events.length === 0 ? (
+        {!NEWS_FLOW_ENABLED ? (
+          <p className="text-slate-500 text-sm text-center py-8">News flow disabled</p>
+        ) : events.length === 0 ? (
           <p className="text-slate-500 text-sm text-center py-8">No recent news events</p>
         ) : (
           <div className="space-y-3">

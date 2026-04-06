@@ -1050,6 +1050,8 @@ interface NewsCorrelationDashboardProps {
   embedded?: boolean;
 }
 
+const NEWS_FLOW_ENABLED = false;
+
 export default function NewsCorrelationDashboard({ embedded = false }: NewsCorrelationDashboardProps) {
   const router = useRouter();
   const [selectedSymbol, setSelectedSymbol] = useState("XAUUSD");
@@ -1077,7 +1079,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   const [loadingExplanation, setLoadingExplanation] = useState(false);
 
   // Calendar tab states
-  const [activeTab, setActiveTab] = useState<"news" | "economic" | "earnings">("news");
+  const [activeTab, setActiveTab] = useState<"news" | "economic" | "earnings">(NEWS_FLOW_ENABLED ? "news" : "economic");
   const [economicEvents, setEconomicEvents] = useState<EconomicEvent[]>([]);
   const [earningsEvents, setEarningsEvents] = useState<EarningsEvent[]>([]);
   const [economicLoading, setEconomicLoading] = useState(false);
@@ -1088,7 +1090,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   const [selectedEarningsEvent, setSelectedEarningsEvent] = useState<EarningsEvent | null>(null);
   const markerLookbackHours = getMarkerLookbackHours(timeframe);
   const markerLimit = timeframe === "1d" ? 120 : timeframe === "4h" ? 90 : timeframe === "1h" ? 72 : 60;
-  const { markers: newsMarkers, error: newsMarkersError } = useNewsMarkers(selectedSymbol, markerLookbackHours, 5, markerLimit);
+  const { markers: newsMarkers, error: newsMarkersError } = useNewsMarkers(selectedSymbol, markerLookbackHours, 5, markerLimit, NEWS_FLOW_ENABLED);
   const mappedChartMarkers = useMemo(() => buildMappedChartMarkers(newsMarkers, chartData), [newsMarkers, chartData]);
   const renderableChartMarkers = useMemo(() => buildRenderableChartMarkers(mappedChartMarkers), [mappedChartMarkers]);
   const [isEconomicModalOpen, setIsEconomicModalOpen] = useState(false);
@@ -1297,6 +1299,15 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
 
   // Fetch news
   const fetchNews = useCallback(async (useMock = false) => {
+    if (!NEWS_FLOW_ENABLED) {
+      setNews([]);
+      setNewsStatus("empty");
+      setNewsStatusMessage("News flow disabled.");
+      setNewsLastUpdatedAt(null);
+      setNewsLoading(false);
+      return;
+    }
+
     try {
       setNewsLoading(true);
 
@@ -1541,7 +1552,9 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   useEffect(() => {
     if (mounted) {
       fetchChartData();
-      fetchNews();
+      if (NEWS_FLOW_ENABLED) {
+        fetchNews();
+      }
     }
   }, [fetchChartData, fetchNews, mounted]);
 
@@ -1588,6 +1601,10 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
   }, [fetchAIExplanation]);
 
   const handleChartCandleSelect = useCallback((selectedTimestampSeconds: number) => {
+    if (!NEWS_FLOW_ENABLED) {
+      return;
+    }
+
     if (!Number.isFinite(selectedTimestampSeconds) || chartDataRef.current.length === 0) {
       return;
     }
@@ -2071,10 +2088,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                 )}
               >
                 <span className="font-semibold">{sym.symbol}</span>
-                <span className={cn(
-                  "text-xs font-mono",
-                  sym.change > 0 ? "text-green-400" : sym.change < 0 ? "text-red-400" : "text-gray-500"
-                )}>
+                <span className="text-xs text-gray-500 font-mono">
                   ${sym.price > 0 ? sym.price.toLocaleString() : "-.--"}
                 </span>
                 {WS_BACKED_SYMBOLS.has(sym.symbol) && wsConnected && selectedSymbol === sym.symbol && (
@@ -2131,7 +2145,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
                     key={tf.value}
                     onClick={() => setTimeframe(tf.value)}
                     className={cn(
-                      "px-3 py-1.5 rounded text-xs font-medium transition-all",
+                      "px-3 py-1 rounded text-xs font-medium transition-all",
                       timeframe === tf.value ? "bg-gray-700 text-white" : "text-gray-400 hover:text-white hover:bg-gray-800"
                     )}
                   >
@@ -2199,7 +2213,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
               />
 
               {/* Candle click tip */}
-              {!loading && !error && !selectedCandleNews && chartData.length > 0 && (
+              {NEWS_FLOW_ENABLED && !loading && !error && !selectedCandleNews && chartData.length > 0 && (
                 <div className="absolute bottom-16 left-4 z-10 bg-gray-900/80 backdrop-blur px-3 py-2 rounded-lg border border-gray-800 text-xs text-gray-400">
                   {getT(currentLocale).clickCandle}
                 </div>
@@ -2421,24 +2435,26 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           <aside className="w-[420px] border-l border-gray-800 bg-[#0a0a0a] flex flex-col">
             {/* Tabs Header */}
             <div className="flex border-b border-gray-800">
-              <button
-                onClick={() => setActiveTab("news")}
-                className={cn(
-                  "flex-1 h-12 flex items-center justify-center gap-2 text-sm font-medium transition-all relative",
-                  activeTab === "news" ? "text-white" : "text-gray-500 hover:text-gray-300"
-                )}
-              >
-                <Newspaper className="w-4 h-4" />
-                <span>{getT(currentLocale).news}</span>
-                {!newsLoading && news.length > 0 && activeTab === "news" && (
-                  <span className="px-1.5 py-0.5 bg-purple-500/20 text-purple-400 text-[10px] rounded-full">
-                    {news.length}
-                  </span>
-                )}
-                {activeTab === "news" && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />
-                )}
-              </button>
+              {NEWS_FLOW_ENABLED && (
+                <button
+                  onClick={() => setActiveTab("news")}
+                  className={cn(
+                    "flex-1 h-12 flex items-center justify-center gap-2 text-sm font-medium transition-all relative",
+                    activeTab === "news" ? "text-white" : "text-gray-500 hover:text-gray-300"
+                  )}
+                >
+                  <Newspaper className="w-4 h-4" />
+                  <span>{getT(currentLocale).news}</span>
+                  {!newsLoading && news.length > 0 && activeTab === "news" && (
+                    <span className="px-1.5 py-0.5 bg-purple-500/20 text-purple-400 text-[10px] rounded-full">
+                      {news.length}
+                    </span>
+                  )}
+                  {activeTab === "news" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500" />
+                  )}
+                </button>
+              )}
               <button
                 onClick={() => setActiveTab("economic")}
                 className={cn(
@@ -2468,7 +2484,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
             </div>
 
             {/* News Tab Content */}
-            {activeTab === "news" && (
+            {NEWS_FLOW_ENABLED && activeTab === "news" && (
               <>
                 {/* News Toolbar */}
                 <div className="h-12 flex items-center justify-between px-4 border-b border-gray-800 bg-[#0a0a0a]">

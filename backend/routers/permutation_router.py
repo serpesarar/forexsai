@@ -2,6 +2,7 @@ import asyncio
 from fastapi import APIRouter, Query
 import logging
 
+from services.consensus_report_service import get_symbol_consensus_view
 from services.permutation_analysis_service import (
     analyze_model_permutations,
     analyze_technical_permutations
@@ -18,6 +19,30 @@ router = APIRouter(
     tags=["Permutation Analysis"],
     responses={404: {"description": "Not found"}},
 )
+
+
+@router.get("/consensus/{symbol}")
+async def get_consensus_analysis(
+    symbol: str,
+    top: int = Query(6, ge=1, le=20),
+    prefix: str = Query("consensus_model_analysis_all_tf_10m"),
+    report_path: str | None = Query(None),
+):
+    try:
+        data = await asyncio.to_thread(
+            get_symbol_consensus_view,
+            symbol,
+            top=top,
+            prefix=prefix,
+            report_path=report_path,
+        )
+        return {
+            "success": True,
+            "data": data,
+        }
+    except Exception as e:
+        logger.error(f"[PermutationRouter] Consensus error for {symbol}: {e}", exc_info=True)
+        return {"success": False, "error": str(e)}
 
 @router.get("/{symbol}")
 async def get_permutation_analysis(

@@ -45,14 +45,20 @@ export function useNewsMarkers(
   symbol: string,
   hours: number = 24,
   minImpactScore: number = 5,
-  maxMarkers: number = 60
+  maxMarkers: number = 60,
+  enabled: boolean = true
 ): UseNewsMarkersReturn {
   const [markers, setMarkers] = useState<NewsMarker[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchMarkers = useCallback(async () => {
-    if (!symbol) return;
+    if (!enabled || !symbol) {
+      setMarkers([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -81,16 +87,23 @@ export function useNewsMarkers(
     } finally {
       setLoading(false);
     }
-  }, [symbol, hours, minImpactScore, maxMarkers]);
+  }, [symbol, hours, minImpactScore, maxMarkers, enabled]);
 
   useEffect(() => {
+    if (!enabled) {
+      setMarkers([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     fetchMarkers();
 
     // Her 5 dakikada bir güncelle
     const interval = setInterval(fetchMarkers, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [fetchMarkers]);
+  }, [fetchMarkers, enabled]);
 
   return {
     markers,

@@ -987,8 +987,8 @@ async def background_scheduler_loop_with_rss():
             await log_smc_signals_if_needed()
             from services.ai_panel_signal_logger import log_ai_panel_signals_if_needed
             await log_ai_panel_signals_if_needed()
-            # RSS aggregation every 7 minutes (cost optimized)
-            await run_rss_aggregation_if_needed()
+            # RSS aggregation disabled locally since Python listener performs it
+            # await run_rss_aggregation_if_needed()
             # Pattern analysis twice daily (US open +1h, close -2h)
             await run_pattern_analysis_if_needed()
         except Exception as e:

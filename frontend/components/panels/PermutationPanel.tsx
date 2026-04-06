@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import ConsensusComboBoard, { type ConsensusSymbolView } from "./ConsensusComboBoard";
 const translations: Record<string, Record<string, string>> = {
   tr: {
     title: "Permütasyon Analizi",
@@ -97,6 +98,7 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [modelsData, setModelsData] = useState<ModelResult[]>([]);
   const [indicatorsData, setIndicatorsData] = useState<IndicatorResult[]>([]);
+  const [consensusData, setConsensusData] = useState<ConsensusSymbolView | null>(null);
   const [metaInfo, setMetaInfo] = useState<MetaInfo>({
     tgt_pct: 0.3,
     fwd_candles: 5,
@@ -111,9 +113,23 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
     setError(null);
     try {
       const url = buildApiUrl(`/api/permutation-analysis/${symbol}?direction=${direction}&analysis_type=both&source=auto&min_occurrences=10&cluster_window_minutes=10&lookforward_candles=5&target_move_pct=0.3`);
-      const res = await fetch(url);
+      const consensusUrl = buildApiUrl(`/api/permutation-analysis/consensus/${symbol}?top=6`);
+      const [res, consensusRes] = await Promise.all([
+        fetch(url),
+        fetch(consensusUrl),
+      ]);
       if (!res.ok) throw new Error("Failed to fetch permutation data");
       const json = await res.json();
+      if (consensusRes.ok) {
+        const consensusJson = await consensusRes.json();
+        if (consensusJson?.success && consensusJson.data) {
+          setConsensusData(consensusJson.data as ConsensusSymbolView);
+        } else {
+          setConsensusData(null);
+        }
+      } else {
+        setConsensusData(null);
+      }
 
       if (json.success) {
         const modelsAnalysis = json.data.models_analysis || {};
@@ -284,67 +300,80 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="overflow-x-auto"
+                className="space-y-4"
               >
-                {modelsData.length === 0 ? (
-                  <div className="text-center text-gray-500 py-10 text-sm">{t("no_data")}</div>
-                ) : (
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-white/5">
-                        <th className="pb-3 text-xs uppercase tracking-wider text-[#6B7280] font-medium pl-2">{t("col_combo")}</th>
-                        <th className="pb-3 text-xs uppercase tracking-wider text-[#6B7280] font-medium text-right">{t("col_signals")}</th>
-                        <th className="pb-3 text-xs uppercase tracking-wider text-[#6B7280] font-medium text-right">{t("col_winrate")}</th>
-                        <th className="pb-3 text-xs uppercase tracking-wider text-[#6B7280] font-medium text-right pr-2">{t("col_profit_factor")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {modelsData.map((row, idx) => (
-                        <tr key={idx}
-                          className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${row.insufficient_data ? 'opacity-50 saturate-50' : ''}`}
-                          title={row.insufficient_data ? t("insufficient_data_tooltip") || "Yetersiz Veri (Son 180G)" : undefined}
-                        >
-                          <td className="py-3 pl-2">
-                            <div className="flex flex-wrap gap-1.5 items-center">
-                              {row.insufficient_data && <TriangleAlert className="w-3.5 h-3.5 text-yellow-500 mr-1" />}
-                              {(row.combination || "").split('+').map((m: string, i: number) => (
-                                <span key={i} className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-xs font-semibold uppercase border border-blue-500/20 shadow-[0_0_8px_rgba(79,140,255,0.05)]">
-                                  {m}
-                                </span>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="py-3 text-right text-sm text-[#9AA4B2] font-medium bg-black/20">
-                            {row.total_signals}
-                          </td>
-                          <td className="py-3 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              {/* Small bar indicator */}
-                              <div className="w-12 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full rounded-full"
-                                  style={{
-                                    width: `${(row.win_rate || 0) * 100}%`,
-                                    backgroundColor: (row.win_rate || 0) >= 0.5 ? '#16C784' : '#EA3943',
-                                    opacity: 0.9
-                                  }}
-                                />
-                              </div>
-                              <span className={`text-sm font-bold w-12 text-right ${(row.win_rate || 0) >= 0.5 ? "text-[#16C784]" : "text-[#EA3943]"}`}>
-                                {((row.win_rate || 0) * 100).toFixed(1)}%
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-3 text-right pr-2">
-                            <span className={`text-sm font-bold ${(row.profit_factor || 0) >= 1.5 ? "text-[#16C784]" : (row.profit_factor || 0) >= 1.0 ? "text-white" : "text-[#EA3943]"}`}>
-                              {(row.profit_factor === 999.0 || !row.profit_factor) ? "∞" : (row.profit_factor || 0).toFixed(2)}x
-                            </span>
-                          </td>
+                {consensusData && <ConsensusComboBoard data={consensusData} maxRows={4} />}
+                <div className="rounded-xl border border-white/5 bg-[#0B0F17]/40 overflow-x-auto">
+                  <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-[#6B7280]">Live model ranking</div>
+                      <div className="text-sm text-[#E6EDF3] font-medium">{direction} yönü için klasik permutation tablosu</div>
+                    </div>
+                    {consensusData?.parameters && (
+                      <div className="text-[11px] text-[#6B7280] text-right">
+                        {consensusData.parameters.lookback_days}D • {consensusData.parameters.bucket_minutes}m bucket
+                      </div>
+                    )}
+                  </div>
+                  {modelsData.length === 0 ? (
+                    <div className="text-center text-gray-500 py-10 text-sm">{t("no_data")}</div>
+                  ) : (
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-white/5">
+                          <th className="pb-3 pt-3 text-xs uppercase tracking-wider text-[#6B7280] font-medium pl-4">{t("col_combo")}</th>
+                          <th className="pb-3 pt-3 text-xs uppercase tracking-wider text-[#6B7280] font-medium text-right">{t("col_signals")}</th>
+                          <th className="pb-3 pt-3 text-xs uppercase tracking-wider text-[#6B7280] font-medium text-right">{t("col_winrate")}</th>
+                          <th className="pb-3 pt-3 text-xs uppercase tracking-wider text-[#6B7280] font-medium text-right pr-4">{t("col_profit_factor")}</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+                      </thead>
+                      <tbody>
+                        {modelsData.map((row, idx) => (
+                          <tr key={idx}
+                            className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${row.insufficient_data ? 'opacity-50 saturate-50' : ''}`}
+                            title={row.insufficient_data ? t("insufficient_data_tooltip") || "Yetersiz Veri (Son 180G)" : undefined}
+                          >
+                            <td className="py-3 pl-4">
+                              <div className="flex flex-wrap gap-1.5 items-center">
+                                {row.insufficient_data && <TriangleAlert className="w-3.5 h-3.5 text-yellow-500 mr-1" />}
+                                {(row.combination || "").split('+').map((m: string, i: number) => (
+                                  <span key={i} className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-xs font-semibold uppercase border border-blue-500/20 shadow-[0_0_8px_rgba(79,140,255,0.05)]">
+                                    {m}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="py-3 text-right text-sm text-[#9AA4B2] font-medium bg-black/20">
+                              {row.total_signals}
+                            </td>
+                            <td className="py-3 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <div className="w-12 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full rounded-full"
+                                    style={{
+                                      width: `${(row.win_rate || 0) * 100}%`,
+                                      backgroundColor: (row.win_rate || 0) >= 0.5 ? '#16C784' : '#EA3943',
+                                      opacity: 0.9
+                                    }}
+                                  />
+                                </div>
+                                <span className={`text-sm font-bold w-12 text-right ${(row.win_rate || 0) >= 0.5 ? "text-[#16C784]" : "text-[#EA3943]"}`}>
+                                  {((row.win_rate || 0) * 100).toFixed(1)}%
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-3 text-right pr-4">
+                              <span className={`text-sm font-bold ${(row.profit_factor || 0) >= 1.5 ? "text-[#16C784]" : (row.profit_factor || 0) >= 1.0 ? "text-white" : "text-[#EA3943]"}`}>
+                                {(row.profit_factor === 999.0 || !row.profit_factor) ? "∞" : (row.profit_factor || 0).toFixed(2)}x
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               </motion.div>
             )}
 

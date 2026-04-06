@@ -558,6 +558,9 @@ class RSSAggregator:
         """Send news to DeepSeek AI with caching and smart filtering"""
         import os
         
+        # EARLY RETURN BYPASS - The local Python `haber` handles news analysis into DB directly now.
+        return self._fallback_analysis(item)
+        
         # Check if DeepSeek API key is configured
         api_key = os.getenv("DEEP_SEEKR1", "")
         if not api_key:
