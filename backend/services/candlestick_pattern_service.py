@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 from typing import Dict, List, Optional, Literal
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -480,7 +480,7 @@ async def detect_candlestick_patterns(
     
     result = {
         "symbol": symbol,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "timeframes": {},
         "all_patterns": [],
         "bullish_count": 0,

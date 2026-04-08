@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from database.supabase_client import get_supabase_client, is_db_available
@@ -40,7 +40,7 @@ async def submit_report(report: FeedbackReport):
             "message": report.message,
             "metadata": report.metadata or {},
             "status": "pending", # pending, in_progress, resolved
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
         if report.user_id:
             data["user_id"] = report.user_id

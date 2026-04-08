@@ -16,7 +16,7 @@ Features:
 
 from __future__ import annotations
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Literal, Optional, List, Dict, Any
 from enum import Enum
 import numpy as np
@@ -797,7 +797,7 @@ async def run_trend_analysis(
     result = TrendAnalysisResult(
         symbol=symbol,
         current_price=round(current_price, 2),
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         data_quality=round(data_quality, 2),
         
         trend=trend.value,

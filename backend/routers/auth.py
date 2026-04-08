@@ -15,7 +15,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Request, Header, Depends
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from services.auth_service import (
     signup, login, logout, validate_session, verify_email,
@@ -337,19 +337,19 @@ async def verify_otp_endpoint(body: VerifyOTPRequest):
     # Update user
     client.table("user_profiles").eq("id", user_id).update({
         "email_verified": True,
-        "email_verified_at": datetime.utcnow().isoformat(),
+        "email_verified_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "status": "active"
     })
     
     # Mark verification as used
     client.table("email_verifications").eq("id", v_data["id"]).update({
-        "verified_at": datetime.utcnow().isoformat()
+        "verified_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     })
     
     # Complete referral if exists
     client.table("referrals").eq("referred_id", user_id).update({
         "status": "completed",
-        "completed_at": datetime.utcnow().isoformat()
+        "completed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     })
     
     return {"success": True, "message": "Email verified successfully"}
@@ -397,7 +397,7 @@ async def resend_verification(body: ResendVerificationRequest):
     client.table("email_verifications").insert({
         "user_id": user["id"],
         "token": verification_token,
-        "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat()
+        "expires_at": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat().replace("+00:00", "Z")
     })
     
     # Send email
@@ -474,7 +474,7 @@ async def get_referral_stats(user: UserProfile = Depends(require_auth)):
         "pending_referrals": pending,
         "progress_to_reward": f"{progress}/5",
         "reward_unlocked": reward_unlocked,
-        "reward_description": "5 arkadaş davet et, 1 hafta Pro üyelik kazan!"
+        "reward_description": "5 arkadaş davet et, 1 haftalık Pro üyelik kazan!"
     }
 
 
@@ -585,7 +585,7 @@ async def forgot_password(body: ForgotPasswordRequest):
         # Generate reset token
         token = generate_token()
         token_hash = hashlib.sha256(token.encode()).hexdigest()
-        expires_at = datetime.utcnow() + timedelta(hours=1)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
         
         # Store token (reuse email_verifications table)
         try:
@@ -657,7 +657,7 @@ async def reset_password(body: ResetPasswordRequest):
     password_hash = hash_password(body.new_password)
     client.table("user_credentials").eq("user_id", user_id).update({
         "password_hash": password_hash,
-        "updated_at": datetime.utcnow().isoformat()
+        "updated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     })
     
     # Delete used token

@@ -26,11 +26,64 @@ export type OrderBlockDetectPayload = {
   };
 };
 
+export type OrderBlockCombinedSignal = {
+  action: string;
+  confidence: number;
+  reasoning: string[];
+  reasons: string[];
+};
+
+export type OrderBlockDetectResponse = {
+  symbol: string;
+  timeframe: string;
+  total_order_blocks: number;
+  bearish_obs: number;
+  bullish_obs: number;
+  order_blocks: Array<Record<string, unknown>>;
+  active_signals: Array<Record<string, unknown>>;
+  combined_signal?: OrderBlockCombinedSignal;
+  structure?: Record<string, unknown>;
+  choch_list?: Array<Record<string, unknown>>;
+  bos_list?: Array<Record<string, unknown>>;
+  fvg_list?: Array<Record<string, unknown>>;
+  trend?: string;
+  support_resistance?: Record<string, unknown>;
+  timestamp?: string;
+  warning?: string;
+};
+
+export type OrderBlockBacktestPayload = {
+  symbol: string;
+  timeframe: "5m" | "15m" | "30m" | "1h" | "4h" | "1d";
+  start_date?: string;
+  end_date?: string;
+  config?: OrderBlockDetectPayload["config"];
+};
+
+export type OrderBlockBacktestResult = {
+  signal: string;
+  entry: number;
+  outcome: string;
+};
+
+export type OrderBlockBacktestResponse = {
+  total_signals: number;
+  wins: number;
+  losses: number;
+  win_rate: number;
+  results: OrderBlockBacktestResult[];
+  total_trades: number;
+  avg_risk_reward: number;
+  total_profit: number;
+  max_drawdown: number;
+  sharpe_ratio: number;
+};
+
 export function useOrderBlockDetect(payload: OrderBlockDetectPayload) {
   return useQuery({
     queryKey: ["order-blocks", payload],
     queryFn: () =>
-      fetcher("/api/order-blocks/detect", {
+      fetcher<OrderBlockDetectResponse>("/api/order-blocks/detect", {
         method: "POST",
         body: JSON.stringify(payload)
       }),
@@ -50,8 +103,8 @@ export function useOrderBlockEntry() {
 
 export function useOrderBlockBacktest() {
   return useMutation({
-    mutationFn: (payload: { symbol: string; timeframe: string; start_date: string; end_date: string }) =>
-      fetcher("/api/order-blocks/backtest", {
+    mutationFn: (payload: OrderBlockBacktestPayload) =>
+      fetcher<OrderBlockBacktestResponse>("/api/order-blocks/backtest", {
         method: "POST",
         body: JSON.stringify(payload)
       })

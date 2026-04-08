@@ -23,7 +23,7 @@ Data sources (all FREE):
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional, List, Any
 from dataclasses import dataclass, asdict
 
@@ -193,8 +193,7 @@ def _detect_alerts(
 ) -> List[WhaleAlert]:
     """Detect noteworthy whale activity events."""
     alerts: List[WhaleAlert] = []
-    now = datetime.utcnow().isoformat() + "Z"
-
+    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     # Crowded trade warning
     if spec_long_pct > 80 or spec_percentile > 90:
         alerts.append(WhaleAlert(
@@ -265,7 +264,7 @@ async def get_whale_snapshot(symbol: str) -> WhaleSnapshot:
     cached = _whale_cache.get(cache_key)
     if cached:
         try:
-            age = datetime.utcnow() - datetime.fromisoformat(cached["ts"].replace("Z", ""))
+            age = datetime.now(timezone.utc) - datetime.fromisoformat(cached["ts"].replace("Z", "+00:00"))
             if age < _CACHE_TTL:
                 return WhaleSnapshot(**cached["data"])
         except Exception:
@@ -326,13 +325,13 @@ async def get_whale_snapshot(symbol: str) -> WhaleSnapshot:
         active_alerts=[asdict(a) for a in alerts],
         report_date=cot.report_date,
         data_source=cot.data_source,
-        last_updated=datetime.utcnow().isoformat() + "Z",
+        last_updated=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     )
 
     # Cache
     _whale_cache[cache_key] = {
         "data": asdict(snapshot),
-        "ts": datetime.utcnow().isoformat() + "Z",
+        "ts": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
 
     return snapshot
@@ -358,7 +357,7 @@ async def get_whale_dashboard() -> Dict:
         "symbols": snapshots,
         "alerts": all_alerts[:10],  # Top 10 alerts
         "tracked_symbols": TRACKED_SYMBOLS,
-        "last_updated": datetime.utcnow().isoformat() + "Z",
+        "last_updated": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
 
 

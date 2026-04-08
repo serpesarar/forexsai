@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 import httpx
@@ -129,7 +129,7 @@ class UnifiedNewsAnalyzer:
         
         # Cache kontrolü
         if (self._last_eodhd_fetch and 
-            datetime.utcnow() - self._last_eodhd_fetch < self._cache_duration and
+            datetime.now(timezone.utc) - self._last_eodhd_fetch < self._cache_duration and
             self._last_eodhd_data):
             return self._last_eodhd_data
         
@@ -155,7 +155,7 @@ class UnifiedNewsAnalyzer:
                     data = response.json()
                     if isinstance(data, list):
                         self._last_eodhd_data = data
-                        self._last_eodhd_fetch = datetime.utcnow()
+                        self._last_eodhd_fetch = datetime.now(timezone.utc)
                         return data
                         
                 return []
@@ -485,7 +485,7 @@ class UnifiedNewsAnalyzer:
         )
         
         # Data freshness
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         freshness = {
             'eodhd': int((now - self._last_eodhd_fetch).total_seconds() / 60) if self._last_eodhd_fetch else 999,
             'live_tv': 0 if live_tv_result.get('is_active') else 999,
@@ -514,7 +514,7 @@ class UnifiedNewsAnalyzer:
     async def get_source_status(self) -> List[NewsSourceStatus]:
         """Tüm haber kaynaklarının durumu"""
         statuses = []
-        
+         
         # EODHD
         try:
             news = await self._fetch_eodhd_news()
@@ -532,7 +532,7 @@ class UnifiedNewsAnalyzer:
                 data_count=0,
                 error=str(e)
             ))
-        
+         
         # Live TV
         try:
             from services.live_news_monitor import get_live_monitor
@@ -540,7 +540,7 @@ class UnifiedNewsAnalyzer:
             statuses.append(NewsSourceStatus(
                 name="Live TV",
                 is_active=monitor.is_running,
-                last_data=datetime.utcnow() if monitor.is_running else None,
+                last_data=datetime.now(timezone.utc) if monitor.is_running else None,
                 data_count=len(monitor.alerts)
             ))
         except:
@@ -551,7 +551,7 @@ class UnifiedNewsAnalyzer:
                 data_count=0,
                 error="Not initialized"
             ))
-        
+         
         # Twitter
         try:
             from services.twitter_monitor import get_twitter_monitor
@@ -559,7 +559,7 @@ class UnifiedNewsAnalyzer:
             statuses.append(NewsSourceStatus(
                 name="Twitter/X",
                 is_active=monitor.is_running,
-                last_data=datetime.utcnow() if monitor.is_running else None,
+                last_data=datetime.now(timezone.utc) if monitor.is_running else None,
                 data_count=len(monitor.alerts)
             ))
         except:
@@ -570,13 +570,13 @@ class UnifiedNewsAnalyzer:
                 data_count=0,
                 error="Not initialized"
             ))
-        
+         
         return statuses
-
-
-# =============================================================================
-# GLOBAL INSTANCE & HELPER FUNCTIONS
-# =============================================================================
+ 
+ 
+ # =============================================================================
+ # GLOBAL INSTANCE & HELPER FUNCTIONS
+ # =============================================================================
 
 _analyzer_instance: Optional[UnifiedNewsAnalyzer] = None
 

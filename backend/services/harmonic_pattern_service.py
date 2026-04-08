@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 import logging
 
@@ -317,7 +317,7 @@ def _detect_classic_patterns(candles: List[Dict[str, Any]], timeframe: str, min_
         if confidence >= min_confidence:
             between = candles[l1["index"]:l2["index"] + 1]
             neckline = max(item["high"] for item in between)
-            bottom_avg = (l1["price"] + l2["price"] ) / 2
+            bottom_avg = (l1["price"] + l2["price"]) / 2
             height = neckline - bottom_avg
             patterns.append(_build_pattern("DOUBLE_BOTTOM", CLASSIC_PATTERNS["DOUBLE_BOTTOM"], timeframe, "BULLISH", confidence, "COMPLETED", _indices_between(l1["index"], l2["index"]), {"A": l1, "B": l2}, neckline + height, bottom_avg))
 
@@ -447,7 +447,7 @@ def detect_chart_patterns_from_candles(candles: List[Dict[str, Any]], timeframe:
     classic = _detect_classic_patterns(normalized, normalized_timeframe, float(opts["min_confidence"]))
     patterns = sorted(harmonic + classic, key=lambda item: (item.get("category") != "harmonic", -item.get("confidence", 0)))
     summary = _summarize(patterns, normalized_timeframe)
-    summary["timestamp"] = datetime.utcnow().isoformat() + "Z"
+    summary["timestamp"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     return summary
 
 

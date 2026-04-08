@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 import threading
 from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
 import numpy as np
 
@@ -94,7 +94,7 @@ class SRFeatureEngine:
         with _sr_cache_lock:
             if cache_key in _sr_cache:
                 cached = _sr_cache[cache_key]
-                age = (datetime.utcnow() - cached['timestamp']).total_seconds()
+                age = (datetime.now(timezone.utc) - cached['timestamp']).total_seconds()
                 if age < _SR_CACHE_TTL_SECONDS:
                     logger.debug(f"S/R cache hit for {self.symbol} (age: {age:.0f}s)")
                     return cached['data']
@@ -105,7 +105,7 @@ class SRFeatureEngine:
         cache_key = f"sr_{self.symbol}"
         with _sr_cache_lock:
             _sr_cache[cache_key] = {
-                'timestamp': datetime.utcnow(),
+                'timestamp': datetime.now(timezone.utc),
                 'data': data
             }
         logger.debug(f"S/R cache set for {self.symbol}")
@@ -235,7 +235,7 @@ class SRFeatureEngine:
                             touch_count=3 - i,
                             rejection_count=2 - i,
                             volume_confirmation=0.7 - i * 0.1,
-                            first_touch_date=datetime.utcnow() - timedelta(days=7 * (i + 1)),
+                            first_touch_date=datetime.now(timezone.utc) - timedelta(days=7 * (i + 1)),
                             is_broken=current_price < price
                         ))
                     
@@ -250,7 +250,7 @@ class SRFeatureEngine:
                             touch_count=3 - i,
                             rejection_count=2 - i,
                             volume_confirmation=0.7 - i * 0.1,
-                            first_touch_date=datetime.utcnow() - timedelta(days=7 * (i + 1)),
+                            first_touch_date=datetime.now(timezone.utc) - timedelta(days=7 * (i + 1)),
                             is_broken=current_price > price
                         ))
                     
@@ -263,7 +263,7 @@ class SRFeatureEngine:
                         touch_count=5,
                         rejection_count=3,
                         volume_confirmation=0.8,
-                        first_touch_date=datetime.utcnow() - timedelta(days=1),
+                        first_touch_date=datetime.now(timezone.utc) - timedelta(days=1),
                         is_broken=False
                     ))
                     
@@ -293,7 +293,7 @@ class SRFeatureEngine:
                 touch_count=max(1, 3 - i),
                 rejection_count=max(0, 2 - i),
                 volume_confirmation=0.5,
-                first_touch_date=datetime.utcnow() - timedelta(days=i * 3),
+                first_touch_date=datetime.now(timezone.utc) - timedelta(days=i * 3),
                 is_broken=False
             ))
             # Resistances
@@ -305,7 +305,7 @@ class SRFeatureEngine:
                 touch_count=max(1, 3 - i),
                 rejection_count=max(0, 2 - i),
                 volume_confirmation=0.5,
-                first_touch_date=datetime.utcnow() - timedelta(days=i * 3),
+                first_touch_date=datetime.now(timezone.utc) - timedelta(days=i * 3),
                 is_broken=False
             ))
         return levels
@@ -403,7 +403,7 @@ class SRFeatureEngine:
                 
                 # YENİ: Age skoru (yaş - daha eski = daha güçlü, ama çok eski = zayıf)
                 # 7-30 gün = optimal, <7 gün = çok yeni, >60 gün = eski
-                age_days = level.age_days if level.age_days > 0 else (datetime.utcnow() - level.first_touch_date).days
+                age_days = level.age_days if level.age_days > 0 else (datetime.now(timezone.utc) - level.first_touch_date).days
                 if age_days < 7:
                     age_score = age_days / 7 * 0.7  # Çok yeni, güç %70'e kadar
                 elif age_days <= 30:

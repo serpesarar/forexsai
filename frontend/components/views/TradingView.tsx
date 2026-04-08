@@ -18,6 +18,7 @@ const DetailedAnalysisPanel = lazy(() => import("../../components/DetailedAnalys
 const LearningDashboardPanel = lazy(() => import("../../components/LearningDashboardPanel"));
 const PredictionHistoryTable = lazy(() => import("../../components/PredictionHistoryTable"));
 const OrderBlockPanelSimple = lazy(() => import("../../components/OrderBlockPanelSimple"));
+const OrderBlockChartPanel = lazy(() => import("../../components/panels/OrderBlockChartPanel"));
 const RhythmDetectorSimple = lazy(() => import("../../components/RhythmDetectorSimple"));
 
 const PanelLoader = () => (
@@ -207,6 +208,21 @@ export default function TradingView() {
               <div className="transform-gpu transition-all duration-300">
                 <Suspense fallback={<PanelLoader />}>
                   <DetailedAnalysisPanel symbol={selectedSymbol} symbolLabel={currentSymbol.shortLabel} />
+                </Suspense>
+              </div>
+            </section>
+
+            {/* Order Block Chart Visualization */}
+            <section>
+              <div className="mb-3 flex items-center gap-2">
+                <ChartsIcon size={20} className="text-orange-400" />
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-textSecondary">
+                  Order Block Chart
+                </h2>
+              </div>
+              <div className="transform-gpu transition-all duration-300" style={{ minHeight: 520 }}>
+                <Suspense fallback={<PanelLoader />}>
+                  <OrderBlockChartPanel />
                 </Suspense>
               </div>
             </section>

@@ -18,7 +18,7 @@ import tempfile
 import os
 import time
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Callable, Any
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -320,7 +320,7 @@ class LiveNewsMonitor:
                     keyword=keyword,
                     full_text=text[:500],
                     channel=channel,
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(timezone.utc),
                     sentiment=sentiment,
                     impact_level=config['impact'],
                     confidence=min(0.9, 0.5 + abs(sentiment_score))
@@ -410,7 +410,7 @@ class LiveNewsMonitor:
     
     def get_recent_alerts(self, minutes: int = 60) -> List[TranscriptAlert]:
         """Son X dakikadaki alert'leri getir"""
-        cutoff = datetime.utcnow() - timedelta(minutes=minutes)
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         return [a for a in self.alerts if a.timestamp > cutoff]
     
     def get_impact_summary(self) -> LiveNewsImpact:
@@ -423,7 +423,7 @@ class LiveNewsMonitor:
                 confidence=20.0,
                 direction_bias="NEUTRAL",
                 alerts=[],
-                last_update=datetime.utcnow(),
+                last_update=datetime.now(timezone.utc),
                 channels_active=self.active_channels.copy()
             )
         
@@ -461,7 +461,7 @@ class LiveNewsMonitor:
             confidence=confidence,
             direction_bias=direction,
             alerts=recent[-10:],  # Son 10 alert
-            last_update=datetime.utcnow(),
+            last_update=datetime.now(timezone.utc),
             channels_active=self.active_channels.copy()
         )
 

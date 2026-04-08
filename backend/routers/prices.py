@@ -102,7 +102,7 @@ async def get_symbol_price(symbol: str) -> Dict[str, Any]:
                     "success": True,
                     "symbol": symbol,
                     "price": price,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
         
         # Fallback to mock
@@ -121,4 +121,4 @@ async def get_symbol_price(symbol: str) -> Dict[str, Any]:
             "symbol": symbol
         }
 
-from datetime import datetime
+from datetime import datetime, timezone

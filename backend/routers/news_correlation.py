@@ -265,7 +265,7 @@ async def get_big_moves(
         supabase = get_supabase_client()
         
         # Get candles with big moves from cache
-        from_time = datetime.utcnow() - timedelta(hours=hours)
+        from_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         
         result = supabase.table("candle_cache")\
             .select("*")\
@@ -425,7 +425,7 @@ async def get_economic_events(
     try:
         supabase = get_supabase_client()
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         future = now + timedelta(hours=hours_ahead)
         
         # Map symbols to relevant currencies/countries

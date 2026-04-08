@@ -14,7 +14,7 @@ import logging
 import hashlib
 import secrets
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Optional, Dict, Any, Tuple
 from dataclasses import dataclass, asdict
@@ -328,7 +328,7 @@ async def signup(
             "user_id": user_id,
             "token": verification_token,
             "otp_code": otp_code,
-            "expires_at": (datetime.utcnow() + timedelta(minutes=30)).isoformat()  # 30 min expiry
+            "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=30)).isoformat().replace("+00:00", "Z")  # 30 min expiry
         })
         
         # Send verification email with OTP
@@ -399,19 +399,19 @@ async def verify_email(token: str) -> Tuple[bool, Optional[str]]:
         # Update user
         client.table("user_profiles").eq("id", user_id).update({
             "email_verified": True,
-            "email_verified_at": datetime.utcnow().isoformat(),
+            "email_verified_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "status": "active"
         })
         
         # Mark token as used
         client.table("email_verifications").eq("id", verification["id"]).update({
-            "verified_at": datetime.utcnow().isoformat()
+            "verified_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         })
         
         # Complete referral if exists
         client.table("referrals").eq("referred_id", user_id).update({
             "status": "completed",
-            "completed_at": datetime.utcnow().isoformat()
+            "completed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         })
         
         # Check and award referral bonus
@@ -505,7 +505,7 @@ async def login(
             update_data = {"failed_login_attempts": failed}
             
             if failed >= 5:
-                update_data["locked_until"] = (datetime.utcnow() + timedelta(minutes=15)).isoformat()
+                update_data["locked_until"] = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat().replace("+00:00", "Z")
             
             client.table("user_profiles").eq("id", user_id).update(update_data)
             
@@ -526,7 +526,7 @@ async def login(
         device_info = {
             "user_agent": user_agent,
             "ip": ip_address,
-            "login_time": datetime.utcnow().isoformat()
+            "login_time": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         }
         
         client.table("user_sessions").insert({
@@ -534,12 +534,12 @@ async def login(
             "token_hash": token_hash,
             "device_info": device_info,
             "ip_address": ip_address,
-            "expires_at": (datetime.utcnow() + timedelta(days=7)).isoformat()
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat().replace("+00:00", "Z")
         })
         
         # 9. Update user stats
         client.table("user_profiles").eq("id", user_id).update({
-            "last_login_at": datetime.utcnow().isoformat(),
+            "last_login_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "login_count": user.get("login_count", 0) + 1,
             "failed_login_attempts": 0,
             "locked_until": None
@@ -557,7 +557,7 @@ async def login(
             status=user["status"],
             email_verified=user["email_verified"],
             created_at=user["created_at"],
-            last_login_at=datetime.utcnow().isoformat()
+            last_login_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         )
         
         return AuthResult(success=True, user=profile, session_token=session_token)
@@ -611,7 +611,7 @@ async def validate_session(token: str) -> Optional[UserProfile]:
         
         # Update last activity
         client.table("user_sessions").eq("id", session["id"]).update({
-            "last_activity_at": datetime.utcnow().isoformat()
+            "last_activity_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         })
         
         return UserProfile(
@@ -687,7 +687,7 @@ async def check_referral_reward(referred_user_id: str) -> bool:
             # Mark referrals as rewarded
             client.table("referrals").eq("referrer_id", referrer_id).eq("status", "completed").update({
                 "status": "rewarded",
-                "rewarded_at": datetime.utcnow().isoformat(),
+                "rewarded_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                 "reward_type": "pro_membership",
                 "reward_days": REFERRAL_REWARD_DAYS
             })
@@ -730,7 +730,7 @@ async def grant_pro_membership(user_id: str, days: int, reason: str) -> bool:
         if current_expiry and current_expiry > datetime.now(current_expiry.tzinfo):
             new_expiry = current_expiry + timedelta(days=days)
         else:
-            new_expiry = datetime.utcnow() + timedelta(days=days)
+            new_expiry = datetime.now(timezone.utc) + timedelta(days=days)
         
         # Update user
         client.table("user_profiles").eq("id", user_id).update({
@@ -749,7 +749,7 @@ async def grant_pro_membership(user_id: str, days: int, reason: str) -> bool:
                 "user_id": user_id,
                 "package_id": pro_package["data"][0]["id"],
                 "status": "active",
-                "starts_at": datetime.utcnow().isoformat(),
+                "starts_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                 "ends_at": new_expiry.isoformat(),
                 "auto_renew": False
             })
@@ -888,7 +888,7 @@ async def check_claude_limit(user_id: str) -> Tuple[bool, Optional[str], int]:
         limit = RATE_LIMITS.get(f"claude_call_{tier}", (0, 86400))[0]
         
         # Count today's usage
-        today = datetime.utcnow().date().isoformat()
+        today = datetime.now(timezone.utc).date().isoformat()
         usage = client.table("claude_usage")\
             .select("id")\
             .eq("user_id", user_id)\

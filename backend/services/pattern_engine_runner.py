@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import List
 
@@ -21,7 +21,7 @@ def run_pattern_engine(last_n: int, select_top: float, output_selected_only: boo
 
     # Pull recent daily candles from DataHub (0 API calls)
     symbol = "NDX.INDX"
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     closes: List[float] = []
     try:
@@ -62,7 +62,7 @@ def run_pattern_engine(last_n: int, select_top: float, output_selected_only: boo
     patterns: List[dict] = []
     trade_thr = 0.65
     for idx, (pid, route, p_success) in enumerate(base_patterns[: min(10, last_n)]):
-        timestamp = (now - timedelta(minutes=idx * 15)).isoformat() + "Z"
+        timestamp = (now - timedelta(minutes=idx * 15)).isoformat().replace("+00:00", "Z")
         patterns.append(
             {
                 "timestamp": timestamp,

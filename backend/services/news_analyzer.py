@@ -7,7 +7,7 @@ Uses DeepSeek AI to analyze news and predict market impacts
 import json
 import os
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
 import asyncio
@@ -353,7 +353,7 @@ BAŞLIK: {headline_tr}
 İÇERİK: {content_tr[:300] if content_tr else "N/A"}
 
 SOURCE: {source}
-TIMESTAMP: {datetime.utcnow().isoformat()}
+TIMESTAMP: {datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")}
 
 Provide analysis in strict JSON format:
 {{

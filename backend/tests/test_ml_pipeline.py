@@ -9,6 +9,7 @@ Tests ml_prediction_service.py logic:
 - Test graceful failure when model file is missing
 Use pytest + pandas + numpy for synthetic data generation.
 """
+from datetime import UTC, datetime
 import pytest
 import numpy as np
 import pandas as pd
@@ -412,7 +413,6 @@ class TestPredictionResult:
         """PredictionResult should be creatable with required fields"""
         try:
             from services.ml_prediction_service import PredictionResult
-            from datetime import datetime
             
             pred = PredictionResult(
                 symbol="XAUUSD",
@@ -432,7 +432,7 @@ class TestPredictionResult:
                 volatility_regime="normal",
                 reasoning="Test reasoning",
                 key_levels={"support": 1990, "resistance": 2010},
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 model_version="1.0"
             )
             

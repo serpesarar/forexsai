@@ -4,7 +4,7 @@ Telegram Notification Service
 import logging
 import aiohttp
 from typing import Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class TelegramNotifier:
 {targets_text}
 
 💡 {prediction.get('reasoning', ['N/A'])[0] if prediction.get('reasoning') else 'N/A'}
-⏱️ {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}
+⏱️ {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}
 """
         return await self._send_message(message.strip(), chat_id)
     
@@ -95,7 +95,7 @@ class TelegramNotifier:
 🎯 {target_level}: <b>{pips:+.1f} pips</b>
 💰 Kar/Zarar: <b>${profit:+.2f}</b>
 
-⏱️ {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}
+⏱️ {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}
 """
         return await self._send_message(message.strip(), chat_id)
     
@@ -109,7 +109,7 @@ class TelegramNotifier:
 🛑 SL: <b>{pips:.1f} pips</b>
 💸 Zarar: <b>${loss:.2f}</b>
 
-⏱️ {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}
+⏱️ {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}
 """
         return await self._send_message(message.strip(), chat_id)
     

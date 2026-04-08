@@ -121,13 +121,13 @@ def test_plan_xauusd_ml_backfill_update_rebuilds_timeframe_targets_and_tp_hits()
 
     assert payload is not None
     assert payload["updates"]["timeframe"] == DESIRED_TIMEFRAME
-    assert payload["updates"]["stop_loss_pips"] == 19.0
-    assert payload["updates"]["targets"]["TP1"] == 2012.0
-    assert payload["updates"]["targets"]["TP2"] == 2019.0
-    assert payload["updates"]["targets"]["TP3"] == 2029.0
-    assert payload["updates"]["targets"]["TP4"] == 2044.0
-    assert payload["updates"]["targets"]["SL"] == 1981.0
-    assert payload["updates"]["targets_hit"] == {"TP1": True, "TP2": False, "TP3": False, "TP4": False}
+    assert payload["updates"]["stop_loss_pips"] == 15.0
+    assert payload["updates"]["targets"]["TP1"] == 2008.0
+    assert payload["updates"]["targets"]["TP2"] == 2015.0
+    assert payload["updates"]["targets"]["TP3"] == 2025.0
+    assert payload["updates"]["targets"]["TP4"] == 2040.0
+    assert payload["updates"]["targets"]["SL"] == 1985.0
+    assert payload["updates"]["targets_hit"] == {"TP1": True, "TP2": True, "TP3": False, "TP4": False}
 
 
 def test_run_xauusd_ml_history_backfill_dry_run_counts_only_ml_xauusd_rows():

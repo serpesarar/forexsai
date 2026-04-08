@@ -3,7 +3,7 @@ Centralized API Cache for EOD Historical Data
 Prevents duplicate API calls across services
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from threading import Lock
 from typing import Any, Dict, Optional, Tuple
 import hashlib
@@ -52,7 +52,7 @@ class APICache:
         Returns None if cache miss.
         """
         key = self._make_key(endpoint, params)
-        now = datetime.utcnow().timestamp()
+        now = datetime.now(timezone.utc).timestamp()
         
         with self._lock:
             cached = self._cache.get(key)
@@ -68,7 +68,7 @@ class APICache:
     def set(self, endpoint: str, params: Dict, data: Any) -> None:
         """Store response in cache"""
         key = self._make_key(endpoint, params)
-        now = datetime.utcnow().timestamp()
+        now = datetime.now(timezone.utc).timestamp()
         
         with self._lock:
             self._cache[key] = (now, data)
@@ -101,7 +101,7 @@ class APICache:
     
     def cleanup_expired(self, max_age: int = 3600) -> int:
         """Remove entries older than max_age seconds"""
-        now = datetime.utcnow().timestamp()
+        now = datetime.now(timezone.utc).timestamp()
         removed = 0
         
         with self._lock:

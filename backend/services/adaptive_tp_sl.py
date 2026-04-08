@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import logging
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass
@@ -485,7 +485,7 @@ async def save_failure_analysis(analysis: FailureAnalysis) -> bool:
             "fib_level_hit": analysis.fib_level_hit,
             "macd_divergence": analysis.macd_divergence,
             "recommendation": analysis.recommendation,
-            "created_at": datetime.utcnow().isoformat() + "Z"
+            "created_at": datetime.now(timezone.utc).isoformat() + "Z"
         }
         
         result = client.table("failure_analyses").insert(data).execute()

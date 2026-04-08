@@ -4,7 +4,7 @@ Simple TTL-based caching for trend analysis results
 """
 
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, timezone
 from threading import Lock
 from typing import Any, Optional, Dict
 
@@ -19,7 +19,7 @@ def get_cached(key: str) -> Optional[Any]:
             return None
         
         expiry, value = _cache[key]
-        now = datetime.utcnow().timestamp()
+        now = datetime.now(timezone.utc).timestamp()
         
         if now > expiry:
             del _cache[key]
@@ -31,7 +31,7 @@ def get_cached(key: str) -> Optional[Any]:
 def set_cached(key: str, value: Any, ttl: int = 300) -> None:
     """Set cache with TTL in seconds (default 5 minutes)"""
     with _cache_lock:
-        expiry = datetime.utcnow().timestamp() + ttl
+        expiry = datetime.now(timezone.utc).timestamp() + ttl
         _cache[key] = (expiry, value)
 
 
@@ -59,7 +59,7 @@ def clear_all() -> None:
 def get_cache_stats() -> dict:
     """Get cache statistics"""
     with _cache_lock:
-        now = datetime.utcnow().timestamp()
+        now = datetime.now(timezone.utc).timestamp()
         total = len(_cache)
         expired = sum(1 for _, (expiry, _) in _cache.items() if now > expiry)
         return {

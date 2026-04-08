@@ -5,7 +5,7 @@ import logging
 import re
 
 from config import settings
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import httpx
@@ -388,7 +388,7 @@ def _get_economic_calendar_flags() -> dict:
     
     # High-impact events schedule (simplified - in production use API)
     # These are typical recurring events
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     weekday = now.weekday()
     hour = now.hour
     
@@ -647,7 +647,7 @@ async def build_context_pack(symbol: str) -> Dict[str, Any]:
     }
 
     # Session context (market hours)
-    now_utc = datetime.utcnow()
+    now_utc = datetime.now(timezone.utc)
     hour_utc = now_utc.hour
     session = "closed"
     if 13 <= hour_utc < 21:  # US market hours (9:30-16:00 EST = 14:30-21:00 UTC)
@@ -687,7 +687,7 @@ async def build_context_pack(symbol: str) -> Dict[str, Any]:
 
     return {
         "symbol": normalized_symbol,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "context_pack_version": CONTEXT_PACK_VERSION,
         "ml_prediction": prediction_dict,
         "ta": ta,
@@ -840,7 +840,7 @@ def _fallback_detailed_analysis(context: Dict[str, Any]) -> Dict[str, Any]:
         "red_flags": ["Claude API unavailable - analysis quality reduced"],
         "gating_applied": ["fallback_mode"],
         "next_data_needed": ["Claude API connection for full analysis"],
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "model_used": "fallback",
         "engine_version": ANALYSIS_ENGINE_VERSION
     }
@@ -888,7 +888,7 @@ Remember:
 
         parsed = _parse_claude_json(response_text)
         if parsed is not None:
-            parsed["timestamp"] = parsed.get("timestamp") or (datetime.utcnow().isoformat() + "Z")
+            parsed["timestamp"] = parsed.get("timestamp") or datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
             parsed["model_used"] = parsed.get("model_used") or DEEPSEEK_MODEL
             parsed["engine_version"] = ANALYSIS_ENGINE_VERSION
             return parsed
@@ -907,7 +907,7 @@ Remember:
             "red_flags": ["DeepSeek response was not valid JSON - raw response logged"],
             "gating_applied": ["json_parse_failure"],
             "next_data_needed": ["Valid JSON response from DeepSeek"],
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "model_used": DEEPSEEK_MODEL,
             "engine_version": ANALYSIS_ENGINE_VERSION,
             "raw_response_preview": response_text[:500]

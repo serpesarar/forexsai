@@ -1,5 +1,6 @@
 from datetime import datetime
 import asyncio
+import importlib
 import time
 import os
 import sys
@@ -292,19 +293,25 @@ async def health_readiness():
     try:
         from database.supabase_client import get_auth_error, get_supabase_client, is_auth_failed
         client = get_supabase_client()
+        auth_failed = is_auth_failed()
+        auth_failed = auth_failed if isinstance(auth_failed, bool) else False
         if client:
             start = time.time()
             result = client.table("prediction_logs").select("id").limit(1).execute()
             latency = (time.time() - start) * 1000
             checks["db"] = result.get("error") is None
             checks["db_latency_ms"] = round(latency, 1)
-            if is_auth_failed():
+            if auth_failed:
                 checks["degraded"] = True
-                checks["db_auth_error"] = get_auth_error()
+                auth_error = get_auth_error()
+                if auth_error is not None:
+                    checks["db_auth_error"] = str(auth_error)[:200]
                 checks["db"] = False
-        elif is_auth_failed():
+        elif auth_failed:
             checks["degraded"] = True
-            checks["db_auth_error"] = get_auth_error()
+            auth_error = get_auth_error()
+            if auth_error is not None:
+                checks["db_auth_error"] = str(auth_error)[:200]
     except Exception as e:
         checks["db_error"] = str(e)[:100]
 
@@ -338,93 +345,66 @@ async def connection_stats():
 ROUTERS_LOADED = False
 IMPORT_ERROR = None
 
-# Try to import routers with error handling
 try:
-    from models.responses import HealthResponse, RunAllResponse
-    from routers import (
-        nasdaq,
-        xauusd,
-        usoil,
-        dax,
-        oil_baltic_intelligence,
-        pattern_engine,
-        patterns_stub,
-        claude_news,
-        claude_sentiment,
-        order_blocks,
-        rtyhiim,
-        ta,
-        data,
-        prediction,
-        ai_analysis,
-        learning,
-        fvg,
-        auth,
-        mtf_analysis,
-        trading_engine_test,
-        emel_pulse,
-        admin,
-        clear_trend,
-        deepseek_analysis,
-        websocket,
-        signal_lifecycle_router,
-        strategy_optimizer,
-        news_correlation,
-        rss_router,
-        prices,
-        economic_calendar_router,
-        meta_engine_router,
-    )
-    from services.data_fetcher import fetch_latest_price
-    from services.ml_service import run_nasdaq_signal, run_xauusd_signal
-    from services.pattern_engine_runner import run_pattern_engine
-    from services.sentiment_analyzer import run_claude_sentiment
-    from services.rtyhiim_service import run_rtyhiim_detector
-    from services.order_block_service import service as order_block_service
-    from order_block_detector import OrderBlockConfig
-
-    app.include_router(patterns_stub.router)
-    app.include_router(nasdaq.router)
-    app.include_router(xauusd.router)
-    app.include_router(usoil.router)
-    app.include_router(dax.router)
-    app.include_router(oil_baltic_intelligence.router)
-    app.include_router(pattern_engine.router)
-    app.include_router(claude_news.router)
-    app.include_router(claude_sentiment.router)
-    app.include_router(order_blocks.router)
-    app.include_router(rtyhiim.router)
-    app.include_router(ta.router)
-    app.include_router(data.router)
-    app.include_router(prediction.router)
-    app.include_router(ai_analysis.router)
-    app.include_router(learning.router)
-    app.include_router(fvg.router)
-    app.include_router(auth.router)
-    app.include_router(mtf_analysis.router)
-    app.include_router(trading_engine_test.router)
-    app.include_router(emel_pulse.router)
-    app.include_router(admin.router)
+    from routers import clear_trend
     app.include_router(clear_trend.router)
-    app.include_router(deepseek_analysis.router)
-    app.include_router(websocket.router)
-    app.include_router(signal_lifecycle_router.router)
-    app.include_router(strategy_optimizer.router)
-    app.include_router(news_correlation.router)
-    app.include_router(rss_router.router)
-    app.include_router(prices.router)
-    app.include_router(economic_calendar_router.router)
-    app.include_router(meta_engine_router.router)
-    from routers import permutation_router
-    app.include_router(permutation_router.router)
-    
-    ROUTERS_LOADED = True
 except Exception as e:
+    print(f"ERROR loading clear_trend router: {e}", file=sys.stderr)
+
+# Try to import routers with error handling
+router_errors = []
+router_module_names = [
+    "patterns_stub",
+    "nasdaq",
+    "xauusd",
+    "usoil",
+    "dax",
+    "oil_baltic_intelligence",
+    "pattern_engine",
+    "claude_news",
+    "claude_sentiment",
+    "order_blocks",
+    "rtyhiim",
+    "ta",
+    "data",
+    "prediction",
+    "ai_analysis",
+    "learning",
+    "fvg",
+    "auth",
+    "mtf_analysis",
+    "trading_engine_test",
+    "emel_pulse",
+    "admin",
+    "deepseek_analysis",
+    "websocket",
+    "signal_lifecycle_router",
+    "strategy_optimizer",
+    "news_correlation",
+    "rss_router",
+    "prices",
+    "economic_calendar_router",
+    "meta_engine_router",
+    "permutation_router",
+]
+
+for module_name in router_module_names:
+    try:
+        module = importlib.import_module(f"routers.{module_name}")
+        router = getattr(module, "router", None)
+        if router is None:
+            raise AttributeError("router attribute missing")
+        app.include_router(router)
+    except Exception as e:
+        router_errors.append(f"{module_name}: {e}")
+        print(f"ERROR loading router {module_name}: {e}", file=sys.stderr)
+
+if router_errors:
     ROUTERS_LOADED = False
-    IMPORT_ERROR = str(e)
-    IMPORT_TRACEBACK = traceback.format_exc()
-    print(f"ERROR loading routers: {e}", file=sys.stderr)
-    print(IMPORT_TRACEBACK, file=sys.stderr)
+    IMPORT_ERROR = "; ".join(router_errors[:5])
+    IMPORT_TRACEBACK = "\n".join(router_errors)
+else:
+    ROUTERS_LOADED = True
 
 @app.get("/api/debug")
 async def debug_info():

@@ -4,7 +4,7 @@ Son performansa göre dinamik confidence threshold
 """
 import logging
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 from .constants import ADAPTIVE_THRESHOLD_CONFIG
 
@@ -140,7 +140,9 @@ class AdaptiveThresholdManager:
             }
         
         cache = self._performance_cache[symbol]
-        ts = timestamp or datetime.utcnow()
+        ts = timestamp or datetime.now(timezone.utc)
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
         
         if is_win:
             cache['wins'] += 1
@@ -153,7 +155,7 @@ class AdaptiveThresholdManager:
         })
         
         # Son 7 günü tut
-        cutoff = datetime.utcnow() - timedelta(days=self.config['lookback_days'])
+        cutoff = datetime.now(timezone.utc) - timedelta(days=self.config['lookback_days'])
         cache['history'] = [h for h in cache['history'] if h['time'] > cutoff]
     
     def get_cached_performance(self, symbol: str) -> Optional[Dict[str, Any]]:

@@ -205,7 +205,7 @@ class TestTPSLCalculations:
     def test_xauusd_config_has_correct_pip_value(self):
         """XAUUSD config should have correct targets"""
         config = get_symbol_config("XAUUSD")
-        assert config.stoploss_pips == 8
+        assert config.stoploss_pips == 15
         assert len(config.targets) == 4
 
 

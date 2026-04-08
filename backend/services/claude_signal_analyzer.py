@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 import json
 from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Literal, Dict, Any
 
 import httpx
@@ -26,7 +26,7 @@ def _get_cached_analysis(symbol: str) -> Optional[Any]:
     """Get cached analysis if not expired."""
     if symbol in _analysis_cache:
         cached_at, result = _analysis_cache[symbol]
-        if datetime.now() - cached_at < timedelta(minutes=CACHE_TTL_MINUTES):
+        if datetime.now(timezone.utc) - cached_at < timedelta(minutes=CACHE_TTL_MINUTES):
             logger.info(f"Using cached analysis for {symbol}")
             return result
         else:
@@ -35,7 +35,7 @@ def _get_cached_analysis(symbol: str) -> Optional[Any]:
 
 def _set_cached_analysis(symbol: str, result: Any):
     """Cache analysis result with timestamp."""
-    _analysis_cache[symbol] = (datetime.now(), result)
+    _analysis_cache[symbol] = (datetime.now(timezone.utc), result)
 
 # DeepSeek R1 model
 DEEPSEEK_MODEL = "deepseek-reasoner"
@@ -366,7 +366,7 @@ def _parse_claude_response(prediction: dict, response: str) -> ClaudeAnalysisRes
         position_size_suggestion=pos_size,
         key_observations=observations[:5] if observations else ["Claude analizi tamamlandı"],
         risk_factors=weaknesses[:3],
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         model_used="claude-sonnet-4-5-20250514"
     )
 
@@ -540,7 +540,7 @@ def _fallback_analysis(prediction: dict, ta_data: dict = None) -> ClaudeAnalysis
         position_size_suggestion=pos_size,
         key_observations=observations[:5] if observations else ["Teknik göstergeler analiz edildi"],
         risk_factors=weaknesses[:3],
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         model_used="independent-ta-engine"
     )
 

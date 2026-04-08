@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { RefreshCw, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, XCircle, HelpCircle, X, Layers, Activity, Clock3, ChevronRight, Zap } from "lucide-react";
-import { useOrderBlockDetect } from "../lib/api/orderBlocks";
+import { useOrderBlockBacktest, useOrderBlockDetect } from "../lib/api/orderBlocks";
 import { useRefreshAge } from "../hooks/useRefreshAge";
 import { useI18nStore } from "../lib/i18n/store";
 import SMCPanel from "./panels/SMCPanel";
@@ -103,10 +103,11 @@ interface ApiResponse {
   choch_list?: CHoCH[];
   bos_list?: BOS[];
   fvg_list?: FVG[];
-  combined_signal?: { action: string; confidence: number; reasoning: string[] };
+  combined_signal?: { action: string; confidence: number; reasoning: string[]; reasons: string[] };
   trend?: string;
   support_resistance?: SupportResistanceData;
   timestamp?: string;
+  warning?: string;
 }
 
 interface OrderBlockPanelUnifiedProps {
@@ -129,8 +130,9 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
   }), [symbol, timeframe]);
 
   const { data, isLoading, isFetching, error, refetch } = useOrderBlockDetect(payload);
+  const backtestMutation = useOrderBlockBacktest();
 
-  const typedData = data as ApiResponse | undefined;
+  const typedData = data as unknown as ApiResponse | undefined;
   const analyzedAt = typedData?.timestamp || null;
   const { refreshAge, markRefreshed } = useRefreshAge(analyzedAt ? new Date(analyzedAt) : null);
 
@@ -173,6 +175,7 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
   const srMethodLabel = supportResistance?.method === "swing_cluster_fib"
     ? "Clustered swings + Fib fallback"
     : "Order block fallback";
+  const backtestError = backtestMutation.error instanceof Error ? backtestMutation.error.message : null;
 
   if (!isActive) return null;
 
@@ -229,6 +232,12 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
         </div>
       )}
 
+      {typedData?.warning && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+          {typedData.warning}
+        </div>
+      )}
+
       {/* Trend Indicator */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -260,6 +269,18 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
               <p className="text-xs text-textSecondary">Confidence</p>
             </div>
           </div>
+          {signal.reasons && signal.reasons.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {signal.reasons.map((reason, index) => (
+                <span
+                  key={`${reason}-${index}`}
+                  className="rounded-full border border-white/10 bg-white/10 px-2 py-1 text-[10px] font-medium text-white/90"
+                >
+                  {reason}
+                </span>
+              ))}
+            </div>
+          )}
           {signal.reasoning && signal.reasoning.length > 0 && (
             <div className="mt-3 pt-3 border-t border-white/10">
               <p className="text-xs text-textSecondary">{signal.reasoning[0]}</p>
@@ -267,6 +288,52 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
           )}
         </div>
       )}
+
+      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-white">Backtest Snapshot</p>
+            <p className="text-[11px] text-textSecondary">Historical order block signals over the latest 500 candles</p>
+          </div>
+          <button
+            onClick={() => backtestMutation.mutate({ symbol, timeframe, config: payload.config })}
+            disabled={backtestMutation.isPending}
+            className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs font-medium text-white transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${backtestMutation.isPending ? "animate-spin" : ""}`} />
+            {backtestMutation.isPending ? "Running..." : "Run Backtest"}
+          </button>
+        </div>
+
+        {backtestMutation.data && (
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+              <p className="text-[10px] uppercase tracking-wide text-textSecondary">Win Rate</p>
+              <p className="mt-1 text-xl font-bold text-emerald-400">{backtestMutation.data.win_rate}%</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+              <p className="text-[10px] uppercase tracking-wide text-textSecondary">Signals</p>
+              <p className="mt-1 text-xl font-bold text-white">{backtestMutation.data.total_signals}</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+              <p className="text-[10px] uppercase tracking-wide text-textSecondary">Wins</p>
+              <p className="mt-1 text-xl font-bold text-emerald-400">{backtestMutation.data.wins}</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+              <p className="text-[10px] uppercase tracking-wide text-textSecondary">Losses</p>
+              <p className="mt-1 text-xl font-bold text-red-400">{backtestMutation.data.losses}</p>
+            </div>
+          </div>
+        )}
+
+        {!backtestMutation.data && !backtestMutation.isPending && !backtestError && (
+          <p className="mt-3 text-xs text-textSecondary">Run the backtest to see win rate and resolved signal counts.</p>
+        )}
+
+        {backtestError && (
+          <p className="mt-3 text-xs text-red-400">{backtestError}</p>
+        )}
+      </div>
 
       {/* Destek/Direnç Zonları */}
       <div className="grid grid-cols-2 gap-3">

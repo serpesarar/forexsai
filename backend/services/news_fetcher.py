@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
 import httpx
@@ -15,7 +15,7 @@ async def fetch_economic_events(days: int = 7) -> List[Dict[str, str]]:
     if not settings.eodhd_api_key:
         return _sample_economic_events()
 
-    end_date = datetime.utcnow().date()
+    end_date = datetime.now(timezone.utc).date()
     start_date = end_date - timedelta(days=days)
     params = {
         "api_token": settings.eodhd_api_key,
@@ -108,10 +108,10 @@ def _to_float(value: Optional[str]) -> Optional[float]:
 
 
 def _sample_economic_events() -> List[Dict[str, str]]:
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     return [
         {
-            "date": (now - timedelta(hours=2)).isoformat() + "Z",
+            "date": (now - timedelta(hours=2)).isoformat().replace("+00:00", "Z"),
             "event": "Fed Interest Rate Decision",
             "impact": "High",
             "actual": "5.50%",
@@ -119,7 +119,7 @@ def _sample_economic_events() -> List[Dict[str, str]]:
             "previous": "5.25%",
         },
         {
-            "date": (now - timedelta(hours=4)).isoformat() + "Z",
+            "date": (now - timedelta(hours=4)).isoformat().replace("+00:00", "Z"),
             "event": "CPI (Core)",
             "impact": "Medium",
             "actual": "3.2%",
@@ -127,7 +127,7 @@ def _sample_economic_events() -> List[Dict[str, str]]:
             "previous": "3.4%",
         },
         {
-            "date": (now - timedelta(days=1)).isoformat() + "Z",
+            "date": (now - timedelta(days=1)).isoformat().replace("+00:00", "Z"),
             "event": "Housing Starts",
             "impact": "Low",
             "actual": "1.42M",
@@ -138,17 +138,17 @@ def _sample_economic_events() -> List[Dict[str, str]]:
 
 
 def _sample_market_news() -> List[Dict[str, str]]:
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     return [
         {
-            "date": (now - timedelta(minutes=45)).isoformat() + "Z",
+            "date": (now - timedelta(minutes=45)).isoformat().replace("+00:00", "Z"),
             "title": "Nasdaq rallies as mega-cap earnings beat expectations",
             "content": "Tech earnings sparked a broad market rally as investors rotated into growth.",
             "link": "https://example.com/market-news/nasdaq-rally",
             "symbols": ["NDX.INDX"],
         },
         {
-            "date": (now - timedelta(hours=6)).isoformat() + "Z",
+            "date": (now - timedelta(hours=6)).isoformat().replace("+00:00", "Z"),
             "title": "Gold steadies ahead of CPI report",
             "content": "Traders positioned cautiously ahead of inflation data and Fed commentary.",
             "link": "https://example.com/market-news/gold-steadies",

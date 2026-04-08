@@ -30,11 +30,11 @@ class TestXAUUSDPipCalculation:
         config = get_symbol_config("XAUUSD")
         assert config.pip_value == 1.0  # 1 pip = $1.00
         assert config.is_percentage == False
-        assert config.stoploss_pips == 8  # 8 pips = $8 SL
+        assert config.stoploss_pips == 15  # 15 pips = $15 SL
         
         # Verify targets
         target_pips = [t.pips for t in config.targets]
-        assert target_pips == [4, 7, 10, 17]  # TP1-4 in pips
+        assert target_pips == [8, 15, 25, 40]  # TP1-4 in pips
 
 
 class TestXAUUSDPriceFetching:
@@ -46,7 +46,7 @@ class TestXAUUSDPriceFetching:
         from services.data_fetcher import fetch_latest_price
         
         # Mock DataHub get_price
-        with patch("services.data_fetcher.get_price", return_value=2915.50):
+        with patch("services.data_hub.get_price", return_value=2915.50):
             price = await fetch_latest_price("XAUUSD")
             assert price == 2915.50
 
@@ -103,14 +103,14 @@ class TestXAUUSDEndToEnd:
     @pytest.mark.asyncio
     async def test_xauusd_lifecycle_check(self):
         """Full lifecycle check for XAUUSD signal"""
-        from services.signal_lifecycle import _check_single_signal
+        from services.signal_lifecycle import _process_signal
         
         mock_signal = {
             "id": "test-xau-123",
             "symbol": "XAUUSD",
             "ml_direction": "BUY",
             "ml_entry_price": 2900.00,
-            "targets": '{"TP1": 4, "TP2": 7, "TP3": 10, "TP4": 17}',
+            "targets": '{"TP1": 8, "TP2": 15, "TP3": 25, "TP4": 40}',
             "targets_hit": '{}',
             "highest_profit_pips": 0,
             "lowest_drawdown_pips": 0,
@@ -119,28 +119,27 @@ class TestXAUUSDEndToEnd:
         
         # Mock Supabase client
         mock_client = MagicMock()
-        mock_client.table.return_value.update.return_value.eq.return_value.execute = AsyncMock(
+        mock_client.table.return_value.update.return_value.eq.return_value.execute = MagicMock(
             return_value=MagicMock(data=[mock_signal])
         )
         
         # Mock price to be $10 higher than entry (should be 10 pips profit)
         with patch("services.signal_lifecycle.fetch_latest_price", AsyncMock(return_value=2910.00)):
             with patch("services.signal_lifecycle._update_signal_status") as mock_update:
-                with patch("services.signal_lifecycle.get_supabase_client", return_value=mock_client):
-                    result = await _check_single_signal(mock_signal)
+                result = await _process_signal(mock_client, mock_signal)
                     
-                    # Should return something (target hit or None for no target hit)
-                    # The key point: highest_profit_pips should be 10.0, not 0
+                # Should return something (target hit or None for no target hit)
+                # The key point: highest_profit_pips should be 10.0, not 0
                     
-                    # Check if _update_signal_status was called with correct highest_profit_pips
-                    if mock_update.called:
-                        call_args = mock_update.call_args
-                        update_data = call_args[0][2] if len(call_args[0]) > 2 else call_args[1].get('updates', {})
-                        
-                        # Verify highest_profit_pips is in update data and is correct
-                        if isinstance(update_data, dict) and 'highest_profit_pips' in update_data:
-                            assert update_data['highest_profit_pips'] == 10.0, \
-                                f"Expected highest_profit_pips=10.0, got {update_data['highest_profit_pips']}"
+                # Check if _update_signal_status was called with correct highest_profit_pips
+                if mock_update.called:
+                    call_args = mock_update.call_args
+                    update_data = call_args[0][2] if len(call_args[0]) > 2 else call_args[1].get('updates', {})
+                    
+                    # Verify highest_profit_pips is in update data and is correct
+                    if isinstance(update_data, dict) and 'highest_profit_pips' in update_data:
+                        assert update_data['highest_profit_pips'] == 10.0, \
+                            f"Expected highest_profit_pips=10.0, got {update_data['highest_profit_pips']}"
 
 
 if __name__ == "__main__":

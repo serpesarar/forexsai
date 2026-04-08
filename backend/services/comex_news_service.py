@@ -241,7 +241,7 @@ def parse_rss_date(date_str: str) -> datetime:
             continue
     
     # Fallback to now
-    return datetime.utcnow()
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 # =============================================================================
@@ -404,7 +404,7 @@ class COMEXNewsService:
             return value
         if isinstance(value, str) and value:
             return parse_rss_date(value)
-        return datetime.utcnow()
+        return datetime.now(timezone.utc).replace(tzinfo=None)
 
     def _generate_news_id(self, title: str, source: str) -> str:
         """Unique ID for deduplication"""
@@ -416,7 +416,7 @@ class COMEXNewsService:
         
         # Cache check
         if (self._last_fetch and 
-            datetime.utcnow() - self._last_fetch < self._cache_duration and
+            datetime.now(timezone.utc) - self._last_fetch < self._cache_duration and
             self._cache):
             return list(self._cache.values())
         
@@ -463,7 +463,7 @@ class COMEXNewsService:
                     pub_date = self._normalize_news_datetime(item.get("pub_date", ""))
                     
                     # Filter old news (>24h)
-                    if datetime.utcnow() - pub_date > timedelta(hours=24):
+                    if datetime.now(timezone.utc) - pub_date > timedelta(hours=24):
                         continue
                     
                     # Create news item
@@ -484,7 +484,7 @@ class COMEXNewsService:
         
         # Update cache
         self._cache = {n.id: n for n in all_news[:50]}  # Keep last 50
-        self._last_fetch = datetime.utcnow()
+        self._last_fetch = datetime.now(timezone.utc)
         
         return all_news[:50]
     
@@ -542,7 +542,7 @@ class COMEXNewsService:
                 recent_news=[],
                 high_impact_news=[],
                 ml_features=self._get_empty_features(),
-                last_update=datetime.utcnow(),
+                last_update=datetime.now(timezone.utc).replace(tzinfo=None),
                 news_count=0
             )
         
@@ -553,7 +553,7 @@ class COMEXNewsService:
             analyzed_news.append(analyzed)
         
         # Calculate time-weighted impact
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         total_impact = 0.0
         total_weight = 0.0
         high_impact_news = []

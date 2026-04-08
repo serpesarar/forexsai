@@ -16,7 +16,7 @@ import logging
 import re
 import time
 import math
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, field
 import httpx
@@ -747,21 +747,21 @@ async def validate_news_prediction(
 
 def _sample_gold_news_v2() -> List[Dict]:
     """Sample news for when API is unavailable"""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     return [
         {
             "title": "Federal Reserve signals potential rate changes ahead",
-            "date": now.isoformat(),
+            "date": now.isoformat().replace("+00:00", "Z"),
             "link": "https://reuters.com/fed-signals"
         },
         {
             "title": "Gold prices steady as investors await inflation data",
-            "date": (now - timedelta(hours=1)).isoformat(),
+            "date": (now - timedelta(hours=1)).isoformat().replace("+00:00", "Z"),
             "link": "https://bloomberg.com/gold-steady"
         },
         {
             "title": "Geopolitical tensions continue to support safe haven demand",
-            "date": (now - timedelta(hours=2)).isoformat(),
+            "date": (now - timedelta(hours=2)).isoformat().replace("+00:00", "Z"),
             "link": "https://cnbc.com/geopolitical"
         },
     ]

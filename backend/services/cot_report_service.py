@@ -19,7 +19,7 @@ Key Insights:
 import logging
 import io
 import csv
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional, Literal, List
 from dataclasses import dataclass, asdict, field
 from collections import deque
@@ -139,7 +139,7 @@ async def _fetch_cftc_file(url: str) -> Optional[str]:
 
     cached = _raw_file_cache.get(url)
     if cached:
-        age = datetime.utcnow() - cached["fetched_at"]
+        age = datetime.now(timezone.utc) - cached["fetched_at"]
         if age < RAW_CACHE_TTL:
             return cached["data"]
 
@@ -149,7 +149,7 @@ async def _fetch_cftc_file(url: str) -> Optional[str]:
             resp = await client.get(url)
             resp.raise_for_status()
             raw = resp.text
-            _raw_file_cache[url] = {"data": raw, "fetched_at": datetime.utcnow()}
+            _raw_file_cache[url] = {"data": raw, "fetched_at": datetime.now(timezone.utc)}
             logger.info(f"Fetched CFTC file from {url} ({len(raw)} bytes)")
             return raw
     except Exception as e:
@@ -220,7 +220,7 @@ def _parse_cftc_futures_only(raw_data: str, contract_info: Dict) -> Optional[Dic
                         
                         if len(position_vals) >= 4:
                             return {
-                                "report_date": report_date_str or datetime.utcnow().strftime("%Y-%m-%d"),
+                                "report_date": report_date_str or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
                                 "speculators_long": position_vals[0],
                                 "speculators_short": position_vals[1],
                                 "commercials_long": position_vals[2],
@@ -287,7 +287,8 @@ def _extract_from_named_row(row: Dict[str, str]) -> Optional[Dict]:
             if "date" in k.lower() and v.strip():
                 for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%Y%m%d"):
                     try:
-                        report_date = datetime.strptime(v.strip(), fmt).strftime("%Y-%m-%d")
+                        dt = datetime.strptime(v.strip(), fmt)
+                        report_date = dt.strftime("%Y-%m-%d")
                         break
                     except ValueError:
                         continue
@@ -295,7 +296,7 @@ def _extract_from_named_row(row: Dict[str, str]) -> Optional[Dict]:
                     break
         
         return {
-            "report_date": report_date or datetime.utcnow().strftime("%Y-%m-%d"),
+            "report_date": report_date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "speculators_long": safe_int(["noncommercial_long", "non-commercial_long", "non_commercial_long", "noncomm_long"]),
             "speculators_short": safe_int(["noncommercial_short", "non-commercial_short", "non_commercial_short", "noncomm_short"]),
             "commercials_long": safe_int(["commercial_long", "comm_long"]),
@@ -383,7 +384,7 @@ async def fetch_cot_data(symbol: str = "XAUUSD") -> COTData:
     if cache_key in _cot_cache:
         cached = _cot_cache[cache_key]
         try:
-            cache_age = datetime.utcnow() - datetime.fromisoformat(cached["fetched_at"].replace("Z", ""))
+            cache_age = datetime.now(timezone.utc) - datetime.fromisoformat(cached["fetched_at"].replace("Z", "+00:00"))
             if cache_age < timedelta(hours=6):
                 return COTData(**cached["data"])
         except Exception:
@@ -424,7 +425,7 @@ async def fetch_cot_data(symbol: str = "XAUUSD") -> COTData:
         data_source = "fallback"
         base = _FALLBACK_COT_DATA.get(normalized, _FALLBACK_COT_DATA["XAUUSD"])
         parsed = {
-            "report_date": datetime.utcnow().strftime("%Y-%m-%d"),
+            "report_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "speculators_long": base["speculators_long"],
             "speculators_short": base["speculators_short"],
             "commercials_long": base["commercials_long"],
@@ -448,7 +449,7 @@ def _build_cot_data(symbol: str, parsed: Dict, data_source: str) -> COTData:
     spec_net = spec_long - spec_short
 
     total_oi = parsed.get("total_open_interest", 0)
-    report_date = parsed.get("report_date", datetime.utcnow().strftime("%Y-%m-%d"))
+    report_date = parsed.get("report_date", datetime.now(timezone.utc).strftime("%Y-%m-%d"))
 
     total_spec = spec_long + spec_short
     spec_long_pct = (spec_long / total_spec * 100) if total_spec > 0 else 50.0
@@ -519,9 +520,9 @@ def _build_cot_data(symbol: str, parsed: Dict, data_source: str) -> COTData:
     # Cache
     _cot_cache[symbol] = {
         "data": asdict(cot),
-        "fetched_at": datetime.utcnow().isoformat() + "Z",
+        "fetched_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
-    _last_fetch = datetime.utcnow()
+    _last_fetch = datetime.now(timezone.utc)
 
     logger.info(
         f"COT {symbol} ({data_source}): Comm={comm_net:+,} Δ{comm_net_change:+,} | "

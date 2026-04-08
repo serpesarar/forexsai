@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock
 from typing import Dict, List, Optional, Any
@@ -17,204 +17,215 @@ from config import settings
 @dataclass
 class ConsolidationResult:
     """Yatay hareket (consolidation) tespit sonucu."""
-    is_consolidating: bool  # Yatay hareket var mı?
-    range_high: float  # Range üst sınırı
-    range_low: float  # Range alt sınırı
-    range_size: float  # Range boyutu (pips/points)
-    range_percent: float  # Range boyutu (% olarak)
-    midpoint: float  # Range orta noktası
-    current_price: float  # Anlık fiyat
-    position_in_range: float  # Fiyatın range içindeki pozisyonu (0-100%)
-    atr: float  # Average True Range
-    volatility_ratio: float  # ATR / Range oranı
-    consolidation_score: float  # Consolidation skoru (0-100)
-    candles_analyzed: int  # Analiz edilen mum sayısı
-    breakout_direction: Optional[str]  # Potansiyel kırılım yönü
-    # Swing point based detection
-    swing_highs: List[float]  # Tespit edilen tepe noktaları
-    swing_lows: List[float]  # Tespit edilen dip noktaları
-    swing_high_consistency: bool  # Tepeler tutarlı mı?
-    swing_low_consistency: bool  # Dipler tutarlı mı?
-    swing_count: int  # Toplam swing sayısı
-    high_deviation: float  # Tepeler arası maksimum sapma
-    low_deviation: float  # Dipler arası maksimum sapma
-    
+    is_consolidating: bool
+    range_high: float
+    range_low: float
+    range_size: float
+    range_percent: float
+    midpoint: float
+    current_price: float
+    position_in_range: float
+    atr: float
+    volatility_ratio: float
+    consolidation_score: float
+    candles_analyzed: int
+    breakout_direction: Optional[str]
+    swing_highs: List[float]
+    swing_lows: List[float]
+    swing_high_consistency: bool
+    swing_low_consistency: bool
+    swing_count: int
+    high_deviation: float
+    low_deviation: float
+
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 
 
 def _get_symbol_threshold(symbol: str) -> float:
-    """
-    Sembol bazlı sapma threshold'u döndür.
-    XAUUSD: 3 pip ($3)
-    NASDAQ: 15 point
-    """
     sym = symbol.upper()
     if "XAU" in sym or "GOLD" in sym:
-        return 3.0  # $3 for gold
-    elif "NDX" in sym or "NASDAQ" in sym or "NAS" in sym:
-        return 15.0  # 15 points for NASDAQ
-    elif "EUR" in sym or "GBP" in sym or "JPY" in sym:
-        return 0.0015  # 15 pips for forex
-    else:
-        return 10.0  # Default
+        return 3.0
+    if "NDX" in sym or "NASDAQ" in sym or "NAS" in sym:
+        return 15.0
+    if "EUR" in sym or "GBP" in sym or "JPY" in sym:
+        return 0.0015
+    return 10.0
 
 
-def _detect_swing_points(candles: List[Dict], lookback: int = 3) -> tuple:
-    """
-    Swing high ve swing low noktalarını tespit et.
-    
-    Swing High: Sağındaki ve solundaki N mumdan daha yüksek
-    Swing Low: Sağındaki ve solundaki N mumdan daha düşük
-    
-    Returns:
-        (swing_highs, swing_lows, swing_high_indices, swing_low_indices)
-    """
-    swing_highs = []
-    swing_lows = []
-    swing_high_indices = []
-    swing_low_indices = []
-    
-    highs = [c["high"] for c in candles]
-    lows = [c["low"] for c in candles]
-    
+def _detect_swing_points(candles: List[Dict[str, Any]], lookback: int = 3):
+    swing_highs: List[float] = []
+    swing_lows: List[float] = []
+    swing_high_indices: List[int] = []
+    swing_low_indices: List[int] = []
+    highs = [float(c["high"]) for c in candles]
+    lows = [float(c["low"]) for c in candles]
+
     for i in range(lookback, len(candles) - lookback):
-        # Swing High kontrolü
         is_swing_high = True
         for j in range(1, lookback + 1):
             if highs[i] <= highs[i - j] or highs[i] <= highs[i + j]:
                 is_swing_high = False
                 break
-        
         if is_swing_high:
             swing_highs.append(highs[i])
             swing_high_indices.append(i)
-        
-        # Swing Low kontrolü
+
         is_swing_low = True
         for j in range(1, lookback + 1):
             if lows[i] >= lows[i - j] or lows[i] >= lows[i + j]:
                 is_swing_low = False
                 break
-        
         if is_swing_low:
             swing_lows.append(lows[i])
             swing_low_indices.append(i)
-    
+
     return swing_highs, swing_lows, swing_high_indices, swing_low_indices
 
 
-def _check_swing_consistency(swing_points: List[float], threshold: float) -> tuple:
-    """
-    Swing noktalarının tutarlılığını kontrol et.
-    
-    Tüm noktalar arasındaki maksimum sapma threshold'dan küçükse tutarlı.
-    
-    Returns:
-        (is_consistent, max_deviation)
-    """
+def _check_swing_consistency(swing_points: List[float], threshold: float):
     if len(swing_points) < 2:
         return False, 0.0
-    
     max_deviation = max(swing_points) - min(swing_points)
-    is_consistent = max_deviation <= threshold
-    
-    return is_consistent, max_deviation
+    return max_deviation <= threshold, max_deviation
 
 
-async def detect_consolidation(
-    symbol: str,
-    lookback: int = 20,
-    interval: str = "1m"
-) -> ConsolidationResult:
-    """
-    Yatay hareket (consolidation/range) tespiti.
-    
-    İki yöntem kullanılır:
-    1. Swing Point Consistency: Tepe ve dip noktalarının belirli sapma içinde kalması
-    2. Statistical: ATR, slope, range analizi
-    
-    Args:
-        symbol: Trading sembolü
-        lookback: Kontrol edilecek mum sayısı (varsayılan: 20)
-        interval: Zaman dilimi (varsayılan: 1m)
-    
-    Returns:
-        ConsolidationResult: Yatay hareket analiz sonucu
-    """
-    # Intraday veri çek
-    candles = await fetch_intraday_candles(symbol, interval, lookback + 14)  # ATR için ekstra
-    
+def _calculate_atr_from_candles(candles: List[Dict[str, Any]], period: int = 14) -> float:
+    if len(candles) < period + 1:
+        return 0.0
+    tr_values: List[float] = []
+    for i in range(1, min(len(candles), period + 1)):
+        high = float(candles[i]["high"])
+        low = float(candles[i]["low"])
+        prev_close = float(candles[i - 1]["close"])
+        tr_values.append(max(high - low, abs(high - prev_close), abs(low - prev_close)))
+    return sum(tr_values) / len(tr_values) if tr_values else 0.0
+
+
+def _calculate_consolidation_score(
+    closes: List[float],
+    range_size: float,
+    atr: float,
+    volatility_ratio: float,
+    current_price: float,
+    midpoint: float,
+) -> float:
+    score = 0.0
+    if range_size > 0 and atr > 0:
+        atr_ratio = atr / range_size
+        if atr_ratio < 0.3:
+            score += 30
+        elif atr_ratio < 0.5:
+            score += 20
+        elif atr_ratio < 0.7:
+            score += 10
+
+    if range_size > 0:
+        distance_from_mid = abs(current_price - midpoint) / (range_size / 2)
+        if distance_from_mid < 0.3:
+            score += 20
+        elif distance_from_mid < 0.5:
+            score += 15
+        elif distance_from_mid < 0.7:
+            score += 10
+
+    if len(closes) >= 5:
+        x = np.arange(len(closes))
+        slope, _ = np.polyfit(x, closes, 1)
+        slope_pct = abs(float(slope) / float(np.mean(closes))) * 100
+        if slope_pct < 0.01:
+            score += 30
+        elif slope_pct < 0.05:
+            score += 20
+        elif slope_pct < 0.1:
+            score += 10
+
+    range_pct = (range_size / current_price) * 100 if current_price > 0 else 0
+    if range_pct < 0.5:
+        score += 20
+    elif range_pct < 1.0:
+        score += 15
+    elif range_pct < 2.0:
+        score += 10
+    return min(100.0, score)
+
+
+async def fetch_intraday_candles(symbol: str, interval: str = "1m", limit: int = 100) -> List[Dict[str, Any]]:
+    from services.data_fetcher import fetch_intraday_candles as _central_fetch
+    return await _central_fetch(symbol, interval=interval, limit=limit)
+
+
+async def fetch_live_prices(symbol: str, limit: int = 600) -> List[float]:
+    from services.data_fetcher import fetch_intraday_candles as _central_fetch
+    candles = await _central_fetch(symbol, interval="5m", limit=limit)
+    if candles:
+        return [float(c.get("close", 0)) for c in candles[-limit:]]
+
+    from services.data_fetcher import fetch_eod_candles
+    eod = await fetch_eod_candles(symbol, limit=limit)
+    if eod:
+        return [float(c.get("close", 0)) for c in eod[-limit:]]
+    return []
+
+
+async def detect_consolidation(symbol: str, lookback: int = 20, interval: str = "1m") -> ConsolidationResult:
+    candles = await fetch_intraday_candles(symbol, interval, lookback + 14)
     if not candles or len(candles) < lookback:
         return ConsolidationResult(
             is_consolidating=False,
-            range_high=0, range_low=0, range_size=0, range_percent=0,
-            midpoint=0, current_price=0, position_in_range=0,
-            atr=0, volatility_ratio=0, consolidation_score=0,
-            candles_analyzed=0, breakout_direction=None,
-            swing_highs=[], swing_lows=[],
-            swing_high_consistency=False, swing_low_consistency=False,
-            swing_count=0, high_deviation=0, low_deviation=0
+            range_high=0,
+            range_low=0,
+            range_size=0,
+            range_percent=0,
+            midpoint=0,
+            current_price=0,
+            position_in_range=0,
+            atr=0,
+            volatility_ratio=0,
+            consolidation_score=0,
+            candles_analyzed=0,
+            breakout_direction=None,
+            swing_highs=[],
+            swing_lows=[],
+            swing_high_consistency=False,
+            swing_low_consistency=False,
+            swing_count=0,
+            high_deviation=0,
+            low_deviation=0,
         )
-    
-    # Son N mumu al
+
     recent = candles[-lookback:]
-    
-    # OHLC değerlerini çıkar
-    highs = [c["high"] for c in recent]
-    lows = [c["low"] for c in recent]
-    closes = [c["close"] for c in recent]
-    
-    # Range hesapla
+    highs = [float(c["high"]) for c in recent]
+    lows = [float(c["low"]) for c in recent]
+    closes = [float(c["close"]) for c in recent]
     range_high = max(highs)
     range_low = min(lows)
     range_size = range_high - range_low
     current_price = closes[-1]
     midpoint = (range_high + range_low) / 2
     range_percent = (range_size / midpoint) * 100 if midpoint > 0 else 0
-    
-    # Fiyatın range içindeki pozisyonu (0-100%)
     position_in_range = ((current_price - range_low) / range_size * 100) if range_size > 0 else 50
-    
-    # ATR hesapla (14 periyot)
     atr = _calculate_atr_from_candles(candles, 14)
-    
-    # Volatility ratio
     volatility_ratio = (atr / range_size) if range_size > 0 else 0
-    
-    # === SWING POINT DETECTION ===
+
     threshold = _get_symbol_threshold(symbol)
     swing_highs, swing_lows, _, _ = _detect_swing_points(recent, lookback=2)
-    
-    # Swing tutarlılık kontrolü
     swing_high_consistent, high_deviation = _check_swing_consistency(swing_highs, threshold)
     swing_low_consistent, low_deviation = _check_swing_consistency(swing_lows, threshold)
-    
     total_swings = len(swing_highs) + len(swing_lows)
-    
-    # === CONSOLIDATION KARARI ===
-    # Yeni mantık: Her iki tarafta da tutarlı swing noktaları varsa ve minimum 4 swing varsa
-    swing_based_consolidation = (
-        swing_high_consistent and 
-        swing_low_consistent and 
-        total_swings >= 4
-    )
-    
-    # Statistical score (yedek olarak)
-    statistical_score = _calculate_consolidation_score(
-        closes, range_size, atr, volatility_ratio, current_price, midpoint
-    )
-    
-    # Final karar: Swing based öncelikli, statistical yedek
+    swing_based_consolidation = swing_high_consistent and swing_low_consistent and total_swings >= 4
+    statistical_score = _calculate_consolidation_score(closes, range_size, atr, volatility_ratio, current_price, midpoint)
+
     if swing_based_consolidation:
         is_consolidating = True
-        # Swing tutarlılığına göre score hesapla
-        consolidation_score = min(100, 60 + (total_swings * 5) + (20 if high_deviation < threshold/2 else 0) + (20 if low_deviation < threshold/2 else 0))
+        consolidation_score = min(
+            100,
+            60 + (total_swings * 5) + (20 if high_deviation < threshold / 2 else 0) + (20 if low_deviation < threshold / 2 else 0),
+        )
     else:
-        is_consolidating = statistical_score >= 70  # Daha yüksek threshold
+        is_consolidating = statistical_score >= 70
         consolidation_score = statistical_score
-    
-    # Breakout yönü tahmini
+
     breakout_direction = None
     if is_consolidating:
         if position_in_range > 70:
@@ -223,7 +234,7 @@ async def detect_consolidation(
             breakout_direction = "DOWN"
         else:
             breakout_direction = "NEUTRAL"
-    
+
     return ConsolidationResult(
         is_consolidating=is_consolidating,
         range_high=round(range_high, 4),
@@ -244,116 +255,8 @@ async def detect_consolidation(
         swing_low_consistency=swing_low_consistent,
         swing_count=total_swings,
         high_deviation=round(high_deviation, 4),
-        low_deviation=round(low_deviation, 4)
+        low_deviation=round(low_deviation, 4),
     )
-
-
-def _calculate_atr_from_candles(candles: List[Dict], period: int = 14) -> float:
-    """ATR hesapla."""
-    if len(candles) < period + 1:
-        return 0.0
-    
-    tr_values = []
-    for i in range(1, min(len(candles), period + 1)):
-        high = candles[i]["high"]
-        low = candles[i]["low"]
-        prev_close = candles[i - 1]["close"]
-        
-        tr = max(
-            high - low,
-            abs(high - prev_close),
-            abs(low - prev_close)
-        )
-        tr_values.append(tr)
-    
-    return sum(tr_values) / len(tr_values) if tr_values else 0.0
-
-
-def _calculate_consolidation_score(
-    closes: List[float],
-    range_size: float,
-    atr: float,
-    volatility_ratio: float,
-    current_price: float,
-    midpoint: float
-) -> float:
-    """
-    Consolidation skoru hesapla (0-100).
-    
-    Yüksek skor = Güçlü yatay hareket
-    """
-    score = 0.0
-    
-    # 1. Range/ATR oranı (max 30 puan)
-    # ATR'nin range'e oranı düşükse consolidation güçlü
-    if range_size > 0 and atr > 0:
-        atr_ratio = atr / range_size
-        if atr_ratio < 0.3:
-            score += 30
-        elif atr_ratio < 0.5:
-            score += 20
-        elif atr_ratio < 0.7:
-            score += 10
-    
-    # 2. Fiyat ortaya yakınlık (max 20 puan)
-    if range_size > 0:
-        distance_from_mid = abs(current_price - midpoint) / (range_size / 2)
-        if distance_from_mid < 0.3:
-            score += 20
-        elif distance_from_mid < 0.5:
-            score += 15
-        elif distance_from_mid < 0.7:
-            score += 10
-    
-    # 3. Trend düzlüğü (max 30 puan)
-    if len(closes) >= 5:
-        # Linear regression slope
-        x = np.arange(len(closes))
-        slope, _ = np.polyfit(x, closes, 1)
-        slope_pct = abs(slope / np.mean(closes)) * 100
-        
-        if slope_pct < 0.01:  # Çok düz
-            score += 30
-        elif slope_pct < 0.05:
-            score += 20
-        elif slope_pct < 0.1:
-            score += 10
-    
-    # 4. Range boyutu kontrolü (max 20 puan)
-    # Çok dar range = güçlü consolidation
-    range_pct = (range_size / current_price) * 100 if current_price > 0 else 0
-    if range_pct < 0.5:
-        score += 20
-    elif range_pct < 1.0:
-        score += 15
-    elif range_pct < 2.0:
-        score += 10
-    
-    return min(100.0, score)
-
-
-async def fetch_intraday_candles(symbol: str, interval: str = "1m", limit: int = 100) -> List[Dict]:
-    """Intraday mum verisi çek - uses centralized data_fetcher with caching."""
-    from services.data_fetcher import fetch_intraday_candles as _central_fetch
-    return await _central_fetch(symbol, interval=interval, limit=limit)
-
-
-async def fetch_live_prices(symbol: str, limit: int = 600) -> List[float]:
-    """Fetch live intraday prices for rhythm detection. Uses centralized cached data."""
-    from services.data_fetcher import fetch_intraday_candles as _central_fetch
-    
-    # Use 5m candles from centralized cache (much cheaper than 1m)
-    candles = await _central_fetch(symbol, interval="5m", limit=limit)
-    if candles:
-        return [float(c.get("close", 0)) for c in candles[-limit:]]
-    
-    # Fallback to EOD
-    from services.data_fetcher import fetch_eod_candles
-    eod = await fetch_eod_candles(symbol, limit=limit)
-    if eod:
-        return [float(c.get("close", 0)) for c in eod[-limit:]]
-    
-    return []
 
 
 def run_rtyhiim_detector(symbol: str, timeframe: str) -> Dict[str, object]:
@@ -373,7 +276,7 @@ def run_rtyhiim_detector(symbol: str, timeframe: str) -> Dict[str, object]:
         "symbol": symbol,
         "timeframe": timeframe,
         "state": state,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
 
 
@@ -384,18 +287,16 @@ async def run_rtyhiim_detector_async(symbol: str, timeframe: str) -> Dict[str, o
         "symbol": symbol,
         "timeframe": timeframe,
         "state": state,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
 
 
 async def _run_rhythm_engine_async(symbol: str) -> Dict[str, object]:
     """Async version that fetches live prices."""
     detector = _build_detector()
-    
-    # Fetch live prices
+
     prices = await fetch_live_prices(symbol, 600)
     if not prices or len(prices) < 50:
-        # Fallback to generated prices if live data unavailable
         prices = _generate_prices(600).tolist()
     
     for idx, price in enumerate(prices):

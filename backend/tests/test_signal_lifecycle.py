@@ -51,7 +51,7 @@ def mock_supabase_lifecycle():
     mock_table.limit.return_value = mock_table
     mock_table.order.return_value = mock_table
     mock_table.in_.return_value = mock_table
-    mock_table.execute = AsyncMock(return_value={"data": [], "error": None})
+    mock_table.execute = MagicMock(return_value={"data": [], "error": None})
     mock.table.return_value = mock_table
     return mock
 
@@ -226,7 +226,7 @@ class TestSignalStatusTransitions:
                 {"high": 2060.0, "low": 2040.0, "close": 2055.0}
             ])):
                 with patch('services.signal_lifecycle.fetch_latest_price', new=AsyncMock(return_value=2055.0)):
-                    mock_supabase_lifecycle.table.return_value.execute = AsyncMock(return_value={
+                    mock_supabase_lifecycle.table.return_value.execute = MagicMock(return_value={
                         "data": [mock_active_signal],
                         "error": None
                     })
@@ -263,7 +263,7 @@ class TestSignalStatusTransitions:
             with patch('services.signal_lifecycle.fetch_intraday_candles', new=AsyncMock(return_value=[
                 {"high": 2010.0, "low": 1990.0, "close": 2000.0}
             ])):
-                mock_supabase_lifecycle.table.return_value.execute = AsyncMock(return_value={
+                mock_supabase_lifecycle.table.return_value.execute = MagicMock(return_value={
                     "data": [old_signal],
                     "error": None
                 })

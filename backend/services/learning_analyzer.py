@@ -5,7 +5,7 @@ Analyzes prediction outcomes to identify patterns and improve future predictions
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Any, Dict, List, Optional
 from collections import defaultdict
@@ -38,7 +38,7 @@ async def analyze_factor_correlations(
     if client is None:
         return {"error": "Database client not available"}
     
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     cutoff_iso = cutoff.isoformat() + "Z"
     
     try:
@@ -134,7 +134,7 @@ async def analyze_factor_correlations(
             "sample_size": len(outcomes),
             "numeric_factors": numeric_analysis,
             "categorical_factors": categorical_analysis,
-            "generated_at": datetime.utcnow().isoformat() + "Z"
+            "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         }
         
     except Exception as e:

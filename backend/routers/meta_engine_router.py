@@ -17,7 +17,7 @@ router = APIRouter(prefix="/api/meta", tags=["Meta-Engine"])
 @router.get("/analyze/{symbol}")
 async def meta_analyze(
     symbol: str,
-    risk_profile: str = Query("balanced", regex="^(conservative|balanced|aggressive)$"),
+    risk_profile: str = Query("balanced", pattern="^(conservative|balanced|aggressive)$"),
     min_confidence: float = Query(40, ge=0, le=100),
 ):
     """

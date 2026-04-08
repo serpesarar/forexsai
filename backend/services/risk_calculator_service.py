@@ -8,7 +8,7 @@ NO DeepSeek/AI - Mathematical formulas only for instant results.
 import numpy as np
 from typing import Dict, Literal, Optional, List
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 @dataclass
@@ -404,7 +404,7 @@ async def calculate_risk_analysis(
         return {
             "error": "Insufficient candle data",
             "symbol": symbol,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
     current_price = _to_float(current_price, _to_float(candles[-1].get("close")))
@@ -412,7 +412,7 @@ async def calculate_risk_analysis(
         return {
             "error": "Invalid current price",
             "symbol": symbol,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     
     # Convert to numpy arrays
@@ -477,7 +477,7 @@ async def calculate_risk_analysis(
     
     return {
         "symbol": symbol,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "current_price": round(current_price, 2),
         "direction": direction,
         "atr_14": round(atr, 2),

@@ -18,7 +18,7 @@ import logging
 import os
 import json
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 import httpx
@@ -371,7 +371,7 @@ class TwitterMonitor:
             alert = TweetAlert(
                 author=username,
                 text=text,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 sentiment=analysis.get('sentiment', 'neutral'),
                 impact_level=analysis.get('impact_level', 'medium'),
                 confidence=analysis.get('confidence', 50) / 100,
@@ -423,7 +423,7 @@ class TwitterMonitor:
     
     def get_recent_alerts(self, minutes: int = 60) -> List[TweetAlert]:
         """Son X dakikadaki alert'leri getir"""
-        cutoff = datetime.utcnow() - timedelta(minutes=minutes)
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         return [a for a in self.alerts if a.timestamp > cutoff]
     
     def get_impact_summary(self) -> TwitterImpact:
@@ -438,7 +438,7 @@ class TwitterMonitor:
                 recent_tweets=[],
                 trump_sentiment=0.0,
                 fed_sentiment=0.0,
-                last_update=datetime.utcnow()
+                last_update=datetime.now(timezone.utc)
             )
         
         # Kategori bazlı sentiment
@@ -487,7 +487,7 @@ class TwitterMonitor:
             recent_tweets=recent[-10:],
             trump_sentiment=trump_sentiment,
             fed_sentiment=fed_sentiment,
-            last_update=datetime.utcnow()
+            last_update=datetime.now(timezone.utc)
         )
 
 

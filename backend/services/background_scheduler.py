@@ -7,7 +7,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Dict, Any, Optional, List
 
@@ -136,7 +136,7 @@ async def _get_macro_data() -> Dict[str, Any]:
     
     # Fallback: direct fetch with local cache (only before DataHub populates)
     global _last_macro_update, _cached_macro
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     if _last_macro_update and (now - _last_macro_update).total_seconds() < MACRO_UPDATE_INTERVAL and _cached_macro:
         return _cached_macro
     
@@ -184,7 +184,7 @@ async def update_symbol_data(symbol: str) -> Optional[Dict[str, Any]]:
         macro = await _get_macro_data()
         
         # Session info
-        now_utc = datetime.utcnow()
+        now_utc = datetime.now(timezone.utc)
         hour_utc = now_utc.hour
         session = "closed"
         if 13 <= hour_utc < 21:
@@ -264,7 +264,7 @@ async def update_symbol_data(symbol: str) -> Optional[Dict[str, Any]]:
         
         return {
             "symbol": symbol,
-            "updated_at": datetime.utcnow().isoformat() + "Z",
+            "updated_at": datetime.now(timezone.utc).isoformat() + "Z",
             "ml_prediction": ml_dict,
             "ta_snapshot": ta_snapshot,
             "current_price": float(current_price) if current_price else None,
@@ -283,7 +283,7 @@ async def update_news_if_needed(symbol: str) -> Optional[Dict[str, Any]]:
     """Update news only if enough time has passed or new news available."""
     global _last_news_update, _last_news_hash
     
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     last_update = _last_news_update.get(symbol)
     
     # Check if we need to update
@@ -343,7 +343,7 @@ async def save_to_cache(symbol: str, data: Dict[str, Any], news: Optional[Dict[s
         # Prepare cache data
         cache_data = {
             "symbol": symbol,
-            "updated_at": datetime.utcnow().isoformat() + "Z",
+            "updated_at": datetime.now(timezone.utc).isoformat() + "Z",
             "ml_prediction": json.dumps(data.get("ml_prediction", {})),
             "ta_snapshot": json.dumps(data.get("ta_snapshot", {})),
             "macro": json.dumps(data.get("macro", {})),
@@ -377,7 +377,7 @@ async def check_outcomes_if_needed():
     """Check prediction outcomes periodically."""
     global _last_outcome_check
     
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     # Check if we need to run outcome check
     if _last_outcome_check and (now - _last_outcome_check).total_seconds() < OUTCOME_CHECK_INTERVAL:
@@ -504,7 +504,7 @@ async def analyze_errors_if_needed():
     """Analyze failed predictions periodically (every hour)."""
     global _last_error_analysis
     
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     # Check if we need to run error analysis
     if _last_error_analysis and (now - _last_error_analysis).total_seconds() < ERROR_ANALYSIS_INTERVAL:
@@ -525,7 +525,7 @@ async def log_predictions_if_needed():
     """Log predictions to database periodically for learning system."""
     global _last_prediction_log
     
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     for symbol in TRACKED_SYMBOLS:
         # Check if we need to log for this symbol
@@ -592,6 +592,71 @@ async def log_predictions_if_needed():
             logger.error(f"Error auto-logging prediction for {symbol}: {e}")
 
 
+async def log_pulse_signals_if_needed():
+    """Check all Pulse/EMEL models for all symbols and log BUY/SELL signals.
+    Runs every PULSE_LOG_INTERVAL. Dedup handled by prediction_logger (active signal check)."""
+    global _last_pulse_log
+
+    now = datetime.now(timezone.utc)
+
+    for symbol in TRACKED_SYMBOLS:
+        last_log = _last_pulse_log.get(symbol)
+        if last_log and (now - last_log).total_seconds() < PULSE_LOG_INTERVAL:
+            continue
+
+        _last_pulse_log[symbol] = now
+
+        if not is_db_available():
+            continue
+
+        for model_type, tf in LEGACY_PULSE_LOG_TIMEFRAMES.items():
+            try:
+                await _check_and_log_pulse(symbol, model_type, None, tf)
+                await asyncio.sleep(0.3)
+            except Exception as e:
+                logger.error(f"{model_type} {tf} log error {symbol}: {e}")
+
+
+async def log_smc_signals_if_needed():
+    global _last_smc_log
+
+    now = datetime.now(timezone.utc)
+    if _last_smc_log and (now - _last_smc_log).total_seconds() < SMC_LOG_INTERVAL:
+        return
+
+    _last_smc_log = now
+
+    config = OrderBlockConfig(
+        fractal_period=2,
+        min_displacement_atr=1.0,
+        min_score=45,
+        zone_type="wick",
+        max_tests=3,
+    )
+
+    for symbol in TRACKED_SYMBOLS:
+        if not is_symbol_market_open(symbol, now):
+            continue
+        for timeframe in SMC_AUTO_LOG_TIMEFRAMES:
+            cadence_minutes = timeframe_cadence_minutes(timeframe) or max(int(SMC_LOG_INTERVAL / 60), 1)
+            last_scope_log = _resolve_last_smc_log_time(symbol, timeframe)
+            if last_scope_log and (now - last_scope_log).total_seconds() < cadence_minutes * 60:
+                continue
+            try:
+                await order_block_service.detect(
+                    symbol,
+                    timeframe,
+                    500,
+                    config,
+                    use_cache=False,
+                    log_signals=True,
+                )
+                _last_smc_scope_log[(symbol, timeframe)] = now
+                await asyncio.sleep(0.15)
+            except Exception as e:
+                logger.error(f"smc {symbol} {timeframe} log error: {e}")
+
+
 async def _log_pulse_signal(symbol: str, direction: str, confidence: float,
                            entry_price: float, model_type: str, strategy: str,
                            timeframe: str = "5m",
@@ -645,71 +710,6 @@ async def _log_pulse_signal(symbol: str, direction: str, confidence: float,
         import traceback
         logger.error(traceback.format_exc())
         return None
-
-
-async def log_pulse_signals_if_needed():
-    """Check all Pulse/EMEL models for all symbols and log BUY/SELL signals.
-    Runs every PULSE_LOG_INTERVAL. Dedup handled by prediction_logger (active signal check)."""
-    global _last_pulse_log
-
-    now = datetime.utcnow()
-
-    for symbol in TRACKED_SYMBOLS:
-        last_log = _last_pulse_log.get(symbol)
-        if last_log and (now - last_log).total_seconds() < PULSE_LOG_INTERVAL:
-            continue
-
-        _last_pulse_log[symbol] = now
-
-        if not is_db_available():
-            continue
-
-        for model_type, tf in LEGACY_PULSE_LOG_TIMEFRAMES.items():
-            try:
-                await _check_and_log_pulse(symbol, model_type, None, tf)
-                await asyncio.sleep(0.3)
-            except Exception as e:
-                logger.error(f"{model_type} {tf} log error {symbol}: {e}")
-
-
-async def log_smc_signals_if_needed():
-    global _last_smc_log
-
-    now = datetime.utcnow()
-    if _last_smc_log and (now - _last_smc_log).total_seconds() < SMC_LOG_INTERVAL:
-        return
-
-    _last_smc_log = now
-
-    config = OrderBlockConfig(
-        fractal_period=2,
-        min_displacement_atr=1.0,
-        min_score=45,
-        zone_type="wick",
-        max_tests=3,
-    )
-
-    for symbol in TRACKED_SYMBOLS:
-        if not is_symbol_market_open(symbol, now):
-            continue
-        for timeframe in SMC_AUTO_LOG_TIMEFRAMES:
-            cadence_minutes = timeframe_cadence_minutes(timeframe) or max(int(SMC_LOG_INTERVAL / 60), 1)
-            last_scope_log = _resolve_last_smc_log_time(symbol, timeframe)
-            if last_scope_log and (now - last_scope_log).total_seconds() < cadence_minutes * 60:
-                continue
-            try:
-                await order_block_service.detect(
-                    symbol,
-                    timeframe,
-                    500,
-                    config,
-                    use_cache=False,
-                    log_signals=True,
-                )
-                _last_smc_scope_log[(symbol, timeframe)] = now
-                await asyncio.sleep(0.15)
-            except Exception as e:
-                logger.error(f"smc {symbol} {timeframe} log error: {e}")
 
 
 async def _check_and_log_pulse(symbol: str, model_type: str, client, timeframe: str = "5m"):
@@ -766,125 +766,6 @@ async def _check_and_log_pulse(symbol: str, model_type: str, client, timeframe: 
         logger.error(f"{model_type} log error {symbol}: {e}")
 
 
-async def _check_and_catchup():
-    """On startup, check scheduler_state for stale jobs. If lifecycle_check
-    hasn't run in >10 min, force an immediate lifecycle pass. Non-blocking."""
-    if not is_db_available():
-        return
-    client = get_supabase_client()
-    if not client:
-        return
-    try:
-        result = client.table("scheduler_state").select(
-            "job_name, last_run_at"
-        ).eq("job_name", "lifecycle_check").limit(1).execute()
-        rows = safe_get_data(result)
-        if not rows:
-            return
-        last_run = rows[0].get("last_run_at")
-        if last_run:
-            from datetime import datetime, timezone
-            last_dt = datetime.fromisoformat(last_run.replace("Z", "+00:00"))
-            age_s = (datetime.now(timezone.utc) - last_dt).total_seconds()
-            if age_s > 600:  # >10 min stale
-                logger.info(f"scheduler.catchup | lifecycle_check stale ({age_s:.0f}s ago), running immediate pass")
-                await check_lifecycle_if_needed()
-            else:
-                logger.info(f"scheduler.catchup | lifecycle_check fresh ({age_s:.0f}s ago), no catch-up needed")
-        else:
-            logger.info("scheduler.catchup | lifecycle_check never ran, running immediate pass")
-            await check_lifecycle_if_needed()
-    except Exception as e:
-        logger.debug(f"scheduler.catchup error: {e}")
-
-
-async def background_scheduler_loop():
-    """Main background scheduler loop."""
-    global _scheduler_running
-    
-    if _scheduler_running:
-        logger.warning("Scheduler already running")
-        return
-    
-    _scheduler_running = True
-    logger.info("Background scheduler started")
-
-    # Non-blocking catch-up: check if jobs are stale from previous crash/restart
-    try:
-        await _check_and_catchup()
-    except Exception as e:
-        logger.debug(f"Catch-up error (non-fatal): {e}")
-    
-    while _scheduler_running:
-        try:
-            await run_update_cycle()
-            # Check outcomes periodically
-            await check_outcomes_if_needed()
-            # Signal lifecycle: price check every 3 min (internally gated)
-            await check_lifecycle_if_needed()
-            # Analyze errors periodically (self-learning)
-            await analyze_errors_if_needed()
-            # Log ML predictions every 15 min
-            await log_predictions_if_needed()
-            # Log Pulse/EMEL signals every 15 min
-            await log_pulse_signals_if_needed()
-            await log_smc_signals_if_needed()
-            from services.ai_panel_signal_logger import log_ai_panel_signals_if_needed
-            await log_ai_panel_signals_if_needed()
-        except Exception as e:
-            logger.error(f"Scheduler error: {e}")
-        
-        # Wait before next cycle
-        await asyncio.sleep(DATA_UPDATE_INTERVAL)
-    
-    logger.info("Background scheduler stopped")
-
-
-def start_scheduler():
-    """Start the background scheduler."""
-    asyncio.create_task(background_scheduler_loop())
-    logger.info("Background scheduler task created")
-
-
-def stop_scheduler():
-    """Stop the background scheduler."""
-    global _scheduler_running
-    _scheduler_running = False
-    logger.info("Background scheduler stop requested")
-
-
-async def get_cached_data(symbol: str) -> Optional[Dict[str, Any]]:
-    """Get cached data from Supabase."""
-    if not is_db_available():
-        return None
-    
-    client = get_supabase_client()
-    if not client:
-        return None
-    
-    try:
-        result = client.table("live_data_cache").select("*").eq("symbol", symbol).execute()
-        
-        if safe_get_data(result) and len(result["data"]) > 0:
-            row = result["data"][0]
-            return {
-                "symbol": row.get("symbol"),
-                "updated_at": row.get("updated_at"),
-                "ml_prediction": json.loads(row.get("ml_prediction", "{}")),
-                "ta_snapshot": json.loads(row.get("ta_snapshot", "{}")),
-                "macro": json.loads(row.get("macro", "{}")),
-                "session": json.loads(row.get("session", "{}")),
-                "volume": json.loads(row.get("volume", "{}")),
-                "volatility": json.loads(row.get("volatility", "{}")),
-                "news": json.loads(row.get("news", "{}")),
-                "context_pack": json.loads(row.get("context_pack", "{}")),
-            }
-        return None
-    except Exception as e:
-        logger.error(f"Error getting cached data for {symbol}: {e}")
-        return None
-
-
 # RSS Aggregation tracking
 _last_rss_update: Optional[datetime] = None
 RSS_UPDATE_INTERVAL = 420  # 7 minutes for RSS feeds (was 2 min)
@@ -894,7 +775,7 @@ async def run_rss_aggregation_if_needed():
     """Run RSS aggregation every 7 minutes (optimized for cost)"""
     global _last_rss_update
     
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     # Check if we need to run RSS aggregation
     if _last_rss_update and (now - _last_rss_update).total_seconds() < RSS_UPDATE_INTERVAL:
@@ -925,7 +806,7 @@ async def run_pattern_analysis_if_needed():
     """
     global _last_pattern_analysis
     
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     hour = now.hour
     minute = now.minute
     

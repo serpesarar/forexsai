@@ -8,7 +8,7 @@ EKSİK #1, #3, #10 entegrasyonu:
 - NULL signal detaylı sebepleri
 """
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from threading import Lock
 from typing import Dict, List, Optional, Any, Tuple
 from .constants import (
@@ -81,7 +81,7 @@ class SignalStateMachine:
     def can_trade(self) -> Tuple[bool, str]:
         """Trade yapılabilir mi?"""
         with self._lock:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             
             # Cooldown check
             if self.state.cooldown_until and now < self.state.cooldown_until:
@@ -113,7 +113,7 @@ class SignalStateMachine:
                 return True, "Aynı yön"
             
             # Time since last signal
-            time_since = (datetime.utcnow() - self.state.last_signal_time).seconds / 60
+            time_since = (datetime.now(timezone.utc) - self.state.last_signal_time).seconds / 60
             
             # Cooldown period check (relaxed for responsive dashboard)
             if time_since < 15:  # 15 dakika minimum (was 30)
@@ -147,7 +147,7 @@ class SignalStateMachine:
             
             direction = "LONG" if self.state.current_state == SignalState.LONG_SETUP else "SHORT"
             self.state.current_state = SignalState.LONG_ACTIVE if direction == "LONG" else SignalState.SHORT_ACTIVE
-            self.state.last_signal_time = datetime.utcnow()
+            self.state.last_signal_time = datetime.now(timezone.utc)
             self.state.last_signal_direction = direction
             self.state.last_signal_price = entry_price
             self.state.daily_trades += 1
@@ -171,7 +171,7 @@ class SignalStateMachine:
             else:
                 cooldown = COOLDOWN_AFTER_INVALIDATION
             
-            self.state.cooldown_until = datetime.utcnow() + timedelta(minutes=cooldown)
+            self.state.cooldown_until = datetime.now(timezone.utc) + timedelta(minutes=cooldown)
             self.state.current_state = SignalState.COOLDOWN
             self.state.active_setup = None
             
@@ -193,7 +193,7 @@ class SignalStateMachine:
     def _log(self, message: str):
         """State history log"""
         self.state.state_history.append({
-            "time": datetime.utcnow().isoformat(),
+            "time": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "state": self.state.current_state.name,
             "message": message
         })
@@ -220,7 +220,7 @@ class SignalStateMachine:
                 return True, None, None
             
             min_hours = MIN_SIGNAL_DURATION_HOURS.get(strategy, 4)
-            elapsed = (datetime.utcnow() - self.state.last_signal_time).total_seconds() / 3600
+            elapsed = (datetime.now(timezone.utc) - self.state.last_signal_time).total_seconds() / 3600
             
             if elapsed < min_hours:
                 remaining_hours = min_hours - elapsed

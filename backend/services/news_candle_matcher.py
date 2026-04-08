@@ -624,7 +624,7 @@ CANDIDATES:
             item["ai_reasoning_tr"] = str(ai_match.get("reasoning_tr") or "").strip()
             item["importance_level"] = ai_match.get("importance_level")
             item["importance_score"] = ai_match.get("importance_score")
-            item["ai_match_confidence"] = ai_confidence
+            item["ai_match_confidence"] = round(ai_confidence * 100)
             ordered.append(item)
             used_ids.add(news_id)
 

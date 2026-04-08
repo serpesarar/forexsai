@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 import httpx
@@ -160,8 +160,8 @@ async def fetch_economic_calendar() -> List[Dict]:
     if not settings.eodhd_api_key:
         return []
     
-    end_date = datetime.utcnow().date() + timedelta(days=7)
-    start_date = datetime.utcnow().date() - timedelta(days=1)
+    end_date = datetime.now(timezone.utc).date() + timedelta(days=7)
+    start_date = datetime.now(timezone.utc).date() - timedelta(days=1)
     
     params = {
         "api_token": settings.eodhd_api_key,
@@ -291,7 +291,7 @@ async def analyze_gold_news_impact() -> GoldNewsImpact:
 def _sample_gold_news() -> List[Dict]:
     """Sample news for when API is unavailable"""
     return [
-        {"title": "Federal Reserve signals potential rate changes ahead", "date": datetime.utcnow().isoformat()},
-        {"title": "Gold prices steady as investors await inflation data", "date": datetime.utcnow().isoformat()},
-        {"title": "Geopolitical tensions continue to support safe haven demand", "date": datetime.utcnow().isoformat()},
+        {"title": "Federal Reserve signals potential rate changes ahead", "date": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")},
+        {"title": "Gold prices steady as investors await inflation data", "date": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")},
+        {"title": "Geopolitical tensions continue to support safe haven demand", "date": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")},
     ]

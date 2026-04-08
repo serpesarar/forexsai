@@ -8,7 +8,7 @@ from fastapi import APIRouter, Query
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -1255,7 +1255,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
         if cached_response:
             return cached_response
 
-        response_timestamp = datetime.utcnow().isoformat()
+        response_timestamp = datetime.now(timezone.utc).isoformat()
         signal_timestamp = _resolve_signal_timestamp(symbol, response_timestamp)
 
         from services.ml_prediction_service import _compute_technical_indicators
@@ -1743,7 +1743,7 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bo
         if cached_response:
             return cached_response
 
-        response_timestamp = datetime.utcnow().isoformat()
+        response_timestamp = datetime.now(timezone.utc).isoformat()
         signal_timestamp = _resolve_signal_timestamp(symbol, response_timestamp)
 
         from services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
@@ -2159,13 +2159,13 @@ def _cache_get(key: str, max_age_seconds: int) -> Any:
     """Get from cache if not expired"""
     if key in _pulse3_cache:
         data, ts = _pulse3_cache[key]
-        if (datetime.now() - ts).total_seconds() < max_age_seconds:
+        if (datetime.now(timezone.utc) - ts).total_seconds() < max_age_seconds:
             return data
     return None
 
 def _cache_set(key: str, data: Any):
     """Store in cache with timestamp"""
-    _pulse3_cache[key] = (data, datetime.now())
+    _pulse3_cache[key] = (data, datetime.now(timezone.utc))
 
 
 async def _fetch_tf_data(symbol: str, tf: str, limit: int, cache_seconds: int):
@@ -2415,7 +2415,7 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
         if cached_response:
             return cached_response
 
-        response_timestamp = datetime.utcnow().isoformat()
+        response_timestamp = datetime.now(timezone.utc).isoformat()
         signal_timestamp = _resolve_signal_timestamp(symbol, response_timestamp)
 
         from services.ml_prediction_service import _compute_technical_indicators

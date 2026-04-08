@@ -9,7 +9,7 @@ import hashlib
 import html
 import json
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional, Set, Any
 from dataclasses import dataclass
 import aiohttp
@@ -398,7 +398,7 @@ class RSSAggregator:
         # Check if source is paused due to failures
         if self.failed_sources.get(source_name, 0) >= 3:
             last_fail = self.last_fetch.get(source_name)
-            if last_fail and datetime.utcnow() - last_fail < timedelta(minutes=30):
+            if last_fail and datetime.now(timezone.utc) - last_fail < timedelta(minutes=30):
                 print(f"[RSS] {source_name} is paused due to repeated failures")
                 return []
             # Reset failure count after pause
@@ -408,7 +408,7 @@ class RSSAggregator:
         last_fetch = self.last_fetch.get(source_name)
         min_interval = source_config.get("fetch_interval", 120)
         
-        if last_fetch and (datetime.utcnow() - last_fetch).seconds < min_interval:
+        if last_fetch and (datetime.now(timezone.utc) - last_fetch).seconds < min_interval:
             return []
         
         try:
@@ -427,7 +427,7 @@ class RSSAggregator:
                     print(f"[RSS] {source_name} parse warning: {feed.bozo_exception}")
                 
                 # Update tracking
-                self.last_fetch[source_name] = datetime.utcnow()
+                self.last_fetch[source_name] = datetime.now(timezone.utc)
                 self.failed_sources[source_name] = 0
                 
                 # Process entries
@@ -479,10 +479,10 @@ class RSSAggregator:
                     published = feedparser._parse_date(item_data["published"])
                     published_dt = datetime(*published[:6])
                 except:
-                    published_dt = datetime.utcnow()
+                    published_dt = datetime.now(timezone.utc)
                 
                 # Skip old news (> 48 hours)
-                if datetime.utcnow() - published_dt > timedelta(hours=48):
+                if datetime.now(timezone.utc) - published_dt > timedelta(hours=48):
                     continue
                 
                 # Generate ID
@@ -509,7 +509,7 @@ class RSSAggregator:
                     source=source_name,
                     original_url=item_data["link"],
                     published_at=published_dt,
-                    fetched_at=datetime.utcnow(),
+                    fetched_at=datetime.now(timezone.utc),
                     title=item_data["title"],
                     content=self._truncate_content(item_data.get("summary", "")),
                     category=RSS_SOURCES[source_name]["category"],
@@ -610,7 +610,7 @@ class RSSAggregator:
                 item.importance_reason = cached_result.get("importance_reason", "")
                 item.ai_model = cached_result.get("ai_model", "deepseek-reasoner")
                 item.ai_processed = True
-                item.processed_at = datetime.utcnow()
+                item.processed_at = datetime.now(timezone.utc)
                 return item
             else:
                 print(f"[RSS] CACHE BYPASS (fallback/partial payload): {item.title[:50]}...")
@@ -683,7 +683,7 @@ class RSSAggregator:
                     "symbol": imp.symbol,
                     "direction": imp.direction,
                     "score": imp.score,
-                    "confidence": imp.confidence,
+                    "confidence": min(0.62, max(0.38, 0.32 + (imp.score * 0.04))),
                     "reasoning": imp.reasoning,
                     "reasoning_tr": imp.reasoning_tr,
                     "emoji": "📈" if imp.direction == "bullish" else "📉" if imp.direction == "bearish" else "➡️",
@@ -712,7 +712,7 @@ class RSSAggregator:
                 item.urgency = "high"
 
             item.ai_processed = True
-            item.processed_at = datetime.utcnow()
+            item.processed_at = datetime.now(timezone.utc)
             
             # STEP 3: Store in cache (2 hours TTL)
             cache_data = {
@@ -836,7 +836,7 @@ class RSSAggregator:
             item.urgency = "high" if best_rule["volatility"] == "high" else "medium"
             item.ai_confidence = min(0.58, max(0.38, 0.3 + (max_rule_score * 0.03)))
             item.ai_processed = True
-            item.processed_at = datetime.utcnow()
+            item.processed_at = datetime.now(timezone.utc)
             base_importance_score = int(max_rule_score * 10)
             if item.urgency == "high":
                 base_importance_score += 10
@@ -866,7 +866,7 @@ class RSSAggregator:
 
         # No rules matched
         item.ai_processed = True
-        item.processed_at = datetime.utcnow()
+        item.processed_at = datetime.now(timezone.utc)
         item.urgency = "low"
         item.impacts = []
         item.importance_level = "low"
@@ -1049,7 +1049,7 @@ class RSSAggregator:
                 "volatility_expectation": item.volatility_expectation,
                 "event_duration": "short_term",
                 "ai_confidence": item.ai_confidence * 100,
-                "analysis_timestamp": datetime.utcnow().isoformat(),
+                "analysis_timestamp": datetime.now(timezone.utc).isoformat(),
                 "urgency": item.urgency,
                 "duplicate_of": item.duplicate_of,
                 "sources": item.sources,
@@ -1067,6 +1067,8 @@ class RSSAggregator:
             optional_columns = ["importance_level", "importance_score", "importance_reason", "ai_model"]
             try:
                 result = supabase.table("enriched_news").insert(data)
+                if hasattr(result, "execute") and callable(result.execute):
+                    result = result.execute()
                 if isinstance(result, dict) and result.get("error"):
                     raise Exception(result["error"])
                 print(f"[RSS] ✓ Saved to DB: {item.id[:40]}... - {item.title[:60]}...")
@@ -1078,25 +1080,19 @@ class RSSAggregator:
                 # Log which columns might be missing
                 if "column" in error_msg.lower() and "does not exist" in error_msg.lower():
                     print(f"[RSS]   → Missing column error! Retrying without optional columns...")
-                    legacy_data = {k: v for k, v in data.items() if k not in optional_columns}
-                    try:
-                        legacy_result = supabase.table("enriched_news").insert(legacy_data)
-                        if isinstance(legacy_result, dict) and legacy_result.get("error"):
-                            raise Exception(legacy_result["error"])
-                        print(f"[RSS] ✓ Saved to DB (legacy mode): {item.id[:40]}... - {item.title[:60]}...")
-                        return True
-                    except Exception as legacy_error:
-                        print(f"[RSS]   → Legacy insert failed: {legacy_error}")
-                elif "constraint" in error_msg.lower():
-                    print(f"[RSS]   → Constraint violation!")
+                    retry_data = {key: value for key, value in data.items() if key not in optional_columns}
+                    retry_result = supabase.table("enriched_news").insert(retry_data)
+                    if hasattr(retry_result, "execute") and callable(retry_result.execute):
+                        retry_result = retry_result.execute()
+                    if isinstance(retry_result, dict) and retry_result.get("error"):
+                        raise Exception(retry_result["error"])
+                    print(f"[RSS] ✓ Saved to DB without optional columns: {item.id[:40]}... - {item.title[:60]}...")
+                    return True
                 return False
-            
         except Exception as e:
-            print(f"[RSS] Database error (outer): {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"[RSS] Database store error: {e}")
             return False
-    
+
     async def run_aggregation_cycle(self) -> Dict[str, Any]:
         """Run one full aggregation cycle"""
         stats = {
@@ -1107,6 +1103,9 @@ class RSSAggregator:
             "rule_based": 0,
             "errors": 0,
         }
+        if not RSS_AGGREGATION_ENABLED:
+            print("[RSS] Aggregation disabled, skipping DeepSeek analysis and Supabase writes")
+            return stats
         
         try:
             supabase = get_supabase_client()

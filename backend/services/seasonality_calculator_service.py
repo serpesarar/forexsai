@@ -7,7 +7,7 @@ NO DeepSeek/AI - Pure SQL aggregation for instant results.
 
 import numpy as np
 from typing import Dict, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 
 
@@ -314,7 +314,7 @@ async def calculate_seasonality(symbol: str, candles: list = None) -> dict:
     Returns:
         Seasonality analysis as dict (JSON serializable)
     """
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     current_month = now.month
     current_dow = now.weekday()
     current_quarter = f"Q{(current_month - 1) // 3 + 1}"

@@ -46,6 +46,7 @@ class CHoCH:
     price: float
     prev_swing: float
     strength: str  # "strong", "moderate", "weak"
+    candle_index_ago: int = 0  # How many candles ago this CHoCH occurred
     
     def to_dict(self):
         return {
@@ -54,7 +55,8 @@ class CHoCH:
             "index": self.index,
             "price": round(self.price, 2),
             "prev_swing": round(self.prev_swing, 2),
-            "strength": self.strength
+            "strength": self.strength,
+            "candle_index_ago": self.candle_index_ago
         }
 
 
@@ -89,6 +91,11 @@ class FVG:
     filled: bool
     fill_percentage: float
     
+    @property
+    def mid(self):
+        """Midpoint of the FVG zone"""
+        return (self.high + self.low) / 2
+    
     def to_dict(self):
         return {
             "detected": True,
@@ -97,7 +104,8 @@ class FVG:
             "low": round(self.low, 2),
             "size": round(self.size, 2),
             "filled": self.filled,
-            "fill_percentage": round(self.fill_percentage, 1)
+            "fill_percentage": round(self.fill_percentage, 1),
+            "mid": round(self.mid, 2)
         }
 
 
@@ -119,6 +127,7 @@ class OrderBlock:
         return {
             "detected": True,
             "type": self.type,
+            "index": self.index,
             "zone_low": round(self.zone_low, 2),
             "zone_high": round(self.zone_high, 2),
             "score": self.score,
@@ -239,7 +248,8 @@ class CHoCHDetector:
                         type="bullish",
                         price=highs[i].price,
                         prev_swing=highs[i-1].price,
-                        strength=strength
+                        strength=strength,
+                        candle_index_ago=len(candles) - 1 - idx
                     ))
             
             # Bearish CHoCH: Lower low after higher lows — must be in a prior uptrend
@@ -257,7 +267,8 @@ class CHoCHDetector:
                         type="bearish",
                         price=lows[i].price,
                         prev_swing=lows[i-1].price,
-                        strength=strength
+                        strength=strength,
+                        candle_index_ago=len(candles) - 1 - idx
                     ))
         
         return choch_list
@@ -475,13 +486,14 @@ class OrderBlockDetector:
                     strength = "strong" if score > 70 else "moderate" if score > 50 else "weak"
                     
                     # Check tested/mitigated using ONLY the current (last) candle
-                    # No future look-ahead: we only know the latest price state
+                    # Mitigated = CLOSE below zone (confirmed break)
+                    # Tested = wick into zone OR sweep below zone with close back inside
                     last_candle = candles[-1]
                     tested = False
                     mitigated = False
-                    if last_candle.low <= c_current.low:
+                    if last_candle.close < c_current.low:
                         mitigated = True
-                    elif last_candle.low <= c_current.high and last_candle.low >= c_current.low:
+                    elif last_candle.low <= c_current.high:
                         tested = True
                     
                     ob_list.append(OrderBlock(
@@ -508,12 +520,14 @@ class OrderBlockDetector:
                     strength = "strong" if score > 70 else "moderate" if score > 50 else "weak"
                     
                     # Check tested/mitigated using ONLY the current (last) candle
+                    # Mitigated = CLOSE above zone (confirmed break)
+                    # Tested = wick into zone OR sweep above zone with close back inside
                     last_candle = candles[-1]
                     tested = False
                     mitigated = False
-                    if last_candle.high >= c_current.high:
+                    if last_candle.close > c_current.high:
                         mitigated = True
-                    elif last_candle.high >= c_current.low and last_candle.high <= c_current.high:
+                    elif last_candle.high >= c_current.low:
                         tested = True
                     
                     ob_list.append(OrderBlock(

@@ -8,7 +8,7 @@ NO DeepSeek/AI - Pure geometric calculation for instant results.
 import numpy as np
 from typing import List, Dict, Literal, Optional
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 @dataclass
@@ -142,7 +142,7 @@ def detect_order_blocks(
                     strength=strength,
                     status=status,
                     timeframe="H1",
-                    created_at=datetime.utcnow().isoformat()
+                    created_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
                 ))
         
         # Bearish Order Block: Bullish candle before strong bearish move
@@ -170,7 +170,7 @@ def detect_order_blocks(
                     strength=strength,
                     status=status,
                     timeframe="H1",
-                    created_at=datetime.utcnow().isoformat()
+                    created_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
                 ))
     
     # Sort by strength and recency
@@ -562,7 +562,7 @@ async def calculate_smc(symbol: str, candles: list) -> dict:
     # Convert to dict format
     return {
         "symbol": symbol,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "market_structure": market_structure,
         "order_blocks": [
             {

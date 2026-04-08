@@ -32,7 +32,7 @@ def mock_supabase_auth():
     mock_table.update.return_value = mock_table
     mock_table.eq.return_value = mock_table
     mock_table.limit.return_value = mock_table
-    mock_table.execute = AsyncMock(return_value={"data": [], "error": None})
+    mock_table.execute = MagicMock(return_value={"data": [], "error": None})
     mock.table.return_value = mock_table
     
     mock_auth = MagicMock()
@@ -71,10 +71,10 @@ class TestRegister:
     
     def test_register_valid_payload_returns_success(self, test_client, mock_supabase_auth):
         """POST /api/auth/signup with valid payload → success"""
-        mock_supabase_auth.table.return_value.select.return_value.eq.return_value.execute = AsyncMock(
+        mock_supabase_auth.table.return_value.select.return_value.eq.return_value.execute = MagicMock(
             return_value={"data": [], "error": None}
         )
-        mock_supabase_auth.table.return_value.insert.return_value.execute = AsyncMock(
+        mock_supabase_auth.table.return_value.insert.return_value.execute = MagicMock(
             return_value={"data": [{"id": "user-123", "referral_code": "REF123"}], "error": None}
         )
         
@@ -93,7 +93,7 @@ class TestRegister:
     
     def test_register_duplicate_email_returns_400(self, test_client, mock_supabase_auth):
         """POST /api/auth/signup with duplicate email → 400"""
-        mock_supabase_auth.table.return_value.select.return_value.eq.return_value.execute = AsyncMock(
+        mock_supabase_auth.table.return_value.select.return_value.eq.return_value.execute = MagicMock(
             return_value={"data": [{"id": "existing-user", "email": "test@example.com"}], "error": None}
         )
         
@@ -110,7 +110,7 @@ class TestLogin:
     
     def test_login_valid_credentials_returns_jwt(self, test_client, mock_supabase_auth):
         """POST /api/auth/login with valid credentials → returns JWT token"""
-        mock_supabase_auth.table.return_value.select.return_value.eq.return_value.execute = AsyncMock(
+        mock_supabase_auth.table.return_value.select.return_value.eq.return_value.execute = MagicMock(
             return_value={
                 "data": [{
                     "id": "user-123",
@@ -145,7 +145,7 @@ class TestLogin:
     
     def test_login_wrong_password_returns_401(self, test_client, mock_supabase_auth):
         """POST /api/auth/login with wrong password → 401"""
-        mock_supabase_auth.table.return_value.select.return_value.eq.return_value.execute = AsyncMock(
+        mock_supabase_auth.table.return_value.select.return_value.eq.return_value.execute = MagicMock(
             return_value={
                 "data": [{
                     "id": "user-123",
@@ -173,7 +173,7 @@ class TestMe:
     
     def test_me_with_valid_token_returns_user(self, test_client, mock_supabase_auth):
         """GET /api/auth/me with valid token → user object"""
-        with patch('services.auth_service.validate_session', new=AsyncMock(return_value=MagicMock(
+        with patch('routers.auth.validate_session', new=AsyncMock(return_value=MagicMock(
             id="user-123",
             email="test@example.com",
             full_name="Test User",

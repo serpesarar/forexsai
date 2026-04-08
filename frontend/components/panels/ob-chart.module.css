@@ -1,0 +1,203 @@
+/* ═══ Order Block Chart Panel ═══ */
+.wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 520px;
+  background: var(--bg-card);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+.symbolBtn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.symbolBtn:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+.symbolBtnActive {
+  background: var(--accent-info);
+  color: #fff;
+  border-color: var(--accent-info);
+}
+
+.tfBtn {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.tfBtn:hover {
+  color: var(--text-primary);
+}
+.tfBtnActive {
+  background: rgba(var(--accent-info-rgb, 59, 130, 246), 0.2);
+  color: var(--accent-info);
+  border-color: var(--accent-info);
+}
+
+.separator {
+  width: 1px;
+  height: 20px;
+  background: var(--border-subtle);
+  margin: 0 4px;
+}
+
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.legendDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 3px;
+  vertical-align: middle;
+}
+
+.chartContainer {
+  flex: 1;
+  position: relative;
+  min-height: 400px;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.signalBadge {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  z-index: 3;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.signalBuy {
+  background: rgba(38, 166, 154, 0.25);
+  color: #26a69a;
+  border: 1px solid rgba(38, 166, 154, 0.4);
+}
+.signalSell {
+  background: rgba(239, 83, 80, 0.25);
+  color: #ef5350;
+  border: 1px solid rgba(239, 83, 80, 0.4);
+}
+.signalNeutral {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.trendTag {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 3;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.trendBullish {
+  background: rgba(38, 166, 154, 0.15);
+  color: #26a69a;
+}
+.trendBearish {
+  background: rgba(239, 83, 80, 0.15);
+  color: #ef5350;
+}
+.trendRanging {
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 400px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.statsBar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 12px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-subtle);
+  font-size: 10px;
+  color: var(--text-muted);
+  overflow-x: auto;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.statValue {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.fullscreenBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+.fullscreenBtn:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}

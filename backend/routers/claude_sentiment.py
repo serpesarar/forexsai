@@ -31,5 +31,5 @@ async def analyze_patterns(symbol: str = Query(default="NDX.INDX"), lang: str = 
         "patterns": [],
         "summary": "Pattern analysis temporarily unavailable",
         "message": "Pattern analyzer v2 is being developed",
-        "timestamp": __import__("datetime").datetime.utcnow().isoformat() + "Z"
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
     }

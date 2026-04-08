@@ -707,7 +707,7 @@ function toFallbackMatchedItem(item: EnrichedNews, selectedSymbol: string): Matc
     importance_score: item.importanceScore,
     importance_reason: item.importanceReason,
     ai_model: item.aiModel,
-    ai_match_confidence: item.aiConfidence ? item.aiConfidence / 100 : 0,
+    ai_match_confidence: item.aiConfidence ? normalizeAiConfidence(item.aiConfidence) / 100 : 0,
     url: item.url || "",
   };
 }
@@ -759,11 +759,11 @@ function markerToMatchedItem(
     reasoning_tr: marker.reasoning_tr || "",
     event_id: marker.event_id || undefined,
     affected_symbols: [selectedSymbol],
-    relevance_score: typeof marker.ai_confidence === "number" ? Math.max(0.3, Math.min(0.95, marker.ai_confidence / 100)) : 0.75,
+    relevance_score: typeof marker.ai_confidence === "number" ? Math.max(0.3, Math.min(0.95, normalizeAiConfidence(marker.ai_confidence) / 100)) : 0.75,
     importance_level: marker.importance_level,
     importance_score: marker.importance_score,
     importance_reason: marker.importance_reason,
-    ai_match_confidence: typeof marker.ai_confidence === "number" ? marker.ai_confidence / 100 : undefined,
+    ai_match_confidence: typeof marker.ai_confidence === "number" ? normalizeAiConfidence(marker.ai_confidence) / 100 : undefined,
     url: marker.url || "",
   };
 }
@@ -1968,7 +1968,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
             symbol: selectedSymbol,
             direction: normalizeImpactDirection(newsItem.direction),
             score: newsItem.score || 0,
-            confidence: newsItem.ai_match_confidence ?? newsItem.relevance_score ?? 0,
+            confidence: normalizeAiConfidence(newsItem.ai_match_confidence ?? newsItem.relevance_score ?? 0) / 100,
             reasoning: newsItem.reasoning || newsItem.reasoning_tr || '',
             reasoning_tr: newsItem.reasoning_tr || '',
             reasoning_locale: newsItem.reasoning_locale || undefined,
@@ -1979,7 +1979,7 @@ export default function NewsCorrelationDashboard({ embedded = false }: NewsCorre
           urgency: normalizeUrgency(newsItem.urgency),
           eventDuration: 'short_term',
           affectedCandles: [],
-          aiConfidence: Math.round((newsItem.ai_match_confidence ?? newsItem.relevance_score ?? 0) * 100),
+          aiConfidence: Math.round(normalizeAiConfidence(newsItem.ai_match_confidence ?? newsItem.relevance_score ?? 0)),
           analysisTimestamp: newsItem.timestamp || new Date().toISOString(),
         }
       : newsItem;

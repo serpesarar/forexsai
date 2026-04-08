@@ -5,7 +5,7 @@ Checks predictions after specified intervals to see if they were correct.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Any, Dict, List, Optional
 
@@ -52,7 +52,7 @@ async def get_high_low_since_prediction(
         
         if not relevant_candles:
             # Use last N candles based on interval
-            interval_candles = {"1h": 12, "4h": 48, "24h": 288}  # 5m candles
+            interval_candles = {"1h": 12, "4h": 48, "24h": 288, "48h": 576, "7d": 1008}  # 5m candles
             n = interval_candles.get(check_interval, 12)
             relevant_candles = candles[-n:] if candles else []
         
@@ -147,7 +147,7 @@ async def check_prediction_outcome(
         if isinstance(created_at, str):
             pred_time = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
         else:
-            pred_time = datetime.utcnow() - timedelta(hours=1)
+            pred_time = datetime.now(timezone.utc) - timedelta(hours=1)
         
         # Get HIGH/LOW prices since prediction (crucial for accurate target detection)
         try:
@@ -303,7 +303,7 @@ async def check_pending_outcomes(check_interval: str = "24h") -> List[Dict[str, 
     }
     
     hours = interval_hours.get(check_interval, 24)
-    cutoff = datetime.utcnow() - timedelta(hours=hours)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
     cutoff_iso = cutoff.isoformat() + "Z"
     
     try:
@@ -371,7 +371,7 @@ async def get_accuracy_summary(
     if client is None:
         return {"error": "Database client not available"}
     
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     cutoff_iso = cutoff.isoformat() + "Z"
     
     try:
@@ -588,7 +588,7 @@ async def get_multi_target_accuracy(
     if client is None:
         return {"error": "Database client not available"}
     
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     cutoff_iso = cutoff.isoformat() + "Z"
     
     try:

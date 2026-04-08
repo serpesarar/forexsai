@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
+from datetime import UTC
 
 from config import settings
 from services.marketaux_service import fetch_marketaux_headlines
@@ -152,7 +153,7 @@ async def run_claude_sentiment(symbol: str = "NDX.INDX", lang: str = "en") -> di
         "current_price": current_price,
         "news_count": rss_sentiment.get("news_count", 0),
         "news_source": "rss_aggregator",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
 
     # Skip DeepSeek - use RSS sentiment data (already analyzed)

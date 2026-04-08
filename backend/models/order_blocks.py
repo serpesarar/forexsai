@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class OrderBlockConfigRequest(BaseModel):
@@ -26,12 +26,16 @@ class OrderBlockEntryRequest(BaseModel):
     order_block_index: int
 
 
-class OrderBlockBacktestRequest(BaseModel):
+class BacktestRequest(BaseModel):
     symbol: str
     timeframe: Literal["5m", "15m", "30m", "1h", "4h", "1d"]
-    start_date: str
-    end_date: str
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
     config: OrderBlockConfigRequest | None = None
+
+
+class OrderBlockBacktestRequest(BacktestRequest):
+    pass
 
 
 class OrderBlockItem(BaseModel):
@@ -57,8 +61,7 @@ class OrderBlockItem(BaseModel):
     test_count: Optional[int] = None
     is_valid: Optional[bool] = None
 
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 
 class OrderBlockSignal(BaseModel):
@@ -76,6 +79,9 @@ class CombinedSignal(BaseModel):
     action: str
     confidence: float
     reasoning: List[str]
+    reasons: List[str] = []
+
+    model_config = ConfigDict(extra="allow")
 
 
 class CHoCHItem(BaseModel):
@@ -86,8 +92,7 @@ class CHoCHItem(BaseModel):
     prev_swing: Optional[float] = None
     strength: Optional[str] = None
 
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 
 class BOSItem(BaseModel):
@@ -98,8 +103,7 @@ class BOSItem(BaseModel):
     broken_level: Optional[float] = None
     confirmation: Optional[bool] = None
 
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 
 class FVGItem(BaseModel):
@@ -111,8 +115,14 @@ class FVGItem(BaseModel):
     filled: Optional[bool] = None
     fill_percentage: Optional[float] = None
 
-    class Config:
-        extra = "allow"
+    @property
+    def mid(self) -> Optional[float]:
+        """Midpoint of the FVG zone"""
+        if self.high is not None and self.low is not None:
+            return (self.high + self.low) / 2
+        return None
+
+    model_config = ConfigDict(extra="allow")
 
 
 class StructureCounts(BaseModel):
@@ -130,8 +140,7 @@ class StructureData(BaseModel):
     trend: Optional[str] = None
     counts: Optional[StructureCounts] = None
 
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 
 class SupportResistanceLevel(BaseModel):
@@ -144,8 +153,7 @@ class SupportResistanceLevel(BaseModel):
     is_next: Optional[bool] = None
     touch_count: Optional[int] = None
 
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 
 class SupportResistanceData(BaseModel):
@@ -157,8 +165,7 @@ class SupportResistanceData(BaseModel):
     range_low: Optional[float] = None
     method: Optional[str] = None
 
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 
 class OrderBlockDetectResponse(BaseModel):
@@ -177,9 +184,9 @@ class OrderBlockDetectResponse(BaseModel):
     trend: Optional[str] = None
     support_resistance: Optional[SupportResistanceData] = None
     timestamp: str
+    warning: Optional[str] = None
 
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 
 class OrderBlockEntryResponse(BaseModel):
@@ -191,10 +198,24 @@ class OrderBlockEntryResponse(BaseModel):
     risk_reward: float
 
 
-class OrderBlockBacktestResponse(BaseModel):
-    total_trades: int
+class BacktestResultItem(BaseModel):
+    signal: str
+    entry: float
+    outcome: str
+
+
+class BacktestResponse(BaseModel):
+    total_signals: int
+    wins: int
+    losses: int
     win_rate: float
-    avg_risk_reward: float
-    total_profit: float
-    max_drawdown: float
-    sharpe_ratio: float
+    results: List[BacktestResultItem] = Field(default_factory=list)
+    total_trades: int = 0
+    avg_risk_reward: float = 0.0
+    total_profit: float = 0.0
+    max_drawdown: float = 0.0
+    sharpe_ratio: float = 0.0
+
+
+class OrderBlockBacktestResponse(BacktestResponse):
+    pass

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Any, Dict, List, Optional
 
@@ -567,7 +567,7 @@ async def check_and_analyze_failed_predictions(
         # 1. Are at least X hours old
         # 2. Have an outcome marked as incorrect
         # 3. Don't have an error analysis yet
-        cutoff = datetime.utcnow() - timedelta(hours=hours_ago)
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours_ago)
         cutoff_iso = cutoff.isoformat() + "Z"
         
         # Get outcomes that are failures

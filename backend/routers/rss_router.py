@@ -68,7 +68,10 @@ RUNTIME_TRANSLATION_BATCH_SIZE = 20
 
 
 def _normalize_lang(lang: Optional[str]) -> str:
-    return (lang or "en").strip().lower()
+    if not isinstance(lang, str):
+        return "en"
+    normalized = lang.strip().lower()
+    return normalized or "en"
 
 
 def _needs_runtime_translation(lang: str) -> bool:
@@ -296,7 +299,7 @@ async def get_rss_news(
     try:
         supabase = get_supabase_client()
         
-        start_time = datetime.utcnow() - timedelta(hours=hours)
+        start_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         print(f"[RSS API] Querying news from last {hours}h (since {start_time.isoformat()})")
         
         # Build query
@@ -410,7 +413,7 @@ async def get_latest_breaking(limit: int = Query(10, ge=1, le=50)):
     try:
         supabase = get_supabase_client()
         
-        start_time = datetime.utcnow() - timedelta(hours=1)
+        start_time = datetime.now(timezone.utc) - timedelta(hours=1)
         
         result = (
             supabase.table("enriched_news")
@@ -455,7 +458,7 @@ async def get_chart_news_markers(
         supabase = get_supabase_client()
         from routers.economic_calendar_router import generate_economic_events_between, generate_earnings_events_between
 
-        start_time = datetime.utcnow() - timedelta(hours=hours)
+        start_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         end_time = datetime.now(timezone.utc)
 
         result = (
@@ -791,7 +794,7 @@ async def get_economic_calendar(
         
         return {
             "success": True,
-            "date": date or datetime.utcnow().strftime("%Y-%m-%d"),
+            "date": date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "count": len(events),
             "events": [
                 {
@@ -862,7 +865,7 @@ async def get_earnings_calendar(
         
         return {
             "success": True,
-            "date": date or datetime.utcnow().strftime("%Y-%m-%d"),
+            "date": date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "count": len(mock_earnings),
             "events": mock_earnings
         }
@@ -884,7 +887,7 @@ async def get_news_by_category(
     try:
         supabase = get_supabase_client()
         
-        start_time = datetime.utcnow() - timedelta(hours=hours)
+        start_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         
         result = (
             supabase.table("enriched_news")
@@ -944,7 +947,7 @@ async def backfill_turkish_translations(
     try:
         supabase = get_supabase_client()
         
-        start_time = datetime.utcnow() - timedelta(hours=hours)
+        start_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         
         # Get news without headline_tr
         result = (
@@ -1133,7 +1136,7 @@ async def get_rss_stats(hours: int = Query(24, ge=1, le=168)):
     try:
         supabase = get_supabase_client()
         
-        start_time = datetime.utcnow() - timedelta(hours=hours)
+        start_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         
         # Get counts by urgency
         urgency_counts = (
@@ -1311,7 +1314,7 @@ async def get_rss_diagnostics():
         anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
         
         # Get recent news stats
-        start_time = datetime.utcnow() - timedelta(hours=24)
+        start_time = datetime.now(timezone.utc) - timedelta(hours=24)
         
         result = (
             supabase.table("enriched_news")
@@ -1442,7 +1445,7 @@ async def re_analyze_fallback_news(
             supabase = get_supabase_client()
             from services.news_analyzer_v2 import get_real_analyzer
             
-            start_time = datetime.utcnow() - timedelta(hours=hours)
+            start_time = datetime.now(timezone.utc) - timedelta(hours=hours)
             
             # Get fallback-analyzed news (headline_tr starts with [TR] or low confidence)
             result = (
@@ -1518,7 +1521,7 @@ async def re_analyze_fallback_news(
                             "importance_reason": result.importance_reason,
                             "ai_model": result.ai_model,
                             "ai_confidence": result.confidence,
-                            "analysis_timestamp": datetime.utcnow().isoformat(),
+                            "analysis_timestamp": datetime.now(timezone.utc).isoformat(),
                             "show_on_chart": (
                                 result.urgency in ["high", "breaking"]
                                 or result.importance_score >= 70

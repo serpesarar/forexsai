@@ -4,7 +4,7 @@ Portföy bazlı risk kontrolü ve trade limitleri
 """
 import logging
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass, field
 from threading import Lock
 from .constants import PORTFOLIO_RISK_CONFIG
@@ -236,7 +236,7 @@ class PortfolioRiskManager:
     
     def _check_daily_reset(self):
         """Günlük reset kontrolü"""
-        today = datetime.utcnow().date()
+        today = datetime.now(timezone.utc).date()
         
         if self.state.daily_reset_date != today:
             self.state.daily_pnl = 0.0
@@ -251,10 +251,10 @@ class PortfolioRiskManager:
                 'direction': direction,
                 'size': size,
                 'entry_price': entry_price,
-                'open_time': datetime.utcnow()
+                'open_time': datetime.now(timezone.utc)
             })
             self.state.today_trades += 1
-            self.state.last_trade_time = datetime.utcnow()
+            self.state.last_trade_time = datetime.now(timezone.utc)
     
     def record_trade_close(self, symbol: str, pnl: float):
         """Trade kapanışı kaydet"""

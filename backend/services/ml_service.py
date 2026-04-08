@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
+from datetime import timezone
 
 from config import settings
 
@@ -88,7 +89,7 @@ async def run_nasdaq_signal_async(current_price: float | None = None, timeframe:
                 "trend": "NEUTRAL",
                 "current_price": current_price,
             },
-            timestamp=datetime.utcnow().isoformat() + "Z",
+            timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             model_status=f"Error: {str(e)}",
         )
 
@@ -157,7 +158,7 @@ async def run_xauusd_signal_async(current_price: float | None = None, timeframe:
                 "trend": "NEUTRAL",
                 "current_price": current_price,
             },
-            timestamp=datetime.utcnow().isoformat() + "Z",
+            timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             model_status=f"Error: {str(e)}",
         )
 
@@ -180,7 +181,7 @@ def run_nasdaq_signal(current_price: float | None = None) -> SignalResult:
             "trend": "NEUTRAL",
             "current_price": current_price,
         },
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         model_status="Use async version",
     )
 
@@ -201,7 +202,7 @@ def run_xauusd_signal(current_price: float | None = None) -> SignalResult:
             "trend": "NEUTRAL",
             "current_price": current_price,
         },
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         model_status="Use async version",
     )
 
@@ -270,7 +271,7 @@ async def run_usoil_signal_async(current_price: float | None = None, timeframe: 
                 "trend": "NEUTRAL",
                 "current_price": current_price,
             },
-            timestamp=datetime.utcnow().isoformat() + "Z",
+            timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             model_status=f"Error: {str(e)}",
         )
 
@@ -339,6 +340,6 @@ async def run_dax_signal_async(current_price: float | None = None, timeframe: st
                 "trend": "NEUTRAL",
                 "current_price": current_price,
             },
-            timestamp=datetime.utcnow().isoformat() + "Z",
+            timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             model_status=f"Error: {str(e)}",
         )

@@ -3,7 +3,7 @@ Confluence Engine - Çok Faktörlü Değerlendirme
 Trend %30, Momentum %20, Yapı %25, Formasyon %15, Temporal %10
 """
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from .constants import CONFLUENCE_WEIGHTS, PriceStructure
 from .mtf_analyzer import TimeframeAnalysis
@@ -219,7 +219,7 @@ class ConfluenceEngine:
     
     def _eval_temporal(self) -> float:
         """Seans değerlendirmesi (-1 to 1)"""
-        hour = datetime.utcnow().hour
+        hour = datetime.now(timezone.utc).hour
         
         if 7 <= hour <= 11:      # London
             return 0.2

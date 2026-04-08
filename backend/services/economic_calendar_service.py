@@ -7,7 +7,7 @@ Integrates with news correlation to mark important events on charts.
 
 import json
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass
 import aiohttp
@@ -72,7 +72,7 @@ class EconomicCalendarService:
         event_payload = dict(payload)
         timestamp = event_payload.get("timestamp")
         if isinstance(timestamp, str):
-            event_payload["timestamp"] = datetime.fromisoformat(timestamp.replace("Z", "+00:00")).replace(tzinfo=None)
+            event_payload["timestamp"] = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
         return EconomicEvent(**event_payload)
         
     def _get_cache_key(self, date_str: str) -> str:
@@ -130,7 +130,7 @@ class EconomicCalendarService:
     
     async def fetch_today_events(self) -> List[EconomicEvent]:
         """Fetch today's economic events from cache or API"""
-        today = datetime.utcnow().strftime("%Y-%m-%d")
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         cache_key = self._get_cache_key(today)
         
         # Try cache first
@@ -163,14 +163,14 @@ class EconomicCalendarService:
     def _generate_today_events(self) -> List[EconomicEvent]:
         """Generate today's known economic events (simplified)"""
         events = []
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         weekday = now.weekday()
         
         # Weekly recurring events
         if weekday == 0:  # Monday
             events.append(EconomicEvent(
                 id=f"event_{now.strftime('%Y%m%d')}_001",
-                timestamp=now.replace(hour=14, minute=0),
+                timestamp=now.replace(hour=14, minute=0, tzinfo=timezone.utc),
                 currency="USD",
                 event_name="New Home Sales",
                 impact="medium",
@@ -183,7 +183,7 @@ class EconomicCalendarService:
         if weekday == 1:  # Tuesday
             events.append(EconomicEvent(
                 id=f"event_{now.strftime('%Y%m%d')}_002",
-                timestamp=now.replace(hour=14, minute=0),
+                timestamp=now.replace(hour=14, minute=0, tzinfo=timezone.utc),
                 currency="USD",
                 event_name="Durable Goods Orders",
                 impact="medium",
@@ -197,7 +197,7 @@ class EconomicCalendarService:
             # EIA Oil Inventory (always Wednesday)
             events.append(EconomicEvent(
                 id=f"event_{now.strftime('%Y%m%d')}_eia",
-                timestamp=now.replace(hour=14, minute=30),
+                timestamp=now.replace(hour=14, minute=30, tzinfo=timezone.utc),
                 currency="USD",
                 event_name="EIA Crude Oil Inventories",
                 impact="high",
@@ -210,7 +210,7 @@ class EconomicCalendarService:
         if weekday == 3:  # Thursday
             events.append(EconomicEvent(
                 id=f"event_{now.strftime('%Y%m%d')}_003",
-                timestamp=now.replace(hour=12, minute=30),
+                timestamp=now.replace(hour=12, minute=30, tzinfo=timezone.utc),
                 currency="USD",
                 event_name="Initial Jobless Claims",
                 impact="medium",
@@ -225,7 +225,7 @@ class EconomicCalendarService:
             if now.day <= 7:
                 events.append(EconomicEvent(
                     id=f"event_{now.strftime('%Y%m%d')}_nfp",
-                    timestamp=now.replace(hour=12, minute=30),
+                    timestamp=now.replace(hour=12, minute=30, tzinfo=timezone.utc),
                     currency="USD",
                     event_name="Non-Farm Payrolls",
                     impact="high",
@@ -236,7 +236,7 @@ class EconomicCalendarService:
                 ))
             events.append(EconomicEvent(
                 id=f"event_{now.strftime('%Y%m%d')}_004",
-                timestamp=now.replace(hour=14, minute=0),
+                timestamp=now.replace(hour=14, minute=0, tzinfo=timezone.utc),
                 currency="USD",
                 event_name="ISM Manufacturing PMI",
                 impact="high",
@@ -264,12 +264,12 @@ class EconomicCalendarService:
     
     async def fetch_earnings_today(self) -> List[EconomicEvent]:
         """Fetch today's earnings reports"""
-        today = datetime.utcnow().strftime("%Y-%m-%d")
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         cache_key = self._get_earnings_cache_key(today)
         
         cached = cache_get(cache_key)
         if cached:
-            return [EconomicEvent(**e) for e in cached]
+            return [self._deserialize_event(e) for e in cached]
         
         # Major earnings calendar (simplified)
         earnings = self._generate_today_earnings()
@@ -303,7 +303,7 @@ class EconomicCalendarService:
     async def get_upcoming_high_impact_events(self, minutes_ahead: int = 60) -> List[EconomicEvent]:
         """Get high-impact events happening in next X minutes"""
         all_events = await self.fetch_today_events()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         cutoff = now + timedelta(minutes=minutes_ahead)
         
         upcoming = [
@@ -316,7 +316,7 @@ class EconomicCalendarService:
     async def get_events_for_symbol(self, symbol: str, hours_back: int = 24) -> List[EconomicEvent]:
         """Get economic events affecting a specific symbol"""
         all_events = await self.fetch_today_events()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         cutoff = now - timedelta(hours=hours_back)
         
         symbol_events = [
@@ -353,6 +353,8 @@ async def enrich_news_with_economic_context(news_item: Dict) -> Dict:
     if news_time:
         if isinstance(news_time, str):
             news_time = datetime.fromisoformat(news_time.replace("Z", "+00:00"))
+        elif isinstance(news_time, datetime) and news_time.tzinfo is None:
+            news_time = news_time.replace(tzinfo=timezone.utc)
         
         # Check if news is near any economic event
         for event in events:

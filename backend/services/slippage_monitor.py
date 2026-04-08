@@ -11,7 +11,7 @@ What it does:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Literal
 from dataclasses import dataclass, asdict
 import json
@@ -131,7 +131,7 @@ async def log_execution(
         slippage_pips=slippage_pips,
         direction=direction,
         broker=broker,
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         is_favorable=is_favorable
     )
     
@@ -189,7 +189,7 @@ async def _check_and_adjust_position_size():
         # High slippage detected - reduce position size
         _slippage_config["current_multiplier"] = _slippage_config["adjustment_factor"]
         _slippage_config["high_slippage_mode"] = True
-        _slippage_config["last_alert"] = datetime.utcnow().isoformat()
+        _slippage_config["last_alert"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         
         logger.warning(
             f"🚨 HIGH SLIPPAGE ALERT: Avg {avg_slippage:.2f} pips > threshold {_slippage_config['threshold_pips']} pips. "

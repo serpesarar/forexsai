@@ -114,7 +114,7 @@ def mock_supabase_client():
     mock_table.eq.return_value = mock_table
     mock_table.limit.return_value = mock_table
     mock_table.order.return_value = mock_table
-    mock_table.execute = AsyncMock(return_value={
+    mock_table.execute = MagicMock(return_value={
         "data": [],
         "error": None
     })

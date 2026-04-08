@@ -2,7 +2,7 @@
 Multi-Target Tracking Service
 """
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 
@@ -116,7 +116,7 @@ class MultiTargetTracker:
     
     async def get_strategy_analysis(self, symbol: str, strategy: str = None, days: int = 30) -> Dict:
         try:
-            since = (datetime.utcnow() - timedelta(days=days)).isoformat()
+            since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat().replace("+00:00", "Z")
             query = self.supabase.table('multi_target_predictions').select('*').eq('symbol', symbol).gte('created_at', since)
             if strategy:
                 query = query.eq('strategy', strategy)

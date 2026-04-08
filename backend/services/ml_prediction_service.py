@@ -14,7 +14,7 @@ import asyncio
 import logging
 import math
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import List, Optional, Literal, Dict, Any
 import numpy as np
@@ -45,7 +45,7 @@ def _update_signal_cache(symbol: str, direction: str, confidence: float, price: 
             "direction": direction,
             "confidence": confidence,
             "price": price,
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.now(timezone.utc)
         }
 
 def _should_allow_direction_change(
@@ -78,7 +78,7 @@ def _should_allow_direction_change(
         return True, "HOLD geçişi"
     
     # Calculate time since last signal
-    time_since = (datetime.utcnow() - old_time).total_seconds() / 60
+    time_since = (datetime.now(timezone.utc) - old_time).total_seconds() / 60
     
     # Calculate price change percentage
     price_change_pct = abs((current_price - old_price) / old_price * 100)
@@ -2253,7 +2253,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
         volatility_regime=volatility_regime,
         reasoning=reasoning,
         key_levels=key_levels,
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         model_version="lgbm_v2_regime",
         active_patterns=_active_patterns,
         mtf_data=_mtf_for_emel,
@@ -2428,7 +2428,7 @@ def _default_prediction(symbol: str, reason: str) -> PredictionResult:
         volatility_regime="Unknown",
         reasoning=[reason],
         key_levels=[],
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         model_version="fallback"
     )
 
@@ -2555,6 +2555,6 @@ def _rule_based_prediction(symbol: str, ta: dict, current_price: float) -> Predi
             {"type": "EMA20", "price": round(ta["ema_20"], 2), "distance": f"{((current_price - ta['ema_20']) / ta['ema_20'] * 100):.2f}%"},
             {"type": "EMA50", "price": round(ta["ema_50"], 2), "distance": f"{((current_price - ta['ema_50']) / ta['ema_50'] * 100):.2f}%"},
         ],
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         model_version="rule_based"
     )

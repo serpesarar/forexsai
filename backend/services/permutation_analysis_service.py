@@ -8,7 +8,7 @@ import logging
 from typing import Dict, List, Any, Optional
 from itertools import combinations
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 import pandas as pd
 import numpy as np
 
@@ -188,7 +188,7 @@ async def analyze_model_permutations(
         if minimum_start_days not in lookback_intervals:
             lookback_intervals = [minimum_start_days, *lookback_intervals]
         logs: List[Dict[str, Any]] = []
-        last_cutoff = datetime.utcnow()
+        last_cutoff = datetime.now(timezone.utc)
         current_days_used = 0
 
         def fetch_logs_chunk(end_date_iso: str, start_date_iso: str) -> List[Dict[str, Any]]:
@@ -255,7 +255,7 @@ async def analyze_model_permutations(
 
         for idx, current_days in enumerate(lookback_intervals):
             current_days_used = current_days
-            start_date = datetime.utcnow() - pd.Timedelta(days=current_days)
+            start_date = datetime.now(timezone.utc) - pd.Timedelta(days=current_days)
 
             new_logs = await asyncio.to_thread(fetch_logs_chunk, _utc_iso(last_cutoff), _utc_iso(start_date))
             logs.extend(new_logs)

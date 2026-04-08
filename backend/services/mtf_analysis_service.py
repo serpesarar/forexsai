@@ -12,7 +12,7 @@ Provides comprehensive technical analysis across multiple timeframes:
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Literal, Optional, Dict, Any
 from threading import Lock
 import numpy as np
@@ -776,8 +776,7 @@ def _calculate_pivot_points(
 
 def _get_current_session() -> tuple[Literal["ASIA", "LONDON", "NEW_YORK", "OVERLAP"], Literal["LOW", "NORMAL", "HIGH", "EXTREME"]]:
     """Determine current trading session and expected volatility"""
-    from datetime import datetime
-    utc_hour = datetime.utcnow().hour
+    utc_hour = datetime.now(timezone.utc).hour
     
     # Session hours (UTC)
     # Asia: 22:00 - 07:00 UTC
@@ -797,8 +796,7 @@ def _get_current_session() -> tuple[Literal["ASIA", "LONDON", "NEW_YORK", "OVERL
 
 def _check_high_impact_event() -> Optional[str]:
     """Check for high impact economic events (simplified)"""
-    from datetime import datetime
-    today = datetime.utcnow()
+    today = datetime.now(timezone.utc)
     day_of_week = today.weekday()  # 0=Monday
     day_of_month = today.day
     
@@ -1391,7 +1389,7 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
     """
     
     cache_key = f"{symbol}:{timeframe or 'all'}"
-    now_ts = datetime.utcnow().timestamp()
+    now_ts = datetime.now(timezone.utc).timestamp()
     
     # Check cache
     with _cache_lock:
@@ -1501,7 +1499,7 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
             "success": True,
             "symbol": symbol,
             "timeframe": timeframe,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "analysis": _sanitize_for_json(asdict(analysis)),
             "debug": {
                 "candle_count": len(closes),
@@ -1777,7 +1775,7 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
         result = {
             "success": True,
             "symbol": symbol,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "current_price": current_price,
             "pip_value": pip_value,
             "timeframes": _sanitize_for_json({tf: asdict(a) for tf, a in analyses.items()}),

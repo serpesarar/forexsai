@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import math
 import random
 from typing import List
@@ -71,20 +71,20 @@ def build_support_resistance(candles: List[ChartCandle]) -> List[SupportResistan
 
 def _parse_timestamp(value: str | None) -> int:
     if not value:
-        return int(datetime.utcnow().timestamp() * 1000)
+        return int(datetime.now(timezone.utc).timestamp() * 1000)
     try:
         dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
         try:
             dt = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
         except ValueError:
-            dt = datetime.utcnow()
+            dt = datetime.now(timezone.utc)
     return int(dt.timestamp() * 1000)
 
 
 def _generate_mock_candles(symbol: str, timeframe: str, limit: int) -> List[ChartCandle]:
     minutes = _TIMEFRAME_MINUTES.get(timeframe, 5)
-    now = datetime.utcnow().replace(second=0, microsecond=0)
+    now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
     randomizer = random.Random(hash((symbol, timeframe)) & 0xFFFFFFFF)
     base_price = 21500.0 if "NDX" in symbol else 2000.0
     candles: List[ChartCandle] = []

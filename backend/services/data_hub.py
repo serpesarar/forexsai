@@ -36,7 +36,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from threading import Lock
 from typing import Any, Dict, List, Optional
 
@@ -138,7 +138,7 @@ def _is_us_market_open() -> bool:
     try:
         now_ny = datetime.now(zoneinfo.ZoneInfo("America/New_York"))
     except Exception:
-        now_ny = datetime.utcnow() - timedelta(hours=5)
+        now_ny = datetime.now(timezone.utc) - timedelta(hours=5)
     
     if now_ny.weekday() >= 5:
         return False
@@ -351,7 +351,7 @@ async def _fetch_candles_from_api(symbol: str, interval: str, limit: int = 500) 
     trading_days_needed = math.ceil(limit / max(candles_per_day, 1))
     # Buffer for weekends/holidays (×2 to be safe)
     calendar_days = max(int(trading_days_needed * 2) + 7, 14)
-    from_ts = int((datetime.utcnow() - timedelta(days=calendar_days)).timestamp())
+    from_ts = int((datetime.now(timezone.utc) - timedelta(days=calendar_days)).timestamp())
     
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
@@ -408,7 +408,7 @@ async def _fetch_eod_from_api(symbol: str, limit: int = 300) -> List[Dict]:
 
     if not settings.eodhd_api_key:
         return []
-    from_date = (datetime.utcnow() - timedelta(days=max(30, limit * 2))).date().isoformat()
+    from_date = (datetime.now(timezone.utc) - timedelta(days=max(30, limit * 2))).date().isoformat()
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(
@@ -497,7 +497,7 @@ def _rebuild_derived(symbol: str):
     NDX.INDX: 5m→15m, 5m→30m, 1h(fetched)→4h
     XAUUSD:   5m→15m, 30m(fetched)→1h→4h  (30m also from 5m if not fetched)
     """
-    now = datetime.utcnow().timestamp()
+    now = datetime.now(timezone.utc).timestamp()
     
     raw_5m = _candles_5m.get(symbol, {}).get("candles", [])
     if raw_5m:
@@ -529,13 +529,13 @@ def _rebuild_derived(symbol: str):
 # DATA PUMP (background loop)
 # ═══════════════════════════════════════════════════════════════
 def _should_fetch(key: str, interval: float) -> bool:
-    now = datetime.utcnow().timestamp()
+    now = datetime.now(timezone.utc).timestamp()
     last = _last_fetch.get(key, 0)
     return (now - last) >= interval
 
 
 def _mark_fetched(key: str):
-    _last_fetch[key] = datetime.utcnow().timestamp()
+    _last_fetch[key] = datetime.now(timezone.utc).timestamp()
 
 
 # Track whether initial seed has been done (first fetch = full, subsequent = delta)
@@ -657,7 +657,7 @@ def _has_sufficient_cached_history(
 
 async def _pump_cycle():
     """One pump cycle: fetch what's due, rebuild derived data."""
-    now_ts = datetime.utcnow().timestamp()
+    now_ts = datetime.now(timezone.utc).timestamp()
     
     for symbol in TRACKED_SYMBOLS:
         seed_key = symbol
@@ -781,7 +781,7 @@ def _load_from_persistent_cache():
         logger.warning(f"Candle cache store not available: {e}")
         return
     
-    now_ts = datetime.utcnow().timestamp()
+    now_ts = datetime.now(timezone.utc).timestamp()
     loaded_any = False
     
     for symbol in TRACKED_SYMBOLS:
@@ -1020,12 +1020,12 @@ def get_hub_status() -> Dict[str, Any]:
             if latest_ts:
                 if isinstance(latest_ts, (int, float)):
                     # Unix timestamp in milliseconds
-                    hours_old = (datetime.utcnow().timestamp() - latest_ts/1000) / 3600
+                    hours_old = (datetime.now(timezone.utc).timestamp() - latest_ts/1000) / 3600
                 else:
                     # ISO date string
                     try:
                         dt = datetime.fromisoformat(str(latest_ts).replace('Z', '+00:00'))
-                        hours_old = (datetime.utcnow() - dt.replace(tzinfo=None)).total_seconds() / 3600
+                        hours_old = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
                     except:
                         hours_old = None
                 

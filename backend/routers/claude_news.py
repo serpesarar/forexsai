@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter, Query
@@ -41,7 +41,7 @@ def _signed_sentiment(item: dict, impact: dict | None) -> float:
 
 def _load_news(symbol: str, hours_back: int, limit: int) -> list[dict]:
     supabase = get_supabase_client()
-    start_time = datetime.utcnow() - timedelta(hours=hours_back)
+    start_time = datetime.now(timezone.utc) - timedelta(hours=hours_back)
     result = (
         supabase.table("enriched_news")
         .select("id, timestamp, source, headline, impacts, sentiment, ai_confidence, category, analysis_timestamp, analysis_tr")
@@ -83,7 +83,7 @@ async def analyze_news(symbol: str, limit: int = Query(15, ge=1, le=50), hours_b
     direction_bias = "bullish" if overall_sentiment > 0.05 else "bearish" if overall_sentiment < -0.05 else "neutral"
     return {
         "symbol": symbol,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
         "news_count": len(items),
         "analyzed_count": len(analyses),
         "overall_sentiment": overall_sentiment,

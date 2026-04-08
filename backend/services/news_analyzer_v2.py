@@ -8,7 +8,7 @@ import os
 import logging
 import re
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from anthropic import Anthropic
@@ -416,7 +416,7 @@ class RealNewsAnalyzer:
 NEWS HEADLINE: {headline}
 NEWS CONTENT: {content[:800] if content else "No additional content"}
 SOURCE: {source}
-DATE: {datetime.utcnow().isoformat()}
+DATE: {datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")}
 {mkt}
 
 INSTRUCTIONS:
