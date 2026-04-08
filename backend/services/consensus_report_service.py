@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
+
+logger = logging.getLogger(__name__)
 
 SYMBOL_ALIASES = {
     "NASDAQ": "NDX.INDX",
@@ -182,6 +185,15 @@ def _direction_payload(rows: Sequence[Dict[str, Any]], top: int, min_occurrences
     }
 
 
+def _empty_direction_payload() -> Dict[str, Any]:
+    return {
+        "total_rows": 0,
+        "most_frequent": [],
+        "best_stable": [],
+        "top_quality_counts": {"strong": 0, "usable": 0, "weak": 0, "weak_sample": 0},
+    }
+
+
 def get_symbol_consensus_view(
     symbol: str,
     *,
@@ -190,7 +202,19 @@ def get_symbol_consensus_view(
     report_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     normalized_symbol = _normalize_symbol(symbol)
-    payload = load_consensus_report(prefix=prefix, report_path=report_path)
+    try:
+        payload = load_consensus_report(prefix=prefix, report_path=report_path)
+    except FileNotFoundError as exc:
+        logger.warning("[ConsensusReportService] %s — returning empty view", exc)
+        return {
+            "symbol": normalized_symbol,
+            "report_generated_at": None,
+            "report_path": None,
+            "parameters": {},
+            "buy": _empty_direction_payload(),
+            "sell": _empty_direction_payload(),
+            "warning": str(exc),
+        }
     rows = payload.get("aggregates") or []
     if not isinstance(rows, list):
         rows = []

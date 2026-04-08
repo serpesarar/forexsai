@@ -61,6 +61,12 @@ REGIME_WEIGHT_MULTIPLIERS: Dict[str, Dict[str, float]] = {
     "VOLATILE": {
         "ml": 0.7, "pulse1": 0.7, "pulse2": 0.8, "pulse3": 0.8, "emel": 1.0, "smc": 1.4,
     },
+    "TRANSITION": {
+        "ml": 1.0, "pulse1": 1.0, "pulse2": 1.0, "pulse3": 1.0, "emel": 1.0, "smc": 1.0,
+    },
+    "UNKNOWN": {
+        "ml": 1.0, "pulse1": 1.0, "pulse2": 1.0, "pulse3": 1.0, "emel": 1.0, "smc": 1.0,
+    },
 }
 
 # ATR multipliers for TP/SL calculation per symbol
@@ -357,16 +363,21 @@ class MetaAnalysisEngine:
             if not client:
                 return []
 
-            result = client.table("meta_combination_stats") \
-                .select("*") \
-                .eq("symbol", symbol) \
-                .eq("regime", regime) \
-                .gte("total_signals", 5) \
-                .order("win_rate", desc=True) \
-                .limit(10) \
-                .execute()
+            # Try detected regime first, fall back to UNKNOWN if no results
+            rows = []
+            for try_regime in [regime, "UNKNOWN"]:
+                result = client.table("meta_combination_stats") \
+                    .select("*") \
+                    .eq("symbol", symbol) \
+                    .eq("regime", try_regime) \
+                    .gte("total_signals", 5) \
+                    .order("win_rate", desc=True) \
+                    .limit(10) \
+                    .execute()
+                rows = result.get("data", []) if isinstance(result, dict) else (result.data if hasattr(result, "data") else [])
+                if rows:
+                    break
 
-            rows = result.get("data", []) if isinstance(result, dict) else (result.data if hasattr(result, "data") else [])
             combos = []
             if rows:
                 for row in rows:
@@ -463,15 +474,20 @@ class MetaAnalysisEngine:
             ema_50 = ema(closes, 50)
             ema_200 = ema(closes, 200) if len(closes) >= 200 else ema(closes, len(closes))
 
-            # RSI
+            # RSI (Wilder's exponential smoothing)
             def calc_rsi(data, period=14):
                 if len(data) < period + 1:
                     return 50
                 deltas = [data[i] - data[i - 1] for i in range(1, len(data))]
                 gains = [max(0, d) for d in deltas]
                 losses_val = [abs(min(0, d)) for d in deltas]
-                avg_gain = sum(gains[-period:]) / period
-                avg_loss = sum(losses_val[-period:]) / period
+                # Seed with SMA of first `period` values
+                avg_gain = sum(gains[:period]) / period
+                avg_loss = sum(losses_val[:period]) / period
+                # Wilder smooth the rest
+                for i in range(period, len(gains)):
+                    avg_gain = (avg_gain * (period - 1) + gains[i]) / period
+                    avg_loss = (avg_loss * (period - 1) + losses_val[i]) / period
                 if avg_loss == 0:
                     return 100
                 rs = avg_gain / avg_loss
@@ -479,39 +495,92 @@ class MetaAnalysisEngine:
 
             rsi = calc_rsi(closes)
 
-            # MACD
-            macd_val = ema(closes, 12) - ema(closes, 26)
-            # For signal line, we'd need MACD history — simplified
-            macd_signal = ema(closes[-26:], 9) - ema(closes[-26:], 18) if len(closes) >= 26 else 0
+            # MACD — compute proper MACD history then signal line
+            def calc_macd_line(data, fast=12, slow=26):
+                """Compute MACD line series for signal line EMA."""
+                if len(data) < slow:
+                    return [0.0]
+                fast_alpha = 2.0 / (fast + 1)
+                slow_alpha = 2.0 / (slow + 1)
+                fast_ema = data[0]
+                slow_ema = data[0]
+                macd_series = []
+                for v in data[1:]:
+                    fast_ema = fast_alpha * v + (1 - fast_alpha) * fast_ema
+                    slow_ema = slow_alpha * v + (1 - slow_alpha) * slow_ema
+                    macd_series.append(fast_ema - slow_ema)
+                return macd_series if macd_series else [0.0]
 
-            # ADX (simplified using ATR-based approach)
+            macd_history = calc_macd_line(closes)
+            macd_val = macd_history[-1] if macd_history else 0
+            # Signal line = 9-period EMA of MACD values
+            if len(macd_history) >= 9:
+                sig_alpha = 2.0 / (9 + 1)
+                sig_ema = macd_history[0]
+                for mv in macd_history[1:]:
+                    sig_ema = sig_alpha * mv + (1 - sig_alpha) * sig_ema
+                macd_signal = sig_ema
+            else:
+                macd_signal = macd_val
+
+            # ADX (Wilder-smoothed: ATR, +DI, -DI, then smoothed DX)
             def calc_adx(highs_l, lows_l, closes_l, period=14):
-                if len(highs_l) < period + 1:
-                    return 25
+                n = len(highs_l)
+                if n < period * 2 + 1:
+                    # Not enough data for proper smoothed ADX — rough fallback
+                    if n < period + 1:
+                        return 25
+                    # Single-period DX as fallback
+                    tr_s = sum(max(highs_l[i] - lows_l[i], abs(highs_l[i] - closes_l[i-1]), abs(lows_l[i] - closes_l[i-1])) for i in range(1, n))
+                    if tr_s == 0:
+                        return 25
+                    pdm_s = sum(max(highs_l[i] - highs_l[i-1], 0) if (highs_l[i] - highs_l[i-1]) > (lows_l[i-1] - lows_l[i]) else 0 for i in range(1, n))
+                    mdm_s = sum(max(lows_l[i-1] - lows_l[i], 0) if (lows_l[i-1] - lows_l[i]) > (highs_l[i] - highs_l[i-1]) else 0 for i in range(1, n))
+                    pdi = 100 * pdm_s / tr_s
+                    mdi = 100 * mdm_s / tr_s
+                    di_sum = pdi + mdi
+                    return 100 * abs(pdi - mdi) / di_sum if di_sum else 25
+
+                # Step 1: raw TR, +DM, -DM
                 tr_list = []
-                plus_dm_list = []
-                minus_dm_list = []
-                for i in range(1, len(highs_l)):
-                    high_low = highs_l[i] - lows_l[i]
-                    high_close = abs(highs_l[i] - closes_l[i - 1])
-                    low_close = abs(lows_l[i] - closes_l[i - 1])
-                    tr_list.append(max(high_low, high_close, low_close))
-                    up_move = highs_l[i] - highs_l[i - 1]
-                    down_move = lows_l[i - 1] - lows_l[i]
-                    plus_dm_list.append(up_move if up_move > down_move and up_move > 0 else 0)
-                    minus_dm_list.append(down_move if down_move > up_move and down_move > 0 else 0)
+                plus_dm = []
+                minus_dm = []
+                for i in range(1, n):
+                    hl = highs_l[i] - lows_l[i]
+                    hc = abs(highs_l[i] - closes_l[i - 1])
+                    lc = abs(lows_l[i] - closes_l[i - 1])
+                    tr_list.append(max(hl, hc, lc))
+                    up = highs_l[i] - highs_l[i - 1]
+                    dn = lows_l[i - 1] - lows_l[i]
+                    plus_dm.append(up if up > dn and up > 0 else 0)
+                    minus_dm.append(dn if dn > up and dn > 0 else 0)
 
-                atr_sum = sum(tr_list[-period:])
-                if atr_sum == 0:
+                # Step 2: Wilder-smooth TR, +DM, -DM (seed = sum of first period)
+                sm_tr = sum(tr_list[:period])
+                sm_pdm = sum(plus_dm[:period])
+                sm_mdm = sum(minus_dm[:period])
+
+                dx_list = []
+                for i in range(period, len(tr_list)):
+                    sm_tr = sm_tr - sm_tr / period + tr_list[i]
+                    sm_pdm = sm_pdm - sm_pdm / period + plus_dm[i]
+                    sm_mdm = sm_mdm - sm_mdm / period + minus_dm[i]
+                    pdi = 100 * sm_pdm / sm_tr if sm_tr else 0
+                    mdi = 100 * sm_mdm / sm_tr if sm_tr else 0
+                    di_sum = pdi + mdi
+                    dx = 100 * abs(pdi - mdi) / di_sum if di_sum else 0
+                    dx_list.append(dx)
+
+                if not dx_list:
                     return 25
 
-                plus_di = 100 * sum(plus_dm_list[-period:]) / atr_sum
-                minus_di = 100 * sum(minus_dm_list[-period:]) / atr_sum
-                di_sum = plus_di + minus_di
-                if di_sum == 0:
-                    return 25
-                dx = 100 * abs(plus_di - minus_di) / di_sum
-                return dx
+                # Step 3: Smooth DX → ADX (seed = average of first period DX values)
+                if len(dx_list) < period:
+                    return sum(dx_list) / len(dx_list)
+                adx_val = sum(dx_list[:period]) / period
+                for i in range(period, len(dx_list)):
+                    adx_val = (adx_val * (period - 1) + dx_list[i]) / period
+                return adx_val
 
             adx = calc_adx(highs, lows, closes)
 

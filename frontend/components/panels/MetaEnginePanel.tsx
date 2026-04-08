@@ -153,6 +153,8 @@ export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
   const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
   const [signals, setSignals] = useState<Record<string, MetaSignalData>>({});
   const [consensusViews, setConsensusViews] = useState<Record<string, ConsensusSymbolView>>({});
+  const consensusFetchedAt = useRef<Record<string, number>>({});
+  const CONSENSUS_TTL_MS = 5 * 60 * 1000; // 5 minutes
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const fetchRef = useRef(false);
@@ -206,6 +208,7 @@ export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
           ...prev,
           [targetSymbol]: resp.data as ConsensusSymbolView,
         }));
+        consensusFetchedAt.current[targetSymbol] = Date.now();
       }
     } catch {
       return;
@@ -231,11 +234,13 @@ export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
   }, [fetchDashboard]);
 
   useEffect(() => {
-    if (!activeSymbol || consensusViews[activeSymbol]) {
-      return;
+    if (!activeSymbol) return;
+    const lastFetch = consensusFetchedAt.current[activeSymbol] || 0;
+    const isStale = Date.now() - lastFetch > CONSENSUS_TTL_MS;
+    if (!consensusViews[activeSymbol] || isStale) {
+      fetchConsensus(activeSymbol);
     }
-    fetchConsensus(activeSymbol);
-  }, [activeSymbol, consensusViews, fetchConsensus]);
+  }, [activeSymbol, fetchConsensus]);
 
   const currentSignal = signals[activeSymbol] as MetaSignalData | undefined;
   const currentConsensus = consensusViews[activeSymbol] as ConsensusSymbolView | undefined;

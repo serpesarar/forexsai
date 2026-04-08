@@ -20,6 +20,8 @@ from services.news_analyzer_v2 import get_real_analyzer
 from database.supabase_client import get_supabase_client
 from services.redis_client import cache_get, cache_set
 
+RSS_AGGREGATION_ENABLED = False
+
 # IMPORTANT SYMBOLS - Only analyze news affecting these
 IMPORTANT_SYMBOLS = {"XAUUSD", "NDX", "DAX", "USOIL", "VIX", "DXY", "GOLD", "NASDAQ", "OIL"}
 
@@ -964,6 +966,9 @@ class RSSAggregator:
     
     async def store_in_database(self, item: RSSNewsItem) -> bool:
         """Store processed news in database with economic calendar integration"""
+        if not RSS_AGGREGATION_ENABLED:
+            print(f"[RSS] Database write disabled, skipping: {item.title[:60]}...")
+            return False
         try:
             # Check economic calendar first
             item = await self._check_economic_calendar(item)

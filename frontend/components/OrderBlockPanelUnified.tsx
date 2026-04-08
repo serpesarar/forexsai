@@ -123,9 +123,9 @@ function SymbolData({ symbol, symbolLabel, timeframe, isActive }: SymbolDataProp
     config: {
       fractal_period: 2,
       min_displacement_atr: 1.0,
-      min_score: 45,  // Balanced filter for quality detections
+      min_score: 50,
       zone_type: "wick" as const,
-      max_tests: 3
+      max_tests: 2
     }
   }), [symbol, timeframe]);
 
@@ -548,7 +548,7 @@ export default function OrderBlockPanelUnified({ symbol }: OrderBlockPanelUnifie
   const { t } = useI18nStore();
   const initialSymbol = symbol ?? "NDX.INDX";
   const isSymbolLocked = Boolean(symbol);
-  const [timeframe, setTimeframe] = useState<"5m" | "15m" | "1h" | "4h">("15m");
+  const [timeframe, setTimeframe] = useState<"5m" | "15m" | "1h" | "4h">("5m");
   const [activeSymbol, setActiveSymbol] = useState(initialSymbol);
   const [showInfo, setShowInfo] = useState(false);
 

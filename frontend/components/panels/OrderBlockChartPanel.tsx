@@ -12,7 +12,6 @@ import {
 } from "lightweight-charts";
 import { Maximize2, Minimize2, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useFullscreen } from "../../hooks/useFullscreen";
 import { fetcher } from "../../lib/api";
 import { useOrderBlockDetect } from "../../lib/api/orderBlocks";
 import styles from "./ob-chart.module.css";
@@ -82,13 +81,29 @@ function throttle<T extends (...args: any[]) => void>(fn: T, delay: number): T {
 export default function OrderBlockChartPanel() {
   const [symbol, setSymbol] = useState(SYMBOLS[0].key);
   const [timeframe, setTimeframe] = useState<TF>("5m");
-  const { isFullscreen, toggleFullscreen } = useFullscreen();
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const priceLinesRef = useRef<any[]>([]);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!wrapperRef.current) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      wrapperRef.current.requestFullscreen().catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
   const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
   const [overlayVersion, setOverlayVersion] = useState(0);
 
@@ -409,7 +424,7 @@ export default function OrderBlockChartPanel() {
   const fvgCount = (obData?.fvg_list as any[])?.filter((f: any) => !f.filled)?.length || 0;
 
   return (
-      <div className={styles.wrapper}>
+      <div ref={wrapperRef} className={styles.wrapper} style={isFullscreen ? { background: '#0a0e17' } : undefined}>
         {/* Toolbar */}
         <div className={styles.toolbar}>
           {SYMBOLS.map((s) => (

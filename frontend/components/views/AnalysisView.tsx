@@ -12,6 +12,7 @@ const MTFMatrixPanel = lazy(() => import("../../components/panels/MTFMatrixPanel
 const COTWhalePanel = lazy(() => import("../../components/panels/COTWhalePanel"));
 const SeasonalityPanel = lazy(() => import("../../components/panels/SeasonalityPanel"));
 const OrderBlockPanelUnified = lazy(() => import("../../components/OrderBlockPanelUnified"));
+const OrderBlockChartPanel = lazy(() => import("../../components/panels/OrderBlockChartPanel"));
 const WhaleTrackerPanel = lazy(() => import("../../components/WhaleTrackerPanel"));
 const InstitutionalDataPanel = lazy(() => import("../../components/InstitutionalDataPanel"));
 const AdvancedAnalysisPanel = lazy(() => import("../../components/AdvancedAnalysisPanel"));
@@ -71,6 +72,15 @@ export default function AnalysisView() {
                     <Suspense fallback={<PanelLoader />}>
                         <ErrorBoundary>
                             <OrderBlockPanelUnified />
+                        </ErrorBoundary>
+                    </Suspense>
+                </LazyPanel>
+
+                {/* Order Block Chart Visualization */}
+                <LazyPanel fallbackHeight={520}>
+                    <Suspense fallback={<PanelLoader />}>
+                        <ErrorBoundary>
+                            <OrderBlockChartPanel />
                         </ErrorBoundary>
                     </Suspense>
                 </LazyPanel>
