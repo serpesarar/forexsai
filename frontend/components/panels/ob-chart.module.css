@@ -69,6 +69,24 @@
   margin: 0 4px;
 }
 
+.helpBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(250, 204, 21, 0.28);
+  background: rgba(250, 204, 21, 0.12);
+  color: #facc15;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.helpBtn:hover {
+  background: rgba(250, 204, 21, 0.18);
+}
+
 .legendRow {
   display: flex;
   align-items: center;
@@ -76,6 +94,104 @@
   margin-left: auto;
   font-size: 10px;
   color: var(--text-muted);
+}
+
+.autoRefresh {
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(250, 204, 21, 0.22);
+  background: rgba(250, 204, 21, 0.08);
+  color: #facc15;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.contentRow {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.helpPanel {
+  width: 270px;
+  flex: 0 0 270px;
+  border-right: 1px solid var(--border-subtle);
+  background: rgba(8, 12, 20, 0.96);
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.helpPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.helpPanelTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #f3f4f6;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.helpCloseBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.helpBlock {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.helpLabelBull,
+.helpLabelBear,
+.helpLabelBos,
+.helpLabelChoch {
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.helpLabelBull,
+.helpLabelBos {
+  color: #facc15;
+}
+
+.helpLabelBear,
+.helpLabelChoch {
+  color: #ff8a65;
+}
+
+.helpText {
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.helpFooter {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(250, 204, 21, 0.08);
+  border: 1px solid rgba(250, 204, 21, 0.18);
+  color: #fde68a;
+  font-size: 11px;
+  line-height: 1.5;
 }
 
 .legendDot {
@@ -91,6 +207,7 @@
   flex: 1;
   position: relative;
   min-height: 400px;
+  min-width: 0;
 }
 
 .overlay {
@@ -214,4 +331,18 @@
 .wrapper:fullscreen .chartContainer {
   flex: 1;
   min-height: 0;
+}
+
+@media (max-width: 1100px) {
+  .contentRow {
+    flex-direction: column;
+  }
+
+  .helpPanel {
+    width: 100%;
+    flex: 0 0 auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+    max-height: 240px;
+  }
 }

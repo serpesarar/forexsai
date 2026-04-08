@@ -10,10 +10,10 @@ import {
   Time,
   SeriesMarker,
 } from "lightweight-charts";
-import { Maximize2, Minimize2, RefreshCw } from "lucide-react";
+import { HelpCircle, Maximize2, Minimize2, RefreshCw, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { fetcher } from "../../lib/api";
-import { useOrderBlockDetect } from "../../lib/api/orderBlocks";
+import type { OrderBlockDetectResponse } from "../../lib/api/orderBlocks";
 import styles from "./ob-chart.module.css";
 
 // ─── CONFIG ──────────────────────────────────────────────────────────
@@ -28,13 +28,14 @@ const SYMBOLS = [
 const TIMEFRAMES = ["5m", "15m", "1h", "4h"] as const;
 type TF = (typeof TIMEFRAMES)[number];
 
-const OB_BULL_COLOR = "rgba(38, 166, 154, 0.18)";
-const OB_BULL_BORDER = "rgba(38, 166, 154, 0.6)";
+const BULL_HIGHLIGHT = "#facc15";
+const OB_BULL_COLOR = "rgba(250, 204, 21, 0.16)";
+const OB_BULL_BORDER = "rgba(250, 204, 21, 0.64)";
 const OB_BEAR_COLOR = "rgba(239, 83, 80, 0.18)";
 const OB_BEAR_BORDER = "rgba(239, 83, 80, 0.6)";
-const FVG_BULL_COLOR = "rgba(38, 166, 154, 0.08)";
+const FVG_BULL_COLOR = "rgba(250, 204, 21, 0.1)";
 const FVG_BEAR_COLOR = "rgba(239, 83, 80, 0.08)";
-const SR_SUPPORT_COLOR = "#26a69a";
+const SR_SUPPORT_COLOR = BULL_HIGHLIGHT;
 const SR_RESISTANCE_COLOR = "#ef5350";
 
 interface CandleData {
@@ -50,7 +51,8 @@ interface CandleData {
 
 async function fetchOHLCV(symbol: string, timeframe: string): Promise<CandleData[]> {
   const data = await fetcher<{ data?: any[] }>(
-    `/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=${timeframe}&limit=300`
+    `/api/data/ohlcv?symbol=${encodeURIComponent(symbol)}&timeframe=${timeframe}&limit=300`,
+    { cache: "no-store" }
   );
   const raw: any[] = data.data || [];
   return raw.map((d) => ({
@@ -82,6 +84,7 @@ export default function OrderBlockChartPanel() {
   const [symbol, setSymbol] = useState(SYMBOLS[0].key);
   const [timeframe, setTimeframe] = useState<TF>("5m");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showGuide, setShowGuide] = useState(true);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -89,6 +92,21 @@ export default function OrderBlockChartPanel() {
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const priceLinesRef = useRef<any[]>([]);
+  const detectPayload = useMemo(
+    () => ({
+      symbol,
+      timeframe,
+      limit: 300,
+      config: {
+        fractal_period: 2,
+        min_displacement_atr: 1.0,
+        min_score: 50,
+        zone_type: "wick" as const,
+        max_tests: 2,
+      },
+    }),
+    [symbol, timeframe]
+  );
 
   const toggleFullscreen = useCallback(() => {
     if (!wrapperRef.current) return;
@@ -114,22 +132,25 @@ export default function OrderBlockChartPanel() {
   } = useQuery({
     queryKey: ["ob-chart-ohlcv", symbol, timeframe],
     queryFn: () => fetchOHLCV(symbol, timeframe),
-    refetchInterval: 30000,
-    staleTime: 15000,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
   // ── Order block detect data
-  const { data: obData, isLoading: obLoading } = useOrderBlockDetect({
-    symbol,
-    timeframe,
-    limit: 300,
-    config: {
-      fractal_period: 2,
-      min_displacement_atr: 1.0,
-      min_score: 50,
-      zone_type: "wick",
-      max_tests: 2,
-    },
+  const { data: obData, isLoading: obLoading } = useQuery<OrderBlockDetectResponse>({
+    queryKey: ["ob-chart-detect", detectPayload],
+    queryFn: () =>
+      fetcher<OrderBlockDetectResponse>("/api/order-blocks/detect", {
+        method: "POST",
+        body: JSON.stringify(detectPayload),
+        cache: "no-store",
+      }),
+    refetchInterval: 60000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
   // ── Chart init
@@ -221,7 +242,7 @@ export default function OrderBlockChartPanel() {
           markers.push({
             time: candles[idx].time as Time,
             position: isBullish ? "belowBar" : "aboveBar",
-            color: isBullish ? "#26a69a" : "#ef5350",
+            color: isBullish ? BULL_HIGHLIGHT : "#ef5350",
             shape: isBullish ? "arrowUp" : "arrowDown",
             text: `CHoCH`,
           });
@@ -237,7 +258,7 @@ export default function OrderBlockChartPanel() {
           markers.push({
             time: candles[idx].time as Time,
             position: isBullish ? "belowBar" : "aboveBar",
-            color: isBullish ? "#4dd0e1" : "#ff8a65",
+            color: isBullish ? BULL_HIGHLIGHT : "#ff8a65",
             shape: "circle",
             text: `BOS`,
           });
@@ -361,7 +382,7 @@ export default function OrderBlockChartPanel() {
 
         // Label
         ctx.font = "bold 9px monospace";
-        ctx.fillStyle = isBullish ? "#26a69a" : "#ef5350";
+        ctx.fillStyle = isBullish ? BULL_HIGHLIGHT : "#ef5350";
         const label = `${isBullish ? "Bull" : "Bear"} OB (${ob.score || 0})`;
         ctx.fillText(label, obX + 4, y + 10);
       }
@@ -396,7 +417,7 @@ export default function OrderBlockChartPanel() {
         ctx.fillRect(fvgX, y, chartSize.width - fvgX, h);
 
         // Dashed border
-        ctx.strokeStyle = isBullish ? "rgba(38,166,154,0.3)" : "rgba(239,83,80,0.3)";
+        ctx.strokeStyle = isBullish ? "rgba(250,204,21,0.36)" : "rgba(239,83,80,0.3)";
         ctx.lineWidth = 0.5;
         ctx.setLineDash([3, 3]);
         ctx.strokeRect(fvgX, y, chartSize.width - fvgX, h);
@@ -404,7 +425,7 @@ export default function OrderBlockChartPanel() {
 
         // FVG label
         ctx.font = "8px monospace";
-        ctx.fillStyle = isBullish ? "rgba(38,166,154,0.5)" : "rgba(239,83,80,0.5)";
+        ctx.fillStyle = isBullish ? "rgba(250,204,21,0.72)" : "rgba(239,83,80,0.5)";
         ctx.fillText("FVG", fvgX + 3, y + 9);
       }
     }
@@ -424,41 +445,80 @@ export default function OrderBlockChartPanel() {
   const fvgCount = (obData?.fvg_list as any[])?.filter((f: any) => !f.filled)?.length || 0;
 
   return (
-      <div ref={wrapperRef} className={styles.wrapper} style={isFullscreen ? { background: '#0a0e17' } : undefined}>
-        {/* Toolbar */}
-        <div className={styles.toolbar}>
-          {SYMBOLS.map((s) => (
-            <button
-              key={s.key}
-              className={`${styles.symbolBtn} ${symbol === s.key ? styles.symbolBtnActive : ""}`}
-              onClick={() => setSymbol(s.key)}
-            >
-              {s.label}
-            </button>
-          ))}
-          <div className={styles.separator} />
-          {TIMEFRAMES.map((tf) => (
-            <button
-              key={tf}
-              className={`${styles.tfBtn} ${timeframe === tf ? styles.tfBtnActive : ""}`}
-              onClick={() => setTimeframe(tf)}
-            >
-              {tf}
-            </button>
-          ))}
-          <div className={styles.separator} />
-          <div className={styles.legendRow}>
-            <span><span className={styles.legendDot} style={{ background: "#26a69a" }} />Bull OB</span>
-            <span><span className={styles.legendDot} style={{ background: "#ef5350" }} />Bear OB</span>
-            <span><span className={styles.legendDot} style={{ background: "#4dd0e1" }} />BOS</span>
-            <span><span className={styles.legendDot} style={{ background: "#ff8a65" }} />CHoCH</span>
-          </div>
-          <button className={styles.fullscreenBtn} onClick={toggleFullscreen}>
-            {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+    <div ref={wrapperRef} className={styles.wrapper} style={isFullscreen ? { background: '#0a0e17' } : undefined}>
+      {/* Toolbar */}
+      <div className={styles.toolbar}>
+        <button
+          className={styles.helpBtn}
+          onClick={() => setShowGuide((prev) => !prev)}
+          type="button"
+        >
+          <HelpCircle size={14} />
+        </button>
+        {SYMBOLS.map((s) => (
+          <button
+            key={s.key}
+            className={`${styles.symbolBtn} ${symbol === s.key ? styles.symbolBtnActive : ""}`}
+            onClick={() => setSymbol(s.key)}
+          >
+            {s.label}
           </button>
+        ))}
+        <div className={styles.separator} />
+        {TIMEFRAMES.map((tf) => (
+          <button
+            key={tf}
+            className={`${styles.tfBtn} ${timeframe === tf ? styles.tfBtnActive : ""}`}
+            onClick={() => setTimeframe(tf)}
+          >
+            {tf}
+          </button>
+        ))}
+        <div className={styles.separator} />
+        <div className={styles.legendRow}>
+          <span><span className={styles.legendDot} style={{ background: BULL_HIGHLIGHT }} />Bull OB</span>
+          <span><span className={styles.legendDot} style={{ background: "#ef5350" }} />Bear OB</span>
+          <span><span className={styles.legendDot} style={{ background: BULL_HIGHLIGHT }} />BOS</span>
+          <span><span className={styles.legendDot} style={{ background: "#ff8a65" }} />CHoCH</span>
         </div>
+        <div className={styles.autoRefresh}>1m auto</div>
+        <button className={styles.fullscreenBtn} onClick={toggleFullscreen}>
+          {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+        </button>
+      </div>
 
-        {/* Chart */}
+      <div className={styles.contentRow}>
+        {showGuide ? (
+          <div className={styles.helpPanel}>
+            <div className={styles.helpPanelHeader}>
+              <div className={styles.helpPanelTitle}>
+                <HelpCircle size={14} />
+                <span>SMC Guide</span>
+              </div>
+              <button className={styles.helpCloseBtn} onClick={() => setShowGuide(false)} type="button">
+                <X size={14} />
+              </button>
+            </div>
+            <div className={styles.helpBlock}>
+              <div className={styles.helpLabelBull}>Bull OB</div>
+              <p className={styles.helpText}>Kurumsal alım bölgesi. Fiyat banda geldiğinde direkt alım yerine önce tutunma, bullish mum veya yukarı yönlü teyit bekle.</p>
+            </div>
+            <div className={styles.helpBlock}>
+              <div className={styles.helpLabelBear}>Bear OB</div>
+              <p className={styles.helpText}>Kurumsal satış bölgesi. Fiyat banda dokunduğunda rejection, zayıflama veya aşağı yönlü teyit görmeden satışa atlama.</p>
+            </div>
+            <div className={styles.helpBlock}>
+              <div className={styles.helpLabelBos}>BOS</div>
+              <p className={styles.helpText}>Break of Structure. Trend devamının teyidi sayılır. Bölge temasından sonra işlem yönünde BOS gelirse senaryo güçlenir.</p>
+            </div>
+            <div className={styles.helpBlock}>
+              <div className={styles.helpLabelChoch}>CHoCH</div>
+              <p className={styles.helpText}>Change of Character. İlk dönüş sinyali olabilir. Tek başına giriş yerine CHoCH sonrası ikinci teyit veya BOS beklemek daha güvenlidir.</p>
+            </div>
+            <div className={styles.helpFooter}>Temas tek başına giriş değildir; fiyatın bölgede nasıl davrandığını beklemek daha güvenli senaryodur.</div>
+          </div>
+        ) : null}
+
         <div className={styles.chartContainer} ref={chartContainerRef}>
           {isLoading && (
             <div className={styles.loading}>
@@ -498,27 +558,27 @@ export default function OrderBlockChartPanel() {
             {trend}
           </div>
         </div>
-
-        {/* Stats bar */}
-        <div className={styles.statsBar}>
-          <div className={styles.statItem}>
-            OBs: <span className={styles.statValue}>{obCount}</span>
-          </div>
-          <div className={styles.statItem}>
-            CHoCH: <span className={styles.statValue}>{chochCount}</span>
-          </div>
-          <div className={styles.statItem}>
-            BOS: <span className={styles.statValue}>{bosCount}</span>
-          </div>
-          <div className={styles.statItem}>
-            FVG: <span className={styles.statValue}>{fvgCount}</span>
-          </div>
-          {signal?.reasons?.length ? (
-            <div className={styles.statItem} style={{ marginLeft: "auto" }}>
-              {signal.reasons.slice(0, 3).join(" · ")}
-            </div>
-          ) : null}
-        </div>
       </div>
+
+      <div className={styles.statsBar}>
+        <div className={styles.statItem}>
+          OBs: <span className={styles.statValue}>{obCount}</span>
+        </div>
+        <div className={styles.statItem}>
+          CHoCH: <span className={styles.statValue}>{chochCount}</span>
+        </div>
+        <div className={styles.statItem}>
+          BOS: <span className={styles.statValue}>{bosCount}</span>
+        </div>
+        <div className={styles.statItem}>
+          FVG: <span className={styles.statValue}>{fvgCount}</span>
+        </div>
+        {signal?.reasons?.length ? (
+          <div className={styles.statItem} style={{ marginLeft: "auto" }}>
+            {signal.reasons.slice(0, 3).join(" · ")}
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }
