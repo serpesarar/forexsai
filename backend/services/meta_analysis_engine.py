@@ -888,8 +888,8 @@ class MetaAnalysisEngine:
         _meta_cache[symbol] = (time.time(), meta_signal)
 
         try:
-            from services.meta_signal_logger import log_meta_prediction
-            await log_meta_prediction(asdict(meta_signal))
+            from services.meta_signal_logger import capture_meta_snapshot_if_due
+            await capture_meta_snapshot_if_due(asdict(meta_signal))
         except Exception as e:
             logger.warning(f"[MetaEngine] Meta prediction log failed for {symbol}: {e}")
 

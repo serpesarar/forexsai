@@ -110,11 +110,12 @@ MAX_ACTIVE_SIGNALS = 100              # Cap for performance
 ARCHIVE_AFTER_DAYS = 30               # Move to cold storage after 30 days
 CLEANUP_INTERVAL_SECONDS = 1800       # Cleanup every 30 minutes
 
-KNOWN_TIMEFRAMES = {"1m", "5m", "15m", "30m", "1h", "4h", "1d"}
+KNOWN_TIMEFRAMES = {"1m", "5m", "15m", "20m", "30m", "1h", "4h", "1d"}
 TIMEFRAME_EVALUATION_WINDOWS = {
     "1m": 2,
     "5m": 10,
     "15m": SIGNAL_MAX_AGE_MINUTES,
+    "20m": 20,
     "30m": 60,
     "1h": 120,
     "4h": 480,
@@ -867,6 +868,33 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     if new_status == "stopped":
         await _create_failure_autopsy(client, signal, targets_hit, current)
 
+    if new_status in {"completed", "stopped"}:
+        try:
+            model_type = normalize_model_type(signal)
+            if model_type == "meta":
+                resolved_signal = dict(signal)
+                resolved_signal.update(update_data)
+                factors = resolved_signal.get("factors") or {}
+                if not isinstance(factors, dict):
+                    factors = parse_json_field(factors, {})
+                combo_key = str(factors.get("source_combo") or "").strip()
+                regime = str(factors.get("regime") or "UNKNOWN").strip() or "UNKNOWN"
+                if combo_key:
+                    _, is_win, scored_pips = classify_signal(resolved_signal, default_symbol=symbol)
+                    if is_win is not None and scored_pips is not None:
+                        from services.meta_signal_logger import update_combination_stats
+                        await update_combination_stats(
+                            combo_key=combo_key,
+                            symbol=symbol,
+                            regime=regime,
+                            is_win=bool(is_win),
+                            profit_pips=abs(float(scored_pips)),
+                        )
+        except Exception as combo_err:
+            logger.warning(
+                f"lifecycle.meta_combo_update_failed | signal={signal_id[:8]} symbol={symbol} error={combo_err}"
+            )
+
     return new_status
 
 
@@ -1225,7 +1253,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
         return {"error": "No DB client"}
 
     try:
-        tf_order = ["5m", "15m", "30m", "1h", "4h", "1d"]
+        tf_order = ["5m", "15m", "20m", "30m", "1h", "4h", "1d"]
 
         # Supabase PostgREST caps at 1000 rows per request.
         # Fetch day-by-day to stay under 1000 rows per request.

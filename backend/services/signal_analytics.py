@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from services.target_config import calculate_stoploss_price, calculate_target_prices, pips_from_price_change
 
-TIMEFRAME_ORDER = ["5m", "15m", "30m", "1h", "4h", "1d"]
+TIMEFRAME_ORDER = ["5m", "15m", "20m", "30m", "1h", "4h", "1d"]
 VALID_TIMEFRAMES = set(TIMEFRAME_ORDER)
 MODEL_ORDER = ["ml", "ai_panel", "meta", "pulse1", "pulse2", "pulse3", "emel", "emel_inverse", "smc", "hybrid"]
 TP_LEVEL_ORDER = ("TP1", "TP2", "TP3", "TP4")

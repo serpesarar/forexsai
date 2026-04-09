@@ -5,18 +5,113 @@ Logs meta-engine signals to Supabase and updates combination stats.
 
 from __future__ import annotations
 
+import math
 import logging
+from datetime import datetime, timezone
 from itertools import combinations
 from typing import Dict, Any, Optional, List
 
 logger = logging.getLogger(__name__)
 
+META_MODEL_TYPE = "meta"
+META_STRATEGY = "META_ENGINE"
+META_SIGNAL_TIMEFRAME = "20m"
+META_SNAPSHOT_INTERVAL_SECONDS = 20 * 60
+_last_meta_snapshot_log: Dict[str, datetime] = {}
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _parse_datetime(value: Any) -> Optional[datetime]:
+    if isinstance(value, datetime):
+        return value.astimezone(timezone.utc) if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed.astimezone(timezone.utc) if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def _coerce_float(value: Any, default: float = 0.0) -> float:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return default
+    if math.isnan(parsed):
+        return default
+    return parsed
+
+
+def _get_last_persisted_meta_log_time(symbol: str) -> Optional[datetime]:
+    from database.supabase_client import get_supabase_client, is_db_available
+    from utils.safe_supabase import safe_get_data
+
+    if not is_db_available():
+        return None
+
+    client = get_supabase_client()
+    if not client:
+        return None
+
+    try:
+        result = client.table("prediction_logs").select(
+            "created_at"
+        ).eq(
+            "symbol", symbol
+        ).eq(
+            "model_type", META_MODEL_TYPE
+        ).order(
+            "created_at", desc=True
+        ).limit(1).execute()
+        rows = safe_get_data(result) or []
+        if not rows:
+            return None
+        return _parse_datetime(rows[0].get("created_at"))
+    except Exception as exc:
+        logger.debug("[MetaSignalLogger] last meta snapshot lookup failed for %s: %s", symbol, exc)
+        return None
+
+
+def _resolve_last_meta_snapshot_time(symbol: str) -> Optional[datetime]:
+    memory_last = _last_meta_snapshot_log.get(symbol)
+    db_last = _get_last_persisted_meta_log_time(symbol)
+    if memory_last and db_last:
+        return max(memory_last, db_last)
+    return memory_last or db_last
+
+
+def should_log_meta_snapshot(symbol: str, now: Optional[datetime] = None) -> bool:
+    reference = now or _utc_now()
+    last_logged = _resolve_last_meta_snapshot_time(symbol)
+    if not last_logged:
+        return True
+    return (reference - last_logged).total_seconds() >= META_SNAPSHOT_INTERVAL_SECONDS
+
+
+async def capture_meta_snapshot_if_due(signal_data: Dict[str, Any]) -> Optional[str]:
+    symbol = str(signal_data.get("symbol") or "").upper().strip()
+    if not symbol:
+        return None
+
+    now = _utc_now()
+    if not should_log_meta_snapshot(symbol, now=now):
+        return None
+
+    prediction_id = await log_meta_prediction(signal_data, timeframe=META_SIGNAL_TIMEFRAME)
+    if prediction_id:
+        _last_meta_snapshot_log[symbol] = now
+    return prediction_id
+
 
 async def log_meta_prediction(signal_data: Dict[str, Any], timeframe: str = "1h") -> Optional[str]:
     try:
         from database.supabase_client import get_supabase_client, is_db_available
-        from services.prediction_logger import _close_existing_signal, _get_current_session, _has_active_signal
-        from services.target_config import pips_from_price_change
+        from services.prediction_logger import _check_session_filter, _close_existing_signal, _get_current_session, _has_active_signal
+        from services.target_config import calculate_stoploss_price, calculate_target_prices, pips_from_price_change
         from utils.safe_supabase import safe_get_data, safe_get_error
 
         direction = str(signal_data.get("direction") or "").upper().strip()
@@ -24,16 +119,14 @@ async def log_meta_prediction(signal_data: Dict[str, Any], timeframe: str = "1h"
         if direction not in {"BUY", "SELL"} or not symbol:
             return None
 
-        try:
-            entry_price = float(signal_data.get("entry_price") or 0)
-            stop_loss = float(signal_data.get("stop_loss") or 0)
-            take_profit_1 = float(signal_data.get("take_profit_1") or 0)
-            take_profit_2 = float(signal_data.get("take_profit_2") or 0)
-            confidence = float(signal_data.get("confidence") or 0)
-        except (TypeError, ValueError):
+        should_filter, reason = _check_session_filter(symbol)
+        if should_filter:
+            logger.info("[MetaSignalLogger] %s", reason)
             return None
 
-        if entry_price <= 0 or stop_loss <= 0:
+        entry_price = _coerce_float(signal_data.get("entry_price") or 0)
+        confidence = _coerce_float(signal_data.get("confidence") or 0)
+        if entry_price <= 0:
             return None
 
         if not is_db_available():
@@ -48,39 +141,35 @@ async def log_meta_prediction(signal_data: Dict[str, Any], timeframe: str = "1h"
         has_active, active_signal_id, active_direction = _has_active_signal(
             client,
             symbol,
-            "meta",
+            META_MODEL_TYPE,
             normalized_timeframe,
             direction,
         )
 
         if has_active:
-            if active_direction == direction:
-                return None
-            if not active_signal_id:
-                return None
-            closed = _close_existing_signal(
-                client,
-                active_signal_id,
-                direction,
-                entry_price,
-                reason="direction_flip",
-            )
-            if not closed:
-                return None
+            if active_direction != direction:
+                if not active_signal_id:
+                    return None
+                closed = _close_existing_signal(
+                    client,
+                    active_signal_id,
+                    direction,
+                    entry_price,
+                    reason="direction_flip",
+                )
+                if not closed:
+                    return None
 
-        targets = {}
-        if take_profit_1 > 0:
-            targets["TP1"] = round(take_profit_1, 4)
-        if take_profit_2 > 0:
-            targets["TP2"] = round(take_profit_2, 4)
+        targets = calculate_target_prices(entry_price, direction, symbol, normalized_timeframe)
+        stop_loss = calculate_stoploss_price(entry_price, direction, symbol, normalized_timeframe)
         targets["SL"] = round(stop_loss, 4)
 
         stop_loss_pips = abs(pips_from_price_change(abs(entry_price - stop_loss), symbol))
         factors = {
             "session": _get_current_session(),
-            "target_type": "meta_engine",
-            "strategy": "META_ENGINE",
-            "source": "META_ENGINE",
+            "target_type": "static_pips",
+            "strategy": META_STRATEGY,
+            "source": META_STRATEGY,
             "source_combo": signal_data.get("source_combo"),
             "regime": signal_data.get("regime"),
             "agreement_ratio": signal_data.get("agreement_ratio"),
@@ -90,6 +179,10 @@ async def log_meta_prediction(signal_data: Dict[str, Any], timeframe: str = "1h"
             "strength": signal_data.get("strength"),
             "model_breakdown": signal_data.get("model_breakdown", {}),
             "alternatives": signal_data.get("alternatives", []),
+            "meta_snapshot_interval_seconds": META_SNAPSHOT_INTERVAL_SECONDS,
+            "meta_live_stop_loss": round(_coerce_float(signal_data.get("stop_loss"), stop_loss), 4),
+            "meta_live_take_profit_1": round(_coerce_float(signal_data.get("take_profit_1"), 0.0), 4),
+            "meta_live_take_profit_2": round(_coerce_float(signal_data.get("take_profit_2"), 0.0), 4),
         }
         factors = {key: value for key, value in factors.items() if value not in (None, "", [], {})}
 
@@ -98,22 +191,22 @@ async def log_meta_prediction(signal_data: Dict[str, Any], timeframe: str = "1h"
             "timeframe": normalized_timeframe,
             "ml_direction": direction,
             "ml_confidence": round(confidence, 1),
-            "ml_target_price": take_profit_1 or None,
+            "ml_target_price": targets.get("TP1") or None,
             "ml_stop_price": stop_loss,
             "ml_entry_price": entry_price,
             "claude_direction": direction,
             "claude_confidence": round(confidence, 1),
-            "claude_model": "META_ENGINE",
+            "claude_model": META_STRATEGY,
             "factors": factors,
             "outcome_checked": False,
-            "strategy": "META_ENGINE",
+            "strategy": META_STRATEGY,
             "status": "active",
             "targets": targets,
             "stop_loss_pips": round(stop_loss_pips, 2),
             "targets_hit": {tp: False for tp in targets if tp != "SL"},
             "highest_profit_pips": 0,
             "lowest_drawdown_pips": 0,
-            "model_type": "meta",
+            "model_type": META_MODEL_TYPE,
         }
 
         result = client.table("prediction_logs").insert_ignore(record)
@@ -127,6 +220,7 @@ async def log_meta_prediction(signal_data: Dict[str, Any], timeframe: str = "1h"
         if rows:
             prediction_id = rows[0].get("id")
             await log_meta_signal(signal_data)
+            _last_meta_snapshot_log[symbol] = _utc_now()
             logger.info("[MetaSignalLogger] Logged meta prediction %s for %s", prediction_id, symbol)
             return prediction_id
         return None
@@ -139,6 +233,7 @@ async def log_meta_signal(signal_data: Dict[str, Any]) -> Optional[str]:
     """Log a meta-signal to the meta_signals table. Returns the row ID."""
     try:
         from database.supabase_client import get_supabase_client
+        from utils.safe_supabase import safe_get_data
         client = get_supabase_client()
         if not client:
             logger.warning("[MetaSignalLogger] No Supabase client")
@@ -163,8 +258,8 @@ async def log_meta_signal(signal_data: Dict[str, Any]) -> Optional[str]:
             "status": "active",
         }
 
-        result = client.table("meta_signals").insert(row).execute()
-        data = result.get("data", []) if isinstance(result, dict) else (result.data if hasattr(result, "data") else [])
+        result = client.table("meta_signals").insert(row)
+        data = safe_get_data(result) or []
 
         if data and len(data) > 0:
             row_id = data[0].get("id")
@@ -187,6 +282,7 @@ async def update_combination_stats(
     """Update meta_combination_stats after a signal resolves."""
     try:
         from database.supabase_client import get_supabase_client
+        from utils.safe_supabase import safe_get_data
         client = get_supabase_client()
         if not client:
             return
@@ -200,7 +296,8 @@ async def update_combination_stats(
             .limit(1) \
             .execute()
 
-        rows = existing.get("data", []) if isinstance(existing, dict) else (existing.data if hasattr(existing, "data") else [])
+        rows = safe_get_data(existing) or []
+        now_iso = _utc_now().isoformat().replace("+00:00", "Z")
 
         if rows and len(rows) > 0:
             # Update existing
@@ -230,20 +327,17 @@ async def update_combination_stats(
             # Expectancy = (win_rate * avg_profit) - ((1-win_rate) * avg_loss)
             expectancy = (win_rate * avg_profit) - ((1 - win_rate) * avg_loss)
 
-            client.table("meta_combination_stats") \
-                .update({
-                    "total_signals": total,
-                    "wins": wins,
-                    "losses": losses,
-                    "win_rate": round(win_rate, 4),
-                    "avg_profit_pips": round(avg_profit, 2),
-                    "avg_loss_pips": round(avg_loss, 2),
-                    "profit_factor": round(profit_factor, 2),
-                    "expectancy": round(expectancy, 2),
-                    "last_updated": "now()",
-                }) \
-                .eq("id", row["id"]) \
-                .execute()
+            client.table("meta_combination_stats").eq("id", row["id"]).update({
+                "total_signals": total,
+                "wins": wins,
+                "losses": losses,
+                "win_rate": round(win_rate, 4),
+                "avg_profit_pips": round(avg_profit, 2),
+                "avg_loss_pips": round(avg_loss, 2),
+                "profit_factor": round(profit_factor, 2),
+                "expectancy": round(expectancy, 2),
+                "last_updated": now_iso,
+            })
 
             logger.info(
                 f"[MetaSignalLogger] Updated combo {combo_key}/{symbol}/{regime}: "
@@ -263,8 +357,9 @@ async def update_combination_stats(
                 "win_rate": 1.0 if is_win else 0.0,
                 "profit_factor": 0,
                 "expectancy": 0,
+                "last_updated": now_iso,
             }
-            client.table("meta_combination_stats").insert(new_row).execute()
+            client.table("meta_combination_stats").insert(new_row)
             logger.info(f"[MetaSignalLogger] Created combo {combo_key}/{symbol}/{regime}")
 
     except Exception as e:
@@ -419,7 +514,7 @@ async def backfill_combination_stats() -> Dict[str, Any]:
                     client.table("meta_combination_stats").upsert(
                         batch,
                         on_conflict="combo_key,symbol,regime"
-                    ).execute()
+                    )
             except Exception as e:
                 logger.error(f"Bulk upsert error: {e}")
 

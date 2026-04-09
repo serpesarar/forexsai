@@ -194,7 +194,7 @@ export default function MetaSignalAnalysisPanel() {
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: "rgba(79,140,255,0.08)", border: "1px solid rgba(79,140,255,0.15)", color: "#4F8CFF", fontSize: 11, fontWeight: 500 }}>
-            <ClockBadge /> Meta check 60s
+            <ClockBadge /> Meta snapshot 20m
           </span>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: "rgba(22,199,132,0.08)", border: "1px solid rgba(22,199,132,0.15)", color: "var(--accent-positive)", fontSize: 11, fontWeight: 500 }}>
             <ShieldCheck className="w-3.5 h-3.5" /> Lifecycle eval 60s
