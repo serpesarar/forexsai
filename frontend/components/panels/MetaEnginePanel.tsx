@@ -104,21 +104,118 @@ function ConfidenceRing({ value, size = 100, direction }: { value: number; size?
   );
 }
 
-function ModelDot({ label, direction, agrees, confidence }: {
-  label: string; direction: string; agrees: boolean; confidence: number;
+interface ComboInsight {
+  bestWinRate: number;
+  bestCombo: string;
+  isPending: boolean;
+  pendingCombo: string;
+  pendingComboWR: number;
+}
+
+function analyzeModelCombos(
+  modelId: string,
+  modelBreakdown: Record<string, ModelBreakdown>,
+  consensus: ConsensusSymbolView | undefined,
+  metaDirection: string,
+): ComboInsight {
+  const result: ComboInsight = { bestWinRate: 0, bestCombo: "", isPending: false, pendingCombo: "", pendingComboWR: 0 };
+  if (!consensus) return result;
+
+  const dirSection = metaDirection === "BUY" ? consensus.buy : metaDirection === "SELL" ? consensus.sell : null;
+  if (!dirSection) return result;
+
+  const allCombos = [...(dirSection.best_stable || []), ...(dirSection.most_frequent || [])];
+  const seen = new Set<string>();
+  const uniqueCombos = allCombos.filter((c: any) => {
+    const k = c.combination;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+
+  const agreeingModels = new Set(
+    Object.entries(modelBreakdown)
+      .filter(([, info]) => info.agrees && info.is_available)
+      .map(([id]) => id)
+  );
+
+  for (const combo of uniqueCombos) {
+    const comboStr = (combo as any).combination || "";
+    const wr = Number((combo as any).win_rate || 0);
+    const models = comboStr.split("+").map((m: string) => m.trim().toLowerCase());
+    if (!models.includes(modelId)) continue;
+
+    // Best combo this model is part of (where model agrees)
+    if (agreeingModels.has(modelId) && wr > result.bestWinRate) {
+      const allAgree = models.every((m: string) => agreeingModels.has(m));
+      if (allAgree) {
+        result.bestWinRate = wr;
+        result.bestCombo = comboStr;
+      }
+    }
+
+    // Pending: model does NOT agree, but all OTHER models in combo DO agree
+    if (!agreeingModels.has(modelId) && wr >= 0.55) {
+      const othersAgree = models.filter((m: string) => m !== modelId).every((m: string) => agreeingModels.has(m));
+      if (othersAgree && wr > result.pendingComboWR) {
+        result.isPending = true;
+        result.pendingCombo = comboStr;
+        result.pendingComboWR = wr;
+      }
+    }
+  }
+
+  return result;
+}
+
+function ModelDot({ label, modelId, direction, agrees, confidence, insight }: {
+  label: string; modelId: string; direction: string; agrees: boolean; confidence: number;
+  insight: ComboInsight;
 }) {
-  const color = !agrees ? "rgba(255,255,255,0.15)"
-    : direction === "BUY" ? "#16C784"
-    : direction === "SELL" ? "#EA3943"
-    : "rgba(255,255,255,0.3)";
+  let color: string;
+  let glow = "none";
+  let animClass = "";
+  let tooltip = `${label}: ${direction} (${Math.round(confidence)}%)`;
+
+  if (insight.isPending) {
+    // Pending confirmation — blink yellow
+    color = "#F5A623";
+    glow = "0 0 8px #F5A623";
+    animClass = "animate-pulse";
+    tooltip += ` \u2014 Awaiting for combo: ${insight.pendingCombo} (${Math.round(insight.pendingComboWR * 100)}% WR)`;
+  } else if (!agrees) {
+    color = "rgba(255,255,255,0.15)";
+  } else if (insight.bestWinRate >= 0.60) {
+    // Strong combo — bright green with intense glow
+    color = direction === "SELL" ? "#EA3943" : "#16C784";
+    glow = `0 0 10px ${color}, 0 0 20px ${color}40`;
+    tooltip += ` \u2014 Active combo: ${insight.bestCombo} (${Math.round(insight.bestWinRate * 100)}% WR)`;
+  } else if (insight.bestWinRate >= 0.50) {
+    color = direction === "SELL" ? "#EA3943" : "#16C784";
+    glow = `0 0 6px ${color}`;
+    tooltip += ` \u2014 Combo: ${insight.bestCombo} (${Math.round(insight.bestWinRate * 100)}% WR)`;
+  } else if (agrees) {
+    color = direction === "BUY" ? "#16C784" : direction === "SELL" ? "#EA3943" : "rgba(255,255,255,0.3)";
+    glow = `0 0 4px ${color}`;
+  } else {
+    color = "rgba(255,255,255,0.15)";
+  }
+
+  const shortLabel = label.replace("Model ", "").replace("Pulse ", "P");
 
   return (
-    <div className="flex flex-col items-center gap-1" title={`${label}: ${direction} (${Math.round(confidence)}%)`}>
+    <div className="flex flex-col items-center gap-1" title={tooltip}>
       <div
-        className="w-3 h-3 rounded-full transition-all duration-500"
-        style={{ backgroundColor: color, boxShadow: agrees ? `0 0 6px ${color}` : "none" }}
+        className={`w-3.5 h-3.5 rounded-full transition-all duration-500 ${animClass}`}
+        style={{
+          backgroundColor: color,
+          boxShadow: glow,
+          border: insight.isPending ? "1.5px solid #F5A623" : insight.bestWinRate >= 0.60 ? `1.5px solid ${color}` : "none",
+        }}
       />
-      <span className="text-[9px] opacity-60 font-medium">{label.replace("Model ", "").replace("Pulse ", "P")}</span>
+      <span className={`text-[9px] font-medium ${
+        insight.isPending ? "text-yellow-400" : agrees ? "text-[#E6EDF3]/70" : "text-[#6B7280]/60"
+      }`}>{shortLabel}</span>
     </div>
   );
 }
@@ -357,17 +454,40 @@ export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
                 )}
 
                 {/* Model Agreement Dots */}
-                <div className="flex items-center gap-3">
-                  {Object.entries(currentSignal.model_breakdown || {}).map(([id, info]) => (
-                    <ModelDot
-                      key={id}
-                      label={MODEL_LABELS[id] || id}
-                      direction={info.direction}
-                      agrees={info.agrees}
-                      confidence={info.confidence}
-                    />
-                  ))}
-                </div>
+                {(() => {
+                  const breakdown = currentSignal.model_breakdown || {};
+                  const insights: Record<string, ComboInsight> = {};
+                  Object.keys(breakdown).forEach((id) => {
+                    insights[id] = analyzeModelCombos(id, breakdown, currentConsensus, currentSignal.direction);
+                  });
+                  const pendingModels = Object.entries(insights).filter(([, ins]) => ins.isPending);
+
+                  return (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-3">
+                        {Object.entries(breakdown).map(([id, info]) => (
+                          <ModelDot
+                            key={id}
+                            modelId={id}
+                            label={MODEL_LABELS[id] || id}
+                            direction={info.direction}
+                            agrees={info.agrees}
+                            confidence={info.confidence}
+                            insight={insights[id] || { bestWinRate: 0, bestCombo: "", isPending: false, pendingCombo: "", pendingComboWR: 0 }}
+                          />
+                        ))}
+                      </div>
+                      {pendingModels.length > 0 && (
+                        <div className="flex items-center gap-1.5 text-[10px]">
+                          <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+                          <span className="text-yellow-400/80">
+                            {pendingModels.map(([id, ins]) => `${MODEL_LABELS[id] || id} → ${ins.pendingCombo} (${Math.round(ins.pendingComboWR * 100)}%)`).join(" • ")}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 

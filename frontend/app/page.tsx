@@ -1350,7 +1350,7 @@ export default function HomePage() {
 
                   <div className="mb-6 w-full">
                     <LazyPanel fallbackHeight={300}>
-                      <PermutationPanel symbol={signalCards[0]?.symbol || "NDX.INDX"} />
+                      <PermutationPanel />
                     </LazyPanel>
                   </div>
 

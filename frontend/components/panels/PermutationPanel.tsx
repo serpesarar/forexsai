@@ -54,8 +54,15 @@ import {
 } from "lucide-react";
 import { buildApiUrl } from "@/lib/api/base";
 
+const SYMBOLS = [
+  { id: "NDX.INDX", label: "NASDAQ" },
+  { id: "XAUUSD", label: "XAU/USD" },
+  { id: "GDAXI.INDX", label: "DAX" },
+  { id: "USOIL.FOREX", label: "US OIL" },
+];
+
 interface PermutationPanelProps {
-  symbol: string;
+  symbol?: string;
 }
 
 interface ModelResult {
@@ -88,11 +95,14 @@ interface MetaInfo {
   indicator_timeframe: string;
 }
 
-export function PermutationPanel({ symbol }: PermutationPanelProps) {
+export function PermutationPanel({ symbol: propSymbol }: PermutationPanelProps) {
   const t = (key: keyof typeof translations.tr) => (translations.tr[key] || key) as string;
+  const [activeSymbol, setActiveSymbol] = useState(propSymbol || "NDX.INDX");
   const [activeTab, setActiveTab] = useState<"models" | "indicators">("models");
   const [direction, setDirection] = useState<"BUY" | "SELL">("BUY");
   const [showInfo, setShowInfo] = useState(false);
+  const isSymbolLocked = Boolean(propSymbol);
+  const symbol = activeSymbol;
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -112,7 +122,7 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
     setIsLoading(true);
     setError(null);
     try {
-      const url = buildApiUrl(`/api/permutation-analysis/${symbol}?direction=${direction}&analysis_type=both&source=auto&min_occurrences=10&cluster_window_minutes=10&lookforward_candles=5&target_move_pct=0.3`);
+      const url = buildApiUrl(`/api/permutation-analysis/${symbol}?direction=${direction}&analysis_type=both&source=auto&min_occurrences=5&cluster_window_minutes=10&lookforward_candles=5&target_move_pct=0.3&lookback_days=365`);
       const consensusUrl = buildApiUrl(`/api/permutation-analysis/consensus/${symbol}?top=6`);
       const [res, consensusRes] = await Promise.all([
         fetch(url),
@@ -171,6 +181,10 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
     }
   }, [symbol, direction]);
 
+  useEffect(() => {
+    if (propSymbol) setActiveSymbol(propSymbol);
+  }, [propSymbol]);
+
   return (
     <div className="bg-[#141C2B] rounded-xl border border-white/5 overflow-hidden flex flex-col mt-4">
       {/* HEADER */}
@@ -226,6 +240,25 @@ export function PermutationPanel({ symbol }: PermutationPanelProps) {
           </button>
         </div>
       </div>
+
+      {/* SYMBOL TABS */}
+      {!isSymbolLocked && (
+        <div className="flex items-center gap-1 px-4 py-2 border-b border-white/5 bg-[#0D1117]">
+          {SYMBOLS.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setActiveSymbol(s.id)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                activeSymbol === s.id
+                  ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                  : "text-gray-500 hover:text-gray-300 hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* TABS */}
       <div className="flex border-b border-white/5 bg-[#111827]">

@@ -194,6 +194,190 @@ def _empty_direction_payload() -> Dict[str, Any]:
     }
 
 
+def _assign_quality(row: Dict[str, Any]) -> str:
+    """Assign quality label based on signals and win_rate."""
+    signals = _as_int(row.get("total_signals") or row.get("occurrences") or 0)
+    wr = _as_float(row.get("win_rate") or 0)
+    pf = _as_float(row.get("profit_factor") or 0)
+    if signals >= 15 and wr >= 0.60 and pf >= 1.5:
+        return "strong"
+    if signals >= 8 and wr >= 0.50 and pf >= 1.0:
+        return "usable"
+    if signals >= 5:
+        return "weak"
+    return "weak_sample"
+
+
+def _db_direction_payload(rows: List[Dict[str, Any]], top: int) -> Dict[str, Any]:
+    """Build direction payload from DB rows (model_permutation_batch_results format)."""
+    enriched = []
+    for row in rows:
+        quality = _assign_quality(row)
+        signals = _as_int(row.get("total_signals") or 0)
+        wins = _as_int(row.get("wins") or 0)
+        losses = _as_int(row.get("losses") or 0)
+        wr = _as_float(row.get("win_rate") or 0)
+        pf = _as_float(row.get("profit_factor") or 0)
+        exp = _as_float(row.get("expectancy") or 0)
+        combo = row.get("combination") or ""
+        enriched.append({
+            "symbol": row.get("symbol"),
+            "direction": row.get("direction"),
+            "combination": combo,
+            "model_count": len(combo.split("+")) if combo else 0,
+            "occurrences": signals,
+            "total_signals": signals,
+            "wins": wins,
+            "losses": losses,
+            "expired": 0,
+            "resolved_count": signals,
+            "win_rate": wr,
+            "completion_rate": 1.0,
+            "profit_factor": pf,
+            "expectancy": exp,
+            "stability_score": wr * min(1.0, signals / 20.0),
+            "quality": quality,
+        })
+
+    most_frequent = sorted(enriched, key=lambda r: (_as_int(r["total_signals"]), _as_float(r["win_rate"])), reverse=True)[:top]
+    best_stable = sorted(
+        [r for r in enriched if r["total_signals"] >= 5],
+        key=lambda r: (_quality_rank(r["quality"]), _as_float(r["stability_score"]), _as_float(r["win_rate"])),
+        reverse=True,
+    )[:top]
+
+    return {
+        "total_rows": len(enriched),
+        "most_frequent": most_frequent,
+        "best_stable": best_stable,
+        "top_quality_counts": {
+            "strong": sum(1 for r in enriched if r["quality"] == "strong"),
+            "usable": sum(1 for r in enriched if r["quality"] == "usable"),
+            "weak": sum(1 for r in enriched if r["quality"] == "weak"),
+            "weak_sample": sum(1 for r in enriched if r["quality"] == "weak_sample"),
+        },
+    }
+
+
+def get_db_consensus_view(symbol: str, *, top: int = 6) -> Dict[str, Any]:
+    """Build consensus view from model_permutation_batch_results in DB."""
+    from database.supabase_client import get_supabase_client
+
+    normalized_symbol = _normalize_symbol(symbol)
+    client = get_supabase_client()
+    if not client:
+        logger.warning("[ConsensusReportService] No DB client for DB consensus")
+        return {
+            "symbol": normalized_symbol,
+            "report_generated_at": None,
+            "report_path": None,
+            "parameters": {},
+            "buy": _empty_direction_payload(),
+            "sell": _empty_direction_payload(),
+            "warning": "No database connection",
+        }
+
+    # Find latest completed batch run with model data
+    runs_result = (
+        client.table("permutation_batch_runs")
+        .select("id,started_at,completed_at,parameters")
+        .eq("status", "completed")
+        .in_("batch_kind", ["full", "model"])
+        .order("started_at", desc=True)
+        .limit(10)
+        .execute()
+    )
+    runs = runs_result.data if hasattr(runs_result, "data") else (runs_result.get("data") if isinstance(runs_result, dict) else [])
+    if not runs:
+        return {
+            "symbol": normalized_symbol,
+            "report_generated_at": None,
+            "report_path": None,
+            "parameters": {},
+            "buy": _empty_direction_payload(),
+            "sell": _empty_direction_payload(),
+            "warning": "No completed batch runs found",
+        }
+
+    # Try each run until we find data for this symbol
+    # Also try CL.COMM alias for USOIL.FOREX
+    symbol_variants = [normalized_symbol]
+    if normalized_symbol == "USOIL.FOREX":
+        symbol_variants.append("CL.COMM")
+
+    for run in (runs or []):
+        run_id = run.get("id")
+        if not run_id:
+            continue
+
+        for sym_variant in symbol_variants:
+            result = (
+                client.table("model_permutation_batch_results")
+                .select("combination,direction,total_signals,wins,losses,win_rate,profit_factor,expectancy,lookback_days,insufficient_data")
+                .eq("run_id", run_id)
+                .eq("symbol", sym_variant)
+                .eq("insufficient_data", False)
+                .order("rank")
+                .limit(100)
+                .execute()
+            )
+            rows = result.data if hasattr(result, "data") else (result.get("data") if isinstance(result, dict) else [])
+            if not rows:
+                continue
+
+            # Split by direction
+            buy_rows = [r for r in rows if str(r.get("direction") or "").upper() == "BUY"]
+            sell_rows = [r for r in rows if str(r.get("direction") or "").upper() == "SELL"]
+
+            # If no direction column in model batch results, we need to query per direction
+            if not buy_rows and not sell_rows:
+                # Query separately by direction
+                for dir_val in ["BUY", "SELL"]:
+                    dir_result = (
+                        client.table("model_permutation_batch_results")
+                        .select("combination,direction,total_signals,wins,losses,win_rate,profit_factor,expectancy,lookback_days")
+                        .eq("run_id", run_id)
+                        .eq("symbol", sym_variant)
+                        .eq("direction", dir_val)
+                        .eq("insufficient_data", False)
+                        .order("rank")
+                        .limit(50)
+                        .execute()
+                    )
+                    dir_rows = dir_result.data if hasattr(dir_result, "data") else (dir_result.get("data") if isinstance(dir_result, dict) else [])
+                    if dir_val == "BUY":
+                        buy_rows = dir_rows or []
+                    else:
+                        sell_rows = dir_rows or []
+
+            params = run.get("parameters") or {}
+            lookback = _as_int((buy_rows or sell_rows or [{}])[0].get("lookback_days") or params.get("model_lookback_days") or 0)
+
+            return {
+                "symbol": normalized_symbol,
+                "report_generated_at": run.get("completed_at") or run.get("started_at"),
+                "report_path": f"db:batch_run:{run_id}",
+                "parameters": {
+                    "lookback_days": lookback,
+                    "bucket_minutes": _as_int(params.get("cluster_window_minutes") or 10),
+                    "min_occurrences": _as_int(params.get("model_min_occurrences") or 5),
+                    "target_level": "batch",
+                },
+                "buy": _db_direction_payload(buy_rows, top=top),
+                "sell": _db_direction_payload(sell_rows, top=top),
+            }
+
+    return {
+        "symbol": normalized_symbol,
+        "report_generated_at": None,
+        "report_path": None,
+        "parameters": {},
+        "buy": _empty_direction_payload(),
+        "sell": _empty_direction_payload(),
+        "warning": f"No batch results found for {normalized_symbol}",
+    }
+
+
 def get_symbol_consensus_view(
     symbol: str,
     *,

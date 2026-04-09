@@ -2,7 +2,7 @@ import asyncio
 from fastapi import APIRouter, Query
 import logging
 
-from services.consensus_report_service import get_symbol_consensus_view
+from services.consensus_report_service import get_symbol_consensus_view, get_db_consensus_view
 from services.permutation_analysis_service import (
     analyze_model_permutations,
     analyze_technical_permutations
@@ -27,15 +27,32 @@ async def get_consensus_analysis(
     top: int = Query(6, ge=1, le=20),
     prefix: str = Query("consensus_model_analysis_all_tf_10m"),
     report_path: str | None = Query(None),
+    source: str = Query("auto", description="auto | db | file"),
 ):
     try:
-        data = await asyncio.to_thread(
-            get_symbol_consensus_view,
-            symbol,
-            top=top,
-            prefix=prefix,
-            report_path=report_path,
-        )
+        data = None
+
+        # DB-based consensus (primary — works on Railway)
+        if source in {"auto", "db"}:
+            data = await asyncio.to_thread(get_db_consensus_view, symbol, top=top)
+            has_combos = (
+                data
+                and (data.get("buy", {}).get("total_rows", 0) > 0
+                     or data.get("sell", {}).get("total_rows", 0) > 0)
+            )
+            if not has_combos and source == "auto":
+                data = None  # fall through to file
+
+        # File-based consensus (fallback — local dev)
+        if data is None and source in {"auto", "file"}:
+            data = await asyncio.to_thread(
+                get_symbol_consensus_view,
+                symbol,
+                top=top,
+                prefix=prefix,
+                report_path=report_path,
+            )
+
         return {
             "success": True,
             "data": data,
@@ -50,7 +67,7 @@ async def get_permutation_analysis(
     analysis_type: str = Query("both", description="models | indicators | both"),
     source: str = Query("auto", description="auto | batch | live"),
     direction: str = Query("BUY", description="BUY | SELL"),
-    lookback_days: int = Query(30, ge=1, le=365, description="Gün sayısı (Sadece model analizi için kullanılır)"),
+    lookback_days: int = Query(365, ge=1, le=365, description="Gün sayısı (Sadece model analizi için kullanılır)"),
     min_occurrences: int = Query(10, ge=1, description="Kombinasyon minimum yaşanma sayısı"),
     cluster_window_minutes: int = Query(10, ge=5, le=15, description="Model analizi için aynı-an tolerans penceresi (dakika)"),
     lookforward_candles: int = Query(5, ge=1, le=50, description="Sadece indicator analizi: Kaç mum sonrasına bakılacak?"),
