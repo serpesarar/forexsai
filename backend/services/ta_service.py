@@ -1,15 +1,111 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Literal, Tuple
+from datetime import datetime, timedelta, timezone
+from typing import List, Literal, Tuple, Optional
 
 import numpy as np
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo
 
 from services.data_fetcher import fetch_eod_candles, fetch_latest_price
 from services.technical_indicators import calculate_ema, calculate_rsi
 
+# Market timezones
+NY_TZ = ZoneInfo("America/New_York")
+UTC_TZ = ZoneInfo("UTC")
+
 
 Trend = Literal["BULLISH", "BEARISH", "NEUTRAL"]
+
+
+def _get_ny_now() -> datetime:
+    """Get current time in New York timezone."""
+    return datetime.now(NY_TZ)
+
+
+def _find_prev_trading_day_close(eod_rows: List[dict], symbol: str) -> Optional[float]:
+    """
+    Find the previous trading day's closing price based on NY market hours.
+    
+    For NASDAQ and US equity markets:
+    - Market closes at 4:00 PM ET
+    - After 4:00 PM ET: previous close is today's 4:00 PM close
+    - Before 4:00 PM ET: previous close is yesterday's 4:00 PM close
+    - On weekends: previous close is Friday's 4:00 PM close
+    
+    For commodities (XAUUSD, USOIL) which trade 23h:
+    - Use the last available daily close
+    
+    Returns the closing price or None if not available.
+    """
+    if not eod_rows or len(eod_rows) < 2:
+        return None
+    
+    ny_now = _get_ny_now()
+    ny_weekday = ny_now.weekday()  # 0=Monday, 6=Sunday
+    ny_hour = ny_now.hour + ny_now.minute / 60.0
+    
+    # Check if symbol is a US equity index (follows NY market hours)
+    is_us_equity = any(x in symbol.upper() for x in ["NDX", "NASDAQ", "SPX", "SPY", "DOW"])
+    
+    if is_us_equity:
+        # US Market hours: 9:30 AM - 4:00 PM ET
+        # After 4:00 PM ET: previous close is today's close (index 0 = today, index 1 = yesterday)
+        # Before 4:00 PM ET: previous close is yesterday's close (index 1 = yesterday)
+        
+        if ny_weekday >= 5:  # Weekend
+            # Use Friday's close (last trading day)
+            # eod_rows[-1] = today (weekend, no data), eod_rows[-2] = Friday
+            return float(eod_rows[-1]["close"]) if len(eod_rows) >= 1 else None
+        elif ny_hour >= 16.0:  # After 4:00 PM ET, market closed
+            # Today's close is available, use yesterday as "previous close"
+            return float(eod_rows[-2]["close"]) if len(eod_rows) >= 2 else None
+        else:  # Before 4:00 PM ET, market open or pre-market
+            # Yesterday's close is the reference
+            return float(eod_rows[-2]["close"]) if len(eod_rows) >= 2 else None
+    else:
+        # For commodities (XAUUSD, USOIL) - use last available daily close
+        # These trade ~23h/day so previous close is just yesterday's close
+        return float(eod_rows[-2]["close"]) if len(eod_rows) >= 2 else None
+
+
+def _get_market_hours_context(symbol: str) -> dict:
+    """Get market hours context for the symbol."""
+    ny_now = _get_ny_now()
+    ny_weekday = ny_now.weekday()
+    ny_hour = ny_now.hour + ny_now.minute / 60.0
+    
+    is_us_equity = any(x in symbol.upper() for x in ["NDX", "NASDAQ", "SPX", "SPY", "DOW"])
+    is_commodity = any(x in symbol.upper() for x in ["XAU", "GOLD", "USOIL", "CL", "OIL"])
+    
+    context = {
+        "ny_time": ny_now.strftime("%H:%M"),
+        "ny_date": ny_now.strftime("%Y-%m-%d"),
+        "is_market_open": False,
+        "reference_close_label": "Previous Close"
+    }
+    
+    if is_us_equity:
+        # US Market: 9:30 AM - 4:00 PM ET, Mon-Fri
+        if ny_weekday < 5 and 9.5 <= ny_hour < 16.0:
+            context["is_market_open"] = True
+            context["reference_close_label"] = "Yesterday's Close"
+        elif ny_weekday < 5 and ny_hour >= 16.0:
+            context["is_market_open"] = False
+            context["reference_close_label"] = "Today's Close"
+        else:
+            context["is_market_open"] = False
+            context["reference_close_label"] = "Last Close"
+    elif is_commodity:
+        # Commodities trade ~23h, reference is always yesterday
+        context["is_market_open"] = ny_weekday < 5  # Closed weekends
+        context["reference_close_label"] = "Previous Close"
+    
+    return context
 
 
 @dataclass
@@ -114,13 +210,17 @@ async def compute_ta_snapshot(symbol: str, limit: int = 220) -> dict:
 
     supports, resistances = _swing_levels(closes, current_price)
 
-    prev_close = float(closes[-2]) if len(closes) >= 2 else None
+    # Use NY market hours-aware previous close calculation
+    prev_close = _find_prev_trading_day_close(eod_rows, symbol)
     last_close = float(closes[-1]) if len(closes) else None
     
+    # Get market hours context (NY time, market status, etc.)
+    market_context = _get_market_hours_context(symbol)
+    
     # TradingView-style % change: (current_price - previous_close) / previous_close * 100
-    # This gives the real-time intraday change, not just yesterday's close vs day before
+    # This is now calculated based on NY market hours (4:00 PM ET close as reference)
     change_pct = None
-    if prev_close and current_price:
+    if prev_close and current_price and prev_close > 0:
         change_pct = float(((current_price - prev_close) / prev_close) * 100.0)
 
     def _safe_float(v):
@@ -150,6 +250,7 @@ async def compute_ta_snapshot(symbol: str, limit: int = 220) -> dict:
         "trend": trend,
         "supports": [{"price": _safe_float(s.price), "kind": s.kind, "hits": s.hits, "strength": _safe_float(s.strength)} for s in supports],
         "resistances": [{"price": _safe_float(r.price), "kind": r.kind, "hits": r.hits, "strength": _safe_float(r.strength)} for r in resistances],
+        "market_context": market_context,  # NY time info for frontend display
     }
 
 
