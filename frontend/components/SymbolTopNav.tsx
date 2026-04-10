@@ -112,7 +112,7 @@ function SymbolTab({
     >
       {isActive && (
         <div
-          className={`absolute inset-0 rounded-xl opacity-40 blur-lg ${symbol.accent.bg}`}
+          className={`absolute inset-0 rounded-xl opacity-40 blur-lg pointer-events-none ${symbol.accent.bg}`}
         />
       )}
 
@@ -183,8 +183,12 @@ export default function SymbolTopNav({
               isActive={pathname === symbol.path}
               price={prices.find((item) => item.label === symbol.label)}
               onClick={() => {
-                console.log("Navigating to:", symbol.path);
-                router.push(symbol.path);
+                try {
+                  router.push(symbol.path);
+                } catch (e) {
+                  console.error("Navigation failed, falling back:", e);
+                  window.location.href = symbol.path;
+                }
               }}
             />
           ))}

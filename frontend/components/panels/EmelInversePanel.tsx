@@ -235,13 +235,14 @@ export default function EmelInversePanel({ symbol: initialSymbol = "NDX.INDX" }:
 
       setLiveData(json);
       setLastUpdated(new Date());
+      markRefreshed(json.signal_timestamp || json.timestamp || new Date());
     } catch (err) {
       console.error("EMEL Live fetch error:", err);
       setLiveError("fetch_error");
     } finally {
       if (showLoading) setLiveLoading(false);
     }
-  }, [activeSymbol, timeframe]);
+  }, [activeSymbol, timeframe, markRefreshed]);
 
   // Inverse signal computation
   const inverseSignal = useMemo(() => {

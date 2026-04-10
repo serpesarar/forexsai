@@ -18,13 +18,13 @@ interface I18nState {
 // Simple localStorage persistence
 export const getStoredLocale = (): Locale => {
   if (typeof window === "undefined") return "en";
-  const stored = localStorage.getItem("i18n-locale");
+  const stored = localStorage.getItem("locale");
   return (stored === "en" || stored === "tr") ? stored : "en";
 };
 
 const setStoredLocale = (locale: Locale) => {
   if (typeof window !== "undefined") {
-    localStorage.setItem("i18n-locale", locale);
+    localStorage.setItem("locale", locale);
   }
 };
 
