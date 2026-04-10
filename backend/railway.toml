@@ -5,6 +5,6 @@ builder = "NIXPACKS"
 providers = ["python"]
 
 [deploy]
-startCommand = "python -m services.background_scheduler"
+startCommand = "python main.py"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
