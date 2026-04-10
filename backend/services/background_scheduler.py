@@ -883,3 +883,25 @@ async def background_scheduler_loop_with_rss():
 # Replace the original function
 import sys
 sys.modules[__name__].background_scheduler_loop = background_scheduler_loop_with_rss
+
+
+if __name__ == "__main__":
+    """Worker servisi sadece scheduler olarak çalıştırıldığında burası çalışır"""
+    import asyncio
+    import os
+    import logging
+
+    # Redis bağlantısını kontrol et (log için)
+    redis_url = os.getenv("REDIS_URL")
+    if redis_url:
+        logger.info("✅ REDIS_URL bulundu, broadcast cache aktif")
+    else:
+        logger.warning("⚠️ REDIS_URL bulunamadı, in-memory fallback kullanılıyor")
+
+    # Ana scheduler loop'unu çalıştır
+    try:
+        asyncio.run(background_scheduler_loop_with_rss())   # veya background_scheduler_loop() 
+    except KeyboardInterrupt:
+        logger.info("Scheduler durduruldu (Ctrl+C)")
+    except Exception as e:
+        logger.error(f"Scheduler çöktü: {e}")
