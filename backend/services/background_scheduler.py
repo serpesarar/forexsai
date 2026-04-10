@@ -830,10 +830,6 @@ async def run_pattern_analysis_if_needed():
     logger.info(f"Pattern analysis skipped (disabled) at {hour}:{minute:02d} UTC")
 
 
-# Patch the background_scheduler_loop to include RSS
-_original_background_scheduler_loop = background_scheduler_loop
-
-
 async def background_scheduler_loop_with_rss():
     """Main background scheduler loop with RSS support."""
     global _scheduler_running
@@ -878,11 +874,6 @@ async def background_scheduler_loop_with_rss():
         await asyncio.sleep(DATA_UPDATE_INTERVAL)
     
     logger.info("Background scheduler stopped")
-
-
-# Replace the original function
-import sys
-sys.modules[__name__].background_scheduler_loop = background_scheduler_loop_with_rss
 
 
 if __name__ == "__main__":
