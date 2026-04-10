@@ -53,10 +53,9 @@ _last_macro_update: Optional[datetime] = None
 _cached_macro: Dict[str, Any] = {}  # Cached macro data
 
 # Legacy/default scheduler logging targets.
-# Intentionally excludes emel_inverse and post-expansion multi-timeframe loops
-# so the historical model-performance panels keep only the original main history.
 LEGACY_PULSE_LOG_TIMEFRAMES: Dict[str, str] = {
     "emel": "1h",
+    "emel_inverse": "1h",
     "pulse1": "5m",
     "pulse2": "15m",
     "pulse3": "5m",

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 REGIONS: Dict[str, Dict[str, Any]] = {
     "strait_of_hormuz": {
         "label": "Strait of Hormuz",
-        "bounds": [[25.0, 56.0], [26.5, 57.5]],
+        "bounds": [[24.5, 55.0], [27.0, 57.5]],
         "storage_hub": False,
     },
     "singapore_anchorage": {
@@ -403,7 +403,7 @@ def refresh_chokepoint_metrics() -> List[Dict[str, Any]]:
 
     result = client.table("tanker_state").select("region,status,speed_knots,estimated_barrels,movement_bias,last_seen_at").execute()
     rows = _safe_rows(result)
-    cutoff = _now().timestamp() - 48 * 3600
+    cutoff = _now().timestamp() - 168 * 3600  # 7 days — transit chokepoints need wider window
     aggregated: List[Dict[str, Any]] = []
 
     for region in REGIONS:

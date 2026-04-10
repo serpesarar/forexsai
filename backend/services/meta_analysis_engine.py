@@ -751,7 +751,31 @@ class MetaAnalysisEngine:
 
         if len(available_signals) < 2:
             logger.info(f"[MetaEngine] Not enough signals for {symbol}: {len(available_signals)}")
-            return None
+            # Still return a HOLD signal with model_breakdown so panel shows individual model directions
+            breakdown = {}
+            for sig in signals:
+                breakdown[sig.model_id] = {
+                    "direction": sig.direction,
+                    "confidence": sig.confidence,
+                    "is_available": sig.is_available,
+                    "agrees": False,
+                }
+            hold_signal = MetaSignal(
+                symbol=symbol,
+                direction="HOLD",
+                confidence=0,
+                strength="WEAK",
+                source_combo="",
+                regime="UNKNOWN",
+                agreement_ratio=0,
+                technical_score=0,
+                passed_conditions=[],
+                model_breakdown=breakdown,
+                alternatives=[],
+                timestamp=time.time(),
+            )
+            _meta_cache[symbol] = (time.time(), hold_signal)
+            return hold_signal
 
         # === Determine majority direction ===
         buy_count = sum(1 for s in available_signals if s.direction == "BUY")
