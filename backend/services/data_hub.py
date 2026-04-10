@@ -199,14 +199,31 @@ async def _fetch_yahoo_price(yahoo_symbol: str) -> Optional[float]:
         return None  # Keeps previous data hub cache intact
 
     headers = {'User-Agent': 'Mozilla/5.0'}
+    # Use 1m interval for most recent price, 5m as fallback for stability
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{yahoo_symbol}?interval=1m&range=1d"
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(url, headers=headers)
             if resp.status_code == 200:
                 data = resp.json()
-                meta = data['chart']['result'][0]['meta']
-                return float(meta['regularMarketPrice'])
+                result = data['chart']['result'][0]
+                meta = result.get('meta', {})
+                
+                # Try meta regularMarketPrice first
+                if meta.get('regularMarketPrice'):
+                    price = float(meta['regularMarketPrice'])
+                    if price > 0:
+                        return price
+                
+                # Fallback: use last candle close (more recent for commodities)
+                timestamps = result.get('timestamp', [])
+                quote = result.get('indicators', {}).get('quote', [{}])[0]
+                if timestamps and quote.get('close'):
+                    closes = quote['close']
+                    # Find last valid close price
+                    for i in range(len(closes) - 1, -1, -1):
+                        if closes[i] is not None and closes[i] > 0:
+                            return float(closes[i])
     except Exception as e:
         logger.error(f"Yahoo fetch error for {yahoo_symbol}: {e}")
     return None
@@ -679,7 +696,7 @@ async def _pump_cycle():
                         "timestamp": now_ts
                     })
                 except Exception as e:
-                    logger.debug(f"[DataHub] Instant price broadcast failed for {symbol}: {e}")
+                    logger.warning(f"[DataHub] Price broadcast failed for {symbol}: {e}")
         
         # ── 5m candles (every 5min) ──
         if _should_fetch(f"5m:{symbol}", CANDLE_5M_INTERVAL):
