@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { ModelPerformanceModal } from "./ModelPerformanceModal";
 import { getApiBase } from "../../lib/api/base";
-import { useRefreshAge } from "../../hooks/useRefreshAge";
+import { useSignalCountdown } from "../../hooks/useSignalCountdown";
 
 const API_BASE = getApiBase();
 
@@ -505,7 +505,7 @@ function TimeframeMatrix({
 
 export default function ModelAnalysisPanel() {
   const t = useModelTranslations();
-  const { refreshAge, markRefreshed } = useRefreshAge();
+  const { formattedTime: refreshAge, markRefreshed } = useSignalCountdown("model_analysis", 300);
 
   const [selectedModel, setSelectedModel] = useState<string>("emel");
   const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>();
@@ -548,7 +548,7 @@ export default function ModelAnalysisPanel() {
   useEffect(() => {
     const latestRefreshAt = Math.max(summaryUpdatedAt || 0, matrixUpdatedAt || 0, analysisUpdatedAt || 0);
     if (latestRefreshAt > 0) {
-      markRefreshed(latestRefreshAt);
+      markRefreshed();
     }
   }, [summaryUpdatedAt, matrixUpdatedAt, analysisUpdatedAt, markRefreshed]);
 

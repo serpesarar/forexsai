@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { fetcher } from '../../lib/api';
-import { useRefreshAge } from '../../hooks/useRefreshAge';
+import { useSignalCountdown } from '../../hooks/useSignalCountdown';
 import { 
   Layers, 
   TrendingUp, 
@@ -104,7 +104,7 @@ export default function SMCPanel({ lockedSymbol }: SMCPanelProps) {
   const [data, setData] = useState<SMCData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { refreshAge, markRefreshed } = useRefreshAge(data?.timestamp ? new Date(data.timestamp) : null);
+  const { formattedTime: refreshAge, markRefreshed } = useSignalCountdown("smc", 300, data?.timestamp);
 
   useEffect(() => {
     if (lockedSymbol) {
@@ -114,7 +114,7 @@ export default function SMCPanel({ lockedSymbol }: SMCPanelProps) {
 
   useEffect(() => {
     if (data?.timestamp) {
-      markRefreshed(data.timestamp);
+      markRefreshed();
     }
   }, [data?.timestamp, markRefreshed]);
 

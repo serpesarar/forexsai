@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Activity, Anchor, Droplets, Gauge, RefreshCw, Waves, Radar, Fuel, ShieldAlert } from "lucide-react";
 
 import { buildApiUrl } from "../../lib/api/base";
-import { useRefreshAge } from "../../hooks/useRefreshAge";
+import { useSignalCountdown } from "../../hooks/useSignalCountdown";
 import styles from "./oil-baltic-panel.module.css";
 
 interface SourceHealthItem {
@@ -443,7 +443,7 @@ export default function OilBalticPanel() {
   const mapRef = useRef<any>(null);
   const tankerMarkersRef = useRef<any[]>([]);
   const chokepointMarkersRef = useRef<any[]>([]);
-  const { refreshAge, markRefreshed } = useRefreshAge();
+  const { formattedTime: refreshAge, markRefreshed } = useSignalCountdown("oil_baltic", 60);
 
   const fetchPanel = useCallback(async () => {
     try {
@@ -458,7 +458,7 @@ export default function OilBalticPanel() {
       setData(json);
       setMapboxGuard(json.mapbox_guard || null);
       setError(json.available ? null : (json.error || null));
-      markRefreshed(json.generated_at || new Date());
+      markRefreshed();
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : "Failed to load oil Baltic panel.");
     } finally {

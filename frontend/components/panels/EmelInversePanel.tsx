@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowRightLeft, Zap, TrendingUp, TrendingDown } from "lucide-react";
 import { getApiBase } from "../../lib/api/base";
-import { useRefreshAge } from "../../hooks/useRefreshAge";
+import { useSignalCountdown } from "../../hooks/useSignalCountdown";
 import { PanelHeader } from "../PanelHeader";
 import {
   ArrowUpRightIcon as ArrowUpRight,
@@ -168,13 +168,14 @@ export default function EmelInversePanel({ symbol: initialSymbol = "NDX.INDX" }:
   const [signals, setSignals] = useState<SignalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { refreshAge: signalAge, markRefreshed } = useRefreshAge();
 
   // Live EMEL data state
   const [liveData, setLiveData] = useState<LiveEmelData | null>(null);
   const [liveLoading, setLiveLoading] = useState(false);
   const [liveError, setLiveError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const { formattedTime: signalAge, markRefreshed } = useSignalCountdown("emel_inverse", 300, liveData?.timestamp);
 
   const fetchData = useCallback(async (showLoading = false) => {
     try {
@@ -204,7 +205,7 @@ export default function EmelInversePanel({ symbol: initialSymbol = "NDX.INDX" }:
       const nextSignals = Array.isArray(json.signals) ? json.signals : [];
       setSignals(nextSignals);
       if (nextSignals[0]?.created_at) {
-        markRefreshed(nextSignals[0].created_at);
+        markRefreshed();
       }
     } catch (err) {
       console.error("EMEL Inverse fetch error:", err);
@@ -235,7 +236,7 @@ export default function EmelInversePanel({ symbol: initialSymbol = "NDX.INDX" }:
 
       setLiveData(json);
       setLastUpdated(new Date());
-      markRefreshed(json.signal_timestamp || json.timestamp || new Date());
+      markRefreshed();
     } catch (err) {
       console.error("EMEL Live fetch error:", err);
       setLiveError("fetch_error");
@@ -371,6 +372,11 @@ export default function EmelInversePanel({ symbol: initialSymbol = "NDX.INDX" }:
         loading={liveLoading}
         panelId="emel-inverse-panel"
         signalAge={signalAge}
+        signalCountdown={{
+          modelKey: "emel_inverse",
+          refreshIntervalSeconds: 300,
+          signalTimestamp: liveData?.timestamp,
+        }}
         extraContent={inverseSignal ? (
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: toneMix(liveInverseTone.color, 15), border: `1px solid ${toneMix(liveInverseTone.color, 30)}` }}>

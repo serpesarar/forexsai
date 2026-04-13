@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getApiBase } from "../../lib/api/base";
-import { useRefreshAge } from "../../hooks/useRefreshAge";
+import { useSignalCountdown } from "../../hooks/useSignalCountdown";
 import { PanelHeader } from "../PanelHeader";
 import {
   TargetIcon as Target,
@@ -219,7 +219,7 @@ export default function ReboundDetectionPanel({ symbol: initialSymbol = "NDX.IND
   const [data, setData] = useState<ReboundResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { refreshAge: signalAge, markRefreshed } = useRefreshAge();
+  const { formattedTime: signalAge, markRefreshed } = useSignalCountdown("rebound", 300, data?.timestamp);
 
   const fetchData = useCallback(async (showLoading = false, forceRefresh = false) => {
     try {
@@ -238,7 +238,7 @@ export default function ReboundDetectionPanel({ symbol: initialSymbol = "NDX.IND
         setData(null);
       } else {
         setData(json as ReboundResponse);
-        markRefreshed(json.timestamp);
+        markRefreshed();
       }
     } catch (err) {
       setError("Network error");
@@ -282,6 +282,11 @@ export default function ReboundDetectionPanel({ symbol: initialSymbol = "NDX.IND
         loading={loading}
         panelId="rebound-detection"
         signalAge={signalAge}
+        signalCountdown={{
+          modelKey: "rebound",
+          refreshIntervalSeconds: 300,
+          signalTimestamp: data?.timestamp,
+        }}
         extraContent={data?.price ? (
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase" }}>Price</div>

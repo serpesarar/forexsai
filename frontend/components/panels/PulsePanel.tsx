@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import { getApiBase } from "../../lib/api/base";
 import { useI18nStore } from "../../lib/i18n/store";
-import { useRefreshAge } from "../../hooks/useRefreshAge";
+import { useSignalCountdown } from "../../hooks/useSignalCountdown";
 import { PanelHeader } from "../PanelHeader";
 import {
   ActivityIcon as Activity,
@@ -92,7 +92,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeframe, setTimeframe] = useState("5m");
-  const { refreshAge: signalAge, markRefreshed } = useRefreshAge();
+  const { formattedTime: signalAge, markRefreshed } = useSignalCountdown("pulse1", 300, data?.signal_timestamp);
   const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "pulse1");
 
   const fetchData = useCallback(async (showLoading = false, forceRefresh = false) => {
@@ -114,7 +114,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
         setData(null);
       } else {
         setData(json as PulseData);
-        markRefreshed((json as PulseData).signal_timestamp || (json as PulseData).timestamp);
+        markRefreshed();
       }
     } catch (e) {
       console.error("PULSE fetch error:", e);
@@ -129,7 +129,7 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
   useEffect(() => {
     if (wsData && typeof wsData === "object" && !wsData.error) {
       setData(wsData as PulseData);
-      markRefreshed((wsData as PulseData).signal_timestamp || (wsData as PulseData).timestamp);
+      markRefreshed();
       setLoading(false);
       setError(null);
     }
@@ -199,6 +199,11 @@ export default function PulsePanel({ symbol: initialSymbol = "NDX.INDX", onSwitc
         loading={loading}
         panelId="pulse-panel"
         signalAge={signalAge}
+        signalCountdown={{
+          modelKey: "pulse1",
+          refreshIntervalSeconds: 300,
+          signalTimestamp: data?.signal_timestamp || data?.timestamp,
+        }}
         extraContent={data ? (
           <div>
             <div className="text-[26px] font-bold tracking-tighter leading-none" style={{ color: "var(--text-primary)" }}>
