@@ -102,6 +102,38 @@ _last_fetch: Dict[str, float] = {}
 _hub_running = False
 
 
+def get_market_data_source() -> str:
+    source = (settings.market_data_source or "eodhd").strip().lower()
+    if source not in {"eodhd", "mt5_redis", "hybrid"}:
+        return "eodhd"
+    return source
+
+
+def _upstream_market_fetch_enabled() -> bool:
+    return get_market_data_source() in {"eodhd", "hybrid"}
+
+
+def _canonical_symbol(symbol: str) -> str:
+    value = (symbol or "").strip()
+    upper = value.upper()
+    aliases = {
+        "NDX": "NDX.INDX",
+        "NASDAQ": "NDX.INDX",
+        "NDX.INDX": "NDX.INDX",
+        "XAUUSD": "XAUUSD",
+        "XAUUSD.FOREX": "XAUUSD",
+        "GOLD": "XAUUSD",
+        "GDAXI": "GDAXI.INDX",
+        "DAX": "GDAXI.INDX",
+        "GDAXI.INDX": "GDAXI.INDX",
+        "USOIL": "USOIL.FOREX",
+        "USOIL.FOREX": "USOIL.FOREX",
+        "CL": "USOIL.FOREX",
+        "WTI": "USOIL.FOREX",
+    }
+    return aliases.get(upper, value)
+
+
 # ═══════════════════════════════════════════════════════════════
 # SYMBOL NORMALIZATION
 # ═══════════════════════════════════════════════════════════════
@@ -128,6 +160,56 @@ def _normalize_symbol(symbol: str) -> str:
     if len(s) == 6 and s.isalnum():
         return f"{s}.FOREX"
     return s
+
+
+def _normalize_timeframe(timeframe: str) -> str:
+    tf = (timeframe or "").lower().strip()
+    tf_map = {
+        "m1": "1m", "m5": "5m", "m15": "15m", "m30": "30m",
+        "h1": "1h", "h4": "4h", "d1": "eod", "1d": "eod", "daily": "eod",
+    }
+    return tf_map.get(tf, tf)
+
+
+def _get_store_for_timeframe(timeframe: str):
+    tf = _normalize_timeframe(timeframe)
+    store_map = {
+        "5m": _candles_5m,
+        "15m": _candles_15m,
+        "30m": _candles_30m,
+        "1h": _candles_1h,
+        "4h": _candles_4h,
+        "eod": _candles_eod,
+    }
+    return tf, store_map.get(tf)
+
+
+def _coerce_epoch_seconds(timestamp: Any) -> float:
+    if timestamp is None:
+        return datetime.now(timezone.utc).timestamp()
+    if isinstance(timestamp, (int, float)):
+        value = float(timestamp)
+        return value / 1000.0 if value > 10_000_000_000 else value
+    try:
+        parsed = datetime.fromisoformat(str(timestamp).replace("Z", "+00:00"))
+        return parsed.timestamp()
+    except Exception:
+        return datetime.now(timezone.utc).timestamp()
+
+
+def _coerce_timestamp_ms(timestamp: Any) -> int:
+    return int(_coerce_epoch_seconds(timestamp) * 1000)
+
+
+def _entry_age_seconds(entry: Dict[str, Any]) -> Optional[float]:
+    timestamp = entry.get("timestamp")
+    if timestamp is None:
+        return None
+    try:
+        age = time.time() - _coerce_epoch_seconds(timestamp)
+        return round(max(age, 0.0), 1)
+    except Exception:
+        return None
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -515,31 +597,39 @@ def _rebuild_derived(symbol: str):
     XAUUSD:   5m→15m, 30m(fetched)→1h→4h  (30m also from 5m if not fetched)
     """
     now = datetime.now(timezone.utc).timestamp()
+    market_data_source = get_market_data_source()
+    use_direct_30m = symbol in _30M_DIRECT_SYMBOLS and market_data_source == "eodhd"
+    derive_from_30m = symbol in _30M_DIRECT_SYMBOLS
     
     raw_5m = _candles_5m.get(symbol, {}).get("candles", [])
     if raw_5m:
         # 15m = 5m × 3 (always)
-        _candles_15m[symbol] = {"candles": _resample(raw_5m, 3), "timestamp": now}
+        _candles_15m[symbol] = {"candles": _resample(raw_5m, 3), "timestamp": now, "source": "derived_from_5m"}
         
         # 30m: use directly-fetched 30m if available, otherwise derive from 5m
-        if symbol not in _30M_DIRECT_SYMBOLS:
-            _candles_30m[symbol] = {"candles": _resample(raw_5m, 6), "timestamp": now}
+        if not use_direct_30m:
+            _candles_30m[symbol] = {"candles": _resample(raw_5m, 6), "timestamp": now, "source": "derived_from_5m"}
+
+        if market_data_source in {"mt5_redis", "hybrid"} and not use_direct_30m and not derive_from_30m:
+            derived_1h = _resample(raw_5m, 12)
+            if derived_1h:
+                _candles_1h[symbol] = {"candles": derived_1h, "timestamp": now, "source": "derived_from_5m"}
     
-    # For symbols with direct 30m fetch: derive 1h and 4h from 30m
-    if symbol in _30M_DIRECT_SYMBOLS:
+    # XAUUSD keeps its 1h/4h chain on top of 30m, whether 30m was fetched or derived.
+    if derive_from_30m:
         raw_30m = _candles_30m.get(symbol, {}).get("candles", [])
         if raw_30m:
             derived_1h = _resample(raw_30m, 2)  # 1h = 30m × 2
             if derived_1h:
-                _candles_1h[symbol] = {"candles": derived_1h, "timestamp": now}
+                _candles_1h[symbol] = {"candles": derived_1h, "timestamp": now, "source": "derived_from_30m"}
             derived_4h = _resample(raw_30m, 8)  # 4h = 30m × 8
             if derived_4h:
-                _candles_4h[symbol] = {"candles": derived_4h, "timestamp": now}
+                _candles_4h[symbol] = {"candles": derived_4h, "timestamp": now, "source": "derived_from_30m"}
     else:
         # NDX: 4h = 1h × 4
         raw_1h = _candles_1h.get(symbol, {}).get("candles", [])
         if raw_1h:
-            _candles_4h[symbol] = {"candles": _resample(raw_1h, 4), "timestamp": now}
+            _candles_4h[symbol] = {"candles": _resample(raw_1h, 4), "timestamp": now, "source": "derived_from_1h"}
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -566,7 +656,7 @@ DELTA_LIMIT_EOD = 5       # ~5 days of EOD candles
 
 # Full seed limits — sized so EMA200 works on ALL derived timeframes:
 #   5m:  1500 → 15m=500, 30m=250
-#   30m: 1600 → 1h=800, 4h=200 (XAUUSD: 30m fetched directly)
+#   30m: 1600 → 1h=800, 4h=200 (XAUUSD: fetched directly)
 #   1h:  800  → 4h=200 (NDX: fetched directly)
 #   EOD: 365  → EMA200 with full year of data
 FULL_SEED_LIMIT_5M = 1500   # ~5.2 days of 5m candles
@@ -675,17 +765,19 @@ def _has_sufficient_cached_history(
 async def _pump_cycle():
     """One pump cycle: fetch what's due, rebuild derived data."""
     now_ts = datetime.now(timezone.utc).timestamp()
-    
+    allow_upstream_market_fetch = get_market_data_source() in {"eodhd", "hybrid"}
+    allow_upstream_direct_30m_fetch = get_market_data_source() == "eodhd"
+
     for symbol in TRACKED_SYMBOLS:
         seed_key = symbol
-        is_seeded = _initial_seed_done.get(seed_key, False)
-        
+        is_seeded = bool(_initial_seed_done.get(seed_key))
+
         # ── Price (every 30s) ──
-        if _should_fetch(f"price:{symbol}", PRICE_INTERVAL):
+        if allow_upstream_market_fetch and _should_fetch(f"price:{symbol}", PRICE_INTERVAL):
             price = await _fetch_price_from_api(symbol)
             if price is not None:
                 with _lock:
-                    _prices[symbol] = {"price": price, "timestamp": now_ts}
+                    _prices[symbol] = {"price": price, "timestamp": now_ts, "source": "eodhd_poll"}
                 _mark_fetched(f"price:{symbol}")
                 try:
                     from services.ws_manager import manager
@@ -693,17 +785,16 @@ async def _pump_cycle():
                         "type": "price_update",
                         "symbol": symbol,
                         "price": price,
-                        "timestamp": now_ts
+                        "timestamp": now_ts,
                     })
                 except Exception as e:
                     logger.warning(f"[DataHub] Price broadcast failed for {symbol}: {e}")
-        
+
         # ── 5m candles (every 5min) ──
-        if _should_fetch(f"5m:{symbol}", CANDLE_5M_INTERVAL):
+        if allow_upstream_market_fetch and _should_fetch(f"5m:{symbol}", CANDLE_5M_INTERVAL):
             is_seed = not is_seeded
-            
+
             if symbol in _1M_ONLY_SYMBOLS:
-                # XAUUSD.FOREX only supports 1m interval — fetch 1m, resample to 5m
                 raw_limit = (FULL_SEED_LIMIT_5M * 5) if is_seed else (DELTA_LIMIT_5M * 5)
                 raw_1m = await _fetch_candles_from_api(symbol, "1m", limit=raw_limit)
                 candles = _resample(raw_1m, 5) if raw_1m else []
@@ -711,18 +802,18 @@ async def _pump_cycle():
             else:
                 fetch_limit = FULL_SEED_LIMIT_5M if is_seed else DELTA_LIMIT_5M
                 candles = await _fetch_candles_from_api(symbol, "5m", limit=fetch_limit)
-            
+
             if candles:
                 with _lock:
                     existing = (_candles_5m.get(symbol) or {}).get("candles", [])
                     merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_5M)
-                    _candles_5m[symbol] = {"candles": merged, "timestamp": now_ts}
+                    _candles_5m[symbol] = {"candles": merged, "timestamp": now_ts, "source": "eodhd_poll"}
                     _rebuild_derived(symbol)
                 _mark_fetched(f"5m:{symbol}")
                 _persist_async(symbol, "5m", merged if is_seed else candles)
-        
-        # ── 30m candles (XAUUSD only — EODHD supports 30m directly) ──
-        if symbol in _30M_DIRECT_SYMBOLS and _should_fetch(f"30m:{symbol}", CANDLE_30M_INTERVAL):
+
+        # ── 30m candles (XAUUSD only — direct upstream only in pure eodhd mode) ──
+        if allow_upstream_direct_30m_fetch and symbol in _30M_DIRECT_SYMBOLS and _should_fetch(f"30m:{symbol}", CANDLE_30M_INTERVAL):
             is_seed = not is_seeded
             fetch_limit = FULL_SEED_LIMIT_30M if is_seed else DELTA_LIMIT_30M
             candles = await _fetch_candles_from_api(symbol, "30m", limit=fetch_limit)
@@ -730,18 +821,17 @@ async def _pump_cycle():
                 with _lock:
                     existing = (_candles_30m.get(symbol) or {}).get("candles", [])
                     merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_30M)
-                    _candles_30m[symbol] = {"candles": merged, "timestamp": now_ts}
-                    _rebuild_derived(symbol)  # This will derive 1h and 4h from 30m
+                    _candles_30m[symbol] = {"candles": merged, "timestamp": now_ts, "source": "eodhd_poll"}
+                    _rebuild_derived(symbol)
                 _mark_fetched(f"30m:{symbol}")
                 _persist_async(symbol, "30m", merged if is_seed else candles)
                 logger.info(f"[DataHub] {symbol}: fetched {len(candles)} 30m candles → 1h={len(_candles_1h.get(symbol, {}).get('candles', []))}, 4h={len(_candles_4h.get(symbol, {}).get('candles', []))}")
-        
+
         # ── 1h candles (every 5min) ──
-        if _should_fetch(f"1h:{symbol}", CANDLE_1H_INTERVAL):
+        if allow_upstream_market_fetch and _should_fetch(f"1h:{symbol}", CANDLE_1H_INTERVAL):
             is_seed = not is_seeded
-            
+
             if symbol in _30M_DIRECT_SYMBOLS:
-                # 1h is derived from 30m in _rebuild_derived — just mark as fetched
                 _mark_fetched(f"1h:{symbol}")
             else:
                 fetch_limit = FULL_SEED_LIMIT_1H if is_seed else DELTA_LIMIT_1H
@@ -750,13 +840,13 @@ async def _pump_cycle():
                     with _lock:
                         existing = (_candles_1h.get(symbol) or {}).get("candles", [])
                         merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_1H)
-                        _candles_1h[symbol] = {"candles": merged, "timestamp": now_ts}
+                        _candles_1h[symbol] = {"candles": merged, "timestamp": now_ts, "source": "eodhd_poll"}
                         _rebuild_derived(symbol)
                     _mark_fetched(f"1h:{symbol}")
                     _persist_async(symbol, "1h", merged if is_seed else candles)
-        
+
         # ── EOD candles (every 30min) ──
-        if _should_fetch(f"eod:{symbol}", CANDLE_EOD_INTERVAL):
+        if allow_upstream_market_fetch and _should_fetch(f"eod:{symbol}", CANDLE_EOD_INTERVAL):
             is_seed = not is_seeded
             fetch_limit = FULL_SEED_LIMIT_EOD if is_seed else DELTA_LIMIT_EOD
             candles = await _fetch_eod_from_api(symbol, limit=fetch_limit)
@@ -764,12 +854,10 @@ async def _pump_cycle():
                 with _lock:
                     existing = (_candles_eod.get(symbol) or {}).get("candles", [])
                     merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_EOD)
-                    _candles_eod[symbol] = {"candles": merged, "timestamp": now_ts}
+                    _candles_eod[symbol] = {"candles": merged, "timestamp": now_ts, "source": "eodhd_poll"}
                 _mark_fetched(f"eod:{symbol}")
                 _persist_async(symbol, "eod", merged if is_seed else candles)
-        
-        # Mark as seeded only when required intraday caches are ready.
-        # This avoids switching to delta mode too early with shallow 1h history.
+
         if not is_seeded and _has_required_seed_data(symbol):
             has_5m = len((_candles_5m.get(symbol) or {}).get("candles", []))
             has_30m = len((_candles_30m.get(symbol) or {}).get("candles", []))
@@ -779,7 +867,7 @@ async def _pump_cycle():
                 f"[DataHub] {symbol} seeded with intraday depth "
                 f"(5m={has_5m}, 30m={has_30m}, 1h={has_1h})"
             )
-    
+
     # ── Macro data (every 5min) ──
     if _should_fetch("macro", MACRO_INTERVAL):
         for key, sym in MACRO_SYMBOLS.items():
@@ -806,7 +894,7 @@ def _load_from_persistent_cache():
         cached_5m = load_candles(symbol, "5m", limit=FULL_SEED_LIMIT_5M)
         if cached_5m:
             with _lock:
-                _candles_5m[symbol] = {"candles": cached_5m, "timestamp": now_ts}
+                _candles_5m[symbol] = {"candles": cached_5m, "timestamp": now_ts, "source": "persistent_cache"}
                 _rebuild_derived(symbol)
             loaded_any = True
             logger.info(f"[DataHub] Loaded {len(cached_5m)} cached 5m candles for {symbol}")
@@ -815,7 +903,7 @@ def _load_from_persistent_cache():
         cached_30m = load_candles(symbol, "30m", limit=FULL_SEED_LIMIT_30M)
         if cached_30m:
             with _lock:
-                _candles_30m[symbol] = {"candles": cached_30m, "timestamp": now_ts}
+                _candles_30m[symbol] = {"candles": cached_30m, "timestamp": now_ts, "source": "persistent_cache"}
                 _rebuild_derived(symbol)
             loaded_any = True
             logger.info(f"[DataHub] Loaded {len(cached_30m)} cached 30m candles for {symbol}")
@@ -824,7 +912,7 @@ def _load_from_persistent_cache():
         cached_1h = load_candles(symbol, "1h", limit=FULL_SEED_LIMIT_1H)
         if cached_1h:
             with _lock:
-                _candles_1h[symbol] = {"candles": cached_1h, "timestamp": now_ts}
+                _candles_1h[symbol] = {"candles": cached_1h, "timestamp": now_ts, "source": "persistent_cache"}
                 _rebuild_derived(symbol)
             loaded_any = True
             logger.info(f"[DataHub] Loaded {len(cached_1h)} cached 1h candles for {symbol}")
@@ -833,7 +921,7 @@ def _load_from_persistent_cache():
         cached_eod = load_candles(symbol, "eod", limit=FULL_SEED_LIMIT_EOD)
         if cached_eod:
             with _lock:
-                _candles_eod[symbol] = {"candles": cached_eod, "timestamp": now_ts}
+                _candles_eod[symbol] = {"candles": cached_eod, "timestamp": now_ts, "source": "persistent_cache"}
             loaded_any = True
             logger.info(f"[DataHub] Loaded {len(cached_eod)} cached EOD candles for {symbol}")
         
@@ -856,9 +944,15 @@ def _load_from_persistent_cache():
             )
     
     if loaded_any:
-        logger.info("[DataHub] Persistent cache loaded — will only fetch delta from EODHD")
+        if get_market_data_source() == "mt5_redis":
+            logger.info("[DataHub] Persistent cache loaded — waiting for MT5 Redis live updates")
+        else:
+            logger.info("[DataHub] Persistent cache loaded — will only fetch delta from EODHD")
     else:
-        logger.info("[DataHub] No persistent cache found — will do full seed from EODHD")
+        if get_market_data_source() == "mt5_redis":
+            logger.info("[DataHub] No persistent cache found — MT5 Redis must seed live candles")
+        else:
+            logger.info("[DataHub] No persistent cache found — will do full seed from EODHD")
 
 
 async def start_data_hub():
@@ -869,7 +963,7 @@ async def start_data_hub():
         return
     
     _hub_running = True
-    logger.info("DataHub started - centralized market data pump")
+    logger.info("DataHub started - centralized market data pump (%s)", get_market_data_source())
     
     # ── Step 1: Load from persistent cache (Supabase) ──
     _load_from_persistent_cache()
@@ -927,6 +1021,7 @@ def stop_data_hub():
 # ═══════════════════════════════════════════════════════════════
 def get_price(symbol: str) -> Optional[float]:
     """Get latest cached price for a symbol. Returns None if not yet fetched."""
+    symbol = _canonical_symbol(symbol)
     with _lock:
         data = _prices.get(symbol)
         if data:
@@ -945,25 +1040,8 @@ def get_candles(symbol: str, timeframe: str, limit: int = 300) -> List[Dict]:
     Supported timeframes: 1m, 5m, 15m, 30m, 1h, 4h, 1d/eod
     Also accepts: M1, M5, M15, M30, H1, H4, D1
     """
-    tf = timeframe.lower().strip()
-    
-    # Normalize timeframe aliases
-    tf_map = {
-        "m1": "1m", "m5": "5m", "m15": "15m", "m30": "30m",
-        "h1": "1h", "h4": "4h", "d1": "eod", "1d": "eod", "daily": "eod",
-    }
-    tf = tf_map.get(tf, tf)
-    
-    store_map = {
-        "5m": _candles_5m,
-        "15m": _candles_15m,
-        "30m": _candles_30m,
-        "1h": _candles_1h,
-        "4h": _candles_4h,
-        "eod": _candles_eod,
-    }
-    
-    store = store_map.get(tf)
+    symbol = _canonical_symbol(symbol)
+    tf, store = _get_store_for_timeframe(timeframe)
     if store is None:
         # 1m not stored - would need separate fetch
         return []
@@ -1066,8 +1144,10 @@ def get_hub_status() -> Dict[str, Any]:
         
         status = {
             "running": _hub_running,
+            "market_data_source": get_market_data_source(),
             "symbols": TRACKED_SYMBOLS,
             "prices": {s: _prices.get(s, {}).get("price") for s in TRACKED_SYMBOLS},
+            "price_sources": {s: _prices.get(s, {}).get("source") for s in TRACKED_SYMBOLS},
             "price_staleness": price_staleness,
             "candles_5m": {s: len(_candles_5m.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
             "candles_15m": {s: len(_candles_15m.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
@@ -1075,6 +1155,17 @@ def get_hub_status() -> Dict[str, Any]:
             "candles_1h": {s: len(_candles_1h.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
             "candles_4h": {s: len(_candles_4h.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
             "candles_eod": {s: len(_candles_eod.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
+            "candle_sources": {
+                s: {
+                    "5m": _candles_5m.get(s, {}).get("source"),
+                    "15m": _candles_15m.get(s, {}).get("source"),
+                    "30m": _candles_30m.get(s, {}).get("source"),
+                    "1h": _candles_1h.get(s, {}).get("source"),
+                    "4h": _candles_4h.get(s, {}).get("source"),
+                    "eod": _candles_eod.get(s, {}).get("source"),
+                }
+                for s in TRACKED_SYMBOLS
+            },
             "volume_stats": volume_stats,  # Hacim istatistikleri eklendi
             "macro": {k: v.get("price") for k, v in _macro_data.items()},
             "last_fetch": {k: datetime.fromtimestamp(v).isoformat() for k, v in _last_fetch.items()},
@@ -1087,3 +1178,177 @@ def get_hub_status() -> Dict[str, Any]:
     except Exception:
         status["persistent_cache"] = {"available": False}
     return status
+
+
+def get_flow_check(symbols: Optional[List[str]] = None) -> Dict[str, Any]:
+    selected_symbols = symbols or TRACKED_SYMBOLS
+    checked_at = datetime.now(timezone.utc).isoformat()
+    symbol_reports: Dict[str, Any] = {}
+
+    for symbol in selected_symbols:
+        canonical_symbol = _canonical_symbol(symbol)
+        price = get_price(symbol)
+        timeframe_reports: Dict[str, Any] = {}
+
+        for timeframe in ("5m", "15m", "30m", "1h", "4h", "eod"):
+            _, store = _get_store_for_timeframe(timeframe)
+            candles = get_candles(symbol, timeframe, limit=3)
+            latest = None
+            if candles:
+                latest = candles[-1].get("timestamp") or candles[-1].get("date")
+            entry = (store or {}).get(canonical_symbol, {}) if store else {}
+            timeframe_reports[timeframe] = {
+                "available": bool(candles),
+                "count": len(candles),
+                "latest": latest,
+                "source": entry.get("source") or "datahub_cache",
+                "cache_age_seconds": _entry_age_seconds(entry),
+            }
+
+        intraday_ready = timeframe_reports["5m"]["available"] and (
+            timeframe_reports["1h"]["available"] or timeframe_reports["30m"]["available"]
+        )
+        analysis_ready = intraday_ready and timeframe_reports["eod"]["available"] and price is not None
+
+        symbol_reports[symbol] = {
+            "price_available": price is not None,
+            "price_source": _prices.get(canonical_symbol, {}).get("source") or "datahub_cache",
+            "price_age_seconds": _entry_age_seconds(_prices.get(canonical_symbol, {})),
+            "timeframes": timeframe_reports,
+            "intraday_ready": intraday_ready,
+            "analysis_ready": analysis_ready,
+        }
+
+    ok = all(report["analysis_ready"] for report in symbol_reports.values()) if symbol_reports else False
+
+    return {
+        "ok": ok,
+        "checked_at": checked_at,
+        "running": _hub_running,
+        "market_data_source": get_market_data_source(),
+        "symbols": symbol_reports,
+    }
+
+
+async def ingest_live_price(
+    symbol: str,
+    price: float,
+    timestamp: Any = None,
+    bid: Optional[float] = None,
+    ask: Optional[float] = None,
+    source: str = "mt5_redis",
+) -> bool:
+    canonical_symbol = _canonical_symbol(symbol)
+    if canonical_symbol not in TRACKED_SYMBOLS:
+        logger.warning("[DataHub] Ignoring live price for untracked symbol %s", symbol)
+        return False
+
+    ts_seconds = _coerce_epoch_seconds(timestamp)
+    payload: Dict[str, Any] = {
+        "price": float(price),
+        "timestamp": ts_seconds,
+        "source": source,
+    }
+    if bid is not None:
+        payload["bid"] = float(bid)
+    if ask is not None:
+        payload["ask"] = float(ask)
+
+    with _lock:
+        existing = _prices.get(canonical_symbol, {})
+        existing_ts = _coerce_epoch_seconds(existing.get("timestamp")) if existing else 0.0
+        if existing_ts and ts_seconds + 1 < existing_ts:
+            return False
+        _prices[canonical_symbol] = payload
+
+    _last_fetch[f"price:{canonical_symbol}"] = time.time()
+
+    try:
+        from services.ws_manager import manager
+        await manager.broadcast(canonical_symbol, {
+            "type": "price_update",
+            "symbol": canonical_symbol,
+            "price": payload["price"],
+            "timestamp": ts_seconds,
+            "source": source,
+        })
+    except Exception as e:
+        logger.debug("[DataHub] Live price broadcast skipped for %s: %s", canonical_symbol, e)
+
+    return True
+
+
+def _normalize_ingested_candle(candle: Dict[str, Any], timeframe: str) -> Optional[Dict[str, Any]]:
+    if not candle:
+        return None
+
+    normalized = {
+        "open": float(candle.get("open", 0) or 0),
+        "high": float(candle.get("high", 0) or 0),
+        "low": float(candle.get("low", 0) or 0),
+        "close": float(candle.get("close", 0) or 0),
+        "volume": float(candle.get("volume", 0) or 0),
+    }
+    timestamp = candle.get("timestamp") or candle.get("time") or candle.get("date")
+
+    if timeframe == "eod":
+        ts_seconds = _coerce_epoch_seconds(timestamp)
+        normalized["timestamp"] = int(ts_seconds * 1000)
+        normalized["date"] = datetime.fromtimestamp(ts_seconds, tz=timezone.utc).date().isoformat()
+    else:
+        normalized["timestamp"] = _coerce_timestamp_ms(timestamp)
+
+    if all(normalized[key] == 0 for key in ("open", "high", "low", "close")):
+        return None
+    return normalized
+
+
+async def ingest_candles(
+    symbol: str,
+    timeframe: str,
+    candles: List[Dict[str, Any]],
+    source: str = "mt5_redis",
+) -> int:
+    canonical_symbol = _canonical_symbol(symbol)
+    tf, store = _get_store_for_timeframe(timeframe)
+    if canonical_symbol not in TRACKED_SYMBOLS:
+        logger.warning("[DataHub] Ignoring candles for untracked symbol %s", symbol)
+        return 0
+    if store is None or tf in {"15m", "4h", "1m"}:
+        logger.warning("[DataHub] Unsupported direct ingest timeframe %s for %s", timeframe, canonical_symbol)
+        return 0
+
+    normalized_candles = [
+        normalized for normalized in (_normalize_ingested_candle(candle, tf) for candle in candles or []) if normalized
+    ]
+    if not normalized_candles:
+        return 0
+
+    limit_map = {
+        "5m": FULL_SEED_LIMIT_5M,
+        "30m": FULL_SEED_LIMIT_30M,
+        "1h": FULL_SEED_LIMIT_1H,
+        "eod": FULL_SEED_LIMIT_EOD,
+    }
+    now_ts = time.time()
+
+    with _lock:
+        existing = (store.get(canonical_symbol) or {}).get("candles", [])
+        merged = _merge_candles(existing, normalized_candles, limit_map[tf])
+        store[canonical_symbol] = {"candles": merged, "timestamp": now_ts, "source": source}
+        if tf in {"5m", "30m", "1h"}:
+            _rebuild_derived(canonical_symbol)
+
+    _last_fetch[f"{tf}:{canonical_symbol}"] = now_ts
+    _persist_async(canonical_symbol, tf, merged if len(normalized_candles) > 1 else normalized_candles)
+    return len(normalized_candles)
+
+
+async def ingest_candle(
+    symbol: str,
+    timeframe: str,
+    candle: Dict[str, Any],
+    source: str = "mt5_redis",
+) -> bool:
+    ingested = await ingest_candles(symbol, timeframe, [candle], source=source)
+    return ingested > 0

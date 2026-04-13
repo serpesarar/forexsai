@@ -23,8 +23,8 @@ def get_redis_url() -> Optional[str]:
     """Get Redis URL from environment variables (Railway sets these automatically)."""
     # Railway Redis addon sets REDIS_URL automatically
     return (
-        os.getenv("REDIS_URL")
-        or os.getenv("REDIS_PRIVATE_URL")  # Railway internal network
+        os.getenv("REDIS_PRIVATE_URL")  # Railway internal network
+        or os.getenv("REDIS_URL")
         or os.getenv("CELERY_BROKER_URL")
     )
 

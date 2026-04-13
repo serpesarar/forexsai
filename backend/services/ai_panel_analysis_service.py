@@ -1138,16 +1138,7 @@ async def _collect_oil_analysis(symbol: str, market_state: Dict[str, Any]) -> Di
     ndx_task = fetch_intraday_candles("NDX.INDX", "5m", 240)
     wti_candles, dxy_candles, ndx_candles = await asyncio.gather(candles_task, dxy_task, ndx_task)
     if not wti_candles:
-        try:
-            from services.data_hub import _fetch_candles_from_api
-
-            wti_candles = await _fetch_candles_from_api(symbol, "5m", limit=240)
-            if not dxy_candles:
-                dxy_candles = await _fetch_candles_from_api("DXY.INDX", "5m", limit=240)
-            if not ndx_candles:
-                ndx_candles = await _fetch_candles_from_api("NDX.INDX", "5m", limit=240)
-        except Exception as exc:
-            logger.debug("Oil analysis direct candle fallback failed for %s: %s", symbol, exc)
+        logger.warning("Oil analysis DataHub cache unavailable for %s 5m candles", symbol)
     if not wti_candles:
         return {}
     oil_session = _oil_session_from_market_state(market_state)

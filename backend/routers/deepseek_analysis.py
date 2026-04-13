@@ -93,16 +93,10 @@ async def risk_analysis(
         current_price = data_hub.get_price(symbol)
 
         if not candles or len(candles) < 14:
-            try:
-                candles = await data_hub._fetch_candles_from_api(symbol, "1h", limit=50)
-            except Exception:
-                candles = candles or []
+            logger.warning("Risk analysis DataHub cache unavailable for %s 1h candles", symbol)
 
         if not current_price:
-            try:
-                current_price = await data_hub._fetch_price_from_api(symbol)
-            except Exception:
-                current_price = current_price or None
+            logger.warning("Risk analysis DataHub cache unavailable for %s price", symbol)
         
         if not candles or len(candles) < 14:
             return NumpySafeJSONResponse(
@@ -186,20 +180,11 @@ async def smart_setup_analysis(
         current_price = data_hub.get_price(symbol)
 
         if not candles_1h or len(candles_1h) < 20:
-            try:
-                candles_1h = await data_hub._fetch_candles_from_api(symbol, "1h", limit=100)
-            except Exception:
-                candles_1h = candles_1h or []
+            logger.warning("Smart setup DataHub cache unavailable for %s 1h candles", symbol)
         if not candles_1d or len(candles_1d) < 20:
-            try:
-                candles_1d = await data_hub._fetch_eod_from_api(symbol, limit=30)
-            except Exception:
-                candles_1d = candles_1d or []
+            logger.warning("Smart setup DataHub cache unavailable for %s daily candles", symbol)
         if not current_price:
-            try:
-                current_price = await data_hub._fetch_price_from_api(symbol)
-            except Exception:
-                current_price = current_price or None
+            logger.warning("Smart setup DataHub cache unavailable for %s price", symbol)
         
         if not candles_1h or len(candles_1h) < 20:
             return NumpySafeJSONResponse(
