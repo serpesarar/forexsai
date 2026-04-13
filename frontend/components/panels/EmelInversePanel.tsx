@@ -175,7 +175,7 @@ export default function EmelInversePanel({ symbol: initialSymbol = "NDX.INDX" }:
   const [liveError, setLiveError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const { formattedTime: signalAge, markRefreshed } = useSignalCountdown("emel_inverse", 300, liveData?.timestamp);
+  const { markRefreshed } = useSignalCountdown("emel_inverse", 300, liveData?.timestamp);
 
   const fetchData = useCallback(async (showLoading = false) => {
     try {
@@ -371,7 +371,6 @@ export default function EmelInversePanel({ symbol: initialSymbol = "NDX.INDX" }:
         timeframes={TIMEFRAMES}
         loading={liveLoading}
         panelId="emel-inverse-panel"
-        signalAge={signalAge}
         signalCountdown={{
           modelKey: "emel_inverse",
           refreshIntervalSeconds: 300,

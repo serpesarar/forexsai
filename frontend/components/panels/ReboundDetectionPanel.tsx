@@ -219,7 +219,7 @@ export default function ReboundDetectionPanel({ symbol: initialSymbol = "NDX.IND
   const [data, setData] = useState<ReboundResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { formattedTime: signalAge, markRefreshed } = useSignalCountdown("rebound", 300, data?.timestamp);
+  const { markRefreshed } = useSignalCountdown("rebound", 300, data?.timestamp);
 
   const fetchData = useCallback(async (showLoading = false, forceRefresh = false) => {
     try {
@@ -281,7 +281,6 @@ export default function ReboundDetectionPanel({ symbol: initialSymbol = "NDX.IND
         timeframes={TIMEFRAMES}
         loading={loading}
         panelId="rebound-detection"
-        signalAge={signalAge}
         signalCountdown={{
           modelKey: "rebound",
           refreshIntervalSeconds: 300,

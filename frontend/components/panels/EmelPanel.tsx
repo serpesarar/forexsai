@@ -181,7 +181,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
   const [data, setData] = useState<EmelData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState("1H");
-  const { formattedTime: signalAge, markRefreshed } = useSignalCountdown("emel", 300, data?.timestamp);
+  const { markRefreshed } = useSignalCountdown("emel", 300, data?.timestamp);
   const { data: wsData } = useWSPanelData(activeSymbol, "emel");
 
   const fetchData = useCallback(async (showLoading = false) => {
@@ -274,7 +274,6 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
         timeframes={["15m", "1H", "4H", "1D"]}
         loading={loading}
         panelId="emel-panel"
-        signalAge={signalAge}
         signalCountdown={{
           modelKey: "emel",
           refreshIntervalSeconds: 300,

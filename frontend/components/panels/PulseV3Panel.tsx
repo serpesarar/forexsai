@@ -136,7 +136,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const [data, setData] = useState<PulseV3Data | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { formattedTime: signalAge, markRefreshed } = useSignalCountdown("pulse_v3", 300, data?.signal_timestamp);
+  const { markRefreshed } = useSignalCountdown("pulse_v3", 300, data?.signal_timestamp);
   const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "pulse_v3");
 
   const fetchData = useCallback(async (showLoading = false, forceRefresh = false) => {
@@ -269,7 +269,6 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         iconColor="var(--accent-cyan)"
         loading={loading}
         panelId="pulse-v3"
-        signalAge={signalAge}
         signalCountdown={{
           modelKey: "pulse_v3",
           refreshIntervalSeconds: 300,
@@ -589,8 +588,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
       {/* ── Footer ── */}
       <div className="px-2 py-2 text-center bg-transparent">
         <p className="text-[10px] font-mono" style={{ color: P.muted }}>
-          {`${t("pulseV3.lastUpdate")} ${signalAge}`}{" "}
-          | {t("pulseV3.validity")} {(data?.valid_for_seconds / 60)?.toFixed?.(0) ?? '--'} {t("pulseV3.min")}
+          {t("pulseV3.validity")} {(data?.valid_for_seconds / 60)?.toFixed?.(0) ?? '--'} {t("pulseV3.min")}
         </p>
       </div>
     </div>

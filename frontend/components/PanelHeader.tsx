@@ -234,22 +234,7 @@ export function PanelHeader({
           ))}
         </div>
 
-        {/* Signal Age Badge - supports string, ReactNode, or SignalCountdown */}
-        {signalAge && typeof signalAge === "string" && (
-          <div
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-[12px] font-mono font-bold tracking-wide"
-            style={{
-              background: "color-mix(in srgb, var(--accent-info) 12%, var(--bg-input))",
-              border: "1px solid color-mix(in srgb, var(--accent-info) 35%, var(--border-subtle))",
-              color: "var(--text-primary)",
-              boxShadow: "0 0 0 1px rgba(255,255,255,0.02) inset, 0 8px 18px rgba(0,0,0,0.22)",
-            }}
-          >
-            <div className="w-2 h-2 rounded-full" style={{ background: "var(--accent-positive)", animation: "pulse 2s infinite", boxShadow: "0 0 10px var(--accent-positive)" }} />
-            {signalAge}
-          </div>
-        )}
-        {signalAge && typeof signalAge !== "string" && signalAge}
+        {/* Signal Countdown - animated badge only */}
         {signalCountdown && (
           <SignalCountdownBadge
             modelKey={signalCountdown.modelKey}
@@ -380,22 +365,7 @@ export function PanelHeaderCompact({
       {/* Right: Controls */}
       <div className="flex items-center gap-2 z-10">
         {children}
-        {/* Signal Age Badge */}
-        {signalAge && typeof signalAge === "string" && (
-          <div
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold tracking-wide"
-            style={{
-              background: "color-mix(in srgb, var(--accent-info) 12%, var(--bg-input))",
-              border: "1px solid color-mix(in srgb, var(--accent-info) 35%, var(--border-subtle))",
-              color: "var(--text-primary)",
-              boxShadow: "0 0 0 1px rgba(255,255,255,0.02) inset, 0 6px 14px rgba(0,0,0,0.2)",
-            }}
-          >
-            <div className="w-2 h-2 rounded-full" style={{ background: "var(--accent-positive)", animation: "pulse 2s infinite", boxShadow: "0 0 10px var(--accent-positive)" }} />
-            {signalAge}
-          </div>
-        )}
-        {signalAge && typeof signalAge !== "string" && signalAge}
+        {/* Signal Countdown - animated badge only */}
         {signalCountdown && (
           <SignalCountdownBadge
             modelKey={signalCountdown.modelKey}

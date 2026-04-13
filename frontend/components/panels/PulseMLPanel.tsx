@@ -98,7 +98,7 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const [data, setData] = useState<PulseMLData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { formattedTime: signalAge, markRefreshed } = useSignalCountdown("pulse2", 300, data?.signal_timestamp);
+  const { markRefreshed } = useSignalCountdown("pulse2", 300, data?.signal_timestamp);
   const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "pulse2");
 
   const fetchData = useCallback(async (showLoading = false, forceRefresh = false) => {
@@ -218,7 +218,6 @@ export default function PulseMLPanel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         timeframes={TIMEFRAMES}
         loading={loading}
         panelId="pulse-ml"
-        signalAge={signalAge}
         signalCountdown={{
           modelKey: "pulse2",
           refreshIntervalSeconds: 300,

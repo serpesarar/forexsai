@@ -89,7 +89,7 @@ export default function MTFMatrixPanel({ symbol: lockedSymbol }: MTFMatrixPanelP
   const [symbol, setSymbol] = useState(initialSymbol);
   const [data, setData] = useState<MTFData | null>(null);
   const [loading, setLoading] = useState(true);
-  const { formattedTime: signalAge, markRefreshed } = useSignalCountdown("mtf", 300, data?.timestamp);
+  const { markRefreshed } = useSignalCountdown("mtf", 300, data?.timestamp);
 
   useEffect(() => {
     setSymbol(initialSymbol);
@@ -212,7 +212,6 @@ export default function MTFMatrixPanel({ symbol: lockedSymbol }: MTFMatrixPanelP
         onRefresh={fetchData}
         loading={loading}
         panelId="mtf-matrix"
-        signalAge={signalAge}
         signalCountdown={{
           modelKey: "mtf",
           refreshIntervalSeconds: 300,
@@ -337,7 +336,7 @@ export default function MTFMatrixPanel({ symbol: lockedSymbol }: MTFMatrixPanelP
       {/* Footer */}
       <div className="px-4 py-2 text-center" style={{ background: "rgba(0,0,0,0.2)", borderTop: "1px solid var(--border-subtle)" }}>
         <p className="text-[10px] font-mono" style={{ color: P.muted }}>
-          Sonraki yenileme: {signalAge} | MTF Analysis
+          MTF Analysis
         </p>
       </div>
     </div>
