@@ -887,7 +887,6 @@ def start_scheduler() -> asyncio.Task:
         return _scheduler_task
 
     loop = asyncio.get_running_loop()
-    _scheduler_running = True
     _scheduler_task = loop.create_task(background_scheduler_loop_with_rss())
     return _scheduler_task
 
