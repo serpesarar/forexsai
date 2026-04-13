@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getApiBase } from "../../lib/api/base";
-import { useWSPanelData } from "../../contexts/WebSocketContext";
+import { useWSPanelData, useWSSymbolData } from "../../contexts/WebSocketContext";
 import {
   LoadingIcon,
   PulseIcon,
@@ -206,6 +206,8 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
   const prevPriceRef = useRef<number | null>(null);
 
   const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "clear_trend");
+  const wsSymbol = useWSSymbolData(activeSymbol);
+  const livePrice = wsSymbol?.data?.current_price ?? null;
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -271,11 +273,48 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
     if (data?.explanations?.[key]) setExplanationModal({ title, content: data.explanations[key] });
   };
 
+  // Live price overlay: recalculate S/R distances on every tick without re-fetching
+  const liveData = useMemo<ClearTrendData | null>(() => {
+    if (!data) return null;
+    if (!livePrice || livePrice <= 0) return data;
+    if (Math.abs(livePrice - data.price.current) < (data.pip_value || 1) * 0.01) return data;
+
+    const pipVal = data.pip_value || 1;
+    const decimals = data.price.decimals ?? 2;
+    const unit = "pts";
+
+    const updatedLevels = data.levels.all_levels.map((level: any) => {
+      if (level.type === "current") {
+        return { ...level, price: Math.round(livePrice * Math.pow(10, decimals)) / Math.pow(10, decimals) };
+      }
+      const dist = Math.abs(level.price - livePrice) / pipVal;
+      const prefix = level.type === "resistance" ? "+" : "-";
+      return {
+        ...level,
+        distance: Math.round(dist * 10) / 10,
+        distance_display: `${prefix}${(Math.round(dist * 10) / 10)} ${unit}`,
+      };
+    });
+
+    const resistances = updatedLevels.filter((l: any) => l.type === "resistance");
+    const supports = updatedLevels.filter((l: any) => l.type === "support");
+    const nearestRes = resistances.length ? resistances.reduce((a: any, b: any) => (a.distance < b.distance ? a : b)) : null;
+    const nearestSup = supports.length ? supports.reduce((a: any, b: any) => (a.distance < b.distance ? a : b)) : null;
+
+    return {
+      ...data,
+      price: { ...data.price, current: livePrice, display: livePrice.toFixed(decimals) },
+      levels: { ...data.levels, all_levels: updatedLevels, nearest_resistance: nearestRes, nearest_support: nearestSup },
+    };
+  }, [data, livePrice]);
+
+  const d = liveData;
+
   const proximity = useProximityAnimation(
-    data?.price?.current ?? 0,
-    data?.levels?.nearest_support?.price ?? null,
-    data?.levels?.nearest_resistance?.price ?? null,
-    data?.trend?.ema_20 ?? null
+    d?.price?.current ?? 0,
+    d?.levels?.nearest_support?.price ?? null,
+    d?.levels?.nearest_resistance?.price ?? null,
+    d?.trend?.ema_20 ?? null
   );
 
   /* ── Loading skeleton ── */
@@ -291,27 +330,27 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
     );
   }
 
-  if (!data) return null;
+  if (!d) return null;
 
-  const trendColor = data.trend.direction === "UP" ? P.green : data.trend.direction === "DOWN" ? P.red : P.warn;
-  const trendLabel = data.trend.direction === "UP" ? "BULLISH" : data.trend.direction === "DOWN" ? "BEARISH" : "NEUTRAL";
+  const trendColor = d.trend.direction === "UP" ? P.green : d.trend.direction === "DOWN" ? P.red : P.warn;
+  const trendLabel = d.trend.direction === "UP" ? "BULLISH" : d.trend.direction === "DOWN" ? "BEARISH" : "NEUTRAL";
 
-  const chartCloses = data.chart_data?.closes ?? [];
-  const chartDates = data.chart_data?.dates ?? [];
-  const chartUpper = data.chart_data?.trend_channel?.upper ?? [];
-  const chartLower = data.chart_data?.trend_channel?.lower ?? [];
-  const chartMiddle = data.chart_data?.trend_channel?.middle ?? [];
+  const chartCloses = d.chart_data?.closes ?? [];
+  const chartDates = d.chart_data?.dates ?? [];
+  const chartUpper = d.chart_data?.trend_channel?.upper ?? [];
+  const chartLower = d.chart_data?.trend_channel?.lower ?? [];
+  const chartMiddle = d.chart_data?.trend_channel?.middle ?? [];
 
-  const supportLevelsForChart = (data.levels.all_levels || [])
+  const supportLevelsForChart = (d.levels.all_levels || [])
     .filter((l) => l.type === "support")
     .map((l) => ({ price: l.price, label: l.name.split(" ")[0], strength: l.strength }));
-  const resistanceLevelsForChart = (data.levels.all_levels || [])
+  const resistanceLevelsForChart = (d.levels.all_levels || [])
     .filter((l) => l.type === "resistance")
     .map((l) => ({ price: l.price, label: l.name.split(" ")[0], strength: l.strength }));
 
-  const resistanceLevels = (data.levels.all_levels || []).filter((l) => l.type === "resistance");
-  const supportLevels = (data.levels.all_levels || []).filter((l) => l.type === "support");
-  const currentLevel = (data.levels.all_levels || []).find((l) => l.type === "current");
+  const resistanceLevels = (d.levels.all_levels || []).filter((l) => l.type === "resistance");
+  const supportLevels = (d.levels.all_levels || []).filter((l) => l.type === "support");
+  const currentLevel = (d.levels.all_levels || []).find((l) => l.type === "current");
 
   return (
     <motion.div
@@ -364,9 +403,9 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
           {/* Price bar above chart */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {data.trend.direction === "UP" ? (
+              {d.trend.direction === "UP" ? (
                 <ArrowUpIcon size={24} style={{ color: trendColor, filter: `drop-shadow(0 0 6px ${trendColor}60)` }} />
-              ) : data.trend.direction === "DOWN" ? (
+              ) : d.trend.direction === "DOWN" ? (
                 <ArrowDownIcon size={24} style={{ color: trendColor, filter: `drop-shadow(0 0 6px ${trendColor}60)` }} />
               ) : (
                 <NeutralIcon size={24} style={{ color: trendColor }} />
@@ -377,7 +416,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
                 animate={priceFlash ? { scale: [1, 1.05, 1] } : {}}
                 transition={{ duration: 0.3 }}
               >
-                {data.price.display}
+                {d.price.display}
                 <motion.span
                   className="absolute -top-1 -right-2.5 w-2 h-2 rounded-full"
                   style={{ backgroundColor: trendColor }}
@@ -394,16 +433,16 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
 
             {/* EMA Pills */}
             <div className="hidden md:flex items-center gap-1.5">
-              <EmaPill label="EMA20" value={data.trend.ema_20} currentPrice={data.price.current} color={P.pink} isProximate={proximity.ema20Proximity} decimals={data.price.decimals} />
-              <EmaPill label="EMA50" value={data.trend.ema_50} currentPrice={data.price.current} color={P.orange} isProximate={false} decimals={data.price.decimals} />
-              {data.trend.ema_200 != null && data.trend.ema_200 > 0 && (
-                <EmaPill label="EMA200" value={data.trend.ema_200} currentPrice={data.price.current} color={P.text} isProximate={false} decimals={data.price.decimals} />
+              <EmaPill label="EMA20" value={d.trend.ema_20} currentPrice={d.price.current} color={P.pink} isProximate={proximity.ema20Proximity} decimals={d.price.decimals} />
+              <EmaPill label="EMA50" value={d.trend.ema_50} currentPrice={d.price.current} color={P.orange} isProximate={false} decimals={d.price.decimals} />
+              {d.trend.ema_200 != null && d.trend.ema_200 > 0 && (
+                <EmaPill label="EMA200" value={d.trend.ema_200} currentPrice={d.price.current} color={P.text} isProximate={false} decimals={d.price.decimals} />
               )}
             </div>
           </div>
 
           {/* Strength bar */}
-          <HorizontalStrengthBar percent={data.trend.strength_percent} direction={data.trend.direction} />
+          <HorizontalStrengthBar percent={d.trend.strength_percent} direction={d.trend.direction} />
 
           {/* CHART */}
           {chartCloses.length > 5 ? (
@@ -416,8 +455,8 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
                 middle={chartMiddle}
                 supportLevels={supportLevelsForChart}
                 resistanceLevels={resistanceLevelsForChart}
-                currentPrice={data.price.current}
-                decimals={data.price.decimals}
+                currentPrice={d.price.current}
+                decimals={d.price.decimals}
                 supportProximity={proximity.supportProximity}
                 resistanceProximity={proximity.resistanceProximity}
                 supportIntensity={proximity.supportIntensity}
@@ -432,10 +471,10 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
 
           {/* Mobile-only EMA pills */}
           <div className="flex md:hidden flex-wrap gap-1.5">
-            <EmaPill label="EMA20" value={data.trend.ema_20} currentPrice={data.price.current} color={P.pink} isProximate={proximity.ema20Proximity} decimals={data.price.decimals} />
-            <EmaPill label="EMA50" value={data.trend.ema_50} currentPrice={data.price.current} color={P.orange} isProximate={false} decimals={data.price.decimals} />
-            {data.trend.ema_200 != null && data.trend.ema_200 > 0 && (
-              <EmaPill label="EMA200" value={data.trend.ema_200} currentPrice={data.price.current} color={P.text} isProximate={false} decimals={data.price.decimals} />
+            <EmaPill label="EMA20" value={d.trend.ema_20} currentPrice={d.price.current} color={P.pink} isProximate={proximity.ema20Proximity} decimals={d.price.decimals} />
+            <EmaPill label="EMA50" value={d.trend.ema_50} currentPrice={d.price.current} color={P.orange} isProximate={false} decimals={d.price.decimals} />
+            {d.trend.ema_200 != null && d.trend.ema_200 > 0 && (
+              <EmaPill label="EMA200" value={d.trend.ema_200} currentPrice={d.price.current} color={P.text} isProximate={false} decimals={d.price.decimals} />
             )}
           </div>
         </div>
@@ -457,7 +496,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
           {/* Resistance levels */}
           <div className="px-3 space-y-1">
             {resistanceLevels.map((level, i) => (
-              <CompactLevelRow key={`r-${i}`} level={level} decimals={data.price.decimals} />
+              <CompactLevelRow key={`r-${i}`} level={level} decimals={d.price.decimals} />
             ))}
           </div>
 
@@ -473,7 +512,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
                 />
                 <span className="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded" style={{ color: P.green, backgroundColor: `${P.green}15` }}>NOW</span>
                 <span className="font-mono text-sm font-bold flex-1" style={{ color: P.green, textShadow: `0 0 10px ${P.green}80` }}>
-                  {currentLevel.price.toFixed(data.price.decimals)}
+                  {currentLevel.price.toFixed(d.price.decimals)}
                 </span>
                 <span className="text-[10px] font-mono" style={{ color: `${P.green}80` }}>HERE</span>
               </motion.div>
@@ -483,7 +522,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
           {/* Support levels */}
           <div className="px-3 space-y-1 pb-3">
             {supportLevels.map((level, i) => (
-              <CompactLevelRow key={`s-${i}`} level={level} decimals={data.price.decimals} />
+              <CompactLevelRow key={`s-${i}`} level={level} decimals={d.price.decimals} />
             ))}
           </div>
 
@@ -492,18 +531,18 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
 
           {/* Nearest Levels Summary */}
           <div className="px-4 py-3 grid grid-cols-2 gap-2">
-            {data.levels.nearest_resistance && (
+            {d.levels.nearest_resistance && (
               <div className="rounded-lg p-2.5" style={{ backgroundColor: `${P.red}06`, border: `1px solid ${P.red}15` }}>
                 <div className="text-[8px] font-mono uppercase tracking-wider mb-1" style={{ color: `${P.red}80` }}>Nearest Resistance</div>
-                <div className="text-sm font-bold font-mono" style={{ color: P.red }}>{data.levels.nearest_resistance.price.toFixed(data.price.decimals)}</div>
-                <div className="text-[9px] font-mono" style={{ color: `${P.red}60` }}>{data.levels.nearest_resistance.distance_display}</div>
+                <div className="text-sm font-bold font-mono" style={{ color: P.red }}>{d.levels.nearest_resistance.price.toFixed(d.price.decimals)}</div>
+                <div className="text-[9px] font-mono" style={{ color: `${P.red}60` }}>{d.levels.nearest_resistance.distance_display}</div>
               </div>
             )}
-            {data.levels.nearest_support && (
+            {d.levels.nearest_support && (
               <div className="rounded-lg p-2.5" style={{ backgroundColor: `${P.accent}06`, border: `1px solid ${P.accent}15` }}>
                 <div className="text-[8px] font-mono uppercase tracking-wider mb-1" style={{ color: `${P.accent}80` }}>Nearest Support</div>
-                <div className="text-sm font-bold font-mono" style={{ color: P.accent }}>{data.levels.nearest_support.price.toFixed(data.price.decimals)}</div>
-                <div className="text-[9px] font-mono" style={{ color: `${P.accent}60` }}>{data.levels.nearest_support.distance_display}</div>
+                <div className="text-sm font-bold font-mono" style={{ color: P.accent }}>{d.levels.nearest_support.price.toFixed(d.price.decimals)}</div>
+                <div className="text-[9px] font-mono" style={{ color: `${P.accent}60` }}>{d.levels.nearest_support.distance_display}</div>
               </div>
             )}
           </div>
@@ -517,16 +556,16 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
               <TargetIcon size={14} style={{ color: trendColor }} />
               <span className="text-[10px] uppercase tracking-[0.2em] font-mono" style={{ color: "rgba(255,255,255,0.35)" }}>Trade Setup</span>
             </div>
-            <p className="text-[11px] text-white/50 mb-3 font-mono leading-relaxed">{data.trade_zones.suggestion}</p>
+            <p className="text-[11px] text-white/50 mb-3 font-mono leading-relaxed">{d.trade_zones.suggestion}</p>
 
-            {data.trade_zones.target != null && data.trade_zones.stop != null && (
+            {d.trade_zones.target != null && d.trade_zones.stop != null && (
               <div className="grid grid-cols-2 gap-2">
                 <div className="text-center rounded-lg py-2" style={{ background: `${P.green}05`, border: `1px solid ${P.green}10` }}>
                   <div className="text-[8px] text-white/25 font-mono uppercase tracking-wider mb-0.5">
                     <TargetIcon size={10} className="inline mr-0.5" style={{ color: P.green }} />Target
                   </div>
                   <div className="text-base font-bold font-mono" style={{ color: P.green, textShadow: `0 0 6px ${P.green}30` }}>
-                    {data.trade_zones.target.toFixed(data.price.decimals)}
+                    {d.trade_zones.target.toFixed(d.price.decimals)}
                   </div>
                 </div>
                 <div className="text-center rounded-lg py-2" style={{ background: `${P.red}05`, border: `1px solid ${P.red}10` }}>
@@ -534,7 +573,7 @@ export default function CyberpunkTrendPanel({ symbol: initialSymbol = "NDX.INDX"
                     <SecurityShieldIcon size={10} className="inline mr-0.5" style={{ color: P.red }} />Stop
                   </div>
                   <div className="text-base font-bold font-mono" style={{ color: P.red, textShadow: `0 0 6px ${P.red}30` }}>
-                    {data.trade_zones.stop.toFixed(data.price.decimals)}
+                    {d.trade_zones.stop.toFixed(d.price.decimals)}
                   </div>
                 </div>
               </div>

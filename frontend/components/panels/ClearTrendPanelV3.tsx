@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getApiBase } from "../../lib/api/base";
 import { useI18nStore } from "../../lib/i18n/store";
-import { useWSPanelData } from "../../contexts/WebSocketContext";
+import { useWSPanelData, useWSSymbolData } from "../../contexts/WebSocketContext";
+import { useSignalCountdown } from "../../hooks/useSignalCountdown";
 import {
   TrendingUpIcon as TrendingUp,
   ArrowDownIcon as TrendingDown,
@@ -112,6 +113,11 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
   const [explanationModal, setExplanationModal] = useState<{ title: string; content: string } | null>(null);
 
   const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "clear_trend");
+  const wsSymbol = useWSSymbolData(activeSymbol);
+  const livePrice = wsSymbol?.data?.current_price ?? null;
+
+  // Signal countdown for refresh timer
+  const { markRefreshed } = useSignalCountdown("clear_trend", 120, data?.timestamp);
 
   useEffect(() => {
     const handler = () => fetchData();
@@ -135,8 +141,12 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
   };
 
   useEffect(() => {
-    if (wsData) { setData(wsData); setLoading(false); }
-  }, [wsData]);
+    if (wsData) {
+      setData(wsData);
+      setLoading(false);
+      markRefreshed();
+    }
+  }, [wsData, markRefreshed]);
 
   useEffect(() => {
     if (!wsData) fetchData();
@@ -145,6 +155,51 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
       return () => clearInterval(interval);
     }
   }, [activeSymbol, timeframe, wsConnected]);
+
+  // Live price overlay: recalculate S/R distances on every tick without re-fetching
+  const liveData = useMemo<ClearTrendData | null>(() => {
+    if (!data) return null;
+    if (!livePrice || livePrice <= 0) return data;
+    // Skip if price hasn't meaningfully changed (avoids unnecessary re-renders)
+    if (Math.abs(livePrice - data.price.current) < data.pip_value * 0.01) return data;
+
+    const pipVal = data.pip_value || 1;
+    const decimals = data.price.decimals ?? 2;
+    const unit = "pts";
+
+    const updatedLevels = data.levels.all_levels.map((level) => {
+      if (level.type === "current") {
+        return { ...level, price: Math.round(livePrice * Math.pow(10, decimals)) / Math.pow(10, decimals) };
+      }
+      const dist = Math.abs(level.price - livePrice) / pipVal;
+      const prefix = level.type === "resistance" ? "+" : "-";
+      return {
+        ...level,
+        distance: Math.round(dist * 10) / 10,
+        distance_display: `${prefix}${(Math.round(dist * 10) / 10)} ${unit}`,
+      };
+    });
+
+    const resistances = updatedLevels.filter((l) => l.type === "resistance");
+    const supports = updatedLevels.filter((l) => l.type === "support");
+    const nearestRes = resistances.length ? resistances.reduce((a, b) => (a.distance < b.distance ? a : b)) : null;
+    const nearestSup = supports.length ? supports.reduce((a, b) => (a.distance < b.distance ? a : b)) : null;
+
+    return {
+      ...data,
+      price: {
+        ...data.price,
+        current: livePrice,
+        display: livePrice.toFixed(decimals),
+      },
+      levels: {
+        ...data.levels,
+        all_levels: updatedLevels,
+        nearest_resistance: nearestRes,
+        nearest_support: nearestSup,
+      },
+    };
+  }, [data, livePrice]);
 
   const openExplanation = (key: string, title: string) => {
     if (data?.explanations?.[key]) {
@@ -162,24 +217,27 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
     );
   }
 
+  // Use liveData (with real-time price overlay) for all rendering
+  const d = liveData;
+
   const getTrendColor = () => {
-    if (!data) return P.muted;
-    if (data.trend.direction === "UP") return P.green;
-    if (data.trend.direction === "DOWN") return P.red;
+    if (!d) return P.muted;
+    if (d.trend.direction === "UP") return P.green;
+    if (d.trend.direction === "DOWN") return P.red;
     return P.warn;
   };
 
   const getTrendBg = () => {
-    if (!data) return "rgba(255,255,255,0.02)";
-    if (data.trend.direction === "UP") return `${P.green}06`;
-    if (data.trend.direction === "DOWN") return `${P.red}06`;
+    if (!d) return "rgba(255,255,255,0.02)";
+    if (d.trend.direction === "UP") return `${P.green}06`;
+    if (d.trend.direction === "DOWN") return `${P.red}06`;
     return `${P.warn}06`;
   };
 
   const getTrendBorder = () => {
-    if (!data) return P.border;
-    if (data.trend.direction === "UP") return `${P.green}20`;
-    if (data.trend.direction === "DOWN") return `${P.red}20`;
+    if (!d) return P.border;
+    if (d.trend.direction === "UP") return `${P.green}20`;
+    if (d.trend.direction === "DOWN") return `${P.red}20`;
     return `${P.warn}20`;
   };
 
@@ -203,26 +261,31 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
         onRefresh={fetchData}
         loading={loading}
         panelId="clear-trend-v3"
+        signalCountdown={{
+          modelKey: "clear_trend",
+          refreshIntervalSeconds: 120,
+          signalTimestamp: data?.timestamp,
+        }}
       />
 
-      {data && (
+      {d && (
         <>
           {/* Main Price Display */}
           <div className="rounded-xl p-4 text-center" style={{ background: getTrendBg(), border: `1px solid ${getTrendBorder()}` }}>
             <div className="flex items-center justify-center gap-3 mb-2">
-              {data.trend.direction === "UP" ? (
+              {d.trend.direction === "UP" ? (
                 <TrendingUp className="w-8 h-8" style={{ color: P.green }} />
-              ) : data.trend.direction === "DOWN" ? (
+              ) : d.trend.direction === "DOWN" ? (
                 <TrendingDown className="w-8 h-8" style={{ color: P.red }} />
               ) : (
                 <Minus className="w-8 h-8" style={{ color: P.warn }} />
               )}
               <span style={{ fontFamily: FONT, fontSize: 36, fontWeight: 700, letterSpacing: "-0.5px", color: getTrendColor() }}>
-                {data.price.display}
+                {d.price.display}
               </span>
             </div>
             <p style={{ fontFamily: FONT, fontSize: 14, color: getTrendColor(), marginBottom: 8 }}>
-              {data.trend.description}
+              {d.trend.description}
             </p>
             <div className="flex items-center justify-center gap-2">
               <div className="flex items-center gap-1">
@@ -230,38 +293,38 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
                 <div className="rounded-full overflow-hidden" style={{ width: 80, height: 6, background: P.border }}>
                   <div
                     style={{
-                      width: `${data.trend.strength_percent}%`, height: "100%", borderRadius: 999,
-                      background: data.trend.direction === "UP" ? P.green : data.trend.direction === "DOWN" ? P.red : P.warn,
+                      width: `${d.trend.strength_percent}%`, height: "100%", borderRadius: 999,
+                      background: d.trend.direction === "UP" ? P.green : d.trend.direction === "DOWN" ? P.red : P.warn,
                       opacity: 0.85,
                     }}
                   />
                 </div>
-                <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.text }}>{data.trend.strength_percent}%</span>
+                <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: P.text }}>{d.trend.strength_percent}%</span>
               </div>
             </div>
           </div>
 
           {/* CHART AREA - Added for visual clarity */}
-          {data.chart_data && data.chart_data.closes.length > 5 && (
+          {d.chart_data && d.chart_data.closes.length > 5 && (
             <div className="bg-transparent p-2">
               <TrendChannelChart
-                closes={data.chart_data.closes}
-                dates={data.chart_data.dates || []}
-                upper={data.chart_data.trend_channel.upper}
-                lower={data.chart_data.trend_channel.lower}
-                middle={data.chart_data.trend_channel.middle}
-                supportLevels={data.levels.all_levels
+                closes={d.chart_data.closes}
+                dates={d.chart_data.dates || []}
+                upper={d.chart_data.trend_channel.upper}
+                lower={d.chart_data.trend_channel.lower}
+                middle={d.chart_data.trend_channel.middle}
+                supportLevels={d.levels.all_levels
                   .filter(l => l.type === 'support')
                   .map(l => ({ price: l.price, label: l.name.split(' ')[0], strength: l.strength }))}
-                resistanceLevels={data.levels.all_levels
+                resistanceLevels={d.levels.all_levels
                   .filter(l => l.type === 'resistance')
                   .map(l => ({ price: l.price, label: l.name.split(' ')[0], strength: l.strength }))}
-                currentPrice={data.price.current}
-                decimals={data.price.decimals}
-                supportProximity={!!data.levels.nearest_support && parseFloat(data.levels.nearest_support.distance_display) < 20}
-                resistanceProximity={!!data.levels.nearest_resistance && parseFloat(data.levels.nearest_resistance.distance_display) < 20}
-                supportIntensity={data.trend.direction === 'DOWN' ? 1 : 0.5}
-                resistanceIntensity={data.trend.direction === 'UP' ? 1 : 0.5}
+                currentPrice={d.price.current}
+                decimals={d.price.decimals}
+                supportProximity={!!d.levels.nearest_support && parseFloat(d.levels.nearest_support.distance_display) < 20}
+                resistanceProximity={!!d.levels.nearest_resistance && parseFloat(d.levels.nearest_resistance.distance_display) < 20}
+                supportIntensity={d.trend.direction === 'DOWN' ? 1 : 0.5}
+                resistanceIntensity={d.trend.direction === 'UP' ? 1 : 0.5}
               />
             </div>
           )}
@@ -282,7 +345,7 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
 
             {/* Levels Visual */}
             <div className="space-y-2">
-              {data.levels.all_levels.map((level, index) => {
+              {d.levels.all_levels.map((level, index) => {
                 const isCurrent = level.type === "current";
                 const isResistance = level.type === "resistance";
                 const isSupport = level.type === "support";
@@ -313,7 +376,7 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
                     {/* Price */}
                     <div className="flex-1">
                       <div style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: isCurrent ? P.text : isResistance ? P.red : P.green }}>
-                        {level.price.toFixed(data.price.decimals)}
+                        {level.price.toFixed(d.price.decimals)}
                       </div>
                       {level.name && !isCurrent && (
                         <div className="text-xs text-gray-500">
@@ -346,7 +409,7 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-3 mt-4">
-              {data.levels.nearest_resistance && (
+              {d.levels.nearest_resistance && (
                 <div
                   onClick={() => openExplanation("resistance", "Nearest Resistance")}
                   className="rounded-lg p-3 cursor-pointer"
@@ -354,14 +417,14 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
                 >
                   <div style={{ fontFamily: FONT, fontSize: 11, color: P.red, marginBottom: 4 }}>↑ Nearest Resistance</div>
                   <div style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: P.red }}>
-                    {data.levels.nearest_resistance.price.toFixed(data.price.decimals)}
+                    {d.levels.nearest_resistance.price.toFixed(d.price.decimals)}
                   </div>
                   <div style={{ fontFamily: FONT, fontSize: 11, color: P.red, opacity: 0.75 }}>
-                    {data.levels.nearest_resistance.distance_display} above
+                    {d.levels.nearest_resistance.distance_display} above
                   </div>
                 </div>
               )}
-              {data.levels.nearest_support && (
+              {d.levels.nearest_support && (
                 <div
                   onClick={() => openExplanation("support", "Nearest Support")}
                   className="rounded-lg p-3 cursor-pointer"
@@ -369,10 +432,10 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
                 >
                   <div style={{ fontFamily: FONT, fontSize: 11, color: P.green, marginBottom: 4 }}>↓ Nearest Support</div>
                   <div style={{ fontFamily: FONT, fontSize: 18, fontWeight: 700, color: P.green }}>
-                    {data.levels.nearest_support.price.toFixed(data.price.decimals)}
+                    {d.levels.nearest_support.price.toFixed(d.price.decimals)}
                   </div>
                   <div style={{ fontFamily: FONT, fontSize: 11, color: P.green, opacity: 0.75 }}>
-                    {data.levels.nearest_support.distance_display} below
+                    {d.levels.nearest_support.distance_display} below
                   </div>
                 </div>
               )}
@@ -394,17 +457,17 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
             </div>
 
             <div className="rounded-xl p-4" style={{
-              background: data.trend.direction === "UP" ? `${P.green}08` : data.trend.direction === "DOWN" ? `${P.red}08` : `${P.warn}08`,
-              border: `1px solid ${data.trend.direction === "UP" ? `${P.green}20` : data.trend.direction === "DOWN" ? `${P.red}20` : `${P.warn}20`}`,
+              background: d.trend.direction === "UP" ? `${P.green}08` : d.trend.direction === "DOWN" ? `${P.red}08` : `${P.warn}08`,
+              border: `1px solid ${d.trend.direction === "UP" ? `${P.green}20` : d.trend.direction === "DOWN" ? `${P.red}20` : `${P.warn}20`}`,
             }}>
-              <p className="text-sm text-white mb-3">{data.trade_zones.suggestion}</p>
+              <p className="text-sm text-white mb-3">{d.trade_zones.suggestion}</p>
 
-              {data.trade_zones.target && data.trade_zones.stop && (
+              {d.trade_zones.target && d.trade_zones.stop && (
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
                     <div className="text-xs text-gray-400 mb-1">🎯 Target</div>
                     <div className="text-xl font-bold text-green-400">
-                      {data.trade_zones.target.toFixed(data.price.decimals)}
+                      {d.trade_zones.target.toFixed(d.price.decimals)}
                     </div>
                     <button
                       onClick={() => openExplanation("target", "Target Price")}
@@ -416,7 +479,7 @@ export default function ClearTrendPanelV3({ symbol: initialSymbol = "NDX.INDX" }
                   <div>
                     <div className="text-xs text-gray-400 mb-1">🛑 Stop</div>
                     <div className="text-xl font-bold text-red-400">
-                      {data.trade_zones.stop.toFixed(data.price.decimals)}
+                      {d.trade_zones.stop.toFixed(d.price.decimals)}
                     </div>
                     <button
                       onClick={() => openExplanation("stop", "Stop-Loss")}

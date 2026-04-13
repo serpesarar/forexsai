@@ -25,6 +25,8 @@ export interface SymbolData {
     volatility: any;
   };
   panels?: {
+    pulse1?: any;
+    pulse2?: any;
     pulse_v3?: any;
     emel?: any;
     mtf?: any;
@@ -245,6 +247,27 @@ export function WebSocketProvider({ children }: Props) {
                       }
                     } : {})
                   }
+                } as SymbolData,
+              };
+            });
+            setLastUpdate(new Date());
+            return;
+          }
+
+          // Partial panel update — merge new panel data into existing symbol
+          if (msg.type === "panel_update" && msg.symbol && msg.panels) {
+            setSymbolData((prev) => {
+              const existing = prev[msg.symbol];
+              if (!existing) return prev;
+              return {
+                ...prev,
+                [msg.symbol]: {
+                  ...existing,
+                  timestamp: new Date().toISOString(),
+                  panels: {
+                    ...(existing.panels || {}),
+                    ...msg.panels,
+                  },
                 } as SymbolData,
               };
             });

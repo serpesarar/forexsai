@@ -102,6 +102,63 @@ _last_fetch: Dict[str, float] = {}
 # Hub running flag
 _hub_running = False
 
+# ═══════════════════════════════════════════════════════════════
+# CANDLE CLOSE EVENT SYSTEM
+# ═══════════════════════════════════════════════════════════════
+# Tracks the latest candle timestamp per symbol/timeframe to detect new closes
+_last_candle_ts: Dict[str, int] = {}  # "symbol:timeframe" -> last candle timestamp (ms)
+
+# Registered callbacks: timeframe -> list of async callables(symbol, timeframe)
+_candle_close_callbacks: Dict[str, List] = {}
+
+
+def on_candle_close(timeframe: str):
+    """Decorator to register a callback for candle close events.
+    Usage:
+        @on_candle_close("5m")
+        async def handle_5m_close(symbol: str, timeframe: str): ...
+    """
+    def decorator(func):
+        _candle_close_callbacks.setdefault(timeframe, []).append(func)
+        logger.info(f"[DataHub] Registered candle close callback: {func.__name__} for {timeframe}")
+        return func
+    return decorator
+
+
+def register_candle_close_callback(timeframe: str, func):
+    """Programmatic registration of candle close callbacks."""
+    _candle_close_callbacks.setdefault(timeframe, []).append(func)
+    logger.info(f"[DataHub] Registered candle close callback: {func.__name__} for {timeframe}")
+
+
+async def _fire_candle_close_events(symbol: str, timeframe: str, candles: List[Dict]):
+    """Check if the latest candle is new and fire registered callbacks."""
+    if not candles:
+        return
+    
+    latest_ts = candles[-1].get("timestamp", 0)
+    if not latest_ts:
+        return
+    
+    cache_key = f"{symbol}:{timeframe}"
+    prev_ts = _last_candle_ts.get(cache_key, 0)
+    
+    if latest_ts > prev_ts:
+        _last_candle_ts[cache_key] = latest_ts
+        
+        # Skip first-time (seed) — no event on initial load
+        if prev_ts == 0:
+            return
+        
+        callbacks = _candle_close_callbacks.get(timeframe, [])
+        if callbacks:
+            logger.info(f"[DataHub] Candle close detected: {symbol}/{timeframe} ts={latest_ts}, firing {len(callbacks)} callbacks")
+            for cb in callbacks:
+                try:
+                    asyncio.create_task(cb(symbol, timeframe))
+                except Exception as e:
+                    logger.error(f"[DataHub] Candle close callback error ({cb.__name__}): {e}")
+
 
 def get_market_data_source() -> str:
     source = (settings.market_data_source or "eodhd").strip().lower()
@@ -814,6 +871,14 @@ async def _pump_cycle():
                     _rebuild_derived(symbol)
                 _mark_fetched(f"5m:{symbol}")
                 _persist_async(symbol, "5m", merged if is_seed else candles)
+                # Fire candle close events for 5m and derived timeframes
+                await _fire_candle_close_events(symbol, "5m", merged)
+                d15 = (_candles_15m.get(symbol) or {}).get("candles", [])
+                if d15:
+                    await _fire_candle_close_events(symbol, "15m", d15)
+                d30 = (_candles_30m.get(symbol) or {}).get("candles", [])
+                if d30:
+                    await _fire_candle_close_events(symbol, "30m", d30)
 
         # ── 30m candles (XAUUSD only — direct upstream only in pure eodhd mode) ──
         if allow_upstream_direct_30m_fetch and symbol in _30M_DIRECT_SYMBOLS and _should_fetch(f"30m:{symbol}", CANDLE_30M_INTERVAL):
@@ -829,6 +894,14 @@ async def _pump_cycle():
                 _mark_fetched(f"30m:{symbol}")
                 _persist_async(symbol, "30m", merged if is_seed else candles)
                 logger.info(f"[DataHub] {symbol}: fetched {len(candles)} 30m candles → 1h={len(_candles_1h.get(symbol, {}).get('candles', []))}, 4h={len(_candles_4h.get(symbol, {}).get('candles', []))}")
+                # Fire candle close events for 30m and derived 1h/4h
+                await _fire_candle_close_events(symbol, "30m", merged)
+                d1h = (_candles_1h.get(symbol) or {}).get("candles", [])
+                if d1h:
+                    await _fire_candle_close_events(symbol, "1h", d1h)
+                d4h = (_candles_4h.get(symbol) or {}).get("candles", [])
+                if d4h:
+                    await _fire_candle_close_events(symbol, "4h", d4h)
 
         # ── 1h candles (every 5min) ──
         if allow_upstream_market_fetch and _should_fetch(f"1h:{symbol}", CANDLE_1H_INTERVAL):
@@ -847,6 +920,11 @@ async def _pump_cycle():
                         _rebuild_derived(symbol)
                     _mark_fetched(f"1h:{symbol}")
                     _persist_async(symbol, "1h", merged if is_seed else candles)
+                    # Fire candle close events for 1h and derived 4h
+                    await _fire_candle_close_events(symbol, "1h", merged)
+                    d4h = (_candles_4h.get(symbol) or {}).get("candles", [])
+                    if d4h:
+                        await _fire_candle_close_events(symbol, "4h", d4h)
 
         # ── EOD candles (every 30min) ──
         if allow_upstream_market_fetch and _should_fetch(f"eod:{symbol}", CANDLE_EOD_INTERVAL):

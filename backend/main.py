@@ -79,6 +79,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Failed to start DataHub: {e}")
 
+    # 2.1 Register candle close event handlers (event-driven model refresh)
+    try:
+        from services.candle_event_handlers import register_all_candle_event_handlers
+        register_all_candle_event_handlers()
+        print("Candle close event handlers registered")
+    except Exception as e:
+        print(f"Failed to register candle event handlers: {e}")
+
     # 2.5 MT5 Redis listener (optional, source-mode controlled)
     try:
         from services.mt5_redis_client import start_mt5_redis_listener

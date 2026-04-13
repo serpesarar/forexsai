@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useWSPanelData } from "../../contexts/WebSocketContext";
 import { getApiBase } from "../../lib/api/base";
 import { useI18nStore } from "../../lib/i18n/store";
 import { useRefreshAge } from "../../hooks/useRefreshAge";
@@ -136,6 +137,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { refreshAge: signalAge, markRefreshed } = useRefreshAge();
+  const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "pulse_v3");
 
   const fetchData = useCallback(async (showLoading = false, forceRefresh = false) => {
     try {
@@ -168,16 +170,28 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
     }
   }, [activeSymbol, markRefreshed]);
 
-  // Fetch when symbol changes
+  // Use WS data when available
   useEffect(() => {
-    fetchData(true);
+    if (wsData && typeof wsData === "object" && !wsData.error) {
+      setData(wsData as PulseV3Data);
+      markRefreshed((wsData as PulseV3Data).signal_timestamp || (wsData as PulseV3Data).timestamp);
+      setLoading(false);
+      setError(null);
+    }
+  }, [wsData, markRefreshed]);
+
+  // Fetch when symbol changes (initial load)
+  useEffect(() => {
+    if (!wsData) fetchData(true);
   }, [fetchData]);
 
-  // HTTP polling every 60 seconds
+  // HTTP polling fallback only when WS disconnected
   useEffect(() => {
-    const interval = setInterval(() => fetchData(false), 60000); // Background refresh without loading
-    return () => clearInterval(interval);
-  }, [fetchData]);
+    if (!wsConnected) {
+      const interval = setInterval(() => fetchData(false), 60000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchData, wsConnected]);
 
   // Listen for global refresh event from header button
   useEffect(() => {

@@ -64,7 +64,7 @@ class RegimeResult:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _regime_cache: Dict[str, tuple] = {}  # symbol -> (RegimeResult, datetime)
-REGIME_CACHE_SECONDS = 1800  # 30 minutes
+REGIME_CACHE_SECONDS = 900  # 15 minutes (was 30m — reduced for faster regime transitions)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

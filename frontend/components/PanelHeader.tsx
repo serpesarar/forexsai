@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import { PanelInfoButton } from "./PanelInfoButton";
+import { SignalCountdownBadge } from "./SignalCountdown";
 
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 
@@ -40,8 +41,15 @@ export interface PanelHeaderProps {
   // Extra content (price display, etc.)
   extraContent?: ReactNode;
 
-  // Signal age (seconds since last signal)
-  signalAge?: string;
+  // Signal age (string like "02:45" or ReactNode for countdown component)
+  signalAge?: string | ReactNode;
+
+  // Signal countdown props for animated countdown
+  signalCountdown?: {
+    modelKey: string;
+    refreshIntervalSeconds?: number;
+    signalTimestamp?: string | Date | null;
+  };
 
   // Fullscreen toggle
   onFullscreen?: () => void;
@@ -67,6 +75,7 @@ export function PanelHeader({
   panelId,
   extraContent,
   signalAge,
+  signalCountdown,
   onFullscreen,
   isFullscreen = false,
 }: PanelHeaderProps) {
@@ -225,8 +234,8 @@ export function PanelHeader({
           ))}
         </div>
 
-        {/* Signal Age Badge */}
-        {signalAge && (
+        {/* Signal Age Badge - supports string, ReactNode, or SignalCountdown */}
+        {signalAge && typeof signalAge === "string" && (
           <div
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-[12px] font-mono font-bold tracking-wide"
             style={{
@@ -239,6 +248,14 @@ export function PanelHeader({
             <div className="w-2 h-2 rounded-full" style={{ background: "var(--accent-positive)", animation: "pulse 2s infinite", boxShadow: "0 0 10px var(--accent-positive)" }} />
             {signalAge}
           </div>
+        )}
+        {signalAge && typeof signalAge !== "string" && signalAge}
+        {signalCountdown && (
+          <SignalCountdownBadge
+            modelKey={signalCountdown.modelKey}
+            refreshIntervalSeconds={signalCountdown.refreshIntervalSeconds}
+            signalTimestamp={signalCountdown.signalTimestamp}
+          />
         )}
 
         {/* Fullscreen Toggle */}
@@ -285,6 +302,7 @@ export function PanelHeaderCompact({
   panelId,
   children,
   signalAge,
+  signalCountdown,
 }: {
   title: string;
   subtitle: string;
@@ -294,7 +312,12 @@ export function PanelHeaderCompact({
   loading?: boolean;
   panelId: string;
   children?: ReactNode;
-  signalAge?: string;
+  signalAge?: string | ReactNode;
+  signalCountdown?: {
+    modelKey: string;
+    refreshIntervalSeconds?: number;
+    signalTimestamp?: string | Date | null;
+  };
 }) {
   return (
     <div
@@ -358,7 +381,7 @@ export function PanelHeaderCompact({
       <div className="flex items-center gap-2 z-10">
         {children}
         {/* Signal Age Badge */}
-        {signalAge && (
+        {signalAge && typeof signalAge === "string" && (
           <div
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold tracking-wide"
             style={{
@@ -371,6 +394,14 @@ export function PanelHeaderCompact({
             <div className="w-2 h-2 rounded-full" style={{ background: "var(--accent-positive)", animation: "pulse 2s infinite", boxShadow: "0 0 10px var(--accent-positive)" }} />
             {signalAge}
           </div>
+        )}
+        {signalAge && typeof signalAge !== "string" && signalAge}
+        {signalCountdown && (
+          <SignalCountdownBadge
+            modelKey={signalCountdown.modelKey}
+            refreshIntervalSeconds={signalCountdown.refreshIntervalSeconds}
+            signalTimestamp={signalCountdown.signalTimestamp}
+          />
         )}
         <PanelInfoButton panelId={panelId} />
       </div>

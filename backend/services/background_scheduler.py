@@ -408,6 +408,8 @@ def _get_cached_panel_data(symbol: str) -> Dict[str, Any]:
 
     panels = {}
     panel_keys = {
+        "pulse1": f"panel:pulse1:{symbol}",
+        "pulse2": f"panel:pulse2:{symbol}",
         "pulse_v3": f"panel:pulse_v3:{symbol}",
         "emel": f"panel:emel:{symbol}",
         "mtf": f"panel:mtf:{symbol}",
@@ -459,9 +461,9 @@ async def run_update_cycle():
                 # Save to Supabase cache (legacy)
                 await save_to_cache(symbol, data, news)
 
-                await _warm_pulse_panel_cache(symbol)
-
-                # Read cached panel data for broadcast (panels cache their responses via HTTP)
+                # Panel data is now refreshed event-driven via candle close events
+                # (see services/candle_event_handlers.py)
+                # Read cached panel data for broadcast
                 panel_data = _get_cached_panel_data(symbol)
 
                 # Build broadcast payload — includes ALL data panels need

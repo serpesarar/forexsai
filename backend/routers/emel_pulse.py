@@ -310,6 +310,9 @@ def _set_cached_panel_analysis(panel_name: str, symbol: str, timeframe: str, pay
     from services.redis_client import cache_set
 
     cache_set(_panel_analysis_cache_key(panel_name, symbol, timeframe), payload, ttl=PULSE_PANEL_CACHE_TTL)
+    # Also write to the broadcast-format key so WS broadcasts include this panel data
+    broadcast_key = f"panel:{panel_name}:{symbol.upper()}"
+    cache_set(broadcast_key, payload, ttl=PULSE_PANEL_CACHE_TTL)
 
 
 def _get_latest_market_timestamp(symbol: str) -> Optional[str]:
