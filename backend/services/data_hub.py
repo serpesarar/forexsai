@@ -88,6 +88,7 @@ _candles_1h: Dict[str, Dict[str, Any]] = {}     # symbol -> {candles, timestamp}
 _candles_eod: Dict[str, Dict[str, Any]] = {}    # symbol -> {candles, timestamp}
 
 # Derived data (computed from raw, 0 API calls)
+_candles_20m: Dict[str, Dict[str, Any]] = {}    # symbol -> {candles, timestamp}
 _candles_15m: Dict[str, Dict[str, Any]] = {}    # symbol -> {candles, timestamp}
 _candles_30m: Dict[str, Dict[str, Any]] = {}    # symbol -> {candles, timestamp}
 _candles_4h: Dict[str, Dict[str, Any]] = {}     # symbol -> {candles, timestamp}
@@ -165,7 +166,7 @@ def _normalize_symbol(symbol: str) -> str:
 def _normalize_timeframe(timeframe: str) -> str:
     tf = (timeframe or "").lower().strip()
     tf_map = {
-        "m1": "1m", "m5": "5m", "m15": "15m", "m30": "30m",
+        "m1": "1m", "m5": "5m", "m15": "15m", "m20": "20m", "m30": "30m",
         "h1": "1h", "h4": "4h", "d1": "eod", "1d": "eod", "daily": "eod",
     }
     return tf_map.get(tf, tf)
@@ -175,6 +176,7 @@ def _get_store_for_timeframe(timeframe: str):
     tf = _normalize_timeframe(timeframe)
     store_map = {
         "5m": _candles_5m,
+        "20m": _candles_20m,
         "15m": _candles_15m,
         "30m": _candles_30m,
         "1h": _candles_1h,
@@ -603,6 +605,7 @@ def _rebuild_derived(symbol: str):
     
     raw_5m = _candles_5m.get(symbol, {}).get("candles", [])
     if raw_5m:
+        _candles_20m[symbol] = {"candles": _resample(raw_5m, 4), "timestamp": now, "source": "derived_from_5m"}
         # 15m = 5m × 3 (always)
         _candles_15m[symbol] = {"candles": _resample(raw_5m, 3), "timestamp": now, "source": "derived_from_5m"}
         
@@ -993,6 +996,7 @@ def force_reseed():
         for symbol in TRACKED_SYMBOLS:
             # Clear all candle caches so merge starts fresh
             _candles_5m.pop(symbol, None)
+            _candles_20m.pop(symbol, None)
             _candles_15m.pop(symbol, None)
             _candles_30m.pop(symbol, None)
             _candles_1h.pop(symbol, None)
@@ -1037,8 +1041,8 @@ def get_candles(symbol: str, timeframe: str, limit: int = 300) -> List[Dict]:
     """
     Get cached candles for any timeframe. Returns empty list if not yet fetched.
     
-    Supported timeframes: 1m, 5m, 15m, 30m, 1h, 4h, 1d/eod
-    Also accepts: M1, M5, M15, M30, H1, H4, D1
+    Supported timeframes: 1m, 5m, 15m, 20m, 30m, 1h, 4h, 1d/eod
+    Also accepts: M1, M5, M15, M20, M30, H1, H4, D1
     """
     symbol = _canonical_symbol(symbol)
     tf, store = _get_store_for_timeframe(timeframe)
@@ -1135,6 +1139,7 @@ def get_hub_status() -> Dict[str, Any]:
         for s in TRACKED_SYMBOLS:
             volume_stats[s] = {
                 "5m": _get_volume_stats(s, _candles_5m),
+                "20m": _get_volume_stats(s, _candles_20m),
                 "15m": _get_volume_stats(s, _candles_15m),
                 "30m": _get_volume_stats(s, _candles_30m),
                 "1h": _get_volume_stats(s, _candles_1h),
@@ -1150,6 +1155,7 @@ def get_hub_status() -> Dict[str, Any]:
             "price_sources": {s: _prices.get(s, {}).get("source") for s in TRACKED_SYMBOLS},
             "price_staleness": price_staleness,
             "candles_5m": {s: len(_candles_5m.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
+            "candles_20m": {s: len(_candles_20m.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
             "candles_15m": {s: len(_candles_15m.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
             "candles_30m": {s: len(_candles_30m.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
             "candles_1h": {s: len(_candles_1h.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
@@ -1158,6 +1164,7 @@ def get_hub_status() -> Dict[str, Any]:
             "candle_sources": {
                 s: {
                     "5m": _candles_5m.get(s, {}).get("source"),
+                    "20m": _candles_20m.get(s, {}).get("source"),
                     "15m": _candles_15m.get(s, {}).get("source"),
                     "30m": _candles_30m.get(s, {}).get("source"),
                     "1h": _candles_1h.get(s, {}).get("source"),
@@ -1190,7 +1197,7 @@ def get_flow_check(symbols: Optional[List[str]] = None) -> Dict[str, Any]:
         price = get_price(symbol)
         timeframe_reports: Dict[str, Any] = {}
 
-        for timeframe in ("5m", "15m", "30m", "1h", "4h", "eod"):
+        for timeframe in ("5m", "15m", "20m", "30m", "1h", "4h", "eod"):
             _, store = _get_store_for_timeframe(timeframe)
             candles = get_candles(symbol, timeframe, limit=3)
             latest = None

@@ -943,6 +943,19 @@ def _parse_model_response(model_id: str, data: Any) -> ModelSignal:
             if isinstance(inner, dict):
                 data = inner
 
+        def _coerce_direction_value(value: Any) -> str:
+            if isinstance(value, str):
+                return value
+            if isinstance(value, dict):
+                for key in ("signal", "direction", "bias", "trend", "market_bias"):
+                    nested = value.get(key)
+                    if isinstance(nested, str) and nested.strip():
+                        return nested
+                for nested in value.values():
+                    if isinstance(nested, str) and nested.strip():
+                        return nested
+            return "HOLD"
+
         direction = "HOLD"
         confidence = 0.0
         entry = 0.0
@@ -951,7 +964,7 @@ def _parse_model_response(model_id: str, data: Any) -> ModelSignal:
 
         # ML model response
         if model_id == "ml":
-            direction = data.get("signal", data.get("ml_direction", "HOLD"))
+            direction = _coerce_direction_value(data.get("signal", data.get("ml_direction", "HOLD")))
             conf_raw = data.get("confidence", data.get("ml_confidence", 0))
             confidence = float(conf_raw) * 100 if float(conf_raw) <= 1 else float(conf_raw)
             entry = float(data.get("current_price", data.get("ml_entry_price", 0)) or 0)
@@ -960,7 +973,7 @@ def _parse_model_response(model_id: str, data: Any) -> ModelSignal:
 
         # Pulse 1/2/3 response
         elif model_id.startswith("pulse"):
-            direction = data.get("signal", data.get("direction", "HOLD"))
+            direction = _coerce_direction_value(data.get("signal", data.get("direction", "HOLD")))
             conf_raw = data.get("confidence", data.get("meta_confidence", 0))
             confidence = float(conf_raw) * 100 if float(conf_raw) <= 1 else float(conf_raw)
             entry = float(data.get("entry_price", data.get("current_price", 0)) or 0)
@@ -969,7 +982,7 @@ def _parse_model_response(model_id: str, data: Any) -> ModelSignal:
 
         # EMEL response
         elif model_id == "emel":
-            direction = data.get("signal", data.get("direction", "HOLD"))
+            direction = _coerce_direction_value(data.get("signal", data.get("direction", "HOLD")))
             conf_raw = data.get("confidence", data.get("total_score", 0))
             confidence = float(conf_raw) * 100 if float(conf_raw) <= 1 else float(conf_raw)
             # EMEL uses checkpoint scoring
@@ -979,13 +992,13 @@ def _parse_model_response(model_id: str, data: Any) -> ModelSignal:
 
         # SMC response
         elif model_id == "smc":
-            direction = data.get("signal", data.get("bias", "HOLD"))
+            direction = _coerce_direction_value(data.get("signal", data.get("bias", "HOLD")))
             conf_raw = data.get("confidence", data.get("score", 0))
             confidence = float(conf_raw) * 100 if float(conf_raw) <= 1 else float(conf_raw)
             entry = float(data.get("entry_price", data.get("current_price", 0)) or 0)
 
         # Normalize direction
-        direction = direction.upper()
+        direction = str(direction).upper().strip()
         if direction not in ("BUY", "SELL", "HOLD"):
             if direction in ("BULLISH", "LONG", "UP"):
                 direction = "BUY"
