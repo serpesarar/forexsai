@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 _APP_START_TIME = time.time()
 _conn_logger_task = None
+_mt5_redis_task = None
 
 
 async def _connection_stats_logger():
@@ -59,7 +60,7 @@ async def _connection_stats_logger():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """FastAPI lifespan: startup + shutdown in one place."""
-    global _conn_logger_task
+    global _conn_logger_task, _mt5_redis_task
 
     # ── STARTUP (non-blocking, fast) ─────────────────────────────
     # 1. Redis (optional)
@@ -77,6 +78,14 @@ async def lifespan(app: FastAPI):
         print("DataHub started - centralized market data pump")
     except Exception as e:
         print(f"Failed to start DataHub: {e}")
+
+    # 2.5 MT5 Redis listener (optional, source-mode controlled)
+    try:
+        from services.mt5_redis_client import start_mt5_redis_listener
+        _mt5_redis_task = asyncio.create_task(start_mt5_redis_listener())
+        print("MT5 Redis listener task started")
+    except Exception as e:
+        print(f"Failed to start MT5 Redis listener: {e}")
 
     # 3. PULSE + EMEL SCHEDULER (Doğrudan Başlat - 15dk'da bir)
     try:
@@ -176,12 +185,22 @@ async def lifespan(app: FastAPI):
     if _conn_logger_task:
         _conn_logger_task.cancel()
 
+    if _mt5_redis_task:
+        _mt5_redis_task.cancel()
+
     try:
         from services.data_hub import stop_data_hub
         stop_data_hub()
         print("DataHub stopped")
     except Exception as e:
         print(f"Error stopping DataHub: {e}")
+
+    try:
+        from services.mt5_redis_client import stop_mt5_redis_listener
+        await stop_mt5_redis_listener()
+        print("MT5 Redis listener stopped")
+    except Exception as e:
+        print(f"Error stopping MT5 Redis listener: {e}")
 
     try:
         from services.background_scheduler import stop_scheduler
@@ -762,6 +781,18 @@ async def datahub_reseed():
         return force_reseed()
     except Exception as e:
         return {"error": str(e)}
+
+
+@app.get("/api/datahub/flow-check")
+async def datahub_flow_check(symbols: str | None = None):
+    """Verify that market analysis inputs are currently available from DataHub cache only."""
+    try:
+        from services.data_hub import get_flow_check
+
+        requested_symbols = [item.strip() for item in (symbols or "").split(",") if item.strip()] or None
+        return get_flow_check(requested_symbols)
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
 
 
 @app.get("/api/market/status")
