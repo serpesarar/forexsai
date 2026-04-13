@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import { getApiBase } from "../../lib/api/base";
 import { useI18nStore } from "../../lib/i18n/store";
-import { useRefreshAge } from "../../hooks/useRefreshAge";
+import { useSignalCountdown } from "../../hooks/useSignalCountdown";
 import { PanelHeaderCompact } from "../PanelHeader";
 import {
   ArrowUpIcon as TrendingUp,
@@ -136,7 +136,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   const [data, setData] = useState<PulseV3Data | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { refreshAge: signalAge, markRefreshed } = useRefreshAge();
+  const { formattedTime: signalAge, markRefreshed } = useSignalCountdown("pulse_v3", 300, data?.signal_timestamp);
   const { data: wsData, wsConnected } = useWSPanelData(activeSymbol, "pulse_v3");
 
   const fetchData = useCallback(async (showLoading = false, forceRefresh = false) => {
@@ -159,7 +159,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         setData(null);
       } else {
         setData(json as PulseV3Data);
-        markRefreshed((json as PulseV3Data).signal_timestamp || (json as PulseV3Data).timestamp);
+        markRefreshed();
       }
     } catch (e) {
       console.error("PULSE V3 fetch error:", e);
@@ -174,7 +174,7 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
   useEffect(() => {
     if (wsData && typeof wsData === "object" && !wsData.error) {
       setData(wsData as PulseV3Data);
-      markRefreshed((wsData as PulseV3Data).signal_timestamp || (wsData as PulseV3Data).timestamp);
+      markRefreshed();
       setLoading(false);
       setError(null);
     }
@@ -270,6 +270,11 @@ export default function PulseV3Panel({ symbol: initialSymbol = "NDX.INDX" }: Pul
         loading={loading}
         panelId="pulse-v3"
         signalAge={signalAge}
+        signalCountdown={{
+          modelKey: "pulse_v3",
+          refreshIntervalSeconds: 300,
+          signalTimestamp: data?.signal_timestamp || data?.timestamp,
+        }}
       >
         <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid var(--border-default)" }}>
           {SYMBOLS.map((s) => (

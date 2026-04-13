@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { fetcher } from "../../lib/api";
 import { PanelHeader } from "../PanelHeader";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
+import { useSignalCountdown } from "../../hooks/useSignalCountdown";
 import {
   ArrowUpIcon as TrendingUp,
   ArrowDownIcon as TrendingDown,
@@ -88,7 +89,7 @@ export default function MTFMatrixPanel({ symbol: lockedSymbol }: MTFMatrixPanelP
   const [symbol, setSymbol] = useState(initialSymbol);
   const [data, setData] = useState<MTFData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const { formattedTime: signalAge, markRefreshed } = useSignalCountdown("mtf", 300, data?.timestamp);
 
   useEffect(() => {
     setSymbol(initialSymbol);
@@ -107,7 +108,7 @@ export default function MTFMatrixPanel({ symbol: lockedSymbol }: MTFMatrixPanelP
       setLoading(true);
       const json = await fetcher<MTFData>(`/api/mtf/analysis?symbol=${symbol}`);
       setData(json);
-      if (json.success) setLastUpdate(new Date());
+      if (json.success) markRefreshed();
     } catch (e) {
       console.error("MTF fetch error:", e);
       setData({ success: false, error: "Connection failed" });
@@ -119,10 +120,10 @@ export default function MTFMatrixPanel({ symbol: lockedSymbol }: MTFMatrixPanelP
   useEffect(() => {
     if (wsData) {
       setData(wsData);
-      setLastUpdate(new Date());
+      markRefreshed();
       setLoading(false);
     }
-  }, [wsData]);
+  }, [wsData, markRefreshed]);
 
   useEffect(() => {
     if (!wsData) fetchData();
@@ -211,6 +212,12 @@ export default function MTFMatrixPanel({ symbol: lockedSymbol }: MTFMatrixPanelP
         onRefresh={fetchData}
         loading={loading}
         panelId="mtf-matrix"
+        signalAge={signalAge}
+        signalCountdown={{
+          modelKey: "mtf",
+          refreshIntervalSeconds: 300,
+          signalTimestamp: data?.timestamp,
+        }}
       />
 
       {!data?.success ? (
@@ -330,7 +337,7 @@ export default function MTFMatrixPanel({ symbol: lockedSymbol }: MTFMatrixPanelP
       {/* Footer */}
       <div className="px-4 py-2 text-center" style={{ background: "rgba(0,0,0,0.2)", borderTop: "1px solid var(--border-subtle)" }}>
         <p className="text-[10px] font-mono" style={{ color: P.muted }}>
-          {lastUpdate ? `Son güncelleme: ${lastUpdate.toLocaleTimeString()}` : "Yükleniyor..."} | MTF Analysis
+          Sonraki yenileme: {signalAge} | MTF Analysis
         </p>
       </div>
     </div>

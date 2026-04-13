@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { getApiBase } from "../../lib/api/base";
 import { useI18nStore } from "../../lib/i18n/store";
-import { useRefreshAge } from "../../hooks/useRefreshAge";
+import { useSignalCountdown } from "../../hooks/useSignalCountdown";
 import { PanelHeader } from "../PanelHeader";
 import { useWSPanelData } from "../../contexts/WebSocketContext";
 import {
@@ -181,7 +181,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
   const [data, setData] = useState<EmelData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState("1H");
-  const { refreshAge: signalAge, markRefreshed } = useRefreshAge();
+  const { formattedTime: signalAge, markRefreshed } = useSignalCountdown("emel", 300, data?.timestamp);
   const { data: wsData } = useWSPanelData(activeSymbol, "emel");
 
   const fetchData = useCallback(async (showLoading = false) => {
@@ -191,7 +191,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
       const json = await res.json().catch(() => null);
       if (res.ok && json && typeof json === "object" && !("error" in json && json.error)) {
         setData(json as EmelData);
-        markRefreshed((json as any).signal_timestamp || (json as any).timestamp);
+        markRefreshed();
       }
     } catch (e) {
       console.error("EMEL fetch error:", e);
@@ -219,7 +219,7 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
     if (wsData && typeof wsData === "object" && !("error" in (wsData as any) && (wsData as any).error)) {
       setData(wsData as EmelData);
       setLoading(false);
-      markRefreshed((wsData as any).signal_timestamp || (wsData as any).timestamp);
+      markRefreshed();
     }
   }, [wsData, markRefreshed]);
 
@@ -275,6 +275,11 @@ export default function EmelPanel({ symbol: initialSymbol = "NDX.INDX", onSwitch
         loading={loading}
         panelId="emel-panel"
         signalAge={signalAge}
+        signalCountdown={{
+          modelKey: "emel",
+          refreshIntervalSeconds: 300,
+          signalTimestamp: data?.timestamp,
+        }}
         extraContent={data ? (
           <div className="flex items-center gap-3">
             <div className="text-[26px] font-bold tracking-tighter leading-none font-mono" style={{ color: theme.text }}>
