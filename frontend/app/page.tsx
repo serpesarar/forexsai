@@ -366,6 +366,7 @@ export default function HomePage() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const { activeView } = useNavigationStore();
   const localeEffectInitialized = useRef(false);
+  const cachedCardSyncRef = useRef<{ nasdaq?: string; xauusd?: string }>({});
   const [heavyDataEnabled, setHeavyDataEnabled] = useState(false);
 
   const [activeTf, setActiveTf] = useState<(typeof timeframes)[number]>("15m");
@@ -428,23 +429,40 @@ export default function HomePage() {
 
   // Update signal cards from cache on first load
   useEffect(() => {
-    if (hasCachedData) {
-      const nasdaqCard = cachedToSignalCard(cachedNasdaq ?? null, "NASDAQ");
-      const xauusdCard = cachedToSignalCard(cachedXauusd ?? null, "XAUUSD");
-
-      setSignalCards((prev) => {
-        const updated = [...prev];
-        if (nasdaqCard) {
-          const idx = updated.findIndex(c => c.symbol === "NASDAQ");
-          if (idx >= 0) updated[idx] = nasdaqCard as any;
-        }
-        if (xauusdCard) {
-          const idx = updated.findIndex(c => c.symbol === "XAUUSD");
-          if (idx >= 0) updated[idx] = xauusdCard as any;
-        }
-        return updated;
-      });
+    if (!hasCachedData) {
+      return;
     }
+
+    const nasdaqStamp = cachedNasdaq?.updated_at || cachedNasdaq?.current_price?.toString() || "";
+    const xauusdStamp = cachedXauusd?.updated_at || cachedXauusd?.current_price?.toString() || "";
+
+    if (
+      cachedCardSyncRef.current.nasdaq === nasdaqStamp &&
+      cachedCardSyncRef.current.xauusd === xauusdStamp
+    ) {
+      return;
+    }
+
+    cachedCardSyncRef.current = {
+      nasdaq: nasdaqStamp,
+      xauusd: xauusdStamp,
+    };
+
+    const nasdaqCard = cachedToSignalCard(cachedNasdaq ?? null, "NASDAQ");
+    const xauusdCard = cachedToSignalCard(cachedXauusd ?? null, "XAUUSD");
+
+    setSignalCards((prev) => {
+      const updated = [...prev];
+      if (nasdaqCard) {
+        const idx = updated.findIndex(c => c.symbol === "NASDAQ");
+        if (idx >= 0) updated[idx] = nasdaqCard as any;
+      }
+      if (xauusdCard) {
+        const idx = updated.findIndex(c => c.symbol === "XAUUSD");
+        if (idx >= 0) updated[idx] = xauusdCard as any;
+      }
+      return updated;
+    });
   }, [hasCachedData, cachedNasdaq, cachedXauusd]);
 
   useEffect(() => {

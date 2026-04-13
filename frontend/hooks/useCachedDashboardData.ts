@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useWSData, type SymbolData } from "../contexts/WebSocketContext";
 import { buildApiUrl } from "../lib/api/base";
@@ -130,13 +130,15 @@ export function useCachedDashboardData(httpFallbackDelayMs: number = 2500) {
   });
 
   // Prefer WebSocket data, fall back to HTTP data
-  const nasdaq = wsData["NDX.INDX"]
-    ? wsDataToCached(wsData["NDX.INDX"])
-    : nasdaqQuery.data;
+  const nasdaq = useMemo(
+    () => (wsData["NDX.INDX"] ? wsDataToCached(wsData["NDX.INDX"]) : nasdaqQuery.data),
+    [nasdaqQuery.data, wsData]
+  );
 
-  const xauusd = wsData["XAUUSD"]
-    ? wsDataToCached(wsData["XAUUSD"])
-    : xauusdQuery.data;
+  const xauusd = useMemo(
+    () => (wsData["XAUUSD"] ? wsDataToCached(wsData["XAUUSD"]) : xauusdQuery.data),
+    [wsData, xauusdQuery.data]
+  );
 
   const isLoading = !nasdaq && !xauusd && (nasdaqQuery.isLoading || xauusdQuery.isLoading);
   const hasData = !!(nasdaq || xauusd);

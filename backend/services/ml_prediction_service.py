@@ -1090,14 +1090,21 @@ def _build_feature_vector(symbol: str, ta: dict, candles: list, ta_1h: dict = No
                 feature_dict[feat] = 0.0
     
     # Create DataFrame with correct column order
-    df = pd.DataFrame([feature_dict])[features]
-    
-    # Convert numeric columns to float64, keep categorical as object
-    for col in df.columns:
-        if col not in CATEGORICAL_COLS:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0.0).astype(np.float64)
-        else:
-            df[col] = df[col].astype(str)
+    df = pd.DataFrame([feature_dict])[features].copy()
+
+    numeric_cols = [col for col in df.columns if col not in CATEGORICAL_COLS]
+    categorical_cols = [col for col in df.columns if col in CATEGORICAL_COLS]
+
+    numeric_df = pd.DataFrame(index=df.index)
+    if numeric_cols:
+        numeric_df = df[numeric_cols].apply(pd.to_numeric, errors='coerce').fillna(0.0).astype(np.float64)
+
+    categorical_df = pd.DataFrame(index=df.index)
+    if categorical_cols:
+        categorical_df = df[categorical_cols].astype(str)
+
+    df = pd.concat([numeric_df, categorical_df], axis=1)
+    df = df[features]
     
     return df
 

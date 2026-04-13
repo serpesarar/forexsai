@@ -73,6 +73,7 @@ NASDAQ_FAMILY_ML_AUTO_LOG_SCOPES: List[tuple[str, str]] = [
 ]
 NASDAQ_FAMILY_SYMBOLS = {"NDX.INDX", "GDAXI.INDX"}
 SMC_AUTO_LOG_TIMEFRAMES = ["5m", "15m", "1h", "4h"]
+_scheduler_task: Optional[asyncio.Task] = None
 
 
 def _get_ml_auto_log_scopes(symbol: str) -> List[tuple[str, str]]:
@@ -717,7 +718,7 @@ async def _check_and_log_pulse(symbol: str, model_type: str, client, timeframe: 
         from routers.emel_pulse import get_pulse_v3_analysis, get_pulse_ml_analysis, get_pulse_analysis, get_emel_analysis
 
         if model_type == "pulse3":
-            result = await get_pulse_v3_analysis(symbol, timeframe=timeframe)
+            result = await get_pulse_v3_analysis(symbol)
             strategy, sig_key = "PULSE_V3", "direction"
         elif model_type == "pulse2":
             result = await get_pulse_ml_analysis(symbol, timeframe=timeframe)
@@ -832,7 +833,7 @@ async def run_pattern_analysis_if_needed():
 
 async def background_scheduler_loop_with_rss():
     """Main background scheduler loop with RSS support."""
-    global _scheduler_running
+    global _scheduler_running, _scheduler_task
     
     if _scheduler_running:
         logger.warning("Scheduler already running")
@@ -847,33 +848,56 @@ async def background_scheduler_loop_with_rss():
     except Exception as e:
         logger.debug(f"Catch-up error (non-fatal): {e}")
     
-    while _scheduler_running:
-        try:
-            await run_update_cycle()
-            # Check outcomes periodically
-            await check_outcomes_if_needed()
-            # Signal lifecycle: price check every 3 min (internally gated)
-            await check_lifecycle_if_needed()
-            # Analyze errors periodically (self-learning)
-            await analyze_errors_if_needed()
-            # Log ML predictions every 15 min
-            await log_predictions_if_needed()
-            # Log Pulse/EMEL signals every 15 min
-            await log_pulse_signals_if_needed()
-            await log_smc_signals_if_needed()
-            from services.ai_panel_signal_logger import log_ai_panel_signals_if_needed
-            await log_ai_panel_signals_if_needed()
-            # RSS aggregation disabled locally since Python listener performs it
-            # await run_rss_aggregation_if_needed()
-            # Pattern analysis twice daily (US open +1h, close -2h)
-            await run_pattern_analysis_if_needed()
-        except Exception as e:
-            logger.error(f"Scheduler error: {e}")
-        
-        # Wait before next cycle
-        await asyncio.sleep(DATA_UPDATE_INTERVAL)
-    
-    logger.info("Background scheduler stopped")
+    try:
+        while _scheduler_running:
+            try:
+                await run_update_cycle()
+                # Check outcomes periodically
+                await check_outcomes_if_needed()
+                # Signal lifecycle: price check every 3 min (internally gated)
+                await check_lifecycle_if_needed()
+                # Analyze errors periodically (self-learning)
+                await analyze_errors_if_needed()
+                # Log ML predictions every 15 min
+                await log_predictions_if_needed()
+                # Log Pulse/EMEL signals every 15 min
+                await log_pulse_signals_if_needed()
+                await log_smc_signals_if_needed()
+                from services.ai_panel_signal_logger import log_ai_panel_signals_if_needed
+                await log_ai_panel_signals_if_needed()
+                # RSS aggregation disabled locally since Python listener performs it
+                # await run_rss_aggregation_if_needed()
+                # Pattern analysis twice daily (US open +1h, close -2h)
+                await run_pattern_analysis_if_needed()
+            except Exception as e:
+                logger.error(f"Scheduler error: {e}")
+            
+            # Wait before next cycle
+            await asyncio.sleep(DATA_UPDATE_INTERVAL)
+    finally:
+        _scheduler_running = False
+        _scheduler_task = None
+        logger.info("Background scheduler stopped")
+
+
+def start_scheduler() -> asyncio.Task:
+    """Start the background scheduler loop once per process."""
+    global _scheduler_task, _scheduler_running
+    if _scheduler_task and not _scheduler_task.done():
+        return _scheduler_task
+
+    loop = asyncio.get_running_loop()
+    _scheduler_running = True
+    _scheduler_task = loop.create_task(background_scheduler_loop_with_rss())
+    return _scheduler_task
+
+
+def stop_scheduler() -> None:
+    """Stop the background scheduler loop if it is running."""
+    global _scheduler_running, _scheduler_task
+    _scheduler_running = False
+    if _scheduler_task and not _scheduler_task.done():
+        _scheduler_task.cancel()
 
 
 if __name__ == "__main__":
