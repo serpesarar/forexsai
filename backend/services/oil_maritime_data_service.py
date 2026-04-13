@@ -394,6 +394,90 @@ def persist_tanker_observation(observation: Dict[str, Any]) -> Dict[str, Any]:
         return {"ok": False, "error": str(exc)}
 
 
+def _aggregate_from_positions(client: Any, region: str, hours: int) -> Dict[str, Any]:
+    """Aggregate chokepoint metrics from tanker_positions using trailing window.
+
+    For transit chokepoints like Hormuz, this captures vessels that passed through
+    recently even if they've already exited the region (unlike tanker_state which
+    only shows current position).
+    """
+    cutoff = (_now() - timedelta(hours=hours)).isoformat()
+    bounds = REGIONS.get(region, {}).get("bounds", [[0, 0], [0, 0]])
+    (min_lat, min_lon), (max_lat, max_lon) = bounds
+
+    # Query tanker_positions for this region within the time window
+    result = (
+        client.table("tanker_positions")
+        .select("mmsi,status,speed_knots,estimated_barrels,heading,observed_at")
+        .eq("region", region)
+        .gte("observed_at", cutoff)
+        .execute()
+    )
+    rows = _safe_rows(result)
+
+    if not rows:
+        return {
+            "vessel_count": 0,
+            "floating_storage_vessels": 0,
+            "anchored_vessels": 0,
+            "inbound_vessels": 0,
+            "outbound_vessels": 0,
+            "avg_speed": 0.0,
+            "storage_estimate_mm_bbl": 0.0,
+            "active_rows": 0,
+        }
+
+    # Get distinct vessels (latest record per mmsi)
+    seen_mmsi: Dict[int, Dict[str, Any]] = {}
+    for row in rows:
+        mmsi = int(row.get("mmsi") or 0)
+        if mmsi not in seen_mmsi:
+            seen_mmsi[mmsi] = row
+        else:
+            # Keep the more recent observation
+            try:
+                current_ts = _parse_dt(row.get("observed_at")).timestamp()
+                existing_ts = _parse_dt(seen_mmsi[mmsi].get("observed_at")).timestamp()
+                if current_ts > existing_ts:
+                    seen_mmsi[mmsi] = row
+            except Exception:
+                pass
+
+    relevant = list(seen_mmsi.values())
+    vessel_count = len(relevant)
+    floating_storage_vessels = sum(1 for r in relevant if r.get("status") == "floating_storage")
+    anchored_vessels = sum(1 for r in relevant if r.get("status") in {"anchored", "idle", "floating_storage"})
+
+    # Calculate inbound/outbound from heading using same logic as _heading_bucket
+    inbound_vessels = 0
+    outbound_vessels = 0
+    for r in relevant:
+        heading = r.get("heading")
+        if heading is not None:
+            bucket = _heading_bucket(region, float(heading))
+            if bucket == "inbound":
+                inbound_vessels += 1
+            elif bucket == "outbound":
+                outbound_vessels += 1
+
+    speeds = [float(r.get("speed_knots") or 0.0) for r in relevant]
+    avg_speed = round(sum(speeds) / len(speeds), 2) if speeds else 0.0
+    storage_estimate_mm_bbl = round(
+        sum(float(r.get("estimated_barrels") or 0.0) for r in relevant if r.get("status") == "floating_storage") / 1_000_000.0, 2
+    )
+
+    return {
+        "vessel_count": vessel_count,
+        "floating_storage_vessels": floating_storage_vessels,
+        "anchored_vessels": anchored_vessels,
+        "inbound_vessels": inbound_vessels,
+        "outbound_vessels": outbound_vessels,
+        "avg_speed": avg_speed,
+        "storage_estimate_mm_bbl": storage_estimate_mm_bbl,
+        "active_rows": len(rows),  # Total position records (not distinct vessels)
+    }
+
+
 def refresh_chokepoint_metrics() -> List[Dict[str, Any]]:
     client = get_supabase_client()
     if client is None:
@@ -401,33 +485,36 @@ def refresh_chokepoint_metrics() -> List[Dict[str, Any]]:
     if is_auth_failed():
         return []
 
-    result = client.table("tanker_state").select("region,status,speed_knots,estimated_barrels,movement_bias,last_seen_at").execute()
-    rows = _safe_rows(result)
-    cutoff = _now().timestamp() - 168 * 3600  # 7 days — transit chokepoints need wider window
+    # Determine trailing window per region type:
+    # - Transit chokepoints (Hormuz, US Gulf): 12h window (fast passage)
+    # - Storage hubs (Rotterdam, Singapore): 48h window (vessels stay longer)
+    TRANSIT_REGIONS = {"strait_of_hormuz", "us_gulf"}
+
     aggregated: List[Dict[str, Any]] = []
 
     for region in REGIONS:
-        relevant = []
-        for row in rows:
-            if row.get("region") != region:
-                continue
-            try:
-                last_seen = _parse_dt(row.get("last_seen_at")).timestamp()
-            except Exception:
-                last_seen = 0.0
-            if last_seen >= cutoff:
-                relevant.append(row)
+        is_transit = region in TRANSIT_REGIONS
+        trailing_hours = 12 if is_transit else 48
 
-        vessel_count = len(relevant)
-        floating_storage_vessels = sum(1 for row in relevant if row.get("status") == "floating_storage")
-        anchored_vessels = sum(1 for row in relevant if row.get("status") in {"anchored", "idle", "floating_storage"})
-        inbound_vessels = sum(1 for row in relevant if row.get("movement_bias") == "inbound")
-        outbound_vessels = sum(1 for row in relevant if row.get("movement_bias") == "outbound")
-        speeds = [float(row.get("speed_knots") or 0.0) for row in relevant]
-        avg_speed = round(sum(speeds) / len(speeds), 2) if speeds else 0.0
-        storage_estimate_mm_bbl = round(sum(float(row.get("estimated_barrels") or 0.0) for row in relevant if row.get("status") == "floating_storage") / 1_000_000.0, 2)
-        congestion_score = min(100.0, round(vessel_count * 2.2 + floating_storage_vessels * 5.5 + anchored_vessels * 1.7 + max(0.0, 10 - avg_speed), 2))
+        # Use tanker_positions with trailing window for all regions
+        # This captures recent passage even for vessels that have exited
+        metrics = _aggregate_from_positions(client, region, trailing_hours)
 
+        vessel_count = metrics["vessel_count"]
+        floating_storage_vessels = metrics["floating_storage_vessels"]
+        anchored_vessels = metrics["anchored_vessels"]
+        inbound_vessels = metrics["inbound_vessels"]
+        outbound_vessels = metrics["outbound_vessels"]
+        avg_speed = metrics["avg_speed"]
+        storage_estimate_mm_bbl = metrics["storage_estimate_mm_bbl"]
+
+        # Congestion score calculation
+        congestion_score = min(
+            100.0,
+            round(vessel_count * 2.2 + floating_storage_vessels * 5.5 + anchored_vessels * 1.7 + max(0.0, 10 - avg_speed), 2),
+        )
+
+        # Signal logic
         if floating_storage_vessels >= 4 or storage_estimate_mm_bbl >= 6:
             pressure_bias = "bearish"
             signal = "storage_buildup"
@@ -456,13 +543,16 @@ def refresh_chokepoint_metrics() -> List[Dict[str, Any]]:
             "source": "aisstream",
             "last_updated": _now().isoformat(),
             "meta": {
-                "active_rows": vessel_count,
+                "active_rows": metrics["active_rows"],
                 "anchored_vessels": anchored_vessels,
+                "trailing_hours": trailing_hours,
+                "aggregation_method": "positions_trailing_window",
             },
         }
         upsert_result = client.table("chokepoint_metrics").upsert(row, on_conflict="region")
         if upsert_result.get("error"):
-            return aggregated
+            logger.error("Failed to upsert chokepoint_metrics for %s: %s", region, upsert_result.get("error"))
+            continue
         aggregated.append(row)
 
     return aggregated
