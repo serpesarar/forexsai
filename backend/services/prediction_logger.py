@@ -88,6 +88,54 @@ def _resolve_logging_identity(
     return normalized_model_type or (strategy.lower() if strategy else "ml"), strategy
 
 
+_TIMEFRAME_COOLDOWN_MINUTES = {
+    "5m": 5,
+    "15m": 10,
+    "30m": 20,
+    "1h": 30,
+    "4h": 120,
+    "1d": 480,
+}
+
+
+def _is_within_cooldown(
+    client,
+    symbol: str,
+    model_type: str,
+    timeframe: Optional[str],
+) -> bool:
+    """
+    Check if the most recent signal (any status) for this model/symbol/timeframe
+    was created within the cooldown period.  Prevents signal spam from models
+    whose signals get resolved very quickly.
+    """
+    try:
+        tf = _normalize_timeframe(timeframe)
+        cooldown_min = _TIMEFRAME_COOLDOWN_MINUTES.get(tf, 15)
+        cutoff = _utc_iso(datetime.now(timezone.utc) - timedelta(minutes=cooldown_min))
+
+        query = (
+            client.table("prediction_logs")
+            .select("id, created_at")
+            .eq("symbol", symbol)
+            .eq("model_type", model_type)
+            .gte("created_at", cutoff)
+            .order("created_at", desc=True)
+            .limit(1)
+        )
+        data = safe_get_data(query.execute()) or []
+        if data:
+            logger.debug(
+                "Cooldown active for %s %s %s (last signal %s)",
+                symbol, model_type, tf, data[0].get("created_at"),
+            )
+            return True
+        return False
+    except Exception as e:
+        logger.error("Cooldown check error: %s", e)
+        return False
+
+
 def _has_active_signal(
     client,
     symbol: str,
@@ -633,6 +681,16 @@ async def log_prediction(
                         effective_model_type,
                     )
                     return None
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # COOLDOWN: Prevent signal spam when previous signals resolve instantly
+        # ═══════════════════════════════════════════════════════════════════════
+        if _is_within_cooldown(client, symbol, effective_model_type, normalized_timeframe):
+            logger.debug(
+                "Cooldown active — skipping %s %s %s %s",
+                symbol, effective_model_type, normalized_timeframe, direction,
+            )
+            return None
 
         # ═══════════════════════════════════════════════════════════════════════
         # STATIC TARGETS: Fixed pip-based TP/SL (Reverted from ATR)

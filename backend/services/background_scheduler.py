@@ -731,6 +731,10 @@ async def _check_and_log_pulse(symbol: str, model_type: str, client, timeframe: 
         elif model_type in ["emel", "emel_inverse"]:
             result = await get_emel_analysis(symbol, timeframe=timeframe)
             strategy, sig_key = "EMEL", "signal"
+            if model_type == "emel_inverse":
+                # get_emel_analysis already logs emel_inverse signals for NDX.INDX
+                # internally — no need to double-log here.
+                return
         else:
             return
 
@@ -754,14 +758,7 @@ async def _check_and_log_pulse(symbol: str, model_type: str, client, timeframe: 
             return
         conf = result.get("confidence", 50) or 50
         
-        # Determine actual model constraint explicitly 
         final_model_type = model_type
-        if model_type == "emel_inverse":
-            # the reverse logic is usually integrated in the emel_pulse API itself,
-            # but if this is just logging directly from here, we need to enforce that sig is inverted
-            sig = "SELL" if sig == "BUY" else ("BUY" if sig == "SELL" else "HOLD")
-            strategy = "EMEL_INVERSE"
-            
         await _log_pulse_signal(symbol, sig, conf, entry, final_model_type, strategy, timeframe)
 
     except Exception as e:

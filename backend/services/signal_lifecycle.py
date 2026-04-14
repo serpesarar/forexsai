@@ -379,11 +379,14 @@ async def _get_price_window_since_signal(
             relevant_candles = list(candles)
 
             if created_dt is not None:
-                cutoff_ms = (created_dt - timedelta(minutes=5)).timestamp() * 1000
+                # Use exact signal creation time as cutoff — not minus 5 minutes.
+                # A 5m candle starting BEFORE the signal includes pre-signal wicks
+                # which cause false TP/SL hits on volatile instruments.
+                cutoff_ms = created_dt.timestamp() * 1000
                 filtered = []
                 for candle in candles:
                     candle_ts = _extract_candle_timestamp_ms(candle)
-                    if candle_ts is None or candle_ts >= cutoff_ms:
+                    if candle_ts is not None and candle_ts >= cutoff_ms:
                         filtered.append(candle)
                 if filtered:
                     relevant_candles = filtered
@@ -679,11 +682,15 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     # ------------------------------------------------------------------
     if direction == "BUY":
         profit_pips = pips_from_price_change(current - entry_price, symbol)
+        wick_best = pips_from_price_change((session_high or current) - entry_price, symbol)
+        wick_worst = pips_from_price_change((session_low or current) - entry_price, symbol)
     else:
         profit_pips = pips_from_price_change(entry_price - current, symbol)
+        wick_best = pips_from_price_change(entry_price - (session_low or current), symbol)
+        wick_worst = pips_from_price_change(entry_price - (session_high or current), symbol)
 
-    best_pips = max(profit_pips, 0)
-    worst_pips = min(profit_pips, 0)
+    best_pips = max(profit_pips, wick_best, 0)
+    worst_pips = min(profit_pips, wick_worst, 0)
 
     prev_high = _coerce_float(signal.get("highest_profit_pips"), 0.0) or 0.0
     prev_low = _coerce_float(signal.get("lowest_drawdown_pips"), 0.0) or 0.0
@@ -703,13 +710,32 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         if targets_hit.get(tp_name):
             continue
 
+        # Calculate pip distance to this target from entry
+        tp_pips_distance = abs(pips_from_price_change(abs(tp_price - entry_price), symbol))
+
         if direction == "BUY" and session_high is not None and session_high >= tp_price:
+            # Sanity gate: cumulative best profit must be at least 60% of target
+            # distance. Prevents false positives from stale/pre-signal candle wicks.
+            if tp_pips_distance > 0 and new_high < tp_pips_distance * 0.6:
+                logger.debug(
+                    f"lifecycle.tp_gate_blocked | signal={signal_id[:8]} {symbol} {direction} "
+                    f"{tp_name} wick_high={session_high:.2f} target={tp_price:.2f} "
+                    f"new_high={new_high:.1f} < {tp_pips_distance:.1f}*0.6"
+                )
+                continue
             targets_hit[tp_name] = True
             logger.info(
                 f"✅ Signal {signal_id[:8]} {symbol} {direction}: "
                 f"{tp_name} HIT @ high={session_high:.2f} (target={tp_price:.2f})"
             )
         elif direction == "SELL" and session_low is not None and session_low <= tp_price:
+            if tp_pips_distance > 0 and new_high < tp_pips_distance * 0.6:
+                logger.debug(
+                    f"lifecycle.tp_gate_blocked | signal={signal_id[:8]} {symbol} {direction} "
+                    f"{tp_name} wick_low={session_low:.2f} target={tp_price:.2f} "
+                    f"new_high={new_high:.1f} < {tp_pips_distance:.1f}*0.6"
+                )
+                continue
             targets_hit[tp_name] = True
             logger.info(
                 f"✅ Signal {signal_id[:8]} {symbol} {direction}: "
@@ -733,9 +759,12 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     resolved_sl_pips = abs(pips_from_price_change(abs(entry_price - sl_price), symbol))
     hit_stop = False
 
-    if direction == "BUY" and session_low is not None and session_low <= sl_price:
+    # Sanity gate for SL: actual drawdown must be at least 60% of SL distance
+    sl_drawdown_ok = resolved_sl_pips <= 0 or abs(new_low) >= resolved_sl_pips * 0.6
+
+    if direction == "BUY" and session_low is not None and session_low <= sl_price and sl_drawdown_ok:
         hit_stop = True
-    elif direction == "SELL" and session_high is not None and session_high >= sl_price:
+    elif direction == "SELL" and session_high is not None and session_high >= sl_price and sl_drawdown_ok:
         hit_stop = True
 
     target_status = {tp_name: bool(targets_hit.get(tp_name)) for tp_name in target_prices}

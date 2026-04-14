@@ -187,12 +187,12 @@ async def test_model_detail_analytics_repairs_target_hit_rows_with_bad_exit_pric
         payload = await get_model_detail_analytics(model="ml", symbol="NDX.INDX", days=1, timeframe="all")
 
     assert payload["overview"]["completed"] == 1
-    assert payload["overview"]["net_pips"] == 25.0
+    assert payload["overview"]["net_pips"] == 3.0
     assert payload["timeframe_comparison"] == [
-        {"tf": "30m", "total": 1, "active": 0, "win_rate": 100.0, "net_pips": 25.0, "avg_pips": 25.0}
+        {"tf": "30m", "total": 1, "active": 0, "win_rate": 100.0, "net_pips": 3.0, "avg_pips": 3.0}
     ]
     assert payload["recent_signals"][0]["status"] == "completed"
-    assert payload["recent_signals"][0]["pips"] == 25.0
+    assert payload["recent_signals"][0]["pips"] == 3.0
     assert payload["recent_signals"][0]["entry_price"] == 100.0
 
 

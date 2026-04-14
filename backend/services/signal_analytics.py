@@ -341,6 +341,11 @@ def classify_signal(
         target_resolution = resolution_reason in {"tp4_hit", "tp1_3_hit_then_sl", "all_targets_hit"}
 
         if target_floor_profit is not None and (explicit_any_target_hit or target_resolution or (status == "stopped" and any_target_hit)):
+            # Sanity check: if highest_profit_pips is far less than the target
+            # floor, the target_hit data may be stale/wrong (e.g. from pre-signal
+            # candle wicks).  Cap to what was actually observed.
+            if profit_pips > 0 and target_floor_profit > profit_pips * 3:
+                return max(profit_pips, 0.0)
             return target_floor_profit
 
         if realized is not None:
