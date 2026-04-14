@@ -980,23 +980,34 @@ def _load_from_persistent_cache():
             loaded_any = True
             logger.info(f"[DataHub] Loaded {len(cached_5m)} cached 5m candles for {symbol}")
         
-        # Load 30m candles (XAUUSD: fetched directly from EODHD)
-        cached_30m = load_candles(symbol, "30m", limit=FULL_SEED_LIMIT_30M)
-        if cached_30m:
-            with _lock:
-                _candles_30m[symbol] = {"candles": cached_30m, "timestamp": now_ts, "source": "persistent_cache"}
-                _rebuild_derived(symbol)
-            loaded_any = True
-            logger.info(f"[DataHub] Loaded {len(cached_30m)} cached 30m candles for {symbol}")
+        # Load 30m candles (XAUUSD: fetched directly from EODHD only in eodhd mode)
+        # In mt5_redis/hybrid mode, XAUUSD 30m is derived from 5m - skip loading stale cache
+        cached_30m = None
+        if get_market_data_source() == "eodhd" or symbol not in _30M_DIRECT_SYMBOLS:
+            cached_30m = load_candles(symbol, "30m", limit=FULL_SEED_LIMIT_30M)
+            if cached_30m:
+                with _lock:
+                    _candles_30m[symbol] = {"candles": cached_30m, "timestamp": now_ts, "source": "persistent_cache"}
+                    _rebuild_derived(symbol)
+                loaded_any = True
+                logger.info(f"[DataHub] Loaded {len(cached_30m)} cached 30m candles for {symbol}")
+        else:
+            # In mt5_redis/hybrid: 30m will be derived from 5m after all loading completes
+            logger.info(f"[DataHub] Skipping 30m cache load for {symbol} (derived from 5m in {get_market_data_source()} mode)")
         
-        # Load 1h candles
-        cached_1h = load_candles(symbol, "1h", limit=FULL_SEED_LIMIT_1H)
-        if cached_1h:
-            with _lock:
-                _candles_1h[symbol] = {"candles": cached_1h, "timestamp": now_ts, "source": "persistent_cache"}
-                _rebuild_derived(symbol)
-            loaded_any = True
-            logger.info(f"[DataHub] Loaded {len(cached_1h)} cached 1h candles for {symbol}")
+        # Load 1h candles (XAUUSD: derived from 30m in mt5_redis/hybrid mode)
+        cached_1h = None
+        if get_market_data_source() == "eodhd" or symbol not in _30M_DIRECT_SYMBOLS:
+            cached_1h = load_candles(symbol, "1h", limit=FULL_SEED_LIMIT_1H)
+            if cached_1h:
+                with _lock:
+                    _candles_1h[symbol] = {"candles": cached_1h, "timestamp": now_ts, "source": "persistent_cache"}
+                    _rebuild_derived(symbol)
+                loaded_any = True
+                logger.info(f"[DataHub] Loaded {len(cached_1h)} cached 1h candles for {symbol}")
+        else:
+            # In mt5_redis/hybrid: 1h will be derived from 30m (which is derived from 5m)
+            logger.info(f"[DataHub] Skipping 1h cache load for {symbol} (derived from 30m in {get_market_data_source()} mode)")
         
         # Load EOD candles
         cached_eod = load_candles(symbol, "eod", limit=FULL_SEED_LIMIT_EOD)
@@ -1023,6 +1034,13 @@ def _load_from_persistent_cache():
                 f"(5m={len(cached_5m or [])}, 30m={len(cached_30m or [])}, 1h={len(cached_1h or [])}) "
                 f"→ full seed will run"
             )
+    
+    # Final rebuild for symbols with derived timeframes (especially XAUUSD in mt5_redis/hybrid)
+    if get_market_data_source() in {"mt5_redis", "hybrid"}:
+        for symbol in TRACKED_SYMBOLS:
+            with _lock:
+                _rebuild_derived(symbol)
+            logger.info(f"[DataHub] Final derived rebuild completed for {symbol}")
     
     if loaded_any:
         if get_market_data_source() == "mt5_redis":
