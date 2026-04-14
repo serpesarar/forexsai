@@ -468,9 +468,9 @@ def _build_regime_result(
     """Build RegimeResult with model weights, RSI thresholds, allowed directions."""
 
     # ═══ MODEL WEIGHT MATRIX ═══
-    # Keys: ml, pulse1, pulse2, pulse3
+    # Keys: ml, pulse1, pulse2, pulse3, emel, smc
     if regime == "STRONG_TREND_UP":
-        weights = {"ml": 0.50, "pulse1": 0.15, "pulse2": 0.25, "pulse3": 0.10}
+        weights = {"ml": 0.50, "pulse1": 0.15, "pulse2": 0.25, "pulse3": 0.10, "emel": 0.25, "smc": 0.15}
         rsi_ob = 92.0    # RSI >92 = too extreme even in trend
         rsi_os = 35.0     # RSI <35 in uptrend = buy dip opportunity
         rsi_boost = True   # RSI 70-92 = "strong momentum", not sell
@@ -478,7 +478,7 @@ def _build_regime_result(
         min_rr = 1.5       # higher R/R in trend for pullback entries
 
     elif regime == "STRONG_TREND_DOWN":
-        weights = {"ml": 0.50, "pulse1": 0.15, "pulse2": 0.25, "pulse3": 0.10}
+        weights = {"ml": 0.50, "pulse1": 0.15, "pulse2": 0.25, "pulse3": 0.10, "emel": 0.25, "smc": 0.15}
         rsi_ob = 65.0
         rsi_os = 8.0      # RSI <8 = too extreme
         rsi_boost = True   # RSI <30 = strong bearish momentum
@@ -486,7 +486,7 @@ def _build_regime_result(
         min_rr = 1.5
 
     elif regime == "RANGING":
-        weights = {"ml": 0.20, "pulse1": 0.40, "pulse2": 0.20, "pulse3": 0.20}
+        weights = {"ml": 0.20, "pulse1": 0.40, "pulse2": 0.20, "pulse3": 0.20, "emel": 0.25, "smc": 0.15}
         rsi_ob = 70.0
         rsi_os = 30.0
         rsi_boost = False
@@ -494,7 +494,7 @@ def _build_regime_result(
         min_rr = 1.2
 
     else:  # TRANSITION
-        weights = {"ml": 0.40, "pulse1": 0.20, "pulse2": 0.20, "pulse3": 0.20}
+        weights = {"ml": 0.40, "pulse1": 0.20, "pulse2": 0.20, "pulse3": 0.20, "emel": 0.25, "smc": 0.15}
         rsi_ob = 75.0
         rsi_os = 25.0
         rsi_boost = False

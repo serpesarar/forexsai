@@ -2946,9 +2946,57 @@ async def debug_datahub_volumes(symbol: str):
             result["ohlcv_1h_via_market_data_service"] = {"error": "No data"}
         
         return result
-        
+
     except Exception as e:
         logger.error(f"DataHub debug error: {e}")
         import traceback
         return {"error": str(e), "traceback": traceback.format_exc()}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SMC PANEL ENDPOINT - Smart Money Concepts / ICT Order Blocks
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/smc/{symbol}", response_model=Dict[str, Any])
+async def get_smc_panel(
+    symbol: str,
+    timeframe: str = Query(default="5m", description="Timeframe: 5m, 15m, 1h, 4h"),
+    limit: int = Query(default=100, ge=50, le=300, description="Candle count"),
+    refresh: bool = Query(default=False, description="Force cache bypass"),
+):
+    """
+    SMC Panel — Smart Money Concepts / ICT Order Block analizi.
+
+    Returns OB/FVG/CHoCH/BOS detection + combined directional signal.
+    Logs BUY/SELL signals to prediction_logs (model_type='smc').
+    Cached for 300s (use refresh=true to bypass).
+    """
+    try:
+        from services.order_block_service import service as smc_service
+        from order_block_detector import OrderBlockConfig
+
+        config = OrderBlockConfig()
+        result = await smc_service.detect(
+            symbol=symbol,
+            timeframe=timeframe,
+            limit=limit,
+            config=config,
+            use_cache=not refresh,
+            log_signals=True,
+        )
+
+        # Normalise combined_signal action → direction for frontend consistency
+        combined = result.get("combined_signal") or {}
+        action = (combined.get("action") or "HOLD").upper()
+        if action == "NEUTRAL":
+            action = "HOLD"
+
+        result["direction"] = action
+        result["model"] = "smc"
+        result["panel"] = "smc"
+        return result
+
+    except Exception as e:
+        logger.error(f"SMC panel error for {symbol}: {e}")
+        return {"error": str(e), "symbol": symbol, "model": "smc", "direction": "HOLD"}
 
