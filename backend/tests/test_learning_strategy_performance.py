@@ -55,6 +55,7 @@ class _FilteringQuery:
         self._neq_filters = []
         self._gte_filters = []
         self._lt_filters = []
+        self._lte_filters = []
         self._limit = None
         self._order_field = None
         self._order_desc = False
@@ -78,6 +79,10 @@ class _FilteringQuery:
         self._lt_filters.append((field, value))
         return self
 
+    def lte(self, field, value):
+        self._lte_filters.append((field, value))
+        return self
+
     def order(self, field, desc=False):
         self._order_field = field
         self._order_desc = desc
@@ -99,6 +104,9 @@ class _FilteringQuery:
         for field, value in self._lt_filters:
             compare = _parse_iso(value)
             rows = [row for row in rows if (parsed := _parse_iso(row.get(field))) is not None and parsed < compare]
+        for field, value in self._lte_filters:
+            compare = _parse_iso(value)
+            rows = [row for row in rows if (parsed := _parse_iso(row.get(field))) is not None and parsed <= compare]
         if self._order_field:
             rows.sort(key=lambda row: _parse_iso(row.get(self._order_field)) or row.get(self._order_field), reverse=self._order_desc)
         if self._limit is not None:

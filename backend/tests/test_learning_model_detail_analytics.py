@@ -32,6 +32,9 @@ class _SequenceQuery:
     def lt(self, *_args, **_kwargs):
         return self
 
+    def lte(self, *_args, **_kwargs):
+        return self
+
     def order(self, *_args, **_kwargs):
         return self
 
@@ -624,8 +627,8 @@ async def test_model_detail_analytics_uses_session_hours_and_tp_sl_only_weekday_
         "day_short": "Mon",
         "total": 3,
         "wins": 2,
-        "win_rate": 75.0,
-        "avg_pips": -10.0,
+        "win_rate": 66.7,
+        "avg_pips": -6.7,
     }
     assert weekday_rows["Tuesday"] == {
         "day": "Tuesday",
@@ -751,7 +754,7 @@ async def test_model_detail_analytics_tp_rates_use_common_resolved_denominator()
         },
     ]
 
-    client = _FakeClient([[], signal_rows])
+    client = _FakeClient([signal_rows])
 
     def _classify(sig, default_symbol=None):
         status = sig.get("status")

@@ -554,7 +554,7 @@ export const ModelPerformanceModal: React.FC<{
       params.set("recent_signals_page", String(recentSignalsPage));
 
       const controller = new AbortController();
-      const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+      const timeoutId = window.setTimeout(() => controller.abort(), 30000);
       let response: Response;
       try {
         response = await fetch(`${API_BASE}/api/learning/model-detail-analytics?${params.toString()}`, {

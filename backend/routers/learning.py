@@ -103,37 +103,48 @@ async def _fetch_prediction_logs_window(
     symbol: Optional[str] = None,
 ) -> List[dict]:
     predictions: List[dict] = []
+    seen_ids: set = set()
     end = _utc_now()
     cur = cutoff
     days_back = max(0, int((end - cutoff).total_seconds() // 86400))
     window_days = 1 if 0 < days_back <= 90 else 7 if 90 < days_back <= 365 else 30
 
     while cur < end:
-        ds = cur.replace(hour=0, minute=0, second=0, microsecond=0)
-        de = min(ds + timedelta(days=window_days), end)
+        de = min(cur + timedelta(days=window_days), end)
         page_before: Optional[str] = None
         while True:
             query = client.table("prediction_logs").select(select_fields)
             if symbol:
                 query = query.eq("symbol", symbol)
-            query = query.gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de))
+            query = query.gte("created_at", _utc_iso(cur)).lt("created_at", _utc_iso(de))
             if page_before:
-                query = query.lt("created_at", page_before)
+                query = query.lte("created_at", page_before)
 
             batch = safe_get_data(query.order("created_at", desc=True).limit(1000).execute()) or []
             if not batch:
                 break
 
-            predictions.extend(batch)
+            new_count = 0
+            for row in batch:
+                row_id = row.get("id")
+                if row_id and row_id in seen_ids:
+                    continue
+                if row_id:
+                    seen_ids.add(row_id)
+                predictions.append(row)
+                new_count += 1
+
             if len(batch) < 1000:
+                break
+            if new_count == 0:
                 break
 
             last_created_at = batch[-1].get("created_at")
             if not isinstance(last_created_at, str) or not last_created_at:
-                logger.warning("Prediction log pagination cursor missing for %s - %s", _utc_iso(ds), _utc_iso(de))
+                logger.warning("Prediction log pagination cursor missing for %s - %s", _utc_iso(cur), _utc_iso(de))
                 break
             if page_before == last_created_at:
-                logger.warning("Prediction log pagination stalled for %s - %s at %s", _utc_iso(ds), _utc_iso(de), last_created_at)
+                logger.warning("Prediction log pagination stalled for %s - %s at %s", _utc_iso(cur), _utc_iso(de), last_created_at)
                 break
 
             page_before = last_created_at
@@ -353,41 +364,32 @@ def _pick_scope_leader(scope_metrics: Dict[str, dict], score_key: str) -> dict:
     }
 
 
-def _model_detail_hourly_contract(symbol: Optional[str], observed_hours: Optional[set[int]] = None) -> dict:
+def _model_detail_hourly_contract(symbol: Optional[str]) -> dict:
     normalized_symbol = (symbol or "").upper().strip()
 
     if normalized_symbol == "NDX.INDX":
-        base_hours = list(range(9, 18))
+        hours = list(range(9, 18))
         session_key = "us_cash"
         window_label = "09:00–17:00"
     elif normalized_symbol == "GDAXI.INDX":
-        base_hours = list(range(7, 16))
+        hours = list(range(7, 16))
         session_key = "xetra_cash"
         window_label = "07:00–15:00 UTC"
     elif normalized_symbol in {"USOIL.FOREX", "CL.F", "CL.COMM"}:
-        base_hours = list(range(1, 24))
+        hours = list(range(1, 24))
         session_key = "oil_extended"
         window_label = "01:00–23:00 UTC"
     elif normalized_symbol == "XAUUSD":
-        base_hours = list(range(24))
+        hours = list(range(24))
         session_key = "continuous_weekday"
         window_label = "00:00–23:00 UTC"
     else:
-        base_hours = list(range(24))
+        hours = list(range(24))
         session_key = "continuous"
         window_label = "00:00–23:00 UTC"
 
-    normalized_observed = sorted(
-        {
-            hour
-            for hour in (observed_hours or set())
-            if isinstance(hour, int) and 0 <= hour <= 23
-        }
-    )
-    visible_hours = base_hours or normalized_observed
-
     return {
-        "hours": visible_hours,
+        "hours": hours,
         "window_label": window_label,
         "session_key": session_key,
     }
@@ -3285,6 +3287,22 @@ def _normalize_model_type(sig: dict) -> str:
     return normalize_model_type(sig)
 
 
+_SYMBOL_ALIAS_MAP = {
+    "CL.F": "USOIL.FOREX",
+    "CL.COMM": "USOIL.FOREX",
+    "NASDAQ": "NDX.INDX",
+    "DAX": "GDAXI.INDX",
+    "US OIL": "USOIL.FOREX",
+    "OIL": "USOIL.FOREX",
+    "USOIL": "USOIL.FOREX",
+}
+
+
+def _normalize_symbol(raw_symbol: str) -> str:
+    upper = raw_symbol.upper().strip()
+    return _SYMBOL_ALIAS_MAP.get(upper, upper)
+
+
 @router.get("/model-detail-analytics")
 async def get_model_detail_analytics(
     model: Optional[str] = Query(None, description="Model type (ml, emel, pulse1, pulse2, pulse3, emel_inverse, smc, hybrid) or 'all'"),
@@ -3299,6 +3317,7 @@ async def get_model_detail_analytics(
     Backward-compatible response with richer metadata for all-model and
     timeframe-aware drilldowns.
     """
+    symbol = _normalize_symbol(symbol)
     if not isinstance(model, str):
         model = None
     if not isinstance(strategy_scope, str):
@@ -3609,7 +3628,7 @@ async def get_model_detail_analytics(
             if status == "active":
                 active += 1
                 continue
-            if status is None or status == "direction_flip":
+            if status is None:
                 continue
 
             if status == "completed":
@@ -3697,8 +3716,7 @@ async def get_model_detail_analytics(
         # ── 4. Build response ──
 
         # Hourly heatmap
-        observed_hours = {hour for hour, bucket in hourly_stats.items() if bucket["resolved_total"] > 0}
-        hourly_contract = _model_detail_hourly_contract(symbol, observed_hours=observed_hours)
+        hourly_contract = _model_detail_hourly_contract(symbol)
         hourly_heatmap = []
         for h in hourly_contract["hours"]:
             s = hourly_stats[h]
@@ -3760,20 +3778,16 @@ async def get_model_detail_analytics(
             daily_buckets = dow_daily_groups[d]
             weekday_total = sum(bucket["scored_total"] for bucket in daily_buckets)
             wins = sum(bucket["wins"] for bucket in daily_buckets)
-            avg_day_win_rate = (
-                sum((bucket["wins"] / bucket["scored_total"] * 100) for bucket in daily_buckets if bucket["scored_total"] > 0)
-                / len(daily_buckets)
-            ) if daily_buckets else 0.0
-            avg_day_pips = (
-                sum(bucket["pips"] for bucket in daily_buckets) / len(daily_buckets)
-            ) if daily_buckets else 0.0
+            total_pips = sum(bucket["pips"] for bucket in daily_buckets)
+            pooled_win_rate = (wins / weekday_total * 100) if weekday_total > 0 else 0.0
+            avg_pips_per_signal = (total_pips / weekday_total) if weekday_total > 0 else 0.0
             day_of_week.append({
                 "day": dow_names[d],
                 "day_short": dow_names[d][:3],
                 "total": weekday_total,
                 "wins": wins,
-                "win_rate": round(avg_day_win_rate, 1),
-                "avg_pips": round(avg_day_pips, 1),
+                "win_rate": round(pooled_win_rate, 1),
+                "avg_pips": round(avg_pips_per_signal, 1),
             })
 
         # TP hit rates
