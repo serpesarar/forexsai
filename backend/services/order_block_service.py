@@ -469,8 +469,8 @@ class OrderBlockService:
                 self._cache[cache_key] = CacheEntry(timestamp=self._utc_now(), payload=payload)
             return payload
 
-        # Use NEW detector with independent algorithms
-        structure = MarketStructureAnalyzer.analyze(candles)
+        # Use NEW detector with independent algorithms (symbol-aware TP/SL)
+        structure = MarketStructureAnalyzer.analyze(candles, symbol=symbol)
 
         # Prepare enriched order blocks with structure info
         enriched_obs = self._enrich_order_blocks(structure, n=len(candles))
@@ -615,7 +615,7 @@ class OrderBlockService:
             window = candles[: i + 1]
             future_candles = candles[i + 1 : i + 31]
             current_price = float(candles[i].close)
-            structure = MarketStructureAnalyzer.analyze(window)
+            structure = MarketStructureAnalyzer.analyze(window, symbol=symbol)
 
             enriched_obs = self._enrich_order_blocks(structure, n=len(window))
 

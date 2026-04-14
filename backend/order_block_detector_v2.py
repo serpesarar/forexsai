@@ -621,26 +621,46 @@ class OrderBlockDetector:
 
 class MarketStructureAnalyzer:
     """Main analyzer combining all detection algorithms"""
-    
+
+    # ─── Symbol-specific TP/SL config ─────────────────────────────────────────
+    # SL ATR multiplier: how many ATRs below/above swing low/high
+    _SL_ATR: Dict[str, float] = {
+        "NDX.INDX":    1.0,   # NASDAQ — wide SL, high intraday volatility
+        "GDAXI.INDX":  0.8,   # DAX — slightly tighter
+        "XAUUSD":      0.5,   # Gold — tightest, ranging instrument
+        "USOIL.FOREX": 1.2,   # Oil — widest, EIA event risk
+    }
+    _DEFAULT_SL_ATR = 0.7
+
+    # TP Fibonacci levels: fractions of swing_range projected from swing extreme
+    # tp1=first target, tp2=second, tp3=extension
+    _TP_FIBS: Dict[str, Tuple[float, float, float]] = {
+        "NDX.INDX":    (1.0, 1.618, 2.0),    # NASDAQ loves momentum extensions
+        "GDAXI.INDX":  (1.0, 1.272, 1.618),
+        "XAUUSD":      (1.0, 1.618, 2.618),  # Gold: textbook fib extensions
+        "USOIL.FOREX": (0.618, 1.0, 1.272),  # Oil: conservative (EIA reversals)
+    }
+    _DEFAULT_TP_FIBS: Tuple[float, float, float] = (1.0, 1.618, 2.0)
+
     @staticmethod
-    def analyze(candles: List[Candle], swing_period: int = 3) -> MarketStructure:
+    def analyze(candles: List[Candle], swing_period: int = 3, symbol: str = "") -> MarketStructure:
         # Step 1: Detect swing points (period=3 reduces noise on intraday)
         swings = SwingDetector.detect(candles, period=swing_period)
-        
+
         # Step 2: Run independent detection algorithms
         choch_list = CHoCHDetector.detect(candles, swings)
         bos_list = BOSDetector.detect(candles, swings)
         fvg_list = FVGDetector.detect(candles)
         ob_list = OrderBlockDetector.detect(candles, swings)
-        
+
         # Step 3: Determine trend
         trend = MarketStructureAnalyzer._determine_trend(candles, swings)
-        
-        # Step 4: Calculate TP/SL projection based on swing range and OB/FVG
+
+        # Step 4: Calculate TP/SL projection (symbol-aware)
         projection = MarketStructureAnalyzer._calculate_projection(
-            candles, swings, ob_list, fvg_list, trend
+            candles, swings, ob_list, fvg_list, trend, symbol=symbol
         )
-        
+
         return MarketStructure(
             choch_list=choch_list,
             bos_list=bos_list,
@@ -693,104 +713,103 @@ class MarketStructureAnalyzer:
         ob_list: List[OrderBlock],
         fvg_list: List[FVG],
         trend: str,
+        symbol: str = "",
     ) -> Optional[TPSLProjection]:
-        """Calculate TP/SL projection based on swing range.
-        
-        Logic (like reference images):
-        - Find the most recent significant Swing High and Swing Low
-        - For bullish: entry = nearest bullish OB zone, SL = below swing low,
-          TP = 50%/100%/161.8% of swing range projected above swing high
-        - For bearish: mirror logic
+        """Calculate symbol-aware TP/SL projection based on swing range.
+
+        Logic:
+        - Swing range = most recent significant Swing High − Swing Low
+        - SL = beyond swing extreme, ATR multiplier varies per symbol
+        - TP1/2/3 = Fibonacci extensions projected from swing extreme
+          Symbol-specific Fib levels (NDX: 1.0/1.618/2.0, Gold: 1.0/1.618/2.618)
+        - Entry zone = nearest OB in direction, or 10% of range from extreme
         """
         if len(swings) < 4 or not candles:
             return None
-        
+
         current_price = candles[-1].close
-        
-        # Get recent swing highs and lows
+
         recent_highs = [s for s in swings if s.type == "high"]
         recent_lows = [s for s in swings if s.type == "low"]
-        
         if not recent_highs or not recent_lows:
             return None
-        
-        # Use the most recent significant swing high and low
+
         swing_high = max(recent_highs[-4:], key=lambda s: s.price)
         swing_low = min(recent_lows[-4:], key=lambda s: s.price)
         swing_range = swing_high.price - swing_low.price
-        
         if swing_range <= 0:
             return None
-        
-        # ATR for SL margin
+
+        # ── Symbol-aware ATR multiplier for SL ────────────────────────────────
+        sym_upper = (symbol or "").upper().strip()
+        sl_atr_mult = MarketStructureAnalyzer._SL_ATR.get(sym_upper, MarketStructureAnalyzer._DEFAULT_SL_ATR)
         atr = FVGDetector._calculate_atr(candles, 14)
-        sl_margin = atr * 0.5
-        
-        # Determine confidence based on confirmations
-        confirmations = 0
-        if ob_list:
-            confirmations += 1
-        if fvg_list:
-            confirmations += 1
-        if trend != "ranging":
-            confirmations += 1
+        sl_margin = atr * sl_atr_mult
+
+        # ── Symbol-aware Fibonacci TP levels ──────────────────────────────────
+        fib1, fib2, fib3 = MarketStructureAnalyzer._TP_FIBS.get(
+            sym_upper, MarketStructureAnalyzer._DEFAULT_TP_FIBS
+        )
+
+        # ── Confidence score ────────────────────────────────────────────────
+        confirmations = sum([bool(ob_list), bool(fvg_list), trend != "ranging"])
         confidence = "high" if confirmations >= 3 else "medium" if confirmations >= 2 else "low"
-        
-        if trend == "bullish" or (trend == "ranging" and current_price < (swing_high.price + swing_low.price) / 2):
-            # Bullish projection: TP above swing high
-            # Entry zone = nearest bullish OB or swing low area
+
+        mid = (swing_high.price + swing_low.price) / 2
+        is_bullish = trend == "bullish" or (trend == "ranging" and current_price < mid)
+        is_bearish = trend == "bearish" or (trend == "ranging" and current_price >= mid)
+
+        if is_bullish:
             bull_obs = [ob for ob in ob_list if ob.type == "bullish"]
             if bull_obs:
                 best_ob = bull_obs[0]
-                entry_low = best_ob.zone_low
-                entry_high = best_ob.zone_high
+                entry_low, entry_high = best_ob.zone_low, best_ob.zone_high
             else:
                 entry_low = swing_low.price
                 entry_high = swing_low.price + swing_range * 0.1
-            
+
             return TPSLProjection(
                 direction="bullish",
                 entry_zone_low=entry_low,
                 entry_zone_high=entry_high,
                 stop_loss=swing_low.price - sl_margin,
-                tp1=swing_high.price,
-                tp2=swing_high.price + swing_range * 0.5,
-                tp3=swing_high.price + swing_range * 0.618,
+                tp1=swing_high.price + swing_range * (fib1 - 1.0),   # fib1=1.0 → swing high itself
+                tp2=swing_high.price + swing_range * (fib2 - 1.0),
+                tp3=swing_high.price + swing_range * (fib3 - 1.0),
                 swing_low=swing_low.price,
                 swing_high=swing_high.price,
                 swing_range=swing_range,
                 confidence=confidence,
             )
-        elif trend == "bearish" or (trend == "ranging" and current_price > (swing_high.price + swing_low.price) / 2):
-            # Bearish projection: TP below swing low
+
+        if is_bearish:
             bear_obs = [ob for ob in ob_list if ob.type == "bearish"]
             if bear_obs:
                 best_ob = bear_obs[0]
-                entry_low = best_ob.zone_low
-                entry_high = best_ob.zone_high
+                entry_low, entry_high = best_ob.zone_low, best_ob.zone_high
             else:
                 entry_low = swing_high.price - swing_range * 0.1
                 entry_high = swing_high.price
-            
+
             return TPSLProjection(
                 direction="bearish",
                 entry_zone_low=entry_low,
                 entry_zone_high=entry_high,
                 stop_loss=swing_high.price + sl_margin,
-                tp1=swing_low.price,
-                tp2=swing_low.price - swing_range * 0.5,
-                tp3=swing_low.price - swing_range * 0.618,
+                tp1=swing_low.price - swing_range * (fib1 - 1.0),
+                tp2=swing_low.price - swing_range * (fib2 - 1.0),
+                tp3=swing_low.price - swing_range * (fib3 - 1.0),
                 swing_low=swing_low.price,
                 swing_high=swing_high.price,
                 swing_range=swing_range,
                 confidence=confidence,
             )
-        
+
         return None
 
 
 # Convenience function
-def detect_all(candles: List[Candle], swing_period: int = 3) -> Dict:
+def detect_all(candles: List[Candle], swing_period: int = 3, symbol: str = "") -> Dict:
     """Main entry point - detects all market structures"""
-    structure = MarketStructureAnalyzer.analyze(candles, swing_period=swing_period)
+    structure = MarketStructureAnalyzer.analyze(candles, swing_period=swing_period, symbol=symbol)
     return structure.to_dict()

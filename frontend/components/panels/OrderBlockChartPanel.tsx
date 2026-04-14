@@ -29,23 +29,41 @@ const TIMEFRAMES = ["5m", "15m", "1h", "4h"] as const;
 type TF = (typeof TIMEFRAMES)[number];
 
 // ── Professional SMC Color Palette ──
-const OB_BULL_COLOR = "rgba(34, 197, 94, 0.18)";
-const OB_BULL_BORDER = "rgba(34, 197, 94, 0.7)";
-const OB_BEAR_COLOR = "rgba(239, 68, 68, 0.18)";
-const OB_BEAR_BORDER = "rgba(239, 68, 68, 0.65)";
-const FVG_BULL_COLOR = "rgba(34, 197, 94, 0.12)";
-const FVG_BULL_BORDER = "rgba(34, 197, 94, 0.45)";
-const FVG_BEAR_COLOR = "rgba(239, 68, 68, 0.10)";
-const FVG_BEAR_BORDER = "rgba(239, 68, 68, 0.40)";
-const TP_ZONE_COLOR = "rgba(34, 197, 94, 0.14)";
-const TP_ZONE_BORDER = "rgba(34, 197, 94, 0.6)";
-const SL_ZONE_COLOR = "rgba(239, 68, 68, 0.14)";
-const SL_ZONE_BORDER = "rgba(239, 68, 68, 0.55)";
-const SWING_LINE_COLOR = "rgba(59, 130, 246, 0.7)";
+// Order Blocks → Gold/Yellow (distinctive, never confused with TP/SL)
+const OB_BULL_COLOR  = "rgba(234, 179, 8, 0.22)";   // golden fill
+const OB_BULL_BORDER = "rgba(234, 179, 8, 0.92)";   // #eab308
+const OB_BEAR_COLOR  = "rgba(245, 158, 11, 0.20)";  // amber fill
+const OB_BEAR_BORDER = "rgba(245, 158, 11, 0.90)";  // #f59e0b
+
+// FVG → blue-teal (subtle, doesn't compete with OB or TP/SL)
+const FVG_BULL_COLOR  = "rgba(56, 189, 248, 0.10)";  // sky-300
+const FVG_BULL_BORDER = "rgba(56, 189, 248, 0.45)";
+const FVG_BEAR_COLOR  = "rgba(167, 139, 250, 0.10)"; // violet-400
+const FVG_BEAR_BORDER = "rgba(167, 139, 250, 0.40)";
+
+// TP levels → 3 shades of green (bright → darker)
+const TP1_COLOR = "#22c55e";   // green-500 — closest target
+const TP2_COLOR = "#16a34a";   // green-600
+const TP3_COLOR = "#15803d";   // green-700 — extension
+
+// SL → bold red
+const SL_COLOR       = "#ef4444";   // red-500
+const SL_BG_COLOR    = "rgba(239, 68, 68, 0.10)";
+
+// Entry zone → neutral white
+const ENTRY_FILL  = "rgba(248, 250, 252, 0.06)";
+const ENTRY_BORDER = "rgba(248, 250, 252, 0.35)";
+
+// Swing lines → blue (unchanged)
+const SWING_LINE_COLOR  = "rgba(59, 130, 246, 0.7)";
 const SWING_LABEL_COLOR = "#3b82f6";
-const BOS_COLOR = "#facc15";
+
+// Structure markers
+const BOS_COLOR   = "#facc15";
 const CHOCH_COLOR = "#f97316";
-const SR_SUPPORT_COLOR = "rgba(34, 197, 94, 0.6)";
+
+// S/R price lines
+const SR_SUPPORT_COLOR    = "rgba(34, 197, 94, 0.6)";
 const SR_RESISTANCE_COLOR = "rgba(239, 68, 68, 0.55)";
 
 interface CandleData {
@@ -403,138 +421,205 @@ export default function OrderBlockChartPanel() {
       for (const sl of swingLows.slice(-2)) drawSwingLine(sl, "SL");
     }
 
-    // ── 2. Draw TP/SL projection zones (green/red areas like reference images)
+    // ── 2. Draw TP/SL projection — individual numbered lines (clean & readable)
     const projection = (obData as any)?.projection as any | undefined;
     if (projection) {
       const isBullish = projection.direction === "bullish";
 
-      // TP zone (green)
-      const tp1Y = priceToY(projection.tp1);
-      const tp2Y = priceToY(projection.tp2);
-      if (tp1Y !== null && tp2Y !== null) {
-        const tpTop = Math.min(tp1Y, tp2Y);
-        const tpH = Math.abs(tp2Y - tp1Y);
-        if (tpH > 1) {
-          // Green gradient fill
-          const tpGrad = ctx.createLinearGradient(0, tpTop, 0, tpTop + tpH);
-          tpGrad.addColorStop(0, isBullish ? "rgba(34, 197, 94, 0.22)" : "rgba(34, 197, 94, 0.06)");
-          tpGrad.addColorStop(1, isBullish ? "rgba(34, 197, 94, 0.06)" : "rgba(34, 197, 94, 0.22)");
-          ctx.fillStyle = tpGrad;
-          ctx.fillRect(xLeft, tpTop, chartW - xLeft, tpH);
+      // Helper: draw a single horizontal price line with a right-side pill label
+      const drawPriceLine = (
+        price: number,
+        color: string,
+        lineWidth: number,
+        dashed: boolean,
+        label: string,
+        bgAlpha = 0.12,
+      ) => {
+        const y = priceToY(price);
+        if (y === null) return;
 
-          // Top/bottom border
-          ctx.strokeStyle = TP_ZONE_BORDER;
-          ctx.lineWidth = 1;
-          ctx.setLineDash([4, 3]);
-          ctx.beginPath();
-          ctx.moveTo(xLeft, tpTop);
-          ctx.lineTo(chartW, tpTop);
-          ctx.moveTo(xLeft, tpTop + tpH);
-          ctx.lineTo(chartW, tpTop + tpH);
-          ctx.stroke();
-          ctx.setLineDash([]);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lineWidth;
+        ctx.setLineDash(dashed ? [6, 3] : []);
+        ctx.beginPath();
+        ctx.moveTo(xLeft, y);
+        ctx.lineTo(chartW, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
 
-          // TP label
-          ctx.font = "bold 10px Inter, sans-serif";
-          ctx.fillStyle = "rgba(34, 197, 94, 0.9)";
-          ctx.fillText("TP ZONE", xLeft + 6, tpTop + 13);
-          ctx.font = "9px Inter, sans-serif";
-          ctx.fillStyle = "rgba(34, 197, 94, 0.7)";
-          ctx.fillText(`TP1: ${projection.tp1.toFixed(1)}  TP2: ${projection.tp2.toFixed(1)}`, xLeft + 6, tpTop + 25);
-        }
+        // Right-side pill
+        ctx.font = `bold 10px Inter, sans-serif`;
+        const tm = ctx.measureText(label);
+        const px = chartW - tm.width - 14;
+        const py = y - 7;
+        ctx.fillStyle = color.replace(/[\d.]+\)$/, `${bgAlpha})`).replace(/^#/, `rgba(${parseInt(color.slice(1,3),16)},${parseInt(color.slice(3,5),16)},${parseInt(color.slice(5,7),16)},${bgAlpha})`);
+        // Use solid bg instead of parsing hex
+        ctx.fillStyle = `rgba(10,14,23,0.75)`;
+        ctx.fillRect(px - 4, py, tm.width + 8, 14);
+        ctx.fillStyle = color;
+        ctx.fillText(label, px, py + 10);
+      };
+
+      // ── Entry zone (subtle white box) ─────────────────────────────────────
+      const ezLowY  = priceToY(projection.entry_zone_low);
+      const ezHighY = priceToY(projection.entry_zone_high);
+      if (ezLowY !== null && ezHighY !== null) {
+        const ezTop = Math.min(ezLowY, ezHighY);
+        const ezH   = Math.max(2, Math.abs(ezHighY - ezLowY));
+        ctx.fillStyle = ENTRY_FILL;
+        ctx.fillRect(xLeft, ezTop, chartW - xLeft, ezH);
+        ctx.strokeStyle = ENTRY_BORDER;
+        ctx.lineWidth = 0.8;
+        ctx.setLineDash([3, 3]);
+        ctx.strokeRect(xLeft, ezTop, chartW - xLeft, ezH);
+        ctx.setLineDash([]);
+        ctx.font = "bold 9px Inter, sans-serif";
+        ctx.fillStyle = "rgba(248,250,252,0.55)";
+        ctx.fillText("ENTRY", xLeft + 6, ezTop + 10);
       }
 
-      // SL zone (red)
+      // ── SL — thick red solid line ──────────────────────────────────────────
       const slY = priceToY(projection.stop_loss);
-      const entryEdgeY = priceToY(isBullish ? projection.entry_zone_low : projection.entry_zone_high);
-      if (slY !== null && entryEdgeY !== null) {
-        const slTop = Math.min(slY, entryEdgeY);
-        const slH = Math.abs(slY - entryEdgeY);
-        if (slH > 1) {
-          const slGrad = ctx.createLinearGradient(0, slTop, 0, slTop + slH);
-          slGrad.addColorStop(0, isBullish ? "rgba(239, 68, 68, 0.06)" : "rgba(239, 68, 68, 0.22)");
-          slGrad.addColorStop(1, isBullish ? "rgba(239, 68, 68, 0.22)" : "rgba(239, 68, 68, 0.06)");
-          ctx.fillStyle = slGrad;
-          ctx.fillRect(xLeft, slTop, chartW - xLeft, slH);
-
-          ctx.strokeStyle = SL_ZONE_BORDER;
-          ctx.lineWidth = 1;
-          ctx.setLineDash([4, 3]);
-          ctx.beginPath();
-          ctx.moveTo(xLeft, slTop + slH);
-          ctx.lineTo(chartW, slTop + slH);
-          ctx.stroke();
-          ctx.setLineDash([]);
-
-          ctx.font = "bold 10px Inter, sans-serif";
-          ctx.fillStyle = "rgba(239, 68, 68, 0.9)";
-          ctx.fillText("SL ZONE", xLeft + 6, slTop + slH - 5);
-          ctx.font = "9px Inter, sans-serif";
-          ctx.fillStyle = "rgba(239, 68, 68, 0.7)";
-          ctx.fillText(`SL: ${projection.stop_loss.toFixed(1)}`, xLeft + 6, slTop + slH - 17);
+      if (slY !== null) {
+        // Red fill below SL (danger zone)
+        const slFillH = isBullish ? chartSize.height - slY : slY;
+        if (slFillH > 0) {
+          ctx.fillStyle = SL_BG_COLOR;
+          ctx.fillRect(xLeft, isBullish ? slY : 0, chartW - xLeft, slFillH);
         }
+        ctx.strokeStyle = SL_COLOR;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(xLeft, slY);
+        ctx.lineTo(chartW, slY);
+        ctx.stroke();
+
+        // Label pill
+        const slLabel = `⊗ SL  ${projection.stop_loss.toFixed(1)}`;
+        ctx.font = "bold 10px Inter, sans-serif";
+        const slTm = ctx.measureText(slLabel);
+        const slPx = chartW - slTm.width - 14;
+        ctx.fillStyle = "rgba(10,14,23,0.80)";
+        ctx.fillRect(slPx - 4, slY - 8, slTm.width + 8, 14);
+        ctx.fillStyle = SL_COLOR;
+        ctx.fillText(slLabel, slPx, slY + 3);
       }
 
-      // 100% swing range measurement arrow (vertical arrow with label)
-      const swHighY = priceToY(projection.swing_high);
-      const swLowY = priceToY(projection.swing_low);
-      if (swHighY !== null && swLowY !== null) {
-        const arrowX = chartW - 35;
-        const topY = Math.min(swHighY, swLowY);
-        const botY = Math.max(swHighY, swLowY);
-        const midY = (topY + botY) / 2;
-
-        // Vertical line
-        ctx.strokeStyle = "rgba(250, 204, 21, 0.7)";
+      // ── TP1 — bright green solid ────────────────────────────────────────────
+      const tp1Y = priceToY(projection.tp1);
+      if (tp1Y !== null) {
+        ctx.strokeStyle = TP1_COLOR;
         ctx.lineWidth = 1.5;
         ctx.setLineDash([]);
         ctx.beginPath();
-        ctx.moveTo(arrowX, topY + 4);
-        ctx.lineTo(arrowX, botY - 4);
+        ctx.moveTo(xLeft, tp1Y);
+        ctx.lineTo(chartW, tp1Y);
         ctx.stroke();
 
-        // Arrow tips
-        ctx.fillStyle = "rgba(250, 204, 21, 0.9)";
-        // Up arrow
-        ctx.beginPath();
-        ctx.moveTo(arrowX, topY);
-        ctx.lineTo(arrowX - 4, topY + 6);
-        ctx.lineTo(arrowX + 4, topY + 6);
-        ctx.fill();
-        // Down arrow
-        ctx.beginPath();
-        ctx.moveTo(arrowX, botY);
-        ctx.lineTo(arrowX - 4, botY - 6);
-        ctx.lineTo(arrowX + 4, botY - 6);
-        ctx.fill();
+        const tp1Label = `① TP1  ${projection.tp1.toFixed(1)}`;
+        ctx.font = "bold 10px Inter, sans-serif";
+        const t1m = ctx.measureText(tp1Label);
+        const t1x = chartW - t1m.width - 14;
+        ctx.fillStyle = "rgba(10,14,23,0.80)";
+        ctx.fillRect(t1x - 4, tp1Y - 8, t1m.width + 8, 14);
+        ctx.fillStyle = TP1_COLOR;
+        ctx.fillText(tp1Label, t1x, tp1Y + 3);
+      }
 
-        // "100%" label
-        ctx.font = "bold 9px Inter, sans-serif";
-        ctx.fillStyle = "rgba(250, 204, 21, 0.95)";
-        const rangeText = `${projection.swing_range.toFixed(0)} pts`;
-        const pctText = "100%";
-        ctx.fillText(pctText, arrowX - 14, midY - 2);
-        ctx.font = "8px Inter, sans-serif";
-        ctx.fillStyle = "rgba(250, 204, 21, 0.7)";
-        ctx.fillText(rangeText, arrowX - 18, midY + 10);
+      // ── TP2 — medium green solid ────────────────────────────────────────────
+      const tp2Y = priceToY(projection.tp2);
+      if (tp2Y !== null) {
+        ctx.strokeStyle = TP2_COLOR;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(xLeft, tp2Y);
+        ctx.lineTo(chartW, tp2Y);
+        ctx.stroke();
+
+        const tp2Label = `② TP2  ${projection.tp2.toFixed(1)}`;
+        ctx.font = "bold 10px Inter, sans-serif";
+        const t2m = ctx.measureText(tp2Label);
+        const t2x = chartW - t2m.width - 14;
+        ctx.fillStyle = "rgba(10,14,23,0.80)";
+        ctx.fillRect(t2x - 4, tp2Y - 8, t2m.width + 8, 14);
+        ctx.fillStyle = TP2_COLOR;
+        ctx.fillText(tp2Label, t2x, tp2Y + 3);
+      }
+
+      // ── TP3 — dark green dashed (Fibonacci extension) ──────────────────────
+      const tp3Y = priceToY(projection.tp3);
+      if (tp3Y !== null) {
+        ctx.strokeStyle = TP3_COLOR;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([8, 4]);
+        ctx.beginPath();
+        ctx.moveTo(xLeft, tp3Y);
+        ctx.lineTo(chartW, tp3Y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        const tp3Label = `③ TP3  ${projection.tp3.toFixed(1)}`;
+        ctx.font = "bold 10px Inter, sans-serif";
+        const t3m = ctx.measureText(tp3Label);
+        const t3x = chartW - t3m.width - 14;
+        ctx.fillStyle = "rgba(10,14,23,0.80)";
+        ctx.fillRect(t3x - 4, tp3Y - 8, t3m.width + 8, 14);
+        ctx.fillStyle = TP3_COLOR;
+        ctx.fillText(tp3Label, t3x, tp3Y + 3);
+      }
+
+      // ── Swing range arrow (vertical, right edge) ───────────────────────────
+      const swHighY = priceToY(projection.swing_high);
+      const swLowY  = priceToY(projection.swing_low);
+      if (swHighY !== null && swLowY !== null) {
+        const arrowX = chartW - 8;
+        const topY   = Math.min(swHighY, swLowY);
+        const botY   = Math.max(swHighY, swLowY);
+        const midY   = (topY + botY) / 2;
+
+        ctx.strokeStyle = "rgba(250, 204, 21, 0.60)";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(arrowX, topY + 5);
+        ctx.lineTo(arrowX, botY - 5);
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(250, 204, 21, 0.80)";
+        ctx.beginPath(); ctx.moveTo(arrowX, topY); ctx.lineTo(arrowX-3, topY+5); ctx.lineTo(arrowX+3, topY+5); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(arrowX, botY); ctx.lineTo(arrowX-3, botY-5); ctx.lineTo(arrowX+3, botY-5); ctx.fill();
+
+        ctx.font = "bold 8px Inter, sans-serif";
+        ctx.fillStyle = "rgba(250,204,21,0.85)";
+        const rText = `${projection.swing_range.toFixed(0)}`;
+        ctx.save();
+        ctx.translate(arrowX - 4, midY);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText(rText, -ctx.measureText(rText).width / 2, 0);
+        ctx.restore();
       }
     }
 
-    // ── 3. Draw OB zones (green for bullish, red for bearish)
+    // ── 3. Draw OB zones — Gold/Yellow (distinct from green TP and red SL)
     if (obData?.order_blocks) {
-      for (const ob of obData.order_blocks as any[]) {
-        const zoneLow = ob.zone_low;
+      const obs = obData.order_blocks as any[];
+      // Only show top 5 OBs to avoid clutter
+      const visibleOBs = obs.slice(0, 5);
+      visibleOBs.forEach((ob: any, obSeq: number) => {
+        const zoneLow  = ob.zone_low;
         const zoneHigh = ob.zone_high;
         const isBullish = ob.type === "bullish";
-        if (!zoneLow || !zoneHigh) continue;
+        if (!zoneLow || !zoneHigh) return;
 
-        const yLow = priceToY(zoneLow);
+        const yLow  = priceToY(zoneLow);
         const yHigh = priceToY(zoneHigh);
-        if (yLow === null || yHigh === null) continue;
+        if (yLow === null || yHigh === null) return;
 
         const y = Math.min(yLow, yHigh);
         const h = Math.abs(yLow - yHigh);
-        if (h < 1) continue;
+        if (h < 1) return;
 
         const obIdx = ob.index || 0;
         let obX = xLeft;
@@ -543,44 +628,60 @@ export default function OrderBlockChartPanel() {
           if (x !== null) obX = x;
         }
 
-        // Gradient fill
+        // Gold fill — horizontal gradient (brighter at origin, fades right)
+        const fillColor = isBullish ? OB_BULL_COLOR : OB_BEAR_COLOR;
+        const borderColor = isBullish ? OB_BULL_BORDER : OB_BEAR_BORDER;
+
         const grad = ctx.createLinearGradient(obX, y, chartW, y);
+        // Both bull and bear use gold/amber shades — different opacity only
         if (isBullish) {
-          grad.addColorStop(0, "rgba(34, 197, 94, 0.25)");
-          grad.addColorStop(1, "rgba(34, 197, 94, 0.05)");
+          grad.addColorStop(0, "rgba(234,179,8,0.30)");
+          grad.addColorStop(0.6, "rgba(234,179,8,0.12)");
+          grad.addColorStop(1, "rgba(234,179,8,0.04)");
         } else {
-          grad.addColorStop(0, "rgba(239, 68, 68, 0.25)");
-          grad.addColorStop(1, "rgba(239, 68, 68, 0.05)");
+          grad.addColorStop(0, "rgba(245,158,11,0.28)");
+          grad.addColorStop(0.6, "rgba(245,158,11,0.11)");
+          grad.addColorStop(1, "rgba(245,158,11,0.03)");
         }
         ctx.fillStyle = grad;
         ctx.fillRect(obX, y, chartW - obX, h);
 
-        // Left accent border
-        ctx.fillStyle = isBullish ? OB_BULL_BORDER : OB_BEAR_BORDER;
-        ctx.fillRect(obX, y, 3, h);
+        // Left accent bar (4px solid gold)
+        ctx.fillStyle = borderColor;
+        ctx.fillRect(obX, y, 4, h);
 
-        // Top/bottom border
-        ctx.strokeStyle = isBullish ? OB_BULL_BORDER : OB_BEAR_BORDER;
-        ctx.lineWidth = 0.5;
+        // Top + bottom border lines (solid, 1px)
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 1;
         ctx.setLineDash([]);
         ctx.beginPath();
-        ctx.moveTo(obX, y);
+        ctx.moveTo(obX + 4, y);
         ctx.lineTo(chartW, y);
-        ctx.moveTo(obX, y + h);
+        ctx.moveTo(obX + 4, y + h);
         ctx.lineTo(chartW, y + h);
         ctx.stroke();
 
-        // Label with pill background
-        ctx.font = "bold 9px Inter, sans-serif";
-        const label = `${isBullish ? "\u25B2 Bull" : "\u25BC Bear"} OB (${ob.score || 0})`;
+        // Numbered label pill (①②③...) at left side
+        const num = ["①","②","③","④","⑤"][obSeq] ?? `${obSeq+1}`;
+        const status = ob.tested ? " ✓" : ob.mitigated ? " ✗" : "";
+        const score  = ob.score != null ? ` ${ob.score}` : "";
+        const label  = `${num} ${isBullish ? "Bull" : "Bear"} OB${score}${status}`;
+        ctx.font = "bold 9.5px Inter, sans-serif";
         const lm = ctx.measureText(label);
-        const pillX = obX + 6;
+        const pillX = obX + 8;
         const pillY = y + 3;
-        ctx.fillStyle = isBullish ? "rgba(34, 197, 94, 0.15)" : "rgba(239, 68, 68, 0.15)";
-        ctx.fillRect(pillX - 2, pillY - 1, lm.width + 4, 12);
-        ctx.fillStyle = isBullish ? "#22c55e" : "#ef4444";
-        ctx.fillText(label, pillX, pillY + 9);
-      }
+
+        ctx.fillStyle = "rgba(10,14,23,0.72)";
+        ctx.fillRect(pillX - 2, pillY, lm.width + 6, 13);
+        ctx.fillStyle = borderColor;
+        ctx.fillText(label, pillX + 1, pillY + 10);
+
+        // Price labels on right axis
+        ctx.font = "8px Inter, sans-serif";
+        ctx.fillStyle = borderColor;
+        ctx.fillText(zoneHigh.toFixed(1), chartW - 52, y - 2);
+        ctx.fillText(zoneLow.toFixed(1),  chartW - 52, y + h + 9);
+      });
     }
 
     // ── 4. Draw FVG zones
@@ -607,20 +708,23 @@ export default function OrderBlockChartPanel() {
           if (x !== null) fvgX = x;
         }
 
-        // Diagonal hatch pattern fill
-        ctx.fillStyle = isBullish ? FVG_BULL_COLOR : FVG_BEAR_COLOR;
+        // Teal/violet fill for FVG (clearly distinct from gold OB and green/red TP/SL)
+        const fvgFill   = isBullish ? FVG_BULL_COLOR : FVG_BEAR_COLOR;
+        const fvgBorder = isBullish ? FVG_BULL_BORDER : FVG_BEAR_BORDER;
+
+        ctx.fillStyle = fvgFill;
         ctx.fillRect(fvgX, y, chartW - fvgX, h);
 
-        // Draw diagonal lines for hatching effect
-        ctx.strokeStyle = isBullish ? FVG_BULL_BORDER : FVG_BEAR_BORDER;
+        // Diagonal hatch for FVG texture
+        ctx.strokeStyle = fvgBorder;
         ctx.lineWidth = 0.5;
         ctx.setLineDash([]);
         ctx.save();
         ctx.beginPath();
         ctx.rect(fvgX, y, chartW - fvgX, h);
         ctx.clip();
-        const step = 8;
-        for (let lx = fvgX - h; lx < chartW; lx += step) {
+        const fvgStep = 8;
+        for (let lx = fvgX - h; lx < chartW; lx += fvgStep) {
           ctx.beginPath();
           ctx.moveTo(lx, y + h);
           ctx.lineTo(lx + h, y);
@@ -629,15 +733,15 @@ export default function OrderBlockChartPanel() {
         ctx.restore();
 
         // Dashed border
-        ctx.strokeStyle = isBullish ? FVG_BULL_BORDER : FVG_BEAR_BORDER;
-        ctx.lineWidth = 0.7;
+        ctx.strokeStyle = fvgBorder;
+        ctx.lineWidth = 0.8;
         ctx.setLineDash([3, 3]);
         ctx.strokeRect(fvgX, y, chartW - fvgX, h);
         ctx.setLineDash([]);
 
         // FVG label
         ctx.font = "bold 8px Inter, sans-serif";
-        ctx.fillStyle = isBullish ? "rgba(34, 197, 94, 0.85)" : "rgba(239, 68, 68, 0.75)";
+        ctx.fillStyle = fvgBorder;
         ctx.fillText("FVG", fvgX + 4, y + 9);
       }
     }
@@ -747,13 +851,14 @@ export default function OrderBlockChartPanel() {
         ))}
         <div className={styles.separator} />
         <div className={styles.legendRow}>
-          <span><span className={styles.legendDot} style={{ background: "#22c55e" }} />Bull OB</span>
-          <span><span className={styles.legendDot} style={{ background: "#ef4444" }} />Bear OB</span>
+          <span><span className={styles.legendDot} style={{ background: "#eab308" }} />Bull OB</span>
+          <span><span className={styles.legendDot} style={{ background: "#f59e0b" }} />Bear OB</span>
+          <span><span className={styles.legendDot} style={{ background: "#38bdf8" }} />FVG</span>
           <span><span className={styles.legendDot} style={{ background: BOS_COLOR }} />BOS</span>
           <span><span className={styles.legendDot} style={{ background: CHOCH_COLOR }} />CHoCH</span>
           <span><span className={styles.legendDot} style={{ background: "#3b82f6" }} />Swing</span>
-          <span><span className={styles.legendDot} style={{ background: "rgba(34,197,94,0.6)" }} />TP</span>
-          <span><span className={styles.legendDot} style={{ background: "rgba(239,68,68,0.6)" }} />SL</span>
+          <span><span className={styles.legendDot} style={{ background: TP1_COLOR }} />TP①②③</span>
+          <span><span className={styles.legendDot} style={{ background: SL_COLOR }} />SL</span>
         </div>
         <div className={styles.autoRefresh}>1m auto</div>
         <button className={styles.fullscreenBtn} onClick={toggleFullscreen}>
@@ -774,11 +879,11 @@ export default function OrderBlockChartPanel() {
               </button>
             </div>
             <div className={styles.helpBlock}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', marginBottom: 6 }}>Bull OB (Green Zone)</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#eab308', marginBottom: 6 }}>Bull OB (Gold Zone)</div>
               <p className={styles.helpText}>Kurumsal alım bölgesi. Fiyat banda geldiğinde direkt alım yerine önce tutunma, bullish mum veya yukarı yönlü teyit bekle.</p>
             </div>
             <div className={styles.helpBlock}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#ef4444', marginBottom: 6 }}>Bear OB (Red Zone)</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b', marginBottom: 6 }}>Bear OB (Amber Zone)</div>
               <p className={styles.helpText}>Kurumsal satış bölgesi. Fiyat banda dokunduğunda rejection, zayıflama veya aşağı yönlü teyit görmeden satışa atlama.</p>
             </div>
             <div className={styles.helpBlock}>
@@ -794,12 +899,12 @@ export default function OrderBlockChartPanel() {
               <p className={styles.helpText}>Fractal bazlı swing noktaları. Mavi kesikli çizgiler olarak gösterilir. Swing aralığı TP/SL hesaplamasının temelidir.</p>
             </div>
             <div className={styles.helpBlock}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', marginBottom: 6 }}>TP Zone (Green Area)</div>
-              <p className={styles.helpText}>Swing aralığının %50-%100 projeksiyonu. Yeşil alan beklenen hedef bölgesidir.</p>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', marginBottom: 6 }}>① TP1 · ② TP2 · ③ TP3 (Green Lines)</div>
+              <p className={styles.helpText}>Sembol bazlı Fibonacci projeksiyonları. NASDAQ: 1.618x–2.0x, Gold: 1.618x–2.618x. TP3 kesikli çizgidir (uzatma hedefi).</p>
             </div>
             <div className={styles.helpBlock}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#ef4444', marginBottom: 6 }}>SL Zone (Red Area)</div>
-              <p className={styles.helpText}>Stop-loss bölgesi. Swing Low/High altı/üstü + ATR x 0.5 marjin ile hesaplanır.</p>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#ef4444', marginBottom: 6 }}>⊗ SL (Red Line)</div>
+              <p className={styles.helpText}>Sembol bazlı ATR marjini: NASDAQ 1.0×ATR, Gold 0.5×ATR, Oil 1.2×ATR. Kalın kırmızı çizgi olarak gösterilir.</p>
             </div>
             <div className={styles.helpFooter}>Temas tek başına giriş değildir; fiyatın bölgede nasıl davrandığını beklemek daha güvenli senaryodur. TP/SL alanları swing bazlı projeksiyondur.</div>
           </div>
@@ -859,12 +964,19 @@ export default function OrderBlockChartPanel() {
         <div className={styles.statItem}>
           FVG: <span className={styles.statValue}>{fvgCount}</span>
         </div>
-        {(obData as any)?.projection ? (
-          <div className={styles.statItem} style={{ color: (obData as any).projection.direction === "bullish" ? "#22c55e" : "#ef4444" }}>
-            {(obData as any).projection.direction === "bullish" ? "\u25B2" : "\u25BC"}{" "}
-            TP1: {(obData as any).projection.tp1.toFixed(1)} | SL: {(obData as any).projection.stop_loss.toFixed(1)} | Range: {(obData as any).projection.swing_range.toFixed(0)}pts
-          </div>
-        ) : null}
+        {(obData as any)?.projection ? (() => {
+          const p = (obData as any).projection;
+          const isBull = p.direction === "bullish";
+          return (
+            <div className={styles.statItem} style={{ color: isBull ? "#22c55e" : "#ef4444", gap: 6, display: "flex", flexWrap: "wrap" }}>
+              <span style={{ color: "#ef4444", fontWeight: 700 }}>⊗ SL {p.stop_loss.toFixed(1)}</span>
+              <span style={{ color: "#22c55e" }}>① {p.tp1.toFixed(1)}</span>
+              <span style={{ color: "#16a34a" }}>② {p.tp2.toFixed(1)}</span>
+              <span style={{ color: "#15803d" }}>③ {p.tp3.toFixed(1)}</span>
+              <span style={{ color: "#facc15", marginLeft: 4 }}>Range {p.swing_range.toFixed(0)}pts · {p.confidence}</span>
+            </div>
+          );
+        })() : null}
         {signal?.reasons?.length ? (
           <div className={styles.statItem} style={{ marginLeft: "auto" }}>
             {signal.reasons.slice(0, 3).join(" \u00B7 ")}
