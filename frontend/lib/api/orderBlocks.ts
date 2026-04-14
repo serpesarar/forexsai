@@ -33,6 +33,26 @@ export type OrderBlockCombinedSignal = {
   reasons: string[];
 };
 
+export type SwingPoint = {
+  index: number;
+  price: number;
+  type: "high" | "low";
+};
+
+export type TPSLProjection = {
+  direction: "bullish" | "bearish";
+  entry_zone_low: number;
+  entry_zone_high: number;
+  stop_loss: number;
+  tp1: number;
+  tp2: number;
+  tp3: number;
+  swing_low: number;
+  swing_high: number;
+  swing_range: number;
+  confidence: "high" | "medium" | "low";
+};
+
 export type OrderBlockDetectResponse = {
   symbol: string;
   timeframe: string;
@@ -46,6 +66,8 @@ export type OrderBlockDetectResponse = {
   choch_list?: Array<Record<string, unknown>>;
   bos_list?: Array<Record<string, unknown>>;
   fvg_list?: Array<Record<string, unknown>>;
+  swing_points?: SwingPoint[];
+  projection?: TPSLProjection | null;
   trend?: string;
   support_resistance?: Record<string, unknown>;
   timestamp?: string;

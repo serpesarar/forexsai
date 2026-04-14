@@ -141,13 +141,46 @@ class OrderBlock:
 
 
 @dataclass
+class TPSLProjection:
+    """TP/SL projection based on swing range"""
+    direction: str  # "bullish" or "bearish"
+    entry_zone_low: float
+    entry_zone_high: float
+    stop_loss: float
+    tp1: float  # 50% of swing range
+    tp2: float  # 100% of swing range
+    tp3: float  # 161.8% of swing range (Fibonacci extension)
+    swing_low: float
+    swing_high: float
+    swing_range: float
+    confidence: str  # "high", "medium", "low"
+
+    def to_dict(self):
+        return {
+            "direction": self.direction,
+            "entry_zone_low": round(self.entry_zone_low, 2),
+            "entry_zone_high": round(self.entry_zone_high, 2),
+            "stop_loss": round(self.stop_loss, 2),
+            "tp1": round(self.tp1, 2),
+            "tp2": round(self.tp2, 2),
+            "tp3": round(self.tp3, 2),
+            "swing_low": round(self.swing_low, 2),
+            "swing_high": round(self.swing_high, 2),
+            "swing_range": round(self.swing_range, 2),
+            "confidence": self.confidence,
+        }
+
+
+@dataclass
 class MarketStructure:
     """Complete market structure analysis"""
     choch_list: List[CHoCH]
     bos_list: List[BOS]
     fvg_list: List[FVG]
     ob_list: List[OrderBlock]
+    swing_list: List[SwingPoint]
     trend: str  # "bullish", "bearish", "ranging"
+    projection: Optional[TPSLProjection] = None
     
     def to_dict(self):
         return {
@@ -155,7 +188,12 @@ class MarketStructure:
             "bos": [b.to_dict() for b in self.bos_list[-3:]],
             "fvg": [f.to_dict() for f in self.fvg_list[-5:]],
             "order_blocks": [ob.to_dict() for ob in self.ob_list[:5]],
+            "swing_points": [
+                {"index": s.index, "price": round(s.price, 2), "type": s.type}
+                for s in self.swing_list[-20:]
+            ],
             "trend": self.trend,
+            "projection": self.projection.to_dict() if self.projection else None,
             "counts": {
                 "choch": len(self.choch_list),
                 "bos": len(self.bos_list),
@@ -169,7 +207,7 @@ class SwingDetector:
     """Swing Point Detection using Fractals"""
     
     @staticmethod
-    def detect(candles: List[Candle], period: int = 2) -> List[SwingPoint]:
+    def detect(candles: List[Candle], period: int = 3) -> List[SwingPoint]:
         if len(candles) < period * 2 + 1:
             return []
         
@@ -305,12 +343,17 @@ class BOSDetector:
         
         bos_list = []
         
+        # Calculate ATR for minimum displacement filter
+        atr = BOSDetector._calculate_atr(candles, 14)
+        min_displacement = atr * 0.15  # BOS must break by at least 15% of ATR
+        
         highs = [s for s in swings if s.type == "high"]
         lows = [s for s in swings if s.type == "low"]
         
         # Bullish BOS: Consecutive higher highs in an uptrend context
         for i in range(1, len(highs)):
-            if highs[i].price > highs[i-1].price:
+            displacement = highs[i].price - highs[i-1].price
+            if displacement > min_displacement:
                 candle = candles[highs[i].index]
                 # Close must confirm break above previous swing high
                 confirmation = candle.close > highs[i-1].price
@@ -332,7 +375,8 @@ class BOSDetector:
         
         # Bearish BOS: Consecutive lower lows in a downtrend context
         for i in range(1, len(lows)):
-            if lows[i].price < lows[i-1].price:
+            displacement = lows[i-1].price - lows[i].price
+            if displacement > min_displacement:
                 candle = candles[lows[i].index]
                 confirmation = candle.close < lows[i-1].price
                 
@@ -352,6 +396,18 @@ class BOSDetector:
                     ))
         
         return bos_list
+    
+    @staticmethod
+    def _calculate_atr(candles: List[Candle], period: int) -> float:
+        if len(candles) < period + 1:
+            return 1.0
+        ranges = []
+        for i in range(1, len(candles)):
+            high = candles[i].high
+            low = candles[i].low
+            prev_close = candles[i-1].close
+            ranges.append(max(high - low, abs(high - prev_close), abs(low - prev_close)))
+        return float(np.mean(ranges[-period:]))
 
 
 class FVGDetector:
@@ -372,7 +428,7 @@ class FVGDetector:
         
         # Calculate ATR for minimum gap size filter
         atr = FVGDetector._calculate_atr(candles, 14)
-        min_gap = atr * 0.1  # Gap must be at least 10% of ATR
+        min_gap = atr * 0.25  # Gap must be at least 25% of ATR (filters noise)
         
         for i in range(2, len(candles)):
             c_prev2 = candles[i-2]
@@ -567,9 +623,9 @@ class MarketStructureAnalyzer:
     """Main analyzer combining all detection algorithms"""
     
     @staticmethod
-    def analyze(candles: List[Candle]) -> MarketStructure:
-        # Step 1: Detect swing points
-        swings = SwingDetector.detect(candles, period=2)
+    def analyze(candles: List[Candle], swing_period: int = 3) -> MarketStructure:
+        # Step 1: Detect swing points (period=3 reduces noise on intraday)
+        swings = SwingDetector.detect(candles, period=swing_period)
         
         # Step 2: Run independent detection algorithms
         choch_list = CHoCHDetector.detect(candles, swings)
@@ -580,12 +636,19 @@ class MarketStructureAnalyzer:
         # Step 3: Determine trend
         trend = MarketStructureAnalyzer._determine_trend(candles, swings)
         
+        # Step 4: Calculate TP/SL projection based on swing range and OB/FVG
+        projection = MarketStructureAnalyzer._calculate_projection(
+            candles, swings, ob_list, fvg_list, trend
+        )
+        
         return MarketStructure(
             choch_list=choch_list,
             bos_list=bos_list,
             fvg_list=fvg_list,
             ob_list=ob_list,
-            trend=trend
+            swing_list=swings,
+            trend=trend,
+            projection=projection,
         )
     
     @staticmethod
@@ -623,8 +686,111 @@ class MarketStructureAnalyzer:
         return "ranging"
 
 
+    @staticmethod
+    def _calculate_projection(
+        candles: List[Candle],
+        swings: List[SwingPoint],
+        ob_list: List[OrderBlock],
+        fvg_list: List[FVG],
+        trend: str,
+    ) -> Optional[TPSLProjection]:
+        """Calculate TP/SL projection based on swing range.
+        
+        Logic (like reference images):
+        - Find the most recent significant Swing High and Swing Low
+        - For bullish: entry = nearest bullish OB zone, SL = below swing low,
+          TP = 50%/100%/161.8% of swing range projected above swing high
+        - For bearish: mirror logic
+        """
+        if len(swings) < 4 or not candles:
+            return None
+        
+        current_price = candles[-1].close
+        
+        # Get recent swing highs and lows
+        recent_highs = [s for s in swings if s.type == "high"]
+        recent_lows = [s for s in swings if s.type == "low"]
+        
+        if not recent_highs or not recent_lows:
+            return None
+        
+        # Use the most recent significant swing high and low
+        swing_high = max(recent_highs[-4:], key=lambda s: s.price)
+        swing_low = min(recent_lows[-4:], key=lambda s: s.price)
+        swing_range = swing_high.price - swing_low.price
+        
+        if swing_range <= 0:
+            return None
+        
+        # ATR for SL margin
+        atr = FVGDetector._calculate_atr(candles, 14)
+        sl_margin = atr * 0.5
+        
+        # Determine confidence based on confirmations
+        confirmations = 0
+        if ob_list:
+            confirmations += 1
+        if fvg_list:
+            confirmations += 1
+        if trend != "ranging":
+            confirmations += 1
+        confidence = "high" if confirmations >= 3 else "medium" if confirmations >= 2 else "low"
+        
+        if trend == "bullish" or (trend == "ranging" and current_price < (swing_high.price + swing_low.price) / 2):
+            # Bullish projection: TP above swing high
+            # Entry zone = nearest bullish OB or swing low area
+            bull_obs = [ob for ob in ob_list if ob.type == "bullish"]
+            if bull_obs:
+                best_ob = bull_obs[0]
+                entry_low = best_ob.zone_low
+                entry_high = best_ob.zone_high
+            else:
+                entry_low = swing_low.price
+                entry_high = swing_low.price + swing_range * 0.1
+            
+            return TPSLProjection(
+                direction="bullish",
+                entry_zone_low=entry_low,
+                entry_zone_high=entry_high,
+                stop_loss=swing_low.price - sl_margin,
+                tp1=swing_high.price,
+                tp2=swing_high.price + swing_range * 0.5,
+                tp3=swing_high.price + swing_range * 0.618,
+                swing_low=swing_low.price,
+                swing_high=swing_high.price,
+                swing_range=swing_range,
+                confidence=confidence,
+            )
+        elif trend == "bearish" or (trend == "ranging" and current_price > (swing_high.price + swing_low.price) / 2):
+            # Bearish projection: TP below swing low
+            bear_obs = [ob for ob in ob_list if ob.type == "bearish"]
+            if bear_obs:
+                best_ob = bear_obs[0]
+                entry_low = best_ob.zone_low
+                entry_high = best_ob.zone_high
+            else:
+                entry_low = swing_high.price - swing_range * 0.1
+                entry_high = swing_high.price
+            
+            return TPSLProjection(
+                direction="bearish",
+                entry_zone_low=entry_low,
+                entry_zone_high=entry_high,
+                stop_loss=swing_high.price + sl_margin,
+                tp1=swing_low.price,
+                tp2=swing_low.price - swing_range * 0.5,
+                tp3=swing_low.price - swing_range * 0.618,
+                swing_low=swing_low.price,
+                swing_high=swing_high.price,
+                swing_range=swing_range,
+                confidence=confidence,
+            )
+        
+        return None
+
+
 # Convenience function
-def detect_all(candles: List[Candle]) -> Dict:
+def detect_all(candles: List[Candle], swing_period: int = 3) -> Dict:
     """Main entry point - detects all market structures"""
-    structure = MarketStructureAnalyzer.analyze(candles)
+    structure = MarketStructureAnalyzer.analyze(candles, swing_period=swing_period)
     return structure.to_dict()

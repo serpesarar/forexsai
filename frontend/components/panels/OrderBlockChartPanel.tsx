@@ -28,15 +28,25 @@ const SYMBOLS = [
 const TIMEFRAMES = ["5m", "15m", "1h", "4h"] as const;
 type TF = (typeof TIMEFRAMES)[number];
 
-const BULL_HIGHLIGHT = "#facc15";
-const OB_BULL_COLOR = "rgba(250, 204, 21, 0.16)";
-const OB_BULL_BORDER = "rgba(250, 204, 21, 0.64)";
-const OB_BEAR_COLOR = "rgba(239, 83, 80, 0.18)";
-const OB_BEAR_BORDER = "rgba(239, 83, 80, 0.6)";
-const FVG_BULL_COLOR = "rgba(250, 204, 21, 0.1)";
-const FVG_BEAR_COLOR = "rgba(239, 83, 80, 0.08)";
-const SR_SUPPORT_COLOR = BULL_HIGHLIGHT;
-const SR_RESISTANCE_COLOR = "#ef5350";
+// ── Professional SMC Color Palette ──
+const OB_BULL_COLOR = "rgba(34, 197, 94, 0.18)";
+const OB_BULL_BORDER = "rgba(34, 197, 94, 0.7)";
+const OB_BEAR_COLOR = "rgba(239, 68, 68, 0.18)";
+const OB_BEAR_BORDER = "rgba(239, 68, 68, 0.65)";
+const FVG_BULL_COLOR = "rgba(34, 197, 94, 0.12)";
+const FVG_BULL_BORDER = "rgba(34, 197, 94, 0.45)";
+const FVG_BEAR_COLOR = "rgba(239, 68, 68, 0.10)";
+const FVG_BEAR_BORDER = "rgba(239, 68, 68, 0.40)";
+const TP_ZONE_COLOR = "rgba(34, 197, 94, 0.14)";
+const TP_ZONE_BORDER = "rgba(34, 197, 94, 0.6)";
+const SL_ZONE_COLOR = "rgba(239, 68, 68, 0.14)";
+const SL_ZONE_BORDER = "rgba(239, 68, 68, 0.55)";
+const SWING_LINE_COLOR = "rgba(59, 130, 246, 0.7)";
+const SWING_LABEL_COLOR = "#3b82f6";
+const BOS_COLOR = "#facc15";
+const CHOCH_COLOR = "#f97316";
+const SR_SUPPORT_COLOR = "rgba(34, 197, 94, 0.6)";
+const SR_RESISTANCE_COLOR = "rgba(239, 68, 68, 0.55)";
 
 interface CandleData {
   time: number;
@@ -242,7 +252,7 @@ export default function OrderBlockChartPanel() {
           markers.push({
             time: candles[idx].time as Time,
             position: isBullish ? "belowBar" : "aboveBar",
-            color: isBullish ? BULL_HIGHLIGHT : "#ef5350",
+            color: CHOCH_COLOR,
             shape: isBullish ? "arrowUp" : "arrowDown",
             text: `CHoCH`,
           });
@@ -258,7 +268,7 @@ export default function OrderBlockChartPanel() {
           markers.push({
             time: candles[idx].time as Time,
             position: isBullish ? "belowBar" : "aboveBar",
-            color: isBullish ? BULL_HIGHLIGHT : "#ff8a65",
+            color: BOS_COLOR,
             shape: "circle",
             text: `BOS`,
           });
@@ -270,7 +280,7 @@ export default function OrderBlockChartPanel() {
     markers.sort((a, b) => (a.time as number) - (b.time as number));
     candleSeriesRef.current.setMarkers(markers);
 
-    // S/R price lines — remove old ones first
+    // S/R price lines — remove old ones first, then add clean limited set
     for (const pl of priceLinesRef.current) {
       try { candleSeriesRef.current.removePriceLine(pl); } catch { /* ignore */ }
     }
@@ -278,16 +288,22 @@ export default function OrderBlockChartPanel() {
 
     if (obData?.support_resistance) {
       const sr = obData.support_resistance as any;
-      const levels = sr?.all_levels || [];
-      for (const level of levels) {
+      const levels = (sr?.all_levels || []) as any[];
+      // Only show top 2 support + 2 resistance (nearest) to avoid clutter
+      const supports = levels.filter((l: any) => l.type === "support").slice(0, 2);
+      const resistances = levels.filter((l: any) => l.type === "resistance").slice(-2);
+      const filteredLevels = [...supports, ...resistances];
+      for (const level of filteredLevels) {
         try {
+          const isRes = level.type === "resistance";
+          const touches = level.touch_count || 1;
           const pl = candleSeriesRef.current.createPriceLine({
             price: level.price,
-            color: level.type === "resistance" ? SR_RESISTANCE_COLOR : SR_SUPPORT_COLOR,
-            lineWidth: 1,
+            color: isRes ? SR_RESISTANCE_COLOR : SR_SUPPORT_COLOR,
+            lineWidth: touches >= 2 ? 2 : 1,
             lineStyle: 2, // dashed
             axisLabelVisible: true,
-            title: level.name || "",
+            title: `${level.name || ""}${touches >= 2 ? " \u2022" + touches : ""}`,
           });
           priceLinesRef.current.push(pl);
         } catch { /* ignore */ }
@@ -298,7 +314,7 @@ export default function OrderBlockChartPanel() {
     setOverlayVersion((v) => v + 1);
   }, [candles, obData]);
 
-  // ── Canvas overlay for OB zones and FVG zones
+  // ── Canvas overlay: OB zones, FVG zones, swing lines, TP/SL projection, BOS/ChoCH lines
   const drawOverlay = useCallback(() => {
     const chart = chartRef.current;
     const series = candleSeriesRef.current;
@@ -318,19 +334,15 @@ export default function OrderBlockChartPanel() {
 
     const timeScale = chart.timeScale();
 
-    // Helper: time → x pixel
     const timeToX = (time: number): number | null => {
       const coord = timeScale.timeToCoordinate(time as Time);
       return coord !== null ? coord : null;
     };
-
-    // Helper: price → y pixel
     const priceToY = (price: number): number | null => {
       const coord = series.priceToCoordinate(price);
       return coord !== null ? coord : null;
     };
 
-    // Get visible time range for clipping
     const visibleRange = timeScale.getVisibleLogicalRange();
     if (!visibleRange) return;
 
@@ -345,8 +357,170 @@ export default function OrderBlockChartPanel() {
     const xLeft = timeToX(leftTime);
     const xRight = timeToX(rightTime);
     if (xLeft === null || xRight === null) return;
+    const chartW = chartSize.width;
 
-    // ── Draw OB zones
+    // ── 1. Draw Swing High/Low horizontal lines (blue)
+    const swingPoints = (obData as any)?.swing_points as any[] | undefined;
+    if (swingPoints?.length) {
+      // Find most recent significant swing high and low
+      const swingHighs = swingPoints.filter((s: any) => s.type === "high");
+      const swingLows = swingPoints.filter((s: any) => s.type === "low");
+
+      const drawSwingLine = (sw: any, label: string) => {
+        const yPos = priceToY(sw.price);
+        if (yPos === null) return;
+
+        let startX = xLeft;
+        if (sw.index >= 0 && sw.index < candles.length) {
+          const x = timeToX(candles[sw.index].time);
+          if (x !== null) startX = x;
+        }
+
+        // Dashed blue line
+        ctx.strokeStyle = SWING_LINE_COLOR;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.moveTo(startX, yPos);
+        ctx.lineTo(chartW, yPos);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Label with background
+        ctx.font = "bold 9px Inter, sans-serif";
+        const text = `${label} ${sw.price.toFixed(1)}`;
+        const tm = ctx.measureText(text);
+        const lx = chartW - tm.width - 8;
+        const ly = yPos - 4;
+        ctx.fillStyle = "rgba(59, 130, 246, 0.15)";
+        ctx.fillRect(lx - 3, ly - 9, tm.width + 6, 12);
+        ctx.fillStyle = SWING_LABEL_COLOR;
+        ctx.fillText(text, lx, ly);
+      };
+
+      // Draw last 2 swing highs and lows
+      for (const sh of swingHighs.slice(-2)) drawSwingLine(sh, "SH");
+      for (const sl of swingLows.slice(-2)) drawSwingLine(sl, "SL");
+    }
+
+    // ── 2. Draw TP/SL projection zones (green/red areas like reference images)
+    const projection = (obData as any)?.projection as any | undefined;
+    if (projection) {
+      const isBullish = projection.direction === "bullish";
+
+      // TP zone (green)
+      const tp1Y = priceToY(projection.tp1);
+      const tp2Y = priceToY(projection.tp2);
+      if (tp1Y !== null && tp2Y !== null) {
+        const tpTop = Math.min(tp1Y, tp2Y);
+        const tpH = Math.abs(tp2Y - tp1Y);
+        if (tpH > 1) {
+          // Green gradient fill
+          const tpGrad = ctx.createLinearGradient(0, tpTop, 0, tpTop + tpH);
+          tpGrad.addColorStop(0, isBullish ? "rgba(34, 197, 94, 0.22)" : "rgba(34, 197, 94, 0.06)");
+          tpGrad.addColorStop(1, isBullish ? "rgba(34, 197, 94, 0.06)" : "rgba(34, 197, 94, 0.22)");
+          ctx.fillStyle = tpGrad;
+          ctx.fillRect(xLeft, tpTop, chartW - xLeft, tpH);
+
+          // Top/bottom border
+          ctx.strokeStyle = TP_ZONE_BORDER;
+          ctx.lineWidth = 1;
+          ctx.setLineDash([4, 3]);
+          ctx.beginPath();
+          ctx.moveTo(xLeft, tpTop);
+          ctx.lineTo(chartW, tpTop);
+          ctx.moveTo(xLeft, tpTop + tpH);
+          ctx.lineTo(chartW, tpTop + tpH);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // TP label
+          ctx.font = "bold 10px Inter, sans-serif";
+          ctx.fillStyle = "rgba(34, 197, 94, 0.9)";
+          ctx.fillText("TP ZONE", xLeft + 6, tpTop + 13);
+          ctx.font = "9px Inter, sans-serif";
+          ctx.fillStyle = "rgba(34, 197, 94, 0.7)";
+          ctx.fillText(`TP1: ${projection.tp1.toFixed(1)}  TP2: ${projection.tp2.toFixed(1)}`, xLeft + 6, tpTop + 25);
+        }
+      }
+
+      // SL zone (red)
+      const slY = priceToY(projection.stop_loss);
+      const entryEdgeY = priceToY(isBullish ? projection.entry_zone_low : projection.entry_zone_high);
+      if (slY !== null && entryEdgeY !== null) {
+        const slTop = Math.min(slY, entryEdgeY);
+        const slH = Math.abs(slY - entryEdgeY);
+        if (slH > 1) {
+          const slGrad = ctx.createLinearGradient(0, slTop, 0, slTop + slH);
+          slGrad.addColorStop(0, isBullish ? "rgba(239, 68, 68, 0.06)" : "rgba(239, 68, 68, 0.22)");
+          slGrad.addColorStop(1, isBullish ? "rgba(239, 68, 68, 0.22)" : "rgba(239, 68, 68, 0.06)");
+          ctx.fillStyle = slGrad;
+          ctx.fillRect(xLeft, slTop, chartW - xLeft, slH);
+
+          ctx.strokeStyle = SL_ZONE_BORDER;
+          ctx.lineWidth = 1;
+          ctx.setLineDash([4, 3]);
+          ctx.beginPath();
+          ctx.moveTo(xLeft, slTop + slH);
+          ctx.lineTo(chartW, slTop + slH);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.font = "bold 10px Inter, sans-serif";
+          ctx.fillStyle = "rgba(239, 68, 68, 0.9)";
+          ctx.fillText("SL ZONE", xLeft + 6, slTop + slH - 5);
+          ctx.font = "9px Inter, sans-serif";
+          ctx.fillStyle = "rgba(239, 68, 68, 0.7)";
+          ctx.fillText(`SL: ${projection.stop_loss.toFixed(1)}`, xLeft + 6, slTop + slH - 17);
+        }
+      }
+
+      // 100% swing range measurement arrow (vertical arrow with label)
+      const swHighY = priceToY(projection.swing_high);
+      const swLowY = priceToY(projection.swing_low);
+      if (swHighY !== null && swLowY !== null) {
+        const arrowX = chartW - 35;
+        const topY = Math.min(swHighY, swLowY);
+        const botY = Math.max(swHighY, swLowY);
+        const midY = (topY + botY) / 2;
+
+        // Vertical line
+        ctx.strokeStyle = "rgba(250, 204, 21, 0.7)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(arrowX, topY + 4);
+        ctx.lineTo(arrowX, botY - 4);
+        ctx.stroke();
+
+        // Arrow tips
+        ctx.fillStyle = "rgba(250, 204, 21, 0.9)";
+        // Up arrow
+        ctx.beginPath();
+        ctx.moveTo(arrowX, topY);
+        ctx.lineTo(arrowX - 4, topY + 6);
+        ctx.lineTo(arrowX + 4, topY + 6);
+        ctx.fill();
+        // Down arrow
+        ctx.beginPath();
+        ctx.moveTo(arrowX, botY);
+        ctx.lineTo(arrowX - 4, botY - 6);
+        ctx.lineTo(arrowX + 4, botY - 6);
+        ctx.fill();
+
+        // "100%" label
+        ctx.font = "bold 9px Inter, sans-serif";
+        ctx.fillStyle = "rgba(250, 204, 21, 0.95)";
+        const rangeText = `${projection.swing_range.toFixed(0)} pts`;
+        const pctText = "100%";
+        ctx.fillText(pctText, arrowX - 14, midY - 2);
+        ctx.font = "8px Inter, sans-serif";
+        ctx.fillStyle = "rgba(250, 204, 21, 0.7)";
+        ctx.fillText(rangeText, arrowX - 18, midY + 10);
+      }
+    }
+
+    // ── 3. Draw OB zones (green for bullish, red for bearish)
     if (obData?.order_blocks) {
       for (const ob of obData.order_blocks as any[]) {
         const zoneLow = ob.zone_low;
@@ -362,7 +536,6 @@ export default function OrderBlockChartPanel() {
         const h = Math.abs(yLow - yHigh);
         if (h < 1) continue;
 
-        // OB rectangle spans from OB index to right edge
         const obIdx = ob.index || 0;
         let obX = xLeft;
         if (obIdx >= 0 && obIdx < candles.length) {
@@ -370,25 +543,47 @@ export default function OrderBlockChartPanel() {
           if (x !== null) obX = x;
         }
 
-        // Fill
-        ctx.fillStyle = isBullish ? OB_BULL_COLOR : OB_BEAR_COLOR;
-        ctx.fillRect(obX, y, chartSize.width - obX, h);
+        // Gradient fill
+        const grad = ctx.createLinearGradient(obX, y, chartW, y);
+        if (isBullish) {
+          grad.addColorStop(0, "rgba(34, 197, 94, 0.25)");
+          grad.addColorStop(1, "rgba(34, 197, 94, 0.05)");
+        } else {
+          grad.addColorStop(0, "rgba(239, 68, 68, 0.25)");
+          grad.addColorStop(1, "rgba(239, 68, 68, 0.05)");
+        }
+        ctx.fillStyle = grad;
+        ctx.fillRect(obX, y, chartW - obX, h);
 
-        // Border
+        // Left accent border
+        ctx.fillStyle = isBullish ? OB_BULL_BORDER : OB_BEAR_BORDER;
+        ctx.fillRect(obX, y, 3, h);
+
+        // Top/bottom border
         ctx.strokeStyle = isBullish ? OB_BULL_BORDER : OB_BEAR_BORDER;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 0.5;
         ctx.setLineDash([]);
-        ctx.strokeRect(obX, y, chartSize.width - obX, h);
+        ctx.beginPath();
+        ctx.moveTo(obX, y);
+        ctx.lineTo(chartW, y);
+        ctx.moveTo(obX, y + h);
+        ctx.lineTo(chartW, y + h);
+        ctx.stroke();
 
-        // Label
-        ctx.font = "bold 9px monospace";
-        ctx.fillStyle = isBullish ? BULL_HIGHLIGHT : "#ef5350";
-        const label = `${isBullish ? "Bull" : "Bear"} OB (${ob.score || 0})`;
-        ctx.fillText(label, obX + 4, y + 10);
+        // Label with pill background
+        ctx.font = "bold 9px Inter, sans-serif";
+        const label = `${isBullish ? "\u25B2 Bull" : "\u25BC Bear"} OB (${ob.score || 0})`;
+        const lm = ctx.measureText(label);
+        const pillX = obX + 6;
+        const pillY = y + 3;
+        ctx.fillStyle = isBullish ? "rgba(34, 197, 94, 0.15)" : "rgba(239, 68, 68, 0.15)";
+        ctx.fillRect(pillX - 2, pillY - 1, lm.width + 4, 12);
+        ctx.fillStyle = isBullish ? "#22c55e" : "#ef4444";
+        ctx.fillText(label, pillX, pillY + 9);
       }
     }
 
-    // ── Draw FVG zones
+    // ── 4. Draw FVG zones
     if (obData?.fvg_list) {
       for (const fvg of obData.fvg_list as any[]) {
         if (fvg.filled) continue;
@@ -412,23 +607,99 @@ export default function OrderBlockChartPanel() {
           if (x !== null) fvgX = x;
         }
 
-        // Semi-transparent fill with diagonal hatching
+        // Diagonal hatch pattern fill
         ctx.fillStyle = isBullish ? FVG_BULL_COLOR : FVG_BEAR_COLOR;
-        ctx.fillRect(fvgX, y, chartSize.width - fvgX, h);
+        ctx.fillRect(fvgX, y, chartW - fvgX, h);
+
+        // Draw diagonal lines for hatching effect
+        ctx.strokeStyle = isBullish ? FVG_BULL_BORDER : FVG_BEAR_BORDER;
+        ctx.lineWidth = 0.5;
+        ctx.setLineDash([]);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(fvgX, y, chartW - fvgX, h);
+        ctx.clip();
+        const step = 8;
+        for (let lx = fvgX - h; lx < chartW; lx += step) {
+          ctx.beginPath();
+          ctx.moveTo(lx, y + h);
+          ctx.lineTo(lx + h, y);
+          ctx.stroke();
+        }
+        ctx.restore();
 
         // Dashed border
-        ctx.strokeStyle = isBullish ? "rgba(250,204,21,0.36)" : "rgba(239,83,80,0.3)";
-        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = isBullish ? FVG_BULL_BORDER : FVG_BEAR_BORDER;
+        ctx.lineWidth = 0.7;
         ctx.setLineDash([3, 3]);
-        ctx.strokeRect(fvgX, y, chartSize.width - fvgX, h);
+        ctx.strokeRect(fvgX, y, chartW - fvgX, h);
         ctx.setLineDash([]);
 
         // FVG label
-        ctx.font = "8px monospace";
-        ctx.fillStyle = isBullish ? "rgba(250,204,21,0.72)" : "rgba(239,83,80,0.5)";
-        ctx.fillText("FVG", fvgX + 3, y + 9);
+        ctx.font = "bold 8px Inter, sans-serif";
+        ctx.fillStyle = isBullish ? "rgba(34, 197, 94, 0.85)" : "rgba(239, 68, 68, 0.75)";
+        ctx.fillText("FVG", fvgX + 4, y + 9);
       }
     }
+
+    // ── 5. Draw BOS/ChoCH as horizontal dashed lines at the broken level
+    if (obData?.bos_list) {
+      for (const b of obData.bos_list as any[]) {
+        const level = b.broken_level;
+        if (!level) continue;
+        const yPos = priceToY(level);
+        if (yPos === null) continue;
+
+        let startX = xLeft;
+        if (b.index >= 0 && b.index < candles.length) {
+          const x = timeToX(candles[b.index].time);
+          if (x !== null) startX = Math.max(xLeft, x - 40);
+        }
+
+        ctx.strokeStyle = BOS_COLOR;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 3]);
+        ctx.beginPath();
+        ctx.moveTo(startX, yPos);
+        ctx.lineTo(chartW, yPos);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Label
+        ctx.font = "bold 8px Inter, sans-serif";
+        ctx.fillStyle = BOS_COLOR;
+        ctx.fillText("BOS", startX + 3, yPos - 3);
+      }
+    }
+
+    if (obData?.choch_list) {
+      for (const ch of obData.choch_list as any[]) {
+        const level = ch.broken_level;
+        if (!level) continue;
+        const yPos = priceToY(level);
+        if (yPos === null) continue;
+
+        let startX = xLeft;
+        if (ch.index >= 0 && ch.index < candles.length) {
+          const x = timeToX(candles[ch.index].time);
+          if (x !== null) startX = Math.max(xLeft, x - 40);
+        }
+
+        ctx.strokeStyle = CHOCH_COLOR;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 2]);
+        ctx.beginPath();
+        ctx.moveTo(startX, yPos);
+        ctx.lineTo(chartW, yPos);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.font = "bold 8px Inter, sans-serif";
+        ctx.fillStyle = CHOCH_COLOR;
+        ctx.fillText("CHoCH", startX + 3, yPos - 3);
+      }
+    }
+
   }, [candles, obData, chartSize, overlayVersion]);
 
   useEffect(() => {
@@ -476,10 +747,13 @@ export default function OrderBlockChartPanel() {
         ))}
         <div className={styles.separator} />
         <div className={styles.legendRow}>
-          <span><span className={styles.legendDot} style={{ background: BULL_HIGHLIGHT }} />Bull OB</span>
-          <span><span className={styles.legendDot} style={{ background: "#ef5350" }} />Bear OB</span>
-          <span><span className={styles.legendDot} style={{ background: BULL_HIGHLIGHT }} />BOS</span>
-          <span><span className={styles.legendDot} style={{ background: "#ff8a65" }} />CHoCH</span>
+          <span><span className={styles.legendDot} style={{ background: "#22c55e" }} />Bull OB</span>
+          <span><span className={styles.legendDot} style={{ background: "#ef4444" }} />Bear OB</span>
+          <span><span className={styles.legendDot} style={{ background: BOS_COLOR }} />BOS</span>
+          <span><span className={styles.legendDot} style={{ background: CHOCH_COLOR }} />CHoCH</span>
+          <span><span className={styles.legendDot} style={{ background: "#3b82f6" }} />Swing</span>
+          <span><span className={styles.legendDot} style={{ background: "rgba(34,197,94,0.6)" }} />TP</span>
+          <span><span className={styles.legendDot} style={{ background: "rgba(239,68,68,0.6)" }} />SL</span>
         </div>
         <div className={styles.autoRefresh}>1m auto</div>
         <button className={styles.fullscreenBtn} onClick={toggleFullscreen}>
@@ -500,22 +774,34 @@ export default function OrderBlockChartPanel() {
               </button>
             </div>
             <div className={styles.helpBlock}>
-              <div className={styles.helpLabelBull}>Bull OB</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', marginBottom: 6 }}>Bull OB (Green Zone)</div>
               <p className={styles.helpText}>Kurumsal alım bölgesi. Fiyat banda geldiğinde direkt alım yerine önce tutunma, bullish mum veya yukarı yönlü teyit bekle.</p>
             </div>
             <div className={styles.helpBlock}>
-              <div className={styles.helpLabelBear}>Bear OB</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#ef4444', marginBottom: 6 }}>Bear OB (Red Zone)</div>
               <p className={styles.helpText}>Kurumsal satış bölgesi. Fiyat banda dokunduğunda rejection, zayıflama veya aşağı yönlü teyit görmeden satışa atlama.</p>
             </div>
             <div className={styles.helpBlock}>
               <div className={styles.helpLabelBos}>BOS</div>
-              <p className={styles.helpText}>Break of Structure. Trend devamının teyidi sayılır. Bölge temasından sonra işlem yönünde BOS gelirse senaryo güçlenir.</p>
+              <p className={styles.helpText}>Break of Structure. Trend devamının teyidi sayılır. Minimum ATR x 0.15 deplasman filtresi ile gürültü azaltıldı.</p>
             </div>
             <div className={styles.helpBlock}>
               <div className={styles.helpLabelChoch}>CHoCH</div>
-              <p className={styles.helpText}>Change of Character. İlk dönüş sinyali olabilir. Tek başına giriş yerine CHoCH sonrası ikinci teyit veya BOS beklemek daha güvenlidir.</p>
+              <p className={styles.helpText}>Change of Character. İlk dönüş sinyali. CHoCH sonrası ikinci teyit veya BOS beklemek daha güvenlidir.</p>
             </div>
-            <div className={styles.helpFooter}>Temas tek başına giriş değildir; fiyatın bölgede nasıl davrandığını beklemek daha güvenli senaryodur.</div>
+            <div className={styles.helpBlock}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#3b82f6', marginBottom: 6 }}>Swing High/Low (Blue)</div>
+              <p className={styles.helpText}>Fractal bazlı swing noktaları. Mavi kesikli çizgiler olarak gösterilir. Swing aralığı TP/SL hesaplamasının temelidir.</p>
+            </div>
+            <div className={styles.helpBlock}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', marginBottom: 6 }}>TP Zone (Green Area)</div>
+              <p className={styles.helpText}>Swing aralığının %50-%100 projeksiyonu. Yeşil alan beklenen hedef bölgesidir.</p>
+            </div>
+            <div className={styles.helpBlock}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#ef4444', marginBottom: 6 }}>SL Zone (Red Area)</div>
+              <p className={styles.helpText}>Stop-loss bölgesi. Swing Low/High altı/üstü + ATR x 0.5 marjin ile hesaplanır.</p>
+            </div>
+            <div className={styles.helpFooter}>Temas tek başına giriş değildir; fiyatın bölgede nasıl davrandığını beklemek daha güvenli senaryodur. TP/SL alanları swing bazlı projeksiyondur.</div>
           </div>
         ) : null}
 
@@ -573,9 +859,15 @@ export default function OrderBlockChartPanel() {
         <div className={styles.statItem}>
           FVG: <span className={styles.statValue}>{fvgCount}</span>
         </div>
+        {(obData as any)?.projection ? (
+          <div className={styles.statItem} style={{ color: (obData as any).projection.direction === "bullish" ? "#22c55e" : "#ef4444" }}>
+            {(obData as any).projection.direction === "bullish" ? "\u25B2" : "\u25BC"}{" "}
+            TP1: {(obData as any).projection.tp1.toFixed(1)} | SL: {(obData as any).projection.stop_loss.toFixed(1)} | Range: {(obData as any).projection.swing_range.toFixed(0)}pts
+          </div>
+        ) : null}
         {signal?.reasons?.length ? (
           <div className={styles.statItem} style={{ marginLeft: "auto" }}>
-            {signal.reasons.slice(0, 3).join(" · ")}
+            {signal.reasons.slice(0, 3).join(" \u00B7 ")}
           </div>
         ) : null}
       </div>

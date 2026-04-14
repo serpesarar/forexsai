@@ -501,10 +501,15 @@ class OrderBlockService:
             "bearish_obs": len([ob for ob in structure.ob_list if ob.type == "bearish"]),
             "bullish_obs": len([ob for ob in structure.ob_list if ob.type == "bullish"]),
             "order_blocks": enriched_obs,
-            "structure": structure.to_dict(),  # NEW: Full structure data
+            "structure": structure.to_dict(),  # Full structure data
             "choch_list": [c.to_dict() for c in structure.choch_list],
             "bos_list": [b.to_dict() for b in structure.bos_list],
             "fvg_list": [f.to_dict() for f in structure.fvg_list],
+            "swing_points": [
+                {"index": s.index, "price": round(s.price, 2), "type": s.type}
+                for s in structure.swing_list[-20:]
+            ],
+            "projection": structure.projection.to_dict() if structure.projection else None,
             "active_signals": [],
             "combined_signal": combined_signal,
             "trend": structure.trend,
@@ -994,9 +999,9 @@ class OrderBlockService:
                     bear_score += 8
                     bear_reasons.append("rejection candle")
 
-        # ── 9. DECISION (asymmetric: BUY needs higher conviction) ──
-        bull_threshold = 75
-        bear_threshold = 50
+        # ── 9. DECISION (symmetric thresholds for balanced signals) ──
+        bull_threshold = 60
+        bear_threshold = 60
 
         bull_pass = bull_score >= bull_threshold
         bear_pass = bear_score >= bear_threshold
