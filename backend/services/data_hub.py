@@ -1449,8 +1449,9 @@ async def ingest_candles(
     if canonical_symbol not in TRACKED_SYMBOLS:
         logger.warning("[DataHub] Ignoring candles for untracked symbol %s", symbol)
         return 0
-    if store is None or tf in {"15m", "4h"}:
-        logger.warning("[DataHub] Unsupported direct ingest timeframe %s for %s", timeframe, canonical_symbol)
+    # 15m and 4h are derived-only — never ingested directly
+    if store is None or tf in {"15m", "4h", "20m"}:
+        logger.debug("[DataHub] Derived-only timeframe %s skipped for %s", timeframe, canonical_symbol)
         return 0
 
     normalized_candles = [
@@ -1467,11 +1468,12 @@ async def ingest_candles(
         "1h": FULL_SEED_LIMIT_1H,
         "eod": FULL_SEED_LIMIT_EOD,
     }
+    candle_limit = limit_map.get(tf, FULL_SEED_LIMIT_5M)  # safe fallback — never KeyError
     now_ts = time.time()
 
     with _lock:
         existing = (store.get(canonical_symbol) or {}).get("candles", [])
-        merged = _merge_candles(existing, normalized_candles, limit_map[tf])
+        merged = _merge_candles(existing, normalized_candles, candle_limit)
         store[canonical_symbol] = {"candles": merged, "timestamp": now_ts, "source": source}
 
         if tf == "1m":

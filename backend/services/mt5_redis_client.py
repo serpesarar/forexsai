@@ -170,34 +170,58 @@ async def start_mt5_redis_listener() -> None:
             logger.info("[MT5Redis] Listening pubsub tick=%s, streams mt5:bar:*", tick_channel)
 
             async def _stream_loop():
-                # Start reading from current end of streams
-                streams = {
-                    "mt5:bar:1m": "$",
+                # Start reading from current end of streams.
+                # mt5:bar:1m is optional — it may not exist in all MT5 bridge configs.
+                # We probe for it; if Redis rejects it we silently drop it and continue.
+                core_streams = {
                     "mt5:bar:5m": "$",
                     "mt5:bar:1h": "$",
-                    "mt5:bar:1d": "$"
+                    "mt5:bar:1d": "$",
                 }
+                optional_streams = {"mt5:bar:1m": "$"}
+                streams: Dict[str, str] = {**core_streams, **optional_streams}
+                optional_probed = False  # have we verified optional streams exist?
+
                 while _listener_running:
                     try:
                         result = await _listener_client.xread(streams, count=50, block=1000)
+                        optional_probed = True  # xread succeeded → all current streams are valid
                         if result:
                             for stream_name, messages in result:
                                 for msg_id, msg_data in messages:
-                                    payload_str = msg_data.get("payload")
-                                    if payload_str:
-                                        payload = _decode_payload(payload_str)
-                                        if payload:
-                                            # Derive timeframe from stream name if not present
-                                            tf = stream_name.split(":")[-1]
-                                            if not payload.get("timeframe"):
-                                                payload["timeframe"] = tf
-                                            await _handle_bar(payload)
-                                    # Update offset
-                                    streams[stream_name] = msg_id
+                                    try:
+                                        payload_str = msg_data.get("payload")
+                                        if payload_str:
+                                            payload = _decode_payload(payload_str)
+                                            if payload:
+                                                # Derive timeframe from stream name if not present
+                                                tf = stream_name.split(":")[-1]
+                                                if not payload.get("timeframe"):
+                                                    payload["timeframe"] = tf
+                                                await _handle_bar(payload)
+                                    except Exception as msg_err:
+                                        logger.warning(
+                                            "[MT5Redis] Error handling message from %s: %s",
+                                            stream_name, msg_err,
+                                        )
+                                    finally:
+                                        # Always advance offset so we don't reprocess this message
+                                        streams[stream_name] = msg_id
                     except asyncio.CancelledError:
                         break
                     except Exception as e:
-                        logger.error("[MT5Redis] Stream read error: %s", e)
+                        err_str = str(e)
+                        logger.error("[MT5Redis] Stream read error: %s", err_str)
+                        # If optional streams are causing the failure, drop them and retry
+                        if not optional_probed:
+                            dropped = [k for k in optional_streams if k in streams]
+                            if dropped:
+                                for k in dropped:
+                                    del streams[k]
+                                logger.warning(
+                                    "[MT5Redis] Dropped optional streams %s (may not exist yet)", dropped
+                                )
+                                continue  # retry immediately without sleep
                         await asyncio.sleep(2)
 
             stream_task = asyncio.create_task(_stream_loop())
