@@ -193,6 +193,41 @@ def get_last_candle_time(symbol: str, timeframe: str) -> Optional[str]:
     return None
 
 
+def purge_stale_candles(symbol: Optional[str] = None, max_age_hours: float = 96) -> Dict:
+    """Delete cached candles older than `max_age_hours`.
+
+    If `symbol` is None, purges ALL tracked symbols.
+    Returns a dict with per-symbol/timeframe counts of deleted rows.
+    """
+    from datetime import timedelta
+    db = _get_db()
+    if not db:
+        return {"available": False, "deleted": {}}
+
+    cutoff_dt = datetime.now(timezone.utc) - timedelta(hours=max_age_hours)
+    cutoff_iso = cutoff_dt.isoformat()
+
+    deleted: Dict = {}
+    try:
+        query = db.table("candle_cache").delete().lt("candle_time", cutoff_iso)
+        if symbol:
+            query = query.eq("symbol", symbol)
+        result = query.execute()
+        deleted["rows_deleted"] = len(result.data) if result.data else 0
+        deleted["cutoff"] = cutoff_iso
+        if symbol:
+            deleted["symbol"] = symbol
+        logger.info(
+            "[CandleCache] Purged stale candles (symbol=%s, max_age_hours=%.1f, cutoff=%s, rows=%s)",
+            symbol or "ALL", max_age_hours, cutoff_iso, deleted["rows_deleted"],
+        )
+    except Exception as e:
+        logger.error(f"purge_stale_candles error: {e}")
+        deleted["error"] = str(e)
+
+    return {"available": True, "deleted": deleted}
+
+
 def get_cache_stats() -> Dict:
     """Get cache statistics for monitoring."""
     db = _get_db()

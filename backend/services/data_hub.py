@@ -103,6 +103,17 @@ _last_fetch: Dict[str, float] = {}
 # Hub running flag
 _hub_running = False
 
+# ── Hybrid-mode MT5 freshness thresholds ─────────────────────────────────────
+# If MT5 has pushed data more recently than these thresholds, skip the EODHD
+# poll so that stale EODHD data cannot overwrite correct live MT5 prices/candles.
+MT5_PRICE_FRESHNESS_THRESHOLD = 120    # 2 min — skip EODHD price if MT5 is fresher
+MT5_CANDLES_FRESHNESS_THRESHOLD = 900  # 15 min — skip EODHD candle fetch if MT5 is fresher
+
+# ── Persistent-cache staleness gate ──────────────────────────────────────────
+# If the most recent candle in a Supabase cache is older than this threshold,
+# skip that cache entry entirely (force fresh API seed instead of using stale data).
+MAX_CACHE_AGE_HOURS = 96  # 4 days — covers a long holiday weekend
+
 # ═══════════════════════════════════════════════════════════════
 # CANDLE CLOSE EVENT SYSTEM
 # ═══════════════════════════════════════════════════════════════
@@ -271,6 +282,57 @@ def _entry_age_seconds(entry: Dict[str, Any]) -> Optional[float]:
         return round(max(age, 0.0), 1)
     except Exception:
         return None
+
+
+def _get_latest_candle_age_hours(candles: List[Dict]) -> Optional[float]:
+    """Return how many hours old the most recent candle in `candles` is.
+
+    Candles must be sorted ascending (oldest → newest).  Returns None if the
+    list is empty or the timestamp cannot be parsed.
+    """
+    if not candles:
+        return None
+    latest_ts = candles[-1].get("timestamp", 0)  # milliseconds
+    if not latest_ts:
+        return None
+    try:
+        age_hours = (time.time() - float(latest_ts) / 1000) / 3600
+        return round(max(age_hours, 0.0), 2)
+    except Exception:
+        return None
+
+
+def _mt5_price_is_fresh(symbol: str) -> bool:
+    """Return True when a recent MT5 price exists and is newer than the threshold.
+
+    Used in hybrid mode to prevent EODHD polls from overwriting live MT5 data.
+    """
+    entry = _prices.get(symbol, {})
+    if entry.get("source") != "mt5_redis":
+        return False
+    ts = entry.get("timestamp", 0)
+    if not ts:
+        return False
+    age_seconds = time.time() - float(ts)
+    return age_seconds < MT5_PRICE_FRESHNESS_THRESHOLD
+
+
+def _mt5_candles_are_fresh(symbol: str, timeframe: str) -> bool:
+    """Return True when MT5 has recently written candles for symbol/timeframe.
+
+    Checks the `_last_fetch` stamp set by `ingest_candles` as well as the
+    source tag on the candle store so that EODHD does not overwrite fresh
+    MT5 intraday data in hybrid mode.
+    """
+    tf, store = _get_store_for_timeframe(timeframe)
+    if store is None:
+        return False
+    entry = store.get(symbol, {})
+    source = entry.get("source", "")
+    if "mt5" not in source:
+        return False
+    last_ingest = _last_fetch.get(f"{tf}:{symbol}", 0)
+    return (time.time() - last_ingest) < MT5_CANDLES_FRESHNESS_THRESHOLD
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -861,53 +923,65 @@ async def _pump_cycle():
         seed_key = symbol
         is_seeded = bool(_initial_seed_done.get(seed_key))
 
-        # ── Price (every 30s) ──
+        is_hybrid = get_market_data_source() == "hybrid"
+
+        # ── Price (every 5s) ──
         if allow_upstream_market_fetch and _should_fetch(f"price:{symbol}", PRICE_INTERVAL):
-            price = await _fetch_price_from_api(symbol)
-            if price is not None:
-                with _lock:
-                    _prices[symbol] = {"price": price, "timestamp": now_ts, "source": "eodhd_poll"}
+            # In hybrid mode, skip EODHD poll when MT5 has pushed a fresh price
+            # recently — prevents stale EODHD data from overwriting live MT5 quotes.
+            if is_hybrid and _mt5_price_is_fresh(symbol):
                 _mark_fetched(f"price:{symbol}")
-                try:
-                    from services.ws_manager import manager
-                    await manager.broadcast(symbol, {
-                        "type": "price_update",
-                        "symbol": symbol,
-                        "price": price,
-                        "timestamp": now_ts,
-                    })
-                except Exception as e:
-                    logger.warning(f"[DataHub] Price broadcast failed for {symbol}: {e}")
+                logger.debug("[DataHub] %s price: MT5 fresh — skipping EODHD poll", symbol)
+            else:
+                price = await _fetch_price_from_api(symbol)
+                if price is not None:
+                    with _lock:
+                        _prices[symbol] = {"price": price, "timestamp": now_ts, "source": "eodhd_poll"}
+                    _mark_fetched(f"price:{symbol}")
+                    try:
+                        from services.ws_manager import manager
+                        await manager.broadcast(symbol, {
+                            "type": "price_update",
+                            "symbol": symbol,
+                            "price": price,
+                            "timestamp": now_ts,
+                        })
+                    except Exception as e:
+                        logger.warning(f"[DataHub] Price broadcast failed for {symbol}: {e}")
 
         # ── 5m candles (every 5min) ──
         if allow_upstream_market_fetch and _should_fetch(f"5m:{symbol}", CANDLE_5M_INTERVAL):
-            is_seed = not is_seeded
-
-            if symbol in _1M_ONLY_SYMBOLS:
-                raw_limit = (FULL_SEED_LIMIT_5M * 5) if is_seed else (DELTA_LIMIT_5M * 5)
-                raw_1m = await _fetch_candles_from_api(symbol, "1m", limit=raw_limit)
-                candles = _resample(raw_1m, 5) if raw_1m else []
-                logger.info(f"[DataHub] {symbol}: fetched {len(raw_1m)} 1m → resampled to {len(candles)} 5m candles")
-            else:
-                fetch_limit = FULL_SEED_LIMIT_5M if is_seed else DELTA_LIMIT_5M
-                candles = await _fetch_candles_from_api(symbol, "5m", limit=fetch_limit)
-
-            if candles:
-                with _lock:
-                    existing = (_candles_5m.get(symbol) or {}).get("candles", [])
-                    merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_5M)
-                    _candles_5m[symbol] = {"candles": merged, "timestamp": now_ts, "source": "eodhd_poll"}
-                    _rebuild_derived(symbol)
+            # In hybrid mode, skip EODHD if MT5 has been actively feeding 5m bars.
+            if is_hybrid and _mt5_candles_are_fresh(symbol, "5m"):
                 _mark_fetched(f"5m:{symbol}")
-                _persist_async(symbol, "5m", merged if is_seed else candles)
-                # Fire candle close events for 5m and derived timeframes
-                await _fire_candle_close_events(symbol, "5m", merged)
-                d15 = (_candles_15m.get(symbol) or {}).get("candles", [])
-                if d15:
-                    await _fire_candle_close_events(symbol, "15m", d15)
-                d30 = (_candles_30m.get(symbol) or {}).get("candles", [])
-                if d30:
-                    await _fire_candle_close_events(symbol, "30m", d30)
+                logger.debug("[DataHub] %s 5m: MT5 fresh — skipping EODHD candle fetch", symbol)
+            else:
+                is_seed = not is_seeded
+
+                if symbol in _1M_ONLY_SYMBOLS:
+                    raw_limit = (FULL_SEED_LIMIT_5M * 5) if is_seed else (DELTA_LIMIT_5M * 5)
+                    raw_1m = await _fetch_candles_from_api(symbol, "1m", limit=raw_limit)
+                    candles = _resample(raw_1m, 5) if raw_1m else []
+                    logger.info(f"[DataHub] {symbol}: fetched {len(raw_1m)} 1m → resampled to {len(candles)} 5m candles")
+                else:
+                    fetch_limit = FULL_SEED_LIMIT_5M if is_seed else DELTA_LIMIT_5M
+                    candles = await _fetch_candles_from_api(symbol, "5m", limit=fetch_limit)
+
+                if candles:
+                    with _lock:
+                        existing = (_candles_5m.get(symbol) or {}).get("candles", [])
+                        merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_5M)
+                        _candles_5m[symbol] = {"candles": merged, "timestamp": now_ts, "source": "eodhd_poll"}
+                        _rebuild_derived(symbol)
+                    _mark_fetched(f"5m:{symbol}")
+                    _persist_async(symbol, "5m", merged if is_seed else candles)
+                    await _fire_candle_close_events(symbol, "5m", merged)
+                    d15 = (_candles_15m.get(symbol) or {}).get("candles", [])
+                    if d15:
+                        await _fire_candle_close_events(symbol, "15m", d15)
+                    d30 = (_candles_30m.get(symbol) or {}).get("candles", [])
+                    if d30:
+                        await _fire_candle_close_events(symbol, "30m", d30)
 
         # ── 30m candles (XAUUSD only — direct upstream only in pure eodhd mode) ──
         if allow_upstream_direct_30m_fetch and symbol in _30M_DIRECT_SYMBOLS and _should_fetch(f"30m:{symbol}", CANDLE_30M_INTERVAL):
@@ -923,7 +997,6 @@ async def _pump_cycle():
                 _mark_fetched(f"30m:{symbol}")
                 _persist_async(symbol, "30m", merged if is_seed else candles)
                 logger.info(f"[DataHub] {symbol}: fetched {len(candles)} 30m candles → 1h={len(_candles_1h.get(symbol, {}).get('candles', []))}, 4h={len(_candles_4h.get(symbol, {}).get('candles', []))}")
-                # Fire candle close events for 30m and derived 1h/4h
                 await _fire_candle_close_events(symbol, "30m", merged)
                 d1h = (_candles_1h.get(symbol) or {}).get("candles", [])
                 if d1h:
@@ -939,21 +1012,25 @@ async def _pump_cycle():
             if symbol in _30M_DIRECT_SYMBOLS:
                 _mark_fetched(f"1h:{symbol}")
             else:
-                fetch_limit = FULL_SEED_LIMIT_1H if is_seed else DELTA_LIMIT_1H
-                candles = await _fetch_candles_from_api(symbol, "1h", limit=fetch_limit)
-                if candles:
-                    with _lock:
-                        existing = (_candles_1h.get(symbol) or {}).get("candles", [])
-                        merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_1H)
-                        _candles_1h[symbol] = {"candles": merged, "timestamp": now_ts, "source": "eodhd_poll"}
-                        _rebuild_derived(symbol)
+                # In hybrid mode, skip EODHD if MT5 has been feeding 1h bars.
+                if is_hybrid and _mt5_candles_are_fresh(symbol, "1h"):
                     _mark_fetched(f"1h:{symbol}")
-                    _persist_async(symbol, "1h", merged if is_seed else candles)
-                    # Fire candle close events for 1h and derived 4h
-                    await _fire_candle_close_events(symbol, "1h", merged)
-                    d4h = (_candles_4h.get(symbol) or {}).get("candles", [])
-                    if d4h:
-                        await _fire_candle_close_events(symbol, "4h", d4h)
+                    logger.debug("[DataHub] %s 1h: MT5 fresh — skipping EODHD candle fetch", symbol)
+                else:
+                    fetch_limit = FULL_SEED_LIMIT_1H if is_seed else DELTA_LIMIT_1H
+                    candles = await _fetch_candles_from_api(symbol, "1h", limit=fetch_limit)
+                    if candles:
+                        with _lock:
+                            existing = (_candles_1h.get(symbol) or {}).get("candles", [])
+                            merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_1H)
+                            _candles_1h[symbol] = {"candles": merged, "timestamp": now_ts, "source": "eodhd_poll"}
+                            _rebuild_derived(symbol)
+                        _mark_fetched(f"1h:{symbol}")
+                        _persist_async(symbol, "1h", merged if is_seed else candles)
+                        await _fire_candle_close_events(symbol, "1h", merged)
+                        d4h = (_candles_4h.get(symbol) or {}).get("candles", [])
+                        if d4h:
+                            await _fire_candle_close_events(symbol, "4h", d4h)
 
         # ── EOD candles (every 30min) ──
         if allow_upstream_market_fetch and _should_fetch(f"eod:{symbol}", CANDLE_EOD_INTERVAL):
@@ -1000,51 +1077,85 @@ def _load_from_persistent_cache():
     loaded_any = False
     
     for symbol in TRACKED_SYMBOLS:
-        # Load 5m candles
-        cached_5m = load_candles(symbol, "5m", limit=FULL_SEED_LIMIT_5M)
-        if cached_5m:
-            with _lock:
-                _candles_5m[symbol] = {"candles": cached_5m, "timestamp": now_ts, "source": "persistent_cache"}
-                _rebuild_derived(symbol)
-            loaded_any = True
-            logger.info(f"[DataHub] Loaded {len(cached_5m)} cached 5m candles for {symbol}")
-        
-        # Load 30m candles (XAUUSD: fetched directly from EODHD only in eodhd mode)
+        # ── 5m candles ──────────────────────────────────────────────────────────
+        cached_5m_raw = load_candles(symbol, "5m", limit=FULL_SEED_LIMIT_5M)
+        cached_5m: Optional[List[Dict]] = None
+        if cached_5m_raw:
+            age_5m = _get_latest_candle_age_hours(cached_5m_raw)
+            if age_5m is not None and age_5m > MAX_CACHE_AGE_HOURS:
+                logger.warning(
+                    "[DataHub] %s 5m cache is %.1fh old (>%dh) — skipping stale cache, full re-seed will run",
+                    symbol, age_5m, MAX_CACHE_AGE_HOURS,
+                )
+            else:
+                cached_5m = cached_5m_raw
+                with _lock:
+                    _candles_5m[symbol] = {"candles": cached_5m, "timestamp": now_ts, "source": "persistent_cache"}
+                    _rebuild_derived(symbol)
+                loaded_any = True
+                logger.info(f"[DataHub] Loaded {len(cached_5m)} cached 5m candles for {symbol} (age={age_5m}h)")
+
+        # ── 30m candles (XAUUSD: fetched directly from EODHD only in eodhd mode) ──
         # In mt5_redis/hybrid mode, XAUUSD 30m is derived from 5m - skip loading stale cache
-        cached_30m = None
+        cached_30m: Optional[List[Dict]] = None
         if get_market_data_source() == "eodhd" or symbol not in _30M_DIRECT_SYMBOLS:
-            cached_30m = load_candles(symbol, "30m", limit=FULL_SEED_LIMIT_30M)
-            if cached_30m:
-                with _lock:
-                    _candles_30m[symbol] = {"candles": cached_30m, "timestamp": now_ts, "source": "persistent_cache"}
-                    _rebuild_derived(symbol)
-                loaded_any = True
-                logger.info(f"[DataHub] Loaded {len(cached_30m)} cached 30m candles for {symbol}")
+            cached_30m_raw = load_candles(symbol, "30m", limit=FULL_SEED_LIMIT_30M)
+            if cached_30m_raw:
+                age_30m = _get_latest_candle_age_hours(cached_30m_raw)
+                if age_30m is not None and age_30m > MAX_CACHE_AGE_HOURS:
+                    logger.warning(
+                        "[DataHub] %s 30m cache is %.1fh old (>%dh) — skipping stale cache",
+                        symbol, age_30m, MAX_CACHE_AGE_HOURS,
+                    )
+                else:
+                    cached_30m = cached_30m_raw
+                    with _lock:
+                        _candles_30m[symbol] = {"candles": cached_30m, "timestamp": now_ts, "source": "persistent_cache"}
+                        _rebuild_derived(symbol)
+                    loaded_any = True
+                    logger.info(f"[DataHub] Loaded {len(cached_30m)} cached 30m candles for {symbol}")
         else:
-            # In mt5_redis/hybrid: 30m will be derived from 5m after all loading completes
             logger.info(f"[DataHub] Skipping 30m cache load for {symbol} (derived from 5m in {get_market_data_source()} mode)")
-        
-        # Load 1h candles (XAUUSD: derived from 30m in mt5_redis/hybrid mode)
-        cached_1h = None
+
+        # ── 1h candles ──────────────────────────────────────────────────────────
+        cached_1h: Optional[List[Dict]] = None
         if get_market_data_source() == "eodhd" or symbol not in _30M_DIRECT_SYMBOLS:
-            cached_1h = load_candles(symbol, "1h", limit=FULL_SEED_LIMIT_1H)
-            if cached_1h:
-                with _lock:
-                    _candles_1h[symbol] = {"candles": cached_1h, "timestamp": now_ts, "source": "persistent_cache"}
-                    _rebuild_derived(symbol)
-                loaded_any = True
-                logger.info(f"[DataHub] Loaded {len(cached_1h)} cached 1h candles for {symbol}")
+            cached_1h_raw = load_candles(symbol, "1h", limit=FULL_SEED_LIMIT_1H)
+            if cached_1h_raw:
+                age_1h = _get_latest_candle_age_hours(cached_1h_raw)
+                if age_1h is not None and age_1h > MAX_CACHE_AGE_HOURS:
+                    logger.warning(
+                        "[DataHub] %s 1h cache is %.1fh old (>%dh) — skipping stale cache",
+                        symbol, age_1h, MAX_CACHE_AGE_HOURS,
+                    )
+                else:
+                    cached_1h = cached_1h_raw
+                    with _lock:
+                        _candles_1h[symbol] = {"candles": cached_1h, "timestamp": now_ts, "source": "persistent_cache"}
+                        _rebuild_derived(symbol)
+                    loaded_any = True
+                    logger.info(f"[DataHub] Loaded {len(cached_1h)} cached 1h candles for {symbol}")
         else:
-            # In mt5_redis/hybrid: 1h will be derived from 30m (which is derived from 5m)
             logger.info(f"[DataHub] Skipping 1h cache load for {symbol} (derived from 30m in {get_market_data_source()} mode)")
-        
-        # Load EOD candles
-        cached_eod = load_candles(symbol, "eod", limit=FULL_SEED_LIMIT_EOD)
-        if cached_eod:
-            with _lock:
-                _candles_eod[symbol] = {"candles": cached_eod, "timestamp": now_ts, "source": "persistent_cache"}
-            loaded_any = True
-            logger.info(f"[DataHub] Loaded {len(cached_eod)} cached EOD candles for {symbol}")
+
+        # ── EOD candles ──────────────────────────────────────────────────────────
+        cached_eod_raw = load_candles(symbol, "eod", limit=FULL_SEED_LIMIT_EOD)
+        cached_eod: Optional[List[Dict]] = None
+        if cached_eod_raw:
+            age_eod = _get_latest_candle_age_hours(cached_eod_raw)
+            # EOD data is fine up to 7 days old (weekly gap / market holidays)
+            max_eod_age = max(MAX_CACHE_AGE_HOURS, 168)
+            if age_eod is not None and age_eod > max_eod_age:
+                logger.warning(
+                    "[DataHub] %s EOD cache is %.1fh old (>%dh) — skipping stale cache",
+                    symbol, age_eod, max_eod_age,
+                )
+            else:
+                cached_eod = cached_eod_raw
+                with _lock:
+                    _candles_eod[symbol] = {"candles": cached_eod, "timestamp": now_ts, "source": "persistent_cache"}
+                loaded_any = True
+                logger.info(f"[DataHub] Loaded {len(cached_eod)} cached EOD candles for {symbol}")
         
         # Check sufficiency per-symbol using required caches (not loose OR logic).
         # This prevents symbols from being marked "seeded" when 1h history is still thin.

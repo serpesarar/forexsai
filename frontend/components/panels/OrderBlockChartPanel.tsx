@@ -603,6 +603,9 @@ export default function OrderBlockChartPanel() {
     }
 
     // ── 3. Draw OB zones — Gold/Yellow (distinct from green TP and red SL)
+    // Max zone height = 40% of chart — anything taller is a data-artifact zone
+    const MAX_ZONE_H = chartSize.height * 0.40;
+
     if (obData?.order_blocks) {
       const obs = obData.order_blocks as any[];
       // Only show top 5 OBs to avoid clutter
@@ -619,7 +622,7 @@ export default function OrderBlockChartPanel() {
 
         const y = Math.min(yLow, yHigh);
         const h = Math.abs(yLow - yHigh);
-        if (h < 1) return;
+        if (h < 1 || h > MAX_ZONE_H) return;  // skip data-artifact zones
 
         const obIdx = ob.index || 0;
         let obX = xLeft;
@@ -699,7 +702,8 @@ export default function OrderBlockChartPanel() {
 
         const y = Math.min(yLow, yHigh);
         const h = Math.abs(yLow - yHigh);
-        if (h < 1) continue;
+        // Skip tiny zones and data-artifact zones that cover most of the chart
+        if (h < 1 || h > MAX_ZONE_H) continue;
 
         const fvgIdx = fvg.index || 0;
         let fvgX = xLeft;

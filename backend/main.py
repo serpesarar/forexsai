@@ -791,6 +791,52 @@ async def datahub_reseed():
         return {"error": str(e)}
 
 
+@app.post("/api/datahub/purge-stale-cache")
+async def datahub_purge_stale_cache(
+    symbol: str | None = None,
+    max_age_hours: float = 96,
+):
+    """Purge candle_cache rows older than `max_age_hours` (default 96h / 4 days).
+
+    After purging, trigger a force re-seed so DataHub fetches fresh data.
+    Optionally filter by `symbol` (e.g. NDX.INDX).
+    """
+    try:
+        from services.candle_cache_store import purge_stale_candles
+        from services.data_hub import force_reseed
+        purge_result = purge_stale_candles(symbol=symbol, max_age_hours=max_age_hours)
+        reseed_result = force_reseed()
+        return {
+            "purge": purge_result,
+            "reseed": reseed_result,
+            "message": "Stale cache purged and full re-seed triggered",
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/datahub/clear-symbol/{symbol_path:path}")
+async def datahub_clear_symbol(symbol_path: str):
+    """Remove ALL candle_cache rows for a specific symbol and force re-seed.
+
+    Useful when a single symbol has corrupted price data.
+    """
+    try:
+        from services.candle_cache_store import purge_stale_candles
+        from services.data_hub import force_reseed
+        # Purge with max_age_hours=0 deletes everything up to now
+        purge_result = purge_stale_candles(symbol=symbol_path, max_age_hours=0)
+        reseed_result = force_reseed()
+        return {
+            "symbol": symbol_path,
+            "purge": purge_result,
+            "reseed": reseed_result,
+            "message": f"All cached candles cleared for {symbol_path} — re-seed triggered",
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
 @app.get("/api/datahub/flow-check")
 async def datahub_flow_check(symbols: str | None = None):
     """Verify that market analysis inputs are currently available from DataHub cache only."""

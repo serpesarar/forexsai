@@ -423,27 +423,44 @@ class FVGDetector:
     def detect(candles: List[Candle]) -> List[FVG]:
         if len(candles) < 15:
             return []
-        
+
         fvg_list = []
-        
-        # Calculate ATR for minimum gap size filter
+
+        # Calculate ATR for minimum and MAXIMUM gap size filters
         atr = FVGDetector._calculate_atr(candles, 14)
-        min_gap = atr * 0.25  # Gap must be at least 25% of ATR (filters noise)
-        
+        min_gap = atr * 0.25   # Gap must be at least 25% of ATR (filters noise)
+        max_gap = atr * 10.0   # Gap must be at most 10× ATR (rejects cross-data-gap artifacts)
+
+        # Estimate base bar interval from the first valid consecutive pair
+        base_interval: float = 0.0
+        for k in range(1, min(20, len(candles))):
+            diff = candles[k].timestamp - candles[k - 1].timestamp
+            if diff > 0:
+                base_interval = diff
+                break
+        # Allow up to 6× the base interval between the outer candles of a 3-bar FVG
+        max_time_span = base_interval * 6 if base_interval > 0 else 0.0
+
         for i in range(2, len(candles)):
             c_prev2 = candles[i-2]
             c_current = candles[i]
-            
+
+            # Time-continuity guard: skip if candles are not time-adjacent
+            # (prevents cross-break-in-data false FVGs spanning extreme price ranges)
+            if max_time_span > 0:
+                time_span = c_current.timestamp - c_prev2.timestamp
+                if time_span > max_time_span:
+                    continue
+
             # Bullish FVG: Gap up (Low > Previous High)
             if c_current.low > c_prev2.high:
                 gap_size = c_current.low - c_prev2.high
-                
-                # Filter out tiny gaps (noise)
-                if gap_size < min_gap:
+
+                # Filter out tiny gaps (noise) and enormous gaps (data artifacts)
+                if gap_size < min_gap or gap_size > max_gap:
                     continue
-                
+
                 # Check if filled using ONLY the last candle (no future look-ahead)
-                # We only know the current state of the market, not what happens next
                 last_candle = candles[-1]
                 filled = last_candle.low <= c_prev2.high
                 fill_pct = 0.0
@@ -451,7 +468,7 @@ class FVGDetector:
                     fill_pct = 100.0
                 elif last_candle.low < c_current.low:
                     fill_pct = min(100, ((c_current.low - last_candle.low) / gap_size) * 100)
-                
+
                 fvg_list.append(FVG(
                     index=i,
                     direction="bullish",
@@ -461,14 +478,14 @@ class FVGDetector:
                     filled=filled,
                     fill_percentage=fill_pct
                 ))
-            
+
             # Bearish FVG: Gap down (High < Previous Low)
             elif c_current.high < c_prev2.low:
                 gap_size = c_prev2.low - c_current.high
-                
-                if gap_size < min_gap:
+
+                if gap_size < min_gap or gap_size > max_gap:
                     continue
-                
+
                 # Check if filled using ONLY the last candle (no future look-ahead)
                 last_candle = candles[-1]
                 filled = last_candle.high >= c_prev2.low
@@ -477,7 +494,7 @@ class FVGDetector:
                     fill_pct = 100.0
                 elif last_candle.high > c_current.high:
                     fill_pct = min(100, ((last_candle.high - c_current.high) / gap_size) * 100)
-                
+
                 fvg_list.append(FVG(
                     index=i,
                     direction="bearish",
@@ -487,7 +504,7 @@ class FVGDetector:
                     filled=filled,
                     fill_percentage=fill_pct
                 ))
-        
+
         return fvg_list
     
     @staticmethod
@@ -515,17 +532,34 @@ class OrderBlockDetector:
     def detect(candles: List[Candle], swings: List[SwingPoint]) -> List[OrderBlock]:
         if len(candles) < 20:
             return []
-        
+
         ob_list = []
         atr = OrderBlockDetector._calculate_atr(candles, 14)
         volumes = np.array([c.volume for c in candles])
         avg_volume = float(np.mean(volumes)) if len(volumes) > 0 else 1.0
-        
+
+        # Estimate base bar interval for time-continuity guard
+        base_interval: float = 0.0
+        for k in range(1, min(20, len(candles))):
+            diff = candles[k].timestamp - candles[k - 1].timestamp
+            if diff > 0:
+                base_interval = diff
+                break
+        max_bar_gap = base_interval * 6 if base_interval > 0 else 0.0
+
         for i in range(1, len(candles) - 2):
             c_prev = candles[i-1]
             c_current = candles[i]
             c_next = candles[i+1]
-            
+
+            # Time-continuity guard: skip OB if prev→current or current→next spans a
+            # data break (e.g. stale-to-live candle seam after a Redis outage).
+            if max_bar_gap > 0:
+                if (c_current.timestamp - c_prev.timestamp) > max_bar_gap:
+                    continue
+                if (c_next.timestamp - c_current.timestamp) > max_bar_gap:
+                    continue
+
             # Volume confirmation: OB candle or displacement candle should have above-average volume
             local_vol_avg = float(np.mean(volumes[max(0, i-20):i+1])) if i > 0 else avg_volume
             vol_ratio = volumes[i+1] / local_vol_avg if local_vol_avg > 0 else 1.0
