@@ -837,6 +837,16 @@ async def datahub_clear_symbol(symbol_path: str):
         return {"error": str(e)}
 
 
+@app.get("/api/mt5-redis/diagnostics")
+async def mt5_redis_diagnostics():
+    """Diagnostic endpoint to check MT5 Redis listener status, stream existence, and counters."""
+    try:
+        from services.mt5_redis_client import get_mt5_redis_diagnostics
+        return await get_mt5_redis_diagnostics()
+    except Exception as e:
+        return {"error": str(e)}
+
+
 @app.get("/api/datahub/flow-check")
 async def datahub_flow_check(symbols: str | None = None):
     """Verify that market analysis inputs are currently available from DataHub cache only."""

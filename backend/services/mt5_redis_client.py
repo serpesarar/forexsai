@@ -16,6 +16,19 @@ _listener_running = False
 _listener_client: Optional[redis.Redis] = None
 _listener_pubsub = None
 
+# ── Diagnostic counters ──────────────────────────────────────────────────────
+_diag = {
+    "ticks_received": 0,
+    "bars_received": 0,
+    "last_tick_time": None,
+    "last_bar_time": None,
+    "last_tick_symbol": None,
+    "last_bar_symbol": None,
+    "errors": [],
+    "listener_started_at": None,
+    "last_reconnect": None,
+}
+
 
 def _source_mode_enabled() -> bool:
     source = (settings.market_data_source or "eodhd").strip().lower()
@@ -95,6 +108,9 @@ async def _handle_tick(payload: Dict[str, Any]) -> None:
         ask=payload.get("ask"),
         source="mt5_redis",
     )
+    _diag["ticks_received"] += 1
+    _diag["last_tick_time"] = asyncio.get_event_loop().time()
+    _diag["last_tick_symbol"] = symbol
 
 
 async def _handle_bar(payload: Dict[str, Any]) -> None:
@@ -116,6 +132,9 @@ async def _handle_bar(payload: Dict[str, Any]) -> None:
 
     candle = _extract_candle_payload(payload)
     await ingest_candle(symbol, timeframe, candle, source="mt5_redis")
+    _diag["bars_received"] += 1
+    _diag["last_bar_time"] = asyncio.get_event_loop().time()
+    _diag["last_bar_symbol"] = f"{symbol}/{timeframe}"
 
 
 async def _close_connections() -> None:
@@ -153,6 +172,8 @@ async def start_mt5_redis_listener() -> None:
 
     tick_channel = settings.mt5_redis_tick_channel
     _listener_running = True
+    import time as _time
+    _diag["listener_started_at"] = _time.time()
 
     while _listener_running:
         stream_task = None
@@ -255,6 +276,56 @@ async def start_mt5_redis_listener() -> None:
             if stream_task:
                 stream_task.cancel()
             await _close_connections()
+
+
+async def get_mt5_redis_diagnostics() -> Dict[str, Any]:
+    """Return diagnostic info about the MT5 Redis listener."""
+    import time as _time
+
+    redis_url = get_redis_url()
+    result: Dict[str, Any] = {
+        "source_mode_enabled": _source_mode_enabled(),
+        "market_data_source": (settings.market_data_source or "eodhd").strip().lower(),
+        "listener_running": _listener_running,
+        "redis_url_configured": bool(redis_url),
+        "redis_url_prefix": (redis_url or "")[:30] + "..." if redis_url else None,
+        "tick_channel": settings.mt5_redis_tick_channel,
+        "bar_streams": ["mt5:bar:5m", "mt5:bar:1h", "mt5:bar:1d"],
+        "counters": dict(_diag),
+    }
+
+    # Probe Redis keys and streams
+    if redis_url:
+        try:
+            probe = redis.from_url(redis_url, decode_responses=True, socket_connect_timeout=3)
+            await probe.ping()
+            result["redis_ping"] = "ok"
+
+            # Check if streams exist
+            for stream in ["mt5:bar:5m", "mt5:bar:1h", "mt5:bar:1d", "mt5:bar:1m"]:
+                try:
+                    info = await probe.xinfo_stream(stream)
+                    result[f"stream_{stream}"] = {
+                        "length": info.get("length", 0),
+                        "first_entry": str(info.get("first-entry")) if info.get("first-entry") else None,
+                        "last_entry": str(info.get("last-entry")) if info.get("last-entry") else None,
+                    }
+                except Exception:
+                    result[f"stream_{stream}"] = "not_found"
+
+            # Check pubsub channels
+            channels = await probe.pubsub_channels()
+            result["active_pubsub_channels"] = [c if isinstance(c, str) else c.decode() for c in channels]
+
+            # Check pubsub subscribers for tick channel
+            numsub = await probe.pubsub_numsub(settings.mt5_redis_tick_channel)
+            result["tick_channel_subscribers"] = numsub.get(settings.mt5_redis_tick_channel, 0) if isinstance(numsub, dict) else str(numsub)
+
+            await probe.close()
+        except Exception as e:
+            result["redis_probe_error"] = str(e)
+
+    return result
 
 
 async def stop_mt5_redis_listener() -> None:
