@@ -83,6 +83,7 @@ _lock = Lock()
 
 # Raw data from EODHD (fetched via API)
 _prices: Dict[str, Dict[str, Any]] = {}        # symbol -> {price, timestamp}
+_candles_1m: Dict[str, Dict[str, Any]] = {}     # symbol -> {candles, timestamp} — MT5 Redis / XAUUSD
 _candles_5m: Dict[str, Dict[str, Any]] = {}     # symbol -> {candles, timestamp}
 _candles_1h: Dict[str, Dict[str, Any]] = {}     # symbol -> {candles, timestamp}
 _candles_eod: Dict[str, Dict[str, Any]] = {}    # symbol -> {candles, timestamp}
@@ -232,6 +233,7 @@ def _normalize_timeframe(timeframe: str) -> str:
 def _get_store_for_timeframe(timeframe: str):
     tf = _normalize_timeframe(timeframe)
     store_map = {
+        "1m": _candles_1m,
         "5m": _candles_5m,
         "20m": _candles_20m,
         "15m": _candles_15m,
@@ -399,20 +401,29 @@ async def _fetch_yahoo_candles(yahoo_symbol: str, interval: str, limit: int) -> 
                 
                 candles = []
                 for i in range(len(timestamps)):
-                    if quote['open'][i] is not None:
-                        # Convert to milliseconds for standard Datahub format
-                        ts_ms = timestamps[i] * 1000
-                        dt_str = datetime.fromtimestamp(timestamps[i]).isoformat()
-                        
-                        candles.append({
-                            "timestamp": ts_ms,
-                            "date": dt_str,
-                            "open": float(quote['open'][i]),
-                            "high": float(quote['high'][i]),
-                            "low": float(quote['low'][i]),
-                            "close": float(quote['close'][i]),
-                            "volume": float(quote.get('volume', [0])[i] or 0)
-                        })
+                    o = quote['open'][i]
+                    h = quote['high'][i]
+                    l = quote['low'][i]
+                    c = quote['close'][i]
+                    # Reject candles where any OHLC field is None or close=0 (Yahoo partial bar)
+                    if o is None or h is None or l is None or c is None:
+                        continue
+                    o_f, h_f, l_f, c_f = float(o), float(h), float(l), float(c)
+                    if c_f <= 0 or h_f <= 0:
+                        continue
+                    # Convert to milliseconds for standard Datahub format
+                    ts_ms = timestamps[i] * 1000
+                    dt_str = datetime.fromtimestamp(timestamps[i]).isoformat()
+
+                    candles.append({
+                        "timestamp": ts_ms,
+                        "date": dt_str,
+                        "open": o_f,
+                        "high": h_f,
+                        "low": l_f,
+                        "close": c_f,
+                        "volume": float(quote.get('volume', [0])[i] or 0)
+                    })
                 
                 # Filter out Asian/off-hours ONLY for stock indices, NOT for commodities/forex
                 if not is_commodity and yf_interval in ("1m", "5m", "15m", "30m", "60m"):
@@ -606,43 +617,61 @@ async def _fetch_eod_from_api(symbol: str, limit: int = 300) -> List[Dict]:
 # RESAMPLE LOGIC (0 API calls - pure computation)
 # ═══════════════════════════════════════════════════════════════
 def _resample(candles: List[Dict], period: int) -> List[Dict]:
-    """Resample candles to larger timeframe. E.g., 5m×3=15m, 5m×6=30m, 1h×4=4h."""
+    """Resample candles to larger timeframe. E.g., 5m×3=15m, 5m×6=30m, 1h×4=4h.
+
+    Gap handling (CRITICAL):
+      When a time gap is found at position j inside a group, we advance i to
+      (i + j + 1) — i.e. the candle right AFTER the gap boundary — and start
+      a fresh group from there.  The old `i += 1` pattern caused heavily
+      overlapping windows: e.g. a 1m gap at j=3 would produce groups
+      [0:5], [1:6], [2:7], [3:8] all as separate 5m candles from the same
+      underlying 1m bars, making the chart look like 3× too many candles.
+    """
     if not candles or len(candles) < period:
         return []
     result = []
-    
-    # Estimate base interval from first few candles
-    base_interval = 0
+
+    # Estimate base interval from first two candles
+    base_interval: int = 0
     if len(candles) > 1:
-        base_interval = candles[1].get("timestamp", 0) - candles[0].get("timestamp", 0)
+        base_interval = int(
+            candles[1].get("timestamp", 0) - candles[0].get("timestamp", 0)
+        )
         if base_interval <= 0:
-            base_interval = 5 * 60 * 1000 # Default to 5m
+            base_interval = 5 * 60 * 1000  # default 5m
+
+    # Gap threshold: 6× base interval (tolerates brief illiquidity, e.g. XAUUSD
+    # Asian-session quiet minutes, but still rejects weekend / holiday gaps)
+    gap_threshold = base_interval * 6 if base_interval > 0 else 0
 
     i = 0
     while i <= len(candles) - period:
-        group = candles[i:i + period]
-        
-        # Prevent merging across weekends or large missing data gaps
-        has_gap = False
-        for j in range(len(group) - 1):
-            diff = group[j+1].get("timestamp", 0) - group[j].get("timestamp", 0)
-            if diff > base_interval * 4: # Gap larger than 4 missing candles is rejected
-                has_gap = True
-                break
-                
-        if has_gap:
-            # Step forward by 1 index so we decouple the gap border
-            i += 1
+        group = candles[i : i + period]
+
+        # Find first gap inside this group
+        gap_at = -1
+        if gap_threshold > 0:
+            for j in range(len(group) - 1):
+                diff = int(
+                    group[j + 1].get("timestamp", 0) - group[j].get("timestamp", 0)
+                )
+                if diff > gap_threshold:
+                    gap_at = j
+                    break
+
+        if gap_at >= 0:
+            # Skip to the first candle AFTER the gap — no overlapping windows
+            i += gap_at + 1
             continue
 
         result.append({
             "timestamp": group[0].get("timestamp", 0),
-            "date": group[0].get("date", ""),
-            "open": group[0].get("open", 0),
-            "high": max(c.get("high", 0) for c in group),
-            "low": min(c.get("low", float("inf")) for c in group),
-            "close": group[-1].get("close", 0),
-            "volume": sum(c.get("volume", 0) for c in group),
+            "date":      group[0].get("date", ""),
+            "open":      group[0].get("open", 0),
+            "high":      max(c.get("high", 0) for c in group),
+            "low":       min(c.get("low", float("inf")) for c in group),
+            "close":     group[-1].get("close", 0),
+            "volume":    sum(c.get("volume", 0) for c in group),
         })
         i += period
 
@@ -1091,6 +1120,7 @@ def force_reseed():
     with _lock:
         for symbol in TRACKED_SYMBOLS:
             # Clear all candle caches so merge starts fresh
+            _candles_1m.pop(symbol, None)
             _candles_5m.pop(symbol, None)
             _candles_20m.pop(symbol, None)
             _candles_15m.pop(symbol, None)
@@ -1143,7 +1173,6 @@ def get_candles(symbol: str, timeframe: str, limit: int = 300) -> List[Dict]:
     symbol = _canonical_symbol(symbol)
     tf, store = _get_store_for_timeframe(timeframe)
     if store is None:
-        # 1m not stored - would need separate fetch
         return []
     
     with _lock:
@@ -1234,6 +1263,7 @@ def get_hub_status() -> Dict[str, Any]:
         volume_stats = {}
         for s in TRACKED_SYMBOLS:
             volume_stats[s] = {
+                "1m": _get_volume_stats(s, _candles_1m),
                 "5m": _get_volume_stats(s, _candles_5m),
                 "20m": _get_volume_stats(s, _candles_20m),
                 "15m": _get_volume_stats(s, _candles_15m),
@@ -1250,6 +1280,7 @@ def get_hub_status() -> Dict[str, Any]:
             "prices": {s: _prices.get(s, {}).get("price") for s in TRACKED_SYMBOLS},
             "price_sources": {s: _prices.get(s, {}).get("source") for s in TRACKED_SYMBOLS},
             "price_staleness": price_staleness,
+            "candles_1m": {s: len(_candles_1m.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
             "candles_5m": {s: len(_candles_5m.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
             "candles_20m": {s: len(_candles_20m.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
             "candles_15m": {s: len(_candles_15m.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
@@ -1259,6 +1290,7 @@ def get_hub_status() -> Dict[str, Any]:
             "candles_eod": {s: len(_candles_eod.get(s, {}).get("candles", [])) for s in TRACKED_SYMBOLS},
             "candle_sources": {
                 s: {
+                    "1m": _candles_1m.get(s, {}).get("source"),
                     "5m": _candles_5m.get(s, {}).get("source"),
                     "20m": _candles_20m.get(s, {}).get("source"),
                     "15m": _candles_15m.get(s, {}).get("source"),
@@ -1417,7 +1449,7 @@ async def ingest_candles(
     if canonical_symbol not in TRACKED_SYMBOLS:
         logger.warning("[DataHub] Ignoring candles for untracked symbol %s", symbol)
         return 0
-    if store is None or tf in {"15m", "4h", "1m"}:
+    if store is None or tf in {"15m", "4h"}:
         logger.warning("[DataHub] Unsupported direct ingest timeframe %s for %s", timeframe, canonical_symbol)
         return 0
 
@@ -1427,7 +1459,9 @@ async def ingest_candles(
     if not normalized_candles:
         return 0
 
+    # 1m raw capacity: FULL_SEED_LIMIT_5M × 5 bars so we can always resample to full 5m depth
     limit_map = {
+        "1m": FULL_SEED_LIMIT_5M * 5,
         "5m": FULL_SEED_LIMIT_5M,
         "30m": FULL_SEED_LIMIT_30M,
         "1h": FULL_SEED_LIMIT_1H,
@@ -1439,7 +1473,23 @@ async def ingest_candles(
         existing = (store.get(canonical_symbol) or {}).get("candles", [])
         merged = _merge_candles(existing, normalized_candles, limit_map[tf])
         store[canonical_symbol] = {"candles": merged, "timestamp": now_ts, "source": source}
-        if tf in {"5m", "30m", "1h"}:
+
+        if tf == "1m":
+            # For symbols that use 1m as primary (XAUUSD), cascade: 1m → 5m → derived TFs
+            if canonical_symbol in _1M_ONLY_SYMBOLS:
+                resampled_5m = _resample(merged, 5)
+                if resampled_5m:
+                    existing_5m = (_candles_5m.get(canonical_symbol) or {}).get("candles", [])
+                    merged_5m = _merge_candles(existing_5m, resampled_5m, FULL_SEED_LIMIT_5M)
+                    _candles_5m[canonical_symbol] = {
+                        "candles": merged_5m, "timestamp": now_ts, "source": f"{source}_1m_resampled"
+                    }
+                    _rebuild_derived(canonical_symbol)
+                    logger.debug(
+                        "[DataHub] %s: ingested %d 1m bars → resampled to %d 5m candles",
+                        canonical_symbol, len(merged), len(resampled_5m),
+                    )
+        elif tf in {"5m", "30m", "1h"}:
             _rebuild_derived(canonical_symbol)
 
     _last_fetch[f"{tf}:{canonical_symbol}"] = now_ts

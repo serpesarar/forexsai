@@ -3,7 +3,8 @@
     "allow": [
       "Bash(grep -E \"\\\\.\\(ts|js|py\\)$\")",
       "Bash(python3 *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('services/data_hub.py'\\).read\\(\\)\\); print\\('data_hub.py: OK'\\)\")"
     ]
   }
 }

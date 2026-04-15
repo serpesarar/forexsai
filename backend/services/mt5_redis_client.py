@@ -172,6 +172,7 @@ async def start_mt5_redis_listener() -> None:
             async def _stream_loop():
                 # Start reading from current end of streams
                 streams = {
+                    "mt5:bar:1m": "$",
                     "mt5:bar:5m": "$",
                     "mt5:bar:1h": "$",
                     "mt5:bar:1d": "$"
