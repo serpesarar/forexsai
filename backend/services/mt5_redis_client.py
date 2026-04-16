@@ -16,6 +16,10 @@ _listener_running = False
 _listener_client: Optional[redis.Redis] = None
 _listener_pubsub = None
 
+# ── Heartbeat / reconnect settings ────────────────────────────────────────────
+_HEARTBEAT_INTERVAL = 30        # seconds between keepalive pings
+_NO_TICK_RECONNECT_THRESHOLD = 120  # seconds — force reconnect if no ticks received
+
 # ── Diagnostic counters ──────────────────────────────────────────────────────
 _diag = {
     "ticks_received": 0,
@@ -29,6 +33,8 @@ _diag = {
     "last_tick_payload": None,
     "last_tick_price": None,
     "errors": [],
+    "reconnect_count": 0,
+    "last_heartbeat": None,
     "listener_started_at": None,
     "last_reconnect": None,
 }
@@ -257,11 +263,36 @@ async def start_mt5_redis_listener() -> None:
 
             stream_task = asyncio.create_task(_stream_loop())
 
+            import time as _time
+            _last_heartbeat = _time.time()
+            _last_tick_seen = _time.time()
+
             while _listener_running:
                 if stream_task.done():
                     logger.warning("[MT5Redis] Stream task exited unexpectedly, reconnecting...")
                     break
-                
+
+                # ── Periodic keepalive PING ──────────────────────────────────
+                now = _time.time()
+                if now - _last_heartbeat > _HEARTBEAT_INTERVAL:
+                    try:
+                        await _listener_client.ping()
+                        _last_heartbeat = now
+                        _diag["last_heartbeat"] = now
+                    except Exception as ping_err:
+                        logger.warning("[MT5Redis] Heartbeat PING failed: %s — forcing reconnect", ping_err)
+                        break  # → outer while will reconnect
+
+                # ── No-tick watchdog ─────────────────────────────────────────
+                if now - _last_tick_seen > _NO_TICK_RECONNECT_THRESHOLD:
+                    logger.warning(
+                        "[MT5Redis] No ticks for %ds — forcing reconnect (threshold=%ds)",
+                        int(now - _last_tick_seen), _NO_TICK_RECONNECT_THRESHOLD,
+                    )
+                    _diag["reconnect_count"] = _diag.get("reconnect_count", 0) + 1
+                    _diag["last_reconnect"] = now
+                    break  # → outer while will reconnect
+
                 message = await _listener_pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
                 if not message:
                     await asyncio.sleep(0.05)
@@ -274,6 +305,7 @@ async def start_mt5_redis_listener() -> None:
                 channel = message.get("channel")
                 if channel == tick_channel:
                     await _handle_tick(payload)
+                    _last_tick_seen = _time.time()  # reset watchdog
                     
         except asyncio.CancelledError:
             if stream_task:
