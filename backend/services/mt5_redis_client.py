@@ -19,11 +19,15 @@ _listener_pubsub = None
 # ── Diagnostic counters ──────────────────────────────────────────────────────
 _diag = {
     "ticks_received": 0,
+    "ticks_ingested": 0,
+    "ticks_rejected": 0,
     "bars_received": 0,
     "last_tick_time": None,
     "last_bar_time": None,
     "last_tick_symbol": None,
     "last_bar_symbol": None,
+    "last_tick_payload": None,
+    "last_tick_price": None,
     "errors": [],
     "listener_started_at": None,
     "last_reconnect": None,
@@ -100,7 +104,7 @@ async def _handle_tick(payload: Dict[str, Any]) -> None:
         logger.debug("[MT5Redis] Tick payload missing price: %s", payload)
         return
 
-    await ingest_live_price(
+    ingested = await ingest_live_price(
         symbol=symbol,
         price=price,
         timestamp=payload.get("timestamp") or payload.get("time"),
@@ -111,6 +115,12 @@ async def _handle_tick(payload: Dict[str, Any]) -> None:
     _diag["ticks_received"] += 1
     _diag["last_tick_time"] = asyncio.get_event_loop().time()
     _diag["last_tick_symbol"] = symbol
+    _diag["last_tick_price"] = price
+    _diag["last_tick_payload"] = {k: v for k, v in payload.items() if k != "candles"}  # sample
+    if ingested:
+        _diag["ticks_ingested"] += 1
+    else:
+        _diag["ticks_rejected"] += 1
 
 
 async def _handle_bar(payload: Dict[str, Any]) -> None:
