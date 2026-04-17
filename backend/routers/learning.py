@@ -156,8 +156,8 @@ async def _fetch_prediction_logs_window(
 async def _bootstrap_smc_predictions_if_empty() -> None:
     config = OrderBlockConfig(
         fractal_period=2,
-        min_displacement_atr=1.0,
-        min_score=45,
+        min_displacement_atr=1.2,
+        min_score=50,
         zone_type="wick",
         max_tests=3,
     )
@@ -282,7 +282,7 @@ def _build_strategy_scope_metrics(scope: str, scope_signals: List[dict], *, symb
     win_rate_norm = (summary["win_rate"] or 0.0) / 100.0
     speed_norm = 0.5 if avg_duration is None else _clamp01(1.0 - max(avg_duration - 20.0, 0.0) / 220.0)
     endurance_norm = 0.35 if avg_duration is None else _clamp01(min(avg_duration, 480.0) / 480.0)
-    reliability = _clamp01(resolved / 8.0) if resolved > 0 else 0.0
+    reliability = _clamp01(resolved / 5.0) if resolved > 0 else 0.0
 
     quality_score = round(
         100.0 * reliability * (0.45 * win_rate_norm + 0.30 * tp_depth_rate + 0.25 * profit_norm),
@@ -332,7 +332,7 @@ def _build_strategy_scope_metrics(scope: str, scope_signals: List[dict], *, symb
 
 
 def _pick_scope_leader(scope_metrics: Dict[str, dict], score_key: str) -> dict:
-    candidates = [metrics for metrics in scope_metrics.values() if metrics["resolved_signals"] >= 3]
+    candidates = [metrics for metrics in scope_metrics.values() if metrics["resolved_signals"] >= 2]
     if not candidates:
         candidates = [metrics for metrics in scope_metrics.values() if metrics["resolved_signals"] > 0]
     if not candidates:
@@ -656,11 +656,9 @@ async def get_accuracy_by_model(
                 # Signal stopped out
                 stats["stop_hit"] += 1
             elif status == "expired":
-                # Expired without outcome
                 stats["expired"] += 1
-                # Check if any target was hit before expiry
                 if any_target_hit:
-                    stats["target_hit"] += 1
+                    stats["partial_target_hit"] = stats.get("partial_target_hit", 0) + 1
             
             # Claude correctness - would need outcome_results for this
             # For now, use ml_correct as proxy if directions match
@@ -683,6 +681,7 @@ async def get_accuracy_by_model(
                 "stop_hit_rate": round(stats["stop_hit"] / with_outcome, 3) if with_outcome > 0 else None,
                 "stop_hits": stats["stop_hit"],
                 "expired": stats["expired"],
+                "partial_target_hit": stats.get("partial_target_hit", 0),
             })
         
         # Sort by total predictions descending

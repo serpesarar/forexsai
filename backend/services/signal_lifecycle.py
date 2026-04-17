@@ -591,17 +591,26 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
 
     created_dt = _parse_created_at(signal.get("created_at"))
     if created_dt is not None and not is_symbol_market_open(symbol, created_dt):
-        _update_signal_status(
-            client,
-            signal_id,
-            "expired",
-            None,
-            resolution_reason="market_closed_invalid",
+        # Grace buffer: boundary signals (within 30min of a market-open window)
+        # are likely timing drift vs retroactive kills. Only flag as market_closed_invalid
+        # when the signal is clearly deep inside a market-closed period on both sides.
+        buffer = timedelta(minutes=30)
+        if not is_symbol_market_open(symbol, created_dt - buffer) and not is_symbol_market_open(symbol, created_dt + buffer):
+            _update_signal_status(
+                client,
+                signal_id,
+                "expired",
+                None,
+                resolution_reason="market_closed_invalid",
+            )
+            logger.warning(
+                f"lifecycle.invalid_market_closed_signal | signal={signal_id[:8]} symbol={symbol} created_at={signal.get('created_at')}"
+            )
+            return "expired"
+        logger.info(
+            f"lifecycle.market_boundary_grace | signal={signal_id[:8]} symbol={symbol} "
+            f"created_at={signal.get('created_at')} — within 30min of market window, not killing"
         )
-        logger.warning(
-            f"lifecycle.invalid_market_closed_signal | signal={signal_id[:8]} symbol={symbol} created_at={signal.get('created_at')}"
-        )
-        return "expired"
 
     # ------------------------------------------------------------------
     # 1. Post-entry price window (better than single latest price only)

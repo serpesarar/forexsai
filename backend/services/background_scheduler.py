@@ -630,8 +630,8 @@ async def log_smc_signals_if_needed():
 
     config = OrderBlockConfig(
         fractal_period=2,
-        min_displacement_atr=1.0,
-        min_score=45,
+        min_displacement_atr=1.2,
+        min_score=50,
         zone_type="wick",
         max_tests=3,
     )

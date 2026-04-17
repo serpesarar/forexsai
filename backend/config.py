@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     
     # Redis (for WebSocket broadcast cache)
     redis_url: str | None = Field(default=None, validation_alias="REDIS_URL")
-    market_data_source: str = Field(default="eodhd", validation_alias="MARKET_DATA_SOURCE")
+    market_data_source: str = Field(default="mt5_redis", validation_alias="MARKET_DATA_SOURCE")
     mt5_redis_tick_channel: str = Field(default="mt5:tick", validation_alias="MT5_REDIS_TICK_CHANNEL")
     mt5_redis_bar_channel: str = Field(default="mt5:bar", validation_alias="MT5_REDIS_BAR_CHANNEL")
 

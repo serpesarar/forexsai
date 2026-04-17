@@ -201,14 +201,20 @@ class TechnicalSnapshot:
             detail=f"BB: {self.bb_lower:.2f} | {self.bb_middle:.2f} | {self.bb_upper:.2f}"
         ))
 
-        # 8. ATR Volatility Check (not too extreme — ATR < 3x average is fine)
-        # We consider ATR always "ok" here since it's more of a sizing parameter
-        atr_ok = self.atr_14 > 0
+        # 8. ATR Volatility Check — ATR/price ratio between 0.05% and 3.0%
+        # Filters out dead markets (ATR≈0) and chaotic spikes (ATR > 3% of price)
+        if self.atr_14 > 0 and self.price > 0:
+            atr_pct = (self.atr_14 / self.price) * 100
+            atr_ok = 0.05 <= atr_pct <= 3.0
+            detail = f"ATR={self.atr_14:.4f} ({atr_pct:.2f}% of price)"
+        else:
+            atr_ok = False
+            detail = f"ATR={self.atr_14:.4f} (invalid — zero atr or price)"
         conditions.append(TechnicalCondition(
             name="atr_valid",
             passed=atr_ok,
             value=self.atr_14,
-            detail=f"ATR={self.atr_14:.4f}"
+            detail=detail,
         ))
 
         return conditions
@@ -370,7 +376,7 @@ class MetaAnalysisEngine:
                     .select("*") \
                     .eq("symbol", symbol) \
                     .eq("regime", try_regime) \
-                    .gte("total_signals", 5) \
+                    .gte("total_signals", 3) \
                     .order("win_rate", desc=True) \
                     .limit(10) \
                     .execute()
