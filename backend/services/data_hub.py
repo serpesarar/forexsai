@@ -1,34 +1,34 @@
 """
-DataHub - Centralized Market Data Store with Persistent Cache
-=============================================================
+DataHub - Centralized Market Data Store
+========================================
 Single source of truth for all market data in the system.
 
-Architecture (v2 - Persistent Cache):
+Default mode: mt5_redis (MT5 Bridge → Redis → DataHub)
+  All price and OHLCV data flows exclusively from the MT5 bridge.
+  EODHD is NOT used for price/candle data in this mode.
+
+Architecture (mt5_redis mode):
   Startup:  Supabase (candle_cache) → DataHub (in-memory)
-  Running:  EODHD API (delta only) → DataHub (in-memory) → persist to Supabase
-  Restart:  Load from Supabase (0 API calls) → fetch only new candles
+  Running:  MT5 Bridge → Redis pub/sub + streams → ingest_live_price / ingest_candle
+  Persist:  DataHub (in-memory) → Supabase candle_cache (every 15 min)
+  Restart:  Load from Supabase (0 MT5 wait) → live updates resume automatically
 
-Fetch schedule (after initial seed):
-  - Real-time price: every 30s per symbol (1 API call each)
-  - 5m candles: every 5min, DELTA only (24 candles = ~2h)
-  - 1h candles: every 5min, DELTA only (6 candles = ~6h)
-  - EOD candles: every 30min, DELTA only (5 candles = ~5 days)
+MT5 streams consumed:
+  mt5:tick       → ingest_live_price (real-time bid/ask/last)
+  mt5:bar:5m     → ingest_candle("5m")  → rebuild 15m / 30m + XAUUSD 1h/4h
+  mt5:bar:1h     → ingest_candle("1h")  → rebuild 4h (NDX/DAX/USOIL)
+  mt5:bar:1d     → ingest_candle("eod")
 
-Derived (computed, 0 API calls):
-  - 15m candles: resampled from 5m (3x)
-  - 30m candles: resampled from 5m (6x)
-  - 4h candles: resampled from 1h (4x)
+Derived (0 API calls — pure resample):
+  NDX/DAX/USOIL: 5m→15m, 5m→30m, 5m→1h, 1h→4h
+  XAUUSD:        5m→15m, 5m→30m, 30m→1h, 30m→4h
 
-Daily API budget (after first seed):
-  Price: 3 symbols × 1 call × 2/min × 60min × 24h = 8,640 calls
-  5m:    3 symbols × 1 call × 12/hour × 24h = 864 calls (delta=24 candles)
-  1h:    3 symbols × 1 call × 12/hour × 24h = 864 calls (delta=6 candles)
-  EOD:   3 symbols × 1 call × 2/hour × 24h = 144 calls (delta=5 candles)
-  Macro: 5 symbols × 1 call × 12/hour × 24h = 1,440 calls
-  TOTAL: ~11,950 / 100,000 limit (~12% usage)
+Macro data (DXY, VIX, USDTRY, EURUSD — context only, not trading data):
+  Fetched from EODHD every 5 min regardless of mode.
 
-  First-time seed (one-time): ~30 extra calls for full history
-  Subsequent days: only delta → 93% reduction vs original design
+Other modes (set MARKET_DATA_SOURCE env var):
+  hybrid    → MT5 primary; EODHD fallback when MT5 is stale (>2 min price, >15 min candle)
+  eodhd     → Legacy EODHD-only mode (not recommended)
 """
 
 from __future__ import annotations
@@ -808,12 +808,12 @@ DELTA_LIMIT_EOD = 5       # ~5 days of EOD candles
 # Full seed limits — sized so EMA200 works on ALL derived timeframes:
 #   5m:  1500 → 15m=500, 30m=250
 #   30m: 1600 → 1h=800, 4h=200 (XAUUSD: fetched directly)
-#   1h:  800  → 4h=200 (NDX: fetched directly)
-#   EOD: 365  → EMA200 with full year of data
+#   1h:  2400 → 4h=600 (~100 days) — needed for harmonic pattern history
+#   EOD: 730  → EMA200 with 2 full years of data
 FULL_SEED_LIMIT_5M = 1500   # ~5.2 days of 5m candles
 FULL_SEED_LIMIT_30M = 1600  # ~54 days of 30m candles (XAUUSD max 1h limit capacity)
-FULL_SEED_LIMIT_1H = 800    # ~114 days of 1h candles
-FULL_SEED_LIMIT_EOD = 365   # ~1 year of daily candles
+FULL_SEED_LIMIT_1H = 2400   # ~200+ days of 1h candles → 4h derived = ~600 candles (~100 days)
+FULL_SEED_LIMIT_EOD = 730   # ~2 years of daily candles
 
 # EODHD interval support varies by symbol:
 #   XAUUSD.FOREX: supports 1m, 15m, 30m (NOT 5m, 1h)
