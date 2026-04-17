@@ -9,3 +9,6 @@ __pycache__
 
 # Local Netlify folder
 .netlify
+
+# Claude AI local settings
+.claude/settings.json
