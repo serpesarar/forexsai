@@ -453,17 +453,19 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         from services.market_data_service import get_ohlcv_data
         from services.rebound_filter_service import analyze_rebound
         
-        # Get market data — for XAUUSD, 1H is derived from 30m by DataHub.
-        # If 30m not seeded yet, fall back to 5m or 30m to avoid "Insufficient data".
+        # Get market data — track effective timeframe so panel can expose fallback to user.
+        effective_tf = timeframe
         ohlcv = await get_ohlcv_data(symbol, timeframe, limit=250)
         if not ohlcv or len(ohlcv) < 50:
-            # Fallback: try 5m (always fetched for XAUUSD via 1m→5m resample)
-            ohlcv = await get_ohlcv_data(symbol, "5M", limit=250)
-        if not ohlcv or len(ohlcv) < 50:
-            # Fallback: try 30m (XAUUSD directly fetched)
             ohlcv = await get_ohlcv_data(symbol, "30M", limit=250)
+            if ohlcv and len(ohlcv) >= 50:
+                effective_tf = "30M"
+        if not ohlcv or len(ohlcv) < 50:
+            ohlcv = await get_ohlcv_data(symbol, "5M", limit=250)
+            if ohlcv and len(ohlcv) >= 50:
+                effective_tf = "5M"
         if not ohlcv or len(ohlcv) < 20:
-            logger.warning(f"EMEL: Insufficient candle data for {symbol} (tried 1H/5m/30m)")
+            logger.warning(f"EMEL: Insufficient candle data for {symbol} (tried 1H/30m/5m)")
             return {"error": "Insufficient data"}
 
         
@@ -502,29 +504,44 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         ema_20 = ta.get("ema_20", current_price)
         ema_50 = ta.get("ema_50", current_price)
         ema_200 = ta.get("ema_200", current_price)
-        
+
+        # EMA20 slope over last 5 bars (normalized by price)
+        ema20_series = ta.get("ema_20_series") or ta.get("ema20_series")
+        if isinstance(ema20_series, (list, tuple)) and len(ema20_series) >= 6:
+            ema20_slope_pct = (float(ema20_series[-1]) - float(ema20_series[-6])) / max(current_price, 1e-9) * 100.0
+        else:
+            # Fallback: approximate slope from closes (last 5 bars EMA ≈ mean of last 5 closes for signal)
+            ema20_slope_pct = (float(closes[-1]) - float(closes[-6])) / max(current_price, 1e-9) * 100.0 if len(closes) >= 6 else 0.0
+
         price_above_ema20 = current_price > ema_20
         ema20_above_ema50 = ema_20 > ema_50
         ema50_above_ema200 = ema_50 > ema_200
-        
-        if price_above_ema20 and ema20_above_ema50 and ema50_above_ema200:
-            trend_status = "pass"
-            trend_direction = "up"
-            trend_color = "green"
+
+        # Bull/bear structure: stacking + slope must agree
+        bull_stack = price_above_ema20 and ema20_above_ema50 and ema50_above_ema200
+        bear_stack = (not price_above_ema20) and (not ema20_above_ema50) and (not ema50_above_ema200)
+        slope_threshold = 0.05  # %0.05 over 5 bars = meaningful slope
+
+        if bull_stack and ema20_slope_pct > slope_threshold:
+            trend_status = "pass"; trend_direction = "up"; trend_color = "green"
             trend_label = "YUKARI YÖN"
-            trend_comment = "Kısa ve orta vadeli trend yukarı. EMA50 yakın destek olarak çalışabilir."
+            trend_comment = f"EMA dizilimi bullish + slope +{ema20_slope_pct:.2f}%. Trend takip uygun."
             green_count += 1
-        elif not price_above_ema20 and not ema20_above_ema50 and not ema50_above_ema200:
-            trend_status = "fail"
-            trend_direction = "down"
-            trend_color = "red"
+        elif bear_stack and ema20_slope_pct < -slope_threshold:
+            trend_status = "fail"; trend_direction = "down"; trend_color = "red"
             trend_label = "AŞAĞI YÖN"
-            trend_comment = "Trend aşağı yönlü. EMA50 direnç konumunda."
+            trend_comment = f"EMA dizilimi bearish + slope {ema20_slope_pct:.2f}%. Trend aşağı."
             red_count += 1
-        else:
+        elif bull_stack or bear_stack:
+            # Stacking var ama slope zayıf → düşük güven
             trend_status = "warning"
-            trend_direction = "neutral"
+            trend_direction = "up" if bull_stack else "down"
             trend_color = "yellow"
+            trend_label = "ZAYIF TREND"
+            trend_comment = f"EMA dizilimi {'bullish' if bull_stack else 'bearish'} ama momentum zayıf (slope {ema20_slope_pct:+.2f}%)."
+            yellow_count += 1
+        else:
+            trend_status = "warning"; trend_direction = "neutral"; trend_color = "yellow"
             trend_label = "KARIŞIK"
             trend_comment = "EMA'lar karışık sinyal veriyor. Net bir yön yok."
             yellow_count += 1
@@ -590,36 +607,55 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         # ─────────────────────────────────────────────────────────────────────
         mtf_data = prediction.get("mtf_data", {})
         mtf_checks = []
-        mtf_conflicts = 0
-        
+
+        # Ana yönü trend_direction'dan belirle (bullish/bearish bias yok)
+        # NEUTRAL ise dominant çoğunluğa bak
+        dirs: Dict[str, int] = {"up": 0, "down": 0, "neutral": 0}
         for tf in ["1D", "4H", "1H", "15m"]:
-            tf_trend = mtf_data.get(tf, {}).get("trend", "NEUTRAL")
+            tf_trend = str(mtf_data.get(tf, {}).get("trend", "NEUTRAL")).upper()
             if tf_trend == "UP":
-                mtf_checks.append({"tf": tf, "dir": "up", "icon": "🟢"})
+                mtf_checks.append({"tf": tf, "dir": "up", "icon": "🟢"}); dirs["up"] += 1
             elif tf_trend == "DOWN":
-                mtf_checks.append({"tf": tf, "dir": "down", "icon": "🔴"})
-                if tf in ["4H", "1H"]:
-                    mtf_conflicts += 1
+                mtf_checks.append({"tf": tf, "dir": "down", "icon": "🔴"}); dirs["down"] += 1
             else:
-                mtf_checks.append({"tf": tf, "dir": "neutral", "icon": "🟡"})
-        
-        if mtf_conflicts == 0:
-            mtf_status = "pass"
-            mtf_color = "green"
+                mtf_checks.append({"tf": tf, "dir": "neutral", "icon": "🟡"}); dirs["neutral"] += 1
+
+        if trend_direction in ("up", "down"):
+            main_dir = trend_direction
+        else:
+            main_dir = "up" if dirs["up"] > dirs["down"] else ("down" if dirs["down"] > dirs["up"] else "neutral")
+
+        # 4H ve 1H ana yöne karşı mı?
+        opposing_core = 0
+        neutral_core = 0
+        if main_dir != "neutral":
+            opp = "down" if main_dir == "up" else "up"
+            for item in mtf_checks:
+                if item["tf"] in ("4H", "1H"):
+                    if item["dir"] == opp:
+                        opposing_core += 1
+                    elif item["dir"] == "neutral":
+                        neutral_core += 1
+
+        if main_dir == "neutral":
+            mtf_status = "warning"; mtf_color = "yellow"
+            mtf_label = "NET YÖN YOK"
+            mtf_comment = "Ana trend belirsiz, MTF verisi yön taraması için yetersiz."
+            yellow_count += 1
+        elif opposing_core == 0 and neutral_core == 0:
+            mtf_status = "pass"; mtf_color = "green"
             mtf_label = "UYUMLU"
-            mtf_comment = "Tüm zaman dilimleri aynı yönü gösteriyor."
+            mtf_comment = f"Tüm zaman dilimleri {main_dir.upper()} yönünde hizalı."
             green_count += 1
-        elif mtf_conflicts == 1:
-            mtf_status = "warning"
-            mtf_color = "yellow"
+        elif opposing_core == 0:
+            mtf_status = "warning"; mtf_color = "yellow"
             mtf_label = "KISMI UYUM"
-            mtf_comment = "Bazı zaman dilimlerinde çelişki var. Dikkatli ol."
+            mtf_comment = "Bazı core TF'ler nötr — hizalanma bekleyin."
             yellow_count += 1
         else:
-            mtf_status = "fail"
-            mtf_color = "red"
+            mtf_status = "fail"; mtf_color = "red"
             mtf_label = "ÇELİŞKİLİ"
-            mtf_comment = "4H ve 1H ana trende karşı. BEKLE tavsiyesi."
+            mtf_comment = f"Core TF ({opposing_core}) ana trende karşı ({main_dir.upper()}). BEKLE."
             red_count += 1
         
         checks.append({
@@ -726,23 +762,43 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         dist_to_support = current_price - s1
         dist_to_resistance = r1 - current_price
         
-        if dist_to_support < dist_to_resistance * 0.5:
-            sr_status = "pass"
-            sr_color = "green"
-            sr_label = "DESTEK YAKINI"
-            sr_comment = f"Destek bölgesine yakın ({dist_to_support:.0f} pts). Buradan dönüş olabilir."
-            green_count += 1
-        elif dist_to_resistance < dist_to_support * 0.5:
-            sr_status = "fail"
-            sr_color = "red"
-            sr_label = "DİRENÇ YAKINI"
-            sr_comment = f"Direnç bölgesine yakın ({dist_to_resistance:.0f} pts). Satış baskısı gelebilir."
-            red_count += 1
+        near_support = dist_to_support < dist_to_resistance * 0.5
+        near_resistance = dist_to_resistance < dist_to_support * 0.5
+
+        # Yön-farkında skorlama:
+        # UP trend + destek yakın = bounce setup (pass)
+        # UP trend + direnç yakın = breakout riski (warning)
+        # DOWN trend + destek yakın = breakdown riski (warning)
+        # DOWN trend + direnç yakın = rejection setup (pass, SELL yönü için)
+        if near_support:
+            if trend_direction == "up":
+                sr_status = "pass"; sr_color = "green"; sr_label = "DESTEK YAKINI"
+                sr_comment = f"UP trend + destek yakın ({dist_to_support:.0f} pts). Bounce entry fırsatı."
+                green_count += 1
+            elif trend_direction == "down":
+                sr_status = "warning"; sr_color = "yellow"; sr_label = "BREAKDOWN RİSKİ"
+                sr_comment = f"DOWN trend + destek yakın. Kırılım → SL tetiklenme riski."
+                yellow_count += 1
+            else:
+                sr_status = "warning"; sr_color = "yellow"; sr_label = "DESTEK YAKINI"
+                sr_comment = f"Yönsüz piyasada destek yakın ({dist_to_support:.0f} pts)."
+                yellow_count += 1
+        elif near_resistance:
+            if trend_direction == "down":
+                sr_status = "pass"; sr_color = "green"; sr_label = "DİRENÇ REDDİ"
+                sr_comment = f"DOWN trend + direnç yakın ({dist_to_resistance:.0f} pts). SELL setup için uygun."
+                green_count += 1
+            elif trend_direction == "up":
+                sr_status = "warning"; sr_color = "yellow"; sr_label = "BREAKOUT BÖLGESİ"
+                sr_comment = f"UP trend + direnç yakın. Kırılım veya rejection — teyit bekle."
+                yellow_count += 1
+            else:
+                sr_status = "fail"; sr_color = "red"; sr_label = "DİRENÇ YAKINI"
+                sr_comment = f"Yönsüz piyasada direnç yakın ({dist_to_resistance:.0f} pts). Satış baskısı gelebilir."
+                red_count += 1
         else:
-            sr_status = "warning"
-            sr_color = "yellow"
-            sr_label = "ORTADA"
-            sr_comment = "Fiyat destek ve direnç arasında ortada."
+            sr_status = "warning"; sr_color = "yellow"; sr_label = "ORTADA"
+            sr_comment = "Fiyat destek ve direnç arasında — net S/R sinyali yok."
             yellow_count += 1
         
         checks.append({
@@ -810,66 +866,47 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         })
         
         # ─────────────────────────────────────────────────────────────────────
-        # 7️⃣ HACİM ANALİZİ - YENİDEN YAZILDI (Timeframe-aware)
+        # 7️⃣ HACİM ANALİZİ — z-score tabanlı (20 mum baseline)
         # ─────────────────────────────────────────────────────────────────────
-        # 
-        # SORUN: Fallback yapıldığında farklı timeframe'lerin hacim ölçekleri karışıyor
-        # 1H hacmi: ~50-100M, 5M hacmi: ~2000-5000
-        # 
-        # ÇÖZÜM: Sadece son 4 meaningful volume'ü kullan, tüm array'in ortalamasını değil
-        #
-        
-        # Sadece son 4 tam mumun hacimlerini al (son mum tam kapanmamış olabilir)
-        recent_volumes_list = [v for v in volumes[-5:-1] if v > 0] if len(volumes) >= 5 else [v for v in volumes if v > 0]
-        
-        # Son 4 mumdan en az 2'sinde anlamlı hacim var mı?
-        has_recent_volume = len(recent_volumes_list) >= 2
-        
-        if has_recent_volume:
-            # Sadece son 4 mumun ortalaması (timeframe mixing sorununu önler)
-            avg_volume = np.mean(recent_volumes_list)
-            
-            # Son tam mum (sondan 2. veya 3.)
-            current_volume = recent_volumes_list[-1] if recent_volumes_list else avg_volume
-            
-            # Hacim trendini belirle
-            if current_volume > 0 and avg_volume > 0:
-                volume_ratio = current_volume / avg_volume
-            else:
-                volume_ratio = 1.0  # Nötr
-            
-            # DEBUG: Detaylı log
-            logger.info(f"[EMEL Volume Debug] {symbol} {timeframe}: recent_volumes={recent_volumes_list}, "
-                       f"avg={avg_volume:.2f}, current={current_volume:.2f}, ratio={volume_ratio:.2f}")
-            
-            if volume_ratio >= 1.2:
-                vol_status = "pass"
-                vol_color = "green"
-                vol_label = "YÜKSEK HACİM"
-                vol_comment = "Hacim ortalamanın üzerinde. Hareket güçlü."
+        # Endeksler (NDX, GDAXI) MT5'ten TICK VOLUME alır, gerçek hacim değil.
+        # Futures-based sembollerde (XAUUSD, USOIL) de MT5 exchange volume'ı kısmen yansıtır.
+        is_tick_volume = symbol in ("NDX.INDX", "GDAXI.INDX")
+        vol_source_label = "tick" if is_tick_volume else "volume"
+
+        # Son 20 mumun hacim baseline'ı (son mum hariç — henüz kapanmadı)
+        baseline_window = [float(v) for v in volumes[-21:-1] if v > 0] if len(volumes) >= 21 else [float(v) for v in volumes[:-1] if v > 0]
+        # Son tam mum (sondan 2.)
+        current_volume = float(volumes[-2]) if len(volumes) >= 2 and volumes[-2] > 0 else 0.0
+
+        volume_ratio = 1.0
+        volume_z = 0.0
+        if len(baseline_window) >= 5 and current_volume > 0:
+            baseline_mean = float(np.mean(baseline_window))
+            baseline_std = float(np.std(baseline_window)) or 1.0
+            volume_ratio = current_volume / max(baseline_mean, 1e-9)
+            volume_z = (current_volume - baseline_mean) / baseline_std
+
+            logger.info(f"[EMEL Volume] {symbol} {timeframe} src={vol_source_label}: "
+                        f"current={current_volume:.0f} baseline_mean={baseline_mean:.0f} "
+                        f"ratio={volume_ratio:.2f} z={volume_z:.2f}")
+
+            if volume_z >= 1.0:  # 1σ üzeri spike
+                vol_status = "pass"; vol_color = "green"; vol_label = "HACİM SPİKE"
+                vol_comment = f"{vol_source_label.capitalize()} z={volume_z:.1f}σ (spike). Hareket güçlü."
                 green_count += 1
-            elif volume_ratio >= 0.5:  # 0.6'dan 0.5'e düşürdük (hafta sonu için daha toleranslı)
-                vol_status = "warning"
-                vol_color = "yellow"
-                vol_label = "NORMAL HACİM"
-                vol_comment = "Hacim ortalama seviyede."
-                yellow_count += 1
-            else:
-                vol_status = "fail"
-                vol_color = "red"
-                vol_label = "DÜŞÜK HACİM"
-                vol_comment = "Düşük hacimli hareket güvenilmez. Hacim artmadan işlem açma."
+            elif volume_z <= -1.0:
+                vol_status = "fail"; vol_color = "red"; vol_label = "DÜŞÜK HACİM"
+                vol_comment = f"{vol_source_label.capitalize()} z={volume_z:.1f}σ. Hareket güvenilmez."
                 red_count += 1
+            else:
+                vol_status = "warning"; vol_color = "yellow"; vol_label = "NORMAL HACİM"
+                vol_comment = f"{vol_source_label.capitalize()} z={volume_z:+.1f}σ — ortalama band içinde."
+                yellow_count += 1
         else:
-            # Hacim verisi yok veya çok düşük - bunu red yerine warning yap
-            # Çünkü bazı sembollerde (özellikle endekslerde) hacim verisi eksik olabilir
-            vol_status = "warning"
-            vol_color = "yellow"
-            vol_label = "VERİ YOK"
-            vol_comment = f"Hacim verisi yetersiz (son 4 mumda yeterli veri yok)."
+            vol_status = "warning"; vol_color = "yellow"; vol_label = "VERİ YOK"
+            vol_comment = f"Hacim baseline'ı oluşmuyor ({len(baseline_window)} mum)."
             yellow_count += 1
-            volume_ratio = 1.0  # Nötr kabul et
-            logger.warning(f"[EMEL Volume Debug] {symbol}: Yetersiz hacim verisi - recent_count={len(recent_volumes_list) if 'recent_volumes_list' in locals() else 0}")
+            logger.warning(f"[EMEL Volume] {symbol}: baseline yetersiz ({len(baseline_window)})")
         
         checks.append({
             "id": 7,
@@ -880,17 +917,11 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             "color": vol_color,
             "label": vol_label,
             "details": {
+                "z_score": round(volume_z, 2),
                 "ratio": round(volume_ratio * 100, 0),
-                "trend": "Artıyor" if volume_ratio > 1 else "Azalıyor",
-                "debug": {
-                    "volumes_count": len(volumes),
-                    "total_volume": float(np.sum(volumes)),
-                    "avg_volume": float(avg_volume) if 'avg_volume' in locals() else 0,
-                    "current_volume": float(current_volume) if 'current_volume' in locals() else 0,
-                    "recent_count": len(recent_volumes_list) if 'recent_volumes_list' in locals() else 0,
-                    "last_5": [float(v) for v in volumes[-5:]] if len(volumes) >= 5 else [float(v) for v in volumes],
-                    "recent_volumes": recent_volumes_list if 'recent_volumes_list' in locals() else [],
-                }
+                "source": vol_source_label,
+                "baseline_n": len(baseline_window),
+                "trend": "Artıyor" if volume_z > 0 else "Azalıyor",
             },
             "comment": vol_comment
         })
@@ -899,26 +930,27 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         # 8️⃣ LEARNING / GEÇMİŞ PERFORMANS
         # ─────────────────────────────────────────────────────────────────────
         learning_data = prediction.get("learning_insights", {})
-        win_rate = learning_data.get("win_rate", 50)
-        sample_count = learning_data.get("sample_count", 0)
-        
-        if win_rate >= 60 and sample_count >= 5:
-            learn_status = "pass"
-            learn_color = "green"
-            learn_label = "İYİ GEÇMİŞ"
+        win_rate = float(learning_data.get("win_rate", 50) or 50)
+        sample_count = int(learning_data.get("sample_count", 0) or 0)
+
+        # İstatistiksel güven için min 10 örnek şart
+        if sample_count < 10:
+            learn_status = "warning"
+            learn_color = "yellow"
+            learn_label = "VERİ YOK"
+            learn_comment = f"Benzer setup için yeterli geçmiş yok ({sample_count} örnek, min 10 gerekli)."
+            yellow_count += 1
+        elif win_rate >= 60:
+            learn_status = "pass"; learn_color = "green"; learn_label = "İYİ GEÇMİŞ"
             learn_comment = f"Benzer setup'larda %{win_rate:.0f} başarı ({sample_count} örnek)."
             green_count += 1
         elif win_rate >= 45:
-            learn_status = "warning"
-            learn_color = "yellow"
-            learn_label = "ORTA RİSK"
-            learn_comment = f"Geçmiş performans ortalama (%{win_rate:.0f})."
+            learn_status = "warning"; learn_color = "yellow"; learn_label = "ORTA RİSK"
+            learn_comment = f"Geçmiş performans ortalama (%{win_rate:.0f}, n={sample_count})."
             yellow_count += 1
         else:
-            learn_status = "fail"
-            learn_color = "red"
-            learn_label = "DÜŞÜK BAŞARI"
-            learn_comment = f"Benzer setup'larda düşük başarı (%{win_rate:.0f}). Dikkatli ol."
+            learn_status = "fail"; learn_color = "red"; learn_label = "DÜŞÜK BAŞARI"
+            learn_comment = f"Benzer setup'larda düşük başarı (%{win_rate:.0f}, n={sample_count}). Dikkatli ol."
             red_count += 1
         
         checks.append({
@@ -1015,53 +1047,88 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             "portfolio": port_status
         }
         
-        # 3. AĞIRLIKLI SKOR HESAPLA (detaylı katkı takibi)
-        score = 0
-        factor_contributions = {}  # Her faktörün katkısını takip et
+        # 3. YÖNLÜ ağırlıklı skor: yönlü faktörler (trend, mtf, momentum, sr, pattern)
+        #    pass olduğunda faktörün kendi yönüne göre +/- skor ekler.
+        #    Salt kalite faktörleri (regime, volume, portfolio, learning) skoru azaltır/artırır
+        #    ama yön kararı vermez.
+        directional_factors = {"trend", "mtf", "momentum", "sr", "pattern"}
+
+        # Momentum yönü (label yerine flag kullan)
+        mom_direction = "up" if bullish_momentum else "down" if bearish_momentum else "neutral"
+        # SR yönü (trend'e paralel setup'ta aynı yönde katkı)
+        sr_direction = trend_direction if sr_status == "pass" else "neutral"
+        # Pattern yönü
+        pattern_direction = "up" if pattern_signal == "bullish" else "down" if pattern_signal == "bearish" else "neutral"
+
+        factor_dirs = {
+            "trend": trend_direction,
+            "mtf": main_dir if mtf_status == "pass" else "neutral",
+            "momentum": mom_direction,
+            "sr": sr_direction,
+            "pattern": pattern_direction,
+        }
+
+        score = 0.0
+        factor_contributions: Dict[str, Dict[str, Any]] = {}
         for factor, status in factor_status.items():
             weight = weights.get(factor, 15)
-            contribution = 0
-            if status == "pass":
-                contribution = weight
-                score += weight
-            elif status == "fail":
-                contribution = -weight * 1.5  # Red'ler daha ağır bassın
-                score += contribution
-            # warning = 0 puan (nötr)
+            contribution = 0.0
+            if factor in directional_factors:
+                fdir = factor_dirs.get(factor, "neutral")
+                if status == "pass" and fdir == "up":
+                    contribution = +weight
+                elif status == "pass" and fdir == "down":
+                    contribution = -weight
+                elif status == "fail":
+                    # fail = yön bilgisi var (trend down stack gibi) → karşı yön skoruna eksi
+                    if fdir == "up":
+                        contribution = -weight
+                    elif fdir == "down":
+                        contribution = +weight
+                    else:
+                        contribution = 0
+            else:
+                # Kalite faktörleri: symmetric quality gate (yönsüz)
+                if status == "pass":
+                    contribution = +weight * 0.5  # pozitif katkı tatmin eder, yön vermez
+                elif status == "fail":
+                    contribution = -weight  # fail cezası tam
+
+            score += contribution
             factor_contributions[factor] = {
-                "weight": weight,
-                "status": status,
-                "contribution": round(contribution, 1)
+                "weight": weight, "status": status, "contribution": round(contribution, 1),
+                "direction": factor_dirs.get(factor)
             }
-        
+
         # 4. KONFLUANS BONUS/CEZALARI
-        bonuses = []
-        
-        # "Kutsal Üçlü": MTF + Trend + Momentum aynı yönde
-        if mtf_status == "pass" and trend_status == "pass" and mom_status == "pass":
-            # Yön kontrolü
-            if trend_direction == "up" and mom_label == "YUKARI MOMENTUM":
-                score += 15
-                bonuses.append({"name": "Holy Trinity (Bullish)", "value": 15})
-            elif trend_direction == "down" and mom_label == "AŞAĞI MOMENTUM":
-                score -= 15
-                bonuses.append({"name": "Holy Trinity (Bearish)", "value": -15})
-        
-        # "Yatay+Düşük Hacim" cezası
+        bonuses: List[Dict[str, Any]] = []
+
+        # Holy Trinity — pure direction check (no label string match)
+        if (mtf_status == "pass" and trend_status == "pass" and mom_status == "pass"
+                and trend_direction == mom_direction and trend_direction == main_dir
+                and trend_direction in ("up", "down")):
+            delta = 15 if trend_direction == "up" else -15
+            score += delta
+            bonuses.append({"name": f"Holy Trinity ({'Bullish' if trend_direction == 'up' else 'Bearish'})", "value": delta})
+
+        # Yatay + düşük hacim cezası (yönsüz)
         if regime_status != "pass" and vol_status == "fail":
-            score -= 20
-            bonuses.append({"name": "Low Volume + Ranging", "value": -20})
-        
-        # Portföy riski aşımı = kesin red
+            penalty = 15
+            score -= penalty if score >= 0 else 0  # pozitif skoru düşür
+            score += penalty if score < 0 else 0   # negatif skoru toparla (daha az negatif)
+            # Simpler: magnitude azalt
+            bonuses.append({"name": "Low Volume + Ranging", "value": -penalty, "applied_to": "magnitude"})
+
+        # Portföy riski aşımı = kesin red (hard gate)
         if port_status == "fail":
-            score = -100  # Override everything
-            bonuses.append({"name": "Risk Limit Exceeded", "value": -100})
+            score = 0  # yön kararını öldür, HOLD'a düşer
+            bonuses.append({"name": "Risk Limit Exceeded", "value": 0, "hard_gate": True})
         
         # 5. SİNYAL SEVİYESİ BELİRLE
         # DÜZELTME: Sinyal yönü kendi 9-check skorundan türetilir, ML'den DEĞİL
         # ML prediction yalnızca minor boost olarak skora eklenir
         ml_confidence = prediction.get("confidence", 50)
-        
+
         # ML sinyali ile skoru birleştir (küçük boost, yön değiştirmez)
         ml_boost = 0
         ml_dir = prediction.get("direction", "HOLD")
@@ -1069,8 +1136,35 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             ml_boost = (ml_confidence - 50) / 5  # +0 to +10
         elif ml_dir == "SELL":
             ml_boost = -(ml_confidence - 50) / 5  # -0 to -10
-        
+
         final_score = score + ml_boost
+
+        # ─── ATH / Session hard gates ───
+        gate_notes: List[str] = []
+        regime_info: Dict[str, Any] = {}
+        try:
+            from services.market_regime_service import get_regime_info as _get_regime
+            regime_info = await _get_regime(symbol) or {}
+        except Exception as reg_err:
+            logger.warning(f"EMEL regime gate failed: {reg_err}")
+
+        # ATH zone: SELL bloklanır (CLAUDE.md ATH protocol)
+        if regime_info.get("is_ath_zone") and final_score < 0:
+            gate_notes.append("ATH zone — SELL bloklandı, HOLD'a zorlandı")
+            final_score = max(final_score, 0)
+            bonuses.append({"name": "ATH Zone Block (SELL)", "value": 0, "hard_gate": True})
+
+        # Market session gate: piyasa kapalıysa yeni sinyal üretme (HOLD)
+        try:
+            from utils.market_hours import is_symbol_market_open
+            if not is_symbol_market_open(symbol):
+                gate_notes.append("Piyasa kapalı — sinyal HOLD'a indirildi")
+                # skor gösterilsin ama kararı HOLD'a düşür
+                market_closed = True
+            else:
+                market_closed = False
+        except Exception:
+            market_closed = False
         
         # 6. KARAR VER — Yön 9-check skorundan gelir
         if final_score >= 70:
@@ -1101,8 +1195,17 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             decision = "HOLD"
             signal = "HOLD"
             decision_reason = f"Yetersiz konfluans: {final_score:.1f} (40-55 arası sinyal gerekli)"
-        
-        confidence = min(abs(final_score), 100)
+
+        # Market closed: hard-override to HOLD (gösterimde kalır, loglanmaz)
+        if market_closed and signal in ("BUY", "SELL"):
+            decision = "HOLD"
+            signal = "HOLD"
+            decision_reason = "Piyasa kapalı — yeni sinyal üretilmedi"
+
+        # Confidence = reliability × |final_score|
+        # reliability = clamp(0-1, resolved_samples / 8) — low-sample penalizasyonu
+        reliability = max(0.0, min(1.0, sample_count / 8.0)) if sample_count > 0 else 0.4
+        confidence = min(abs(final_score) * (0.5 + 0.5 * reliability), 100)
         
         # Build rejection reasons
         rejections = []
@@ -1201,14 +1304,22 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         except Exception as rebound_err:
             logger.warning(f"EMEL rebound integration failed: {rebound_err}")
         
+        _now_iso = datetime.now().isoformat()
         return {
             "symbol": symbol,
             "timeframe": timeframe,
-            "timestamp": datetime.now().isoformat(),
-            "signal_timestamp": datetime.now().isoformat(),
+            "effective_timeframe": effective_tf,
+            "timestamp": _now_iso,
+            "signal_timestamp": _resolve_signal_timestamp(symbol, _now_iso),
             "signal": decision,
             "confidence": confidence,
             "price": current_price,
+            "reliability": round(reliability, 2),
+            "gates": {
+                "is_ath_zone": bool(regime_info.get("is_ath_zone")),
+                "market_open": not market_closed,
+                "notes": gate_notes,
+            },
             "checks": checks,
             "confluence": {
                 "score": round(final_score, 1),
