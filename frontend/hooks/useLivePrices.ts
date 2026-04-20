@@ -53,19 +53,23 @@ export function useLivePrices(_refreshInterval?: number): {
         return { label, price: "--", change: "--%", trend: "up" as const };
       }
 
-      // Try to get change from TA snapshot FIRST (most reliable)
+      // Calculate % change from prev_close + live current_price.
+      // This ensures the percentage updates in real-time as price_update ticks arrive,
+      // rather than staying stale from the last full backend update.
       const prevClose = ta?.prev_close ?? ta?.last_close ?? null;
       const changePctBackend = ta?.change_pct ?? null;
 
       let changeValue = 0;
       let changePercent = 0;
 
-      if (changePctBackend !== null) {
-        changePercent = changePctBackend;
-        changeValue = currentPrice * (changePercent / 100);
-      } else if (prevClose && prevClose > 0) {
+      if (prevClose && prevClose > 0) {
+        // Best path: recalculate from prev_close + live price
         changeValue = currentPrice - prevClose;
         changePercent = (changeValue / prevClose) * 100;
+      } else if (changePctBackend !== null) {
+        // Fallback: use backend-computed change_pct (won't update with ticks)
+        changePercent = changePctBackend;
+        changeValue = currentPrice * (changePercent / 100);
       } else {
         // We have price but no history: display price with 0% change
         return {

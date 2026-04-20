@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date as date_type
 from typing import List, Literal, Tuple, Optional
 
 import numpy as np
@@ -13,6 +14,8 @@ except ImportError:
 
 from services.data_fetcher import fetch_eod_candles, fetch_latest_price
 from services.technical_indicators import calculate_ema, calculate_rsi
+
+logger = logging.getLogger(__name__)
 
 # Market timezones
 NY_TZ = ZoneInfo("America/New_York")
@@ -27,50 +30,81 @@ def _get_ny_now() -> datetime:
     return datetime.now(NY_TZ)
 
 
+def _parse_candle_date(candle: dict) -> Optional[date_type]:
+    """Extract date from candle dict. Handles EODHD ('2026-04-18') and Yahoo ISO ('2026-04-18T16:00:00')."""
+    raw = candle.get("date", "")
+    if not raw:
+        # Fallback: use timestamp field (ms since epoch)
+        ts = candle.get("timestamp")
+        if ts:
+            try:
+                return datetime.fromtimestamp(float(ts) / 1000, tz=UTC_TZ).date()
+            except Exception:
+                pass
+        return None
+    if isinstance(raw, datetime):
+        return raw.date() if hasattr(raw, "date") else None
+    if isinstance(raw, date_type):
+        return raw
+    try:
+        return datetime.strptime(str(raw)[:10], "%Y-%m-%d").date()
+    except Exception:
+        return None
+
+
 def _find_prev_trading_day_close(eod_rows: List[dict], symbol: str) -> Optional[float]:
     """
-    Find the previous trading day's closing price based on NY market hours.
+    Find the previous trading day's closing price for daily % change.
     
-    For NASDAQ and US equity markets:
-    - Market closes at 4:00 PM ET
-    - After 4:00 PM ET: previous close is today's 4:00 PM close
-    - Before 4:00 PM ET: previous close is yesterday's 4:00 PM close
-    - On weekends: previous close is Friday's 4:00 PM close
+    Uses date-aware logic instead of fragile positional indexing:
+    - Weekend: show last trading day's change → prev_close = eod_rows[-2]
+      (e.g., Friday close vs Thursday close)
+    - Weekday with today's candle in EOD: prev_close = eod_rows[-2] (yesterday)
+    - Weekday without today's candle: prev_close = eod_rows[-1] (last completed day)
     
-    For commodities (XAUUSD, USOIL) which trade 23h:
-    - Use the last available daily close
-    
-    Returns the closing price or None if not available.
+    This mirrors how TradingView calculates daily % change.
     """
     if not eod_rows or len(eod_rows) < 2:
         return None
     
     ny_now = _get_ny_now()
-    ny_weekday = ny_now.weekday()  # 0=Monday, 6=Sunday
-    ny_hour = ny_now.hour + ny_now.minute / 60.0
+    is_weekend = ny_now.weekday() >= 5  # Saturday=5, Sunday=6
     
-    # Check if symbol is a US equity index (follows NY market hours)
-    is_us_equity = any(x in symbol.upper() for x in ["NDX", "NASDAQ", "SPX", "SPY", "DOW"])
+    if is_weekend:
+        # On weekends, current_price ≈ Friday's close (markets closed).
+        # Show last trading day's change: prev_close = the day BEFORE the last candle.
+        # eod_rows[-1] = Friday, eod_rows[-2] = Thursday
+        prev = float(eod_rows[-2]["close"])
+        logger.debug(
+            "ta_snapshot prev_close [%s] weekend: using eod[-2]=%.2f (eod[-1] date=%s)",
+            symbol, prev, str(eod_rows[-1].get("date", "?"))[:10]
+        )
+        return prev
     
-    if is_us_equity:
-        # US Market hours: 9:30 AM - 4:00 PM ET
-        # After 4:00 PM ET: previous close is today's close (index 0 = today, index 1 = yesterday)
-        # Before 4:00 PM ET: previous close is yesterday's close (index 1 = yesterday)
-        
-        if ny_weekday >= 5:  # Weekend
-            # Use Friday's close (last trading day)
-            # eod_rows[-1] = today (weekend, no data), eod_rows[-2] = Friday
-            return float(eod_rows[-1]["close"]) if len(eod_rows) >= 1 else None
-        elif ny_hour >= 16.0:  # After 4:00 PM ET, market closed
-            # Today's close is available, use yesterday as "previous close"
-            return float(eod_rows[-2]["close"]) if len(eod_rows) >= 2 else None
-        else:  # Before 4:00 PM ET, market open or pre-market
-            # Yesterday's close is the reference
-            return float(eod_rows[-2]["close"]) if len(eod_rows) >= 2 else None
+    # Weekday: check if today's candle exists in EOD data
+    today_str = ny_now.strftime("%Y-%m-%d")
+    last_candle_date = _parse_candle_date(eod_rows[-1])
+    last_date_str = last_candle_date.isoformat() if last_candle_date else ""
+    
+    if last_date_str == today_str:
+        # Today's candle is in EOD (market closed and data updated)
+        # prev_close = yesterday = eod_rows[-2]
+        prev = float(eod_rows[-2]["close"])
+        logger.debug(
+            "ta_snapshot prev_close [%s] today-candle-exists: using eod[-2]=%.2f",
+            symbol, prev
+        )
+        return prev
     else:
-        # For commodities (XAUUSD, USOIL) - use last available daily close
-        # These trade ~23h/day so previous close is just yesterday's close
-        return float(eod_rows[-2]["close"]) if len(eod_rows) >= 2 else None
+        # Today's candle NOT in EOD yet (market open, pre-market, or delayed update)
+        # eod_rows[-1] = last completed trading day (yesterday, or Friday on Monday)
+        # This IS the previous close for intraday % change
+        prev = float(eod_rows[-1]["close"])
+        logger.debug(
+            "ta_snapshot prev_close [%s] no-today-candle: using eod[-1]=%.2f (date=%s, today=%s)",
+            symbol, prev, last_date_str, today_str
+        )
+        return prev
 
 
 def _get_market_hours_context(symbol: str) -> dict:
@@ -218,10 +252,21 @@ async def compute_ta_snapshot(symbol: str, limit: int = 220) -> dict:
     market_context = _get_market_hours_context(symbol)
     
     # TradingView-style % change: (current_price - previous_close) / previous_close * 100
-    # This is now calculated based on NY market hours (4:00 PM ET close as reference)
     change_pct = None
     if prev_close and current_price and prev_close > 0:
         change_pct = float(((current_price - prev_close) / prev_close) * 100.0)
+    
+    # Sanity check: if |change_pct| > 15%, log a warning (likely data issue)
+    if change_pct is not None and abs(change_pct) > 15.0:
+        logger.warning(
+            "ta_snapshot [%s] SUSPICIOUS change_pct=%.2f%% | current=%.2f prev_close=%.2f "
+            "last_close=%.4f eod[-1].date=%s eod[-2].date=%s eod_count=%d",
+            symbol, change_pct, current_price or 0, prev_close or 0,
+            last_close or 0,
+            str(eod_rows[-1].get("date", "?"))[:10] if len(eod_rows) >= 1 else "?",
+            str(eod_rows[-2].get("date", "?"))[:10] if len(eod_rows) >= 2 else "?",
+            len(eod_rows),
+        )
 
     def _safe_float(v):
         if v is None:
@@ -234,6 +279,10 @@ async def compute_ta_snapshot(symbol: str, limit: int = 220) -> dict:
             return f
         except (ValueError, TypeError):
             return None
+
+    # Debug: last two EOD candle dates for diagnostic
+    eod_last_date = str(eod_rows[-1].get("date", ""))[:10] if eod_rows else None
+    eod_prev_date = str(eod_rows[-2].get("date", ""))[:10] if len(eod_rows) >= 2 else None
 
     return {
         "symbol": symbol,
@@ -250,7 +299,12 @@ async def compute_ta_snapshot(symbol: str, limit: int = 220) -> dict:
         "trend": trend,
         "supports": [{"price": _safe_float(s.price), "kind": s.kind, "hits": s.hits, "strength": _safe_float(s.strength)} for s in supports],
         "resistances": [{"price": _safe_float(r.price), "kind": r.kind, "hits": r.hits, "strength": _safe_float(r.strength)} for r in resistances],
-        "market_context": market_context,  # NY time info for frontend display
+        "market_context": market_context,
+        "eod_debug": {
+            "last_candle_date": eod_last_date,
+            "prev_candle_date": eod_prev_date,
+            "eod_count": len(eod_rows) if eod_rows else 0,
+        },
     }
 
 
