@@ -782,7 +782,7 @@ export default function OrderBlockChartPanel() {
 
     if (obData?.choch_list) {
       for (const ch of obData.choch_list as any[]) {
-        const level = ch.broken_level;
+        const level = ch.prev_swing;
         if (!level) continue;
         const yPos = priceToY(level);
         if (yPos === null) continue;

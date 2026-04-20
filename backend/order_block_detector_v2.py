@@ -100,6 +100,7 @@ class FVG:
         return {
             "detected": True,
             "direction": self.direction,
+            "index": self.index,
             "high": round(self.high, 2),
             "low": round(self.low, 2),
             "size": round(self.size, 2),
