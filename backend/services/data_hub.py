@@ -762,9 +762,22 @@ def _rebuild_derived(symbol: str):
             _candles_30m[symbol] = {"candles": _resample(raw_5m, 6), "timestamp": now, "source": "derived_from_5m"}
 
         if market_data_source in {"mt5_redis", "hybrid"} and not use_direct_30m and not derive_from_30m:
-            derived_1h = _resample(raw_5m, 12)
-            if derived_1h:
-                _candles_1h[symbol] = {"candles": derived_1h, "timestamp": now, "source": "derived_from_5m"}
+            # Respect directly-ingested 1h from MT5 (mt5:bar:1h stream) or Supabase
+            # persistent cache; only fall back to 5m-derived 1h when no richer source
+            # is available. This prevents clobbering ~2400 real 1h bars with the
+            # ~125 bars we can derive from the 5m window, which in turn collapses
+            # the 4h chain (4h = 1h × 4) from ~600 candles down to ~31.
+            existing_1h = _candles_1h.get(symbol, {}) or {}
+            existing_1h_candles = existing_1h.get("candles", [])
+            existing_1h_source = (existing_1h.get("source") or "").lower()
+            richer_1h_available = (
+                len(existing_1h_candles) > len(raw_5m) // 12
+                or ("derived" not in existing_1h_source and existing_1h_source not in {"", "unknown"})
+            )
+            if not richer_1h_available:
+                derived_1h = _resample(raw_5m, 12)
+                if derived_1h:
+                    _candles_1h[symbol] = {"candles": derived_1h, "timestamp": now, "source": "derived_from_5m"}
     
     # XAUUSD keeps its 1h/4h chain on top of 30m, whether 30m was fetched or derived.
     if derive_from_30m:
