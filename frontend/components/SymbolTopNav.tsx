@@ -139,12 +139,12 @@ function SymbolTab({
           {symbol.label}
         </span>
 
-        <div className="flex items-center gap-1 text-[10px] font-medium">
-          <span className={isPriceReady ? "text-slate-300" : "text-slate-500"}>
+        <div className="flex items-center gap-1 text-[10px] font-medium tabular-nums max-w-full">
+          <span className={`${isPriceReady ? "text-slate-300" : "text-slate-500"} truncate`}>
             {formattedPrice}
           </span>
           {isPriceReady && price?.change && (
-            <span className={isUp ? "text-emerald-400" : "text-rose-400"}>
+            <span className={`${isUp ? "text-emerald-400" : "text-rose-400"} truncate`}>
               {price.change}
             </span>
           )}
@@ -171,7 +171,14 @@ export default function SymbolTopNav({
   return (
     <nav
       className="sticky top-0 z-[100] w-full border-b border-slate-800/50 bg-slate-950/90 backdrop-blur-xl"
-      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+      style={{
+        // Top inset clears Dynamic Island when the sticky nav is scrolled
+        // behind it; left/right insets matter in iPhone landscape to keep
+        // the hamburger out of the rounded-corner curvature.
+        paddingTop: "env(safe-area-inset-top, 0px)",
+        paddingLeft: "env(safe-area-inset-left, 0px)",
+        paddingRight: "env(safe-area-inset-right, 0px)",
+      }}
     >
       <div className="mx-auto flex max-w-[1680px] items-center gap-2 px-3 py-2 sm:px-4 md:px-6 lg:px-8 pointer-events-auto">
         {/* Mobile hamburger — opens the Sidebar drawer. Hidden on tablet+. */}
@@ -192,11 +199,12 @@ export default function SymbolTopNav({
           <span className="text-sm font-bold text-white">ForexSAI</span>
         </div>
 
-        {/* Symbol tabs — horizontally scrollable on narrow phones, flex-equal
-            on tablet+ so the whole row fills the available width cleanly. */}
-        <div className="flex flex-1 min-w-0 gap-2 sm:gap-3 pointer-events-auto overflow-x-auto md:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        {/* Symbol tabs — flex-equal so 4 tabs share the row width on every
+            device. On very narrow phones (<360px) the row horizontally
+            scrolls via the outer overflow-x-auto and min-w on each tab. */}
+        <div className="flex flex-1 min-w-0 gap-1.5 sm:gap-2 md:gap-3 pointer-events-auto overflow-x-auto md:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {SYMBOLS.map((symbol) => (
-            <div key={symbol.id} className="flex-none basis-[26%] min-w-[96px] md:flex-1 md:basis-auto md:min-w-0">
+            <div key={symbol.id} className="flex-1 min-w-[78px] sm:min-w-[92px]">
               <SymbolTab
                 symbol={symbol}
                 isActive={pathname === symbol.path}

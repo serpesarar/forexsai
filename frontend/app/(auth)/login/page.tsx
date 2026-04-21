@@ -74,11 +74,12 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex relative">
-      {/* Language & Back */}
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
+      {/* Language & Back — `fsai-safe-top` pushes below the iPhone Dynamic
+          Island on notched devices; falls back to 0px elsewhere. */}
+      <div className="fsai-safe-top absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
         <LanguageSwitcher />
       </div>
-      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
+      <div className="fsai-safe-top absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
         <Link
           href="/welcome"
           className="flex items-center gap-2 text-xs uppercase tracking-widest text-gray-500 hover:text-white transition-colors"

@@ -260,13 +260,13 @@ function SignupForm() {
           50% { opacity: 0.8; transform: scale(1); }
         }
       `}</style>
-      {/* Language */}
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
+      {/* Language — fsai-safe-top clears the iPhone notch on notched devices */}
+      <div className="fsai-safe-top absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
         <LanguageSwitcher />
       </div>
       
       {/* Back */}
-      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
+      <div className="fsai-safe-top absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
         <Link href="/welcome" className="flex items-center gap-2 text-xs uppercase tracking-widest text-gray-500 hover:text-white transition-colors">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
           Back

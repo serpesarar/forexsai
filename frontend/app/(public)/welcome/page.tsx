@@ -281,8 +281,11 @@ export default function WelcomePage() {
             </Link>
           </nav>
 
-          {/* Hero Content — center-aligned on mobile, right-aligned on tablet+ */}
-          <div className="flex-1 flex flex-col items-center md:items-end justify-center px-5 sm:px-8 md:px-12 pb-48 md:pb-20 text-center md:text-right">
+          {/* Hero Content — center-aligned on mobile, right-aligned on tablet+.
+              Bottom padding leaves room for the absolute-positioned feature
+              cards (one row horizontal scroll on mobile ~130px, 3-col grid
+              on tablet+ ~120px). */}
+          <div className="flex-1 flex flex-col items-center md:items-end justify-center px-5 sm:px-8 md:px-12 pb-40 sm:pb-44 md:pb-20 text-center md:text-right">
             <motion.div
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
@@ -310,17 +313,24 @@ export default function WelcomePage() {
             </motion.div>
           </div>
 
-          {/* Feature Cards — compact horizontal scroll on mobile to avoid
-              overlapping the hero; fixed bottom-anchored grid on tablet+. */}
-          <div className="absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 w-full max-w-5xl px-4 sm:px-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+          {/* Feature Cards — single-row horizontal scroll on mobile (never
+              overlaps the hero), fixed 3-col grid on tablet+. */}
+          <div className="absolute bottom-4 md:bottom-8 left-0 right-0 w-full md:left-1/2 md:-translate-x-1/2 md:max-w-5xl px-4 sm:px-6">
+            <div
+              className="flex md:grid md:grid-cols-3 gap-3 md:gap-4 overflow-x-auto md:overflow-visible snap-x snap-mandatory md:snap-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              style={{ paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" }}
+            >
               {[
                 { icon: "📡", title: "Live Markets", desc: "Real-time AI analysis", href: "#features", accent: "group-hover:bg-cyan-500/40", defaultBg: "bg-cyan-500/20" },
                 { icon: "🧠", title: "AI Analysis", desc: "Deep pattern recognition", href: "#about", accent: "group-hover:bg-purple-500/40", defaultBg: "bg-purple-500/20" },
                 { icon: "📊", title: "Portfolio", desc: "Intelligent risk management", href: "#pricing", accent: "group-hover:bg-blue-500/40", defaultBg: "bg-blue-500/20" },
               ].map((card) => (
-                <a key={card.title} href={card.href}>
-                  <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-xl hover:bg-white/10 hover:scale-105 transition-all duration-300 cursor-pointer group">
+                <a
+                  key={card.title}
+                  href={card.href}
+                  className="flex-none w-[72%] sm:w-[46%] md:w-auto snap-start md:snap-align-none"
+                >
+                  <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-4 md:p-5 rounded-xl hover:bg-white/10 hover:scale-105 transition-all duration-300 cursor-pointer group h-full">
                     <div className={`w-9 h-9 rounded-full ${card.defaultBg} flex items-center justify-center mb-3 ${card.accent} transition-colors`}>
                       <span className="text-base">{card.icon}</span>
                     </div>
