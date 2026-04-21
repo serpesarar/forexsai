@@ -78,21 +78,55 @@ const LEGAL_LINKS = [
 
 export default function Sidebar() {
     const router = useRouter();
-    const { activeView, setActiveView } = useNavigationStore();
+    const { activeView, setActiveView, mobileSidebarOpen, setMobileSidebarOpen } = useNavigationStore();
     const { locale, setLocale } = useI18nStore();
     const user = useUser();
     const { logout } = useAuthStore();
 
-    const [collapsed, setCollapsed] = useState(false);
+    const [rawCollapsed, setCollapsed] = useState(false);
     const [legalOpen, setLegalOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
     const legalRef = useRef<HTMLDivElement>(null);
+
+    // Mobile drawer always renders in the "expanded" layout so labels stay legible.
+    const collapsed = isMobile ? false : rawCollapsed;
 
     useEffect(() => {
         setMounted(true);
         const saved = localStorage.getItem("sidebar-collapsed");
         if (saved === "true") setCollapsed(true);
+        // Track viewport size so we can adapt behavior (drawer on mobile, rail on
+        // tablet+) without duplicating logic in callers. Tablet breakpoint = 768px.
+        const mql = window.matchMedia("(max-width: 767px)");
+        const sync = () => setIsMobile(mql.matches);
+        sync();
+        mql.addEventListener("change", sync);
+        return () => mql.removeEventListener("change", sync);
     }, []);
+
+    // Prevent body scroll while the mobile drawer is open.
+    useEffect(() => {
+        if (!isMobile) return;
+        if (mobileSidebarOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, [isMobile, mobileSidebarOpen]);
+
+    // Close drawer on Escape.
+    useEffect(() => {
+        if (!mobileSidebarOpen) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setMobileSidebarOpen(false);
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [mobileSidebarOpen, setMobileSidebarOpen]);
 
     // Close legal dropdown when clicking outside
     useEffect(() => {
@@ -106,7 +140,12 @@ export default function Sidebar() {
     }, []);
 
     const toggleCollapse = () => {
-        const next = !collapsed;
+        // On mobile the chevron closes the drawer instead of toggling rail width.
+        if (isMobile) {
+            setMobileSidebarOpen(false);
+            return;
+        }
+        const next = !rawCollapsed;
         setCollapsed(next);
         localStorage.setItem("sidebar-collapsed", String(next));
         if (next) setLegalOpen(false);
@@ -121,13 +160,35 @@ export default function Sidebar() {
 
     if (!mounted) return null;
 
+    // On mobile we force the full-width "expanded" look (260px) inside the drawer
+    // so the nav labels are readable. Off-canvas when closed, on-canvas when open.
+    const drawerOffCanvas = isMobile && !mobileSidebarOpen;
+    const widthClass = isMobile
+        ? "w-[280px] max-w-[85vw]"
+        : collapsed
+            ? "w-[80px]"
+            : "w-[260px]";
+    const transformClass = drawerOffCanvas ? "-translate-x-full" : "translate-x-0";
+
     return (
+        <>
+            {/* Mobile-only backdrop behind the drawer */}
+            {isMobile && mobileSidebarOpen && (
+                <button
+                    type="button"
+                    aria-label="Close menu"
+                    onClick={() => setMobileSidebarOpen(false)}
+                    className="fixed inset-0 z-[998] bg-black/60 backdrop-blur-sm md:hidden"
+                />
+            )}
         <aside
-            className={`fixed left-0 top-0 h-screen z-[999] pointer-events-auto flex flex-col transition-all duration-500 ease-out ${collapsed ? "w-[80px]" : "w-[260px]"}`}
+            className={`fixed left-0 top-0 h-screen h-[100dvh] z-[999] pointer-events-auto flex flex-col transition-transform duration-300 ease-out ${widthClass} ${transformClass}`}
             style={{
                 background: "linear-gradient(180deg, rgba(8,13,26,0.98) 0%, rgba(6,10,20,0.99) 50%, rgba(10,15,30,0.98) 100%)",
                 borderRight: "1px solid rgba(0,224,198,0.12)",
                 boxShadow: "4px 0 40px rgba(0,0,0,0.5), inset -1px 0 0 rgba(255,255,255,0.03)",
+                paddingTop: "env(safe-area-inset-top, 0px)",
+                paddingBottom: "env(safe-area-inset-bottom, 0px)",
             }}
         >
             {/* Animated neon line on right edge */}
@@ -357,5 +418,6 @@ export default function Sidebar() {
                 }
             `}</style>
         </aside>
+        </>
     );
 }

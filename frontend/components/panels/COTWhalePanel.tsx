@@ -235,7 +235,7 @@ export default function COTWhalePanel({ symbol: lockedSymbol }: COTWhalePanelPro
           )}
 
           {/* COT Breakdown */}
-          <div className="px-4 py-3 grid grid-cols-3 gap-2" style={{ borderBottom: "1px solid var(--border)" }}>
+          <div className="px-4 py-3 grid grid-cols-1 sm:grid-cols-3 gap-2" style={{ borderBottom: "1px solid var(--border)" }}>
             {/* Non-Commercial (Smart Money) */}
             <div className="rounded-xl p-3" style={{ background: P.border, border: "1px solid var(--border)" }}>
               <div className="flex items-center gap-1 mb-1.5">

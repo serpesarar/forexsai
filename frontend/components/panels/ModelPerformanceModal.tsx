@@ -622,7 +622,7 @@ export const ModelPerformanceModal: React.FC<{
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4"
         style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(10px)" }}
         onClick={onClose}
       >
@@ -631,7 +631,7 @@ export const ModelPerformanceModal: React.FC<{
           animate={{ y: 0, scale: 1, opacity: 1 }}
           exit={{ y: 16, scale: 0.98, opacity: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 24 }}
-          className="w-full max-w-6xl max-h-[92vh] overflow-y-auto rounded-3xl"
+          className="w-full h-[100dvh] md:h-auto max-w-6xl md:max-h-[92vh] overflow-y-auto rounded-none md:rounded-3xl"
           style={{
             background: "var(--bg-primary)",
             border: "1px solid var(--border-subtle)",

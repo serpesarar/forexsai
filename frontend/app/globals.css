@@ -1264,6 +1264,215 @@ body {
   border-color: rgba(14, 168, 150, 0.1) !important;
 }
 
+/* ============================================================
+   RESPONSIVE FOUNDATION (ForexSAI)
+   Breakpoints:  mobile < 768, tablet 768–1279, desktop >= 1280
+   ============================================================ */
+
+/* 1) Safe-area support for notched iPhones / Android gesture areas */
+html,
+body {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Horizontal padding is handled per-page to avoid breaking fixed headers. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 2) Prevent horizontal overflow at root level (common on mobile with wide panels) */
+html,
+body {
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+}
+
+/* 3) Base typography scaling per device */
+html {
+  font-size: 15px;
+}
+@media (min-width: 768px) {
+  html {
+    font-size: 15.5px;
+  }
+}
+@media (min-width: 1280px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+/* 4) Responsive container helper */
+.fsai-container {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 12px;
+}
+@media (min-width: 768px) {
+  .fsai-container {
+    padding-inline: 20px;
+    max-width: 1024px;
+  }
+}
+@media (min-width: 1280px) {
+  .fsai-container {
+    padding-inline: 28px;
+    max-width: 1360px;
+  }
+}
+@media (min-width: 1536px) {
+  .fsai-container {
+    max-width: 1520px;
+  }
+}
+
+/* 5) Responsive grid helpers — used by panel bodies */
+.fsai-grid-1-2-3 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .fsai-grid-1-2-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+@media (min-width: 1280px) {
+  .fsai-grid-1-2-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+.fsai-grid-1-2-4 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .fsai-grid-1-2-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+@media (min-width: 1280px) {
+  .fsai-grid-1-2-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+/* 6) Horizontal scroll helper for data-dense rows (tabs, chips, wide tables) */
+.fsai-h-scroll {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+}
+.fsai-h-scroll > * {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+.fsai-h-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.fsai-h-scroll::-webkit-scrollbar-thumb {
+  background: rgba(79, 140, 255, 0.25);
+  border-radius: 4px;
+}
+
+/* 7) Wide-table fallback: horizontal scroll wrapper */
+.fsai-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.fsai-table-wrap table {
+  min-width: 640px;
+}
+
+/* 8) Enforce minimum 44×44 px touch targets on mobile (a11y + WCAG) */
+@media (max-width: 767px) {
+  button,
+  [role="button"],
+  a.btn,
+  .fsai-tap {
+    min-height: 44px;
+  }
+  /* Small icon-only buttons can opt-out with .fsai-tap-sm */
+  .fsai-tap-sm {
+    min-height: 32px;
+  }
+}
+
+/* 9) Prevent text from becoming comically large and tighten spacing on phones */
+@media (max-width: 767px) {
+  h1 {
+    font-size: clamp(1.4rem, 5vw, 1.9rem);
+    line-height: 1.15;
+  }
+  h2 {
+    font-size: clamp(1.2rem, 4.5vw, 1.55rem);
+    line-height: 1.2;
+  }
+  h3 {
+    font-size: clamp(1.05rem, 4vw, 1.3rem);
+    line-height: 1.25;
+  }
+  /* Panel default padding should be tighter on mobile */
+  .glass-card {
+    border-radius: 14px;
+  }
+}
+
+/* 10) Mobile-only & desktop-only visibility helpers (complement Tailwind hidden/block) */
+.fsai-mobile-only {
+  display: block;
+}
+.fsai-tablet-up {
+  display: none;
+}
+.fsai-desktop-only {
+  display: none;
+}
+@media (min-width: 768px) {
+  .fsai-mobile-only {
+    display: none;
+  }
+  .fsai-tablet-up {
+    display: block;
+  }
+}
+@media (min-width: 1280px) {
+  .fsai-desktop-only {
+    display: block;
+  }
+}
+
+/* 11) Lightweight-charts / recharts canvas containers should shrink on mobile */
+@media (max-width: 767px) {
+  .tv-lightweight-charts,
+  .recharts-responsive-container {
+    max-width: 100% !important;
+  }
+}
+
+/* 12) Modal/dialog — become full-screen sheets on mobile for legibility */
+@media (max-width: 767px) {
+  .fsai-modal,
+  [role="dialog"].fsai-modal {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-width: 100vw !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+}
+
 /* ─── LOADING STATE with dark backgrounds ─── */
 [data-theme="morning"] .animate-pulse[style] {
   background: rgba(240, 253, 250, 0.6) !important;

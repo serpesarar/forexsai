@@ -186,9 +186,9 @@ export default function DetailPanel({ isOpen, onClose, title, symbol, type, data
   if (!isOpen || !type || !data) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-6 md:items-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:p-4 md:p-6 md:items-center">
       <div className="detail-panel-overlay absolute inset-0" onClick={onClose} />
-      <div className="detail-panel-content relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/10 bg-background p-6">
+      <div className="detail-panel-content relative z-10 w-full max-w-3xl max-h-[92dvh] md:max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-white/10 bg-background p-4 sm:p-6">
         <div className="flex items-center justify-between sticky top-0 bg-background pb-4 border-b border-white/10">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-textSecondary">{symbol}</p>
@@ -228,7 +228,7 @@ export default function DetailPanel({ isOpen, onClose, title, symbol, type, data
             </div>
 
             {/* Key Levels */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {guide.keyLevels.map((level) => (
                 <div 
                   key={level.label} 

@@ -206,7 +206,7 @@ function SignupForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center px-4 py-20 sm:p-8 relative overflow-hidden">
       {/* Starry Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         {/* Gradient background */}
@@ -261,12 +261,12 @@ function SignupForm() {
         }
       `}</style>
       {/* Language */}
-      <div className="absolute top-6 right-6 z-50">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
         <LanguageSwitcher />
       </div>
       
       {/* Back */}
-      <div className="absolute top-6 left-6 z-50">
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
         <Link href="/welcome" className="flex items-center gap-2 text-xs uppercase tracking-widest text-gray-500 hover:text-white transition-colors">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
           Back
@@ -282,7 +282,7 @@ function SignupForm() {
 
         {/* STEP 1: Registration Form */}
         {step === "form" && (
-          <div className="bg-white/[0.03] backdrop-blur-2xl rounded-2xl border border-white/8 p-8 shadow-2xl">
+          <div className="bg-white/[0.03] backdrop-blur-2xl rounded-2xl border border-white/8 p-6 sm:p-8 shadow-2xl">
             <div className="mb-8">
               <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-2">{t("auth.signup.start") || "Get Started"}</p>
               <h2 className="text-2xl font-light text-white">{t("auth.signup.createAccount") || "Create Account"}</h2>
@@ -375,7 +375,7 @@ function SignupForm() {
 
         {/* STEP 2: OTP Verification */}
         {step === "otp" && (
-          <div className="bg-white/[0.03] backdrop-blur-2xl rounded-2xl border border-white/8 p-8 shadow-2xl text-center">
+          <div className="bg-white/[0.03] backdrop-blur-2xl rounded-2xl border border-white/8 p-6 sm:p-8 shadow-2xl text-center">
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
               <svg className="w-8 h-8 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M22 17H2a3 3 0 0 0 3-3V9a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v5a3 3 0 0 0 3 3z"/>
@@ -432,7 +432,7 @@ function SignupForm() {
 
         {/* STEP 3: Success */}
         {step === "success" && (
-          <div className="bg-white/[0.03] backdrop-blur-2xl rounded-2xl border border-white/8 p-8 shadow-2xl text-center">
+          <div className="bg-white/[0.03] backdrop-blur-2xl rounded-2xl border border-white/8 p-6 sm:p-8 shadow-2xl text-center">
             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center animate-bounce">
               <svg className="w-10 h-10 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="20 6 9 17 4 12" />

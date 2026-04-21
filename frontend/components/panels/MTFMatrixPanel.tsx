@@ -258,8 +258,10 @@ export default function MTFMatrixPanel({ symbol: lockedSymbol }: MTFMatrixPanelP
             </div>
           )}
 
-          {/* Matrix Table */}
-          <div className="px-3 py-3">
+          {/* Matrix Table — horizontal scroll on mobile so 6 columns stay
+              legible; natural grid on tablet+. */}
+          <div className="px-3 py-3 overflow-x-auto -mx-1 md:mx-0">
+            <div className="min-w-[520px] md:min-w-0">
             {/* Table Header */}
             <div className="grid grid-cols-6 gap-1 mb-1.5 px-1">
               <div className="text-[9px] font-mono uppercase tracking-widest" style={{ color: P.muted }}>TF</div>
@@ -316,6 +318,7 @@ export default function MTFMatrixPanel({ symbol: lockedSymbol }: MTFMatrixPanelP
                   </div>
                 );
               })}
+            </div>
             </div>
           </div>
 

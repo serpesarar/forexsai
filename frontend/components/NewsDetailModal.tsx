@@ -249,15 +249,15 @@ export default function NewsDetailModal({ news, isOpen, onClose, locale = "en" }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
       
-      {/* Modal */}
-      <div className="relative w-full max-w-2xl mx-4 bg-[#0f0f0f] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      {/* Modal — bottom-sheet on mobile, centered dialog on tablet+ */}
+      <div className="relative w-full max-w-2xl h-[92dvh] md:h-auto md:max-h-[90vh] overflow-y-auto mx-0 md:mx-4 bg-[#0f0f0f] border border-gray-800 rounded-t-2xl md:rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         {/* Close button */}
         <button
           onClick={onClose}

@@ -237,7 +237,7 @@ function ModelCard({ model, stats, onSelectSymbol }: { model: string; stats: Mod
       {open && (
         <div className="p-5 space-y-5">
           {/* KPI Strip */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { label: "TOTAL PROFIT", val: `+${stats.total_profit_pips ?? stats.avg_profit_pips}p`, color: "var(--accent-positive)" },
               { label: "TOTAL LOSS", val: `-${stats.total_loss_pips ?? stats.avg_loss_pips}p`, color: "var(--accent-negative)" },

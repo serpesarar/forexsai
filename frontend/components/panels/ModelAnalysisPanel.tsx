@@ -668,7 +668,7 @@ export default function ModelAnalysisPanel() {
         ) : analysis && analysis.total_signals > 0 ? (
           <>
             {/* Stats Grid */}
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               <StatCard
                 label={t.totalSignals}
                 value={analysis.total_signals.toString()}
@@ -698,7 +698,7 @@ export default function ModelAnalysisPanel() {
             {Object.keys(analysis.target_rates || {}).length > 0 && (
               <div>
                 <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">{t.targetHitRates}</h3>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {Object.entries(analysis.target_rates).map(([tp, rate]) => (
                     <div key={tp} className="p-3 rounded-lg" style={{ background: "var(--bg-card)" }}>
                       <div className="flex items-center justify-between mb-2">

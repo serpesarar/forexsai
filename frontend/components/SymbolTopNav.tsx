@@ -7,7 +7,9 @@ import {
   CircleDollarSign,
   Building2,
   Fuel,
+  Menu,
 } from "lucide-react";
+import { useNavigationStore } from "@/lib/store/navigation";
 
 const SYMBOLS = [
   {
@@ -164,42 +166,60 @@ export default function SymbolTopNav({
 }: SymbolTopNavProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const toggleMobileSidebar = useNavigationStore((s) => s.toggleMobileSidebar);
 
   return (
-    <nav className="sticky top-0 z-[100] w-full border-b border-slate-800/50 bg-slate-950/90 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[1680px] items-center gap-2 px-4 py-2 sm:px-6 lg:px-8 pointer-events-auto">
-        <div className="mr-4 hidden shrink-0 items-center gap-2 md:flex">
+    <nav
+      className="sticky top-0 z-[100] w-full border-b border-slate-800/50 bg-slate-950/90 backdrop-blur-xl"
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+    >
+      <div className="mx-auto flex max-w-[1680px] items-center gap-2 px-3 py-2 sm:px-4 md:px-6 lg:px-8 pointer-events-auto">
+        {/* Mobile hamburger — opens the Sidebar drawer. Hidden on tablet+. */}
+        <button
+          type="button"
+          aria-label="Open navigation menu"
+          onClick={toggleMobileSidebar}
+          className="fsai-tap-sm md:hidden flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900/60 text-slate-200 transition-colors hover:bg-slate-800/80 active:scale-95"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
+        {/* Brand — hidden on mobile (logo lives in sidebar), visible from tablet */}
+        <div className="mr-2 hidden shrink-0 items-center gap-2 md:flex">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500">
             <TrendingUp className="h-4 w-4 text-white" />
           </div>
           <span className="text-sm font-bold text-white">ForexSAI</span>
         </div>
 
-        <div className="flex flex-1 gap-2 sm:gap-3 pointer-events-auto">
+        {/* Symbol tabs — horizontally scrollable on narrow phones, flex-equal
+            on tablet+ so the whole row fills the available width cleanly. */}
+        <div className="flex flex-1 min-w-0 gap-2 sm:gap-3 pointer-events-auto overflow-x-auto md:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {SYMBOLS.map((symbol) => (
-            <SymbolTab
-              key={symbol.id}
-              symbol={symbol}
-              isActive={pathname === symbol.path}
-              price={prices.find((item) => item.label === symbol.label)}
-              onClick={() => {
-                try {
-                  router.push(symbol.path);
-                } catch (e) {
-                  console.error("Navigation failed, falling back:", e);
-                  window.location.href = symbol.path;
-                }
-              }}
-            />
+            <div key={symbol.id} className="flex-none basis-[26%] min-w-[96px] md:flex-1 md:basis-auto md:min-w-0">
+              <SymbolTab
+                symbol={symbol}
+                isActive={pathname === symbol.path}
+                price={prices.find((item) => item.label === symbol.label)}
+                onClick={() => {
+                  try {
+                    router.push(symbol.path);
+                  } catch (e) {
+                    console.error("Navigation failed, falling back:", e);
+                    window.location.href = symbol.path;
+                  }
+                }}
+              />
+            </div>
           ))}
         </div>
 
         {rightSlot ? (
-          <div className="ml-4 hidden shrink-0 items-center gap-3 lg:flex pointer-events-auto">
+          <div className="ml-2 hidden shrink-0 items-center gap-2 md:flex md:gap-3 pointer-events-auto">
             {rightSlot}
           </div>
         ) : (
-          <div className="ml-4 hidden shrink-0 items-center gap-3 lg:flex pointer-events-auto">
+          <div className="ml-2 hidden shrink-0 items-center gap-3 md:flex pointer-events-auto">
             <div className="h-6 w-px bg-slate-800" />
             <span className="text-xs text-slate-500">Live Market</span>
             <div className="flex h-2 w-2 animate-pulse rounded-full bg-emerald-500" />

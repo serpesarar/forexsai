@@ -195,7 +195,7 @@ export default function ResetPasswordPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-slate-800 p-8">
+        <div className="bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-slate-800 p-6 sm:p-8">
           <Suspense fallback={<div className="text-center text-slate-400">Yükleniyor...</div>}>
             <ResetPasswordForm />
           </Suspense>

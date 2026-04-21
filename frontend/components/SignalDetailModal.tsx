@@ -250,9 +250,9 @@ export default function SignalDetailModal({ signalId, isOpen, onClose }: SignalD
     .map(([name]) => name);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-sm">
       <div 
-        className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl border border-gray-700/50"
+        className="relative w-full h-[100dvh] md:h-auto max-w-4xl md:max-h-[90vh] overflow-hidden rounded-none md:rounded-2xl border border-gray-700/50"
         style={{ background: "linear-gradient(180deg, #0F1419 0%, #1A1F2E 100%)" }}
       >
         {/* Header */}

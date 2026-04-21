@@ -547,7 +547,7 @@ export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
                 <span className="text-[10px] uppercase tracking-[0.15em] text-[#6B7280] font-medium block mb-2">
                   {t("meta_engine.risk_params")}
                 </span>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                   {[
                     { label: "Entry", value: currentSignal.entry_price, color: "#E6EDF3" },
                     { label: "TP1", value: currentSignal.take_profit_1, color: "#16C784" },

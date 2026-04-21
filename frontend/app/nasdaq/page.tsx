@@ -346,23 +346,23 @@ function NasdaqPageContent() {
       <DashboardEditProvider storageKey={STORAGE_KEY} defaultLayout={GRID_LAYOUT}>
         <div className="relative z-10 mx-auto flex w-full flex-col gap-4 px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6">
           {/* 1. Header */}
-          <motion.div {...frame(0)} className="flex items-center justify-between rounded-3xl border border-slate-800 bg-slate-950/85 p-5 shadow-2xl backdrop-blur-xl md:p-6">
-            <div className="flex items-center gap-4">
-              <Link href="/" className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900/80 px-3 py-2 text-sm text-slate-400 hover:text-white">
+          <motion.div {...frame(0)} className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between rounded-3xl border border-slate-800 bg-slate-950/85 p-4 sm:p-5 shadow-2xl backdrop-blur-xl md:p-6">
+            <div className="flex items-center gap-3 md:gap-4 min-w-0">
+              <Link href="/" className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-800 bg-slate-900/80 px-3 py-2 text-xs sm:text-sm text-slate-400 hover:text-white">
                 <ArrowLeft className="h-4 w-4" />
                 {copy.back}
               </Link>
-              <div>
-                <h1 className="text-3xl font-black tracking-tight text-white md:text-5xl">{copy.title}</h1>
-                <p className="mt-1 text-sm text-slate-400">{copy.subtitle}</p>
+              <div className="min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white md:text-5xl truncate">{copy.title}</h1>
+                <p className="mt-1 text-xs sm:text-sm text-slate-400 line-clamp-2">{copy.subtitle}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl font-black text-white">
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-xl sm:text-2xl font-black text-white">
                 {isLoading || !nasdaqTicker ? "--" : `$${nasdaqTicker.price}`}
               </span>
               {!isLoading && nasdaqTicker?.change && (
-                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-bold ${isPositive ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs sm:text-sm font-bold ${isPositive ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
                   {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                   {nasdaqTicker.change}
                 </span>

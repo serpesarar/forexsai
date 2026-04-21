@@ -37,7 +37,7 @@ function AboutSection() {
   ];
 
   return (
-    <section ref={ref} className="min-h-screen flex items-center py-32 px-8">
+    <section ref={ref} className="min-h-[80vh] md:min-h-screen flex items-center py-20 md:py-32 px-5 sm:px-6 md:px-8">
       <div className="max-w-6xl mx-auto w-full">
         <motion.div
           initial={{ opacity: 0, y: 60 }}
@@ -46,7 +46,7 @@ function AboutSection() {
         >
           <p className="text-xs uppercase tracking-[0.4em] text-gray-600 mb-6">About ForexsAI</p>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-16 items-start">
             {/* Left */}
             <div>
               <h2 className="text-4xl md:text-6xl font-bold mb-8 leading-tight">
@@ -117,7 +117,7 @@ function FeaturesSection() {
   ];
 
   return (
-    <section ref={ref} className="min-h-screen flex items-center py-32 px-8">
+    <section ref={ref} className="min-h-[80vh] md:min-h-screen flex items-center py-20 md:py-32 px-5 sm:px-6 md:px-8">
       <div className="max-w-6xl mx-auto w-full">
         <motion.div
           initial={{ opacity: 0, y: 60 }}
@@ -125,7 +125,7 @@ function FeaturesSection() {
           transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
         >
           <p className="text-xs uppercase tracking-[0.4em] text-gray-600 mb-6">Core Technology</p>
-          <h2 className="text-4xl md:text-6xl font-bold mb-16 leading-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-10 md:mb-16 leading-tight">
             <span className="bg-gradient-to-br from-gray-100 via-gray-300 to-gray-500 bg-clip-text text-transparent">
               Three models.
             </span>
@@ -182,7 +182,7 @@ function PricingSection() {
   const inView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section ref={ref} className="min-h-screen flex items-center py-32 px-8">
+    <section ref={ref} className="min-h-[80vh] md:min-h-screen flex items-center py-20 md:py-32 px-5 sm:px-6 md:px-8">
       <div className="max-w-5xl mx-auto w-full">
         <motion.div
           initial={{ opacity: 0, y: 60 }}
@@ -190,7 +190,7 @@ function PricingSection() {
           transition={{ duration: 1 }}
         >
           <p className="text-xs uppercase tracking-[0.4em] text-gray-600 mb-6">Pricing</p>
-          <h2 className="text-4xl md:text-6xl font-bold mb-16 leading-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-10 md:mb-16 leading-tight">
             <span className="bg-gradient-to-br from-gray-100 via-gray-300 to-gray-500 bg-clip-text text-transparent">
               Simple.
             </span>
@@ -198,7 +198,7 @@ function PricingSection() {
             <span className="font-light text-gray-600">Transparent.</span>
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 max-w-2xl mx-auto md:mx-0">
             {/* Free */}
             <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-8">
               <p className="text-xs uppercase tracking-[0.3em] text-gray-600 mb-6">Free</p>
@@ -266,43 +266,43 @@ export default function WelcomePage() {
         <div className="relative z-20 flex flex-col h-full mx-auto max-w-[1400px]">
 
           {/* Glass Navbar */}
-          <nav className="flex items-center justify-between px-8 py-5 backdrop-blur-md border-b border-white/10">
+          <nav className="flex items-center justify-between px-4 sm:px-6 md:px-8 py-4 md:py-5 backdrop-blur-md border-b border-white/10">
             <div className="flex items-center gap-1">
-              <span className="text-xl font-bold tracking-[0.1em] bg-gradient-to-br from-gray-100 to-gray-400 bg-clip-text text-transparent">FOREXS</span>
-              <span className="text-xl font-light tracking-[0.1em] text-white/90">AI</span>
+              <span className="text-lg md:text-xl font-bold tracking-[0.1em] bg-gradient-to-br from-gray-100 to-gray-400 bg-clip-text text-transparent">FOREXS</span>
+              <span className="text-lg md:text-xl font-light tracking-[0.1em] text-white/90">AI</span>
             </div>
             <div className="hidden md:flex gap-10">
               <a href="#features" className="uppercase tracking-widest text-xs text-gray-400 hover:text-white transition-colors scroll-smooth">FEATURES</a>
               <a href="#about" className="uppercase tracking-widest text-xs text-gray-400 hover:text-white transition-colors">ABOUT</a>
               <a href="#pricing" className="uppercase tracking-widest text-xs text-gray-400 hover:text-white transition-colors">PRICING</a>
             </div>
-            <Link href="/login" className="uppercase tracking-widest text-xs text-gray-300 hover:text-white transition-colors border border-white/20 px-5 py-2.5 rounded hover:bg-white/5">
+            <Link href="/login" className="uppercase tracking-widest text-[11px] md:text-xs text-gray-300 hover:text-white transition-colors border border-white/20 px-4 py-2 md:px-5 md:py-2.5 rounded hover:bg-white/5">
               LOGIN
             </Link>
           </nav>
 
-          {/* Hero Content */}
-          <div className="flex-1 flex flex-col items-end justify-center px-12 pb-20">
+          {/* Hero Content — center-aligned on mobile, right-aligned on tablet+ */}
+          <div className="flex-1 flex flex-col items-center md:items-end justify-center px-5 sm:px-8 md:px-12 pb-48 md:pb-20 text-center md:text-right">
             <motion.div
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1, delay: 0.3 }}
-              className="max-w-xl text-right"
+              className="max-w-xl w-full"
             >
-              <h1 className="text-6xl md:text-8xl font-sans mb-4 flex flex-col items-end leading-tight">
-                <span className="font-bold tracking-[0.2em] bg-gradient-to-r from-gray-100 via-gray-400 to-gray-100 bg-clip-text text-transparent drop-shadow-lg">
+              <h1 className="text-5xl sm:text-6xl md:text-8xl font-sans mb-4 flex flex-col items-center md:items-end leading-tight">
+                <span className="font-bold tracking-[0.15em] md:tracking-[0.2em] bg-gradient-to-r from-gray-100 via-gray-400 to-gray-100 bg-clip-text text-transparent drop-shadow-lg">
                   FOREXS
                 </span>
-                <span className="font-light tracking-[0.2em] text-white/90">AI</span>
+                <span className="font-light tracking-[0.15em] md:tracking-[0.2em] text-white/90">AI</span>
               </h1>
-              <p className="text-gray-400 font-light text-xl mb-10 max-w-lg mt-6 ml-auto leading-relaxed border-r-2 border-cyan-500/50 pr-4">
+              <p className="text-gray-400 font-light text-base sm:text-lg md:text-xl mb-8 md:mb-10 max-w-lg mx-auto md:ml-auto md:mr-0 mt-5 md:mt-6 leading-relaxed md:border-r-2 md:border-cyan-500/50 md:pr-4">
                 Advanced algorithmic trading powered by neural networks
               </p>
               <Link href="/signup">
                 <motion.button
                   whileHover={{ scale: 1.03, boxShadow: "0 0 30px rgba(200,200,200,0.4)" }}
                   whileTap={{ scale: 0.97 }}
-                  className="bg-gradient-to-r from-gray-700 via-gray-400 to-gray-700 border border-gray-500/50 shadow-[0_0_15px_rgba(192,192,192,0.3)] transition-all duration-300 text-white uppercase tracking-widest text-sm px-10 py-4 rounded-sm font-medium"
+                  className="bg-gradient-to-r from-gray-700 via-gray-400 to-gray-700 border border-gray-500/50 shadow-[0_0_15px_rgba(192,192,192,0.3)] transition-all duration-300 text-white uppercase tracking-widest text-xs sm:text-sm px-8 sm:px-10 py-3.5 sm:py-4 rounded-sm font-medium"
                 >
                   START TRADING
                 </motion.button>
@@ -310,9 +310,10 @@ export default function WelcomePage() {
             </motion.div>
           </div>
 
-          {/* Feature Cards */}
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-full max-w-5xl px-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Feature Cards — compact horizontal scroll on mobile to avoid
+              overlapping the hero; fixed bottom-anchored grid on tablet+. */}
+          <div className="absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 w-full max-w-5xl px-4 sm:px-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
               {[
                 { icon: "📡", title: "Live Markets", desc: "Real-time AI analysis", href: "#features", accent: "group-hover:bg-cyan-500/40", defaultBg: "bg-cyan-500/20" },
                 { icon: "🧠", title: "AI Analysis", desc: "Deep pattern recognition", href: "#about", accent: "group-hover:bg-purple-500/40", defaultBg: "bg-purple-500/20" },

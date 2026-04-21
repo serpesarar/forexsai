@@ -1321,8 +1321,10 @@ export default function HomePage() {
         <Sidebar />
       </div>
 
-      {/* Main Content - offset by sidebar width */}
-      <div className="transition-all duration-300" style={{ marginLeft: 72 }}>
+      {/* Main Content - offset by sidebar width.
+          Mobile (<768px): sidebar is an off-canvas drawer, so no left offset.
+          Tablet+ (>=768px): reserve 72px for the collapsed rail. */}
+      <div className="transition-all duration-300 ml-0 md:ml-[72px]">
         {/* Animated Background with Star Particles */}
         <TradingBackground />
 
@@ -1479,7 +1481,7 @@ export default function HomePage() {
             </Suspense>
           </div>
           {activeView === "news-correlation" && (
-            <div className="w-full h-[calc(100vh-64px)] overflow-hidden bg-[#0a0a0a]">
+            <div className="w-full h-[calc(100dvh-64px)] overflow-hidden bg-[#0a0a0a]">
               <NewsCorrelationDashboard embedded={true} />
             </div>
           )}

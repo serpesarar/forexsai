@@ -83,8 +83,8 @@ export default function EconomicEventModal({ event, isOpen, onClose }: EconomicE
   const DirectionIcon = direction.icon;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="glass-premium w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl animate-scaleIn">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 bg-black/80 backdrop-blur-sm">
+      <div className="glass-premium w-full max-w-2xl h-[100dvh] md:h-auto md:max-h-[90vh] overflow-y-auto rounded-none md:rounded-2xl animate-scaleIn">
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-white/10 bg-background/80 backdrop-blur">
           <div className="flex items-center gap-3">

@@ -3,6 +3,19 @@ import type { Config } from "tailwindcss";
 const config: Config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./lib/**/*.{ts,tsx}"],
   theme: {
+    screens: {
+      // Custom three-tier breakpoint system for ForexSAI
+      // mobile  : <  768px  (no prefix)
+      // tablet  : >= 768px  (tablet: / md:)
+      // desktop : >= 1280px (desktop: / xl:)
+      sm: "640px",
+      md: "768px",
+      tablet: "768px",
+      lg: "1024px",
+      xl: "1280px",
+      desktop: "1280px",
+      "2xl": "1536px",
+    },
     extend: {
       colors: {
         background: "var(--bg-primary)",

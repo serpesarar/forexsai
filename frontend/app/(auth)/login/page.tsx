@@ -75,10 +75,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex relative">
       {/* Language & Back */}
-      <div className="absolute top-6 right-6 z-50">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
         <LanguageSwitcher />
       </div>
-      <div className="absolute top-6 left-6 z-50">
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50">
         <Link
           href="/welcome"
           className="flex items-center gap-2 text-xs uppercase tracking-widest text-gray-500 hover:text-white transition-colors"
@@ -140,10 +140,10 @@ export default function LoginPage() {
       </div>
 
       {/* RIGHT PANEL — Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-20 sm:p-12">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-1 justify-center mb-10">
+          <div className="lg:hidden flex items-center gap-1 justify-center mb-8 sm:mb-10">
             <span className="text-2xl font-bold tracking-[0.15em] bg-gradient-to-br from-gray-100 to-gray-400 bg-clip-text text-transparent">
               FOREXS
             </span>
@@ -151,7 +151,7 @@ export default function LoginPage() {
           </div>
 
           {/* Card */}
-          <div className="bg-white/[0.03] backdrop-blur-2xl rounded-2xl border border-white/8 p-8 shadow-2xl">
+          <div className="bg-white/[0.03] backdrop-blur-2xl rounded-2xl border border-white/8 p-6 sm:p-8 shadow-2xl">
             <div className="mb-8">
               <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-2">Welcome back</p>
               <h2 className="text-2xl font-light text-white tracking-wide">
