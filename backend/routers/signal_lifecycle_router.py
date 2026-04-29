@@ -25,7 +25,7 @@ router = APIRouter(tags=["signals"])
 async def get_active_signals():
     """Return all currently active signals."""
     from database.supabase_client import get_supabase_client, is_db_available
-    from services.signal_analytics import canonical_stop_loss_pips, normalized_targets_hit, resolved_targets
+    from services.signal_analytics import canonical_stop_loss_pips, canonical_stop_price, normalized_targets_hit, resolved_targets
 
     if not is_db_available():
         return {"signals": [], "error": "DB not available"}
@@ -57,10 +57,13 @@ async def get_active_signals():
             corrected_targets = resolved_targets(s, default_symbol=s.get("symbol"))
             corrected_targets_hit = normalized_targets_hit(s, default_symbol=s.get("symbol"))
             corrected_stop_loss_pips = canonical_stop_loss_pips(s, default_symbol=s.get("symbol"))
+            corrected_stop_price = canonical_stop_price(s, default_symbol=s.get("symbol"))
             s["targets"] = {key: round(float(value), 4) for key, value in corrected_targets.items()}
             s["targets_hit"] = {key: bool(corrected_targets_hit.get(key)) for key in corrected_targets.keys()}
             if corrected_stop_loss_pips is not None:
                 s["stop_loss_pips"] = round(corrected_stop_loss_pips, 2)
+            if corrected_stop_price is not None:
+                s["stop_price"] = round(float(corrected_stop_price), 4)
 
         return {"signals": signals, "count": len(signals)}
 

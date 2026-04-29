@@ -212,7 +212,7 @@ ML_MODEL_FAMILY_BY_SYMBOL = {
 
 ML_MODEL_FILES = {
     "NDX.INDX": "model_lgbm_nasdaq.joblib",
-    "XAUUSD": "model_lgbm_xauusd.joblib",
+    "XAUUSD": "model_xauusd_v2.joblib",
 }
 
 NASDAQ_FAMILY_SCOPE_SYMBOLS = {"NDX.INDX", "GDAXI.INDX"}

@@ -58,6 +58,15 @@ const ENTRY_BORDER = "rgba(248, 250, 252, 0.35)";
 const SWING_LINE_COLOR  = "rgba(59, 130, 246, 0.7)";
 const SWING_LABEL_COLOR = "#3b82f6";
 
+// Live signal layer (gerçek aktif SMC sinyali) — tamamen ayrı renk ailesi
+// dotted styling, ENTRY=cyan, SL=red dotted, TPs=magenta shades
+const SIG_ENTRY_COLOR = "#06b6d4";        // cyan-500
+const SIG_SL_COLOR    = "#dc2626";        // red-600 (dotted, projection SL'den ayırt)
+const SIG_TP1_COLOR   = "#a855f7";        // purple-500
+const SIG_TP2_COLOR   = "#c026d3";        // fuchsia-600
+const SIG_TP3_COLOR   = "#db2777";        // pink-600
+const SIG_TP4_COLOR   = "#e11d48";        // rose-600
+
 // Structure markers
 const BOS_COLOR   = "#facc15";
 const CHOCH_COLOR = "#f97316";
@@ -113,6 +122,7 @@ export default function OrderBlockChartPanel() {
   const [timeframe, setTimeframe] = useState<TF>("5m");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showGuide, setShowGuide] = useState(true);
+  const [showSignalLayer, setShowSignalLayer] = useState(false);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -165,6 +175,32 @@ export default function OrderBlockChartPanel() {
     refetchOnWindowFocus: true,
     staleTime: 0,
   });
+
+  // ── Active SMC signals (live entry/TP/SL layer)
+  const { data: activeSignalsData } = useQuery<{ signals?: any[] }>({
+    queryKey: ["ob-chart-active-signals"],
+    queryFn: () => fetcher<{ signals?: any[] }>(`/api/signals/active`, { cache: "no-store" }),
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false,
+    staleTime: 15000,
+    enabled: showSignalLayer,
+  });
+
+  // En yeni aktif SMC sinyalini seç (current symbol'e ait)
+  const liveSignal = useMemo(() => {
+    if (!showSignalLayer) return null;
+    const list = activeSignalsData?.signals || [];
+    const matches = list.filter((s: any) => {
+      const sSym = (s?.symbol || "").toUpperCase();
+      const curSym = (symbol || "").toUpperCase();
+      const mt = (s?.model_type || s?.strategy || "").toLowerCase();
+      const isSmc = mt === "smc" || mt === "order_block" || mt === "smart_money_zones";
+      return sSym === curSym && isSmc;
+    });
+    if (!matches.length) return null;
+    matches.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return matches[0];
+  }, [activeSignalsData, symbol, showSignalLayer]);
 
   // ── Order block detect data
   const { data: obData, isLoading: obLoading } = useQuery<OrderBlockDetectResponse>({
@@ -602,6 +638,70 @@ export default function OrderBlockChartPanel() {
       }
     }
 
+    // ── 2b. Draw LIVE SIGNAL layer (gerçek aktif SMC sinyali)
+    if (liveSignal) {
+      const direction = (liveSignal.ml_direction || "").toUpperCase();
+      const entry = Number(liveSignal.ml_entry_price);
+      const sl = Number(liveSignal.stop_price);
+      const targets = liveSignal.targets || {};
+      const targetsHit = liveSignal.targets_hit || {};
+
+      const drawSigLine = (
+        price: number,
+        color: string,
+        label: string,
+        opts: { dash?: number[]; lineWidth?: number; strikethrough?: boolean } = {},
+      ) => {
+        if (!Number.isFinite(price)) return;
+        const y = priceToY(price);
+        if (y === null) return;
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = opts.lineWidth ?? 1.5;
+        ctx.setLineDash(opts.dash ?? [2, 4]);
+        ctx.beginPath();
+        ctx.moveTo(xLeft, y);
+        ctx.lineTo(chartW, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // LEFT-side label pill (right side projection labels'la çakışmasın)
+        ctx.font = "bold 10px Inter, sans-serif";
+        const text = `${label} ${price.toFixed(1)}${opts.strikethrough ? " ✓" : ""}`;
+        const tm = ctx.measureText(text);
+        const px = xLeft + 8;
+        const py = y - 7;
+        ctx.fillStyle = "rgba(10,14,23,0.85)";
+        ctx.fillRect(px - 3, py, tm.width + 8, 14);
+        ctx.fillStyle = color;
+        ctx.fillText(text, px + 1, py + 10);
+      };
+
+      // ENTRY — solid cyan (1.5px), single most prominent live line
+      if (Number.isFinite(entry)) {
+        drawSigLine(entry, SIG_ENTRY_COLOR, `▶ SIG ENTRY ${direction}`, { dash: [], lineWidth: 1.5 });
+      }
+
+      // SL — dotted red (projection SL solid, live SL dotted → ayırt)
+      if (Number.isFinite(sl)) {
+        drawSigLine(sl, SIG_SL_COLOR, `⊗ SIG SL`, { dash: [2, 3], lineWidth: 2 });
+      }
+
+      // TPs — magenta/purple shades, dotted, ✓ if hit
+      const tpDefs: { key: string; color: string; label: string }[] = [
+        { key: "TP1", color: SIG_TP1_COLOR, label: "▶ SIG TP1" },
+        { key: "TP2", color: SIG_TP2_COLOR, label: "▶ SIG TP2" },
+        { key: "TP3", color: SIG_TP3_COLOR, label: "▶ SIG TP3" },
+        { key: "TP4", color: SIG_TP4_COLOR, label: "▶ SIG TP4" },
+      ];
+      for (const def of tpDefs) {
+        const price = Number(targets[def.key]);
+        if (!Number.isFinite(price)) continue;
+        const hit = !!targetsHit[def.key];
+        drawSigLine(price, def.color, def.label, { dash: [2, 3], lineWidth: 1.2, strikethrough: hit });
+      }
+    }
+
     // ── 3. Draw OB zones — Gold/Yellow (distinct from green TP and red SL)
     // Max zone height = 40% of chart — anything taller is a data-artifact zone
     const MAX_ZONE_H = chartSize.height * 0.40;
@@ -808,7 +908,7 @@ export default function OrderBlockChartPanel() {
       }
     }
 
-  }, [candles, obData, chartSize, overlayVersion]);
+  }, [candles, obData, chartSize, overlayVersion, liveSignal]);
 
   useEffect(() => {
     drawOverlay();
@@ -863,7 +963,22 @@ export default function OrderBlockChartPanel() {
           <span><span className={styles.legendDot} style={{ background: "#3b82f6" }} />Swing</span>
           <span><span className={styles.legendDot} style={{ background: TP1_COLOR }} />TP①②③</span>
           <span><span className={styles.legendDot} style={{ background: SL_COLOR }} />SL</span>
+          {showSignalLayer && (
+            <>
+              <span><span className={styles.legendDot} style={{ background: SIG_ENTRY_COLOR }} />Sig Entry</span>
+              <span><span className={styles.legendDot} style={{ background: SIG_TP1_COLOR }} />Sig TP</span>
+            </>
+          )}
         </div>
+        <button
+          className={`${styles.symbolBtn} ${showSignalLayer ? styles.symbolBtnActive : ""}`}
+          onClick={() => setShowSignalLayer((v) => !v)}
+          type="button"
+          title="Aktif SMC sinyalinin gerçek Entry/SL/TP'lerini grafiğe bindir"
+          style={{ marginLeft: 4 }}
+        >
+          {showSignalLayer ? "● Sinyal Katmanı" : "○ Sinyal Katmanı"}
+        </button>
         <div className={styles.autoRefresh}>1m auto</div>
         <button className={styles.fullscreenBtn} onClick={toggleFullscreen}>
           {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
@@ -981,6 +1096,20 @@ export default function OrderBlockChartPanel() {
             </div>
           );
         })() : null}
+        {showSignalLayer && liveSignal ? (
+          <div className={styles.statItem} style={{ color: SIG_ENTRY_COLOR, gap: 6, display: "flex", flexWrap: "wrap" }}>
+            <span style={{ fontWeight: 700 }}>SIG {(liveSignal.ml_direction || "").toUpperCase()}</span>
+            <span>{liveSignal.timeframe}</span>
+            <span>{Math.round(((liveSignal.ml_confidence ?? 0) as number) * 100)}%</span>
+            <span style={{ color: "rgba(248,250,252,0.55)" }}>
+              {new Date(liveSignal.created_at).toLocaleTimeString()}
+            </span>
+          </div>
+        ) : showSignalLayer ? (
+          <div className={styles.statItem} style={{ color: "rgba(248,250,252,0.45)" }}>
+            Aktif SMC sinyali yok ({symbol})
+          </div>
+        ) : null}
         {signal?.reasons?.length ? (
           <div className={styles.statItem} style={{ marginLeft: "auto" }}>
             {signal.reasons.slice(0, 3).join(" \u00B7 ")}

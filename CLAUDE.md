@@ -25,8 +25,11 @@ Sen ForexSAI projesinin **Lead Architect & Senior Full-Stack Developer**'ısın.
 - **Backend:** FastAPI + Python 3.11
 - **Database:** Supabase PostgreSQL (tüm persistence)
 - **ML:** LightGBM (joblib), 150+ feature
-- **Data Source:** EODHD API (WebSocket + REST, 30s poll)
-- **Deployment:** [projeye göre güncelle]
+- **Data Source (Primary):** MetaTrader 5 Bridge → Redis (pub/sub + streams) → DataHub
+- **Data Source (Secondary):** EODHD API — sadece COT raporları, Whale Tracker, Macro (DXY/VIX)
+- **Veri Modu:** `MARKET_DATA_SOURCE=mt5_redis` (.env)
+- **Redis Host:** Railway (uzak sunucu)
+- **Deployment:** Railway (backend), Vercel/Netlify (frontend)
 
 ### Dizin Yapısı
 ```
@@ -55,21 +58,67 @@ forexsai/
 │   ├── services/
 │   │   ├── ml_prediction_service.py      # LightGBM prediction + 150 feature
 │   │   ├── market_regime_service.py      # Regime detection (ADX + structure)
-│   │   ├── market_data_service.py        # OHLCV veri servisi
+│   │   ├── market_data_service.py        # OHLCV veri servisi (DataHub üzerinden)
+│   │   ├── mt5_redis_client.py           # ⭐ MT5 Bridge dinleyici (pub/sub + stream)
 │   │   ├── order_block_service.py        # SMC/ICT analiz
 │   │   ├── order_block_detector_v2.py    # OB/FVG/CHoCH/BOS detection
 │   │   ├── signal_lifecycle.py           # Sinyal yaşam döngüsü (2dk interval)
 │   │   ├── prediction_logger.py          # Supabase loglama
 │   │   ├── ml_scope_policy.py            # Risk/scope presets
-│   │   ├── cot_report_service.py         # CFTC COT raporları
-│   │   ├── whale_tracker_service.py      # Whale pressure hesaplama
-│   │   └── data_fetcher.py               # EODHD API client
+│   │   ├── cot_report_service.py         # CFTC COT raporları (EODHD)
+│   │   ├── whale_tracker_service.py      # Whale pressure hesaplama (EODHD)
+│   │   └── data_fetcher.py               # DataHub proxy (EODHD çağrısı YOK, DataHub'a yönlendirir)
 │   ├── models/                  # ML model dosyaları
 │   │   ├── model_lgbm_nasdaq.joblib      # NDX + GDAXI
 │   │   └── model_lgbm_xauusd.joblib      # XAUUSD + USOIL
-│   └── data_hub.py              # In-memory cache + WebSocket broadcast
+│   └── data_hub.py              # ⭐ In-memory cache merkezi + WebSocket broadcast
 └── supabase/
     └── migrations/              # SQL migration dosyaları
+```
+
+---
+
+## 🔌 Veri Akışı Mimarisi (MT5 → Redis → DataHub)
+
+```
+┌─────────────┐    ┌──────────────────────────┐    ┌─────────────────────┐
+│    MT5      │    │     Redis (Railway)       │    │  FastAPI Backend    │
+│   (EA/Bot)  │    │                          │    │                     │
+│             │───▶│  Pub/Sub: mt5:tick        │───▶│  mt5_redis_client   │
+│  Tick data  │    │  Stream:  mt5:bar:5m      │    │  (dinleyici servis) │
+│  Bar data   │    │           mt5:bar:1h      │    │         │           │
+│             │    │           mt5:bar:1d      │    │         ▼           │
+└─────────────┘    └──────────────────────────┘    │     DataHub         │
+                                                    │  (in-memory cache)  │
+                   ┌──────────────────────────┐    │         │           │
+                   │  EODHD API (Secondary)   │    │  _prices, _candles  │
+                   │  COT / Whale / Macro only │───▶│  _candles_5m→4h    │
+                   └──────────────────────────┘    │         │           │
+                                                    │         ▼           │
+                                                    │  data_fetcher.py    │
+                                                    │  (DataHub proxy)    │
+                                                    └─────────┬───────────┘
+                                                              │
+                                              ┌───────────────┴───────────────┐
+                                              │   WebSocket / HTTP API         │
+                                              │   Frontend / Signal Models     │
+                                              └───────────────────────────────┘
+```
+
+**Redis Veri Yapısı:**
+| Kanal/Stream | Tip | İçerik |
+|---|---|---|
+| `mt5:tick` | Pub/Sub | Anlık tick — symbol, price, bid, ask, timestamp |
+| `mt5:bar:5m` | Stream | Kapalı 5m bar — symbol, O/H/L/C/V, timestamp |
+| `mt5:bar:1h` | Stream | Kapalı 1h bar |
+| `mt5:bar:1d` | Stream | Günlük bar (EOD) |
+
+**DataHub Source Etiketleri:**
+```
+"mt5_redis"        → Direkt MT5'ten gelen ham veri
+"derived_from_5m"  → 5m'den resample edilmiş (15m, 30m)
+"derived_from_30m" → 30m'den resample edilmiş (1h, 4h — özellikle XAUUSD)
+"persistent_cache" → Startup'ta Supabase candle_cache'ten yüklenmiş
 ```
 
 ---
@@ -176,7 +225,7 @@ TRANSITION:         ml=0.40, pulse1=0.20, pulse2=0.25, pulse3=0.15, emel=0.25, s
 ### Desteklenen Semboller
 - `NDX.INDX` — NASDAQ 100
 - `GDAXI.INDX` — DAX 40
-- `XAUUSD` — Altın (XAUUSD.FOREX olarak EODHD'de)
+- `XAUUSD` — Altın (MT5'te XAUUSD, DataHub'da da XAUUSD olarak saklanır)
 - `USOIL.FOREX` — WTI Ham Petrol
 
 ### Model-Sembol Routing
@@ -186,10 +235,12 @@ XAUUSD + USOIL.FOREX   → model_lgbm_xauusd.joblib
 ```
 
 ### XAUUSD Özel Durum (KRİTİK)
-EODHD'de XAUUSD.FOREX sadece 1m interval destekler. 5m ve üstü boş döner.
-- 1m çekilir → 5m'ye resample edilir
-- 5m'den 15m, 30m, 1h, 4h türetilir
-- Bu mantığı `data_fetcher.py` ve `market_data_service.py`'da koru
+MT5 Bridge XAUUSD için 5m barları doğrudan gönderir. Üst timeframe'ler DataHub'da türetilir:
+- MT5 → Redis `mt5:bar:5m` stream → DataHub `_candles_5m`
+- 5m → resample → 15m, 30m (derived_from_5m)
+- 30m → resample → 1h, 4h (derived_from_30m)
+- Bu türetme mantığı `data_hub.py` içinde, `mt5_redis_client.py`'ın ingest ettiği veriden yapılır
+- `data_fetcher.py` ve `market_data_service.py` sadece DataHub'dan okur, doğrudan MT5/Redis'e bağlanmaz
 
 ### Enstrüman-Spesifik EMEL Ağırlıkları
 ```
@@ -297,18 +348,22 @@ Sen düşün:
 - Frontend: React.memo, useMemo, useCallback uygun yerlerde
 - Backend: asyncio.gather ile paralel istekler
 - Supabase: composite index'ler, materialized view'lar düşün
-- EODHD: 100K/gün limit, şu an ~7K — headroom var ama dikkatli ol
+- EODHD: Sadece COT/Whale/Macro için — 100K/gün limit düşük risk
+- Redis: MT5 bridge bağlantısı kopunca DataHub donabilir — reconnect logic'i kontrol et
+- MT5 Bridge: Tick pub/sub (`mt5:tick`) + Bar stream (`mt5:bar:5m`, `mt5:bar:1h`, `mt5:bar:1d`) ayrı dinlenir
 
 ---
 
 ## ⚠️ Bilinen Kısıtlamalar ve Özel Durumlar
 
-1. **EODHD XAUUSD:** Sadece 1m destekler, resample zorunlu
-2. **EODHD API Limiti:** 100,000 çağrı/gün (izle)
-3. **DeepSeek API:** Rate limit değişken (R1 model)
-4. **CFTC COT:** Haftalık, Cuma yayınlanır
-5. **Signal Lifecycle:** 2dk interval (main.py asyncio.sleep(120)) — daha sık kontrol CPU yükü artırır
-6. **Model Files:** joblib format, Python sürüm uyumu kritik
+1. **MT5 Bridge Kesintisi:** Redis bağlantısı koparsa DataHub'daki veriler eskir — `mt5_redis_client.py` reconnect logic'ini koru
+2. **Redis Stream Lag:** MT5 bar kapanışı ile Redis'e yazılması arasında küçük gecikme olabilir (genellikle <500ms)
+3. **DataHub Türetme:** XAUUSD 1h/4h verileri 30m'den türetilir; 30m verisi eksikse üst timeframe'ler boş kalır
+4. **EODHD (Sadece COT/Whale/Macro):** Fiyat/mum verisi için KULLANILMIYOR — COT, Whale Tracker, DXY/VIX için hâlâ aktif; 100K/gün limit
+5. **DeepSeek API:** Rate limit değişken (R1 model)
+6. **CFTC COT:** Haftalık, Cuma yayınlanır
+7. **Signal Lifecycle:** 2dk interval (main.py asyncio.sleep(120)) — daha sık kontrol CPU yükü artırır
+8. **Model Files:** joblib format, Python sürüm uyumu kritik
 
 ---
 
@@ -332,7 +387,16 @@ SUPABASE_URL=
 SUPABASE_KEY=
 SUPABASE_SERVICE_KEY=
 
-# EODHD
+# Redis (MT5 Bridge - Primary Data Source)
+REDIS_URL=                        # Railway Redis URL
+REDIS_HOST=
+REDIS_PORT=6379
+REDIS_PASSWORD=
+
+# Veri Modu
+MARKET_DATA_SOURCE=mt5_redis      # mt5_redis (default) | hybrid | eodhd
+
+# EODHD (Sadece COT / Whale / Macro için)
 EODHD_API_KEY=
 
 # DeepSeek (AI Analiz)
@@ -343,3 +407,220 @@ ENVIRONMENT=development|production
 LOG_LEVEL=INFO
 WEBSOCKET_HEARTBEAT_INTERVAL=30
 ```
+
+### Veri Kaynağı Seçim Mantığı
+```
+MARKET_DATA_SOURCE=mt5_redis → ✅ DEFAULT — Fiyat/Mum: Sadece MT5 Redis, EODHD fallback yok
+                               COT/Whale/Macro: Her zaman EODHD (bağımsız servisler)
+MARKET_DATA_SOURCE=hybrid   → Fiyat/Mum: MT5 Redis (primary), EODHD fallback (MT5 stale ise)
+                               COT/Whale/Macro: Her zaman EODHD
+MARKET_DATA_SOURCE=eodhd    → Legacy — Sadece EODHD (MT5 bridge kullanılmaz)
+```
+
+---
+
+## 📊 Performans Panelleri — Sinyal Analiz Sistemi
+
+### Panel Listesi ve Endpoint'ler
+| # | Panel | Endpoint | Veri Kaynağı | Kapsam |
+|---|-------|----------|-------------|--------|
+| 1 | Meta Signal Analysis | `GET /api/meta/analyze/{symbol}` | 6 model ensemble | Tüm modeller |
+| 2 | Strategy Performance | `GET /api/learning/strategy-performance?days=N` | prediction_logs | Sadece ML scope'ları |
+| 3 | Signal Performance | `GET /api/learning/accuracy-by-model?days=N` | prediction_logs | Tüm model_type'lar |
+| 4 | AI Panel Performance | `GET /api/learning/ai-panel-performance?days=N` | prediction_logs | model_type="ai_panel" |
+| 5 | SMC Performance | `GET /api/learning/smc-performance?days=N` | prediction_logs | model_type="smc" |
+
+### Meta Signal Analysis — 5 Katmanlı Pipeline
+```
+Katman 1: Signal Collection → 6 model paralel (ml, pulse1/2/3, emel, smc)
+Katman 2: Combination Mining → meta_combination_stats tablosu, regime-filtered
+Katman 3: Technical Validation → 8 koşul (EMA stack, RSI, MACD, ADX, Volume, BB, ATR)
+Katman 4: Confidence Fusion → base + tech_boost[-15,+15] + combo_boost[-10,+10]
+Katman 5: Risk Calculation → ATR×1.5 SL, ATR×1.0/2.0 TP
+```
+- Cache TTL: 55s
+- Min 2 model BUY/SELL gerekli, yoksa HOLD
+- Güç: ≥75 STRONG, ≥55 MODERATE, <55 WEAK, <40 → HOLD override
+
+### Model Ağırlıkları (Meta Signal)
+| Model | Base Ağırlık | STRONG_TREND çarpanı | RANGING çarpanı | VOLATILE çarpanı |
+|-------|-------------|---------------------|-----------------|-----------------|
+| ml | 0.25 | 1.2× | 0.8× | 0.7× |
+| emel | 0.20 | 1.0× | 1.0× | 1.0× |
+| pulse1/2/3 | 0.15 each | 1.0/1.0/1.3× | 1.0/1.0/0.9× | 1.0/1.0/0.8× |
+| smc | 0.10 | 0.7× | 1.3× | 1.4× |
+
+### Sinyal Loglama Sıklıkları
+| Model | Log Aralığı | Koşul |
+|-------|------------|-------|
+| ML | 15 dakika | Her zaman |
+| Pulse/EMEL | 3 dakika | Aktif sinyal varsa |
+| SMC | 3 dakika | Cadence'e göre (5m→5dk, 1h→60dk) |
+| AI Panel | 60 dakika | Sadece NY session açıkken |
+| Fiyat/TA | 10 saniye | Sürekli |
+| Outcome Check | 2 dakika | Aktif sinyal varsa |
+
+### Sinyal Durum Akışı
+```
+active → completed (TP hit = WIN)
+      → stopped (SL hit = LOSS)
+      → expired (zaman doldu = NÖTR)
+      → market_closed_invalid (filtrelenir)
+```
+
+### Performans Skor Formülleri
+```
+quality_score   = 100 × reliability × (0.45×win_rate + 0.30×tp_depth + 0.25×profit)
+scalp_score     = 100 × reliability × (0.40×win_rate + 0.20×tp1_rate + 0.15×profit + 0.25×speed)
+long_term_score = 100 × reliability × (0.35×win_rate + 0.30×tp_depth + 0.25×profit + 0.10×endurance)
+reliability     = clamp(0-1, resolved/8)
+```
+
+### Risk Profil Çarpanları
+| Profil | SL (ATR×) | TP1 (ATR×) | TP2 (ATR×) |
+|--------|----------|-----------|-----------|
+| conservative | 1.5 × 0.8 | 1.0 × 0.8 | 2.0 × 0.8 |
+| balanced | 1.5 × 1.0 | 1.0 × 1.0 | 2.0 × 1.0 |
+| aggressive | 1.5 × 1.3 | 1.0 × 1.3 | 2.0 × 1.3 |
+
+---
+
+## 🔬 Funnel / Pipeline Gözlemleri (2026-04-17 audit)
+
+### Toplam Hacim (2 ay, 75,672 kayıt)
+| Aşama | Kayıt | % |
+|---|---|---|
+| prediction_logs (ham) | 75,672 | 100% |
+| resolved (completed + stopped) | 41,174 | 54.4% |
+| expired (normal) | 2,852 | 3.8% |
+| **market_closed_invalid (faz dışı)** | **31,636** | **41.9%** |
+| active | 10 | 0.0% |
+
+### market_closed_invalid Dağılımı — ANA DARBOĞAZ
+| Model | MCI sayısı | Modelin toplamı | MCI oranı |
+|---|---|---|---|
+| smc | 10,286 | 14,106 | 72.9% |
+| pulse3 | 6,842 | 17,835 | 38.4% |
+| pulse1 | 6,558 | 18,400 | 35.6% |
+| pulse2 | 4,619 | 13,029 | 35.5% |
+| meta | 748 | 1,512 | 49.5% |
+
+**Sebep:** `signal_lifecycle.py:593` — signal'in `created_at` zamanı `is_symbol_market_open()` testini geçemiyor. `prediction_logger._check_session_filter()` insert öncesi zaten filtreliyor ama lifecycle zamanında aynı değerlendirme farklı sonuç veriyor. En olası açıklama: eski veriler (session_filter eklenmeden önce logged) + market boundary timing drift (örn. 21:59 UTC XAUUSD SELL, lifecycle Cuma 22:05'te koşar, `created_at` 22:00 olarak kaydedilmiş olabilir).
+
+**Etki:** Panel endpoint'leri `filter_market_closed_invalid_signals()` ile bu kayıtları SİLİYOR — yani "76-80 resolved" düşüklüğünün ana sebebi: toplam volume'un %42'si zaten panellerde görünmüyor.
+
+### Loglama Öncesi Düşüşler (DB'ye hiç ulaşmıyor)
+- `direction == "HOLD"` → atılır, asla loglanmaz
+- `_check_session_filter()` (piyasa kapalı veya 5m candle >20dk bayat) → atılır
+- Cooldown aşılmamış (5m=5dk, 1h=30dk, 4h=120dk, 1d=480dk) → `return None`
+- Aktif sinyal var aynı yönde → dedup, `return None`
+- AI Panel: BUY/SELL değilse veya entry/stop/target eksikse → sadece `ai_panel_signal_snapshots`'a yazılır, `prediction_logs`'a yazılmaz
+
+**Telemetri eksikliği:** Bu drop'lar log seviyesinde (`logger.debug/info`) sayılıyor ama DB'ye metrik yok. Üretken çalışmada kaç sinyalin cooldown/dedup nedeniyle kaybolduğunu görmek zor.
+
+### Threshold Değerleri — Uygulanan Değişiklikler (2026-04-17)
+| Konum | Eski → Yeni | Gerekçe |
+|---|---|---|
+| `learning.py:285` reliability formula | `resolved/8` → `resolved/5` | Küçük scope'lar (ör. ml:nasdaq_precision 23 resolved) full score kazanabilsin |
+| `learning.py:335` _pick_scope_leader min | `≥3` → `≥2` | Düşük hacimli scope'lar lider seçilebilsin |
+| `meta_analysis_engine.py:379` combo gate | `total_signals ≥5` → `≥3` | Seyrek kombinasyonlar aktif hale gelir |
+| `meta_engine_router.py:21` min_confidence | `40` → `45` | Zayıf meta sinyalleri HOLD'a düşsün |
+| `background_scheduler.py:634` SMC min_score | `45` → `50` | SMC MCI oranı %72.9 — daha sıkı zone kalitesi |
+| `background_scheduler.py:633` min_displacement_atr | `1.0` → `1.2` | Küçük displacement yapıları elenir |
+| `learning.py:160` SMC bootstrap min_score | `45` → `50` | Prod ile aynı eşik |
+| `learning.py:159` SMC bootstrap displacement | `1.0` → `1.2` | Prod ile aynı eşik |
+| `signal_lifecycle.py:593` MCI gate | Her zaman uygular → 30dk grace buffer | Boundary drift (21:59 UTC vs 22:00 UTC) retroaktif kills'i engeller; derin kapalı periyotta hâlâ yakalar |
+| `meta_analysis_engine.py` MIN_MODELS | `2` (değişmedi) | HOLD eşiği doğru |
+
+### Panel Duplikasyonu Analizi
+| Panel | Ana model_type | Ana niyet | Overlap |
+|---|---|---|---|
+| Strategy Performance | yalnızca ml:* varyantları | Scope-level lider seçimi (quality/scalp/long_term) | Signal Perf ile (aynı ML sinyalleri) |
+| Signal Performance | tüm model_type'lar | Model bazlı ham accuracy | Strategy ile ML scope'ları overlap eder |
+| SMC Performance | yalnızca smc | Cadence-collapsed SMC | Signal Perf içinde smc satırı ile overlap |
+| AI Panel Performance | yalnızca ai_panel | NY session DeepSeek analizleri | Yok |
+| Meta Signal Analysis | canlı (6 model fusion) | Gerçek zamanlı sinyal | Diğerleri geçmiş; overlap yok |
+
+**Birleştirme önerisi:** Strategy + Signal Performance aynı UI sekmesinde tab olarak sunulabilir; ML scope'lar Strategy'de, diğer modeller Signal'de. SMC ayrı kalabilir (cadence collapse farklı istatistik üretiyor).
+
+### Uygulanan Düzeltmeler (2026-04-17 audit)
+1. **`routers/learning.py::get_accuracy_by_model`** — `expired + any_target_hit` artık `target_hit` sayısına eklenmiyor; ayrı `partial_target_hit` alanına gidiyor. Düzeltme öncesi: `target_hit_rate` teorik olarak >1.0 olabilirdi.
+2. **`services/meta_analysis_engine.py::TechnicalSnapshot.get_conditions`** — `atr_valid` artık gerçek kontrol: ATR/price oranı %0.05–%3.0 arasında olmalı (önceden sadece `atr_14 > 0`, trivial geçer).
+
+### Yeni Log Aralığı Kuralları (2026-04-17 teyitli)
+| Model | Gerçek aralık (30d median) | Beklenen | Durum |
+|---|---|---|---|
+| pulse1 | 1.1dk median, 3.7dk avg | 3dk | ✓ |
+| pulse2 | 1.6dk median | 3dk | ✓ |
+| pulse3 | 1.1dk median | 3dk | ✓ |
+| smc | 0.0dk median | cadence bazlı | ⚠ Aynı bucket birden fazla → collapse filtresi yakalıyor |
+| emel | 8.0dk median | 3dk | ✓ |
+| emel_inverse | 3.0dk median | 3dk | ✓ |
+| ml:main | 15.0dk median | 15dk | ✓ |
+| ai_panel | 61.9dk median | 60dk | ✓ |
+| meta | 2.2dk median | canlı, log değil | - |
+
+---
+
+## 🎨 Frontend Tasarım Sistemi — Panel Organizasyonu
+
+### Navigasyon Yapısı
+```
+/ (Dashboard)
+├── Sembol Kartları: NDX | DAX | XAUUSD | USOIL
+│   └── Tıkla → /dashboard/{symbol}
+│
+/dashboard/{symbol} (Sembol Sayfası)
+├── Bölüm 1: Üst Bar (fiyat + meta signal)
+├── Bölüm 2: Ortak Grafik (SharedChart)
+├── Bölüm 3: Sinyal Grid (6 model, 2×3)
+├── Bölüm 4: Piyasa Bağlamı (regime + COT + AI)
+└── Bölüm 5: Performans Scoreboard (horizontal scroll)
+```
+
+### Sayfa Oranları (Altın Oran Bazlı)
+| Bölüm | Oran | İçerik | Öncelik |
+|-------|------|--------|---------|
+| Üst Bar | %8 | Fiyat + Meta Signal | Anlık durum |
+| Grafik | %25 | Shared chart + TF tabs | Görsel analiz |
+| Sinyal Grid | %35 | 6 model kart | Karar verme |
+| Bağlam | %12 | Regime + COT + AI | Destekleyici |
+| Scoreboard | %20 | Model performans | Güvenilirlik |
+
+### Renk Kodlaması (Tüm Sistemde Tutarlı)
+| Amaç | Renk | Tailwind |
+|------|------|---------|
+| ML modeli | Mavi | blue-500/600 |
+| EMEL | Mor | purple-500/600 |
+| PULSE 1/2/3 | Turuncu/Coral | orange-500/600 |
+| SMC | Teal | teal-500/600 |
+| AI Panel | Amber | amber-500/600 |
+| BUY sinyal | Yeşil | green-500 |
+| SELL sinyal | Kırmızı | red-500 |
+| HOLD sinyal | Gri | gray-400 |
+| CONFIRM | Solid arka plan | bg-{renk}-500 |
+| SCOUT | Çizgili/yarı saydam | bg-{renk}-100 border |
+
+### Component Yapısı
+```
+components/
+├── layout/          → SymbolPage, SymbolSelector
+├── price/           → LivePriceBar
+├── meta/            → MetaSignalCard
+├── chart/           → SharedChart (TEK grafik component)
+├── signals/         → SignalGrid, SignalCard, ConfidenceBar
+├── context/         → RegimeCard, WhaleCard, AIPanelCard
+├── performance/     → PerformanceScoreboard, ModelScoreCard
+└── shared/          → StatusBadge, DirectionIndicator, SkeletonLoader
+```
+
+### Responsive Breakpoints
+| Breakpoint | Grid | Scoreboard |
+|------------|------|------------|
+| Desktop (≥1280px) | 2×3 sinyal, 3 bağlam | Yatay scroll |
+| Tablet (768-1279px) | 2 kolon | Yatay scroll |
+| Mobil (<768px) | 1 kolon stack | Yatay scroll korunur |
+
+### Panel Tekrar Kuralı
+Her panel sisteme **tam olarak 1 kez** görünür — sembol sayfası içinde.
+Dashboard (/) sadece sembol kartlarını gösterir, panel içermez.

@@ -97,7 +97,7 @@ function RateBar({ label, value }: { label: string; value: number }) {
 }
 
 export default function MetaSignalAnalysisPanel() {
-  const [days, setDays] = useState(30);
+  const [days, setDays] = useState(0);
   const [checking, setChecking] = useState(false);
   const [selectedSignalId, setSelectedSignalId] = useState<string | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);

@@ -4,7 +4,22 @@
       "Bash(grep -E \"\\\\.\\(ts|js|py\\)$\")",
       "Bash(python3 *)",
       "Bash(npx tsc *)",
-      "Bash(python -c \"import ast; ast.parse\\(open\\('services/data_hub.py'\\).read\\(\\)\\); print\\('data_hub.py: OK'\\)\")"
+      "Bash(python -c \"import ast; ast.parse\\(open\\('services/data_hub.py'\\).read\\(\\)\\); print\\('data_hub.py: OK'\\)\")",
+      "Bash(python -c \"from services.data_hub import force_reseed, get_hub_status, MT5_PRICE_FRESHNESS_THRESHOLD, MAX_CACHE_AGE_HOURS; print\\('data_hub OK'\\)\")",
+      "Bash(find *)",
+      "Bash(curl -s http://localhost:8000/api/datahub/status)",
+      "Bash(tee /tmp/audit_out.txt)",
+      "Bash(tee /tmp/audit_out2.txt)",
+      "Bash(echo \"--- exit: $? ---\")",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(curl -s \"http://localhost:8000/api/meta/dashboard\")",
+      "Bash(curl -s \"https://upbeat-flow-production.up.railway.app/api/meta/dashboard\" --max-time 30)",
+      "Bash(curl -s \"https://upbeat-flow-production.up.railway.app/api/meta/history?symbol=NDX.INDX&limit=100\" --max-time 60)",
+      "Bash(curl -s \"https://upbeat-flow-production.up.railway.app/api/learning/accuracy-by-model?days=10\" --max-time 60)",
+      "Bash(curl -s \"https://upbeat-flow-production.up.railway.app/api/signals/active\" --max-time 30)",
+      "Bash(mkdir -p /Users/melihcanodacioglu/Desktop/mt5_bridge/migrations)",
+      "Read(//Users/melihcanodacioglu/Desktop/**)",
+      "Bash(curl -s -H \"apikey: $\\(grep -E '^SUPABASE_KEY=' backend/.env)"
     ]
   }
 }

@@ -418,7 +418,7 @@ function ModelCard({ model, stats, onSelectSymbol }: { model: string; stats: Mod
 // MAIN COMPONENT — SIGNAL PERFORMANCE DASHBOARD
 // ════════════════════════════════════════════════════════════════════════════
 export default function LearningDashboardV2() {
-  const [days, setDays] = useState(30);
+  const [days, setDays] = useState(0);
   const [checking, setChecking] = useState(false);
   const [selectedSignal, setSelectedSignal] = useState<string | null>(null);
   const [signalListFilter, setSignalListFilter] = useState<{ model?: string; symbol?: string } | null>(null);

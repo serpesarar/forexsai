@@ -1,0 +1,389 @@
+{
+  "model": {
+    "path": "/Users/melihcanodacioglu/Desktop/panel/backend/models/model_lgbm_xauusd.joblib",
+    "type": "Pipeline",
+    "classes": [
+      0,
+      1
+    ],
+    "n_features": 150,
+    "importance_length_mismatch": {
+      "importances": 155,
+      "names": 150
+    }
+  },
+  "model_features": [
+    "pattern_id",
+    "route",
+    "signal",
+    "components",
+    "entry_price",
+    "policy_score",
+    "policy_conf",
+    "open_M30",
+    "high_M30",
+    "low_M30",
+    "close_M30",
+    "rsi_14_M30",
+    "rsi_7_M30",
+    "stoch_k_M30",
+    "stoch_d_M30",
+    "macd_line_M30",
+    "macd_signal_M30",
+    "macd_hist_M30",
+    "macd_hist_diff_M30",
+    "ema_20_M30",
+    "ema_50_M30",
+    "ema_200_M30",
+    "sma_20_M30",
+    "sma_50_M30",
+    "sma_200_M30",
+    "boll_upper_M30",
+    "boll_lower_M30",
+    "boll_middle_M30",
+    "boll_width_M30",
+    "boll_zscore_M30",
+    "atr_14_M30",
+    "atr_pct_M30",
+    "mfi_M30",
+    "adx_M30",
+    "williams_r_M30",
+    "psar_M30",
+    "close_ma5_M30",
+    "returns_std5_M30",
+    "zscore5_M30",
+    "close_ma10_M30",
+    "returns_std10_M30",
+    "zscore10_M30",
+    "close_ma20_M30",
+    "returns_std20_M30",
+    "zscore20_M30",
+    "close_ma50_M30",
+    "returns_std50_M30",
+    "zscore50_M30",
+    "obv_M30",
+    "cmf_M30",
+    "volatility_M30",
+    "open_H1",
+    "high_H1",
+    "low_H1",
+    "close_H1",
+    "rsi_14_H1",
+    "rsi_7_H1",
+    "stoch_k_H1",
+    "stoch_d_H1",
+    "macd_line_H1",
+    "macd_signal_H1",
+    "macd_hist_H1",
+    "macd_hist_diff_H1",
+    "ema_20_H1",
+    "ema_50_H1",
+    "ema_200_H1",
+    "sma_20_H1",
+    "sma_50_H1",
+    "sma_200_H1",
+    "boll_upper_H1",
+    "boll_lower_H1",
+    "boll_middle_H1",
+    "boll_width_H1",
+    "boll_zscore_H1",
+    "atr_14_H1",
+    "atr_pct_H1",
+    "mfi_H1",
+    "adx_H1",
+    "williams_r_H1",
+    "psar_H1",
+    "close_ma5_H1",
+    "returns_std5_H1",
+    "zscore5_H1",
+    "close_ma10_H1",
+    "returns_std10_H1",
+    "zscore10_H1",
+    "close_ma20_H1",
+    "returns_std20_H1",
+    "zscore20_H1",
+    "close_ma50_H1",
+    "returns_std50_H1",
+    "zscore50_H1",
+    "obv_H1",
+    "cmf_H1",
+    "volatility_H1",
+    "open_H4",
+    "high_H4",
+    "low_H4",
+    "close_H4",
+    "rsi_14_H4",
+    "rsi_7_H4",
+    "stoch_k_H4",
+    "stoch_d_H4",
+    "macd_line_H4",
+    "macd_signal_H4",
+    "macd_hist_H4",
+    "macd_hist_diff_H4",
+    "ema_20_H4",
+    "ema_50_H4",
+    "ema_200_H4",
+    "sma_20_H4",
+    "sma_50_H4",
+    "sma_200_H4",
+    "boll_upper_H4",
+    "boll_lower_H4",
+    "boll_middle_H4",
+    "boll_width_H4",
+    "boll_zscore_H4",
+    "atr_14_H4",
+    "atr_pct_H4",
+    "mfi_H4",
+    "adx_H4",
+    "williams_r_H4",
+    "psar_H4",
+    "close_ma5_H4",
+    "returns_std5_H4",
+    "zscore5_H4",
+    "close_ma10_H4",
+    "returns_std10_H4",
+    "zscore10_H4",
+    "close_ma20_H4",
+    "returns_std20_H4",
+    "zscore20_H4",
+    "close_ma50_H4",
+    "returns_std50_H4",
+    "zscore50_H4",
+    "obv_H4",
+    "cmf_H4",
+    "volatility_H4",
+    "signal_mkt",
+    "trend_strength_M30",
+    "trend_direction_M30",
+    "range_compression_M30",
+    "momentum_3_M30",
+    "momentum_10_M30",
+    "ema_50",
+    "ema_200",
+    "rsi_14",
+    "macd_hist",
+    "signal_wave"
+  ],
+  "predictions": {
+    "window_days": 90,
+    "since": "2026-01-29T00:41:39.918849Z",
+    "total": 20422,
+    "ml_rows": 2635,
+    "direction_distribution": {
+      "BUY": 759,
+      "SELL": 1876
+    },
+    "buy_share_pct": 28.8,
+    "sell_share_pct": 71.2,
+    "status_distribution": {
+      "active": 3,
+      "stopped": 1122,
+      "completed": 1041,
+      "expired": 469
+    },
+    "win_rate_pct": 48.1,
+    "resolved_total": 2163,
+    "by_direction_status": {
+      "BUY": {
+        "active": 1,
+        "stopped": 419,
+        "completed": 256,
+        "expired": 83
+      },
+      "SELL": {
+        "active": 2,
+        "stopped": 703,
+        "completed": 785,
+        "expired": 386
+      }
+    },
+    "win_rate_by_direction": {
+      "BUY": {
+        "resolved": 675,
+        "wins": 256,
+        "win_rate_pct": 37.9
+      },
+      "SELL": {
+        "resolved": 1488,
+        "wins": 785,
+        "win_rate_pct": 52.8
+      }
+    },
+    "confidence_calibration": {
+      "<50": {
+        "wins": 542,
+        "resolved": 1170,
+        "win_rate_pct": 46.3
+      },
+      "50-60": {
+        "wins": 254,
+        "resolved": 469,
+        "win_rate_pct": 54.2
+      },
+      "60-70": {
+        "wins": 171,
+        "resolved": 365,
+        "win_rate_pct": 46.8
+      },
+      "70-80": {
+        "wins": 48,
+        "resolved": 112,
+        "win_rate_pct": 42.9
+      },
+      "80+": {
+        "wins": 26,
+        "resolved": 47,
+        "win_rate_pct": 55.3
+      }
+    },
+    "resolution_reasons": {
+      "sl_hit": 615,
+      "window_resolve_positive": 540,
+      "market_closed_invalid": 368,
+      "direction_flip": 344,
+      "tp1_3_hit_then_sl": 299,
+      "tp4_hit": 170,
+      "NULL": 167,
+      "window_resolve_negative": 132
+    },
+    "by_timeframe": {
+      "30m": 2635
+    },
+    "by_model_subtype": {
+      "ml:aggressive": 168,
+      "ml:full_power": 735,
+      "ml:main": 769,
+      "ml:balanced": 642,
+      "ml:ultra_safe": 138,
+      "ml": 183
+    },
+    "hourly_buy_sell": {
+      "0": {
+        "BUY": 21,
+        "SELL": 76
+      },
+      "1": {
+        "BUY": 45,
+        "SELL": 79
+      },
+      "2": {
+        "BUY": 29,
+        "SELL": 95
+      },
+      "3": {
+        "BUY": 20,
+        "SELL": 75
+      },
+      "4": {
+        "BUY": 39,
+        "SELL": 48
+      },
+      "5": {
+        "BUY": 38,
+        "SELL": 69
+      },
+      "6": {
+        "BUY": 20,
+        "SELL": 94
+      },
+      "7": {
+        "BUY": 36,
+        "SELL": 94
+      },
+      "8": {
+        "BUY": 50,
+        "SELL": 71
+      },
+      "9": {
+        "BUY": 24,
+        "SELL": 80
+      },
+      "10": {
+        "BUY": 22,
+        "SELL": 81
+      },
+      "11": {
+        "BUY": 52,
+        "SELL": 74
+      },
+      "12": {
+        "BUY": 43,
+        "SELL": 80
+      },
+      "13": {
+        "BUY": 54,
+        "SELL": 64
+      },
+      "14": {
+        "BUY": 17,
+        "SELL": 62
+      },
+      "15": {
+        "BUY": 18,
+        "SELL": 87
+      },
+      "16": {
+        "BUY": 32,
+        "SELL": 56
+      },
+      "17": {
+        "BUY": 35,
+        "SELL": 75
+      },
+      "18": {
+        "BUY": 33,
+        "SELL": 73
+      },
+      "19": {
+        "BUY": 26,
+        "SELL": 104
+      },
+      "20": {
+        "BUY": 30,
+        "SELL": 114
+      },
+      "21": {
+        "BUY": 33,
+        "SELL": 62
+      },
+      "22": {
+        "BUY": 25,
+        "SELL": 72
+      },
+      "23": {
+        "BUY": 17,
+        "SELL": 91
+      }
+    }
+  },
+  "outcomes": {
+    "error_XAUUSD": "400 {\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column outcome_results.symbol does not exist\"}",
+    "error_XAUUSD.FOREX": "400 {\"code\":\"42703\",\"details\":null,\"hint\":null,\"message\":\"column outcome_results.symbol does not exist\"}",
+    "total": 0
+  },
+  "errors": {
+    "error_analysis_total": 7,
+    "error_analysis_failed_direction": {
+      "BUY": 5,
+      "SELL": 2
+    },
+    "root_cause_distribution": {
+      "unknown": 7
+    },
+    "fake_move_types": {
+      "stop_hunt": 5,
+      "liquidity_grab": 2
+    },
+    "sample_lessons": [],
+    "failure_analyses_total": 0,
+    "learning_feedback_active": 0,
+    "learning_feedback_for_xauusd": []
+  },
+  "candles": {
+    "XAUUSD/5m": 5810,
+    "XAUUSD/30m": 1561,
+    "XAUUSD/1h": 3364,
+    "range_error": "0"
+  },
+  "generated_at": "2026-04-29T00:41:39.918849+00:00"
+}
