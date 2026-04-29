@@ -707,12 +707,24 @@ async def log_prediction(
         
         # Calculate actual price targets for DB storage using fixed pip values
         if entry_price and entry_price > 0:
-            target_prices = calculate_target_prices(entry_price, direction, symbol, normalized_timeframe)
-            sl_price = calculate_stoploss_price(entry_price, direction, symbol, normalized_timeframe)
-            # Store as {TP1: price, TP2: price, ...}
-            targets_dict = dict(target_prices)
-            targets_dict["SL"] = round(sl_price, 4)
-            stop_loss_pips = abs(pips_from_price_change(abs(entry_price - sl_price), symbol))
+            # XAUUSD v2 model emits a single-target risk profile (TP=$10, SL=$15);
+            # honor it instead of the legacy TP1/2/3/4 ladder so lifecycle does not
+            # trigger an early "completed" on a $4 TP1 the model never targeted.
+            is_xauusd_v2 = (symbol == "XAUUSD"
+                            and (effective_model_type or "").lower().startswith("ml")
+                            and ml.get("target_price") and ml.get("stop_price"))
+            if is_xauusd_v2:
+                tp_price = float(ml["target_price"])
+                sl_price = float(ml["stop_price"])
+                targets_dict = {"TP1": round(tp_price, 4)}
+                targets_dict["SL"] = round(sl_price, 4)
+                stop_loss_pips = abs(pips_from_price_change(abs(entry_price - sl_price), symbol))
+            else:
+                target_prices = calculate_target_prices(entry_price, direction, symbol, normalized_timeframe)
+                sl_price = calculate_stoploss_price(entry_price, direction, symbol, normalized_timeframe)
+                targets_dict = dict(target_prices)
+                targets_dict["SL"] = round(sl_price, 4)
+                stop_loss_pips = abs(pips_from_price_change(abs(entry_price - sl_price), symbol))
         else:
             targets_dict = {tl.name: tl.pips for tl in cfg.targets}
             targets_dict["SL"] = cfg.stoploss_pips

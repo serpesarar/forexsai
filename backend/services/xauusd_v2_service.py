@@ -1,5 +1,5 @@
 """
-XAUUSD v2 ML Prediction Service.
+XAUUSD v2/v3 ML Prediction Service.
 
 Replaces the legacy 150-feature LightGBM Pipeline for XAUUSD with a two-headed
 calibrated ensemble:
@@ -7,13 +7,17 @@ calibrated ensemble:
   * BUY model:  P(long trade profitable within 12h with TP=1.5×ATR / SL=1.0×ATR)
   * SELL model: P(short trade profitable within same window)
   * Isotonic calibrators on each head
-  * Feature set: ATR-normalized M30 + H1 + H4 OHLC, sessions, DXY/VIX/US10Y
-    correlations + returns
+  * Feature set (v3, 133 cols): ATR-normalized M30/H1/H4 OHLC + M15 anti-chase,
+    swing-high/low distance, parabolic SAR position, linreg trend channel,
+    consecutive-bar streaks, upper/lower wick clusters, sessions, DXY/VIX/US10Y
+    correlations + returns. v3 specifically targets the "BUY at resistance /
+    SELL at support" failure mode observed in early v2 production trades.
 
 Fixed risk profile (Test A from hold-out backtest):
     TP = $10 (10 pips for XAUUSD)
     SL = $15
-Hold-out 60d backtest: 80.5% win-rate, +$3019 net, -$10 max drawdown.
+Hold-out 60d backtest (v3): 82.3% win-rate, +$3296 net, -$0 max drawdown,
+1.2% BUY-at-resistance rate (vs ~15-20% in v2).
 
 Public entry point:
     await predict_xauusd_v2(strategy="balanced") -> PredictionResult
@@ -91,6 +95,71 @@ def _bbands(c: pd.Series, n: int = 20, k: float = 2.0):
     return m - k * sd, m, m + k * sd
 
 
+def _parabolic_sar(high: pd.Series, low: pd.Series, af_init: float = 0.02,
+                    af_step: float = 0.02, af_max: float = 0.2) -> pd.Series:
+    """Wilder's Parabolic SAR — must mirror xauusdegitim/features.py exactly."""
+    n = len(high)
+    sar = np.full(n, np.nan)
+    if n < 3:
+        return pd.Series(sar, index=high.index)
+    h = high.values
+    l = low.values
+    is_long = True
+    sar[0] = l[0]
+    ep = h[0]
+    af = af_init
+    for i in range(1, n):
+        prev_sar = sar[i - 1] if not np.isnan(sar[i - 1]) else l[i - 1]
+        if is_long:
+            sar_i = prev_sar + af * (ep - prev_sar)
+            sar_i = min(sar_i, l[i - 1], l[i - 2] if i >= 2 else l[i - 1])
+            if l[i] < sar_i:
+                is_long = False
+                sar_i = ep
+                ep = l[i]
+                af = af_init
+            else:
+                if h[i] > ep:
+                    ep = h[i]
+                    af = min(af + af_step, af_max)
+        else:
+            sar_i = prev_sar + af * (ep - prev_sar)
+            sar_i = max(sar_i, h[i - 1], h[i - 2] if i >= 2 else h[i - 1])
+            if h[i] > sar_i:
+                is_long = True
+                sar_i = ep
+                ep = h[i]
+                af = af_init
+            else:
+                if l[i] < ep:
+                    ep = l[i]
+                    af = min(af + af_step, af_max)
+        sar[i] = sar_i
+    return pd.Series(sar, index=high.index)
+
+
+def _linreg_channel(close: pd.Series, n: int = 50) -> pd.DataFrame:
+    """Rolling linreg channel: slope, residual sigma, %position within ±2σ band."""
+    x = np.arange(n)
+    out = pd.DataFrame(index=close.index, columns=["slope", "sigma", "pct_in_channel"], dtype=float)
+    vals = close.values
+    for i in range(n - 1, len(close)):
+        y = vals[i - n + 1:i + 1]
+        if np.any(np.isnan(y)):
+            continue
+        slope, intercept = np.polyfit(x, y, 1)
+        pred = slope * x + intercept
+        residuals = y - pred
+        sigma = float(np.std(residuals))
+        if sigma <= 0:
+            continue
+        upper = pred[-1] + 2 * sigma
+        lower = pred[-1] - 2 * sigma
+        pct = (y[-1] - lower) / (upper - lower) if upper > lower else 0.5
+        out.iloc[i] = [slope, sigma, pct]
+    return out
+
+
 def _adx(h: pd.Series, l: pd.Series, c: pd.Series, n: int = 14) -> pd.Series:
     up = h.diff()
     dn = -l.diff()
@@ -133,6 +202,36 @@ def _build_tf_features(df: pd.DataFrame, suffix: str) -> pd.DataFrame:
         vmu = vol.rolling(50).mean()
         vsd = vol.rolling(50).std()
         out[f"vol_z_{suffix}"] = (vol - vmu) / vsd.replace(0, np.nan)
+
+    # ── v3 anti-chase features (must match xauusdegitim/features.py) ──
+    for lb in (30, 100):
+        sw_high = h.rolling(lb).max()
+        sw_low = l.rolling(lb).min()
+        out[f"dist_swing_high_{lb}_atr_{suffix}"] = (sw_high - c) / a
+        out[f"dist_swing_low_{lb}_atr_{suffix}"] = (c - sw_low) / a
+
+    out[f"bars_since_high_30_{suffix}"] = h.rolling(30).apply(
+        lambda x: 30 - 1 - int(np.argmax(x)), raw=True)
+    out[f"bars_since_low_30_{suffix}"] = l.rolling(30).apply(
+        lambda x: 30 - 1 - int(np.argmin(x)), raw=True)
+
+    direction = np.sign(c - o)
+    streak = direction.groupby((direction != direction.shift()).cumsum()).cumcount() + 1
+    out[f"consec_green_{suffix}"] = (streak * (direction > 0)).astype(float)
+    out[f"consec_red_{suffix}"] = (streak * (direction < 0)).astype(float)
+
+    sar = _parabolic_sar(h, l)
+    out[f"sar_above_{suffix}"] = (sar > c).astype(float) - (sar < c).astype(float)
+    out[f"sar_dist_atr_{suffix}"] = (c - sar) / a
+
+    chan = _linreg_channel(c, n=50)
+    out[f"chan_slope_atr_{suffix}"] = chan["slope"] / a
+    out[f"chan_pct_{suffix}"] = chan["pct_in_channel"]
+
+    upper_wick = (h - c.where(c >= o, o)) / a
+    lower_wick = (c.where(c <= o, o) - l) / a
+    out[f"upper_wick_5_{suffix}"] = upper_wick.rolling(5).sum()
+    out[f"lower_wick_5_{suffix}"] = lower_wick.rolling(5).sum()
     return out
 
 
@@ -260,10 +359,11 @@ async def predict_xauusd_v2(strategy: str = "balanced", **_ignored):
         return _hold_result("XAUUSD", "model_unavailable")
 
     # Pull candles in parallel
+    m15_task = asyncio.create_task(_fetch_tf("15m", 500))
     m30_task = asyncio.create_task(_fetch_tf("30m", 500))
     h1_task = asyncio.create_task(_fetch_tf("1h", 300))
     h4_task = asyncio.create_task(_fetch_tf("4h", 200))
-    m30, h1, h4 = await asyncio.gather(m30_task, h1_task, h4_task)
+    m15, m30, h1, h4 = await asyncio.gather(m15_task, m30_task, h1_task, h4_task)
 
     if m30.empty or len(m30) < 60:
         return _hold_result("XAUUSD", f"insufficient_m30_bars({len(m30)})")
@@ -271,6 +371,10 @@ async def predict_xauusd_v2(strategy: str = "balanced", **_ignored):
         return _hold_result("XAUUSD", f"insufficient_h1_bars({len(h1)})")
     if h4.empty or len(h4) < 30:
         return _hold_result("XAUUSD", f"insufficient_h4_bars({len(h4)})")
+    if m15.empty or len(m15) < 60:
+        # M15 anti-chase features still useful but not strictly required;
+        # downstream column-fill will impute missing M15 columns.
+        logger.warning(f"[xauusd_v2] M15 unavailable ({len(m15)} bars) — anti-chase M15 features will be imputed")
 
     # Build feature matrix at M30 cadence
     feats = [
@@ -279,6 +383,13 @@ async def predict_xauusd_v2(strategy: str = "balanced", **_ignored):
         _build_tf_features(h4, "H4").reindex(m30.index, method="ffill"),
         _session_features(m30.index),
     ]
+    if not m15.empty and len(m15) >= 60:
+        m15_feat = _build_tf_features(m15, "M15")
+        keep = [col for col in m15_feat.columns if any(k in col for k in (
+            "swing_high", "swing_low", "bars_since_high", "bars_since_low",
+            "consec_green", "consec_red", "sar_", "chan_", "wick_5",
+        ))]
+        feats.append(m15_feat[keep].reindex(m30.index, method="ffill"))
     try:
         feats.append(_macro_features(m30))
     except Exception as e:

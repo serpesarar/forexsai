@@ -205,7 +205,8 @@ def main():
         sys.exit(1)
 
     print("\nBuilding feature matrix...")
-    X, y = build_dataset(xau["M30"], xau["H1"], xau["H4"], macros=macros, horizon_bars=args.horizon)
+    X, y = build_dataset(xau["M30"], xau["H1"], xau["H4"], macros=macros,
+                         horizon_bars=args.horizon, m15=xau.get("M15"))
     # Drop rows where label is undefined (last `horizon_bars` and any with NaN long_pl)
     valid_idx = y["long_pl_atr"].notna() & y["short_pl_atr"].notna()
     X = X.loc[valid_idx]

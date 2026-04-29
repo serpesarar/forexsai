@@ -52,6 +52,71 @@ def bbands(close: pd.Series, n: int = 20, k: float = 2.0):
     return m - k * sd, m, m + k * sd
 
 
+def parabolic_sar(high: pd.Series, low: pd.Series, af_init: float = 0.02,
+                   af_step: float = 0.02, af_max: float = 0.2) -> pd.Series:
+    """Wilder's Parabolic SAR. Returns SAR value series."""
+    n = len(high)
+    sar = np.full(n, np.nan)
+    if n < 3:
+        return pd.Series(sar, index=high.index)
+    h = high.values
+    l = low.values
+    is_long = True
+    sar[0] = l[0]
+    ep = h[0]
+    af = af_init
+    for i in range(1, n):
+        prev_sar = sar[i - 1] if not np.isnan(sar[i - 1]) else l[i - 1]
+        if is_long:
+            sar_i = prev_sar + af * (ep - prev_sar)
+            sar_i = min(sar_i, l[i - 1], l[i - 2] if i >= 2 else l[i - 1])
+            if l[i] < sar_i:
+                is_long = False
+                sar_i = ep
+                ep = l[i]
+                af = af_init
+            else:
+                if h[i] > ep:
+                    ep = h[i]
+                    af = min(af + af_step, af_max)
+        else:
+            sar_i = prev_sar + af * (ep - prev_sar)
+            sar_i = max(sar_i, h[i - 1], h[i - 2] if i >= 2 else h[i - 1])
+            if h[i] > sar_i:
+                is_long = True
+                sar_i = ep
+                ep = h[i]
+                af = af_init
+            else:
+                if l[i] < ep:
+                    ep = l[i]
+                    af = min(af + af_step, af_max)
+        sar[i] = sar_i
+    return pd.Series(sar, index=high.index)
+
+
+def linreg_channel(close: pd.Series, n: int = 50) -> pd.DataFrame:
+    """Rolling linear-regression channel: slope, residual sigma, %position within ±2σ band."""
+    x = np.arange(n)
+    out = pd.DataFrame(index=close.index, columns=["slope", "sigma", "pct_in_channel"], dtype=float)
+    vals = close.values
+    for i in range(n - 1, len(close)):
+        y = vals[i - n + 1:i + 1]
+        if np.any(np.isnan(y)):
+            continue
+        slope, intercept = np.polyfit(x, y, 1)
+        pred = slope * x + intercept
+        residuals = y - pred
+        sigma = float(np.std(residuals))
+        if sigma <= 0:
+            continue
+        upper = pred[-1] + 2 * sigma
+        lower = pred[-1] - 2 * sigma
+        pct = (y[-1] - lower) / (upper - lower) if upper > lower else 0.5
+        out.iloc[i] = [slope, sigma, pct]
+    return out
+
+
 def adx(high: pd.Series, low: pd.Series, close: pd.Series, n: int = 14) -> pd.Series:
     up = high.diff()
     dn = -low.diff()
@@ -110,6 +175,46 @@ def build_tf_features(df: pd.DataFrame, suffix: str) -> pd.DataFrame:
         vmu = vol.rolling(50).mean()
         vsd = vol.rolling(50).std()
         out[f"vol_z_{suffix}"] = (vol - vmu) / vsd.replace(0, np.nan)
+
+    # ── Anti-chase features (added v3 for resistance-buying / support-selling fix) ──
+    # 1) Distance to recent swing high/low (ATR-normalized)
+    for lb in (30, 100):
+        sw_high = h.rolling(lb).max()
+        sw_low = l.rolling(lb).min()
+        out[f"dist_swing_high_{lb}_atr_{suffix}"] = (sw_high - c) / a   # >0 always; ≈0 means "AT resistance"
+        out[f"dist_swing_low_{lb}_atr_{suffix}"] = (c - sw_low) / a     # ≈0 means "AT support"
+
+    # 2) Bars-since swing extreme — exhaustion timing
+    def _bars_since_max(s: pd.Series, lb: int) -> pd.Series:
+        return s.rolling(lb).apply(lambda x: lb - 1 - int(np.argmax(x)), raw=True)
+
+    def _bars_since_min(s: pd.Series, lb: int) -> pd.Series:
+        return s.rolling(lb).apply(lambda x: lb - 1 - int(np.argmin(x)), raw=True)
+
+    out[f"bars_since_high_30_{suffix}"] = _bars_since_max(h, 30)
+    out[f"bars_since_low_30_{suffix}"] = _bars_since_min(l, 30)
+
+    # 3) Consecutive same-direction bars (exhaustion / momentum chase)
+    direction = np.sign(c - o)
+    streak = direction.groupby((direction != direction.shift()).cumsum()).cumcount() + 1
+    out[f"consec_green_{suffix}"] = (streak * (direction > 0)).astype(float)
+    out[f"consec_red_{suffix}"] = (streak * (direction < 0)).astype(float)
+
+    # 4) Parabolic SAR position relative to price (-1 SAR below=bullish, +1 SAR above=bearish)
+    sar = parabolic_sar(h, l)
+    out[f"sar_above_{suffix}"] = (sar > c).astype(float) - (sar < c).astype(float)
+    out[f"sar_dist_atr_{suffix}"] = (c - sar) / a
+
+    # 5) Linear-regression trend channel (50-bar)
+    chan = linreg_channel(c, n=50)
+    out[f"chan_slope_atr_{suffix}"] = chan["slope"] / a
+    out[f"chan_pct_{suffix}"] = chan["pct_in_channel"]    # 0..1; >0.85 ≈ at upper band (BUY exhaustion)
+
+    # 6) Upper/lower wick cluster (last 5 bars) — repeated rejection at level
+    upper_wick = (h - c.where(c >= o, o)) / a
+    lower_wick = (c.where(c <= o, o) - l) / a
+    out[f"upper_wick_5_{suffix}"] = upper_wick.rolling(5).sum()
+    out[f"lower_wick_5_{suffix}"] = lower_wick.rolling(5).sum()
 
     return out
 
@@ -251,6 +356,7 @@ def build_dataset(
     h4: pd.DataFrame,
     macros: dict | None = None,
     horizon_bars: int = 24,
+    m15: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Returns (X, y) aligned to base_m30 index.
@@ -264,6 +370,16 @@ def build_dataset(
         build_tf_features(h4, "H4").reindex(base_m30.index, method="ffill"),
         session_features(base_m30.index),
     ]
+    if m15 is not None and not m15.empty:
+        # M15 gives finer-grained channel + swing detection (asked for explicitly).
+        # We attach only the new anti-chase columns (skip the redundant base TA from M15
+        # to avoid feature-space explosion).
+        m15_feat = build_tf_features(m15, "M15")
+        keep = [c for c in m15_feat.columns if any(k in c for k in (
+            "swing_high", "swing_low", "bars_since_high", "bars_since_low",
+            "consec_green", "consec_red", "sar_", "chan_", "wick_5",
+        ))]
+        feats.append(m15_feat[keep].reindex(base_m30.index, method="ffill"))
     if macros:
         feats.append(macro_features(base_m30,
                                     macros.get("DXY", {}).get("H1") if isinstance(macros.get("DXY"), dict) else None,

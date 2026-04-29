@@ -196,7 +196,8 @@ def main():
     macros = load_macros()
     print("Building features...")
     X, y = build_dataset(xau["M30"], xau["H1"], xau["H4"], macros=macros,
-                         horizon_bars=bundle["config"]["horizon_bars"])
+                         horizon_bars=bundle["config"]["horizon_bars"],
+                         m15=xau.get("M15"))
     # ATR on M30 for adaptive sizing
     atr_m30 = atr(xau["M30"]["high"], xau["M30"]["low"], xau["M30"]["close"], 14)
     # ADX_H4 already in X
@@ -244,6 +245,24 @@ def main():
         last_entry[direction] = t
 
     print(f"\nGenerated {len(entries)} entries (after threshold/margin/cooldown)")
+
+    # Resistance-buying / support-selling diagnostic — what we explicitly trained against
+    chase_buy = chase_sell = 0
+    for t, d, conf, entry, atr_v, adx_v in entries:
+        try:
+            recent_high = float(xau["M30"]["high"].loc[:t].iloc[-30:].max())
+            recent_low = float(xau["M30"]["low"].loc[:t].iloc[-30:].min())
+        except Exception:
+            continue
+        if d == "BUY" and (recent_high - entry) < 0.3 * atr_v:
+            chase_buy += 1
+        if d == "SELL" and (entry - recent_low) < 0.3 * atr_v:
+            chase_sell += 1
+    n_buy = sum(1 for e in entries if e[1] == "BUY")
+    n_sell = sum(1 for e in entries if e[1] == "SELL")
+    print(f"  Anti-chase diagnostic (entry within 0.3×ATR of 30-bar extreme):")
+    print(f"    BUY at resistance:  {chase_buy}/{n_buy} = {chase_buy / max(n_buy, 1):.1%}")
+    print(f"    SELL at support:    {chase_sell}/{n_sell} = {chase_sell / max(n_sell, 1):.1%}")
 
     if not entries:
         print("No trades generated — check threshold/margin or hold-out window.")
