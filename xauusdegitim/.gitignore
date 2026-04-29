@@ -1,0 +1,9 @@
+# Raw MT5/Yahoo CSV exports — too large for git, recreatable via fetch_macros.py + MQL5 script
+data/
+
+# Trained artifacts — model bundle is in backend/models/ for prod; reports + per-trade CSVs are run-output
+artifacts/
+
+# Python cache
+__pycache__/
+*.pyc

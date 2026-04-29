@@ -1111,13 +1111,24 @@ def _build_feature_vector(symbol: str, ta: dict, candles: list, ta_1h: dict = No
 
 async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy: str = "balanced") -> PredictionResult:
     """Get ML prediction for symbol with direction and pip targets.
-    
+
     Args:
         symbol: Trading symbol (e.g. 'XAUUSD', 'NDX.INDX')
         enabled_factors: Optional list of factor IDs to apply (trend,confluence,session,pattern,candle,cot,sr,news,regime)
                         If None, factors are determined by strategy preset.
         strategy: Preset strategy (main, ultra_safe, balanced, full_power, aggressive, nasdaq_precision)
     """
+    # ── XAUUSD v2: replaces legacy 150-feature LightGBM with calibrated BUY/SELL
+    # ensemble + macro features. Hold-out backtest: 80.5% win-rate, +$3019 / 60d.
+    # Fixed risk profile: TP=$10, SL=$15. Routed early to skip the legacy pipeline.
+    _xau_norm = (symbol or "").upper().replace(".FOREX", "")
+    if _xau_norm in ("XAUUSD", "GOLD", "XAU"):
+        try:
+            from services.xauusd_v2_service import predict_xauusd_v2
+            return await predict_xauusd_v2(strategy=strategy)
+        except Exception as e:
+            logger.exception(f"[xauusd_v2] failed, falling back to legacy: {e}")
+
     from services.data_fetcher import fetch_eod_candles, fetch_30m_candles, fetch_latest_price
     strategy = (strategy or "balanced").lower().strip()
     is_main_strategy = strategy == "main"

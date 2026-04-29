@@ -95,6 +95,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Failed to start MT5 Redis listener: {e}")
 
+    # 2.6 Macro data service (DXY/VIX/US10Y from Yahoo, hourly refresh)
+    try:
+        from services.macro_data_service import ensure_started as start_macros
+        asyncio.create_task(start_macros())
+        print("✅ Macro data service başlatıldı (DXY/VIX/US10Y, hourly refresh)")
+    except Exception as e:
+        print(f"❌ Macro data service başlatılamadı: {e}")
+
     # 3. PULSE + EMEL SCHEDULER (Doğrudan Başlat - 15dk'da bir)
     try:
         from services.background_scheduler import log_pulse_signals_if_needed
