@@ -103,6 +103,27 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"❌ Macro data service başlatılamadı: {e}")
 
+    # 2.7 AI-Ops orchestrator (daily failure-cluster + DeepSeek proposal cycle)
+    try:
+        from services.ai_ops_orchestrator import orchestrate_ai_ops
+
+        async def ai_ops_loop():
+            # Wait 5 min after startup so other services warm up first
+            await asyncio.sleep(300)
+            while True:
+                try:
+                    summary = await orchestrate_ai_ops(window_days=7)
+                    logger.info("[ai_ops] daily cycle: %s", summary)
+                except Exception as e:
+                    logger.error("[ai_ops] cycle failed: %s", e)
+                # Run once per 24h
+                await asyncio.sleep(86400)
+
+        asyncio.create_task(ai_ops_loop())
+        print("✅ AI-Ops orchestrator başlatıldı (24h cycle, DeepSeek proposals)")
+    except Exception as e:
+        print(f"❌ AI-Ops orchestrator başlatılamadı: {e}")
+
     # 3. PULSE + EMEL SCHEDULER (Doğrudan Başlat - 15dk'da bir)
     try:
         from services.background_scheduler import log_pulse_signals_if_needed

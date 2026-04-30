@@ -186,6 +186,16 @@ async def log_meta_prediction(signal_data: Dict[str, Any], timeframe: str = "1h"
         }
         factors = {key: value for key, value in factors.items() if value not in (None, "", [], {})}
 
+        # Enrich with comprehensive feature snapshot for AI-ops analysis (failsafe)
+        try:
+            from services.signal_feature_snapshot import build_signal_feature_snapshot
+            snap = await build_signal_feature_snapshot(symbol)
+            if snap:
+                for k, v in snap.items():
+                    factors.setdefault(k, v)
+        except Exception as snap_err:
+            logger.debug("[MetaSignalLogger] snapshot enrich failed: %s", snap_err)
+
         record = {
             "symbol": symbol,
             "timeframe": normalized_timeframe,
