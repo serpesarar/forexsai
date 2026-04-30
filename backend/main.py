@@ -442,6 +442,7 @@ router_module_names = [
     "economic_calendar_router",
     "meta_engine_router",
     "permutation_router",
+    "ai_ops_router",
 ]
 
 for module_name in router_module_names:
