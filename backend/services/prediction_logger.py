@@ -470,6 +470,16 @@ async def log_smc_prediction(
         if reasoning:
             factors["signal_reasoning"] = [str(item) for item in reasoning]
 
+        # SMC enrich with feature snapshot (failsafe — same shared snapshot as ML logs)
+        try:
+            from services.signal_feature_snapshot import build_signal_feature_snapshot
+            snap = await build_signal_feature_snapshot(symbol)
+            if snap:
+                for k, v in snap.items():
+                    factors.setdefault(k, v)
+        except Exception as snap_err:
+            logger.debug("signal_feature_snapshot enrich (smc) failed: %s", snap_err)
+
         record = {
             "symbol": symbol,
             "timeframe": normalized_timeframe,
@@ -735,7 +745,7 @@ async def log_prediction(
         factors["target_type"] = "static_pips"
         if _correlation_tag:
             factors["correlation_warning"] = _correlation_tag
-        
+
         # Store strategy in both the column and factors JSONB
         stored_strategy = resolved_strategy or strategy
         if stored_strategy:
@@ -743,6 +753,19 @@ async def log_prediction(
             factors["source"] = context.get("source", stored_strategy)
         if allow_parallel_active:
             factors["parallel_active_allowed"] = True
+
+        # ── Enrich with comprehensive feature snapshot (failsafe) ──
+        # Adds ~60 fields covering momentum, trend, S/R, exhaustion, macro, session
+        # so that the AI-ops loop can later cluster and analyze failures.
+        try:
+            from services.signal_feature_snapshot import build_signal_feature_snapshot
+            snap = await build_signal_feature_snapshot(symbol)
+            if snap:
+                # Caller-provided values take precedence; snapshot fills the gaps.
+                for k, v in snap.items():
+                    factors.setdefault(k, v)
+        except Exception as snap_err:
+            logger.debug("signal_feature_snapshot enrich failed: %s", snap_err)
 
         record = {
             "symbol": symbol,
