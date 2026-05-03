@@ -123,6 +123,82 @@ def parse_factors(v: Any) -> dict:
     return {}
 
 
+def _signal_macro_alignment(symbol: str, direction: str, dxy_chg1d: float | None,
+                             vix_chg1d: float | None, us10y_chg1d: float | None) -> str:
+    """Per-symbol "is the macro environment supporting this trade direction?"
+
+    XAU:    DXY DOWN + US10Y DOWN → BUY aligned;  reverse for SELL
+    NDX/DAX: VIX DOWN + DXY DOWN → BUY aligned;  reverse for SELL (risk-on / risk-off)
+    USOIL:  DXY DOWN → BUY aligned;  DXY UP → SELL aligned (oil priced in USD)
+    """
+    if direction not in ("BUY", "SELL"):
+        return "NA"
+    s = symbol.upper().replace(".INDX", "").replace(".FOREX", "")
+    sign = 1 if direction == "BUY" else -1
+
+    score = 0  # +1 each pro-direction signal, -1 against
+    have = 0
+
+    if "XAU" in s or s == "GOLD":
+        if dxy_chg1d is not None:
+            have += 1; score += -sign if dxy_chg1d > 0.1 else (sign if dxy_chg1d < -0.1 else 0)
+        if us10y_chg1d is not None:
+            have += 1; score += -sign if us10y_chg1d > 0.05 else (sign if us10y_chg1d < -0.05 else 0)
+        if vix_chg1d is not None:
+            have += 1; score += sign if vix_chg1d > 1.0 else (-sign if vix_chg1d < -1.0 else 0)
+    elif s in ("NDX", "GDAXI", "DAX", "SPX"):
+        if vix_chg1d is not None:
+            have += 1; score += -sign if vix_chg1d > 1.0 else (sign if vix_chg1d < -1.0 else 0)
+        if dxy_chg1d is not None:
+            have += 1; score += -sign if dxy_chg1d > 0.1 else (sign if dxy_chg1d < -0.1 else 0)
+        if us10y_chg1d is not None:
+            # Higher yields = bad for tech / equities (mild)
+            have += 1; score += -sign if us10y_chg1d > 0.1 else 0
+    elif s == "USOIL" or "OIL" in s:
+        if dxy_chg1d is not None:
+            have += 1; score += -sign * 2 if dxy_chg1d > 0.2 else (sign * 2 if dxy_chg1d < -0.2 else 0)
+
+    if have == 0:
+        return "NA"
+    if score >= 2: return "strong_pro"
+    if score == 1: return "weak_pro"
+    if score == 0: return "neutral"
+    if score == -1: return "weak_against"
+    return "strong_against"
+
+
+def _session_phase_label(symbol: str, ts: pd.Timestamp) -> str:
+    """Per-symbol cash session phase. Indices have a "cash session" with open/mid/close;
+    USOIL is closer to forex — pit hours but trades nearly 24h."""
+    h = ts.hour
+    m = ts.minute
+    s = symbol.upper()
+    if "NDX" in s or "SPX" in s:
+        # NDX cash: 14:30 - 21:00 UTC (regular session)
+        minutes = h * 60 + m
+        if 14 * 60 + 30 <= minutes < 14 * 60 + 30 + 60:  return "open_drive"      # first hour
+        if 14 * 60 + 30 + 60 <= minutes < 19 * 60:        return "mid_session"
+        if 19 * 60 <= minutes < 21 * 60:                  return "close_drive"     # last 2h
+        if 21 * 60 <= minutes or minutes < 14 * 60 + 30:  return "after_hours"
+        return "pre_market"
+    if "GDAXI" in s or "DAX" in s:
+        # DAX cash: 08:00 - 16:30 UTC + 17:30 close auction
+        minutes = h * 60 + m
+        if 8 * 60 <= minutes < 9 * 60:    return "open_drive"
+        if 9 * 60 <= minutes < 14 * 60:   return "mid_session"
+        if 14 * 60 <= minutes < 16 * 60 + 30:  return "us_overlap"   # DAX + NY
+        if 16 * 60 + 30 <= minutes < 17 * 60 + 30:  return "close_auction"
+        return "after_hours"
+    if "OIL" in s:
+        # Oil: floor session 13:00-18:30 UTC most active
+        if 13 <= h < 16:   return "early_pit"
+        if 16 <= h < 18:   return "active_pit"
+        if 18 <= h < 22:   return "late_pit"
+        return "off_hours"
+    # XAU/forex: just session
+    return "any"
+
+
 def build_feature_table(df: pd.DataFrame) -> pd.DataFrame:
     """Flatten factors snapshot into mineable columns. Discretize continuous fields."""
     out = pd.DataFrame(index=df.index)
@@ -131,6 +207,19 @@ def build_feature_table(df: pd.DataFrame) -> pd.DataFrame:
     out["direction"] = df["ml_direction"]
     out["won"] = df["won"]
     out["created_at"] = df["created_at"]
+
+    # Time-based features (universal)
+    ts_series = pd.to_datetime(df["created_at"], utc=True, errors="coerce")
+    out["dow"] = ts_series.dt.dayofweek.map(
+        {0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"})
+    out["hour_bucket"] = ts_series.dt.hour.apply(
+        lambda h: "00-04" if h < 4 else "04-08" if h < 8 else "08-12" if h < 12
+        else "12-16" if h < 16 else "16-20" if h < 20 else "20-24")
+    # Per-symbol session phase
+    out["session_phase"] = [
+        _session_phase_label(sym, ts) if pd.notna(ts) else "NA"
+        for sym, ts in zip(df["symbol"], ts_series)
+    ]
 
     # ml_confidence (column-level, not in factors)
     out["ml_confidence_bucket"] = df["ml_confidence"].apply(
@@ -183,6 +272,21 @@ def build_feature_table(df: pd.DataFrame) -> pd.DataFrame:
         lambda f: _bucket_label(
             float(f.get("macro_vix_chg1d_pct")) if f.get("macro_vix_chg1d_pct") is not None else np.nan,
             [-np.inf, -3, 0, 3, np.inf]))
+    out["us10y_chg1d"] = factors_list.apply(
+        lambda f: _bucket_label(
+            float(f.get("macro_us10y_chg1d_pct")) if f.get("macro_us10y_chg1d_pct") is not None else np.nan,
+            [-np.inf, -0.5, 0, 0.5, np.inf]))
+
+    # Per-symbol macro alignment with signal direction (the key new feature)
+    out["macro_alignment"] = [
+        _signal_macro_alignment(
+            sym, dirn,
+            f.get("macro_dxy_chg1d_pct"),
+            f.get("macro_vix_chg1d_pct"),
+            f.get("macro_us10y_chg1d_pct"),
+        )
+        for sym, dirn, f in zip(df["symbol"], df["ml_direction"], factors_list)
+    ]
 
     return out
 
