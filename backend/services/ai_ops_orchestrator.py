@@ -241,12 +241,47 @@ ALWAYS reply with valid JSON in this exact schema:
       "description": "<plain language change>",
       "implementation_hint": "<code-level guidance: which file/function, pseudo-code>",
       "estimated_impact": "<X% of failures prevented, Y% of wins also affected>",
-      "risk": "low|medium|high"
+      "risk": "low|medium|high",
+
+      // FOR filter_rule TYPE — REQUIRED for auto-simulation:
+      "filter_spec": {
+        "predicates": [
+          {"field": "factors.regime_label", "op": "eq", "value": "ranging"},
+          {"field": "factors.M30_rsi_14", "op": "gt", "value": 70},
+          {"field": "factors.near_resistance", "op": "is_true", "value": null}
+        ],
+        "applies_to_direction": "BUY",
+        "action": "block"
+      },
+
+      // FOR threshold_tweak TYPE — REQUIRED for auto-simulation:
+      "threshold_spec": {
+        "field": "ml_confidence",
+        "op": "gte",
+        "old_value": 60,
+        "new_value": 65
+      }
     }
   ],
   "alternative_explanations": ["<other plausible root cause>"],
   "requires_data": "<what additional data would help confirm/refute>"
 }
+
+Allowed predicate ops: eq, ne, gt, gte, lt, lte, in, not_in, is_true, is_false.
+Field paths use 'factors.<key>' for snapshot fields, or top-level columns
+like 'ml_confidence', 'ml_direction'. Snapshot keys you can reference include:
+  factors.regime_label, factors.mtf_trend, factors.volatility_regime,
+  factors.near_resistance, factors.near_support, factors.overbought,
+  factors.oversold, factors.exhaustion_up, factors.exhaustion_down,
+  factors.bb_extreme_upper, factors.bb_extreme_lower, factors.sar_bearish,
+  factors.M30_rsi_14, factors.M30_adx_14, factors.M30_macd_hist,
+  factors.M30_dist_swing_high_30_atr, factors.M30_dist_swing_low_30_atr,
+  factors.M30_consec_green, factors.M30_consec_red, factors.H4_ema_stack,
+  factors.H4_adx_14, factors.macro_dxy_chg1d_pct, factors.macro_vix_chg1d_pct.
+
+Always include filter_spec or threshold_spec when proposing those types — the
+system will counterfactually replay them on historical data and show the user
+the simulated win-rate delta before they approve.
 """
 
 
@@ -416,6 +451,13 @@ async def orchestrate_ai_ops(window_days: int = DEFAULT_WINDOW_DAYS) -> dict:
                 ).eq("id", cluster["id"])
             except Exception:
                 pass
+            # Counterfactual simulation — fire-and-forget; persists into the same row
+            try:
+                from services.proposal_simulator import simulate_and_persist
+                await simulate_and_persist(prop_id, window_days=60)
+            except Exception as sim_err:
+                logger.warning("[ai_ops] proposal simulation failed for %s: %s",
+                               prop_id, sim_err)
 
     summary = {
         "status": "ok",

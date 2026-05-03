@@ -346,6 +346,20 @@ async def manual_run(payload: ManualRunRequest, bg: BackgroundTasks):
     return {"ok": True, "status": "scheduled", "window_days": payload.window_days}
 
 
+@router.post("/proposals/{proposal_id}/simulate")
+async def simulate_proposal_endpoint(proposal_id: str, window_days: int = 60):
+    """Re-run counterfactual simulation for a single proposal."""
+    if not is_db_available():
+        raise HTTPException(503, "supabase unavailable")
+    try:
+        from services.proposal_simulator import simulate_and_persist
+        result = await simulate_and_persist(proposal_id, window_days=window_days)
+        return {"ok": True, "result": result}
+    except Exception as e:
+        logger.exception("simulate_proposal_endpoint failed: %s", e)
+        raise HTTPException(500, str(e))
+
+
 @router.get("/clusters")
 async def list_clusters(
     symbol: Optional[str] = None,

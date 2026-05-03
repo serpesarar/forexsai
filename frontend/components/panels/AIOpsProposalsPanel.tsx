@@ -9,7 +9,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  aiOps, type Proposal, type Severity, type ProposalStatus,
+  aiOps, type Proposal, type Severity, type ProposalStatus, type SimulatedMetric,
 } from "../../lib/api/aiOps";
 
 const SEVERITY_COLOR: Record<Severity, { bg: string; border: string; text: string; emoji: string }> = {
@@ -247,6 +247,9 @@ function ProposalCard({
       {/* Expanded details */}
       {expanded && (
         <div style={{ padding: "0 18px 18px 18px", borderTop: "1px solid #1F2937" }}>
+          {/* Simulation result — counterfactual replay (TOP PRIORITY DISPLAY) */}
+          <SimulationBlock proposal={p} />
+
           {/* Cluster stats */}
           {detail.data?.cluster && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, margin: "16px 0", fontSize: 12 }}>
@@ -378,6 +381,137 @@ function ProposalCard({
               )}
             </div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SimulationBlock({ proposal: p }: { proposal: Proposal }) {
+  const qc = useQueryClient();
+  const sim: SimulatedMetric | null = p.simulated_metric;
+  const reSimMut = useMutation({
+    mutationFn: () => aiOps.simulate(p.id, 60),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ai-ops-proposals"] });
+      qc.invalidateQueries({ queryKey: ["ai-ops-proposal", p.id] });
+    },
+  });
+
+  if (!sim) {
+    return (
+      <div style={{
+        margin: "16px 0", padding: 12, background: "#111827", borderRadius: 8,
+        border: "1px dashed #374151", display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <div style={{ fontSize: 12, color: "#9CA3AF" }}>
+          📊 Simülasyon henüz çalıştırılmadı.
+        </div>
+        <button
+          onClick={() => reSimMut.mutate()}
+          disabled={reSimMut.isPending}
+          style={{
+            background: "#374151", color: "#E5E7EB", border: "none",
+            padding: "6px 12px", borderRadius: 4, fontSize: 11, cursor: "pointer",
+          }}
+        >
+          {reSimMut.isPending ? "Çalışıyor..." : "Şimdi Simüle Et"}
+        </button>
+      </div>
+    );
+  }
+  if (sim.status === "manual_review_required") {
+    return (
+      <div style={{
+        margin: "16px 0", padding: 12, background: "rgba(234,179,8,0.10)", borderRadius: 8,
+        borderLeft: "3px solid #EAB308", fontSize: 12, color: "#FDE68A",
+      }}>
+        ⚠ Bu önerinin türü otomatik simüle edilemez (feature_addition / weight_adjustment / retrain).
+        İmplementasyon sonrası 7-gün canlı tracking yapılacak.
+      </div>
+    );
+  }
+  if (sim.status === "error" || sim.error === "no_historical_signals_in_window") {
+    return (
+      <div style={{
+        margin: "16px 0", padding: 12, background: "rgba(239,68,68,0.10)", borderRadius: 8,
+        borderLeft: "3px solid #EF4444", fontSize: 12, color: "#FCA5A5",
+      }}>
+        ⚠ Simülasyon başarısız: {sim.error ?? "bilinmeyen hata"}
+      </div>
+    );
+  }
+
+  const dWin = sim.deltas.win_rate_pp;
+  const dPnl = sim.deltas.pnl_pips ?? 0;
+  const blocked = sim.deltas.n_signals_blocked ?? 0;
+  const blockedLoss = sim.deltas.blocked_was_loss ?? 0;
+  const blockedWin = sim.deltas.blocked_was_win ?? 0;
+  const positive = (dWin ?? 0) > 0 && dPnl >= 0;
+  const accent = positive ? "#22C55E" : (dWin ?? 0) < 0 ? "#EF4444" : "#F97316";
+  const winColor = (dWin ?? 0) > 0 ? "#86EFAC" : (dWin ?? 0) < 0 ? "#FCA5A5" : "#FDE68A";
+  const pnlColor = dPnl > 0 ? "#86EFAC" : dPnl < 0 ? "#FCA5A5" : "#FDE68A";
+
+  return (
+    <div style={{
+      margin: "16px 0", padding: 14, background: "#0B0F17",
+      borderRadius: 8, borderLeft: `3px solid ${accent}`,
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <span style={{ fontSize: 11, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 0.5 }}>
+          📊 Counterfactual Simülasyon (Son {sim.window_days}g)
+        </span>
+        <button
+          onClick={() => reSimMut.mutate()}
+          disabled={reSimMut.isPending}
+          style={{
+            background: "transparent", color: "#9CA3AF", border: "1px solid #374151",
+            padding: "3px 10px", borderRadius: 4, fontSize: 10, cursor: "pointer",
+          }}
+        >
+          {reSimMut.isPending ? "..." : "↻ Yenile"}
+        </button>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, fontSize: 12 }}>
+        <div>
+          <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>Win-Rate Δ</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: winColor }}>
+            {dWin == null ? "—" : `${dWin > 0 ? "+" : ""}${dWin.toFixed(2)}pp`}
+          </div>
+          <div style={{ fontSize: 10, color: "#6B7280" }}>
+            {sim.original.win_rate ?? "—"}% → {sim.simulated.win_rate ?? "—"}%
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>P/L Δ (pips)</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: pnlColor }}>
+            {dPnl > 0 ? "+" : ""}{dPnl.toFixed(1)}
+          </div>
+          <div style={{ fontSize: 10, color: "#6B7280" }}>
+            {sim.original.total_pnl_pips ?? 0} → {sim.simulated.total_pnl_pips ?? 0}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>Blocked</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: "#E5E7EB" }}>{blocked}</div>
+          <div style={{ fontSize: 10, color: "#6B7280" }}>
+            <span style={{ color: "#86EFAC" }}>{blockedLoss} fail önlendi</span>
+            {" · "}
+            <span style={{ color: "#FCA5A5" }}>{blockedWin} win kayıp</span>
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>Sample</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: "#E5E7EB" }}>
+            {sim.original.n_signals ?? 0}
+          </div>
+          <div style={{ fontSize: 10, color: "#6B7280" }}>signals replayed</div>
+        </div>
+      </div>
+      {sim.fixes_skipped?.length > 0 && (
+        <div style={{ marginTop: 10, fontSize: 11, color: "#9CA3AF" }}>
+          {sim.fixes_skipped.length} fix simülasyon dışı (manuel inceleme gerekli):
+          {" "}{sim.fixes_skipped.map(f => f.type).join(", ")}
         </div>
       )}
     </div>

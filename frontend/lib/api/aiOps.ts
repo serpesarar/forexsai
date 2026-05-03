@@ -13,6 +13,27 @@ export interface ProposedFix {
   risk: "low" | "medium" | "high";
 }
 
+export interface SimulatedMetric {
+  status: "ok" | "manual_review_required" | "error";
+  window_days: number;
+  original: { n_signals?: number; n_resolved?: number; n_wins?: number;
+              win_rate?: number | null; total_pnl_pips?: number; avg_pnl_pips?: number | null };
+  simulated: { n_signals?: number; n_resolved?: number; n_wins?: number;
+               win_rate?: number | null; total_pnl_pips?: number; avg_pnl_pips?: number | null };
+  deltas: {
+    win_rate_pp?: number | null;
+    pnl_pips?: number;
+    n_signals_blocked?: number;
+    blocked_pnl_avoided?: number;
+    blocked_was_loss?: number;
+    blocked_was_win?: number;
+  };
+  fixes_evaluated: { type: string; description: string; n_blocked: number; block_rate_pct: number }[];
+  fixes_skipped: { type: string; description: string; reason: string }[];
+  error?: string | null;
+  simulated_at: string;
+}
+
 export interface Proposal {
   id: string;
   cluster_id: string | null;
@@ -27,6 +48,8 @@ export interface Proposal {
   requires_data: string | null;
   pre_change_metric: Record<string, any> | null;
   post_change_metric: Record<string, any> | null;
+  simulated_metric: SimulatedMetric | null;
+  simulated_at: string | null;
   reviewed_by: string | null;
   reviewed_at: string | null;
   pr_url: string | null;
@@ -112,6 +135,10 @@ export const aiOps = {
     ),
   reject: (id: string, body: { reviewer?: string; reason?: string }) =>
     patch<{ ok: boolean; status: string }>(`/api/ai-ops/proposals/${id}/reject`, body),
+  simulate: (id: string, windowDays = 60) =>
+    post<{ ok: boolean; result: SimulatedMetric }>(
+      `/api/ai-ops/proposals/${id}/simulate?window_days=${windowDays}`, {}
+    ),
   manualRun: (windowDays = 7) =>
     post<{ ok: boolean; status: string; window_days: number }>(
       `/api/ai-ops/run`, { window_days: windowDays }
