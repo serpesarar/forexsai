@@ -34,6 +34,16 @@ export default function AIOpsProposalsPanel() {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const stats = useQuery({ queryKey: ["ai-ops-stats"], queryFn: () => aiOps.stats(), refetchInterval: 60000 });
+  const miningStatus = useQuery({
+    queryKey: ["ai-ops-mining-status"],
+    queryFn: () => aiOps.miningStatus(),
+    refetchInterval: 120000,
+  });
+  const triggerMine = useMutation({
+    mutationFn: () => aiOps.triggerMining(60),
+    onSuccess: () => alert("Pattern mining tetiklendi — 1-3 dakika içinde yeni kurallar yüklenecek."),
+    onError: (e: any) => alert(`Tetiklenemedi: ${e?.message ?? "bilinmiyor"}`),
+  });
   const proposals = useQuery({
     queryKey: ["ai-ops-proposals", filter],
     queryFn: () => aiOps.listProposals(filter === "all" ? {} : { status: filter, limit: 100 }),
@@ -97,6 +107,13 @@ export default function AIOpsProposalsPanel() {
           {runMut.isPending ? "Tetikleniyor..." : "Manuel Çalıştır (7g pencere)"}
         </button>
       </div>
+
+      {/* Pattern mining status — self-feeding indicator */}
+      <PatternMiningStatusBadge
+        status={miningStatus.data}
+        onTrigger={() => triggerMine.mutate()}
+        triggering={triggerMine.isPending}
+      />
 
       {/* Stats row */}
       {stats.data?.available && (
@@ -181,6 +198,84 @@ export default function AIOpsProposalsPanel() {
     </div>
   );
 }
+
+function PatternMiningStatusBadge({
+  status, onTrigger, triggering,
+}: { status: any; onTrigger: () => void; triggering: boolean }) {
+  if (!status) return null;
+  const latest = status.latest_run;
+  const generatedAt = latest?.generated_at || status.local_generated_at;
+  const rulesCount = latest?.rules_count ?? status.local_rules_count ?? 0;
+  let ageText = "henüz koşmadı";
+  let ageColor = "#9CA3AF";
+  if (generatedAt) {
+    const ageHours = (Date.now() - new Date(generatedAt).getTime()) / (1000 * 60 * 60);
+    if (ageHours < 24) {
+      ageText = `${Math.round(ageHours)}sa önce güncellendi`;
+      ageColor = "#22C55E";
+    } else if (ageHours < 24 * 7) {
+      ageText = `${Math.round(ageHours / 24)}g önce güncellendi`;
+      ageColor = "#22C55E";
+    } else if (ageHours < 24 * 14) {
+      ageText = `${Math.round(ageHours / 24)}g önce güncellendi (yenileme yaklaştı)`;
+      ageColor = "#F59E0B";
+    } else {
+      ageText = `${Math.round(ageHours / 24)}g önce — eski!`;
+      ageColor = "#EF4444";
+    }
+  }
+  return (
+    <div style={{
+      marginBottom: 16, padding: "10px 14px", background: "#0F1623",
+      borderRadius: 8, border: "1px solid #1F2937",
+      display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1 }}>
+        <div>
+          <div style={{ fontSize: 11, color: "#6B7280", textTransform: "uppercase",
+                        letterSpacing: 0.5 }}>
+            🔄 Self-Feeding Pattern Mining
+          </div>
+          <div style={{ fontSize: 13, color: "#E5E7EB", marginTop: 2 }}>
+            <b>{rulesCount}</b> kural aktif · <span style={{ color: ageColor }}>{ageText}</span>
+            {latest?.triggered_by && (
+              <span style={{ color: "#6B7280", fontSize: 11, marginLeft: 8 }}>
+                ({latest.triggered_by === "cron" ? "haftalık otomatik" : "manuel"})
+              </span>
+            )}
+          </div>
+        </div>
+        {status.recent_runs && status.recent_runs.length > 0 && (
+          <div style={{ display: "flex", gap: 4 }}>
+            {status.recent_runs.slice(0, 5).reverse().map((r: any) => (
+              <div
+                key={r.id}
+                title={`${new Date(r.generated_at).toLocaleString("tr-TR")} · ${r.rules_count} rules · ${r.triggered_by}`}
+                style={{
+                  width: 24, height: 4, borderRadius: 2,
+                  background: r.triggered_by === "cron" ? "#22C55E" : "#4F8CFF",
+                  opacity: 0.7,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+      <button
+        onClick={onTrigger}
+        disabled={triggering}
+        style={{
+          background: "#4F8CFF", color: "#fff", border: "none", padding: "6px 12px",
+          borderRadius: 6, cursor: "pointer", fontWeight: 500, fontSize: 11,
+          opacity: triggering ? 0.5 : 1,
+        }}
+      >
+        {triggering ? "Çalışıyor..." : "Şimdi Yeniden Mine Et"}
+      </button>
+    </div>
+  );
+}
+
 
 function ProposalCard({
   proposal: p,

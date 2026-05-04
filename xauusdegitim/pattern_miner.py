@@ -497,26 +497,33 @@ def to_machine_rules(s: dict) -> list[dict]:
 # Main
 # ---------------------------------------------------------------------------
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--days", type=int, default=60, help="Geçmiş kaç gün taransın")
-    ap.add_argument("--min-samples", type=int, default=20, help="Bir kuralın min örnek sayısı")
-    ap.add_argument("--min-segment-size", type=int, default=80, help="Bir segmentte min total signals")
-    ap.add_argument("--max-depth", type=int, default=4, help="Decision tree max derinlik (kural uzunluğu)")
-    args = ap.parse_args()
+def run_mining(days: int = 60, min_samples: int = 20,
+               min_segment_size: int = 80, max_depth: int = 4,
+               write_files: bool = True, verbose: bool = True) -> dict:
+    """Programmatic entry point — same pipeline as CLI, returns summary dict.
 
-    print(f">> Fetching last {args.days} days resolved signals...")
+    Used by:
+      - CLI main() with default arguments
+      - backend/services/pattern_mining_service.py weekly cron
+    """
+    args = argparse.Namespace(
+        days=days, min_samples=min_samples,
+        min_segment_size=min_segment_size, max_depth=max_depth,
+    )
+    log = print if verbose else (lambda *a, **kw: None)
+
+    log(f">> Fetching last {args.days} days resolved signals...")
     raw = fetch_resolved(args.days)
-    print(f"   {len(raw)} resolved rows")
+    log(f"   {len(raw)} resolved rows")
     if raw.empty:
-        print("   data yok, çıkıyorum.")
-        return
+        return {"status": "skipped", "reason": "no_data", "total_signals": 0,
+                "rules_count": 0, "generated_at": iso(NOW)}
 
-    print(">> Building feature table...")
+    log(">> Building feature table...")
     feats = build_feature_table(raw)
-    print(f"   feature columns: {list(feats.columns)[:10]}...  total {len(feats.columns)}")
+    log(f"   feature columns: {list(feats.columns)[:10]}...  total {len(feats.columns)}")
 
-    print(">> Running decision tree mining per segment...")
+    log(">> Running decision tree mining per segment...")
     segments: list[dict] = [analyze_segment(feats, "GLOBAL — tüm sembol & model", args)]
 
     # Per (symbol, model_type) — sadece yeterli örnek var ise
@@ -531,7 +538,7 @@ def main():
             continue
         segments.append(analyze_segment(grp, f"{sym} · {model} · {direction}", args))
 
-    print(f"   {len(segments)} segments analyzed")
+    log(f"   {len(segments)} segments analyzed")
 
     # Render
     out_dir = Path(__file__).resolve().parent
@@ -550,25 +557,48 @@ def main():
         md.extend(render_segment(s))
         md.append("---\n")
 
-    # Persist
-    md_path = out_dir / "pattern_report.md"
-    md_path.write_text("\n".join(md))
-    json_path = out_dir / "pattern_rules.json"
     json_payload = {
         "generated_at": iso(NOW),
         "days": args.days,
         "total_signals": int(len(raw)),
         "rules": [r for s in segments for r in to_machine_rules(s)],
     }
-    json_path.write_text(json.dumps(json_payload, indent=2, default=str))
-
-    print(f"\nWrote {md_path}")
-    print(f"Wrote {json_path}")
-    print(f"\nÖzet: {len(json_payload['rules'])} kural çıktı.")
     win_count = sum(1 for r in json_payload["rules"] if r["kind"] == "winning_pattern")
     avoid_count = sum(1 for r in json_payload["rules"] if r["kind"] == "avoid_pattern")
-    print(f"  - 🟢 winning: {win_count}")
-    print(f"  - 🔴 avoid: {avoid_count}")
+
+    if write_files:
+        md_path = out_dir / "pattern_report.md"
+        md_path.write_text("\n".join(md))
+        json_path = out_dir / "pattern_rules.json"
+        json_path.write_text(json.dumps(json_payload, indent=2, default=str))
+        log(f"\nWrote {md_path}")
+        log(f"Wrote {json_path}")
+        log(f"\nÖzet: {len(json_payload['rules'])} kural çıktı.")
+        log(f"  - 🟢 winning: {win_count}")
+        log(f"  - 🔴 avoid: {avoid_count}")
+
+    return {
+        "status": "ok",
+        "generated_at": json_payload["generated_at"],
+        "days": args.days,
+        "total_signals": json_payload["total_signals"],
+        "rules_count": len(json_payload["rules"]),
+        "winning_count": win_count,
+        "avoid_count": avoid_count,
+        "segments_count": len(segments),
+        "rules": json_payload["rules"],  # included so DB can persist
+    }
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--days", type=int, default=60, help="Geçmiş kaç gün taransın")
+    ap.add_argument("--min-samples", type=int, default=20, help="Bir kuralın min örnek sayısı")
+    ap.add_argument("--min-segment-size", type=int, default=80, help="Bir segmentte min total signals")
+    ap.add_argument("--max-depth", type=int, default=4, help="Decision tree max derinlik (kural uzunluğu)")
+    args = ap.parse_args()
+    run_mining(days=args.days, min_samples=args.min_samples,
+               min_segment_size=args.min_segment_size, max_depth=args.max_depth)
 
 
 if __name__ == "__main__":

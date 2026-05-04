@@ -390,6 +390,38 @@ async def reload_pattern_rules():
         raise HTTPException(500, str(e))
 
 
+@router.post("/pattern-mining/run")
+async def trigger_pattern_mining(bg: BackgroundTasks, days: int = 60):
+    """Manually trigger a fresh pattern mining cycle (otherwise weekly cron handles it)."""
+    try:
+        from services.pattern_mining_service import run_mining_now
+    except ImportError as e:
+        raise HTTPException(500, f"mining service unavailable: {e}")
+
+    async def _run():
+        try:
+            summary = await run_mining_now(days=days, triggered_by="manual")
+            logger.info("[ai_ops] manual mining run complete: rules=%s",
+                        summary.get("rules_count"))
+        except Exception as e:
+            logger.exception("[ai_ops] manual mining run failed: %s", e)
+
+    bg.add_task(_run)
+    return {"ok": True, "status": "scheduled", "days": days,
+            "note": "Running in background. ~1-3 minutes to complete; check /pattern-mining/status."}
+
+
+@router.get("/pattern-mining/status")
+async def pattern_mining_status():
+    """Frontend status badge — last run, rule count, recent history."""
+    try:
+        from services.pattern_mining_service import get_status
+        return await get_status()
+    except Exception as e:
+        logger.exception("pattern_mining_status failed: %s", e)
+        raise HTTPException(500, str(e))
+
+
 @router.post("/proposals/{proposal_id}/simulate")
 async def simulate_proposal_endpoint(proposal_id: str, window_days: int = 60):
     """Re-run counterfactual simulation for a single proposal."""

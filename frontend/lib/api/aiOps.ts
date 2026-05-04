@@ -111,6 +111,30 @@ async function post<T>(endpoint: string, body: object): Promise<T> {
   return r.json() as Promise<T>;
 }
 
+export interface PatternMiningStatus {
+  local_file_exists: boolean;
+  local_generated_at?: string;
+  local_rules_count?: number;
+  local_window_days?: number;
+  recent_runs?: Array<{
+    id: string;
+    generated_at: string;
+    rules_count: number;
+    winning_count: number;
+    avoid_count: number;
+    total_signals: number;
+    window_days: number;
+    triggered_by: string;
+    duration_seconds: number;
+    status: string;
+  }>;
+  latest_run?: {
+    generated_at: string;
+    rules_count: number;
+    triggered_by: string;
+  };
+}
+
 export const aiOps = {
   stats: () => get<Stats>("/api/ai-ops/stats"),
   listProposals: (params: {
@@ -153,4 +177,9 @@ export const aiOps = {
     Object.entries(params).forEach(([k, v]) => v != null && q.set(k, String(v)));
     return get<{ clusters: FailureCluster[] }>(`/api/ai-ops/clusters?${q}`);
   },
+  miningStatus: () => get<PatternMiningStatus>("/api/ai-ops/pattern-mining/status"),
+  triggerMining: (days = 60) =>
+    post<{ ok: boolean; status: string; days: number; note: string }>(
+      `/api/ai-ops/pattern-mining/run?days=${days}`, {}
+    ),
 };

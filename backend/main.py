@@ -124,6 +124,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"❌ AI-Ops orchestrator başlatılamadı: {e}")
 
+    # 2.8 Pattern mining cron (weekly self-feeding rule discovery)
+    try:
+        from services.pattern_mining_service import weekly_loop as pattern_mining_loop
+        asyncio.create_task(pattern_mining_loop())
+        print("✅ Pattern mining cron başlatıldı (weekly self-feeding rules)")
+    except Exception as e:
+        print(f"❌ Pattern mining cron başlatılamadı: {e}")
+
     # 3. PULSE + EMEL SCHEDULER (Doğrudan Başlat - 15dk'da bir)
     try:
         from services.background_scheduler import log_pulse_signals_if_needed
