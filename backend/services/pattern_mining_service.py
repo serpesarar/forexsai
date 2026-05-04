@@ -129,32 +129,59 @@ async def restore_from_supabase() -> bool:
 # ---------------------------------------------------------------------------
 
 async def run_mining_now(days: int = 60, triggered_by: str = "manual") -> dict:
-    """Execute one mining cycle. Persists to file (via miner) + Supabase. Returns summary."""
+    """Execute BOTH mining cycles: signal-based (pattern_miner) AND chart-based
+    (price_action_miner). Persists each. Returns combined summary."""
     started = time.monotonic()
-    summary: dict
-    try:
-        # Lazy-import the mining module — sklearn loads only on first use
-        try:
-            import pattern_miner  # type: ignore
-        except ImportError as e:
-            logger.exception("[pattern_mining] cannot import pattern_miner: %s", e)
-            return {"status": "error", "error": f"import failed: {e}"}
+    combined: dict = {"signal": {}, "chart": {}}
+    loop = asyncio.get_running_loop()
 
-        # Run the sync sklearn pipeline in a thread pool so we don't block the loop
-        loop = asyncio.get_running_loop()
-        summary = await loop.run_in_executor(
+    # === Signal-based pattern miner ===
+    try:
+        import pattern_miner  # type: ignore
+        combined["signal"] = await loop.run_in_executor(
             None,
             lambda: pattern_miner.run_mining(
                 days=days, write_files=True, verbose=False
             ),
         )
     except Exception as e:
-        logger.exception("[pattern_mining] run failed: %s", e)
-        summary = {"status": "error", "error": str(e), "rules_count": 0,
-                   "rules": []}
+        logger.exception("[pattern_mining] signal miner failed: %s", e)
+        combined["signal"] = {"status": "error", "error": str(e), "rules_count": 0, "rules": []}
+
+    # === Chart-based price action miner (model-independent) ===
+    try:
+        import price_action_miner  # type: ignore
+        combined["chart"] = await loop.run_in_executor(
+            None,
+            lambda: price_action_miner.run_chart_mining(
+                symbols=["XAUUSD", "NDX.INDX", "GDAXI.INDX", "USOIL.FOREX"],
+                timeframes=["5m", "15m", "30m", "1h"],
+                days=days, write_files=True,
+            ),
+        )
+    except Exception as e:
+        logger.exception("[pattern_mining] chart miner failed: %s", e)
+        combined["chart"] = {"status": "error", "error": str(e), "rules_count": 0, "rules": []}
 
     duration = time.monotonic() - started
-    summary["duration_seconds"] = round(duration, 2)
+    total_rules = (combined["signal"].get("rules_count") or 0) + (combined["chart"].get("rules_count") or 0)
+
+    # Compose flat summary (Supabase row uses signal-based stats; full results are logged)
+    summary: dict = {
+        "status": "ok" if total_rules > 0 else "no_rules",
+        "duration_seconds": round(duration, 2),
+        "rules_count": total_rules,
+        "signal_rules": combined["signal"].get("rules_count", 0),
+        "chart_rules": combined["chart"].get("rules_count", 0),
+        "generated_at": combined["signal"].get("generated_at") or datetime.now(timezone.utc).isoformat(),
+        "days": days,
+        "total_signals": combined["signal"].get("total_signals", 0),
+        "winning_count": combined["signal"].get("winning_count", 0),
+        "avoid_count": combined["signal"].get("avoid_count", 0),
+        "segments_count": combined["signal"].get("segments_count", 0),
+        # Persist all rules for cross-restart restoration. Chart rules included.
+        "rules": (combined["signal"].get("rules") or []) + (combined["chart"].get("rules") or []),
+    }
 
     # Persist to Supabase
     row_id = await _persist_to_supabase(summary, triggered_by=triggered_by,
@@ -162,7 +189,7 @@ async def run_mining_now(days: int = 60, triggered_by: str = "manual") -> dict:
     if row_id:
         summary["supabase_run_id"] = row_id
 
-    # Trigger matcher reload so live signals see new rules immediately
+    # Trigger matcher reload — picks up BOTH JSON files
     try:
         from services.pattern_matcher import reload_rules
         reloaded = reload_rules()
@@ -170,8 +197,8 @@ async def run_mining_now(days: int = 60, triggered_by: str = "manual") -> dict:
     except Exception as e:
         logger.warning("[pattern_mining] matcher reload failed: %s", e)
 
-    logger.info(f"[pattern_mining] {triggered_by} run done: {summary.get('rules_count', 0)} rules, "
-                f"{duration:.1f}s, supabase_id={row_id}")
+    logger.info(f"[pattern_mining] {triggered_by} run done: signal={summary['signal_rules']} "
+                f"chart={summary['chart_rules']} total={total_rules}, {duration:.1f}s")
     return summary
 
 

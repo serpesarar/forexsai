@@ -40,6 +40,7 @@ TOXIC_MAX_WIN_RATE = 35.0      # ≤ this: avoid setup
 MIN_SAMPLE_SIZE = 20           # rule must have at least this many historical trades
 
 RULES_PATH = Path(__file__).resolve().parent.parent.parent / "xauusdegitim" / "pattern_rules.json"
+CHART_RULES_PATH = Path(__file__).resolve().parent.parent.parent / "xauusdegitim" / "chart_pattern_rules.json"
 
 # Bucket bins — MUST match pattern_miner.py CONTINUOUS_BINS exactly
 BINS = {
@@ -232,30 +233,35 @@ def enrich_snapshot(snapshot: dict, *, symbol: str, model_type: str,
 # ---------------------------------------------------------------------------
 
 def _load_rules(force: bool = False) -> list[dict]:
-    """Load + cache pattern_rules.json. Auto-reloads on file mtime change."""
+    """Load + cache rules from BOTH pattern_rules.json (signal-based) and
+    chart_pattern_rules.json (chart-based). Auto-reloads on mtime change of either."""
     global _rules_cache, _rules_loaded_at, _rules_mtime
     try:
-        mtime = RULES_PATH.stat().st_mtime if RULES_PATH.exists() else 0
+        m1 = RULES_PATH.stat().st_mtime if RULES_PATH.exists() else 0
+        m2 = CHART_RULES_PATH.stat().st_mtime if CHART_RULES_PATH.exists() else 0
+        mtime = max(m1, m2)
     except Exception:
         mtime = 0
     if _rules_cache is not None and not force and mtime == _rules_mtime:
         return _rules_cache
-    if not RULES_PATH.exists():
-        logger.warning(f"[pattern_matcher] rules file missing: {RULES_PATH}")
-        _rules_cache = []
-        return _rules_cache
-    try:
-        payload = json.loads(RULES_PATH.read_text())
-        rules = payload.get("rules") or []
-        _rules_cache = rules
-        _rules_loaded_at = datetime.now(timezone.utc)
-        _rules_mtime = mtime
-        logger.info(f"[pattern_matcher] loaded {len(rules)} rules from {RULES_PATH}")
-        return rules
-    except Exception as e:
-        logger.exception(f"[pattern_matcher] failed to load rules: {e}")
-        _rules_cache = []
-        return _rules_cache
+    rules: list[dict] = []
+    for path, source in [(RULES_PATH, "signal"), (CHART_RULES_PATH, "chart")]:
+        if not path.exists():
+            continue
+        try:
+            payload = json.loads(path.read_text())
+            for r in (payload.get("rules") or []):
+                # Tag rules with their source so frontend/UI can distinguish layers
+                rules.append({**r, "source": source})
+        except Exception as e:
+            logger.exception(f"[pattern_matcher] failed to load {path}: {e}")
+    _rules_cache = rules
+    _rules_loaded_at = datetime.now(timezone.utc)
+    _rules_mtime = mtime
+    logger.info(f"[pattern_matcher] loaded {len(rules)} rules total "
+                f"({sum(1 for r in rules if r.get('source')=='signal')} signal + "
+                f"{sum(1 for r in rules if r.get('source')=='chart')} chart)")
+    return rules
 
 
 # Parse "field op value" condition strings into (field, op, value)

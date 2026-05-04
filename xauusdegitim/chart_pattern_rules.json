@@ -1,0 +1,1959 @@
+{
+  "generated_at": "2026-05-04T13:23:48.546487Z",
+  "symbols": [
+    "XAUUSD"
+  ],
+  "timeframes": [
+    "5m",
+    "30m",
+    "1h"
+  ],
+  "rules_count": 166,
+  "rules": [
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 LADDER",
+      "win_rate": 30.8,
+      "samples": 13,
+      "conditions": [
+        "before_rsi_avg_bucket \u2260 (50.0, 70.0]",
+        "before_bb_width_atr_avg_bucket = (2.0, 4.0]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 LADDER",
+      "win_rate": 20.0,
+      "samples": 15,
+      "conditions": [
+        "before_rsi_avg_bucket = (50.0, 70.0]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 ALL EVENTS",
+      "win_rate": 100.0,
+      "samples": 75,
+      "conditions": [
+        "type \u2260 bearish_OB",
+        "type = bullish_OB",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "atr_pct_b = (0.4, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 ALL EVENTS",
+      "win_rate": 100.0,
+      "samples": 28,
+      "conditions": [
+        "type = bearish_OB",
+        "rsi_b \u2260 (50.0, 70.0]",
+        "dow = Tue",
+        "adx_b = (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 ALL EVENTS",
+      "win_rate": 100.0,
+      "samples": 102,
+      "conditions": [
+        "type = bearish_OB",
+        "rsi_b = (50.0, 70.0]",
+        "atr_pct_b = (0.4, inf]",
+        "dow \u2260 Mon"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 ALL EVENTS",
+      "win_rate": 98.5,
+      "samples": 67,
+      "conditions": [
+        "type = bearish_OB",
+        "rsi_b = (50.0, 70.0]",
+        "atr_pct_b = (0.4, inf]",
+        "dow = Mon"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 ALL EVENTS",
+      "win_rate": 95.6,
+      "samples": 137,
+      "conditions": [
+        "type = bearish_OB",
+        "rsi_b = (50.0, 70.0]",
+        "atr_pct_b \u2260 (0.4, inf]",
+        "dow = Wed"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 ALL EVENTS",
+      "win_rate": 83.3,
+      "samples": 18,
+      "conditions": [
+        "type = bearish_OB",
+        "rsi_b \u2260 (50.0, 70.0]",
+        "dow = Tue",
+        "adx_b \u2260 (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 ALL EVENTS",
+      "win_rate": 81.5,
+      "samples": 314,
+      "conditions": [
+        "type = bearish_OB",
+        "rsi_b = (50.0, 70.0]",
+        "atr_pct_b \u2260 (0.4, inf]",
+        "dow \u2260 Wed"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 ALL EVENTS",
+      "win_rate": 79.9,
+      "samples": 254,
+      "conditions": [
+        "type \u2260 bearish_OB",
+        "type = bullish_OB",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "atr_pct_b \u2260 (0.4, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 ALL EVENTS",
+      "win_rate": 77.6,
+      "samples": 85,
+      "conditions": [
+        "type \u2260 bearish_OB",
+        "type = bullish_OB",
+        "atr_pct_b = (0.05, 0.15]",
+        "rsi_b \u2260 (30.0, 50.0]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 ALL EVENTS",
+      "win_rate": 21.0,
+      "samples": 2481,
+      "conditions": [
+        "type \u2260 bearish_OB",
+        "type \u2260 bullish_OB",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "type \u2260 CHoCH_bearish"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 BOS_bearish",
+      "win_rate": 21.1,
+      "samples": 19,
+      "conditions": [
+        "adx_b \u2260 (-inf, 18.0]",
+        "dow \u2260 Mon",
+        "rsi_b = (-inf, 30.0]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 BOS_bearish",
+      "win_rate": 16.7,
+      "samples": 24,
+      "conditions": [
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b = (0.05, 0.15]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 BOS_bearish",
+      "win_rate": 13.0,
+      "samples": 23,
+      "conditions": [
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "dow = Wed"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 BOS_bearish",
+      "win_rate": 5.3,
+      "samples": 19,
+      "conditions": [
+        "adx_b \u2260 (-inf, 18.0]",
+        "dow = Mon",
+        "rsi_b \u2260 (50.0, 70.0]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 BOS_bearish",
+      "win_rate": 0.0,
+      "samples": 44,
+      "conditions": [
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "dow \u2260 Wed",
+        "dow \u2260 Thu"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 BOS_bullish",
+      "win_rate": 26.7,
+      "samples": 15,
+      "conditions": [
+        "adx_b \u2260 (-inf, 18.0]",
+        "vol_z_b \u2260 (-0.5, 0.5]",
+        "rsi_b = (50.0, 70.0]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 BOS_bullish",
+      "win_rate": 6.2,
+      "samples": 16,
+      "conditions": [
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "dow \u2260 Tue",
+        "dow = Mon"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 BOS_bullish",
+      "win_rate": 0.0,
+      "samples": 42,
+      "conditions": [
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "dow \u2260 Tue",
+        "dow \u2260 Mon"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 CHoCH_bearish",
+      "win_rate": 93.5,
+      "samples": 93,
+      "conditions": [
+        "rsi_b = (50.0, 70.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "adx_b \u2260 (25.0, inf]",
+        "dow \u2260 Fri"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 CHoCH_bearish",
+      "win_rate": 80.0,
+      "samples": 15,
+      "conditions": [
+        "rsi_b = (50.0, 70.0]",
+        "atr_pct_b = (0.05, 0.15]",
+        "adx_b = (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 CHoCH_bearish",
+      "win_rate": 25.0,
+      "samples": 32,
+      "conditions": [
+        "rsi_b \u2260 (50.0, 70.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "atr_pct_b \u2260 (0.4, inf]",
+        "vol_z_b \u2260 (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 CHoCH_bearish",
+      "win_rate": 0.0,
+      "samples": 24,
+      "conditions": [
+        "rsi_b \u2260 (50.0, 70.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "atr_pct_b = (0.4, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 CHoCH_bullish",
+      "win_rate": 100.0,
+      "samples": 37,
+      "conditions": [
+        "rsi_b = (30.0, 50.0]",
+        "atr_pct_b = (0.4, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 CHoCH_bullish",
+      "win_rate": 81.0,
+      "samples": 42,
+      "conditions": [
+        "rsi_b = (30.0, 50.0]",
+        "atr_pct_b \u2260 (0.4, inf]",
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b = (0.15, 0.4]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 CHoCH_bullish",
+      "win_rate": 28.2,
+      "samples": 39,
+      "conditions": [
+        "rsi_b \u2260 (30.0, 50.0]",
+        "atr_pct_b \u2260 (0.4, inf]",
+        "dow \u2260 Fri",
+        "atr_pct_b \u2260 (0.15, 0.4]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 CHoCH_bullish",
+      "win_rate": 15.6,
+      "samples": 45,
+      "conditions": [
+        "rsi_b \u2260 (30.0, 50.0]",
+        "atr_pct_b \u2260 (0.4, inf]",
+        "dow \u2260 Fri",
+        "atr_pct_b = (0.15, 0.4]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 CHoCH_bullish",
+      "win_rate": 0.0,
+      "samples": 22,
+      "conditions": [
+        "rsi_b \u2260 (30.0, 50.0]",
+        "atr_pct_b = (0.4, inf]",
+        "vol_z_b \u2260 (-inf, -0.5]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 bearish",
+      "win_rate": 28.1,
+      "samples": 57,
+      "conditions": [
+        "atr_pct_b \u2260 (0.4, inf]",
+        "atr_pct_b \u2260 (0.15, 0.4]",
+        "dow = Thu",
+        "rsi_b \u2260 (50.0, 70.0]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 bearish",
+      "win_rate": 5.4,
+      "samples": 239,
+      "conditions": [
+        "atr_pct_b \u2260 (0.4, inf]",
+        "atr_pct_b = (0.15, 0.4]",
+        "adx_b = (-inf, 18.0]",
+        "vol_z_b \u2260 (-inf, -0.5]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 bearish",
+      "win_rate": 0.0,
+      "samples": 221,
+      "conditions": [
+        "atr_pct_b = (0.4, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bearish_OB",
+      "win_rate": 100.0,
+      "samples": 28,
+      "conditions": [
+        "atr_pct_b \u2260 (0.4, inf]",
+        "rsi_b \u2260 (50.0, 70.0]",
+        "dow = Tue",
+        "adx_b = (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bearish_OB",
+      "win_rate": 100.0,
+      "samples": 40,
+      "conditions": [
+        "atr_pct_b = (0.4, inf]",
+        "dow \u2260 Mon",
+        "dow \u2260 Tue"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bearish_OB",
+      "win_rate": 100.0,
+      "samples": 62,
+      "conditions": [
+        "atr_pct_b = (0.4, inf]",
+        "dow \u2260 Mon",
+        "dow = Tue"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bearish_OB",
+      "win_rate": 100.0,
+      "samples": 41,
+      "conditions": [
+        "atr_pct_b = (0.4, inf]",
+        "dow = Mon",
+        "vol_z_b \u2260 (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bearish_OB",
+      "win_rate": 97.8,
+      "samples": 91,
+      "conditions": [
+        "atr_pct_b \u2260 (0.4, inf]",
+        "rsi_b = (50.0, 70.0]",
+        "dow = Wed",
+        "vol_z_b \u2260 (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bearish_OB",
+      "win_rate": 96.2,
+      "samples": 26,
+      "conditions": [
+        "atr_pct_b = (0.4, inf]",
+        "dow = Mon",
+        "vol_z_b = (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bearish_OB",
+      "win_rate": 91.3,
+      "samples": 46,
+      "conditions": [
+        "atr_pct_b \u2260 (0.4, inf]",
+        "rsi_b = (50.0, 70.0]",
+        "dow = Wed",
+        "vol_z_b = (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bearish_OB",
+      "win_rate": 88.3,
+      "samples": 111,
+      "conditions": [
+        "atr_pct_b \u2260 (0.4, inf]",
+        "rsi_b = (50.0, 70.0]",
+        "dow \u2260 Wed",
+        "vol_z_b = (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bearish_OB",
+      "win_rate": 83.3,
+      "samples": 18,
+      "conditions": [
+        "atr_pct_b \u2260 (0.4, inf]",
+        "rsi_b \u2260 (50.0, 70.0]",
+        "dow = Tue",
+        "adx_b \u2260 (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bearish_OB",
+      "win_rate": 77.8,
+      "samples": 203,
+      "conditions": [
+        "atr_pct_b \u2260 (0.4, inf]",
+        "rsi_b = (50.0, 70.0]",
+        "dow \u2260 Wed",
+        "vol_z_b \u2260 (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 breakdown",
+      "win_rate": 77.3,
+      "samples": 22,
+      "conditions": [
+        "atr_pct_b = (0.05, 0.15]",
+        "dow = Fri",
+        "vol_z_b \u2260 (0.5, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 breakdown",
+      "win_rate": 23.8,
+      "samples": 21,
+      "conditions": [
+        "atr_pct_b = (0.05, 0.15]",
+        "dow \u2260 Fri",
+        "adx_b = (-inf, 18.0]",
+        "vol_z_b = (0.5, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 breakdown",
+      "win_rate": 11.5,
+      "samples": 26,
+      "conditions": [
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "adx_b \u2260 (-inf, 18.0]",
+        "dow \u2260 Thu",
+        "vol_z_b = (0.5, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 breakdown",
+      "win_rate": 10.0,
+      "samples": 20,
+      "conditions": [
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "adx_b = (-inf, 18.0]",
+        "dow = Thu"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 breakdown",
+      "win_rate": 2.9,
+      "samples": 35,
+      "conditions": [
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "adx_b = (-inf, 18.0]",
+        "dow \u2260 Thu",
+        "dow = Wed"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 breakdown",
+      "win_rate": 0.0,
+      "samples": 56,
+      "conditions": [
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "adx_b = (-inf, 18.0]",
+        "dow \u2260 Thu",
+        "dow \u2260 Wed"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 breakout_up",
+      "win_rate": 73.3,
+      "samples": 15,
+      "conditions": [
+        "adx_b \u2260 (-inf, 18.0]",
+        "adx_b \u2260 (18.0, 25.0]",
+        "dow = Wed"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 breakout_up",
+      "win_rate": 29.4,
+      "samples": 17,
+      "conditions": [
+        "adx_b \u2260 (-inf, 18.0]",
+        "adx_b = (18.0, 25.0]",
+        "vol_z_b \u2260 (-0.5, 0.5]",
+        "vol_z_b = (0.5, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 breakout_up",
+      "win_rate": 26.7,
+      "samples": 15,
+      "conditions": [
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "dow = Wed",
+        "vol_z_b = (-inf, -0.5]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 breakout_up",
+      "win_rate": 7.1,
+      "samples": 28,
+      "conditions": [
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "dow \u2260 Wed",
+        "vol_z_b = (0.5, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 breakout_up",
+      "win_rate": 0.9,
+      "samples": 107,
+      "conditions": [
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "dow \u2260 Wed",
+        "vol_z_b \u2260 (0.5, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 breakout_up",
+      "win_rate": 0.0,
+      "samples": 15,
+      "conditions": [
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "dow = Wed",
+        "vol_z_b \u2260 (-inf, -0.5]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 bullish",
+      "win_rate": 18.2,
+      "samples": 77,
+      "conditions": [
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b = (0.05, 0.15]",
+        "dow \u2260 Mon",
+        "dow \u2260 Wed"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 bullish",
+      "win_rate": 12.0,
+      "samples": 75,
+      "conditions": [
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "atr_pct_b = (0.15, 0.4]",
+        "dow = Mon"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 bullish",
+      "win_rate": 6.2,
+      "samples": 16,
+      "conditions": [
+        "adx_b \u2260 (-inf, 18.0]",
+        "rsi_b \u2260 (70.0, inf]",
+        "dow = Wed",
+        "atr_pct_b = (0.15, 0.4]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 bullish",
+      "win_rate": 4.9,
+      "samples": 184,
+      "conditions": [
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "atr_pct_b = (0.15, 0.4]",
+        "dow \u2260 Mon"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 bullish",
+      "win_rate": 3.8,
+      "samples": 26,
+      "conditions": [
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "atr_pct_b \u2260 (0.15, 0.4]",
+        "dow = Wed"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 bullish",
+      "win_rate": 0.0,
+      "samples": 195,
+      "conditions": [
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "atr_pct_b \u2260 (0.15, 0.4]",
+        "dow \u2260 Wed"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bullish_OB",
+      "win_rate": 100.0,
+      "samples": 75,
+      "conditions": [
+        "atr_pct_b = (0.4, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bullish_OB",
+      "win_rate": 93.8,
+      "samples": 16,
+      "conditions": [
+        "atr_pct_b \u2260 (0.4, inf]",
+        "atr_pct_b \u2260 (0.15, 0.4]",
+        "rsi_b \u2260 (30.0, 50.0]",
+        "dow = Mon"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bullish_OB",
+      "win_rate": 84.6,
+      "samples": 156,
+      "conditions": [
+        "atr_pct_b \u2260 (0.4, inf]",
+        "atr_pct_b = (0.15, 0.4]",
+        "rsi_b \u2260 (-inf, 30.0]",
+        "vol_z_b = (0.5, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bullish_OB",
+      "win_rate": 75.9,
+      "samples": 83,
+      "conditions": [
+        "atr_pct_b \u2260 (0.4, inf]",
+        "atr_pct_b = (0.15, 0.4]",
+        "rsi_b \u2260 (-inf, 30.0]",
+        "vol_z_b \u2260 (0.5, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bullish_OB",
+      "win_rate": 72.9,
+      "samples": 70,
+      "conditions": [
+        "atr_pct_b \u2260 (0.4, inf]",
+        "atr_pct_b \u2260 (0.15, 0.4]",
+        "rsi_b \u2260 (30.0, 50.0]",
+        "dow \u2260 Mon"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 bullish_OB",
+      "win_rate": 70.4,
+      "samples": 27,
+      "conditions": [
+        "atr_pct_b \u2260 (0.4, inf]",
+        "atr_pct_b \u2260 (0.15, 0.4]",
+        "rsi_b = (30.0, 50.0]",
+        "dow = Thu"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 engulfing_bear",
+      "win_rate": 25.0,
+      "samples": 24,
+      "conditions": [
+        "adx_b = (25.0, inf]",
+        "dow \u2260 Mon",
+        "dow \u2260 Tue",
+        "dow \u2260 Fri"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 engulfing_bull",
+      "win_rate": 23.1,
+      "samples": 52,
+      "conditions": [
+        "dow \u2260 Mon",
+        "vol_z_b \u2260 (-inf, -0.5]",
+        "dow \u2260 Thu",
+        "dow \u2260 Fri"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 engulfing_bull",
+      "win_rate": 14.3,
+      "samples": 21,
+      "conditions": [
+        "dow \u2260 Mon",
+        "vol_z_b = (-inf, -0.5]",
+        "atr_pct_b = (0.05, 0.15]",
+        "rsi_b \u2260 (50.0, 70.0]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 hammer",
+      "win_rate": 100.0,
+      "samples": 30,
+      "conditions": [
+        "rsi_b \u2260 (50.0, 70.0]",
+        "atr_pct_b = (0.4, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 hammer",
+      "win_rate": 29.4,
+      "samples": 17,
+      "conditions": [
+        "rsi_b = (50.0, 70.0]",
+        "adx_b \u2260 (-inf, 18.0]",
+        "dow = Mon"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 hammer",
+      "win_rate": 26.9,
+      "samples": 26,
+      "conditions": [
+        "rsi_b = (50.0, 70.0]",
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b = (0.05, 0.15]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 hammer",
+      "win_rate": 8.3,
+      "samples": 24,
+      "conditions": [
+        "rsi_b \u2260 (50.0, 70.0]",
+        "atr_pct_b \u2260 (0.4, inf]",
+        "atr_pct_b \u2260 (0.15, 0.4]",
+        "dow = Tue"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 hammer",
+      "win_rate": 8.0,
+      "samples": 25,
+      "conditions": [
+        "rsi_b = (50.0, 70.0]",
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "dow = Wed"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 hammer",
+      "win_rate": 1.6,
+      "samples": 62,
+      "conditions": [
+        "rsi_b = (50.0, 70.0]",
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "dow \u2260 Wed"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 shooting_star",
+      "win_rate": 100.0,
+      "samples": 37,
+      "conditions": [
+        "rsi_b \u2260 (30.0, 50.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "adx_b \u2260 (25.0, inf]",
+        "atr_pct_b = (0.4, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/5m \u00b7 shooting_star",
+      "win_rate": 83.1,
+      "samples": 65,
+      "conditions": [
+        "rsi_b \u2260 (30.0, 50.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "adx_b \u2260 (25.0, inf]",
+        "atr_pct_b \u2260 (0.4, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 shooting_star",
+      "win_rate": 22.2,
+      "samples": 27,
+      "conditions": [
+        "rsi_b \u2260 (30.0, 50.0]",
+        "atr_pct_b = (0.05, 0.15]",
+        "dow \u2260 Tue",
+        "vol_z_b = (-inf, -0.5]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 shooting_star",
+      "win_rate": 15.8,
+      "samples": 38,
+      "conditions": [
+        "rsi_b = (30.0, 50.0]",
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "atr_pct_b = (0.15, 0.4]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/5m \u00b7 shooting_star",
+      "win_rate": 0.0,
+      "samples": 40,
+      "conditions": [
+        "rsi_b = (30.0, 50.0]",
+        "adx_b = (-inf, 18.0]",
+        "atr_pct_b \u2260 (0.05, 0.15]",
+        "atr_pct_b \u2260 (0.15, 0.4]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/30m \u00b7 LADDER",
+      "win_rate": 25.0,
+      "samples": 16,
+      "conditions": [
+        "start_dist_ema50_atr_bucket = (0.0, 1.0]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/30m \u00b7 LADDER",
+      "win_rate": 18.8,
+      "samples": 16,
+      "conditions": [
+        "start_dist_ema50_atr_bucket \u2260 (0.0, 1.0]",
+        "before_bb_width_atr_avg_bucket = (4.0, inf]",
+        "ladder_total_atr_bucket \u2260 (1.0, 2.5]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/30m \u00b7 ALL EVENTS",
+      "win_rate": 91.5,
+      "samples": 47,
+      "conditions": [
+        "type = bearish_OB",
+        "dow \u2260 Tue",
+        "dow \u2260 Fri",
+        "adx_b \u2260 (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/30m \u00b7 ALL EVENTS",
+      "win_rate": 81.2,
+      "samples": 48,
+      "conditions": [
+        "type = bearish_OB",
+        "dow \u2260 Tue",
+        "dow \u2260 Fri",
+        "adx_b = (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/30m \u00b7 ALL EVENTS",
+      "win_rate": 77.2,
+      "samples": 79,
+      "conditions": [
+        "type \u2260 bearish_OB",
+        "type = bullish_OB",
+        "dow \u2260 Wed",
+        "dow \u2260 Fri"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/30m \u00b7 ALL EVENTS",
+      "win_rate": 27.7,
+      "samples": 159,
+      "conditions": [
+        "type \u2260 bearish_OB",
+        "type \u2260 bullish_OB",
+        "dow = Mon",
+        "type \u2260 bullish"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/30m \u00b7 ALL EVENTS",
+      "win_rate": 27.4,
+      "samples": 73,
+      "conditions": [
+        "type \u2260 bearish_OB",
+        "type \u2260 bullish_OB",
+        "dow \u2260 Mon",
+        "rsi_b = (70.0, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/30m \u00b7 CHoCH_bullish",
+      "win_rate": 73.3,
+      "samples": 15,
+      "conditions": [
+        "rsi_b = (30.0, 50.0]",
+        "vol_z_b \u2260 (-inf, -0.5]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/30m \u00b7 bearish",
+      "win_rate": 84.2,
+      "samples": 19,
+      "conditions": [
+        "dow \u2260 Mon",
+        "dow = Wed",
+        "rsi_b \u2260 (30.0, 50.0]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/30m \u00b7 bearish",
+      "win_rate": 72.2,
+      "samples": 18,
+      "conditions": [
+        "dow \u2260 Mon",
+        "dow \u2260 Wed",
+        "vol_z_b \u2260 (-0.5, 0.5]",
+        "dow = Fri"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/30m \u00b7 bearish",
+      "win_rate": 27.8,
+      "samples": 18,
+      "conditions": [
+        "dow \u2260 Mon",
+        "dow \u2260 Wed",
+        "vol_z_b = (-0.5, 0.5]",
+        "dow \u2260 Thu"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/30m \u00b7 bearish",
+      "win_rate": 15.8,
+      "samples": 19,
+      "conditions": [
+        "dow = Mon",
+        "vol_z_b \u2260 (-0.5, 0.5]",
+        "rsi_b \u2260 (-inf, 30.0]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/30m \u00b7 bearish_OB",
+      "win_rate": 91.2,
+      "samples": 34,
+      "conditions": [
+        "dow \u2260 Tue",
+        "dow \u2260 Fri",
+        "vol_z_b \u2260 (-inf, -0.5]",
+        "adx_b \u2260 (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/30m \u00b7 bearish_OB",
+      "win_rate": 76.9,
+      "samples": 39,
+      "conditions": [
+        "dow \u2260 Tue",
+        "dow \u2260 Fri",
+        "vol_z_b \u2260 (-inf, -0.5]",
+        "adx_b = (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/30m \u00b7 breakdown",
+      "win_rate": 20.0,
+      "samples": 15,
+      "conditions": [
+        "dow = Mon"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/30m \u00b7 bullish",
+      "win_rate": 23.5,
+      "samples": 17,
+      "conditions": [
+        "atr_pct_b = (0.15, 0.4]",
+        "adx_b \u2260 (-inf, 18.0]",
+        "rsi_b \u2260 (50.0, 70.0]",
+        "vol_z_b \u2260 (-inf, -0.5]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/30m \u00b7 bullish",
+      "win_rate": 11.1,
+      "samples": 18,
+      "conditions": [
+        "atr_pct_b = (0.15, 0.4]",
+        "adx_b = (-inf, 18.0]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/30m \u00b7 bullish_OB",
+      "win_rate": 94.4,
+      "samples": 18,
+      "conditions": [
+        "dow \u2260 Wed",
+        "dow \u2260 Fri",
+        "vol_z_b \u2260 (-inf, -0.5]",
+        "rsi_b = (50.0, 70.0]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/30m \u00b7 bullish_OB",
+      "win_rate": 80.0,
+      "samples": 40,
+      "conditions": [
+        "dow \u2260 Wed",
+        "dow \u2260 Fri",
+        "vol_z_b \u2260 (-inf, -0.5]",
+        "rsi_b \u2260 (50.0, 70.0]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/30m \u00b7 bullish_OB",
+      "win_rate": 73.3,
+      "samples": 15,
+      "conditions": [
+        "dow \u2260 Wed",
+        "dow = Fri",
+        "rsi_b = (30.0, 50.0]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/30m \u00b7 engulfing_bull",
+      "win_rate": 5.9,
+      "samples": 17,
+      "conditions": [
+        "atr_pct_b = (0.15, 0.4]",
+        "adx_b \u2260 (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/30m \u00b7 hammer",
+      "win_rate": 29.4,
+      "samples": 17,
+      "conditions": [
+        "dow \u2260 Wed",
+        "atr_pct_b = (0.15, 0.4]",
+        "adx_b \u2260 (18.0, 25.0]",
+        "vol_z_b \u2260 (-inf, -0.5]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/30m \u00b7 hammer",
+      "win_rate": 22.2,
+      "samples": 18,
+      "conditions": [
+        "dow \u2260 Wed",
+        "atr_pct_b \u2260 (0.15, 0.4]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/30m \u00b7 shooting_star",
+      "win_rate": 20.0,
+      "samples": 15,
+      "conditions": [
+        "dow = Mon"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 LADDER",
+      "win_rate": 33.3,
+      "samples": 18,
+      "conditions": [
+        "start_dist_ema50_atr_bucket \u2260 (0.0, 1.0]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 LADDER",
+      "win_rate": 12.5,
+      "samples": 16,
+      "conditions": [
+        "start_dist_ema50_atr_bucket = (0.0, 1.0]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 ALL EVENTS",
+      "win_rate": 99.0,
+      "samples": 197,
+      "conditions": [
+        "type = bearish_OB",
+        "rsi_b \u2260 (30.0, 50.0]",
+        "adx_b = (25.0, inf]",
+        "atr_pct_b = (0.4, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 ALL EVENTS",
+      "win_rate": 96.3,
+      "samples": 107,
+      "conditions": [
+        "type \u2260 bearish_OB",
+        "type = bullish_OB",
+        "vol_z_b \u2260 (-inf, -0.5]",
+        "atr_pct_b \u2260 (0.15, 0.4]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 ALL EVENTS",
+      "win_rate": 91.9,
+      "samples": 123,
+      "conditions": [
+        "type = bearish_OB",
+        "rsi_b \u2260 (30.0, 50.0]",
+        "adx_b \u2260 (25.0, inf]",
+        "vol_z_b \u2260 (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 ALL EVENTS",
+      "win_rate": 89.0,
+      "samples": 127,
+      "conditions": [
+        "type \u2260 bearish_OB",
+        "type \u2260 bullish_OB",
+        "type = CHoCH_bearish",
+        "rsi_b \u2260 (30.0, 50.0]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 ALL EVENTS",
+      "win_rate": 84.0,
+      "samples": 25,
+      "conditions": [
+        "type \u2260 bearish_OB",
+        "type = bullish_OB",
+        "vol_z_b \u2260 (-inf, -0.5]",
+        "atr_pct_b = (0.15, 0.4]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 ALL EVENTS",
+      "win_rate": 80.0,
+      "samples": 30,
+      "conditions": [
+        "type = bearish_OB",
+        "rsi_b \u2260 (30.0, 50.0]",
+        "adx_b = (25.0, inf]",
+        "atr_pct_b \u2260 (0.4, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 ALL EVENTS",
+      "win_rate": 72.7,
+      "samples": 44,
+      "conditions": [
+        "type = bearish_OB",
+        "rsi_b \u2260 (30.0, 50.0]",
+        "adx_b \u2260 (25.0, inf]",
+        "vol_z_b = (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 ALL EVENTS",
+      "win_rate": 72.0,
+      "samples": 25,
+      "conditions": [
+        "type \u2260 bearish_OB",
+        "type = bullish_OB",
+        "vol_z_b = (-inf, -0.5]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 ALL EVENTS",
+      "win_rate": 17.2,
+      "samples": 58,
+      "conditions": [
+        "type \u2260 bearish_OB",
+        "type \u2260 bullish_OB",
+        "type = CHoCH_bearish",
+        "rsi_b = (30.0, 50.0]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 ALL EVENTS",
+      "win_rate": 17.0,
+      "samples": 1264,
+      "conditions": [
+        "type \u2260 bearish_OB",
+        "type \u2260 bullish_OB",
+        "type \u2260 CHoCH_bearish",
+        "type \u2260 BOS_bearish"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 BOS_bearish",
+      "win_rate": 100.0,
+      "samples": 17,
+      "conditions": [
+        "rsi_b = (50.0, 70.0]",
+        "vol_z_b \u2260 (0.5, inf]",
+        "dow = Wed",
+        "vol_z_b = (-inf, -0.5]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 BOS_bearish",
+      "win_rate": 100.0,
+      "samples": 29,
+      "conditions": [
+        "rsi_b = (50.0, 70.0]",
+        "vol_z_b = (0.5, inf]",
+        "adx_b \u2260 (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 BOS_bearish",
+      "win_rate": 95.1,
+      "samples": 41,
+      "conditions": [
+        "rsi_b = (50.0, 70.0]",
+        "vol_z_b = (0.5, inf]",
+        "adx_b = (25.0, inf]",
+        "dow \u2260 Mon"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 BOS_bearish",
+      "win_rate": 90.6,
+      "samples": 32,
+      "conditions": [
+        "rsi_b = (50.0, 70.0]",
+        "vol_z_b \u2260 (0.5, inf]",
+        "dow = Wed",
+        "vol_z_b \u2260 (-inf, -0.5]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 BOS_bearish",
+      "win_rate": 70.2,
+      "samples": 84,
+      "conditions": [
+        "rsi_b = (50.0, 70.0]",
+        "vol_z_b \u2260 (0.5, inf]",
+        "dow \u2260 Wed",
+        "dow \u2260 Thu"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 BOS_bearish",
+      "win_rate": 29.6,
+      "samples": 54,
+      "conditions": [
+        "rsi_b \u2260 (50.0, 70.0]",
+        "dow \u2260 Tue",
+        "vol_z_b = (-0.5, 0.5]",
+        "adx_b = (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 BOS_bearish",
+      "win_rate": 17.5,
+      "samples": 40,
+      "conditions": [
+        "rsi_b \u2260 (50.0, 70.0]",
+        "dow \u2260 Tue",
+        "vol_z_b = (-0.5, 0.5]",
+        "adx_b \u2260 (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 BOS_bearish",
+      "win_rate": 16.7,
+      "samples": 30,
+      "conditions": [
+        "rsi_b \u2260 (50.0, 70.0]",
+        "dow = Tue",
+        "adx_b \u2260 (-inf, 18.0]",
+        "vol_z_b \u2260 (0.5, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 BOS_bearish",
+      "win_rate": 12.2,
+      "samples": 123,
+      "conditions": [
+        "rsi_b \u2260 (50.0, 70.0]",
+        "dow \u2260 Tue",
+        "vol_z_b \u2260 (-0.5, 0.5]",
+        "adx_b = (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 BOS_bearish",
+      "win_rate": 3.4,
+      "samples": 117,
+      "conditions": [
+        "rsi_b \u2260 (50.0, 70.0]",
+        "dow \u2260 Tue",
+        "vol_z_b \u2260 (-0.5, 0.5]",
+        "adx_b \u2260 (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 CHoCH_bearish",
+      "win_rate": 92.5,
+      "samples": 67,
+      "conditions": [
+        "rsi_b \u2260 (30.0, 50.0]",
+        "dow \u2260 Fri",
+        "dow \u2260 Mon",
+        "atr_pct_b \u2260 (0.15, 0.4]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 CHoCH_bearish",
+      "win_rate": 85.0,
+      "samples": 20,
+      "conditions": [
+        "rsi_b \u2260 (30.0, 50.0]",
+        "dow \u2260 Fri",
+        "dow = Mon",
+        "adx_b = (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 CHoCH_bullish",
+      "win_rate": 93.2,
+      "samples": 44,
+      "conditions": [
+        "rsi_b = (30.0, 50.0]",
+        "dow \u2260 Wed",
+        "vol_z_b \u2260 (-inf, -0.5]",
+        "atr_pct_b \u2260 (0.15, 0.4]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 CHoCH_bullish",
+      "win_rate": 0.0,
+      "samples": 49,
+      "conditions": [
+        "rsi_b \u2260 (30.0, 50.0]",
+        "dow \u2260 Fri",
+        "dow \u2260 Mon",
+        "dow \u2260 Wed"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 CHoCH_bullish",
+      "win_rate": 0.0,
+      "samples": 18,
+      "conditions": [
+        "rsi_b \u2260 (30.0, 50.0]",
+        "dow \u2260 Fri",
+        "dow \u2260 Mon",
+        "dow = Wed"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 bearish",
+      "win_rate": 5.6,
+      "samples": 18,
+      "conditions": [
+        "atr_pct_b = (0.4, inf]",
+        "vol_z_b = (-0.5, 0.5]",
+        "adx_b = (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 bearish",
+      "win_rate": 0.0,
+      "samples": 55,
+      "conditions": [
+        "atr_pct_b = (0.4, inf]",
+        "vol_z_b \u2260 (-0.5, 0.5]",
+        "dow \u2260 Thu"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 bearish",
+      "win_rate": 0.0,
+      "samples": 18,
+      "conditions": [
+        "atr_pct_b = (0.4, inf]",
+        "vol_z_b \u2260 (-0.5, 0.5]",
+        "dow = Thu"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 bearish_OB",
+      "win_rate": 100.0,
+      "samples": 24,
+      "conditions": [
+        "dow \u2260 Tue",
+        "rsi_b \u2260 (30.0, 50.0]",
+        "vol_z_b = (-0.5, 0.5]",
+        "adx_b = (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 bearish_OB",
+      "win_rate": 100.0,
+      "samples": 109,
+      "conditions": [
+        "dow = Tue",
+        "adx_b \u2260 (18.0, 25.0]",
+        "atr_pct_b \u2260 (0.15, 0.4]",
+        "vol_z_b \u2260 (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 bearish_OB",
+      "win_rate": 97.5,
+      "samples": 40,
+      "conditions": [
+        "dow = Tue",
+        "adx_b \u2260 (18.0, 25.0]",
+        "atr_pct_b \u2260 (0.15, 0.4]",
+        "vol_z_b = (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 bearish_OB",
+      "win_rate": 92.6,
+      "samples": 121,
+      "conditions": [
+        "dow \u2260 Tue",
+        "rsi_b \u2260 (30.0, 50.0]",
+        "vol_z_b \u2260 (-0.5, 0.5]",
+        "atr_pct_b \u2260 (0.15, 0.4]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 bearish_OB",
+      "win_rate": 84.8,
+      "samples": 33,
+      "conditions": [
+        "dow \u2260 Tue",
+        "rsi_b \u2260 (30.0, 50.0]",
+        "vol_z_b \u2260 (-0.5, 0.5]",
+        "atr_pct_b = (0.15, 0.4]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 bearish_OB",
+      "win_rate": 71.1,
+      "samples": 38,
+      "conditions": [
+        "dow \u2260 Tue",
+        "rsi_b \u2260 (30.0, 50.0]",
+        "vol_z_b = (-0.5, 0.5]",
+        "adx_b \u2260 (25.0, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 breakdown",
+      "win_rate": 13.3,
+      "samples": 15,
+      "conditions": [
+        "atr_pct_b = (0.4, inf]",
+        "dow \u2260 Mon",
+        "vol_z_b = (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 breakdown",
+      "win_rate": 0.0,
+      "samples": 48,
+      "conditions": [
+        "atr_pct_b = (0.4, inf]",
+        "dow \u2260 Mon",
+        "vol_z_b \u2260 (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 breakout_up",
+      "win_rate": 11.1,
+      "samples": 18,
+      "conditions": [
+        "atr_pct_b \u2260 (0.4, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 breakout_up",
+      "win_rate": 6.2,
+      "samples": 16,
+      "conditions": [
+        "atr_pct_b = (0.4, inf]",
+        "vol_z_b = (0.5, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 breakout_up",
+      "win_rate": 0.0,
+      "samples": 85,
+      "conditions": [
+        "atr_pct_b = (0.4, inf]",
+        "vol_z_b \u2260 (0.5, inf]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 bullish",
+      "win_rate": 25.0,
+      "samples": 20,
+      "conditions": [
+        "adx_b = (18.0, 25.0]",
+        "dow \u2260 Fri"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 bullish",
+      "win_rate": 10.7,
+      "samples": 28,
+      "conditions": [
+        "adx_b \u2260 (18.0, 25.0]",
+        "dow = Fri"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 bullish",
+      "win_rate": 4.2,
+      "samples": 24,
+      "conditions": [
+        "adx_b \u2260 (18.0, 25.0]",
+        "dow \u2260 Fri",
+        "dow \u2260 Wed",
+        "dow = Thu"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 bullish",
+      "win_rate": 0.0,
+      "samples": 52,
+      "conditions": [
+        "adx_b \u2260 (18.0, 25.0]",
+        "dow \u2260 Fri",
+        "dow \u2260 Wed",
+        "dow \u2260 Thu"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 bullish_OB",
+      "win_rate": 100.0,
+      "samples": 29,
+      "conditions": [
+        "vol_z_b \u2260 (-inf, -0.5]",
+        "atr_pct_b \u2260 (0.15, 0.4]",
+        "adx_b \u2260 (25.0, inf]",
+        "dow \u2260 Fri"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 bullish_OB",
+      "win_rate": 97.0,
+      "samples": 33,
+      "conditions": [
+        "vol_z_b \u2260 (-inf, -0.5]",
+        "atr_pct_b \u2260 (0.15, 0.4]",
+        "adx_b \u2260 (25.0, inf]",
+        "dow = Fri"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 bullish_OB",
+      "win_rate": 94.3,
+      "samples": 35,
+      "conditions": [
+        "vol_z_b \u2260 (-inf, -0.5]",
+        "atr_pct_b \u2260 (0.15, 0.4]",
+        "adx_b = (25.0, inf]",
+        "dow \u2260 Wed"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 bullish_OB",
+      "win_rate": 86.7,
+      "samples": 15,
+      "conditions": [
+        "vol_z_b = (-inf, -0.5]",
+        "dow \u2260 Fri"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 bullish_OB",
+      "win_rate": 73.3,
+      "samples": 15,
+      "conditions": [
+        "vol_z_b \u2260 (-inf, -0.5]",
+        "atr_pct_b = (0.15, 0.4]",
+        "dow \u2260 Thu"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 engulfing_bear",
+      "win_rate": 22.6,
+      "samples": 31,
+      "conditions": [
+        "rsi_b \u2260 (50.0, 70.0]",
+        "dow \u2260 Wed",
+        "dow \u2260 Thu",
+        "dow \u2260 Tue"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 engulfing_bear",
+      "win_rate": 0.0,
+      "samples": 28,
+      "conditions": [
+        "rsi_b \u2260 (50.0, 70.0]",
+        "dow = Wed"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 engulfing_bull",
+      "win_rate": 20.0,
+      "samples": 25,
+      "conditions": [
+        "dow \u2260 Wed",
+        "adx_b \u2260 (18.0, 25.0]",
+        "vol_z_b \u2260 (-0.5, 0.5]",
+        "dow \u2260 Tue"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 engulfing_bull",
+      "win_rate": 5.6,
+      "samples": 18,
+      "conditions": [
+        "dow \u2260 Wed",
+        "adx_b \u2260 (18.0, 25.0]",
+        "vol_z_b \u2260 (-0.5, 0.5]",
+        "dow = Tue"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 engulfing_bull",
+      "win_rate": 4.2,
+      "samples": 24,
+      "conditions": [
+        "dow \u2260 Wed",
+        "adx_b \u2260 (18.0, 25.0]",
+        "vol_z_b = (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 engulfing_bull",
+      "win_rate": 0.0,
+      "samples": 22,
+      "conditions": [
+        "dow = Wed"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 hammer",
+      "win_rate": 23.5,
+      "samples": 17,
+      "conditions": [
+        "rsi_b = (30.0, 50.0]",
+        "vol_z_b \u2260 (0.5, inf]",
+        "vol_z_b = (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 hammer",
+      "win_rate": 5.6,
+      "samples": 18,
+      "conditions": [
+        "rsi_b \u2260 (30.0, 50.0]",
+        "dow \u2260 Thu",
+        "adx_b = (18.0, 25.0]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 hammer",
+      "win_rate": 1.1,
+      "samples": 92,
+      "conditions": [
+        "rsi_b \u2260 (30.0, 50.0]",
+        "dow \u2260 Thu",
+        "adx_b \u2260 (18.0, 25.0]",
+        "vol_z_b \u2260 (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 hammer",
+      "win_rate": 0.0,
+      "samples": 80,
+      "conditions": [
+        "rsi_b \u2260 (30.0, 50.0]",
+        "dow \u2260 Thu",
+        "adx_b \u2260 (18.0, 25.0]",
+        "vol_z_b = (-0.5, 0.5]"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD/1h \u00b7 shooting_star",
+      "win_rate": 100.0,
+      "samples": 16,
+      "conditions": [
+        "rsi_b = (50.0, 70.0]",
+        "adx_b = (-inf, 18.0]"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD/1h \u00b7 shooting_star",
+      "win_rate": 28.0,
+      "samples": 25,
+      "conditions": [
+        "rsi_b \u2260 (50.0, 70.0]",
+        "atr_pct_b \u2260 (0.15, 0.4]",
+        "dow \u2260 Mon",
+        "vol_z_b \u2260 (-0.5, 0.5]"
+      ]
+    }
+  ],
+  "report_layers": [
+    "smc_structure",
+    "trend_ladders",
+    "generic_events",
+    "motifs"
+  ],
+  "totals": {
+    "XAUUSD/5m": {
+      "candles": 7941,
+      "swings": 1262,
+      "fvg": 1787,
+      "choch_bos": 883,
+      "order_blocks": 1353,
+      "ladders": 39,
+      "candle_patterns": 1962,
+      "breakouts": 664,
+      "sr_levels": 3,
+      "motifs": 0
+    },
+    "XAUUSD/30m": {
+      "candles": 1747,
+      "swings": 226,
+      "fvg": 360,
+      "choch_bos": 160,
+      "order_blocks": 278,
+      "ladders": 103,
+      "candle_patterns": 477,
+      "breakouts": 171,
+      "sr_levels": 17,
+      "motifs": 0
+    },
+    "XAUUSD/1h": {
+      "candles": 4900,
+      "swings": 2562,
+      "fvg": 300,
+      "choch_bos": 1344,
+      "order_blocks": 570,
+      "ladders": 34,
+      "candle_patterns": 1425,
+      "breakouts": 231,
+      "sr_levels": 1,
+      "motifs": 0
+    }
+  }
+}
