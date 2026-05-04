@@ -361,8 +361,19 @@ export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
   const currentSignal = signals[activeSymbol] as MetaSignalData | undefined;
   const currentConsensus = consensusViews[activeSymbol] as ConsensusSymbolView | undefined;
 
+  // Pattern-alert-driven panel border pulse — direction-aware so RED never
+  // gets confused with a SELL signal in trading conventions.
+  const alerts = currentSignal?.pattern_alerts;
+  const direction = currentSignal?.direction;
+  const alertStyling = computePanelBorderStyle(alerts, direction);
+
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-[#111827] overflow-hidden">
+    <>
+      {alertStyling.css && <style jsx global>{alertStyling.css}</style>}
+    <div
+      className={`rounded-2xl bg-[#111827] overflow-hidden ${alertStyling.className}`}
+      style={alertStyling.style}
+    >
       {/* ── Header ── */}
       <div className="px-5 pt-5 pb-3 border-b border-white/[0.06]">
         <div className="flex items-center justify-between">
@@ -614,10 +625,57 @@ export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
         )}
       </div>
     </div>
+    </>
   );
 }
 
+// Direction-aware panel border styling (avoids RED-as-SELL confusion).
+// TRUSTED + BUY  → green pulse   (BUY direction color, "go ahead")
+// TRUSTED + SELL → red pulse     (SELL direction color, "go ahead")
+// CAUTION (any)  → amber pulse   (warning, no direction overlap)
+// BLOCKED        → magenta pulse (clearly distinct from BUY/SELL colors)
+function computePanelBorderStyle(alerts?: PatternAlerts, direction?: string) {
+  if (!alerts || alerts.alert_level === "neutral") {
+    return {
+      className: "border border-white/[0.06]",
+      style: {},
+      css: "",
+    };
+  }
+  let accent = "#FFFFFF";
+  let animationName = "patternPanelPulse";
+  if (alerts.alert_level === "blocked") {
+    accent = "#A855F7";          // magenta — clearly not BUY/SELL
+  } else if (alerts.alert_level === "caution") {
+    accent = "#F59E0B";          // amber — universal warning
+  } else if (alerts.alert_level === "trusted") {
+    accent = direction === "SELL" ? "#EF4444" : "#16C784";
+  }
+  const css = `
+    @keyframes ${animationName} {
+      0%, 100% {
+        border-color: ${accent}EE;
+        box-shadow: 0 0 0 0 ${accent}66, inset 0 0 24px 0 ${accent}22;
+      }
+      50% {
+        border-color: ${accent}77;
+        box-shadow: 0 0 28px 6px ${accent}55, inset 0 0 32px 0 ${accent}11;
+      }
+    }
+  `;
+  return {
+    className: "",
+    style: {
+      border: `2px solid ${accent}`,
+      animation: `${animationName} 1.6s ease-in-out infinite`,
+    } as React.CSSProperties,
+    css,
+  };
+}
+
 // ── Pattern Alert Banner — flashing badge for ≥75% winning / ≤35% toxic ──
+// Color scheme matches the panel border: direction-aware to avoid RED=SELL
+// confusion. See computePanelBorderStyle() above for the color rationale.
 function PatternAlertBanner({ alerts, direction }: {
   alerts?: PatternAlerts;
   direction?: string;
@@ -626,18 +684,25 @@ function PatternAlertBanner({ alerts, direction }: {
   const isTrusted = alerts.alert_level === "trusted";
   const isBlocked = alerts.alert_level === "blocked";
   const isCaution = alerts.alert_level === "caution";
+  const isSell = direction === "SELL";
 
-  const accent = isBlocked ? "#EF4444" : isCaution ? "#F97316" : "#16C784";
-  const bg = isBlocked ? "rgba(239,68,68,0.10)"
-            : isCaution ? "rgba(249,115,22,0.10)"
+  // Direction-aware accent — see panel border for rationale
+  const accent = isBlocked ? "#A855F7"     // magenta: extreme toxic
+              : isCaution ? "#F59E0B"     // amber: warning
+              : isSell ? "#EF4444"          // red: trusted SELL (SELL direction)
+              : "#16C784";                  // green: trusted BUY (BUY direction)
+  const bg = isBlocked ? "rgba(168,85,247,0.10)"
+            : isCaution ? "rgba(245,158,11,0.10)"
+            : isSell ? "rgba(239,68,68,0.10)"
             : "rgba(22,199,132,0.10)";
-  const emoji = isBlocked ? "⛔" : isCaution ? "⚠️" : "✅";
-  const label = isBlocked ? "TOXIC PATTERN — DİKKAT"
+  const emoji = isBlocked ? "⛔" : isCaution ? "⚠️" : isTrusted ? (isSell ? "🔻" : "🔺") : "✅";
+  const label = isBlocked ? "BLOCK SETUP — DİKKAT"
               : isCaution ? "RİSKLİ KURULUM"
-              : "GÜVENİLİR KURULUM";
+              : isSell ? "GÜVENİLİR SELL KURULUMU"
+              : "GÜVENİLİR BUY KURULUMU";
   const headline = isTrusted
-    ? `Bu yön (${direction}) için %${alerts.best_winning_win_rate?.toFixed(0)} win-rate'li ${alerts.total_winning} pattern eşleşti`
-    : `${alerts.total_avoid} toxic pattern aktif (worst win-rate: %${alerts.worst_avoid_win_rate?.toFixed(0)})`;
+    ? `${direction} yönünde geçmişte %${alerts.best_winning_win_rate?.toFixed(0)} win-rate veren ${alerts.total_winning} pattern aktif`
+    : `${alerts.total_avoid} toxic pattern uyumlu (en kötü win-rate: %${alerts.worst_avoid_win_rate?.toFixed(0)})`;
 
   const top = (isTrusted ? alerts.winning_matches : alerts.avoid_matches)[0];
 
