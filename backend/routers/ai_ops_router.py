@@ -346,6 +346,50 @@ async def manual_run(payload: ManualRunRequest, bg: BackgroundTasks):
     return {"ok": True, "status": "scheduled", "window_days": payload.window_days}
 
 
+@router.get("/pattern-alerts/{symbol}")
+async def pattern_alerts(symbol: str, model_type: str = "meta",
+                          direction: Optional[str] = None,
+                          confidence: Optional[float] = None):
+    """Live pattern alerts — winning/toxic mined-rule matches for the current snapshot.
+    Used by frontend to render flashing 'trusted setup' / 'caution' indicators."""
+    try:
+        from services.signal_feature_snapshot import build_signal_feature_snapshot
+        from services.pattern_matcher import match_patterns, get_rules_meta
+    except ImportError as e:
+        raise HTTPException(500, f"matcher unavailable: {e}")
+    try:
+        snap = await build_signal_feature_snapshot(symbol)
+        if not snap:
+            return {"available": False, "reason": "snapshot_unavailable", "symbol": symbol}
+        # If no direction provided, try both — return alerts that fire either way
+        directions = [direction] if direction in ("BUY", "SELL") else ["BUY", "SELL"]
+        results: dict = {"symbol": symbol, "model_type": model_type, "by_direction": {}}
+        for d in directions:
+            results["by_direction"][d] = match_patterns(
+                symbol=symbol, model_type=model_type,
+                ml_direction=d, ml_confidence=confidence,
+                snapshot=snap,
+            )
+        results["meta"] = get_rules_meta()
+        results["available"] = True
+        return results
+    except Exception as e:
+        logger.exception("pattern_alerts failed: %s", e)
+        raise HTTPException(500, str(e))
+
+
+@router.post("/pattern-alerts/reload")
+async def reload_pattern_rules():
+    """Force reload pattern_rules.json (call after running pattern_miner.py again)."""
+    try:
+        from services.pattern_matcher import reload_rules
+        n = reload_rules()
+        return {"ok": True, "rules_loaded": n}
+    except Exception as e:
+        logger.exception("reload_pattern_rules failed: %s", e)
+        raise HTTPException(500, str(e))
+
+
 @router.post("/proposals/{proposal_id}/simulate")
 async def simulate_proposal_endpoint(proposal_id: str, window_days: int = 60):
     """Re-run counterfactual simulation for a single proposal."""

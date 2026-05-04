@@ -14,6 +14,24 @@ interface ModelBreakdown {
   agrees: boolean;
 }
 
+interface PatternMatch {
+  segment: string;
+  win_rate: number;
+  samples: number;
+  conditions: string[];
+  kind: "winning_pattern" | "avoid_pattern";
+}
+
+interface PatternAlerts {
+  alert_level: "trusted" | "caution" | "neutral" | "blocked";
+  winning_matches: PatternMatch[];
+  avoid_matches: PatternMatch[];
+  best_winning_win_rate: number | null;
+  worst_avoid_win_rate: number | null;
+  total_winning: number;
+  total_avoid: number;
+}
+
 interface MetaSignalData {
   symbol: string;
   direction: string;
@@ -37,6 +55,7 @@ interface MetaSignalData {
     profit_factor: number;
   }>;
   timestamp: number;
+  pattern_alerts?: PatternAlerts;
   message?: string;
 }
 
@@ -411,6 +430,9 @@ export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
           </div>
         ) : (
           <div className="space-y-5">
+            {/* Pattern Alerts — flashing trusted/toxic indicator from mined rules */}
+            <PatternAlertBanner alerts={currentSignal.pattern_alerts} direction={currentSignal.direction} />
+
             {/* Row 1: Confidence Ring + Agreement + Combo */}
             <div className="flex items-start gap-4">
               {/* Confidence Ring */}
@@ -592,5 +614,97 @@ export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
         )}
       </div>
     </div>
+  );
+}
+
+// ── Pattern Alert Banner — flashing badge for ≥75% winning / ≤35% toxic ──
+function PatternAlertBanner({ alerts, direction }: {
+  alerts?: PatternAlerts;
+  direction?: string;
+}) {
+  if (!alerts || alerts.alert_level === "neutral") return null;
+  const isTrusted = alerts.alert_level === "trusted";
+  const isBlocked = alerts.alert_level === "blocked";
+  const isCaution = alerts.alert_level === "caution";
+
+  const accent = isBlocked ? "#EF4444" : isCaution ? "#F97316" : "#16C784";
+  const bg = isBlocked ? "rgba(239,68,68,0.10)"
+            : isCaution ? "rgba(249,115,22,0.10)"
+            : "rgba(22,199,132,0.10)";
+  const emoji = isBlocked ? "⛔" : isCaution ? "⚠️" : "✅";
+  const label = isBlocked ? "TOXIC PATTERN — DİKKAT"
+              : isCaution ? "RİSKLİ KURULUM"
+              : "GÜVENİLİR KURULUM";
+  const headline = isTrusted
+    ? `Bu yön (${direction}) için %${alerts.best_winning_win_rate?.toFixed(0)} win-rate'li ${alerts.total_winning} pattern eşleşti`
+    : `${alerts.total_avoid} toxic pattern aktif (worst win-rate: %${alerts.worst_avoid_win_rate?.toFixed(0)})`;
+
+  const top = (isTrusted ? alerts.winning_matches : alerts.avoid_matches)[0];
+
+  return (
+    <>
+      <style jsx>{`
+        @keyframes patternPulse {
+          0%, 100% { opacity: 1; box-shadow: 0 0 0 0 ${accent}66; }
+          50%      { opacity: 0.92; box-shadow: 0 0 0 6px ${accent}11; }
+        }
+        .pattern-alert-banner { animation: patternPulse 1.6s ease-in-out infinite; }
+      `}</style>
+      <div
+        className="pattern-alert-banner rounded-xl px-4 py-3"
+        style={{
+          background: bg,
+          borderLeft: `3px solid ${accent}`,
+          border: `1px solid ${accent}33`,
+        }}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span style={{ fontSize: 18 }}>{emoji}</span>
+              <span style={{ color: accent, fontSize: 11, fontWeight: 700, letterSpacing: 0.5 }}>
+                {label}
+              </span>
+            </div>
+            <div className="text-sm text-[#E6EDF3] mb-2">{headline}</div>
+            {top && (
+              <div className="text-[11px] text-[#9AA4B2]">
+                <span style={{ color: accent, fontWeight: 600 }}>
+                  {top.win_rate.toFixed(1)}%
+                </span>
+                {" · "}
+                <span>{top.samples} geçmiş trade</span>
+                {" · "}
+                <span className="font-mono">{top.segment}</span>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {top.conditions.map((c, i) => (
+                    <span
+                      key={i}
+                      className="px-1.5 py-0.5 rounded font-mono"
+                      style={{ background: "rgba(0,0,0,0.25)", fontSize: 10 }}
+                    >
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          {(alerts.total_winning > 1 || alerts.total_avoid > 1) && (
+            <div
+              className="text-center px-2 py-1 rounded-lg"
+              style={{ background: "rgba(0,0,0,0.30)", minWidth: 56 }}
+            >
+              <div style={{ color: accent, fontSize: 18, fontWeight: 700, lineHeight: 1 }}>
+                {isTrusted ? alerts.total_winning : alerts.total_avoid}
+              </div>
+              <div style={{ fontSize: 9, color: "#6B7280", marginTop: 2 }}>
+                pattern
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 }

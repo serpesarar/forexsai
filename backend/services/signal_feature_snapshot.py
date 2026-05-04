@@ -443,7 +443,8 @@ def _macro_block() -> dict:
     try:
         from services import macro_data_service as macro
         snap = macro.get_snapshot()
-        for name in ("DXY", "VIX", "US10Y"):
+        # All Yahoo-sourced macros (DXY/VIX/US10Y/SPX/NQ/STOXX)
+        for name in ("DXY", "VIX", "US10Y", "SPX", "NQ", "STOXX"):
             s = snap.get(name)
             if s is None:
                 continue
@@ -455,6 +456,54 @@ def _macro_block() -> dict:
                 out[f"macro_{n}_chg1d_pct"] = _round(s.change_1d_pct, 3)
     except Exception as e:
         logger.debug(f"[snapshot] macro unavailable: {e}")
+    return out
+
+
+async def _bdi_block() -> dict:
+    """Baltic Dry Index — primary external feed for USOIL ecosystem.
+    Reads from existing baltic_index_service which scrapes BDI/BDTI/BCTI."""
+    out: dict = {}
+    try:
+        from services.baltic_index_service import get_index
+        for index_type in ("BDI", "BDTI", "BCTI"):
+            try:
+                data = await get_index(index_type)
+                if not data:
+                    continue
+                price = data.get("value") or data.get("price")
+                chg_pct = data.get("change_pct") or data.get("changePct")
+                if price is not None:
+                    out[f"baltic_{index_type.lower()}_price"] = _round(price, 2)
+                if chg_pct is not None:
+                    out[f"baltic_{index_type.lower()}_chg_pct"] = _round(chg_pct, 3)
+            except Exception:
+                continue
+    except Exception as e:
+        logger.debug(f"[snapshot] baltic unavailable: {e}")
+    return out
+
+
+async def _cot_block(symbol: str) -> dict:
+    """COT positioning — primary external feed for XAU + commodities.
+    Reads from cot_report_service. Only run for symbols that have COT futures contract."""
+    out: dict = {}
+    if symbol.upper().replace(".FOREX", "").replace(".INDX", "") not in (
+        "XAUUSD", "GOLD", "USOIL", "NDX", "GDAXI"
+    ):
+        return out
+    try:
+        from services.cot_report_service import fetch_cot_data
+        data = await fetch_cot_data(symbol)
+        if data is None:
+            return out
+        # COTData dataclass — pull useful fields if present
+        for field in ("commercials_net", "speculators_net",
+                      "commercials_net_change", "speculators_net_change"):
+            v = getattr(data, field, None)
+            if v is not None:
+                out[f"cot_{field}"] = int(v) if isinstance(v, (int, float)) else v
+    except Exception as e:
+        logger.debug(f"[snapshot] cot unavailable for {symbol}: {e}")
     return out
 
 
@@ -518,9 +567,18 @@ async def build_signal_feature_snapshot(symbol: str) -> dict:
             # Aggregates + warning flags
             snap.update(_compute_aggregates(snap))
 
-            # Macro + session
+            # Macro + session + external feeds
             snap.update(_macro_block())
             snap.update(_session_block())
+            # Async-only blocks: BDI (USOIL) + COT (XAU/commods)
+            try:
+                snap.update(await _bdi_block())
+            except Exception:
+                pass
+            try:
+                snap.update(await _cot_block(symbol))
+            except Exception:
+                pass
 
             # Snapshot meta
             snap["snapshot_v"] = 1

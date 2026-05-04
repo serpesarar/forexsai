@@ -256,6 +256,7 @@ class MetaSignal:
     model_breakdown: Dict[str, Any] = field(default_factory=dict)
     alternatives: List[Dict] = field(default_factory=list)
     timestamp: float = 0.0
+    pattern_alerts: Dict[str, Any] = field(default_factory=dict)  # mined-rule live matches
 
 
 # ═══════════════════════════════════════════════════════════
@@ -913,6 +914,20 @@ class MetaAnalysisEngine:
             alternatives=alternatives,
             timestamp=time.time(),
         )
+
+        # ── Live pattern matcher: tag winning/toxic mined-rule hits ──
+        try:
+            from services.signal_feature_snapshot import build_signal_feature_snapshot
+            from services.pattern_matcher import match_patterns
+            live_snap = await build_signal_feature_snapshot(symbol)
+            if live_snap:
+                meta_signal.pattern_alerts = match_patterns(
+                    symbol=symbol, model_type="meta",
+                    ml_direction=direction, ml_confidence=confidence,
+                    snapshot=live_snap,
+                )
+        except Exception as e:
+            logger.debug(f"[MetaEngine] pattern alert tagging failed for {symbol}: {e}")
 
         # Cache
         _meta_cache[symbol] = (time.time(), meta_signal)

@@ -1,0 +1,334 @@
+{
+  "generated_at": "2026-05-04T02:57:20.596674Z",
+  "window_size": 50,
+  "segments": [
+    {
+      "label": "GLOBAL \u2014 t\u00fcm sembol & model",
+      "n_signals": 50000,
+      "baseline_win_rate": 64.03,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 100.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "GDAXI.INDX \u00b7 emel",
+      "n_signals": 171,
+      "baseline_win_rate": 73.1,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 28.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "GDAXI.INDX \u00b7 meta",
+      "n_signals": 180,
+      "baseline_win_rate": 84.44,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 24.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "GDAXI.INDX \u00b7 ml:balanced",
+      "n_signals": 115,
+      "baseline_win_rate": 74.78,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 22.31,
+      "feature_correlations": []
+    },
+    {
+      "label": "GDAXI.INDX \u00b7 ml:full_power",
+      "n_signals": 142,
+      "baseline_win_rate": 74.65,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 14.98,
+      "feature_correlations": []
+    },
+    {
+      "label": "GDAXI.INDX \u00b7 ml:main",
+      "n_signals": 168,
+      "baseline_win_rate": 77.38,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 28.67,
+      "feature_correlations": []
+    },
+    {
+      "label": "GDAXI.INDX \u00b7 pulse1",
+      "n_signals": 1494,
+      "baseline_win_rate": 58.37,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 100.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "GDAXI.INDX \u00b7 pulse2",
+      "n_signals": 674,
+      "baseline_win_rate": 74.04,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 72.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "GDAXI.INDX \u00b7 pulse3",
+      "n_signals": 1272,
+      "baseline_win_rate": 70.2,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 100.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "GDAXI.INDX \u00b7 smc",
+      "n_signals": 273,
+      "baseline_win_rate": 58.24,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 98.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "NDX.INDX \u00b7 emel",
+      "n_signals": 201,
+      "baseline_win_rate": 53.73,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 68.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "NDX.INDX \u00b7 meta",
+      "n_signals": 159,
+      "baseline_win_rate": 81.76,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 32.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "NDX.INDX \u00b7 ml",
+      "n_signals": 116,
+      "baseline_win_rate": 78.45,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 12.76,
+      "feature_correlations": []
+    },
+    {
+      "label": "NDX.INDX \u00b7 ml:balanced",
+      "n_signals": 100,
+      "baseline_win_rate": 81.0,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 17.81,
+      "feature_correlations": []
+    },
+    {
+      "label": "NDX.INDX \u00b7 ml:main",
+      "n_signals": 102,
+      "baseline_win_rate": 75.49,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 18.67,
+      "feature_correlations": []
+    },
+    {
+      "label": "NDX.INDX \u00b7 pulse1",
+      "n_signals": 1239,
+      "baseline_win_rate": 65.21,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 100.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "NDX.INDX \u00b7 pulse2",
+      "n_signals": 840,
+      "baseline_win_rate": 72.02,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 68.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "NDX.INDX \u00b7 pulse3",
+      "n_signals": 1152,
+      "baseline_win_rate": 64.41,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 100.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "USOIL.FOREX \u00b7 emel",
+      "n_signals": 1149,
+      "baseline_win_rate": 64.32,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 68.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "USOIL.FOREX \u00b7 meta",
+      "n_signals": 646,
+      "baseline_win_rate": 71.05,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 56.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "USOIL.FOREX \u00b7 ml",
+      "n_signals": 278,
+      "baseline_win_rate": 56.83,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 28.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "USOIL.FOREX \u00b7 ml:aggressive",
+      "n_signals": 148,
+      "baseline_win_rate": 76.35,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 22.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "USOIL.FOREX \u00b7 ml:balanced",
+      "n_signals": 1010,
+      "baseline_win_rate": 70.2,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 54.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "USOIL.FOREX \u00b7 ml:full_power",
+      "n_signals": 1045,
+      "baseline_win_rate": 70.43,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 52.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "USOIL.FOREX \u00b7 ml:main",
+      "n_signals": 1174,
+      "baseline_win_rate": 70.7,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 54.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "USOIL.FOREX \u00b7 ml:ultra_safe",
+      "n_signals": 124,
+      "baseline_win_rate": 80.65,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 30.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "USOIL.FOREX \u00b7 pulse1",
+      "n_signals": 6678,
+      "baseline_win_rate": 70.74,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 64.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "USOIL.FOREX \u00b7 pulse2",
+      "n_signals": 5219,
+      "baseline_win_rate": 70.86,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 90.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "USOIL.FOREX \u00b7 pulse3",
+      "n_signals": 6245,
+      "baseline_win_rate": 71.14,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 68.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "USOIL.FOREX \u00b7 smc",
+      "n_signals": 2422,
+      "baseline_win_rate": 85.3,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 58.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "XAUUSD \u00b7 emel",
+      "n_signals": 464,
+      "baseline_win_rate": 38.58,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 70.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "XAUUSD \u00b7 meta",
+      "n_signals": 571,
+      "baseline_win_rate": 64.97,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 58.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "XAUUSD \u00b7 ml:aggressive",
+      "n_signals": 139,
+      "baseline_win_rate": 44.6,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 44.62,
+      "feature_correlations": []
+    },
+    {
+      "label": "XAUUSD \u00b7 ml:balanced",
+      "n_signals": 612,
+      "baseline_win_rate": 51.96,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 68.46,
+      "feature_correlations": []
+    },
+    {
+      "label": "XAUUSD \u00b7 ml:full_power",
+      "n_signals": 648,
+      "baseline_win_rate": 48.61,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 62.77,
+      "feature_correlations": []
+    },
+    {
+      "label": "XAUUSD \u00b7 ml:main",
+      "n_signals": 681,
+      "baseline_win_rate": 49.63,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 58.77,
+      "feature_correlations": []
+    },
+    {
+      "label": "XAUUSD \u00b7 ml:ultra_safe",
+      "n_signals": 110,
+      "baseline_win_rate": 43.64,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 50.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "XAUUSD \u00b7 pulse1",
+      "n_signals": 3986,
+      "baseline_win_rate": 40.94,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 94.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "XAUUSD \u00b7 pulse2",
+      "n_signals": 2467,
+      "baseline_win_rate": 49.01,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 98.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "XAUUSD \u00b7 pulse3",
+      "n_signals": 3694,
+      "baseline_win_rate": 51.6,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 100.0,
+      "feature_correlations": []
+    },
+    {
+      "label": "XAUUSD \u00b7 smc",
+      "n_signals": 1375,
+      "baseline_win_rate": 49.24,
+      "rolling_window": 50,
+      "wr_min_max_swing_pp": 82.0,
+      "feature_correlations": []
+    }
+  ]
+}

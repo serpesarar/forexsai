@@ -26,11 +26,14 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-# Yahoo tickers
+# Yahoo tickers — feed for ALL models that need macro context
 TICKERS = {
-    "DXY":   "DX-Y.NYB",  # ICE US Dollar Index
-    "VIX":   "^VIX",
-    "US10Y": "^TNX",       # 10-yr yield (in percentage points)
+    "DXY":   "DX-Y.NYB",   # ICE US Dollar Index — XAU + USOIL inverse
+    "VIX":   "^VIX",        # Volatility — risk-on/off proxy for indices
+    "US10Y": "^TNX",        # 10-yr yield (%) — XAU + tech rate-sensitivity
+    "SPX":   "^GSPC",       # S&P 500 cash — broader US equity tape
+    "NQ":    "^IXIC",       # Nasdaq Composite — NDX correlation
+    "STOXX": "^STOXX50E",   # Euro Stoxx 50 — DAX peer
 }
 
 REFRESH_INTERVAL_SECONDS = 3600   # 1 hour
