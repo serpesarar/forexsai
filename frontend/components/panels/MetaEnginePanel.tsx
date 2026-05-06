@@ -369,7 +369,12 @@ export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
 
   return (
     <>
-      {alertStyling.css && <style jsx global>{alertStyling.css}</style>}
+      {alertStyling.css ? (
+        // styled-jsx requires static template literal children — not a runtime
+        // variable. Use plain <style> with dangerouslySetInnerHTML for the
+        // dynamically-generated keyframes (we control the content, no XSS risk).
+        <style dangerouslySetInnerHTML={{ __html: alertStyling.css }} />
+      ) : null}
     <div
       className={`rounded-2xl bg-[#111827] overflow-hidden ${alertStyling.className}`}
       style={alertStyling.style}
