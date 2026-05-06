@@ -436,6 +436,49 @@ async def simulate_proposal_endpoint(proposal_id: str, window_days: int = 60):
         raise HTTPException(500, str(e))
 
 
+@router.post("/proposals/{proposal_id}/check-live")
+async def check_proposal_live_endpoint(proposal_id: str):
+    """Manually trigger one live-tracking pass for a single proposal.
+    Otherwise the daily cron handles it automatically."""
+    if not is_db_available():
+        raise HTTPException(503, "supabase unavailable")
+    try:
+        from services.post_deploy_monitor import check_proposal
+        client = get_supabase_client()
+        rows = _row_data(client.table("improvement_proposals").select("*")
+                         .eq("id", proposal_id).limit(1))
+        if not rows:
+            raise HTTPException(404, "proposal not found")
+        result = await check_proposal(rows[0])
+        return {"ok": True, "result": result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("check_proposal_live failed: %s", e)
+        raise HTTPException(500, str(e))
+
+
+@router.get("/proposals/tracked")
+async def list_tracked_proposals():
+    """List all proposals currently in live tracking (status=implemented + within 7d)."""
+    if not is_db_available():
+        raise HTTPException(503, "supabase unavailable")
+    client = get_supabase_client()
+    try:
+        from datetime import datetime, timedelta, timezone
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).isoformat()
+        q = client.table("improvement_proposals").select(
+            "id,symbol,model_type,severity,root_cause,simulated_metric,"
+            "live_tracking_metric,live_tracking_started_at,live_tracking_last_check,"
+            "rollback_recommended,rollback_recommendation_reason,reviewed_at"
+        ).eq("status", "implemented").gte("live_tracking_started_at", cutoff
+        ).order("live_tracking_started_at", desc=True).limit(100)
+        return {"tracked": _row_data(q)}
+    except Exception as e:
+        logger.exception("list_tracked_proposals failed: %s", e)
+        raise HTTPException(500, str(e))
+
+
 @router.get("/clusters")
 async def list_clusters(
     symbol: Optional[str] = None,

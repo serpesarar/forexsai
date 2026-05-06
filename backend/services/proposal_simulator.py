@@ -161,21 +161,66 @@ def _signal_pnl_pips(row: pd.Series) -> float:
     return 0.0
 
 
+def _wilson_ci(wins: int, total: int, z: float = 1.96) -> tuple[float, float]:
+    """95% Wilson confidence interval for win rate (small-sample-safe)."""
+    if total == 0:
+        return (0.0, 0.0)
+    import math
+    p = wins / total
+    z2 = z * z
+    denom = 1 + z2 / total
+    center = (p + z2 / (2 * total)) / denom
+    margin = (z * math.sqrt((p * (1 - p) + z2 / (4 * total)) / total)) / denom
+    return (max(0.0, center - margin) * 100, min(1.0, center + margin) * 100)
+
+
+def _max_drawdown(pnls: list[float]) -> float:
+    """Maximum drawdown of cumulative P/L curve."""
+    if not pnls:
+        return 0.0
+    cum = []
+    running = 0.0
+    for v in pnls:
+        running += v
+        cum.append(running)
+    peak = cum[0]
+    max_dd = 0.0
+    for v in cum:
+        if v > peak:
+            peak = v
+        dd = peak - v
+        if dd > max_dd:
+            max_dd = dd
+    return float(max_dd)
+
+
 def _compute_metrics(df: pd.DataFrame, label: str) -> dict:
     n = len(df)
     if n == 0:
-        return {"label": label, "n_signals": 0, "win_rate": None, "total_pnl_pips": 0}
-    wins = (df["status"] == "completed").sum()
-    resolved = df["status"].isin(["completed", "stopped"]).sum()
-    pnl = df.apply(_signal_pnl_pips, axis=1).sum()
+        return {"label": label, "n_signals": 0, "win_rate": None, "total_pnl_pips": 0,
+                "max_drawdown_pips": 0, "ci_low_pct": None, "ci_high_pct": None}
+    wins = int((df["status"] == "completed").sum())
+    resolved = int(df["status"].isin(["completed", "stopped"]).sum())
+    pnls = df.apply(_signal_pnl_pips, axis=1).tolist()
+    pnl = float(sum(pnls))
+    max_dd = _max_drawdown(pnls)
+    ci_low, ci_high = _wilson_ci(wins, resolved) if resolved else (None, None)
+    # Profit factor = sum(wins) / |sum(losses)|
+    gains = sum(p for p in pnls if p > 0)
+    losses = abs(sum(p for p in pnls if p < 0))
+    profit_factor = round(gains / losses, 3) if losses > 0 else None
     return {
         "label": label,
-        "n_signals": int(n),
-        "n_resolved": int(resolved),
-        "n_wins": int(wins),
-        "win_rate": round(float(wins / resolved * 100), 2) if resolved else None,
-        "total_pnl_pips": round(float(pnl), 2),
-        "avg_pnl_pips": round(float(pnl / resolved), 3) if resolved else None,
+        "n_signals": n,
+        "n_resolved": resolved,
+        "n_wins": wins,
+        "win_rate": round(wins / resolved * 100, 2) if resolved else None,
+        "total_pnl_pips": round(pnl, 2),
+        "avg_pnl_pips": round(pnl / resolved, 3) if resolved else None,
+        "max_drawdown_pips": round(max_dd, 2),
+        "ci_low_pct": round(ci_low, 2) if ci_low is not None else None,
+        "ci_high_pct": round(ci_high, 2) if ci_high is not None else None,
+        "profit_factor": profit_factor,
     }
 
 
@@ -328,10 +373,18 @@ async def simulate_proposal(proposal_id: str,
                         if simulated.get("win_rate") is not None and original.get("win_rate") is not None
                         else None),
         "pnl_pips": round(simulated.get("total_pnl_pips", 0) - original.get("total_pnl_pips", 0), 2),
+        "max_drawdown_pp": round(simulated.get("max_drawdown_pips", 0) - original.get("max_drawdown_pips", 0), 2),
+        "profit_factor_delta": (
+            round((simulated.get("profit_factor") or 0) - (original.get("profit_factor") or 0), 3)
+            if simulated.get("profit_factor") and original.get("profit_factor")
+            else None
+        ),
         "n_signals_blocked": int(blocked_mask.sum()),
         "blocked_pnl_avoided": round(-blocked_pnl, 2),  # if we saved net negative P/L, this is positive
         "blocked_was_loss": blocked_fails,
         "blocked_was_win": blocked_wins,
+        # Multi-metric verdict — a "good" proposal must clear ALL gates
+        "verdict": _verdict(simulated, original),
     }
 
     return SimulationResult(
@@ -339,6 +392,29 @@ async def simulate_proposal(proposal_id: str,
         original, simulated, deltas,
         fixes_evaluated, skipped,
     )
+
+
+def _verdict(simulated: dict, original: dict) -> str:
+    """Multi-metric gate. A proposal must improve win-rate AND P/L AND not blow up drawdown.
+    Returns one of: 'unanimously_better', 'mixed', 'unanimously_worse', 'insignificant'."""
+    sw = simulated.get("win_rate")
+    ow = original.get("win_rate")
+    sp = simulated.get("total_pnl_pips") or 0
+    op = original.get("total_pnl_pips") or 0
+    sdd = simulated.get("max_drawdown_pips") or 0
+    odd = original.get("max_drawdown_pips") or 0
+    if sw is None or ow is None:
+        return "insufficient_data"
+    win_better = sw > ow + 0.5
+    pnl_better = sp > op + 1
+    dd_better_or_equal = sdd <= odd * 1.1   # tolerate +10% drawdown if other metrics improve
+    if win_better and pnl_better and dd_better_or_equal:
+        return "unanimously_better"
+    if not win_better and not pnl_better and not dd_better_or_equal:
+        return "unanimously_worse"
+    if abs(sw - ow) < 0.5 and abs(sp - op) < 1:
+        return "insignificant"
+    return "mixed"
 
 
 async def simulate_and_persist(proposal_id: str, window_days: int = DEFAULT_WINDOW_DAYS) -> dict:

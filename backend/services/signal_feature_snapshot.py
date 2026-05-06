@@ -530,6 +530,79 @@ def _session_block() -> dict:
     }
 
 
+async def _macro_event_proximity_block(symbol: str) -> dict:
+    """Flag if a high-impact macro event is imminent (NFP, FOMC, CPI, ECB, etc.).
+    These hours/days have very different price dynamics — rules mined on normal
+    days mislead during event windows. Uses the existing economic_calendar_service."""
+    out: dict = {}
+    try:
+        from services.economic_calendar_service import get_calendar_service
+    except ImportError:
+        return out
+    try:
+        from datetime import datetime, timezone
+        cal = get_calendar_service()
+        # Pull all today's events; filter ourselves for proximity windows
+        events = await cal.fetch_today_events()
+        if not events:
+            return out
+        s = symbol.upper().replace(".INDX", "").replace(".FOREX", "")
+        if "XAU" in s or s == "GOLD" or "NDX" in s or "SPX" in s or "OIL" in s:
+            relevant_currencies = {"USD"}
+        elif "GDAXI" in s or "DAX" in s:
+            relevant_currencies = {"EUR", "USD"}
+        else:
+            relevant_currencies = {"USD"}
+
+        now = datetime.now(timezone.utc)
+        nearest = None
+        nearest_minutes = float("inf")
+        for ev in events:
+            currency = (getattr(ev, "currency", None) or "").upper()
+            impact = (getattr(ev, "impact", None) or "").lower()
+            if impact not in ("high", "high_impact", "3"):
+                continue
+            if currency not in relevant_currencies:
+                continue
+            ts_attr = getattr(ev, "timestamp", None) or getattr(ev, "datetime", None)
+            if ts_attr is None:
+                continue
+            try:
+                if isinstance(ts_attr, datetime):
+                    ev_time = ts_attr
+                else:
+                    ev_time = datetime.fromisoformat(str(ts_attr).replace("Z", "+00:00"))
+                if ev_time.tzinfo is None:
+                    ev_time = ev_time.replace(tzinfo=timezone.utc)
+            except Exception:
+                continue
+            mins = (ev_time - now).total_seconds() / 60
+            if -30 <= mins <= 24 * 60 and mins < nearest_minutes:
+                nearest_minutes = mins
+                nearest = (ev, mins)
+
+        if nearest is not None:
+            ev, mins = nearest
+            out["macro_event_pending"] = True
+            out["macro_event_minutes_until"] = round(mins, 1)
+            out["macro_event_name"] = getattr(ev, "title", None) or getattr(ev, "event_name", None)
+            out["macro_event_currency"] = getattr(ev, "currency", None)
+            if abs(mins) <= 30:
+                out["macro_event_proximity"] = "active"
+            elif 30 < mins <= 120:
+                out["macro_event_proximity"] = "imminent_2h"
+            elif 120 < mins <= 480:
+                out["macro_event_proximity"] = "today"
+            else:
+                out["macro_event_proximity"] = "tomorrow"
+        else:
+            out["macro_event_pending"] = False
+            out["macro_event_proximity"] = "clear"
+    except Exception as e:
+        logger.debug(f"[snapshot] macro event proximity unavailable: {e}")
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Public entry
 # ---------------------------------------------------------------------------
@@ -570,13 +643,17 @@ async def build_signal_feature_snapshot(symbol: str) -> dict:
             # Macro + session + external feeds
             snap.update(_macro_block())
             snap.update(_session_block())
-            # Async-only blocks: BDI (USOIL) + COT (XAU/commods)
+            # Async-only blocks: BDI (USOIL) + COT (XAU/commods) + macro events
             try:
                 snap.update(await _bdi_block())
             except Exception:
                 pass
             try:
                 snap.update(await _cot_block(symbol))
+            except Exception:
+                pass
+            try:
+                snap.update(await _macro_event_proximity_block(symbol))
             except Exception:
                 pass
 

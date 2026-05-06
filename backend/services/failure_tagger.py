@@ -137,6 +137,12 @@ def tag_failure(prediction: dict, outcome: Optional[dict] = None) -> Optional[di
         tags.append("LOW_ADX_RANGING")
         sig_parts.append("low_adx")
 
+    # Macro event proximity — flag fails happening during/near high-impact news
+    macro_prox = factors.get("macro_event_proximity")
+    if macro_prox in ("active", "imminent_2h"):
+        tags.append("MACRO_EVENT_PROXIMITY")
+        sig_parts.append(f"macro_event={macro_prox}")
+
     # Resolution-derived tags
     if resolution == "tp1_3_hit_then_sl":
         tags.append("TP_GREED_REVERSAL")

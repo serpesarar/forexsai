@@ -539,13 +539,25 @@ function SimulationBlock({ proposal: p }: { proposal: Proposal }) {
 
   const dWin = sim.deltas.win_rate_pp;
   const dPnl = sim.deltas.pnl_pips ?? 0;
+  const dDrawdown = sim.deltas.max_drawdown_pp ?? 0;
+  const dPF = sim.deltas.profit_factor_delta;
   const blocked = sim.deltas.n_signals_blocked ?? 0;
   const blockedLoss = sim.deltas.blocked_was_loss ?? 0;
   const blockedWin = sim.deltas.blocked_was_win ?? 0;
-  const positive = (dWin ?? 0) > 0 && dPnl >= 0;
-  const accent = positive ? "#22C55E" : (dWin ?? 0) < 0 ? "#EF4444" : "#F97316";
+  const verdict = sim.deltas.verdict;
+  const ciLow = sim.simulated.ci_low_pct;
+  const ciHigh = sim.simulated.ci_high_pct;
+  // Verdict-driven coloring (multi-metric, not just win-rate)
+  const accent =
+    verdict === "unanimously_better" ? "#22C55E"
+    : verdict === "unanimously_worse" ? "#EF4444"
+    : verdict === "insignificant" ? "#6B7280"
+    : (dWin ?? 0) > 0 ? "#22C55E"
+    : (dWin ?? 0) < 0 ? "#EF4444"
+    : "#F97316";
   const winColor = (dWin ?? 0) > 0 ? "#86EFAC" : (dWin ?? 0) < 0 ? "#FCA5A5" : "#FDE68A";
   const pnlColor = dPnl > 0 ? "#86EFAC" : dPnl < 0 ? "#FCA5A5" : "#FDE68A";
+  const ddColor = dDrawdown < 0 ? "#86EFAC" : dDrawdown > 5 ? "#FCA5A5" : "#FDE68A";
 
   return (
     <div style={{
@@ -567,40 +579,69 @@ function SimulationBlock({ proposal: p }: { proposal: Proposal }) {
           {reSimMut.isPending ? "..." : "↻ Yenile"}
         </button>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, fontSize: 12 }}>
+      {verdict && (
+        <div style={{
+          marginBottom: 10, padding: "5px 10px",
+          background: accent + "22", borderRadius: 4, display: "inline-block",
+          fontSize: 10, fontWeight: 700, color: accent, textTransform: "uppercase",
+        }}>
+          Verdict: {verdict === "unanimously_better" ? "🟢 Tüm metrikler iyileşti"
+                   : verdict === "unanimously_worse" ? "🔴 Hiçbir metrik iyileşmedi"
+                   : verdict === "insignificant" ? "⚪ Anlamlı değişim yok"
+                   : verdict === "insufficient_data" ? "❓ Veri yetersiz"
+                   : "🟠 Karışık (bazısı iyi, bazısı kötü)"}
+        </div>
+      )}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, fontSize: 12 }}>
         <div>
           <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>Win-Rate Δ</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: winColor }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: winColor }}>
             {dWin == null ? "—" : `${dWin > 0 ? "+" : ""}${dWin.toFixed(2)}pp`}
           </div>
           <div style={{ fontSize: 10, color: "#6B7280" }}>
             {sim.original.win_rate ?? "—"}% → {sim.simulated.win_rate ?? "—"}%
           </div>
+          {ciLow != null && ciHigh != null && (
+            <div style={{ fontSize: 9, color: "#6B7280", marginTop: 2 }}>
+              CI95: [{ciLow.toFixed(1)}, {ciHigh.toFixed(1)}]%
+            </div>
+          )}
         </div>
         <div>
-          <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>P/L Δ (pips)</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: pnlColor }}>
+          <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>P/L Δ</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: pnlColor }}>
             {dPnl > 0 ? "+" : ""}{dPnl.toFixed(1)}
           </div>
           <div style={{ fontSize: 10, color: "#6B7280" }}>
-            {sim.original.total_pnl_pips ?? 0} → {sim.simulated.total_pnl_pips ?? 0}
+            pips: {sim.original.total_pnl_pips ?? 0} → {sim.simulated.total_pnl_pips ?? 0}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>Max DD Δ</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: ddColor }}>
+            {dDrawdown > 0 ? "+" : ""}{dDrawdown.toFixed(1)}
+          </div>
+          <div style={{ fontSize: 10, color: "#6B7280" }}>
+            pips: {sim.original.max_drawdown_pips ?? 0} → {sim.simulated.max_drawdown_pips ?? 0}
           </div>
         </div>
         <div>
           <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>Blocked</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#E5E7EB" }}>{blocked}</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#E5E7EB" }}>{blocked}</div>
           <div style={{ fontSize: 10, color: "#6B7280" }}>
-            <span style={{ color: "#86EFAC" }}>{blockedLoss} fail önlendi</span>
+            <span style={{ color: "#86EFAC" }}>{blockedLoss} fail</span>
             {" · "}
-            <span style={{ color: "#FCA5A5" }}>{blockedWin} win kayıp</span>
+            <span style={{ color: "#FCA5A5" }}>{blockedWin} win</span>
           </div>
         </div>
         <div>
           <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>Sample</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#E5E7EB" }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#E5E7EB" }}>
             {sim.original.n_signals ?? 0}
           </div>
-          <div style={{ fontSize: 10, color: "#6B7280" }}>signals replayed</div>
+          <div style={{ fontSize: 10, color: "#6B7280" }}>
+            {dPF != null ? `PF Δ ${dPF > 0 ? "+" : ""}${dPF.toFixed(2)}` : "signals replayed"}
+          </div>
         </div>
       </div>
       {sim.fixes_skipped?.length > 0 && (

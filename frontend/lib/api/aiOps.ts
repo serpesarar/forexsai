@@ -13,25 +13,76 @@ export interface ProposedFix {
   risk: "low" | "medium" | "high";
 }
 
+export interface MetricBlock {
+  n_signals?: number;
+  n_resolved?: number;
+  n_wins?: number;
+  win_rate?: number | null;
+  total_pnl_pips?: number;
+  avg_pnl_pips?: number | null;
+  max_drawdown_pips?: number;
+  ci_low_pct?: number | null;
+  ci_high_pct?: number | null;
+  profit_factor?: number | null;
+}
+
 export interface SimulatedMetric {
   status: "ok" | "manual_review_required" | "error";
   window_days: number;
-  original: { n_signals?: number; n_resolved?: number; n_wins?: number;
-              win_rate?: number | null; total_pnl_pips?: number; avg_pnl_pips?: number | null };
-  simulated: { n_signals?: number; n_resolved?: number; n_wins?: number;
-               win_rate?: number | null; total_pnl_pips?: number; avg_pnl_pips?: number | null };
+  original: MetricBlock;
+  simulated: MetricBlock;
   deltas: {
     win_rate_pp?: number | null;
     pnl_pips?: number;
+    max_drawdown_pp?: number;
+    profit_factor_delta?: number | null;
     n_signals_blocked?: number;
     blocked_pnl_avoided?: number;
     blocked_was_loss?: number;
     blocked_was_win?: number;
+    verdict?: "unanimously_better" | "mixed" | "unanimously_worse" | "insignificant" | "insufficient_data";
   };
   fixes_evaluated: { type: string; description: string; n_blocked: number; block_rate_pct: number }[];
   fixes_skipped: { type: string; description: string; reason: string }[];
   error?: string | null;
   simulated_at: string;
+}
+
+export interface LiveTrackingMetric {
+  started_at: string;
+  checked_days: number;
+  daily_snapshots: Array<{
+    checked_at: string;
+    age_days: number;
+    n_signals: number;
+    win_rate: number | null;
+    total_pnl_pips: number;
+    max_drawdown_pips: number;
+    ci_low_pct: number | null;
+    ci_high_pct: number | null;
+  }>;
+  overall: MetricBlock;
+  vs_simulation: {
+    sim_winrate_delta: number | null;
+    live_winrate_delta: number | null;
+    divergence_factor: number | null;
+  };
+  status: "tracking" | "confirmed" | "degraded" | "degraded_drawdown" | "insufficient_data";
+}
+
+export interface TrackedProposal {
+  id: string;
+  symbol: string;
+  model_type: string;
+  severity: Severity;
+  root_cause: string | null;
+  simulated_metric: SimulatedMetric | null;
+  live_tracking_metric: LiveTrackingMetric | null;
+  live_tracking_started_at: string | null;
+  live_tracking_last_check: string | null;
+  rollback_recommended: boolean | null;
+  rollback_recommendation_reason: string | null;
+  reviewed_at: string | null;
 }
 
 export interface Proposal {
@@ -182,4 +233,7 @@ export const aiOps = {
     post<{ ok: boolean; status: string; days: number; note: string }>(
       `/api/ai-ops/pattern-mining/run?days=${days}`, {}
     ),
+  listTracked: () => get<{ tracked: TrackedProposal[] }>("/api/ai-ops/proposals/tracked"),
+  checkLive: (id: string) =>
+    post<{ ok: boolean; result: any }>(`/api/ai-ops/proposals/${id}/check-live`, {}),
 };

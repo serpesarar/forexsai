@@ -132,6 +132,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"❌ Pattern mining cron başlatılamadı: {e}")
 
+    # 2.9 Post-deploy monitor (daily live-vs-simulation tracking for implemented proposals)
+    try:
+        from services.post_deploy_monitor import daily_loop as post_deploy_loop
+        asyncio.create_task(post_deploy_loop())
+        print("✅ Post-deploy monitor başlatıldı (daily proposal tracking)")
+    except Exception as e:
+        print(f"❌ Post-deploy monitor başlatılamadı: {e}")
+
     # 3. PULSE + EMEL SCHEDULER (Doğrudan Başlat - 15dk'da bir)
     try:
         from services.background_scheduler import log_pulse_signals_if_needed
