@@ -11,7 +11,11 @@ from utils.market_hours import get_new_york_market_hours_label, is_new_york_mark
 
 logger = logging.getLogger(__name__)
 
-DEEPSEEK_MODEL = "deepseek-reasoner"
+# DeepSeek's smartest reasoning model. Override via DEEPSEEK_MODEL env var
+# when a newer version (e.g. deepseek-r2 / deepseek-reasoner-v4) ships.
+# Flash/chat variants (`deepseek-chat`) are NOT used — analytical reasoning
+# matters for AI-Ops root-cause analysis.
+DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-reasoner")
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
 
 
