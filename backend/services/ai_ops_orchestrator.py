@@ -88,26 +88,81 @@ async def _fetch_outcome_map(client, prediction_ids: list[str]) -> dict[str, dic
 
 
 async def _persist_tags(client, tagged: list[dict]) -> int:
-    """Insert tagged failures into failure_analyses, skipping duplicates."""
-    from services.failure_tagger import parse_factors  # noqa
+    """Insert tagged failures into failure_analyses. Tries UPSERT first, then
+    falls back to plain INSERT with manual dedup if the UNIQUE constraint
+    is missing (back-compat with installs where the migration was incomplete)."""
     if not tagged:
         return 0
-    # Filter out internal keys
+    # Filter out internal keys (the underscore-prefixed ones the tagger uses)
     rows = []
     for t in tagged:
         rows.append({k: v for k, v in t.items() if not k.startswith("_")})
+
+    # Pre-check: is there already a row for any of these prediction_ids? (safe dedup)
+    existing_ids: set[str] = set()
+    try:
+        pred_ids = [r["prediction_id"] for r in rows if r.get("prediction_id")]
+        for i in range(0, len(pred_ids), 200):
+            chunk = pred_ids[i:i + 200]
+            r = client.table("failure_analyses").select("prediction_id").in_(
+                "prediction_id", chunk)
+            res = r.execute() if hasattr(r, "execute") else r
+            data = res.get("data") if isinstance(res, dict) else getattr(res, "data", []) or []
+            for row in (data or []):
+                if row.get("prediction_id"):
+                    existing_ids.add(row["prediction_id"])
+    except Exception as e:
+        logger.warning("[ai_ops] dedup pre-check failed (will rely on DB constraint): %s", e)
+
+    fresh_rows = [r for r in rows if r.get("prediction_id") not in existing_ids]
+    if not fresh_rows:
+        logger.info("[ai_ops] all %d tagged failures already in failure_analyses", len(rows))
+        return 0
+
     inserted = 0
-    for i in range(0, len(rows), 200):
-        chunk = rows[i:i + 200]
+    upsert_failed = False
+    for i in range(0, len(fresh_rows), 200):
+        chunk = fresh_rows[i:i + 200]
         try:
             r = client.table("failure_analyses").upsert(chunk, on_conflict="prediction_id")
             res = r.execute() if hasattr(r, "execute") else r
-            if isinstance(res, dict) and res.get("error"):
-                logger.warning("[ai_ops] failure_analyses upsert err: %s", res["error"])
-            else:
-                inserted += len(chunk)
+            err = res.get("error") if isinstance(res, dict) else None
+            if err:
+                logger.warning("[ai_ops] upsert err on chunk %d (will fallback to insert): %s",
+                               i, err)
+                upsert_failed = True
+                break
+            inserted += len(chunk)
         except Exception as e:
-            logger.warning("[ai_ops] failure_analyses chunk %d failed: %s", i, e)
+            err_str = str(e)
+            if "unique" in err_str.lower() or "constraint" in err_str.lower() or "on_conflict" in err_str.lower():
+                logger.warning("[ai_ops] UNIQUE constraint missing on failure_analyses.prediction_id "
+                               "— falling back to plain INSERT (apply migration "
+                               "20260430_ai_ops_proposals.sql to enable proper UPSERT). Error: %s",
+                               err_str[:200])
+                upsert_failed = True
+                break
+            logger.warning("[ai_ops] failure_analyses upsert chunk %d unexpected error: %s",
+                           i, err_str[:200])
+
+    if upsert_failed:
+        # Plain insert (we already deduped above)
+        inserted = 0
+        for i in range(0, len(fresh_rows), 200):
+            chunk = fresh_rows[i:i + 200]
+            try:
+                r = client.table("failure_analyses").insert(chunk)
+                res = r.execute() if hasattr(r, "execute") else r
+                err = res.get("error") if isinstance(res, dict) else None
+                if err:
+                    logger.warning("[ai_ops] fallback insert err on chunk %d: %s", i, err)
+                else:
+                    inserted += len(chunk)
+            except Exception as e:
+                logger.warning("[ai_ops] fallback insert chunk %d: %s", i, str(e)[:200])
+
+    logger.info("[ai_ops] failure_analyses persisted: %d (skipped %d existing)",
+                inserted, len(rows) - len(fresh_rows))
     return inserted
 
 

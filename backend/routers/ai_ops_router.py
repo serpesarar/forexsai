@@ -532,21 +532,24 @@ async def diagnostic():
             })
 
     # 4) Recent prediction_logs activity (proves system is producing signals)
+    # Counting via fetch+len works on the older safe client wrapper that doesn't
+    # accept count="exact" — fetch a bounded sample instead.
     if is_db_available():
         client = get_supabase_client()
         try:
             from datetime import timedelta
             since = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
-            r = client.table("prediction_logs").select(
-                "id", count="exact"
-            ).gte("created_at", since).limit(1)
+            r = client.table("prediction_logs").select("id").gte(
+                "created_at", since).limit(5000)
             res = r.execute() if hasattr(r, "execute") else r
-            count = res.get("count") if isinstance(res, dict) else getattr(res, "count", None)
+            data = res.get("data") if isinstance(res, dict) else getattr(res, "data", []) or []
+            n = len(data or [])
             out["checks"].append({
                 "name": "recent_prediction_logs_7d",
-                "ok": (count or 0) > 0,
-                "count": count or 0,
-                "hint": "If 0, the trading system itself isn't producing signals." if not count else None,
+                "ok": n > 0,
+                "count_sampled": n,
+                "note": "sample bounded at 5000 — actual could be higher" if n == 5000 else None,
+                "hint": "If 0, the trading system itself isn't producing signals." if n == 0 else None,
             })
         except Exception as e:
             out["checks"].append({"name": "recent_prediction_logs_7d", "ok": False, "error": str(e)[:200]})
@@ -555,17 +558,20 @@ async def diagnostic():
     if is_db_available():
         client = get_supabase_client()
         try:
-            r = client.table("failure_analyses").select("id", count="exact").limit(1)
+            r = client.table("failure_analyses").select("id").limit(1000)
             res = r.execute() if hasattr(r, "execute") else r
-            count = res.get("count") if isinstance(res, dict) else getattr(res, "count", None)
+            data = res.get("data") if isinstance(res, dict) else getattr(res, "data", []) or []
+            n = len(data or [])
             out["checks"].append({
                 "name": "failure_analyses_total_rows",
-                "ok": (count or 0) > 0,
-                "count": count or 0,
+                "ok": n > 0,
+                "count_sampled": n,
                 "hint": ("Orchestrator hasn't tagged any failures. Likely cause: "
-                         "migration 20260430_ai_ops_proposals.sql not applied "
-                         "(failure_analyses_prediction_id_unique constraint missing → "
-                         "UPSERT fails silently)." if not count else None),
+                         "failure_analyses_prediction_id_unique constraint missing — "
+                         "UPSERT silently fails. Try clusters and proposals are still "
+                         "produced via in-memory clustering, so this is non-blocking, "
+                         "but historical tag retrieval will be empty."
+                         if n == 0 else None),
             })
         except Exception as e:
             out["checks"].append({"name": "failure_analyses_total_rows", "ok": False, "error": str(e)[:200]})
