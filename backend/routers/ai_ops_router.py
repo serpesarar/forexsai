@@ -644,6 +644,92 @@ async def list_tracked_proposals():
         raise HTTPException(500, str(e))
 
 
+@router.get("/tp-sl/recommendations")
+async def list_tp_sl_recommendations(
+    symbol: Optional[str] = None,
+    status: Optional[str] = "pending",
+    severity: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=500),
+):
+    """Latest TP/SL recommendations from the optimizer."""
+    if not is_db_available():
+        raise HTTPException(503, "supabase unavailable")
+    client = get_supabase_client()
+    try:
+        q = client.table("tp_sl_recommendations").select("*").order(
+            "created_at", desc=True).limit(limit)
+        if symbol:
+            q = q.eq("symbol", symbol)
+        if status:
+            q = q.eq("status", status)
+        if severity:
+            q = q.eq("severity", severity)
+        return {"recommendations": _row_data(q)}
+    except Exception as e:
+        logger.exception("list_tp_sl failed: %s", e)
+        raise HTTPException(500, str(e))
+
+
+@router.post("/tp-sl/run")
+async def trigger_tp_sl_analysis(bg: BackgroundTasks, days: int = 60,
+                                   symbol: Optional[str] = None):
+    """Manual trigger — analyze TP/SL for one symbol or all."""
+    try:
+        from services.tp_sl_optimizer import analyze_tp_sl, analyze_all_combinations
+    except ImportError as e:
+        raise HTTPException(500, f"tp_sl_optimizer unavailable: {e}")
+
+    async def _run():
+        try:
+            if symbol:
+                for direction in ("BUY", "SELL"):
+                    await analyze_tp_sl(symbol, direction=direction, days=days)
+            else:
+                await analyze_all_combinations(days=days)
+        except Exception as e:
+            logger.exception("[tp_sl] manual run failed: %s", e)
+
+    bg.add_task(_run)
+    return {"ok": True, "status": "scheduled", "days": days, "symbol": symbol or "all"}
+
+
+@router.patch("/tp-sl/recommendations/{rec_id}/apply")
+async def mark_tp_sl_applied(rec_id: str, body: dict):
+    """Mark a recommendation as applied. After updating target_config.py manually
+    or via PR, hit this endpoint so it stops appearing in pending."""
+    if not is_db_available():
+        raise HTTPException(503, "supabase unavailable")
+    client = get_supabase_client()
+    try:
+        client.table("tp_sl_recommendations").update({
+            "status": "applied",
+            "applied_at": datetime.now(timezone.utc).isoformat(),
+            "reviewed_by": body.get("reviewer") or "user",
+            "notes": body.get("notes"),
+        }).eq("id", rec_id)
+        return {"ok": True}
+    except Exception as e:
+        logger.exception("mark_tp_sl_applied failed: %s", e)
+        raise HTTPException(500, str(e))
+
+
+@router.patch("/tp-sl/recommendations/{rec_id}/reject")
+async def reject_tp_sl(rec_id: str, body: dict):
+    if not is_db_available():
+        raise HTTPException(503, "supabase unavailable")
+    client = get_supabase_client()
+    try:
+        client.table("tp_sl_recommendations").update({
+            "status": "rejected",
+            "reviewed_by": body.get("reviewer") or "user",
+            "notes": body.get("reason"),
+            "reviewed_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("id", rec_id)
+        return {"ok": True}
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
 @router.get("/clusters")
 async def list_clusters(
     symbol: Optional[str] = None,

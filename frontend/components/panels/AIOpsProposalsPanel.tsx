@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   aiOps, type Proposal, type Severity, type ProposalStatus, type SimulatedMetric,
+  type TpSlRecommendation,
 } from "../../lib/api/aiOps";
 
 const SEVERITY_COLOR: Record<Severity, { bg: string; border: string; text: string; emoji: string }> = {
@@ -115,6 +116,9 @@ export default function AIOpsProposalsPanel() {
         triggering={triggerMine.isPending}
       />
 
+      {/* TP/SL Optimizer Section */}
+      <TpSlOptimizerSection />
+
       {/* Stats row */}
       {stats.data?.available && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
@@ -198,6 +202,255 @@ export default function AIOpsProposalsPanel() {
     </div>
   );
 }
+
+function TpSlOptimizerSection() {
+  const qc = useQueryClient();
+  const [showAll, setShowAll] = useState(false);
+  const list = useQuery({
+    queryKey: ["tp-sl-list", showAll],
+    queryFn: () => aiOps.tpSlList({ status: showAll ? undefined : "pending", limit: 60 }),
+    refetchInterval: 120000,
+  });
+  const runMut = useMutation({
+    mutationFn: () => aiOps.tpSlRun(60),
+    onSuccess: () => alert("TP/SL analizi tetiklendi — ~1 dk içinde sonuçlar görünür."),
+  });
+  const applyMut = useMutation({
+    mutationFn: (id: string) => aiOps.tpSlApply(id, { reviewer: "user" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tp-sl-list"] }),
+  });
+  const rejectMut = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      aiOps.tpSlReject(id, { reason, reviewer: "user" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tp-sl-list"] }),
+  });
+
+  const recs = list.data?.recommendations ?? [];
+  // Filter to material recommendations (severity != none) for default view
+  const visible = showAll ? recs : recs.filter(r => r.severity !== "none");
+
+  return (
+    <div style={{
+      marginBottom: 16, padding: 14, background: "#0F1623",
+      borderRadius: 8, border: "1px solid #1F2937",
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div>
+          <div style={{ fontSize: 11, color: "#6B7280", textTransform: "uppercase", letterSpacing: 0.5 }}>
+            🎯 TP/SL Optimizasyon Önerileri
+          </div>
+          <div style={{ fontSize: 13, color: "#E5E7EB", marginTop: 4 }}>
+            Modellerin geçmiş MFE/MAE dağılımına göre **optimal TP/SL** çiftleri.
+            {visible.length > 0 ? ` ${visible.length} öneri.` : " Henüz pending öneri yok."}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={() => setShowAll(!showAll)}
+            style={{
+              background: "transparent", color: "#9CA3AF",
+              border: "1px solid #374151", padding: "6px 10px",
+              borderRadius: 4, cursor: "pointer", fontSize: 11,
+            }}
+          >
+            {showAll ? "Sadece Aksiyonlu" : "Tümünü Göster"}
+          </button>
+          <button
+            onClick={() => runMut.mutate()}
+            disabled={runMut.isPending}
+            style={{
+              background: "#4F8CFF", color: "#fff", border: "none",
+              padding: "6px 12px", borderRadius: 4, cursor: "pointer", fontSize: 11,
+              opacity: runMut.isPending ? 0.5 : 1,
+            }}
+          >
+            {runMut.isPending ? "..." : "Şimdi Analiz Et"}
+          </button>
+        </div>
+      </div>
+
+      {visible.length === 0 ? (
+        <div style={{ padding: 20, textAlign: "center", color: "#6B7280", fontSize: 12 }}>
+          {list.isLoading ? "Yükleniyor..." :
+            "Aksiyonlu öneri yok. Sistem yeterli sample biriktirdiğinde optimal TP/SL'leri burada gösterir."}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {visible.map(r => (
+            <TpSlRecCard
+              key={r.id}
+              rec={r}
+              onApply={() => applyMut.mutate(r.id)}
+              onReject={() => {
+                const reason = prompt("Reddetme nedeni:") || "";
+                rejectMut.mutate({ id: r.id, reason });
+              }}
+              isWorking={applyMut.isPending || rejectMut.isPending}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TpSlRecCard({ rec, onApply, onReject, isWorking }: {
+  rec: TpSlRecommendation;
+  onApply: () => void;
+  onReject: () => void;
+  isWorking: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const sevColor: Record<string, string> = {
+    critical: "#EF4444", high: "#F97316", medium: "#EAB308",
+    low: "#22C55E", none: "#6B7280",
+  };
+  const accent = sevColor[rec.severity] ?? "#6B7280";
+  const tpChange = rec.recommended_tp_pips - (rec.current_tp_pips ?? 0);
+  const slChange = rec.recommended_sl_pips - (rec.current_sl_pips ?? 0);
+  const pnlDelta = rec.expected_pnl_delta_pips ?? 0;
+  const dirIcon = rec.direction === "BUY" ? "🔺" : rec.direction === "SELL" ? "🔻" : "↕";
+
+  return (
+    <div style={{
+      background: "#141C2B", borderRadius: 6,
+      border: `1px solid ${accent}33`, borderLeft: `3px solid ${accent}`,
+      overflow: "hidden",
+    }}>
+      <div onClick={() => setExpanded(!expanded)} style={{
+        cursor: "pointer", padding: "10px 14px",
+        display: "grid",
+        gridTemplateColumns: "auto 1fr auto auto auto auto",
+        gap: 12, alignItems: "center", fontSize: 12,
+      }}>
+        <span style={{
+          padding: "2px 8px", borderRadius: 3, fontSize: 9, fontWeight: 700,
+          background: accent + "22", color: accent, textTransform: "uppercase",
+        }}>
+          {rec.severity}
+        </span>
+        <span style={{ color: "#E5E7EB", fontWeight: 500 }}>
+          {rec.symbol} {dirIcon} <span style={{ color: "#6B7280" }}>{rec.direction ?? "BOTH"}</span>
+        </span>
+        <span style={{ fontFamily: "monospace", color: "#9CA3AF" }}>
+          TP: <span style={{ color: "#FCA5A5" }}>{rec.current_tp_pips ?? "—"}</span> →{" "}
+          <span style={{ color: "#86EFAC" }}>{rec.recommended_tp_pips}</span>
+          {tpChange !== 0 && (
+            <span style={{ marginLeft: 4, color: tpChange > 0 ? "#86EFAC" : "#FCA5A5" }}>
+              ({tpChange > 0 ? "+" : ""}{tpChange.toFixed(0)})
+            </span>
+          )}
+        </span>
+        <span style={{ fontFamily: "monospace", color: "#9CA3AF" }}>
+          SL: <span style={{ color: "#FCA5A5" }}>{rec.current_sl_pips ?? "—"}</span> →{" "}
+          <span style={{ color: "#86EFAC" }}>{rec.recommended_sl_pips}</span>
+          {slChange !== 0 && (
+            <span style={{ marginLeft: 4, color: slChange < 0 ? "#86EFAC" : "#FCA5A5" }}>
+              ({slChange > 0 ? "+" : ""}{slChange.toFixed(0)})
+            </span>
+          )}
+        </span>
+        <span style={{ color: pnlDelta > 0 ? "#86EFAC" : "#FCA5A5", fontWeight: 600 }}>
+          {pnlDelta > 0 ? "+" : ""}{pnlDelta.toFixed(0)} pips
+        </span>
+        <span style={{ color: "#6B7280", fontSize: 10 }}>n={rec.sample_size}</span>
+      </div>
+
+      {expanded && (
+        <div style={{ padding: "10px 14px 14px", borderTop: "1px solid #1F2937", fontSize: 11 }}>
+          {rec.reasoning && (
+            <div style={{ marginBottom: 10, color: "#D1D5DB", lineHeight: 1.6 }}>
+              💬 {rec.reasoning}
+            </div>
+          )}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 10 }}>
+            <DistBlock title="MFE Dağılımı" stats={rec.mfe_distribution} positive />
+            <DistBlock title="MAE Dağılımı" stats={rec.mae_distribution} positive={false} />
+          </div>
+          {rec.grid_top5 && rec.grid_top5.length > 0 && (
+            <>
+              <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase",
+                            marginBottom: 4, marginTop: 8 }}>
+                🏆 Grid Search Top 5
+              </div>
+              <div style={{ background: "#0B0F17", padding: 6, borderRadius: 4 }}>
+                {rec.grid_top5.map((g, i) => (
+                  <div key={i} style={{
+                    display: "flex", justifyContent: "space-between", padding: "3px 0",
+                    fontFamily: "monospace", fontSize: 11,
+                    color: i === 0 ? "#86EFAC" : "#9CA3AF",
+                  }}>
+                    <span>#{i + 1} TP={g.tp} SL={g.sl} R/R={g.rr_ratio ?? "—"}</span>
+                    <span>net={g.net_pnl > 0 ? "+" : ""}{g.net_pnl} pips · WR {g.win_rate ?? "—"}%</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          {rec.status === "pending" && (
+            <div style={{ display: "flex", gap: 8, marginTop: 12, paddingTop: 10,
+                          borderTop: "1px solid #1F2937" }}>
+              <button
+                disabled={isWorking}
+                onClick={onApply}
+                style={{
+                  background: "#22C55E", color: "#000", border: "none",
+                  padding: "6px 14px", borderRadius: 4, cursor: "pointer", fontSize: 11, fontWeight: 600,
+                  opacity: isWorking ? 0.5 : 1,
+                }}
+              >
+                ✓ Uyguladım (target_config.py'i güncelledim)
+              </button>
+              <button
+                disabled={isWorking}
+                onClick={onReject}
+                style={{
+                  background: "transparent", color: "#FCA5A5",
+                  border: "1px solid #7F1D1D", padding: "6px 14px",
+                  borderRadius: 4, cursor: "pointer", fontSize: 11,
+                }}
+              >
+                ✗ Reddet
+              </button>
+            </div>
+          )}
+          {rec.status !== "pending" && (
+            <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #1F2937",
+                          fontSize: 11, color: "#6B7280" }}>
+              Status: <b style={{ color: "#9CA3AF" }}>{rec.status}</b>
+              {rec.applied_at && ` · Uygulandı: ${new Date(rec.applied_at).toLocaleString("tr-TR")}`}
+              {rec.reviewed_at && ` · İnceleme: ${new Date(rec.reviewed_at).toLocaleString("tr-TR")}`}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DistBlock({ title, stats, positive }: {
+  title: string; stats: Record<string, number>; positive: boolean;
+}) {
+  const color = positive ? "#86EFAC" : "#FCA5A5";
+  const keys = ["p25", "p50", "p70", "p80", "p90", "p95"];
+  return (
+    <div style={{ background: "#0B0F17", padding: 8, borderRadius: 4 }}>
+      <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", marginBottom: 4 }}>
+        {title}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4, fontSize: 11 }}>
+        {keys.map(k => (
+          <div key={k} style={{ color: "#9CA3AF" }}>
+            {k}: <span style={{ color, fontFamily: "monospace" }}>
+              {stats?.[k] != null ? stats[k].toFixed(0) : "—"}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 
 function PatternMiningStatusBadge({
   status, onTrigger, triggering,

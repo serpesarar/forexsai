@@ -176,6 +176,36 @@ async function post<T>(endpoint: string, body: object): Promise<T> {
   return r.json() as Promise<T>;
 }
 
+export interface TpSlRecommendation {
+  id: string;
+  symbol: string;
+  model_type: string | null;
+  direction: "BUY" | "SELL" | null;
+  timeframe: string | null;
+  sample_size: number;
+  analysis_window_days: number;
+  current_tp_pips: number | null;
+  current_sl_pips: number | null;
+  current_net_pnl_pips: number | null;
+  current_win_rate: number | null;
+  recommended_tp_pips: number;
+  recommended_sl_pips: number;
+  recommended_net_pnl_pips: number | null;
+  recommended_win_rate: number | null;
+  expected_pnl_delta_pips: number | null;
+  expected_winrate_delta_pp: number | null;
+  mfe_distribution: Record<string, number>;
+  mae_distribution: Record<string, number>;
+  grid_top5: Array<{ tp: number; sl: number; net_pnl: number; win_rate: number | null; rr_ratio: number | null }>;
+  status: "pending" | "reviewed" | "applied" | "rejected";
+  severity: "critical" | "high" | "medium" | "low" | "none";
+  reasoning: string | null;
+  reviewed_at: string | null;
+  applied_at: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
 export interface PatternMiningStatus {
   local_file_exists: boolean;
   local_generated_at?: string;
@@ -242,6 +272,20 @@ export const aiOps = {
     Object.entries(params).forEach(([k, v]) => v != null && q.set(k, String(v)));
     return get<{ clusters: FailureCluster[] }>(`/api/ai-ops/clusters?${q}`);
   },
+  // TP/SL Optimizer
+  tpSlList: (params: { symbol?: string; status?: string; severity?: string; limit?: number } = {}) => {
+    const q = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => v != null && q.set(k, String(v)));
+    return get<{ recommendations: TpSlRecommendation[] }>(`/api/ai-ops/tp-sl/recommendations?${q}`);
+  },
+  tpSlRun: (days = 60, symbol?: string) =>
+    post<{ ok: boolean; status: string; days: number; symbol: string }>(
+      `/api/ai-ops/tp-sl/run?days=${days}${symbol ? `&symbol=${encodeURIComponent(symbol)}` : ""}`, {}
+    ),
+  tpSlApply: (id: string, body: { reviewer?: string; notes?: string }) =>
+    patch<{ ok: boolean }>(`/api/ai-ops/tp-sl/recommendations/${id}/apply`, body),
+  tpSlReject: (id: string, body: { reviewer?: string; reason?: string }) =>
+    patch<{ ok: boolean }>(`/api/ai-ops/tp-sl/recommendations/${id}/reject`, body),
   miningStatus: () => get<PatternMiningStatus>("/api/ai-ops/pattern-mining/status"),
   triggerMining: (days = 60) =>
     post<{ ok: boolean; status: string; days: number; note: string }>(

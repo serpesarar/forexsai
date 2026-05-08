@@ -140,6 +140,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"❌ Post-deploy monitor başlatılamadı: {e}")
 
+    # 2.10 TP/SL optimizer (daily MFE/MAE grid search → optimal TP/SL recommendations)
+    try:
+        from services.tp_sl_optimizer import daily_loop as tp_sl_loop
+        asyncio.create_task(tp_sl_loop())
+        print("✅ TP/SL optimizer başlatıldı (daily MFE/MAE grid search)")
+    except Exception as e:
+        print(f"❌ TP/SL optimizer başlatılamadı: {e}")
+
     # 3. PULSE + EMEL SCHEDULER (Doğrudan Başlat - 15dk'da bir)
     try:
         from services.background_scheduler import log_pulse_signals_if_needed
