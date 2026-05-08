@@ -321,7 +321,9 @@ async def approve_proposal(proposal_id: str, payload: ApproveRequest):
         }
         if issue_url:
             update["pr_url"] = issue_url   # column is pr_url but stores issue URL too
-        _exec(client.table("improvement_proposals").update(update).eq("id", proposal_id))
+        # The project's supabase wrapper requires .eq() BEFORE .update() (custom
+        # API differs from supabase-py upstream). Order is critical.
+        _exec(client.table("improvement_proposals").eq("id", proposal_id).update(update))
 
         return {"ok": True, "status": "approved", "issue_url": issue_url}
     except HTTPException:
@@ -350,7 +352,7 @@ async def reject_proposal(proposal_id: str, payload: RejectRequest):
             "rollback_reason": payload.reason,
             "updated_at": _now_iso(),
         }
-        _exec(client.table("improvement_proposals").update(update).eq("id", proposal_id))
+        _exec(client.table("improvement_proposals").eq("id", proposal_id).update(update))
         return {"ok": True, "status": "rejected"}
     except HTTPException:
         raise

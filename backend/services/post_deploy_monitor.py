@@ -250,7 +250,8 @@ async def check_proposal(proposal: dict) -> dict:
         update["rollback_recommended"] = True
         update["rollback_recommendation_reason"] = rollback_reason
     try:
-        client.table("improvement_proposals").update(update).eq("id", pid)
+        # Custom supabase wrapper expects .eq() BEFORE .update() — see ai_ops_router.
+        client.table("improvement_proposals").eq("id", pid).update(update)
     except Exception as e:
         logger.exception("[monitor] update failed: %s", e)
 

@@ -540,10 +540,11 @@ async def simulate_and_persist(proposal_id: str, window_days: int = DEFAULT_WIND
     try:
         client = get_supabase_client()
         if client is not None:
-            client.table("improvement_proposals").update({
+            # Custom wrapper: .eq() comes BEFORE .update()
+            client.table("improvement_proposals").eq("id", proposal_id).update({
                 "simulated_metric": payload,
                 "simulated_at": payload["simulated_at"],
-            }).eq("id", proposal_id)
+            })
     except Exception as e:
         logger.exception("[simulator] persist failed: %s", e)
         payload["persist_error"] = str(e)

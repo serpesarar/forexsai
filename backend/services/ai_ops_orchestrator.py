@@ -499,11 +499,11 @@ async def orchestrate_ai_ops(window_days: int = DEFAULT_WINDOW_DAYS) -> dict:
         prop_id = await _persist_proposal(client, cluster.get("id"), cluster, llm_out)
         if prop_id:
             proposals += 1
-            # Mark cluster as sent
+            # Mark cluster as sent (custom wrapper: .eq() before .update())
             try:
-                client.table("failure_clusters").update(
+                client.table("failure_clusters").eq("id", cluster["id"]).update(
                     {"sent_to_llm": True, "proposal_id": prop_id}
-                ).eq("id", cluster["id"])
+                )
             except Exception:
                 pass
             # Counterfactual simulation — fire-and-forget; persists into the same row
