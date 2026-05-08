@@ -196,7 +196,17 @@ async def get_proposal(proposal_id: str):
 # ---------------------------------------------------------------------------
 
 GITHUB_REPO = os.getenv("GITHUB_REPO", "serpesarar/forexsai")  # owner/repo
-GITHUB_TOKEN_ENV = "GITHUB_TOKEN"
+# Multiple common env var names — Railway / .env / shell may use any of these
+GITHUB_TOKEN_ENV_NAMES = ("GITHUB_TOKEN", "GH_TOKEN", "GITHUB_PAT", "GITHUB_API_TOKEN")
+
+
+def _resolve_github_token() -> tuple[Optional[str], str]:
+    """Walk through accepted env var names, return (token, source_name)."""
+    for name in GITHUB_TOKEN_ENV_NAMES:
+        v = os.environ.get(name)
+        if v and v.strip():
+            return v.strip(), name
+    return None, ""
 
 
 def _format_issue_body(prop: dict, cluster: Optional[dict]) -> tuple[str, list[str]]:
@@ -254,12 +264,16 @@ def _format_issue_body(prop: dict, cluster: Optional[dict]) -> tuple[str, list[s
     return "\n".join(body), labels
 
 
-async def _create_github_issue(prop: dict, cluster: Optional[dict]) -> Optional[str]:
-    """Create a GitHub issue describing the proposal. Returns the issue HTML URL or None."""
-    token = os.environ.get(GITHUB_TOKEN_ENV)
+async def _create_github_issue(prop: dict, cluster: Optional[dict]) -> dict:
+    """Create a GitHub issue describing the proposal. Returns:
+        {ok: True, url: str}                       on success
+        {ok: False, reason: str, detail: str}      on failure (so caller can surface to UI)
+    """
+    token, token_source = _resolve_github_token()
     if not token:
-        logger.warning("[ai-ops] GITHUB_TOKEN missing — skipping issue creation")
-        return None
+        return {"ok": False, "reason": "no_token",
+                "detail": f"None of the env vars {list(GITHUB_TOKEN_ENV_NAMES)} are set on the backend. "
+                          f"Add GITHUB_TOKEN to Railway service env vars (not just .env) and redeploy."}
     title = (f"[AI-Ops] {(prop.get('severity') or 'medium').upper()} · "
              f"{prop['symbol']}/{prop['model_type']} — "
              f"{(prop.get('root_cause') or '')[:80]}")
@@ -276,11 +290,29 @@ async def _create_github_issue(prop: dict, cluster: Optional[dict]) -> Optional[
                 json={"title": title, "body": body, "labels": labels},
             )
         if r.status_code in (200, 201):
-            return r.json().get("html_url")
+            url = r.json().get("html_url")
+            return {"ok": True, "url": url, "token_source": token_source}
         logger.warning("[ai-ops] github issue create failed: %s %s", r.status_code, r.text[:300])
+        # Decode common GitHub errors
+        api_err = ""
+        try:
+            api_err = r.json().get("message", "")
+        except Exception:
+            api_err = r.text[:200]
+        reason = "github_api_error"
+        if r.status_code == 401:
+            reason = "token_invalid_or_expired"
+        elif r.status_code == 403:
+            reason = "token_lacks_issues_write_permission"
+        elif r.status_code == 404:
+            reason = "repo_not_found_or_token_no_access"
+        elif r.status_code == 422:
+            reason = "github_validation_error"
+        return {"ok": False, "reason": reason, "detail": f"{r.status_code}: {api_err}",
+                "repo": GITHUB_REPO, "token_source": token_source}
     except Exception as e:
         logger.exception("[ai-ops] github call failed: %s", e)
-    return None
+        return {"ok": False, "reason": "network_error", "detail": str(e)[:200]}
 
 
 # ---------------------------------------------------------------------------
@@ -304,14 +336,19 @@ async def approve_proposal(proposal_id: str, payload: ApproveRequest):
             raise HTTPException(409, f"cannot approve from status={prop.get('status')}")
 
         # Optional issue creation
-        issue_url = None
+        issue_url: Optional[str] = None
+        github_error: Optional[dict] = None
         if payload.create_github_issue:
             cluster = None
             if prop.get("cluster_id"):
                 crows = _row_data(client.table("failure_clusters")
                                   .select("*").eq("id", prop["cluster_id"]).limit(1))
                 cluster = crows[0] if crows else None
-            issue_url = await _create_github_issue(prop, cluster)
+            gh_result = await _create_github_issue(prop, cluster)
+            if gh_result.get("ok"):
+                issue_url = gh_result.get("url")
+            else:
+                github_error = gh_result
 
         update = {
             "status": "approved",
@@ -325,7 +362,11 @@ async def approve_proposal(proposal_id: str, payload: ApproveRequest):
         # API differs from supabase-py upstream). Order is critical.
         _exec(client.table("improvement_proposals").eq("id", proposal_id).update(update))
 
-        return {"ok": True, "status": "approved", "issue_url": issue_url}
+        return {
+            "ok": True, "status": "approved",
+            "issue_url": issue_url,
+            "github_error": github_error,   # surfaces to UI when issue creation fails
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -629,6 +670,31 @@ async def diagnostic():
             })
         except Exception as e:
             out["checks"].append({"name": "orchestrator_last_run", "ok": False, "error": str(e)[:200]})
+
+    # 7) GitHub token presence (proposal approval needs this)
+    token, token_source = _resolve_github_token()
+    out["checks"].append({
+        "name": "github_token",
+        "ok": bool(token),
+        "found_in_env": token_source if token else None,
+        "scanned_env_names": list(GITHUB_TOKEN_ENV_NAMES),
+        "repo_target": GITHUB_REPO,
+        "hint": ("None of the scanned env vars are populated on this Railway service. "
+                 "Even if you set GITHUB_TOKEN in your local .env file, Railway needs "
+                 "it set as a SERVICE ENV VAR (Railway dashboard → Variables tab). "
+                 "After setting it, hit 'Redeploy' so the new env var is in process scope."
+                 if not token else None),
+    })
+
+    # 8) DeepSeek key presence (proposal generation needs this)
+    deep_key = os.environ.get("DEEP_SEEKR1") or os.environ.get("DEEPSEEK_API_KEY")
+    out["checks"].append({
+        "name": "deepseek_api_key",
+        "ok": bool(deep_key),
+        "model": os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro"),
+        "scanned_env_names": ["DEEP_SEEKR1", "DEEPSEEK_API_KEY"],
+        "hint": "Set DEEP_SEEKR1 (or DEEPSEEK_API_KEY) on Railway." if not deep_key else None,
+    })
 
     # Aggregate verdict
     failed = [c for c in out["checks"] if not c.get("ok")]

@@ -248,10 +248,12 @@ export const aiOps = {
       `/api/ai-ops/proposals/${id}`
     ),
   approve: (id: string, body: { reviewer?: string; create_github_issue?: boolean; note?: string }) =>
-    patch<{ ok: boolean; status: string; issue_url: string | null }>(
-      `/api/ai-ops/proposals/${id}/approve`,
-      body
-    ),
+    patch<{
+      ok: boolean;
+      status: string;
+      issue_url: string | null;
+      github_error: { reason: string; detail: string; repo?: string; token_source?: string } | null;
+    }>(`/api/ai-ops/proposals/${id}/approve`, body),
   reject: (id: string, body: { reviewer?: string; reason?: string }) =>
     patch<{ ok: boolean; status: string }>(`/api/ai-ops/proposals/${id}/reject`, body),
   simulate: (id: string, windowDays = 60) =>

@@ -64,8 +64,28 @@ export default function AIOpsProposalsPanel() {
       qc.invalidateQueries({ queryKey: ["ai-ops-stats"] });
       if (data.issue_url) {
         window.open(data.issue_url, "_blank");
+      } else if (data.github_error) {
+        const e = data.github_error;
+        const reasonHint: Record<string, string> = {
+          no_token: "Railway dashboard → Variables → GITHUB_TOKEN ekle, Redeploy bas.",
+          token_invalid_or_expired: "Token geçersiz veya süresi dolmuş — yenile.",
+          token_lacks_issues_write_permission:
+            "Token'da 'Issues: Read & Write' izni yok. Fine-grained PAT'a bu repo + Issues yetkisi ver.",
+          repo_not_found_or_token_no_access:
+            `Repo "${e.repo}" bulunamadı veya token bu repo'ya erişemiyor. GITHUB_REPO env var yanlış olabilir.`,
+          github_validation_error: "GitHub validation hatası — issue title/body sorunlu.",
+          network_error: "GitHub'a bağlanılamadı.",
+        };
+        const hint = reasonHint[e.reason] ?? "";
+        alert(
+          `Onaylandı, ama GitHub issue açılamadı.\n\n` +
+          `Sebep: ${e.reason}\n` +
+          `Detay: ${e.detail}\n` +
+          (e.token_source ? `Token bulundu (${e.token_source}) ama API çağrısı reddedildi.\n` : "Token hiç bulunamadı.\n") +
+          `\nÇözüm: ${hint}`
+        );
       } else {
-        alert("Onaylandı. GitHub issue açılamadı (GITHUB_TOKEN backend env'de eksik olabilir).");
+        alert("Onaylandı. (GitHub issue açılmadı, sebep bilinmiyor)");
       }
     },
     onError: (e: any) => alert(`Onay başarısız: ${e?.message ?? "bilinmiyor"}`),
