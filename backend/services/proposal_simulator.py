@@ -31,6 +31,7 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 DEFAULT_WINDOW_DAYS = 60
+DEFAULT_TRAINING_WINDOW_DAYS = 7   # The window DeepSeek saw when proposing — in-sample
 MAX_SIGNALS = 10000  # safety cap
 
 # Operators allowed in filter predicates — no eval, deterministic mapping
@@ -229,8 +230,15 @@ def _compute_metrics(df: pd.DataFrame, label: str) -> dict:
 # ---------------------------------------------------------------------------
 
 async def _fetch_signals(client, symbol: str, model_type: Optional[str],
-                          window_days: int) -> pd.DataFrame:
-    since = datetime.now(timezone.utc) - timedelta(days=window_days)
+                          window_days: int,
+                          since_override: Optional[datetime] = None,
+                          until_override: Optional[datetime] = None) -> pd.DataFrame:
+    """Pull resolved signals. By default last `window_days`. Pass since/until
+    to bracket a specific range (used by walk-forward in/out-of-sample split)."""
+    if since_override is not None:
+        since = since_override
+    else:
+        since = datetime.now(timezone.utc) - timedelta(days=window_days)
     since_iso = since.isoformat()
 
     q = client.table("prediction_logs").select(
@@ -239,6 +247,8 @@ async def _fetch_signals(client, symbol: str, model_type: Optional[str],
     ).eq("symbol", symbol).gte("created_at", since_iso).in_(
         "status", ["completed", "stopped"]
     ).limit(MAX_SIGNALS)
+    if until_override is not None:
+        q = q.lt("created_at", until_override.isoformat())
     if model_type and model_type != "any":
         q = q.eq("model_type", model_type)
 
@@ -275,9 +285,139 @@ async def _fetch_signals(client, symbol: str, model_type: Optional[str],
 AUTO_SIMULATABLE = {"filter_rule", "threshold_tweak"}
 
 
+def _build_blocked_mask(df: pd.DataFrame, auto_fixes: list[dict],
+                         skipped_accumulator: list[dict]) -> tuple[pd.Series, list[dict]]:
+    """Apply each auto-simulatable fix, OR-combine the masks.
+    Returns (blocked_mask, fixes_evaluated)."""
+    blocked_mask = pd.Series([False] * len(df), index=df.index)
+    evaluated: list[dict] = []
+    for fix in auto_fixes:
+        ftype = fix.get("type")
+        if ftype == "filter_rule":
+            spec = fix.get("filter_spec") or {}
+            if not spec.get("predicates"):
+                skipped_accumulator.append({"type": ftype, "description": fix.get("description"),
+                                             "reason": "missing filter_spec.predicates"})
+                continue
+            mask = df.apply(lambda r: _signal_blocked_by_filter(r, spec), axis=1)
+        elif ftype == "threshold_tweak":
+            spec = fix.get("threshold_spec") or {}
+            if not spec.get("field") or spec.get("new_value") is None:
+                skipped_accumulator.append({"type": ftype, "description": fix.get("description"),
+                                             "reason": "missing threshold_spec.field or new_value"})
+                continue
+            mask = df.apply(lambda r: _signal_blocked_by_threshold(r, spec), axis=1)
+        else:
+            continue
+        evaluated.append({
+            "type": ftype, "description": fix.get("description"),
+            "n_blocked": int(mask.sum()),
+            "block_rate_pct": round(mask.sum() / len(df) * 100, 2) if len(df) > 0 else 0,
+        })
+        blocked_mask = blocked_mask | mask
+    return blocked_mask, evaluated
+
+
+def _compute_window(df: pd.DataFrame, blocked_mask: pd.Series, label: str) -> dict:
+    """Original + simulated metrics + delta for one date-range slice."""
+    if df.empty:
+        return {"label": label, "n_signals": 0, "skipped": True,
+                "reason": "no_signals_in_window"}
+    original = _compute_metrics(df, f"{label}_original")
+    kept = df[~blocked_mask]
+    simulated = _compute_metrics(kept, f"{label}_simulated")
+    blocked = df[blocked_mask]
+    blocked_fails = int((blocked["status"] == "stopped").sum())
+    blocked_wins = int((blocked["status"] == "completed").sum())
+    blocked_pnl = float(blocked.apply(_signal_pnl_pips, axis=1).sum())
+
+    deltas = {
+        "win_rate_pp": (round(simulated.get("win_rate", 0) - original.get("win_rate", 0), 2)
+                        if simulated.get("win_rate") is not None and original.get("win_rate") is not None
+                        else None),
+        "pnl_pips": round(simulated.get("total_pnl_pips", 0) - original.get("total_pnl_pips", 0), 2),
+        "max_drawdown_pp": round(simulated.get("max_drawdown_pips", 0) - original.get("max_drawdown_pips", 0), 2),
+        "profit_factor_delta": (
+            round((simulated.get("profit_factor") or 0) - (original.get("profit_factor") or 0), 3)
+            if simulated.get("profit_factor") and original.get("profit_factor") else None
+        ),
+        "n_signals_blocked": int(blocked_mask.sum()),
+        "blocked_pnl_avoided": round(-blocked_pnl, 2),
+        "blocked_was_loss": blocked_fails,
+        "blocked_was_win": blocked_wins,
+        "verdict": _verdict(simulated, original),
+    }
+    return {"label": label, "n_signals": len(df),
+            "original": original, "simulated": simulated, "deltas": deltas}
+
+
+def _robustness_verdict(in_sample: dict, oos: dict) -> dict:
+    """Compare in-sample to out-of-sample to detect overfitting.
+    Walk-forward style: DeepSeek "trained" on the in-sample window (the
+    last N days where the failure cluster was found). The OOS window is
+    older data DeepSeek did NOT see. If the rule's effect collapses in
+    OOS, it's overfit to the specific cluster."""
+    if in_sample.get("skipped") or oos.get("skipped"):
+        return {"status": "insufficient_data",
+                "reason": "one of the windows had no signals"}
+    in_dwin = in_sample["deltas"].get("win_rate_pp")
+    oos_dwin = oos["deltas"].get("win_rate_pp")
+    in_dpnl = in_sample["deltas"].get("pnl_pips") or 0
+    oos_dpnl = oos["deltas"].get("pnl_pips") or 0
+
+    if in_dwin is None or oos_dwin is None:
+        return {"status": "insufficient_data",
+                "in_sample_winrate_delta": in_dwin, "oos_winrate_delta": oos_dwin}
+
+    out: dict = {
+        "in_sample_winrate_delta": in_dwin,
+        "oos_winrate_delta": oos_dwin,
+        "in_sample_pnl_delta": in_dpnl,
+        "oos_pnl_delta": oos_dpnl,
+    }
+
+    # Robustness ratio: does OOS retain at least 60% of in-sample improvement?
+    if abs(in_dwin) < 0.5:
+        # Effect too small to judge robustness
+        out["status"] = "insignificant_in_sample"
+        out["robustness_ratio"] = None
+    else:
+        ratio = oos_dwin / in_dwin
+        out["robustness_ratio"] = round(ratio, 3)
+        if in_dwin > 0:
+            # Rule was supposed to HELP
+            if oos_dwin > 0 and ratio >= 0.6:
+                out["status"] = "robust"
+                out["interpretation"] = "Out-of-sample preserves ≥60% of in-sample gain — likely real edge"
+            elif oos_dwin > 0 and ratio >= 0.3:
+                out["status"] = "marginally_overfit"
+                out["interpretation"] = "OOS shows weaker effect; gain is partially specific to the recent cluster"
+            elif oos_dwin > 0:
+                out["status"] = "overfit"
+                out["interpretation"] = "OOS gain is much smaller than in-sample — high overfitting risk"
+            else:
+                out["status"] = "highly_overfit"
+                out["interpretation"] = "OOS effect is opposite — rule is fitting noise in the recent cluster"
+        else:
+            # In-sample HURTS — rule itself is bad regardless of OOS
+            out["status"] = "broken"
+            out["interpretation"] = "Rule worsens in-sample; do not deploy"
+    return out
+
+
 async def simulate_proposal(proposal_id: str,
-                             window_days: int = DEFAULT_WINDOW_DAYS) -> SimulationResult:
-    """Run counterfactual replay of a proposal's fixes against historical signals."""
+                             window_days: int = DEFAULT_WINDOW_DAYS,
+                             training_window_days: int = DEFAULT_TRAINING_WINDOW_DAYS
+                             ) -> SimulationResult:
+    """Counterfactual replay + WALK-FORWARD overfitting check.
+
+    Rule was derived by DeepSeek from a recent failure cluster (the
+    `training_window_days` most recent days). We test the rule on:
+      1. The full window (legacy headline metric)
+      2. In-sample only (training window)  — what DeepSeek "saw"
+      3. Out-of-sample (older portion)     — blind test
+    A genuine edge survives in OOS; an overfit one collapses.
+    """
     from database.supabase_client import get_supabase_client, is_db_available
     if not is_db_available():
         return SimulationResult("error", window_days, {}, {}, {}, [], [], "db_unavailable")
@@ -303,18 +443,18 @@ async def simulate_proposal(proposal_id: str,
         except Exception: fixes = []
 
     auto_fixes = [f for f in fixes if isinstance(f, dict) and f.get("type") in AUTO_SIMULATABLE]
-    skipped = [{"type": f.get("type"), "description": f.get("description"),
-                "reason": "non-simulatable type"}
-               for f in fixes if isinstance(f, dict) and f.get("type") not in AUTO_SIMULATABLE]
+    skipped: list[dict] = [
+        {"type": f.get("type"), "description": f.get("description"), "reason": "non-simulatable type"}
+        for f in fixes if isinstance(f, dict) and f.get("type") not in AUTO_SIMULATABLE
+    ]
 
     if not auto_fixes:
         return SimulationResult(
             "manual_review_required", window_days,
-            {}, {}, {}, [], skipped,
-            error=None,
+            {}, {}, {}, [], skipped, error=None,
         )
 
-    # 2) Pull historical signals for this symbol/model
+    # 2) Pull historical signals for full window
     df = await _fetch_signals(client, prop["symbol"], prop.get("model_type"), window_days)
     if df.empty:
         return SimulationResult(
@@ -322,75 +462,50 @@ async def simulate_proposal(proposal_id: str,
             {"label": "original", "n_signals": 0},
             {"label": "simulated", "n_signals": 0},
             {"win_rate_pp": 0, "pnl_pips": 0},
-            [], skipped,
-            error="no_historical_signals_in_window",
+            [], skipped, error="no_historical_signals_in_window",
         )
 
-    # 3) Build "would be blocked" mask across all auto-simulatable fixes (OR logic —
-    #    if ANY proposed filter would have caught the signal, it's counted as blocked)
-    blocked_mask = pd.Series([False] * len(df), index=df.index)
-    fixes_evaluated: list[dict] = []
-    for fix in auto_fixes:
-        ftype = fix.get("type")
-        if ftype == "filter_rule":
-            spec = fix.get("filter_spec") or {}
-            if not spec.get("predicates"):
-                skipped.append({"type": ftype, "description": fix.get("description"),
-                                "reason": "missing filter_spec.predicates"})
-                continue
-            mask = df.apply(lambda r: _signal_blocked_by_filter(r, spec), axis=1)
-        elif ftype == "threshold_tweak":
-            spec = fix.get("threshold_spec") or {}
-            if not spec.get("field") or spec.get("new_value") is None:
-                skipped.append({"type": ftype, "description": fix.get("description"),
-                                "reason": "missing threshold_spec.field or new_value"})
-                continue
-            mask = df.apply(lambda r: _signal_blocked_by_threshold(r, spec), axis=1)
-        else:
-            continue
-        n_blocked = int(mask.sum())
-        fixes_evaluated.append({
-            "type": ftype,
-            "description": fix.get("description"),
-            "n_blocked": n_blocked,
-            "block_rate_pct": round(n_blocked / len(df) * 100, 2),
-        })
-        blocked_mask = blocked_mask | mask
+    # 3) Walk-forward split: training (recent) vs out-of-sample (older)
+    df["_created_at"] = pd.to_datetime(df["created_at"], utc=True, errors="coerce")
+    train_cutoff = datetime.now(timezone.utc) - timedelta(days=training_window_days)
+    in_sample_df = df[df["_created_at"] >= train_cutoff].copy().reset_index(drop=True)
+    oos_df = df[df["_created_at"] < train_cutoff].copy().reset_index(drop=True)
 
-    # 4) Compute metrics
-    original = _compute_metrics(df, "original")
-    kept = df[~blocked_mask]
-    simulated = _compute_metrics(kept, "simulated")
-    blocked = df[blocked_mask]
+    # 4) Apply blocked-mask separately to each window + full
+    full_mask, fixes_evaluated = _build_blocked_mask(df, auto_fixes, skipped)
+    in_mask = full_mask.loc[df["_created_at"] >= train_cutoff].reset_index(drop=True)
+    oos_mask = full_mask.loc[df["_created_at"] < train_cutoff].reset_index(drop=True)
 
-    # Of the blocked signals, how many were FAILS we successfully prevented?
-    blocked_fails = int((blocked["status"] == "stopped").sum())
-    blocked_wins = int((blocked["status"] == "completed").sum())
-    blocked_pnl = float(blocked.apply(_signal_pnl_pips, axis=1).sum())
+    # 5) Compute three windows
+    full_window = _compute_window(df.reset_index(drop=True), full_mask.reset_index(drop=True), "full")
+    in_window = _compute_window(in_sample_df, in_mask, "in_sample")
+    oos_window = _compute_window(oos_df, oos_mask, "out_of_sample")
 
-    deltas = {
-        "win_rate_pp": (round(simulated.get("win_rate", 0) - original.get("win_rate", 0), 2)
-                        if simulated.get("win_rate") is not None and original.get("win_rate") is not None
-                        else None),
-        "pnl_pips": round(simulated.get("total_pnl_pips", 0) - original.get("total_pnl_pips", 0), 2),
-        "max_drawdown_pp": round(simulated.get("max_drawdown_pips", 0) - original.get("max_drawdown_pips", 0), 2),
-        "profit_factor_delta": (
-            round((simulated.get("profit_factor") or 0) - (original.get("profit_factor") or 0), 3)
-            if simulated.get("profit_factor") and original.get("profit_factor")
-            else None
-        ),
-        "n_signals_blocked": int(blocked_mask.sum()),
-        "blocked_pnl_avoided": round(-blocked_pnl, 2),  # if we saved net negative P/L, this is positive
-        "blocked_was_loss": blocked_fails,
-        "blocked_was_win": blocked_wins,
-        # Multi-metric verdict — a "good" proposal must clear ALL gates
-        "verdict": _verdict(simulated, original),
-    }
+    # 6) Robustness verdict — the headline overfit detector
+    robustness = _robustness_verdict(in_window, oos_window)
 
+    # 7) Compose result. The "main" original/simulated/deltas remain the FULL
+    # window for backwards compatibility with existing frontend.
     return SimulationResult(
-        "ok", window_days,
-        original, simulated, deltas,
-        fixes_evaluated, skipped,
+        status="ok",
+        window_days=window_days,
+        original=full_window["original"],
+        simulated=full_window["simulated"],
+        deltas={
+            **full_window["deltas"],
+            "robustness": robustness,
+            "training_window_days": training_window_days,
+            "in_sample": {
+                "n_signals": in_window.get("n_signals", 0),
+                "deltas": in_window.get("deltas") if not in_window.get("skipped") else None,
+            },
+            "out_of_sample": {
+                "n_signals": oos_window.get("n_signals", 0),
+                "deltas": oos_window.get("deltas") if not oos_window.get("skipped") else None,
+            },
+        },
+        fixes_evaluated=fixes_evaluated,
+        fixes_skipped=skipped,
     )
 
 

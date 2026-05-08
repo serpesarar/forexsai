@@ -41,6 +41,20 @@ export interface SimulatedMetric {
     blocked_was_loss?: number;
     blocked_was_win?: number;
     verdict?: "unanimously_better" | "mixed" | "unanimously_worse" | "insignificant" | "insufficient_data";
+    // Walk-forward overfitting check
+    robustness?: {
+      status: "robust" | "marginally_overfit" | "overfit" | "highly_overfit"
+            | "broken" | "insufficient_data" | "insignificant_in_sample";
+      in_sample_winrate_delta?: number | null;
+      oos_winrate_delta?: number | null;
+      in_sample_pnl_delta?: number;
+      oos_pnl_delta?: number;
+      robustness_ratio?: number | null;
+      interpretation?: string;
+    };
+    training_window_days?: number;
+    in_sample?: { n_signals: number; deltas: any | null };
+    out_of_sample?: { n_signals: number; deltas: any | null };
   };
   fixes_evaluated: { type: string; description: string; n_blocked: number; block_rate_pct: number }[];
   fixes_skipped: { type: string; description: string; reason: string }[];

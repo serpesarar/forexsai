@@ -644,10 +644,86 @@ function SimulationBlock({ proposal: p }: { proposal: Proposal }) {
           </div>
         </div>
       </div>
+      {/* Walk-forward robustness (overfitting check) */}
+      {sim.deltas.robustness && (
+        <RobustnessBlock robustness={sim.deltas.robustness} sim={sim} />
+      )}
+
       {sim.fixes_skipped?.length > 0 && (
         <div style={{ marginTop: 10, fontSize: 11, color: "#9CA3AF" }}>
           {sim.fixes_skipped.length} fix simülasyon dışı (manuel inceleme gerekli):
           {" "}{sim.fixes_skipped.map(f => f.type).join(", ")}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RobustnessBlock({ robustness, sim }: { robustness: any; sim: SimulatedMetric }) {
+  const status = robustness.status;
+  const inDelta = robustness.in_sample_winrate_delta;
+  const oosDelta = robustness.oos_winrate_delta;
+  const ratio = robustness.robustness_ratio;
+  const inN = sim.deltas.in_sample?.n_signals ?? 0;
+  const oosN = sim.deltas.out_of_sample?.n_signals ?? 0;
+
+  const statusMeta: Record<string, { label: string; color: string; emoji: string }> = {
+    robust: { label: "ROBUST", color: "#22C55E", emoji: "✅" },
+    marginally_overfit: { label: "MARGINALLY OVERFIT", color: "#F59E0B", emoji: "⚠️" },
+    overfit: { label: "OVERFIT", color: "#F97316", emoji: "🟠" },
+    highly_overfit: { label: "HIGHLY OVERFIT", color: "#EF4444", emoji: "🔴" },
+    broken: { label: "BROKEN IN-SAMPLE", color: "#EF4444", emoji: "❌" },
+    insufficient_data: { label: "INSUFFICIENT DATA", color: "#6B7280", emoji: "❓" },
+    insignificant_in_sample: { label: "EFFECT TOO SMALL", color: "#6B7280", emoji: "⚪" },
+  };
+  const meta = statusMeta[status] ?? statusMeta.insufficient_data;
+
+  return (
+    <div style={{
+      marginTop: 14, padding: 12, background: "#0B0F17", borderRadius: 6,
+      borderLeft: `3px solid ${meta.color}`,
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <span style={{ fontSize: 11, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 0.5 }}>
+          🔬 Walk-Forward Overfitting Check
+        </span>
+        <span style={{
+          padding: "3px 10px", borderRadius: 4, fontSize: 10, fontWeight: 700,
+          background: meta.color + "22", color: meta.color, letterSpacing: 0.5,
+        }}>
+          {meta.emoji} {meta.label}
+        </span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, fontSize: 12 }}>
+        <div>
+          <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>
+            In-Sample (DeepSeek'in gördüğü {sim.deltas.training_window_days ?? 7} gün)
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#FCA5A5" }}>
+            {inDelta == null ? "—" : `${inDelta > 0 ? "+" : ""}${inDelta.toFixed(2)}pp`}
+          </div>
+          <div style={{ fontSize: 10, color: "#6B7280" }}>{inN} signal</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>
+            Out-of-Sample (DeepSeek'in görmediği {sim.window_days - (sim.deltas.training_window_days ?? 7)} gün)
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#86EFAC" }}>
+            {oosDelta == null ? "—" : `${oosDelta > 0 ? "+" : ""}${oosDelta.toFixed(2)}pp`}
+          </div>
+          <div style={{ fontSize: 10, color: "#6B7280" }}>{oosN} signal</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>Robustness Ratio</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: meta.color }}>
+            {ratio == null ? "—" : ratio.toFixed(2)}
+          </div>
+          <div style={{ fontSize: 10, color: "#6B7280" }}>OOS / In-Sample</div>
+        </div>
+      </div>
+      {robustness.interpretation && (
+        <div style={{ marginTop: 10, fontSize: 11, color: "#D1D5DB", fontStyle: "italic" }}>
+          {robustness.interpretation}
         </div>
       )}
     </div>
