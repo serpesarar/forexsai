@@ -49,10 +49,32 @@ class ManualRunRequest(BaseModel):
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _row_data(result: Any) -> list[dict]:
-    if isinstance(result, dict):
-        return result.get("data") or []
-    return getattr(result, "data", None) or []
+def _row_data(result_or_query: Any) -> list[dict]:
+    """Universal extractor — works for both auto-executing wrappers and
+    lazy query builders. If the object has .execute(), call it; otherwise
+    treat it as already-executed result."""
+    obj = result_or_query
+    if hasattr(obj, "execute") and callable(getattr(obj, "execute", None)):
+        try:
+            obj = obj.execute()
+        except Exception as e:
+            logger.warning("[ai_ops] query execute failed: %s", e)
+            return []
+    if isinstance(obj, dict):
+        return obj.get("data") or []
+    return getattr(obj, "data", None) or []
+
+
+def _exec(query_or_result: Any) -> Any:
+    """Execute a lazy query if needed; pass through executed results."""
+    obj = query_or_result
+    if hasattr(obj, "execute") and callable(getattr(obj, "execute", None)):
+        try:
+            return obj.execute()
+        except Exception as e:
+            logger.warning("[ai_ops] mutation execute failed: %s", e)
+            return None
+    return obj
 
 
 def _now_iso() -> str:
@@ -71,17 +93,25 @@ async def get_stats():
     client = get_supabase_client()
     out: dict[str, Any] = {"available": True, "by_status": {}, "by_severity": {}}
     try:
-        rows = _row_data(client.table("improvement_proposals")
-                         .select("status,severity").limit(2000))
+        # Explicit .execute() — the project's supabase wrapper sometimes auto-executes
+        # and sometimes returns a lazy query, depending on the method chain. Always
+        # be explicit on read paths.
+        q1 = client.table("improvement_proposals").select("status,severity").limit(2000)
+        res1 = q1.execute() if hasattr(q1, "execute") else q1
+        rows = (res1.get("data") if isinstance(res1, dict)
+                else getattr(res1, "data", None)) or []
         for r in rows:
             s = r.get("status") or "unknown"
             sev = r.get("severity") or "unknown"
             out["by_status"][s] = out["by_status"].get(s, 0) + 1
             out["by_severity"][sev] = out["by_severity"].get(sev, 0) + 1
         out["total"] = len(rows)
-        clusters_total = _row_data(client.table("failure_clusters").select("id").limit(1))
-        out["clusters_total"] = len(_row_data(client.table("failure_clusters")
-                                              .select("id").limit(2000)))
+
+        q2 = client.table("failure_clusters").select("id").limit(2000)
+        res2 = q2.execute() if hasattr(q2, "execute") else q2
+        cluster_rows = (res2.get("data") if isinstance(res2, dict)
+                        else getattr(res2, "data", None)) or []
+        out["clusters_total"] = len(cluster_rows)
     except Exception as e:
         logger.exception("ai_ops stats failed: %s", e)
         out["error"] = str(e)
@@ -104,7 +134,8 @@ async def list_proposals(
         q = client.table("improvement_proposals").select(
             "id,cluster_id,symbol,model_type,severity,status,llm_model,"
             "root_cause,proposed_fixes,alternative_explanations,requires_data,"
-            "pre_change_metric,post_change_metric,reviewed_by,reviewed_at,"
+            "pre_change_metric,post_change_metric,simulated_metric,simulated_at,"
+            "reviewed_by,reviewed_at,"
             "pr_url,created_at,updated_at"
         ).order("created_at", desc=True).limit(limit)
         if status:
@@ -115,7 +146,10 @@ async def list_proposals(
             q = q.eq("symbol", symbol)
         if model_type:
             q = q.eq("model_type", model_type)
-        rows = _row_data(q)
+        # Force explicit execution
+        result = q.execute() if hasattr(q, "execute") else q
+        rows = (result.get("data") if isinstance(result, dict)
+                else getattr(result, "data", None)) or []
         return {"proposals": rows, "count": len(rows)}
     except Exception as e:
         logger.exception("list_proposals failed: %s", e)
@@ -287,7 +321,7 @@ async def approve_proposal(proposal_id: str, payload: ApproveRequest):
         }
         if issue_url:
             update["pr_url"] = issue_url   # column is pr_url but stores issue URL too
-        client.table("improvement_proposals").update(update).eq("id", proposal_id)
+        _exec(client.table("improvement_proposals").update(update).eq("id", proposal_id))
 
         return {"ok": True, "status": "approved", "issue_url": issue_url}
     except HTTPException:
@@ -316,7 +350,7 @@ async def reject_proposal(proposal_id: str, payload: RejectRequest):
             "rollback_reason": payload.reason,
             "updated_at": _now_iso(),
         }
-        client.table("improvement_proposals").update(update).eq("id", proposal_id)
+        _exec(client.table("improvement_proposals").update(update).eq("id", proposal_id))
         return {"ok": True, "status": "rejected"}
     except HTTPException:
         raise
@@ -701,12 +735,12 @@ async def mark_tp_sl_applied(rec_id: str, body: dict):
         raise HTTPException(503, "supabase unavailable")
     client = get_supabase_client()
     try:
-        client.table("tp_sl_recommendations").update({
+        _exec(client.table("tp_sl_recommendations").update({
             "status": "applied",
             "applied_at": datetime.now(timezone.utc).isoformat(),
             "reviewed_by": body.get("reviewer") or "user",
             "notes": body.get("notes"),
-        }).eq("id", rec_id)
+        }).eq("id", rec_id))
         return {"ok": True}
     except Exception as e:
         logger.exception("mark_tp_sl_applied failed: %s", e)
@@ -719,12 +753,12 @@ async def reject_tp_sl(rec_id: str, body: dict):
         raise HTTPException(503, "supabase unavailable")
     client = get_supabase_client()
     try:
-        client.table("tp_sl_recommendations").update({
+        _exec(client.table("tp_sl_recommendations").update({
             "status": "rejected",
             "reviewed_by": body.get("reviewer") or "user",
             "notes": body.get("reason"),
             "reviewed_at": datetime.now(timezone.utc).isoformat(),
-        }).eq("id", rec_id)
+        }).eq("id", rec_id))
         return {"ok": True}
     except Exception as e:
         raise HTTPException(500, str(e))
