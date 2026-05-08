@@ -436,6 +436,165 @@ async def simulate_proposal_endpoint(proposal_id: str, window_days: int = 60):
         raise HTTPException(500, str(e))
 
 
+@router.get("/diagnostic")
+async def diagnostic():
+    """Self-check — what's wrong with the AI-Ops loop on this deploy?
+    Hit this when the dashboard shows 0 proposals after multiple days."""
+    from pathlib import Path
+    out: dict = {
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+        "checks": [],
+    }
+
+    # 1) Are the rule files deployed?
+    backend_root = Path(__file__).resolve().parent.parent
+    pr_path = backend_root / "data" / "pattern_rules.json"
+    cr_path = backend_root / "data" / "chart_pattern_rules.json"
+    out["checks"].append({
+        "name": "pattern_rules_file",
+        "ok": pr_path.exists(),
+        "path": str(pr_path),
+        "size_bytes": pr_path.stat().st_size if pr_path.exists() else 0,
+    })
+    out["checks"].append({
+        "name": "chart_pattern_rules_file",
+        "ok": cr_path.exists(),
+        "path": str(cr_path),
+        "size_bytes": cr_path.stat().st_size if cr_path.exists() else 0,
+    })
+
+    # 2) Pattern matcher loads rules?
+    try:
+        from services.pattern_matcher import _load_rules, get_rules_meta
+        rules = _load_rules()
+        meta = get_rules_meta()
+        out["checks"].append({
+            "name": "pattern_matcher_load",
+            "ok": len(rules) > 0,
+            "rules_loaded": len(rules),
+            "meta": meta,
+        })
+    except Exception as e:
+        out["checks"].append({"name": "pattern_matcher_load", "ok": False, "error": str(e)[:200]})
+
+    # 3) Are required Supabase tables/columns present?
+    if is_db_available():
+        client = get_supabase_client()
+        for table, sample_col in [
+            ("failure_clusters", "id"),
+            ("improvement_proposals", "id"),
+            ("pattern_mining_runs", "id"),
+            ("failure_analyses", "id"),
+            ("prediction_logs", "id"),
+        ]:
+            try:
+                r = client.table(table).select(sample_col).limit(1)
+                res = r.execute() if hasattr(r, "execute") else r
+                data = res.get("data") if isinstance(res, dict) else getattr(res, "data", None)
+                out["checks"].append({
+                    "name": f"table:{table}",
+                    "ok": True,
+                    "has_rows": bool(data),
+                })
+            except Exception as e:
+                out["checks"].append({
+                    "name": f"table:{table}",
+                    "ok": False,
+                    "error": str(e)[:200],
+                    "hint": ("Migration not applied. Run "
+                             "supabase/migrations/20260430_ai_ops_proposals.sql "
+                             "and 20260504_pattern_mining_runs.sql in Supabase SQL Editor.")
+                            if "does not exist" in str(e) or "PGRST205" in str(e) else None,
+                })
+        # Check for simulated_metric column on improvement_proposals
+        try:
+            r = client.table("improvement_proposals").select("simulated_metric").limit(1)
+            res = r.execute() if hasattr(r, "execute") else r
+            out["checks"].append({"name": "column:improvement_proposals.simulated_metric", "ok": True})
+        except Exception as e:
+            out["checks"].append({
+                "name": "column:improvement_proposals.simulated_metric",
+                "ok": False, "error": str(e)[:200],
+                "hint": "Run 20260430_proposal_simulation.sql migration"
+                        if "does not exist" in str(e) else None,
+            })
+        # Check for live_tracking columns
+        try:
+            r = client.table("improvement_proposals").select("live_tracking_started_at").limit(1)
+            res = r.execute() if hasattr(r, "execute") else r
+            out["checks"].append({"name": "column:improvement_proposals.live_tracking_*", "ok": True})
+        except Exception as e:
+            out["checks"].append({
+                "name": "column:improvement_proposals.live_tracking_*",
+                "ok": False, "error": str(e)[:200],
+                "hint": "Run 20260505_proposal_monitoring.sql migration"
+                        if "does not exist" in str(e) else None,
+            })
+
+    # 4) Recent prediction_logs activity (proves system is producing signals)
+    if is_db_available():
+        client = get_supabase_client()
+        try:
+            from datetime import timedelta
+            since = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+            r = client.table("prediction_logs").select(
+                "id", count="exact"
+            ).gte("created_at", since).limit(1)
+            res = r.execute() if hasattr(r, "execute") else r
+            count = res.get("count") if isinstance(res, dict) else getattr(res, "count", None)
+            out["checks"].append({
+                "name": "recent_prediction_logs_7d",
+                "ok": (count or 0) > 0,
+                "count": count or 0,
+                "hint": "If 0, the trading system itself isn't producing signals." if not count else None,
+            })
+        except Exception as e:
+            out["checks"].append({"name": "recent_prediction_logs_7d", "ok": False, "error": str(e)[:200]})
+
+    # 5) Failure tagger — has it ever populated failure_analyses?
+    if is_db_available():
+        client = get_supabase_client()
+        try:
+            r = client.table("failure_analyses").select("id", count="exact").limit(1)
+            res = r.execute() if hasattr(r, "execute") else r
+            count = res.get("count") if isinstance(res, dict) else getattr(res, "count", None)
+            out["checks"].append({
+                "name": "failure_analyses_total_rows",
+                "ok": (count or 0) > 0,
+                "count": count or 0,
+                "hint": ("Orchestrator hasn't tagged any failures. Likely cause: "
+                         "migration 20260430_ai_ops_proposals.sql not applied "
+                         "(failure_analyses_prediction_id_unique constraint missing → "
+                         "UPSERT fails silently)." if not count else None),
+            })
+        except Exception as e:
+            out["checks"].append({"name": "failure_analyses_total_rows", "ok": False, "error": str(e)[:200]})
+
+    # 6) Last orchestrator run? Use most recent failure_clusters.created_at as proxy
+    if is_db_available():
+        client = get_supabase_client()
+        try:
+            r = client.table("failure_clusters").select("created_at").order(
+                "created_at", desc=True).limit(1)
+            res = r.execute() if hasattr(r, "execute") else r
+            data = res.get("data") if isinstance(res, dict) else getattr(res, "data", None)
+            last = data[0]["created_at"] if data else None
+            out["checks"].append({
+                "name": "orchestrator_last_run",
+                "ok": last is not None,
+                "last_cluster_created_at": last,
+                "hint": "Orchestrator may have never produced a cluster (need 5+ similar fails)." if not last else None,
+            })
+        except Exception as e:
+            out["checks"].append({"name": "orchestrator_last_run", "ok": False, "error": str(e)[:200]})
+
+    # Aggregate verdict
+    failed = [c for c in out["checks"] if not c.get("ok")]
+    out["overall_status"] = "healthy" if not failed else "issues_detected"
+    out["failed_checks"] = len(failed)
+    return out
+
+
 @router.post("/proposals/{proposal_id}/check-live")
 async def check_proposal_live_endpoint(proposal_id: str):
     """Manually trigger one live-tracking pass for a single proposal.

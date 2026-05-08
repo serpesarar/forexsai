@@ -26,14 +26,22 @@ from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
-# Make xauusdegitim/ importable
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-_RESEARCH_DIR = _PROJECT_ROOT / "xauusdegitim"
-if str(_RESEARCH_DIR) not in sys.path:
+# Path resolution — same logic as pattern_matcher
+_BACKEND_ROOT = Path(__file__).resolve().parent.parent
+_REPO_ROOT = _BACKEND_ROOT.parent
+_RESEARCH_DIR = _REPO_ROOT / "xauusdegitim"
+_BACKEND_DATA_DIR = _BACKEND_ROOT / "data"
+_BACKEND_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+# Try local research dir for imports (dev), else skip — miner won't run on prod
+# unless we bundle it. For now it gracefully degrades to "rules from file only".
+if _RESEARCH_DIR.exists() and str(_RESEARCH_DIR) not in sys.path:
     sys.path.insert(0, str(_RESEARCH_DIR))
 
-# Local file path the matcher reads from
-RULES_PATH = _RESEARCH_DIR / "pattern_rules.json"
+# Write target — always under backend/data/ in production
+RULES_PATH = (_BACKEND_DATA_DIR / "pattern_rules.json"
+              if _BACKEND_DATA_DIR.exists()
+              else _RESEARCH_DIR / "pattern_rules.json")
 
 # Cron cadence
 WEEKLY_INTERVAL_SECONDS = 7 * 24 * 3600
@@ -130,38 +138,55 @@ async def restore_from_supabase() -> bool:
 
 async def run_mining_now(days: int = 60, triggered_by: str = "manual") -> dict:
     """Execute BOTH mining cycles: signal-based (pattern_miner) AND chart-based
-    (price_action_miner). Persists each. Returns combined summary."""
+    (price_action_miner). Persists each. Returns combined summary.
+
+    On production where the research dir isn't deployed, both miners are
+    unavailable — the function just returns a clean 'unavailable' status
+    instead of crashing. Static rules from backend/data/*.json continue
+    serving via the matcher's mtime-watching reload."""
     started = time.monotonic()
     combined: dict = {"signal": {}, "chart": {}}
     loop = asyncio.get_running_loop()
 
+    miners_available = _RESEARCH_DIR.exists()
+    if not miners_available:
+        logger.warning("[pattern_mining] research dir missing (%s) — skipping mining cycle. "
+                       "Run miners locally and commit the JSON outputs to backend/data/.",
+                       _RESEARCH_DIR)
+
     # === Signal-based pattern miner ===
-    try:
-        import pattern_miner  # type: ignore
-        combined["signal"] = await loop.run_in_executor(
-            None,
-            lambda: pattern_miner.run_mining(
-                days=days, write_files=True, verbose=False
-            ),
-        )
-    except Exception as e:
-        logger.exception("[pattern_mining] signal miner failed: %s", e)
-        combined["signal"] = {"status": "error", "error": str(e), "rules_count": 0, "rules": []}
+    if miners_available:
+        try:
+            import pattern_miner  # type: ignore
+            combined["signal"] = await loop.run_in_executor(
+                None,
+                lambda: pattern_miner.run_mining(
+                    days=days, write_files=True, verbose=False
+                ),
+            )
+        except Exception as e:
+            logger.exception("[pattern_mining] signal miner failed: %s", e)
+            combined["signal"] = {"status": "error", "error": str(e), "rules_count": 0, "rules": []}
+    else:
+        combined["signal"] = {"status": "miner_unavailable", "rules_count": 0, "rules": []}
 
     # === Chart-based price action miner (model-independent) ===
-    try:
-        import price_action_miner  # type: ignore
-        combined["chart"] = await loop.run_in_executor(
-            None,
-            lambda: price_action_miner.run_chart_mining(
-                symbols=["XAUUSD", "NDX.INDX", "GDAXI.INDX", "USOIL.FOREX"],
-                timeframes=["5m", "15m", "30m", "1h"],
-                days=days, write_files=True,
-            ),
-        )
-    except Exception as e:
-        logger.exception("[pattern_mining] chart miner failed: %s", e)
-        combined["chart"] = {"status": "error", "error": str(e), "rules_count": 0, "rules": []}
+    if miners_available:
+        try:
+            import price_action_miner  # type: ignore
+            combined["chart"] = await loop.run_in_executor(
+                None,
+                lambda: price_action_miner.run_chart_mining(
+                    symbols=["XAUUSD", "NDX.INDX", "GDAXI.INDX", "USOIL.FOREX"],
+                    timeframes=["5m", "15m", "30m", "1h"],
+                    days=days, write_files=True,
+                ),
+            )
+        except Exception as e:
+            logger.exception("[pattern_mining] chart miner failed: %s", e)
+            combined["chart"] = {"status": "error", "error": str(e), "rules_count": 0, "rules": []}
+    else:
+        combined["chart"] = {"status": "miner_unavailable", "rules_count": 0, "rules": []}
 
     duration = time.monotonic() - started
     total_rules = (combined["signal"].get("rules_count") or 0) + (combined["chart"].get("rules_count") or 0)

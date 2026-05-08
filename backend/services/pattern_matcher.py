@@ -39,8 +39,22 @@ WINNING_MIN_WIN_RATE = 75.0   # ≥ this: trusted setup
 TOXIC_MAX_WIN_RATE = 35.0      # ≤ this: avoid setup
 MIN_SAMPLE_SIZE = 20           # rule must have at least this many historical trades
 
-RULES_PATH = Path(__file__).resolve().parent.parent.parent / "xauusdegitim" / "pattern_rules.json"
-CHART_RULES_PATH = Path(__file__).resolve().parent.parent.parent / "xauusdegitim" / "chart_pattern_rules.json"
+# Path resolution: try backend/data/ first (production deploy), then
+# xauusdegitim/ (local development). Files in backend/data/ are deployed
+# inside the Docker image. Repo root is OUTSIDE the Docker context so the
+# xauusdegitim path won't resolve in production.
+_BACKEND_ROOT = Path(__file__).resolve().parent.parent
+_REPO_ROOT = _BACKEND_ROOT.parent
+
+def _resolve_rules_path(filename: str) -> Path:
+    in_backend_data = _BACKEND_ROOT / "data" / filename
+    if in_backend_data.exists():
+        return in_backend_data
+    in_xauusdegitim = _REPO_ROOT / "xauusdegitim" / filename
+    return in_xauusdegitim
+
+RULES_PATH = _resolve_rules_path("pattern_rules.json")
+CHART_RULES_PATH = _resolve_rules_path("chart_pattern_rules.json")
 
 # Bucket bins — MUST match pattern_miner.py CONTINUOUS_BINS exactly
 BINS = {
