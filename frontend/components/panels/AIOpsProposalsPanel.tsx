@@ -32,6 +32,8 @@ const STATUS_LABEL: Record<ProposalStatus, string> = {
 export default function AIOpsProposalsPanel() {
   const qc = useQueryClient();
   const [filter, setFilter] = useState<ProposalStatus | "all">("pending");
+  const [symbolFilter, setSymbolFilter] = useState<string>("all");
+  const [minSampleSize, setMinSampleSize] = useState<number>(0);
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const stats = useQuery({ queryKey: ["ai-ops-stats"], queryFn: () => aiOps.stats(), refetchInterval: 60000 });
@@ -46,8 +48,12 @@ export default function AIOpsProposalsPanel() {
     onError: (e: any) => alert(`Tetiklenemedi: ${e?.message ?? "bilinmiyor"}`),
   });
   const proposals = useQuery({
-    queryKey: ["ai-ops-proposals", filter],
-    queryFn: () => aiOps.listProposals(filter === "all" ? {} : { status: filter, limit: 100 }),
+    queryKey: ["ai-ops-proposals", filter, symbolFilter],
+    queryFn: () => aiOps.listProposals({
+      ...(filter === "all" ? {} : { status: filter }),
+      ...(symbolFilter !== "all" ? { symbol: symbolFilter } : {}),
+      limit: 100,
+    }),
     refetchInterval: 60000,
   });
 
@@ -81,7 +87,14 @@ export default function AIOpsProposalsPanel() {
     onError: (e: any) => alert(`Tetiklenemedi: ${e?.message ?? "bilinmiyor"}`),
   });
 
-  const list = proposals.data?.proposals ?? [];
+  const allList = proposals.data?.proposals ?? [];
+  const list = minSampleSize > 0
+    ? allList.filter((p: Proposal) => {
+        const sample = (p.simulated_metric?.original?.n_signals ?? 0)
+                     || (p.pre_change_metric?.sample_size ?? 0);
+        return sample >= minSampleSize;
+      })
+    : allList;
 
   return (
     <div style={{
@@ -150,7 +163,7 @@ export default function AIOpsProposalsPanel() {
       )}
 
       {/* Filter tabs */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         {(["pending", "approved", "rejected", "implemented", "all"] as const).map((s) => (
           <button
             key={s}
@@ -167,6 +180,50 @@ export default function AIOpsProposalsPanel() {
             {stats.data?.by_status?.[s] ? ` (${stats.data.by_status[s]})` : ""}
           </button>
         ))}
+      </div>
+
+      {/* Symbol + sample-size filters */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
+        <span style={{ fontSize: 11, color: "#6B7280", textTransform: "uppercase",
+                       letterSpacing: 0.5 }}>Sembol:</span>
+        {(["all", "XAUUSD", "NDX.INDX", "GDAXI.INDX", "USOIL.FOREX"] as const).map(sym => (
+          <button
+            key={sym}
+            onClick={() => setSymbolFilter(sym)}
+            style={{
+              background: symbolFilter === sym ? "#16C784" : "transparent",
+              color: symbolFilter === sym ? "#000" : "#9CA3AF",
+              border: `1px solid ${symbolFilter === sym ? "#16C784" : "#1F2937"}`,
+              padding: "5px 10px", borderRadius: 4, cursor: "pointer", fontSize: 11,
+              fontWeight: symbolFilter === sym ? 600 : 400,
+            }}
+          >
+            {sym === "all" ? "Tümü"
+             : sym === "XAUUSD" ? "XAUUSD (Altın)"
+             : sym === "NDX.INDX" ? "NDX (Nasdaq)"
+             : sym === "GDAXI.INDX" ? "DAX"
+             : "OIL"}
+          </button>
+        ))}
+        <span style={{ fontSize: 11, color: "#6B7280", marginLeft: 14,
+                       textTransform: "uppercase", letterSpacing: 0.5 }}>Min sample:</span>
+        {[0, 10, 20, 50].map(n => (
+          <button
+            key={n}
+            onClick={() => setMinSampleSize(n)}
+            style={{
+              background: minSampleSize === n ? "#A855F7" : "transparent",
+              color: minSampleSize === n ? "#fff" : "#9CA3AF",
+              border: `1px solid ${minSampleSize === n ? "#A855F7" : "#1F2937"}`,
+              padding: "5px 10px", borderRadius: 4, cursor: "pointer", fontSize: 11,
+            }}
+          >
+            {n === 0 ? "All" : `≥${n}`}
+          </button>
+        ))}
+        <span style={{ fontSize: 11, color: "#6B7280", marginLeft: "auto" }}>
+          {list.length} / {allList.length} öneri gösteriliyor
+        </span>
       </div>
 
       {/* Loading / empty */}
