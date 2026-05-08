@@ -26,22 +26,24 @@ from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
-# Path resolution — same logic as pattern_matcher
+# Path resolution — production uses backend/research/ (deployed inside Docker),
+# local dev can also use the original xauusdegitim/ at repo root.
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent
 _REPO_ROOT = _BACKEND_ROOT.parent
-_RESEARCH_DIR = _REPO_ROOT / "xauusdegitim"
+_BACKEND_RESEARCH_DIR = _BACKEND_ROOT / "research"   # in-deploy location
+_REPO_RESEARCH_DIR = _REPO_ROOT / "xauusdegitim"      # repo-root local-dev location
 _BACKEND_DATA_DIR = _BACKEND_ROOT / "data"
 _BACKEND_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-# Try local research dir for imports (dev), else skip — miner won't run on prod
-# unless we bundle it. For now it gracefully degrades to "rules from file only".
+# Prefer backend/research/ — it's always present in the Docker image.
+# Fallback to repo-root xauusdegitim/ for local dev convenience.
+_RESEARCH_DIR = (_BACKEND_RESEARCH_DIR if _BACKEND_RESEARCH_DIR.exists()
+                 else _REPO_RESEARCH_DIR)
 if _RESEARCH_DIR.exists() and str(_RESEARCH_DIR) not in sys.path:
     sys.path.insert(0, str(_RESEARCH_DIR))
 
-# Write target — always under backend/data/ in production
-RULES_PATH = (_BACKEND_DATA_DIR / "pattern_rules.json"
-              if _BACKEND_DATA_DIR.exists()
-              else _RESEARCH_DIR / "pattern_rules.json")
+# Output target is always backend/data/ — that's where the matcher reads
+RULES_PATH = _BACKEND_DATA_DIR / "pattern_rules.json"
 
 # Cron cadence
 WEEKLY_INTERVAL_SECONDS = 7 * 24 * 3600
@@ -161,7 +163,8 @@ async def run_mining_now(days: int = 60, triggered_by: str = "manual") -> dict:
             combined["signal"] = await loop.run_in_executor(
                 None,
                 lambda: pattern_miner.run_mining(
-                    days=days, write_files=True, verbose=False
+                    days=days, write_files=True, verbose=False,
+                    out_dir=_BACKEND_DATA_DIR,
                 ),
             )
         except Exception as e:
@@ -180,6 +183,7 @@ async def run_mining_now(days: int = 60, triggered_by: str = "manual") -> dict:
                     symbols=["XAUUSD", "NDX.INDX", "GDAXI.INDX", "USOIL.FOREX"],
                     timeframes=["5m", "15m", "30m", "1h"],
                     days=days, write_files=True,
+                    out_dir=_BACKEND_DATA_DIR,
                 ),
             )
         except Exception as e:
