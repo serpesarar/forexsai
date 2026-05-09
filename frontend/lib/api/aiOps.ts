@@ -40,7 +40,12 @@ export interface SimulatedMetric {
     blocked_pnl_avoided?: number;
     blocked_was_loss?: number;
     blocked_was_win?: number;
-    verdict?: "unanimously_better" | "mixed" | "unanimously_worse" | "insignificant" | "insufficient_data";
+    // Filter selectivity — what % of blocks are actually fails (TP precision)
+    selectivity_pct?: number | null;
+    selectivity_label?: "clean" | "acceptable" | "noisy" | "no_blocks";
+    verdict?: "unanimously_better" | "unanimously_better_but_noisy_filter"
+            | "mixed" | "unanimously_worse" | "insignificant"
+            | "noisy_filter" | "insufficient_data";
     // Walk-forward overfitting check
     robustness?: {
       status: "robust" | "marginally_overfit" | "overfit" | "highly_overfit"

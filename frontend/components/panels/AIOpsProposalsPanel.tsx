@@ -916,11 +916,18 @@ function SimulationBlock({ proposal: p }: { proposal: Proposal }) {
           fontSize: 10, fontWeight: 700, color: accent, textTransform: "uppercase",
         }}>
           Verdict: {verdict === "unanimously_better" ? "🟢 Tüm metrikler iyileşti"
+                   : verdict === "unanimously_better_but_noisy_filter"
+                       ? "🟡 Metrikler iyi AMA filtre kazançları da öldürüyor"
+                   : verdict === "noisy_filter" ? "🔴 Kirli filtre — kazançları öldürüyor"
                    : verdict === "unanimously_worse" ? "🔴 Hiçbir metrik iyileşmedi"
                    : verdict === "insignificant" ? "⚪ Anlamlı değişim yok"
                    : verdict === "insufficient_data" ? "❓ Veri yetersiz"
                    : "🟠 Karışık (bazısı iyi, bazısı kötü)"}
         </div>
+      )}
+      {/* Selectivity warning — user's "kazançları da öldürmesin" check */}
+      {sim.deltas.selectivity_pct != null && (sim.deltas.n_signals_blocked ?? 0) > 0 && (
+        <SelectivityBlock sel={sim.deltas} />
       )}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, fontSize: 12 }}>
         <div>
@@ -988,6 +995,72 @@ function SimulationBlock({ proposal: p }: { proposal: Proposal }) {
     </div>
   );
 }
+
+function SelectivityBlock({ sel }: { sel: any }) {
+  const pct = sel.selectivity_pct;
+  const label = sel.selectivity_label;
+  const lossN = sel.blocked_was_loss ?? 0;
+  const winN = sel.blocked_was_win ?? 0;
+  const totalBlocked = lossN + winN;
+
+  const meta: Record<string, { color: string; emoji: string; text: string; explainer: string }> = {
+    clean: { color: "#22C55E", emoji: "✅", text: "TEMİZ FİLTRE",
+             explainer: "Filtre çoğunlukla gerçek fail'leri yakalıyor — kazançları öldürmüyor." },
+    acceptable: { color: "#EAB308", emoji: "🟡", text: "KABUL EDİLEBİLİR",
+                  explainer: "Filtre çoğu fail'i yakalıyor ama bazı kazançları da bloklayabilir." },
+    noisy: { color: "#EF4444", emoji: "❌", text: "KİRLİ FİLTRE",
+             explainer: "Filtre kazançları aşırı bloklarken yeterli fail'i yakalamıyor — kullanma." },
+    no_blocks: { color: "#6B7280", emoji: "⚪", text: "BLOCK YOK",
+                 explainer: "Filtre hiçbir sinyali etkilemiyor — geçerli koşul tetiklenmedi." },
+  };
+  const m = meta[label as string] ?? meta.no_blocks;
+
+  return (
+    <div style={{
+      margin: "10px 0", padding: 10, background: "#0B0F17", borderRadius: 6,
+      borderLeft: `3px solid ${m.color}`, fontSize: 12,
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+                    marginBottom: 6 }}>
+        <span style={{ fontSize: 11, color: "#9CA3AF", textTransform: "uppercase",
+                       letterSpacing: 0.5 }}>
+          🎯 Filter Selectivity (Kazançları Öldürüyor mu?)
+        </span>
+        <span style={{
+          padding: "3px 10px", borderRadius: 4, fontSize: 10, fontWeight: 700,
+          background: m.color + "22", color: m.color, letterSpacing: 0.5,
+        }}>
+          {m.emoji} {m.text}
+        </span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>Precision</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: m.color }}>
+            {pct != null ? `${pct.toFixed(1)}%` : "—"}
+          </div>
+          <div style={{ fontSize: 10, color: "#6B7280" }}>
+            {lossN}/{totalBlocked} blocked were fails
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>Önlenen Fail</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#86EFAC" }}>{lossN}</div>
+          <div style={{ fontSize: 10, color: "#6B7280" }}>true positives</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>Kaybedilen Win</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#FCA5A5" }}>{winN}</div>
+          <div style={{ fontSize: 10, color: "#6B7280" }}>false positives — collateral</div>
+        </div>
+      </div>
+      <div style={{ marginTop: 8, fontSize: 11, color: "#D1D5DB", fontStyle: "italic" }}>
+        💬 {m.explainer}
+      </div>
+    </div>
+  );
+}
+
 
 function RobustnessBlock({ robustness, sim }: { robustness: any; sim: SimulatedMetric }) {
   const status = robustness.status;

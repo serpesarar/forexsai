@@ -319,7 +319,15 @@ def _build_blocked_mask(df: pd.DataFrame, auto_fixes: list[dict],
 
 
 def _compute_window(df: pd.DataFrame, blocked_mask: pd.Series, label: str) -> dict:
-    """Original + simulated metrics + delta for one date-range slice."""
+    """Original + simulated metrics + delta for one date-range slice.
+
+    Includes SELECTIVITY metric — a filter that blocks 15 fails but also
+    kills 100 wins is NOT a good filter even if the net P/L looks fine.
+    Selectivity = blocked_fails / (blocked_fails + blocked_wins)
+       ≥ 80% → clean filter (every 5 blocked, 4 are real fails)
+       60-80% → acceptable (gray zone)
+       <  60% → noisy (collateral damage on winning signals)
+    """
     if df.empty:
         return {"label": label, "n_signals": 0, "skipped": True,
                 "reason": "no_signals_in_window"}
@@ -330,6 +338,19 @@ def _compute_window(df: pd.DataFrame, blocked_mask: pd.Series, label: str) -> di
     blocked_fails = int((blocked["status"] == "stopped").sum())
     blocked_wins = int((blocked["status"] == "completed").sum())
     blocked_pnl = float(blocked.apply(_signal_pnl_pips, axis=1).sum())
+
+    # Selectivity / precision — what % of the filter's blocks were actually fails
+    blocked_resolved = blocked_fails + blocked_wins
+    selectivity_pct = (round(blocked_fails / blocked_resolved * 100, 2)
+                       if blocked_resolved > 0 else None)
+    if selectivity_pct is None:
+        selectivity_label = "no_blocks"
+    elif selectivity_pct >= 80:
+        selectivity_label = "clean"
+    elif selectivity_pct >= 60:
+        selectivity_label = "acceptable"
+    else:
+        selectivity_label = "noisy"
 
     deltas = {
         "win_rate_pp": (round(simulated.get("win_rate", 0) - original.get("win_rate", 0), 2)
@@ -345,7 +366,10 @@ def _compute_window(df: pd.DataFrame, blocked_mask: pd.Series, label: str) -> di
         "blocked_pnl_avoided": round(-blocked_pnl, 2),
         "blocked_was_loss": blocked_fails,
         "blocked_was_win": blocked_wins,
-        "verdict": _verdict(simulated, original),
+        # ── User's "kazançları da öldürmesin" insight ──
+        "selectivity_pct": selectivity_pct,
+        "selectivity_label": selectivity_label,
+        "verdict": _verdict(simulated, original, selectivity_label),
     }
     return {"label": label, "n_signals": len(df),
             "original": original, "simulated": simulated, "deltas": deltas}
@@ -509,9 +533,15 @@ async def simulate_proposal(proposal_id: str,
     )
 
 
-def _verdict(simulated: dict, original: dict) -> str:
+def _verdict(simulated: dict, original: dict, selectivity_label: str = "no_blocks") -> str:
     """Multi-metric gate. A proposal must improve win-rate AND P/L AND not blow up drawdown.
-    Returns one of: 'unanimously_better', 'mixed', 'unanimously_worse', 'insignificant'."""
+    AND the filter must be selective enough — a noisy filter (kills wins ≥ fails) is
+    rejected outright, regardless of net aggregate.
+
+    Returns one of:
+      'unanimously_better', 'unanimously_better_but_noisy_filter',
+      'mixed', 'unanimously_worse', 'insignificant', 'noisy_filter'.
+    """
     sw = simulated.get("win_rate")
     ow = original.get("win_rate")
     sp = simulated.get("total_pnl_pips") or 0
@@ -523,6 +553,15 @@ def _verdict(simulated: dict, original: dict) -> str:
     win_better = sw > ow + 0.5
     pnl_better = sp > op + 1
     dd_better_or_equal = sdd <= odd * 1.1   # tolerate +10% drawdown if other metrics improve
+
+    # Selectivity guard — user's insight: even if aggregate looks good, a filter
+    # that kills lots of wins is dangerous. Annotate the verdict so the user
+    # can decide whether the noise is acceptable.
+    if selectivity_label == "noisy":
+        if win_better and pnl_better and dd_better_or_equal:
+            return "unanimously_better_but_noisy_filter"
+        return "noisy_filter"
+
     if win_better and pnl_better and dd_better_or_equal:
         return "unanimously_better"
     if not win_better and not pnl_better and not dd_better_or_equal:
