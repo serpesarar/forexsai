@@ -1074,7 +1074,21 @@ async def outcome_audit(symbol: str, days: int = Query(30, ge=1, le=365)):
                 break
 
         if not preds:
-            # Debug: surface what symbols actually exist
+            # Debug: list statuses for this symbol (no status filter)
+            all_rows = _row_data(
+                client.table("prediction_logs")
+                .select("symbol, status, model_type")
+                .eq("symbol", symbol)
+                .gte("created_at", since)
+                .limit(5000)
+            )
+            status_counts: dict[str, int] = {}
+            model_counts: dict[str, int] = {}
+            for r in all_rows:
+                s = r.get("status") or "null"
+                m = r.get("model_type") or "null"
+                status_counts[s] = status_counts.get(s, 0) + 1
+                model_counts[m] = model_counts.get(m, 0) + 1
             sample_symbols = _row_data(
                 client.table("prediction_logs")
                 .select("symbol")
@@ -1087,8 +1101,11 @@ async def outcome_audit(symbol: str, days: int = Query(30, ge=1, le=365)):
                 "tried_variants": sorted(variants),
                 "days": days,
                 "n_signals": 0,
-                "health": "no_data",
+                "health": "no_resolved_signals",
                 "distinct_symbols_in_window": distinct,
+                "status_breakdown_for_symbol": status_counts,
+                "model_breakdown_for_symbol": model_counts,
+                "total_rows_for_symbol_any_status": len(all_rows),
             }
 
         ids = [p["id"] for p in preds]
