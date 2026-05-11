@@ -1064,10 +1064,12 @@ async def outcome_audit(symbol: str, days: int = Query(30, ge=1, le=365)):
                 client.table("prediction_logs")
                 .select("id, symbol, model_type, direction, status, entry_price, created_at")
                 .eq("symbol", variant)
-                .in_("status", ["completed", "stopped"])
                 .gte("created_at", since)
                 .limit(5000)
             )
+            # Filter status in Python — wrapper's in_() combined with eq+gte
+            # silently returns empty (confirmed via /outcome-audit debug path).
+            rows = [r for r in rows if r.get("status") in ("completed", "stopped")]
             if rows:
                 preds = rows
                 matched_symbol = variant
