@@ -898,6 +898,114 @@ async def reject_tp_sl(rec_id: str, body: dict):
         raise HTTPException(500, str(e))
 
 
+@router.get("/coverage-stats")
+async def coverage_stats(days: int = 7):
+    """Why does symbol X have few/no proposals? This breaks down the raw
+    funnel so the user can see WHERE coverage drops:
+        signals → resolved → failures → factor-rich → clusters → proposals
+    For each symbol in the last `days` window."""
+    if not is_db_available():
+        raise HTTPException(503, "supabase unavailable")
+    client = get_supabase_client()
+    from datetime import timedelta
+    since_iso = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    out: dict[str, Any] = {"window_days": days, "since": since_iso, "symbols": {}}
+
+    SYMBOLS = ["XAUUSD", "NDX.INDX", "GDAXI.INDX", "USOIL.FOREX"]
+    try:
+        for sym in SYMBOLS:
+            # Bounded sampling — we just need counts, not full content
+            q = client.table("prediction_logs").select(
+                "id,status,model_type,factors"
+            ).eq("symbol", sym).gte("created_at", since_iso).limit(10000)
+            res = q.execute() if hasattr(q, "execute") else q
+            rows = (res.get("data") if isinstance(res, dict)
+                    else getattr(res, "data", None)) or []
+            total = len(rows)
+            resolved = sum(1 for r in rows if r.get("status") in ("completed", "stopped"))
+            failures = sum(1 for r in rows if r.get("status") == "stopped")
+            # How many failures have rich snapshot factors? (key indicator)
+            factor_rich = 0
+            for r in rows:
+                if r.get("status") != "stopped":
+                    continue
+                f = r.get("factors")
+                if isinstance(f, str):
+                    try:
+                        import json as _json
+                        f = _json.loads(f)
+                    except Exception:
+                        f = {}
+                if isinstance(f, dict) and (
+                    f.get("regime_label") or f.get("M30_rsi_14") is not None
+                    or f.get("sar_bearish") is not None
+                ):
+                    factor_rich += 1
+            # Model breakdown
+            from collections import Counter
+            by_model = Counter(r.get("model_type") for r in rows)
+
+            # Clusters for this symbol
+            cq = client.table("failure_clusters").select("id,sample_size,model_type").eq(
+                "symbol", sym).limit(500)
+            cres = cq.execute() if hasattr(cq, "execute") else cq
+            crows = (cres.get("data") if isinstance(cres, dict)
+                     else getattr(cres, "data", None)) or []
+            clusters_total = len(crows)
+            clusters_meeting_threshold = sum(1 for c in crows if (c.get("sample_size") or 0) >= 5)
+
+            # Proposals for this symbol
+            pq = client.table("improvement_proposals").select("id,status").eq(
+                "symbol", sym).limit(500)
+            pres = pq.execute() if hasattr(pq, "execute") else pq
+            prows = (pres.get("data") if isinstance(pres, dict)
+                     else getattr(pres, "data", None)) or []
+            proposals_total = len(prows)
+            proposals_pending = sum(1 for p in prows if p.get("status") == "pending")
+
+            out["symbols"][sym] = {
+                "signals_total": total,
+                "resolved": resolved,
+                "failures": failures,
+                "win_rate_pct": (round((resolved - failures) / resolved * 100, 1)
+                                  if resolved > 0 else None),
+                "factor_rich_failures": factor_rich,
+                "factor_coverage_pct": (round(factor_rich / failures * 100, 1)
+                                         if failures > 0 else None),
+                "by_model_signals": dict(by_model.most_common(10)),
+                "clusters_total": clusters_total,
+                "clusters_meeting_5plus": clusters_meeting_threshold,
+                "proposals_total": proposals_total,
+                "proposals_pending": proposals_pending,
+                # Diagnostic interpretation
+                "bottleneck": _diagnose_bottleneck(
+                    total, failures, factor_rich, clusters_meeting_threshold, proposals_total
+                ),
+            }
+    except Exception as e:
+        logger.exception("coverage_stats failed: %s", e)
+        out["error"] = str(e)
+    return out
+
+
+def _diagnose_bottleneck(signals: int, fails: int, factor_rich: int,
+                          clusters: int, proposals: int) -> str:
+    """Identify WHERE the funnel breaks for a symbol."""
+    if signals == 0:
+        return "no_signals — symbol not generating any predictions in this window"
+    if fails == 0:
+        return "no_failures — model is winning everything (rare; verify outcome_results)"
+    if factor_rich == 0:
+        return "no_factor_coverage — snapshot enrichment not producing readable factors for this symbol"
+    if factor_rich < 5:
+        return f"only {factor_rich} factor-rich failures — below cluster threshold (need ≥5)"
+    if clusters == 0:
+        return "failures don't cluster — each failure has a unique signature (no repeated patterns)"
+    if proposals == 0:
+        return "clusters exist but no proposals — DeepSeek call may be failing"
+    return "healthy — funnel producing proposals"
+
+
 @router.get("/clusters")
 async def list_clusters(
     symbol: Optional[str] = None,
