@@ -1030,3 +1030,127 @@ async def list_clusters(
     except Exception as e:
         logger.exception("list_clusters failed: %s", e)
         raise HTTPException(500, str(e))
+
+
+@router.get("/outcome-audit/{symbol}")
+async def outcome_audit(symbol: str, days: int = Query(30, ge=1, le=365)):
+    """
+    Diagnostic: inspect raw outcome_results for a symbol to surface P/L
+    recording bugs (e.g. USOIL 98% win-rate with 0 total pips).
+
+    Joins prediction_logs (status=completed|stopped) with outcome_results and
+    reports MFE/MAE distribution, zero-counts, and a health verdict.
+    """
+    if not is_db_available():
+        raise HTTPException(503, "supabase unavailable")
+    client = get_supabase_client()
+    try:
+        from datetime import timedelta
+        since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        preds = _row_data(
+            client.table("prediction_logs")
+            .select("id, symbol, model_type, direction, status, entry_price, created_at")
+            .eq("symbol", symbol)
+            .in_("status", ["completed", "stopped"])
+            .gte("created_at", since)
+            .limit(5000)
+        )
+        if not preds:
+            return {"symbol": symbol, "days": days, "n_signals": 0, "health": "no_data"}
+
+        ids = [p["id"] for p in preds]
+        # Batch fetch outcomes (chunks of 200 to keep IN-list manageable)
+        outcomes: dict[str, dict] = {}
+        for i in range(0, len(ids), 200):
+            chunk = ids[i:i+200]
+            rows = _row_data(
+                client.table("outcome_results")
+                .select("signal_id, outcome, highest_profit_pips, lowest_drawdown_pips, exit_price")
+                .in_("signal_id", chunk)
+                .limit(5000)
+            )
+            for r in rows:
+                outcomes[r["signal_id"]] = r
+
+        n = len(preds)
+        matched = sum(1 for p in preds if p["id"] in outcomes)
+        unmatched = n - matched
+        mfe_zero = 0
+        mae_zero = 0
+        mfe_values: list[float] = []
+        mae_values: list[float] = []
+        wins = 0
+        losses = 0
+        total_mfe = 0.0
+        total_mae = 0.0
+        samples: list[dict] = []
+        for p in preds:
+            o = outcomes.get(p["id"])
+            if not o:
+                continue
+            mfe = float(o.get("highest_profit_pips") or 0)
+            mae = float(o.get("lowest_drawdown_pips") or 0)
+            mfe_values.append(mfe)
+            mae_values.append(mae)
+            if mfe == 0:
+                mfe_zero += 1
+            if mae == 0:
+                mae_zero += 1
+            total_mfe += mfe
+            total_mae += mae
+            if p["status"] == "completed":
+                wins += 1
+            elif p["status"] == "stopped":
+                losses += 1
+            if len(samples) < 10:
+                samples.append({
+                    "signal_id": p["id"],
+                    "model_type": p["model_type"],
+                    "direction": p["direction"],
+                    "status": p["status"],
+                    "entry_price": p.get("entry_price"),
+                    "exit_price": o.get("exit_price"),
+                    "outcome": o.get("outcome"),
+                    "mfe_pips": mfe,
+                    "mae_pips": mae,
+                })
+
+        wr = (wins / matched * 100.0) if matched else None
+        avg_mfe = (total_mfe / matched) if matched else None
+        avg_mae = (total_mae / matched) if matched else None
+        net = total_mfe + total_mae  # mae is negative-ish
+
+        # Health verdict — surfaces the USOIL bug
+        if matched == 0:
+            health = "no_outcome_rows"
+        elif mfe_zero == matched and mae_zero == matched:
+            health = "BUG_all_zero"
+        elif wr is not None and wr >= 70 and abs(net) < 1.0:
+            health = "BUG_high_winrate_zero_pnl"
+        elif unmatched > matched:
+            health = "WARN_mostly_unmatched"
+        else:
+            health = "ok"
+
+        return {
+            "symbol": symbol,
+            "days": days,
+            "n_signals": n,
+            "matched_outcomes": matched,
+            "unmatched": unmatched,
+            "wins": wins,
+            "losses": losses,
+            "win_rate_pct": wr,
+            "mfe_zero_count": mfe_zero,
+            "mae_zero_count": mae_zero,
+            "avg_mfe_pips": avg_mfe,
+            "avg_mae_pips": avg_mae,
+            "total_mfe_pips": total_mfe,
+            "total_mae_pips": total_mae,
+            "net_pips": net,
+            "health": health,
+            "samples": samples,
+        }
+    except Exception as e:
+        logger.exception("outcome_audit failed: %s", e)
+        raise HTTPException(500, str(e))
