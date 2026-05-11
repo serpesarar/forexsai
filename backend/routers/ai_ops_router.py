@@ -1047,16 +1047,49 @@ async def outcome_audit(symbol: str, days: int = Query(30, ge=1, le=365)):
     try:
         from datetime import timedelta
         since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
-        preds = _row_data(
-            client.table("prediction_logs")
-            .select("id, symbol, model_type, direction, status, entry_price, created_at")
-            .eq("symbol", symbol)
-            .in_("status", ["completed", "stopped"])
-            .gte("created_at", since)
-            .limit(5000)
-        )
+
+        # Symbol normalization — prediction_logs may use bare form (USOIL)
+        # while proposals/config use suffixed form (USOIL.FOREX).
+        variants = {symbol}
+        if "." in symbol:
+            variants.add(symbol.split(".")[0])
+        else:
+            variants.add(f"{symbol}.FOREX")
+            variants.add(f"{symbol}.INDX")
+
+        preds: list[dict] = []
+        matched_symbol = None
+        for variant in variants:
+            rows = _row_data(
+                client.table("prediction_logs")
+                .select("id, symbol, model_type, direction, status, entry_price, created_at")
+                .eq("symbol", variant)
+                .in_("status", ["completed", "stopped"])
+                .gte("created_at", since)
+                .limit(5000)
+            )
+            if rows:
+                preds = rows
+                matched_symbol = variant
+                break
+
         if not preds:
-            return {"symbol": symbol, "days": days, "n_signals": 0, "health": "no_data"}
+            # Debug: surface what symbols actually exist
+            sample_symbols = _row_data(
+                client.table("prediction_logs")
+                .select("symbol")
+                .gte("created_at", since)
+                .limit(500)
+            )
+            distinct = sorted({r.get("symbol") for r in sample_symbols if r.get("symbol")})
+            return {
+                "symbol": symbol,
+                "tried_variants": sorted(variants),
+                "days": days,
+                "n_signals": 0,
+                "health": "no_data",
+                "distinct_symbols_in_window": distinct,
+            }
 
         ids = [p["id"] for p in preds]
         # Batch fetch outcomes (chunks of 200 to keep IN-list manageable)
@@ -1134,6 +1167,7 @@ async def outcome_audit(symbol: str, days: int = Query(30, ge=1, le=365)):
 
         return {
             "symbol": symbol,
+            "matched_symbol": matched_symbol,
             "days": days,
             "n_signals": n,
             "matched_outcomes": matched,
