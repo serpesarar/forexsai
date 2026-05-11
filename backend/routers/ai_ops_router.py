@@ -1062,7 +1062,7 @@ async def outcome_audit(symbol: str, days: int = Query(30, ge=1, le=365)):
         for variant in variants:
             rows = _row_data(
                 client.table("prediction_logs")
-                .select("id, symbol, model_type, direction, status, entry_price, created_at")
+                .select("id, symbol, model_type, ml_direction, status, ml_entry_price, created_at")
                 .eq("symbol", variant)
                 .gte("created_at", since)
                 .limit(5000)
@@ -1158,9 +1158,9 @@ async def outcome_audit(symbol: str, days: int = Query(30, ge=1, le=365)):
                 samples.append({
                     "signal_id": p["id"],
                     "model_type": p["model_type"],
-                    "direction": p["direction"],
+                    "direction": p.get("ml_direction"),
                     "status": p["status"],
-                    "entry_price": p.get("entry_price"),
+                    "entry_price": p.get("ml_entry_price"),
                     "exit_price": o.get("exit_price"),
                     "outcome": o.get("outcome"),
                     "mfe_pips": mfe,
