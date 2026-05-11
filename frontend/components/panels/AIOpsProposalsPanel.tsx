@@ -10,7 +10,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   aiOps, type Proposal, type Severity, type ProposalStatus, type SimulatedMetric,
-  type TpSlRecommendation,
+  type TpSlRecommendation, type DiscriminatorAnalysis,
 } from "../../lib/api/aiOps";
 
 const SEVERITY_COLOR: Record<Severity, { bg: string; border: string; text: string; emoji: string }> = {
@@ -929,6 +929,12 @@ function SimulationBlock({ proposal: p }: { proposal: Proposal }) {
       {sim.deltas.selectivity_pct != null && (sim.deltas.n_signals_blocked ?? 0) > 0 && (
         <SelectivityBlock sel={sim.deltas} />
       )}
+
+      {/* Discriminator deep-dive — only meaningful when selectivity is sub-optimal */}
+      {sim.deltas.selectivity_label && sim.deltas.selectivity_label !== "clean"
+        && (sim.deltas.blocked_was_win ?? 0) >= 5 && p.id && (
+        <DiscriminatorBlock proposalId={p.id} />
+      )}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, fontSize: 12 }}>
         <div>
           <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase" }}>Win-Rate Δ</div>
@@ -1057,6 +1063,164 @@ function SelectivityBlock({ sel }: { sel: any }) {
       <div style={{ marginTop: 8, fontSize: 11, color: "#D1D5DB", fontStyle: "italic" }}>
         💬 {m.explainer}
       </div>
+    </div>
+  );
+}
+
+
+function DiscriminatorBlock({ proposalId }: { proposalId: string }) {
+  const [result, setResult] = useState<DiscriminatorAnalysis | null>(null);
+  const [open, setOpen] = useState(false);
+  const mut = useMutation({
+    mutationFn: () => aiOps.discriminatorAnalysis(proposalId, 60),
+    onSuccess: (data) => { setResult(data.result); setOpen(true); },
+    onError: (e: any) => alert(`Discriminator analizi başarısız: ${e?.message ?? "bilinmiyor"}`),
+  });
+
+  return (
+    <div style={{
+      margin: "10px 0", padding: 12, background: "#0B0F17", borderRadius: 6,
+      borderLeft: "3px solid #A855F7",
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <div style={{ fontSize: 11, color: "#9CA3AF", textTransform: "uppercase",
+                        letterSpacing: 0.5 }}>
+            🔬 Discriminator Deep-Dive
+          </div>
+          <div style={{ fontSize: 11, color: "#D1D5DB", marginTop: 4 }}>
+            Bloklanan win'lerle fail'leri ayıran gizli feature'ları bul — filter'ı keskinleştir.
+          </div>
+        </div>
+        <button
+          onClick={() => result ? setOpen(!open) : mut.mutate()}
+          disabled={mut.isPending}
+          style={{
+            background: "#A855F7", color: "#fff", border: "none",
+            padding: "6px 12px", borderRadius: 4, cursor: "pointer", fontSize: 11,
+            opacity: mut.isPending ? 0.5 : 1, whiteSpace: "nowrap",
+          }}
+        >
+          {mut.isPending ? "Analiz Ediliyor..." : result ? (open ? "Gizle" : "Sonucu Aç") : "Derin Analiz Çalıştır"}
+        </button>
+      </div>
+
+      {open && result && (
+        <DiscriminatorResult result={result} />
+      )}
+    </div>
+  );
+}
+
+function DiscriminatorResult({ result }: { result: DiscriminatorAnalysis }) {
+  if (result.status === "insufficient_data") {
+    return (
+      <div style={{ marginTop: 10, fontSize: 11, color: "#FDE68A" }}>
+        ⚠ Yeterli örnek yok: {result.n_wins} win, {result.n_fails} fail bulundu
+        (min {result.min_required?.wins ?? 5}/{result.min_required?.fails ?? 5} gerekli).
+      </div>
+    );
+  }
+  if (result.status === "error") {
+    return (
+      <div style={{ marginTop: 10, fontSize: 11, color: "#FCA5A5" }}>
+        ❌ {result.error}{result.note ? ` — ${result.note}` : ""}
+      </div>
+    );
+  }
+
+  const orig = result.original;
+  const top = result.discriminators_top ?? [];
+  const refine = result.recommended_refinement;
+
+  return (
+    <div style={{ marginTop: 12 }}>
+      {orig && (
+        <div style={{ fontSize: 11, color: "#9CA3AF", marginBottom: 10 }}>
+          Bloklanan toplam: <b>{orig.n_blocked}</b> · Fails: <b style={{ color: "#86EFAC" }}>{orig.n_fails_blocked}</b>
+          {" · "}Wins kaybı: <b style={{ color: "#FCA5A5" }}>{orig.n_wins_blocked}</b>
+          {" · "}Precision: <b>{orig.precision_pct}%</b>
+        </div>
+      )}
+
+      <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase",
+                    letterSpacing: 0.5, marginBottom: 6 }}>
+        🏆 En Güçlü Ayırıcı Feature'lar (top {top.length})
+      </div>
+      <table style={{ width: "100%", fontSize: 11, borderCollapse: "collapse" }}>
+        <thead>
+          <tr style={{ color: "#6B7280", fontSize: 10, textTransform: "uppercase",
+                       textAlign: "left", borderBottom: "1px solid #1F2937" }}>
+            <th style={{ padding: "6px 4px" }}>Feature</th>
+            <th style={{ padding: "6px 4px" }}>Win Ort.</th>
+            <th style={{ padding: "6px 4px" }}>Fail Ort.</th>
+            <th style={{ padding: "6px 4px" }}>Eşik / Kategori</th>
+            <th style={{ padding: "6px 4px", textAlign: "right" }}>Rescue / Leak</th>
+          </tr>
+        </thead>
+        <tbody>
+          {top.map((d, i) => {
+            const sepColor = Math.abs(d.separation) >= 0.3 ? "#22C55E"
+                           : Math.abs(d.separation) >= 0.15 ? "#EAB308" : "#9CA3AF";
+            return (
+              <tr key={i} style={{ borderBottom: "1px solid #111827",
+                                    background: i === 0 ? "#A855F710" : "transparent" }}>
+                <td style={{ padding: "6px 4px", fontFamily: "monospace", color: "#E5E7EB" }}>
+                  {d.feature}
+                </td>
+                <td style={{ padding: "6px 4px", color: "#86EFAC" }}>
+                  {d.type === "numeric" ? d.win_mean?.toFixed(2) : "—"}
+                </td>
+                <td style={{ padding: "6px 4px", color: "#FCA5A5" }}>
+                  {d.type === "numeric" ? d.fail_mean?.toFixed(2) : "—"}
+                </td>
+                <td style={{ padding: "6px 4px", color: sepColor, fontFamily: "monospace" }}>
+                  {d.type === "numeric"
+                    ? `${d.direction === "above" ? ">" : "<"} ${d.threshold?.toFixed(2)}`
+                    : `= ${d.category}`}
+                  {" "}
+                  <span style={{ color: "#6B7280" }}>(Δ {(d.separation * 100).toFixed(1)}%)</span>
+                </td>
+                <td style={{ padding: "6px 4px", textAlign: "right", color: "#9CA3AF" }}>
+                  <span style={{ color: "#86EFAC" }}>+{d.wins_in_rescue}w</span>
+                  {" / "}
+                  <span style={{ color: "#FCA5A5" }}>+{d.fails_re_allowed}f</span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      {refine && (
+        <div style={{ marginTop: 14, padding: 12, background: "#111827",
+                      borderLeft: "3px solid #22C55E", borderRadius: 4 }}>
+          <div style={{ fontSize: 10, color: "#86EFAC", textTransform: "uppercase",
+                        letterSpacing: 0.5, marginBottom: 6, fontWeight: 700 }}>
+            ✨ Önerilen Refinement
+          </div>
+          <div style={{ fontSize: 12, color: "#E5E7EB", marginBottom: 10, lineHeight: 1.5 }}>
+            {refine.rule}
+          </div>
+          <pre style={{
+            background: "#000", padding: 10, borderRadius: 4, margin: 0,
+            fontSize: 11, color: "#86EFAC", overflow: "auto",
+          }}>
+{`${refine.extra_predicate.field} ${refine.extra_predicate.op} ${JSON.stringify(refine.extra_predicate.value)}`}
+          </pre>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
+                        gap: 12, marginTop: 12, fontSize: 11 }}>
+            <Stat label="Kurtarılan Win" value={`${refine.expected.wins_rescued}`} color="#86EFAC" />
+            <Stat label="Yeniden Geçen Fail" value={`${refine.expected.fails_re_allowed}`} color="#FCA5A5" />
+            <Stat label="Yeni Precision" value={`${refine.expected.new_precision_pct ?? "—"}%`} color="#E5E7EB" />
+            <Stat label="Fail Block Kaybı" value={`${refine.expected.fail_block_efficacy_loss_pct}%`} color="#FDE68A" />
+          </div>
+          <div style={{ marginTop: 10, fontSize: 10, color: "#6B7280", fontStyle: "italic" }}>
+            Bu refinement'i implement etmek için yeni proposal_simulator kuralı yaz veya
+            mevcut PR'a `extra_predicate`'i ekle.
+          </div>
+        </div>
+      )}
     </div>
   );
 }

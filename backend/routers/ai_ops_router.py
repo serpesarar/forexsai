@@ -499,6 +499,22 @@ async def pattern_mining_status():
         raise HTTPException(500, str(e))
 
 
+@router.post("/proposals/{proposal_id}/discriminator-analysis")
+async def discriminator_analysis_endpoint(proposal_id: str, window_days: int = 60):
+    """Deep-dive: for a filter proposal that blocks both fails AND wins, find
+    the features that distinguish them. Returns ranked discriminators + a
+    refined filter recommendation that rescues winning signals."""
+    if not is_db_available():
+        raise HTTPException(503, "supabase unavailable")
+    try:
+        from services.filter_discriminator import analyze_discriminators
+        result = await analyze_discriminators(proposal_id, days=window_days)
+        return {"ok": True, "result": result}
+    except Exception as e:
+        logger.exception("discriminator_analysis failed: %s", e)
+        raise HTTPException(500, str(e))
+
+
 @router.post("/proposals/{proposal_id}/simulate")
 async def simulate_proposal_endpoint(proposal_id: str, window_days: int = 60):
     """Re-run counterfactual simulation for a single proposal."""

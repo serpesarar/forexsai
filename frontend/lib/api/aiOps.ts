@@ -211,6 +211,58 @@ export interface TpSlRecommendation {
   created_at: string;
 }
 
+export interface DiscriminatorAnalysis {
+  status: "ok" | "error" | "insufficient_data";
+  proposal_id?: string;
+  window_days?: number;
+  symbol?: string;
+  model_type?: string;
+  original?: {
+    n_blocked: number;
+    n_wins_blocked: number;
+    n_fails_blocked: number;
+    precision_pct: number | null;
+  };
+  discriminators_top?: Array<{
+    feature: string;
+    type: "numeric" | "categorical";
+    win_n: number;
+    fail_n: number;
+    win_mean?: number;
+    fail_mean?: number;
+    win_median?: number;
+    fail_median?: number;
+    threshold?: number;
+    direction?: "above" | "below";
+    category?: string;
+    separation: number;
+    abs_separation: number;
+    wins_in_rescue: number;
+    fails_re_allowed: number;
+    rescue_ratio: number;
+    fail_leak_ratio: number;
+  }>;
+  recommended_refinement?: {
+    rule: string;
+    extra_predicate: { field: string; op: string; value: any };
+    refined_filter_spec: any;
+    expected: {
+      wins_rescued: number;
+      fails_re_allowed: number;
+      new_blocked_fails: number;
+      new_blocked_wins: number;
+      new_precision_pct: number | null;
+      fail_block_efficacy_loss_pct: number;
+    };
+  } | null;
+  n_wins?: number;
+  n_fails?: number;
+  error?: string;
+  note?: string;
+  generated_at?: string;
+}
+
+
 export interface PatternMiningStatus {
   local_file_exists: boolean;
   local_generated_at?: string;
@@ -264,6 +316,10 @@ export const aiOps = {
   simulate: (id: string, windowDays = 60) =>
     post<{ ok: boolean; result: SimulatedMetric }>(
       `/api/ai-ops/proposals/${id}/simulate?window_days=${windowDays}`, {}
+    ),
+  discriminatorAnalysis: (id: string, windowDays = 60) =>
+    post<{ ok: boolean; result: DiscriminatorAnalysis }>(
+      `/api/ai-ops/proposals/${id}/discriminator-analysis?window_days=${windowDays}`, {}
     ),
   manualRun: (windowDays = 7) =>
     post<{ ok: boolean; status: string; window_days: number }>(
