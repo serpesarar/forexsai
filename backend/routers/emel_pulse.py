@@ -1688,7 +1688,56 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
         if was_filtered:
             signal_type = "HOLD"
             decision_notes.append(filter_reason)
-        
+
+        # ─── AI-Ops Guards (XAU/PULSE1) ───────────────────────────────────────
+        # Multiple independent failure clusters surfaced by AI-Ops on
+        # XAUUSD/PULSE1. Each guard is additive — checked in series with one
+        # shared snapshot fetch (30s cached). Sources: GitHub issues #6, #7, #8.
+        if pulse_signal == "BUY" and symbol.upper() in ("XAUUSD", "XAUUSD.FOREX"):
+            try:
+                from services.signal_feature_snapshot import build_signal_feature_snapshot
+                snap = await build_signal_feature_snapshot(symbol)
+
+                # Rule #XAU-PULSE1-001: SAR-against-transition guard
+                # Clusters: 20 fails (proposal 2f8a...) + 5 fails (#6) + 8 fails (#8)
+                # = 33 historical fails, 0 wins. Pattern: PULSE1 BUYs counter to a
+                # bearish Parabolic SAR during a 'transition' regime — classic
+                # mean-reversion-into-bearish-momentum trap.
+                if snap.get("sar_bearish") is True and snap.get("regime_label") == "transition":
+                    pulse_signal = "HOLD"
+                    signal_type = "HOLD"
+                    decision_notes.append(
+                        "PULSE1 BUY blocked: SAR bearish during transition regime "
+                        "(AI-Ops rule #XAU-PULSE1-001 — 33 historical fails, 0 wins)"
+                    )
+                    logger.info(
+                        f"[AI-Ops] PULSE1 BUY blocked on {symbol}: "
+                        f"sar_bearish=True, regime=transition"
+                    )
+
+                # Rule #XAU-PULSE1-002: DXY-strength in transition regime guard
+                # Cluster: 6 fails (#7), 0 wins. DXY strengthening (>0.2% 1d
+                # change) is a structural bearish headwind for gold. Combined
+                # with a 'transition' regime (no clear direction), these BUYs
+                # repeatedly fail. Only block in the transition regime — in a
+                # confirmed uptrend, transient DXY strength can still be bought.
+                dxy_chg = snap.get("macro_dxy_chg1d_pct")
+                if (pulse_signal == "BUY"   # may have just been blocked by rule 001
+                        and snap.get("regime_label") == "transition"
+                        and dxy_chg is not None and dxy_chg > 0.2):
+                    pulse_signal = "HOLD"
+                    signal_type = "HOLD"
+                    decision_notes.append(
+                        f"PULSE1 BUY blocked: DXY +{dxy_chg:.2f}% in transition regime "
+                        f"(AI-Ops rule #XAU-PULSE1-002 — 6 historical fails, 0 wins)"
+                    )
+                    logger.info(
+                        f"[AI-Ops] PULSE1 BUY blocked on {symbol}: "
+                        f"dxy_chg1d={dxy_chg}%, regime=transition"
+                    )
+            except Exception as guard_err:
+                logger.warning(f"PULSE1 AI-Ops guard check failed: {guard_err}")
+
         # Hacim notu (iptal değil, bilgi)
         if pulse_signal in ["BUY", "SELL"] and volume_status == "low":
             decision_notes.append("Low volume - be cautious")
