@@ -104,6 +104,8 @@ export interface TrackedProposal {
   reviewed_at: string | null;
 }
 
+export type AutoDecision = "auto_apply" | "human_review" | "auto_reject";
+
 export interface Proposal {
   id: string;
   cluster_id: string | null;
@@ -120,6 +122,10 @@ export interface Proposal {
   post_change_metric: Record<string, any> | null;
   simulated_metric: SimulatedMetric | null;
   simulated_at: string | null;
+  auto_decision: AutoDecision | null;
+  auto_decision_reason: string | null;
+  auto_decided_at: string | null;
+  auto_implemented_pr_url: string | null;
   reviewed_by: string | null;
   reviewed_at: string | null;
   pr_url: string | null;
@@ -294,12 +300,21 @@ export const aiOps = {
     severity?: Severity;
     symbol?: string;
     model_type?: string;
+    auto_decision?: AutoDecision;
     limit?: number;
   } = {}) => {
     const q = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => v != null && q.set(k, String(v)));
     return get<{ proposals: Proposal[]; count: number }>(`/api/ai-ops/proposals?${q}`);
   },
+  autoTriageRun: (limit = 500) =>
+    post<{ ok: boolean; status: string; note: string }>(
+      `/api/ai-ops/auto-triage/run?limit=${limit}`, {}
+    ),
+  autoTriageStats: () =>
+    get<{ available: boolean; counts: Record<string, number>; total?: number }>(
+      "/api/ai-ops/auto-triage/stats"
+    ),
   getProposal: (id: string) =>
     get<{ proposal: Proposal; cluster: FailureCluster | null; sample_failures: any[] }>(
       `/api/ai-ops/proposals/${id}`

@@ -148,6 +148,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"❌ TP/SL optimizer başlatılamadı: {e}")
 
+    # 2.11 Auto-triage (6h cycle: classify pending proposals into apply/review/reject)
+    try:
+        from services.ai_ops_auto_triage import cron_loop as auto_triage_loop
+        asyncio.create_task(auto_triage_loop())
+        print("✅ Auto-triage başlatıldı (6h cycle, pending → apply/review/reject)")
+    except Exception as e:
+        print(f"❌ Auto-triage başlatılamadı: {e}")
+
     # 3. PULSE + EMEL SCHEDULER (Doğrudan Başlat - 15dk'da bir)
     try:
         from services.background_scheduler import log_pulse_signals_if_needed

@@ -124,6 +124,7 @@ async def list_proposals(
     severity: Optional[str] = Query(None, description="critical|high|medium|low"),
     symbol: Optional[str] = None,
     model_type: Optional[str] = None,
+    auto_decision: Optional[str] = Query(None, description="auto_apply|human_review|auto_reject"),
     limit: int = Query(50, ge=1, le=200),
 ):
     """List improvement proposals with optional filters, newest first."""
@@ -135,6 +136,7 @@ async def list_proposals(
             "id,cluster_id,symbol,model_type,severity,status,llm_model,"
             "root_cause,proposed_fixes,alternative_explanations,requires_data,"
             "pre_change_metric,post_change_metric,simulated_metric,simulated_at,"
+            "auto_decision,auto_decision_reason,auto_decided_at,auto_implemented_pr_url,"
             "reviewed_by,reviewed_at,"
             "pr_url,created_at,updated_at"
         ).order("created_at", desc=True).limit(limit)
@@ -146,6 +148,8 @@ async def list_proposals(
             q = q.eq("symbol", symbol)
         if model_type:
             q = q.eq("model_type", model_type)
+        if auto_decision:
+            q = q.eq("auto_decision", auto_decision)
         # Force explicit execution
         result = q.execute() if hasattr(q, "execute") else q
         rows = (result.get("data") if isinstance(result, dict)
@@ -527,6 +531,52 @@ async def simulate_proposal_endpoint(proposal_id: str, window_days: int = 60):
     except Exception as e:
         logger.exception("simulate_proposal_endpoint failed: %s", e)
         raise HTTPException(500, str(e))
+
+
+@router.post("/auto-triage/run")
+async def trigger_auto_triage(bg: BackgroundTasks, limit: int = 500):
+    """Manually run auto-triage on all untriaged pending proposals.
+    Otherwise the 6h cron handles it."""
+    try:
+        from services.ai_ops_auto_triage import run_full_triage
+    except ImportError as e:
+        raise HTTPException(500, f"auto-triage unavailable: {e}")
+
+    async def _run():
+        try:
+            summary = await run_full_triage(limit=limit)
+            logger.info("[ai-ops] manual auto-triage complete: %s", summary)
+        except Exception as e:
+            logger.exception("[ai-ops] manual auto-triage failed: %s", e)
+
+    bg.add_task(_run)
+    return {"ok": True, "status": "scheduled",
+            "note": "Triage runs in background — 1-3 min depending on queue size. "
+                    "Pending proposals will get auto_decision values populated. "
+                    "Auto-rejected proposals also flip status to 'rejected'."}
+
+
+@router.get("/auto-triage/stats")
+async def auto_triage_stats():
+    """Counts by auto_decision so the dashboard can show triage outcome."""
+    if not is_db_available():
+        return {"available": False}
+    client = get_supabase_client()
+    out: dict = {"available": True, "counts": {}}
+    try:
+        q = client.table("improvement_proposals").select(
+            "auto_decision,status").limit(5000)
+        res = q.execute() if hasattr(q, "execute") else q
+        rows = (res.get("data") if isinstance(res, dict)
+                else getattr(res, "data", None)) or []
+        for r in rows:
+            d = r.get("auto_decision") or "untriaged"
+            out["counts"][d] = out["counts"].get(d, 0) + 1
+        out["total"] = len(rows)
+    except Exception as e:
+        logger.exception("auto_triage_stats failed: %s", e)
+        out["error"] = str(e)
+    return out
 
 
 @router.get("/diagnostic")

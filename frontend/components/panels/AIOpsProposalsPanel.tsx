@@ -10,7 +10,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   aiOps, type Proposal, type Severity, type ProposalStatus, type SimulatedMetric,
-  type TpSlRecommendation, type DiscriminatorAnalysis,
+  type TpSlRecommendation, type DiscriminatorAnalysis, type AutoDecision,
 } from "../../lib/api/aiOps";
 
 const SEVERITY_COLOR: Record<Severity, { bg: string; border: string; text: string; emoji: string }> = {
@@ -32,6 +32,7 @@ const STATUS_LABEL: Record<ProposalStatus, string> = {
 export default function AIOpsProposalsPanel() {
   const qc = useQueryClient();
   const [filter, setFilter] = useState<ProposalStatus | "all">("pending");
+  const [autoDecisionFilter, setAutoDecisionFilter] = useState<AutoDecision | "all">("all");
   const [symbolFilter, setSymbolFilter] = useState<string>("all");
   const [minSampleSize, setMinSampleSize] = useState<number>(0);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -48,13 +49,23 @@ export default function AIOpsProposalsPanel() {
     onError: (e: any) => alert(`Tetiklenemedi: ${e?.message ?? "bilinmiyor"}`),
   });
   const proposals = useQuery({
-    queryKey: ["ai-ops-proposals", filter, symbolFilter],
+    queryKey: ["ai-ops-proposals", filter, symbolFilter, autoDecisionFilter],
     queryFn: () => aiOps.listProposals({
       ...(filter === "all" ? {} : { status: filter }),
       ...(symbolFilter !== "all" ? { symbol: symbolFilter } : {}),
+      ...(autoDecisionFilter !== "all" ? { auto_decision: autoDecisionFilter } : {}),
       limit: 100,
     }),
     refetchInterval: 60000,
+  });
+  const triageStats = useQuery({
+    queryKey: ["ai-ops-auto-triage-stats"],
+    queryFn: () => aiOps.autoTriageStats(),
+    refetchInterval: 60000,
+  });
+  const triageRun = useMutation({
+    mutationFn: () => aiOps.autoTriageRun(500),
+    onSuccess: () => alert("Auto-triage tetiklendi — 1-3 dakika içinde sonuçlar dolar."),
   });
 
   const approveMut = useMutation({
@@ -200,6 +211,64 @@ export default function AIOpsProposalsPanel() {
             {stats.data?.by_status?.[s] ? ` (${stats.data.by_status[s]})` : ""}
           </button>
         ))}
+      </div>
+
+      {/* Auto-triage filter row */}
+      <div style={{ marginBottom: 12, padding: "10px 14px", background: "#0F1623",
+                    borderRadius: 8, border: "1px solid #1F2937" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+          <div>
+            <div style={{ fontSize: 11, color: "#6B7280", textTransform: "uppercase",
+                          letterSpacing: 0.5 }}>
+              🤖 Auto-Triage (sistemin otomatik sınıflandırması)
+            </div>
+            <div style={{ fontSize: 11, color: "#9CA3AF", marginTop: 2 }}>
+              Sistem objektif kriterlerle her öneriyi: ✅ auto_apply (PR aday), 👁 human_review (sen bak), ❌ auto_reject (zaten kapatıldı).
+            </div>
+          </div>
+          <button
+            onClick={() => triageRun.mutate()}
+            disabled={triageRun.isPending}
+            style={{
+              background: "#A855F7", color: "#fff", border: "none",
+              padding: "5px 10px", borderRadius: 4, cursor: "pointer", fontSize: 11,
+              opacity: triageRun.isPending ? 0.5 : 1, whiteSpace: "nowrap",
+            }}
+          >
+            {triageRun.isPending ? "..." : "Şimdi Triage Et"}
+          </button>
+        </div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {([
+            ["all", "Tüm Auto", "#374151", null],
+            ["auto_apply", "✅ Auto-Apply", "#22C55E", "auto_apply"],
+            ["human_review", "👁 Human Review", "#EAB308", "human_review"],
+            ["auto_reject", "❌ Auto-Reject", "#EF4444", "auto_reject"],
+          ] as const).map(([key, label, color, statsKey]) => {
+            const count = statsKey != null ? (triageStats.data?.counts?.[statsKey] ?? 0) : null;
+            const active = autoDecisionFilter === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setAutoDecisionFilter(key as any)}
+                style={{
+                  background: active ? color : "transparent",
+                  color: active ? "#fff" : "#9CA3AF",
+                  border: `1px solid ${active ? color : "#1F2937"}`,
+                  padding: "5px 10px", borderRadius: 4, cursor: "pointer", fontSize: 11,
+                  fontWeight: active ? 600 : 400,
+                }}
+              >
+                {label}{count != null ? ` (${count})` : ""}
+              </button>
+            );
+          })}
+          {triageStats.data?.counts?.untriaged ? (
+            <span style={{ fontSize: 11, color: "#9CA3AF", marginLeft: 8, alignSelf: "center" }}>
+              · {triageStats.data.counts.untriaged} henüz triaged değil
+            </span>
+          ) : null}
+        </div>
       </div>
 
       {/* Symbol + sample-size filters */}
