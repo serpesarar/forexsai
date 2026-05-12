@@ -74,10 +74,9 @@ async def _fetch_signals_with_outcomes(
     since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
     try:
         q = client.table("prediction_logs").select(
-            "id,symbol,model_type,ml_direction,ml_entry_price,timeframe,status,resolution_reason,created_at"
-        ).eq("symbol", symbol).gte("created_at", since).in_(
-            "status", ["completed", "stopped"]
-        ).limit(10000)
+            "id,symbol,model_type,ml_direction,ml_entry_price,timeframe,status,resolution_reason,"
+            "highest_profit_pips,lowest_drawdown_pips,exit_price,created_at"
+        ).eq("symbol", symbol).gte("created_at", since).limit(10000)
         if model_type:
             q = q.eq("model_type", model_type)
         if direction in ("BUY", "SELL"):
@@ -85,35 +84,18 @@ async def _fetch_signals_with_outcomes(
         if timeframe:
             q = q.eq("timeframe", timeframe)
         res = q.execute() if hasattr(q, "execute") else q
-        signals = res.get("data") if isinstance(res, dict) else getattr(res, "data", []) or []
+        rows = res.get("data") if isinstance(res, dict) else getattr(res, "data", []) or []
+        signals = [r for r in rows if r.get("status") in ("completed", "stopped")]
     except Exception as e:
         logger.exception("[tp_sl] fetch signals failed: %s", e)
         return []
     if not signals:
         return []
 
-    pred_ids = [s["id"] for s in signals]
-    outcomes: dict[str, dict] = {}
-    try:
-        for i in range(0, len(pred_ids), 200):
-            chunk = pred_ids[i:i + 200]
-            r = client.table("outcome_results").select(
-                "prediction_id,highest_profit_pips,lowest_drawdown_pips,exit_price"
-            ).in_("prediction_id", chunk)
-            res = r.execute() if hasattr(r, "execute") else r
-            data = res.get("data") if isinstance(res, dict) else getattr(res, "data", []) or []
-            for o in data:
-                outcomes[o["prediction_id"]] = o
-    except Exception as e:
-        logger.warning("[tp_sl] outcome fetch failed: %s", e)
-
     enriched: list[dict] = []
     for s in signals:
-        o = outcomes.get(s["id"])
-        if not o:
-            continue
-        mfe = float(o.get("highest_profit_pips") or 0)
-        mae = float(o.get("lowest_drawdown_pips") or 0)
+        mfe = float(s.get("highest_profit_pips") or 0)
+        mae = float(s.get("lowest_drawdown_pips") or 0)
         # Realized P/L for timeout cases — sign by status
         realized = mfe if s.get("status") == "completed" else -mae
         enriched.append({

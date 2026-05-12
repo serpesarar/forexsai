@@ -50,40 +50,48 @@ def _iso(dt: datetime) -> str:
 # ---------------------------------------------------------------------------
 
 async def _fetch_resolved_failures(client, since_iso: str, limit: int = 5000) -> list[dict]:
-    """Fetch failed (stopped or negative-resolution) signals + their outcomes."""
+    """Fetch failed (stopped or negative-resolution) signals with P/L data.
+
+    P/L (highest_profit_pips, lowest_drawdown_pips, exit_price) is on
+    prediction_logs itself — written by signal_lifecycle on resolution.
+    The legacy outcome_results table is empty in prod.
+    """
     try:
         rows = client.table("prediction_logs").select(
             "id,symbol,model_type,ml_direction,ml_confidence,status,resolution_reason,"
-            "ml_entry_price,ml_target_price,ml_stop_price,factors,created_at,timeframe"
-        ).gte("created_at", since_iso).in_("status", ["stopped", "completed"]).limit(limit)
+            "ml_entry_price,ml_target_price,ml_stop_price,factors,created_at,timeframe,"
+            "highest_profit_pips,lowest_drawdown_pips,exit_price,targets_hit"
+        ).gte("created_at", since_iso).limit(limit)
         result = rows.execute() if hasattr(rows, "execute") else rows
         data = result.get("data") if isinstance(result, dict) else getattr(result, "data", [])
-        return data or []
+        # Filter status in Python — wrapper .in_() drops rows when combined.
+        return [d for d in (data or []) if d.get("status") in ("stopped", "completed")]
     except Exception as e:
         logger.exception("[ai_ops] fetch failures failed: %s", e)
         return []
 
 
-async def _fetch_outcome_map(client, prediction_ids: list[str]) -> dict[str, dict]:
-    if not prediction_ids:
+async def _fetch_outcome_map(client, prediction_ids: list[str], resolved: list[dict] | None = None) -> dict[str, dict]:
+    """Build outcome map from prediction_logs rows (which already carry P/L)."""
+    if not resolved:
         return {}
     out: dict[str, dict] = {}
-    # Chunk by 200 to keep URL length sane
-    for i in range(0, len(prediction_ids), 200):
-        chunk = prediction_ids[i:i + 200]
-        try:
-            r = client.table("outcome_results").select(
-                "prediction_id,outcome,exit_price,highest_profit_pips,lowest_drawdown_pips,"
-                "hit_target,hit_stop,ml_correct"
-            ).in_("prediction_id", chunk)
-            result = r.execute() if hasattr(r, "execute") else r
-            data = result.get("data") if isinstance(result, dict) else getattr(result, "data", [])
-            for o in (data or []):
-                pid = o.get("prediction_id")
-                if pid:
-                    out[pid] = o
-        except Exception as e:
-            logger.warning("[ai_ops] outcome chunk %d failed: %s", i, e)
+    for p in resolved:
+        pid = p.get("id")
+        if not pid:
+            continue
+        targets_hit = p.get("targets_hit") or {}
+        hit_target = bool(targets_hit) and any(targets_hit.values())
+        out[pid] = {
+            "prediction_id": pid,
+            "outcome": p.get("status"),
+            "exit_price": p.get("exit_price"),
+            "highest_profit_pips": p.get("highest_profit_pips"),
+            "lowest_drawdown_pips": p.get("lowest_drawdown_pips"),
+            "hit_target": hit_target,
+            "hit_stop": p.get("status") == "stopped",
+            "ml_correct": p.get("status") == "completed",
+        }
     return out
 
 
@@ -463,7 +471,7 @@ async def orchestrate_ai_ops(window_days: int = DEFAULT_WINDOW_DAYS) -> dict:
 
     # 2) Pull outcomes
     pred_ids = [p["id"] for p in resolved]
-    outcomes = await _fetch_outcome_map(client, pred_ids)
+    outcomes = await _fetch_outcome_map(client, pred_ids, resolved=resolved)
     logger.info("[ai_ops] fetched %d outcomes", len(outcomes))
 
     # 3) Tag failures (Layer 1)

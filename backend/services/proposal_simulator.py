@@ -241,12 +241,15 @@ async def _fetch_signals(client, symbol: str, model_type: Optional[str],
         since = datetime.now(timezone.utc) - timedelta(days=window_days)
     since_iso = since.isoformat()
 
+    # P/L (highest_profit_pips/lowest_drawdown_pips) lives directly on
+    # prediction_logs, written by signal_lifecycle when status moves to
+    # completed/stopped. The legacy outcome_results table is empty in prod;
+    # querying it returned 0 pnl for every simulation.
     q = client.table("prediction_logs").select(
         "id,symbol,model_type,ml_direction,ml_confidence,status,resolution_reason,"
-        "ml_entry_price,ml_target_price,ml_stop_price,factors,created_at,timeframe"
-    ).eq("symbol", symbol).gte("created_at", since_iso).in_(
-        "status", ["completed", "stopped"]
-    ).limit(MAX_SIGNALS)
+        "ml_entry_price,ml_target_price,ml_stop_price,factors,created_at,timeframe,"
+        "highest_profit_pips,lowest_drawdown_pips,exit_price"
+    ).eq("symbol", symbol).gte("created_at", since_iso).limit(MAX_SIGNALS)
     if until_override is not None:
         q = q.lt("created_at", until_override.isoformat())
     if model_type and model_type != "any":
@@ -254,27 +257,12 @@ async def _fetch_signals(client, symbol: str, model_type: Optional[str],
 
     rows = q.execute() if hasattr(q, "execute") else q
     data = rows.get("data") if isinstance(rows, dict) else getattr(rows, "data", []) or []
+    # Filter status in Python — wrapper's .in_() combined with other filters
+    # silently drops rows (confirmed via /outcome-audit).
+    data = [d for d in data if d.get("status") in ("completed", "stopped")]
     if not data:
         return pd.DataFrame()
     df = pd.DataFrame(data)
-
-    # Attach outcome data
-    pred_ids = df["id"].tolist()
-    outcomes: dict[str, dict] = {}
-    for i in range(0, len(pred_ids), 200):
-        chunk = pred_ids[i:i + 200]
-        try:
-            r = client.table("outcome_results").select(
-                "prediction_id,highest_profit_pips,lowest_drawdown_pips"
-            ).in_("prediction_id", chunk)
-            res = r.execute() if hasattr(r, "execute") else r
-            data2 = res.get("data") if isinstance(res, dict) else getattr(res, "data", []) or []
-            for o in data2:
-                outcomes[o["prediction_id"]] = o
-        except Exception as e:
-            logger.warning("[simulator] outcome chunk failed: %s", e)
-    df["highest_profit_pips"] = df["id"].map(lambda i: outcomes.get(i, {}).get("highest_profit_pips"))
-    df["lowest_drawdown_pips"] = df["id"].map(lambda i: outcomes.get(i, {}).get("lowest_drawdown_pips"))
     return df
 
 

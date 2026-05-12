@@ -72,34 +72,34 @@ async def _fetch_live_signals(client, symbol: str, model_type: str,
     """All resolved signals for this proposal's scope since tracking started."""
     try:
         q = client.table("prediction_logs").select(
-            "id,ml_direction,ml_confidence,status,resolution_reason,factors,created_at"
+            "id,ml_direction,ml_confidence,status,resolution_reason,factors,created_at,"
+            "highest_profit_pips,lowest_drawdown_pips,exit_price"
         ).eq("symbol", symbol).eq("model_type", model_type).gte(
             "created_at", since_iso
-        ).in_("status", ["completed", "stopped"]).limit(max_rows)
+        ).limit(max_rows)
         res = q.execute() if hasattr(q, "execute") else q
         data = res.get("data") if isinstance(res, dict) else getattr(res, "data", [])
-        return data or []
+        return [d for d in (data or []) if d.get("status") in ("completed", "stopped")]
     except Exception as e:
         logger.exception("[monitor] fetch failed: %s", e)
         return []
 
 
-async def _fetch_outcomes(client, prediction_ids: list[str]) -> dict[str, dict]:
-    if not prediction_ids:
+async def _fetch_outcomes(client, prediction_ids: list[str], signals: list[dict] | None = None) -> dict[str, dict]:
+    """Build outcome map from prediction_logs rows directly."""
+    if not signals:
         return {}
     out: dict[str, dict] = {}
-    for i in range(0, len(prediction_ids), 200):
-        chunk = prediction_ids[i:i + 200]
-        try:
-            r = client.table("outcome_results").select(
-                "prediction_id,highest_profit_pips,lowest_drawdown_pips,exit_price"
-            ).in_("prediction_id", chunk)
-            res = r.execute() if hasattr(r, "execute") else r
-            data = res.get("data") if isinstance(res, dict) else getattr(res, "data", []) or []
-            for o in data:
-                out[o["prediction_id"]] = o
-        except Exception as e:
-            logger.warning("[monitor] outcome fetch failed: %s", e)
+    for s in signals:
+        pid = s.get("id")
+        if not pid:
+            continue
+        out[pid] = {
+            "prediction_id": pid,
+            "highest_profit_pips": s.get("highest_profit_pips"),
+            "lowest_drawdown_pips": s.get("lowest_drawdown_pips"),
+            "exit_price": s.get("exit_price"),
+        }
     return out
 
 
@@ -166,7 +166,7 @@ async def check_proposal(proposal: dict) -> dict:
     # Pull live signals in scope
     signals = await _fetch_live_signals(client, proposal["symbol"],
                                           proposal["model_type"], started_iso)
-    outcomes = await _fetch_outcomes(client, [s["id"] for s in signals])
+    outcomes = await _fetch_outcomes(client, [s["id"] for s in signals], signals=signals)
     live = _compute_live_metric(signals, outcomes)
 
     # Compare with simulation
