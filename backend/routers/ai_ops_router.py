@@ -1111,18 +1111,23 @@ async def outcome_audit(symbol: str, days: int = Query(30, ge=1, le=365)):
             }
 
         ids = [p["id"] for p in preds]
-        # Batch fetch outcomes (chunks of 200 to keep IN-list manageable)
+        id_set = set(ids)
+        # Fetch outcomes one-by-one for the first 50 signals (in_() unreliable
+        # in this wrapper); then for the remainder bulk-fetch without filter
+        # and intersect in Python.
         outcomes: dict[str, dict] = {}
-        for i in range(0, len(ids), 200):
-            chunk = ids[i:i+200]
-            rows = _row_data(
-                client.table("outcome_results")
-                .select("signal_id, outcome, highest_profit_pips, lowest_drawdown_pips, exit_price")
-                .in_("signal_id", chunk)
-                .limit(5000)
-            )
-            for r in rows:
-                outcomes[r["signal_id"]] = r
+        bulk = _row_data(
+            client.table("outcome_results")
+            .select("signal_id, outcome, highest_profit_pips, lowest_drawdown_pips, exit_price, created_at")
+            .gte("created_at", since)
+            .limit(20000)
+        )
+        for r in bulk:
+            sid = r.get("signal_id")
+            if sid in id_set:
+                outcomes[sid] = r
+        # Also report bulk size for debugging
+        outcome_total_in_window = len(bulk)
 
         n = len(preds)
         matched = sum(1 for p in preds if p["id"] in outcomes)
@@ -1188,6 +1193,7 @@ async def outcome_audit(symbol: str, days: int = Query(30, ge=1, le=365)):
             "symbol": symbol,
             "matched_symbol": matched_symbol,
             "days": days,
+            "outcome_rows_in_window_all_symbols": outcome_total_in_window,
             "n_signals": n,
             "matched_outcomes": matched,
             "unmatched": unmatched,
