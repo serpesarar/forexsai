@@ -1062,13 +1062,15 @@ async def outcome_audit(symbol: str, days: int = Query(30, ge=1, le=365)):
         for variant in variants:
             rows = _row_data(
                 client.table("prediction_logs")
-                .select("id, symbol, model_type, ml_direction, status, ml_entry_price, created_at")
+                .select(
+                    "id, symbol, model_type, ml_direction, status, "
+                    "ml_entry_price, exit_price, highest_profit_pips, "
+                    "lowest_drawdown_pips, targets_hit, created_at"
+                )
                 .eq("symbol", variant)
                 .gte("created_at", since)
                 .limit(5000)
             )
-            # Filter status in Python — wrapper's in_() combined with eq+gte
-            # silently returns empty (confirmed via /outcome-audit debug path).
             rows = [r for r in rows if r.get("status") in ("completed", "stopped")]
             if rows:
                 preds = rows
@@ -1110,24 +1112,20 @@ async def outcome_audit(symbol: str, days: int = Query(30, ge=1, le=365)):
                 "total_rows_for_symbol_any_status": len(all_rows),
             }
 
-        ids = [p["id"] for p in preds]
-        id_set = set(ids)
-        # Fetch outcomes one-by-one for the first 50 signals (in_() unreliable
-        # in this wrapper); then for the remainder bulk-fetch without filter
-        # and intersect in Python.
-        outcomes: dict[str, dict] = {}
-        bulk = _row_data(
-            client.table("outcome_results")
-            .select("signal_id, outcome, highest_profit_pips, lowest_drawdown_pips, exit_price, created_at")
-            .gte("created_at", since)
-            .limit(20000)
-        )
-        for r in bulk:
-            sid = r.get("signal_id")
-            if sid in id_set:
-                outcomes[sid] = r
-        # Also report bulk size for debugging
-        outcome_total_in_window = len(bulk)
+        # P/L lives ON prediction_logs (not in legacy outcome_results table).
+        # signal_lifecycle.py writes highest_profit_pips/lowest_drawdown_pips
+        # directly to the row when it transitions status to completed/stopped.
+        outcomes: dict[str, dict] = {
+            p["id"]: {
+                "signal_id": p["id"],
+                "outcome": p.get("status"),
+                "highest_profit_pips": p.get("highest_profit_pips"),
+                "lowest_drawdown_pips": p.get("lowest_drawdown_pips"),
+                "exit_price": p.get("exit_price"),
+            }
+            for p in preds
+        }
+        outcome_total_in_window = len(outcomes)
 
         n = len(preds)
         matched = sum(1 for p in preds if p["id"] in outcomes)
