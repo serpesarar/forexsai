@@ -1698,21 +1698,34 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
                 from services.signal_feature_snapshot import build_signal_feature_snapshot
                 snap = await build_signal_feature_snapshot(symbol)
 
-                # Rule #XAU-PULSE1-001: SAR-against-transition guard
-                # Clusters: 20 fails (proposal 2f8a...) + 5 fails (#6) + 8 fails (#8)
-                # = 33 historical fails, 0 wins. Pattern: PULSE1 BUYs counter to a
-                # bearish Parabolic SAR during a 'transition' regime — classic
-                # mean-reversion-into-bearish-momentum trap.
-                if snap.get("sar_bearish") is True and snap.get("regime_label") == "transition":
+                # Rule #XAU-PULSE1-001: SAR-against-transition guard (refined)
+                # Issue #12 + clusters: 33 historical fails / 0 wins under
+                # (sar_bearish + regime=transition). Earlier 2-predicate
+                # version also blocked ~43 winners (precision 71%, net -1980 pip).
+                # Discriminator analysis (proposal 76c75023) found two extra
+                # predicates that lift precision to ~86% by leaving in the
+                # volatility-breakout setups (high ATR, MACD not yet negative):
+                #   - M30_macd_hist < 0   (momentum confirmation)
+                #   - M30_atr_pct ≤ 0.362 (calm-tape filter; high-ATR setups
+                #     are volatility breakouts that often pay)
+                m30_macd_hist = snap.get("M30_macd_hist")
+                m30_atr_pct = snap.get("M30_atr_pct")
+                if (snap.get("sar_bearish") is True
+                        and snap.get("regime_label") == "transition"
+                        and m30_macd_hist is not None and m30_macd_hist < 0
+                        and m30_atr_pct is not None and m30_atr_pct <= 0.362):
                     pulse_signal = "HOLD"
                     signal_type = "HOLD"
                     decision_notes.append(
-                        "PULSE1 BUY blocked: SAR bearish during transition regime "
-                        "(AI-Ops rule #XAU-PULSE1-001 — 33 historical fails, 0 wins)"
+                        "PULSE1 BUY blocked: SAR bearish + MACD<0 + low-ATR "
+                        "during transition regime "
+                        "(AI-Ops rule #XAU-PULSE1-001 — refined; "
+                        "precision 86%, rescues 31/39 winners vs v1)"
                     )
                     logger.info(
                         f"[AI-Ops] PULSE1 BUY blocked on {symbol}: "
-                        f"sar_bearish=True, regime=transition"
+                        f"sar_bearish=True, regime=transition, "
+                        f"macd_hist={m30_macd_hist}, atr_pct={m30_atr_pct}"
                     )
 
                 # Rule #XAU-PULSE1-002: DXY-strength in transition regime guard
