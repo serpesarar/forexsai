@@ -1688,7 +1688,69 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
         if was_filtered:
             signal_type = "HOLD"
             decision_notes.append(filter_reason)
-        
+
+        # ─── AI-Ops Guards (XAU/PULSE1) ───────────────────────────────────────
+        # Multiple independent failure clusters surfaced by AI-Ops on
+        # XAUUSD/PULSE1. Each guard is additive — checked in series with one
+        # shared snapshot fetch (30s cached). Sources: GitHub issues #6, #7, #8.
+        if pulse_signal == "BUY" and symbol.upper() in ("XAUUSD", "XAUUSD.FOREX"):
+            try:
+                from services.signal_feature_snapshot import build_signal_feature_snapshot
+                snap = await build_signal_feature_snapshot(symbol)
+
+                # Rule #XAU-PULSE1-001: SAR-against-transition guard (refined)
+                # Issue #12 + clusters: 33 historical fails / 0 wins under
+                # (sar_bearish + regime=transition). Earlier 2-predicate
+                # version also blocked ~43 winners (precision 71%, net -1980 pip).
+                # Discriminator analysis (proposal 76c75023) found two extra
+                # predicates that lift precision to ~86% by leaving in the
+                # volatility-breakout setups (high ATR, MACD not yet negative):
+                #   - M30_macd_hist < 0   (momentum confirmation)
+                #   - M30_atr_pct ≤ 0.362 (calm-tape filter; high-ATR setups
+                #     are volatility breakouts that often pay)
+                m30_macd_hist = snap.get("M30_macd_hist")
+                m30_atr_pct = snap.get("M30_atr_pct")
+                if (snap.get("sar_bearish") is True
+                        and snap.get("regime_label") == "transition"
+                        and m30_macd_hist is not None and m30_macd_hist < 0
+                        and m30_atr_pct is not None and m30_atr_pct <= 0.362):
+                    pulse_signal = "HOLD"
+                    signal_type = "HOLD"
+                    decision_notes.append(
+                        "PULSE1 BUY blocked: SAR bearish + MACD<0 + low-ATR "
+                        "during transition regime "
+                        "(AI-Ops rule #XAU-PULSE1-001 — refined; "
+                        "precision 86%, rescues 31/39 winners vs v1)"
+                    )
+                    logger.info(
+                        f"[AI-Ops] PULSE1 BUY blocked on {symbol}: "
+                        f"sar_bearish=True, regime=transition, "
+                        f"macd_hist={m30_macd_hist}, atr_pct={m30_atr_pct}"
+                    )
+
+                # Rule #XAU-PULSE1-002: DXY-strength in transition regime guard
+                # Cluster: 6 fails (#7), 0 wins. DXY strengthening (>0.2% 1d
+                # change) is a structural bearish headwind for gold. Combined
+                # with a 'transition' regime (no clear direction), these BUYs
+                # repeatedly fail. Only block in the transition regime — in a
+                # confirmed uptrend, transient DXY strength can still be bought.
+                dxy_chg = snap.get("macro_dxy_chg1d_pct")
+                if (pulse_signal == "BUY"   # may have just been blocked by rule 001
+                        and snap.get("regime_label") == "transition"
+                        and dxy_chg is not None and dxy_chg > 0.2):
+                    pulse_signal = "HOLD"
+                    signal_type = "HOLD"
+                    decision_notes.append(
+                        f"PULSE1 BUY blocked: DXY +{dxy_chg:.2f}% in transition regime "
+                        f"(AI-Ops rule #XAU-PULSE1-002 — 6 historical fails, 0 wins)"
+                    )
+                    logger.info(
+                        f"[AI-Ops] PULSE1 BUY blocked on {symbol}: "
+                        f"dxy_chg1d={dxy_chg}%, regime=transition"
+                    )
+            except Exception as guard_err:
+                logger.warning(f"PULSE1 AI-Ops guard check failed: {guard_err}")
+
         # Hacim notu (iptal değil, bilgi)
         if pulse_signal in ["BUY", "SELL"] and volume_status == "low":
             decision_notes.append("Low volume - be cautious")
