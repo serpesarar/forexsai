@@ -103,6 +103,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"❌ Macro data service başlatılamadı: {e}")
 
+    # 2.6b Pandemic Sensitivity Index (basket-driven health-crisis early-warning, 6h refresh)
+    try:
+        from services.pandemic_sensitivity_service import ensure_started as start_psi
+        asyncio.create_task(start_psi())
+        print("✅ Pandemic Sensitivity Index başlatıldı (6h basket refresh)")
+    except Exception as e:
+        print(f"❌ Pandemic Sensitivity Index başlatılamadı: {e}")
+
     # 2.7 AI-Ops orchestrator (daily failure-cluster + DeepSeek proposal cycle)
     try:
         from services.ai_ops_orchestrator import orchestrate_ai_ops
@@ -475,6 +483,7 @@ router_module_names = [
     "meta_engine_router",
     "permutation_router",
     "ai_ops_router",
+    "pandemic_sensitivity",
 ]
 
 for module_name in router_module_names:

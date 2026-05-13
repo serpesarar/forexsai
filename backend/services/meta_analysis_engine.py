@@ -257,6 +257,11 @@ class MetaSignal:
     alternatives: List[Dict] = field(default_factory=list)
     timestamp: float = 0.0
     pattern_alerts: Dict[str, Any] = field(default_factory=dict)  # mined-rule live matches
+    # Pandemic Sensitivity Index overlay (small, asymmetric confidence nudge).
+    # raw_confidence preserves the 6-model fusion output for auditability.
+    raw_confidence: float = 0.0
+    psi_adjustment: float = 0.0
+    psi_context: Dict[str, Any] = field(default_factory=dict)
 
 
 # ═══════════════════════════════════════════════════════════
@@ -842,7 +847,7 @@ class MetaAnalysisEngine:
         tech_score = len(passed) / len(conditions) if conditions else 0
 
         # === LAYER 4: Confidence Fusion ===
-        confidence = self.fuse_confidence(
+        raw_confidence = self.fuse_confidence(
             signals=available_signals,
             direction=direction,
             regime=regime,
@@ -850,7 +855,29 @@ class MetaAnalysisEngine:
             best_combo=best_combo,
         )
 
-        # Check minimum confidence
+        # === LAYER 4b: Pandemic Sensitivity Index overlay ===
+        # Small, asymmetric, per-symbol/per-direction nudge. Capped at ±15
+        # absolute points and silently no-ops if the PSI service is down or
+        # the symbol isn't in the bias matrix. Never inverts signal direction.
+        psi_adjustment = 0.0
+        psi_context: Dict[str, Any] = {}
+        try:
+            from services.pandemic_sensitivity_service import compute_meta_adjustment
+            psi_info = compute_meta_adjustment(symbol, direction)
+            psi_adjustment = float(psi_info.get("adjustment", 0.0) or 0.0)
+            psi_context = {
+                "psi_score": psi_info.get("psi_score", 0.0),
+                "risk_level": psi_info.get("risk_level", "NORMAL"),
+                "rationale": psi_info.get("rationale", ""),
+                "applied": bool(psi_info.get("applied", False)),
+            }
+        except Exception as e:
+            logger.debug(f"[MetaEngine] PSI overlay skipped for {symbol}: {e}")
+
+        confidence = round(max(0.0, min(100.0, raw_confidence + psi_adjustment)), 1)
+
+        # Check minimum confidence (uses ADJUSTED confidence so a CRITICAL PSI
+        # band can rightfully downgrade a borderline equity-long to HOLD).
         if confidence < min_confidence:
             direction = "HOLD"
 
@@ -913,6 +940,9 @@ class MetaAnalysisEngine:
             model_breakdown=model_breakdown,
             alternatives=alternatives,
             timestamp=time.time(),
+            raw_confidence=round(raw_confidence, 1),
+            psi_adjustment=round(psi_adjustment, 2),
+            psi_context=psi_context,
         )
 
         # ── Live pattern matcher: tag winning/toxic mined-rule hits ──
@@ -939,10 +969,14 @@ class MetaAnalysisEngine:
             logger.warning(f"[MetaEngine] Meta prediction log failed for {symbol}: {e}")
 
         elapsed = (time.time() - start_ts) * 1000
+        psi_log = (
+            f" psi={psi_adjustment:+.1f}@{psi_context.get('risk_level', 'NORMAL')}"
+            if psi_context.get("applied") else ""
+        )
         logger.info(
             f"[MetaEngine] {symbol}: {direction} ({confidence:.0f}%) "
             f"combo={display_combo} regime={regime} "
-            f"tech={tech_score:.0%} in {elapsed:.0f}ms"
+            f"tech={tech_score:.0%}{psi_log} in {elapsed:.0f}ms"
         )
 
         return meta_signal

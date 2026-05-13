@@ -53,6 +53,8 @@ const SeasonalityPanel = lazy(() => import("../components/panels/SeasonalityPane
 const SmartSetupPanel = lazy(() => import("../components/panels/SmartSetupPanel"));
 const HarmonicVisualizerPanel = lazy(() => import("../components/panels/HarmonicVisualizerPanel"));
 const StrategyOptimizerPanel = lazy(() => import("../components/panels/StrategyOptimizerPanel"));
+const PandemicSensitivityPanel = lazy(() => import("../components/panels/PandemicSensitivityPanel"));
+const PSISpeedometer = lazy(() => import("../components/PSISpeedometer"));
 const OilBalticPanel = lazy(() => import("../components/panels/OilBalticPanel"));
 const NewsChartCorrelationPanel = lazy(() => import("../components/panels/NewsChartCorrelationPanel"));
 const MetaEnginePanel = lazy(() => import("../components/panels/MetaEnginePanel"));
@@ -955,6 +957,8 @@ export default function HomePage() {
         return <HarmonicVisualizerPanel />;
       case "strategy-optimizer":
         return <StrategyOptimizerPanel />;
+      case "pandemic-sensitivity":
+        return <PandemicSensitivityPanel />;
       case "oil-baltic":
         return <OilBalticPanel />;
       case "news-correlation":
@@ -1359,6 +1363,17 @@ export default function HomePage() {
             <div className="animate-in fade-in duration-300">
               <DraggableDashboard>
                 <main className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-20 md:pb-8">
+                  {/* ═══ PSI SPEEDOMETER — World Health Macro Gauge ═══
+                       Always-on, compact analog dial above Meta-Engine. It is
+                       a fixed hero element (not editable via DraggableDashboard)
+                       because it represents global market risk regime — every
+                       trader needs it visible regardless of layout choices. */}
+                  <div className="mb-4 flex justify-center w-full">
+                    <LazyPanel fallbackHeight={110}>
+                      <PSISpeedometer />
+                    </LazyPanel>
+                  </div>
+
                   {/* ═══ META-ENGINE — High Confidence Aggregator ═══ */}
                   {getCard("meta-engine")?.visible !== false && (
                     <div className="mb-6 w-full">

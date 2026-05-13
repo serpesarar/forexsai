@@ -57,6 +57,15 @@ interface MetaSignalData {
   timestamp: number;
   pattern_alerts?: PatternAlerts;
   message?: string;
+  // Pandemic Sensitivity Index overlay (may be absent on cached or older payloads)
+  raw_confidence?: number;
+  psi_adjustment?: number;
+  psi_context?: {
+    psi_score?: number;
+    risk_level?: string;
+    rationale?: string;
+    applied?: boolean;
+  };
 }
 
 const SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"];
@@ -479,6 +488,36 @@ export default function MetaEnginePanel({ symbol }: MetaEnginePanelProps) {
                   <span className="text-[11px] text-[#6B7280]">
                     {t("meta_engine.agreement")}: {Math.round((currentSignal.agreement_ratio || 0) * 100)}%
                   </span>
+                  {/* PSI overlay badge — only shown when an adjustment was actually applied */}
+                  {currentSignal.psi_context?.applied && currentSignal.psi_adjustment !== undefined && (
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide border"
+                      style={(() => {
+                        const adj = currentSignal.psi_adjustment ?? 0;
+                        const lvl = currentSignal.psi_context?.risk_level ?? "NORMAL";
+                        const positive = adj > 0;
+                        const colors = {
+                          CRITICAL: { bg: "rgba(220,38,38,0.18)", border: "rgba(220,38,38,0.45)", text: "#fca5a5" },
+                          HIGH_RISK: { bg: "rgba(234,88,12,0.16)", border: "rgba(234,88,12,0.4)", text: "#fdba74" },
+                          WARNING: { bg: "rgba(245,158,11,0.15)", border: "rgba(245,158,11,0.35)", text: "#fcd34d" },
+                          ELEVATED: { bg: "rgba(234,179,8,0.12)", border: "rgba(234,179,8,0.3)", text: "#fde68a" },
+                        }[lvl] || { bg: "rgba(107,114,128,0.15)", border: "rgba(107,114,128,0.3)", text: "#9ca3af" };
+                        return {
+                          backgroundColor: colors.bg,
+                          borderColor: colors.border,
+                          color: positive ? "#86efac" : colors.text,
+                        };
+                      })()}
+                      title={currentSignal.psi_context?.rationale ?? ""}
+                    >
+                      <span>🦠</span>
+                      <span>PSI {currentSignal.psi_context?.risk_level?.replace("_", " ") ?? ""}</span>
+                      <span className="tabular-nums">
+                        {(currentSignal.psi_adjustment ?? 0) >= 0 ? "+" : ""}
+                        {(currentSignal.psi_adjustment ?? 0).toFixed(1)}
+                      </span>
+                    </span>
+                  )}
                 </div>
 
                 {/* Best Combo */}

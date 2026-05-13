@@ -19,7 +19,19 @@
       "Bash(curl -s \"https://upbeat-flow-production.up.railway.app/api/signals/active\" --max-time 30)",
       "Bash(mkdir -p /Users/melihcanodacioglu/Desktop/mt5_bridge/migrations)",
       "Read(//Users/melihcanodacioglu/Desktop/**)",
-      "Bash(curl -s -H \"apikey: $\\(grep -E '^SUPABASE_KEY=' backend/.env)"
+      "Bash(curl -s -H \"apikey: $\\(grep -E '^SUPABASE_KEY=' backend/.env)",
+      "Bash(awk '/^## GLOBAL/,/^---$/' xauusdegitim/pattern_report.md)",
+      "Bash(awk '/^## NDX.INDX · meta$/,/^---$/' xauusdegitim/pattern_report.md)",
+      "Bash(awk '/^## USOIL.FOREX · meta$/,/^---$/' xauusdegitim/pattern_report.md)",
+      "Bash(awk '/^## GDAXI.INDX · meta$/,/^---$/' xauusdegitim/pattern_report.md)",
+      "Bash(awk '/^## GLOBAL/,/^---$/' xauusdegitim/win_rate_decay_report.md)",
+      "Bash(awk '/^## XAUUSD · 5m/,/^---$/' xauusdegitim/chart_pattern_report.md)",
+      "Bash(awk '/^## XAUUSD/,/^---$/' xauusdegitim/chart_pattern_report.md)",
+      "Bash(curl -sL \"https://api.github.com/repos/serpesarar/forexsai/issues/7\")",
+      "Bash(curl -s \"https://upbeat-flow-production.up.railway.app/api/ai-ops/outcome-audit/USOIL.FOREX?days=30\")",
+      "Bash(curl -fs \"https://upbeat-flow-production.up.railway.app/api/ai-ops/stats\")",
+      "Bash(curl -s \"https://upbeat-flow-production.up.railway.app/api/ai-ops/proposals?symbol=USOIL.FOREX&limit=1\")",
+      "Bash(curl -s -X POST \"https://upbeat-flow-production.up.railway.app/api/ai-ops/proposals/fbb4397b-2c76-4b1c-9bbc-5c941b0c0c37/simulate?window_days=30\")"
     ]
   }
 }
