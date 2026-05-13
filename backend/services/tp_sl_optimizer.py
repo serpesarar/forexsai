@@ -28,11 +28,69 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# Grid search parameters
+# Grid search parameters (legacy — kept for callers that pass explicit grids)
 DEFAULT_TP_CANDIDATES = (3, 5, 8, 10, 12, 15, 18, 20, 25, 30, 40, 50, 75, 100)
 DEFAULT_SL_CANDIDATES = (5, 8, 10, 12, 15, 18, 20, 25, 30, 35, 40, 50, 75, 100)
 MIN_SAMPLE_SIZE = 30           # below this, recommendation is unreliable
 MATERIAL_PNL_DELTA_PIPS = 50   # below this, recommendation = "no change"
+
+
+def _adaptive_grid(values: list[float], current_anchors: list[float],
+                    floor: float = 1.0) -> list[float]:
+    """Build a data-driven candidate grid.
+
+    Strategy:
+      - 1-pip granularity in the dense zone (p25..p90 of the distribution)
+      - 2-pip granularity in the tail (p90..p99)
+      - Always include current static config values so the comparison shows
+        them as actual grid points (otherwise the "current" point is off-grid
+        and the optimizer can't honestly tell us "no change needed").
+      - Cap at p99 + 20% safety margin so we don't search dead space.
+
+    USOIL uses percentage values (e.g. 0.05 = 0.05%). For those, we drop to
+    0.01% granularity automatically by detecting max < 5.
+    """
+    if not values:
+        return list(DEFAULT_TP_CANDIDATES)
+    arr = np.array(values, dtype=float)
+    arr = arr[np.isfinite(arr) & (arr > 0)]
+    if arr.size == 0:
+        return list(DEFAULT_TP_CANDIDATES)
+
+    p25 = float(np.percentile(arr, 25))
+    p90 = float(np.percentile(arr, 90))
+    p99 = float(np.percentile(arr, 99))
+    upper = min(float(arr.max()), p99 * 1.2)
+
+    # Detect percentage-unit symbols (USOIL): tiny max → fine granularity
+    if upper < 5:
+        step_dense = 0.01
+        step_tail = 0.02
+    elif upper < 50:
+        step_dense = 1.0
+        step_tail = 2.0
+    else:
+        step_dense = 2.0
+        step_tail = 5.0
+
+    low = max(floor, round(p25 - step_dense, 4))
+    cands: set[float] = set()
+    # Dense zone p25..p90 at fine step
+    v = low
+    while v <= p90:
+        cands.add(round(v, 4))
+        v += step_dense
+    # Tail zone p90..upper at coarser step
+    v = p90
+    while v <= upper:
+        cands.add(round(v, 4))
+        v += step_tail
+    # Always anchor current static config values
+    for a in current_anchors:
+        if a and a > 0:
+            cands.add(round(float(a), 4))
+
+    return sorted(cands)
 
 
 # ---------------------------------------------------------------------------
@@ -40,27 +98,33 @@ MATERIAL_PNL_DELTA_PIPS = 50   # below this, recommendation = "no change"
 # ---------------------------------------------------------------------------
 
 def get_current_config(symbol: str, timeframe: Optional[str] = None) -> dict:
-    """Pull the current static TP/SL config for the symbol."""
+    """Pull the current static TP/SL config for the symbol.
+
+    Returns all TP levels so the comparison can be honest: the "effective TP"
+    a signal experiences depends on which level closes it, not the deepest one.
+    """
     try:
-        from services.target_config import get_symbol_config, calculate_target_prices
+        from services.target_config import get_symbol_config
         cfg = get_symbol_config(symbol)
-        # Targets are a list of TargetLevel(name, pips); use TP4 (deepest) as the
-        # representative TP for "fully ridden" signals
         targets = list(cfg.targets) if cfg and cfg.targets else []
-        tp_pips = float(targets[-1].pips) if targets else 0.0
         sl_pips = float(getattr(cfg, "stoploss_pips", 0))
-        # Also surface TP1 since that's where most signals close
+        all_levels = [{"name": t.name, "pips": float(t.pips)} for t in targets]
         tp1_pips = float(targets[0].pips) if targets else 0.0
+        tp_deepest_pips = float(targets[-1].pips) if targets else 0.0
         return {
-            "tp_pips": tp_pips,
+            # Primary comparison anchor — TP1 is where most signals actually close.
+            "tp_pips": tp1_pips,
             "tp1_pips": tp1_pips,
+            "tp_deepest_pips": tp_deepest_pips,
             "sl_pips": sl_pips,
-            "all_tp_levels": [{"name": t.name, "pips": float(t.pips)} for t in targets],
+            "all_tp_levels": all_levels,
             "pip_value": float(getattr(cfg, "pip_value", 1.0)),
+            "is_percentage": bool(getattr(cfg, "is_percentage", False)),
         }
     except Exception as e:
         logger.warning("[tp_sl] could not read target_config for %s: %s", symbol, e)
-        return {"tp_pips": 0.0, "tp1_pips": 0.0, "sl_pips": 0.0, "all_tp_levels": []}
+        return {"tp_pips": 0.0, "tp1_pips": 0.0, "tp_deepest_pips": 0.0,
+                "sl_pips": 0.0, "all_tp_levels": []}
 
 
 # ---------------------------------------------------------------------------
@@ -156,15 +220,29 @@ def simulate_tp_sl(signals: list[dict], tp_pips: float, sl_pips: float) -> dict:
 def grid_search(signals: list[dict],
                 tp_candidates: list[float] = None,
                 sl_candidates: list[float] = None) -> dict:
-    """Try every (TP, SL) combo, return best by net_pnl + top 5 for inspection."""
+    """Try every (TP, SL) combo, return best by net_pnl + top 5 for inspection.
+
+    Ranking ties (within 2% net_pnl of best) are broken by win_rate then by
+    smaller SL (less downside). This avoids the optimizer recommending an
+    aggressive wider-SL setup when a tighter one performs equivalently.
+    """
     tp_candidates = tp_candidates or list(DEFAULT_TP_CANDIDATES)
     sl_candidates = sl_candidates or list(DEFAULT_SL_CANDIDATES)
     results = []
     for tp in tp_candidates:
         for sl in sl_candidates:
             results.append(simulate_tp_sl(signals, tp, sl))
-    results.sort(key=lambda r: -r["net_pnl"])
-    return {"best": results[0] if results else None, "top5": results[:5], "all": results}
+    if not results:
+        return {"best": None, "top5": [], "all": []}
+    top_pnl = max(r["net_pnl"] for r in results)
+    tolerance = max(1.0, abs(top_pnl) * 0.02)
+    # Sort: net_pnl desc; within tolerance band prefer higher win_rate then smaller SL
+    results.sort(key=lambda r: (
+        -r["net_pnl"] if (top_pnl - r["net_pnl"]) > tolerance else -top_pnl,
+        -(r.get("win_rate") or 0),
+        r["sl"],
+    ))
+    return {"best": results[0], "top5": results[:5], "all": results}
 
 
 # ---------------------------------------------------------------------------
@@ -195,60 +273,87 @@ def distribution_stats(values: list[float]) -> dict:
 # ---------------------------------------------------------------------------
 
 def _build_reasoning(symbol: str, current: dict, optimal: dict,
-                      mfe_stats: dict, mae_stats: dict, n: int) -> tuple[str, str]:
-    cur_tp, cur_sl = current.get("tp_pips", 0), current.get("sl_pips", 0)
+                      mfe_stats: dict, mae_stats: dict, n: int,
+                      per_level_sim: Optional[list[dict]] = None,
+                      current_sim: Optional[dict] = None,
+                      pct_unit: bool = False) -> tuple[str, str]:
+    """Data-grounded reasoning: every claim references an actual percentile or
+    count. Avoids generic templates; mentions only the analyses that fired."""
+    cur_tp1 = current.get("tp1_pips", 0)
+    cur_tp_deep = current.get("tp_deepest_pips", 0)
+    cur_sl = current.get("sl_pips", 0)
     rec_tp, rec_sl = optimal["tp"], optimal["sl"]
+    unit = "%" if pct_unit else "pip"
+    fmt = (lambda v: f"{v:.3f}{unit}") if pct_unit else (lambda v: f"{v:.1f} {unit}")
 
     parts: list[str] = []
 
-    # SL analysis
-    if cur_sl > 0:
-        # What % of fails would have stopped at the recommended SL vs current?
-        cur_sl_hit_pct = ((np.array([s for s in [mae_stats.get("p10"), mae_stats.get("p25"),
-                                                  mae_stats.get("p50"), mae_stats.get("p70"),
-                                                  mae_stats.get("p80"), mae_stats.get("p90")
-                                                  ] if s is not None]) >= cur_sl).sum()
-                         / 6 * 100) if mae_stats else 0
-        if rec_sl > cur_sl * 1.2:
-            parts.append(
-                f"⚠ Mevcut SL ({cur_sl:.0f} pips) çok dar. MAE p70 = {mae_stats.get('p70')} pips "
-                f"— tipik bir 'reverse-then-recover' setup'ta sinyal SL hit ediyor ama sonra MFE "
-                f"genellikle {mfe_stats.get('p50')} pips'e ulaşıyor. Önerilen SL ({rec_sl:.0f}) "
-                f"bu kayıpların büyük kısmını engeller."
-            )
-        elif rec_sl < cur_sl * 0.8:
-            parts.append(
-                f"⚠ Mevcut SL ({cur_sl:.0f} pips) gereksiz geniş. MAE p90 = {mae_stats.get('p90')} pips "
-                f"— sinyallerin %90'ı bu kadar derine zaten gitmiyor. Daha sıkı SL ({rec_sl:.0f}) "
-                f"genel risk-adjusted return'ü artırır."
-            )
-
-    # TP analysis
-    if cur_tp > 0:
-        if rec_tp > cur_tp * 1.3:
-            parts.append(
-                f"📈 Mevcut TP ({cur_tp:.0f} pips) erken kapatıyor. MFE p70 = {mfe_stats.get('p70')} pips "
-                f"— sinyallerin önemli bir kısmı çok daha derin gidebiliyor ama TP nedeniyle erken kapanıyor. "
-                f"Önerilen TP ({rec_tp:.0f}) parayı masada bırakmaz."
-            )
-        elif rec_tp < cur_tp * 0.7:
-            parts.append(
-                f"📊 Mevcut TP ({cur_tp:.0f} pips) çok uzak. MFE median = {mfe_stats.get('median')} pips "
-                f"— çoğu sinyal o seviyeye ulaşamıyor. Daha yakın TP ({rec_tp:.0f}) win-rate'i artırır."
-            )
-
-    if not parts:
+    # 1) Anchor the comparison honestly — TP1 is where most signals close
+    if cur_tp1 > 0:
         parts.append(
-            f"Mevcut konfig ({cur_tp:.0f}/{cur_sl:.0f}) optimal civarında ({rec_tp:.0f}/{rec_sl:.0f}). "
-            f"Net P/L farkı {optimal['net_pnl'] - simulate_tp_sl([{'mfe_pips': mfe_stats.get('mean', 0), 'mae_pips': mae_stats.get('mean', 0), 'realized_pnl_pips': 0}], cur_tp, cur_sl)['net_pnl']:.0f} pips civarında. Değişiklik gerekmeyebilir."
+            f"Mevcut TP ladder: TP1={fmt(cur_tp1)}, TP4={fmt(cur_tp_deep)}, SL={fmt(cur_sl)}. "
+            f"Karşılaştırma TP1 üzerinden — sinyallerin çoğu burada kapanır."
         )
 
-    parts.append(f"Sample: {n} resolved signal, MFE/MAE based grid search.")
+    # 2) MFE distribution evidence
+    p50_mfe = mfe_stats.get("p50")
+    p70_mfe = mfe_stats.get("p70")
+    p90_mfe = mfe_stats.get("p90")
+    if p50_mfe is not None:
+        # How many signals would have run past current TP1?
+        if cur_tp1 and p70_mfe is not None and p70_mfe > cur_tp1 * 1.5:
+            parts.append(
+                f"📈 MFE p70={fmt(p70_mfe)}, p90={fmt(p90_mfe)} → sinyallerin en az %30'u "
+                f"TP1'in {p70_mfe / max(cur_tp1, 1e-9):.1f}× üstüne gidiyor; TP1 erken kapatıyor."
+            )
+        elif cur_tp1 and p50_mfe < cur_tp1 * 0.7:
+            parts.append(
+                f"📊 MFE median={fmt(p50_mfe)} → sinyallerin yarısından fazlası TP1'e "
+                f"({fmt(cur_tp1)}) ulaşmıyor; TP1 çok uzak."
+            )
 
-    # Severity
-    delta = optimal["net_pnl"]  # we'll compute delta against current externally
-    severity = "low"
-    return " ".join(parts), severity
+    # 3) MAE distribution evidence
+    p70_mae = mae_stats.get("p70")
+    p90_mae = mae_stats.get("p90")
+    p95_mae = mae_stats.get("p95")
+    if p70_mae is not None and cur_sl > 0:
+        # MAE values are stored as negative-pips (drawdown). Compare abs.
+        abs_p70 = abs(p70_mae)
+        abs_p90 = abs(p90_mae) if p90_mae is not None else None
+        abs_p95 = abs(p95_mae) if p95_mae is not None else None
+        if abs_p90 is not None and abs_p90 < cur_sl * 0.6:
+            parts.append(
+                f"⚠ SL fazla geniş: |MAE p90|={fmt(abs_p90)} ama SL={fmt(cur_sl)} "
+                f"— %90 sinyal SL'ye uzaktan yakın bile geçmiyor. Sıkı SL risk/return iyileştirir."
+            )
+        elif abs_p70 > cur_sl:
+            parts.append(
+                f"⚠ SL fazla dar: |MAE p70|={fmt(abs_p70)} > SL={fmt(cur_sl)} "
+                f"— sinyallerin en az %30'u doğal volatilite içinde stop oluyor."
+            )
+
+    # 4) Per-TP-level efficiency (TP1..TP4)
+    if per_level_sim:
+        lines = []
+        for lvl in per_level_sim:
+            lines.append(
+                f"{lvl['name']}({fmt(lvl['tp_pips'])}): "
+                f"win={lvl['win_rate']}%, net={lvl['net_pnl']:+.1f}"
+            )
+        parts.append("Per-TP simulasyonu: " + " | ".join(lines))
+
+    # 5) Recommendation framing
+    rec_str = f"Önerilen: TP={fmt(rec_tp)}, SL={fmt(rec_sl)}"
+    if current_sim:
+        delta_pnl = optimal["net_pnl"] - current_sim["net_pnl"]
+        delta_wr = (optimal.get("win_rate") or 0) - (current_sim.get("win_rate") or 0)
+        rec_str += (f" → mevcut TP1 ile karşılaştırma: net P/L "
+                    f"{delta_pnl:+.1f} {unit}, win-rate {delta_wr:+.1f}pp.")
+    parts.append(rec_str)
+
+    parts.append(f"Sample: {n} resolved signal (grid {len(optimal.get('_grid_dim', '?'))})")
+
+    return " ".join(parts), "low"
 
 
 def _classify_severity(pnl_delta: float, sample_size: int) -> str:
@@ -296,15 +401,36 @@ async def analyze_tp_sl(
         out["reason"] = f"only {len(signals)} resolved signals (need ≥{MIN_SAMPLE_SIZE})"
         return out
 
+    # MFE positive, MAE stored as drawdown (positive magnitude in
+    # signal_lifecycle, but we treat values as-is and compare abs())
     mfe_values = [s["mfe_pips"] for s in signals]
-    mae_values = [s["mae_pips"] for s in signals]
+    mae_values = [abs(s["mae_pips"]) for s in signals]
     mfe_stats = distribution_stats(mfe_values)
     mae_stats = distribution_stats(mae_values)
 
-    grid = grid_search(signals)
+    current_cfg = get_current_config(symbol, timeframe)
+    out["current"] = current_cfg
+    pct_unit = bool(current_cfg.get("is_percentage"))
+
+    # Adaptive, data-driven grid — 1-pip granularity in p25..p90 hot zone.
+    tp_anchors = [lvl["pips"] for lvl in current_cfg.get("all_tp_levels", [])]
+    sl_anchors = [current_cfg.get("sl_pips")] if current_cfg.get("sl_pips") else []
+    tp_grid = _adaptive_grid(mfe_values, tp_anchors)
+    sl_grid = _adaptive_grid(mae_values, sl_anchors)
+
+    grid = grid_search(signals, tp_candidates=tp_grid, sl_candidates=sl_grid)
     best = grid["best"]
+    if best is None:
+        out["status"] = "error"
+        out["reason"] = "grid_search returned no results"
+        return out
+    best["_grid_dim"] = f"{len(tp_grid)}×{len(sl_grid)}"
+
     out["mfe_distribution"] = mfe_stats
     out["mae_distribution"] = mae_stats
+    out["grid_dim"] = {"tp_candidates": len(tp_grid), "sl_candidates": len(sl_grid),
+                       "tp_range": [tp_grid[0], tp_grid[-1]] if tp_grid else None,
+                       "sl_range": [sl_grid[0], sl_grid[-1]] if sl_grid else None}
     out["recommended"] = {
         "tp_pips": best["tp"], "sl_pips": best["sl"],
         "net_pnl_pips": best["net_pnl"], "win_rate": best["win_rate"],
@@ -312,8 +438,20 @@ async def analyze_tp_sl(
     }
     out["grid_top5"] = grid["top5"]
 
-    current_cfg = get_current_config(symbol, timeframe)
-    out["current"] = current_cfg
+    # Per-TP-level simulation: how does each existing TP level perform
+    # against the current SL? This is the honest answer to "should we move TP".
+    per_level_sim: list[dict] = []
+    if current_cfg.get("sl_pips") and current_cfg.get("all_tp_levels"):
+        for lvl in current_cfg["all_tp_levels"]:
+            sim = simulate_tp_sl(signals, lvl["pips"], current_cfg["sl_pips"])
+            per_level_sim.append({
+                "name": lvl["name"], "tp_pips": lvl["pips"], "sl_pips": current_cfg["sl_pips"],
+                "net_pnl": sim["net_pnl"], "win_rate": sim["win_rate"],
+                "wins": sim["wins"], "losses": sim["losses"], "timeouts": sim["timeouts"],
+            })
+    out["per_tp_level_simulated"] = per_level_sim
+
+    # Honest "current" baseline = TP1+SL (where most signals actually close).
     if current_cfg.get("tp_pips") and current_cfg.get("sl_pips"):
         current_sim = simulate_tp_sl(signals, current_cfg["tp_pips"], current_cfg["sl_pips"])
         out["current_simulated"] = current_sim
@@ -325,9 +463,10 @@ async def analyze_tp_sl(
             "tp_change": round(best["tp"] - current_cfg["tp_pips"], 2),
             "sl_change": round(best["sl"] - current_cfg["sl_pips"], 2),
         }
-        severity = _classify_severity(pnl_delta, len(signals))
-        out["severity"] = severity
-        reasoning, _ = _build_reasoning(symbol, current_cfg, best, mfe_stats, mae_stats, len(signals))
+        out["severity"] = _classify_severity(pnl_delta, len(signals))
+        reasoning, _ = _build_reasoning(symbol, current_cfg, best, mfe_stats, mae_stats,
+                                          len(signals), per_level_sim=per_level_sim,
+                                          current_sim=current_sim, pct_unit=pct_unit)
         out["reasoning"] = reasoning
     else:
         out["delta"] = None
@@ -358,6 +497,8 @@ async def analyze_tp_sl(
                 "mfe_distribution": mfe_stats,
                 "mae_distribution": mae_stats,
                 "grid_top5": grid["top5"],
+                "per_tp_level_simulated": per_level_sim,
+                "grid_dim": out.get("grid_dim"),
                 "severity": out.get("severity"),
                 "reasoning": out.get("reasoning"),
                 "status": "pending",

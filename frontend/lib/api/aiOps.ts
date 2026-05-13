@@ -208,6 +208,22 @@ export interface TpSlRecommendation {
   mfe_distribution: Record<string, number>;
   mae_distribution: Record<string, number>;
   grid_top5: Array<{ tp: number; sl: number; net_pnl: number; win_rate: number | null; rr_ratio: number | null }>;
+  per_tp_level_simulated?: Array<{
+    name: string;
+    tp_pips: number;
+    sl_pips: number;
+    net_pnl: number;
+    win_rate: number | null;
+    wins: number;
+    losses: number;
+    timeouts: number;
+  }> | null;
+  grid_dim?: {
+    tp_candidates: number;
+    sl_candidates: number;
+    tp_range: [number, number] | null;
+    sl_range: [number, number] | null;
+  } | null;
   status: "pending" | "reviewed" | "applied" | "rejected";
   severity: "critical" | "high" | "medium" | "low" | "none";
   reasoning: string | null;

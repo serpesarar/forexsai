@@ -513,11 +513,51 @@ function TpSlRecCard({ rec, onApply, onReject, isWorking }: {
             <DistBlock title="MFE Dağılımı" stats={rec.mfe_distribution} positive />
             <DistBlock title="MAE Dağılımı" stats={rec.mae_distribution} positive={false} />
           </div>
+          {rec.per_tp_level_simulated && rec.per_tp_level_simulated.length > 0 && (
+            <>
+              <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase",
+                            marginBottom: 4, marginTop: 8 }}>
+                🪜 Mevcut TP Ladder — Her seviye için simülasyon
+              </div>
+              <div style={{ background: "#0B0F17", padding: 6, borderRadius: 4, marginBottom: 8 }}>
+                {rec.per_tp_level_simulated.map((lvl) => (
+                  <div key={lvl.name} style={{
+                    display: "flex", justifyContent: "space-between", padding: "3px 0",
+                    fontFamily: "monospace", fontSize: 11, color: "#D1D5DB",
+                  }}>
+                    <span>
+                      <span style={{ color: "#9CA3AF" }}>{lvl.name}</span>
+                      {" "}TP={lvl.tp_pips} SL={lvl.sl_pips}
+                    </span>
+                    <span>
+                      <span style={{ color: "#86EFAC" }}>{lvl.wins}W</span>
+                      {" / "}
+                      <span style={{ color: "#FCA5A5" }}>{lvl.losses}L</span>
+                      {" / "}
+                      <span style={{ color: "#9CA3AF" }}>{lvl.timeouts}T</span>
+                      {" · "}WR {lvl.win_rate ?? "—"}%
+                      {" · net "}
+                      <span style={{ color: lvl.net_pnl > 0 ? "#86EFAC" : "#FCA5A5", fontWeight: 600 }}>
+                        {lvl.net_pnl > 0 ? "+" : ""}{lvl.net_pnl.toFixed(1)}
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           {rec.grid_top5 && rec.grid_top5.length > 0 && (
             <>
               <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase",
                             marginBottom: 4, marginTop: 8 }}>
                 🏆 Grid Search Top 5
+                {rec.grid_dim && (
+                  <span style={{ marginLeft: 6, textTransform: "none", color: "#4B5563", fontWeight: 400 }}>
+                    ({rec.grid_dim.tp_candidates}×{rec.grid_dim.sl_candidates} grid;
+                    {" "}TP {rec.grid_dim.tp_range?.[0]}–{rec.grid_dim.tp_range?.[1]},
+                    {" "}SL {rec.grid_dim.sl_range?.[0]}–{rec.grid_dim.sl_range?.[1]})
+                  </span>
+                )}
               </div>
               <div style={{ background: "#0B0F17", padding: 6, borderRadius: 4 }}>
                 {rec.grid_top5.map((g, i) => (
