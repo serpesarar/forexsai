@@ -644,6 +644,8 @@ async def analyze_tp_sl(
         try:
             # Supersede prior pending rows for the same scope so the dashboard
             # doesn't pile up duplicates as we keep re-running the analysis.
+            # Custom Supabase wrapper auto-executes .update() — don't chain
+            # .execute() on the dict it returns.
             try:
                 supersede_q = client.table("tp_sl_recommendations").eq(
                     "symbol", symbol).eq("status", "pending")
@@ -657,7 +659,10 @@ async def analyze_tp_sl(
                     supersede_q = supersede_q.eq("timeframe", timeframe)
                 else:
                     supersede_q = supersede_q.is_("timeframe", "null")
-                supersede_q.update({"status": "superseded"}).execute()
+                sup_res = supersede_q.update({"status": "superseded"})
+                if isinstance(sup_res, dict) and sup_res.get("error"):
+                    logger.warning("[tp_sl] supersede returned error: %s",
+                                   sup_res.get("error"))
             except Exception as sup_err:
                 logger.warning("[tp_sl] supersede failed (non-fatal): %s", sup_err)
 
@@ -687,9 +692,8 @@ async def analyze_tp_sl(
                 "reasoning": out.get("reasoning"),
                 "status": "pending",
             }
-            ins = client.table("tp_sl_recommendations").insert(row)
-            if hasattr(ins, "execute"):
-                ins.execute()
+            # insert auto-executes in this wrapper (returns dict)
+            client.table("tp_sl_recommendations").insert(row)
         except Exception as e:
             logger.warning("[tp_sl] persist failed: %s", e)
             out["persist_error"] = str(e)[:200]
