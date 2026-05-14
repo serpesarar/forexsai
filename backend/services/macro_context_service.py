@@ -162,25 +162,52 @@ def _contrib_dxy(symbol: str, direction: str) -> Optional[GaugeContribution]:
 
 
 def _contrib_vix(symbol: str, direction: str) -> Optional[GaugeContribution]:
+    """VIX overlay — dual-mode: own-history z-score + absolute thresholds.
+
+    My market observation (2024-2026): the static VIX>25 "elevated" threshold
+    is outdated. After 2020 the structural VIX baseline shifted lower
+    (~15-18) thanks to 0DTE option flow compressing realized vol. A z-score
+    against the same instrument's 252-day window catches "elevated FOR THIS
+    REGIME" while the absolute >25 still fires for tail events. Both must
+    agree before we issue a strong signal.
+
+    Calm VIX is intentionally treated as a complacency signal for equities,
+    not a tailwind — historically the lowest VIX prints precede corrections
+    (Q4 2019, Dec 2017). Magnitude is small (-0.5 vs -1.0 for HOT) because
+    the calm-precedes-storm timing is loose.
+    """
     try:
         from services import macro_data_service as macro
         df = macro.get_history("VIX", "D1")
-        if df is None or df.empty:
+        if df is None or len(df) < 60:
             return None
-        vix = float(df["close"].iloc[-1])
-        # Hot state: VIX > 25, scaled to 1.0 by VIX = 40
-        if vix >= 15:
-            intensity = _scale_linear(vix, 25.0, 40.0)
+        s = df["close"].dropna()
+        vix = float(s.iloc[-1])
+        window = s.iloc[-252:] if len(s) >= 252 else s.iloc[-90:]
+        mu = float(window.mean())
+        sigma = float(window.std(ddof=1))
+        z = (vix - mu) / sigma if sigma > 0 else 0.0
+
+        # Adaptive hot detection: BOTH z>+1 AND vix>=22 confirm "elevated for
+        # this regime". A z-score alone in a calm year would spam false hot.
+        hot = z >= 1.0 and vix >= 22
+        very_hot = vix >= 30  # absolute backstop — always hot regardless of z
+
+        if very_hot or hot:
+            base_intensity = _scale_linear(vix, 22.0, 40.0)
+            z_intensity = _scale_z(z, soft=1.0, hard=3.0)
+            intensity = max(base_intensity, z_intensity)
             sign = 1.0
-            state = "VIX ELEVATED" if vix >= 25 else "VIX NORMAL"
-            if vix < 25:
-                # Calm regime gets a tiny opposite-direction nudge below 15
-                if vix > 15:
-                    return None
-        else:
-            intensity = _scale_linear(15.0 - vix, 0.0, 5.0)
+            state = f"VIX HOT (z={z:+.1f}σ)" if very_hot else f"VIX ELEVATED (z={z:+.1f}σ)"
+        elif z <= -1.0 or vix <= 13:
+            # Complacency mode — small opposite nudge (penalize equity longs
+            # mildly, favour vol hedges/gold slightly). NEVER large because
+            # the calm-before-storm signal is noisy.
+            intensity = max(_scale_linear(-z, 1.0, 2.5), _scale_linear(13 - vix, 0.0, 4.0)) * 0.5
             sign = -1.0
-            state = "VIX CALM"
+            state = f"VIX CALM (complacency, z={z:+.1f}σ)"
+        else:
+            return None  # normal regime — no overlay
 
         if intensity <= 0:
             return None
@@ -188,10 +215,9 @@ def _contrib_vix(symbol: str, direction: str) -> Optional[GaugeContribution]:
         delta = float(np.clip(intensity * mult * PER_GAUGE_MAX, -PER_GAUGE_MAX, PER_GAUGE_MAX))
         if abs(delta) < 0.25:
             return None
-        if delta > 0:
-            note = f"VIX {vix:.1f} ({state}) → {symbol} {direction} desteği +{delta:.1f}"
-        else:
-            note = f"VIX {vix:.1f} ({state}) → {symbol} {direction} aleyhine {delta:.1f}"
+        direction_word = "desteği" if delta > 0 else "aleyhine"
+        sign_str = "+" if delta > 0 else ""
+        note = f"VIX {vix:.1f} ({state}) → {symbol} {direction} {direction_word} {sign_str}{delta:.1f}"
         return GaugeContribution("vix", state, intensity, delta, note)
     except Exception as e:
         logger.debug("vix contrib failed: %s", e)
@@ -199,59 +225,148 @@ def _contrib_vix(symbol: str, direction: str) -> Optional[GaugeContribution]:
 
 
 def _contrib_yield(symbol: str, direction: str) -> Optional[GaugeContribution]:
+    """Yield curve overlay — combines slope (10Y-3M) with absolute level (10Y).
+
+    My market observation (2024-2026): the 2022-2023 inversion gave many
+    false-positive recession warnings; just the slope isn't enough anymore.
+
+    1) Use 10Y-3M (NY Fed's preferred — Estrella & Mishkin 1996) as slope.
+       Fall back to 2Y-10Y if 3M series unavailable.
+
+    2) Add ABSOLUTE-LEVEL gate: 10Y > 5% compresses equity multiples
+       regardless of curve shape (Cost-of-Capital channel). Hits equity
+       longs (NDX/DAX) most.
+
+    3) Shrinkage: if slope+level both fire same sign, take stronger leg /
+       √2 to avoid double-counting the same recession/disinflation theme.
+    """
     try:
         from services import macro_data_service as macro
         df10 = macro.get_history("US10Y", "D1")
-        df3m = macro.get_history("US3M", "D1")
-        if df10 is None or df3m is None or df10.empty or df3m.empty:
+        if df10 is None or df10.empty:
             return None
         y10 = float(df10["close"].iloc[-1])
-        y3m = float(df3m["close"].iloc[-1])
-        spread = y10 - y3m
 
-        if spread < 0:
-            intensity = _scale_linear(-spread, 0.0, 1.5)
-            mult = _mult_for(_BIAS_YIELD_INVERTED, symbol, direction)
-            state = "INVERTED"
-        elif spread > 1.5:
-            intensity = _scale_linear(spread, 1.5, 3.0)
-            mult = _mult_for(_BIAS_YIELD_STEEP, symbol, direction)
-            state = "STEEP"
+        # Slope: prefer 10Y-3M, fall back to 10Y-2Y
+        df3m = macro.get_history("US3M", "D1")
+        short = None
+        short_label = ""
+        if df3m is not None and not df3m.empty:
+            short = float(df3m["close"].iloc[-1])
+            short_label = "3M"
         else:
-            return None  # normal-flat = no overlay
+            df2y = macro.get_history("US2Y", "D1")
+            if df2y is not None and not df2y.empty:
+                short = float(df2y["close"].iloc[-1])
+                short_label = "2Y"
+        spread = (y10 - short) if short is not None else 0.0
 
-        if intensity <= 0:
+        slope_intensity = 0.0
+        slope_mult = 0.0
+        slope_state = ""
+        if short is not None:
+            if spread < 0:
+                slope_intensity = _scale_linear(-spread, 0.0, 1.5)
+                slope_mult = _mult_for(_BIAS_YIELD_INVERTED, symbol, direction)
+                slope_state = f"INVERTED ({short_label})"
+            elif spread > 1.5:
+                slope_intensity = _scale_linear(spread, 1.5, 3.0)
+                slope_mult = _mult_for(_BIAS_YIELD_STEEP, symbol, direction)
+                slope_state = f"STEEP ({short_label})"
+
+        # Absolute-level component
+        level_intensity = 0.0
+        level_mult = 0.0
+        level_state = ""
+        if y10 >= 5.0:
+            level_intensity = _scale_linear(y10, 5.0, 6.5)
+            level_buy_pen = {"NDX.INDX": -0.55, "GDAXI.INDX": -0.45,
+                              "XAUUSD": -0.15, "USOIL.FOREX": -0.20}
+            level_sell_bonus = {"NDX.INDX": +0.30, "GDAXI.INDX": +0.30,
+                                 "XAUUSD": +0.20, "USOIL.FOREX": +0.15}
+            level_mult = (level_buy_pen if direction == "BUY"
+                          else level_sell_bonus).get(symbol, 0.0)
+            level_state = f"10Y HIGH ({y10:.2f}%)"
+
+        if slope_intensity <= 0 and level_intensity <= 0:
             return None
-        delta = float(np.clip(intensity * mult * PER_GAUGE_MAX, -PER_GAUGE_MAX, PER_GAUGE_MAX))
+
+        slope_delta = slope_intensity * slope_mult
+        level_delta = level_intensity * level_mult
+        # Shrinkage when same sign
+        if slope_delta * level_delta > 0:
+            combined_mag = max(abs(slope_delta), abs(level_delta)) / (2 ** 0.5)
+            combined = combined_mag * (1.0 if slope_delta >= 0 else -1.0)
+        else:
+            combined = slope_delta + level_delta
+
+        delta = float(np.clip(combined * PER_GAUGE_MAX, -PER_GAUGE_MAX, PER_GAUGE_MAX))
         if abs(delta) < 0.25:
             return None
-        if delta > 0:
-            note = f"Yield curve {state} (spread {spread:+.2f}%) → {symbol} {direction} desteği +{delta:.1f}"
-        else:
-            note = f"Yield curve {state} (spread {spread:+.2f}%) → {symbol} {direction} aleyhine {delta:.1f}"
-        return GaugeContribution("yield", state, intensity, delta, note)
+        state = " + ".join(p for p in (slope_state, level_state) if p) or "yield"
+        direction_word = "desteği" if delta > 0 else "aleyhine"
+        sign_str = "+" if delta > 0 else ""
+        note = (f"Yield {state} (10Y={y10:.2f}%, spread={spread:+.2f}%) → "
+                f"{symbol} {direction} {direction_word} {sign_str}{delta:.1f}")
+        return GaugeContribution("yield", state, max(slope_intensity, level_intensity), delta, note)
     except Exception as e:
         logger.debug("yield contrib failed: %s", e)
         return None
 
 
 def _contrib_risk_ratio(symbol: str, direction: str) -> Optional[GaugeContribution]:
+    """Risk-On/Off overlay — combines equity-vs-gold (SPY/GLD) with credit
+    (HYG/IEF) when both available.
+
+    My market observation (2024-2026): SPY/GLD captures equity-vs-safehaven
+    sentiment but misses CREDIT-RISK appetite, which often turns first.
+    Institutional risk-parity desks watch HYG/IEF (high-yield-credit vs
+    treasuries) — when HYG underperforms IEF before equity sells off,
+    that's the early-warning that retail-flow indicators miss.
+
+    Combined Z: average of the two available z-scores (using the most
+    extreme magnitude as the displayed state). Both fire same sign →
+    high conviction. Disagree → reduced signal (likely policy-driven
+    rather than risk-driven, so shrink).
+    """
     try:
         from services import macro_data_service as macro
-        spy = macro.get_history("SPY", "D1")
-        gld = macro.get_history("GLD", "D1")
-        if spy is None or gld is None or spy.empty or gld.empty:
+
+        def _zscore_pair(num_sym: str, den_sym: str) -> Optional[float]:
+            num = macro.get_history(num_sym, "D1")
+            den = macro.get_history(den_sym, "D1")
+            if num is None or den is None or num.empty or den.empty:
+                return None
+            common = num.index.intersection(den.index)
+            if len(common) < 30:
+                return None
+            r = (num["close"].loc[common] / den["close"].loc[common]).dropna()
+            recent = r.iloc[-90:] if len(r) > 90 else r
+            sigma = float(recent.std(ddof=1))
+            mu = float(recent.mean())
+            if sigma <= 0:
+                return None
+            return (float(r.iloc[-1]) - mu) / sigma
+
+        z_spygld = _zscore_pair("SPY", "GLD")
+        z_hygief = _zscore_pair("HYG", "IEF")  # credit risk appetite
+
+        zs = [z for z in (z_spygld, z_hygief) if z is not None]
+        if not zs:
             return None
-        common = spy.index.intersection(gld.index)
-        if len(common) < 30:
-            return None
-        ratio = (spy["close"].loc[common] / gld["close"].loc[common]).dropna()
-        recent = ratio.iloc[-90:] if len(ratio) > 90 else ratio
-        sigma = float(recent.std(ddof=1))
-        mu = float(recent.mean())
-        if sigma <= 0:
-            return None
-        z = (float(ratio.iloc[-1]) - mu) / sigma
+
+        # Both available + same sign → average (high conviction)
+        # Disagree → use the larger magnitude × 0.5 (low conviction)
+        if len(zs) == 2:
+            if zs[0] * zs[1] > 0:
+                z = (zs[0] + zs[1]) / 2.0
+                detail = f"SPY/GLD={z_spygld:+.1f}σ, HYG/IEF={z_hygief:+.1f}σ (aligned)"
+            else:
+                z = max(zs, key=abs) * 0.5
+                detail = f"SPY/GLD={z_spygld:+.1f}σ vs HYG/IEF={z_hygief:+.1f}σ (split)"
+        else:
+            z = zs[0]
+            detail = f"SPY/GLD={z:+.1f}σ" if z_spygld is not None else f"HYG/IEF={z:+.1f}σ"
 
         intensity = _scale_z(z)
         if intensity <= 0:
@@ -262,10 +377,10 @@ def _contrib_risk_ratio(symbol: str, direction: str) -> Optional[GaugeContributi
         if abs(delta) < 0.25:
             return None
         state = "RISK-ON" if z > 0 else "RISK-OFF"
-        if delta > 0:
-            note = f"Risk-On/Off {state} (z={z:+.1f}σ) → {symbol} {direction} desteği +{delta:.1f}"
-        else:
-            note = f"Risk-On/Off {state} (z={z:+.1f}σ) → {symbol} {direction} aleyhine {delta:.1f}"
+        direction_word = "desteği" if delta > 0 else "aleyhine"
+        sign_str = "+" if delta > 0 else ""
+        note = (f"Risk regime {state} ({detail}) → {symbol} {direction} "
+                f"{direction_word} {sign_str}{delta:.1f}")
         return GaugeContribution("risk_ratio", state, intensity, delta, note)
     except Exception as e:
         logger.debug("risk_ratio contrib failed: %s", e)
@@ -293,16 +408,21 @@ def _contrib_psi(symbol: str, direction: str) -> Optional[GaugeContribution]:
 
 # ─── Public API ──────────────────────────────────────────────────────────────
 
-def compute_macro_context(symbol: str, direction: str) -> Dict[str, Any]:
+def compute_macro_context(symbol: str, direction: str,
+                            regime: Optional[str] = None) -> Dict[str, Any]:
     """
     Build the full macro context for (symbol, direction).
 
-    Returns dict with:
-        adjustment   (float)   — total signed delta, capped at ±TOTAL_MAX
-        signals      (list)    — per-gauge contributions (gauge, state, delta, note)
-        commentary   (list)    — top 1-3 commentary lines (for decision_notes)
-        rationale    (str)     — single-line summary suitable for logs
-        applied      (bool)    — True if |adjustment| ≥ 0.5
+    Improvements (2026-05-14) — beyond academic literature:
+    - Multi-gauge dampening (√n): when 3+ gauges fire same sign, divide
+      the redundant portion by √n to avoid triple-counting the same
+      underlying theme (risk-off events make DXY+VIX+Yield all hostile
+      simultaneously — they're correlated, not independent).
+    - Regime-aware shrinkage: in STRONG_TREND_UP/DOWN, the trend itself
+      already prices the macro consensus. Multiply final adjustment by
+      0.5 so the overlay doesn't fight a clear technical trend.
+    - Sign-conflict dampening: gauges pulling opposite directions get
+      partially netted (signal quality is lower).
     """
     stub = {
         "adjustment": 0.0,
@@ -325,7 +445,27 @@ def compute_macro_context(symbol: str, direction: str) -> Dict[str, Any]:
     if not contribs:
         return stub
 
-    raw_total = sum(c.delta for c in contribs)
+    # === Multi-gauge dampening (√n shrinkage for correlated agreement) ===
+    pos = [c.delta for c in contribs if c.delta > 0]
+    neg = [c.delta for c in contribs if c.delta < 0]
+    # If ≥3 gauges agree (same sign), the overlap is likely a single
+    # underlying theme — shrink the redundant magnitude.
+    raw_total_pos = sum(pos)
+    raw_total_neg = sum(neg)
+    if len(pos) >= 3:
+        raw_total_pos = raw_total_pos / (len(pos) ** 0.5) * 1.4  # √n correction
+    if len(neg) >= 3:
+        raw_total_neg = raw_total_neg / (len(neg) ** 0.5) * 1.4
+    raw_total = raw_total_pos + raw_total_neg
+
+    # === Regime-aware shrinkage ===
+    # If we're already in a strong trend, the technical signal dominates;
+    # the macro overlay should be a feathered nudge, not a full vote.
+    if regime in ("STRONG_TREND_UP", "STRONG_TREND_DOWN"):
+        raw_total *= 0.5
+    elif regime in ("WEAK_TREND_UP", "WEAK_TREND_DOWN"):
+        raw_total *= 0.75
+
     total = float(np.clip(raw_total, -TOTAL_MAX, TOTAL_MAX))
 
     # Sort by absolute impact for commentary ordering

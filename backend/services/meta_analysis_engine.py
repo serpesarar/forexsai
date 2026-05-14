@@ -874,7 +874,9 @@ class MetaAnalysisEngine:
         psi_context: Dict[str, Any] = {}
         try:
             from services.macro_context_service import compute_macro_context
-            macro_context = compute_macro_context(symbol, direction) or {}
+            # Pass regime so the overlay can shrink itself in STRONG_TREND_*
+            # (trend dominates; macro is a feathered nudge in those phases).
+            macro_context = compute_macro_context(symbol, direction, regime=regime) or {}
             macro_adjustment = float(macro_context.get("adjustment", 0.0) or 0.0)
             # Extract embedded PSI signal for backward-compat fields
             for sig in macro_context.get("signals", []) or []:
