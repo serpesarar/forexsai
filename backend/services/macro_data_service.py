@@ -31,9 +31,12 @@ TICKERS = {
     "DXY":   "DX-Y.NYB",   # ICE US Dollar Index — XAU + USOIL inverse
     "VIX":   "^VIX",        # Volatility — risk-on/off proxy for indices
     "US10Y": "^TNX",        # 10-yr yield (%) — XAU + tech rate-sensitivity
+    "US3M":  "^IRX",        # 13-week T-bill — short end of curve (10Y-3M term spread)
     "SPX":   "^GSPC",       # S&P 500 cash — broader US equity tape
     "NQ":    "^IXIC",       # Nasdaq Composite — NDX correlation
     "STOXX": "^STOXX50E",   # Euro Stoxx 50 — DAX peer
+    "SPY":   "SPY",         # S&P 500 ETF — risk-on numerator
+    "GLD":   "GLD",         # Gold ETF — risk-off denominator
 }
 
 REFRESH_INTERVAL_SECONDS = 3600   # 1 hour

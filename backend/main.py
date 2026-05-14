@@ -484,6 +484,7 @@ router_module_names = [
     "permutation_router",
     "ai_ops_router",
     "pandemic_sensitivity",
+    "macro_gauges",
 ]
 
 for module_name in router_module_names:

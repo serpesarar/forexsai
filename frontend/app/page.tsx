@@ -55,6 +55,7 @@ const HarmonicVisualizerPanel = lazy(() => import("../components/panels/Harmonic
 const StrategyOptimizerPanel = lazy(() => import("../components/panels/StrategyOptimizerPanel"));
 const PandemicSensitivityPanel = lazy(() => import("../components/panels/PandemicSensitivityPanel"));
 const PSISpeedometer = lazy(() => import("../components/PSISpeedometer"));
+const MacroGaugeStrip = lazy(() => import("../components/MacroGaugeStrip"));
 const OilBalticPanel = lazy(() => import("../components/panels/OilBalticPanel"));
 const NewsChartCorrelationPanel = lazy(() => import("../components/panels/NewsChartCorrelationPanel"));
 const MetaEnginePanel = lazy(() => import("../components/panels/MetaEnginePanel"));
@@ -1363,14 +1364,17 @@ export default function HomePage() {
             <div className="animate-in fade-in duration-300">
               <DraggableDashboard>
                 <main className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 pb-20 md:pb-8">
-                  {/* ═══ PSI SPEEDOMETER — World Health Macro Gauge ═══
-                       Always-on, compact analog dial above Meta-Engine. It is
-                       a fixed hero element (not editable via DraggableDashboard)
-                       because it represents global market risk regime — every
-                       trader needs it visible regardless of layout choices. */}
-                  <div className="mb-4 flex justify-center w-full">
+                  {/* ═══ HERO MACRO STRIP ═══
+                       Always-on row of macro speedometers (PSI + DXY + VIX +
+                       Yield Curve + Risk-On/Off). Hover any gauge for a
+                       directional-bias tooltip. Fixed at top — outside the
+                       DraggableDashboard because every trader needs them. */}
+                  <div className="mb-4 w-full flex flex-col items-center gap-3">
                     <LazyPanel fallbackHeight={110}>
                       <PSISpeedometer />
+                    </LazyPanel>
+                    <LazyPanel fallbackHeight={80}>
+                      <MacroGaugeStrip />
                     </LazyPanel>
                   </div>
 
