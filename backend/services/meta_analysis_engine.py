@@ -666,6 +666,14 @@ class MetaAnalysisEngine:
         for sig in signals:
             if not sig.is_available or sig.direction == "HOLD":
                 continue
+            # Skip "abstain" votes: a model that says BUY/SELL with confidence=0
+            # isn't a real vote — it's a placeholder/null score. Including it
+            # in the weighted average drags consensus confidence toward zero
+            # (e.g. pulse1 + smc routinely emit direction with conf=0 when
+            # they're rule-blocked or score-disabled, which after PR #13
+            # collapsed our meta strength distribution to WEAK on all symbols).
+            if sig.confidence <= 0:
+                continue
 
             base_weight = DEFAULT_MODEL_WEIGHTS.get(sig.model_id, 0.1)
             regime_mult = regime_mults.get(sig.model_id, 1.0)
