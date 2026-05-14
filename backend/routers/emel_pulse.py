@@ -1748,6 +1748,29 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
                         f"[AI-Ops] PULSE1 BUY blocked on {symbol}: "
                         f"dxy_chg1d={dxy_chg}%, regime=transition"
                     )
+
+                # Rule #XAU-PULSE1-003: SAR-against-downtrend guard
+                # Issue #14 (proposal 50c15215). The transition variant of
+                # this pattern is covered by Rule #001; this rule extends
+                # the block to confirmed downtrend regime, where a bearish
+                # SAR + counter-trend BUY is even less defensible.
+                # Re-simulation (after P/L fix) over 60d: 189 blocked
+                # (136L / 53W), verdict=unanimously_better, robust
+                # walk-forward (in/oos both positive), +1693 pip P/L delta.
+                if (pulse_signal == "BUY"
+                        and snap.get("sar_bearish") is True
+                        and snap.get("regime_label") == "downtrend"):
+                    pulse_signal = "HOLD"
+                    signal_type = "HOLD"
+                    decision_notes.append(
+                        "PULSE1 BUY blocked: SAR bearish during downtrend regime "
+                        "(AI-Ops rule #XAU-PULSE1-003 — verdict unanimously_better, "
+                        "robust; +1693 pip / +1.93pp WR on 60d backtest)"
+                    )
+                    logger.info(
+                        f"[AI-Ops] PULSE1 BUY blocked on {symbol}: "
+                        f"sar_bearish=True, regime=downtrend (rule 003)"
+                    )
             except Exception as guard_err:
                 logger.warning(f"PULSE1 AI-Ops guard check failed: {guard_err}")
 
