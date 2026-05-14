@@ -1,20 +1,23 @@
 "use client";
 
 /**
- * PSI Speedometer — Compact dashboard hero gauge
- * ================================================
- * A car-dashboard-style analog dial that sits at the very top of the home
- * page (above Meta-Engine). Designed to be:
+ * PSI Speedometer — Classic car-dashboard gauge
+ * =============================================
+ * Shape: 240° arc forming a dome at the TOP, opening at the BOTTOM
+ * (the way a real automotive speedometer is drawn). Needle pivots from
+ * the bottom-center hub and sweeps over the top arc.
  *
- *   - Instantly readable at a glance (color band + needle position)
- *   - Compact (fits in a single row, ~210px wide)
- *   - Non-intrusive when PSI is NORMAL (subdued green)
- *   - Loud when PSI escalates (red glow + pulsing ring)
+ *      ┌──── colored arc dome (top) ────┐
+ *      │                                │
+ *      └──────  open bottom  ───────────┘
+ *                  ● hub
  *
- * It piggybacks on the same `/api/pandemic-sensitivity` endpoint as the
- * detailed panel below — single HTTP call shared between both via a 5-min
- * polling cycle. If the call fails the gauge silently shows "—" and never
- * blocks the rest of the page.
+ * Robustness:
+ *   - Three quick retries on first mount (2s → 5s → 10s)
+ *   - Distinct LOADING / WARMING / OFFLINE / LIVE states
+ *   - Re-checks every 5 minutes once healthy, every 60 seconds while degraded
+ *   - Works on the public `/api/pandemic-sensitivity` endpoint shared with the
+ *     full panel below — no extra HTTP traffic.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -35,7 +38,9 @@ interface PSIResponse {
   error?: string;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+type Status = "loading" | "live" | "warming" | "offline";
+
+// ─── Constants ───────────────────────────────────────────────────────────────
 
 const LEVEL_LABELS: Record<string, string> = {
   NORMAL: "NORMAL",
@@ -63,7 +68,8 @@ function levelColor(level: string): string {
   }
 }
 
-// Smoothly tween a numeric value over `duration` ms.
+// ─── Animated number tween ───────────────────────────────────────────────────
+
 function useAnimatedNumber(target: number, duration = 900): number {
   const [val, setVal] = useState(target);
   const fromRef = useRef(target);
@@ -79,7 +85,6 @@ function useAnimatedNumber(target: number, duration = 900): number {
       if (startRef.current === null) startRef.current = ts;
       const elapsed = ts - startRef.current;
       const t = Math.min(1, elapsed / duration);
-      // ease-out cubic
       const eased = 1 - Math.pow(1 - t, 3);
       setVal(fromRef.current + (target - fromRef.current) * eased);
       if (t < 1) rafRef.current = requestAnimationFrame(tick);
@@ -94,36 +99,78 @@ function useAnimatedNumber(target: number, duration = 900): number {
   return val;
 }
 
+// ─── Geometry helpers ────────────────────────────────────────────────────────
+//
+// Angle convention: 0° = top (12 o'clock), increasing clockwise.
+// Needle sweep: -120° (lower-left, 8 o'clock) → +120° (lower-right, 4 o'clock).
+// That gives a 240° dome on TOP with the bottom 120° open — the classic
+// automotive speedometer shape.
+
+const SWEEP = 240;       // total arc degrees
+const HALF_SWEEP = SWEEP / 2;  // ±120° from top
+const CX = 100;
+const CY = 100;
+const R = 78;
+
+function angleFromScore(score: number): number {
+  const clamped = Math.max(0, Math.min(100, score));
+  return -HALF_SWEEP + (clamped / 100) * SWEEP;
+}
+
+function pointAt(r: number, deg: number): { x: number; y: number } {
+  const rad = (deg * Math.PI) / 180;
+  return { x: CX + r * Math.sin(rad), y: CY - r * Math.cos(rad) };
+}
+
+function arcPath(r: number, startDeg: number, endDeg: number): string {
+  const start = pointAt(r, startDeg);
+  const end = pointAt(r, endDeg);
+  const large = endDeg - startDeg > 180 ? 1 : 0;
+  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${large} 1 ${end.x} ${end.y}`;
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function PSISpeedometer() {
   const [psi, setPsi] = useState<PSIResponse["data"] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [status, setStatus] = useState<Status>("loading");
 
+  // Robust fetcher: 3 quick retries on first failure, then 5-min cycle
   useEffect(() => {
     let cancelled = false;
-    const load = async () => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const load = async (attempt = 0): Promise<void> => {
       try {
         const res = await fetcher<PSIResponse>("/api/pandemic-sensitivity");
         if (cancelled) return;
-        if (res.success) {
+        if (res.success && res.data) {
           setPsi(res.data);
-          setError(false);
+          // Backend returns psi_score=0 + summary "not yet ready" while warming.
+          const warming = !res.data.psi_score && /not yet ready|warming/i.test(res.data.summary || "");
+          setStatus(warming ? "warming" : "live");
+          timer = setTimeout(() => load(0), warming ? 30_000 : 5 * 60_000);
         } else {
-          setError(true);
+          throw new Error(res.error || "PSI service returned success=false");
         }
       } catch {
-        if (!cancelled) setError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
+        if (cancelled) return;
+        if (attempt < 3) {
+          // 2s → 5s → 10s back-off; remain in loading state during retries
+          const delays = [2_000, 5_000, 10_000];
+          timer = setTimeout(() => load(attempt + 1), delays[attempt]);
+        } else {
+          setStatus("offline");
+          // While offline, retry every 60s instead of 5 min
+          timer = setTimeout(() => load(0), 60_000);
+        }
       }
     };
-    load();
-    const id = setInterval(load, 5 * 60 * 1000); // 5-min refresh
+
+    load(0);
     return () => {
       cancelled = true;
-      clearInterval(id);
+      if (timer) clearTimeout(timer);
     };
   }, []);
 
@@ -131,77 +178,69 @@ export default function PSISpeedometer() {
   const level = psi?.risk_level ?? "NORMAL";
   const color = levelColor(level);
   const animatedScore = useAnimatedNumber(score, 1200);
+  const needleDeg = useMemo(() => angleFromScore(animatedScore), [animatedScore]);
 
-  // Speedometer geometry — 240° arc (sweeps from 8 o'clock to 4 o'clock)
-  const VB = 200;          // viewbox
-  const CX = 100;
-  const CY = 110;
-  const R = 78;
-  const START_ANGLE_DEG = 150;   // bottom-left
-  const SWEEP_DEG = 240;         // total arc
-  const END_ANGLE_DEG = START_ANGLE_DEG + SWEEP_DEG;
-
-  const polar = (cx: number, cy: number, r: number, deg: number) => {
-    const rad = ((deg - 180) * Math.PI) / 180;
-    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-  };
-  const arcPath = (r: number, startDeg: number, endDeg: number) => {
-    const start = polar(CX, CY, r, startDeg);
-    const end = polar(CX, CY, r, endDeg);
-    const large = endDeg - startDeg > 180 ? 1 : 0;
-    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${large} 1 ${end.x} ${end.y}`;
-  };
-
-  // Color band stops mapped to PSI thresholds
+  // Color bands aligned to risk thresholds
   const bands = useMemo(() => [
-    { from: 0,   to: 20,  color: "#16a34a" }, // NORMAL
-    { from: 20,  to: 40,  color: "#eab308" }, // ELEVATED
-    { from: 40,  to: 60,  color: "#f59e0b" }, // WARNING
-    { from: 60,  to: 80,  color: "#ea580c" }, // HIGH_RISK
-    { from: 80,  to: 100, color: "#dc2626" }, // CRITICAL
+    { from: 0,   to: 20,  color: "#16a34a" },
+    { from: 20,  to: 40,  color: "#eab308" },
+    { from: 40,  to: 60,  color: "#f59e0b" },
+    { from: 60,  to: 80,  color: "#ea580c" },
+    { from: 80,  to: 100, color: "#dc2626" },
   ], []);
 
-  const needleDeg = useMemo(
-    () => START_ANGLE_DEG + (Math.min(100, Math.max(0, animatedScore)) / 100) * SWEEP_DEG,
-    [animatedScore],
-  );
-
-  const isElevated = level !== "NORMAL";
-  const isCritical = level === "CRITICAL" || level === "HIGH_RISK";
+  const isOffline = status === "offline";
+  const isWarming = status === "warming";
+  const isLoading = status === "loading";
+  const isElevated = !isOffline && !isLoading && level !== "NORMAL";
+  const isCritical = !isOffline && (level === "CRITICAL" || level === "HIGH_RISK");
 
   return (
-    <div
-      className="relative w-full flex items-center justify-center"
-      title={psi?.summary ?? "Pandemic Sensitivity Index"}
-    >
-      {/* Outer card */}
+    <div className="relative w-full flex items-center justify-center" title={psi?.summary ?? "Pandemic Sensitivity Index"}>
       <div
         className={`
           relative inline-flex items-center gap-4 sm:gap-6
-          px-4 sm:px-6 py-3 rounded-full
+          px-5 sm:px-7 py-3 rounded-full
           bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950
           border transition-all duration-700
-          ${isCritical ? "border-red-500/50 shadow-[0_0_28px_rgba(220,38,38,0.3)]" :
+          ${isOffline ? "border-gray-700/60 shadow-[0_0_18px_rgba(75,85,99,0.18)]" :
+            isCritical ? "border-red-500/50 shadow-[0_0_28px_rgba(220,38,38,0.3)]" :
             isElevated ? "border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.18)]" :
             "border-purple-500/25 shadow-[0_0_18px_rgba(168,85,247,0.12)]"}
         `}
       >
-        {/* Pulsing ring when CRITICAL */}
         {isCritical && (
           <span className="absolute inset-0 rounded-full border-2 border-red-500/40 animate-ping pointer-events-none" />
         )}
 
-        {/* ── Speedometer dial ───────────────────────────────────── */}
-        <div className="relative shrink-0" style={{ width: 130, height: 100 }}>
+        {/* ═══ Speedometer dial ═══ */}
+        <div className="relative shrink-0" style={{ width: 150, height: 96 }}>
           <svg
-            viewBox={`0 0 ${VB} 150`}
+            viewBox="0 0 200 130"
             className="w-full h-full overflow-visible"
             aria-label={`PSI gauge: ${Math.round(score)}, ${LEVEL_LABELS[level]}`}
           >
-            {/* Color band */}
+            {/* Outer bezel — soft glow ring giving the "glass dial" look */}
+            <path
+              d={arcPath(R + 9, -HALF_SWEEP, HALF_SWEEP)}
+              stroke="rgba(255,255,255,0.05)"
+              strokeWidth="1.5"
+              fill="none"
+            />
+
+            {/* Background track (full sweep, dark) */}
+            <path
+              d={arcPath(R, -HALF_SWEEP, HALF_SWEEP)}
+              stroke="rgba(255,255,255,0.06)"
+              strokeWidth="14"
+              strokeLinecap="round"
+              fill="none"
+            />
+
+            {/* Color bands */}
             {bands.map((b) => {
-              const startDeg = START_ANGLE_DEG + (b.from / 100) * SWEEP_DEG;
-              const endDeg = START_ANGLE_DEG + (b.to / 100) * SWEEP_DEG;
+              const startDeg = -HALF_SWEEP + (b.from / 100) * SWEEP;
+              const endDeg = -HALF_SWEEP + (b.to / 100) * SWEEP;
               return (
                 <path
                   key={b.from}
@@ -210,124 +249,119 @@ export default function PSISpeedometer() {
                   strokeWidth="11"
                   strokeLinecap="butt"
                   fill="none"
-                  opacity="0.75"
+                  opacity={isOffline ? 0.18 : 0.85}
                 />
               );
             })}
 
-            {/* Outer ring stroke for crisp edge */}
-            <path
-              d={arcPath(R, START_ANGLE_DEG, END_ANGLE_DEG)}
-              stroke="rgba(255,255,255,0.04)"
-              strokeWidth="13"
-              fill="none"
-            />
-
-            {/* Tick marks every 20 (major) */}
+            {/* Major ticks (0,20,40,60,80,100) */}
             {[0, 20, 40, 60, 80, 100].map((t) => {
-              const deg = START_ANGLE_DEG + (t / 100) * SWEEP_DEG;
-              const outer = polar(CX, CY, R + 7, deg);
-              const inner = polar(CX, CY, R - 5, deg);
+              const deg = -HALF_SWEEP + (t / 100) * SWEEP;
+              const outer = pointAt(R + 8, deg);
+              const inner = pointAt(R - 6, deg);
               return (
                 <line
                   key={t}
                   x1={inner.x} y1={inner.y}
                   x2={outer.x} y2={outer.y}
                   stroke="rgba(255,255,255,0.55)"
-                  strokeWidth="1.4"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
                 />
               );
             })}
 
             {/* Minor ticks every 10 */}
             {[10, 30, 50, 70, 90].map((t) => {
-              const deg = START_ANGLE_DEG + (t / 100) * SWEEP_DEG;
-              const outer = polar(CX, CY, R + 3, deg);
-              const inner = polar(CX, CY, R - 2, deg);
+              const deg = -HALF_SWEEP + (t / 100) * SWEEP;
+              const outer = pointAt(R + 3, deg);
+              const inner = pointAt(R - 2, deg);
               return (
                 <line
                   key={t}
                   x1={inner.x} y1={inner.y}
                   x2={outer.x} y2={outer.y}
-                  stroke="rgba(255,255,255,0.18)"
+                  stroke="rgba(255,255,255,0.22)"
                   strokeWidth="1"
                 />
               );
             })}
 
-            {/* Major tick labels */}
+            {/* Numeric labels at 0 / 50 / 100 */}
             {[0, 50, 100].map((t) => {
-              const deg = START_ANGLE_DEG + (t / 100) * SWEEP_DEG;
-              const p = polar(CX, CY, R + 16, deg);
+              const deg = -HALF_SWEEP + (t / 100) * SWEEP;
+              const p = pointAt(R - 16, deg);
               return (
                 <text
                   key={t}
                   x={p.x} y={p.y + 3}
                   textAnchor="middle"
                   fontSize="9"
-                  fontWeight="600"
-                  fill="rgba(255,255,255,0.45)"
+                  fontWeight="700"
+                  fill="rgba(255,255,255,0.55)"
                 >
                   {t}
                 </text>
               );
             })}
 
-            {/* Needle (rotates around hub) */}
+            {/* Needle — rotates around bottom-center hub */}
             <g
               style={{
-                transform: `rotate(${needleDeg - 90}deg)`,
+                transform: `rotate(${isOffline ? -HALF_SWEEP : needleDeg}deg)`,
                 transformOrigin: `${CX}px ${CY}px`,
                 transition: "transform 1.2s cubic-bezier(.2,.8,.2,1)",
+                opacity: isLoading ? 0.4 : 1,
               }}
             >
-              {/* Needle shadow */}
               <polygon
-                points={`${CX - 3},${CY + 4} ${CX + 3},${CY + 4} ${CX + 1},${CY - R + 10} ${CX - 1},${CY - R + 10}`}
-                fill={color}
+                points={`${CX - 2.5},${CY + 6} ${CX + 2.5},${CY + 6} ${CX + 0.8},${CY - R + 6} ${CX - 0.8},${CY - R + 6}`}
+                fill={isOffline ? "#6b7280" : color}
                 opacity="0.95"
-                style={{ filter: `drop-shadow(0 0 4px ${color})` }}
+                style={{ filter: isOffline ? "none" : `drop-shadow(0 0 4px ${color})` }}
               />
-              {/* Needle tip */}
-              <circle cx={CX} cy={CY - R + 10} r="2" fill="#fff" opacity="0.8" />
+              <circle cx={CX} cy={CY - R + 6} r="2" fill="#fff" opacity="0.85" />
             </g>
 
-            {/* Center hub */}
-            <circle cx={CX} cy={CY} r="8" fill="#0a0a0a" stroke={color} strokeWidth="2" />
-            <circle cx={CX} cy={CY} r="3" fill={color} />
+            {/* Hub — center cap */}
+            <circle cx={CX} cy={CY} r="9" fill="#0a0a0a" stroke={isOffline ? "#374151" : color} strokeWidth="2" />
+            <circle cx={CX} cy={CY} r="3.5" fill={isOffline ? "#374151" : color} />
           </svg>
 
-          {/* Score below the dial */}
-          <div
-            className="absolute left-0 right-0 text-center pointer-events-none"
-            style={{ bottom: -4 }}
-          >
+          {/* Score readout below the hub */}
+          <div className="absolute left-0 right-0 text-center pointer-events-none" style={{ bottom: 0 }}>
             <div
-              className="text-2xl font-extrabold tabular-nums leading-none"
-              style={{ color, textShadow: `0 0 12px ${color}55` }}
+              className="text-[22px] font-extrabold tabular-nums leading-none"
+              style={{
+                color: isOffline ? "#9ca3af" : color,
+                textShadow: isOffline ? "none" : `0 0 12px ${color}55`,
+              }}
             >
-              {loading ? "—" : Math.round(animatedScore)}
+              {isLoading ? "…" : isOffline ? "—" : Math.round(animatedScore)}
             </div>
           </div>
         </div>
 
-        {/* ── Label block ────────────────────────────────────────── */}
+        {/* ═══ Label block ═══ */}
         <div className="min-w-0 flex-1 sm:flex-none">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <Activity className="w-3 h-3 text-purple-400" />
-            <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-purple-300">
+            <Activity className={`w-3 h-3 ${isOffline ? "text-gray-500" : "text-purple-400"}`} />
+            <span className={`text-[9px] font-bold uppercase tracking-[0.18em] ${isOffline ? "text-gray-500" : "text-purple-300"}`}>
               Pandemic Sensitivity
             </span>
-            <Sparkles className="w-3 h-3 text-purple-400/70" />
+            <Sparkles className={`w-3 h-3 ${isOffline ? "text-gray-600" : "text-purple-400/70"}`} />
           </div>
           <div
             className="text-base sm:text-lg font-extrabold tracking-wide leading-tight"
-            style={{ color }}
+            style={{ color: isOffline ? "#9ca3af" : color }}
           >
-            {error ? "OFFLINE" : LEVEL_LABELS[level]}
+            {isLoading ? "LOADING…" : isWarming ? "WARMING UP" : isOffline ? "OFFLINE" : LEVEL_LABELS[level]}
           </div>
-          <div className="text-[10px] text-gray-400 leading-tight max-w-[180px]">
-            {error ? "PSI service unreachable" : LEVEL_DESCRIPTIONS[level]}
+          <div className="text-[10px] text-gray-400 leading-tight max-w-[220px]">
+            {isLoading ? "Fetching basket data…" :
+             isWarming ? "Baskets initialising — first 60s" :
+             isOffline ? "Service unreachable, retrying…" :
+             LEVEL_DESCRIPTIONS[level]}
           </div>
         </div>
       </div>
