@@ -330,6 +330,19 @@ def _resolve_signal_timestamp(symbol: str, fallback: str) -> str:
     return _get_latest_market_timestamp(symbol) or fallback
 
 
+def _emel_macro_notes(symbol: str, decision: str) -> List[str]:
+    """Return up to 3 macro-context commentary lines for EMEL's summary block.
+    Maps EMEL's BUY_SETUP / SELL_SETUP / HOLD into BUY / SELL / HOLD before
+    delegating to the macro_context_service. Never raises."""
+    try:
+        from services.macro_context_service import commentary_lines
+        direction = "BUY" if decision == "BUY_SETUP" else "SELL" if decision == "SELL_SETUP" else "HOLD"
+        return list(commentary_lines(symbol, direction, max_lines=3))
+    except Exception as e:
+        logger.debug(f"EMEL macro notes skipped: {e}")
+        return []
+
+
 def _pattern_signal_value(pattern: Dict[str, Any]) -> str:
     raw = str(pattern.get("signal") or pattern.get("direction") or "neutral").strip().upper()
     if raw in {"BULLISH", "BUY", "UP"}:
@@ -1341,7 +1354,8 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
                 "decision": decision,
                 "decision_reason": decision_reason,
                 "rejections": rejections,
-                "entry_conditions": conditions if decision in ["BUY_SETUP", "SELL_SETUP"] else []
+                "entry_conditions": conditions if decision in ["BUY_SETUP", "SELL_SETUP"] else [],
+                "macro_notes": _emel_macro_notes(symbol, decision),
             },
             "rebound": rebound_summary
         }
@@ -1845,6 +1859,17 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
         except Exception as rebound_err:
             logger.warning(f"PULSE rebound integration failed: {rebound_err}")
 
+        # ─── MACRO CONTEXT — informational decision notes ──────────────────
+        # Append macro overlay commentary (DXY/VIX/Yield/Risk-On/PSI) to the
+        # decision_notes for transparency. Does not change the score.
+        try:
+            from services.macro_context_service import commentary_lines as _macro_lines
+            for _m in _macro_lines(symbol, pulse_signal, max_lines=2):
+                if _m not in decision_notes:
+                    decision_notes.append(f"🌍 {_m}")
+        except Exception as _macro_err:
+            logger.debug(f"PULSE1 macro notes skipped: {_macro_err}")
+
         payload = {
             "symbol": symbol,
             "timeframe": timeframe,
@@ -2289,6 +2314,15 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bo
                 logger.info(f"PULSE-ML signal logged: {symbol} {signal} ({signal_type}) @ {current_price}")
             except Exception as log_err:
                 logger.warning(f"Failed to log PULSE-ML prediction: {log_err}")
+
+        # ─── MACRO CONTEXT — informational notes ──────────────────────────
+        try:
+            from services.macro_context_service import commentary_lines as _macro_lines
+            for _m in _macro_lines(symbol, signal, max_lines=2):
+                if _m not in notes:
+                    notes.append(f"🌍 {_m}")
+        except Exception as _macro_err:
+            logger.debug(f"PULSE2 macro notes skipped: {_macro_err}")
 
         payload = {
             "symbol": symbol,
@@ -2914,6 +2948,16 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
             "valid_for_seconds": 300,
             "rebound": rebound_summary,
         }
+
+        # ─── MACRO CONTEXT — informational notes ──────────────────────────
+        try:
+            from services.macro_context_service import commentary_lines as _macro_lines
+            for _m in _macro_lines(symbol, direction, max_lines=2):
+                if f"🌍 {_m}" not in payload["notes"]:
+                    payload["notes"].append(f"🌍 {_m}")
+        except Exception as _macro_err:
+            logger.debug(f"PULSE3 macro notes skipped: {_macro_err}")
+
         _set_cached_panel_analysis("pulse3", symbol, "5m", payload)
         return payload
         

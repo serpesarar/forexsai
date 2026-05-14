@@ -969,14 +969,15 @@ class MetaAnalysisEngine:
             logger.warning(f"[MetaEngine] Meta prediction log failed for {symbol}: {e}")
 
         elapsed = (time.time() - start_ts) * 1000
-        psi_log = (
-            f" psi={psi_adjustment:+.1f}@{psi_context.get('risk_level', 'NORMAL')}"
-            if psi_context.get("applied") else ""
+        macro_log = (
+            f" macro={macro_adjustment:+.1f}"
+            f"({len(macro_context.get('signals', []))}g)"
+            if macro_context.get("applied") else ""
         )
         logger.info(
             f"[MetaEngine] {symbol}: {direction} ({confidence:.0f}%) "
             f"combo={display_combo} regime={regime} "
-            f"tech={tech_score:.0%}{psi_log} in {elapsed:.0f}ms"
+            f"tech={tech_score:.0%}{macro_log} in {elapsed:.0f}ms"
         )
 
         return meta_signal
