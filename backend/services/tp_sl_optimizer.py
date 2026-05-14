@@ -33,6 +33,8 @@ DEFAULT_TP_CANDIDATES = (3, 5, 8, 10, 12, 15, 18, 20, 25, 30, 40, 50, 75, 100)
 DEFAULT_SL_CANDIDATES = (5, 8, 10, 12, 15, 18, 20, 25, 30, 35, 40, 50, 75, 100)
 MIN_SAMPLE_SIZE = 30           # below this, recommendation is unreliable
 MATERIAL_PNL_DELTA_PIPS = 50   # below this, recommendation = "no change"
+MIN_TRIGGER_RATE_PCT = 40      # a combo that triggers on <40% of signals
+                               # is rejected as "untradeable in practice"
 
 
 def _adaptive_grid(values: list[float], current_anchors: list[float],
@@ -160,24 +162,50 @@ async def _fetch_signals_with_outcomes(
     if not signals:
         return []
 
+    # Detect percentage-unit symbol once (USOIL stores TP/SL as % of entry).
+    try:
+        from services.target_config import get_symbol_config
+        _scfg = get_symbol_config(symbol)
+        is_pct = bool(getattr(_scfg, "is_percentage", False))
+        pip_val = float(getattr(_scfg, "pip_value", 1.0)) or 1.0
+    except Exception:
+        is_pct = False
+        pip_val = 1.0
+
     enriched: list[dict] = []
     for s in signals:
-        # MFE is stored positive (best price excursion in favor).
-        # MAE is stored NEGATIVE in prediction_logs (e.g. -42 for a 42-pip
-        # drawdown). We normalize to positive magnitude here so the rest of
-        # the optimizer can compare it to SL candidates directly with `>=`.
+        # MFE/MAE are price excursions during the signal's lifetime, NOT the
+        # realized P/L at exit. A "completed" signal closed at the actual TP
+        # level it hit (TP1..TP4), but the bar's wick may have spiked far
+        # past that — MFE can be 5× the realized P/L on a wicky candle.
         mfe = abs(float(s.get("highest_profit_pips") or 0))
         mae = abs(float(s.get("lowest_drawdown_pips") or 0))
-        # Realized P/L for timeout-resolution signals: positive when status
-        # was a win (favored MFE), negative magnitude for stopped/loss.
-        realized = mfe if s.get("status") == "completed" else -mae
+
+        # Compute TRUE realized P/L from entry/exit prices. This is the only
+        # honest answer for "timeout" rows in the new backtest grid — using
+        # MFE there would credit profit that the trade never locked in
+        # (it closed at the old, smaller TP).
+        entry = float(s.get("ml_entry_price") or 0)
+        exit_p = float(s.get("exit_price") or 0)
+        direction = s.get("ml_direction")
+        status = s.get("status")
+        if entry > 0 and exit_p > 0 and direction in ("BUY", "SELL"):
+            raw_diff = (exit_p - entry) if direction == "BUY" else (entry - exit_p)
+            if is_pct:
+                realized = (raw_diff / entry) * 100.0  # pips = % of entry
+            else:
+                realized = raw_diff / pip_val
+        else:
+            # Fallback only if exit_price is missing — use the bounded estimate
+            realized = mfe if status == "completed" else -mae
+
         enriched.append({
             "id": s["id"],
             "symbol": s["symbol"],
             "model_type": s.get("model_type"),
-            "direction": s.get("ml_direction"),
+            "direction": direction,
             "timeframe": s.get("timeframe"),
-            "status": s.get("status"),
+            "status": status,
             "mfe_pips": mfe,
             "mae_pips": mae,
             "realized_pnl_pips": realized,
@@ -195,22 +223,30 @@ def simulate_tp_sl(signals: list[dict], tp_pips: float, sl_pips: float) -> dict:
     Resolution logic per signal (mfe, mae both positive magnitudes):
       - MAE >= SL  AND  MFE <  TP  → clear LOSS (only SL would've hit)
       - MFE >= TP  AND  MAE <  SL  → clear WIN  (only TP would've hit)
-      - MFE >= TP  AND  MAE >= SL  → AMBIGUOUS: which fired first?
-              Tie-break with historical `status`:
-                · "completed" → TP fired first historically → WIN
-                · "stopped"   → SL fired first historically → LOSS
-              This is much more accurate than blanket "SL-first" pessimism;
-              it uses the actual sequencing the market produced.
-      - Neither threshold breached → TIMEOUT (realize the signal's actual P/L)
+      - MFE >= TP  AND  MAE >= SL  → AMBIGUOUS: tie-break with historical
+              `status`: completed → TP fired first → WIN;
+                        stopped   → SL fired first → LOSS.
+      - Neither threshold breached → TIMEOUT.
 
-    Returns wins / losses / timeouts / ambiguous_count for transparency.
+    P/L ranking uses ONLY wins (+TP) and losses (-SL). Timeouts are NOT
+    credited any P/L in `net_pnl` — they're trades that never reach the
+    new TP/SL targets, and the new system may not exit them at all (or
+    exits via a time-based mechanism whose P/L we can't credit to this
+    TP/SL pair). Counting timeouts at +MFE (old behavior) tricks the
+    optimizer into recommending huge TPs that almost never trigger but
+    "earn" credit from timeouts closing at the OLD smaller TP.
+
+    `net_pnl_with_timeouts` is exposed for review only — it shows what
+    happens if timeouts realize at their historical exit P/L (assumes the
+    old system's exit mechanism would still kick in).
     """
     if not signals:
         return {"tp": tp_pips, "sl": sl_pips, "n": 0,
                 "wins": 0, "losses": 0, "timeouts": 0, "ambiguous": 0,
-                "net_pnl": 0.0, "win_rate": None}
+                "net_pnl": 0.0, "net_pnl_with_timeouts": 0.0, "win_rate": None}
     wins = losses = timeouts = ambiguous = 0
     pnl = 0.0
+    timeout_realized_total = 0.0
     for s in signals:
         mfe = s["mfe_pips"]
         mae = s["mae_pips"]
@@ -218,7 +254,6 @@ def simulate_tp_sl(signals: list[dict], tp_pips: float, sl_pips: float) -> dict:
         hit_tp = tp_pips > 0 and mfe >= tp_pips
         if hit_sl and hit_tp:
             ambiguous += 1
-            # Resolve with historical sequencing
             if s.get("status") == "completed":
                 wins += 1
                 pnl += tp_pips
@@ -233,14 +268,19 @@ def simulate_tp_sl(signals: list[dict], tp_pips: float, sl_pips: float) -> dict:
             pnl += tp_pips
         else:
             timeouts += 1
-            pnl += s.get("realized_pnl_pips", 0.0)
+            # Do NOT add to net_pnl — timeouts don't lock in a TP/SL outcome.
+            # Track them in a side field for transparency.
+            timeout_realized_total += float(s.get("realized_pnl_pips", 0.0))
     n_resolved = wins + losses
     return {
         "tp": tp_pips, "sl": sl_pips, "n": len(signals),
         "wins": wins, "losses": losses, "timeouts": timeouts,
         "ambiguous": ambiguous,
         "net_pnl": round(pnl, 2),
+        "net_pnl_with_timeouts": round(pnl + timeout_realized_total, 2),
+        "timeout_realized_pips": round(timeout_realized_total, 2),
         "win_rate": round(wins / n_resolved * 100, 2) if n_resolved else None,
+        "trigger_rate_pct": round(n_resolved / len(signals) * 100, 2) if signals else 0,
         "avg_pnl_per_trade": round(pnl / len(signals), 3) if signals else 0,
         "rr_ratio": round(tp_pips / sl_pips, 2) if sl_pips > 0 else None,
     }
@@ -248,30 +288,86 @@ def simulate_tp_sl(signals: list[dict], tp_pips: float, sl_pips: float) -> dict:
 
 def grid_search(signals: list[dict],
                 tp_candidates: list[float] = None,
-                sl_candidates: list[float] = None) -> dict:
+                sl_candidates: list[float] = None,
+                min_trigger_rate_pct: float = MIN_TRIGGER_RATE_PCT,
+                mfe_stats: Optional[dict] = None,
+                mae_stats: Optional[dict] = None,
+                current_anchors: Optional[list[float]] = None) -> dict:
     """Try every (TP, SL) combo, return best by net_pnl + top 5 for inspection.
 
-    Ranking ties (within 2% net_pnl of best) are broken by win_rate then by
-    smaller SL (less downside). This avoids the optimizer recommending an
-    aggressive wider-SL setup when a tighter one performs equivalently.
+    Sanity bands (when distributions are passed):
+      - TP must lie in [MFE p25, MFE p80] — outside this window we're either
+        scalping for noise (too tight) or chasing outliers (too wide).
+      - SL must lie in [MAE p25, MAE p80] — too tight = noise-stop, too wide
+        = unrealistic (we'd never see it fire in production).
+      - Current config anchors are always preserved so the comparison row
+        stays in the search even if it lies outside the bands.
+
+    Tradeable filter: combos that trigger on <`min_trigger_rate_pct`% of
+    signals are dropped — they're not a viable system.
+
+    Ranking ties (within 2% net_pnl of best) are broken by:
+      1. higher win_rate
+      2. higher trigger_rate (more trades, less luck)
+      3. smaller TP (closer to the "honest" mean — wide TP is lottery)
+      4. smaller SL (less downside per loss)
     """
-    tp_candidates = tp_candidates or list(DEFAULT_TP_CANDIDATES)
-    sl_candidates = sl_candidates or list(DEFAULT_SL_CANDIDATES)
-    results = []
+    tp_candidates = list(tp_candidates) if tp_candidates else list(DEFAULT_TP_CANDIDATES)
+    sl_candidates = list(sl_candidates) if sl_candidates else list(DEFAULT_SL_CANDIDATES)
+    current_anchors = current_anchors or []
+
+    # Sanity bands — clip to meaty distribution region, always keep anchors
+    def _within(cands: list[float], stats: dict, lo_key: str, hi_key: str) -> list[float]:
+        lo = stats.get(lo_key) if stats else None
+        hi = stats.get(hi_key) if stats else None
+        if lo is None or hi is None or lo <= 0 or hi <= 0 or lo >= hi:
+            return cands
+        kept = [c for c in cands if lo <= c <= hi]
+        for a in current_anchors:
+            if a and a > 0 and a not in kept:
+                kept.append(a)
+        return sorted(set(kept))
+
+    tp_sane = _within(tp_candidates, mfe_stats or {}, "p25", "p80")
+    sl_sane = _within(sl_candidates, mae_stats or {}, "p25", "p80")
+    # Fall back to full grid if sanity bands removed everything
+    if not tp_sane:
+        tp_sane = tp_candidates
+    if not sl_sane:
+        sl_sane = sl_candidates
+    tp_candidates, sl_candidates = tp_sane, sl_sane
+    all_results = []
     for tp in tp_candidates:
         for sl in sl_candidates:
-            results.append(simulate_tp_sl(signals, tp, sl))
-    if not results:
-        return {"best": None, "top5": [], "all": []}
-    top_pnl = max(r["net_pnl"] for r in results)
+            all_results.append(simulate_tp_sl(signals, tp, sl))
+    if not all_results:
+        return {"best": None, "top5": [], "all": [], "tradeable_count": 0}
+
+    tradeable = [r for r in all_results
+                 if (r.get("trigger_rate_pct") or 0) >= min_trigger_rate_pct]
+
+    if not tradeable:
+        # No combo triggers enough — return overall best but flag it.
+        all_results.sort(key=lambda r: -r["net_pnl"])
+        return {"best": all_results[0], "top5": all_results[:5],
+                "all": all_results, "tradeable_count": 0,
+                "no_tradeable_warning": (
+                    f"No (TP,SL) combo triggers on ≥{min_trigger_rate_pct}% "
+                    f"of signals — model output may be too narrow for any "
+                    f"reasonable TP/SL setting."
+                )}
+
+    top_pnl = max(r["net_pnl"] for r in tradeable)
     tolerance = max(1.0, abs(top_pnl) * 0.02)
-    # Sort: net_pnl desc; within tolerance band prefer higher win_rate then smaller SL
-    results.sort(key=lambda r: (
+    tradeable.sort(key=lambda r: (
         -r["net_pnl"] if (top_pnl - r["net_pnl"]) > tolerance else -top_pnl,
         -(r.get("win_rate") or 0),
+        -(r.get("trigger_rate_pct") or 0),
+        r["tp"],
         r["sl"],
     ))
-    return {"best": results[0], "top5": results[:5], "all": results}
+    return {"best": tradeable[0], "top5": tradeable[:5],
+            "all": all_results, "tradeable_count": len(tradeable)}
 
 
 # ---------------------------------------------------------------------------
@@ -472,13 +568,22 @@ async def analyze_tp_sl(
     tp_grid = _adaptive_grid(mfe_values, tp_anchors)
     sl_grid = _adaptive_grid(mae_values, sl_anchors)
 
-    grid = grid_search(signals, tp_candidates=tp_grid, sl_candidates=sl_grid)
+    grid = grid_search(
+        signals,
+        tp_candidates=tp_grid,
+        sl_candidates=sl_grid,
+        mfe_stats=mfe_stats,
+        mae_stats=mae_stats,
+        current_anchors=tp_anchors + sl_anchors,
+    )
     best = grid["best"]
     if best is None:
         out["status"] = "error"
         out["reason"] = "grid_search returned no results"
         return out
     best["_grid_dim"] = f"{len(tp_grid)}×{len(sl_grid)}"
+    if grid.get("no_tradeable_warning"):
+        out["warning"] = grid["no_tradeable_warning"]
 
     out["mfe_distribution"] = mfe_stats
     out["mae_distribution"] = mae_stats
