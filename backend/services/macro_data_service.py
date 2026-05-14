@@ -28,15 +28,22 @@ logger = logging.getLogger(__name__)
 
 # Yahoo tickers — feed for ALL models that need macro context
 TICKERS = {
-    "DXY":   "DX-Y.NYB",   # ICE US Dollar Index — XAU + USOIL inverse
-    "VIX":   "^VIX",        # Volatility — risk-on/off proxy for indices
-    "US10Y": "^TNX",        # 10-yr yield (%) — XAU + tech rate-sensitivity
-    "US3M":  "^IRX",        # 13-week T-bill — short end of curve (10Y-3M term spread)
-    "SPX":   "^GSPC",       # S&P 500 cash — broader US equity tape
-    "NQ":    "^IXIC",       # Nasdaq Composite — NDX correlation
-    "STOXX": "^STOXX50E",   # Euro Stoxx 50 — DAX peer
-    "SPY":   "SPY",         # S&P 500 ETF — risk-on numerator
-    "GLD":   "GLD",         # Gold ETF — risk-off denominator
+    "DXY":    "DX-Y.NYB",   # ICE US Dollar Index — XAU + USOIL inverse
+    "VIX":    "^VIX",        # Volatility — risk-on/off proxy for indices
+    "US10Y":  "^TNX",        # 10-yr yield (%) — XAU + tech rate-sensitivity
+    "US3M":   "^IRX",        # 13-week T-bill — short end of curve (10Y-3M term spread)
+    "SPX":    "^GSPC",       # S&P 500 cash — broader US equity tape
+    "NQ":     "^IXIC",       # Nasdaq Composite — NDX correlation
+    "STOXX":  "^STOXX50E",   # Euro Stoxx 50 — DAX peer
+    "SPY":    "SPY",         # S&P 500 ETF — risk-on numerator
+    "GLD":    "GLD",         # Gold ETF — risk-off denominator
+    # — Credit risk appetite (institutional risk-parity desks watch this) —
+    "HYG":    "HYG",         # High-yield corporate bond ETF
+    "IEF":    "IEF",          # 7-10Y Treasury ETF — credit-spread denominator
+    # — 2024-2026 risk indicators (post-2020 regime additions) —
+    "BTC":    "BTC-USD",      # Bitcoin — became correlated tech-beta proxy
+    "USDJPY": "JPY=X",        # USD/JPY — carry trade barometer (Aug-2024 unwind)
+    "COPPER": "HG=F",         # Copper futures — global growth/China demand
 }
 
 REFRESH_INTERVAL_SECONDS = 3600   # 1 hour

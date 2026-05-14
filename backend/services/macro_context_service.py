@@ -90,6 +90,37 @@ _BIAS_RISK_ON: Dict[str, Tuple[float, float]] = {
     "USOIL.FOREX": (+0.35, -0.20),
 }
 
+# BTC vs NDX correlation — when BTC underperforms while NDX rallies, that's
+# a "risk-on internal divergence" warning (the speculative tail is leading
+# the broader risk-on flow). For NDX longs this is bearish; for XAU longs
+# this is slightly bullish (defensive flow).
+_BIAS_BTC_NDX_DIVERGENCE: Dict[str, Tuple[float, float]] = {
+    "NDX.INDX":    (-0.45, +0.25),
+    "GDAXI.INDX":  (-0.20, +0.10),
+    "XAUUSD":      (+0.30, -0.15),
+    "USOIL.FOREX": (-0.15, +0.10),
+}
+
+# USD/JPY carry unwind — sharp DROP in USD/JPY usually triggers global
+# risk-off (Aug 2024 reminded everyone). 3-day drop > 3% = warning state.
+# Indices get hit, gold benefits, oil mildly bearish (demand fear).
+_BIAS_CARRY_UNWIND: Dict[str, Tuple[float, float]] = {
+    "NDX.INDX":    (-0.80, +0.45),
+    "GDAXI.INDX":  (-0.70, +0.40),
+    "XAUUSD":      (+0.65, -0.35),
+    "USOIL.FOREX": (-0.45, +0.30),
+}
+
+# Copper/Gold — global growth proxy (China demand sensitive). Rising ratio
+# = pro-growth / pro-cyclical. Useful especially for USOIL and DAX which
+# are exposed to global industrial cycle.
+_BIAS_COPPER_GOLD: Dict[str, Tuple[float, float]] = {
+    "NDX.INDX":    (+0.25, -0.15),
+    "GDAXI.INDX":  (+0.55, -0.30),
+    "XAUUSD":      (-0.40, +0.25),
+    "USOIL.FOREX": (+0.70, -0.35),
+}
+
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -387,6 +418,147 @@ def _contrib_risk_ratio(symbol: str, direction: str) -> Optional[GaugeContributi
         return None
 
 
+def _contrib_btc_ndx_divergence(symbol: str, direction: str) -> Optional[GaugeContribution]:
+    """BTC vs NDX divergence — speculative-tail leading indicator.
+
+    My market observation (2024-2026): post-2020 BTC became a high-beta
+    proxy for tech/risk-on flows — when BTC and NDX move together, the
+    risk-on tide is broad. When BTC sells off WHILE NDX rallies, the
+    speculative edge is fading first — that's the canary. The reverse
+    (BTC rallying while NDX flatlines) is usually less informative.
+
+    Method: 5-day return spread (NDX_5d - BTC_5d). If NDX is up but BTC
+    is down by 5%+, that's a divergence z-score >+1.5 → fire warning.
+    """
+    try:
+        from services import macro_data_service as macro
+        btc = macro.get_history("BTC", "D1")
+        ndx = macro.get_history("NQ", "D1")  # Nasdaq Composite proxy
+        if btc is None or ndx is None or len(btc) < 30 or len(ndx) < 30:
+            return None
+        common = btc.index.intersection(ndx.index)
+        if len(common) < 30:
+            return None
+        btc_c = btc["close"].loc[common]
+        ndx_c = ndx["close"].loc[common]
+        # 5-day returns
+        btc_ret = (btc_c.iloc[-1] / btc_c.iloc[-6] - 1) * 100 if len(btc_c) >= 6 else 0
+        ndx_ret = (ndx_c.iloc[-1] / ndx_c.iloc[-6] - 1) * 100 if len(ndx_c) >= 6 else 0
+        diverg = ndx_ret - btc_ret  # positive = NDX outperforming BTC
+        # Need EITHER ABS(divergence) significant AND signs differ to flag
+        if abs(diverg) < 4.0:
+            return None
+        # Only act when the SIGNS disagree (real divergence, not just lead/lag)
+        if btc_ret * ndx_ret >= 0:
+            return None
+
+        intensity = float(np.clip((abs(diverg) - 4.0) / 6.0, 0.0, 1.0))
+        # Direction of divergence: positive diverg = bullish-NDX/bearish-BTC
+        # is the BEARISH warning (NDX leading without spec-tail support).
+        sign = 1.0 if diverg > 0 else -1.0
+        mult = _mult_for(_BIAS_BTC_NDX_DIVERGENCE, symbol, direction) * sign
+        delta = float(np.clip(intensity * mult * PER_GAUGE_MAX, -PER_GAUGE_MAX, PER_GAUGE_MAX))
+        if abs(delta) < 0.25:
+            return None
+        state = ("NDX↑/BTC↓ divergence" if diverg > 0
+                 else "BTC↑/NDX↓ divergence")
+        direction_word = "desteği" if delta > 0 else "aleyhine"
+        sign_str = "+" if delta > 0 else ""
+        note = (f"{state} (NDX 5d={ndx_ret:+.1f}%, BTC 5d={btc_ret:+.1f}%) → "
+                f"{symbol} {direction} {direction_word} {sign_str}{delta:.1f}")
+        return GaugeContribution("btc_ndx", state, intensity, delta, note)
+    except Exception as e:
+        logger.debug("btc_ndx contrib failed: %s", e)
+        return None
+
+
+def _contrib_carry_unwind(symbol: str, direction: str) -> Optional[GaugeContribution]:
+    """USD/JPY carry-trade unwind detector.
+
+    My market observation (Aug 2024 was the textbook example): rapid drops
+    in USD/JPY trigger forced unwinds of yen-funded leveraged positions
+    globally. The cascade hits indices/risk assets within 24-72h. This is
+    asymmetric — a JPY rally (USDJPY drop) is risk-off; a steady carry
+    grind (USDJPY drift up) is normal liquidity.
+
+    Method: 3-day pct change. < -2% → moderate, < -3.5% → strong warning.
+    Recovery (positive moves) ignored intentionally — only the unwind side
+    matters for risk management.
+    """
+    try:
+        from services import macro_data_service as macro
+        df = macro.get_history("USDJPY", "D1")
+        if df is None or len(df) < 10:
+            return None
+        c = df["close"].dropna()
+        if len(c) < 4:
+            return None
+        chg3d = (float(c.iloc[-1]) / float(c.iloc[-4]) - 1) * 100
+        # Asymmetric — only flag drops
+        if chg3d > -2.0:
+            return None
+        intensity = float(np.clip((-chg3d - 2.0) / 2.5, 0.0, 1.0))
+        # Always negative sign (unwind = risk-off direction in bias matrix)
+        mult = _mult_for(_BIAS_CARRY_UNWIND, symbol, direction)
+        delta = float(np.clip(intensity * mult * PER_GAUGE_MAX, -PER_GAUGE_MAX, PER_GAUGE_MAX))
+        if abs(delta) < 0.25:
+            return None
+        state = f"USD/JPY unwind ({chg3d:+.2f}% 3d)"
+        direction_word = "desteği" if delta > 0 else "aleyhine"
+        sign_str = "+" if delta > 0 else ""
+        note = (f"{state} → carry unwind risk on {symbol} {direction} "
+                f"{direction_word} {sign_str}{delta:.1f}")
+        return GaugeContribution("carry", state, intensity, delta, note)
+    except Exception as e:
+        logger.debug("carry_unwind contrib failed: %s", e)
+        return None
+
+
+def _contrib_copper_gold(symbol: str, direction: str) -> Optional[GaugeContribution]:
+    """Copper/Gold ratio — global growth / China demand proxy.
+
+    My market observation: copper is "Dr. Copper" — first to respond to
+    industrial demand changes. Ratio to gold filters out USD effects.
+    Rising ratio = pro-growth (favours equities + oil, hurts gold).
+    Falling = disinflation/recession fear.
+
+    Method: 30-day rolling z-score of copper/gold ratio. |z| > 1 triggers.
+    """
+    try:
+        from services import macro_data_service as macro
+        cop = macro.get_history("COPPER", "D1")
+        gld = macro.get_history("GLD", "D1")
+        if cop is None or gld is None or len(cop) < 60 or len(gld) < 60:
+            return None
+        common = cop.index.intersection(gld.index)
+        if len(common) < 60:
+            return None
+        ratio = (cop["close"].loc[common] / gld["close"].loc[common]).dropna()
+        recent = ratio.iloc[-90:] if len(ratio) > 90 else ratio
+        sigma = float(recent.std(ddof=1))
+        mu = float(recent.mean())
+        if sigma <= 0:
+            return None
+        z = (float(ratio.iloc[-1]) - mu) / sigma
+        intensity = _scale_z(z)
+        if intensity <= 0:
+            return None
+        sign = 1.0 if z > 0 else -1.0
+        mult = _mult_for(_BIAS_COPPER_GOLD, symbol, direction) * sign
+        delta = float(np.clip(intensity * mult * PER_GAUGE_MAX, -PER_GAUGE_MAX, PER_GAUGE_MAX))
+        if abs(delta) < 0.25:
+            return None
+        state = "GROWTH↑ (Cu/Au)" if z > 0 else "GROWTH↓ (Cu/Au)"
+        direction_word = "desteği" if delta > 0 else "aleyhine"
+        sign_str = "+" if delta > 0 else ""
+        note = (f"Copper/Gold {state} (z={z:+.1f}σ) → {symbol} {direction} "
+                f"{direction_word} {sign_str}{delta:.1f}")
+        return GaugeContribution("copper_gold", state, intensity, delta, note)
+    except Exception as e:
+        logger.debug("copper_gold contrib failed: %s", e)
+        return None
+
+
 def _contrib_psi(symbol: str, direction: str) -> Optional[GaugeContribution]:
     try:
         from services.pandemic_sensitivity_service import compute_meta_adjustment
@@ -437,7 +609,16 @@ def compute_macro_context(symbol: str, direction: str,
         return stub
 
     contribs: List[GaugeContribution] = []
-    for fn in (_contrib_dxy, _contrib_vix, _contrib_yield, _contrib_risk_ratio, _contrib_psi):
+    for fn in (
+        _contrib_dxy,
+        _contrib_vix,
+        _contrib_yield,
+        _contrib_risk_ratio,
+        _contrib_btc_ndx_divergence,
+        _contrib_carry_unwind,
+        _contrib_copper_gold,
+        _contrib_psi,
+    ):
         c = fn(symbol, direction)
         if c is not None:
             contribs.append(c)
