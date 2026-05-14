@@ -573,6 +573,28 @@ async def analyze_tp_sl(
     tp_grid = _adaptive_grid(mfe_values, tp_anchors)
     sl_grid = _adaptive_grid(mae_values, sl_anchors)
 
+    # Execution-friction floors — drop unrealistically tight candidates.
+    # Why: signal_lifecycle samples MFE/MAE every 3-15 min, so historical
+    # MAE values are a LOWER BOUND on intra-bar drawdown. An SL below the
+    # symbol's typical spread+slippage+noise floor is backtest-optimal but
+    # unfilled in live execution. Same idea for TP < min_tp.
+    try:
+        from services.target_config import get_symbol_config as _gsc
+        _base = _gsc(symbol)
+        noise_floor = float(getattr(_base, "noise_floor_pips", 0) or 0)
+        min_tp = float(getattr(_base, "min_tp_pips", 0) or 0)
+    except Exception:
+        noise_floor = 0
+        min_tp = 0
+    if noise_floor > 0:
+        sl_grid = [s for s in sl_grid if s >= noise_floor]
+        if not sl_grid:
+            sl_grid = [noise_floor]
+    if min_tp > 0:
+        tp_grid = [t for t in tp_grid if t >= min_tp]
+        if not tp_grid:
+            tp_grid = [min_tp]
+
     grid = grid_search(
         signals,
         tp_candidates=tp_grid,
@@ -589,6 +611,16 @@ async def analyze_tp_sl(
     best["_grid_dim"] = f"{len(tp_grid)}×{len(sl_grid)}"
     if grid.get("no_tradeable_warning"):
         out["warning"] = grid["no_tradeable_warning"]
+    if noise_floor > 0:
+        out["execution_floor"] = {
+            "noise_floor_pips": noise_floor,
+            "min_tp_pips": min_tp,
+            "note": (
+                f"SL candidates clamped to ≥{noise_floor} pip (spread + intra-bar "
+                f"noise). Historical MAE p25=0 is a lower bound — real execution "
+                f"sees more drawdown than tick-sampled MFE/MAE captures."
+            ),
+        }
 
     out["mfe_distribution"] = mfe_stats
     out["mae_distribution"] = mae_stats

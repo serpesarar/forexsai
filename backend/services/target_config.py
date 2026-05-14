@@ -33,6 +33,13 @@ class SymbolConfig(NamedTuple):
     stoploss_pips: float
     is_percentage: bool     # If True, pips are actually percentage values
     direction_overrides: Optional[Dict[str, DirectionOverride]] = None
+    # Realistic SL floor — spread + typical intra-bar noise + slippage.
+    # The MFE/MAE optimizer samples every 3-15 min so an SL below this floor
+    # is statistically optimal on the recorded data but unfilled in real
+    # execution. AI-Ops recommendations get clamped to ≥ this value.
+    noise_floor_pips: float = 0.0
+    # Realistic TP floor — same idea: TP below typical spread is meaningless.
+    min_tp_pips: float = 0.0
 
 # ─── Symbol configs ───────────────────────────────────────────────────────────
 # NASDAQ-100: 1 pip = 1 index point
@@ -51,6 +58,9 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
         ],
         stoploss_pips=50,
         is_percentage=False,
+        # NDX spread typically 0.5-1 pt, intra-3min range often 5-10 pts.
+        noise_floor_pips=8.0,
+        min_tp_pips=5.0,
     ),
     "GDAXI.INDX": SymbolConfig(
         pip_value=1.0,
@@ -62,6 +72,9 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
         ],
         stoploss_pips=50,
         is_percentage=False,
+        # DAX spread typically 1-2 pt, intra-3min range often 6-12 pts.
+        noise_floor_pips=8.0,
+        min_tp_pips=5.0,
     ),
     "XAUUSD": SymbolConfig(
         pip_value=1.0,  # 1 pip = $1.00 (4711→4710 = 1 pip)
@@ -75,6 +88,11 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
         ],
         stoploss_pips=15,
         is_percentage=False,
+        # XAUUSD spread typically 0.2-0.5 ($), intra-3min wick often 3-6 pips.
+        # Real-world execution friction makes SL < 5 pips effectively a
+        # "spread-trigger" — backtest-optimal but unfilled live.
+        noise_floor_pips=5.0,
+        min_tp_pips=3.0,
         # AI-Ops tp_sl optimizer recommendations applied 2026-05-14
         # User confirmed via dashboard. Per-direction split because the
         # MFE/MAE asymmetry on XAUUSD diverges sharply:
@@ -84,6 +102,12 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
         # Sources: tp_sl_recommendations
         #   BUY  c1b883a0-4722-4656-a1df-01e3b27742ab (n=941, WR 35%, net +915p)
         #   SELL 92662f50-0ff1-4350-8e94-8dd2c3693027 (n=674, WR 29%, net +2294p)
+        # NOTE: optimizer's raw SL recommendations were 2.5 (BUY) and 1.53
+        # (SELL) — below the 5-pip noise_floor for XAUUSD. Those values are
+        # backtest-optimal on the recorded MAE distribution, but in real
+        # execution the spread + intra-bar wick would trigger those SLs
+        # before the trade had a chance to develop. We clamp to the noise
+        # floor here (5 pips) so the live config is executable.
         direction_overrides={
             "BUY": DirectionOverride(
                 targets=[
@@ -92,8 +116,8 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
                     TargetLevel("TP3", 22),
                     TargetLevel("TP4", 35),
                 ],
-                stoploss_pips=2.5,
-                source="ai-ops:tp_sl/c1b883a0",
+                stoploss_pips=5.0,   # was 2.5; clamped to noise floor
+                source="ai-ops:tp_sl/c1b883a0 (SL clamped to noise_floor=5)",
             ),
             "SELL": DirectionOverride(
                 targets=[
@@ -102,8 +126,8 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
                     TargetLevel("TP3", 45),
                     TargetLevel("TP4", 60),
                 ],
-                stoploss_pips=1.53,
-                source="ai-ops:tp_sl/92662f50",
+                stoploss_pips=5.0,   # was 1.53; clamped to noise floor
+                source="ai-ops:tp_sl/92662f50 (SL clamped to noise_floor=5)",
             ),
         },
     ),
@@ -117,6 +141,9 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
         ],
         stoploss_pips=0.05,  # 0.05%
         is_percentage=True,
+        # USOIL spread typically 0.02-0.04%, intra-3min noise ~0.05%.
+        noise_floor_pips=0.04,
+        min_tp_pips=0.02,
     ),
 }
 
