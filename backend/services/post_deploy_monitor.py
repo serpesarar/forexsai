@@ -113,10 +113,12 @@ def _compute_live_metric(signals: list[dict], outcomes: dict[str, dict]) -> dict
     pnls: list[float] = []
     for s in signals:
         o = outcomes.get(s["id"], {})
+        # MFE/MAE may be stored signed in prediction_logs (MAE negative).
+        # abs() normalizes so completed → +pips, stopped → -pips reliably.
         if s.get("status") == "completed":
-            pnls.append(float(o.get("highest_profit_pips") or 0))
+            pnls.append(abs(float(o.get("highest_profit_pips") or 0)))
         elif s.get("status") == "stopped":
-            pnls.append(-float(o.get("lowest_drawdown_pips") or 0))
+            pnls.append(-abs(float(o.get("lowest_drawdown_pips") or 0)))
         else:
             pnls.append(0.0)
     cum = []

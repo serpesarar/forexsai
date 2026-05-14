@@ -158,9 +158,14 @@ async def _fetch_signals_with_outcomes(
 
     enriched: list[dict] = []
     for s in signals:
-        mfe = float(s.get("highest_profit_pips") or 0)
-        mae = float(s.get("lowest_drawdown_pips") or 0)
-        # Realized P/L for timeout cases — sign by status
+        # MFE is stored positive (best price excursion in favor).
+        # MAE is stored NEGATIVE in prediction_logs (e.g. -42 for a 42-pip
+        # drawdown). We normalize to positive magnitude here so the rest of
+        # the optimizer can compare it to SL candidates directly with `>=`.
+        mfe = abs(float(s.get("highest_profit_pips") or 0))
+        mae = abs(float(s.get("lowest_drawdown_pips") or 0))
+        # Realized P/L for timeout-resolution signals: positive when status
+        # was a win (favored MFE), negative magnitude for stopped/loss.
         realized = mfe if s.get("status") == "completed" else -mae
         enriched.append({
             "id": s["id"],
@@ -401,10 +406,10 @@ async def analyze_tp_sl(
         out["reason"] = f"only {len(signals)} resolved signals (need ≥{MIN_SAMPLE_SIZE})"
         return out
 
-    # MFE positive, MAE stored as drawdown (positive magnitude in
-    # signal_lifecycle, but we treat values as-is and compare abs())
+    # MFE/MAE are already normalized to positive magnitude in
+    # _fetch_signals_with_outcomes.
     mfe_values = [s["mfe_pips"] for s in signals]
-    mae_values = [abs(s["mae_pips"]) for s in signals]
+    mae_values = [s["mae_pips"] for s in signals]
     mfe_stats = distribution_stats(mfe_values)
     mae_stats = distribution_stats(mae_values)
 

@@ -151,14 +151,22 @@ def _signal_blocked_by_threshold(row: pd.Series, spec: dict) -> bool:
 # ---------------------------------------------------------------------------
 
 def _signal_pnl_pips(row: pd.Series) -> float:
-    """Best-effort P/L in pips from outcome data attached to the row."""
+    """Best-effort P/L in pips from outcome data attached to the row.
+
+    MFE/MAE are stored signed in prediction_logs — MFE positive (favorable
+    excursion), MAE negative (adverse drawdown e.g. -42). For P/L:
+      completed → +|MFE| (we got the win)
+      stopped   → -|MAE| (we ate the drawdown as a loss)
+    Using abs() makes this robust regardless of whether legacy rows stored
+    MAE as negative or as positive magnitude.
+    """
     status = row.get("status")
-    mfe = row.get("highest_profit_pips") or 0
-    mae = row.get("lowest_drawdown_pips") or 0
+    mfe = abs(float(row.get("highest_profit_pips") or 0))
+    mae = abs(float(row.get("lowest_drawdown_pips") or 0))
     if status == "completed":
-        return float(mfe)
+        return mfe
     if status == "stopped":
-        return -float(mae)
+        return -mae
     return 0.0
 
 
