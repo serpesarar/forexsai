@@ -108,26 +108,29 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
         # execution the spread + intra-bar wick would trigger those SLs
         # before the trade had a chance to develop. We clamp to the noise
         # floor here (5 pips) so the live config is executable.
+        # User override (2026-05-14): SELL TP=25 was too aggressive for live
+        # trading on XAUUSD. Both directions normalized to TP1=6 with a
+        # consistent runner ladder above it.
         direction_overrides={
             "BUY": DirectionOverride(
                 targets=[
-                    TargetLevel("TP1", 9),
-                    TargetLevel("TP2", 14),
-                    TargetLevel("TP3", 22),
-                    TargetLevel("TP4", 35),
+                    TargetLevel("TP1", 6),
+                    TargetLevel("TP2", 10),
+                    TargetLevel("TP3", 16),
+                    TargetLevel("TP4", 25),
                 ],
-                stoploss_pips=5.0,   # was 2.5; clamped to noise floor
-                source="ai-ops:tp_sl/c1b883a0 (SL clamped to noise_floor=5)",
+                stoploss_pips=5.0,
+                source="user-override:2026-05-14 (TP1=6)",
             ),
             "SELL": DirectionOverride(
                 targets=[
-                    TargetLevel("TP1", 25),
-                    TargetLevel("TP2", 35),
-                    TargetLevel("TP3", 45),
-                    TargetLevel("TP4", 60),
+                    TargetLevel("TP1", 6),
+                    TargetLevel("TP2", 10),
+                    TargetLevel("TP3", 16),
+                    TargetLevel("TP4", 25),
                 ],
-                stoploss_pips=5.0,   # was 1.53; clamped to noise floor
-                source="ai-ops:tp_sl/92662f50 (SL clamped to noise_floor=5)",
+                stoploss_pips=5.0,
+                source="user-override:2026-05-14 (TP1=6)",
             ),
         },
     ),
