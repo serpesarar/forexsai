@@ -59,8 +59,12 @@ def _adaptive_grid(values: list[float], current_anchors: list[float],
 
     p25 = float(np.percentile(arr, 25))
     p90 = float(np.percentile(arr, 90))
+    p95 = float(np.percentile(arr, 95))
     p99 = float(np.percentile(arr, 99))
-    upper = min(float(arr.max()), p99 * 1.2)
+    # Upper bound: cap at p99 to ignore single-trade outliers that would
+    # otherwise stretch the grid into useless territory (e.g. one signal
+    # with 766-pip MAE bloating SL candidates up to 766).
+    upper = min(float(arr.max()), p99)
 
     # Detect percentage-unit symbols (USOIL): tiny max → fine granularity
     if upper < 5:
@@ -186,26 +190,45 @@ async def _fetch_signals_with_outcomes(
 # ---------------------------------------------------------------------------
 
 def simulate_tp_sl(signals: list[dict], tp_pips: float, sl_pips: float) -> dict:
-    """For each historical signal: would (tp, sl) have hit? Return aggregated metrics.
+    """For each historical signal: would (tp, sl) have hit? Aggregate metrics.
 
-    Conservative ordering assumption: if BOTH would have hit (MAE>=SL AND MFE>=TP),
-    we assume SL fired first. This is safer than the optimistic counterpart and
-    aligns with how most retail trades resolve when the candle's wick spikes
-    against you before extending in your favor.
+    Resolution logic per signal (mfe, mae both positive magnitudes):
+      - MAE >= SL  AND  MFE <  TP  → clear LOSS (only SL would've hit)
+      - MFE >= TP  AND  MAE <  SL  → clear WIN  (only TP would've hit)
+      - MFE >= TP  AND  MAE >= SL  → AMBIGUOUS: which fired first?
+              Tie-break with historical `status`:
+                · "completed" → TP fired first historically → WIN
+                · "stopped"   → SL fired first historically → LOSS
+              This is much more accurate than blanket "SL-first" pessimism;
+              it uses the actual sequencing the market produced.
+      - Neither threshold breached → TIMEOUT (realize the signal's actual P/L)
+
+    Returns wins / losses / timeouts / ambiguous_count for transparency.
     """
     if not signals:
         return {"tp": tp_pips, "sl": sl_pips, "n": 0,
-                "wins": 0, "losses": 0, "timeouts": 0,
+                "wins": 0, "losses": 0, "timeouts": 0, "ambiguous": 0,
                 "net_pnl": 0.0, "win_rate": None}
-    wins = losses = timeouts = 0
+    wins = losses = timeouts = ambiguous = 0
     pnl = 0.0
     for s in signals:
         mfe = s["mfe_pips"]
         mae = s["mae_pips"]
-        if mae >= sl_pips and sl_pips > 0:
+        hit_sl = sl_pips > 0 and mae >= sl_pips
+        hit_tp = tp_pips > 0 and mfe >= tp_pips
+        if hit_sl and hit_tp:
+            ambiguous += 1
+            # Resolve with historical sequencing
+            if s.get("status") == "completed":
+                wins += 1
+                pnl += tp_pips
+            else:
+                losses += 1
+                pnl -= sl_pips
+        elif hit_sl:
             losses += 1
             pnl -= sl_pips
-        elif mfe >= tp_pips and tp_pips > 0:
+        elif hit_tp:
             wins += 1
             pnl += tp_pips
         else:
@@ -215,6 +238,7 @@ def simulate_tp_sl(signals: list[dict], tp_pips: float, sl_pips: float) -> dict:
     return {
         "tp": tp_pips, "sl": sl_pips, "n": len(signals),
         "wins": wins, "losses": losses, "timeouts": timeouts,
+        "ambiguous": ambiguous,
         "net_pnl": round(pnl, 2),
         "win_rate": round(wins / n_resolved * 100, 2) if n_resolved else None,
         "avg_pnl_per_trade": round(pnl / len(signals), 3) if signals else 0,
@@ -317,25 +341,41 @@ def _build_reasoning(symbol: str, current: dict, optimal: dict,
                 f"({fmt(cur_tp1)}) ulaşmıyor; TP1 çok uzak."
             )
 
-    # 3) MAE distribution evidence
+    # 3) MAE distribution evidence (mae_stats already in positive magnitude
+    # because _fetch_signals_with_outcomes normalizes via abs())
     p70_mae = mae_stats.get("p70")
     p90_mae = mae_stats.get("p90")
     p95_mae = mae_stats.get("p95")
     if p70_mae is not None and cur_sl > 0:
-        # MAE values are stored as negative-pips (drawdown). Compare abs.
-        abs_p70 = abs(p70_mae)
-        abs_p90 = abs(p90_mae) if p90_mae is not None else None
-        abs_p95 = abs(p95_mae) if p95_mae is not None else None
-        if abs_p90 is not None and abs_p90 < cur_sl * 0.6:
+        if p90_mae is not None and p90_mae < cur_sl * 0.6:
             parts.append(
-                f"⚠ SL fazla geniş: |MAE p90|={fmt(abs_p90)} ama SL={fmt(cur_sl)} "
+                f"⚠ SL fazla geniş: MAE p90={fmt(p90_mae)} ama SL={fmt(cur_sl)} "
                 f"— %90 sinyal SL'ye uzaktan yakın bile geçmiyor. Sıkı SL risk/return iyileştirir."
             )
-        elif abs_p70 > cur_sl:
+        elif p70_mae > cur_sl:
             parts.append(
-                f"⚠ SL fazla dar: |MAE p70|={fmt(abs_p70)} > SL={fmt(cur_sl)} "
+                f"⚠ SL fazla dar: MAE p70={fmt(p70_mae)} > SL={fmt(cur_sl)} "
                 f"— sinyallerin en az %30'u doğal volatilite içinde stop oluyor."
             )
+
+    # 3b) Truncation-bias warning: MFE is censored by the historical TP4 exit.
+    # If we're recommending a TP beyond what the data actually observed in
+    # quantity (p90), flag that the upside might be over- or under-stated.
+    mfe_p95 = mfe_stats.get("p95")
+    mfe_max = mfe_stats.get("max")
+    if mfe_p95 is not None and rec_tp > mfe_p95 * 1.1:
+        parts.append(
+            f"⚠ Veri kısıtı: Önerilen TP={fmt(rec_tp)} > MFE p95={fmt(mfe_p95)}. "
+            f"Tarihsel veride sinyaller eski TP4={fmt(cur_tp_deep)}'da kapandığı için "
+            f"daha derin MFE gözlemlenemedi. Yeni TP'nin gerçek başarısı canlı "
+            f"trackingten teyit edilmeli."
+        )
+    elif mae_stats.get("p95") is not None and rec_sl > mae_stats["p95"] * 1.1:
+        parts.append(
+            f"⚠ Veri kısıtı: Önerilen SL={fmt(rec_sl)} > MAE p95={fmt(mae_stats['p95'])}. "
+            f"Daha geniş SL için 'stopped' sinyallerin gerçek devamı bilinmiyor; "
+            f"backtest'in bu kısmı optimistik olabilir."
+        )
 
     # 4) Per-TP-level efficiency (TP1..TP4)
     if per_level_sim:
@@ -348,11 +388,20 @@ def _build_reasoning(symbol: str, current: dict, optimal: dict,
         parts.append("Per-TP simulasyonu: " + " | ".join(lines))
 
     # 5) Recommendation framing
-    rec_str = f"Önerilen: TP={fmt(rec_tp)}, SL={fmt(rec_sl)}"
+    rec_str = (f"Önerilen: TP={fmt(rec_tp)}, SL={fmt(rec_sl)} → "
+               f"{optimal.get('wins',0)}W/{optimal.get('losses',0)}L/"
+               f"{optimal.get('timeouts',0)}T, "
+               f"net {optimal.get('net_pnl',0):+.1f} {unit}, "
+               f"WR {optimal.get('win_rate', '—')}%")
+    amb = optimal.get("ambiguous", 0)
+    if amb > 0:
+        amb_pct = amb / n * 100 if n else 0
+        rec_str += (f" (ambiguous={amb}, %{amb_pct:.1f} — TP+SL aynı barda "
+                    f"vurabilirdi; tarihsel `status` ile çözüldü)")
     if current_sim:
         delta_pnl = optimal["net_pnl"] - current_sim["net_pnl"]
         delta_wr = (optimal.get("win_rate") or 0) - (current_sim.get("win_rate") or 0)
-        rec_str += (f" → mevcut TP1 ile karşılaştırma: net P/L "
+        rec_str += (f". Mevcut TP1 ile karşılaştırma: net P/L "
                     f"{delta_pnl:+.1f} {unit}, win-rate {delta_wr:+.1f}pp.")
     parts.append(rec_str)
 
@@ -453,6 +502,7 @@ async def analyze_tp_sl(
                 "name": lvl["name"], "tp_pips": lvl["pips"], "sl_pips": current_cfg["sl_pips"],
                 "net_pnl": sim["net_pnl"], "win_rate": sim["win_rate"],
                 "wins": sim["wins"], "losses": sim["losses"], "timeouts": sim["timeouts"],
+                "ambiguous": sim.get("ambiguous", 0),
             })
     out["per_tp_level_simulated"] = per_level_sim
 
