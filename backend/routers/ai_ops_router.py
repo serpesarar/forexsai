@@ -869,12 +869,13 @@ async def mark_tp_sl_applied(rec_id: str, body: dict):
         raise HTTPException(503, "supabase unavailable")
     client = get_supabase_client()
     try:
-        _exec(client.table("tp_sl_recommendations").update({
+        # Custom wrapper requires .eq() BEFORE .update() — .update() auto-executes
+        client.table("tp_sl_recommendations").eq("id", rec_id).update({
             "status": "applied",
             "applied_at": datetime.now(timezone.utc).isoformat(),
             "reviewed_by": body.get("reviewer") or "user",
             "notes": body.get("notes"),
-        }).eq("id", rec_id))
+        })
         return {"ok": True}
     except Exception as e:
         logger.exception("mark_tp_sl_applied failed: %s", e)
@@ -887,12 +888,12 @@ async def reject_tp_sl(rec_id: str, body: dict):
         raise HTTPException(503, "supabase unavailable")
     client = get_supabase_client()
     try:
-        _exec(client.table("tp_sl_recommendations").update({
+        client.table("tp_sl_recommendations").eq("id", rec_id).update({
             "status": "rejected",
             "reviewed_by": body.get("reviewer") or "user",
             "notes": body.get("reason"),
             "reviewed_at": datetime.now(timezone.utc).isoformat(),
-        }).eq("id", rec_id))
+        })
         return {"ok": True}
     except Exception as e:
         raise HTTPException(500, str(e))
