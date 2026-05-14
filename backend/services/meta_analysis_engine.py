@@ -863,26 +863,49 @@ class MetaAnalysisEngine:
             best_combo=best_combo,
         )
 
-        # === LAYER 4b: Pandemic Sensitivity Index overlay ===
-        # Small, asymmetric, per-symbol/per-direction nudge. Capped at ±15
-        # absolute points and silently no-ops if the PSI service is down or
-        # the symbol isn't in the bias matrix. Never inverts signal direction.
+        # === LAYER 4b: Macro context overlay (PSI + DXY + VIX + yield + risk) ===
+        # Aggregate macro_context_service already merges PSI internally and
+        # applies a per-symbol/per-direction asymmetric nudge with a hard
+        # ±15-point cap. Falls back to PSI-only if the macro service is down,
+        # and to no adjustment if PSI is also down. Never inverts direction.
+        macro_adjustment = 0.0
+        macro_context: Dict[str, Any] = {}
         psi_adjustment = 0.0
         psi_context: Dict[str, Any] = {}
         try:
-            from services.pandemic_sensitivity_service import compute_meta_adjustment
-            psi_info = compute_meta_adjustment(symbol, direction)
-            psi_adjustment = float(psi_info.get("adjustment", 0.0) or 0.0)
-            psi_context = {
-                "psi_score": psi_info.get("psi_score", 0.0),
-                "risk_level": psi_info.get("risk_level", "NORMAL"),
-                "rationale": psi_info.get("rationale", ""),
-                "applied": bool(psi_info.get("applied", False)),
-            }
-        except Exception as e:
-            logger.debug(f"[MetaEngine] PSI overlay skipped for {symbol}: {e}")
+            from services.macro_context_service import compute_macro_context
+            macro_context = compute_macro_context(symbol, direction) or {}
+            macro_adjustment = float(macro_context.get("adjustment", 0.0) or 0.0)
+            # Extract embedded PSI signal for backward-compat fields
+            for sig in macro_context.get("signals", []) or []:
+                if sig.get("gauge") == "psi":
+                    psi_adjustment = float(sig.get("delta", 0.0) or 0.0)
+                    psi_context = {
+                        "psi_score": sig.get("state", ""),
+                        "risk_level": sig.get("state", "NORMAL"),
+                        "rationale": sig.get("note", ""),
+                        "applied": True,
+                    }
+                    break
+        except Exception as macro_err:
+            logger.debug(f"[MetaEngine] Macro overlay failed for {symbol}: {macro_err}")
+            # PSI-only fallback
+            try:
+                from services.pandemic_sensitivity_service import compute_meta_adjustment
+                psi_info = compute_meta_adjustment(symbol, direction)
+                psi_adjustment = float(psi_info.get("adjustment", 0.0) or 0.0)
+                macro_adjustment = psi_adjustment
+                psi_context = {
+                    "psi_score": psi_info.get("psi_score", 0.0),
+                    "risk_level": psi_info.get("risk_level", "NORMAL"),
+                    "rationale": psi_info.get("rationale", ""),
+                    "applied": bool(psi_info.get("applied", False)),
+                }
+                macro_context = {"adjustment": psi_adjustment, "signals": [], "applied": bool(psi_info.get("applied", False))}
+            except Exception as e:
+                logger.debug(f"[MetaEngine] PSI fallback also failed for {symbol}: {e}")
 
-        confidence = round(max(0.0, min(100.0, raw_confidence + psi_adjustment)), 1)
+        confidence = round(max(0.0, min(100.0, raw_confidence + macro_adjustment)), 1)
 
         # Check minimum confidence (uses ADJUSTED confidence so a CRITICAL PSI
         # band can rightfully downgrade a borderline equity-long to HOLD).
