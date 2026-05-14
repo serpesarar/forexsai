@@ -316,15 +316,20 @@ def grid_search(signals: list[dict],
     sl_candidates = list(sl_candidates) if sl_candidates else list(DEFAULT_SL_CANDIDATES)
     current_anchors = current_anchors or []
 
-    # Sanity bands — clip to meaty distribution region, always keep anchors
+    # Sanity bands — clip to meaty distribution region, always keep anchors.
+    # Note: lo can legitimately be 0 (e.g. MFE p25=0 when many signals close
+    # quickly). We accept lo>=0; we only bail when stats are missing,
+    # negative, or the band collapses (lo >= hi).
     def _within(cands: list[float], stats: dict, lo_key: str, hi_key: str) -> list[float]:
         lo = stats.get(lo_key) if stats else None
         hi = stats.get(hi_key) if stats else None
-        if lo is None or hi is None or lo <= 0 or hi <= 0 or lo >= hi:
+        if lo is None or hi is None or lo < 0 or hi <= 0 or lo >= hi:
             return cands
         kept = [c for c in cands if lo <= c <= hi]
         for a in current_anchors:
-            if a and a > 0 and a not in kept:
+            if a and a > 0 and a not in kept and lo <= a <= hi * 1.5:
+                # Only re-add anchors that aren't wildly outside the band;
+                # an anchor at 3× the upper bound shouldn't drag the search.
                 kept.append(a)
         return sorted(set(kept))
 
@@ -637,6 +642,25 @@ async def analyze_tp_sl(
 
     if persist:
         try:
+            # Supersede prior pending rows for the same scope so the dashboard
+            # doesn't pile up duplicates as we keep re-running the analysis.
+            try:
+                supersede_q = client.table("tp_sl_recommendations").eq(
+                    "symbol", symbol).eq("status", "pending")
+                if direction:
+                    supersede_q = supersede_q.eq("direction", direction)
+                if model_type:
+                    supersede_q = supersede_q.eq("model_type", model_type)
+                else:
+                    supersede_q = supersede_q.is_("model_type", "null")
+                if timeframe:
+                    supersede_q = supersede_q.eq("timeframe", timeframe)
+                else:
+                    supersede_q = supersede_q.is_("timeframe", "null")
+                supersede_q.update({"status": "superseded"}).execute()
+            except Exception as sup_err:
+                logger.warning("[tp_sl] supersede failed (non-fatal): %s", sup_err)
+
             row = {
                 "symbol": symbol,
                 "model_type": model_type,
@@ -663,7 +687,9 @@ async def analyze_tp_sl(
                 "reasoning": out.get("reasoning"),
                 "status": "pending",
             }
-            client.table("tp_sl_recommendations").insert(row)
+            ins = client.table("tp_sl_recommendations").insert(row)
+            if hasattr(ins, "execute"):
+                ins.execute()
         except Exception as e:
             logger.warning("[tp_sl] persist failed: %s", e)
             out["persist_error"] = str(e)[:200]
