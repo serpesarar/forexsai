@@ -78,8 +78,13 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
     ),
     "XAUUSD": SymbolConfig(
         pip_value=1.0,  # 1 pip = $1.00 (4711→4710 = 1 pip)
-        # Base ladder kept as a sane fallback for callers that don't pass
-        # direction (e.g. backfill paths in signal_lifecycle_router).
+        # REVERT 2026-05-15: All direction_overrides removed. Live trading
+        # on the May-14 AI-Ops recommendation (TP1=6/SL=5 → then TP1=6/SL=5
+        # for both directions) produced systematic losses on MT5. Diagnosis:
+        # SL=5 is below realistic execution friction once spread (0.5) +
+        # slippage (1-2) + intra-tick wick (2-4) are stacked. SL was firing
+        # before any signal could develop. Reverted to the pre-AI-Ops base
+        # ladder which had been profitable historically.
         targets=[
             TargetLevel("TP1", 8),
             TargetLevel("TP2", 15),
@@ -88,51 +93,10 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
         ],
         stoploss_pips=15,
         is_percentage=False,
-        # XAUUSD spread typically 0.2-0.5 ($), intra-3min wick often 3-6 pips.
-        # Real-world execution friction makes SL < 5 pips effectively a
-        # "spread-trigger" — backtest-optimal but unfilled live.
         noise_floor_pips=5.0,
         min_tp_pips=3.0,
-        # AI-Ops tp_sl optimizer recommendations applied 2026-05-14
-        # User confirmed via dashboard. Per-direction split because the
-        # MFE/MAE asymmetry on XAUUSD diverges sharply:
-        #   - BUY: tight scalp — most profit captured around TP1 area,
-        #          drawdown beyond a few pips rarely recovers
-        #   - SELL: wider ride — profitable signals run to ~25 pips
-        # Sources: tp_sl_recommendations
-        #   BUY  c1b883a0-4722-4656-a1df-01e3b27742ab (n=941, WR 35%, net +915p)
-        #   SELL 92662f50-0ff1-4350-8e94-8dd2c3693027 (n=674, WR 29%, net +2294p)
-        # NOTE: optimizer's raw SL recommendations were 2.5 (BUY) and 1.53
-        # (SELL) — below the 5-pip noise_floor for XAUUSD. Those values are
-        # backtest-optimal on the recorded MAE distribution, but in real
-        # execution the spread + intra-bar wick would trigger those SLs
-        # before the trade had a chance to develop. We clamp to the noise
-        # floor here (5 pips) so the live config is executable.
-        # User override (2026-05-14): SELL TP=25 was too aggressive for live
-        # trading on XAUUSD. Both directions normalized to TP1=6 with a
-        # consistent runner ladder above it.
-        direction_overrides={
-            "BUY": DirectionOverride(
-                targets=[
-                    TargetLevel("TP1", 6),
-                    TargetLevel("TP2", 10),
-                    TargetLevel("TP3", 16),
-                    TargetLevel("TP4", 25),
-                ],
-                stoploss_pips=5.0,
-                source="user-override:2026-05-14 (TP1=6)",
-            ),
-            "SELL": DirectionOverride(
-                targets=[
-                    TargetLevel("TP1", 6),
-                    TargetLevel("TP2", 10),
-                    TargetLevel("TP3", 16),
-                    TargetLevel("TP4", 25),
-                ],
-                stoploss_pips=5.0,
-                source="user-override:2026-05-14 (TP1=6)",
-            ),
-        },
+        # direction_overrides intentionally omitted — base ladder applies to
+        # both BUY and SELL until we have a re-validated per-direction config.
     ),
     "USOIL.FOREX": SymbolConfig(
         pip_value=1.0,  # placeholder, overridden by is_percentage
