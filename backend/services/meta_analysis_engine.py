@@ -909,9 +909,39 @@ class MetaAnalysisEngine:
 
         confidence = round(max(0.0, min(100.0, raw_confidence + macro_adjustment)), 1)
 
+        # === Per-symbol / per-regime confidence floor ===
+        # XAUUSD live trading (May-15) revealed that meta signals fired during
+        # TRANSITION regime led to systematic SL hits — the market whipsawed
+        # while models gave borderline 45-50 confidence reads. Block weak meta
+        # signals in TRANSITION regime for XAUUSD specifically. Other symbols
+        # use the default min_confidence.
+        effective_min = min_confidence
+        regime_upper = (regime or "").upper()
+        if symbol.upper() in ("XAUUSD", "XAUUSD.FOREX") and regime_upper == "TRANSITION":
+            effective_min = max(min_confidence, 60.0)
+
+        # === Layer 4c: Strong-disagreement abstain ===
+        # If two HIGH-CONVICTION models (confidence ≥ 55) point in opposite
+        # directions, the meta consensus is unstable — force HOLD regardless
+        # of the majority vote. This mirrors the XAUUSD pattern observed
+        # 2026-05-15 where pulse3=SELL(75) vs emel=BUY(44) whipsawed all
+        # trades into SL.
+        high_conv_buy = [s for s in available_signals
+                          if s.direction == "BUY" and s.confidence >= 55]
+        high_conv_sell = [s for s in available_signals
+                           if s.direction == "SELL" and s.confidence >= 55]
+        strong_conflict = bool(high_conv_buy) and bool(high_conv_sell)
+        if strong_conflict:
+            direction = "HOLD"
+            logger.info(
+                f"[MetaEngine] {symbol}: strong-disagreement abstain — "
+                f"BUY({','.join(s.model_id for s in high_conv_buy)}) vs "
+                f"SELL({','.join(s.model_id for s in high_conv_sell)})"
+            )
+
         # Check minimum confidence (uses ADJUSTED confidence so a CRITICAL PSI
         # band can rightfully downgrade a borderline equity-long to HOLD).
-        if confidence < min_confidence:
+        if confidence < effective_min:
             direction = "HOLD"
 
         # Determine strength
