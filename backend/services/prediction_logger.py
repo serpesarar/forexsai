@@ -579,12 +579,46 @@ async def log_prediction(
         ml = context.get("ml_prediction", {}) or {}
         direction = ml.get("direction", "HOLD")
         confidence = float(ml.get("confidence", 0.5))
-        
+
         # ── Skip HOLD signals entirely — they create expired spam in DB ──
         if direction not in ("BUY", "SELL"):
             logger.debug(f"Skipping HOLD signal for {symbol} (model={model_type or strategy})")
             return None
-        
+
+        # ── ML INVERSION EXPERIMENT (XAUUSD + USOIL) ────────────────────────
+        # User-requested experiment 2026-05-17: invert ML signal direction
+        # for XAUUSD and USOIL.FOREX. The historical ML win-rate for these
+        # symbols sits below 50% (especially on live execution), so flipping
+        # may be net positive. Stored as `ml_direction_original` in factors
+        # so analytics can compare inverted vs raw performance.
+        #
+        # Also mirror the ML-provided TP/SL prices so the bot trades the
+        # correct side (BUY target above entry → SELL target below entry).
+        # The downstream calculate_target_prices() call uses the inverted
+        # direction so `targets_dict` is also correct.
+        ML_INVERSION_SYMBOLS = {"XAUUSD", "XAUUSD.FOREX", "USOIL.FOREX", "USOIL"}
+        ml_invert_active = False
+        original_direction = direction
+        if (symbol.upper() in ML_INVERSION_SYMBOLS
+                and (model_type or "").lower().startswith("ml")):
+            direction = "SELL" if direction == "BUY" else "BUY"
+            ml_invert_active = True
+            # Mirror ML's pre-computed TP/SL around entry so they point the
+            # right way for the inverted direction.
+            entry_p = ml.get("entry_price")
+            if entry_p is not None:
+                try:
+                    e = float(entry_p)
+                    for k in ("target_price", "stop_price"):
+                        v = ml.get(k)
+                        if v is not None:
+                            ml[k] = round(2 * e - float(v), 6)
+                except Exception:
+                    pass
+            logger.info(
+                f"[ML-INVERT] {symbol} {model_type}: {original_direction} → {direction}"
+            )
+
         effective_model_type, resolved_strategy = _resolve_logging_identity(model_type, strategy)
         raw_confidence = float(ml.get("confidence", 0.0))
         
@@ -766,6 +800,11 @@ async def log_prediction(
                     factors.setdefault(k, v)
         except Exception as snap_err:
             logger.debug("signal_feature_snapshot enrich failed: %s", snap_err)
+
+        # Tag inversion in factors so analytics can compare inverted vs raw
+        if ml_invert_active:
+            factors["ml_direction_original"] = original_direction
+            factors["ml_inverted"] = True
 
         record = {
             "symbol": symbol,
