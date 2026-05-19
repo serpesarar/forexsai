@@ -1362,15 +1362,26 @@ async def get_prediction_history(
         predictions = safe_get_data(result)
         predictions = filter_market_closed_invalid_signals(predictions)
 
-        # Format for frontend - use lifecycle status + targets_hit instead of outcome_results join
+        # Format for frontend — honest about WHICH resolution path was taken.
+        # 2026-05-19: prior version counted any status='completed' as a TP
+        # hit, but ~74% of completed signals were actually
+        # window_resolve_positive (time-out with 1-pip favorable) which
+        # never reached TP1. We now split them out so the dashboard
+        # reflects real TP hits, not heuristic-based "wins".
+        REAL_TP_REASONS = {"tp4_hit", "tp1_3_hit_then_sl", "all_targets_hit"}
+        WINDOW_POSITIVE_REASONS = {"window_resolve_positive"}
+        REAL_SL_REASONS = {"sl_hit"}
+        NEUTRAL_REASONS = {"window_resolve_inconclusive"}
         formatted = []
         for pred in predictions:
             p_status = pred.get("status")
-            has_outcome = p_status in ("completed", "stopped")
-            is_correct = p_status == "completed"
-            hit_target = p_status == "completed"
-            hit_stop = p_status == "stopped"
-            
+            reason = pred.get("resolution_reason") or ""
+            has_outcome = p_status in ("completed", "stopped", "expired")
+            real_target_hit = reason in REAL_TP_REASONS
+            window_target_hit = reason in WINDOW_POSITIVE_REASONS
+            real_stop_hit = reason in REAL_SL_REASONS
+            neutral_outcome = reason in NEUTRAL_REASONS
+
             entry = {
                 "id": pred.get("id"),
                 "symbol": pred.get("symbol"),
@@ -1384,25 +1395,24 @@ async def get_prediction_history(
                 "claude_confidence": pred.get("claude_confidence"),
                 "has_outcome": has_outcome,
                 "exit_price": pred.get("exit_price"),
-                "hit_target": hit_target,
-                "hit_stop": hit_stop,
-                "ml_correct": is_correct,
+                "hit_target": real_target_hit,           # ONLY real TP hits
+                "hit_stop": real_stop_hit or p_status == "stopped" and not neutral_outcome,
+                "window_target": window_target_hit,      # heuristic win — surfaced separately
+                "neutral": neutral_outcome,
+                # ml_correct now means honest: actually hit TP at some level
+                "ml_correct": real_target_hit,
+                "resolution_reason": reason,
                 "outcome_time": pred.get("exit_time"),
             }
-            
             formatted.append(entry)
-        
-        # Fix ml_correct based on hit_target (target hit = correct prediction)
-        for entry in formatted:
-            if entry.get("hit_target"):
-                entry["ml_correct"] = True
-        
-        # Calculate summary stats
+
         total = len(formatted)
         with_outcome = [p for p in formatted if p.get("has_outcome")]
         ml_correct = sum(1 for p in with_outcome if p.get("ml_correct"))
         target_hits = sum(1 for p in with_outcome if p.get("hit_target"))
+        window_target_hits = sum(1 for p in with_outcome if p.get("window_target"))
         stop_hits = sum(1 for p in with_outcome if p.get("hit_stop"))
+        neutral = sum(1 for p in with_outcome if p.get("neutral"))
         
         return {
             "predictions": formatted,
@@ -1411,9 +1421,16 @@ async def get_prediction_history(
                 "with_outcome": len(with_outcome),
                 "pending_outcome": total - len(with_outcome),
                 "ml_correct": ml_correct,
-                "ml_accuracy": round(ml_correct / len(with_outcome) * 100, 1) if with_outcome else None,
-                "target_hits": target_hits,
+                # ml_accuracy now uses HONEST denominator: real wins / (real wins + real losses)
+                # excludes neutral (window_resolve_inconclusive) outcomes
+                "ml_accuracy": (
+                    round(target_hits / (target_hits + stop_hits) * 100, 1)
+                    if (target_hits + stop_hits) > 0 else None
+                ),
+                "target_hits": target_hits,                  # real TP hits only
+                "window_target_hits": window_target_hits,    # heuristic wins (time-out + MFE ≥ TP1)
                 "stop_hits": stop_hits,
+                "neutral": neutral,                          # time-out + slightly favorable
                 "period_days": days
             }
         }

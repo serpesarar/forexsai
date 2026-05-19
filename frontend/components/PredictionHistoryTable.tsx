@@ -224,19 +224,33 @@ export default function PredictionHistoryTable({ symbol }: PredictionHistoryTabl
       {/* Summary Stats */}
       {correctedSummary && correctedSummary.with_outcome > 0 && (
         <div className="px-4 py-3 border-b border-white/10 bg-white/5">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-6 gap-4 text-center text-sm">
             <div>
               <div className="text-2xl font-bold text-white">
                 {correctedSummary.ml_accuracy !== null ? `${correctedSummary.ml_accuracy}%` : "-"}
               </div>
               <div className="text-xs text-textSecondary">
-                {locale === "en" ? "ML Accuracy" : "ML Doğruluk"}
+                {locale === "en" ? "Real WR" : "Gerçek WR"}
+              </div>
+              <div className="text-[10px] text-textSecondary opacity-60 mt-0.5">
+                {locale === "en" ? "real TPs only" : "gerçek TP hit"}
               </div>
             </div>
             <div>
               <div className="text-2xl font-bold text-success">{correctedSummary.target_hits}</div>
               <div className="text-xs text-textSecondary">
-                {locale === "en" ? "Target Hits" : "Hedef Vuruş"}
+                {locale === "en" ? "Real TP Hits" : "Gerçek TP"}
+              </div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-warning" style={{ color: "#fbbf24" }}>
+                {(correctedSummary as any).window_target_hits ?? 0}
+              </div>
+              <div className="text-xs text-textSecondary">
+                {locale === "en" ? "Window Win" : "Süre Win"}
+              </div>
+              <div className="text-[10px] text-textSecondary opacity-60 mt-0.5">
+                {locale === "en" ? "MFE≥TP1, no fire" : "TP1 değdi, ateşlenmedi"}
               </div>
             </div>
             <div>

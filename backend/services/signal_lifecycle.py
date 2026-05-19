@@ -851,9 +851,32 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
                         return None
 
                     favorable_vs_entry = _is_favorable_vs_entry(entry_price, current, direction)
-                    if tp1_3_hit or favorable_vs_entry:
+                    # Honesty check (2026-05-19): only count a window-resolved
+                    # signal as a win if it ACTUALLY hit TP1 at some point
+                    # (tp1_3_hit means a target boundary was crossed) OR if
+                    # MFE reached at least TP1's pip distance. "Currently
+                    # 1 pip favorable" is NOT a win — it's a trade that
+                    # never met its own target.
+                    tp1_distance = 0.0
+                    if target_prices:
+                        try:
+                            tp1_price = target_prices.get("TP1")
+                            if tp1_price and entry_price:
+                                tp1_distance = abs(float(tp1_price) - float(entry_price))
+                        except Exception:
+                            pass
+                    mfe_in_pips = abs(new_high) if new_high else 0.0
+                    real_tp_reached = tp1_3_hit or (
+                        tp1_distance > 0 and mfe_in_pips >= tp1_distance * 0.95
+                    )
+                    if real_tp_reached:
                         new_status = "completed"
                         resolution_reason = "window_resolve_positive"
+                    elif favorable_vs_entry:
+                        # Trade is mildly positive but never touched TP1.
+                        # Mark as expired (neutral) — not a win, not a loss.
+                        new_status = "expired"
+                        resolution_reason = "window_resolve_inconclusive"
                     else:
                         new_status = "stopped"
                         resolution_reason = "window_resolve_negative"
