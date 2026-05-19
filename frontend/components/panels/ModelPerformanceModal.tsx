@@ -554,10 +554,7 @@ export const ModelPerformanceModal: React.FC<{
       params.set("recent_signals_page", String(recentSignalsPage));
 
       const controller = new AbortController();
-      // 60s timeout: Railway dynos cold-start adds ~10-20s on first request,
-      // and the cold query itself can take ~15-25s for large symbol/all-time
-      // combinations. Cached responses come back in <500ms.
-      const timeoutId = window.setTimeout(() => controller.abort(), 60000);
+      const timeoutId = window.setTimeout(() => controller.abort(), 30000);
       let response: Response;
       try {
         response = await fetch(`${API_BASE}/api/learning/model-detail-analytics?${params.toString()}`, {
