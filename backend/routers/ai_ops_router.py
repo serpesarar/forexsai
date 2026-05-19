@@ -1212,3 +1212,68 @@ async def outcome_audit(symbol: str, days: int = Query(30, ge=1, le=365)):
     except Exception as e:
         logger.exception("outcome_audit failed: %s", e)
         raise HTTPException(500, str(e))
+
+
+@router.get("/trajectory/stats")
+async def trajectory_stats(days: int = Query(7, ge=1, le=90)):
+    """
+    Diagnostic: how is the Post-Entry Trajectory Learner (PETL) doing?
+    Counts trajectory snapshots, deterioration alerts, aborts triggered,
+    and estimated pips saved by aborts. Per-symbol breakdown.
+    """
+    if not is_db_available():
+        raise HTTPException(503, "supabase unavailable")
+    client = get_supabase_client()
+    try:
+        from datetime import timedelta
+        since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+
+        snaps = _row_data(
+            client.table("signal_trajectory_snapshots")
+            .select("symbol, deteriorating, deterioration_score, captured_at")
+            .gte("captured_at", since).limit(20000)
+        )
+        aborts = _row_data(
+            client.table("signal_aborts")
+            .select("symbol, abort_source, pnl_at_abort_pips, saved_pips_estimate, created_at")
+            .gte("created_at", since).limit(5000)
+        )
+
+        by_symbol: dict[str, dict] = {}
+        for s in snaps:
+            sym = s.get("symbol") or "unknown"
+            entry = by_symbol.setdefault(sym, {
+                "snapshots": 0, "deteriorating": 0, "aborts": 0,
+                "saved_pips": 0.0, "abort_pnl_pips": 0.0,
+            })
+            entry["snapshots"] += 1
+            if s.get("deteriorating"):
+                entry["deteriorating"] += 1
+        for a in aborts:
+            sym = a.get("symbol") or "unknown"
+            entry = by_symbol.setdefault(sym, {
+                "snapshots": 0, "deteriorating": 0, "aborts": 0,
+                "saved_pips": 0.0, "abort_pnl_pips": 0.0,
+            })
+            entry["aborts"] += 1
+            entry["saved_pips"] += float(a.get("saved_pips_estimate") or 0)
+            entry["abort_pnl_pips"] += float(a.get("pnl_at_abort_pips") or 0)
+
+        # Round and sort
+        for sym, e in by_symbol.items():
+            e["saved_pips"] = round(e["saved_pips"], 1)
+            e["abort_pnl_pips"] = round(e["abort_pnl_pips"], 1)
+            e["deterioration_rate_pct"] = (
+                round(e["deteriorating"] / e["snapshots"] * 100, 2)
+                if e["snapshots"] else 0
+            )
+
+        return {
+            "window_days": days,
+            "total_snapshots": len(snaps),
+            "total_aborts": len(aborts),
+            "by_symbol": by_symbol,
+        }
+    except Exception as e:
+        logger.exception("trajectory_stats failed: %s", e)
+        raise HTTPException(500, str(e))

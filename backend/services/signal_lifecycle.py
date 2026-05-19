@@ -884,6 +884,56 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     # if resolution_reason:
     #     update_data["resolution_reason"] = resolution_reason
 
+    # ──────────────────────────────────────────────────────────────────
+    # Post-Entry Trajectory Learner (PETL) — v1 rule-based deterioration
+    # Capture a snapshot every check. If signal still active AND already
+    # in drawdown AND trajectory rules say it's deteriorating, force abort.
+    # ──────────────────────────────────────────────────────────────────
+    trajectory_alert: Optional[Dict[str, Any]] = None
+    if not new_status and current is not None:
+        try:
+            from services.signal_trajectory_service import (
+                capture_snapshot as _traj_capture,
+                log_abort as _traj_log_abort,
+            )
+            trajectory_alert = await _traj_capture(
+                signal=signal,
+                current_price=current,
+                current_profit_pips=new_high,
+                current_drawdown_pips=new_low,
+            )
+            # Abort logic — conservative gate to avoid premature exits
+            #   - deterioration score ≥ threshold
+            #   - already in real drawdown (>30% of SL distance traveled)
+            #   - trade is not in profit (don't kill a winning trade on noise)
+            if (trajectory_alert
+                    and trajectory_alert.get("deteriorating")
+                    and new_high < 1.0           # not already winning
+                    and resolved_sl_pips > 0
+                    and abs(new_low) >= resolved_sl_pips * 0.3):
+                new_status = "stopped"
+                resolution_reason = f"deterioration_abort:{trajectory_alert['score']:.2f}"
+                exit_price = current
+                # Estimate what we would have lost if we held to SL
+                saved_pips = max(0.0, resolved_sl_pips - abs(new_low))
+                logger.warning(
+                    f"🛑 Signal {signal_id[:8]} {symbol} ABORTED — "
+                    f"deterioration={trajectory_alert['score']:.2f} "
+                    f"reasons={trajectory_alert['reasons']} "
+                    f"pnl@abort={new_low:.1f}p saved≈{saved_pips:.1f}p"
+                )
+                await _traj_log_abort(
+                    signal=signal,
+                    reason=resolution_reason + " | " + "; ".join(trajectory_alert["reasons"]),
+                    source="rule_v1",
+                    pnl_at_abort_pips=float(new_low or 0),
+                    saved_pips_estimate=saved_pips,
+                    factors={"score": trajectory_alert["score"],
+                             "reasons": trajectory_alert["reasons"]},
+                )
+        except Exception as traj_err:
+            logger.debug(f"trajectory check failed for {signal_id[:8]}: {traj_err}")
+
     if new_status:
         update_data["status"] = new_status
         update_data["exit_price"] = round(exit_price, 4) if exit_price is not None else None
