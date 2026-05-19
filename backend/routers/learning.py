@@ -5,6 +5,8 @@ Endpoints for prediction tracking, outcome checking, and learning insights.
 from __future__ import annotations
 
 import logging
+import os
+import time
 from fastapi import APIRouter, Query
 from datetime import datetime, timedelta, timezone
 from utils.safe_supabase import safe_get_data, safe_get_error
@@ -107,7 +109,11 @@ async def _fetch_prediction_logs_window(
     end = _utc_now()
     cur = cutoff
     days_back = max(0, int((end - cutoff).total_seconds() // 86400))
-    window_days = 1 if 0 < days_back <= 90 else 7 if 90 < days_back <= 365 else 30
+    # Larger chunks = fewer round trips. Each chunk paginates 1000/req,
+    # so a 7-day chunk with ~300 signals/day = 2-3 pages. A 30-day chunk
+    # = ~10 pages. We bias toward fewer chunks because most slowness comes
+    # from connection overhead, not page size.
+    window_days = 7 if days_back <= 60 else 30 if days_back <= 365 else 90
 
     while cur < end:
         de = min(cur + timedelta(days=window_days), end)
@@ -3319,11 +3325,19 @@ def _normalize_symbol(raw_symbol: str) -> str:
     return _SYMBOL_ALIAS_MAP.get(upper, upper)
 
 
+# Module-level in-memory cache for model-detail-analytics.
+# Keyed by (model, symbol, days, scope, timeframe, page). Stores (timestamp, payload).
+# Each entry expires after _MDA_CACHE_TTL_S seconds.
+_MDA_CACHE: Dict[tuple, tuple] = {}
+_MDA_CACHE_TTL_S = 120
+_MDA_ALLTIME_CAP_DAYS = int(os.getenv("MDA_ALLTIME_CAP_DAYS", "90"))
+
+
 @router.get("/model-detail-analytics")
 async def get_model_detail_analytics(
     model: Optional[str] = Query(None, description="Model type (ml, emel, pulse1, pulse2, pulse3, emel_inverse, smc, hybrid) or 'all'"),
     symbol: str = Query(..., description="Symbol (NDX.INDX, XAUUSD, GDAXI.INDX, USOIL.FOREX, CL.F)"),
-    days: int = Query(0, ge=0, le=3650, description="Days to look back (0 = all available history)"),
+    days: int = Query(0, ge=0, le=3650, description="Days to look back (0 = all available history; capped at MDA_ALLTIME_CAP_DAYS env, default 180)"),
     strategy_scope: Optional[str] = Query(None, description="Optional ML strategy scope filter (main, ultra_safe, balanced, full_power, aggressive, nasdaq_precision)"),
     recent_signals_page: int = Query(1, ge=1, le=500, description="Recent signals page number (20 rows per page)"),
     timeframe: Optional[str] = Query(None, description="Optional timeframe filter (5m, 15m, 30m, 1h, 4h, 1d, or 'all')")
@@ -3360,6 +3374,32 @@ async def get_model_detail_analytics(
     if selected_timeframe in {"*", "all"}:
         selected_timeframe = "all"
     default_hourly_contract = _model_detail_hourly_contract(symbol)
+
+    # ── Performance guard ──────────────────────────────────────────────
+    # XAUUSD/USOIL have 75k+ historical rows. days=0 (all-time) was
+    # paginating ~70+ chunks and timing out at the 30s frontend abort.
+    # Cap all-time queries at MDA_ALLTIME_CAP_DAYS (default 180d). Users
+    # rarely act on > 6-month-old analytics anyway; the response meta
+    # tells the UI when the cap kicked in.
+    capped_alltime = False
+    if days == 0:
+        days = _MDA_ALLTIME_CAP_DAYS
+        capped_alltime = True
+
+    # ── Cache hit (TTL 2 min) ───────────────────────────────────────────
+    cache_key = (
+        resolved_model, symbol, days, requested_scope,
+        selected_timeframe, requested_recent_signals_page,
+    )
+    now_ts = time.time()
+    cached = _MDA_CACHE.get(cache_key)
+    if cached and (now_ts - cached[0]) < _MDA_CACHE_TTL_S:
+        return cached[1]
+    # Drop expired entries opportunistically
+    if len(_MDA_CACHE) > 200:
+        for k in list(_MDA_CACHE.keys()):
+            if (now_ts - _MDA_CACHE[k][0]) > _MDA_CACHE_TTL_S:
+                _MDA_CACHE.pop(k, None)
 
     def _empty_payload(
         error: Optional[str] = None,
@@ -3835,7 +3875,7 @@ async def get_model_detail_analytics(
                 "exit_price": resolved_exit_price(sig, default_symbol=symbol),
             })
 
-        return {
+        payload = {
             "model": resolved_model,
             "symbol": symbol,
             "overview": {
@@ -3872,7 +3912,8 @@ async def get_model_detail_analytics(
                 "available_timeframes": available_timeframes,
                 "available_models": available_models,
                 "days": days,
-                "all_time": days == 0,
+                "all_time": capped_alltime,
+                "all_time_capped_at_days": _MDA_ALLTIME_CAP_DAYS if capped_alltime else None,
                 "date_from": _utc_iso(start_date),
                 "date_to": _utc_iso(end_date),
                 "recent_signals_page": selected_recent_signals_page,
@@ -3884,8 +3925,13 @@ async def get_model_detail_analytics(
                 "hourly_visible_hours": hourly_contract["hours"],
                 "hourly_window_label": hourly_contract["window_label"],
                 "hourly_session_key": hourly_contract["session_key"],
+                "cached": False,
+                "cache_ttl_s": _MDA_CACHE_TTL_S,
             },
         }
+        # Cache for subsequent calls within TTL window
+        _MDA_CACHE[cache_key] = (time.time(), {**payload, "meta": {**payload["meta"], "cached": True}})
+        return payload
 
     except Exception as e:
         import traceback
