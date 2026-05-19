@@ -119,6 +119,22 @@ async def log_meta_prediction(signal_data: Dict[str, Any], timeframe: str = "1h"
         if direction not in {"BUY", "SELL"} or not symbol:
             return None
 
+        # ── AI-Panel bridge exclusivity ─────────────────────────────────────
+        # If this symbol is being served by the AI-Panel→MT5 bridge, the
+        # meta-engine MUST NOT also write meta_signals/prediction_logs for it
+        # — otherwise the bot sees BOTH signal sources and double-trades.
+        # The bridge is the single source of truth while it's active.
+        try:
+            from services.ai_panel_signal_logger import AI_PANEL_BRIDGE_SYMBOLS
+            if symbol in AI_PANEL_BRIDGE_SYMBOLS:
+                logger.info(
+                    "[MetaSignalLogger] %s suppressed — handled by AI-Panel bridge",
+                    symbol,
+                )
+                return None
+        except Exception:
+            pass  # bridge not configured / import failure → fall through normally
+
         should_filter, reason = _check_session_filter(symbol)
         if should_filter:
             logger.info("[MetaSignalLogger] %s", reason)

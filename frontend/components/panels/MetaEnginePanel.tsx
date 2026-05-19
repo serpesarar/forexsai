@@ -748,7 +748,14 @@ function PatternAlertBanner({ alerts, direction }: {
     ? `${direction} yönünde geçmişte %${alerts.best_winning_win_rate?.toFixed(0)} win-rate veren ${alerts.total_winning} pattern aktif`
     : `${alerts.total_avoid} toxic pattern uyumlu (en kötü win-rate: %${alerts.worst_avoid_win_rate?.toFixed(0)})`;
 
-  const top = (isTrusted ? alerts.winning_matches : alerts.avoid_matches)[0];
+  // Backend may omit the arrays when there are 0 matches — guard with [] so
+  // we never crash trying to index undefined[0]. Also bail early if both
+  // arrays are empty (the parent's gating logic should prevent this but the
+  // hourly cron sometimes ships an alert with totals > 0 but matches=[]).
+  const winning = alerts.winning_matches ?? [];
+  const avoid = alerts.avoid_matches ?? [];
+  const top = (isTrusted ? winning : avoid)[0];
+  if (!top) return null;
 
   return (
     <>
