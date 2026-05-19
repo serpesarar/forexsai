@@ -1214,6 +1214,82 @@ async def outcome_audit(symbol: str, days: int = Query(30, ge=1, le=365)):
         raise HTTPException(500, str(e))
 
 
+@router.get("/entry-quality/status")
+async def entry_quality_status():
+    """List trained Entry-Quality models + their metadata."""
+    try:
+        from services.entry_quality_service import (
+            available_symbols, _model_paths,
+        )
+        import json as _json
+        symbols = available_symbols()
+        out = {"trained_symbols": symbols, "models": {}}
+        for sym in symbols:
+            _, meta_path = _model_paths(sym)
+            if meta_path.exists():
+                try:
+                    out["models"][sym] = _json.load(open(meta_path))
+                except Exception:
+                    pass
+        return out
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@router.get("/entry-quality/block-stats")
+async def entry_quality_block_stats(days: int = Query(7, ge=1, le=90)):
+    """How many signals did the entry-quality filter block, by symbol?
+    Reads from prediction_logs factors → entry_quality_p_sl + threshold.
+    Note: blocked signals AREN'T in prediction_logs (return None early),
+    so this only shows the ALLOWED ones with scores. Use logs to count blocks."""
+    if not is_db_available():
+        raise HTTPException(503, "supabase unavailable")
+    client = get_supabase_client()
+    try:
+        from datetime import timedelta
+        since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        rows = _row_data(
+            client.table("prediction_logs")
+            .select("symbol, ml_direction, status, factors, created_at")
+            .gte("created_at", since).limit(20000)
+        )
+        by_sym: dict = {}
+        for r in rows:
+            f = r.get("factors") or {}
+            p_sl = f.get("entry_quality_p_sl")
+            if p_sl is None:
+                continue
+            sym = r.get("symbol") or "?"
+            d = by_sym.setdefault(sym, {
+                "n_scored": 0, "avg_p_sl": 0, "completed": 0, "stopped": 0,
+                "p_sl_when_completed": [], "p_sl_when_stopped": [],
+            })
+            d["n_scored"] += 1
+            d["avg_p_sl"] += float(p_sl)
+            st = r.get("status")
+            if st == "completed":
+                d["completed"] += 1
+                d["p_sl_when_completed"].append(float(p_sl))
+            elif st == "stopped":
+                d["stopped"] += 1
+                d["p_sl_when_stopped"].append(float(p_sl))
+        for sym, d in by_sym.items():
+            if d["n_scored"]:
+                d["avg_p_sl"] = round(d["avg_p_sl"] / d["n_scored"], 3)
+            if d["p_sl_when_completed"]:
+                d["avg_p_sl_completed"] = round(
+                    sum(d["p_sl_when_completed"]) / len(d["p_sl_when_completed"]), 3)
+            if d["p_sl_when_stopped"]:
+                d["avg_p_sl_stopped"] = round(
+                    sum(d["p_sl_when_stopped"]) / len(d["p_sl_when_stopped"]), 3)
+            d.pop("p_sl_when_completed", None)
+            d.pop("p_sl_when_stopped", None)
+        return {"window_days": days, "by_symbol": by_sym}
+    except Exception as e:
+        logger.exception("entry_quality_block_stats failed: %s", e)
+        raise HTTPException(500, str(e))
+
+
 @router.get("/trajectory/stats")
 async def trajectory_stats(days: int = Query(7, ge=1, le=90)):
     """

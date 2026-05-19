@@ -1,0 +1,79 @@
+{
+  "symbol": "XAUUSD",
+  "trained_at": "2026-05-19T05:09:43.462703+00:00",
+  "n_train": 744,
+  "n_val": 248,
+  "auc": 0.5314,
+  "sl_hit_rate_pct": 43.04,
+  "block_threshold": 0.564,
+  "block_threshold_recall_at_p075": 0.133,
+  "feature_names": [
+    "M30_rsi_14",
+    "M30_macd_hist",
+    "M30_macd_hist_slope",
+    "M30_macd_hist_atr",
+    "M30_ema20_slope_atr",
+    "M30_atr_pct",
+    "M30_bb_pctb",
+    "M30_dist_ema200_atr",
+    "M30_chan_pct",
+    "M30_volume_z",
+    "H1_rsi_14",
+    "H1_macd_hist",
+    "H1_adx_14",
+    "H1_ema20_slope_atr",
+    "H1_atr_pct",
+    "D1_rsi_14",
+    "D1_atr_pct",
+    "macro_dxy_chg1d_pct",
+    "macro_vix_chg1d_pct",
+    "macro_yield_10y_3m",
+    "macro_risk_on_z",
+    "dist_swing_high",
+    "dist_swing_low",
+    "dist_resistance_atr",
+    "dist_support_atr",
+    "sar_bearish",
+    "direction_is_buy",
+    "ml_confidence",
+    "regime_transition"
+  ],
+  "class_report": {
+    "0": {
+      "precision": 0.51010101010101,
+      "recall": 0.7890625,
+      "f1-score": 0.6196319018404908,
+      "support": 128.0
+    },
+    "1": {
+      "precision": 0.46,
+      "recall": 0.19166666666666668,
+      "f1-score": 0.27058823529411763,
+      "support": 120.0
+    },
+    "accuracy": 0.5,
+    "macro avg": {
+      "precision": 0.48505050505050507,
+      "recall": 0.4903645833333333,
+      "f1-score": 0.4451100685673042,
+      "support": 248.0
+    },
+    "weighted avg": {
+      "precision": 0.4858585858585858,
+      "recall": 0.5,
+      "f1-score": 0.4507398051245038,
+      "support": 248.0
+    }
+  },
+  "confusion_matrix_at_05": [
+    [
+      101,
+      27
+    ],
+    [
+      97,
+      23
+    ]
+  ],
+  "training_window_days": 180
+}

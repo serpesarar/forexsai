@@ -813,6 +813,29 @@ async def log_prediction(
             factors["ml_direction_original"] = original_direction
             factors["ml_inverted"] = True
 
+        # ── Entry-Quality Filter (Katman 1) ─────────────────────────────────
+        # If a trained P(SL) classifier is available for this symbol, score
+        # the entry features now and block if confidence-of-failure ≥
+        # threshold. Tag the result either way so we can audit later.
+        try:
+            from services.entry_quality_service import score_entry
+            eq = score_entry(
+                symbol=symbol,
+                direction=direction,
+                ml_confidence=raw_confidence,
+                factors=factors,
+            )
+            if eq.get("model_available"):
+                factors["entry_quality_p_sl"] = eq.get("p_sl")
+                factors["entry_quality_threshold"] = eq.get("threshold")
+                if eq.get("should_block"):
+                    logger.info(
+                        f"[EntryQuality] BLOCKED {symbol} {direction} — {eq.get('reason')}"
+                    )
+                    return None
+        except Exception as eq_err:
+            logger.debug(f"entry_quality scoring failed: {eq_err}")
+
         record = {
             "symbol": symbol,
             "timeframe": normalized_timeframe,
