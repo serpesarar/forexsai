@@ -85,10 +85,15 @@ class SupabaseRestClient:
             "Prefer": "return=representation"
         }
         # Persistent client — reuses TCP connections (keepalive)
-        # max_connections=5 keeps us well under the 20-slot Supabase pool
+        # 2026-05-19: bumped max_connections 5 → 16. With multiple analysis
+        # panels loading concurrently (each runs _fetch_prediction_logs_window
+        # with 5-15 chained Supabase calls), the 5-slot pool was the
+        # bottleneck — requests queued on pool waits and timed out. Supabase
+        # PostgREST handles 20 concurrent connections per project, so 16
+        # leaves headroom for cron jobs / signal lifecycle workers.
         self._http = httpx.Client(
             timeout=httpx.Timeout(connect=8.0, read=15.0, write=15.0, pool=10.0),
-            limits=httpx.Limits(max_connections=5, max_keepalive_connections=3, keepalive_expiry=120),
+            limits=httpx.Limits(max_connections=16, max_keepalive_connections=8, keepalive_expiry=120),
             headers=self.headers,
         )
         # ── Observability counters ──
@@ -145,8 +150,8 @@ class SupabaseRestClient:
             "requests_per_minute": round(
                 self._stats["total_requests"] / max(uptime / 60, 1), 1
             ),
-            "pool_max_connections": 5,
-            "pool_keepalive": 3,
+            "pool_max_connections": 16,
+            "pool_keepalive": 8,
             "client_closed": self._http.is_closed,
         }
 
@@ -157,7 +162,7 @@ class SupabaseRestClient:
             logger.info("Recreating closed httpx client")
             self._http = httpx.Client(
                 timeout=httpx.Timeout(connect=8.0, read=15.0, write=15.0, pool=10.0),
-                limits=httpx.Limits(max_connections=5, max_keepalive_connections=3, keepalive_expiry=120),
+                limits=httpx.Limits(max_connections=16, max_keepalive_connections=8, keepalive_expiry=120),
                 headers=self.headers,
             )
         return self._http
