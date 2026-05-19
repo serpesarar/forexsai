@@ -377,19 +377,42 @@ async def _get_price_window_since_signal(
                 latest_candle_at = datetime.fromtimestamp(max(valid_timestamps) / 1000.0, tz=timezone.utc)
 
             relevant_candles = list(candles)
+            extreme_candles = list(candles)  # for high/low — stricter filter
 
             if created_dt is not None:
-                # Use exact signal creation time as cutoff — not minus 5 minutes.
-                # A 5m candle starting BEFORE the signal includes pre-signal wicks
-                # which cause false TP/SL hits on volatile instruments.
+                # User reported (2026-05-19): XAUUSD ml BUY signal entry 4482.40,
+                # current price 4482.63, but Peak +18.5p displayed. Root cause:
+                # the 5m candle that CONTAINS the signal-creation moment was
+                # included for high/low extraction. If a wick happened during
+                # that candle's pre-signal portion (e.g. signal at 16:00:30 in
+                # the 15:55-16:00 candle, wick at 15:56), MFE captured pre-entry
+                # movement as if it were post-entry.
+                #
+                # Fix: split into two views.
+                #   - extremes (high/low): ONLY candles fully after the signal
+                #     (candle_open >= cutoff). The candle that spans the signal
+                #     is excluded to avoid pre-entry wick contamination.
+                #   - current: includes the spanning candle so we still get
+                #     the freshest price reference.
                 cutoff_ms = created_dt.timestamp() * 1000
-                filtered = []
+                # 5-minute candle duration in ms
+                CANDLE_MS = 5 * 60 * 1000
+                spanning_or_after: list = []
+                fully_after: list = []
                 for candle in candles:
                     candle_ts = _extract_candle_timestamp_ms(candle)
-                    if candle_ts is not None and candle_ts >= cutoff_ms:
-                        filtered.append(candle)
-                if filtered:
-                    relevant_candles = filtered
+                    if candle_ts is None:
+                        continue
+                    if candle_ts >= cutoff_ms:
+                        spanning_or_after.append(candle)
+                        fully_after.append(candle)
+                    elif candle_ts + CANDLE_MS > cutoff_ms:
+                        # Candle straddles the signal — include for current
+                        # but NOT for high/low (pre-entry wick contamination).
+                        spanning_or_after.append(candle)
+                if spanning_or_after:
+                    relevant_candles = spanning_or_after
+                    extreme_candles = fully_after or spanning_or_after  # fallback if signal is mid-first-candle
                     has_post_entry_candles = True
                 else:
                     freshness = False
@@ -404,8 +427,10 @@ async def _get_price_window_since_signal(
                         "latest_candle_at": _utc_iso(latest_candle_at) if latest_candle_at else None,
                     }
 
-            highs = [float(c["high"]) for c in relevant_candles if c.get("high") is not None]
-            lows = [float(c["low"]) for c in relevant_candles if c.get("low") is not None]
+            # Highs/lows use the STRICTLY-after-signal subset so pre-entry
+            # wicks can't bleed into MFE/MAE.
+            highs = [float(c["high"]) for c in extreme_candles if c.get("high") is not None]
+            lows = [float(c["low"]) for c in extreme_candles if c.get("low") is not None]
             closes = [float(c["close"]) for c in relevant_candles if c.get("close") is not None]
 
             window_current = closes[-1] if closes else current
