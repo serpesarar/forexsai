@@ -585,23 +585,30 @@ async def log_prediction(
             logger.debug(f"Skipping HOLD signal for {symbol} (model={model_type or strategy})")
             return None
 
-        # ── ML INVERSION EXPERIMENT (XAUUSD + USOIL) ────────────────────────
-        # User-requested experiment 2026-05-17: invert ML signal direction
-        # for XAUUSD and USOIL.FOREX. The historical ML win-rate for these
-        # symbols sits below 50% (especially on live execution), so flipping
-        # may be net positive. Stored as `ml_direction_original` in factors
-        # so analytics can compare inverted vs raw performance.
+        # ── ML INVERSION (ASYMMETRIC) for XAUUSD + USOIL ───────────────────
+        # Live-data analysis 2026-05-18 (36h sample):
+        #   Raw ML BUY  → inverted SELL → 72W/44L, +213 pip net (XAU)
+        #                                 270 trades, +179 pip net (USOIL)
+        #   Raw ML SELL → inverted BUY  →  0W/5L,  -140 pip net (XAU)
         #
-        # Also mirror the ML-provided TP/SL prices so the bot trades the
-        # correct side (BUY target above entry → SELL target below entry).
-        # The downstream calculate_target_prices() call uses the inverted
-        # direction so `targets_dict` is also correct.
+        # Conclusion: ML model is MIS-CALIBRATED on the BUY side (current
+        # market is mean-reverting after rallies; trend-trained model fires
+        # BUY on EMA-cross conditions just before the reversal). SELL signals
+        # are rare and accurate — flipping them destroyed value.
+        #
+        # Root cause: same as PULSE1's AGAINST_MTF_TREND_BUY / SAR_AGAINST_BUY
+        # clusters — XAUUSD's recent regime is hostile to BUYs.
+        # Rule #001/002 patched PULSE1; ML output was never guarded.
+        # Inversion is the band-aid; root fix is model retraining or
+        # ML-side BUY guards. Tracked as ml_direction_original in factors.
         ML_INVERSION_SYMBOLS = {"XAUUSD", "XAUUSD.FOREX", "USOIL.FOREX", "USOIL"}
         ml_invert_active = False
         original_direction = direction
         if (symbol.upper() in ML_INVERSION_SYMBOLS
-                and (model_type or "").lower().startswith("ml")):
-            direction = "SELL" if direction == "BUY" else "BUY"
+                and (model_type or "").lower().startswith("ml")
+                and direction == "BUY"):
+            # Only invert BUY — SELL signals proven accurate, leave alone.
+            direction = "SELL"
             ml_invert_active = True
             # Mirror ML's pre-computed TP/SL around entry so they point the
             # right way for the inverted direction.
@@ -616,7 +623,7 @@ async def log_prediction(
                 except Exception:
                     pass
             logger.info(
-                f"[ML-INVERT] {symbol} {model_type}: {original_direction} → {direction}"
+                f"[ML-INVERT] {symbol} {model_type}: BUY → SELL (asymmetric, BUY-only)"
             )
 
         effective_model_type, resolved_strategy = _resolve_logging_identity(model_type, strategy)
