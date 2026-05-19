@@ -17,6 +17,13 @@ AI_PANEL_MODEL_TYPE = "ai_panel"
 AI_PANEL_STRATEGY = "AI_PANEL_HOURLY"
 AI_PANEL_TIMEFRAME = "1h"
 
+# Symbols where the MT5 auto-trader should consume AI-Panel signals via the
+# `meta_signals` table (the bot's source of truth). Override via env var
+# AI_PANEL_BRIDGE_SYMBOLS (comma-separated) for a quick A/B test.
+import os as _os
+_env_bridge = _os.getenv("AI_PANEL_BRIDGE_SYMBOLS", "XAUUSD")
+AI_PANEL_BRIDGE_SYMBOLS = {s.strip().upper() for s in _env_bridge.split(",") if s.strip()}
+
 _last_ai_panel_log: Dict[str, datetime] = {}
 _last_ai_panel_attempt: Dict[str, datetime] = {}
 _last_ai_panel_success: Dict[str, datetime] = {}
@@ -285,6 +292,112 @@ def _snapshot_row(symbol: str, result: Dict[str, Any], prediction_log_id: Option
 
 
 
+def _ai_panel_to_meta_signals_row(
+    symbol: str, result: Dict[str, Any], prediction_log_id: Optional[str]
+) -> Optional[Dict[str, Any]]:
+    """Build a meta_signals row from an AI-Panel actionable signal.
+
+    The MT5 auto-trader reads from `meta_signals`. By mirroring AI-Panel
+    signals into that table (for symbols in AI_PANEL_BRIDGE_SYMBOLS), we
+    can let the bot consume the higher-WR AI-Panel feed without changing
+    the bot code. Returns None if signal isn't actionable / pieces missing.
+    """
+    if not _is_actionable_signal(result):
+        return None
+    claude_analysis = result.get("claude_analysis") or {}
+    panel_signal = claude_analysis.get("panel_signal") or {}
+    prices = _extract_signal_prices(claude_analysis)
+    direction = _coerce_direction(claude_analysis.get("claude_direction"))
+    confidence = _coerce_float(claude_analysis.get("claude_confidence")) or 0.0
+    if direction not in ("BUY", "SELL") or not prices["entry"]:
+        return None
+
+    # Match meta engine's strength thresholds so the bot filter behaves
+    # the same way: ≥75 STRONG, ≥55 MODERATE, else WEAK.
+    if confidence >= 75:
+        strength = "STRONG"
+    elif confidence >= 55:
+        strength = "MODERATE"
+    else:
+        strength = "WEAK"
+
+    market_context = (claude_analysis.get("market_context") or {})
+    regime_info = market_context.get("regime") or {}
+    regime = regime_info.get("regime") or regime_info.get("trend_direction") or "UNKNOWN"
+
+    entry = float(prices["entry"])
+    stop = float(prices["stop"]) if prices["stop"] is not None else None
+    target = float(prices["target"]) if prices["target"] is not None else None
+    risk_reward = None
+    if stop is not None and target is not None and entry != stop:
+        risk = abs(entry - stop)
+        reward = abs(target - entry)
+        risk_reward = round(reward / risk, 2) if risk > 0 else None
+
+    return {
+        "symbol": symbol,
+        "direction": direction,
+        "confidence": round(confidence, 1),
+        "strength": strength,
+        "source_combo": "ai_panel_hourly",
+        "regime": regime,
+        "agreement_ratio": 1.0,           # single-source signal, agreement is implicit
+        "technical_score": 1.0,
+        "passed_conditions": ["ai_panel:actionable"],
+        "entry_price": round(entry, 4),
+        "stop_loss": round(stop, 4) if stop is not None else None,
+        "take_profit_1": round(target, 4) if target is not None else None,
+        "take_profit_2": round(target, 4) if target is not None else None,
+        "risk_reward": risk_reward,
+        "model_breakdown": {
+            "ai_panel": {
+                "direction": direction,
+                "confidence": confidence,
+                "is_available": True,
+                "agrees": True,
+            }
+        },
+        "status": "active",
+        # Bridge marker so downstream lifecycle / dashboard can distinguish
+        # AI-Panel-sourced meta_signals from true 6-model meta signals.
+        # Stored in model_breakdown to avoid migration; queries can filter
+        # on this when needed.
+    }
+
+
+async def _mirror_ai_panel_to_meta_signals(
+    symbol: str, result: Dict[str, Any], prediction_log_id: Optional[str]
+) -> None:
+    """Write the AI-Panel signal into meta_signals so the MT5 bot picks it up."""
+    if symbol.upper() not in AI_PANEL_BRIDGE_SYMBOLS:
+        return
+    if not is_db_available():
+        return
+    client = get_supabase_client()
+    if client is None:
+        return
+    row = _ai_panel_to_meta_signals_row(symbol, result, prediction_log_id)
+    if row is None:
+        logger.debug("AI-Panel bridge skipped (not actionable) for %s", symbol)
+        return
+    try:
+        # Close any existing active row for this symbol+direction first so
+        # the bot doesn't see overlapping AI-Panel signals.
+        try:
+            client.table("meta_signals").eq("symbol", symbol).eq(
+                "status", "active"
+            ).eq("source_combo", "ai_panel_hourly").update({"status": "closed"})
+        except Exception as close_err:
+            logger.debug("AI-Panel bridge prior-close failed (non-fatal): %s", close_err)
+        client.table("meta_signals").insert(row)
+        logger.info(
+            "[AI-Panel→MT5] mirrored %s %s conf=%.0f strength=%s entry=%.4f",
+            symbol, row["direction"], row["confidence"], row["strength"], row["entry_price"]
+        )
+    except Exception as e:
+        logger.warning("AI-Panel meta_signals mirror failed for %s: %s", symbol, e)
+
+
 async def log_ai_panel_signal(symbol: str) -> Optional[str]:
     result = await get_ai_panel_analysis(symbol, force_refresh=True)
     prediction_log_id: Optional[str] = None
@@ -301,6 +414,10 @@ async def log_ai_panel_signal(symbol: str) -> Optional[str]:
             model_type=AI_PANEL_MODEL_TYPE,
             allow_parallel_active=True,
         )
+        # ── MT5 bridge: mirror AI-Panel signal into meta_signals so the
+        # bot consumes the higher-WR AI-Panel feed (commit 2026-05-19,
+        # XAUUSD only by default; AI_PANEL_BRIDGE_SYMBOLS env to extend).
+        await _mirror_ai_panel_to_meta_signals(symbol, result, prediction_log_id)
 
     if is_db_available():
         client = get_supabase_client()
