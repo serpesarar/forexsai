@@ -499,6 +499,7 @@ router_module_names = [
     "pandemic_sensitivity",
     "macro_gauges",
     "cross_model_experiment",
+    "mt5_reconciliation",
 ]
 
 for module_name in router_module_names:
