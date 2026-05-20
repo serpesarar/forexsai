@@ -13,6 +13,7 @@ import { LazyPanel } from "../../components/LazyPanel";
 const MetaSignalAnalysisPanel = lazy(() => import("../../components/panels/MetaSignalAnalysisPanel"));
 const StrategyPerformancePanel = lazy(() => import("../../components/StrategyPerformancePanel"));
 const LearningDashboardV2 = lazy(() => import("../../components/panels/LearningDashboardV2"));
+const CrossModelExperimentPanel = lazy(() => import("../../components/panels/CrossModelExperimentPanel"));
 
 const PanelLoader = () => (
     <div className="flex items-center justify-center rounded-xl border border-white/5 bg-white/[0.02] min-h-[200px]">
@@ -55,6 +56,13 @@ export default function SignalsView() {
                 <LazyPanel fallbackHeight={400} rootMargin="0px">
                     <Suspense fallback={<PanelLoader />}>
                         <LearningDashboardV2 />
+                    </Suspense>
+                </LazyPanel>
+
+                {/* Experiments — isolated corner; doesn't affect MT5 bot */}
+                <LazyPanel fallbackHeight={320} rootMargin="0px">
+                    <Suspense fallback={<PanelLoader />}>
+                        <CrossModelExperimentPanel />
                     </Suspense>
                 </LazyPanel>
             </div>

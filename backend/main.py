@@ -164,6 +164,19 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"❌ Auto-triage başlatılamadı: {e}")
 
+    # 2.12 Cross-model experiment (NASDAQ ML applied to XAUUSD candles)
+    # Isolated: doesn't mirror to meta_signals → MT5 bot won't trade these.
+    # Kill switch via CROSS_MODEL_EXPERIMENT_ENABLED=0
+    try:
+        from services.cross_model_experiment_service import daily_loop as cross_model_loop, is_enabled as cross_enabled
+        if cross_enabled():
+            asyncio.create_task(cross_model_loop())
+            print("✅ Cross-model experiment başlatıldı (NASDAQ-on-XAU, 15dk cron, no MT5 mirror)")
+        else:
+            print("⏸  Cross-model experiment kapalı (CROSS_MODEL_EXPERIMENT_ENABLED=0)")
+    except Exception as e:
+        print(f"❌ Cross-model experiment başlatılamadı: {e}")
+
     # 3. PULSE + EMEL SCHEDULER (Doğrudan Başlat - 15dk'da bir)
     try:
         from services.background_scheduler import log_pulse_signals_if_needed
@@ -485,6 +498,7 @@ router_module_names = [
     "ai_ops_router",
     "pandemic_sensitivity",
     "macro_gauges",
+    "cross_model_experiment",
 ]
 
 for module_name in router_module_names:
