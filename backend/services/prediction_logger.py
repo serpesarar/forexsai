@@ -585,26 +585,22 @@ async def log_prediction(
             logger.debug(f"Skipping HOLD signal for {symbol} (model={model_type or strategy})")
             return None
 
-        # ── ML INVERSION (ASYMMETRIC) for XAUUSD + USOIL ───────────────────
-        # Live-data analysis 2026-05-18 (36h sample):
-        #   Raw ML BUY  → inverted SELL → 72W/44L, +213 pip net (XAU)
-        #                                 270 trades, +179 pip net (USOIL)
-        #   Raw ML SELL → inverted BUY  →  0W/5L,  -140 pip net (XAU)
+        # ── ML INVERSION (ASYMMETRIC, env-gated) ────────────────────────────
+        # Originally enabled 2026-05-18 as an experiment for XAUUSD + USOIL.
+        # Disabled by default 2026-05-20 because the AI-Panel→MT5 bridge
+        # is now the primary source for XAUUSD bot trades, and inverted
+        # ML signals on prediction_logs were conflicting with the AI-Panel
+        # direction (bot opens SELL while AI says BUY).
         #
-        # Conclusion: ML model is MIS-CALIBRATED on the BUY side (current
-        # market is mean-reverting after rallies; trend-trained model fires
-        # BUY on EMA-cross conditions just before the reversal). SELL signals
-        # are rare and accurate — flipping them destroyed value.
-        #
-        # Root cause: same as PULSE1's AGAINST_MTF_TREND_BUY / SAR_AGAINST_BUY
-        # clusters — XAUUSD's recent regime is hostile to BUYs.
-        # Rule #001/002 patched PULSE1; ML output was never guarded.
-        # Inversion is the band-aid; root fix is model retraining or
-        # ML-side BUY guards. Tracked as ml_direction_original in factors.
+        # To re-enable: env ML_INVERSION_ENABLED=1
+        # History: see commit b151a1d for the experiment data.
+        import os as _os
+        _ml_invert_enabled = _os.getenv("ML_INVERSION_ENABLED", "0") == "1"
         ML_INVERSION_SYMBOLS = {"XAUUSD", "XAUUSD.FOREX", "USOIL.FOREX", "USOIL"}
         ml_invert_active = False
         original_direction = direction
-        if (symbol.upper() in ML_INVERSION_SYMBOLS
+        if (_ml_invert_enabled
+                and symbol.upper() in ML_INVERSION_SYMBOLS
                 and (model_type or "").lower().startswith("ml")
                 and direction == "BUY"):
             # Only invert BUY — SELL signals proven accurate, leave alone.
