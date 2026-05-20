@@ -628,6 +628,42 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         )
         return None
 
+    # ── PRE-ENTRY WICK CONTAMINATION GUARD (CRITICAL — 2026-05-20) ───────
+    # Without this, the lifecycle reads the 5m candle that STRADDLES the
+    # signal creation moment. That candle's high/low includes the 0-5 min
+    # of pre-entry price action — which routinely contains wicks 100+
+    # pips away from entry. Lifecycle then incorrectly fires tp4_hit /
+    # sl_hit on those PRE-entry wicks, producing fake "instant wins"
+    # within seconds of opening.
+    #
+    # Real evidence (MT5 vs our system, 7-day comparison):
+    #   NDX  : system +$37,839  vs MT5 -$45      (fake $37,884)
+    #   GDAXI: system +$18,559  vs MT5 -$2,586   (fake $21,145)
+    #   USOIL: system +$1,426   vs MT5 -$3,674   (fake $5,100)
+    #   XAUUSD: system -$4,693  vs MT5 -$1,123   (XAU TP/SL too tight
+    #                                              for pre-entry contamination)
+    #
+    # Fix: require at least 60 SECONDS of age before allowing target-hit
+    # detection. By then a fresh 5m candle has opened AFTER the signal,
+    # so any session_high/low movement is genuinely post-entry. Below
+    # this threshold we keep tracking MFE/MAE for analytics but DO NOT
+    # mark the signal as completed/stopped.
+    if created_dt is not None:
+        signal_age_seconds = (_utc_now() - created_dt).total_seconds()
+        if signal_age_seconds < 60:
+            # Capture MFE/MAE silently, defer resolution to next check.
+            # Update the running highs/lows ONLY from `current` (single
+            # post-entry tick), not from session_high/low which would
+            # include pre-entry wicks.
+            session_high = current
+            session_low = current
+            # Signal that fast-resolve paths must be skipped this cycle.
+            _suppress_target_hit_this_check = True
+        else:
+            _suppress_target_hit_this_check = False
+    else:
+        _suppress_target_hit_this_check = False
+
     if current is None or current <= 0:
         try:
             if created_dt is not None:
@@ -719,6 +755,13 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         if targets_hit.get(tp_name):
             continue
 
+        # Pre-entry wick guard: signals younger than 60s can't reliably
+        # claim a TP hit because the spanning 5m candle still includes
+        # pre-entry price action. Skip target detection this cycle —
+        # the next lifecycle pass (60s later) will work with clean data.
+        if _suppress_target_hit_this_check:
+            continue
+
         # Calculate pip distance to this target from entry
         tp_pips_distance = abs(pips_from_price_change(abs(tp_price - entry_price), symbol))
 
@@ -771,7 +814,11 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     # Sanity gate for SL: actual drawdown must be at least 60% of SL distance
     sl_drawdown_ok = resolved_sl_pips <= 0 or abs(new_low) >= resolved_sl_pips * 0.6
 
-    if direction == "BUY" and session_low is not None and session_low <= sl_price and sl_drawdown_ok:
+    # Pre-entry wick guard: if signal is younger than 60s, do not fire
+    # target/SL hits — would mis-attribute pre-entry candle ranges.
+    if _suppress_target_hit_this_check:
+        hit_stop = False
+    elif direction == "BUY" and session_low is not None and session_low <= sl_price and sl_drawdown_ok:
         hit_stop = True
     elif direction == "SELL" and session_high is not None and session_high >= sl_price and sl_drawdown_ok:
         hit_stop = True
