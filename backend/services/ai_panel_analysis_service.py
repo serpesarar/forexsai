@@ -45,10 +45,16 @@ SYMBOL_PROFILES: Dict[str, Dict[str, Any]] = {
         "short_label": "XAUUSD",
         "asset_class": "metal",
         "calendar_symbol": "XAUUSD",
-        "session_name": "NY metals",
-        "ny_session_start": 8 * 60 + 20,
-        "ny_session_end": 16 * 60,
-        "prompt_focus": "dollar sensitivity, yields, safe-haven flow, COMEX catalysts, macro headline shock risk",
+        "session_name": "XAU global (24×5)",
+        # User request 2026-05-19: gold trades almost continuously Sun 18:00 NY
+        # through Fri 17:00 NY. Restricting AI panel refreshes to the NY
+        # metals window (08:20-16:00) misses Asia and London moves which often
+        # set the daily tone. The `extended_hours_24x5` flag makes the AI
+        # panel treat the market as open during all weekday hours.
+        "ny_session_start": 0,           # midnight NY
+        "ny_session_end": 24 * 60 - 1,   # 23:59 NY
+        "extended_hours_24x5": True,
+        "prompt_focus": "dollar sensitivity, yields, safe-haven flow, COMEX catalysts, macro headline shock risk, Asia and London session positioning",
     },
     "USOIL.FOREX": {
         "display_name": "US Oil (WTI)",
@@ -281,7 +287,14 @@ def _get_market_state(symbol: str) -> Dict[str, Any]:
     session_start = profile["ny_session_start"]
     session_end = profile["ny_session_end"]
     is_weekday = now_ny.weekday() < 5
-    is_primary_session_open = is_weekday and session_start <= minutes_now <= session_end
+    # Symbols flagged `extended_hours_24x5` (e.g. XAUUSD) trade nearly 24h on
+    # weekdays. Treat them as session-open for any weekday minute so the AI
+    # panel refreshes through Asia/London/NY hours.
+    extended_24x5 = bool(profile.get("extended_hours_24x5"))
+    if extended_24x5:
+        is_primary_session_open = is_weekday
+    else:
+        is_primary_session_open = is_weekday and session_start <= minutes_now <= session_end
 
     if not is_weekday:
         phase = "weekend"
@@ -292,8 +305,8 @@ def _get_market_state(symbol: str) -> Dict[str, Any]:
     else:
         phase = "post"
 
-    minutes_to_open = session_start - minutes_now if is_weekday and minutes_now < session_start else None
-    minutes_to_close = session_end - minutes_now if is_primary_session_open else None
+    minutes_to_open = session_start - minutes_now if (is_weekday and not extended_24x5 and minutes_now < session_start) else None
+    minutes_to_close = session_end - minutes_now if (is_primary_session_open and not extended_24x5) else None
 
     return {
         "ny_time": now_ny.isoformat(),

@@ -91,12 +91,32 @@ def _refresh_window_bounds(symbol: str) -> tuple[int, int]:
     return min(primary_start, us_cash_start), max(primary_end, us_cash_end)
 
 
+def _is_extended_hours(symbol: str) -> bool:
+    profile = SYMBOL_PROFILES.get(symbol) or {}
+    return bool(profile.get("extended_hours_24x5"))
+
+
 def _align_to_refresh_window(symbol: str, candidate: datetime) -> datetime:
     candidate_utc = candidate.astimezone(timezone.utc) if candidate.tzinfo else candidate.replace(tzinfo=timezone.utc)
     candidate_ny = candidate_utc.astimezone(NY_TZ)
-    start_minutes, end_minutes = _refresh_window_bounds(symbol)
     minutes_now = candidate_ny.hour * 60 + candidate_ny.minute
 
+    # Extended-hours symbols (e.g. XAUUSD) trade nearly 24h on weekdays.
+    # Any weekday minute is a valid refresh slot — no NY-session gating.
+    if _is_extended_hours(symbol):
+        if candidate_ny.weekday() < 5:
+            return candidate_utc
+        # Saturday/Sunday — push to next weekday 00:00 NY (gold opens Sun 18:00 NY,
+        # but we wait until Monday for consistency with our hourly cron cadence).
+        days_ahead = 1
+        while True:
+            next_day = candidate_ny + timedelta(days=days_ahead)
+            if next_day.weekday() < 5:
+                aligned = next_day.replace(hour=0, minute=0, second=0, microsecond=0)
+                return aligned.astimezone(timezone.utc)
+            days_ahead += 1
+
+    start_minutes, end_minutes = _refresh_window_bounds(symbol)
     if candidate_ny.weekday() < 5 and start_minutes <= minutes_now <= end_minutes:
         return candidate_utc
 
