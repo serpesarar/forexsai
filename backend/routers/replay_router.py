@@ -30,6 +30,9 @@ async def run_replay(
     limit: Optional[int] = Query(None, ge=1, le=50000),
     dry_run: bool = Query(False, description="Skip DB writes — preview the batch summary only"),
     concurrency: int = Query(6, ge=1, le=32),
+    purge_existing: bool = Query(False,
+                                  description="Delete prior corrections for these symbols "
+                                              "before persisting — use when re-running"),
 ):
     """Walk every prediction_log since `since` against 1m bars from
     candle_cache, re-decide TP/SL outcome via the same rules as
@@ -46,6 +49,7 @@ async def run_replay(
     summary = await run_replay_batch(
         since_iso=since_iso, symbol=symbol, model_type=model_type,
         limit=limit, dry_run=dry_run, concurrency=concurrency,
+        purge_existing=purge_existing,
     )
     if summary.get("status") == "error":
         raise HTTPException(500, summary.get("error", "replay failed"))

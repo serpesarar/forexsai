@@ -498,11 +498,14 @@ async def run_replay_batch(since_iso: str,
                             model_type: Optional[str] = None,
                             limit: Optional[int] = None,
                             dry_run: bool = False,
-                            concurrency: int = 6) -> dict:
+                            concurrency: int = 6,
+                            purge_existing: bool = False) -> dict:
     """Replay every prediction_log since `since_iso`, persisting corrections.
 
     Returns a summary: counts by replay_status and outcome flip counts.
     `dry_run=True` skips the DB write — useful for spot checks.
+    `purge_existing=True` deletes prior corrections for the batch's symbols
+    first — use when re-running so the report doesn't double-count.
     """
     from database.supabase_client import get_supabase_client, is_db_available
     if not is_db_available():
@@ -550,6 +553,20 @@ async def run_replay_batch(since_iso: str,
 
     # ── Pre-load 1m bars ONCE per symbol (shared across that symbol's signals).
     symbols_in_batch = sorted({(r.get("symbol") or "") for r in rows if r.get("symbol")})
+
+    # ── Optional purge — clear prior corrections for these symbols so a
+    #    re-run doesn't leave stale rows the report would double-count.
+    purged: dict[str, str] = {}
+    if purge_existing and not dry_run:
+        for sym in symbols_in_batch:
+            try:
+                client.table("prediction_replay_corrections").delete().eq(
+                    "symbol", sym).execute()
+                purged[sym] = "ok"
+            except Exception as e:
+                logger.warning("replay purge failed for %s: %s", sym, e)
+                purged[sym] = f"failed: {str(e)[:80]}"
+
     bars_by_symbol: dict[str, list[dict]] = {}
     tskeys_by_symbol: dict[str, list] = {}
     bar_coverage: dict[str, dict] = {}
@@ -644,6 +661,8 @@ async def run_replay_batch(since_iso: str,
             except Exception as e:
                 logger.warning("replay persist chunk failed: %s", e)
         summary["persisted"] = persisted
+        if purge_existing:
+            summary["purged"] = purged
     else:
         summary["dry_run"] = True
 
