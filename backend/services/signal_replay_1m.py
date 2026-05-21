@@ -151,7 +151,8 @@ def _slice_bars(symbol_bars: list[dict], ts_keys: list,
 async def replay_signal_row(signal_row: dict,
                               symbol_bars: list[dict],
                               ts_keys: list,
-                              batch_id: Optional[str] = None) -> dict:
+                              batch_id: Optional[str] = None,
+                              trace: Optional[list] = None) -> dict:
     """Walk-forward replay of one signal against a pre-loaded, sorted bar list.
 
     Args:
@@ -159,6 +160,8 @@ async def replay_signal_row(signal_row: dict,
       symbol_bars: ALL 1m bars for this signal's symbol, sorted by `ts`
       ts_keys:     parallel list of just the `ts` values (for bisect)
       batch_id:    groups this row under one /api/replay/run pass
+      trace:       if a list is passed, every walked bar's decision is
+                   appended to it (audit mode — used by /api/replay/inspect)
 
     Returns the dict to write to prediction_replay_corrections.
     """
@@ -312,13 +315,16 @@ async def replay_signal_row(signal_row: dict,
             mae_pips = adv_excursion
 
         # 1) Which TPs got crossed by this bar?
+        newly_hit = []
         for tp_name, tp_px in target_prices.items():
             if hit_targets[tp_name]:
                 continue
             if direction == "BUY" and h >= tp_px:
                 hit_targets[tp_name] = True
+                newly_hit.append(tp_name)
             elif direction == "SELL" and l <= tp_px:
                 hit_targets[tp_name] = True
+                newly_hit.append(tp_name)
 
         tp4_hit_now = any(hit_targets.get(n) and _target_rank(n) == 4 for n in hit_targets)
         tp1_3_hit_now = any(hit_targets.get(n) and (_target_rank(n) in {1, 2, 3})
@@ -329,6 +335,20 @@ async def replay_signal_row(signal_row: dict,
             hit_sl = l <= sl_price
         else:
             hit_sl = h >= sl_price
+
+        # Audit trace — one record per walked bar.
+        if trace is not None:
+            trace.append({
+                "bar": idx + 1,
+                "ts": _utc_iso(bts),
+                "high": round(h, 5),
+                "low": round(l, 5),
+                "newly_hit_tp": newly_hit,
+                "sl_touched": bool(hit_sl),
+                "in_bar_ambiguous": bool(hit_sl and newly_hit),
+                "mfe_pips": round(mfe_pips, 2),
+                "mae_pips": round(mae_pips, 2),
+            })
 
         # 3) Apply resolution rules — same order as signal_lifecycle.py
         if tp4_hit_now and all(hit_targets[n] for n in hit_targets):
@@ -424,8 +444,21 @@ async def replay_signal_row(signal_row: dict,
     notes_bits = []
     if price_offset_applied:
         notes_bits.append(f"price_offset={price_offset_applied:+.3f}")
+
+    diagnostics = {
+        "entry_after_offset": round(entry, 5),
+        "price_offset_applied": round(price_offset_applied, 5),
+        "anchor_bar_open": round(float(anchor_bar.get("open") or 0), 5) if anchor_bar else None,
+        "anchor_bar_ts": _utc_iso(anchor_bar["ts"]) if anchor_bar else None,
+        "tp_prices": {k: round(v, 5) for k, v in target_prices.items()},
+        "sl_price": round(sl_price, 5),
+        "window_minutes": window_minutes,
+        "bars_in_window": len(bars),
+        "tie_break_rule": "TP wins when a single bar spans both TP and SL",
+    }
     return {
         **base,
+        "_diagnostics": diagnostics,
         "corrected_status": resolution["status"],
         "corrected_resolution_reason": resolution["reason"],
         "corrected_target_hit": resolution["target_hit"],
@@ -601,3 +634,69 @@ async def run_replay_batch(since_iso: str,
         summary["dry_run"] = True
 
     return summary
+
+
+# ─── Single-signal inspector (audit) ─────────────────────────────────────────
+
+async def inspect_signal(prediction_id: str) -> dict:
+    """Re-run the replay for ONE signal with full bar-by-bar trace.
+
+    Lets a human audit a correction: see the recorded entry, the measured
+    EODHD→MT5 price offset, every TP/SL price, and each 1m bar's decision
+    until resolution. Used by GET /api/replay/inspect/{id}."""
+    from database.supabase_client import get_supabase_client, is_db_available
+    if not is_db_available():
+        return {"status": "error", "error": "db_unavailable"}
+    client = get_supabase_client()
+
+    try:
+        q = (client.table("prediction_logs").select(
+            "id,symbol,model_type,ml_direction,ml_entry_price,timeframe,status,"
+            "resolution_reason,exit_price,highest_profit_pips,lowest_drawdown_pips,"
+            "created_at").eq("id", prediction_id).limit(1))
+        res = q.execute() if hasattr(q, "execute") else q
+        rows = res.data if hasattr(res, "data") else (
+            res.get("data") if isinstance(res, dict) else []) or []
+    except Exception as e:
+        return {"status": "error", "error": f"fetch_failed: {str(e)[:120]}"}
+    if not rows:
+        return {"status": "error", "error": "prediction_id not found"}
+
+    sig = rows[0]
+    symbol = sig.get("symbol") or ""
+    sym_bars = await asyncio.to_thread(_load_all_1m_bars_sync, symbol)
+    ts_keys = [b["ts"] for b in sym_bars]
+
+    trace: list = []
+    result = await replay_signal_row(sig, symbol_bars=sym_bars, ts_keys=ts_keys,
+                                      batch_id=None, trace=trace)
+
+    return {
+        "status": "ok",
+        "prediction_id": prediction_id,
+        "original": {
+            "status": sig.get("status"),
+            "resolution_reason": sig.get("resolution_reason"),
+            "entry_price": sig.get("ml_entry_price"),
+            "exit_price": sig.get("exit_price"),
+            "highest_profit_pips": sig.get("highest_profit_pips"),
+            "lowest_drawdown_pips": sig.get("lowest_drawdown_pips"),
+            "direction": sig.get("ml_direction"),
+            "timeframe": sig.get("timeframe"),
+            "created_at": sig.get("created_at"),
+        },
+        "corrected": {
+            "status": result.get("corrected_status"),
+            "resolution_reason": result.get("corrected_resolution_reason"),
+            "target_hit": result.get("corrected_target_hit"),
+            "exit_price": result.get("corrected_exit_price"),
+            "exit_at": result.get("corrected_exit_at"),
+            "mfe_pips": result.get("corrected_mfe_pips"),
+            "mae_pips": result.get("corrected_mae_pips"),
+            "time_to_resolution_minutes": result.get("corrected_time_to_resolution_minutes"),
+        },
+        "replay_status": result.get("replay_status"),
+        "outcome_flipped": result.get("outcome_flipped"),
+        "diagnostics": result.get("_diagnostics"),
+        "bar_trace": trace,
+    }

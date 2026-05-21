@@ -15,7 +15,7 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from services.signal_replay_1m import run_replay_batch
+from services.signal_replay_1m import run_replay_batch, inspect_signal
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/replay", tags=["Replay & Correction"])
@@ -50,6 +50,21 @@ async def run_replay(
     if summary.get("status") == "error":
         raise HTTPException(500, summary.get("error", "replay failed"))
     return summary
+
+
+@router.get("/inspect/{prediction_id}")
+async def inspect(prediction_id: str):
+    """Audit one signal's correction — full bar-by-bar walk.
+
+    Returns: original vs corrected outcome, the measured EODHD→MT5 price
+    offset, every TP/SL price level, and each 1m bar's decision (which TP
+    crossed, whether SL was touched, in-bar ambiguity flag) until the
+    signal resolved. Use this to verify a correction is sound."""
+    result = await inspect_signal(prediction_id)
+    if result.get("status") == "error":
+        raise HTTPException(404 if "not found" in str(result.get("error")) else 500,
+                            result.get("error", "inspect failed"))
+    return result
 
 
 @router.get("/report")
