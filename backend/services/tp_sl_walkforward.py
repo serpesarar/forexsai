@@ -1,73 +1,64 @@
 """
-Walk-forward TP/SL designer — distribution-based, overfit-resistant.
+Walk-forward TP/SL designer — distribution-based, overfit-resistant,
+order-aware.
 
-Why this exists
----------------
-The grid-search optimizer (tp_sl_optimizer.py) maximises in-sample net
-P&L. On a near-zero-edge system that just curve-fits the noise of one
-history — it spat out absurd configs (TP=370pt, "+190k pip"). This
-module instead does what the user actually asked for:
-
-  1. Each historical signal is followed on the 1m chart; the replay
-     already recorded its max favourable excursion (MFE — how far price
-     ran) and max adverse excursion (MAE — how deep it dipped).
-  2. TP is set where price ACTUALLY tends to reach — a percentile of the
-     MFE distribution (default median).
-  3. SL is set just beyond the typical drawdown of WINNING signals — a
-     high percentile of the MAE-of-winners distribution — so a trade
-     that would have won is not stopped out early.
-  4. CRITICAL: this is derived on a TRAIN slice (older signals) and then
-     scored on an untouched TEST slice (recent signals). If the derived
-     config still beats the current one on data it never saw, it is
-     real; if not, it was overfit. That train/test split is the honest
-     "try both systems" the user wants.
+Method
+------
+1. TRAIN slice (signals before train_cutoff): read each signal's MFE/MAE
+   (already recorded by the 1m replay) and derive a TP/SL:
+     - TP = percentile of the MFE distribution (where price reaches)
+     - SL = high percentile of WINNERS' MAE (beyond their drawdown)
+2. TEST slice (signals after the cutoff — never seen by the derivation):
+   RE-WALK each signal on the real 1m bars with both the current config
+   and the derived config. This is order-aware (uses the OHLC bar-path
+   heuristic for an in-bar TP+SL) — NOT the aggregate-MFE/MAE shortcut,
+   which mis-resolves ambiguity via a stale status field.
+3. Compare current vs derived on the test slice. If derived wins on data
+   it never saw, it is real; if not, it was overfit.
 
 Public API
 ----------
-    await walk_forward_test(symbol, direction=None, model_type=None,
-                             train_cutoff=..., tp_pct=50, sl_pct=85) → dict
-    await walk_forward_all(train_cutoff=..., ...) → list[dict]
+    await walk_forward_test(symbol, direction=..., ...) → dict
+    await walk_forward_all(...) → list[dict]
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 import numpy as np
 
-from services.tp_sl_optimizer import (
-    get_current_config, simulate_tp_sl, distribution_stats,
+from services.tp_sl_optimizer import get_current_config, distribution_stats
+from services.signal_replay_1m import (
+    _load_all_1m_bars_sync, _slice_bars, _parse_iso, _max_hold_minutes,
 )
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_TRAIN_CUTOFF = "2026-04-20T00:00:00+00:00"  # ~1 month of test data
-DEFAULT_TP_PERCENTILE = 50      # TP at the median MFE — price reaches it ~half the time
-DEFAULT_SL_PERCENTILE = 85      # SL beyond p85 of winners' drawdown
+DEFAULT_TRAIN_CUTOFF = "2026-04-20T00:00:00+00:00"
+DEFAULT_TP_PERCENTILE = 50
+DEFAULT_SL_PERCENTILE = 85
 MIN_TRAIN_SAMPLE = 40
 MIN_TEST_SAMPLE = 20
 SUPABASE_PAGE = 1000
 
 
 # ---------------------------------------------------------------------------
-# Fetch corrected signals WITH created_at (needed to split train/test)
+# Fetch corrected signals (with created_at + entry for the re-walk)
 # ---------------------------------------------------------------------------
 
-async def _fetch_corrected_with_dates(
-    client, symbol: str, direction: Optional[str],
-    model_type: Optional[str], days: int,
-) -> list[dict]:
-    """Pull replay-corrected signals — keeps signal_created_at so the
-    walk-forward split can be made."""
+async def _fetch_corrected(client, symbol: str, direction: Optional[str],
+                            model_type: Optional[str], days: int) -> list[dict]:
     since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
     rows: list[dict] = []
     offset = 0
     while True:
         q = (client.table("prediction_replay_corrections").select(
-            "prediction_id,symbol,model_type,direction,entry_price,"
-            "signal_created_at,corrected_status,corrected_exit_price,"
-            "corrected_mfe_pips,corrected_mae_pips,replay_status")
+            "prediction_id,symbol,model_type,direction,entry_price,timeframe,"
+            "signal_created_at,corrected_status,corrected_mfe_pips,"
+            "corrected_mae_pips,replay_status")
             .eq("symbol", symbol)
             .gte("signal_created_at", since)
             .order("signal_created_at", desc=False)
@@ -84,86 +75,114 @@ async def _fetch_corrected_with_dates(
         if len(page) < SUPABASE_PAGE:
             break
         offset += SUPABASE_PAGE
-
-    # Only trustworthy, resolved rows.
-    rows = [r for r in rows
+    return [r for r in rows
             if r.get("replay_status") == "ok"
             and r.get("corrected_status") in ("completed", "stopped")]
 
-    # Percentage-unit detection (USOIL stores TP/SL as % of entry).
-    try:
-        from services.target_config import get_symbol_config
-        cfg = get_symbol_config(symbol)
-        is_pct = bool(getattr(cfg, "is_percentage", False))
-        pip_val = float(getattr(cfg, "pip_value", 1.0)) or 1.0
-    except Exception:
-        is_pct, pip_val = False, 1.0
 
-    out: list[dict] = []
-    for r in rows:
-        mfe = abs(float(r.get("corrected_mfe_pips") or 0))
-        mae = abs(float(r.get("corrected_mae_pips") or 0))
-        entry = float(r.get("entry_price") or 0)
-        exit_p = float(r.get("corrected_exit_price") or 0)
-        status = r.get("corrected_status")
-        direction_ = r.get("direction")
-        if entry > 0 and exit_p > 0 and direction_ in ("BUY", "SELL"):
-            raw = (exit_p - entry) if direction_ == "BUY" else (entry - exit_p)
-            realized = (raw / entry) * 100.0 if is_pct else raw / pip_val
+# ---------------------------------------------------------------------------
+# Order-aware single-trade evaluation on real 1m bars
+# ---------------------------------------------------------------------------
+
+def evaluate_tpsl(bars: list[dict], entry: float, direction: str,
+                   tp_price: float, sl_price: float) -> str:
+    """Walk 1m bars; return 'win' | 'loss' | 'timeout' for one (TP, SL).
+
+    In-bar TP+SL ambiguity uses the OHLC bar-path heuristic: a bullish bar
+    (close>=open) travels open→low→high→close, a bearish one the reverse."""
+    for bar in bars:
+        h = float(bar["high"]); l = float(bar["low"])
+        o = float(bar.get("open") or 0); c = float(bar.get("close") or 0)
+        if direction == "BUY":
+            tp_hit = h >= tp_price
+            sl_hit = l <= sl_price
         else:
-            realized = mfe if status == "completed" else -mae
-        out.append({
-            "id": r.get("prediction_id"),
-            "created_at": r.get("signal_created_at"),
-            "direction": direction_,
-            "status": status,
-            "mfe_pips": mfe,
-            "mae_pips": mae,
-            "realized_pnl_pips": realized,
-        })
-    return out
+            tp_hit = l <= tp_price
+            sl_hit = h >= sl_price
+        if tp_hit and sl_hit:
+            bullish = c >= o
+            tp_first = (not bullish) if direction == "BUY" else bullish
+            return "win" if tp_first else "loss"
+        if tp_hit:
+            return "win"
+        if sl_hit:
+            return "loss"
+    return "timeout"
 
 
-# ---------------------------------------------------------------------------
-# Distribution-based TP/SL derivation
-# ---------------------------------------------------------------------------
+def _score_config(test_signals: list[dict], symbol_bars: list[dict],
+                   ts_keys: list, tp_pips: float, sl_pips: float,
+                   symbol: str) -> dict:
+    """Re-walk every test signal with one (TP, SL); aggregate net pips."""
+    from services.target_config import get_symbol_config
+    cfg = get_symbol_config(symbol)
+    is_pct = bool(getattr(cfg, "is_percentage", False))
 
-def derive_tp_sl(train_signals: list[dict],
-                  tp_pct: float = DEFAULT_TP_PERCENTILE,
-                  sl_pct: float = DEFAULT_SL_PERCENTILE) -> dict:
-    """Derive TP/SL purely from the MFE/MAE distribution of the train set.
+    wins = losses = timeouts = 0
+    for s in test_signals:
+        created = _parse_iso(s["created_at"])
+        entry = float(s.get("entry_price") or 0)
+        direction = s.get("direction")
+        if not created or entry <= 0 or direction not in ("BUY", "SELL"):
+            continue
+        # TP/SL prices from pip distances (pct symbols: pips = % of entry).
+        if is_pct:
+            tp_off = entry * (tp_pips / 100.0)
+            sl_off = entry * (sl_pips / 100.0)
+        else:
+            tp_off = tp_pips
+            sl_off = sl_pips
+        if direction == "BUY":
+            tp_price = entry + tp_off
+            sl_price = entry - sl_off
+        else:
+            tp_price = entry - tp_off
+            sl_price = entry + sl_off
 
-    TP = percentile(MFE, tp_pct)  — where price actually tends to reach.
-    SL = percentile(MAE of winners, sl_pct) — beyond the typical drawdown
-         of signals that would still have reached the derived TP, so we
-         don't stop a would-be winner early.
+        window_end = created + timedelta(minutes=_max_hold_minutes(s.get("timeframe")))
+        bars = _slice_bars(symbol_bars, ts_keys, created, window_end)
+        if not bars:
+            continue
+        outcome = evaluate_tpsl(bars, entry, direction, tp_price, sl_price)
+        if outcome == "win":
+            wins += 1
+        elif outcome == "loss":
+            losses += 1
+        else:
+            timeouts += 1
 
-    'Winners' are re-evaluated against the DERIVED TP (not the old one):
-    a signal is a winner-candidate if its MFE >= TP_derived.
-    """
-    if not train_signals:
-        return {"tp": None, "sl": None, "reason": "no train signals"}
-
-    mfe = np.array([s["mfe_pips"] for s in train_signals], dtype=float)
-    mae = np.array([s["mae_pips"] for s in train_signals], dtype=float)
-
-    tp = float(np.percentile(mfe, tp_pct))
-    if tp <= 0:
-        tp = float(np.percentile(mfe[mfe > 0], tp_pct)) if (mfe > 0).any() else 0.0
-
-    # Winners under the derived TP — their drawdown drives the SL.
-    winner_mae = mae[mfe >= tp]
-    if winner_mae.size >= 10:
-        sl = float(np.percentile(winner_mae, sl_pct))
-    else:
-        # Too few winners to characterise — fall back to the overall MAE.
-        sl = float(np.percentile(mae, sl_pct))
-
+    resolved = wins + losses
+    net = wins * tp_pips - losses * sl_pips
+    total = wins + losses + timeouts
     return {
-        "tp": round(tp, 4),
-        "sl": round(sl, 4),
-        "tp_percentile": tp_pct,
-        "sl_percentile": sl_pct,
+        "tp_pips": tp_pips, "sl_pips": sl_pips,
+        "wins": wins, "losses": losses, "timeouts": timeouts,
+        "win_rate": round(100 * wins / resolved, 2) if resolved else None,
+        "net_pnl_pips": round(net, 2),
+        "avg_pnl_per_trade": round(net / total, 4) if total else 0,
+        "trigger_rate_pct": round(100 * resolved / total, 1) if total else 0,
+        "rr_ratio": round(tp_pips / sl_pips, 2) if sl_pips else None,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Distribution-based derivation (TRAIN only)
+# ---------------------------------------------------------------------------
+
+def derive_tp_sl(train_rows: list[dict], tp_pct: float, sl_pct: float) -> dict:
+    """TP = percentile of MFE; SL = high percentile of winners' MAE."""
+    mfe = np.array([abs(float(r.get("corrected_mfe_pips") or 0)) for r in train_rows])
+    mae = np.array([abs(float(r.get("corrected_mae_pips") or 0)) for r in train_rows])
+    if mfe.size == 0:
+        return {"tp": None, "sl": None}
+    tp = float(np.percentile(mfe, tp_pct))
+    if tp <= 0 and (mfe > 0).any():
+        tp = float(np.percentile(mfe[mfe > 0], tp_pct))
+    winner_mae = mae[mfe >= tp]
+    sl = float(np.percentile(winner_mae if winner_mae.size >= 10 else mae, sl_pct))
+    return {
+        "tp": round(tp, 4), "sl": round(sl, 4),
+        "tp_percentile": tp_pct, "sl_percentile": sl_pct,
         "winners_in_train": int((mfe >= tp).sum()),
         "mfe_distribution": distribution_stats(list(mfe)),
         "mae_winners_distribution": distribution_stats(list(winner_mae)) if winner_mae.size else {},
@@ -171,7 +190,7 @@ def derive_tp_sl(train_signals: list[dict],
 
 
 # ---------------------------------------------------------------------------
-# Walk-forward: derive on train, score on test
+# Walk-forward
 # ---------------------------------------------------------------------------
 
 async def walk_forward_test(
@@ -182,9 +201,9 @@ async def walk_forward_test(
     days: int = 120,
     tp_pct: float = DEFAULT_TP_PERCENTILE,
     sl_pct: float = DEFAULT_SL_PERCENTILE,
+    _symbol_bars: Optional[list] = None,
+    _ts_keys: Optional[list] = None,
 ) -> dict:
-    """Derive TP/SL on signals before `train_cutoff`, then score current vs
-    derived config on signals after it (data the derivation never saw)."""
     from database.supabase_client import get_supabase_client, is_db_available
     if not is_db_available():
         return {"status": "error", "error": "db_unavailable"}
@@ -195,89 +214,94 @@ async def walk_forward_test(
     except ValueError:
         return {"status": "error", "error": f"bad train_cutoff: {train_cutoff}"}
 
-    signals = await _fetch_corrected_with_dates(client, symbol, direction, model_type, days)
+    rows = await _fetch_corrected(client, symbol, direction, model_type, days)
     out: dict = {
         "status": "ok", "symbol": symbol, "direction": direction,
         "model_type": model_type, "train_cutoff": train_cutoff,
-        "total_signals": len(signals),
+        "total_signals": len(rows),
     }
-    if not signals:
+    if not rows:
         out["status"] = "no_data"
         return out
 
-    def _parse(v):
-        try:
-            return datetime.fromisoformat(str(v).replace("Z", "+00:00"))
-        except Exception:
-            return None
-
-    train = [s for s in signals if (_parse(s["created_at"]) or cutoff) < cutoff]
-    test = [s for s in signals if (_parse(s["created_at"]) or cutoff) >= cutoff]
+    train = [r for r in rows if (_parse_iso(r["signal_created_at"]) or cutoff) < cutoff]
+    test = [r for r in rows if (_parse_iso(r["signal_created_at"]) or cutoff) >= cutoff]
     out["train_size"] = len(train)
     out["test_size"] = len(test)
-
     if len(train) < MIN_TRAIN_SAMPLE or len(test) < MIN_TEST_SAMPLE:
         out["status"] = "insufficient_data"
         out["reason"] = (f"train={len(train)} (need ≥{MIN_TRAIN_SAMPLE}), "
                           f"test={len(test)} (need ≥{MIN_TEST_SAMPLE})")
         return out
 
-    # ── Derive TP/SL from the TRAIN distribution ────────────────────────────
-    derived = derive_tp_sl(train, tp_pct=tp_pct, sl_pct=sl_pct)
+    derived = derive_tp_sl(train, tp_pct, sl_pct)
     out["derived"] = derived
     if not derived.get("tp") or not derived.get("sl"):
         out["status"] = "derivation_failed"
         return out
 
-    # ── Current config ──────────────────────────────────────────────────────
     current_cfg = get_current_config(symbol)
     cur_tp = current_cfg.get("tp_pips") or 0
     cur_sl = current_cfg.get("sl_pips") or 0
     out["current_config"] = {"tp": cur_tp, "sl": cur_sl}
 
-    # ── Score BOTH on the untouched TEST slice ──────────────────────────────
-    sim_current = simulate_tp_sl(test, cur_tp, cur_sl) if (cur_tp and cur_sl) else None
-    sim_derived = simulate_tp_sl(test, derived["tp"], derived["sl"])
+    # 1m bars for the order-aware re-walk (load once; reusable across a batch).
+    symbol_bars = _symbol_bars
+    ts_keys = _ts_keys
+    if symbol_bars is None:
+        symbol_bars = await asyncio.to_thread(_load_all_1m_bars_sync, symbol)
+        ts_keys = [b["ts"] for b in symbol_bars]
+    if not symbol_bars:
+        out["status"] = "no_candles"
+        return out
 
+    # Normalise test rows for _score_config.
+    test_norm = [{
+        "created_at": r["signal_created_at"],
+        "entry_price": r.get("entry_price"),
+        "direction": r.get("direction"),
+        "timeframe": r.get("timeframe"),
+    } for r in test]
+
+    sim_current = (_score_config(test_norm, symbol_bars, ts_keys, cur_tp, cur_sl, symbol)
+                   if (cur_tp and cur_sl) else None)
+    sim_derived = _score_config(test_norm, symbol_bars, ts_keys,
+                                 derived["tp"], derived["sl"], symbol)
     out["test_current"] = sim_current
     out["test_derived"] = sim_derived
 
-    # ── Verdict ─────────────────────────────────────────────────────────────
     if sim_current:
-        delta = sim_derived["net_pnl"] - sim_current["net_pnl"]
-        out["oos_net_pnl_delta"] = round(delta, 2)
-        out["derived_beats_current_oos"] = bool(delta > 0)
-        # Per-trade is the honest figure — total scales with sample size.
-        cur_avg = sim_current.get("avg_pnl_per_trade") or 0
-        der_avg = sim_derived.get("avg_pnl_per_trade") or 0
-        out["oos_avg_pnl_per_trade"] = {"current": cur_avg, "derived": der_avg}
+        d_avg = sim_derived["avg_pnl_per_trade"]
+        c_avg = sim_current["avg_pnl_per_trade"]
+        out["oos_avg_delta"] = round(d_avg - c_avg, 4)
+        out["derived_beats_current_oos"] = bool(d_avg > c_avg)
         out["verdict"] = (
-            "derived config holds up out-of-sample" if delta > 0
-            else "derived config does NOT beat current out-of-sample — likely overfit"
+            "derived config holds up out-of-sample"
+            if d_avg > c_avg else
+            "derived config does NOT beat current out-of-sample — likely overfit"
         )
     else:
         out["verdict"] = "no current config to compare"
-
     return out
 
 
-async def walk_forward_all(
-    train_cutoff: str = DEFAULT_TRAIN_CUTOFF,
-    days: int = 120,
-    tp_pct: float = DEFAULT_TP_PERCENTILE,
-    sl_pct: float = DEFAULT_SL_PERCENTILE,
-    symbols: Optional[list[str]] = None,
-) -> list[dict]:
-    """Run the walk-forward test for every symbol × direction."""
+async def walk_forward_all(train_cutoff: str = DEFAULT_TRAIN_CUTOFF,
+                            days: int = 120,
+                            tp_pct: float = DEFAULT_TP_PERCENTILE,
+                            sl_pct: float = DEFAULT_SL_PERCENTILE,
+                            symbols: Optional[list[str]] = None) -> list[dict]:
     symbols = symbols or ["XAUUSD", "NDX.INDX", "GDAXI.INDX", "USOIL.FOREX"]
     results: list[dict] = []
     for sym in symbols:
+        # Load each symbol's 1m bars ONCE, share across both directions.
+        bars = await asyncio.to_thread(_load_all_1m_bars_sync, sym)
+        tsk = [b["ts"] for b in bars]
         for direction in ("BUY", "SELL"):
             try:
-                r = await walk_forward_test(
+                results.append(await walk_forward_test(
                     sym, direction=direction, train_cutoff=train_cutoff,
-                    days=days, tp_pct=tp_pct, sl_pct=sl_pct)
-                results.append(r)
+                    days=days, tp_pct=tp_pct, sl_pct=sl_pct,
+                    _symbol_bars=bars, _ts_keys=tsk))
             except Exception as e:
                 logger.exception("[walkforward] %s %s failed: %s", sym, direction, e)
                 results.append({"status": "error", "symbol": sym,
