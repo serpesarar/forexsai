@@ -127,6 +127,40 @@ DEFAULT_CONFIG = SymbolConfig(
     is_percentage=False,
 )
 
+# ─── Walk-forward derived TP/SL — SIDE SYSTEM ────────────────────────────────
+# Distribution-derived configs that survived the multi-fold rolling
+# walk-forward (2026-05-21): only NDX.INDX BUY (5/5 folds), GDAXI.INDX SELL
+# (3/4) and USOIL.FOREX SELL (5/5) were robust out-of-sample. TP1 is the
+# walk-forward-validated win threshold; TP2-4 ladder up from it.
+#
+# KILL SWITCH: applied ONLY when env TP_SL_DERIVED_OVERRIDES=1. Default
+# OFF → production trades the base ladder, zero change. Flip to 1 +
+# redeploy to A/B the derived configs; flip back to 0 to revert instantly.
+import os as _os
+
+_DERIVED_OVERRIDES = {
+    "NDX.INDX": ("BUY", DirectionOverride(
+        targets=[TargetLevel("TP1", 80), TargetLevel("TP2", 100),
+                 TargetLevel("TP3", 125), TargetLevel("TP4", 155)],
+        stoploss_pips=110, source="walkforward:NDX-BUY/5of5-folds")),
+    "GDAXI.INDX": ("SELL", DirectionOverride(
+        targets=[TargetLevel("TP1", 67), TargetLevel("TP2", 85),
+                 TargetLevel("TP3", 105), TargetLevel("TP4", 130)],
+        stoploss_pips=119, source="walkforward:GDAXI-SELL/3of4-folds")),
+    "USOIL.FOREX": ("SELL", DirectionOverride(
+        targets=[TargetLevel("TP1", 1.04), TargetLevel("TP2", 1.30),
+                 TargetLevel("TP3", 1.60), TargetLevel("TP4", 2.00)],
+        stoploss_pips=1.49, source="walkforward:USOIL-SELL/5of5-folds")),
+}
+
+DERIVED_OVERRIDES_ACTIVE = _os.getenv("TP_SL_DERIVED_OVERRIDES", "0") == "1"
+
+if DERIVED_OVERRIDES_ACTIVE:
+    for _sym, (_dir, _ov) in _DERIVED_OVERRIDES.items():
+        if _sym in SYMBOL_CONFIGS:
+            SYMBOL_CONFIGS[_sym] = SYMBOL_CONFIGS[_sym]._replace(
+                direction_overrides={_dir: _ov})
+
 
 def get_symbol_config(symbol: str) -> SymbolConfig:
     """Get base configuration for a symbol (no direction override)."""

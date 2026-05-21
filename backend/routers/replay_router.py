@@ -135,6 +135,35 @@ async def walkforward(
                 train_cutoff=train_cutoff, days=days, tp_pct=tp_pct, sl_pct=sl_pct)}
 
 
+@router.get("/derived-config-status")
+async def derived_config_status():
+    """Show the walk-forward 'side system' — the derived TP/SL configs and
+    whether they are currently active (env TP_SL_DERIVED_OVERRIDES)."""
+    from services.target_config import (
+        DERIVED_OVERRIDES_ACTIVE, _DERIVED_OVERRIDES, get_effective_config,
+    )
+    scopes = []
+    for sym, (direction, ov) in _DERIVED_OVERRIDES.items():
+        eff = get_effective_config(sym, direction)
+        scopes.append({
+            "symbol": sym, "direction": direction,
+            "derived_tp_ladder": [t.pips for t in ov.targets],
+            "derived_sl": ov.stoploss_pips,
+            "provenance": ov.source,
+            "currently_applied": bool(DERIVED_OVERRIDES_ACTIVE),
+            "live_tp1": eff.targets[0].pips if eff.targets else None,
+            "live_sl": eff.stoploss_pips,
+        })
+    return {
+        "status": "ok",
+        "side_system_active": bool(DERIVED_OVERRIDES_ACTIVE),
+        "env_flag": "TP_SL_DERIVED_OVERRIDES",
+        "note": ("Set TP_SL_DERIVED_OVERRIDES=1 and redeploy to apply the "
+                  "derived configs to these 3 robust scopes; set to 0 to revert."),
+        "scopes": scopes,
+    }
+
+
 @router.get("/walkforward-rolling")
 async def walkforward_rolling(
     symbol: Optional[str] = Query(None),
