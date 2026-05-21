@@ -134,6 +134,95 @@ def get_current_config(symbol: str, timeframe: Optional[str] = None) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Data fetch — corrected (1m-replay) signals
+# ---------------------------------------------------------------------------
+
+async def _fetch_corrected_signals(
+    client, symbol: str, model_type: Optional[str], direction: Optional[str],
+    timeframe: Optional[str], days: int,
+) -> list[dict]:
+    """Pull resolved signals from prediction_replay_corrections — the honest
+    1m-bar-replay ground truth — and shape them like _fetch_signals_with_outcomes
+    so grid_search/simulate_tp_sl consume them unchanged.
+
+    MFE/MAE here are `corrected_mfe_pips`/`corrected_mae_pips` (replayed),
+    not the leak-contaminated columns on prediction_logs."""
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    rows: list[dict] = []
+    offset = 0
+    PAGE = 1000
+    try:
+        while True:
+            q = (client.table("prediction_replay_corrections").select(
+                "prediction_id,symbol,model_type,direction,timeframe,entry_price,"
+                "corrected_status,corrected_resolution_reason,corrected_exit_price,"
+                "corrected_mfe_pips,corrected_mae_pips,replay_status")
+                .eq("symbol", symbol)
+                .gte("signal_created_at", since)
+                .order("replayed_at", desc=False)
+                .range(offset, offset + PAGE - 1))
+            if model_type:
+                q = q.eq("model_type", model_type)
+            if direction in ("BUY", "SELL"):
+                q = q.eq("direction", direction)
+            if timeframe:
+                q = q.eq("timeframe", timeframe)
+            res = q.execute() if hasattr(q, "execute") else q
+            page = res.get("data") if isinstance(res, dict) else getattr(res, "data", []) or []
+            if not page:
+                break
+            rows.extend(page)
+            if len(page) < PAGE:
+                break
+            offset += PAGE
+    except Exception as e:
+        logger.exception("[tp_sl] fetch corrected signals failed: %s", e)
+        return []
+
+    # Only replay_status='ok' rows carry trustworthy corrected MFE/MAE.
+    rows = [r for r in rows
+            if r.get("replay_status") == "ok"
+            and r.get("corrected_status") in ("completed", "stopped")]
+    if not rows:
+        return []
+
+    try:
+        from services.target_config import get_symbol_config
+        _scfg = get_symbol_config(symbol)
+        is_pct = bool(getattr(_scfg, "is_percentage", False))
+        pip_val = float(getattr(_scfg, "pip_value", 1.0)) or 1.0
+    except Exception:
+        is_pct = False
+        pip_val = 1.0
+
+    enriched: list[dict] = []
+    for s in rows:
+        mfe = abs(float(s.get("corrected_mfe_pips") or 0))
+        mae = abs(float(s.get("corrected_mae_pips") or 0))
+        entry = float(s.get("entry_price") or 0)
+        exit_p = float(s.get("corrected_exit_price") or 0)
+        direction_ = s.get("direction")
+        status = s.get("corrected_status")
+        if entry > 0 and exit_p > 0 and direction_ in ("BUY", "SELL"):
+            raw_diff = (exit_p - entry) if direction_ == "BUY" else (entry - exit_p)
+            realized = (raw_diff / entry) * 100.0 if is_pct else raw_diff / pip_val
+        else:
+            realized = mfe if status == "completed" else -mae
+        enriched.append({
+            "id": s.get("prediction_id"),
+            "symbol": s.get("symbol"),
+            "model_type": s.get("model_type"),
+            "direction": direction_,
+            "timeframe": s.get("timeframe"),
+            "status": status,
+            "mfe_pips": mfe,
+            "mae_pips": mae,
+            "realized_pnl_pips": realized,
+        })
+    return enriched
+
+
+# ---------------------------------------------------------------------------
 # Data fetch — last N days of resolved signals + outcomes
 # ---------------------------------------------------------------------------
 
@@ -543,13 +632,30 @@ async def analyze_tp_sl(
         return {"status": "error", "error": "db_unavailable"}
     client = get_supabase_client()
 
-    signals = await _fetch_signals_with_outcomes(
-        client, symbol, model_type, direction, timeframe, days)
+    # Data source: by default use the 1m-replay corrected ground truth
+    # (prediction_replay_corrections). Set TP_SL_USE_CORRECTED=0 to fall
+    # back to the raw prediction_logs MFE/MAE columns.
+    import os as _os
+    use_corrected = _os.getenv("TP_SL_USE_CORRECTED", "1") != "0"
+    data_source = "prediction_logs"
+    signals = []
+    if use_corrected:
+        signals = await _fetch_corrected_signals(
+            client, symbol, model_type, direction, timeframe, days)
+        if signals:
+            data_source = "prediction_replay_corrections"
+        else:
+            logger.info("[tp_sl] no corrected rows for %s/%s/%s — falling back "
+                        "to prediction_logs", symbol, model_type, direction)
+    if not signals:
+        signals = await _fetch_signals_with_outcomes(
+            client, symbol, model_type, direction, timeframe, days)
 
     out: dict = {
         "symbol": symbol, "model_type": model_type, "direction": direction,
         "timeframe": timeframe, "analysis_window_days": days,
         "sample_size": len(signals),
+        "data_source": data_source,
     }
     if len(signals) < MIN_SAMPLE_SIZE:
         out["status"] = "insufficient_data"
@@ -562,8 +668,10 @@ async def analyze_tp_sl(
     # olduktan sonraki 20 mum nereye gitmiş"). Behind env flag so we can
     # roll it out without disturbing the current optimizer behaviour.
     post_drift_summary: Optional[dict] = None
-    import os as _os
-    if _os.getenv("TP_SL_CANDLE_REPLAY", "0") == "1":
+    # Skip the ad-hoc candle replay when signals already come from
+    # prediction_replay_corrections — those MFE/MAE are already 1m-replayed,
+    # re-walking candles would just duplicate work.
+    if _os.getenv("TP_SL_CANDLE_REPLAY", "0") == "1" and data_source != "prediction_replay_corrections":
         try:
             from services.tp_sl_candle_replay import (
                 enrich_signals_with_replay, summarize_post_drift,
