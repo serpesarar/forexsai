@@ -444,15 +444,17 @@ async def mark_stale_proposals(
         raise HTTPException(503, "supabase unavailable")
     client = get_supabase_client()
 
-    statuses = ["pending"] + (["approved"] if include_approved else [])
+    statuses = {"pending"} | ({"approved"} if include_approved else set())
     try:
-        rows = _row_data(client.table("improvement_proposals")
-                         .select("id,proposal_type,status,created_at")
-                         .in_("status", statuses)
-                         .lt("created_at", cutoff)
-                         .limit(5000))
+        # NOTE: the wrapper's .in_() drops rows when combined with another
+        # filter — fetch by created_at only, filter status in Python.
+        all_rows = _row_data(client.table("improvement_proposals")
+                             .select("id,proposal_type,status,created_at")
+                             .lt("created_at", cutoff)
+                             .limit(5000))
     except Exception as e:
         raise HTTPException(500, f"fetch failed: {str(e)[:160]}")
+    rows = [r for r in all_rows if r.get("status") in statuses]
 
     by_type: dict = {}
     for r in rows:
