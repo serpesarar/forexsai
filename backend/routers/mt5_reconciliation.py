@@ -75,10 +75,19 @@ async def upload_1m_bars(
     broker_utc_offset_hours: float = Query(
         None,
         description=(
-            "Hours to subtract from each bar's `t` so candle_cache stores TRUE UTC. "
-            "MT5 returns time as unix-seconds-treated-as-broker-local, so the bar "
-            "labeled t=22:01 on a UTC+3 broker is actually 19:01 UTC. "
-            "If omitted, falls back to env MT5_BROKER_UTC_OFFSET_HOURS (default 3)."
+            "Hours to subtract from each bar's `t`. The MetaTrader5 Python API "
+            "already returns `time` in UTC (only the terminal DISPLAY shows "
+            "broker-local), so this should normally be 0. Set it only if a "
+            "specific broker's API is observed to return server-local time. "
+            "If omitted, falls back to env MT5_BROKER_UTC_OFFSET_HOURS (default 0)."
+        ),
+    ),
+    purge_existing: bool = Query(
+        False,
+        description=(
+            "Delete all existing 1m candle_cache rows for each symbol BEFORE "
+            "inserting. Use when re-uploading after a wrong tz offset so stale "
+            "shifted bars don't linger as duplicates."
         ),
     ),
 ):
@@ -116,15 +125,17 @@ async def upload_1m_bars(
         if not symbols_block:
             raise HTTPException(400, "No 'symbols' block or top-level 'symbol/bars' in payload")
 
-        # Broker timezone shift — convert MT5's "broker-local-as-unix" to true UTC.
+        # Broker timezone shift — the MT5 Python API returns UTC already, so
+        # the default is 0. Kept configurable for brokers that misbehave.
         if broker_utc_offset_hours is None:
             try:
-                broker_utc_offset_hours = float(os.getenv("MT5_BROKER_UTC_OFFSET_HOURS", "3"))
+                broker_utc_offset_hours = float(os.getenv("MT5_BROKER_UTC_OFFSET_HOURS", "0"))
             except ValueError:
-                broker_utc_offset_hours = 3.0
+                broker_utc_offset_hours = 0.0
         offset_seconds = int(broker_utc_offset_hours * 3600)
 
         from services.candle_cache_store import persist_candles
+        from database.supabase_client import get_supabase_client
 
         per_symbol_report = {}
         total_persisted = 0
@@ -135,6 +146,17 @@ async def upload_1m_bars(
                 per_symbol_report[mt5_sym] = {"canonical": canonical, "persisted": 0,
                                                 "note": "empty"}
                 continue
+
+            # Optional purge — clear stale 1m rows (e.g. wrong-tz re-upload).
+            purged = 0
+            if purge_existing:
+                try:
+                    db = get_supabase_client()
+                    db.table("candle_cache").delete().eq(
+                        "symbol", canonical).eq("timeframe", "1m").execute()
+                    purged = -1   # -1 = "purge issued" (row count not returned)
+                except Exception as pe:
+                    logger.warning("purge failed for %s/1m: %s", canonical, pe)
 
             # Convert exporter format → candle_cache_store input format.
             # Subtract broker offset so we store TRUE UTC, aligning with the
@@ -160,6 +182,7 @@ async def upload_1m_bars(
                 "canonical": canonical,
                 "received": len(bars),
                 "persisted": n,
+                "purged": purge_existing,
             }
 
         return {

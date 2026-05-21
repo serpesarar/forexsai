@@ -34,6 +34,7 @@ Public API
 from __future__ import annotations
 
 import asyncio
+import bisect
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -44,6 +45,7 @@ logger = logging.getLogger(__name__)
 REPLAY_TIMEFRAME = "1m"
 RULE_VERSION = "v1"
 DEFAULT_FETCH_BATCH = 2000
+SUPABASE_PAGE_SIZE = 1000   # Supabase caps a single select at 1000 rows
 
 
 # ─── Helpers ────────────────────────────────────────────────────────────────
@@ -81,17 +83,89 @@ def _target_rank(name: str) -> Optional[int]:
         return None
 
 
+# ─── 1m bar loading — full paginated load per symbol ─────────────────────────
+
+def _load_all_1m_bars_sync(symbol: str) -> list[dict]:
+    """Load EVERY 1m bar for a symbol from candle_cache, paginating past the
+    Supabase 1000-row cap. Returns a list sorted ascending by `ts`.
+
+    This is loaded ONCE per symbol per batch and shared across all that
+    symbol's signals — avoids 75k individual range queries and the old
+    5000-bar window bug (5000 1m bars = only ~3.5 days of coverage)."""
+    from database.supabase_client import get_supabase_client, is_db_available
+    if not is_db_available():
+        return []
+    client = get_supabase_client()
+
+    out: list[dict] = []
+    offset = 0
+    while True:
+        try:
+            q = (client.table("candle_cache")
+                 .select("candle_time,open,high,low,close,volume")
+                 .eq("symbol", symbol)
+                 .eq("timeframe", REPLAY_TIMEFRAME)
+                 .order("candle_time", desc=False)
+                 .range(offset, offset + SUPABASE_PAGE_SIZE - 1))
+            res = q.execute() if hasattr(q, "execute") else q
+        except Exception as e:
+            logger.warning("[replay] candle page fetch failed @%d for %s: %s",
+                           offset, symbol, e)
+            break
+        page = res.data if hasattr(res, "data") else (
+            res.get("data") if isinstance(res, dict) else []) or []
+        if not page:
+            break
+        for row in page:
+            ct = row.get("candle_time")
+            ts = _parse_iso(ct)
+            if ts is None:
+                continue
+            out.append({
+                "ts": ts,
+                "open": float(row.get("open") or 0),
+                "high": float(row.get("high") or 0),
+                "low": float(row.get("low") or 0),
+                "close": float(row.get("close") or 0),
+                "volume": float(row.get("volume") or 0),
+            })
+        if len(page) < SUPABASE_PAGE_SIZE:
+            break
+        offset += SUPABASE_PAGE_SIZE
+
+    out.sort(key=lambda c: c["ts"])
+    logger.info("[replay] loaded %d 1m bars for %s", len(out), symbol)
+    return out
+
+
+def _slice_bars(symbol_bars: list[dict], ts_keys: list,
+                 start: datetime, end: datetime) -> list[dict]:
+    """Binary-search slice of a pre-sorted bar list to [start, end]."""
+    lo = bisect.bisect_left(ts_keys, start)
+    hi = bisect.bisect_right(ts_keys, end)
+    return symbol_bars[lo:hi]
+
+
 # ─── Core: replay a single signal ────────────────────────────────────────────
 
 async def replay_signal_row(signal_row: dict,
+                              symbol_bars: list[dict],
+                              ts_keys: list,
                               batch_id: Optional[str] = None) -> dict:
-    """Walk-forward replay of one signal. Returns the row that should be
-    written to prediction_replay_corrections."""
+    """Walk-forward replay of one signal against a pre-loaded, sorted bar list.
+
+    Args:
+      signal_row:  a prediction_logs row
+      symbol_bars: ALL 1m bars for this signal's symbol, sorted by `ts`
+      ts_keys:     parallel list of just the `ts` values (for bisect)
+      batch_id:    groups this row under one /api/replay/run pass
+
+    Returns the dict to write to prediction_replay_corrections.
+    """
     from services.target_config import (
         calculate_target_prices, calculate_stoploss_price,
         pips_from_price_change, get_symbol_config,
     )
-    from services.candle_cache_store import load_candles
 
     sid = signal_row.get("id")
     symbol = signal_row.get("symbol") or ""
@@ -134,43 +208,39 @@ async def replay_signal_row(signal_row: dict,
         return {**base, "replay_status": "no_entry",
                 "replay_notes": "tp/sl prices unresolved"}
 
-    # ── Fetch 1m bars in the active window ──────────────────────────────────
+    # ── Slice 1m bars for the active window ─────────────────────────────────
+    if not symbol_bars:
+        return {**base, "replay_status": "no_candles",
+                "replay_notes": "candle_cache empty for symbol/1m"}
+
     window_minutes = _evaluation_window_minutes(timeframe)
     # Honest small extension: bars are bucketed by minute boundary, so allow
     # the last open minute to land on a closed bar (+2 min buffer).
     window_end = created_at + timedelta(minutes=window_minutes + 2)
-
-    # candle_cache_store.load_candles returns the LAST N bars across all time.
-    # For long-window replays we'd need a time-range query, but for the
-    # 2-2880 min window the symbol's last ~5000 cached bars almost always
-    # bracket the signal. If not, we degrade gracefully.
-    bars_all = await asyncio.to_thread(load_candles, symbol, REPLAY_TIMEFRAME, 5000)
-    if not bars_all:
-        return {**base, "replay_status": "no_candles",
-                "replay_notes": "candle_cache empty for symbol/1m"}
-
-    # Filter to the exact active window (+ a 2-min lead so we can find the
-    # anchor bar AT created_at for the price-offset calibration below).
-    bars: list[dict] = []
-    anchor_bar: Optional[dict] = None
+    # 2-min lead so we can find the anchor bar AT/just-before created_at for
+    # the price-offset calibration.
     anchor_window_start = created_at - timedelta(minutes=2)
-    for c in bars_all:
-        ts_ms = c.get("timestamp")
-        if not ts_ms:
-            continue
-        ts = datetime.fromtimestamp(ts_ms / 1000.0, tz=timezone.utc)
-        if anchor_window_start <= ts <= window_end:
-            row = {**c, "ts": ts}
-            # The "anchor" is the bar that opens on or just before created_at —
-            # its open price is the cleanest proxy for the live MT5 quote at
-            # signal time.
-            if ts <= created_at:
-                anchor_bar = row
-            if ts >= created_at:
-                bars.append(row)
-    if not bars:
+
+    window_bars = _slice_bars(symbol_bars, ts_keys, anchor_window_start, window_end)
+    if not window_bars:
         return {**base, "replay_status": "no_candles",
                 "replay_notes": (f"no 1m bars in window "
+                                   f"[{created_at.isoformat()}, {window_end.isoformat()}]")}
+
+    bars: list[dict] = []
+    anchor_bar: Optional[dict] = None
+    for row in window_bars:
+        ts = row["ts"]
+        # The "anchor" is the bar that opens on or just before created_at —
+        # its open price is the cleanest proxy for the live MT5 quote at
+        # signal time.
+        if ts <= created_at:
+            anchor_bar = row
+        if ts >= created_at:
+            bars.append(row)
+    if not bars:
+        return {**base, "replay_status": "no_candles",
+                "replay_notes": (f"no 1m bars at/after created_at "
                                    f"[{created_at.isoformat()}, {window_end.isoformat()}]")}
     # Anchor fallback: first bar at-or-after created_at if none before.
     if anchor_bar is None:
@@ -387,38 +457,68 @@ async def run_replay_batch(since_iso: str,
 
     # Fetch resolved + active signals (replay can still produce a result for
     # active ones since the 1m bar history extends past their lifecycle).
-    q = client.table("prediction_logs").select(
-        "id,symbol,model_type,ml_direction,ml_entry_price,timeframe,status,"
-        "resolution_reason,exit_price,highest_profit_pips,lowest_drawdown_pips,"
-        "created_at"
-    ).gte("created_at", since_iso).order("created_at", desc=False)
-    if symbol:
-        q = q.eq("symbol", symbol)
-    if model_type:
-        q = q.eq("model_type", model_type)
-    if limit:
-        q = q.limit(int(limit))
-    else:
-        q = q.limit(50000)
-
+    # Supabase caps a select at 1000 rows — paginate with .range().
+    rows: list[dict] = []
+    page_offset = 0
+    hard_cap = int(limit) if limit else 200000
     try:
-        res = q.execute() if hasattr(q, "execute") else q
+        while len(rows) < hard_cap:
+            page_size = min(SUPABASE_PAGE_SIZE, hard_cap - len(rows))
+            q = (client.table("prediction_logs").select(
+                "id,symbol,model_type,ml_direction,ml_entry_price,timeframe,status,"
+                "resolution_reason,exit_price,highest_profit_pips,lowest_drawdown_pips,"
+                "created_at")
+                .gte("created_at", since_iso)
+                .order("created_at", desc=False)
+                .range(page_offset, page_offset + page_size - 1))
+            if symbol:
+                q = q.eq("symbol", symbol)
+            if model_type:
+                q = q.eq("model_type", model_type)
+            res = q.execute() if hasattr(q, "execute") else q
+            page = res.data if hasattr(res, "data") else (
+                res.get("data") if isinstance(res, dict) else []) or []
+            if not page:
+                break
+            rows.extend(page)
+            if len(page) < page_size:
+                break
+            page_offset += page_size
     except Exception as e:
         logger.exception("replay: prediction_logs fetch failed: %s", e)
         return {"status": "error", "error": f"fetch_failed: {str(e)[:120]}"}
 
-    rows = res.data if hasattr(res, "data") else (res.get("data") if isinstance(res, dict) else []) or []
     if not rows:
         return {"status": "ok", "batch_id": batch_id, "scanned": 0,
                  "note": "no prediction_logs in window"}
 
+    # ── Pre-load 1m bars ONCE per symbol (shared across that symbol's signals).
+    symbols_in_batch = sorted({(r.get("symbol") or "") for r in rows if r.get("symbol")})
+    bars_by_symbol: dict[str, list[dict]] = {}
+    tskeys_by_symbol: dict[str, list] = {}
+    bar_coverage: dict[str, dict] = {}
+    for sym in symbols_in_batch:
+        sym_bars = await asyncio.to_thread(_load_all_1m_bars_sync, sym)
+        bars_by_symbol[sym] = sym_bars
+        tskeys_by_symbol[sym] = [b["ts"] for b in sym_bars]
+        bar_coverage[sym] = {
+            "bars": len(sym_bars),
+            "from": _utc_iso(sym_bars[0]["ts"]) if sym_bars else None,
+            "to": _utc_iso(sym_bars[-1]["ts"]) if sym_bars else None,
+        }
+
     sem = asyncio.Semaphore(max(1, concurrency))
-    results: list[dict] = []
 
     async def _one(sig: dict):
         async with sem:
+            sym = sig.get("symbol") or ""
             try:
-                return await replay_signal_row(sig, batch_id=batch_id)
+                return await replay_signal_row(
+                    sig,
+                    symbol_bars=bars_by_symbol.get(sym, []),
+                    ts_keys=tskeys_by_symbol.get(sym, []),
+                    batch_id=batch_id,
+                )
             except Exception as e:
                 logger.debug("replay error for %s: %s", sig.get("id"), e)
                 return {
@@ -442,6 +542,7 @@ async def run_replay_batch(since_iso: str,
         "status": "ok",
         "batch_id": batch_id,
         "scanned": len(rows),
+        "bar_coverage": bar_coverage,
         "by_replay_status": {},
         "flipped": 0,
         "by_corrected_status": {},
