@@ -249,27 +249,37 @@ async def replay_signal_row(signal_row: dict,
     if anchor_bar is None:
         anchor_bar = bars[0]
 
-    # ── EODHD → MT5 price-source offset correction ──────────────────────────
-    # Pre-MT5-bridge signals (roughly before 2026-04-20) had their entry_price
-    # written from EODHD quotes; bars we're now walking are MT5 quotes. The
-    # constant ~10-20 pip gap between feeds makes the raw TP/SL prices
-    # mismatched against the MT5 candle stream. Measure per-signal: take the
-    # anchor MT5 bar's open and compare to recorded entry_price. If the gap
-    # is meaningful, shift entry+TP+SL up/down by the gap so the replay
-    # happens in MT5's price space.
+    # ── Price-source offset correction (entry → MT5 anchor) ─────────────────
+    # The signal's recorded entry_price comes from whatever feed the bot used
+    # (EODHD pre-bridge; even post-bridge some symbols — notably USOIL — were
+    # observed several % away from MT5's XTIUSD quote). The 1m bars we walk
+    # are MT5 quotes. We MUST replay in MT5 price space, so we anchor the
+    # signal to the MT5 bar at created_at: shift entry + every TP + SL by
+    # (anchor_open - entry). This keeps each TP/SL at its exact pip distance
+    # from entry while moving the whole ladder onto the MT5 scale — the only
+    # way to avoid a phantom instant SL/TP from a pure scale mismatch.
     #
-    # Guards: ignore if the gap is implausibly large (>0.5% of entry) — that
-    # suggests a different problem (wrong symbol mapping, stale entry, etc.)
-    # rather than the feed offset, and shifting would make things worse.
+    # This is self-consistent for ANY offset size: created_at is a reliable
+    # DB insert timestamp, so the anchor bar is the right bar. We only refuse
+    # to judge when the gap is so extreme (>25%) it signals data corruption
+    # (wrong symbol mapping, null/garbage price) rather than a feed gap.
     import os as _os
-    apply_offset = _os.getenv("REPLAY_PRICE_OFFSET_CORRECTION", "1") != "0"
+    raw_offset = 0.0
     price_offset_applied = 0.0
-    if apply_offset and anchor_bar is not None:
+    offset_pct = 0.0
+    apply_offset = _os.getenv("REPLAY_PRICE_OFFSET_CORRECTION", "1") != "0"
+    if anchor_bar is not None:
         anchor_px = float(anchor_bar.get("open") or 0)
-        if anchor_px > 0:
+        if anchor_px > 0 and entry > 0:
             raw_offset = anchor_px - entry
-            max_plausible = entry * 0.005   # 0.5% — well above any real feed gap
-            if abs(raw_offset) <= max_plausible:
+            offset_pct = abs(raw_offset) / entry
+            if offset_pct > 0.25:
+                # Implausible — do NOT fabricate a verdict from mismatched levels.
+                return {**base, "replay_status": "offset_implausible",
+                        "replay_notes": (f"entry={entry:.5f} vs MT5 anchor="
+                                           f"{anchor_px:.5f} ({offset_pct*100:.1f}% gap) — "
+                                           f"likely corrupt entry/symbol mapping")}
+            if apply_offset:
                 price_offset_applied = raw_offset
                 entry = entry + raw_offset
                 target_prices = {k: v + raw_offset for k, v in target_prices.items()}
@@ -446,7 +456,11 @@ async def replay_signal_row(signal_row: dict,
         notes_bits.append(f"price_offset={price_offset_applied:+.3f}")
 
     diagnostics = {
+        "recorded_entry": round(float(signal_row.get("ml_entry_price")
+                                       or signal_row.get("entry_price") or 0), 5),
         "entry_after_offset": round(entry, 5),
+        "raw_offset_measured": round(raw_offset, 5),
+        "offset_pct": round(offset_pct * 100, 3),
         "price_offset_applied": round(price_offset_applied, 5),
         "anchor_bar_open": round(float(anchor_bar.get("open") or 0), 5) if anchor_bar else None,
         "anchor_bar_ts": _utc_iso(anchor_bar["ts"]) if anchor_bar else None,
