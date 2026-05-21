@@ -445,16 +445,19 @@ async def mark_stale_proposals(
     client = get_supabase_client()
 
     statuses = {"pending"} | ({"approved"} if include_approved else set())
+    cutoff_norm = cutoff.replace("Z", "+00:00")
     try:
-        # NOTE: the wrapper's .in_() drops rows when combined with another
-        # filter — fetch by created_at only, filter status in Python.
+        # Wrapper filters (.in_, .lt) behave unreliably when combined — fetch
+        # the whole proposal set (small table) and filter in Python.
         all_rows = _row_data(client.table("improvement_proposals")
                              .select("id,proposal_type,status,created_at")
-                             .lt("created_at", cutoff)
+                             .order("created_at", desc=True)
                              .limit(5000))
     except Exception as e:
         raise HTTPException(500, f"fetch failed: {str(e)[:160]}")
-    rows = [r for r in all_rows if r.get("status") in statuses]
+    rows = [r for r in all_rows
+            if r.get("status") in statuses
+            and str(r.get("created_at") or "") < cutoff_norm]
 
     by_type: dict = {}
     for r in rows:
