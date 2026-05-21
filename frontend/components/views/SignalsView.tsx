@@ -14,6 +14,7 @@ const MetaSignalAnalysisPanel = lazy(() => import("../../components/panels/MetaS
 const StrategyPerformancePanel = lazy(() => import("../../components/StrategyPerformancePanel"));
 const LearningDashboardV2 = lazy(() => import("../../components/panels/LearningDashboardV2"));
 const CrossModelExperimentPanel = lazy(() => import("../../components/panels/CrossModelExperimentPanel"));
+const ReplayCorrectionPanel = lazy(() => import("../../components/panels/ReplayCorrectionPanel"));
 
 const PanelLoader = () => (
     <div className="flex items-center justify-center rounded-xl border border-white/5 bg-white/[0.02] min-h-[200px]">
@@ -42,6 +43,13 @@ export default function SignalsView() {
                 <LazyPanel fallbackHeight={380} rootMargin="0px">
                     <Suspense fallback={<PanelLoader />}>
                         <MetaSignalAnalysisPanel />
+                    </Suspense>
+                </LazyPanel>
+
+                {/* Replay Correction — honest WR from 1m-bar replay */}
+                <LazyPanel fallbackHeight={420} rootMargin="0px">
+                    <Suspense fallback={<PanelLoader />}>
+                        <ReplayCorrectionPanel />
                     </Suspense>
                 </LazyPanel>
 
