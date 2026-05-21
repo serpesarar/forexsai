@@ -135,6 +135,35 @@ async def walkforward(
                 train_cutoff=train_cutoff, days=days, tp_pct=tp_pct, sl_pct=sl_pct)}
 
 
+@router.get("/walkforward-rolling")
+async def walkforward_rolling(
+    symbol: Optional[str] = Query(None),
+    direction: Optional[str] = Query(None),
+    model_type: Optional[str] = Query(None),
+    days: int = Query(120, ge=30, le=200),
+    test_window_days: int = Query(12, ge=5, le=45),
+    min_train_days: int = Query(40, ge=20, le=90),
+    tp_pct: float = Query(50, ge=10, le=95),
+    sl_pct: float = Query(85, ge=50, le=99),
+):
+    """Proper walk-forward analysis — rolls multiple non-overlapping test
+    windows forward in time, re-deriving TP/SL on the expanding train set
+    for each. Validates the derivation METHOD, not one lucky config."""
+    from services.tp_sl_walkforward import rolling_walk_forward, rolling_walk_forward_all
+    if symbol:
+        result = await rolling_walk_forward(
+            symbol, direction=direction, model_type=model_type, days=days,
+            test_window_days=test_window_days, min_train_days=min_train_days,
+            tp_pct=tp_pct, sl_pct=sl_pct)
+        if result.get("status") == "error":
+            raise HTTPException(500, result.get("error", "rolling walk-forward failed"))
+        return result
+    return {"status": "ok",
+            "results": await rolling_walk_forward_all(
+                days=days, test_window_days=test_window_days,
+                min_train_days=min_train_days, tp_pct=tp_pct, sl_pct=sl_pct)}
+
+
 @router.get("/report")
 async def replay_report(
     batch_id: Optional[str] = Query(None,

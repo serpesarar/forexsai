@@ -285,6 +285,141 @@ async def walk_forward_test(
     return out
 
 
+async def rolling_walk_forward(
+    symbol: str,
+    direction: Optional[str] = None,
+    model_type: Optional[str] = None,
+    days: int = 120,
+    test_window_days: int = 12,
+    min_train_days: int = 40,
+    tp_pct: float = DEFAULT_TP_PERCENTILE,
+    sl_pct: float = DEFAULT_SL_PERCENTILE,
+    _symbol_bars: Optional[list] = None,
+    _ts_keys: Optional[list] = None,
+) -> dict:
+    """Proper walk-forward analysis: roll multiple non-overlapping test
+    windows forward in time. Each fold derives TP/SL on all data BEFORE
+    the test window (expanding/anchored train) and scores it on that
+    untouched window. The derived config may differ per fold — that is
+    the point: it validates the DERIVATION METHOD, not one lucky config.
+    A method that beats current across most folds is genuinely robust."""
+    from database.supabase_client import get_supabase_client, is_db_available
+    if not is_db_available():
+        return {"status": "error", "error": "db_unavailable"}
+    client = get_supabase_client()
+
+    rows = await _fetch_corrected(client, symbol, direction, model_type, days)
+    out: dict = {"status": "ok", "symbol": symbol, "direction": direction,
+                 "model_type": model_type, "total_signals": len(rows)}
+    if len(rows) < MIN_TRAIN_SAMPLE + MIN_TEST_SAMPLE:
+        out["status"] = "insufficient_data"
+        return out
+
+    rows.sort(key=lambda r: r.get("signal_created_at") or "")
+    first = _parse_iso(rows[0]["signal_created_at"])
+    last = _parse_iso(rows[-1]["signal_created_at"])
+    if not first or not last:
+        out["status"] = "error"; out["error"] = "unparseable dates"; return out
+
+    current_cfg = get_current_config(symbol)
+    cur_tp = current_cfg.get("tp_pips") or 0
+    cur_sl = current_cfg.get("sl_pips") or 0
+    out["current_config"] = {"tp": cur_tp, "sl": cur_sl}
+
+    symbol_bars = _symbol_bars
+    ts_keys = _ts_keys
+    if symbol_bars is None:
+        symbol_bars = await asyncio.to_thread(_load_all_1m_bars_sync, symbol)
+        ts_keys = [b["ts"] for b in symbol_bars]
+    if not symbol_bars:
+        out["status"] = "no_candles"; return out
+
+    folds: list[dict] = []
+    test_start = first + timedelta(days=min_train_days)
+    while test_start < last:
+        test_end = test_start + timedelta(days=test_window_days)
+        train = [r for r in rows if (_parse_iso(r["signal_created_at"]) or last) < test_start]
+        test = [r for r in rows
+                if test_start <= (_parse_iso(r["signal_created_at"]) or first) < test_end]
+        if len(train) >= MIN_TRAIN_SAMPLE and len(test) >= MIN_TEST_SAMPLE:
+            derived = derive_tp_sl(train, tp_pct, sl_pct)
+            if derived.get("tp") and derived.get("sl"):
+                test_norm = [{
+                    "created_at": r["signal_created_at"],
+                    "entry_price": r.get("entry_price"),
+                    "direction": r.get("direction"),
+                    "timeframe": r.get("timeframe"),
+                } for r in test]
+                sim_cur = (_score_config(test_norm, symbol_bars, ts_keys,
+                                          cur_tp, cur_sl, symbol)
+                           if (cur_tp and cur_sl) else None)
+                sim_der = _score_config(test_norm, symbol_bars, ts_keys,
+                                         derived["tp"], derived["sl"], symbol)
+                folds.append({
+                    "test_window": [test_start.date().isoformat(),
+                                     test_end.date().isoformat()],
+                    "train_size": len(train), "test_size": len(test),
+                    "derived_tp": derived["tp"], "derived_sl": derived["sl"],
+                    "current_avg": sim_cur["avg_pnl_per_trade"] if sim_cur else None,
+                    "derived_avg": sim_der["avg_pnl_per_trade"],
+                    "current_wr": sim_cur["win_rate"] if sim_cur else None,
+                    "derived_wr": sim_der["win_rate"],
+                    "derived_wins_fold": bool(
+                        sim_cur and sim_der["avg_pnl_per_trade"] > sim_cur["avg_pnl_per_trade"]),
+                })
+        test_start = test_end
+
+    out["folds"] = folds
+    out["n_folds"] = len(folds)
+    if not folds:
+        out["status"] = "insufficient_data"
+        out["reason"] = "no fold had enough train+test signals"
+        return out
+
+    wins = sum(1 for f in folds if f["derived_wins_fold"])
+    # Sample-weighted mean avg/trade across all OOS test signals.
+    tot = sum(f["test_size"] for f in folds)
+    cur_w = sum((f["current_avg"] or 0) * f["test_size"] for f in folds) / tot if tot else 0
+    der_w = sum(f["derived_avg"] * f["test_size"] for f in folds) / tot if tot else 0
+    out["folds_derived_won"] = f"{wins}/{len(folds)}"
+    out["oos_avg_per_trade"] = {"current": round(cur_w, 4), "derived": round(der_w, 4)}
+    out["robust"] = bool(wins >= max(1, round(len(folds) * 0.7)))
+    out["verdict"] = (
+        f"derivation method ROBUST — beats current in {wins}/{len(folds)} "
+        f"rolling windows" if out["robust"] else
+        f"derivation method NOT robust — only {wins}/{len(folds)} windows"
+    )
+
+    # Final config to actually use: derive on ALL available data.
+    final = derive_tp_sl(rows, tp_pct, sl_pct)
+    out["final_recommended"] = {"tp": final.get("tp"), "sl": final.get("sl")}
+    return out
+
+
+async def rolling_walk_forward_all(days: int = 120,
+                                    test_window_days: int = 12,
+                                    min_train_days: int = 40,
+                                    tp_pct: float = DEFAULT_TP_PERCENTILE,
+                                    sl_pct: float = DEFAULT_SL_PERCENTILE,
+                                    symbols: Optional[list[str]] = None) -> list[dict]:
+    symbols = symbols or ["XAUUSD", "NDX.INDX", "GDAXI.INDX", "USOIL.FOREX"]
+    results: list[dict] = []
+    for sym in symbols:
+        bars = await asyncio.to_thread(_load_all_1m_bars_sync, sym)
+        tsk = [b["ts"] for b in bars]
+        for direction in ("BUY", "SELL"):
+            try:
+                results.append(await rolling_walk_forward(
+                    sym, direction=direction, days=days,
+                    test_window_days=test_window_days, min_train_days=min_train_days,
+                    tp_pct=tp_pct, sl_pct=sl_pct, _symbol_bars=bars, _ts_keys=tsk))
+            except Exception as e:
+                logger.exception("[rolling-wf] %s %s failed: %s", sym, direction, e)
+                results.append({"status": "error", "symbol": sym,
+                                 "direction": direction, "error": str(e)[:160]})
+    return results
+
+
 async def walk_forward_all(train_cutoff: str = DEFAULT_TRAIN_CUTOFF,
                             days: int = 120,
                             tp_pct: float = DEFAULT_TP_PERCENTILE,
