@@ -52,6 +52,36 @@ async def run_replay(
     return summary
 
 
+@router.get("/sample-ids")
+async def sample_ids(
+    symbol: Optional[str] = Query(None),
+    flipped_only: bool = Query(True),
+    limit: int = Query(10, ge=1, le=100),
+):
+    """Return a handful of prediction_ids from prediction_replay_corrections —
+    handy for feeding /api/replay/inspect/{id} during a spot-check audit."""
+    from database.supabase_client import get_supabase_client, is_db_available
+    if not is_db_available():
+        raise HTTPException(503, "db_unavailable")
+    client = get_supabase_client()
+
+    q = (client.table("prediction_replay_corrections")
+         .select("prediction_id,symbol,model_type,direction,original_status,"
+                 "corrected_status,corrected_resolution_reason,outcome_flipped,"
+                 "pnl_delta_pips,replay_status")
+         .eq("replay_status", "ok")
+         .order("replayed_at", desc=True)
+         .limit(800))
+    if symbol:
+        q = q.eq("symbol", symbol)
+    res = q.execute() if hasattr(q, "execute") else q
+    rows = res.data if hasattr(res, "data") else (
+        res.get("data") if isinstance(res, dict) else []) or []
+    if flipped_only:
+        rows = [r for r in rows if r.get("outcome_flipped")]
+    return {"status": "ok", "count": len(rows[:limit]), "samples": rows[:limit]}
+
+
 @router.get("/inspect/{prediction_id}")
 async def inspect(prediction_id: str):
     """Audit one signal's correction — full bar-by-bar walk.
