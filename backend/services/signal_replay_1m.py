@@ -294,6 +294,8 @@ async def replay_signal_row(signal_row: dict,
         bars_walked = idx + 1
         h = float(bar["high"])
         l = float(bar["low"])
+        o = float(bar.get("open") or 0)
+        c = float(bar.get("close") or 0)
         bts: datetime = bar["ts"]
 
         # Update MFE/MAE
@@ -354,20 +356,37 @@ async def replay_signal_row(signal_row: dict,
 
             if tp_hit_this_bar and hit_sl:
                 # In-bar ambiguity — a single 1m bar spanned both a TP and
-                # the SL; true order is unknowable without tick data. TP wins
-                # (matches signal_lifecycle). Flagged so the batch can report
-                # how many verdicts rest on this assumption.
-                if deepest == "TP4" and all(hit_targets.values()):
-                    reason = "all_targets_hit"
-                elif deepest == "TP4":
-                    reason = "tp4_hit"
+                # the SL; true order is unknowable without tick data. Resolve
+                # it with the standard OHLC bar-path heuristic: a bullish bar
+                # (close>=open) is assumed to travel open→low→high→close, a
+                # bearish one open→high→low→close. That tells us which side
+                # was reached first. Flagged `ambiguous` so the batch reports
+                # how many verdicts rest on this heuristic.
+                bullish = c >= o
+                if direction == "BUY":
+                    # TP is above (high side), SL below (low side).
+                    tp_first = not bullish    # bearish → high(TP) reached first
+                else:  # SELL
+                    # TP is below (low side), SL above (high side).
+                    tp_first = bullish        # bullish → low(TP) reached first
+                if tp_first:
+                    if deepest == "TP4" and all(hit_targets.values()):
+                        reason = "all_targets_hit"
+                    elif deepest == "TP4":
+                        reason = "tp4_hit"
+                    else:
+                        reason = "tp1_3_hit_then_sl"
+                    resolution = {
+                        "status": "completed", "reason": reason,
+                        "exit_price": target_prices.get(deepest), "exit_at": bts,
+                        "target_hit": deepest, "ambiguous": True,
+                    }
                 else:
-                    reason = "tp1_3_hit_then_sl"
-                resolution = {
-                    "status": "completed", "reason": reason,
-                    "exit_price": target_prices.get(deepest), "exit_at": bts,
-                    "target_hit": deepest, "ambiguous": True,
-                }
+                    resolution = {
+                        "status": "stopped", "reason": "sl_hit_ambiguous",
+                        "exit_price": sl_price, "exit_at": bts,
+                        "target_hit": None, "ambiguous": True,
+                    }
             elif tp_hit_this_bar:
                 # Clean TP touch, no SL this bar → WIN at the deepest TP hit.
                 if deepest == "TP4" and all(hit_targets.values()):
