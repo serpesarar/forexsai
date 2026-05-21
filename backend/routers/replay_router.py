@@ -101,6 +101,40 @@ async def inspect(prediction_id: str):
     return result
 
 
+@router.get("/walkforward")
+async def walkforward(
+    symbol: Optional[str] = Query(None, description="One symbol, or omit for all"),
+    direction: Optional[str] = Query(None, description="BUY | SELL | omit for both"),
+    model_type: Optional[str] = Query(None),
+    train_cutoff: str = Query("2026-04-20T00:00:00+00:00",
+                               description="Signals before this = train, after = test"),
+    days: int = Query(120, ge=30, le=200),
+    tp_pct: float = Query(50, ge=10, le=95,
+                           description="TP at this percentile of the MFE distribution"),
+    sl_pct: float = Query(85, ge=50, le=99,
+                           description="SL beyond this percentile of winners' MAE"),
+):
+    """Distribution-based, overfit-resistant TP/SL design with an honest
+    out-of-sample check.
+
+    Derives TP/SL from the MFE/MAE distribution of TRAIN signals (before
+    train_cutoff), then scores both the current config and the derived
+    config on the untouched TEST signals (after the cutoff). If the
+    derived config still wins out-of-sample it is real; if not it was
+    overfit. This is the honest 'try both systems' comparison."""
+    from services.tp_sl_walkforward import walk_forward_test, walk_forward_all
+    if symbol:
+        result = await walk_forward_test(
+            symbol, direction=direction, model_type=model_type,
+            train_cutoff=train_cutoff, days=days, tp_pct=tp_pct, sl_pct=sl_pct)
+        if result.get("status") == "error":
+            raise HTTPException(500, result.get("error", "walkforward failed"))
+        return result
+    return {"status": "ok",
+            "results": await walk_forward_all(
+                train_cutoff=train_cutoff, days=days, tp_pct=tp_pct, sl_pct=sl_pct)}
+
+
 @router.get("/report")
 async def replay_report(
     batch_id: Optional[str] = Query(None,
