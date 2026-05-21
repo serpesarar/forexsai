@@ -342,14 +342,14 @@ async def replay_signal_row(signal_row: dict,
                 "mae_pips": round(mae_pips, 2),
             })
 
-        # 3) Resolution — recorded on the FIRST bar that touches TP or SL,
-        #    but the walk does NOT stop: it continues to the end of the
-        #    holding window so mfe_pips/mae_pips capture the FULL excursion
-        #    ("how far TP could have run, how deep SL could have gone") —
-        #    that full-window MFE/MAE is what the TP/SL optimizer grid-
-        #    searches against. Tie-break for an in-bar TP+SL: OHLC bar-path.
+        # 3) Resolution — FIRST bar that touches TP or SL ends the trade and
+        #    the walk stops. MFE/MAE therefore cover only the trade's actual
+        #    life (open → resolution) — the honest excursion the TP/SL
+        #    optimizer needs. (Walking the full 12-48h window instead made
+        #    every signal wander past every level, producing absurd grid
+        #    recommendations.) Tie-break for an in-bar TP+SL: OHLC bar-path.
         tp_hit_this_bar = bool(newly_hit)
-        if resolution is None and (tp_hit_this_bar or hit_sl):
+        if tp_hit_this_bar or hit_sl:
             deepest = None
             if any(hit_targets.values()):
                 deepest = max((n for n in hit_targets if hit_targets[n]),
@@ -406,7 +406,7 @@ async def replay_signal_row(signal_row: dict,
                     "exit_price": sl_price, "exit_at": bts,
                     "target_hit": None, "ambiguous": False,
                 }
-            # NO break — keep walking so MFE/MAE cover the full window.
+            break
 
     # Neither TP nor SL touched within the full holding horizon → genuinely
     # expired (no decisive move in, e.g., 12-48h).
