@@ -174,7 +174,12 @@ async def replay_signal_row(signal_row: dict,
     symbol = signal_row.get("symbol") or ""
     direction = (signal_row.get("ml_direction") or signal_row.get("direction") or "").upper()
     timeframe = signal_row.get("timeframe") or "15m"
-    entry = float(signal_row.get("ml_entry_price") or signal_row.get("entry_price") or 0)
+    # recorded_entry is kept ONLY for transparency reporting — it is NOT used
+    # to compute the outcome (it was found unreliable: variable 5-25 pip gap
+    # vs the live MT5 quote). Per user spec 2026-05-21: match by date+time+
+    # direction only, take the entry from the MT5 1m chart itself.
+    recorded_entry = float(signal_row.get("ml_entry_price")
+                            or signal_row.get("entry_price") or 0)
     created_at = _parse_iso(signal_row.get("created_at"))
 
     base = {
@@ -183,7 +188,7 @@ async def replay_signal_row(signal_row: dict,
         "model_type": signal_row.get("model_type"),
         "direction": direction or None,
         "timeframe": timeframe,
-        "entry_price": entry if entry > 0 else None,
+        "entry_price": None,   # set below from the MT5 1m bar
         "signal_created_at": _utc_iso(created_at) if created_at else None,
         "original_status": signal_row.get("status"),
         "original_resolution_reason": signal_row.get("resolution_reason"),
@@ -194,24 +199,11 @@ async def replay_signal_row(signal_row: dict,
         "replay_batch_id": batch_id,
     }
 
-    # ── Validation ──────────────────────────────────────────────────────────
-    if entry <= 0 or direction not in ("BUY", "SELL") or not created_at:
+    # ── Validation — only direction + timestamp are needed from the DB ──────
+    if direction not in ("BUY", "SELL") or not created_at:
         return {**base, "replay_status": "no_entry",
-                "replay_notes": "missing entry/direction/created_at"}
+                "replay_notes": "missing direction/created_at"}
 
-    # ── TP/SL price levels ──────────────────────────────────────────────────
-    try:
-        target_prices = calculate_target_prices(entry, direction, symbol, timeframe)
-        sl_price = calculate_stoploss_price(entry, direction, symbol, timeframe)
-    except Exception as e:
-        return {**base, "replay_status": "exception",
-                "replay_notes": f"target_calc_failed: {str(e)[:120]}"}
-
-    if not target_prices or sl_price is None or sl_price <= 0:
-        return {**base, "replay_status": "no_entry",
-                "replay_notes": "tp/sl prices unresolved"}
-
-    # ── Slice 1m bars for the active window ─────────────────────────────────
     if not symbol_bars:
         return {**base, "replay_status": "no_candles",
                 "replay_notes": "candle_cache empty for symbol/1m"}
@@ -220,70 +212,43 @@ async def replay_signal_row(signal_row: dict,
     # Honest small extension: bars are bucketed by minute boundary, so allow
     # the last open minute to land on a closed bar (+2 min buffer).
     window_end = created_at + timedelta(minutes=window_minutes + 2)
-    # 2-min lead so we can find the anchor bar AT/just-before created_at for
-    # the price-offset calibration.
-    anchor_window_start = created_at - timedelta(minutes=2)
 
-    window_bars = _slice_bars(symbol_bars, ts_keys, anchor_window_start, window_end)
-    if not window_bars:
-        return {**base, "replay_status": "no_candles",
-                "replay_notes": (f"no 1m bars in window "
-                                   f"[{created_at.isoformat()}, {window_end.isoformat()}]")}
-
-    bars: list[dict] = []
-    anchor_bar: Optional[dict] = None
-    for row in window_bars:
-        ts = row["ts"]
-        # The "anchor" is the bar that opens on or just before created_at —
-        # its open price is the cleanest proxy for the live MT5 quote at
-        # signal time.
-        if ts <= created_at:
-            anchor_bar = row
-        if ts >= created_at:
-            bars.append(row)
+    # Bars from created_at forward — bars[0] is the ENTRY bar.
+    bars = _slice_bars(symbol_bars, ts_keys, created_at, window_end)
     if not bars:
         return {**base, "replay_status": "no_candles",
                 "replay_notes": (f"no 1m bars at/after created_at "
                                    f"[{created_at.isoformat()}, {window_end.isoformat()}]")}
-    # Anchor fallback: first bar at-or-after created_at if none before.
-    if anchor_bar is None:
-        anchor_bar = bars[0]
 
-    # ── Price-source offset correction (entry → MT5 anchor) ─────────────────
-    # The signal's recorded entry_price comes from whatever feed the bot used
-    # (EODHD pre-bridge; even post-bridge some symbols — notably USOIL — were
-    # observed several % away from MT5's XTIUSD quote). The 1m bars we walk
-    # are MT5 quotes. We MUST replay in MT5 price space, so we anchor the
-    # signal to the MT5 bar at created_at: shift entry + every TP + SL by
-    # (anchor_open - entry). This keeps each TP/SL at its exact pip distance
-    # from entry while moving the whole ladder onto the MT5 scale — the only
-    # way to avoid a phantom instant SL/TP from a pure scale mismatch.
-    #
-    # This is self-consistent for ANY offset size: created_at is a reliable
-    # DB insert timestamp, so the anchor bar is the right bar. We only refuse
-    # to judge when the gap is so extreme (>25%) it signals data corruption
-    # (wrong symbol mapping, null/garbage price) rather than a feed gap.
-    import os as _os
+    # ── Entry = the MT5 1m bar price at signal time (NOT the DB entry) ──────
+    # Open of the first 1m bar at/after created_at = the real market price
+    # the moment the signal fired. The entry bar is INCLUDED in the walk so
+    # its own high/low can trigger TP/SL within the entry minute.
+    entry_bar = bars[0]
+    entry = float(entry_bar.get("open") or 0)
+    if entry <= 0:
+        return {**base, "replay_status": "no_candles",
+                "replay_notes": "entry bar has no open price"}
+    base["entry_price"] = round(entry, 5)
+    anchor_bar = entry_bar   # kept for diagnostics
+
+    # ── TP/SL ladder computed fresh from the MT5 entry ─────────────────────
+    try:
+        target_prices = calculate_target_prices(entry, direction, symbol, timeframe)
+        sl_price = calculate_stoploss_price(entry, direction, symbol, timeframe)
+    except Exception as e:
+        return {**base, "replay_status": "exception",
+                "replay_notes": f"target_calc_failed: {str(e)[:120]}"}
+    if not target_prices or sl_price is None or sl_price <= 0:
+        return {**base, "replay_status": "no_entry",
+                "replay_notes": "tp/sl prices unresolved"}
+
+    # Transparency only: how far the DB-recorded entry sat from the MT5 entry.
     raw_offset = 0.0
-    price_offset_applied = 0.0
     offset_pct = 0.0
-    apply_offset = _os.getenv("REPLAY_PRICE_OFFSET_CORRECTION", "1") != "0"
-    if anchor_bar is not None:
-        anchor_px = float(anchor_bar.get("open") or 0)
-        if anchor_px > 0 and entry > 0:
-            raw_offset = anchor_px - entry
-            offset_pct = abs(raw_offset) / entry
-            if offset_pct > 0.25:
-                # Implausible — do NOT fabricate a verdict from mismatched levels.
-                return {**base, "replay_status": "offset_implausible",
-                        "replay_notes": (f"entry={entry:.5f} vs MT5 anchor="
-                                           f"{anchor_px:.5f} ({offset_pct*100:.1f}% gap) — "
-                                           f"likely corrupt entry/symbol mapping")}
-            if apply_offset:
-                price_offset_applied = raw_offset
-                entry = entry + raw_offset
-                target_prices = {k: v + raw_offset for k, v in target_prices.items()}
-                sl_price = sl_price + raw_offset
+    if recorded_entry > 0:
+        raw_offset = entry - recorded_entry
+        offset_pct = abs(raw_offset) / recorded_entry
 
     # ── Walk forward ────────────────────────────────────────────────────────
     cfg = get_symbol_config(symbol)
@@ -452,18 +417,16 @@ async def replay_signal_row(signal_row: dict,
     reason_changed = (signal_row.get("resolution_reason") != resolution["reason"])
 
     notes_bits = []
-    if price_offset_applied:
-        notes_bits.append(f"price_offset={price_offset_applied:+.3f}")
+    if recorded_entry > 0 and abs(raw_offset) > 0:
+        notes_bits.append(f"db_entry_gap={raw_offset:+.3f}({offset_pct*100:.2f}%)")
 
     diagnostics = {
-        "recorded_entry": round(float(signal_row.get("ml_entry_price")
-                                       or signal_row.get("entry_price") or 0), 5),
-        "entry_after_offset": round(entry, 5),
-        "raw_offset_measured": round(raw_offset, 5),
-        "offset_pct": round(offset_pct * 100, 3),
-        "price_offset_applied": round(price_offset_applied, 5),
-        "anchor_bar_open": round(float(anchor_bar.get("open") or 0), 5) if anchor_bar else None,
-        "anchor_bar_ts": _utc_iso(anchor_bar["ts"]) if anchor_bar else None,
+        "entry_source": "mt5_1m_bar_open",
+        "mt5_entry": round(entry, 5),
+        "db_recorded_entry": round(recorded_entry, 5),
+        "db_entry_gap": round(raw_offset, 5),
+        "db_entry_gap_pct": round(offset_pct * 100, 3),
+        "entry_bar_ts": _utc_iso(entry_bar["ts"]),
         "tp_prices": {k: round(v, 5) for k, v in target_prices.items()},
         "sl_price": round(sl_price, 5),
         "window_minutes": window_minutes,
