@@ -65,12 +65,31 @@ def _parse_iso(value: Any) -> Optional[datetime]:
         return None
 
 
-def _evaluation_window_minutes(timeframe: Optional[str]) -> int:
-    """Mirror signal_lifecycle.TIMEFRAME_EVALUATION_WINDOWS without importing
-    (that module pulls in heavy deps — keep the replay engine lean)."""
-    table = {"1m": 2, "5m": 10, "15m": 15, "20m": 20, "30m": 60,
-             "1h": 120, "4h": 480, "1d": 2880}
-    return table.get((timeframe or "").lower(), 15)
+def _max_hold_minutes(timeframe: Optional[str]) -> int:
+    """Maximum minutes to walk a signal forward looking for TP/SL.
+
+    NOT the live lifecycle's short evaluation window (2-60 min) — that
+    cherry-picks only fast movers and biases the win rate upward. For an
+    honest "did the direction prove right" verdict we walk until TP1 or SL
+    is actually hit, capped at a generous, realistic holding horizon per
+    timeframe. Over these spans virtually every signal resolves; whatever
+    is still 'expired' genuinely never reached TP1 or SL.
+
+    Override any value with env REPLAY_MAXHOLD_<TF> (minutes), e.g.
+    REPLAY_MAXHOLD_5M=600.
+    """
+    import os as _os
+    table = {"1m": 240, "5m": 720, "15m": 1440, "20m": 1440,
+             "30m": 2160, "1h": 2880, "4h": 5760, "1d": 10080}
+    tf = (timeframe or "").lower()
+    base = table.get(tf, 1440)
+    override = _os.getenv(f"REPLAY_MAXHOLD_{tf.upper()}")
+    if override:
+        try:
+            return max(10, int(override))
+        except ValueError:
+            pass
+    return base
 
 
 def _target_rank(name: str) -> Optional[int]:
@@ -208,9 +227,9 @@ async def replay_signal_row(signal_row: dict,
         return {**base, "replay_status": "no_candles",
                 "replay_notes": "candle_cache empty for symbol/1m"}
 
-    window_minutes = _evaluation_window_minutes(timeframe)
-    # Honest small extension: bars are bucketed by minute boundary, so allow
-    # the last open minute to land on a closed bar (+2 min buffer).
+    window_minutes = _max_hold_minutes(timeframe)
+    # Walk forward up to the full holding horizon — the loop short-circuits
+    # the instant TP or SL is hit, so a fast signal still resolves in 1 bar.
     window_end = created_at + timedelta(minutes=window_minutes + 2)
 
     # Bars from created_at forward — bars[0] is the ENTRY bar.
@@ -301,10 +320,6 @@ async def replay_signal_row(signal_row: dict,
                 hit_targets[tp_name] = True
                 newly_hit.append(tp_name)
 
-        tp4_hit_now = any(hit_targets.get(n) and _target_rank(n) == 4 for n in hit_targets)
-        tp1_3_hit_now = any(hit_targets.get(n) and (_target_rank(n) in {1, 2, 3})
-                             for n in hit_targets)
-
         # 2) SL check
         if direction == "BUY":
             hit_sl = l <= sl_price
@@ -325,60 +340,53 @@ async def replay_signal_row(signal_row: dict,
                 "mae_pips": round(mae_pips, 2),
             })
 
-        # 3) Apply resolution rules — same order as signal_lifecycle.py
-        if tp4_hit_now and all(hit_targets[n] for n in hit_targets):
-            # Every TP including TP4 hit. Production calls this 'all_targets_hit'.
-            exit_target = "TP4"
-            resolution = {
-                "status": "completed", "reason": "all_targets_hit",
-                "exit_price": target_prices.get("TP4"), "exit_at": bts,
-                "target_hit": exit_target,
-            }
-            break
-        if tp4_hit_now:
-            resolution = {
-                "status": "completed", "reason": "tp4_hit",
-                "exit_price": target_prices.get("TP4"), "exit_at": bts,
-                "target_hit": "TP4",
-            }
-            break
-        if hit_sl and tp1_3_hit_now:
-            # TP wins the ambiguity (tp1_3_hit_then_sl) — exit price is the
-            # DEEPEST TP that was hit.
-            deepest = max((n for n in hit_targets if hit_targets[n]
-                            and _target_rank(n) in {1, 2, 3}),
-                           key=lambda n: _target_rank(n) or 0)
-            resolution = {
-                "status": "completed", "reason": "tp1_3_hit_then_sl",
-                "exit_price": target_prices.get(deepest), "exit_at": bts,
-                "target_hit": deepest,
-            }
-            break
-        if hit_sl:
-            resolution = {
-                "status": "stopped", "reason": "sl_hit",
-                "exit_price": sl_price, "exit_at": bts,
-                "target_hit": None,
-            }
-            break
-        # Lone TP1/2/3 hit (no SL yet) does NOT terminate — production waits
-        # to see if higher TPs are reached. Continue walking.
+        # 3) Resolution — FIRST bar that touches TP or SL ends the trade.
+        #    The walk short-circuits here, so MFE/MAE/time stay clean and a
+        #    fast signal resolves in 1 bar while a slow one walks the full
+        #    holding horizon. Tie-break: if a single bar spans both a TP and
+        #    the SL, TP wins (matches signal_lifecycle's tp_*_then_sl).
+        tp_hit_this_bar = bool(newly_hit)
+        if tp_hit_this_bar or hit_sl:
+            deepest = None
+            if any(hit_targets.values()):
+                deepest = max((n for n in hit_targets if hit_targets[n]),
+                               key=lambda n: _target_rank(n) or 0)
 
-    # Post-walk: if no resolution but at least one TP1-3 was hit, lock in
-    # the deepest TP1-3 as the terminal outcome (same as the
-    # window_resolve_positive branch in lifecycle).
-    if resolution is None and any(hit_targets[n] and _target_rank(n) in {1, 2, 3}
-                                    for n in hit_targets):
-        deepest = max((n for n in hit_targets if hit_targets[n]
-                        and _target_rank(n) in {1, 2, 3}),
-                       key=lambda n: _target_rank(n) or 0)
-        resolution = {
-            "status": "completed", "reason": f"{deepest.lower()}_hit",
-            "exit_price": target_prices.get(deepest),
-            "exit_at": bars[-1]["ts"],
-            "target_hit": deepest,
-        }
+            if tp_hit_this_bar and hit_sl:
+                # In-bar ambiguity — TP wins.
+                if deepest == "TP4" and all(hit_targets.values()):
+                    reason = "all_targets_hit"
+                elif deepest == "TP4":
+                    reason = "tp4_hit"
+                else:
+                    reason = "tp1_3_hit_then_sl"
+                resolution = {
+                    "status": "completed", "reason": reason,
+                    "exit_price": target_prices.get(deepest), "exit_at": bts,
+                    "target_hit": deepest,
+                }
+            elif tp_hit_this_bar:
+                # Clean TP touch, no SL this bar → WIN at the deepest TP hit.
+                if deepest == "TP4" and all(hit_targets.values()):
+                    reason = "all_targets_hit"
+                else:
+                    reason = f"{deepest.lower()}_hit"
+                resolution = {
+                    "status": "completed", "reason": reason,
+                    "exit_price": target_prices.get(deepest), "exit_at": bts,
+                    "target_hit": deepest,
+                }
+            else:
+                # SL touched, no TP ever → clean LOSS.
+                resolution = {
+                    "status": "stopped", "reason": "sl_hit",
+                    "exit_price": sl_price, "exit_at": bts,
+                    "target_hit": None,
+                }
+            break
 
+    # Neither TP nor SL touched within the full holding horizon → genuinely
+    # expired (no decisive move in, e.g., 12-48h).
     if resolution is None:
         resolution = {
             "status": "expired", "reason": "window_expired",
