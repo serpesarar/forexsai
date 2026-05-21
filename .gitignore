@@ -12,3 +12,7 @@ __pycache__
 
 # Claude AI local settings
 .claude/settings.json
+
+# Local MT5 1m bar exports — uploaded via API, must not bloat the build context
+1mdata/
+1MDATA/
