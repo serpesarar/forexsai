@@ -560,9 +560,11 @@ async def run_replay_batch(since_iso: str,
     if purge_existing and not dry_run:
         for sym in symbols_in_batch:
             try:
-                client.table("prediction_replay_corrections").delete().eq(
-                    "symbol", sym).execute()
-                purged[sym] = "ok"
+                # Wrapper: filters FIRST, then .delete() executes immediately.
+                res = client.table("prediction_replay_corrections").eq(
+                    "symbol", sym).delete()
+                err = res.get("error") if isinstance(res, dict) else None
+                purged[sym] = f"failed: {err}" if err else "ok"
             except Exception as e:
                 logger.warning("replay purge failed for %s: %s", sym, e)
                 purged[sym] = f"failed: {str(e)[:80]}"

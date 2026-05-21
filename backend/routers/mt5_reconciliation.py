@@ -148,13 +148,19 @@ async def upload_1m_bars(
                 continue
 
             # Optional purge — clear stale 1m rows (e.g. wrong-tz re-upload).
-            purged = 0
+            # Wrapper: filters FIRST, then .delete() executes immediately.
+            purged = False
             if purge_existing:
                 try:
                     db = get_supabase_client()
-                    db.table("candle_cache").delete().eq(
-                        "symbol", canonical).eq("timeframe", "1m").execute()
-                    purged = -1   # -1 = "purge issued" (row count not returned)
+                    res = (db.table("candle_cache")
+                           .eq("symbol", canonical).eq("timeframe", "1m")
+                           .delete())
+                    err = res.get("error") if isinstance(res, dict) else None
+                    if err:
+                        logger.warning("purge failed for %s/1m: %s", canonical, err)
+                    else:
+                        purged = True
                 except Exception as pe:
                     logger.warning("purge failed for %s/1m: %s", canonical, pe)
 
