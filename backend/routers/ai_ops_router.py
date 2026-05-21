@@ -449,8 +449,10 @@ async def mark_stale_proposals(
     try:
         # Wrapper filters (.in_, .lt) behave unreliably when combined — fetch
         # the whole proposal set (small table) and filter in Python.
+        # Columns: improvement_proposals has severity/status/created_at but
+        # NO proposal_type column.
         all_rows = _row_data(client.table("improvement_proposals")
-                             .select("id,proposal_type,status,created_at")
+                             .select("id,severity,status,created_at")
                              .order("created_at", desc=True)
                              .limit(5000))
     except Exception as e:
@@ -459,14 +461,15 @@ async def mark_stale_proposals(
             if r.get("status") in statuses
             and str(r.get("created_at") or "") < cutoff_norm]
 
-    by_type: dict = {}
+    by_severity: dict = {}
     for r in rows:
-        t = r.get("proposal_type") or "unknown"
-        by_type[t] = by_type.get(t, 0) + 1
+        t = r.get("severity") or "unknown"
+        by_severity[t] = by_severity.get(t, 0) + 1
 
     if dry_run:
         return {"ok": True, "dry_run": True, "cutoff": cutoff,
-                "would_mark": len(rows), "by_type": by_type}
+                "scanned": len(all_rows),
+                "would_mark": len(rows), "by_severity": by_severity}
 
     marked = 0
     note = ("Auto-marked stale: simulator metrics derived from pre-2026-05-19 "
@@ -474,16 +477,18 @@ async def mark_stale_proposals(
             "(lifecycle fix 32033c6). Re-evaluate against corrected data.")
     for r in rows:
         try:
+            # improvement_proposals has rollback_reason (no review_notes col).
             _exec(client.table("improvement_proposals").eq("id", r["id"]).update({
                 "status": "stale_pre_leak_fix",
-                "review_notes": note,
+                "rollback_reason": note,
+                "updated_at": _now_iso(),
             }))
             marked += 1
         except Exception as e:
             logger.warning("[ai_ops] mark-stale failed for %s: %s", r.get("id"), e)
 
     return {"ok": True, "dry_run": False, "cutoff": cutoff,
-            "marked": marked, "by_type": by_type}
+            "marked": marked, "by_severity": by_severity}
 
 
 @router.get("/pattern-alerts/{symbol}")
