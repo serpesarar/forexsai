@@ -47,6 +47,17 @@ RULE_VERSION = "v1"
 DEFAULT_FETCH_BATCH = 2000
 SUPABASE_PAGE_SIZE = 1000   # Supabase caps a single select at 1000 rows
 
+# MFE/MAE for the TP/SL optimizer are measured over this fixed window —
+# the realistic life of a scalp trade. Long enough to reveal how far a
+# wider TP could have run, short enough to exclude many hours of noise
+# (a 12h window made every signal wander past every level). The verdict
+# walk is separate and uses the full holding horizon.
+import os as _os_mod
+try:
+    OPT_WINDOW_MIN = max(30, int(_os_mod.getenv("REPLAY_OPT_WINDOW_MIN", "180")))
+except ValueError:
+    OPT_WINDOW_MIN = 180
+
 
 # ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -283,7 +294,8 @@ async def replay_signal_row(signal_row: dict,
 
     # Track which TPs have been hit at any point during the walk.
     hit_targets: dict[str, bool] = {name: False for name in target_prices.keys()}
-    # MFE/MAE tracked as cumulative bests.
+    # MFE/MAE — raw favorable/adverse excursion over the fixed OPT_WINDOW_MIN
+    # (no TP/SL exit applied); this is what the TP/SL optimizer grid-searches.
     mfe_pips = 0.0
     mae_pips = 0.0
 
@@ -297,18 +309,20 @@ async def replay_signal_row(signal_row: dict,
         o = float(bar.get("open") or 0)
         c = float(bar.get("close") or 0)
         bts: datetime = bar["ts"]
+        minutes_in = (bts - created_at).total_seconds() / 60.0
 
-        # Update MFE/MAE
-        if direction == "BUY":
-            fav_excursion = _px_to_pips(h - entry)
-            adv_excursion = _px_to_pips(entry - l)
-        else:  # SELL
-            fav_excursion = _px_to_pips(entry - l)
-            adv_excursion = _px_to_pips(h - entry)
-        if fav_excursion > mfe_pips:
-            mfe_pips = fav_excursion
-        if adv_excursion > mae_pips:
-            mae_pips = adv_excursion
+        # MFE/MAE — only accumulate within the optimizer window.
+        if minutes_in <= OPT_WINDOW_MIN:
+            if direction == "BUY":
+                fav_excursion = _px_to_pips(h - entry)
+                adv_excursion = _px_to_pips(entry - l)
+            else:  # SELL
+                fav_excursion = _px_to_pips(entry - l)
+                adv_excursion = _px_to_pips(h - entry)
+            if fav_excursion > mfe_pips:
+                mfe_pips = fav_excursion
+            if adv_excursion > mae_pips:
+                mae_pips = adv_excursion
 
         # 1) Which TPs got crossed by this bar?
         newly_hit = []
@@ -342,14 +356,12 @@ async def replay_signal_row(signal_row: dict,
                 "mae_pips": round(mae_pips, 2),
             })
 
-        # 3) Resolution — FIRST bar that touches TP or SL ends the trade and
-        #    the walk stops. MFE/MAE therefore cover only the trade's actual
-        #    life (open → resolution) — the honest excursion the TP/SL
-        #    optimizer needs. (Walking the full 12-48h window instead made
-        #    every signal wander past every level, producing absurd grid
-        #    recommendations.) Tie-break for an in-bar TP+SL: OHLC bar-path.
+        # 3) Resolution — recorded on the FIRST bar that touches TP or SL
+        #    (the verdict). The walk then continues only until the optimizer
+        #    window (OPT_WINDOW_MIN) is also covered, so MFE/MAE are complete.
+        #    Tie-break for an in-bar TP+SL: OHLC bar-path heuristic.
         tp_hit_this_bar = bool(newly_hit)
-        if tp_hit_this_bar or hit_sl:
+        if resolution is None and (tp_hit_this_bar or hit_sl):
             deepest = None
             if any(hit_targets.values()):
                 deepest = max((n for n in hit_targets if hit_targets[n]),
@@ -406,6 +418,10 @@ async def replay_signal_row(signal_row: dict,
                     "exit_price": sl_price, "exit_at": bts,
                     "target_hit": None, "ambiguous": False,
                 }
+
+        # Stop once we have BOTH the verdict and a full optimizer window of
+        # MFE/MAE — no point walking the rest of the 12-48h horizon.
+        if resolution is not None and minutes_in >= OPT_WINDOW_MIN:
             break
 
     # Neither TP nor SL touched within the full holding horizon → genuinely
