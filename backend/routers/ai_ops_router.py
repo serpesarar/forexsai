@@ -427,6 +427,60 @@ async def manual_run(payload: ManualRunRequest, bg: BackgroundTasks):
     return {"ok": True, "status": "scheduled", "window_days": payload.window_days}
 
 
+@router.post("/proposals/mark-stale")
+async def mark_stale_proposals(
+    cutoff: str = Query("2026-05-19T00:00:00+00:00",
+                         description="Proposals created before this ISO timestamp are stale"),
+    include_approved: bool = Query(False),
+    dry_run: bool = Query(True, description="Preview only — pass dry_run=false to write"),
+):
+    """Mark AI-Ops proposals generated before the pre-entry wick leak fix
+    (commit 32033c6, 2026-05-19) as 'stale_pre_leak_fix'.
+
+    Their simulator metrics were derived from leak-contaminated
+    prediction_logs — win-rate / net-pnl claims are untrustworthy. The row
+    is preserved (audit trail), just moved out of the pending queue."""
+    if not is_db_available():
+        raise HTTPException(503, "supabase unavailable")
+    client = get_supabase_client()
+
+    statuses = ["pending"] + (["approved"] if include_approved else [])
+    try:
+        rows = _row_data(client.table("improvement_proposals")
+                         .select("id,proposal_type,status,created_at")
+                         .in_("status", statuses)
+                         .lt("created_at", cutoff)
+                         .limit(5000))
+    except Exception as e:
+        raise HTTPException(500, f"fetch failed: {str(e)[:160]}")
+
+    by_type: dict = {}
+    for r in rows:
+        t = r.get("proposal_type") or "unknown"
+        by_type[t] = by_type.get(t, 0) + 1
+
+    if dry_run:
+        return {"ok": True, "dry_run": True, "cutoff": cutoff,
+                "would_mark": len(rows), "by_type": by_type}
+
+    marked = 0
+    note = ("Auto-marked stale: simulator metrics derived from pre-2026-05-19 "
+            "prediction_logs with pre-entry wick TP-hit contamination "
+            "(lifecycle fix 32033c6). Re-evaluate against corrected data.")
+    for r in rows:
+        try:
+            _exec(client.table("improvement_proposals").eq("id", r["id"]).update({
+                "status": "stale_pre_leak_fix",
+                "review_notes": note,
+            }))
+            marked += 1
+        except Exception as e:
+            logger.warning("[ai_ops] mark-stale failed for %s: %s", r.get("id"), e)
+
+    return {"ok": True, "dry_run": False, "cutoff": cutoff,
+            "marked": marked, "by_type": by_type}
+
+
 @router.get("/pattern-alerts/{symbol}")
 async def pattern_alerts(symbol: str, model_type: str = "meta",
                           direction: Optional[str] = None,

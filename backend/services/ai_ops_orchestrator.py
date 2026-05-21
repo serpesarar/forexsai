@@ -71,6 +71,61 @@ async def _fetch_resolved_failures(client, since_iso: str, limit: int = 5000) ->
         return []
 
 
+async def _overlay_corrected(client, rows: list[dict]) -> dict:
+    """Overlay 1m-replay corrected outcomes onto prediction_logs rows.
+
+    The pre-entry wick leak (fixed 2026-05-19) inflated `status` and
+    `highest_profit_pips` on many rows. prediction_replay_corrections holds
+    the honest re-walked verdict. For every row that has an 'ok' correction
+    we overwrite status / highest_profit_pips / lowest_drawdown_pips /
+    exit_price IN PLACE so clustering & DeepSeek see the truth.
+
+    Returns a small stats dict for logging. No-op if AI_OPS_USE_CORRECTED=0.
+    """
+    import os as _os
+    if _os.getenv("AI_OPS_USE_CORRECTED", "1") == "0" or not rows:
+        return {"overlaid": 0, "enabled": False}
+
+    ids = [r["id"] for r in rows if r.get("id")]
+    if not ids:
+        return {"overlaid": 0, "enabled": True}
+
+    corr: dict[str, dict] = {}
+    PAGE = 1000
+    for i in range(0, len(ids), PAGE):
+        chunk = ids[i:i + PAGE]
+        try:
+            q = (client.table("prediction_replay_corrections").select(
+                "prediction_id,corrected_status,corrected_mfe_pips,"
+                "corrected_mae_pips,corrected_exit_price,replay_status")
+                .in_("prediction_id", chunk))
+            res = q.execute() if hasattr(q, "execute") else q
+            data = res.get("data") if isinstance(res, dict) else getattr(res, "data", [])
+            for c in (data or []):
+                if c.get("replay_status") == "ok" and c.get("prediction_id"):
+                    corr[c["prediction_id"]] = c
+        except Exception as e:
+            logger.warning("[ai_ops] corrected overlay fetch failed: %s", e)
+
+    overlaid = 0
+    for r in rows:
+        c = corr.get(r.get("id"))
+        if not c:
+            continue
+        cs = c.get("corrected_status")
+        if cs not in ("completed", "stopped", "expired"):
+            continue
+        r["status"] = cs
+        r["highest_profit_pips"] = c.get("corrected_mfe_pips")
+        r["lowest_drawdown_pips"] = c.get("corrected_mae_pips")
+        if c.get("corrected_exit_price") is not None:
+            r["exit_price"] = c.get("corrected_exit_price")
+        r["_corrected"] = True
+        overlaid += 1
+
+    return {"overlaid": overlaid, "enabled": True, "total": len(rows)}
+
+
 async def _fetch_outcome_map(client, prediction_ids: list[str], resolved: list[dict] | None = None) -> dict[str, dict]:
     """Build outcome map from prediction_logs rows (which already carry P/L)."""
     if not resolved:
@@ -468,6 +523,16 @@ async def orchestrate_ai_ops(window_days: int = DEFAULT_WINDOW_DAYS) -> dict:
     logger.info("[ai_ops] fetched %d resolved signals", len(resolved))
     if not resolved:
         return {"status": "ok", "resolved": 0, "tagged": 0, "clusters": 0, "proposals": 0}
+
+    # 1b) Overlay 1m-replay corrected verdicts — clustering must see the
+    #     honest win/loss, not the leak-inflated prediction_logs status.
+    overlay_stats = await _overlay_corrected(client, resolved)
+    if overlay_stats.get("enabled"):
+        logger.info("[ai_ops] corrected overlay: %d/%d rows replaced with replay truth",
+                    overlay_stats.get("overlaid", 0), overlay_stats.get("total", 0))
+        # Drop rows whose corrected verdict is 'expired' — they're no longer
+        # failures/successes, just neutral; they'd pollute the clusters.
+        resolved = [r for r in resolved if r.get("status") in ("stopped", "completed")]
 
     # 2) Pull outcomes
     pred_ids = [p["id"] for p in resolved]
