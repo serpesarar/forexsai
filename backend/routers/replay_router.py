@@ -71,23 +71,37 @@ async def replay_report(
     client = get_supabase_client()
 
     since_iso = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
-    q = client.table("prediction_replay_corrections").select(
-        "prediction_id,symbol,model_type,direction,"
-        "original_status,corrected_status,corrected_resolution_reason,"
-        "outcome_flipped,pnl_delta_pips,replay_status,replayed_at"
-    ).gte("signal_created_at", since_iso)
-    if batch_id:
-        q = q.eq("replay_batch_id", batch_id)
-    if symbol:
-        q = q.eq("symbol", symbol)
 
+    # Paginate past the 1000-row PostgREST cap — the corrections table holds
+    # ~87k rows, a single select would silently truncate to 1000.
+    PAGE = 1000
+    rows: list = []
+    page_offset = 0
     try:
-        res = q.execute() if hasattr(q, "execute") else q
+        while True:
+            q = (client.table("prediction_replay_corrections").select(
+                "prediction_id,symbol,model_type,direction,"
+                "original_status,corrected_status,corrected_resolution_reason,"
+                "outcome_flipped,pnl_delta_pips,replay_status,replayed_at")
+                .gte("signal_created_at", since_iso)
+                .order("replayed_at", desc=False)
+                .range(page_offset, page_offset + PAGE - 1))
+            if batch_id:
+                q = q.eq("replay_batch_id", batch_id)
+            if symbol:
+                q = q.eq("symbol", symbol)
+            res = q.execute() if hasattr(q, "execute") else q
+            page = res.data if hasattr(res, "data") else (
+                res.get("data") if isinstance(res, dict) else []) or []
+            if not page:
+                break
+            rows.extend(page)
+            if len(page) < PAGE:
+                break
+            page_offset += PAGE
     except Exception as e:
         raise HTTPException(500, f"report fetch failed: {str(e)[:120]}")
 
-    rows = res.data if hasattr(res, "data") else (res.get("data") if isinstance(res, dict) else [])
-    rows = rows or []
     if not rows:
         return {"status": "ok", "rows": 0, "scopes": []}
 
