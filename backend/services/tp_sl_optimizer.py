@@ -556,8 +556,40 @@ async def analyze_tp_sl(
         out["reason"] = f"only {len(signals)} resolved signals (need ≥{MIN_SAMPLE_SIZE})"
         return out
 
+    # ── Optional: replay every signal against real 5m candles to (a) recover
+    # honest MFE/MAE ignoring the stored leak-contaminated columns and (b)
+    # measure post-resolution price drift over N bars (user's spec: "TP/SL
+    # olduktan sonraki 20 mum nereye gitmiş"). Behind env flag so we can
+    # roll it out without disturbing the current optimizer behaviour.
+    post_drift_summary: Optional[dict] = None
+    import os as _os
+    if _os.getenv("TP_SL_CANDLE_REPLAY", "0") == "1":
+        try:
+            from services.tp_sl_candle_replay import (
+                enrich_signals_with_replay, summarize_post_drift,
+                DEFAULT_POST_BARS,
+            )
+            post_bars = int(_os.getenv("TP_SL_REPLAY_POST_BARS", str(DEFAULT_POST_BARS)))
+            enriched = await enrich_signals_with_replay(signals, post_bars=post_bars)
+            # Override mfe/mae with replay-derived values where the replay
+            # actually completed; keep originals as fallback.
+            replaced = 0
+            for s in enriched:
+                if s.get("replay_status") == "ok" and s.get("replayed_bars", 0) > 0:
+                    s["mfe_pips"] = s["mfe_true_pips"]
+                    s["mae_pips"] = s["mae_true_pips"]
+                    replaced += 1
+            signals = enriched
+            post_drift_summary = summarize_post_drift(enriched)
+            post_drift_summary["replay_replaced_signals"] = replaced
+            post_drift_summary["replay_post_bars"] = post_bars
+            logger.info("[tp_sl] candle replay: %d/%d signals re-derived, post-drift summary built",
+                        replaced, len(enriched))
+        except Exception as _re:
+            logger.warning("[tp_sl] candle replay failed, falling back to stored MFE/MAE: %s", _re)
+
     # MFE/MAE are already normalized to positive magnitude in
-    # _fetch_signals_with_outcomes.
+    # _fetch_signals_with_outcomes (and optionally replaced above by replay).
     mfe_values = [s["mfe_pips"] for s in signals]
     mae_values = [s["mae_pips"] for s in signals]
     mfe_stats = distribution_stats(mfe_values)
@@ -624,6 +656,10 @@ async def analyze_tp_sl(
 
     out["mfe_distribution"] = mfe_stats
     out["mae_distribution"] = mae_stats
+    if post_drift_summary:
+        # Post-resolution drift: did price keep extending after exit, or did
+        # it reverse immediately? Drives "widen TP" vs "TP is right" call.
+        out["post_resolution_drift"] = post_drift_summary
     out["grid_dim"] = {"tp_candidates": len(tp_grid), "sl_candidates": len(sl_grid),
                        "tp_range": [tp_grid[0], tp_grid[-1]] if tp_grid else None,
                        "sl_range": [sl_grid[0], sl_grid[-1]] if sl_grid else None}

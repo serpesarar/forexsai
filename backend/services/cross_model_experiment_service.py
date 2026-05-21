@@ -71,7 +71,7 @@ async def predict_xau_via_nasdaq_model() -> Dict[str, Any]:
     try:
         # Lazy imports — keeps experiment fully separable from prod pipeline.
         from services import ml_prediction_service as mlp
-        from services.data_fetcher import fetch_30m_candles, fetch_eod_candles, fetch_latest_price
+        from services.data_fetcher import fetch_30m_candles, fetch_latest_price
 
         # ── Load the NASDAQ model (cached internally by ml_prediction_service) ──
         nasdaq_model = mlp._load_model("NDX.INDX")
@@ -89,7 +89,6 @@ async def predict_xau_via_nasdaq_model() -> Dict[str, Any]:
                     "symbol": EXPERIMENT_SYMBOL,
                     "timestamp": _utc_iso()}
 
-        eod_candles = await fetch_eod_candles(EXPERIMENT_SYMBOL, limit=250) or []
         current_price_val = await fetch_latest_price(EXPERIMENT_SYMBOL) or 0.0
         try:
             current_price = float(current_price_val)
@@ -107,6 +106,7 @@ async def predict_xau_via_nasdaq_model() -> Dict[str, Any]:
                     "timestamp": _utc_iso()}
 
         # ── Build feature vector using the NASDAQ pipeline's helpers ──
+        ta_30m: Dict[str, Any] = {}
         try:
             import numpy as np
             closes_30m = np.array([float(c.get("close") or 0) for c in candles_30m], dtype=float)
@@ -115,14 +115,7 @@ async def predict_xau_via_nasdaq_model() -> Dict[str, Any]:
             volumes_30m = np.array([float(c.get("volume") or 0) for c in candles_30m], dtype=float)
 
             ta_30m = mlp._compute_technical_indicators(closes_30m, highs_30m, lows_30m, volumes_30m)
-
-            ta_eod = None
-            if eod_candles and len(eod_candles) >= 30:
-                closes_eod = np.array([float(c.get("close") or 0) for c in eod_candles], dtype=float)
-                highs_eod = np.array([float(c.get("high") or 0) for c in eod_candles], dtype=float)
-                lows_eod = np.array([float(c.get("low") or 0) for c in eod_candles], dtype=float)
-                volumes_eod = np.array([float(c.get("volume") or 0) for c in eod_candles], dtype=float)
-                ta_eod = mlp._compute_technical_indicators(closes_eod, highs_eod, lows_eod, volumes_eod)
+            ta_30m["close"] = current_price
         except Exception as feat_err:
             logger.exception("[cross-model] feature compute failed: %s", feat_err)
             return {"direction": "HOLD", "confidence": 0.0,
@@ -131,14 +124,16 @@ async def predict_xau_via_nasdaq_model() -> Dict[str, Any]:
                     "timestamp": _utc_iso()}
 
         # ── Build the feature_df matching NASDAQ model's expected schema ──
+        # _build_feature_vector signature: (symbol, ta, candles, ta_1h=None, ta_4h=None)
+        # We pass ta_30m as fallback for H1/H4 — same TF degeneracy the prod
+        # pipeline tolerates when MTF data is unavailable.
         try:
             feature_df = mlp._build_feature_vector(
-                symbol="NDX.INDX",  # MATCH the model's training schema
-                ta=ta_30m,
-                ta_eod=ta_eod,
-                current_price=current_price,
-                candles_30m=candles_30m,
-                eod_candles=eod_candles or [],
+                "NDX.INDX",        # MATCH the NASDAQ model's training schema
+                ta_30m,
+                candles_30m,
+                ta_1h=ta_30m,
+                ta_4h=ta_30m,
             )
         except Exception as build_err:
             logger.exception("[cross-model] feature_df build failed: %s", build_err)

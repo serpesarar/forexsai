@@ -500,6 +500,7 @@ router_module_names = [
     "macro_gauges",
     "cross_model_experiment",
     "mt5_reconciliation",
+    "replay_router",
 ]
 
 for module_name in router_module_names:
