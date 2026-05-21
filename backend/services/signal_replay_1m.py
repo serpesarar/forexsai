@@ -353,7 +353,10 @@ async def replay_signal_row(signal_row: dict,
                                key=lambda n: _target_rank(n) or 0)
 
             if tp_hit_this_bar and hit_sl:
-                # In-bar ambiguity — TP wins.
+                # In-bar ambiguity — a single 1m bar spanned both a TP and
+                # the SL; true order is unknowable without tick data. TP wins
+                # (matches signal_lifecycle). Flagged so the batch can report
+                # how many verdicts rest on this assumption.
                 if deepest == "TP4" and all(hit_targets.values()):
                     reason = "all_targets_hit"
                 elif deepest == "TP4":
@@ -363,7 +366,7 @@ async def replay_signal_row(signal_row: dict,
                 resolution = {
                     "status": "completed", "reason": reason,
                     "exit_price": target_prices.get(deepest), "exit_at": bts,
-                    "target_hit": deepest,
+                    "target_hit": deepest, "ambiguous": True,
                 }
             elif tp_hit_this_bar:
                 # Clean TP touch, no SL this bar → WIN at the deepest TP hit.
@@ -374,7 +377,7 @@ async def replay_signal_row(signal_row: dict,
                 resolution = {
                     "status": "completed", "reason": reason,
                     "exit_price": target_prices.get(deepest), "exit_at": bts,
-                    "target_hit": deepest,
+                    "target_hit": deepest, "ambiguous": False,
                 }
             else:
                 # SL touched, no TP ever → clean LOSS.
@@ -457,6 +460,7 @@ async def replay_signal_row(signal_row: dict,
         # outcome_flipped stores the MEANINGFUL verdict change (status).
         "outcome_flipped": bool(status_flipped),
         "_reason_changed": bool(reason_changed),   # summary-only, not persisted
+        "_ambiguous": bool(resolution.get("ambiguous", False)),  # summary-only
         "pnl_delta_pips": round(corrected_pnl - original_pnl, 3),
         "replay_notes": "; ".join(notes_bits) if notes_bits else None,
     }
@@ -592,6 +596,7 @@ async def run_replay_batch(since_iso: str,
         "by_replay_status": {},
         "status_flipped": 0,        # win/loss VERDICT changed — the real metric
         "reason_changed": 0,        # only the granular reason string differs
+        "in_bar_ambiguous": 0,      # verdicts resting on the TP-wins tie-break
         "by_corrected_status": {},
         "by_corrected_reason": {},
         "by_original_status": {},
@@ -603,6 +608,8 @@ async def run_replay_batch(since_iso: str,
             summary["status_flipped"] += 1
         if r.get("_reason_changed"):
             summary["reason_changed"] += 1
+        if r.get("_ambiguous"):
+            summary["in_bar_ambiguous"] += 1
         cs = r.get("corrected_status")
         if cs:
             summary["by_corrected_status"][cs] = summary["by_corrected_status"].get(cs, 0) + 1
