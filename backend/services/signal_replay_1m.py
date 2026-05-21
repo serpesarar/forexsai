@@ -410,9 +410,16 @@ async def replay_signal_row(signal_row: dict,
                                            signal_row.get("resolution_reason") or "",
                                            float(original_exit) if original_exit else None)
 
-    flipped = (signal_row.get("status") != resolution["status"]) or (
-        signal_row.get("resolution_reason") != resolution["reason"]
-    )
+    # Two distinct notions of "changed":
+    #  - status_flipped: the win/loss/neutral VERDICT changed
+    #    (completed↔stopped↔expired) — this is the metric that matters for
+    #    win-rate honesty.
+    #  - reason_changed: only the granular resolution_reason string differs
+    #    (e.g. original 'window_resolve_positive' vs corrected 'tp1_hit').
+    #    Almost always true since the old system used different reason
+    #    vocabulary — NOT a meaningful signal on its own.
+    status_flipped = (signal_row.get("status") != resolution["status"])
+    reason_changed = (signal_row.get("resolution_reason") != resolution["reason"])
 
     notes_bits = []
     if price_offset_applied:
@@ -429,7 +436,9 @@ async def replay_signal_row(signal_row: dict,
         "corrected_mae_pips": round(mae_pips, 3),
         "bars_walked": bars_walked,
         "replay_status": "ok",
-        "outcome_flipped": bool(flipped),
+        # outcome_flipped stores the MEANINGFUL verdict change (status).
+        "outcome_flipped": bool(status_flipped),
+        "_reason_changed": bool(reason_changed),   # summary-only, not persisted
         "pnl_delta_pips": round(corrected_pnl - original_pnl, 3),
         "replay_notes": "; ".join(notes_bits) if notes_bits else None,
     }
@@ -544,28 +553,37 @@ async def run_replay_batch(since_iso: str,
         "scanned": len(rows),
         "bar_coverage": bar_coverage,
         "by_replay_status": {},
-        "flipped": 0,
+        "status_flipped": 0,        # win/loss VERDICT changed — the real metric
+        "reason_changed": 0,        # only the granular reason string differs
         "by_corrected_status": {},
         "by_corrected_reason": {},
+        "by_original_status": {},
     }
     for r in results:
         rs = r.get("replay_status") or "unknown"
         summary["by_replay_status"][rs] = summary["by_replay_status"].get(rs, 0) + 1
         if r.get("outcome_flipped"):
-            summary["flipped"] += 1
+            summary["status_flipped"] += 1
+        if r.get("_reason_changed"):
+            summary["reason_changed"] += 1
         cs = r.get("corrected_status")
         if cs:
             summary["by_corrected_status"][cs] = summary["by_corrected_status"].get(cs, 0) + 1
         cr = r.get("corrected_resolution_reason")
         if cr:
             summary["by_corrected_reason"][cr] = summary["by_corrected_reason"].get(cr, 0) + 1
+        os_ = r.get("original_status")
+        if os_:
+            summary["by_original_status"][os_] = summary["by_original_status"].get(os_, 0) + 1
 
     # ── Persist (batched upsert) ────────────────────────────────────────────
     if not dry_run:
         BATCH = 200
         persisted = 0
         for i in range(0, len(results), BATCH):
-            chunk = results[i:i + BATCH]
+            # Strip summary-only keys the table has no column for.
+            chunk = [{k: v for k, v in r.items() if not k.startswith("_")}
+                     for r in results[i:i + BATCH]]
             try:
                 # on_conflict on (prediction_id, replay_batch_id) — since
                 # batch_id is fresh, this is effectively insert. Using
