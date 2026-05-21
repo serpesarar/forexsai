@@ -201,6 +201,7 @@ class TableQuery:
         self.filters: List[str] = []
         self.order_by: Optional[str] = None
         self.limit_val: Optional[int] = None
+        self.offset_val: Optional[int] = None
 
     def select(self, columns: str = "*") -> "TableQuery":
         self._columns = columns
@@ -262,6 +263,19 @@ class TableQuery:
         self.limit_val = count
         return self
 
+    def offset(self, count: int) -> "TableQuery":
+        """PostgREST pagination — skip the first `count` rows. Pair with
+        limit() to page past the 1000-row default cap."""
+        self.offset_val = count
+        return self
+
+    def range(self, start: int, end: int) -> "TableQuery":
+        """supabase-py compatible range(start, end) — inclusive both ends.
+        Translates to PostgREST offset + limit."""
+        self.offset_val = start
+        self.limit_val = max(0, end - start + 1)
+        return self
+
     def _build_url(self) -> str:
         url = f"{self.client.url}/rest/v1/{self.table_name}"
         params: List[tuple[str, Any]] = []
@@ -276,6 +290,8 @@ class TableQuery:
             params.append(("order", self.order_by))
         if self.limit_val:
             params.append(("limit", self.limit_val))
+        if self.offset_val:
+            params.append(("offset", self.offset_val))
         if params:
             url += "?" + urlencode(params, doseq=True, safe="(),.*")
         return url

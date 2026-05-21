@@ -32,7 +32,8 @@
       "Bash(curl -fs \"https://upbeat-flow-production.up.railway.app/api/ai-ops/stats\")",
       "Bash(curl -s \"https://upbeat-flow-production.up.railway.app/api/ai-ops/proposals?symbol=USOIL.FOREX&limit=1\")",
       "Bash(curl -s -X POST \"https://upbeat-flow-production.up.railway.app/api/ai-ops/proposals/fbb4397b-2c76-4b1c-9bbc-5c941b0c0c37/simulate?window_days=30\")",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(bash replay_ops.sh dry)"
     ]
   }
 }
