@@ -749,3 +749,124 @@ async def inspect_signal(prediction_id: str) -> dict:
         "diagnostics": result.get("_diagnostics"),
         "bar_trace": trace,
     }
+
+
+# ─── Apply corrected outcomes back onto prediction_logs ──────────────────────
+
+async def apply_corrections_to_prediction_logs(since_iso: str,
+                                                 dry_run: bool = True) -> dict:
+    """Overwrite prediction_logs' outcome fields with the replay-corrected
+    values, so every panel (all read prediction_logs) shows the honest
+    1m-replayed result. Fully reversible — the originals are snapshotted in
+    prediction_replay_corrections.original_* (see revert_corrections).
+
+    Only rows with replay_status='ok' are touched. no_candles / pre-2026-02-10
+    signals keep their original outcome."""
+    from database.supabase_client import get_supabase_client, is_db_available
+    if not is_db_available():
+        return {"status": "error", "error": "db_unavailable"}
+    client = get_supabase_client()
+
+    # Fetch all 'ok' corrections since the cutoff (paginated).
+    rows: list[dict] = []
+    offset = 0
+    while True:
+        q = (client.table("prediction_replay_corrections").select(
+            "prediction_id,corrected_status,corrected_resolution_reason,"
+            "corrected_exit_price,corrected_mfe_pips,corrected_mae_pips,replay_status")
+            .gte("signal_created_at", since_iso)
+            .order("replayed_at", desc=False)
+            .range(offset, offset + SUPABASE_PAGE_SIZE - 1))
+        res = q.execute() if hasattr(q, "execute") else q
+        page = res.data if hasattr(res, "data") else (
+            res.get("data") if isinstance(res, dict) else []) or []
+        if not page:
+            break
+        rows.extend(page)
+        if len(page) < SUPABASE_PAGE_SIZE:
+            break
+        offset += SUPABASE_PAGE_SIZE
+
+    ok = [r for r in rows if r.get("replay_status") == "ok" and r.get("prediction_id")]
+    summary = {"status": "ok", "since": since_iso,
+               "corrections_found": len(rows), "applicable": len(ok)}
+    if dry_run:
+        summary["dry_run"] = True
+        return summary
+
+    updates = [{
+        "id": r["prediction_id"],
+        "status": r.get("corrected_status"),
+        "resolution_reason": r.get("corrected_resolution_reason"),
+        "exit_price": r.get("corrected_exit_price"),
+        "highest_profit_pips": r.get("corrected_mfe_pips"),
+        "lowest_drawdown_pips": r.get("corrected_mae_pips"),
+    } for r in ok]
+
+    applied = 0
+    BATCH = 200
+    for i in range(0, len(updates), BATCH):
+        chunk = updates[i:i + BATCH]
+        try:
+            client.table("prediction_logs").upsert(chunk, on_conflict="id")
+            applied += len(chunk)
+        except Exception as e:
+            logger.warning("apply-corrections chunk failed @%d: %s", i, e)
+    summary["applied"] = applied
+    return summary
+
+
+async def revert_corrections(since_iso: str, dry_run: bool = True) -> dict:
+    """Restore prediction_logs' outcome fields from the original_* snapshot
+    held in prediction_replay_corrections — undoes apply_corrections."""
+    from database.supabase_client import get_supabase_client, is_db_available
+    if not is_db_available():
+        return {"status": "error", "error": "db_unavailable"}
+    client = get_supabase_client()
+
+    rows: list[dict] = []
+    offset = 0
+    while True:
+        q = (client.table("prediction_replay_corrections").select(
+            "prediction_id,original_status,original_resolution_reason,"
+            "original_exit_price,original_highest_profit_pips,"
+            "original_lowest_drawdown_pips,replay_status")
+            .gte("signal_created_at", since_iso)
+            .order("replayed_at", desc=False)
+            .range(offset, offset + SUPABASE_PAGE_SIZE - 1))
+        res = q.execute() if hasattr(q, "execute") else q
+        page = res.data if hasattr(res, "data") else (
+            res.get("data") if isinstance(res, dict) else []) or []
+        if not page:
+            break
+        rows.extend(page)
+        if len(page) < SUPABASE_PAGE_SIZE:
+            break
+        offset += SUPABASE_PAGE_SIZE
+
+    ok = [r for r in rows if r.get("replay_status") == "ok" and r.get("prediction_id")]
+    summary = {"status": "ok", "since": since_iso, "restorable": len(ok)}
+    if dry_run:
+        summary["dry_run"] = True
+        return summary
+
+    updates = [{
+        "id": r["prediction_id"],
+        "status": r.get("original_status"),
+        "resolution_reason": r.get("original_resolution_reason"),
+        "exit_price": r.get("original_exit_price"),
+        "highest_profit_pips": r.get("original_highest_profit_pips"),
+        "lowest_drawdown_pips": r.get("original_lowest_drawdown_pips"),
+    } for r in ok]
+
+    reverted = 0
+    BATCH = 200
+    for i in range(0, len(updates), BATCH):
+        chunk = updates[i:i + BATCH]
+        try:
+            client.table("prediction_logs").upsert(chunk, on_conflict="id")
+            reverted += len(chunk)
+        except Exception as e:
+            logger.warning("revert-corrections chunk failed @%d: %s", i, e)
+    summary["reverted"] = reverted
+    return summary

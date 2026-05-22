@@ -15,7 +15,10 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from services.signal_replay_1m import run_replay_batch, inspect_signal
+from services.signal_replay_1m import (
+    run_replay_batch, inspect_signal,
+    apply_corrections_to_prediction_logs, revert_corrections,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/replay", tags=["Replay & Correction"])
@@ -133,6 +136,45 @@ async def walkforward(
     return {"status": "ok",
             "results": await walk_forward_all(
                 train_cutoff=train_cutoff, days=days, tp_pct=tp_pct, sl_pct=sl_pct)}
+
+
+@router.post("/apply-corrections")
+async def apply_corrections(
+    since: str = Query("2026-02-10", description="Apply corrections for signals on/after this date"),
+    dry_run: bool = Query(True, description="Preview counts only — pass dry_run=false to write"),
+):
+    """Overwrite prediction_logs' outcome fields (status, resolution_reason,
+    exit_price, highest_profit_pips, lowest_drawdown_pips) with the
+    1m-replay corrected values. Every panel reads prediction_logs, so this
+    makes ALL panels show the honest signals at once.
+
+    Reversible — originals are snapshotted in prediction_replay_corrections;
+    POST /api/replay/revert-corrections restores them."""
+    try:
+        since_iso = datetime.fromisoformat(since).replace(tzinfo=timezone.utc).isoformat()
+    except ValueError:
+        raise HTTPException(400, f"bad since date: {since}")
+    res = await apply_corrections_to_prediction_logs(since_iso, dry_run=dry_run)
+    if res.get("status") == "error":
+        raise HTTPException(500, res.get("error", "apply failed"))
+    return res
+
+
+@router.post("/revert-corrections")
+async def revert_corrections_endpoint(
+    since: str = Query("2026-02-10"),
+    dry_run: bool = Query(True),
+):
+    """Undo apply-corrections — restore prediction_logs from the original_*
+    snapshot in prediction_replay_corrections."""
+    try:
+        since_iso = datetime.fromisoformat(since).replace(tzinfo=timezone.utc).isoformat()
+    except ValueError:
+        raise HTTPException(400, f"bad since date: {since}")
+    res = await revert_corrections(since_iso, dry_run=dry_run)
+    if res.get("status") == "error":
+        raise HTTPException(500, res.get("error", "revert failed"))
+    return res
 
 
 @router.get("/derived-config-status")
