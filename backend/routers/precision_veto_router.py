@@ -153,20 +153,26 @@ async def veto_summary(days: int = Query(30, ge=1, le=90)):
 
 @router.get("/shadow-report")
 async def shadow_report(days: int = Query(7, ge=1, le=60)):
-    """DÜRÜST backtest: shadow modda 'veto edilirdi' işaretlenen sinyallerin
-    GERÇEK sonucu. Shadow modda sinyal bloklanmaz, prediction_logs'a da yazılır
-    — yani veto kararını gerçek outcome ile karşılaştırabiliriz.
+    """DÜRÜST backtest — PIP TEMELLİ. Shadow modda veto edilen sinyal
+    bloklanmaz, prediction_logs'a yazılır ve lifecycle onu normal çözer —
+    yani gerçek exit_price'ı bilinir. Her veto için:
 
-    'good_catch'  = veto edilen sinyal SL'ye gitti (doğru engellerdik)
-    'missed_win'  = veto edilen sinyal TP yaptı (yanlışlıkla kaçırırdık)
-    Bu oran enforce moduna geçmeden önce motorun değerini gösterir."""
+      good_catch (status=stopped)  → veto X pip ZARARDAN kurtardı
+      missed_win (status=completed)→ veto Y pip KAZANCI kaçırdı
+
+    net_pips_saved = Σ(kurtarılan zarar) − Σ(kaçırılan kazanç), sembol bazlı
+    (NDX puanı / XAUUSD pip / USOIL % aynı kovaya konmaz — per-symbol).
+
+    NOT: enforce moduna geçince vetolanan sinyal prediction_logs'a YAZILMAZ;
+    o zaman bu yöntem çalışmaz — veto anından itibaren 1m mum ileri-yürüyüşü
+    gerekir (replay motoru bunun için hazır). Şimdilik shadow fazında bu
+    yöntem doğru ve yeterli."""
     from database.supabase_client import get_supabase_client, is_db_available
     if not is_db_available():
         raise HTTPException(503, "db_unavailable")
     client = get_supabase_client()
     since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
 
-    # Shadow / veto kayıtları
     vq = (client.table("signal_vetoes")
           .select("created_at,symbol,model_type,signal_direction,veto_stage,"
                   "veto_reason,outcome")
@@ -178,9 +184,10 @@ async def shadow_report(days: int = Query(7, ge=1, le=60)):
         return {"status": "ok", "days": days, "vetoed_signals": 0,
                 "note": "Henüz shadow verisi yok — motor çalıştıkça birikir."}
 
-    # prediction_logs'tan aynı pencereyi çek, eşleştirme için.
+    # prediction_logs — eşleştirme + realized pip hesabı için tüm gerekli alanlar.
     pq = (client.table("prediction_logs")
-          .select("symbol,model_type,ml_direction,status,created_at")
+          .select("symbol,model_type,ml_direction,status,created_at,"
+                  "ml_entry_price,exit_price,stop_loss_pips")
           .gte("created_at", since).limit(50000))
     pres = pq.execute() if hasattr(pq, "execute") else pq
     plogs = pres.data if hasattr(pres, "data") else (
@@ -192,38 +199,77 @@ async def shadow_report(days: int = Query(7, ge=1, le=60)):
         except Exception:
             return None
 
-    # (symbol, model, direction) → [(created_at, status)]
+    try:
+        from services.target_config import pips_from_price_change
+    except Exception:
+        pips_from_price_change = None
+
+    def _realized_pips(symbol, direction, entry, exit_p) -> float:
+        """Sinyal yönünde gerçekleşen pip (kazanç +, zarar −)."""
+        if not entry or not exit_p:
+            return 0.0
+        diff = (exit_p - entry) if direction == "BUY" else (entry - exit_p)
+        if pips_from_price_change:
+            try:
+                mag = abs(pips_from_price_change(abs(diff), symbol))
+                return mag if diff >= 0 else -mag
+            except Exception:
+                pass
+        return diff   # ham fiyat farkı (fallback)
+
+    # (symbol, model, direction) → [(created_at, row)]
     idx: dict = {}
     for p in plogs:
         key = (p.get("symbol"), p.get("model_type"),
                (p.get("ml_direction") or "").upper())
-        idx.setdefault(key, []).append((_parse(p.get("created_at")), p.get("status")))
+        idx.setdefault(key, []).append((_parse(p.get("created_at")), p))
 
     good_catch = missed_win = neutral = unmatched = 0
     by_reason: dict = {}
+    # sembol bazlı pip kovaları (birimler karışmasın)
+    per_symbol: dict = {}
+
     for v in vetoes:
-        key = (v.get("symbol"), v.get("model_type"),
-               (v.get("signal_direction") or "").upper())
+        sym = v.get("symbol")
+        direction = (v.get("signal_direction") or "").upper()
+        key = (sym, v.get("model_type"), direction)
         vt = _parse(v.get("created_at"))
-        match_status = None
+        match = None
         best = None
-        for (pt, status) in idx.get(key, []):
+        for (pt, prow) in idx.get(key, []):
             if pt is None or vt is None:
                 continue
             gap = abs((pt - vt).total_seconds())
             if gap <= 300 and (best is None or gap < best):   # ±5 dk
                 best = gap
-                match_status = status
+                match = prow
         rsn = v.get("veto_reason") or "?"
         bucket = by_reason.setdefault(rsn, {"good": 0, "missed": 0, "other": 0})
-        if match_status == "stopped":
-            good_catch += 1; bucket["good"] += 1
-        elif match_status == "completed":
-            missed_win += 1; bucket["missed"] += 1
-        elif match_status in ("expired", "market_closed_invalid"):
-            neutral += 1; bucket["other"] += 1
-        else:
+        ps = per_symbol.setdefault(sym, {"good_catch": 0, "missed_win": 0,
+                                          "pips_saved": 0.0, "pips_missed": 0.0})
+
+        if match is None:
             unmatched += 1
+            continue
+        status = match.get("status")
+        realized = _realized_pips(sym, direction,
+                                  float(match.get("ml_entry_price") or 0),
+                                  float(match.get("exit_price") or 0))
+        if status == "stopped":
+            good_catch += 1; bucket["good"] += 1
+            ps["good_catch"] += 1
+            ps["pips_saved"] += abs(realized)        # bu zarardan kurtulurduk
+        elif status == "completed":
+            missed_win += 1; bucket["missed"] += 1
+            ps["missed_win"] += 1
+            ps["pips_missed"] += max(0.0, realized)  # bu kazancı kaçırırdık
+        else:
+            neutral += 1; bucket["other"] += 1
+
+    for sym, ps in per_symbol.items():
+        ps["pips_saved"] = round(ps["pips_saved"], 2)
+        ps["pips_missed"] = round(ps["pips_missed"], 2)
+        ps["net_pips_saved"] = round(ps["pips_saved"] - ps["pips_missed"], 2)
 
     resolved = good_catch + missed_win
     precision = round(100 * good_catch / resolved, 1) if resolved else None
@@ -236,12 +282,14 @@ async def shadow_report(days: int = Query(7, ge=1, le=60)):
         "neutral_expired": neutral,
         "unmatched": unmatched,
         "veto_precision_pct": precision,
+        "per_symbol_pips": per_symbol,
         "verdict": (
-            f"Veto edilen sinyallerin %{precision}'i gerçekten SL'ye gitti — "
-            f"motor doğru engelliyor." if precision and precision >= 60 else
+            f"Veto edilen sinyallerin %{precision}'i SL'ye gitti — motor "
+            f"doğru engelliyor. Pip etkisi per_symbol_pips'te." if precision
+            and precision >= 60 else
             f"Veto precision %{precision} — enforce'a geçmeden eşikleri gözden geçir."
             if precision is not None else
-            "Yeterli eşleşmiş resolved sinyal yok."
+            "Yeterli eşleşmiş resolved sinyal yok — birkaç saat/gün daha bekle."
         ),
         "by_reason": by_reason,
     }
