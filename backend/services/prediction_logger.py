@@ -368,6 +368,39 @@ def _check_news_filter(context: Dict[str, Any]) -> Tuple[bool, str]:
     return False, ""
 
 
+async def _apply_precision_veto(record: dict) -> bool:
+    """Precision Veto Engine geçişi — sinyal prediction_logs'a yazılMADAN önce.
+
+    Dönüş: True → sinyal yayınlanabilir; False → hard veto, bloklandı.
+    Hard-veto / shadow / penalty durumları signal_vetoes'a loglanır.
+    Penalty varsa record['ml_confidence'] düşürülür."""
+    try:
+        from services.precision_veto_service import check_signal, log_veto
+        sig = {
+            "symbol": record.get("symbol"),
+            "direction": record.get("ml_direction"),
+            "confidence": float(record.get("ml_confidence") or 0),
+            "model_type": record.get("model_type"),
+            "timeframe": record.get("timeframe"),
+            "price": record.get("ml_entry_price"),
+        }
+        vr = await check_signal(sig)
+        if vr.would_veto or vr.total_penalty > 0:
+            await log_veto(vr, sig)
+        if vr.vetoed:
+            logger.info("[precision-veto] BLOKLANDI %s %s — stage%d/%s",
+                        sig["symbol"], sig["direction"], vr.stage, vr.reason)
+            return False
+        if vr.adjusted_confidence and abs(vr.adjusted_confidence - sig["confidence"]) > 0.01:
+            record["ml_confidence"] = round(vr.adjusted_confidence, 2)
+            if isinstance(record.get("factors"), dict):
+                record["factors"]["precision_veto_penalty"] = round(vr.total_penalty, 1)
+        return True
+    except Exception as e:
+        logger.warning("[precision-veto] kontrol hatası — sinyal geçti: %s", e)
+        return True
+
+
 async def log_smc_prediction(
     symbol: str,
     timeframe: str,
@@ -501,6 +534,8 @@ async def log_smc_prediction(
             "model_type": SMC_MODEL_TYPE,
         }
 
+        if not await _apply_precision_veto(record):
+            return None
         result = client.table("prediction_logs").insert_ignore(record)
 
         if safe_get_error(result):
@@ -859,7 +894,9 @@ async def log_prediction(
         
         if stored_strategy:
             record["strategy"] = stored_strategy
-        
+
+        if not await _apply_precision_veto(record):
+            return None
         result = client.table("prediction_logs").insert_ignore(record)
 
         if safe_get_error(result):
