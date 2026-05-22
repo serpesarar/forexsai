@@ -37,6 +37,57 @@ async def veto_config():
     }
 
 
+@router.get("/test")
+async def veto_self_test(
+    symbol: str = Query("XAUUSD"),
+    direction: str = Query("BUY"),
+    confidence: float = Query(75.0),
+    timeframe: str = Query("15m"),
+):
+    """Self-test — canlı fiyat/mum verisiyle check_signal()'i çalıştırır,
+    4 aşamanın da hatasız çalıştığını anında gösterir. Beklemeden doğrulama."""
+    from services.precision_veto_service import check_signal
+    try:
+        from services.data_fetcher import fetch_latest_price
+        price = await fetch_latest_price(symbol) or 0.0
+    except Exception as e:
+        raise HTTPException(500, f"fiyat alınamadı: {e}")
+    if not price:
+        raise HTTPException(503, f"{symbol} için canlı fiyat yok")
+
+    signal = {"symbol": symbol, "direction": direction.upper(),
+              "confidence": confidence, "model_type": "self_test",
+              "timeframe": timeframe, "price": price}
+    try:
+        vr = await check_signal(signal)
+    except Exception as e:
+        logger.exception("veto self-test hata: %s", e)
+        raise HTTPException(500, f"check_signal hata: {e}")
+
+    return {
+        "status": "ok",
+        "input": signal,
+        "engine_ran": True,
+        "result": {
+            "would_veto": vr.would_veto,
+            "vetoed": vr.vetoed,
+            "shadow_mode": vr.shadow_mode,
+            "stage": vr.stage,
+            "reason": vr.reason,
+            "direction_out": vr.direction,
+            "original_confidence": vr.original_confidence,
+            "adjusted_confidence": round(vr.adjusted_confidence, 2),
+            "total_penalty": vr.total_penalty,
+            "converted_to_hold": vr.converted_to_hold,
+        },
+        "features": vr.features,
+        "stage_details": vr.details,
+        "note": ("4 aşama da hatasız çalıştıysa 'features' alanında "
+                  "liquidity_zone_position / mtf_agreement_score / "
+                  "wick_rejection_score / bb_position / z_score dolu olmalı."),
+    }
+
+
 @router.get("/vetoes")
 async def list_vetoes(
     days: int = Query(7, ge=1, le=90),
