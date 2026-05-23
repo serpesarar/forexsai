@@ -37,6 +37,46 @@ async def veto_config():
     }
 
 
+@router.get("/day-structure")
+async def day_structure(symbol: str = Query("XAUUSD"),
+                         timeframe: str = Query("15m")):
+    """Bir sembol için tam Day Structure paketi — PDH/PDL/PWH/PWL, pivotlar,
+    multi-scale swings, memory zones (freshness + rejection sayısı), ATR.
+    Stage 1c bu veriyi kullanır; Stage 4 ML feature seti de buradan beslenir."""
+    from services.day_structure_service import compute_day_structure
+    ds = await compute_day_structure(symbol, timeframe)
+    if ds is None:
+        raise HTTPException(503, f"{symbol} için day structure hesaplanamadı (mum verisi yok)")
+    return {
+        "status": "ok",
+        "symbol": ds.symbol, "timeframe": ds.timeframe,
+        "computed_at": ds.computed_at.isoformat(),
+        "current_price": ds.current_price,
+        "atr": ds.atr, "today_atr_ratio": ds.today_atr_ratio,
+        "day_high": ds.day_high, "day_low": ds.day_low,
+        "pdh": ds.pdh, "pdl": ds.pdl, "pdc": ds.pdc,
+        "pwh": ds.pwh, "pwl": ds.pwl,
+        "pdh_tests_today": {"touches": ds.pdh_touches_today,
+                              "rejections": ds.pdh_rejections_today},
+        "pdl_tests_today": {"touches": ds.pdl_touches_today,
+                              "rejections": ds.pdl_rejections_today},
+        "pivots": ds.pivots,
+        "swing_counts": {
+            "small_highs": len(ds.swings_small_highs),
+            "small_lows": len(ds.swings_small_lows),
+            "large_highs": len(ds.swings_large_highs),
+            "large_lows": len(ds.swings_large_lows),
+        },
+        "memory_zones": [
+            {"center": z.center, "lower": z.lower, "upper": z.upper,
+             "touches": z.touches, "rejections": z.rejections, "breaks": z.breaks,
+             "freshness": z.freshness, "last_touch_min_ago": z.last_touch_minutes_ago,
+             "strength": z.strength}
+            for z in ds.memory_zones[:10]
+        ],
+    }
+
+
 @router.get("/test")
 async def veto_self_test(
     symbol: str = Query("XAUUSD"),

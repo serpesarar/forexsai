@@ -36,7 +36,16 @@ PRECISION_VETO_CONFIG: dict[str, Any] = {
     "stage_1_enabled": True,
     "stage_2_enabled": True,
     "stage_3_enabled": True,
+    "stage_1c_enabled": True,         # Day Structure veto katmanı
     "stage_4_enabled": True,
+    # Stage 1c eşikleri — profesör review'inden sonra konservatif
+    "stage1c_memory_min_rejections": 4,
+    "stage1c_memory_min_freshness": 0.6,
+    "stage1c_memory_distance_atr": 0.15,
+    "stage1c_pdh_pdl_distance_atr": 0.10,
+    "stage1c_pdh_pdl_min_rejections_today": 2,
+    "stage1c_pivot_penalty_distance_atr": 0.10,
+    "stage1c_pivot_penalty": 10,
     "liquidity_lookback": 50,
     "liquidity_premium_threshold": 0.85,   # son 50 mumun %15 tepesi
     "liquidity_discount_threshold": 0.15,
@@ -417,6 +426,98 @@ def _stage3_meanrev(symbol: str, direction: str, price: float,
     return penalty, details
 
 
+# ─── AŞAMA 1c — Day Structure (lean v1) ─────────────────────────────────────
+async def _stage1c_day_structure(symbol: str, direction: str, price: float,
+                                   timeframe: str
+                                   ) -> tuple[Optional[str], float, dict]:
+    """Day Structure veto katmanı — lean v1 (2 hard, 1 soft).
+
+    HV1: Sinyal yönünde ≥4 reddetme'li memory zone'a ≤0.15 ATR + freshness ≥0.6
+    HV2: BUY→PDH ≤0.10 ATR + PDH bugün ≥2 reddedilmiş (likidite avı kanıtı);
+         SELL→PDL aynı şart.
+    SP1: Pivot karşıt yön (R1/R2 BUY için, S1/S2 SELL için) ≤0.10 ATR → −10
+
+    Dönüş: (veto_reason | None, soft_penalty, details)
+    Aşırı-bloklama önlemleri: zone yönü kontrolü, reject-vs-break ayrımı,
+    PDH/PDL temiz ilk-temas korunur, freshness şartı."""
+    try:
+        from services.day_structure_service import compute_day_structure
+        ds = await compute_day_structure(symbol, timeframe)
+    except Exception as e:
+        logger.debug("[stage1c] day structure hata: %s", e)
+        return None, 0.0, {"skipped": "compute_failed"}
+    if ds is None or ds.atr <= 0:
+        return None, 0.0, {"skipped": "no_structure"}
+
+    details: dict = {
+        "atr": round(ds.atr, 5),
+        "today_atr_ratio": ds.today_atr_ratio,
+        "memory_zone_count": len(ds.memory_zones),
+    }
+    cfg = PRECISION_VETO_CONFIG
+    mem_dist = float(cfg["stage1c_memory_distance_atr"])
+    mem_min_rej = int(cfg["stage1c_memory_min_rejections"])
+    mem_min_fresh = float(cfg["stage1c_memory_min_freshness"])
+
+    # ── HV1: sinyal yönünde strong rejection memory zone ────────────────────
+    nearest_zone = ds.nearest_memory_zone_in_direction(direction)
+    if nearest_zone is not None:
+        dist_atr = abs(nearest_zone.center - price) / ds.atr
+        if (dist_atr <= mem_dist
+                and nearest_zone.rejections >= mem_min_rej
+                and nearest_zone.freshness >= mem_min_fresh):
+            details["hv1"] = {
+                "zone_center": nearest_zone.center,
+                "zone_touches": nearest_zone.touches,
+                "zone_rejections": nearest_zone.rejections,
+                "zone_freshness": nearest_zone.freshness,
+                "distance_atr": round(dist_atr, 3),
+            }
+            return "memory_zone_rejection_path", 0.0, details
+
+    # ── HV2: PDH/PDL'ye yakın + bugün reddedilmiş ────────────────────────────
+    pdh_pdl_dist = float(cfg["stage1c_pdh_pdl_distance_atr"])
+    min_today_rej = int(cfg["stage1c_pdh_pdl_min_rejections_today"])
+    if direction == "BUY" and ds.pdh is not None:
+        d = abs(ds.pdh - price) / ds.atr
+        if d <= pdh_pdl_dist and ds.pdh_rejections_today >= min_today_rej:
+            details["hv2"] = {"level": "PDH", "value": ds.pdh,
+                              "distance_atr": round(d, 3),
+                              "touches_today": ds.pdh_touches_today,
+                              "rejections_today": ds.pdh_rejections_today}
+            return "pdh_rejected_liquidity", 0.0, details
+    if direction == "SELL" and ds.pdl is not None:
+        d = abs(ds.pdl - price) / ds.atr
+        if d <= pdh_pdl_dist and ds.pdl_rejections_today >= min_today_rej:
+            details["hv2"] = {"level": "PDL", "value": ds.pdl,
+                              "distance_atr": round(d, 3),
+                              "touches_today": ds.pdl_touches_today,
+                              "rejections_today": ds.pdl_rejections_today}
+            return "pdl_rejected_liquidity", 0.0, details
+
+    # ── SP1: karşıt-yön pivot zone yakınlığı → soft penalty ──────────────────
+    sp1_dist = float(cfg["stage1c_pivot_penalty_distance_atr"])
+    sp1_pen = float(cfg["stage1c_pivot_penalty"])
+    opposing = ("R1", "R2", "R3") if direction == "BUY" else ("S1", "S2", "S3")
+    nearest_pivot = None
+    nearest_d = None
+    for name in opposing:
+        if name not in ds.pivots:
+            continue
+        d = abs(ds.pivots[name] - price) / ds.atr
+        if d <= sp1_dist and (nearest_d is None or d < nearest_d):
+            nearest_d = d
+            nearest_pivot = name
+    if nearest_pivot:
+        details["sp1"] = {"pivot": nearest_pivot,
+                          "value": ds.pivots[nearest_pivot],
+                          "distance_atr": round(nearest_d, 3),
+                          "penalty": sp1_pen}
+        return None, sp1_pen, details
+
+    return None, 0.0, details
+
+
 # ─── AŞAMA 4 — Meta sentezleyici ─────────────────────────────────────────────
 def _load_meta_model():
     global _meta_model, _meta_model_loaded
@@ -531,6 +632,20 @@ async def check_signal(signal: dict) -> VetoResult:
         reason, det = _stage2_pattern(symbol, direction, price, candles)
         if reason:
             return _hard_veto(2, reason, det)
+
+    # ── AŞAMA 1c — Day Structure (Stage 2'den sonra, Stage 3'ten önce) ──────
+    if PRECISION_VETO_CONFIG.get("stage_1c_enabled", True):
+        reason, sp_penalty, det = await _stage1c_day_structure(
+            symbol, direction, price, timeframe)
+        if reason:
+            return _hard_veto(1, reason, det)   # rapor aşaması=1 (yapısal)
+        if sp_penalty:
+            res.total_penalty += sp_penalty
+            res.details["stage1c"] = det
+        elif det.get("memory_zone_count") is not None:
+            # Sessiz pass — sadece feature snapshot (Stage 4 için)
+            res.features["day_structure_atr"] = det.get("atr")
+            res.features["today_atr_ratio"] = det.get("today_atr_ratio")
 
     # ── AŞAMA 3 — İstatistiksel filtre (soft) ────────────────────────────────
     if PRECISION_VETO_CONFIG["stage_3_enabled"]:
