@@ -235,99 +235,123 @@ async def backtest_stage1c(days: int = 90,
 
 def _eval_stage1c_with_ds(ds, direction: str, price: float
                            ) -> tuple[Optional[str], float]:
-    """Stage 1c kurallarını verilmiş bir DS objesi üzerinde uygula
-    (live fetch yapmadan — backtest için)."""
-    from services.precision_veto_service import PRECISION_VETO_CONFIG
-    cfg = PRECISION_VETO_CONFIG
+    """Stage 1c v2 kurallarını verilmiş bir DS üzerinde uygula (live fetch yok).
+    Yeni mantık: hard veto YOK, sadece rejim-farkında soft penalty."""
     if ds is None or ds.atr <= 0:
         return None, 0.0
-    mem_dist = float(cfg["stage1c_memory_distance_atr"])
-    mem_min_rej = int(cfg["stage1c_memory_min_rejections"])
-    mem_min_fresh = float(cfg["stage1c_memory_min_freshness"])
+    total_penalty = 0.0
 
-    nearest_zone = ds.nearest_memory_zone_in_direction(direction)
-    if nearest_zone is not None:
-        d = abs(nearest_zone.center - price) / ds.atr
-        if (d <= mem_dist and nearest_zone.rejections >= mem_min_rej
-                and nearest_zone.freshness >= mem_min_fresh):
-            return "memory_zone_rejection_path", 0.0
+    nz = ds.nearest_memory_zone_in_direction(direction)
+    if nz is not None and nz.freshness >= 0.5:
+        d = abs(nz.center - price) / ds.atr
+        broken = any(abs(c - nz.center) < ds.atr * 0.15
+                      for c in ds.recently_broken_zone_centers)
+        if d <= 0.20 and not broken:
+            zone_type = "resistance" if direction == "BUY" else "support"
+            trend_supports_zone = (
+                (zone_type == "resistance" and ds.regime == "TRENDING_DOWN")
+                or (zone_type == "support" and ds.regime == "TRENDING_UP")
+            )
+            if ds.regime == "RANGING" and nz.rejections >= 3:
+                total_penalty += 15
+            elif trend_supports_zone and nz.rejections >= 4 and nz.freshness >= 0.7:
+                total_penalty += 8
+            # TRENDING + trend yönünde zone → likidite hedefi, penalty YOK
 
-    pdh_pdl_dist = float(cfg["stage1c_pdh_pdl_distance_atr"])
-    min_today_rej = int(cfg["stage1c_pdh_pdl_min_rejections_today"])
     if direction == "BUY" and ds.pdh is not None:
         d = abs(ds.pdh - price) / ds.atr
-        if d <= pdh_pdl_dist and ds.pdh_rejections_today >= min_today_rej:
-            return "pdh_rejected_liquidity", 0.0
+        if d <= 0.10 and ds.pdh_rejections_today >= 2:
+            total_penalty += 10
     if direction == "SELL" and ds.pdl is not None:
         d = abs(ds.pdl - price) / ds.atr
-        if d <= pdh_pdl_dist and ds.pdl_rejections_today >= min_today_rej:
-            return "pdl_rejected_liquidity", 0.0
+        if d <= 0.10 and ds.pdl_rejections_today >= 2:
+            total_penalty += 10
 
-    sp1_dist = float(cfg["stage1c_pivot_penalty_distance_atr"])
-    sp1_pen = float(cfg["stage1c_pivot_penalty"])
-    opposing = ("R1", "R2", "R3") if direction == "BUY" else ("S1", "S2", "S3")
+    opposing = ("R1", "R2") if direction == "BUY" else ("S1", "S2")
     for name in opposing:
         if name not in ds.pivots:
             continue
         d = abs(ds.pivots[name] - price) / ds.atr
-        if d <= sp1_dist:
-            return None, sp1_pen
-    return None, 0.0
+        if d <= 0.08:
+            total_penalty += 5
+            break
+
+    if total_penalty > 20:
+        total_penalty = 20
+    return None, total_penalty
 
 
 def _summarize(results: list[dict]) -> dict:
     from collections import defaultdict
     by_sym: dict = defaultdict(lambda: {
-        "total": 0, "vetoed": 0, "penalized": 0,
-        "good_catch": 0, "missed_win": 0, "neutral": 0,
-        "pips_saved": 0.0, "pips_missed": 0.0,
+        "total": 0, "penalized": 0,
+        "penalized_stopped": 0, "penalized_completed": 0,
+        "clean_stopped": 0, "clean_completed": 0,
+        "pen_stopped_pips": 0.0, "pen_completed_pips": 0.0,
     })
-    by_reason: dict = defaultdict(lambda: {"good": 0, "missed": 0})
-    overall = {"total": 0, "vetoed": 0, "good_catch": 0, "missed_win": 0,
-               "penalized": 0}
+    overall = {"total": 0, "penalized": 0,
+                "penalized_stopped": 0, "penalized_completed": 0,
+                "clean_stopped": 0, "clean_completed": 0}
 
     for r in results:
         sym = r["symbol"]
         s = by_sym[sym]
         s["total"] += 1
         overall["total"] += 1
-        if r["would_veto"]:
-            s["vetoed"] += 1
-            overall["vetoed"] += 1
-            bucket = by_reason[r["stage1c_reason"]]
-            if r["corrected_status"] == "stopped":
-                s["good_catch"] += 1
-                s["pips_saved"] += abs(r["realized_pips"])
-                overall["good_catch"] += 1
-                bucket["good"] += 1
-            elif r["corrected_status"] == "completed":
-                s["missed_win"] += 1
-                s["pips_missed"] += max(0.0, r["realized_pips"])
-                overall["missed_win"] += 1
-                bucket["missed"] += 1
-            else:
-                s["neutral"] += 1
-        elif r["stage1c_penalty"] > 0:
+        is_pen = r["stage1c_penalty"] > 0
+        if is_pen:
             s["penalized"] += 1
             overall["penalized"] += 1
+            if r["corrected_status"] == "stopped":
+                s["penalized_stopped"] += 1
+                s["pen_stopped_pips"] += abs(r["realized_pips"])
+                overall["penalized_stopped"] += 1
+            elif r["corrected_status"] == "completed":
+                s["penalized_completed"] += 1
+                s["pen_completed_pips"] += max(0.0, r["realized_pips"])
+                overall["penalized_completed"] += 1
+        else:
+            if r["corrected_status"] == "stopped":
+                s["clean_stopped"] += 1
+                overall["clean_stopped"] += 1
+            elif r["corrected_status"] == "completed":
+                s["clean_completed"] += 1
+                overall["clean_completed"] += 1
 
+    # Penaltı'nın seçici olup olmadığını ölçen iki metrik:
+    #   pen_stop_rate  = penalize edilenlerin SL oranı (yüksek = doğru hedefliyoruz)
+    #   clean_stop_rate= penalize edilmeyenlerin SL oranı (baz çizgi)
+    # Aralarındaki fark = penaltının gerçek seçicilik kazancı.
     for sym, s in by_sym.items():
-        s["pips_saved"] = round(s["pips_saved"], 2)
-        s["pips_missed"] = round(s["pips_missed"], 2)
-        s["net_pips_saved"] = round(s["pips_saved"] - s["pips_missed"], 2)
-        s["veto_rate_pct"] = round(100 * s["vetoed"] / s["total"], 2) if s["total"] else 0
-        resolved = s["good_catch"] + s["missed_win"]
-        s["veto_precision_pct"] = round(100 * s["good_catch"] / resolved, 1) if resolved else None
+        s["pen_stopped_pips"] = round(s["pen_stopped_pips"], 2)
+        s["pen_completed_pips"] = round(s["pen_completed_pips"], 2)
+        s["net_pips_saved_if_vetoed"] = round(
+            s["pen_stopped_pips"] - s["pen_completed_pips"], 2)
+        s["penalty_rate_pct"] = round(100 * s["penalized"] / s["total"], 2) if s["total"] else 0
+        pen_res = s["penalized_stopped"] + s["penalized_completed"]
+        s["pen_stop_rate_pct"] = round(100 * s["penalized_stopped"] / pen_res, 1) if pen_res else None
+        clean_res = s["clean_stopped"] + s["clean_completed"]
+        s["clean_stop_rate_pct"] = round(100 * s["clean_stopped"] / clean_res, 1) if clean_res else None
+        if s["pen_stop_rate_pct"] is not None and s["clean_stop_rate_pct"] is not None:
+            s["selectivity_lift_pp"] = round(
+                s["pen_stop_rate_pct"] - s["clean_stop_rate_pct"], 1)
 
-    overall_resolved = overall["good_catch"] + overall["missed_win"]
-    overall["veto_precision_pct"] = round(
-        100 * overall["good_catch"] / overall_resolved, 1) if overall_resolved else None
-    overall["veto_rate_pct"] = round(
-        100 * overall["vetoed"] / overall["total"], 2) if overall["total"] else 0
+    overall["penalty_rate_pct"] = round(
+        100 * overall["penalized"] / overall["total"], 2) if overall["total"] else 0
+    pen_res = overall["penalized_stopped"] + overall["penalized_completed"]
+    overall["pen_stop_rate_pct"] = round(
+        100 * overall["penalized_stopped"] / pen_res, 1) if pen_res else None
+    clean_res = overall["clean_stopped"] + overall["clean_completed"]
+    overall["clean_stop_rate_pct"] = round(
+        100 * overall["clean_stopped"] / clean_res, 1) if clean_res else None
+    if overall["pen_stop_rate_pct"] and overall["clean_stop_rate_pct"]:
+        overall["selectivity_lift_pp"] = round(
+            overall["pen_stop_rate_pct"] - overall["clean_stop_rate_pct"], 1)
 
     return {
         "status": "ok",
         "overall": overall,
         "by_symbol": dict(by_sym),
-        "by_reason": dict(by_reason),
+        "note": ("selectivity_lift_pp = penaltı verilen sinyallerin SL oranı − "
+                  "verilmeyenlerin SL oranı. Pozitif = penaltı doğru hedefliyor."),
     }

@@ -72,6 +72,9 @@ class DayStructure:
     current_price: float
     atr: float
     today_atr_ratio: float        # today_ATR / N-day avg ATR (1.0 = normal)
+    regime: str = "UNKNOWN"       # TRENDING_UP | TRENDING_DOWN | RANGING | TRANSITIONAL
+    regime_efficiency: float = 0.0   # directional efficiency (0..1)
+    recently_broken_zone_centers: list[float] = field(default_factory=list)
     # Referans seviyeleri
     day_high: Optional[float] = None
     day_low: Optional[float] = None
@@ -144,6 +147,55 @@ def _t(c):
         except Exception:
             return None
     return None
+
+
+# ─── Market regime (trending vs ranging) ────────────────────────────────────
+def _compute_regime(candles: list[dict], lookback: int = 30
+                     ) -> tuple[str, float]:
+    """Directional efficiency: net hareket / toplam yol.
+    Yüksek = trend (fiyat tek yöne gidiyor), düşük = ranging (savruluyor)."""
+    if len(candles) < lookback:
+        return "UNKNOWN", 0.0
+    recent = candles[-lookback:]
+    first_close = _cl(recent[0])
+    last_close = _cl(recent[-1])
+    if first_close <= 0:
+        return "UNKNOWN", 0.0
+    net_move = abs(last_close - first_close)
+    total_path = sum(_h(c) - _l(c) for c in recent)
+    if total_path <= 0:
+        return "UNKNOWN", 0.0
+    efficiency = net_move / total_path
+    direction = "UP" if last_close > first_close else "DOWN"
+    if efficiency >= 0.35:
+        return f"TRENDING_{direction}", efficiency
+    if efficiency <= 0.15:
+        return "RANGING", efficiency
+    return "TRANSITIONAL", efficiency
+
+
+# ─── Recently broken zones (continuation kontrolü) ──────────────────────────
+def _detect_recent_breaks(candles: list[dict], zones: list,
+                          lookback: int = 15) -> list[float]:
+    """Bir memory zone'un 'eskiden bir tarafta'ydı + 'şimdi diğer tarafta'
+    durumu: ZONE KIRILMIŞ. Bu durumda zone yakınlığı = retest reversal değil,
+    devam (continuation) sinyali."""
+    if not zones or len(candles) < lookback + 5:
+        return []
+    older = candles[-lookback - 3:-lookback + 3] if lookback < len(candles) else []
+    recent = candles[-5:]
+    broken: list[float] = []
+    for z in zones:
+        if not older or not recent:
+            continue
+        older_above = sum(1 for c in older if _cl(c) > z.upper)
+        older_below = sum(1 for c in older if _cl(c) < z.lower)
+        recent_above = sum(1 for c in recent if _cl(c) > z.upper)
+        recent_below = sum(1 for c in recent if _cl(c) < z.lower)
+        if (older_above >= 3 and recent_below >= 3) or \
+           (older_below >= 3 and recent_above >= 3):
+            broken.append(z.center)
+    return broken
 
 
 # ─── ATR ─────────────────────────────────────────────────────────────────────
@@ -437,6 +489,14 @@ async def compute_day_structure(symbol: str, signal_tf: str = "15m",
         t, r = _count_today_tests(candles_tf, ds.pdl, atr, today_start)
         ds.pdl_touches_today = t
         ds.pdl_rejections_today = r
+
+    # Market regime + recently broken zones
+    regime, eff = _compute_regime(candles_tf, lookback=30)
+    ds.regime = regime
+    ds.regime_efficiency = round(eff, 3)
+    ds.recently_broken_zone_centers = [
+        round(c, 5) for c in _detect_recent_breaks(candles_tf, ds.memory_zones, lookback=15)
+    ]
 
     if _injected_candles is None:
         _cache[cache_key] = (time.time(), ds)

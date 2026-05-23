@@ -430,16 +430,18 @@ def _stage3_meanrev(symbol: str, direction: str, price: float,
 async def _stage1c_day_structure(symbol: str, direction: str, price: float,
                                    timeframe: str
                                    ) -> tuple[Optional[str], float, dict]:
-    """Day Structure veto katmanı — lean v1 (2 hard, 1 soft).
+    """Day Structure katmanı v2 — backtest sonrası tamamen yeniden tasarlandı.
 
-    HV1: Sinyal yönünde ≥4 reddetme'li memory zone'a ≤0.15 ATR + freshness ≥0.6
-    HV2: BUY→PDH ≤0.10 ATR + PDH bugün ≥2 reddedilmiş (likidite avı kanıtı);
-         SELL→PDL aynı şart.
-    SP1: Pivot karşıt yön (R1/R2 BUY için, S1/S2 SELL için) ≤0.10 ATR → −10
+    ESKİ HİPOTEZ (BAŞARISIZ): "memory zone yakını = reversal, veto et."
+    Backtest 90 günde 2388 sinyalde precision %26 verdi — kazananları öldürdü.
 
-    Dönüş: (veto_reason | None, soft_penalty, details)
-    Aşırı-bloklama önlemleri: zone yönü kontrolü, reject-vs-break ayrımı,
-    PDH/PDL temiz ilk-temas korunur, freshness şartı."""
+    YENİ HİPOTEZ: Bu seviyeler likidite havuzu. Her test emirleri tüketir;
+    3-4 dokunma sonrası seviye KIRILMA adayıdır, dönüş değil. Penaltı kararı
+    market REJIMINE bağlı:
+      - RANGING piyasada → memory zone'lar gerçekten S/R, retest = dönüş (penalty)
+      - TRENDING piyasada → memory zone'lar likidite hedefi, sinyal devamı (penalty YOK)
+      - Zone YAKIN ZAMANDA KIRILDIYSA → continuation, penalty YOK
+    Hard veto YOK; max −20 yumuşak penaltı; Stage 4 ML için feature snapshot."""
     try:
         from services.day_structure_service import compute_day_structure
         ds = await compute_day_structure(symbol, timeframe)
@@ -453,69 +455,88 @@ async def _stage1c_day_structure(symbol: str, direction: str, price: float,
         "atr": round(ds.atr, 5),
         "today_atr_ratio": ds.today_atr_ratio,
         "memory_zone_count": len(ds.memory_zones),
+        "regime": ds.regime,
+        "regime_efficiency": ds.regime_efficiency,
+        "recently_broken_zones": len(ds.recently_broken_zone_centers),
     }
-    cfg = PRECISION_VETO_CONFIG
-    mem_dist = float(cfg["stage1c_memory_distance_atr"])
-    mem_min_rej = int(cfg["stage1c_memory_min_rejections"])
-    mem_min_fresh = float(cfg["stage1c_memory_min_freshness"])
+    total_penalty = 0.0
 
-    # ── HV1: sinyal yönünde strong rejection memory zone ────────────────────
-    nearest_zone = ds.nearest_memory_zone_in_direction(direction)
-    if nearest_zone is not None:
-        dist_atr = abs(nearest_zone.center - price) / ds.atr
-        if (dist_atr <= mem_dist
-                and nearest_zone.rejections >= mem_min_rej
-                and nearest_zone.freshness >= mem_min_fresh):
-            details["hv1"] = {
-                "zone_center": nearest_zone.center,
-                "zone_touches": nearest_zone.touches,
-                "zone_rejections": nearest_zone.rejections,
-                "zone_freshness": nearest_zone.freshness,
-                "distance_atr": round(dist_atr, 3),
-            }
-            return "memory_zone_rejection_path", 0.0, details
+    # ── Memory zone — rejime göre yorumla ───────────────────────────────────
+    nz = ds.nearest_memory_zone_in_direction(direction)
+    if nz is not None and nz.freshness >= 0.5:
+        dist_atr = abs(nz.center - price) / ds.atr
+        # Zone yakın zamanda kırılmış mı? (continuation)
+        broken = any(abs(c - nz.center) < ds.atr * 0.15
+                      for c in ds.recently_broken_zone_centers)
+        if dist_atr <= 0.20 and not broken:
+            # Trend yönüne göre zone tipi: BUY için yukarıdaki zone resistance,
+            # SELL için aşağıdaki zone support.
+            zone_type = "resistance" if direction == "BUY" else "support"
+            trend_supports_zone = (
+                (zone_type == "resistance" and ds.regime == "TRENDING_DOWN")
+                or (zone_type == "support" and ds.regime == "TRENDING_UP")
+            )
+            if ds.regime == "RANGING" and nz.rejections >= 3:
+                # RANGING + reject-ağırlıklı zone → klasik S/R, dönüş bekle
+                total_penalty += 15
+                details["memory_zone"] = {
+                    "verdict": "ranging_market_rejection_likely",
+                    "center": nz.center, "rejections": nz.rejections,
+                    "freshness": nz.freshness, "distance_atr": round(dist_atr, 3),
+                    "penalty": 15,
+                }
+            elif trend_supports_zone and nz.rejections >= 4 and nz.freshness >= 0.7:
+                # TRENDING ters yönde + çok güçlü zone → dönüş olabilir (hafif penalty)
+                total_penalty += 8
+                details["memory_zone"] = {
+                    "verdict": "counter_trend_strong_zone",
+                    "center": nz.center, "rejections": nz.rejections,
+                    "penalty": 8,
+                }
+            elif ds.regime.startswith("TRENDING") and not trend_supports_zone:
+                # TRENDING trend yönünde + zone = likidite hedefi (continuation)
+                details["memory_zone"] = {
+                    "verdict": "trend_continuation_through_zone",
+                    "center": nz.center, "no_penalty": True,
+                }
+        elif broken:
+            details["memory_zone"] = {"verdict": "recently_broken_continuation"}
 
-    # ── HV2: PDH/PDL'ye yakın + bugün reddedilmiş ────────────────────────────
-    pdh_pdl_dist = float(cfg["stage1c_pdh_pdl_distance_atr"])
-    min_today_rej = int(cfg["stage1c_pdh_pdl_min_rejections_today"])
+    # ── PDH/PDL — bugün-spesifik rejection kanıtı (soft penalty) ────────────
     if direction == "BUY" and ds.pdh is not None:
         d = abs(ds.pdh - price) / ds.atr
-        if d <= pdh_pdl_dist and ds.pdh_rejections_today >= min_today_rej:
-            details["hv2"] = {"level": "PDH", "value": ds.pdh,
-                              "distance_atr": round(d, 3),
-                              "touches_today": ds.pdh_touches_today,
-                              "rejections_today": ds.pdh_rejections_today}
-            return "pdh_rejected_liquidity", 0.0, details
+        if d <= 0.10 and ds.pdh_rejections_today >= 2:
+            total_penalty += 10
+            details["pdh"] = {"verdict": "pdh_rejected_today_x" +
+                              str(ds.pdh_rejections_today),
+                              "distance_atr": round(d, 3), "penalty": 10}
     if direction == "SELL" and ds.pdl is not None:
         d = abs(ds.pdl - price) / ds.atr
-        if d <= pdh_pdl_dist and ds.pdl_rejections_today >= min_today_rej:
-            details["hv2"] = {"level": "PDL", "value": ds.pdl,
-                              "distance_atr": round(d, 3),
-                              "touches_today": ds.pdl_touches_today,
-                              "rejections_today": ds.pdl_rejections_today}
-            return "pdl_rejected_liquidity", 0.0, details
+        if d <= 0.10 and ds.pdl_rejections_today >= 2:
+            total_penalty += 10
+            details["pdl"] = {"verdict": "pdl_rejected_today_x" +
+                              str(ds.pdl_rejections_today),
+                              "distance_atr": round(d, 3), "penalty": 10}
 
-    # ── SP1: karşıt-yön pivot zone yakınlığı → soft penalty ──────────────────
-    sp1_dist = float(cfg["stage1c_pivot_penalty_distance_atr"])
-    sp1_pen = float(cfg["stage1c_pivot_penalty"])
-    opposing = ("R1", "R2", "R3") if direction == "BUY" else ("S1", "S2", "S3")
-    nearest_pivot = None
-    nearest_d = None
+    # ── Pivot — karşıt yön (low magnitude) ──────────────────────────────────
+    sp1_dist = 0.08    # daha sıkı (önceden 0.10)
+    sp1_pen = 5        # daha düşük (önceden 10)
+    opposing = ("R1", "R2") if direction == "BUY" else ("S1", "S2")  # R3/S3 nadir
     for name in opposing:
         if name not in ds.pivots:
             continue
         d = abs(ds.pivots[name] - price) / ds.atr
-        if d <= sp1_dist and (nearest_d is None or d < nearest_d):
-            nearest_d = d
-            nearest_pivot = name
-    if nearest_pivot:
-        details["sp1"] = {"pivot": nearest_pivot,
-                          "value": ds.pivots[nearest_pivot],
-                          "distance_atr": round(nearest_d, 3),
-                          "penalty": sp1_pen}
-        return None, sp1_pen, details
+        if d <= sp1_dist:
+            total_penalty += sp1_pen
+            details["pivot"] = {"name": name, "distance_atr": round(d, 3),
+                                 "penalty": sp1_pen}
+            break
 
-    return None, 0.0, details
+    # Stage 1c max penalty cap: −20 (kümülatif olarak aşılmasın)
+    if total_penalty > 20:
+        total_penalty = 20
+        details["capped_at"] = 20
+    return None, total_penalty, details
 
 
 # ─── AŞAMA 4 — Meta sentezleyici ─────────────────────────────────────────────
