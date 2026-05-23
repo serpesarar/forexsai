@@ -19,3 +19,7 @@ __pycache__
 
 # Demo experiment bot — contains account credentials, never commit
 yeni deneme/
+
+# Local research documents — never commit
+day_structure_research.md
+day_structure_analysis.png
