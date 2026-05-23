@@ -330,24 +330,35 @@ def _count_today_tests(candles_intraday: list[dict], level: float, atr: float,
 
 
 # ─── Ana giriş ───────────────────────────────────────────────────────────────
-async def compute_day_structure(symbol: str, signal_tf: str = "15m"
+async def compute_day_structure(symbol: str, signal_tf: str = "15m",
+                                  _injected_candles: Optional[dict] = None,
+                                  _as_of: Optional[datetime] = None,
                                  ) -> Optional[DayStructure]:
-    """Bir sinyal için tam gün yapısı paketi. Cache: per (symbol, tf, dakika)."""
-    now = datetime.now(timezone.utc)
-    cache_key = (symbol, signal_tf, now.strftime("%Y%m%d%H%M"))
-    cached = _cache.get(cache_key)
-    if cached and (time.time() - cached[0]) < _CACHE_TTL:
-        return cached[1]
+    """Bir sinyal için tam gün yapısı paketi. Cache: per (symbol, tf, dakika).
 
-    try:
-        from services.data_fetcher import fetch_ohlc_data
-        # 1m or signal_tf for swing/memory, 1h for intraday tests, 1d for PDH/PDL/PWH/PWL
-        candles_tf = await fetch_ohlc_data(symbol, signal_tf, limit=400)
-        candles_1h = await fetch_ohlc_data(symbol, "1h", limit=200)
-        candles_1d = await fetch_ohlc_data(symbol, "1d", limit=30)
-    except Exception as e:
-        logger.warning("[day-structure] mum verisi alınamadı %s: %s", symbol, e)
-        return None
+    Backtest için: `_injected_candles={"<tf>": [bars]}` ve `_as_of=<ts>` verilirse,
+    yayın yerine bu verileri kullanir — point-in-time, leak-siz hesap."""
+    now = _as_of if _as_of is not None else datetime.now(timezone.utc)
+    cache_key = (symbol, signal_tf, now.strftime("%Y%m%d%H%M"),
+                 "inj" if _injected_candles else "live")
+    if not _injected_candles:
+        cached = _cache.get(cache_key)
+        if cached and (time.time() - cached[0]) < _CACHE_TTL:
+            return cached[1]
+
+    if _injected_candles is not None:
+        candles_tf = _injected_candles.get(signal_tf) or _injected_candles.get("tf")
+        candles_1h = _injected_candles.get("1h") or candles_tf
+        candles_1d = _injected_candles.get("1d") or []
+    else:
+        try:
+            from services.data_fetcher import fetch_ohlc_data
+            candles_tf = await fetch_ohlc_data(symbol, signal_tf, limit=400)
+            candles_1h = await fetch_ohlc_data(symbol, "1h", limit=200)
+            candles_1d = await fetch_ohlc_data(symbol, "1d", limit=30)
+        except Exception as e:
+            logger.warning("[day-structure] mum verisi alınamadı %s: %s", symbol, e)
+            return None
 
     if not candles_tf or len(candles_tf) < 30:
         return None
@@ -427,7 +438,8 @@ async def compute_day_structure(symbol: str, signal_tf: str = "15m"
         ds.pdl_touches_today = t
         ds.pdl_rejections_today = r
 
-    _cache[cache_key] = (time.time(), ds)
+    if _injected_candles is None:
+        _cache[cache_key] = (time.time(), ds)
     # Eski cache temizliği — basit bir cap
     if len(_cache) > 256:
         oldest = sorted(_cache.items(), key=lambda kv: kv[1][0])[:128]

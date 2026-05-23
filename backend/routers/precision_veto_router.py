@@ -37,6 +37,24 @@ async def veto_config():
     }
 
 
+@router.post("/backtest-stage1c")
+async def backtest_stage1c(
+    days: int = Query(90, ge=14, le=180),
+    sample_per_scope: int = Query(300, ge=0, le=5000,
+                                    description="(sembol,yön) başına örneklem — 0 = tümü"),
+):
+    """Stage 1c (Day Structure) point-in-time backtest. Leak-siz: her sinyal
+    için sadece o anın 1m verisinden DS yeniden hesaplanır, Stage 1c uygulanır,
+    sonra signal'in gerçek corrected_status'uyla karşılaştırılır.
+
+    Haftasonu beklemeden Stage 1c'nin gerçek etkisini ölçer."""
+    from services.precision_veto_backtest import backtest_stage1c
+    res = await backtest_stage1c(days=days, sample_per_scope=sample_per_scope)
+    if res.get("status") == "error":
+        raise HTTPException(500, res.get("error", "backtest hatası"))
+    return res
+
+
 @router.get("/day-structure")
 async def day_structure(symbol: str = Query("XAUUSD"),
                          timeframe: str = Query("15m")):
