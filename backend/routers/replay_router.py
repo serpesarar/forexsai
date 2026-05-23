@@ -206,6 +206,86 @@ async def derived_config_status():
     }
 
 
+@router.get("/expectancy")
+async def expectancy(days: int = Query(90, ge=14, le=180)):
+    """Sembol bazlı gerçek R-multiple ve beklenti hesabı.
+    Cevap: avg_win_pips, avg_loss_pips, R-multiple (win/loss), expectancy/trade."""
+    from database.supabase_client import get_supabase_client, is_db_available
+    if not is_db_available():
+        raise HTTPException(503, "db_unavailable")
+    client = get_supabase_client()
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    rows: list = []
+    offset = 0
+    while True:
+        q = (client.table("prediction_replay_corrections")
+             .select("symbol,model_type,direction,entry_price,"
+                      "corrected_status,corrected_exit_price,replay_status")
+             .gte("signal_created_at", since)
+             .order("signal_created_at", desc=False)
+             .range(offset, offset + 999))
+        res = q.execute() if hasattr(q, "execute") else q
+        page = res.data if hasattr(res, "data") else (
+            res.get("data") if isinstance(res, dict) else []) or []
+        if not page: break
+        rows.extend(page)
+        if len(page) < 1000: break
+        offset += 1000
+    try:
+        from services.target_config import pips_from_price_change
+    except Exception:
+        pips_from_price_change = None
+
+    def _pips(sym, direction, e, x):
+        if not e or not x: return 0.0
+        diff = (x - e) if direction == "BUY" else (e - x)
+        if pips_from_price_change:
+            try:
+                return abs(pips_from_price_change(abs(diff), sym)) * (1 if diff >= 0 else -1)
+            except Exception:
+                pass
+        return diff
+
+    from collections import defaultdict
+    agg: dict = defaultdict(lambda: {"wins": 0, "losses": 0,
+                                       "win_pips": 0.0, "loss_pips": 0.0})
+    for r in rows:
+        if r.get("replay_status") != "ok": continue
+        sym = r["symbol"]; d = r["direction"]
+        status = r["corrected_status"]
+        e = float(r.get("entry_price") or 0)
+        x = float(r.get("corrected_exit_price") or 0)
+        p = _pips(sym, d, e, x)
+        a = agg[sym]
+        if status == "completed" and p > 0:
+            a["wins"] += 1; a["win_pips"] += p
+        elif status == "stopped" and p < 0:
+            a["losses"] += 1; a["loss_pips"] += abs(p)
+
+    out = {}
+    for sym, a in agg.items():
+        avg_w = a["win_pips"] / a["wins"] if a["wins"] else 0
+        avg_l = a["loss_pips"] / a["losses"] if a["losses"] else 0
+        total = a["wins"] + a["losses"]
+        wr = a["wins"] / total if total else 0
+        # R-multiple = avg_win / avg_loss
+        r_mult = avg_w / avg_l if avg_l > 0 else None
+        # Expectancy/trade = WR*avg_win − (1-WR)*avg_loss
+        exp_pips = wr * avg_w - (1 - wr) * avg_l if total else 0
+        # Expectancy in R units (win_avg as 1R proxy reference)
+        exp_R = (wr * 1.0 - (1 - wr) * (avg_l / avg_w)) if avg_w > 0 else 0
+        out[sym] = {
+            "wins": a["wins"], "losses": a["losses"], "resolved": total,
+            "win_rate_pct": round(100 * wr, 2),
+            "avg_win_pips": round(avg_w, 3),
+            "avg_loss_pips": round(avg_l, 3),
+            "reward_to_risk": round(r_mult, 2) if r_mult else None,
+            "expectancy_pips_per_trade": round(exp_pips, 3),
+            "expectancy_R_per_trade": round(exp_R, 4),
+        }
+    return {"status": "ok", "days": days, "per_symbol": out}
+
+
 @router.get("/walkforward-rolling")
 async def walkforward_rolling(
     symbol: Optional[str] = Query(None),
