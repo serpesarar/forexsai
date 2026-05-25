@@ -33,11 +33,15 @@ logging.basicConfig(level=logging.INFO,
 log = logging.getLogger("train_meta")
 
 
-async def collect_training_data(days: int = 90) -> tuple[list[dict], list[float]]:
+async def collect_training_data(days: int = 90, return_meta: bool = False):
     """Her resolved sinyal için: (features dict, R-multiple target).
 
     Day Structure feature'larını hesaplamak için Stage 1c'yi point-in-time
-    çalıştırırız (canlı veri leak'i olmasın diye)."""
+    çalıştırırız (canlı veri leak'i olmasın diye).
+
+    return_meta=True ise üçüncü liste döner: her satır için
+    {symbol, direction, model_type, status, signal_created_at,
+     entry_price, exit_price, realized_pips, atr_pips, r_mult}."""
     from database.supabase_client import get_supabase_client, is_db_available
     from services.signal_replay_1m import _load_all_1m_bars_sync
     from services.day_structure_service import compute_day_structure
@@ -103,6 +107,7 @@ async def collect_training_data(days: int = 90) -> tuple[list[dict], list[float]
 
     X: list[dict] = []
     y: list[float] = []
+    M: list[dict] = []   # metadata (sadece return_meta=True kullanır)
     for r in rows:
         sym = r["symbol"]
         if sym not in bars_by_sym: continue
@@ -146,8 +151,22 @@ async def collect_training_data(days: int = 90) -> tuple[list[dict], list[float]
         # Outlier kırpma — R > 8 ATR veya R < -4 ATR aşırı, muhtemelen veri hatası
         if r_mult > 8 or r_mult < -4: continue
         X.append(feats); y.append(r_mult)
+        if return_meta:
+            M.append({
+                "symbol": sym, "direction": r["direction"],
+                "model_type": r.get("model_type"),
+                "status": r["corrected_status"],
+                "signal_created_at": r["signal_created_at"],
+                "entry_price": e, "exit_price": x,
+                "realized_pips": round(realized_pips, 3),
+                "atr_pips": round(atr_pips, 4),
+                "r_mult": round(r_mult, 4),
+                "timeframe": tf,
+            })
 
     log.info("eğitim noktası sayısı: %d", len(X))
+    if return_meta:
+        return X, y, M
     return X, y
 
 

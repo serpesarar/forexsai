@@ -141,6 +141,53 @@ async def reload_meta_model_endpoint():
     return reload_meta_model()
 
 
+_STAGE4_BACKTEST_STATUS: dict = {"running": False, "started_at": None,
+                                   "finished_at": None, "result": None, "error": None}
+
+
+@router.post("/backtest-stage4")
+async def backtest_stage4(bg: BackgroundTasks,
+                           days: int = Query(90, ge=14, le=180),
+                           test_frac: float = Query(0.15, ge=0.05, le=0.4)):
+    """Stage 4 ML modelinin GERÇEK kazandırıp kazandırmadığını dürüstçe ölç.
+
+    Aynı 90 günlük replay verisi üzerinde:
+    - Train slice (ilk %85) ile Test slice (son %15) ayrı metrikler
+    - Decile analizi (predicted_r kovaları gerçekten R'yi sıralıyor mu?)
+    - Threshold sweep (skip-if-low filtresi ne kadar kazandırır?)
+    - Per-symbol Spearman (XAUUSD'de mi en iyi?)
+
+    Decision: READY / TUNE / REJECT — Spearman + lift'e göre."""
+    if _STAGE4_BACKTEST_STATUS["running"]:
+        return {"status": "already_running",
+                "started_at": _STAGE4_BACKTEST_STATUS["started_at"]}
+    _STAGE4_BACKTEST_STATUS.update({"running": True,
+                                    "started_at": datetime.now(timezone.utc).isoformat(),
+                                    "finished_at": None, "result": None, "error": None})
+
+    async def _do():
+        try:
+            from services.precision_veto_backtest import backtest_stage4_meta
+            res = await backtest_stage4_meta(days=days, test_frac=test_frac)
+            _STAGE4_BACKTEST_STATUS["result"] = res
+        except Exception as e:
+            logger.exception("[backtest-stage4] hata: %s", e)
+            _STAGE4_BACKTEST_STATUS["error"] = str(e)[:500]
+        finally:
+            _STAGE4_BACKTEST_STATUS["running"] = False
+            _STAGE4_BACKTEST_STATUS["finished_at"] = datetime.now(timezone.utc).isoformat()
+
+    bg.add_task(_do)
+    return {"status": "scheduled", "days": days, "test_frac": test_frac,
+            "poll": "/api/precision-veto/backtest-stage4/status",
+            "estimated_minutes": "5-8"}
+
+
+@router.get("/backtest-stage4/status")
+async def backtest_stage4_status():
+    return {**_STAGE4_BACKTEST_STATUS}
+
+
 @router.post("/backtest-stage1c")
 async def backtest_stage1c(
     days: int = Query(90, ge=14, le=180),

@@ -281,6 +281,204 @@ def _eval_stage1c_with_ds(ds, direction: str, price: float
     return None, total_penalty
 
 
+# ─── Stage 4 ML — Honest OOS değerlendirme ───────────────────────────────────
+async def backtest_stage4_meta(days: int = 90,
+                                test_frac: float = 0.15) -> dict:
+    """Stage 4 ML modelinin GERÇEK kazandırıp kazandırmadığını ölç.
+
+    Akış:
+    1. collect_training_data(return_meta=True) ile tüm resolved sinyallerin
+       features + r_mult + metadata'sını topla (point-in-time, leak-siz).
+    2. Diskteki modeli + feature isim sırasını yükle.
+    3. Tüm satırlarda predict() → predicted_r.
+    4. Honest OOS: kronolojik sıralı veriden son `test_frac` (%15) test slice;
+       önceki kısım model EĞİTİMİNDE kullanıldığı için bilgi sızar.
+    5. Test slice üzerinde:
+       - Spearman / Pearson rank corr (sıralama doğru mu?)
+       - RMSE / MAE (büyüklük doğru mu?)
+       - Decile analizi: predicted_r'ye göre 10 kovaya böl → her kovanın
+         ortalama realized r_mult'ı yükselen mi?
+       - Threshold sweep: skip if predicted_r < t — t ∈ {-1.0..+0.5}; her
+         t için kept_count, kept_avg_r, gross_R_kept, baseline gross_R.
+       - Per-symbol Spearman + kept_avg_r (en azından XAUUSD).
+    """
+    # 1) Veri + meta topla (~3-5 dk; collect_training_data'nın kendisi)
+    try:
+        from scripts.train_precision_meta_classifier import collect_training_data
+    except Exception as e:
+        return {"status": "error", "error": f"train script import: {e}"}
+    try:
+        X, y, M = await collect_training_data(days=days, return_meta=True)
+    except Exception as e:
+        logger.exception("collect_training_data hata")
+        return {"status": "error", "error": f"data collect: {e}"}
+    if len(X) < 200:
+        return {"status": "error", "error": f"yetersiz veri: {len(X)}"}
+
+    # 2) Model + feature names
+    try:
+        import joblib, json
+        from pathlib import Path as _P
+        cand = [_P("backend") / "models", _P(__file__).parent.parent / "models",
+                _P("/app/models")]
+        model = feat_names = None
+        for c in cand:
+            mp = c / "precision_meta_classifier.joblib"
+            fp = c / "precision_meta_features.json"
+            if mp.exists() and fp.exists():
+                model = joblib.load(mp)
+                with open(fp) as f:
+                    feat_names = json.load(f).get("features") or []
+                break
+        if model is None or not feat_names:
+            return {"status": "error",
+                    "error": "model/features.json bulunamadı — önce /train-meta çağır"}
+    except Exception as e:
+        return {"status": "error", "error": f"model load: {e}"}
+
+    # 3) Feature matrix (eksik feature → 0)
+    import numpy as np
+    X_mat = np.array([[float(f.get(n, 0.0) or 0.0) for n in feat_names]
+                       for f in X], dtype=float)
+    y_arr = np.array(y, dtype=float)
+    preds = model.predict(X_mat)
+
+    # 4) Honest split — collect_training_data kronolojik sıralı döner
+    n = len(X_mat)
+    cut = int(n * (1.0 - test_frac))
+    test_idx = list(range(cut, n))
+    train_idx = list(range(0, cut))
+
+    def _metrics(idxs):
+        if not idxs: return None
+        p = preds[idxs]; t = y_arr[idxs]
+        rmse = float(np.sqrt(np.mean((p - t) ** 2)))
+        mae = float(np.mean(np.abs(p - t)))
+        # Naif baseline R² (sabit ortalama)
+        var = float(np.var(t)) or 1e-9
+        r2 = float(1.0 - np.mean((p - t) ** 2) / var)
+        spearman = None
+        try:
+            from scipy.stats import spearmanr
+            rho, _ = spearmanr(p, t)
+            if rho is not None and not np.isnan(rho):
+                spearman = round(float(rho), 4)
+        except Exception:
+            pass
+        return {"n": len(idxs), "rmse": round(rmse, 4),
+                "mae": round(mae, 4), "r2": round(r2, 4),
+                "spearman": spearman,
+                "predicted_r_mean": round(float(p.mean()), 4),
+                "realized_r_mean": round(float(t.mean()), 4)}
+
+    metrics = {"train_slice": _metrics(train_idx),
+               "test_slice_OOS": _metrics(test_idx),
+               "all": _metrics(list(range(n)))}
+
+    # 5) Decile analizi (sadece test slice — honest)
+    p_test = preds[test_idx]; t_test = y_arr[test_idx]
+    deciles = []
+    if len(test_idx) >= 50:
+        order = np.argsort(p_test)
+        bucket_n = max(1, len(order) // 10)
+        for i in range(10):
+            sl = order[i * bucket_n: (i + 1) * bucket_n] if i < 9 else order[i * bucket_n:]
+            if len(sl) == 0: continue
+            deciles.append({
+                "decile": i + 1,
+                "n": int(len(sl)),
+                "predicted_r_mean": round(float(p_test[sl].mean()), 4),
+                "realized_r_mean": round(float(t_test[sl].mean()), 4),
+                "win_rate_pct": round(100 * float((t_test[sl] > 0).mean()), 1),
+            })
+
+    # 6) Threshold sweep — "predicted_r < t ise sinyali geç" stratejisi
+    thresholds = [-1.0, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5]
+    sweep = []
+    baseline_avg = float(t_test.mean()) if len(t_test) else 0.0
+    baseline_gross = float(t_test.sum())
+    for thr in thresholds:
+        mask = p_test >= thr
+        kept = t_test[mask]
+        skipped = t_test[~mask]
+        sweep.append({
+            "threshold_r": thr,
+            "kept_n": int(mask.sum()),
+            "kept_pct": round(100 * float(mask.mean()), 1) if len(p_test) else 0,
+            "kept_avg_realized_r": round(float(kept.mean()), 4) if len(kept) else None,
+            "kept_win_rate_pct": round(100 * float((kept > 0).mean()), 1) if len(kept) else None,
+            "skipped_avg_realized_r": round(float(skipped.mean()), 4) if len(skipped) else None,
+            "gross_R_kept": round(float(kept.sum()), 3),
+            "gross_R_skipped": round(float(skipped.sum()), 3),
+            "lift_vs_baseline_pp": (round(100 * (float(kept.mean()) - baseline_avg), 2)
+                                   if len(kept) else None),
+        })
+
+    # 7) Per-symbol (test slice)
+    per_sym: dict = {}
+    for k, i in enumerate(test_idx):
+        sym = M[i]["symbol"]
+        per_sym.setdefault(sym, {"idxs": []})["idxs"].append(i)
+    for sym, d in per_sym.items():
+        idxs = d.pop("idxs")
+        p = preds[idxs]; t = y_arr[idxs]
+        spearman = None
+        try:
+            from scipy.stats import spearmanr
+            if len(idxs) >= 10:
+                rho, _ = spearmanr(p, t)
+                spearman = round(float(rho), 4) if rho is not None and not np.isnan(rho) else None
+        except Exception:
+            pass
+        d.update({
+            "n": len(idxs),
+            "spearman": spearman,
+            "predicted_r_mean": round(float(p.mean()), 4),
+            "realized_r_mean": round(float(t.mean()), 4),
+            "win_rate_pct": round(100 * float((t > 0).mean()), 1),
+        })
+
+    # 8) Verdict
+    test_spearman = (metrics["test_slice_OOS"] or {}).get("spearman")
+    best_lift = max((s["lift_vs_baseline_pp"] or -999) for s in sweep)
+    verdict_parts = []
+    if test_spearman is None:
+        verdict_parts.append("Spearman hesaplanamadı.")
+    elif test_spearman > 0.10:
+        verdict_parts.append(f"Spearman={test_spearman:.3f} — model anlamlı sıralama yapıyor.")
+    elif test_spearman > 0.05:
+        verdict_parts.append(f"Spearman={test_spearman:.3f} — zayıf ama pozitif sinyal.")
+    else:
+        verdict_parts.append(f"Spearman={test_spearman:.3f} — sıralama gücü düşük/yok.")
+    if best_lift > 0.10:
+        verdict_parts.append(f"En iyi threshold seçimi baz çizgiye göre +{best_lift:.2f}pp R kazanç sağlıyor.")
+    else:
+        verdict_parts.append(f"Threshold filtreleme ciddi kazanç vermiyor (best lift {best_lift:.2f}pp).")
+    decision = ("MODEL READY: deploy A (persistence)" if (test_spearman or 0) > 0.10 and best_lift > 0.10
+                else "TUNE: feature engineering / hyperparam tur"
+                if (test_spearman or 0) > 0.05
+                else "REJECT: model henüz edge vermiyor")
+
+    return {
+        "status": "ok",
+        "days": days,
+        "n_total_samples": n,
+        "test_frac": test_frac,
+        "metrics": metrics,
+        "deciles_test": deciles,
+        "threshold_sweep_test": sweep,
+        "per_symbol_test": per_sym,
+        "verdict": " ".join(verdict_parts),
+        "decision": decision,
+        "interpretation": {
+            "spearman": "rank correlation predicted vs realized (>0.10 anlamlı, >0.20 güçlü)",
+            "deciles": "decile 10 (en yüksek predicted_r) gerçekten en yüksek realized_r mı?",
+            "threshold_sweep": "lift_vs_baseline_pp = filtrelenmiş ortalama R - tüm sinyallerin ortalama R'i",
+            "test_slice": "model eğitiminde kullanılmadı — HONEST OOS",
+        },
+    }
+
+
 def _summarize(results: list[dict]) -> dict:
     from collections import defaultdict
     by_sym: dict = defaultdict(lambda: {
