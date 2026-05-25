@@ -70,6 +70,14 @@ async def train_meta(bg: BackgroundTasks,
                 "n_samples": len(X),
                 "model_path": str(base / "precision_meta_classifier.joblib"),
             }
+            # Persistence: yeni combined modeli Supabase'e yükle
+            try:
+                import asyncio as _aio
+                from services.model_storage import upload_all_models
+                up = await _aio.to_thread(upload_all_models)
+                _TRAINING_STATUS["result"]["uploaded_to_storage"] = up.get("status")
+            except Exception as e:
+                logger.warning("[train-meta] upload atlandı: %s", e)
         except Exception as e:
             logger.exception("[train-meta] hata: %s", e)
             _TRAINING_STATUS["error"] = str(e)[:300]
@@ -254,6 +262,67 @@ async def stage4_sizing_seed_status():
     return {**_SEED_STATUS}
 
 
+# ─── Model persistence (Supabase Storage) ────────────────────────────────────
+@router.post("/storage/upload")
+async def storage_upload():
+    """Tüm Stage 4 modellerini Supabase Storage'a yükle. Eğitim sonunda
+    otomatik tetikleniyor, bu endpoint manuel kontrol için."""
+    import asyncio as _aio
+    from services.model_storage import upload_all_models
+    try:
+        return await _aio.to_thread(upload_all_models)
+    except Exception as e:
+        logger.exception("[storage] upload hata")
+        raise HTTPException(500, f"upload: {e}")
+
+
+@router.post("/storage/download")
+async def storage_download():
+    """Supabase Storage'tan tüm modelleri indir + cache'leri tazele.
+    Startup'ta otomatik çağrılıyor; manuel reset/recovery için bu endpoint."""
+    import asyncio as _aio
+    from services.model_storage import download_all_models
+    try:
+        res = await _aio.to_thread(download_all_models)
+        # Cache'leri tazele (yeni modeller diskte → servisler reload etsin)
+        try:
+            from services.model_loader import reload_all
+            from services.precision_veto_service import reload_meta_model
+            reload_all()
+            reload_meta_model()
+        except Exception as e:
+            res["reload_warning"] = str(e)[:200]
+        return res
+    except Exception as e:
+        logger.exception("[storage] download hata")
+        raise HTTPException(500, f"download: {e}")
+
+
+@router.get("/storage/manifest")
+async def storage_manifest():
+    """Remote manifest'i göster (son eğitim ne zaman, hangi dosyalar, hash'ler).
+    Compatibility check de yapar (lgbm major version vs local)."""
+    from services.model_storage import (get_remote_manifest, validate_manifest,
+                                           storage_state)
+    try:
+        m = get_remote_manifest()
+        return {
+            "state": storage_state(),
+            "manifest": m,
+            "compatibility": validate_manifest(m) if m else None,
+        }
+    except Exception as e:
+        logger.exception("[storage] manifest hata")
+        raise HTTPException(500, f"manifest: {e}")
+
+
+@router.get("/storage/state")
+async def storage_state_endpoint():
+    """Sadece state — bucket adı, env var'lar set mi, local dosyalar var mı."""
+    from services.model_storage import storage_state
+    return storage_state()
+
+
 # ─── Per-symbol training & inspection ────────────────────────────────────────
 _TRAIN_STAGE4_STATUS: dict = {"running": False, "started_at": None,
                                 "finished_at": None, "result": None, "error": None}
@@ -282,6 +351,14 @@ async def train_stage4_endpoint(bg: BackgroundTasks,
             from scripts.train_stage4 import train_all
             res = await train_all(days=days)
             _TRAIN_STAGE4_STATUS["result"] = res
+            # Persistence: per-symbol modelleri Supabase'e yükle
+            try:
+                import asyncio as _aio
+                from services.model_storage import upload_all_models
+                up = await _aio.to_thread(upload_all_models)
+                _TRAIN_STAGE4_STATUS["result"]["uploaded_to_storage"] = up.get("status")
+            except Exception as e:
+                logger.warning("[train-stage4] upload atlandı: %s", e)
         except Exception as e:
             logger.exception("[train-stage4] hata: %s", e)
             _TRAIN_STAGE4_STATUS["error"] = str(e)[:500]
