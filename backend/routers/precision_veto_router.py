@@ -84,7 +84,54 @@ async def train_meta(bg: BackgroundTasks,
 
 @router.get("/train-meta/status")
 async def train_meta_status():
-    return {**_TRAINING_STATUS}
+    """Eğitim durumu + son eğitimin metrikleri (RMSE/MAE/Spearman/feature_count).
+
+    Metrikler `precision_meta_features.json`'dan okunur (eğitim sonu yazılır)."""
+    import json, os
+    from pathlib import Path as _P
+    # train-meta task aynı yolu kullanıyor (backend/models veya scripts'in tahminine göre)
+    candidates = [
+        _P("backend") / "models" / "precision_meta_features.json",
+        _P(__file__).parent.parent / "models" / "precision_meta_features.json",
+        _P("/app/models/precision_meta_features.json"),
+    ]
+    meta_info = None
+    meta_path = None
+    for p in candidates:
+        try:
+            if p.exists():
+                with open(p, "r") as f:
+                    meta_info = json.load(f)
+                meta_path = str(p)
+                # mtime de bilgi olsun (son güncelleme)
+                try:
+                    meta_info["_file_mtime"] = datetime.fromtimestamp(
+                        os.path.getmtime(p), tz=timezone.utc).isoformat()
+                except Exception:
+                    pass
+                break
+        except Exception as e:
+            logger.debug("[train-status] %s okunamadı: %s", p, e)
+    out = {**_TRAINING_STATUS}
+    if meta_info is not None:
+        # features.json içeriği genelde: {"features": [...], "rmse": .., "mae": .., "spearman": ..,
+        #  "n_train": .., "n_test": .., "is_regressor": true, ...}
+        features = meta_info.get("features") or []
+        out["last_model"] = {
+            "path": meta_path,
+            "feature_count": len(features),
+            "metrics": {k: meta_info.get(k) for k in
+                         ("rmse", "mae", "spearman", "r2", "n_train", "n_val",
+                          "n_test", "is_regressor", "target",
+                          "test_rmse", "test_mae", "test_spearman",
+                          "val_rmse", "val_mae")
+                         if meta_info.get(k) is not None},
+            "trained_at": meta_info.get("trained_at") or meta_info.get("_file_mtime"),
+            "first_features": features[:8],
+        }
+    else:
+        out["last_model"] = None
+    return out
 
 
 @router.post("/reload-meta-model")

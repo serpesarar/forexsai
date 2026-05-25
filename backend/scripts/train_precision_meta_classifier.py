@@ -237,16 +237,27 @@ def train(X: list[dict], y: list[float], model_out: Path, features_out: Path):
               callbacks=[lgb.early_stopping(50), lgb.log_evaluation(50)])
 
     # Gerçek out-of-sample değerlendirme (test set — early stopping görmedi)
-    pred = model.predict(X_test)
-    rmse = float(np.sqrt(np.mean((pred - y_test) ** 2)))
-    mae = float(np.mean(np.abs(pred - y_test)))
+    pred_test = model.predict(X_test)
+    pred_val = model.predict(X_val)
+    test_rmse = float(np.sqrt(np.mean((pred_test - y_test) ** 2)))
+    test_mae = float(np.mean(np.abs(pred_test - y_test)))
+    val_rmse = float(np.sqrt(np.mean((pred_val - y_val) ** 2)))
+    val_mae = float(np.mean(np.abs(pred_val - y_val)))
+    # R^2 (test) — naif baseline (sabit ortalama) ile karşılaştırma
+    y_test_var = float(np.var(y_test)) or 1e-9
+    test_r2 = float(1.0 - np.mean((pred_test - y_test) ** 2) / y_test_var)
     # Spearman rank corr (gerçek R sırasını tahmin edebiliyor mu?)
+    test_spearman = None
     try:
         from scipy.stats import spearmanr
-        rho, _ = spearmanr(pred, y_test)
-        log.info("Test  RMSE=%.3f  MAE=%.3f  Spearman=%.3f", rmse, mae, rho)
+        rho, _ = spearmanr(pred_test, y_test)
+        test_spearman = float(rho) if rho is not None and not np.isnan(rho) else None
+        log.info("Test  RMSE=%.3f  MAE=%.3f  Spearman=%.3f  R²=%.3f",
+                 test_rmse, test_mae, test_spearman or 0.0, test_r2)
     except Exception:
-        log.info("Test  RMSE=%.3f  MAE=%.3f", rmse, mae)
+        log.info("Test  RMSE=%.3f  MAE=%.3f  R²=%.3f", test_rmse, test_mae, test_r2)
+    # Compatibility (eski adlandırma)
+    rmse, mae = test_rmse, test_mae
 
     # Feature importance
     imp = sorted(zip(feature_names, model.feature_importances_),
@@ -258,9 +269,25 @@ def train(X: list[dict], y: list[float], model_out: Path, features_out: Path):
     # Kaydet
     model_out.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, model_out)
+    from datetime import datetime as _dt, timezone as _tz
+    meta_out = {
+        "features": feature_names,
+        # legacy keys (geriye uyumlu)
+        "rmse": rmse, "mae": mae,
+        "n_train": len(X_train), "n_test": len(X_test),
+        # zengin metrik seti — /train-meta/status okuyor
+        "test_rmse": test_rmse, "test_mae": test_mae,
+        "test_spearman": test_spearman, "r2": test_r2,
+        "val_rmse": val_rmse, "val_mae": val_mae,
+        "n_val": len(X_val),
+        "is_regressor": True,
+        "target": "r_mult (ATR-normalized realized_pips / atr_pips)",
+        "trained_at": _dt.now(_tz.utc).isoformat(),
+        "top_features": [{"name": n, "importance": int(v)}
+                         for n, v in imp[:15]],
+    }
     with open(features_out, "w") as fp:
-        json.dump({"features": feature_names, "rmse": rmse, "mae": mae,
-                   "n_train": len(X_train), "n_test": len(X_test)}, fp, indent=2)
+        json.dump(meta_out, fp, indent=2)
     log.info("Model → %s", model_out)
     log.info("Feature listesi → %s", features_out)
 
