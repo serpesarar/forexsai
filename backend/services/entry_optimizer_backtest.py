@@ -219,7 +219,8 @@ async def backtest_entry_optimizer(days: int = 90,
              .order("signal_created_at", desc=False)
              .range(offset, offset + PAGE - 1))
         res = q.execute() if hasattr(q, "execute") else q
-        page = res.data if hasattr(res, "data") else []
+        page = (res.data if hasattr(res, "data")
+                 else (res.get("data") if isinstance(res, dict) else [])) or []
         if not page:
             break
         rows.extend(page)
