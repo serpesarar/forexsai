@@ -14,7 +14,8 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from datetime import datetime, timezone
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/entry-optimizer", tags=["Entry Optimizer"])
@@ -85,6 +86,57 @@ async def test_endpoint(
     except Exception as e:
         logger.exception("[entry-optimizer] test hata")
         raise HTTPException(500, f"test: {e}")
+
+
+# ─── 90 günlük replay backtest ────────────────────────────────────────────────
+_BACKTEST_STATUS: dict = {"running": False, "started_at": None,
+                           "finished_at": None, "result": None, "error": None}
+
+
+@router.post("/backtest")
+async def backtest(bg: BackgroundTasks,
+                    days: int = Query(90, ge=14, le=180),
+                    sample_per_scope: int = Query(300, ge=0, le=5000)):
+    """Entry Optimizer'ı son N günün resolved sinyalleri üzerinde point-in-time
+    simüle eder. Her sinyal için:
+      - signal_created_at anına kadar 15m candle slice → MarketStructureAnalyzer
+      - Entry Optimizer kararı (EXECUTE_NOW/LIMIT_ORDER/REJECT)
+      - 1m walk-forward outcome simülasyonu
+
+    Karşılaştırma: original (mevcut TP/SL config) vs entry_optimizer (kendi SL/TP'si).
+    REJECT'lerin gerçek WR'i + LIMIT fill rate + toplam P&L delta.
+
+    ~10-15 dk. Status endpoint ile takip et."""
+    if _BACKTEST_STATUS["running"]:
+        return {"status": "already_running",
+                "started_at": _BACKTEST_STATUS["started_at"]}
+    _BACKTEST_STATUS.update({"running": True,
+                              "started_at": datetime.now(timezone.utc).isoformat(),
+                              "finished_at": None, "result": None, "error": None})
+
+    async def _do():
+        try:
+            from services.entry_optimizer_backtest import backtest_entry_optimizer
+            res = await backtest_entry_optimizer(days=days,
+                                                  sample_per_scope=sample_per_scope)
+            _BACKTEST_STATUS["result"] = res
+        except Exception as e:
+            logger.exception("[entry-bt] hata: %s", e)
+            _BACKTEST_STATUS["error"] = str(e)[:500]
+        finally:
+            _BACKTEST_STATUS["running"] = False
+            _BACKTEST_STATUS["finished_at"] = datetime.now(timezone.utc).isoformat()
+
+    bg.add_task(_do)
+    return {"status": "scheduled", "days": days,
+            "sample_per_scope": sample_per_scope,
+            "poll": "/api/entry-optimizer/backtest/status",
+            "estimated_minutes": "10-15"}
+
+
+@router.get("/backtest/status")
+async def backtest_status():
+    return {**_BACKTEST_STATUS}
 
 
 @router.get("/config")

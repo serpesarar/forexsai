@@ -260,6 +260,19 @@ async def optimize_entry(signal: dict,
             max_wait_candles=0, priority_score=30,
             details={"error": str(e)[:120], "fallback": "passthrough"}).to_dict()
 
+    return decide_from_payload(signal, ob_payload, cfg)
+
+
+def decide_from_payload(signal: dict, ob_payload: dict,
+                          cfg: Optional[dict] = None) -> dict:
+    """Saf karar mantığı — ob_payload önceden hesaplanmış olarak verilir.
+    Backtest, simülasyon ve canlı optimize_entry hep buraya iner."""
+    cfg = {**DEFAULT_CONFIG, **(cfg or {})}
+    direction = (signal.get("direction") or "").upper()
+    current_price = float(signal.get("price") or signal.get("entry_price") or 0)
+    signal_tp = signal.get("tp") or signal.get("tp_price")
+    signal_sl = signal.get("sl") or signal.get("sl_price")
+
     # ── Veri çıkar ───────────────────────────────────────────────────────────
     obs = ob_payload.get("order_blocks") or []
     fvgs = ob_payload.get("fvg_list") or []
