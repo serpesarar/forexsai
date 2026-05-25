@@ -87,6 +87,13 @@ async def train_meta_status():
     return {**_TRAINING_STATUS}
 
 
+@router.post("/reload-meta-model")
+async def reload_meta_model_endpoint():
+    """Yeni eğitim sonrası model cache'ini tazele (yeniden başlatmadan)."""
+    from services.precision_veto_service import reload_meta_model
+    return reload_meta_model()
+
+
 @router.post("/backtest-stage1c")
 async def backtest_stage1c(
     days: int = Query(90, ge=14, le=180),

@@ -82,8 +82,12 @@ _SYMBOL_OVERRIDES: dict[str, dict[str, Any]] = {
 
 _META_MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "models",
                                  "precision_meta_classifier.joblib")
+_META_FEATURES_PATH = os.path.join(os.path.dirname(__file__), "..", "models",
+                                    "precision_meta_features.json")
 _meta_model = None
 _meta_model_loaded = False
+_meta_feature_names: list = []
+_meta_is_regressor: bool = True
 
 
 def _cfg(symbol: str, key: str) -> Any:
@@ -584,44 +588,79 @@ async def _stage1c_day_structure(symbol: str, direction: str, price: float,
 
 
 # ─── AŞAMA 4 — Meta sentezleyici ─────────────────────────────────────────────
-def _load_meta_model():
-    global _meta_model, _meta_model_loaded
-    if _meta_model_loaded:
+def _load_meta_model(force_reload: bool = False):
+    """Stage 4 meta classifier'ı yükle. force_reload=True → cache by-pass."""
+    global _meta_model, _meta_model_loaded, _meta_feature_names, _meta_is_regressor
+    if _meta_model_loaded and not force_reload:
         return _meta_model
     _meta_model_loaded = True
     try:
         if os.path.exists(_META_MODEL_PATH):
-            import joblib
+            import joblib, json as _json
             _meta_model = joblib.load(_META_MODEL_PATH)
-            logger.info("[precision-veto] meta classifier yüklendi")
+            # Feature isim sırasını da yükle — inference aynı sırayla beslenmeli
+            if os.path.exists(_META_FEATURES_PATH):
+                with open(_META_FEATURES_PATH) as fp:
+                    meta = _json.load(fp)
+                    _meta_feature_names = meta.get("features", [])
+            # LightGBM regressor mı classifier mı? type check
+            _meta_is_regressor = "Regressor" in type(_meta_model).__name__
+            logger.info("[precision-veto] meta model yüklendi: %s (%d feature, %s)",
+                        type(_meta_model).__name__, len(_meta_feature_names),
+                        "regression" if _meta_is_regressor else "classification")
         else:
-            logger.info("[precision-veto] meta model yok — Aşama 4 atlanıyor "
-                        "(model eğitilince devreye girer)")
+            _meta_model = None
+            logger.info("[precision-veto] meta model yok — Aşama 4 atlanıyor")
     except Exception as e:
         logger.warning("[precision-veto] meta model yüklenemedi: %s", e)
         _meta_model = None
     return _meta_model
 
 
+def reload_meta_model() -> dict:
+    """Yeni eğitim sonrası eski cache'i temizleyip taze model yükle."""
+    model = _load_meta_model(force_reload=True)
+    return {
+        "loaded": model is not None,
+        "feature_count": len(_meta_feature_names),
+        "type": type(model).__name__ if model else None,
+        "is_regressor": _meta_is_regressor if model else None,
+    }
+
+
 def _stage4_meta(symbol: str, signal: dict, features: dict
                  ) -> tuple[Optional[str], Optional[float], dict]:
-    """Meta classifier. Model yoksa graceful skip."""
+    """Meta inference. Yeni model regression — R-multiple (ATR cinsinden)
+    tahmin ediyor. Yorumlama:
+      predicted_r < -0.2  → güçlü negatif → HARD VETO
+      −0.2 ≤ r < 0.0      → zayıf negatif → soft penalty (büyüklüğe oranlı)
+      0.0 ≤ r < 0.3       → marjinal pozitif → küçük penalty
+      r ≥ 0.3             → güçlü pozitif → no penalty
+    Skor confidence ölçeklemesi: high predicted_r = confidence yükselir
+    (existing meta_confidence_blend_weight ile orantılı)."""
     model = _load_meta_model()
-    if model is None:
+    if model is None or not _meta_feature_names:
         return None, None, {"skipped": "no_model"}
     try:
         import numpy as np
-        # Feature sırası modelin eğitimiyle aynı olmalı — eğitim scripti
-        # bunu precision_meta_features.json'a yazar; yoksa skip.
-        feat_vec = features.get("_meta_feature_vector")
-        if feat_vec is None:
-            return None, None, {"skipped": "no_feature_vector"}
-        proba = float(model.predict_proba(np.array([feat_vec]))[0][1])
+        # Feature vektörünü zorunlu sıra ile inşa et
+        feat_vec = np.array([[features.get(name, -1) for name in _meta_feature_names]],
+                             dtype=float)
+        if _meta_is_regressor:
+            predicted_r = float(model.predict(feat_vec)[0])
+            details = {"predicted_r": round(predicted_r, 3),
+                        "model_type": "regression"}
+            if predicted_r < -0.2:
+                return "meta_classifier_negative_R", None, details
+            return None, predicted_r, details
+        # Eski classification fallback
+        proba = float(model.predict_proba(feat_vec)[0][1])
         thr = float(_cfg(symbol, "meta_classifier_threshold"))
+        details = {"proba": round(proba, 3), "threshold": thr,
+                    "model_type": "classification"}
         if proba < thr:
-            return "meta_classifier_low_confidence", proba, {"proba": round(proba, 3),
-                                                              "threshold": thr}
-        return None, proba, {"proba": round(proba, 3), "threshold": thr}
+            return "meta_classifier_low_confidence", proba, details
+        return None, proba, details
     except Exception as e:
         logger.warning("[precision-veto] meta inference hatası: %s", e)
         return None, None, {"error": str(e)[:120]}
@@ -736,18 +775,35 @@ async def check_signal(signal: dict) -> VetoResult:
             res.direction = "HOLD"
         return res
 
-    # ── AŞAMA 4 — Meta sentezleyici ──────────────────────────────────────────
+    # ── AŞAMA 4 — Meta sentezleyici (regression: predicted R-multiple) ───────
     if PRECISION_VETO_CONFIG["stage_4_enabled"]:
-        reason, proba, det = _stage4_meta(symbol, signal, res.features)
-        if proba is not None:
-            res.features["meta_classifier_proba"] = round(proba, 3)
+        reason, pred_value, det = _stage4_meta(symbol, signal, res.features)
+        if pred_value is not None:
+            # Regression için "predicted_r", classification için proba
+            key = "meta_predicted_r" if _meta_is_regressor else "meta_classifier_proba"
+            res.features[key] = round(pred_value, 3)
         if reason:
             res.details["stage4"] = det
             return _hard_veto(4, reason, det)
-        if proba is not None:
-            # Onaylandı — confidence'ı proba ile harmanla.
-            w = float(PRECISION_VETO_CONFIG["meta_confidence_blend_weight"])
-            res.adjusted_confidence *= (1.0 - w) + w * proba
+        if pred_value is not None:
+            if _meta_is_regressor:
+                # Regression: predicted_r in [-0.2, 0) → soft penalty kademeli
+                # 0+ → küçük confidence boost (× blend weight)
+                w = float(PRECISION_VETO_CONFIG["meta_confidence_blend_weight"])
+                if pred_value < 0.0:
+                    # -0.2 → 10 penalty, -0.05 → 2.5 penalty (lineer)
+                    pen = round(min(20.0, abs(pred_value) * 50.0), 1)
+                    res.total_penalty += pen
+                    res.details["stage4"] = {**det, "penalty": pen}
+                else:
+                    # Pozitif R tahmini → confidence çarpanı (max +%30)
+                    mult = 1.0 + w * min(1.0, pred_value / 1.0)
+                    res.adjusted_confidence *= mult
+                    res.details["stage4"] = {**det, "confidence_mult": round(mult, 3)}
+            else:
+                # Classification: proba ile harmanla (legacy)
+                w = float(PRECISION_VETO_CONFIG["meta_confidence_blend_weight"])
+                res.adjusted_confidence *= (1.0 - w) + w * pred_value
 
     return res
 
