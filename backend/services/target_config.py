@@ -133,9 +133,11 @@ DEFAULT_CONFIG = SymbolConfig(
 # (3/4) and USOIL.FOREX SELL (5/5) were robust out-of-sample. TP1 is the
 # walk-forward-validated win threshold; TP2-4 ladder up from it.
 #
-# KILL SWITCH: applied ONLY when env TP_SL_DERIVED_OVERRIDES=1. Default
-# OFF → production trades the base ladder, zero change. Flip to 1 +
-# redeploy to A/B the derived configs; flip back to 0 to revert instantly.
+# KILL SWITCH: env TP_SL_DERIVED_OVERRIDES (1=on, 0=off).
+# 2026-05-24'ten itibaren VARSAYILAN AÇIK — walk-forward 3 robust scope'u
+# (NDX BUY 5/5, USOIL SELL 5/5, GDAXI SELL 3/4) doğruladı, mevcut config
+# R:R 0.34-0.57 ile zarar veriyordu. Devre dışı bırakmak için
+# TP_SL_DERIVED_OVERRIDES=0 ile redeploy.
 import os as _os
 
 _DERIVED_OVERRIDES = {
@@ -153,7 +155,7 @@ _DERIVED_OVERRIDES = {
         stoploss_pips=1.49, source="walkforward:USOIL-SELL/5of5-folds")),
 }
 
-DERIVED_OVERRIDES_ACTIVE = _os.getenv("TP_SL_DERIVED_OVERRIDES", "0") == "1"
+DERIVED_OVERRIDES_ACTIVE = _os.getenv("TP_SL_DERIVED_OVERRIDES", "1") == "1"
 
 if DERIVED_OVERRIDES_ACTIVE:
     for _sym, (_dir, _ov) in _DERIVED_OVERRIDES.items():

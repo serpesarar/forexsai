@@ -451,14 +451,58 @@ async def _stage1c_day_structure(symbol: str, direction: str, price: float,
     if ds is None or ds.atr <= 0:
         return None, 0.0, {"skipped": "no_structure"}
 
-    details: dict = {
-        "atr": round(ds.atr, 5),
+    # ── ML için zengin feature seti — Day Structure analyzer'ın çıktısı ─────
+    # Stage 4 LightGBM regression bunları kullanacak.
+    feats: dict = {
+        "ds_atr": round(ds.atr, 5),
         "today_atr_ratio": ds.today_atr_ratio,
-        "memory_zone_count": len(ds.memory_zones),
-        "regime": ds.regime,
+        "regime_code": {"TRENDING_UP": 1, "TRENDING_DOWN": -1,
+                          "RANGING": 0, "TRANSITIONAL": 2,
+                          "UNKNOWN": 99}.get(ds.regime, 99),
         "regime_efficiency": ds.regime_efficiency,
-        "recently_broken_zones": len(ds.recently_broken_zone_centers),
+        "memory_zone_count": len(ds.memory_zones),
+        "recently_broken_zone_count": len(ds.recently_broken_zone_centers),
+        "swing_small_high_count": len(ds.swings_small_highs),
+        "swing_small_low_count": len(ds.swings_small_lows),
+        "swing_large_high_count": len(ds.swings_large_highs),
+        "swing_large_low_count": len(ds.swings_large_lows),
     }
+    # PDH/PDL/PWH/PWL mesafeleri (ATR oranı — diğer AI'ın önerisi: ratio feature)
+    for name, lvl in [("pdh", ds.pdh), ("pdl", ds.pdl),
+                       ("pwh", ds.pwh), ("pwl", ds.pwl)]:
+        if lvl is not None and ds.atr > 0:
+            feats[f"{name}_dist_atr"] = round(abs(lvl - price) / ds.atr, 3)
+            feats[f"{name}_dist_signed_atr"] = round((lvl - price) / ds.atr, 3)
+    # Pivot mesafeleri (R/S 1-3)
+    for name, lvl in ds.pivots.items():
+        if ds.atr > 0:
+            feats[f"pivot_{name.lower()}_dist_atr"] = round(abs(lvl - price) / ds.atr, 3)
+    # Bugünkü PDH/PDL test yoğunluğu
+    feats["pdh_touches_today"] = ds.pdh_touches_today
+    feats["pdh_rejections_today"] = ds.pdh_rejections_today
+    feats["pdl_touches_today"] = ds.pdl_touches_today
+    feats["pdl_rejections_today"] = ds.pdl_rejections_today
+    # En yakın memory zone (sinyal yönünde)
+    nz_dir = ds.nearest_memory_zone_in_direction(direction)
+    if nz_dir is not None:
+        feats["near_zone_distance_atr"] = round(
+            abs(nz_dir.center - price) / ds.atr, 3) if ds.atr > 0 else 0
+        feats["near_zone_touches"] = nz_dir.touches
+        feats["near_zone_rejections"] = nz_dir.rejections
+        feats["near_zone_breaks"] = nz_dir.breaks
+        feats["near_zone_freshness"] = nz_dir.freshness
+        # Reject vs break oranı — yön bilgisi
+        total = max(1, nz_dir.rejections + nz_dir.breaks)
+        feats["near_zone_reject_ratio"] = round(nz_dir.rejections / total, 3)
+    # Interaction features (en kritik — diğer AI'ın haklı vurguladığı)
+    trend_dir = (1 if ds.regime == "TRENDING_UP" else
+                  -1 if ds.regime == "TRENDING_DOWN" else 0)
+    sig_dir = 1 if direction == "BUY" else -1
+    feats["trend_aligned_with_signal"] = int(trend_dir == sig_dir) if trend_dir != 0 else 0
+    feats["trend_against_signal"] = int(trend_dir == -sig_dir) if trend_dir != 0 else 0
+
+    details: dict = dict(feats)   # Hepsini details içinde de tut (loglama için)
+    details["regime"] = ds.regime
     total_penalty = 0.0
 
     # ── Memory zone — rejime göre yorumla ───────────────────────────────────
@@ -658,15 +702,16 @@ async def check_signal(signal: dict) -> VetoResult:
     if PRECISION_VETO_CONFIG.get("stage_1c_enabled", True):
         reason, sp_penalty, det = await _stage1c_day_structure(
             symbol, direction, price, timeframe)
+        # Zengin Day Structure feature setini DAİMA snapshot'la (Stage 4 ML için)
+        # — penalti olsun ya da olmasın, veto olsun ya da olmasın.
+        for k, v in det.items():
+            if not k.startswith("_") and k != "regime":
+                res.features[k] = v
         if reason:
-            return _hard_veto(1, reason, det)   # rapor aşaması=1 (yapısal)
+            return _hard_veto(1, reason, det)
         if sp_penalty:
             res.total_penalty += sp_penalty
             res.details["stage1c"] = det
-        elif det.get("memory_zone_count") is not None:
-            # Sessiz pass — sadece feature snapshot (Stage 4 için)
-            res.features["day_structure_atr"] = det.get("atr")
-            res.features["today_atr_ratio"] = det.get("today_atr_ratio")
 
     # ── AŞAMA 3 — İstatistiksel filtre (soft) ────────────────────────────────
     if PRECISION_VETO_CONFIG["stage_3_enabled"]:
