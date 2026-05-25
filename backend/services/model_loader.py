@@ -41,6 +41,18 @@ logger = logging.getLogger(__name__)
 _MODELS_ROOT = Path(__file__).parent.parent / "models"
 _PER_SYMBOL_DIR = _MODELS_ROOT / "stage4_per_symbol"
 
+# 2026-05-25 OOS audit: NDX per-symbol Spearman=-0.155 (TERS). Combined modelin
+# cross-symbol transfer'ı NDX'te +0.317 veriyordu, 9.4K NDX örneği per-symbol
+# için yetersizdi. Bu set'teki semboller her zaman legacy combined'a yönlendirilir
+# (env override: STAGE4_FORCE_LEGACY=symbol1,symbol2). 20K+ NDX verisi
+# biriktiğinde NDX bu listeden çıkarılabilir + per-symbol yeniden değerlendirilir.
+import os as _os
+_FORCE_LEGACY_SYMBOLS = {
+    s.strip().upper() for s in
+    (_os.getenv("STAGE4_FORCE_LEGACY") or "NDX.INDX").split(",")
+    if s.strip()
+}
+
 # Normalization skipped — bunlar zaten encoded küçük integer'lar
 _NO_NORMALIZE_FEATURES = {
     "direction_code", "regime_code", "memory_zone_count",
@@ -126,7 +138,11 @@ def get_model_for(symbol: str) -> Optional[dict]:
     with _lock:
         if slug in _cache:
             return _cache[slug]
-    entry = _load_one(symbol)
+    # NDX gibi sembollerde per-symbol modeli atla (bkz: _FORCE_LEGACY_SYMBOLS)
+    if symbol.upper() in _FORCE_LEGACY_SYMBOLS:
+        entry = None
+    else:
+        entry = _load_one(symbol)
     if entry is None:
         with _lock:
             if _legacy_cache is None:
@@ -189,6 +205,7 @@ def state_snapshot() -> dict:
             "per_symbol_dir_exists": _PER_SYMBOL_DIR.exists(),
             "per_symbol_subdirs": (sorted(p.name for p in _PER_SYMBOL_DIR.iterdir() if p.is_dir())
                                     if _PER_SYMBOL_DIR.exists() else []),
+            "force_legacy_symbols": sorted(_FORCE_LEGACY_SYMBOLS),
             "no_normalize_features": sorted(_NO_NORMALIZE_FEATURES),
         }
 

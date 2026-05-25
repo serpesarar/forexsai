@@ -158,12 +158,21 @@ _SEED_STATUS: dict = {"running": False, "started_at": None,
 @router.post("/stage4-sizing/seed-from-backtest")
 async def stage4_sizing_seed(bg: BackgroundTasks,
                               days: int = Query(90, ge=14, le=180),
-                              test_only: bool = Query(True),
+                              test_only: bool = Query(False, description=
+                                  "True: sadece OOS slice (dar dağılım). "
+                                  "False (default): tüm slice'tan stratified sample"),
+                              stratified_per_symbol: int = Query(500, ge=50, le=5000,
+                                  description="Sembol başına evenly-spaced "
+                                  "kaç örnek (sadece test_only=False'da)"),
                               per_symbol: bool = Query(True, description=
                                   "Her sembolün kendi modeli varsa onunla "
                                   "tahmin et — yoksa legacy combined")):
     """Cold start'ı atlamak için bootstrap. ARKA PLAN — collect_training_data
-    5+ dk sürer; /stage4-sizing/seed-from-backtest/status ile takip et."""
+    5+ dk sürer; /stage4-sizing/seed-from-backtest/status ile takip et.
+
+    test_only=False (default 2026-05-25): tüm slice'tan her sembol için
+    `stratified_per_symbol` evenly-spaced örnek alınır → percentile dağılımı
+    geniş ve gerçekçi (sahte 99+ percentile sorununu önler)."""
     if _SEED_STATUS["running"]:
         return {"status": "already_running",
                 "started_at": _SEED_STATUS["started_at"]}
@@ -181,11 +190,27 @@ async def stage4_sizing_seed(bg: BackgroundTasks,
                 _SEED_STATUS["error"] = "veri yok"
                 return
             n = len(X)
-            cut = int(n * 0.85) if test_only else 0
+            # Stratified sampling per symbol — geniş percentile dağılımı için
+            if test_only:
+                indices = list(range(int(n * 0.85), n))
+            else:
+                from collections import defaultdict
+                by_sym: dict = defaultdict(list)
+                for i, m in enumerate(M):
+                    by_sym[m["symbol"]].append(i)
+                indices = []
+                for sym, idxs in by_sym.items():
+                    if len(idxs) <= stratified_per_symbol:
+                        indices.extend(idxs)
+                    else:
+                        step = len(idxs) / float(stratified_per_symbol)
+                        sel = [idxs[int(k * step)] for k in range(stratified_per_symbol)]
+                        indices.extend(sel)
+                indices.sort()
             rows = []
             used_per_sym = 0
             used_legacy = 0
-            for i in range(cut, n):
+            for i in indices:
                 sym = M[i]["symbol"]
                 pred = None
                 if per_symbol:
@@ -196,7 +221,6 @@ async def stage4_sizing_seed(bg: BackgroundTasks,
                         else:
                             used_legacy += 1
                 if pred is None:
-                    # Legacy fallback (manuel)
                     continue
                 rows.append({"symbol": sym, "predicted_r": float(pred),
                               "realized_r": float(y[i])})
@@ -205,8 +229,11 @@ async def stage4_sizing_seed(bg: BackgroundTasks,
                 "seeded_rows": added,
                 "predicted_per_symbol": used_per_sym,
                 "predicted_legacy_fallback": used_legacy,
-                "from_index": cut, "to_index": n,
+                "indices_used": len(indices),
+                "total_samples": n,
                 "test_only": test_only,
+                "stratified_per_symbol": (stratified_per_symbol
+                                            if not test_only else None),
                 "state_after": get_state(verbose=False),
             }
         except Exception as e:

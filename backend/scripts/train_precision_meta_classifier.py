@@ -173,8 +173,11 @@ async def collect_training_data(days: int = 90, return_meta: bool = False):
 def _extract_features(ds, direction: str, price: float, symbol: str) -> dict:
     """Stage 1c'nin features dict'iyle birebir aynı — eğitim ve inference
     aynı feature'larla beslensin."""
+    # NOT: ds_atr (ham ATR) feature'ı 2026-05-25 audit'inde sembol proxy'si
+    # oluyordu — USOIL 0.75 vs NDX 51.45 (65x scale lift). Cross-symbol
+    # kirliliğin kök nedeni. `today_atr_ratio` (oran) ve diğer *_dist_atr
+    # feature'ları zaten ATR-normalize edildiği için bilgiyi kaybetmiyoruz.
     f: dict = {
-        "ds_atr": ds.atr,
         "today_atr_ratio": ds.today_atr_ratio,
         "regime_code": {"TRENDING_UP": 1, "TRENDING_DOWN": -1,
                           "RANGING": 0, "TRANSITIONAL": 2, "UNKNOWN": 99}.get(ds.regime, 99),

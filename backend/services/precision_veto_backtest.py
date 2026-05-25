@@ -315,36 +315,50 @@ async def backtest_stage4_meta(days: int = 90,
     if len(X) < 200:
         return {"status": "error", "error": f"yetersiz veri: {len(X)}"}
 
-    # 2) Model + feature names
+    # 2) Production inference path — predict_r per-symbol model + normalizer
+    # kullanır, NDX gibi force-legacy semboller combined'a düşer. Bu sayede
+    # backtest sonuçları canlı sistemin DAVRANIŞIYLA AYNIDIR (önceden monolitik
+    # joblib doğrudan yüklüyor, gerçek production path'i atlıyordu).
     try:
-        import joblib, json
-        from pathlib import Path as _P
-        cand = [_P("backend") / "models", _P(__file__).parent.parent / "models",
-                _P("/app/models")]
-        model = feat_names = None
-        for c in cand:
-            mp = c / "precision_meta_classifier.joblib"
-            fp = c / "precision_meta_features.json"
-            if mp.exists() and fp.exists():
-                model = joblib.load(mp)
-                with open(fp) as f:
-                    feat_names = json.load(f).get("features") or []
-                break
-        if model is None or not feat_names:
-            return {"status": "error",
-                    "error": "model/features.json bulunamadı — önce /train-meta çağır"}
+        from services.inference_stage4 import predict_r
+        from services.model_loader import reload_all
+        # Yeni eğitim sonrası cache'i taze tut (testler arası tutarlılık)
+        reload_all()
     except Exception as e:
-        return {"status": "error", "error": f"model load: {e}"}
+        return {"status": "error", "error": f"inference import: {e}"}
 
-    # 3) Feature matrix (eksik feature → 0)
     import numpy as np
-    X_mat = np.array([[float(f.get(n, 0.0) or 0.0) for n in feat_names]
-                       for f in X], dtype=float)
+    preds_list: list[float] = []
+    used_per_sym = used_legacy = unresolved = 0
+    keep_mask: list[bool] = []
+    for i, feats in enumerate(X):
+        sym = M[i]["symbol"]
+        pred, info = predict_r(sym, feats)
+        if pred is None:
+            unresolved += 1
+            keep_mask.append(False)
+            continue
+        preds_list.append(float(pred))
+        if info.get("used_per_symbol"):
+            used_per_sym += 1
+        else:
+            used_legacy += 1
+        keep_mask.append(True)
+    if not preds_list:
+        return {"status": "error",
+                "error": f"hiç tahmin yapılamadı (unresolved={unresolved}) — "
+                          f"önce /train-meta + /train-stage4"}
+    # Filter X/y/M to resolved indices
+    X = [X[i] for i, k in enumerate(keep_mask) if k]
+    y = [y[i] for i, k in enumerate(keep_mask) if k]
+    M = [M[i] for i, k in enumerate(keep_mask) if k]
+    preds = np.array(preds_list, dtype=float)
     y_arr = np.array(y, dtype=float)
-    preds = model.predict(X_mat)
+    # Dummy X_mat for compatibility with downstream code
+    X_mat = np.empty((len(preds), 1))
 
     # 4) Honest split — collect_training_data kronolojik sıralı döner
-    n = len(X_mat)
+    n = len(preds)
     cut = int(n * (1.0 - test_frac))
     test_idx = list(range(cut, n))
     train_idx = list(range(0, cut))
@@ -464,6 +478,11 @@ async def backtest_stage4_meta(days: int = 90,
         "days": days,
         "n_total_samples": n,
         "test_frac": test_frac,
+        "inference_stats": {
+            "predicted_per_symbol_model": used_per_sym,
+            "predicted_legacy_fallback": used_legacy,
+            "unresolved_no_model": unresolved,
+        },
         "metrics": metrics,
         "deciles_test": deciles,
         "threshold_sweep_test": sweep,
