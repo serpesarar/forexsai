@@ -14,7 +14,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/precision-veto", tags=["Precision Veto"])
@@ -35,6 +35,56 @@ async def veto_config():
         "config": PRECISION_VETO_CONFIG,
         "symbol_overrides": _SYMBOL_OVERRIDES,
     }
+
+
+_TRAINING_STATUS: dict = {"running": False, "started_at": None,
+                          "finished_at": None, "result": None, "error": None}
+
+
+@router.post("/train-meta")
+async def train_meta(bg: BackgroundTasks,
+                      days: int = Query(90, ge=14, le=180)):
+    """Stage 4 meta classifier'ı arka planda eğit (Railway'de). Local'de
+    pip/python/env değişkeniyle uğraşmaya gerek yok — sadece bu endpoint'i
+    çağır, /train-meta/status ile ilerlemeyi takip et."""
+    if _TRAINING_STATUS["running"]:
+        return {"status": "already_running",
+                "started_at": _TRAINING_STATUS["started_at"]}
+    _TRAINING_STATUS.update({"running": True, "started_at":
+                              datetime.now(timezone.utc).isoformat(),
+                              "finished_at": None, "result": None, "error": None})
+
+    async def _do_train():
+        try:
+            from scripts.train_precision_meta_classifier import (
+                collect_training_data, train, Path as _Path)
+            X, y = await collect_training_data(days)
+            if len(X) < 200:
+                raise RuntimeError(f"yetersiz veri: {len(X)} örnek")
+            base = _Path("backend") / "models"
+            if not base.exists():
+                base = _Path(__file__).parent.parent / "models"
+            train(X, y, base / "precision_meta_classifier.joblib",
+                  base / "precision_meta_features.json")
+            _TRAINING_STATUS["result"] = {
+                "n_samples": len(X),
+                "model_path": str(base / "precision_meta_classifier.joblib"),
+            }
+        except Exception as e:
+            logger.exception("[train-meta] hata: %s", e)
+            _TRAINING_STATUS["error"] = str(e)[:300]
+        finally:
+            _TRAINING_STATUS["running"] = False
+            _TRAINING_STATUS["finished_at"] = datetime.now(timezone.utc).isoformat()
+
+    bg.add_task(_do_train)
+    return {"status": "scheduled", "days": days,
+            "poll": "/api/precision-veto/train-meta/status"}
+
+
+@router.get("/train-meta/status")
+async def train_meta_status():
+    return {**_TRAINING_STATUS}
 
 
 @router.post("/backtest-stage1c")

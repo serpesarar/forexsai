@@ -21,3 +21,4 @@ redis>=5.0.0
 websockets>=12.0
 feedparser==6.0.11
 ta==0.11.0
+scipy>=1.10.0

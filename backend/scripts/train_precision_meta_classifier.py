@@ -125,18 +125,26 @@ async def collect_training_data(days: int = 90) -> tuple[list[dict], list[float]
 
         # Feature'ları üret — Stage 1c'nin yaptığı gibi
         feats = _extract_features(ds, r["direction"], float(r["entry_price"]), sym)
-        # Target: realized R-multiple
+        # Target: realized R-multiple — ATR'e göre normalize (NOT current SL config)
+        # Bu önemli: derived overrides aktifleştirildi diye OLD signals'in
+        # SL'ini güncel config'e göre hesaplamak yanlış olur. ATR sinyal anında
+        # hesaplanmış, evrensel — sembol/config bağımsız R birim sağlar.
         e = float(r["entry_price"]); x = float(r.get("corrected_exit_price") or 0)
         if x <= 0: continue
         diff = (x - e) if r["direction"] == "BUY" else (e - x)
         try:
-            realized = pips_from_price_change(abs(diff), sym) * (1 if diff >= 0 else -1)
+            realized_pips = pips_from_price_change(abs(diff), sym) * (1 if diff >= 0 else -1)
         except Exception:
-            realized = diff
-        sl_pips = sl_pips_by_sym.get(sym, 15)
-        r_mult = realized / sl_pips if sl_pips > 0 else 0
-        # Outlier kırpma — R > 5 veya R < -2 muhtemelen veri hatası
-        if r_mult > 5 or r_mult < -2: continue
+            realized_pips = diff
+        # ATR pip cinsinden — sembol percentage ise pips_from_price_change zaten % verir
+        try:
+            atr_pips = pips_from_price_change(ds.atr, sym)
+        except Exception:
+            atr_pips = ds.atr
+        if atr_pips <= 0: continue
+        r_mult = realized_pips / atr_pips
+        # Outlier kırpma — R > 8 ATR veya R < -4 ATR aşırı, muhtemelen veri hatası
+        if r_mult > 8 or r_mult < -4: continue
         X.append(feats); y.append(r_mult)
 
     log.info("eğitim noktası sayısı: %d", len(X))
@@ -207,24 +215,28 @@ def train(X: list[dict], y: list[float], model_out: Path, features_out: Path):
     X_mat = np.array([[d.get(k, -1) for k in feature_names] for d in X], dtype=float)
     y_arr = np.array(y, dtype=float)
 
-    # Time-based train/test split (son %20 test)
+    # 70/15/15 time-based split: train → val (early stopping) → held-out test.
+    # Val seti ile early stopping, test seti gerçek out-of-sample dürüst değer.
     n = len(X_mat)
-    cut = int(n * 0.8)
-    X_train, X_test = X_mat[:cut], X_mat[cut:]
-    y_train, y_test = y_arr[:cut], y_arr[cut:]
-    log.info("train=%d test=%d feature=%d", len(X_train), len(X_test), len(feature_names))
+    cut1 = int(n * 0.70)
+    cut2 = int(n * 0.85)
+    X_train, y_train = X_mat[:cut1], y_arr[:cut1]
+    X_val, y_val = X_mat[cut1:cut2], y_arr[cut1:cut2]
+    X_test, y_test = X_mat[cut2:], y_arr[cut2:]
+    log.info("train=%d val=%d test=%d feature=%d",
+             len(X_train), len(X_val), len(X_test), len(feature_names))
 
     model = lgb.LGBMRegressor(
         objective="regression", metric="rmse",
         num_leaves=31, learning_rate=0.05,
         feature_fraction=0.9, bagging_fraction=0.8, bagging_freq=5,
-        n_estimators=500, verbose=-1,
+        n_estimators=500, verbose=-1, min_child_samples=20,
     )
     model.fit(X_train, y_train,
-              eval_set=[(X_test, y_test)],
+              eval_set=[(X_val, y_val)],
               callbacks=[lgb.early_stopping(50), lgb.log_evaluation(50)])
 
-    # Test seti metrik
+    # Gerçek out-of-sample değerlendirme (test set — early stopping görmedi)
     pred = model.predict(X_test)
     rmse = float(np.sqrt(np.mean((pred - y_test) ** 2)))
     mae = float(np.mean(np.abs(pred - y_test)))
