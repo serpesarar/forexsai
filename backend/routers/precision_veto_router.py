@@ -151,57 +151,243 @@ async def stage4_sizing_state(verbose: bool = Query(False)):
     return get_state(verbose=verbose)
 
 
-@router.post("/stage4-sizing/seed-from-backtest")
-async def stage4_sizing_seed(days: int = Query(90, ge=14, le=180),
-                              test_only: bool = Query(True, description=
-                                  "Sadece eğitim test slice'ından (last 15%) "
-                                  "seed et — leak-siz")):
-    """Cold start'ı atlamak için bootstrap: backtest-stage4'ün ürettiği
-    (predicted_r, realized_r) çiftleriyle history'yi tohumla.
+_SEED_STATUS: dict = {"running": False, "started_at": None,
+                       "finished_at": None, "result": None, "error": None}
 
-    test_only=True (default): sadece OOS test slice (model görmedi) → en
-    dürüst seed. False: tüm slice (50%+ örnekleminden hızlıca bilgilenir
-    ama train kısmı modelin görmüş olduğu sinyallerdir)."""
-    from scripts.train_precision_meta_classifier import collect_training_data
-    from services.stage4_sizing import seed_from_backtest
-    import joblib, json, numpy as np
-    from pathlib import Path as _P
-    # Veri + model yükle
-    try:
-        X, y, M = await collect_training_data(days=days, return_meta=True)
-    except Exception as e:
-        raise HTTPException(500, f"collect: {e}")
-    if not X:
-        raise HTTPException(503, "veri yok")
-    cand = [_P("backend") / "models", _P(__file__).parent.parent / "models",
-            _P("/app/models")]
-    model = feat_names = None
-    for c in cand:
-        mp = c / "precision_meta_classifier.joblib"
-        fp = c / "precision_meta_features.json"
-        if mp.exists() and fp.exists():
-            model = joblib.load(mp)
-            with open(fp) as f:
-                feat_names = json.load(f).get("features") or []
-            break
-    if model is None:
-        raise HTTPException(503, "model yok — önce /train-meta")
-    X_mat = np.array([[float(f.get(n, 0.0) or 0.0) for n in feat_names]
-                       for f in X], dtype=float)
-    preds = model.predict(X_mat)
-    n = len(X_mat)
-    cut = int(n * 0.85) if test_only else 0
-    rows = []
-    for i in range(cut, n):
-        rows.append({"symbol": M[i]["symbol"],
-                     "predicted_r": float(preds[i]),
-                     "realized_r": float(y[i])})
-    added = seed_from_backtest(rows)
-    from services.stage4_sizing import get_state
-    return {"status": "ok", "seeded_rows": added,
-            "from_index": cut, "to_index": n,
-            "test_only": test_only,
-            "state_after": get_state(verbose=False)}
+
+@router.post("/stage4-sizing/seed-from-backtest")
+async def stage4_sizing_seed(bg: BackgroundTasks,
+                              days: int = Query(90, ge=14, le=180),
+                              test_only: bool = Query(True),
+                              per_symbol: bool = Query(True, description=
+                                  "Her sembolün kendi modeli varsa onunla "
+                                  "tahmin et — yoksa legacy combined")):
+    """Cold start'ı atlamak için bootstrap. ARKA PLAN — collect_training_data
+    5+ dk sürer; /stage4-sizing/seed-from-backtest/status ile takip et."""
+    if _SEED_STATUS["running"]:
+        return {"status": "already_running",
+                "started_at": _SEED_STATUS["started_at"]}
+    _SEED_STATUS.update({"running": True,
+                          "started_at": datetime.now(timezone.utc).isoformat(),
+                          "finished_at": None, "result": None, "error": None})
+
+    async def _do():
+        try:
+            from scripts.train_precision_meta_classifier import collect_training_data
+            from services.stage4_sizing import seed_from_backtest, get_state
+            from services.inference_stage4 import predict_r as per_sym_predict
+            X, y, M = await collect_training_data(days=days, return_meta=True)
+            if not X:
+                _SEED_STATUS["error"] = "veri yok"
+                return
+            n = len(X)
+            cut = int(n * 0.85) if test_only else 0
+            rows = []
+            used_per_sym = 0
+            used_legacy = 0
+            for i in range(cut, n):
+                sym = M[i]["symbol"]
+                pred = None
+                if per_symbol:
+                    pred, info = per_sym_predict(sym, X[i])
+                    if pred is not None:
+                        if info.get("used_per_symbol"):
+                            used_per_sym += 1
+                        else:
+                            used_legacy += 1
+                if pred is None:
+                    # Legacy fallback (manuel)
+                    continue
+                rows.append({"symbol": sym, "predicted_r": float(pred),
+                              "realized_r": float(y[i])})
+            added = seed_from_backtest(rows)
+            _SEED_STATUS["result"] = {
+                "seeded_rows": added,
+                "predicted_per_symbol": used_per_sym,
+                "predicted_legacy_fallback": used_legacy,
+                "from_index": cut, "to_index": n,
+                "test_only": test_only,
+                "state_after": get_state(verbose=False),
+            }
+        except Exception as e:
+            logger.exception("[seed] hata: %s", e)
+            _SEED_STATUS["error"] = str(e)[:500]
+        finally:
+            _SEED_STATUS["running"] = False
+            _SEED_STATUS["finished_at"] = datetime.now(timezone.utc).isoformat()
+
+    bg.add_task(_do)
+    return {"status": "scheduled", "days": days,
+            "poll": "/api/precision-veto/stage4-sizing/seed-from-backtest/status",
+            "estimated_minutes": "5-7"}
+
+
+@router.get("/stage4-sizing/seed-from-backtest/status")
+async def stage4_sizing_seed_status():
+    return {**_SEED_STATUS}
+
+
+# ─── Per-symbol training & inspection ────────────────────────────────────────
+_TRAIN_STAGE4_STATUS: dict = {"running": False, "started_at": None,
+                                "finished_at": None, "result": None, "error": None}
+
+
+@router.post("/train-stage4")
+async def train_stage4_endpoint(bg: BackgroundTasks,
+                                 days: int = Query(90, ge=14, le=180)):
+    """Sembol bazlı LightGBM eğitimi (z-score normalize). USOIL Spearman=null
+    sorununu çözmek için: her sembol kendi verisi+ölçeğiyle ayrı model.
+
+    Eğitim sonunda backend/models/stage4_per_symbol/{slug}/ altına yazar
+    (model.joblib + features.json + normalizer.json). model_loader otomatik
+    cache'i temizler — sonraki check_signal yeni modeli kullanır.
+
+    ~12 dk (collect_training_data 5dk + sembol başına 1-2 dk eğitim)."""
+    if _TRAIN_STAGE4_STATUS["running"]:
+        return {"status": "already_running",
+                "started_at": _TRAIN_STAGE4_STATUS["started_at"]}
+    _TRAIN_STAGE4_STATUS.update({"running": True,
+                                  "started_at": datetime.now(timezone.utc).isoformat(),
+                                  "finished_at": None, "result": None, "error": None})
+
+    async def _do():
+        try:
+            from scripts.train_stage4 import train_all
+            res = await train_all(days=days)
+            _TRAIN_STAGE4_STATUS["result"] = res
+        except Exception as e:
+            logger.exception("[train-stage4] hata: %s", e)
+            _TRAIN_STAGE4_STATUS["error"] = str(e)[:500]
+        finally:
+            _TRAIN_STAGE4_STATUS["running"] = False
+            _TRAIN_STAGE4_STATUS["finished_at"] = datetime.now(timezone.utc).isoformat()
+
+    bg.add_task(_do)
+    return {"status": "scheduled", "days": days,
+            "poll": "/api/precision-veto/train-stage4/status",
+            "estimated_minutes": "10-15"}
+
+
+@router.get("/train-stage4/status")
+async def train_stage4_status():
+    return {**_TRAIN_STAGE4_STATUS}
+
+
+@router.post("/reload-models")
+async def reload_models():
+    """model_loader cache'ini temizle ve disk'i yeniden tara. Yeni eğitim
+    sonrası çağır (train-stage4 sonunda otomatik çağrılıyor ama manuel
+    kontrol için de açık)."""
+    from services.model_loader import reload_all
+    return reload_all()
+
+
+@router.get("/models-state")
+async def models_state():
+    """Hangi sembollere model yüklü, normalizer var mı, legacy fallback aktif mi."""
+    from services.model_loader import state_snapshot
+    return state_snapshot()
+
+
+# ─── Feature dağılım debug — USOIL Spearman=null kök neden tespiti ───────────
+_FEATURE_DEBUG_STATUS: dict = {"running": False, "started_at": None,
+                                "finished_at": None, "result": None, "error": None}
+
+
+@router.post("/debug-feature-distribution")
+async def debug_feature_distribution(bg: BackgroundTasks,
+                                       days: int = Query(90, ge=14, le=180)):
+    """Per-symbol feature dağılım istatistikleri — USOIL Spearman=null
+    sorununu debug etmek için. Her continuous feature için sembol bazlı
+    p10/p50/p90/std/zero_rate verir, scale uyumsuzluğu görünür."""
+    if _FEATURE_DEBUG_STATUS["running"]:
+        return {"status": "already_running",
+                "started_at": _FEATURE_DEBUG_STATUS["started_at"]}
+    _FEATURE_DEBUG_STATUS.update({"running": True,
+                                   "started_at": datetime.now(timezone.utc).isoformat(),
+                                   "finished_at": None, "result": None, "error": None})
+
+    async def _do():
+        try:
+            from scripts.train_precision_meta_classifier import collect_training_data
+            X, y, M = await collect_training_data(days=days, return_meta=True)
+            if not X:
+                _FEATURE_DEBUG_STATUS["error"] = "veri yok"
+                return
+            # Sembol bazında gruplama
+            per_sym: dict = {}
+            for i, m in enumerate(M):
+                per_sym.setdefault(m["symbol"], []).append(X[i])
+            # Tüm feature isimleri (union)
+            feat_names = sorted({k for row in X for k in row.keys()})
+            import numpy as np
+            out: dict = {"per_symbol_counts": {s: len(v) for s, v in per_sym.items()},
+                          "features": {}}
+            for name in feat_names:
+                row: dict = {}
+                for sym, rows in per_sym.items():
+                    vals = []
+                    zeros = 0
+                    nones = 0
+                    for r in rows:
+                        v = r.get(name)
+                        if v is None:
+                            nones += 1
+                            continue
+                        try:
+                            x = float(v)
+                        except (TypeError, ValueError):
+                            continue
+                        if x == 0.0:
+                            zeros += 1
+                        vals.append(x)
+                    if not vals:
+                        row[sym] = {"n": 0, "all_none_or_skip": True}
+                        continue
+                    arr = np.array(vals, dtype=float)
+                    n = len(arr)
+                    row[sym] = {
+                        "n": n,
+                        "mean": round(float(arr.mean()), 4),
+                        "std": round(float(arr.std()), 4),
+                        "min": round(float(arr.min()), 4),
+                        "p10": round(float(np.percentile(arr, 10)), 4),
+                        "p50": round(float(np.percentile(arr, 50)), 4),
+                        "p90": round(float(np.percentile(arr, 90)), 4),
+                        "max": round(float(arr.max()), 4),
+                        "zero_rate": round(zeros / n, 3),
+                        "none_rate": round(nones / (n + nones), 3) if (n + nones) else 0,
+                    }
+                # Cross-symbol scale lift (max std / min std)
+                stds = [r.get("std") for r in row.values()
+                         if isinstance(r, dict) and r.get("std") is not None]
+                if stds and min(stds) > 1e-9:
+                    row["_scale_lift_max_over_min_std"] = round(max(stds) / min(stds), 2)
+                out["features"][name] = row
+            # En problematik feature'ları öne çıkar (max scale lift)
+            ranked = sorted(
+                ((n, f.get("_scale_lift_max_over_min_std") or 0)
+                 for n, f in out["features"].items()),
+                key=lambda kv: -kv[1])
+            out["top_scale_mismatch"] = [{"feature": n, "scale_lift": s}
+                                          for n, s in ranked[:15] if s > 2]
+            _FEATURE_DEBUG_STATUS["result"] = out
+        except Exception as e:
+            logger.exception("[debug-feature] hata: %s", e)
+            _FEATURE_DEBUG_STATUS["error"] = str(e)[:500]
+        finally:
+            _FEATURE_DEBUG_STATUS["running"] = False
+            _FEATURE_DEBUG_STATUS["finished_at"] = datetime.now(timezone.utc).isoformat()
+
+    bg.add_task(_do)
+    return {"status": "scheduled", "days": days,
+            "poll": "/api/precision-veto/debug-feature-distribution/status",
+            "estimated_minutes": "4-6"}
+
+
+@router.get("/debug-feature-distribution/status")
+async def debug_feature_distribution_status():
+    return {**_FEATURE_DEBUG_STATUS}
 
 
 @router.post("/stage4-sizing/prune")

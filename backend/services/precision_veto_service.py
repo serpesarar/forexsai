@@ -648,42 +648,57 @@ def _stage4_meta(symbol: str, signal: dict, features: dict
     Caller (check_signal) sizing_mult'u VetoResult.position_size_multiplier'a
     yansıtır; downstream (MT5 bridge) lot çarpanı olarak kullanır.
     """
-    model = _load_meta_model()
-    if model is None or not _meta_feature_names:
-        return None, None, {"skipped": "no_model"}
+    # Per-symbol inference — model_loader sembole özel modeli getirir,
+    # yoksa legacy combined model'e düşer. predict_r normalize de uygular.
     try:
-        import numpy as np
-        feat_vec = np.array([[features.get(name, -1) for name in _meta_feature_names]],
-                             dtype=float)
-        if _meta_is_regressor:
-            predicted_r = float(model.predict(feat_vec)[0])
-            # Percentile-based sizing — ana karar mekanizması
-            try:
-                from services.stage4_sizing import get_sizing
-                sizing = get_sizing(symbol, predicted_r)
-            except Exception as e:
-                logger.warning("[precision-veto] stage4_sizing hata: %s", e)
-                sizing = {"sizing_mult": 1.0, "action": "sizing_error",
-                          "percentile": None, "history_size": 0,
-                          "predicted_r": round(predicted_r, 4),
-                          "cold_start": True, "error": str(e)[:100]}
-            details = {"predicted_r": round(predicted_r, 4),
-                       "model_type": "regression",
-                       "sizing": sizing}
-            if sizing.get("action") == "hard_veto":
-                return "meta_bottom_decile_veto", predicted_r, details
-            return None, predicted_r, details
-        # Eski classification fallback
-        proba = float(model.predict_proba(feat_vec)[0][1])
-        thr = float(_cfg(symbol, "meta_classifier_threshold"))
-        details = {"proba": round(proba, 3), "threshold": thr,
-                    "model_type": "classification"}
-        if proba < thr:
-            return "meta_classifier_low_confidence", proba, details
-        return None, proba, details
+        from services.inference_stage4 import predict_r
     except Exception as e:
-        logger.warning("[precision-veto] meta inference hatası: %s", e)
-        return None, None, {"error": str(e)[:120]}
+        logger.warning("[precision-veto] inference_stage4 import: %s", e)
+        return None, None, {"skipped": "no_inference_module"}
+
+    predicted_r, info = predict_r(symbol, features)
+    if predicted_r is None:
+        # Fallback: legacy monolitik path — model_loader hiçbir şey döndüremedi
+        model = _load_meta_model()
+        if model is None or not _meta_feature_names:
+            return None, None, dict(info, skipped="no_model")
+        try:
+            import numpy as np
+            feat_vec = np.array([[features.get(name, -1)
+                                   for name in _meta_feature_names]], dtype=float)
+            if _meta_is_regressor:
+                predicted_r = float(model.predict(feat_vec)[0])
+                info = dict(info, model_source="legacy_inline",
+                            used_per_symbol=False, normalized=False)
+            else:
+                proba = float(model.predict_proba(feat_vec)[0][1])
+                thr = float(_cfg(symbol, "meta_classifier_threshold"))
+                details = {"proba": round(proba, 3), "threshold": thr,
+                           "model_type": "classification", **info}
+                if proba < thr:
+                    return "meta_classifier_low_confidence", proba, details
+                return None, proba, details
+        except Exception as e:
+            logger.warning("[precision-veto] legacy inference hata: %s", e)
+            return None, None, dict(info, error=str(e)[:120])
+
+    # Percentile-based sizing — ana karar mekanizması
+    try:
+        from services.stage4_sizing import get_sizing
+        sizing = get_sizing(symbol, predicted_r)
+    except Exception as e:
+        logger.warning("[precision-veto] stage4_sizing hata: %s", e)
+        sizing = {"sizing_mult": 1.0, "action": "sizing_error",
+                  "percentile": None, "history_size": 0,
+                  "predicted_r": round(predicted_r, 4),
+                  "cold_start": True, "error": str(e)[:100]}
+    details = {"predicted_r": round(predicted_r, 4),
+               "model_type": "regression",
+               "inference": info,
+               "sizing": sizing}
+    if sizing.get("action") == "hard_veto":
+        return "meta_bottom_decile_veto", predicted_r, details
+    return None, predicted_r, details
 
 
 # ─── Ana giriş ───────────────────────────────────────────────────────────────
