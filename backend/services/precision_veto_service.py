@@ -128,6 +128,10 @@ class VetoResult:
     shadow_mode: bool = True
     details: dict = field(default_factory=dict)
     features: dict = field(default_factory=dict)   # signal_vetoes kolonları
+    # Stage 4 percentile-based sizing — trade_executor / MT5 bridge bunu okuyup
+    # lot çarpanı olarak uygular. 1.0 = baseline, 0.0 = veto, >1 = boost.
+    position_size_multiplier: float = 1.0
+    sizing_action: str = ""    # "hard_veto"|"size_quarter"|"size_normal"|"size_boost"|"size_max"|"cold_start_passthrough"
 
     def to_log_dict(self, signal: dict) -> dict:
         f = self.features
@@ -630,28 +634,44 @@ def reload_meta_model() -> dict:
 
 def _stage4_meta(symbol: str, signal: dict, features: dict
                  ) -> tuple[Optional[str], Optional[float], dict]:
-    """Meta inference. Yeni model regression — R-multiple (ATR cinsinden)
-    tahmin ediyor. Yorumlama:
-      predicted_r < -0.2  → güçlü negatif → HARD VETO
-      −0.2 ≤ r < 0.0      → zayıf negatif → soft penalty (büyüklüğe oranlı)
-      0.0 ≤ r < 0.3       → marjinal pozitif → küçük penalty
-      r ≥ 0.3             → güçlü pozitif → no penalty
-    Skor confidence ölçeklemesi: high predicted_r = confidence yükselir
-    (existing meta_confidence_blend_weight ile orantılı)."""
+    """Meta inference — PERCENTILE-BASED sizing (2026-05-25).
+
+    Honest OOS backtest gösterdi ki regression model ATR-normalize R-multiple
+    tahmininde Spearman ~0.20 (rank gücü iyi) ama dağılım dar (0.06-0.12).
+    Mutlak threshold (r < -0.2) hiç tetiklenmiyordu. Çözüm: stage4_sizing
+    modülü ile rolling percentile — sembolün son 500 tahmin dağılımı içinde
+    bu sinyalin yüzdelik konumuna göre size çarpanı uygula.
+
+    Geri dönüş:
+      reason = "meta_bottom_decile_veto"  → percentile < 10% (HARD VETO)
+      reason = None                         → diğer tüm durumlar (sizing details'ta)
+    Caller (check_signal) sizing_mult'u VetoResult.position_size_multiplier'a
+    yansıtır; downstream (MT5 bridge) lot çarpanı olarak kullanır.
+    """
     model = _load_meta_model()
     if model is None or not _meta_feature_names:
         return None, None, {"skipped": "no_model"}
     try:
         import numpy as np
-        # Feature vektörünü zorunlu sıra ile inşa et
         feat_vec = np.array([[features.get(name, -1) for name in _meta_feature_names]],
                              dtype=float)
         if _meta_is_regressor:
             predicted_r = float(model.predict(feat_vec)[0])
-            details = {"predicted_r": round(predicted_r, 3),
-                        "model_type": "regression"}
-            if predicted_r < -0.2:
-                return "meta_classifier_negative_R", None, details
+            # Percentile-based sizing — ana karar mekanizması
+            try:
+                from services.stage4_sizing import get_sizing
+                sizing = get_sizing(symbol, predicted_r)
+            except Exception as e:
+                logger.warning("[precision-veto] stage4_sizing hata: %s", e)
+                sizing = {"sizing_mult": 1.0, "action": "sizing_error",
+                          "percentile": None, "history_size": 0,
+                          "predicted_r": round(predicted_r, 4),
+                          "cold_start": True, "error": str(e)[:100]}
+            details = {"predicted_r": round(predicted_r, 4),
+                       "model_type": "regression",
+                       "sizing": sizing}
+            if sizing.get("action") == "hard_veto":
+                return "meta_bottom_decile_veto", predicted_r, details
             return None, predicted_r, details
         # Eski classification fallback
         proba = float(model.predict_proba(feat_vec)[0][1])
@@ -775,35 +795,47 @@ async def check_signal(signal: dict) -> VetoResult:
             res.direction = "HOLD"
         return res
 
-    # ── AŞAMA 4 — Meta sentezleyici (regression: predicted R-multiple) ───────
+    # ── AŞAMA 4 — Meta sentezleyici (percentile-based sizing) ────────────────
     if PRECISION_VETO_CONFIG["stage_4_enabled"]:
         reason, pred_value, det = _stage4_meta(symbol, signal, res.features)
         if pred_value is not None:
-            # Regression için "predicted_r", classification için proba
             key = "meta_predicted_r" if _meta_is_regressor else "meta_classifier_proba"
-            res.features[key] = round(pred_value, 3)
+            res.features[key] = round(pred_value, 4)
+        sizing = (det or {}).get("sizing") or {}
+        # Sizing alanlarını her durumda VetoResult'a yansıt (cold start dahil)
+        if sizing:
+            res.position_size_multiplier = float(sizing.get("sizing_mult", 1.0))
+            res.sizing_action = str(sizing.get("action") or "")
+            res.features["meta_percentile"] = sizing.get("percentile")
+            res.features["meta_sizing_mult"] = round(res.position_size_multiplier, 3)
+            res.features["meta_sizing_action"] = res.sizing_action
         if reason:
+            # Bottom decile (percentile < 10%) → hard veto
             res.details["stage4"] = det
+            res.position_size_multiplier = 0.0
             return _hard_veto(4, reason, det)
-        if pred_value is not None:
-            if _meta_is_regressor:
-                # Regression: predicted_r in [-0.2, 0) → soft penalty kademeli
-                # 0+ → küçük confidence boost (× blend weight)
-                w = float(PRECISION_VETO_CONFIG["meta_confidence_blend_weight"])
-                if pred_value < 0.0:
-                    # -0.2 → 10 penalty, -0.05 → 2.5 penalty (lineer)
-                    pen = round(min(20.0, abs(pred_value) * 50.0), 1)
-                    res.total_penalty += pen
-                    res.details["stage4"] = {**det, "penalty": pen}
-                else:
-                    # Pozitif R tahmini → confidence çarpanı (max +%30)
-                    mult = 1.0 + w * min(1.0, pred_value / 1.0)
-                    res.adjusted_confidence *= mult
-                    res.details["stage4"] = {**det, "confidence_mult": round(mult, 3)}
+        if pred_value is not None and _meta_is_regressor and sizing:
+            mult = res.position_size_multiplier
+            # Sizing < 1.0 → confidence'a oranlı penalty (downsize sinyalini
+            # confidence düşüşüyle de bildir; meta-rounding panellerinde görünür)
+            if mult < 1.0 and not sizing.get("cold_start"):
+                # 0.25x → 12 pen (1-0.25)*16; baseline scale
+                pen = round((1.0 - mult) * 16.0, 1)
+                res.total_penalty += pen
+                res.details["stage4"] = {**det, "downsize_penalty": pen}
+            elif mult > 1.0 and not sizing.get("cold_start"):
+                # 1.2x → conf×1.10; 1.5x → conf×1.25 (kapanış güvenli)
+                w = float(PRECISION_VETO_CONFIG.get("meta_confidence_blend_weight") or 0.5)
+                conf_mult = 1.0 + (mult - 1.0) * w
+                res.adjusted_confidence *= conf_mult
+                res.details["stage4"] = {**det,
+                                          "confidence_mult": round(conf_mult, 3)}
             else:
-                # Classification: proba ile harmanla (legacy)
-                w = float(PRECISION_VETO_CONFIG["meta_confidence_blend_weight"])
-                res.adjusted_confidence *= (1.0 - w) + w * pred_value
+                res.details["stage4"] = det
+        elif pred_value is not None and not _meta_is_regressor:
+            # Legacy classification path (regressor değilse): proba ile harmanla
+            w = float(PRECISION_VETO_CONFIG.get("meta_confidence_blend_weight") or 0.5)
+            res.adjusted_confidence *= (1.0 - w) + w * pred_value
 
     return res
 

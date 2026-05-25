@@ -141,6 +141,77 @@ async def reload_meta_model_endpoint():
     return reload_meta_model()
 
 
+# ─── Stage 4 percentile-based sizing — state & seeding ───────────────────────
+@router.get("/stage4-sizing/state")
+async def stage4_sizing_state(verbose: bool = Query(False)):
+    """Percentile-based sizing modülünün anlık durumu — sembol başına history
+    sayısı, predicted_r dağılım kuantilleri (p10/p30/p50/p70/p90), realized R
+    ortalaması, win rate, pending kuyruk uzunluğu. Filtreleme aktif mi göster."""
+    from services.stage4_sizing import get_state
+    return get_state(verbose=verbose)
+
+
+@router.post("/stage4-sizing/seed-from-backtest")
+async def stage4_sizing_seed(days: int = Query(90, ge=14, le=180),
+                              test_only: bool = Query(True, description=
+                                  "Sadece eğitim test slice'ından (last 15%) "
+                                  "seed et — leak-siz")):
+    """Cold start'ı atlamak için bootstrap: backtest-stage4'ün ürettiği
+    (predicted_r, realized_r) çiftleriyle history'yi tohumla.
+
+    test_only=True (default): sadece OOS test slice (model görmedi) → en
+    dürüst seed. False: tüm slice (50%+ örnekleminden hızlıca bilgilenir
+    ama train kısmı modelin görmüş olduğu sinyallerdir)."""
+    from scripts.train_precision_meta_classifier import collect_training_data
+    from services.stage4_sizing import seed_from_backtest
+    import joblib, json, numpy as np
+    from pathlib import Path as _P
+    # Veri + model yükle
+    try:
+        X, y, M = await collect_training_data(days=days, return_meta=True)
+    except Exception as e:
+        raise HTTPException(500, f"collect: {e}")
+    if not X:
+        raise HTTPException(503, "veri yok")
+    cand = [_P("backend") / "models", _P(__file__).parent.parent / "models",
+            _P("/app/models")]
+    model = feat_names = None
+    for c in cand:
+        mp = c / "precision_meta_classifier.joblib"
+        fp = c / "precision_meta_features.json"
+        if mp.exists() and fp.exists():
+            model = joblib.load(mp)
+            with open(fp) as f:
+                feat_names = json.load(f).get("features") or []
+            break
+    if model is None:
+        raise HTTPException(503, "model yok — önce /train-meta")
+    X_mat = np.array([[float(f.get(n, 0.0) or 0.0) for n in feat_names]
+                       for f in X], dtype=float)
+    preds = model.predict(X_mat)
+    n = len(X_mat)
+    cut = int(n * 0.85) if test_only else 0
+    rows = []
+    for i in range(cut, n):
+        rows.append({"symbol": M[i]["symbol"],
+                     "predicted_r": float(preds[i]),
+                     "realized_r": float(y[i])})
+    added = seed_from_backtest(rows)
+    from services.stage4_sizing import get_state
+    return {"status": "ok", "seeded_rows": added,
+            "from_index": cut, "to_index": n,
+            "test_only": test_only,
+            "state_after": get_state(verbose=False)}
+
+
+@router.post("/stage4-sizing/prune")
+async def stage4_sizing_prune():
+    """7+ gün bekleyen pending tahminleri at (lifecycle kaçırırsa bellek
+    sızıntısı olmasın)."""
+    from services.stage4_sizing import prune_stale_pending
+    return {"removed": prune_stale_pending()}
+
+
 _STAGE4_BACKTEST_STATUS: dict = {"running": False, "started_at": None,
                                    "finished_at": None, "result": None, "error": None}
 
