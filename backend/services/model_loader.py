@@ -135,11 +135,15 @@ def get_model_for(symbol: str) -> Optional[dict]:
         return None
     slug = slugify(symbol)
     global _legacy_cache
-    with _lock:
-        if slug in _cache:
-            return _cache[slug]
-    # NDX gibi sembollerde per-symbol modeli atla (bkz: _FORCE_LEGACY_SYMBOLS)
-    if symbol.upper() in _FORCE_LEGACY_SYMBOLS:
+    # FORCE_LEGACY önce — cache lookup'tan ÖNCE, çünkü reload_all() per-symbol
+    # modelleri toplu cache'liyor ve bu kontrol bypass ediliyordu. Sembol bu
+    # listede ise her zaman fresh legacy resolution path'ine git.
+    force_legacy = symbol.upper() in _FORCE_LEGACY_SYMBOLS
+    if not force_legacy:
+        with _lock:
+            if slug in _cache:
+                return _cache[slug]
+    if force_legacy:
         entry = None
     else:
         entry = _load_one(symbol)
@@ -168,12 +172,18 @@ def reload_all() -> dict:
         _cache.clear()
         _legacy_cache = None
     # Mevcut sembolleri tarayıp yeniden cache'le (raporlama için)
+    # FORCE_LEGACY sembollerini cache'leme — get_model_for'da her zaman
+    # legacy resolve edilsin
     found = {}
     if _PER_SYMBOL_DIR.exists():
         for child in _PER_SYMBOL_DIR.iterdir():
             if not child.is_dir():
                 continue
             slug = child.name
+            # FORCE_LEGACY kontrolü slug üzerinden — env "NDX.INDX" → slug "ndx_indx"
+            if any(slugify(s) == slug for s in _FORCE_LEGACY_SYMBOLS):
+                found[slug] = {"skipped": "force_legacy"}
+                continue
             entry = _load_one(slug)  # slug doğrudan
             if entry is not None:
                 found[slug] = {
