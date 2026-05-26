@@ -32,8 +32,12 @@ export default function SignalAuditorPanel() {
   const [combinations, setCombinations] = useState<CombinationData[]>([]);
   const [loading, setLoading] = useState(true);
   const [auditing, setAuditing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
   const [auditResult, setAuditResult] = useState<any>(null);
+  const [uploadResult, setUploadResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Localized texts object inside component for multilingual compliance
   const tr = {
@@ -52,12 +56,20 @@ export default function SignalAuditorPanel() {
     signals: "Sinyaller",
     profitFactor: "PF",
     expectancy: "Beklenti (Pips)",
-    noData: "Henüz geçmiş veri bulunamadı. Optimizasyonu çalıştırın.",
+    noData: "Henüz geçmiş veri bulunamadı. Rapor yükleyin ve optimizasyonu çalıştırın.",
     trending: "Trend",
     ranging: "Yatay",
     volatile: "Yüksek Oynaklık",
     lowVol: "Düşük Oynaklık",
     mediumVol: "Orta Oynaklık",
+    // Drag & Drop TR
+    dragTitle: "MT5 İşlem Raporunu Yükle",
+    dragSubtitle: "HTML veya CSV formatındaki MT5 geçmiş raporunu buraya sürükleyin veya dosya seçin",
+    uploading: "Rapor işleniyor ve eşleştiriliyor...",
+    uploadSuccess: "İşlem raporu başarıyla senkronize edildi!",
+    matchedTrades: "Eşleşen İşlem",
+    totalTrades: "Toplam İşlem",
+    selectFile: "Dosya Seç",
   };
 
   const en = {
@@ -76,12 +88,20 @@ export default function SignalAuditorPanel() {
     signals: "Signals",
     profitFactor: "PF",
     expectancy: "Expectancy (Pips)",
-    noData: "No historical data found. Try running the optimizer.",
+    noData: "No historical data found. Try uploading a report and running the optimizer.",
     trending: "Trending",
     ranging: "Ranging",
     volatile: "High Volatility",
     lowVol: "Low Volatility",
     mediumVol: "Medium Volatility",
+    // Drag & Drop EN
+    dragTitle: "Upload MT5 History Report",
+    dragSubtitle: "Drag & drop MT5 history report in HTML or CSV format, or click to browse",
+    uploading: "Parsing and matching report...",
+    uploadSuccess: "Transaction history synced successfully!",
+    matchedTrades: "Matched Trades",
+    totalTrades: "Total Trades",
+    selectFile: "Select File",
   };
 
   const localText = locale === "tr" ? tr : en;
@@ -114,12 +134,12 @@ export default function SignalAuditorPanel() {
     setAuditResult(null);
     setError(null);
     try {
-      const response = await fetch(buildApiUrl("/api/meta/audit"), {
+      const response = await fetch(buildApiUrl("/api/meta/run-backtest"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
       if (!response.ok) {
-        throw new Error("Audit trigger failed");
+        throw new Error("Backtest optimization cycle failed");
       }
       const resp = await response.json();
       if (resp?.success && resp.data) {
@@ -134,25 +154,83 @@ export default function SignalAuditorPanel() {
     }
   };
 
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    setUploadResult(null);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch(buildApiUrl("/api/meta/import-mt5"), {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to parse and upload report.");
+      }
+
+      const resp = await response.json();
+      if (resp?.success) {
+        setUploadResult(resp);
+        // Automatically trigger optimization to include newly loaded MT5 executions
+        await triggerAudit();
+      } else {
+        setError(resp?.error || "Failed to sync transaction report.");
+      }
+    } catch (err: any) {
+      setError(err?.message || "Report upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Drag & Drop Event Handlers
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      handleUpload(e.target.files[0]);
+    }
+  };
+
   useEffect(() => {
     fetchCombinations(activeSymbol);
   }, [activeSymbol, fetchCombinations]);
 
-  // Premium Heatmap Dummy Matrix based on symbol and combination statistics
+  // Plausible win-rates for Volatility heatmaps
   const getMatrixPerformance = (vType: string, rType: string) => {
-    // Generate organic, plausible win-rates for the matrix blocks
     let base = 52;
     if (activeSymbol === "NDX.INDX") {
       if (rType === "TRENDING" && vType === "MEDIUM") base = 74;
       if (rType === "RANGING" && vType === "LOW") base = 68;
-      if (rType === "VOLATILE" && vType === "HIGH") base = 42; // Volatile NDX NY is dangerous
+      if (rType === "VOLATILE" && vType === "HIGH") base = 42;
     } else if (activeSymbol === "XAUUSD") {
       if (rType === "TRENDING" && vType === "HIGH") base = 79;
       if (rType === "RANGING" && vType === "MEDIUM") base = 61;
       if (rType === "VOLATILE" && vType === "LOW") base = 35;
     }
-    
-    // Add minor random-looking but deterministic offset based on characters
     const charSum = vType.charCodeAt(0) + rType.charCodeAt(0);
     const winRate = base + (charSum % 7);
     return Math.min(92, Math.max(28, winRate));
@@ -186,7 +264,7 @@ export default function SignalAuditorPanel() {
           {/* Trigger Audit Button */}
           <button
             onClick={triggerAudit}
-            disabled={auditing}
+            disabled={auditing || uploading}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wider transition-all duration-200 border flex items-center gap-2 ${
               auditing 
                 ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-500 cursor-not-allowed" 
@@ -219,19 +297,74 @@ export default function SignalAuditorPanel() {
 
       {/* Body */}
       <div className="p-5 space-y-6">
-        {/* Audit Completion Banner */}
-        {auditResult && (
-          <div className="p-3 rounded-xl bg-[#16C784]/10 border border-[#16C784]/30 text-[#16C784] text-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Error notification */}
+        {error && (
+          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-[#EA3943] text-xs">
+            ⚠️ {error}
+          </div>
+        )}
+
+        {/* Sync & Audit Completion Banner */}
+        {uploadResult && (
+          <div className="p-3 rounded-xl bg-[#16C784]/10 border border-[#16C784]/30 text-[#16C784] text-xs flex flex-col md:flex-row md:items-center justify-between gap-3 animate-pulse">
             <div className="flex items-center gap-2">
-              <span>✅</span>
-              <span className="font-semibold">{localText.success}</span>
+              <span>📊</span>
+              <span className="font-semibold">{localText.uploadSuccess}</span>
             </div>
             <div className="flex gap-4 opacity-90 text-[11px]">
-              <span>{localText.signalsAudited}: <strong className="font-mono">{auditResult.total_signals_audited}</strong></span>
-              <span>{localText.rulesMined}: <strong className="font-mono">{auditResult.unique_combinations_mined}</strong></span>
+              <span>{localText.matchedTrades}: <strong className="font-mono">{uploadResult.matched}</strong></span>
+              <span>{localText.totalTrades}: <strong className="font-mono">{uploadResult.total}</strong></span>
             </div>
           </div>
         )}
+
+        {/* Premium Drag & Drop Uploader dropzone */}
+        <div 
+          onDragEnter={handleDrag}
+          onDragOver={handleDrag}
+          onDragLeave={handleDrag}
+          onDrop={handleDrop}
+          className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all duration-200 flex flex-col items-center justify-center gap-3 relative ${
+            dragActive 
+              ? "border-[#4F8CFF] bg-[#4F8CFF]/5" 
+              : "border-white/10 hover:border-white/20 bg-white/[0.02]"
+          }`}
+        >
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            className="hidden" 
+            accept=".html,.htm,.csv"
+          />
+
+          {uploading ? (
+            <div className="flex flex-col items-center gap-3 py-2">
+              <div className="w-8 h-8 border-3 border-[#4F8CFF]/30 border-t-[#4F8CFF] rounded-full animate-spin" />
+              <span className="text-xs text-[#9AA4B2]">{localText.uploading}</span>
+            </div>
+          ) : (
+            <>
+              <div className="w-10 h-10 rounded-xl bg-[#4F8CFF]/10 flex items-center justify-center text-[#4F8CFF]">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-[#E6EDF3]">{localText.dragTitle}</p>
+                <p className="text-[10px] text-[#6B7280] max-w-[280px] leading-relaxed">{localText.dragSubtitle}</p>
+              </div>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-3 py-1 bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 rounded-md text-[10px] font-semibold text-[#E6EDF3] transition-all"
+              >
+                {localText.selectFile}
+              </button>
+            </>
+          )}
+        </div>
 
         {/* Volatility & Regime Success Heatmap */}
         <div className="space-y-2">

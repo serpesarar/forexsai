@@ -279,6 +279,7 @@ export interface DiscriminatorAnalysis {
   } | null;
   n_wins?: number;
   n_fails?: number;
+  min_required?: { wins: number; fails: number };
   error?: string;
   note?: string;
   generated_at?: string;

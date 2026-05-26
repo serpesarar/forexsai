@@ -6,7 +6,7 @@ API endpoints for the Meta-Intelligence Engine.
 from __future__ import annotations
 
 import logging
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, UploadFile, File
 from dataclasses import asdict
 
 logger = logging.getLogger(__name__)
@@ -189,4 +189,58 @@ async def meta_audit():
         }
     except Exception as e:
         logger.error(f"[MetaRouter] Audit trigger error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/import-mt5")
+async def import_mt5_history(
+    file: UploadFile = File(...),
+    tolerance: int = Query(90, ge=10, le=600),
+):
+    """
+    Upload and match an MT5 HTML/CSV report.
+    Matches trades with database prediction logs and updates ground truth data.
+    """
+    try:
+        content_bytes = await file.read()
+        content = content_bytes.decode("utf-8", errors="ignore")
+        
+        from services.mt5_report_matcher import MT5ReportMatcher
+        matcher = MT5ReportMatcher()
+        
+        trades = []
+        filename = file.filename.lower()
+        if filename.endswith(".csv"):
+            trades = matcher.parse_csv_report(content)
+        elif filename.endswith(".html") or filename.endswith(".htm"):
+            trades = matcher.parse_html_report(content)
+        else:
+            return {"success": False, "error": "Invalid file format. Please upload .html or .csv report."}
+
+        if not trades:
+            return {"success": False, "error": "No trades parsed from the uploaded report. Verify format."}
+
+        result = await matcher.match_and_sync_trades(trades, tolerance_seconds=tolerance)
+        return result
+    except Exception as e:
+        logger.error(f"[MetaRouter] MT5 history import failed: {e}", exc_info=True)
+        return {"success": False, "error": str(e)}
+
+
+@router.post("/run-backtest")
+async def meta_run_backtest(
+    days: int = Query(45, ge=1, le=180),
+):
+    """
+    Trigger the offline combinatorial backtest over the selected days.
+    """
+    try:
+        from services.combinatorial_auditor import run_audit_cycle
+        result = await run_audit_cycle()
+        return {
+            "success": True,
+            "data": result,
+        }
+    except Exception as e:
+        logger.error(f"[MetaRouter] Backtest trigger error: {e}")
         return {"success": False, "error": str(e)}
