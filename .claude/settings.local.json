@@ -36,7 +36,10 @@
       "Bash(bash replay_ops.sh dry)",
       "Bash(chmod +x /tmp/run_entry_bt2.sh)",
       "Bash(bash /tmp/run_entry_bt2.sh)",
-      "Bash(tee /tmp/run_entry_bt2.log)"
+      "Bash(tee /tmp/run_entry_bt2.log)",
+      "Bash(chmod +x /tmp/run_entry_bt3.sh)",
+      "Bash(bash /tmp/run_entry_bt3.sh)",
+      "Bash(tee /tmp/run_entry_bt3.log)"
     ]
   }
 }

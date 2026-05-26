@@ -42,6 +42,9 @@ logger = logging.getLogger(__name__)
 
 # ─── Konfigürasyon — env ile override edilebilir ─────────────────────────────
 # Tüm mesafe eşikleri ATR cinsinden — sembol bağımsız.
+# 2026-05-26: REJECT kaldırıldı (backtest 1834 pip "kaçırılan kazanç"
+# göstermişti). Yerine FALLBACK_MARKET: sembolün varsayılan TP/SL config'i
+# + market entry. LIMIT timeout'unda da aynı fallback uygulanır.
 DEFAULT_CONFIG = {
     "timeframe": "15m",
     "candle_limit": 100,
@@ -50,21 +53,33 @@ DEFAULT_CONFIG = {
     "ob_max_age_candles": 30,    # OB son 30 mum içinde oluşmuşsa "fresh"
     "fvg_max_age_candles": 20,
     # "İçinde mi?" — fiyatın OB/FVG bölgesinde sayılması için tolerans
-    # zone_low - tol_atr*ATR ≤ price ≤ zone_high + tol_atr*ATR
     "inside_tolerance_atr": 0.10,
     # "Uçmuş mu?" — fiyat OB üstünde/altında bu kadarsa "fled"
     "fled_threshold_atr": 0.30,
-    # LIMIT için maksimum geri-çekilme — bunu aşan zone'a limit yok
+    # LIMIT için maksimum geri-çekilme — bunu aşan zone yoksa LIMIT atılmaz
+    # → FALLBACK_MARKET (market entry, default config TP/SL)
     "limit_max_pullback_atr": 2.0,
-    # REJECT — fiyat herhangi bir geçerli yapıdan >X ATR uzaksa
-    "reject_far_atr": 2.5,
     # LIMIT order için bekleme süresi — TF'e göre default
     "max_wait_candles_default": 5,
-    # SL: zone dışına ne kadar uzak
+    # SL: zone dışına ne kadar uzak (sadece structure-based entry için)
     "sl_buffer_atr": 0.30,
-    # R:R hedefi (TP signal'den yoksa)
+    # R:R hedefi — sembol bazlı override _RR_BY_SYMBOL'da, yoksa bu kullanılır
     "default_rr": 2.0,
 }
+
+# Sembol bazlı R:R — backtest 2026-05-26 kalibrasyonu:
+# Yüksek volatilite + momentum (NDX/USOIL) → 2.0
+# Daha sıkı, oscillating (XAUUSD/GDAXI) → 1.8 (geniş TP'ye ulaşma şansı az)
+_RR_BY_SYMBOL = {
+    "XAUUSD": 1.8,
+    "GDAXI.INDX": 1.8,
+    "NDX.INDX": 2.0,
+    "USOIL.FOREX": 2.0,
+}
+
+
+def _get_rr(symbol: str, default_rr: float) -> float:
+    return _RR_BY_SYMBOL.get(symbol, default_rr)
 
 
 @dataclass
@@ -323,7 +338,8 @@ def decide_from_payload(signal: dict, ob_payload: dict,
         # En yüksek skorlu zone — sembol kalitesini önceler
         best = max(inside_cands, key=lambda c: c["score"])
         sl, tp, rr = _compute_levels(direction, current_price, best,
-                                      signal_sl, signal_tp, atr, cfg)
+                                      signal_sl, signal_tp, atr, cfg,
+                                      symbol=signal.get("symbol") or "")
         fresh_ratio = _freshness(best["index"], current_idx,
                                   cfg["ob_max_age_candles"] if best["kind"] == "ob"
                                   else cfg["fvg_max_age_candles"])
@@ -365,7 +381,8 @@ def decide_from_payload(signal: dict, ob_payload: dict,
         else:
             entry = best["zone_low"]
         sl, tp, rr = _compute_levels(direction, entry, best,
-                                      None, signal_tp, atr, cfg)
+                                      None, signal_tp, atr, cfg,
+                                      symbol=signal.get("symbol") or "")
         fresh = _freshness(best["index"], current_idx,
                             cfg["ob_max_age_candles"] if best["kind"] == "ob"
                             else cfg["fvg_max_age_candles"])
@@ -391,39 +408,79 @@ def decide_from_payload(signal: dict, ob_payload: dict,
                 "current_idx": current_idx,
             }).to_dict()
 
-    # ── KARAR 3: Hiç geçerli yapı yok ya da çok uzak → REJECT ────────────────
+    # ── KARAR 3: Yapısal entry mümkün değil → FALLBACK_MARKET ────────────────
+    # REJECT yerine: sembolün varsayılan TP/SL config'i + market entry.
+    # 2026-05-26 backtest: REJECT 601 sinyal × WR %74.9 = ortalama signal'le
+    # aynı kalitede idi → seçici eleyici değildi. Fallback bu kazançları korur.
     reason = "no_valid_structure"
-    far_obs = None
+    extra: dict = {}
     if candidates:
         nearest = min(candidates,
                        key=lambda c: abs(_zone_distance_signed(
                            current_price, c["zone_low"], c["zone_high"], direction)))
         d = abs(_zone_distance_signed(current_price, nearest["zone_low"],
                                         nearest["zone_high"], direction))
-        if d > cfg["reject_far_atr"] * atr:
-            reason = f"price_too_far_from_valid_zones ({d/atr:.2f} ATR)"
-            far_obs = {"distance_atr": round(d / atr, 2),
-                        "nearest_zone": nearest["type"]}
-        else:
-            # Aday var, içinde değil, pullback için "yanlış taraf" (zone fiyat
-            # ÜZERİNDE BUY için = sinyal yönüne aykırı). FOMO/late entry.
-            reason = "zones_on_wrong_side_for_signal"
+        extra["nearest_zone_dist_atr"] = round(d / atr, 2)
+        extra["nearest_zone_type"] = nearest["type"]
+        reason = ("zones_on_wrong_side_for_signal" if d <= 0.10 * atr
+                   else "price_too_far_or_misaligned")
     elif not (valid_obs or valid_fvgs):
         reason = "no_valid_obs_or_fvgs_in_lookback"
+    return _fallback_market(direction, current_price, signal.get("symbol") or "",
+                              signal_sl, signal_tp, atr, cfg, reason,
+                              extra={**extra,
+                                       "valid_ob_count": len(valid_obs),
+                                       "valid_fvg_count": len(valid_fvgs),
+                                       "candidate_count": len(candidates),
+                                       "current_idx": current_idx})
+
+
+def _fallback_market(direction: str, current_price: float, symbol: str,
+                      signal_sl, signal_tp, atr: float, cfg: dict,
+                      reason: str, extra: Optional[dict] = None) -> dict:
+    """FALLBACK_MARKET: sembolün varsayılan TP/SL config'iyle market entry.
+
+    Stage 4 sizing dışarıda uygulanır (executor); bu fonksiyon sadece
+    entry/sl/tp belirler. Yapı bulunamadığında veya limit timeout sonrası
+    çağrılır."""
+    sl_price = None
+    tp_price = None
+    try:
+        from services.target_config import (
+            calculate_target_prices, calculate_stoploss_price)
+        targets = calculate_target_prices(current_price, direction, symbol, "15m")
+        # Default config'te TP2 daha geniş hedef → R:R uyumlu (TP1 sığ)
+        tp_price = (targets.get("TP2") or targets.get("TP1")
+                     or targets.get("TP3"))
+        sl_price = calculate_stoploss_price(current_price, direction, symbol, "15m")
+    except Exception as e:
+        logger.debug("[entry-opt] target_config fallback: %s", e)
+        # Ultra-safe: ATR tabanlı 1×SL, 2×TP (default R:R)
+        off = atr * 1.0
+        if direction == "BUY":
+            sl_price = current_price - off
+            tp_price = current_price + off * cfg["default_rr"]
+        else:
+            sl_price = current_price + off
+            tp_price = current_price - off * cfg["default_rr"]
+    # Signal override — eğer caller signal_sl/tp koymuşsa onları kullan
+    if signal_sl: sl_price = float(signal_sl)
+    if signal_tp: tp_price = float(signal_tp)
     return EntryDecision(
-        action="REJECT",
+        action="FALLBACK_MARKET",
         entry_price=current_price,
-        sl_price=signal_sl or 0, tp_price=signal_tp or 0,
+        sl_price=sl_price or current_price,
+        tp_price=tp_price or current_price,
         structure_type="none",
         invalidation_reason=reason,
         max_wait_candles=0,
-        priority_score=0,
-        details={"valid_ob_count": len(valid_obs),
-                  "valid_fvg_count": len(valid_fvgs),
-                  "candidate_count": len(candidates),
-                  "current_price": current_price, "atr": round(atr, 5),
-                  "current_idx": current_idx,
-                  **(far_obs or {})}).to_dict()
+        # Düşük ama sıfır değil — sembol default'una göre çalışıyor, structure
+        # entry kadar güvenli değil
+        priority_score=35,
+        details={"fallback_reason": reason,
+                  "tp_source": "symbol_default",
+                  "atr": round(atr, 5),
+                  **(extra or {})}).to_dict()
 
 
 def _structure_atr(ob_payload: dict) -> float:
@@ -455,18 +512,20 @@ def _freshness(idx: int, current_idx: int, max_age: int) -> float:
 
 def _compute_levels(direction: str, entry: float, best_zone: dict,
                      signal_sl: Optional[float], signal_tp: Optional[float],
-                     atr: float, cfg: dict) -> tuple[float, float, float]:
+                     atr: float, cfg: dict,
+                     symbol: str = "") -> tuple[float, float, float]:
     """SL ve TP belirle. SL = zone dışına buffer kadar; TP = signal varsa o,
-    yoksa R:R = default_rr ile hesaplanır. R döndürür (TP-entry)/(entry-SL)."""
+    yoksa R:R = sembol bazlı (XAUUSD/GDAXI 1.8, NDX/USOIL 2.0). R döndürür."""
     buf = cfg["sl_buffer_atr"] * atr
+    rr_target = _get_rr(symbol, cfg["default_rr"])
     if direction == "BUY":
         sl = best_zone["zone_low"] - buf
         risk = max(1e-9, entry - sl)
-        tp = float(signal_tp) if signal_tp else entry + risk * cfg["default_rr"]
+        tp = float(signal_tp) if signal_tp else entry + risk * rr_target
         rr = (tp - entry) / risk if risk > 0 else 0.0
     else:
         sl = best_zone["zone_high"] + buf
         risk = max(1e-9, sl - entry)
-        tp = float(signal_tp) if signal_tp else entry - risk * cfg["default_rr"]
+        tp = float(signal_tp) if signal_tp else entry - risk * rr_target
         rr = (entry - tp) / risk if risk > 0 else 0.0
     return sl, tp, rr

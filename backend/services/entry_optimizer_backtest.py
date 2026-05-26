@@ -156,31 +156,59 @@ def _simulate_outcome(bars_after: list[dict], direction: str,
 
 def _simulate_limit_then_outcome(bars_after: list[dict], direction: str,
                                     limit_price: float, max_wait_bars_1m: int,
-                                    sl: float, tp: float
+                                    sl: float, tp: float, symbol: str = ""
                                     ) -> tuple[str, float, dict]:
     """Limit fill kontrolü → fill olursa o noktadan SL/TP walk.
-    Döner: (status, exit_price, info).
-    status ∈ {completed, stopped, expired, limit_missed}."""
+
+    Fill olmazsa (max_wait_bars_1m'de değmediyse): FALLBACK_MARKET — o anki
+    bar fiyatından market entry, sembolün varsayılan TP/SL config'iyle
+    walk-forward. 2026-05-26 tweak: önceki sürüm "limit_missed" döndürürdü,
+    1213 sinyalin %37.8'i = 459 sinyal kaybediyorduk.
+
+    Döner: (status, exit_price, info)."""
     if not bars_after or limit_price <= 0:
-        return ("limit_missed", limit_price, {"reason": "no_bars"})
+        return ("expired", limit_price, {"reason": "no_bars"})
     fill_idx = -1
     for i, b in enumerate(bars_after[:max_wait_bars_1m]):
         h = float(b.get("high") or 0)
         l = float(b.get("low") or 0)
-        # Limit fill: BUY için fiyat limit_price'a İNERSE, SELL için ÇIKARSA
         if direction == "BUY" and l <= limit_price:
             fill_idx = i
             break
         if direction == "SELL" and h >= limit_price:
             fill_idx = i
             break
-    if fill_idx < 0:
-        return ("limit_missed", limit_price,
-                {"waited_bars": min(len(bars_after), max_wait_bars_1m)})
+    if fill_idx >= 0:
+        status, exit_p, bars_walked = _simulate_outcome(
+            bars_after[fill_idx + 1:], direction, limit_price, sl, tp)
+        return (status, exit_p, {"fill_idx_1m": fill_idx,
+                                  "post_fill_bars": bars_walked,
+                                  "via": "limit_fill"})
+    # ── FALLBACK_MARKET after limit timeout ─────────────────────────────────
+    timeout_idx = min(len(bars_after) - 1, max_wait_bars_1m - 1)
+    timeout_bar = bars_after[timeout_idx]
+    fallback_entry = float(timeout_bar.get("open")
+                            or timeout_bar.get("close") or limit_price)
+    try:
+        from services.target_config import (
+            calculate_target_prices, calculate_stoploss_price)
+        targets = calculate_target_prices(fallback_entry, direction, symbol, "15m")
+        fb_tp = targets.get("TP2") or targets.get("TP1") or fallback_entry
+        fb_sl = calculate_stoploss_price(fallback_entry, direction, symbol, "15m")
+    except Exception:
+        # Ultra-safe — orijinal SL/TP'yi entry'ye paralel kaydır
+        delta_sl = sl - limit_price
+        delta_tp = tp - limit_price
+        fb_sl = fallback_entry + delta_sl
+        fb_tp = fallback_entry + delta_tp
     status, exit_p, bars_walked = _simulate_outcome(
-        bars_after[fill_idx + 1:], direction, limit_price, sl, tp)
-    return (status, exit_p, {"fill_idx_1m": fill_idx,
-                              "post_fill_bars": bars_walked})
+        bars_after[timeout_idx + 1:], direction, fallback_entry, fb_sl, fb_tp)
+    return (status, exit_p, {"fill_idx_1m": -1,
+                              "via": "fallback_market_after_timeout",
+                              "fallback_entry": fallback_entry,
+                              "fallback_sl": fb_sl, "fallback_tp": fb_tp,
+                              "post_fallback_bars": bars_walked,
+                              "waited_bars": timeout_idx + 1})
 
 
 def _realized_pips_signed(symbol: str, direction: str,
@@ -276,7 +304,8 @@ async def backtest_entry_optimizer(days: int = 90,
 
     # ── Her sinyal için decide + simüle ──────────────────────────────────────
     cfg = DEFAULT_CONFIG
-    actions: dict = {"EXECUTE_NOW": [], "LIMIT_ORDER": [], "REJECT": []}
+    actions: dict = {"EXECUTE_NOW": [], "LIMIT_ORDER": [],
+                       "FALLBACK_MARKET": []}
     errors = 0
     per_sym_stats: dict = {}
     payload_diag = {"empty_payloads": 0, "had_obs": 0, "had_fvgs": 0,
@@ -364,48 +393,48 @@ async def backtest_entry_optimizer(days: int = 90,
                           "orig_realized_pips": round(orig_pips, 3),
                           "orig_r_mult": round(orig_r_mult, 3) if orig_r_mult is not None else None}
 
-        if action == "REJECT":
-            outcome["sim_status"] = "no_trade"
-            outcome["sim_realized_pips"] = 0.0
-            outcome["sim_r_mult"] = 0.0
-        elif action == "EXECUTE_NOW":
+        def _r_from_pips(pips_val: float) -> Optional[float]:
+            if atr <= 0:
+                return None
+            try:
+                from services.target_config import pips_from_price_change
+                ap = pips_from_price_change(atr, sym)
+                if ap > 0:
+                    return pips_val / ap
+            except Exception:
+                pass
+            return None
+
+        if action in ("EXECUTE_NOW", "FALLBACK_MARKET"):
+            # Her ikisi de market entry — sadece SL/TP kaynağı farklı
             status, exit_p, bw = _simulate_outcome(
                 bars_after, r["direction"], entry_p, sl_p, tp_p)
             sim_pips = _realized_pips_signed(sym, r["direction"], entry_p, exit_p)
-            sim_r = None
-            if atr > 0:
-                try:
-                    from services.target_config import pips_from_price_change
-                    ap = pips_from_price_change(atr, sym)
-                    if ap > 0:
-                        sim_r = sim_pips / ap
-                except Exception:
-                    pass
             outcome.update({"sim_status": status, "sim_exit": exit_p,
                             "sim_bars_walked": bw,
                             "sim_realized_pips": round(sim_pips, 3),
-                            "sim_r_mult": round(sim_r, 3) if sim_r is not None else None})
+                            "sim_r_mult": (round(_r_from_pips(sim_pips), 3)
+                                            if _r_from_pips(sim_pips) is not None
+                                            else None)})
         elif action == "LIMIT_ORDER":
             max_wait_1m = int(decision.get("max_wait_candles") or 5) * 15
+            # ⭐ symbol parametresi — limit timeout sonrası FALLBACK_MARKET
+            # için sembolün default TP/SL config'ini almak gerekir
             status, exit_p, info = _simulate_limit_then_outcome(
-                bars_after, r["direction"], entry_p, max_wait_1m, sl_p, tp_p)
-            if status == "limit_missed":
-                sim_pips = 0.0; sim_r = 0.0
-            else:
-                sim_pips = _realized_pips_signed(sym, r["direction"], entry_p, exit_p)
-                sim_r = None
-                if atr > 0:
-                    try:
-                        from services.target_config import pips_from_price_change
-                        ap = pips_from_price_change(atr, sym)
-                        if ap > 0:
-                            sim_r = sim_pips / ap
-                    except Exception:
-                        pass
+                bars_after, r["direction"], entry_p, max_wait_1m, sl_p, tp_p,
+                symbol=sym)
+            # Entry — fill ise limit_price, timeout fallback ise yeni entry
+            actual_entry = (info.get("fallback_entry") if info.get("via") ==
+                              "fallback_market_after_timeout" else entry_p)
+            sim_pips = _realized_pips_signed(sym, r["direction"],
+                                               actual_entry, exit_p)
             outcome.update({"sim_status": status, "sim_exit": exit_p,
                             "sim_info": info,
+                            "sim_entry_actual": actual_entry,
                             "sim_realized_pips": round(sim_pips, 3),
-                            "sim_r_mult": round(sim_r, 3) if sim_r is not None else None})
+                            "sim_r_mult": (round(_r_from_pips(sim_pips), 3)
+                                            if _r_from_pips(sim_pips) is not None
+                                            else None)})
 
         actions.setdefault(action, []).append(outcome)
         ss = per_sym_stats.setdefault(sym, {"total": 0,
@@ -441,21 +470,35 @@ def _summarize(actions: dict, per_sym_stats: dict, errors: int,
     for act, rows in actions.items():
         s_orig = stats(rows, "orig_realized_pips", "orig_r_mult", "orig_status")
         s_sim = stats(rows, "sim_realized_pips", "sim_r_mult", "sim_status")
-        # LIMIT için fill rate
+        # LIMIT — fill rate + timeout fallback breakdown
         extra: dict = {}
         if act == "LIMIT_ORDER" and rows:
-            filled = sum(1 for r in rows if r.get("sim_status") not in
-                          ("limit_missed", None, "no_trade"))
+            filled = sum(1 for r in rows
+                          if (r.get("sim_info") or {}).get("via") == "limit_fill")
+            timeout_fallback = sum(1 for r in rows
+                                     if (r.get("sim_info") or {}).get("via") ==
+                                          "fallback_market_after_timeout")
             extra["fill_rate_pct"] = round(100 * filled / len(rows), 1)
             extra["filled_n"] = filled
-        # REJECT için "kaçırılan kazanç" — original'da TP olanlar
-        if act == "REJECT" and rows:
-            orig_wins = sum(1 for r in rows if r.get("orig_status") == "completed")
-            orig_losses = sum(1 for r in rows if r.get("orig_status") == "stopped")
-            extra["orig_win_rate_pct_if_we_had_traded"] = round(
-                100 * orig_wins / (orig_wins + orig_losses), 1) if (orig_wins + orig_losses) else None
-            extra["orig_avg_pips_we_skipped"] = (
-                round(sum(r.get("orig_realized_pips") or 0 for r in rows) / len(rows), 3))
+            extra["timeout_fallback_n"] = timeout_fallback
+            extra["timeout_fallback_pct"] = round(
+                100 * timeout_fallback / len(rows), 1)
+            # Fill olan vs timeout fallback'in ayrı performansı
+            fill_rows = [r for r in rows
+                          if (r.get("sim_info") or {}).get("via") == "limit_fill"]
+            tof_rows = [r for r in rows
+                          if (r.get("sim_info") or {}).get("via") ==
+                            "fallback_market_after_timeout"]
+            extra["fills_avg_pips"] = (
+                round(sum(r.get("sim_realized_pips") or 0 for r in fill_rows)
+                       / len(fill_rows), 3) if fill_rows else None)
+            extra["timeout_fallback_avg_pips"] = (
+                round(sum(r.get("sim_realized_pips") or 0 for r in tof_rows)
+                       / len(tof_rows), 3) if tof_rows else None)
+        # FALLBACK_MARKET — yapısız sinyaller (default config kullanıldı)
+        if act == "FALLBACK_MARKET" and rows:
+            extra["note"] = ("Yapı bulunamadı/uzak — default symbol TP/SL ile "
+                              "market entry. Stage 4 sizing dışarıda uygulanır.")
         summary[act] = {"original_system": s_orig,
                           "entry_optimizer": s_sim,
                           **extra}
@@ -479,15 +522,16 @@ def _summarize(actions: dict, per_sym_stats: dict, errors: int,
 
     # Verdict
     parts = []
-    rejects = summary.get("REJECT", {})
-    rej_orig_wr = (rejects.get("orig_win_rate_pct_if_we_had_traded") or 0)
-    if rej_orig_wr and rej_orig_wr < 50:
-        parts.append(f"REJECT doğru çalışıyor: reddedilenlerin gerçek WR'i %{rej_orig_wr} (<50%).")
-    elif rej_orig_wr:
-        parts.append(f"REJECT şüpheli: reddedilenlerin gerçek WR'i %{rej_orig_wr} (>=50%). FILTER TOO STRICT?")
+    fb = summary.get("FALLBACK_MARKET", {})
+    fb_opt = fb.get("entry_optimizer", {})
+    if fb_opt.get("n"):
+        parts.append(f"FALLBACK_MARKET: {fb_opt['n']} sinyal default config'le, "
+                      f"avg {fb_opt.get('avg_pips')} pips, WR %{fb_opt.get('win_rate_pct')}.")
     limit = summary.get("LIMIT_ORDER", {})
     if limit.get("fill_rate_pct") is not None:
-        parts.append(f"LIMIT fill rate %{limit['fill_rate_pct']}.")
+        parts.append(f"LIMIT: fill %{limit['fill_rate_pct']} (avg {limit.get('fills_avg_pips')}p), "
+                      f"timeout-fallback %{limit.get('timeout_fallback_pct')} "
+                      f"(avg {limit.get('timeout_fallback_avg_pips')}p).")
     if overall["delta_pct"] is not None:
         if overall["delta_pct"] > 5:
             parts.append(f"Toplam P&L iyileşmesi +%{overall['delta_pct']} → DEPLOY önerilir.")
