@@ -147,8 +147,8 @@ _VALIDATION_STATUS: dict = {"running": False, "started_at": None,
 @router.post("/validation-suite")
 async def validation_suite(bg: BackgroundTasks,
                             days: int = Query(90, ge=14, le=180),
-                            sample_per_scope: int = Query(200, ge=50, le=2000,
-                                                            description="Hız için 200"),
+                            sample_per_scope: int = Query(100, ge=30, le=500,
+                                                            description="Bellek için düşük; 100 yeterli"),
                             ):
     """Entry Optimizer üzerinde 5 bağımsız doğrulama:
       1. (Kod-incelemesi) — leakage TEMİZ (FVG/OB candles[-1] kullanıyor)
@@ -166,6 +166,7 @@ async def validation_suite(bg: BackgroundTasks,
                                 "finished_at": None, "result": None, "error": None})
 
     async def _do():
+        import gc
         try:
             from services.entry_optimizer_backtest import backtest_entry_optimizer
             from services.entry_optimizer import decide_from_payload, DEFAULT_CONFIG
@@ -204,6 +205,7 @@ async def validation_suite(bg: BackgroundTasks,
                     "optimizer_pips": ovr.get("optimizer_total_pips"),
                     "delta_pct": ovr.get("delta_pct"),
                 })
+                del res; gc.collect()
             avg_delta = (sum(r["delta_pct"] or 0 for r in wf_results)
                           / max(1, len(wf_results)))
             min_delta = min((r["delta_pct"] or 0) for r in wf_results)
@@ -224,9 +226,11 @@ async def validation_suite(bg: BackgroundTasks,
             no_slip = await backtest_entry_optimizer(
                 days=days, sample_per_scope=sample_per_scope,
                 apply_slippage=False)
+            gc.collect()
             with_slip = await backtest_entry_optimizer(
                 days=days, sample_per_scope=sample_per_scope,
                 apply_slippage=True)
+            gc.collect()
             ns_ovr = no_slip.get("overall") or {}
             ws_ovr = with_slip.get("overall") or {}
             results["check3_slippage"] = {
@@ -247,30 +251,9 @@ async def validation_suite(bg: BackgroundTasks,
                               else "Slippage hassas — gerçekçi beklenti düşük"),
             }
 
-            # ── KONTROL 4: Sembol bazlı — no_slip sonuçundan çıkar
-            per_sym_delta: dict = {}
-            # Re-run with per-symbol breakdown extraction
-            # no_slip içinde by_action var ama symbol breakdown'ı yok.
-            # Symbol bazlı delta için aksiyon rows'ları toplayıp grupla
-            res_full = no_slip  # zaten elimizde
-            # rows'ı by_action altından çıkar
-            all_rows = []
-            for act, rows in (res_full.get("by_action") or {}).items():
-                # by_action sadece özet — ayrıntılı row'lar burada yok.
-                # symbol breakdown için run'ı detaylı yap
-                pass
-            # Daha temiz: per-symbol için ayrı backtest_entry_optimizer çağrıları
-            for sym in ["XAUUSD", "NDX.INDX", "GDAXI.INDX", "USOIL.FOREX"]:
-                rs = await backtest_entry_optimizer(
-                    days=days, sample_per_scope=sample_per_scope,
-                    symbols=[sym], apply_slippage=False)
-                ovr = rs.get("overall") or {}
-                per_sym_delta[sym] = {
-                    "n": ovr.get("n"),
-                    "original_pips": ovr.get("original_total_pips"),
-                    "optimizer_pips": ovr.get("optimizer_total_pips"),
-                    "delta_pct": ovr.get("delta_pct"),
-                }
+            # ── KONTROL 4: Sembol bazlı — no_slip içinden çıkar
+            # (artık main backtest per_symbol_delta dahil dönüyor — ek run yok)
+            per_sym_delta = no_slip.get("per_symbol_delta") or {}
             deltas = [v["delta_pct"] for v in per_sym_delta.values()
                        if v.get("delta_pct") is not None]
             sym_verdict = "DAĞINIK"

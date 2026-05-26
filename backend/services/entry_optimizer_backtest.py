@@ -507,7 +507,34 @@ async def backtest_entry_optimizer(days: int = 90,
 
     summary = _summarize(actions, per_sym_stats, errors, len(rows))
     summary["payload_diagnostics"] = payload_diag
+    # Per-symbol delta — main run'dan ek çağrı yapmaya gerek yok
+    summary["per_symbol_delta"] = _summarize_per_symbol_delta(actions)
     return summary
+
+
+def _summarize_per_symbol_delta(actions: dict) -> dict:
+    """Sembol bazında original vs optimizer toplam pip + delta_pct."""
+    from collections import defaultdict
+    per: dict = defaultdict(lambda: {"n": 0, "orig_pips": 0.0, "opt_pips": 0.0})
+    for act, rows in actions.items():
+        for r in rows:
+            sym = r.get("symbol")
+            if not sym: continue
+            per[sym]["n"] += 1
+            per[sym]["orig_pips"] += r.get("orig_realized_pips") or 0
+            per[sym]["opt_pips"] += r.get("sim_realized_pips") or 0
+    out = {}
+    for sym, s in per.items():
+        op = s["orig_pips"]; sp = s["opt_pips"]
+        out[sym] = {
+            "n": s["n"],
+            "original_pips": round(op, 2),
+            "optimizer_pips": round(sp, 2),
+            "delta_pips": round(sp - op, 2),
+            "delta_pct": (round(100 * (sp - op) / abs(op), 1)
+                           if abs(op) > 1e-9 else None),
+        }
+    return out
 
 
 def _summarize(actions: dict, per_sym_stats: dict, errors: int,
