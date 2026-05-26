@@ -52,53 +52,62 @@ def _atr_from_candles(candles_15m: list[dict], period: int = 14) -> float:
 
 def _candles_to_ob_payload(candles_15m: list[dict], symbol: str) -> dict:
     """MarketStructureAnalyzer ile OB/FVG yapısını çıkar, entry_optimizer'ın
-    beklediği payload şemasına dönüştür."""
-    try:
-        from order_block_detector_v2 import MarketStructureAnalyzer
-    except Exception as e:
-        logger.warning("[entry-bt] MarketStructureAnalyzer import: %s", e)
-        return {"order_blocks": [], "fvg_list": [], "swing_points": []}
+    beklediği payload şemasına dönüştür.
 
-    # MarketStructureAnalyzer.analyze beklenen format: Candle objesi listesi.
-    # OrderBlockService _rows_to_candles helper'ı bunu yapıyor; ama bizim
-    # candle dict'lerimizden direkt liste yapmak için kendi minimal Candle
-    # sınıfımızı kullanabiliriz. Daha temizi: order_block_detector'dan Candle'ı import et.
+    DİKKAT: Candle ve MarketStructureAnalyzer aynı modülden (v2) import
+    edilmeli — v1 ile karıştırılırsa duck typing'de sessiz başarısızlık olur."""
+    debug = {"step": "init"}
     try:
-        from order_block_detector import Candle
+        # v2'nin kendi Candle sınıfı — analyze ile aynı modülde
+        from order_block_detector_v2 import MarketStructureAnalyzer, Candle
+        debug["step"] = "import_ok"
     except Exception as e:
-        logger.warning("[entry-bt] Candle import: %s", e)
-        return {"order_blocks": [], "fvg_list": [], "swing_points": []}
+        return {"order_blocks": [], "fvg_list": [], "swing_points": [],
+                "_error": f"import: {e}"}
 
     cand_objs = []
     for b in candles_15m:
         try:
             ts = b.get("ts") or b.get("timestamp")
+            # timestamp = epoch seconds (float) — v2 Candle dataclass: float
             if isinstance(ts, datetime):
-                ts_iso = ts.isoformat()
+                ts_val = ts.timestamp()
+            elif isinstance(ts, (int, float)):
+                ts_val = float(ts)
             else:
-                ts_iso = str(ts)
+                # string fallback — parse veya 0
+                try:
+                    ts_val = datetime.fromisoformat(
+                        str(ts).replace("Z", "+00:00")).timestamp()
+                except Exception:
+                    ts_val = 0.0
             cand_objs.append(Candle(
-                timestamp=ts_iso,
+                timestamp=ts_val,
                 open=float(b.get("open") or b.get("o") or 0),
                 high=float(b.get("high") or b.get("h") or 0),
                 low=float(b.get("low") or b.get("l") or 0),
                 close=float(b.get("close") or b.get("c") or 0),
                 volume=float(b.get("volume") or b.get("v") or 0),
             ))
-        except Exception:
+        except Exception as e:
+            debug["candle_err"] = str(e)[:80]
             continue
+    debug["n_candles"] = len(cand_objs)
     if len(cand_objs) < 20:
-        return {"order_blocks": [], "fvg_list": [], "swing_points": []}
+        return {"order_blocks": [], "fvg_list": [], "swing_points": [],
+                "_debug": debug}
 
     try:
         structure = MarketStructureAnalyzer.analyze(cand_objs, symbol=symbol)
+        debug["step"] = "analyzed"
+        debug["ob_count_raw"] = len(structure.ob_list or [])
+        debug["fvg_count_raw"] = len(structure.fvg_list or [])
     except Exception as e:
-        logger.warning("[entry-bt] analyze hata %s: %s", symbol, e)
-        return {"order_blocks": [], "fvg_list": [], "swing_points": []}
+        return {"order_blocks": [], "fvg_list": [], "swing_points": [],
+                "_error": f"analyze: {e}", "_debug": debug}
 
     obs = [ob.to_dict() for ob in (structure.ob_list or [])[:10]]
     fvgs = [f.to_dict() for f in (structure.fvg_list or [])]
-    # swing_points → "current_idx" hesabı için (entry_optimizer kullanıyor)
     sp = []
     for attr in ("swing_points", "swings"):
         v = getattr(structure, attr, None)
@@ -106,9 +115,12 @@ def _candles_to_ob_payload(candles_15m: list[dict], symbol: str) -> dict:
             for s in v:
                 sp.append({"index": int(getattr(s, "index", 0) or 0)})
             break
+    debug["ob_enriched"] = len(obs)
+    debug["fvg_enriched"] = len(fvgs)
+    debug["swings"] = len(sp)
     return {"order_blocks": obs, "fvg_list": fvgs, "swing_points": sp,
             "structure": {"counts": {"ob": len(obs)}},
-            "combined_signal": {}}
+            "combined_signal": {}, "_debug": debug}
 
 
 def _simulate_outcome(bars_after: list[dict], direction: str,
@@ -267,6 +279,9 @@ async def backtest_entry_optimizer(days: int = 90,
     actions: dict = {"EXECUTE_NOW": [], "LIMIT_ORDER": [], "REJECT": []}
     errors = 0
     per_sym_stats: dict = {}
+    payload_diag = {"empty_payloads": 0, "had_obs": 0, "had_fvgs": 0,
+                     "import_errors": 0, "analyze_errors": 0,
+                     "first_error": None, "sample_debug": None}
 
     for r in rows:
         sym = r["symbol"]
@@ -286,6 +301,24 @@ async def backtest_entry_optimizer(days: int = 90,
         atr = _atr_from_candles(c_15m)
         # OB payload
         ob_payload = _candles_to_ob_payload(c_15m, sym)
+        if ob_payload.get("_error"):
+            err = ob_payload["_error"]
+            if "import" in err:
+                payload_diag["import_errors"] += 1
+            else:
+                payload_diag["analyze_errors"] += 1
+            if payload_diag["first_error"] is None:
+                payload_diag["first_error"] = err
+                payload_diag["sample_debug"] = ob_payload.get("_debug")
+        if not ob_payload.get("order_blocks") and not ob_payload.get("fvg_list"):
+            payload_diag["empty_payloads"] += 1
+            if payload_diag["sample_debug"] is None:
+                payload_diag["sample_debug"] = ob_payload.get("_debug")
+        else:
+            if ob_payload.get("order_blocks"):
+                payload_diag["had_obs"] += 1
+            if ob_payload.get("fvg_list"):
+                payload_diag["had_fvgs"] += 1
         try:
             signal = {"symbol": sym, "direction": r["direction"],
                         "price": current_price, "atr": atr,
@@ -380,7 +413,9 @@ async def backtest_entry_optimizer(days: int = 90,
         ss["total"] += 1
         ss["by_action"][action] = ss["by_action"].get(action, 0) + 1
 
-    return _summarize(actions, per_sym_stats, errors, len(rows))
+    summary = _summarize(actions, per_sym_stats, errors, len(rows))
+    summary["payload_diagnostics"] = payload_diag
+    return summary
 
 
 def _summarize(actions: dict, per_sym_stats: dict, errors: int,
