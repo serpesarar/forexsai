@@ -928,5 +928,9 @@
     "no_data": "Yeterli veri bulunamadı.",
     "loading": "Permütasyon matrisi hesaplanıyor...",
     "target_target": "Hedef"
+  },
+  "SignalAuditorPanel": {
+    "title": "Kombinasyon Sinyal Denetçisi",
+    "subtitle": "Gerçek MT5 gerçekleşmeleri ve spread-aware simülasyona dayalı model optimizasyonu"
   }
 }

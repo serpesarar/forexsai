@@ -172,3 +172,21 @@ async def meta_history(
     except Exception as e:
         logger.error(f"[MetaRouter] History error: {e}")
         return {"success": False, "error": str(e)}
+
+
+@router.post("/audit")
+async def meta_audit():
+    """
+    Trigger the Combinatorial Auditor cycle to scan logs
+    and update the meta combinations stats.
+    """
+    try:
+        from services.combinatorial_auditor import run_audit_cycle
+        result = await run_audit_cycle()
+        return {
+            "success": True,
+            "data": result,
+        }
+    except Exception as e:
+        logger.error(f"[MetaRouter] Audit trigger error: {e}")
+        return {"success": False, "error": str(e)}

@@ -928,5 +928,9 @@
     "no_data": "Not enough data available.",
     "loading": "Calculating permutation matrix...",
     "target_target": "Target"
+  },
+  "SignalAuditorPanel": {
+    "title": "Combinatorial Signal Auditor",
+    "subtitle": "Model optimization based on real MT5 executions and spread-aware simulation"
   }
 }

@@ -848,6 +848,18 @@ class MetaAnalysisEngine:
 
         display_combo = best_combo.combo_key if best_combo and best_combo.combo_key else current_combo
 
+        # === DYNAMIC CONFLUENCE GATE (COMBINATORIAL TOXIC RULE BLOCKER) ===
+        # If the current combination historically performs terribly (win_rate < 40% with at least 5 signals),
+        # force block the signal by changing direction to HOLD. Prevents false positive bleed.
+        current_combo_info = next((c for c in combos if c.combo_key == display_combo), None)
+        if current_combo_info and current_combo_info.total_signals >= 5 and current_combo_info.win_rate < 0.40:
+            logger.warning(
+                f"[MetaEngine] {symbol} {direction} BLOCKED by Confluence Gate. "
+                f"Combo '{display_combo}' has toxic stats: WR={current_combo_info.win_rate:.0%} "
+                f"PF={current_combo_info.profit_factor:.2f} over {current_combo_info.total_signals} trades."
+            )
+            direction = "HOLD"
+
         # === LAYER 3: Technical Validation ===
         tech = await self.get_technical_snapshot(symbol)
         conditions = tech.get_conditions(direction)

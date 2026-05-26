@@ -59,6 +59,7 @@ const MacroGaugeStrip = lazy(() => import("../components/MacroGaugeStrip"));
 const OilBalticPanel = lazy(() => import("../components/panels/OilBalticPanel"));
 const NewsChartCorrelationPanel = lazy(() => import("../components/panels/NewsChartCorrelationPanel"));
 const MetaEnginePanel = lazy(() => import("../components/panels/MetaEnginePanel"));
+const SignalAuditorPanel = lazy(() => import("../components/panels/SignalAuditorPanel"));
 const PermutationPanel = lazy(() => import("../components/panels/PermutationPanel").then(mod => ({ default: mod.PermutationPanel })));
 const NewsCorrelationDashboard = lazy(() => import("./news-correlation/page"));
 import { useDashboardEdit, DashboardCard } from "../contexts/DashboardEditContext";
@@ -1390,6 +1391,12 @@ export default function HomePage() {
                   <div className="mb-6 w-full">
                     <LazyPanel fallbackHeight={300}>
                       <PermutationPanel />
+                    </LazyPanel>
+                  </div>
+
+                  <div className="mb-6 w-full">
+                    <LazyPanel fallbackHeight={300}>
+                      <SignalAuditorPanel />
                     </LazyPanel>
                   </div>
 
