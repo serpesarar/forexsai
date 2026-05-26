@@ -82,6 +82,21 @@ def _get_rr(symbol: str, default_rr: float) -> float:
     return _RR_BY_SYMBOL.get(symbol, default_rr)
 
 
+# 2026-05-26 Validation suite bulguları:
+# - NDX walk-forward F1 (0-30d): −155% delta (optimizer ZARAR ETTİRDİ)
+# - NDX per-symbol full 90d: −26.4% delta
+# - Diğer 3 sembol +246% ile +933% arası net pozitif
+# → NDX yapısal optimizasyondan dışlandı. PASSTHROUGH action ile eski sistem
+# davranışı korunur (default TP/SL + market entry). Stage 4 sizing ORTHOGONAL
+# olarak aynen uygulanır. Env override: ENTRY_OPT_EXCLUDE_SYMBOLS=sym1,sym2.
+import os as _os
+EXCLUDED_SYMBOLS = {
+    s.strip().upper() for s in
+    (_os.getenv("ENTRY_OPT_EXCLUDE_SYMBOLS") or "NDX.INDX").split(",")
+    if s.strip()
+}
+
+
 @dataclass
 class EntryDecision:
     action: str
@@ -287,6 +302,23 @@ def decide_from_payload(signal: dict, ob_payload: dict,
     current_price = float(signal.get("price") or signal.get("entry_price") or 0)
     signal_tp = signal.get("tp") or signal.get("tp_price")
     signal_sl = signal.get("sl") or signal.get("sl_price")
+    sym_upper = (signal.get("symbol") or "").upper()
+
+    # ── EXCLUSION: NDX gibi yapısal optimizasyondan dışlanan semboller ───────
+    # Hiç yapı incelemesi yapmadan default config ile market entry'ye yönlendir.
+    # Backtest'te delta_pct ~0 olur (orig ile aynı davranış) — Stage 4 sizing
+    # bağımsız uygulanır.
+    if sym_upper in EXCLUDED_SYMBOLS:
+        atr_default = float(signal.get("atr") or 0)
+        if atr_default <= 0:
+            atr_default = max(current_price * 0.001, 1e-6)
+        return _fallback_market(direction, current_price, sym_upper,
+                                  signal_sl, signal_tp, atr_default, cfg,
+                                  reason="symbol_excluded_from_optimization",
+                                  action_override="PASSTHROUGH",
+                                  extra={"note":
+                                          "Walk-forward F1 negative + "
+                                          "per-symbol delta -26% — excluded"})
 
     # ── Veri çıkar ───────────────────────────────────────────────────────────
     obs = ob_payload.get("order_blocks") or []
@@ -437,7 +469,8 @@ def decide_from_payload(signal: dict, ob_payload: dict,
 
 def _fallback_market(direction: str, current_price: float, symbol: str,
                       signal_sl, signal_tp, atr: float, cfg: dict,
-                      reason: str, extra: Optional[dict] = None) -> dict:
+                      reason: str, extra: Optional[dict] = None,
+                      action_override: Optional[str] = None) -> dict:
     """FALLBACK_MARKET: sembolün varsayılan TP/SL config'iyle market entry.
 
     Stage 4 sizing dışarıda uygulanır (executor); bu fonksiyon sadece
@@ -467,15 +500,13 @@ def _fallback_market(direction: str, current_price: float, symbol: str,
     if signal_sl: sl_price = float(signal_sl)
     if signal_tp: tp_price = float(signal_tp)
     return EntryDecision(
-        action="FALLBACK_MARKET",
+        action=action_override or "FALLBACK_MARKET",
         entry_price=current_price,
         sl_price=sl_price or current_price,
         tp_price=tp_price or current_price,
         structure_type="none",
         invalidation_reason=reason,
         max_wait_candles=0,
-        # Düşük ama sıfır değil — sembol default'una göre çalışıyor, structure
-        # entry kadar güvenli değil
         priority_score=35,
         details={"fallback_reason": reason,
                   "tp_source": "symbol_default",

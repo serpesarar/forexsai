@@ -357,7 +357,7 @@ async def backtest_entry_optimizer(days: int = 90,
     # ── Her sinyal için decide + simüle ──────────────────────────────────────
     cfg = DEFAULT_CONFIG
     actions: dict = {"EXECUTE_NOW": [], "LIMIT_ORDER": [],
-                       "FALLBACK_MARKET": []}
+                       "FALLBACK_MARKET": [], "PASSTHROUGH": []}
     # Slippage rng — deterministik (seed = prediction_id hash)
     slip_rng = random.Random(42) if apply_slippage else None
     errors = 0
@@ -459,7 +459,7 @@ async def backtest_entry_optimizer(days: int = 90,
                 pass
             return None
 
-        if action in ("EXECUTE_NOW", "FALLBACK_MARKET"):
+        if action in ("EXECUTE_NOW", "FALLBACK_MARKET", "PASSTHROUGH"):
             # Her ikisi de market entry — sadece SL/TP kaynağı farklı
             # Slippage: gerçekçi market fill — spread/2 + uniform slip
             if apply_slippage and slip_rng is not None:
