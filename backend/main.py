@@ -534,6 +534,7 @@ router_module_names = [
     "precision_veto_router",
     "entry_optimizer_router",
     "bot_router",
+    "bot_diagnostic_router",
 ]
 
 for module_name in router_module_names:
