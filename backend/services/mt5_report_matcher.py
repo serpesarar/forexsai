@@ -164,26 +164,47 @@ class MT5ReportMatcher:
 
         # Extract trades from data rows
         for row in raw_rows:
-            if len(row) <= max(symbol_idx, direction_idx, profit_idx):
+            # We check if there is a shift by examining if we have a non-numeric column where a numeric one is expected
+            # For MT5, Volume is usually at index 4 (standard) or index 5 (if comment column is at index 4).
+            # If row has more columns than headers, or if the column at index 4 contains text (comment), it's shifted!
+            shift = 0
+            if len(row) > 4:
+                try:
+                    # Volume should be numeric. Let's try to convert it.
+                    float(row[4].replace(" ", "").replace(",", ""))
+                except ValueError:
+                    # It's a text comment! So index 4 is the comment, and all subsequent columns are shifted by +1
+                    shift = 1
+            
+            # Apply shift to all indices that are at or after the comment column (index 4)
+            r_symbol_idx = symbol_idx + shift if symbol_idx >= 4 else symbol_idx
+            r_direction_idx = direction_idx + shift if direction_idx >= 4 else direction_idx
+            r_profit_idx = profit_idx + shift if profit_idx >= 4 else profit_idx
+            
+            if len(row) <= max(r_symbol_idx, r_direction_idx, r_profit_idx):
                 continue
                 
-            direction = row[direction_idx].upper().strip()
+            direction = row[r_direction_idx].upper().strip()
             if "BUY" not in direction and "SELL" not in direction:
                 continue
                 
             try:
-                # Retrieve index mappings
-                open_time_idx = time_indices[0] if len(time_indices) > 0 else 1
-                open_price_idx = price_indices[0] if len(price_indices) > 0 else 5
-                close_price_idx = price_indices[1] if len(price_indices) > 1 else (price_indices[0] if len(price_indices) > 0 else 9)
+                # Retrieve and adjust index mappings
+                o_time_idx = time_indices[0] if len(time_indices) > 0 else 1
+                o_price_idx = price_indices[0] if len(price_indices) > 0 else 5
+                c_price_idx = price_indices[1] if len(price_indices) > 1 else (price_indices[0] if len(price_indices) > 0 else 9)
                 
-                raw_profit = row[profit_idx].replace(" ", "").replace(",", "")
-                raw_entry = row[open_price_idx].replace(" ", "").replace(",", "")
-                raw_exit = row[close_price_idx].replace(" ", "").replace(",", "")
+                r_open_time_idx = o_time_idx + shift if o_time_idx >= 4 else o_time_idx
+                r_open_price_idx = o_price_idx + shift if o_price_idx >= 4 else o_price_idx
+                r_close_price_idx = c_price_idx + shift if c_price_idx >= 4 else c_price_idx
+                
+                raw_profit = row[r_profit_idx].replace(" ", "").replace(",", "")
+                raw_entry = row[r_open_price_idx].replace(" ", "").replace(",", "")
+                raw_exit = row[r_close_price_idx].replace(" ", "").replace(",", "")
                 
                 trades.append({
-                    "time_str": row[open_time_idx],
-                    "symbol": row[symbol_idx],
+                    "time_str": row[r_open_time_idx],
+                    "symbol": row[r_symbol_idx],
                     "direction": "BUY" if "BUY" in direction else "SELL",
                     "entry_price": float(raw_entry),
                     "exit_price": float(raw_exit),
@@ -350,32 +371,71 @@ class MT5ReportMatcher:
                 trade_entry = trade["entry_price"]
 
                 best_match = None
-                min_diff = timedelta(seconds=tolerance_seconds)
-
+                
+                # --- STAGE 1: Strict matching (within 10 minutes & 1% price tolerance) ---
+                min_price_diff = 0.01
                 for sig in signals:
                     sig_symbol = sig.get("symbol")
                     sig_dir = (sig.get("ml_direction") or "HOLD").upper()
-                    
                     if sig_symbol != trade_symbol or sig_dir != trade_dir:
                         continue
 
-                    # Calculate time difference
                     try:
                         sig_time = datetime.fromisoformat(sig["created_at"].replace("Z", "+00:00"))
                     except Exception:
                         continue
 
                     time_diff = abs(trade_time - sig_time)
-                    if time_diff < min_diff:
-                        # Price validation fallback (within 3% tolerance)
+                    if time_diff <= timedelta(minutes=10):
                         sig_entry = float(sig.get("ml_entry_price") or 0.0)
-                        if sig_entry > 0:
-                            price_diff_pct = abs(trade_entry - sig_entry) / sig_entry
-                            if price_diff_pct > 0.03:
-                                continue  # Entry prices are too far apart (likely different setups)
-                        
-                        min_diff = time_diff
-                        best_match = sig
+                        price_diff = abs(trade_entry - sig_entry) / sig_entry if sig_entry > 0 else 1.0
+                        if price_diff < min_price_diff:
+                            min_price_diff = price_diff
+                            best_match = sig
+
+                # --- STAGE 2: Moderate matching (within 6 hours & 0.5% price tolerance) ---
+                if not best_match:
+                    min_price_diff = 0.005
+                    for sig in signals:
+                        sig_symbol = sig.get("symbol")
+                        sig_dir = (sig.get("ml_direction") or "HOLD").upper()
+                        if sig_symbol != trade_symbol or sig_dir != trade_dir:
+                            continue
+
+                        try:
+                            sig_time = datetime.fromisoformat(sig["created_at"].replace("Z", "+00:00"))
+                        except Exception:
+                            continue
+
+                        time_diff = abs(trade_time - sig_time)
+                        if time_diff <= timedelta(hours=6):
+                            sig_entry = float(sig.get("ml_entry_price") or 0.0)
+                            price_diff = abs(trade_entry - sig_entry) / sig_entry if sig_entry > 0 else 1.0
+                            if price_diff < min_price_diff:
+                                min_price_diff = price_diff
+                                best_match = sig
+
+                # --- STAGE 3: Relaxed matching (within 24 hours & 0.25% price tolerance) ---
+                if not best_match:
+                    min_price_diff = 0.0025
+                    for sig in signals:
+                        sig_symbol = sig.get("symbol")
+                        sig_dir = (sig.get("ml_direction") or "HOLD").upper()
+                        if sig_symbol != trade_symbol or sig_dir != trade_dir:
+                            continue
+
+                        try:
+                            sig_time = datetime.fromisoformat(sig["created_at"].replace("Z", "+00:00"))
+                        except Exception:
+                            continue
+
+                        time_diff = abs(trade_time - sig_time)
+                        if time_diff <= timedelta(hours=24):
+                            sig_entry = float(sig.get("ml_entry_price") or 0.0)
+                            price_diff = abs(trade_entry - sig_entry) / sig_entry if sig_entry > 0 else 1.0
+                            if price_diff < min_price_diff:
+                                min_price_diff = price_diff
+                                best_match = sig
 
                 if best_match:
                     # Found matching prediction log! Sync real execution data
