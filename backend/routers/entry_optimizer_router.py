@@ -81,7 +81,7 @@ async def test_endpoint(
                     "ob_max_age_candles": cfg["ob_max_age_candles"],
                     "inside_tolerance_atr": cfg["inside_tolerance_atr"],
                     "limit_max_pullback_atr": cfg["limit_max_pullback_atr"],
-                    "reject_far_atr": cfg["reject_far_atr"],
+                    "default_rr": cfg["default_rr"],
                 }}
     except Exception as e:
         logger.exception("[entry-optimizer] test hata")
