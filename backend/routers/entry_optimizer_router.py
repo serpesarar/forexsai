@@ -507,6 +507,47 @@ async def regime_analysis_status():
     return {**_REGIME_STATUS}
 
 
+# ─── Shadow / Enforce mod yönetimi ───────────────────────────────────────────
+@router.get("/shadow/status")
+async def shadow_status():
+    """Mevcut Entry Optimizer modu (off/shadow/enforce) + filter bilgisi."""
+    from services.shadow_executor import get_status
+    return get_status()
+
+
+@router.get("/shadow/stats")
+async def shadow_stats_endpoint(days: int = Query(7, ge=1, le=60)):
+    """Son N gün shadow log özeti — A/B karşılaştırma + dağılım."""
+    from services.regime_logger import shadow_stats
+    return await shadow_stats(days=days)
+
+
+@router.post("/shadow/test-apply")
+async def shadow_test_apply(body: dict):
+    """Manuel test — bir sinyali shadow executor'dan geçir, sonuç ne?
+    Trade pipeline'a etkisi yok, sadece görsel doğrulama.
+
+    body: {symbol, direction, price, confidence?}
+    """
+    from services.shadow_executor import apply_entry_optimizer
+    if not isinstance(body, dict):
+        raise HTTPException(400, "JSON body gerekli")
+    try:
+        result = await apply_entry_optimizer(body, stage4_info=body.get("stage4"))
+        return {"input": body, "output": result,
+                 "mode_note": "Mode env ENTRY_OPTIMIZER_MODE'da set, "
+                                "production sinyalleri bu mod'da işlenir."}
+    except Exception as e:
+        raise HTTPException(500, f"shadow apply: {e}")
+
+
+@router.post("/shadow/backfill/{prediction_id}")
+async def shadow_backfill(prediction_id: str):
+    """Trade kapandı, outcome'u entry_optimizer_logs'a yaz."""
+    from services.regime_logger import backfill_outcome
+    return await backfill_outcome(prediction_id)
+
+
 @router.get("/config")
 async def show_config():
     """Mevcut default config — eşikleri görmek için."""

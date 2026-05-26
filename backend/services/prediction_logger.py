@@ -368,6 +368,50 @@ def _check_news_filter(context: Dict[str, Any]) -> Tuple[bool, str]:
     return False, ""
 
 
+async def _apply_entry_optimizer(record: dict) -> dict:
+    """Entry Optimizer geçişi — precision_veto SONRASI, insert ÖNCESİ.
+
+    ENTRY_OPTIMIZER_MODE env'ine göre davranır:
+      off (default) → record değişmez, optimizer hiç çağrılmaz
+      shadow        → optimizer çağrılır + Supabase'e loglanır, record DEĞİŞMEZ
+      enforce       → çağrılır + log + record entry/sl/tp DEĞİŞTİRİLİR
+
+    Hata atmaz — exception olursa record olduğu gibi döner (sinyal kaybolmaz).
+    """
+    try:
+        from services.shadow_executor import apply_entry_optimizer
+        sig = {
+            "symbol": record.get("symbol"),
+            "direction": record.get("ml_direction"),
+            "confidence": float(record.get("ml_confidence") or 0),
+            "model_type": record.get("model_type"),
+            "timeframe": record.get("timeframe"),
+            "price": record.get("ml_entry_price"),
+        }
+        out = await apply_entry_optimizer(sig)
+        # enforce mode'da out.entry_price/sl_price/tp_price gelir → record'a yansıt
+        if out.get("entry_price") and out.get("entry_price") != sig.get("price"):
+            record["ml_entry_price"] = float(out["entry_price"])
+        if out.get("sl_price"):
+            # record'ta stop_loss_pips var — entry'den pip cinsinden mesafe
+            # Optimizer fiyat veriyor; conversion: ml_stop_price ekle
+            record["ml_stop_price"] = float(out["sl_price"])
+        if out.get("tp_price"):
+            record["ml_target_price"] = float(out["tp_price"])
+        if out.get("entry_optimizer_action"):
+            if isinstance(record.get("factors"), dict):
+                record["factors"]["entry_optimizer"] = {
+                    "action": out["entry_optimizer_action"],
+                    "priority": out.get("entry_optimizer_priority"),
+                    "structure": out.get("structure_type"),
+                    "max_wait_candles": out.get("max_wait_candles"),
+                }
+        return record
+    except Exception as e:
+        logger.warning("[entry-optimizer] hook hata — sinyal değişmedi: %s", e)
+        return record
+
+
 async def _apply_precision_veto(record: dict) -> bool:
     """Precision Veto Engine geçişi — sinyal prediction_logs'a yazılMADAN önce.
 
@@ -536,6 +580,8 @@ async def log_smc_prediction(
 
         if not await _apply_precision_veto(record):
             return None
+        # Entry Optimizer — shadow/enforce moduna göre çağrılır
+        record = await _apply_entry_optimizer(record)
         result = client.table("prediction_logs").insert_ignore(record)
 
         if safe_get_error(result):
@@ -897,6 +943,8 @@ async def log_prediction(
 
         if not await _apply_precision_veto(record):
             return None
+        # Entry Optimizer — shadow/enforce moduna göre çağrılır
+        record = await _apply_entry_optimizer(record)
         result = client.table("prediction_logs").insert_ignore(record)
 
         if safe_get_error(result):
