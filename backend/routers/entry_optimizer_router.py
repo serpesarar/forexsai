@@ -349,17 +349,18 @@ async def regime_analysis(bg: BackgroundTasks,
     async def _do():
         import asyncio as _aio
         import numpy as np
+        from datetime import timedelta as _td
         try:
             from services.signal_replay_1m import _load_all_1m_bars_sync
             from services.precision_veto_backtest import _aggregate
             from database.supabase_client import get_supabase_client, is_db_available
             now = datetime.now(timezone.utc)
             folds = [
-                ("F1_0-30d", now - timedelta(days=days),
-                  now - timedelta(days=days - 30)),
-                ("F2_30-60d", now - timedelta(days=days - 30),
-                  now - timedelta(days=days - 60)),
-                ("F3_60-90d", now - timedelta(days=days - 60), now),
+                ("F1_0-30d", now - _td(days=days),
+                  now - _td(days=days - 30)),
+                ("F2_30-60d", now - _td(days=days - 30),
+                  now - _td(days=days - 60)),
+                ("F3_60-90d", now - _td(days=days - 60), now),
             ]
             symbols = ["XAUUSD", "NDX.INDX", "GDAXI.INDX", "USOIL.FOREX"]
 
