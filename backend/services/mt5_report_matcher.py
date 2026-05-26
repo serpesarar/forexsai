@@ -85,71 +85,116 @@ class MT5ReportMatcher:
         return trades
 
     def parse_html_report(self, content: str) -> List[Dict[str, Any]]:
-        """Parses MT5 history in standard HTML Report format."""
+        """Parses MT5 history in standard HTML Report format dynamically mapping columns."""
         trades = []
+        raw_rows = []
         
         if BS4_AVAILABLE:
             try:
                 soup = BeautifulSoup(content, "lxml")
-                # Look for table rows
-                rows = soup.find_all("tr")
-                for row in rows:
-                    cols = [td.get_text().strip() for td in row.find_all("td")]
-                    if len(cols) < 9:
-                        continue
-
-                    # Standard MT5 HTML History Row:
-                    # Ticket, Time, Type, Volume, Symbol, Price, S/L, T/P, Time, Price, Commission, Swap, Profit
-                    direction = cols[2].upper()
-                    if "BUY" not in direction and "SELL" not in direction:
-                        continue
-
-                    try:
-                        trades.append({
-                            "time_str": cols[1],  # Position Open Time
-                            "symbol": cols[4],
-                            "direction": "BUY" if "BUY" in direction else "SELL",
-                            "entry_price": float(cols[5].replace(" ", "").replace(",", "")),
-                            "exit_price": float(cols[9].replace(" ", "").replace(",", "")),
-                            "profit": float(cols[12].replace(" ", "").replace(",", "")),
-                        })
-                    except (ValueError, IndexError) as parse_err:
-                        # Fallback try-catch for slight table structure variations
-                        logger.debug(f"Skipping row parse due to variation: {parse_err}")
-                        continue
-                return trades
+                # Find all table rows in the HTML document
+                for tr in soup.find_all("tr"):
+                    cols = [cell.get_text().strip() for cell in tr.find_all(["td", "th"])]
+                    if cols:
+                        raw_rows.append(cols)
             except Exception as e:
                 logger.error(f"BeautifulSoup parsing failed: {e}. Trying fallback regex parser.")
-
-        # Robust Regex Fallback Parser (Zero-Failure)
-        try:
-            # Match tr tags and extract td values
-            tr_matches = re.findall(r'<tr[^>]*>(.*?)</tr>', content, re.DOTALL | re.IGNORECASE)
-            for tr in tr_matches:
-                tds = re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL | re.IGNORECASE)
-                cols = [re.sub(r'<[^>]*>', '', td).strip() for td in tds]
                 
-                if len(cols) < 9:
-                    continue
-                    
-                direction = cols[2].upper()
-                if "BUY" not in direction and "SELL" not in direction:
-                    continue
-                    
-                try:
-                    trades.append({
-                        "time_str": cols[1],
-                        "symbol": cols[4],
-                        "direction": "BUY" if "BUY" in direction else "SELL",
-                        "entry_price": float(cols[5].replace(" ", "").replace(",", "")),
-                        "exit_price": float(cols[9].replace(" ", "").replace(",", "")),
-                        "profit": float(cols[12].replace(" ", "").replace(",", "")),
-                    })
-                except Exception:
-                    continue
-        except Exception as e:
-            logger.error(f"Regex fallback parser failed: {e}")
+        if not raw_rows:
+            # Robust fallback regex cell parser
+            try:
+                tr_matches = re.findall(r'<tr[^>]*>(.*?)</tr>', content, re.DOTALL | re.IGNORECASE)
+                for tr in tr_matches:
+                    cells = re.findall(r'<t[dh][^>]*>(.*?)</t[dh]>', tr, re.DOTALL | re.IGNORECASE)
+                    cols = [re.sub(r'<[^>]*>', '', cell).strip() for cell in cells]
+                    if cols:
+                        raw_rows.append(cols)
+            except Exception as e:
+                logger.error(f"Regex fallback parser failed: {e}")
 
+        if not raw_rows:
+            return trades
+
+        # Dynamic Column Mapper
+        # Standard default indices:
+        time_indices = []
+        price_indices = []
+        symbol_idx = 4
+        direction_idx = 2
+        profit_idx = 12
+        header_mapped = False
+        
+        # Look for the header row within the first 25 rows
+        for row in raw_rows[:25]:
+            row_lower = [c.lower().strip() for c in row]
+            
+            # Identify the main header row containing key fields
+            if any("symbol" in c for c in row_lower) and any("type" in c or "action" in c for c in row_lower) and any("profit" in c for c in row_lower):
+                temp_time_indices = []
+                temp_price_indices = []
+                
+                for idx, col_val in enumerate(row_lower):
+                    if "symbol" in col_val:
+                        symbol_idx = idx
+                    elif "type" in col_val or "action" in col_val:
+                        direction_idx = idx
+                    elif "profit" in col_val:
+                        profit_idx = idx
+                    elif "time" in col_val:
+                        temp_time_indices.append(idx)
+                    elif "price" in col_val:
+                        temp_price_indices.append(idx)
+                        
+                if temp_time_indices:
+                    time_indices = temp_time_indices
+                if temp_price_indices:
+                    price_indices = temp_price_indices
+                header_mapped = True
+                logger.info(f"Dynamically mapped HTML headers: Symbol={symbol_idx}, Direction={direction_idx}, Profit={profit_idx}, Time={time_indices}, Price={price_indices}")
+                break
+
+        # Fallback to defaults if no header is found
+        if not header_mapped:
+            logger.info("Header row not found. Using fallback standard MT5 profile.")
+            time_indices = [1, 8]
+            price_indices = [5, 9]
+            symbol_idx = 4
+            direction_idx = 2
+            profit_idx = 12
+
+        # Extract trades from data rows
+        for row in raw_rows:
+            if len(row) <= max(symbol_idx, direction_idx, profit_idx):
+                continue
+                
+            direction = row[direction_idx].upper().strip()
+            if "BUY" not in direction and "SELL" not in direction:
+                continue
+                
+            try:
+                # Retrieve index mappings
+                open_time_idx = time_indices[0] if len(time_indices) > 0 else 1
+                open_price_idx = price_indices[0] if len(price_indices) > 0 else 5
+                close_price_idx = price_indices[1] if len(price_indices) > 1 else (price_indices[0] if len(price_indices) > 0 else 9)
+                
+                raw_profit = row[profit_idx].replace(" ", "").replace(",", "")
+                raw_entry = row[open_price_idx].replace(" ", "").replace(",", "")
+                raw_exit = row[close_price_idx].replace(" ", "").replace(",", "")
+                
+                trades.append({
+                    "time_str": row[open_time_idx],
+                    "symbol": row[symbol_idx],
+                    "direction": "BUY" if "BUY" in direction else "SELL",
+                    "entry_price": float(raw_entry),
+                    "exit_price": float(raw_exit),
+                    "profit": float(raw_profit),
+                })
+            except Exception as parse_err:
+                # Graceful skip for non-numeric/header/summary rows
+                logger.debug(f"Skipped parsing non-trade data row: {parse_err}")
+                continue
+
+        logger.info(f"Successfully parsed {len(trades)} trades from MT5 HTML history.")
         return trades
 
     def normalize_symbol(self, sym: str) -> str:
@@ -159,9 +204,9 @@ class MT5ReportMatcher:
             return "NDX.INDX"
         if "XAU" in s or "GOLD" in s:
             return "XAUUSD"
-        if "DAX" in s or "DE30" in s or "GDAXI" in s:
+        if "DAX" in s or "DE30" in s or "DE40" in s or "GDAXI" in s:
             return "GDAXI.INDX"
-        if "OIL" in s or "WTI" in s or "CL" in s:
+        if "OIL" in s or "WTI" in s or "CL" in s or "XTI" in s:
             return "USOIL.FOREX"
         return s
 
