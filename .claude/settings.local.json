@@ -42,7 +42,10 @@
       "Bash(tee /tmp/run_entry_bt3.log)",
       "Bash(chmod +x /tmp/run_ndx_excl.sh)",
       "Bash(bash /tmp/run_ndx_excl.sh)",
-      "Bash(tee /tmp/run_ndx_excl.log)"
+      "Bash(tee /tmp/run_ndx_excl.log)",
+      "Bash(chmod +x /tmp/regime_only.sh)",
+      "Bash(bash /tmp/regime_only.sh)",
+      "Bash(tee /tmp/regime_only.log)"
     ]
   }
 }

@@ -417,11 +417,12 @@ async def regime_analysis(bg: BackgroundTasks,
                 client = get_supabase_client()
                 for fold_name, lo, hi in folds:
                     q = (client.table("prediction_replay_corrections")
-                          .select("symbol", count="exact")
+                          .select("symbol")
                           .gte("signal_created_at", lo.isoformat())
                           .lte("signal_created_at", hi.isoformat())
                           .eq("replay_status", "ok")
-                          .in_("corrected_status", ["completed", "stopped"]))
+                          .in_("corrected_status", ["completed", "stopped"])
+                          .limit(20000))
                     try:
                         res = q.execute() if hasattr(q, "execute") else q
                         # Page through to get actual rows
