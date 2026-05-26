@@ -533,6 +533,7 @@ router_module_names = [
     "replay_router",
     "precision_veto_router",
     "entry_optimizer_router",
+    "bot_router",
 ]
 
 for module_name in router_module_names:
