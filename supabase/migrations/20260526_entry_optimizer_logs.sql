@@ -78,5 +78,5 @@ CREATE INDEX IF NOT EXISTS idx_eol_unresolved ON
 ALTER TABLE public.entry_optimizer_logs ENABLE ROW LEVEL SECURITY;
 
 COMMENT ON TABLE public.entry_optimizer_logs IS
-    'Entry Optimizer kararları + market context + A/B outcome. '
-    'Shadow mode'\''da gözlem, sonra enforce karşılaştırması.';
+    'Entry Optimizer kararlari + market context + A/B outcome. '
+    'Shadow mode gozlem, sonra enforce karsilastirmasi.';
