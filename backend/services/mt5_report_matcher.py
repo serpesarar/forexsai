@@ -82,7 +82,7 @@ class MT5ReportMatcher:
         except Exception as e:
             logger.error(f"Error parsing MT5 CSV report: {e}", exc_info=True)
             
-        return trades
+        return self._deduplicate_trades(trades)
 
     def parse_html_report(self, content: str) -> List[Dict[str, Any]]:
         """Parses MT5 history in standard HTML Report format dynamically mapping columns."""
@@ -198,6 +198,23 @@ class MT5ReportMatcher:
                 r_open_price_idx = o_price_idx + shift if o_price_idx >= 4 else o_price_idx
                 r_close_price_idx = c_price_idx + shift if c_price_idx >= 4 else c_price_idx
                 
+                # Mapped ticket/position and volume indexes
+                row_lower = [cell.lower().strip() for cell in raw_rows[0]] if raw_rows else []
+                ticket_idx = 1
+                volume_idx = 4
+                for idx, col_val in enumerate(row_lower):
+                    if "position" in col_val or "ticket" in col_val:
+                        ticket_idx = idx
+                    elif "volume" in col_val:
+                        volume_idx = idx
+                        
+                r_ticket_idx = ticket_idx + shift if ticket_idx >= 4 else ticket_idx
+                r_volume_idx = volume_idx + shift if volume_idx >= 4 else volume_idx
+                
+                ticket_val = int(row[r_ticket_idx]) if r_ticket_idx < len(row) and row[r_ticket_idx].isdigit() else 0
+                volume_val = float(row[r_volume_idx].replace(" ", "").replace(",", "")) if r_volume_idx < len(row) else 0.1
+                comment_val = row[4] if shift == 1 and 4 < len(row) else ""
+                
                 raw_profit = row[r_profit_idx].replace(" ", "").replace(",", "")
                 raw_entry = row[r_open_price_idx].replace(" ", "").replace(",", "")
                 raw_exit = row[r_close_price_idx].replace(" ", "").replace(",", "")
@@ -209,14 +226,18 @@ class MT5ReportMatcher:
                     "entry_price": float(raw_entry),
                     "exit_price": float(raw_exit),
                     "profit": float(raw_profit),
+                    "ticket": ticket_val,
+                    "volume": volume_val,
+                    "comment": comment_val,
                 })
             except Exception as parse_err:
                 # Graceful skip for non-numeric/header/summary rows
                 logger.debug(f"Skipped parsing non-trade data row: {parse_err}")
                 continue
 
-        logger.info(f"Successfully parsed {len(trades)} trades from MT5 HTML history.")
-        return trades
+        deduped = self._deduplicate_trades(trades)
+        logger.info(f"Successfully parsed {len(trades)} trades from MT5 HTML history. Deduplicated to {len(deduped)} unique trades.")
+        return deduped
 
     def normalize_symbol(self, sym: str) -> str:
         """Normalizes broker symbols to match ForexSAI internal symbols."""
@@ -250,6 +271,23 @@ class MT5ReportMatcher:
             except ValueError:
                 continue
         return None
+
+    def _deduplicate_trades(self, trades: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Deduplicates trades by ticket ID or a composite key of symbol, direction, entry price, and open time."""
+        seen = set()
+        deduped = []
+        for t in trades:
+            ticket = t.get("ticket") or 0
+            if ticket != 0:
+                key = f"t_{ticket}"
+            else:
+                key = f"p_{t.get('symbol')}_{t.get('direction')}_{t.get('entry_price')}_{t.get('time_str')}"
+            
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(t)
+        return deduped
 
     def detect_timezone_offset(self, trades: List[Dict[str, Any]], signals: List[Dict[str, Any]]) -> float:
         """
@@ -332,13 +370,15 @@ class MT5ReportMatcher:
         return best_offset
 
     async def match_and_sync_trades(self, trades: List[Dict[str, Any]], tolerance_seconds: int = 90) -> Dict[str, Any]:
-        """Matches parsed trades with Supabase prediction logs and updates them."""
+        """Matches parsed trades with Supabase prediction logs and updates them in bulk."""
         if not self.client:
             return {"success": False, "error": "Supabase client not available"}
 
         synced_count = 0
         total_trades = len(trades)
         matched_details = []
+        bulk_prediction_updates = []
+        bulk_mt5_trades = []
 
         try:
             # Fetch active or recently completed signals (past 30 days) to match
@@ -464,31 +504,77 @@ class MT5ReportMatcher:
                     slippage = abs(entry_p - sig_entry_price)
                     slippage_pips = _pips_diff(sig_entry_price, entry_p, trade_symbol, trade_dir)
 
-                    # Update Supabase
-                    update_data = {
-                        "real_entry_price": round(entry_p, 4),
-                        "real_exit_price": round(exit_p, 4),
-                        "real_pnl_pips": round(real_pips_pnl, 2),
-                        "slippage_pips": round(abs(slippage_pips), 2),
-                        # Mark status as completed/stopped based on profit
-                        "status": "completed" if profit > 0 else "stopped",
-                        "resolution_reason": "mt5_manual_sync",
-                        "exit_price": round(exit_p, 4),
-                        "exit_time": trade_time.isoformat(),
-                    }
-
-                    try:
-                        self.client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
-                        synced_count += 1
-                        matched_details.append({
-                            "signal_id": signal_id[:8],
-                            "symbol": trade_symbol,
-                            "direction": trade_dir,
-                            "real_pnl": round(real_pips_pnl, 1),
-                            "slippage": round(abs(slippage_pips), 1),
+                    # Part A: Accumulate prediction update payload ONLY if status has changed (e.g. from active to completed/stopped)
+                    target_status = "completed" if profit > 0 else "stopped"
+                    if best_match.get("status") != target_status:
+                        bulk_prediction_updates.append({
+                            "id": signal_id,
+                            "status": target_status,
+                            "resolution_reason": "mt5_manual_sync",
+                            "exit_price": round(exit_p, 4),
+                            "exit_time": trade_time.isoformat(),
                         })
-                    except Exception as db_err:
-                        logger.error(f"Failed to update prediction_log {signal_id[:8]}: {db_err}")
+
+                    # Part B: Accumulate mt5_trades payload
+                    bulk_mt5_trades.append({
+                        "ticket": trade.get("ticket", 0),
+                        "symbol": trade.get("symbol", ""),
+                        "normalized_symbol": trade_symbol,
+                        "direction": trade_dir,
+                        "entry_type": "inout",
+                        "volume": trade.get("volume", 0.1),
+                        "price": round(entry_p, 4),
+                        "profit": round(profit, 2),
+                        "deal_time": trade_time.isoformat(),
+                        "comment": trade.get("comment", ""),
+                        "matched_prediction_id": signal_id,
+                        "matched_at": datetime.now(timezone.utc).isoformat(),
+                        "match_confidence": 100.0,
+                    })
+
+                    matched_details.append({
+                        "signal_id": signal_id[:8],
+                        "symbol": trade_symbol,
+                        "direction": trade_dir,
+                        "real_pnl": round(real_pips_pnl, 1),
+                        "slippage": round(abs(slippage_pips), 1),
+                    })
+
+            # Perform parallel concurrent updates to prediction_logs (PATCH updates only, avoiding NOT NULL insert constraint issues of upsert)
+            if bulk_prediction_updates:
+                logger.info(f"Synchronizing {len(bulk_prediction_updates)} matched prediction logs in parallel...")
+                
+                def _update_one(item):
+                    pred_id = item["id"]
+                    payload = {
+                        "status": item["status"],
+                        "resolution_reason": item["resolution_reason"],
+                        "exit_price": item["exit_price"],
+                        "exit_time": item["exit_time"],
+                    }
+                    try:
+                        self.client.table("prediction_logs").eq("id", pred_id).update(payload)
+                    except Exception as pred_err:
+                        logger.warning(f"Failed to update prediction_logs row {pred_id[:8]}: {pred_err}")
+
+                import asyncio
+                sem = asyncio.Semaphore(3)  # Limit to 3 concurrent workers to be extremely safe under Supabase pool limits
+                
+                async def _worker(item):
+                    async with sem:
+                        await asyncio.to_thread(_update_one, item)
+                
+                await asyncio.gather(*[_worker(x) for x in bulk_prediction_updates])
+
+            # Perform bulk upsert to mt5_trades (idempotent unique constraint upsert)
+            if bulk_mt5_trades:
+                try:
+                    logger.info(f"Bulk upserting {len(bulk_mt5_trades)} trades to mt5_trades in Supabase...")
+                    self.client.table("mt5_trades").upsert(bulk_mt5_trades, on_conflict="ticket,entry_type")
+                    synced_count = len(bulk_mt5_trades)
+                except Exception as mt5_err:
+                    logger.error(f"Failed bulk mt5_trades upsert: {mt5_err}")
+                    return {"success": False, "error": f"Failed bulk mt5_trades upsert: {mt5_err}"}
 
             return {
                 "success": True,

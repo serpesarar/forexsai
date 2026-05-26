@@ -63,6 +63,21 @@ class CombinatorialAuditor:
                 logger.info("No completed signals found in the selected range.")
                 return None
 
+            # Fetch matched mt5_trades to align with prediction_logs in memory
+            mt5_map = {}
+            try:
+                mt5_res = self.client.table("mt5_trades") \
+                    .select("matched_prediction_id, price, profit, volume, direction, deal_time") \
+                    .is_("matched_prediction_id", "not.null") \
+                    .execute()
+                mt5_deals = safe_get_data(mt5_res) or []
+                for d in mt5_deals:
+                    pred_id = d.get("matched_prediction_id")
+                    if pred_id:
+                        mt5_map[pred_id] = d
+            except Exception as mt5_err:
+                logger.warning(f"Could not load matched mt5_trades: {mt5_err}")
+
             # Parse signal factors/JSON
             parsed_rows = []
             for s in data:
@@ -73,6 +88,36 @@ class CombinatorialAuditor:
                     except Exception:
                         factors = {}
                 
+                # Check if we have a matched MT5 deal for this signal
+                matched_deal = mt5_map.get(s["id"])
+                real_entry = float(s.get("ml_entry_price") or 0.0)
+                real_exit = float(s.get("exit_price") or 0.0)
+                real_pnl = 0.0
+                slippage = 0.0
+                has_real = False
+                
+                if matched_deal:
+                    has_real = True
+                    real_entry = float(matched_deal.get("price") or real_entry)
+                    # Exit price from prediction log or the deal price if available
+                    real_exit = float(s.get("exit_price") or real_entry)
+                    
+                    # Calculate real pips PnL
+                    def _pips_diff(entry, exit, sym, direction):
+                        diff = (exit - entry) if direction == "BUY" else (entry - exit)
+                        sym_upper = sym.upper()
+                        if "XAUUSD" in sym_upper:
+                            return diff / 0.1
+                        if "USOIL" in sym_upper or "CL" in sym_upper:
+                            return diff / 0.01
+                        return diff
+                    
+                    real_pnl = _pips_diff(real_entry, real_exit, s.get("symbol", ""), (s.get("ml_direction") or "HOLD").upper())
+                    
+                    # Calculate entry slippage in pips
+                    sig_entry = float(s.get("ml_entry_price") or real_entry)
+                    slippage = abs(_pips_diff(sig_entry, real_entry, s.get("symbol", ""), (s.get("ml_direction") or "HOLD").upper()))
+
                 # Expose specific indicators as columns
                 row = {
                     "id": s.get("id"),
@@ -85,11 +130,11 @@ class CombinatorialAuditor:
                     "highest_profit": float(s.get("highest_profit_pips") or 0.0),
                     "lowest_drawdown": float(s.get("lowest_drawdown_pips") or 0.0),
                     "created_at": s.get("created_at"),
-                    # Real MT5 values fallback to simulation values if columns don't exist yet
-                    "real_entry": float(s.get("real_entry_price") or s.get("ml_entry_price") or 0.0),
-                    "real_exit": float(s.get("real_exit_price") or s.get("exit_price") or 0.0),
-                    "real_pnl": float(s.get("real_pnl_pips") or 0.0),
-                    "slippage": float(s.get("slippage_pips") or 0.0),
+                    # Real MT5 values
+                    "real_entry": round(real_entry, 4),
+                    "real_exit": round(real_exit, 4),
+                    "real_pnl": round(real_pnl, 2),
+                    "slippage": round(slippage, 2),
                     # Technical snapshot at entry
                     "rsi": float(factors.get("rsi_14") or factors.get("rsi") or 50.0),
                     "adx": float(factors.get("adx") or 20.0),
@@ -98,11 +143,11 @@ class CombinatorialAuditor:
                     "source_combo": str(factors.get("source_combo") or "").strip(),
                 }
                 
-                # Ground truth outcome: 
-                # If MT5 real_pnl exists, use it. Otherwise, fallback to simulation (win = completed)
-                if s.get("real_pnl_pips") is not None:
-                    row["is_win"] = float(s.get("real_pnl_pips") or 0.0) > 0.0
-                    row["pnl_score"] = float(s.get("real_pnl_pips") or 0.0)
+                # Ground truth outcome:
+                # If we have a matched MT5 deal, use its profit/pips. Otherwise, fallback to simulation (win = completed)
+                if has_real:
+                    row["is_win"] = real_pnl > 0.0
+                    row["pnl_score"] = real_pnl
                 else:
                     row["is_win"] = s.get("status") == "completed"
                     # Fallback profit estimate: win gets highest_profit, loss gets lowest_drawdown
