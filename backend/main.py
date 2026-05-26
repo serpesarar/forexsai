@@ -71,33 +71,35 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Redis init skipped: {e}")
 
-    # 1.5 Stage 4 modellerini Supabase Storage'tan indir (Railway redeploy
-    # /app/models/'u siliyor; persistence olmadan her redeploy = 25 dk retrain).
-    # Background task — startup'ı bloklamasın; başarısızsa Stage 4 sessizce
-    # cold start moduna düşer (pass-through veto yok).
-    async def _download_stage4_models():
-        try:
-            from services.model_storage import download_all_models
-            from services.model_loader import reload_all as _reload_models
-            from services.precision_veto_service import reload_meta_model as _reload_legacy
-            res = await asyncio.to_thread(download_all_models)
-            print(f"[startup] Stage 4 modeller: {res.get('status')} "
-                  f"({res.get('downloaded',0)} dosya, "
-                  f"{len(res.get('errors',[]))} hata)")
-            if res.get("downloaded", 0) > 0:
-                # Cache'leri tazele
-                try:
-                    _reload_models()
-                except Exception as e:
-                    print(f"[startup] model_loader reload hatası: {e}")
-                try:
-                    _reload_legacy()
-                except Exception as e:
-                    print(f"[startup] legacy model reload hatası: {e}")
-        except Exception as e:
-            print(f"[startup] Stage 4 model download atlandı: {e}")
+    # 1.5 Stage 4 modellerini Supabase Storage'tan indir
+    # 2026-05-26: Lifespan startup HANG sorunu nedeniyle DEVRE DIŞI.
+    # Supabase storage senkron çağrıları (list_buckets/create_bucket) event
+    # loop'u uzun süre tutuyor olabilir. Manuel /api/precision-veto/storage/
+    # download endpoint'i ile çağrılır. Deploy sonrası 1× tetiklemek yeterli;
+    # model dosyaları diskte kalır (process restart olmadıkça).
+    # Etkin: asenkron thread olmadan, lifespan'a hiç ulaşmaz.
+    # Tekrar açmak için: ENV STARTUP_DOWNLOAD_MODELS=1
+    if os.getenv("STARTUP_DOWNLOAD_MODELS", "0") == "1":
+        async def _download_stage4_models():
+            try:
+                from services.model_storage import download_all_models
+                from services.model_loader import reload_all as _reload_models
+                from services.precision_veto_service import reload_meta_model as _reload_legacy
+                # asyncio.wait_for ile zorunlu timeout — sonsuz hang olmasın
+                res = await asyncio.wait_for(
+                    asyncio.to_thread(download_all_models), timeout=60)
+                print(f"[startup] Stage 4 modeller: {res.get('status')}")
+                if res.get("downloaded", 0) > 0:
+                    try: _reload_models()
+                    except Exception: pass
+                    try: _reload_legacy()
+                    except Exception: pass
+            except asyncio.TimeoutError:
+                print("[startup] Stage 4 download TIMEOUT (60s) — atlandı")
+            except Exception as e:
+                print(f"[startup] Stage 4 model download atlandı: {e}")
 
-    asyncio.create_task(_download_stage4_models())
+        asyncio.create_task(_download_stage4_models())
 
     # 2. DataHub (centralized data pump) — runs as background task
     try:

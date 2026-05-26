@@ -39,7 +39,10 @@
       "Bash(tee /tmp/run_entry_bt2.log)",
       "Bash(chmod +x /tmp/run_entry_bt3.sh)",
       "Bash(bash /tmp/run_entry_bt3.sh)",
-      "Bash(tee /tmp/run_entry_bt3.log)"
+      "Bash(tee /tmp/run_entry_bt3.log)",
+      "Bash(chmod +x /tmp/run_ndx_excl.sh)",
+      "Bash(bash /tmp/run_ndx_excl.sh)",
+      "Bash(tee /tmp/run_ndx_excl.log)"
     ]
   }
 }
