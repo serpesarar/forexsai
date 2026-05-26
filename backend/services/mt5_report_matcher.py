@@ -87,91 +87,177 @@ class MT5ReportMatcher:
     def parse_html_report(self, content: str) -> List[Dict[str, Any]]:
         """Parses MT5 history in standard HTML Report format dynamically mapping columns."""
         trades = []
-        raw_rows = []
+        tables = []
         
         if BS4_AVAILABLE:
             try:
                 soup = BeautifulSoup(content, "lxml")
-                # Find all table rows in the HTML document
-                for tr in soup.find_all("tr"):
-                    cols = [cell.get_text().strip() for cell in tr.find_all(["td", "th"])]
-                    if cols:
-                        raw_rows.append(cols)
+                # Group by table elements
+                for table in soup.find_all("table"):
+                    table_rows = []
+                    for tr in table.find_all("tr"):
+                        cols = [cell.get_text().strip() for cell in tr.find_all(["td", "th"])]
+                        if cols:
+                            table_rows.append(cols)
+                    if table_rows:
+                        tables.append(table_rows)
             except Exception as e:
-                logger.error(f"BeautifulSoup parsing failed: {e}. Trying fallback regex parser.")
+                logger.error(f"BeautifulSoup parsing failed: {e}. Trying fallback regex table parser.")
                 
-        if not raw_rows:
-            # Robust fallback regex cell parser
+        if not tables:
+            # Fallback regex table blocks parser
             try:
-                tr_matches = re.findall(r'<tr[^>]*>(.*?)</tr>', content, re.DOTALL | re.IGNORECASE)
-                for tr in tr_matches:
-                    cells = re.findall(r'<t[dh][^>]*>(.*?)</t[dh]>', tr, re.DOTALL | re.IGNORECASE)
-                    cols = [re.sub(r'<[^>]*>', '', cell).strip() for cell in cells]
-                    if cols:
-                        raw_rows.append(cols)
+                table_matches = re.findall(r'<table[^>]*>(.*?)</table>', content, re.DOTALL | re.IGNORECASE)
+                for table_content in table_matches:
+                    table_rows = []
+                    tr_matches = re.findall(r'<tr[^>]*>(.*?)</tr>', table_content, re.DOTALL | re.IGNORECASE)
+                    for tr in tr_matches:
+                        cells = re.findall(r'<t[dh][^>]*>(.*?)</t[dh]>', tr, re.DOTALL | re.IGNORECASE)
+                        cols = [re.sub(r'<[^>]*>', '', cell).strip() for cell in cells]
+                        if cols:
+                            table_rows.append(cols)
+                    if table_rows:
+                        tables.append(table_rows)
             except Exception as e:
-                logger.error(f"Regex fallback parser failed: {e}")
+                logger.error(f"Regex fallback table parser failed: {e}")
 
-        if not raw_rows:
+        # If no tables found at all, fall back to parsing the entire document as a single list of rows
+        raw_rows = []
+        if not tables:
+            logger.info("No tables grouped. Falling back to parsing all rows in the document.")
+            if BS4_AVAILABLE:
+                try:
+                    soup = BeautifulSoup(content, "lxml")
+                    for tr in soup.find_all("tr"):
+                        cols = [cell.get_text().strip() for cell in tr.find_all(["td", "th"])]
+                        if cols:
+                            raw_rows.append(cols)
+                except Exception:
+                    pass
+            if not raw_rows:
+                try:
+                    tr_matches = re.findall(r'<tr[^>]*>(.*?)</tr>', content, re.DOTALL | re.IGNORECASE)
+                    for tr in tr_matches:
+                        cells = re.findall(r'<t[dh][^>]*>(.*?)</t[dh]>', tr, re.DOTALL | re.IGNORECASE)
+                        cols = [re.sub(r'<[^>]*>', '', cell).strip() for cell in cells]
+                        if cols:
+                            raw_rows.append(cols)
+                except Exception:
+                    pass
+            if raw_rows:
+                tables.append(raw_rows)
+
+        if not tables:
             return trades
 
-        # Dynamic Column Mapper
-        # Standard default indices:
+        # Dynamic Table Selector
+        selected_table_info = None
+        positions_table = None
+        trades_table = None
+        deals_table = None
+        fallback_table = None
+        
+        for table_rows in tables:
+            is_trade_table = False
+            table_type = "unknown"
+            header_idx = -1
+            
+            # Scan first 20 rows of each table for header row containing key columns
+            for idx, row in enumerate(table_rows[:20]):
+                row_lower = [c.lower().strip() for c in row]
+                if any("symbol" in c for c in row_lower) and any("type" in c or "action" in c or "direction" in c for c in row_lower):
+                    is_trade_table = True
+                    header_idx = idx
+                    
+                    has_position = any("position" in c for c in row_lower)
+                    has_deal = any("deal" in c for c in row_lower)
+                    has_order = any("order" in c for c in row_lower)
+                    has_profit = any("profit" in c or "swap" in c for c in row_lower)
+                    
+                    if has_position:
+                        table_type = "POSITIONS"
+                    elif has_deal:
+                        table_type = "DEALS"
+                    elif has_order and not has_profit:
+                        table_type = "ORDERS"
+                    elif has_profit:
+                        table_type = "TRADES"
+                    break
+            
+            if is_trade_table:
+                if table_type == "POSITIONS":
+                    positions_table = (table_rows, header_idx)
+                elif table_type == "TRADES":
+                    trades_table = (table_rows, header_idx)
+                elif table_type == "DEALS":
+                    deals_table = (table_rows, header_idx)
+                elif table_type == "unknown":
+                    fallback_table = (table_rows, header_idx)
+
+        # Select the best table to prevent duplicates
+        if positions_table:
+            selected_table_info = positions_table
+            logger.info("Selected POSITIONS table for parsing to avoid Orders/Deals duplicates.")
+        elif trades_table:
+            selected_table_info = trades_table
+            logger.info("Selected TRADES (Strategy Tester) table for parsing.")
+        elif deals_table:
+            selected_table_info = deals_table
+            logger.info("Selected DEALS table for parsing.")
+        elif fallback_table:
+            selected_table_info = fallback_table
+            logger.info("Selected fallback trade table for parsing.")
+        else:
+            # If no table could be classified but we have raw rows, use the first table's first row as fallback header
+            if tables:
+                selected_table_info = (tables[0], 0)
+                logger.info("No trade table matched headers. Using first table as fallback.")
+            else:
+                return trades
+
+        target_rows, header_idx = selected_table_info
+        header_row = target_rows[header_idx]
+        header_lower = [c.lower().strip() for c in header_row]
+        
+        # Dynamic Column Mapper from the selected header row
         time_indices = []
         price_indices = []
         symbol_idx = 4
         direction_idx = 2
         profit_idx = 12
-        header_mapped = False
+        ticket_idx = 1
+        volume_idx = 4
         
-        # Look for the header row within the first 25 rows
-        for row in raw_rows[:25]:
-            row_lower = [c.lower().strip() for c in row]
-            
-            # Identify the main header row containing key fields
-            if any("symbol" in c for c in row_lower) and any("type" in c or "action" in c for c in row_lower) and any("profit" in c for c in row_lower):
-                temp_time_indices = []
-                temp_price_indices = []
-                
-                for idx, col_val in enumerate(row_lower):
-                    if "symbol" in col_val:
-                        symbol_idx = idx
-                    elif "type" in col_val or "action" in col_val:
-                        direction_idx = idx
-                    elif "profit" in col_val:
-                        profit_idx = idx
-                    elif "time" in col_val:
-                        temp_time_indices.append(idx)
-                    elif "price" in col_val:
-                        temp_price_indices.append(idx)
-                        
-                if temp_time_indices:
-                    time_indices = temp_time_indices
-                if temp_price_indices:
-                    price_indices = temp_price_indices
-                header_mapped = True
-                logger.info(f"Dynamically mapped HTML headers: Symbol={symbol_idx}, Direction={direction_idx}, Profit={profit_idx}, Time={time_indices}, Price={price_indices}")
-                break
+        for idx, col_val in enumerate(header_lower):
+            if "symbol" in col_val:
+                symbol_idx = idx
+            elif "type" in col_val or "action" in col_val or "direction" in col_val:
+                direction_idx = idx
+            elif "profit" in col_val:
+                profit_idx = idx
+            elif "time" in col_val:
+                time_indices.append(idx)
+            elif "price" in col_val:
+                price_indices.append(idx)
+            elif "position" in col_val or "ticket" in col_val or "deal" in col_val:
+                ticket_idx = idx
+            elif "volume" in col_val:
+                volume_idx = idx
 
-        # Fallback to defaults if no header is found
-        if not header_mapped:
-            logger.info("Header row not found. Using fallback standard MT5 profile.")
+        # Set fallbacks if mapper failed to find key fields
+        if not time_indices:
             time_indices = [1, 8]
+        if not price_indices:
             price_indices = [5, 9]
-            symbol_idx = 4
-            direction_idx = 2
-            profit_idx = 12
 
-        # Extract trades from data rows
-        for row in raw_rows:
-            # We check if there is a shift by examining if we have a non-numeric column where a numeric one is expected
-            # For MT5, Volume is usually at index 4 (standard) or index 5 (if comment column is at index 4).
-            # If row has more columns than headers, or if the column at index 4 contains text (comment), it's shifted!
+        # Extract trades from selected table rows starting after the header row
+        for row in target_rows[header_idx + 1:]:
             shift = 0
             if len(row) > 4:
                 try:
                     # Volume should be numeric. Let's try to convert it.
-                    float(row[4].replace(" ", "").replace(",", ""))
+                    v_idx = volume_idx if volume_idx < len(row) else 4
+                    float(row[v_idx].replace(" ", "").replace(",", ""))
                 except ValueError:
                     # It's a text comment! So index 4 is the comment, and all subsequent columns are shifted by +1
                     shift = 1
@@ -198,16 +284,6 @@ class MT5ReportMatcher:
                 r_open_price_idx = o_price_idx + shift if o_price_idx >= 4 else o_price_idx
                 r_close_price_idx = c_price_idx + shift if c_price_idx >= 4 else c_price_idx
                 
-                # Mapped ticket/position and volume indexes
-                row_lower = [cell.lower().strip() for cell in raw_rows[0]] if raw_rows else []
-                ticket_idx = 1
-                volume_idx = 4
-                for idx, col_val in enumerate(row_lower):
-                    if "position" in col_val or "ticket" in col_val:
-                        ticket_idx = idx
-                    elif "volume" in col_val:
-                        volume_idx = idx
-                        
                 r_ticket_idx = ticket_idx + shift if ticket_idx >= 4 else ticket_idx
                 r_volume_idx = volume_idx + shift if volume_idx >= 4 else volume_idx
                 
@@ -381,13 +457,32 @@ class MT5ReportMatcher:
         bulk_mt5_trades = []
 
         try:
-            # Fetch active or recently completed signals (past 30 days) to match
-            cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat().replace("+00:00", "Z")
+            # Collect all valid datetimes from parsed trades
+            trade_times = []
+            for t in trades:
+                dt = self.parse_datetime(t["time_str"])
+                if dt:
+                    trade_times.append(dt)
+            
+            # Fetch active or recently completed signals matching the trades timeframe
+            if trade_times:
+                min_time = min(trade_times)
+                max_time = max(trade_times)
+                # Expand range by 3 days in both directions to handle timezones and broker offsets safely
+                start_cutoff = (min_time - timedelta(days=3)).isoformat().replace("+00:00", "Z")
+                end_cutoff = (max_time + timedelta(days=3)).isoformat().replace("+00:00", "Z")
+                logger.info(f"Dynamically fetching prediction logs between {start_cutoff} and {end_cutoff} for matching.")
+            else:
+                # Fallback to 30 days if no times parsed (failsafe)
+                start_cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat().replace("+00:00", "Z")
+                end_cutoff = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat().replace("+00:00", "Z")
+                logger.info("No trade datetimes found. Using standard 30-day window.")
             
             result = self.client.table("prediction_logs") \
                 .select("id, symbol, ml_direction, ml_entry_price, created_at, status") \
-                .gte("created_at", cutoff) \
-                .limit(2000) \
+                .gte("created_at", start_cutoff) \
+                .lte("created_at", end_cutoff) \
+                .order("created_at", desc=True) \
                 .execute()
 
             signals = safe_get_data(result) or []
