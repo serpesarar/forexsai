@@ -185,6 +185,86 @@ class MT5ReportMatcher:
                 continue
         return None
 
+    def detect_timezone_offset(self, trades: List[Dict[str, Any]], signals: List[Dict[str, Any]]) -> float:
+        """
+        Scans potential timezone offsets (from -12 to +14 hours) to automatically
+        find the offset that aligns the MT5 trade execution times with the database signal times.
+        """
+        best_offset = 0.0
+        max_matches = 0
+        
+        # We will try every hour offset from -12 to +14
+        # and also some common half-hour offsets if needed (e.g. India GMT+5.5, Iran GMT+3.5, etc.)
+        candidate_offsets = [float(h) for h in range(-12, 15)]
+        # Add half-hour offsets for completeness
+        candidate_offsets += [h + 0.5 for h in range(-11, 14)]
+        
+        # Filter signals to only those that have a valid created_at datetimes
+        parsed_signals = []
+        for sig in signals:
+            try:
+                sig_time = datetime.fromisoformat(sig["created_at"].replace("Z", "+00:00"))
+                parsed_signals.append({
+                    "symbol": sig.get("symbol"),
+                    "direction": (sig.get("ml_direction") or "HOLD").upper(),
+                    "entry_price": float(sig.get("ml_entry_price") or 0.0),
+                    "time": sig_time
+                })
+            except Exception:
+                continue
+                
+        if not parsed_signals:
+            return 0.0
+
+        # Filter trades that can be parsed
+        parsed_trades = []
+        for trade in trades:
+            t_time = self.parse_datetime(trade["time_str"])
+            if t_time:
+                parsed_trades.append({
+                    "symbol": self.normalize_symbol(trade["symbol"]),
+                    "direction": trade["direction"],
+                    "entry_price": trade["entry_price"],
+                    "time": t_time
+                })
+                
+        if not parsed_trades:
+            return 0.0
+
+        # Try each offset
+        for offset in candidate_offsets:
+            current_matches = 0
+            for trade in parsed_trades:
+                adjusted_time = trade["time"] - timedelta(hours=offset)
+                
+                # Look for a matching signal
+                for sig in parsed_signals:
+                    if sig["symbol"] != trade["symbol"] or sig["direction"] != trade["direction"]:
+                        continue
+                        
+                    # Check if entry prices are close (within 3%)
+                    if sig["entry_price"] > 0 and trade["entry_price"] > 0:
+                        price_diff_pct = abs(trade["entry_price"] - sig["entry_price"]) / sig["entry_price"]
+                        if price_diff_pct > 0.03:
+                            continue
+                            
+                    # Check if time difference is within 10 minutes (600s) for detection purposes
+                    time_diff = abs(adjusted_time - sig["time"])
+                    if time_diff <= timedelta(minutes=10):
+                        current_matches += 1
+                        break # matched this trade to a signal for this offset
+                        
+            if current_matches > max_matches:
+                max_matches = current_matches
+                best_offset = offset
+                
+        if max_matches > 0:
+            logger.info(f"Auto-detected timezone offset: {best_offset} hours (aligned {max_matches} trades)")
+        else:
+            logger.info("No timezone offset could be confidently auto-detected. Defaulting to 0 hours.")
+            
+        return best_offset
+
     async def match_and_sync_trades(self, trades: List[Dict[str, Any]], tolerance_seconds: int = 90) -> Dict[str, Any]:
         """Matches parsed trades with Supabase prediction logs and updates them."""
         if not self.client:
@@ -208,11 +288,17 @@ class MT5ReportMatcher:
             if not signals:
                 return {"success": True, "matched": 0, "total": total_trades, "message": "No prediction logs found in database to match."}
 
+            # Auto-detect timezone offset
+            detected_offset = self.detect_timezone_offset(trades, signals)
+            logger.info(f"Using timezone offset of {detected_offset} hours for MT5 report matching.")
+
             # Map signals for easy lookup
             for trade in trades:
-                trade_time = self.parse_datetime(trade["time_str"])
-                if not trade_time:
+                raw_trade_time = self.parse_datetime(trade["time_str"])
+                if not raw_trade_time:
                     continue
+
+                trade_time = raw_trade_time - timedelta(hours=detected_offset)
 
                 trade_symbol = self.normalize_symbol(trade["symbol"])
                 trade_dir = trade["direction"]
