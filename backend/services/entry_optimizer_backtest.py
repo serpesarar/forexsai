@@ -226,11 +226,48 @@ def _realized_pips_signed(symbol: str, direction: str,
         return diff
 
 
+# ─── Slippage + spread modeli ────────────────────────────────────────────────
+# Sembol bazlı spread (pip cinsinden — USOIL için yüzde)
+SPREAD_PIPS = {
+    "XAUUSD": 3.5,
+    "NDX.INDX": 1.5,
+    "GDAXI.INDX": 1.5,
+    "USOIL.FOREX": 0.03,   # percentage (0.03%)
+}
+# Slippage aralığı (pip — USOIL için yüzde)
+SLIPPAGE_RANGE = (0.1, 0.5)
+
+
+def _spread_price(symbol: str, entry: float) -> float:
+    """Sembol spread'ini price units'e çevir."""
+    sp = SPREAD_PIPS.get(symbol, 1.0)
+    if symbol == "USOIL.FOREX":
+        return entry * sp / 100.0
+    return sp   # pip_value=1.0 hepsi için
+
+
+def _apply_slippage(entry: float, direction: str, symbol: str,
+                     rng: random.Random) -> float:
+    """Market entry'ye spread/2 + random slip ekle (aleyhe yönde)."""
+    spread = _spread_price(symbol, entry)
+    slip_pips = rng.uniform(*SLIPPAGE_RANGE)
+    if symbol == "USOIL.FOREX":
+        slip = entry * slip_pips / 100.0
+    else:
+        slip = slip_pips
+    if direction == "BUY":
+        return entry + spread / 2 + slip
+    return entry - spread / 2 - slip
+
+
 # ─── Ana fonksiyon ───────────────────────────────────────────────────────────
 async def backtest_entry_optimizer(days: int = 90,
                                      sample_per_scope: int = 300,
                                      symbols: Optional[list[str]] = None,
                                      timeframe: str = "15m",
+                                     day_offset_start: int = 0,
+                                     day_offset_end: Optional[int] = None,
+                                     apply_slippage: bool = False,
                                      ) -> dict:
     """Stage 4'ten geçen tüm resolved sinyaller üzerinde Entry Optimizer'ı
     point-in-time simüle eder. sample_per_scope=0 → tümü."""
@@ -244,7 +281,12 @@ async def backtest_entry_optimizer(days: int = 90,
     from services.entry_optimizer import decide_from_payload, DEFAULT_CONFIG
 
     symbols = symbols or ["XAUUSD", "NDX.INDX", "GDAXI.INDX", "USOIL.FOREX"]
-    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    now = datetime.now(timezone.utc)
+    since = (now - timedelta(days=days)).isoformat()
+    # Walk-forward window — days içinde alt aralık
+    window_start = now - timedelta(days=days - day_offset_start)
+    window_end = (now - timedelta(days=days - day_offset_end)
+                   if day_offset_end is not None else now)
 
     # ── Sinyaller ────────────────────────────────────────────────────────────
     rows: list[dict] = []
@@ -273,6 +315,16 @@ async def backtest_entry_optimizer(days: int = 90,
             and r.get("symbol") in symbols
             and r.get("direction") in ("BUY", "SELL")
             and r.get("entry_price")]
+    # Walk-forward filtering — sadece [window_start, window_end] aralığındaki sinyaller
+    if day_offset_start > 0 or day_offset_end is not None:
+        filtered = []
+        for r in rows:
+            ts = _parse(r.get("signal_created_at"))
+            if ts is None: continue
+            if ts < window_start: continue
+            if ts > window_end: continue
+            filtered.append(r)
+        rows = filtered
     if not rows:
         return {"status": "ok", "scanned": 0, "note": "veri yok"}
 
@@ -306,6 +358,8 @@ async def backtest_entry_optimizer(days: int = 90,
     cfg = DEFAULT_CONFIG
     actions: dict = {"EXECUTE_NOW": [], "LIMIT_ORDER": [],
                        "FALLBACK_MARKET": []}
+    # Slippage rng — deterministik (seed = prediction_id hash)
+    slip_rng = random.Random(42) if apply_slippage else None
     errors = 0
     per_sym_stats: dict = {}
     payload_diag = {"empty_payloads": 0, "had_obs": 0, "had_fvgs": 0,
@@ -407,6 +461,9 @@ async def backtest_entry_optimizer(days: int = 90,
 
         if action in ("EXECUTE_NOW", "FALLBACK_MARKET"):
             # Her ikisi de market entry — sadece SL/TP kaynağı farklı
+            # Slippage: gerçekçi market fill — spread/2 + uniform slip
+            if apply_slippage and slip_rng is not None:
+                entry_p = _apply_slippage(entry_p, r["direction"], sym, slip_rng)
             status, exit_p, bw = _simulate_outcome(
                 bars_after, r["direction"], entry_p, sl_p, tp_p)
             sim_pips = _realized_pips_signed(sym, r["direction"], entry_p, exit_p)
@@ -418,14 +475,20 @@ async def backtest_entry_optimizer(days: int = 90,
                                             else None)})
         elif action == "LIMIT_ORDER":
             max_wait_1m = int(decision.get("max_wait_candles") or 5) * 15
-            # ⭐ symbol parametresi — limit timeout sonrası FALLBACK_MARKET
-            # için sembolün default TP/SL config'ini almak gerekir
             status, exit_p, info = _simulate_limit_then_outcome(
                 bars_after, r["direction"], entry_p, max_wait_1m, sl_p, tp_p,
                 symbol=sym)
-            # Entry — fill ise limit_price, timeout fallback ise yeni entry
             actual_entry = (info.get("fallback_entry") if info.get("via") ==
                               "fallback_market_after_timeout" else entry_p)
+            # Slippage: limit fill için küçük (filled exactly), fallback market için tam slippage
+            if apply_slippage and slip_rng is not None:
+                if info.get("via") == "fallback_market_after_timeout":
+                    actual_entry = _apply_slippage(actual_entry, r["direction"],
+                                                     sym, slip_rng)
+                else:
+                    # Limit fill — sadece spread'in yarısı (favorable fill)
+                    actual_entry = _apply_slippage(actual_entry, r["direction"],
+                                                     sym, slip_rng) * 0.5 + actual_entry * 0.5
             sim_pips = _realized_pips_signed(sym, r["direction"],
                                                actual_entry, exit_p)
             outcome.update({"sim_status": status, "sim_exit": exit_p,

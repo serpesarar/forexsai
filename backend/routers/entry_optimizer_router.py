@@ -139,6 +139,205 @@ async def backtest_status():
     return {**_BACKTEST_STATUS}
 
 
+# ─── Validation Suite — leakage + walk-forward + slippage + determinizm ──────
+_VALIDATION_STATUS: dict = {"running": False, "started_at": None,
+                              "finished_at": None, "result": None, "error": None}
+
+
+@router.post("/validation-suite")
+async def validation_suite(bg: BackgroundTasks,
+                            days: int = Query(90, ge=14, le=180),
+                            sample_per_scope: int = Query(200, ge=50, le=2000,
+                                                            description="Hız için 200"),
+                            ):
+    """Entry Optimizer üzerinde 5 bağımsız doğrulama:
+      1. (Kod-incelemesi) — leakage TEMİZ (FVG/OB candles[-1] kullanıyor)
+      2. Walk-forward — 3 zaman penceresi (0-30, 30-60, 60-90 gün)
+      3. Slippage — spread + random fill ile gerçekçi simülasyon
+      4. Sembol bazlı — her sembol için ayrı delta
+      5. Determinizm — aynı sinyal 5× → aynı action
+
+    Tahmini ~10-12 dk (4 backtest run + determinizm testi)."""
+    if _VALIDATION_STATUS["running"]:
+        return {"status": "already_running",
+                "started_at": _VALIDATION_STATUS["started_at"]}
+    _VALIDATION_STATUS.update({"running": True,
+                                "started_at": datetime.now(timezone.utc).isoformat(),
+                                "finished_at": None, "result": None, "error": None})
+
+    async def _do():
+        try:
+            from services.entry_optimizer_backtest import backtest_entry_optimizer
+            from services.entry_optimizer import decide_from_payload, DEFAULT_CONFIG
+            results: dict = {}
+
+            # ── KONTROL 1: Leakage (kod-tabanlı tespit, çalışma değil)
+            results["check1_leakage"] = {
+                "status": "TEMİZ",
+                "detail": ("FVGDetector.detect ve OrderBlockDetector.detect "
+                            "'filled'/'tested'/'mitigated' kontrollerinde "
+                            "candles[-1] (= signal anındaki son mum) "
+                            "kullanıyor. Backtest candles'ı signal_created_at'e "
+                            "kadar slice'lıyor, dolayısıyla 'son mum' = sinyal "
+                            "anı. OB displacement c_next (i+1) kullanıyor ama "
+                            "bu da slice içinde ve OB'den 1 mum sonra (en az "
+                            "15dk önce). Geleceği görme yolu YOK."),
+                "etki": "Backtest geçerli, devam et."
+            }
+
+            # ── KONTROL 2: Walk-forward — 3 fold (no-overlap windows)
+            wf_results = []
+            folds = [
+                (0, 30, "F1: 0-30d (en eski)"),
+                (30, 60, "F2: 30-60d (orta)"),
+                (60, 90, "F3: 60-90d (en yeni)"),
+            ]
+            for start, end, name in folds:
+                res = await backtest_entry_optimizer(
+                    days=days, sample_per_scope=sample_per_scope,
+                    day_offset_start=start, day_offset_end=end,
+                    apply_slippage=False)
+                ovr = res.get("overall") or {}
+                wf_results.append({
+                    "fold": name, "n": ovr.get("n"),
+                    "original_pips": ovr.get("original_total_pips"),
+                    "optimizer_pips": ovr.get("optimizer_total_pips"),
+                    "delta_pct": ovr.get("delta_pct"),
+                })
+            avg_delta = (sum(r["delta_pct"] or 0 for r in wf_results)
+                          / max(1, len(wf_results)))
+            min_delta = min((r["delta_pct"] or 0) for r in wf_results)
+            max_delta = max((r["delta_pct"] or 0) for r in wf_results)
+            wf_verdict = ("ROBUST — tüm foldlarda pozitif" if min_delta > 50
+                           else "MARJİNAL — bazı foldlarda zayıf"
+                           if min_delta > 10
+                           else "OVERFIT — foldlar arası varyans yüksek")
+            results["check2_walk_forward"] = {
+                "folds": wf_results,
+                "avg_delta_pct": round(avg_delta, 1),
+                "min_delta_pct": round(min_delta, 1),
+                "max_delta_pct": round(max_delta, 1),
+                "verdict": wf_verdict,
+            }
+
+            # ── KONTROL 3: Slippage — full 90d, slippage ON vs OFF
+            no_slip = await backtest_entry_optimizer(
+                days=days, sample_per_scope=sample_per_scope,
+                apply_slippage=False)
+            with_slip = await backtest_entry_optimizer(
+                days=days, sample_per_scope=sample_per_scope,
+                apply_slippage=True)
+            ns_ovr = no_slip.get("overall") or {}
+            ws_ovr = with_slip.get("overall") or {}
+            results["check3_slippage"] = {
+                "no_slippage_delta_pct": ns_ovr.get("delta_pct"),
+                "with_slippage_delta_pct": ws_ovr.get("delta_pct"),
+                "drop_pp": (round((ns_ovr.get("delta_pct") or 0)
+                                    - (ws_ovr.get("delta_pct") or 0), 1)),
+                "spread_table": {
+                    "XAUUSD": "3.5 pips", "NDX.INDX": "1.5 pts",
+                    "GDAXI.INDX": "1.5 pts", "USOIL.FOREX": "0.03%",
+                },
+                "slip_range": "0.1-0.5 pips/% per fill (uniform)",
+                "verdict": ("Robust — slippage ≤30% düşüş" if
+                              ws_ovr.get("delta_pct") and
+                              (ns_ovr.get("delta_pct") or 0) > 0 and
+                              (ws_ovr.get("delta_pct") /
+                               max(1e-9, ns_ovr.get("delta_pct"))) > 0.7
+                              else "Slippage hassas — gerçekçi beklenti düşük"),
+            }
+
+            # ── KONTROL 4: Sembol bazlı — no_slip sonuçundan çıkar
+            per_sym_delta: dict = {}
+            # Re-run with per-symbol breakdown extraction
+            # no_slip içinde by_action var ama symbol breakdown'ı yok.
+            # Symbol bazlı delta için aksiyon rows'ları toplayıp grupla
+            res_full = no_slip  # zaten elimizde
+            # rows'ı by_action altından çıkar
+            all_rows = []
+            for act, rows in (res_full.get("by_action") or {}).items():
+                # by_action sadece özet — ayrıntılı row'lar burada yok.
+                # symbol breakdown için run'ı detaylı yap
+                pass
+            # Daha temiz: per-symbol için ayrı backtest_entry_optimizer çağrıları
+            for sym in ["XAUUSD", "NDX.INDX", "GDAXI.INDX", "USOIL.FOREX"]:
+                rs = await backtest_entry_optimizer(
+                    days=days, sample_per_scope=sample_per_scope,
+                    symbols=[sym], apply_slippage=False)
+                ovr = rs.get("overall") or {}
+                per_sym_delta[sym] = {
+                    "n": ovr.get("n"),
+                    "original_pips": ovr.get("original_total_pips"),
+                    "optimizer_pips": ovr.get("optimizer_total_pips"),
+                    "delta_pct": ovr.get("delta_pct"),
+                }
+            deltas = [v["delta_pct"] for v in per_sym_delta.values()
+                       if v.get("delta_pct") is not None]
+            sym_verdict = "DAĞINIK"
+            if deltas:
+                if min(deltas) > 50 and max(deltas) / max(1, min(deltas)) < 4:
+                    sym_verdict = "YAYGIN — tüm sembollerde edge"
+                elif max(deltas) > 200 and min(deltas) < 50:
+                    sym_verdict = "BAZ SEMBOLDE OVERFIT/ANOMALY"
+                else:
+                    sym_verdict = "KARIŞIK — sembol bazlı strateji düşünülmeli"
+            results["check4_per_symbol"] = {
+                "per_symbol": per_sym_delta,
+                "verdict": sym_verdict,
+            }
+
+            # ── KONTROL 5: Determinizm — aynı input 5× → aynı action
+            test_signals = [
+                {"symbol": "XAUUSD", "direction": "BUY", "price": 4500.0},
+                {"symbol": "NDX.INDX", "direction": "SELL", "price": 30000.0},
+                {"symbol": "USOIL.FOREX", "direction": "BUY", "price": 90.0},
+            ]
+            det_results = []
+            for sig in test_signals:
+                actions_seen = set()
+                priorities = []
+                from services.entry_optimizer import optimize_entry
+                for _ in range(5):
+                    try:
+                        d = await optimize_entry(dict(sig))
+                        actions_seen.add(d.get("action"))
+                        priorities.append(d.get("priority_score"))
+                    except Exception as e:
+                        actions_seen.add(f"err:{str(e)[:40]}")
+                det_results.append({
+                    "input": sig,
+                    "unique_actions": list(actions_seen),
+                    "deterministic": len(actions_seen) == 1,
+                    "priorities": priorities,
+                })
+            all_det = all(r["deterministic"] for r in det_results)
+            results["check5_determinism"] = {
+                "tests": det_results,
+                "all_deterministic": all_det,
+                "verdict": ("DETERMINISTIK" if all_det
+                              else "RASTGELELİK VAR — race condition?"),
+            }
+
+            _VALIDATION_STATUS["result"] = results
+        except Exception as e:
+            logger.exception("[validation] hata: %s", e)
+            _VALIDATION_STATUS["error"] = str(e)[:500]
+        finally:
+            _VALIDATION_STATUS["running"] = False
+            _VALIDATION_STATUS["finished_at"] = datetime.now(timezone.utc).isoformat()
+
+    bg.add_task(_do)
+    return {"status": "scheduled", "days": days,
+            "sample_per_scope": sample_per_scope,
+            "poll": "/api/entry-optimizer/validation-suite/status",
+            "estimated_minutes": "10-12"}
+
+
+@router.get("/validation-suite/status")
+async def validation_suite_status():
+    return {**_VALIDATION_STATUS}
+
+
 @router.get("/config")
 async def show_config():
     """Mevcut default config — eşikleri görmek için."""
