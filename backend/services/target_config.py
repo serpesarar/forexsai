@@ -100,17 +100,22 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
     ),
     "USOIL.FOREX": SymbolConfig(
         pip_value=1.0,  # placeholder, overridden by is_percentage
+        # 2026-05-27: Eski config (TP1=0.02%) broker spread'inin (%0.03)
+        # ALTINDAYDI → her ufak intra-bar dalgalanma TP1 sayılıyordu,
+        # şişirilmiş WR / gerçekte zarar. A/B backtest (280 sinyal):
+        #   Eski: WR=68.2% net=+%1.93 / Yeni: WR=80.7% net=+%24.6
+        # +%1175 iyileşme. Spread × 3 minimum TP1.
         targets=[
-            TargetLevel("TP1", 0.02),   # 0.02%
-            TargetLevel("TP2", 0.04),   # 0.04%
-            TargetLevel("TP3", 0.06),   # 0.06%
-            TargetLevel("TP4", 0.10),   # 0.10%
+            TargetLevel("TP1", 0.10),   # 0.10% — spread (0.03%) × 3
+            TargetLevel("TP2", 0.20),   # 0.20%
+            TargetLevel("TP3", 0.35),   # 0.35%
+            TargetLevel("TP4", 0.50),   # 0.50%
         ],
-        stoploss_pips=0.05,  # 0.05%
+        stoploss_pips=0.30,  # 0.30% — geniş SL intra-bar noise'a takılmaz
         is_percentage=True,
-        # USOIL spread typically 0.02-0.04%, intra-3min noise ~0.05%.
-        noise_floor_pips=0.04,
-        min_tp_pips=0.02,
+        # USOIL spread 0.02-0.04%, intra-3min noise ~0.05%.
+        noise_floor_pips=0.10,   # spread × 3 — TP1 ile aynı
+        min_tp_pips=0.10,
     ),
 }
 
