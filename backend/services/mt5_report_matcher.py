@@ -150,6 +150,17 @@ class MT5ReportMatcher:
         if not tables:
             return trades
 
+        # Multilingual header mapping keywords (supports Turkish and English reports)
+        SYMBOL_KEYWORDS = {"symbol", "sembol", "item", "yatırım"}
+        TYPE_KEYWORDS = {"type", "action", "direction", "tür", "tip", "yön", "işlem"}
+        PROFIT_KEYWORDS = {"profit", "pnl", "kâr", "kar", "kazanç"}
+        POSITION_KEYWORDS = {"position", "pozisyon"}
+        DEAL_KEYWORDS = {"deal", "anlaşma"}
+        ORDER_KEYWORDS = {"order", "emir", "state", "durum"}
+        VOLUME_KEYWORDS = {"volume", "lot", "hacim", "miktar"}
+        PRICE_KEYWORDS = {"price", "fiyat"}
+        TIME_KEYWORDS = {"time", "zaman", "tarih", "saat"}
+
         # Dynamic Table Selector
         selected_table_info = None
         positions_table = None
@@ -165,14 +176,17 @@ class MT5ReportMatcher:
             # Scan first 20 rows of each table for header row containing key columns
             for idx, row in enumerate(table_rows[:20]):
                 row_lower = [c.lower().strip() for c in row]
-                if any("symbol" in c for c in row_lower) and any("type" in c or "action" in c or "direction" in c for c in row_lower):
+                has_sym = any(any(w in c for w in SYMBOL_KEYWORDS) for c in row_lower)
+                has_type = any(any(w in c for w in TYPE_KEYWORDS) for c in row_lower)
+                
+                if has_sym and has_type:
                     is_trade_table = True
                     header_idx = idx
                     
-                    has_position = any("position" in c for c in row_lower)
-                    has_deal = any("deal" in c for c in row_lower)
-                    has_order = any("order" in c for c in row_lower)
-                    has_profit = any("profit" in c or "swap" in c for c in row_lower)
+                    has_position = any(any(w in c for w in POSITION_KEYWORDS) for c in row_lower)
+                    has_deal = any(any(w in c for w in DEAL_KEYWORDS) for c in row_lower)
+                    has_order = any(any(w in c for w in ORDER_KEYWORDS) for c in row_lower)
+                    has_profit = any(any(w in c for w in PROFIT_KEYWORDS) for c in row_lower)
                     
                     if has_position:
                         table_type = "POSITIONS"
@@ -229,19 +243,19 @@ class MT5ReportMatcher:
         volume_idx = 4
         
         for idx, col_val in enumerate(header_lower):
-            if "symbol" in col_val:
+            if any(w in col_val for w in SYMBOL_KEYWORDS):
                 symbol_idx = idx
-            elif "type" in col_val or "action" in col_val or "direction" in col_val:
+            elif any(w in col_val for w in TYPE_KEYWORDS):
                 direction_idx = idx
-            elif "profit" in col_val:
+            elif any(w in col_val for w in PROFIT_KEYWORDS):
                 profit_idx = idx
-            elif "time" in col_val:
+            elif any(w in col_val for w in TIME_KEYWORDS):
                 time_indices.append(idx)
-            elif "price" in col_val:
+            elif any(w in col_val for w in PRICE_KEYWORDS):
                 price_indices.append(idx)
-            elif "position" in col_val or "ticket" in col_val or "deal" in col_val:
+            elif any(w in col_val for w in POSITION_KEYWORDS) or "ticket" in col_val or "bilet" in col_val:
                 ticket_idx = idx
-            elif "volume" in col_val:
+            elif any(w in col_val for w in VOLUME_KEYWORDS):
                 volume_idx = idx
 
         # Set fallbacks if mapper failed to find key fields
@@ -478,14 +492,40 @@ class MT5ReportMatcher:
                 end_cutoff = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat().replace("+00:00", "Z")
                 logger.info("No trade datetimes found. Using standard 30-day window.")
             
-            result = self.client.table("prediction_logs") \
-                .select("id, symbol, ml_direction, ml_entry_price, created_at, status") \
-                .gte("created_at", start_cutoff) \
-                .lte("created_at", end_cutoff) \
-                .order("created_at", desc=True) \
-                .execute()
+            # Fetch active or recently completed signals matching the trades timeframe using pagination
+            signals = []
+            offset = 0
+            chunk_size = 1000
+            max_signals = 15000  # Safe cap to prevent infinite loop or slow response for massive uploads
+            
+            while len(signals) < max_signals:
+                # Executes page-by-page fetching
+                result = self.client.table("prediction_logs") \
+                    .select("id, symbol, ml_direction, ml_entry_price, created_at, status") \
+                    .gte("created_at", start_cutoff) \
+                    .lte("created_at", end_cutoff) \
+                    .order("created_at", desc=True) \
+                    .range(offset, offset + chunk_size - 1) \
+                    .execute()
+                
+                data = safe_get_data(result) or []
+                signals.extend(data)
+                
+                if len(data) < chunk_size:
+                    break
+                offset += chunk_size
 
-            signals = safe_get_data(result) or []
+            # Deduplicate signals in case of any overlaps
+            seen_sig = set()
+            deduped_signals = []
+            for sig in signals:
+                sig_id = sig.get("id")
+                if sig_id not in seen_sig:
+                    seen_sig.add(sig_id)
+                    deduped_signals.append(sig)
+            signals = deduped_signals
+
+            logger.info(f"Successfully fetched {len(signals)} prediction logs from database for matching.")
             if not signals:
                 return {"success": True, "matched": 0, "total": total_trades, "message": "No prediction logs found in database to match."}
 
