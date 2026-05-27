@@ -55,7 +55,7 @@ class CombinatorialAuditor:
                         "targets, created_at, strategy, factors") \
                 .neq("status", "active") \
                 .gte("created_at", cutoff_date) \
-                .limit(2000) \
+                .limit(5000) \
                 .execute()
 
             data = safe_get_data(result) or []
@@ -63,23 +63,35 @@ class CombinatorialAuditor:
                 logger.info("No completed signals found in the selected range.")
                 return None
 
-            # Fetch matched mt5_trades to align with prediction_logs in memory
+            # Fetch matched mt5_trades to align with prediction_logs in memory (chunk-paginated)
             mt5_map = {}
             try:
-                mt5_res = self.client.table("mt5_trades") \
-                    .select("matched_prediction_id, price, profit, volume, direction, deal_time") \
-                    .is_("matched_prediction_id", "not.null") \
-                    .execute()
-                mt5_deals = safe_get_data(mt5_res) or []
-                for d in mt5_deals:
-                    pred_id = d.get("matched_prediction_id")
-                    if pred_id:
-                        mt5_map[pred_id] = d
+                offset = 0
+                chunk_size = 1000
+                while True:
+                    mt5_res = self.client.table("mt5_trades") \
+                        .select("matched_prediction_id, price, profit, volume, direction, deal_time") \
+                        .range(offset, offset + chunk_size - 1) \
+                        .execute()
+                    mt5_deals = safe_get_data(mt5_res) or []
+                    for d in mt5_deals:
+                        pred_id = d.get("matched_prediction_id")
+                        if pred_id:
+                            mt5_map[pred_id] = d
+                    if len(mt5_deals) < chunk_size:
+                        break
+                    offset += chunk_size
+                logger.info(f"Combinatorial Auditor: Loaded {len(mt5_map)} unique matched MT5 deals.")
             except Exception as mt5_err:
                 logger.warning(f"Could not load matched mt5_trades: {mt5_err}")
 
             # Parse signal factors/JSON
             parsed_rows = []
+            
+            # Count how many signals have matched deals to dynamically filter simulated data
+            has_real_count = sum(1 for s in data if s.get("id") in mt5_map)
+            logger.info(f"Combinatorial Auditor: Identified {has_real_count} real-world matched trades in this window.")
+            
             for s in data:
                 factors = s.get("factors") or {}
                 if isinstance(factors, str):
@@ -171,6 +183,12 @@ class CombinatorialAuditor:
                 except Exception:
                     row["session"] = "UNKNOWN"
 
+                # Dynamic Truth Alignment:
+                # If we have real matched trades in this window, we skip simulated rows
+                # to base the leaderboard and heatmaps entirely on actual broker performance!
+                if has_real_count > 0 and not has_real:
+                    continue
+
                 parsed_rows.append(row)
 
             return pd.DataFrame(parsed_rows)
@@ -254,8 +272,7 @@ class CombinatorialAuditor:
             return
 
         try:
-            # We insert/upsert stats per combination
-            # Since REST upsert is cleaner, we batch upsert
+            # We insert/update stats per combination
             for stat in stats:
                 upsert_data = {
                     "combo_key": stat["combo_key"],
@@ -269,15 +286,29 @@ class CombinatorialAuditor:
                     "expectancy": stat["expectancy"],
                     "avg_profit_pips": stat["avg_profit_pips"],
                     "avg_loss_pips": stat["avg_loss_pips"],
-                    "updated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                    "last_updated": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                 }
                 
-                # Check table exists in Supabase
+                # Sync using robust select-and-update/insert pattern to bypass missing composite unique constraints
                 try:
-                    self.client.table("meta_combination_stats").upsert(upsert_data, on_conflict="combo_key,symbol,regime").execute()
+                    res = self.client.table("meta_combination_stats") \
+                        .select("id") \
+                        .eq("combo_key", stat["combo_key"]) \
+                        .eq("symbol", stat["symbol"]) \
+                        .eq("regime", stat["regime"]) \
+                        .execute()
+                    
+                    existing = safe_get_data(res) or []
+                    if existing:
+                        record_id = existing[0]["id"]
+                        # Chaining .eq() BEFORE calling .update() is mandatory in this custom Supabase wrapper
+                        self.client.table("meta_combination_stats") \
+                            .eq("id", record_id) \
+                            .update(upsert_data)
+                    else:
+                        self.client.table("meta_combination_stats").insert(upsert_data)
                 except Exception as db_err:
-                    logger.debug(f"Failed to upsert combination stats directly. Schema upgrade might be pending: {db_err}")
-                    # Keep backup in memory if db fails
+                    logger.warning(f"Failed to sync combination stats for {stat['combo_key']} - {stat['symbol']} - {stat['regime']}: {db_err}")
             
             logger.info(f"Successfully synced {len(stats)} combination stats with Supabase.")
         except Exception as e:
