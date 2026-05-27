@@ -203,6 +203,64 @@ async def trade_signal_preview(symbol: str, direction: str,
     })
 
 
+@router.get("/latest-ai-panel/{symbol}")
+async def latest_ai_panel_signal(symbol: str, max_age_minutes: int = 120):
+    """XAUUSD için bot AI Panel sinyallerini okusun diye dedicated endpoint.
+
+    Bot şu an pulse1/2/3 endpoint'lerini çağırıyor; AI Panel için bu endpoint.
+    Son `max_age_minutes` içindeki aktif ai_panel sinyalini döner.
+
+    Response:
+      {has_signal, direction, confidence, age_minutes, prediction_id}
+    """
+    from database.supabase_client import get_supabase_client, is_db_available
+    from datetime import datetime, timezone, timedelta
+    if not is_db_available():
+        return {"has_signal": False, "error": "db_unavailable"}
+    client = get_supabase_client()
+    cutoff = (datetime.now(timezone.utc) - timedelta(minutes=max_age_minutes)).isoformat()
+    q = (client.table("prediction_logs")
+          .select("id,created_at,symbol,ml_direction,ml_confidence,"
+                  "ml_entry_price,ml_target_price,ml_stop_price,status")
+          .eq("symbol", symbol)
+          .eq("model_type", "ai_panel")
+          .gte("created_at", cutoff)
+          .in_("status", ["active", "completed", "stopped"])
+          .order("created_at", desc=True)
+          .limit(1))
+    res = q.execute() if hasattr(q, "execute") else q
+    rows = (res.data if hasattr(res, "data")
+              else (res.get("data") if isinstance(res, dict) else [])) or []
+    if not rows:
+        return {"has_signal": False, "symbol": symbol,
+                "max_age_minutes": max_age_minutes,
+                "note": f"Son {max_age_minutes}dk içinde {symbol} için ai_panel sinyali yok"}
+    r = rows[0]
+    direction = (r.get("ml_direction") or "").upper()
+    if direction not in ("BUY", "SELL"):
+        return {"has_signal": False, "symbol": symbol,
+                "note": f"Son sinyal yön={direction}, BUY/SELL değil"}
+    age = (datetime.now(timezone.utc) -
+            datetime.fromisoformat(r["created_at"].replace("Z", "+00:00"))
+            ).total_seconds() / 60
+    # Sadece "active" durumdaki taze ai_panel sinyalini bot kullansın
+    if r.get("status") != "active":
+        return {"has_signal": False, "symbol": symbol,
+                "note": f"Son ai_panel sinyali {r.get('status')} (aktif değil)",
+                "last_signal_age_min": round(age, 1)}
+    return {
+        "has_signal": True,
+        "symbol": symbol,
+        "prediction_id": r.get("id"),
+        "direction": direction,
+        "confidence": float(r.get("ml_confidence") or 0),
+        "age_minutes": round(age, 1),
+        "entry_price": float(r.get("ml_entry_price") or 0),
+        "target_price": float(r.get("ml_target_price") or 0),
+        "stop_price": float(r.get("ml_stop_price") or 0),
+    }
+
+
 @router.get("/status")
 async def bot_status():
     """Bot endpoint sağlık + mevcut konfigürasyon."""

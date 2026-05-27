@@ -535,6 +535,7 @@ router_module_names = [
     "entry_optimizer_router",
     "bot_router",
     "bot_diagnostic_router",
+    "usoil_config_backtest",
 ]
 
 for module_name in router_module_names:
