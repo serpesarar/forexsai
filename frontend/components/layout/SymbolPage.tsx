@@ -16,6 +16,7 @@ import PerformanceScoreboard from "../performance/PerformanceScoreboard";
 import type { SymbolConfig } from "../../lib/symbolConfig";
 
 const ClearTrendPanelV3 = dynamic(() => import("../panels/ClearTrendPanelV3"), { ssr: false });
+const NewCombinationPanel = dynamic(() => import("../panels/NewCombinationPanel"), { ssr: false });
 
 interface Props {
   config: SymbolConfig;
@@ -63,6 +64,9 @@ function SymbolPageInner({ config }: Props) {
           <span>/</span>
           <span className="text-slate-300">{config.label}</span>
         </div>
+
+        {/* Section 0 — New Combination: best proven combos, flashes on full agreement */}
+        <NewCombinationPanel symbol={config.symbol} />
 
         {/* Section 1 — Top bar: price + meta signal */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">

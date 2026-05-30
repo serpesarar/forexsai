@@ -102,6 +102,116 @@ async def meta_combinations(
         return {"success": False, "error": str(e)}
 
 
+# ═══════════════════════════════════════════════════════════
+# NEW COMBINATION — leak-free + robustness-proven best combos per symbol.
+# Honest 1m ground-truth WR (2026-05-29 validation). Only the "certain"
+# combos that survived leak-audit + de-dup + OOS + bootstrap CI are listed.
+# ═══════════════════════════════════════════════════════════
+BEST_COMBOS = {
+    "USOIL.FOREX": [
+        {"models": ["pulse2", "pulse3", "smc"], "win_rate": 87.6, "trades": None,
+         "label": "PULSE2 + PULSE3 + SMC"},
+        {"models": ["pulse1", "smc"], "win_rate": 81.4, "trades": 527,
+         "label": "PULSE1 + SMC"},
+    ],
+    "XAUUSD": [
+        {"models": ["emel", "pulse1", "pulse2", "pulse3"], "win_rate": 84.1, "trades": 396,
+         "label": "EMEL + PULSE1 + PULSE2 + PULSE3"},
+        {"models": ["pulse1", "pulse2", "pulse3"], "win_rate": 78.4, "trades": 4051,
+         "label": "PULSE1 + PULSE2 + PULSE3"},
+    ],
+    "GDAXI.INDX": [
+        {"models": ["pulse2", "pulse3"], "win_rate": 87.8, "trades": None,
+         "label": "PULSE2 + PULSE3"},
+    ],
+    "NDX.INDX": [
+        {"models": ["pulse1", "pulse2", "pulse3"], "win_rate": 84.2, "trades": 1627,
+         "label": "PULSE1 + PULSE2 + PULSE3"},
+    ],
+}
+
+
+@router.get("/best-combo/{symbol}")
+async def best_combo_signal(symbol: str):
+    """
+    NEW COMBINATION panel feed.
+
+    For each leak-free + robustness-proven best combo of `symbol`, collect the
+    live per-model directions and report whether EVERY member of the combo is
+    available and agrees on the same direction (all BUY or all SELL). The panel
+    flashes when at least one combo is fully aligned.
+    """
+    try:
+        from services.meta_analysis_engine import MetaAnalysisEngine
+
+        combos_cfg = BEST_COMBOS.get(symbol, [])
+        if not combos_cfg:
+            return {"success": True, "data": {
+                "symbol": symbol, "supported": False, "triggered": False,
+                "direction": "HOLD", "combos": [],
+            }}
+
+        signals = await MetaAnalysisEngine.collect_signals(symbol)
+        by_id = {s.model_id: s for s in signals}
+
+        out_combos = []
+        triggered = False
+        fired = None
+
+        for cfg in combos_cfg:
+            members = []
+            dirs = []
+            for mid in cfg["models"]:
+                sig = by_id.get(mid)
+                avail = bool(sig and sig.is_available)
+                d = (sig.direction if avail else "HOLD") or "HOLD"
+                members.append({
+                    "model": mid,
+                    "direction": d,
+                    "available": avail,
+                    "confidence": round(float(sig.confidence), 1) if sig else 0.0,
+                })
+                dirs.append(d if avail else None)
+
+            actionable = [d for d in dirs if d in ("BUY", "SELL")]
+            all_present = all(d is not None for d in dirs)
+            aligned = (
+                all_present
+                and len(actionable) == len(dirs)
+                and len(set(actionable)) == 1
+            )
+            combo_dir = actionable[0] if aligned else "HOLD"
+
+            if aligned:
+                triggered = True
+                if fired is None or cfg["win_rate"] > fired["win_rate"]:
+                    fired = {"label": cfg["label"], "direction": combo_dir,
+                             "win_rate": cfg["win_rate"]}
+
+            out_combos.append({
+                "label": cfg["label"],
+                "models": cfg["models"],
+                "win_rate": cfg["win_rate"],
+                "trades": cfg.get("trades"),
+                "members": members,
+                "aligned": aligned,
+                "direction": combo_dir,
+            })
+
+        return {"success": True, "data": {
+            "symbol": symbol,
+            "supported": True,
+            "triggered": triggered,
+            "direction": fired["direction"] if fired else "HOLD",
+            "fired_combo": fired["label"] if fired else None,
+            "fired_win_rate": fired["win_rate"] if fired else None,
+            "combos": out_combos,
+        }}
+    except Exception as e:
+        logger.error(f"[MetaRouter] best-combo error for {symbol}: {e}")
+        return {"success": False, "error": str(e)}
+
+
 @router.get("/dashboard")
 async def meta_dashboard():
     """
