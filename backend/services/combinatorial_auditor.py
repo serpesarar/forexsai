@@ -47,21 +47,38 @@ class CombinatorialAuditor:
             # Calculate date range
             cutoff_date = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat().replace("+00:00", "Z")
             
-            # Fetch completed / stopped signals
-            result = self.client.table("prediction_logs") \
-                .select("id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
-                        "model_type, status, targets_hit, highest_profit_pips, "
-                        "lowest_drawdown_pips, exit_price, exit_time, stop_loss_pips, "
-                        "targets, created_at, strategy, factors") \
-                .neq("status", "active") \
-                .gte("created_at", cutoff_date) \
-                .limit(5000) \
-                .execute()
-
-            data = safe_get_data(result) or []
+            # Fetch completed / stopped signals.
+            # PostgREST caps each response at the server max-rows (1000), so a
+            # single .limit(5000) silently truncates. Paginate with .range() to
+            # cover the full window (same pattern as the mt5_trades loop below).
+            cols = ("id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
+                    "model_type, status, targets_hit, highest_profit_pips, "
+                    "lowest_drawdown_pips, exit_price, exit_time, stop_loss_pips, "
+                    "targets, created_at, strategy, factors")
+            data = []
+            p_off, p_chunk, p_cap = 0, 1000, 60000
+            while p_off < p_cap:
+                page_res = self.client.table("prediction_logs") \
+                    .select(cols) \
+                    .neq("status", "active") \
+                    .gte("created_at", cutoff_date) \
+                    .order("created_at", desc=False) \
+                    .range(p_off, p_off + p_chunk - 1) \
+                    .execute()
+                page = safe_get_data(page_res) or []
+                data.extend(page)
+                if len(page) < p_chunk:
+                    break
+                p_off += p_chunk
             if not data:
                 logger.info("No completed signals found in the selected range.")
                 return None
+
+            # Honest 1m ground truth: attach replay corrections so the
+            # simulated-fallback win (below) uses the 1m verdict, not the
+            # inflated 5m-candle status label.
+            from services.signal_analytics import attach_corrections
+            attach_corrections(data, self.client)
 
             # Fetch matched mt5_trades to align with prediction_logs in memory (chunk-paginated)
             mt5_map = {}
@@ -161,7 +178,14 @@ class CombinatorialAuditor:
                     row["is_win"] = real_pnl > 0.0
                     row["pnl_score"] = real_pnl
                 else:
-                    row["is_win"] = s.get("status") == "completed"
+                    # Prefer the honest 1m replay verdict; fall back to the 5m
+                    # status label only when no correction is attached.
+                    corrected_status = s.get("corrected_status")
+                    replay_ok = (s.get("corrected_replay_status") or "ok") == "ok"
+                    if corrected_status in ("completed", "stopped", "expired") and replay_ok:
+                        row["is_win"] = corrected_status == "completed"
+                    else:
+                        row["is_win"] = s.get("status") == "completed"
                     # Fallback profit estimate: win gets highest_profit, loss gets lowest_drawdown
                     if row["is_win"]:
                         row["pnl_score"] = row["highest_profit"]

@@ -304,7 +304,7 @@ async def check_pending_outcomes(check_interval: str = "24h") -> List[Dict[str, 
     
     hours = interval_hours.get(check_interval, 24)
     cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
-    cutoff_iso = cutoff.isoformat() + "Z"
+    cutoff_iso = cutoff.isoformat()
     
     try:
         result = client.table("prediction_logs").select("*").eq(
@@ -372,7 +372,7 @@ async def get_accuracy_summary(
         return {"error": "Database client not available"}
     
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-    cutoff_iso = cutoff.isoformat() + "Z"
+    cutoff_iso = cutoff.isoformat()
     
     try:
         # PRIMARY: Use prediction_logs lifecycle status (completed/stopped)
@@ -589,7 +589,7 @@ async def get_multi_target_accuracy(
         return {"error": "Database client not available"}
     
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-    cutoff_iso = cutoff.isoformat() + "Z"
+    cutoff_iso = cutoff.isoformat()
     
     try:
         # Get predictions (no PostgREST join - custom httpx client doesn't support it)

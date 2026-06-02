@@ -7,7 +7,6 @@ from typing import Optional, List, Any, Dict
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel
 
-from services.marketaux_service import get_marketaux_health
 from services.rss_aggregator import get_rss_aggregator, RSS_SOURCES
 from services.news_candle_matcher import get_matching_impact, symbols_match
 from services.translation_service import translate_texts
@@ -1372,9 +1371,7 @@ async def get_rss_diagnostics():
             "api_keys": {
                 "DEEP_SEEKR1": "✅ SET" if deepseek_key else "❌ NOT SET",
                 "ANTHROPIC_API_KEY": "✅ SET" if anthropic_key else "❌ NOT SET",
-                "MARKETAUX_API_KEY": "✅ SET" if os.getenv("MARKETAUX_API_KEY", "") else "❌ NOT SET",
             },
-            "marketaux_health": get_marketaux_health(),
             "last_24h_stats": {
                 "total_news": len(items),
                 "ai_analyzed": ai_analyzed,
@@ -1413,9 +1410,7 @@ async def get_rss_diagnostics():
             "api_keys": {
                 "DEEP_SEEKR1": "✅ SET" if os.getenv("DEEP_SEEKR1", "") else "❌ NOT SET",
                 "ANTHROPIC_API_KEY": "✅ SET" if os.getenv("ANTHROPIC_API_KEY", "") else "❌ NOT SET",
-                "MARKETAUX_API_KEY": "✅ SET" if os.getenv("MARKETAUX_API_KEY", "") else "❌ NOT SET",
             },
-            "marketaux_health": get_marketaux_health(),
         }
 
 

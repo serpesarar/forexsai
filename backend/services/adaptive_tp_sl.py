@@ -485,7 +485,7 @@ async def save_failure_analysis(analysis: FailureAnalysis) -> bool:
             "fib_level_hit": analysis.fib_level_hit,
             "macd_divergence": analysis.macd_divergence,
             "recommendation": analysis.recommendation,
-            "created_at": datetime.now(timezone.utc).isoformat() + "Z"
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
         
         result = client.table("failure_analyses").insert(data).execute()

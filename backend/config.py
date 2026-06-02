@@ -25,14 +25,9 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("DEEP_SEEKR1", "DEEPSEEK_API_KEY"),
     )
     eodhd_api_key: str | None = Field(default=None, validation_alias="EODHD_API_KEY")
-    marketaux_api_key: str | None = Field(default=None, validation_alias="MARKETAUX_API_KEY")
     groq_api_key: str | None = Field(default=None, validation_alias="GROQ_API_KEY")
     xai_api_key: str | None = Field(default=None, validation_alias="XAI_API_KEY")
     x_bearer_token: str | None = Field(default=None, validation_alias="X_BEARER_TOKEN")
-    marketaux_base_url: str = Field(
-        default="https://api.marketaux.com/v1/news/all",
-        validation_alias="MARKETAUX_BASE_URL",
-    )
     aisstream_api_key: str | None = Field(default=None, validation_alias="AISSTREAM_API_KEY")
     aisstream_ws_url: str = Field(default="wss://stream.aisstream.io/v0/stream", validation_alias="AISSTREAM_WS_URL")
     oil_ais_autostart: bool = Field(default=False, validation_alias="OIL_AIS_AUTOSTART")

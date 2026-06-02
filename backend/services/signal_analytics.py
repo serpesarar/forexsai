@@ -317,11 +317,59 @@ def resolved_exit_price(sig: dict, default_symbol: Optional[str] = None) -> Opti
     return round(raw_exit_price, 4) if raw_exit_price is not None else None
 
 
+def _corrected_classification(
+    sig: dict, default_symbol: Optional[str]
+) -> Optional[Tuple[str, Optional[bool], Optional[float]]]:
+    """Honest 1m ground-truth verdict, if a replay correction is attached.
+
+    `attach_corrections` merges `corrected_status` / `corrected_exit_price` /
+    `corrected_replay_status` onto the signal row from
+    prediction_replay_corrections. When present (and the replay was clean), this
+    overrides the 5m-candle lifecycle label — the source of the win-rate
+    inflation (in-bar TP+SL ambiguity counted as a win on the coarse candle).
+
+    Returns None when no usable correction is attached, so live signals (and any
+    row not yet replayed) fall through to the original status logic unchanged.
+    """
+    cs = (sig.get("corrected_status") or "").lower().strip()
+    if cs not in {"completed", "stopped", "expired"}:
+        return None
+    if (sig.get("corrected_replay_status") or "ok") != "ok":
+        return None
+
+    symbol = sig.get("symbol") or default_symbol
+    entry = coerce_float(sig.get("corrected_entry_price"))
+    if entry is None:
+        entry = coerce_float(sig.get("ml_entry_price"))
+    exit_px = coerce_float(sig.get("corrected_exit_price"))
+    direction = (sig.get("ml_direction") or "").upper().strip()
+
+    signed_pips: Optional[float] = None
+    if entry is not None and exit_px is not None and direction in {"BUY", "SELL"} and symbol:
+        change = (exit_px - entry) if direction == "BUY" else (entry - exit_px)
+        signed_pips = pips_from_price_change(change, symbol)
+
+    if cs == "completed":
+        if signed_pips is None:
+            signed_pips = target_hit_profit_floor(sig, default_symbol=default_symbol) or 0.0
+        return "completed", True, max(signed_pips, 0.0)
+    if cs == "stopped":
+        if signed_pips is None:
+            sl = canonical_stop_loss_pips(sig, default_symbol=default_symbol)
+            signed_pips = -(sl or 0.0)
+        return "stopped", False, min(signed_pips, 0.0)
+    return "expired", False, 0.0
+
+
 def classify_signal(
     sig: dict,
     *,
     default_symbol: Optional[str] = None,
 ) -> Tuple[Optional[str], Optional[bool], Optional[float]]:
+    corrected = _corrected_classification(sig, default_symbol)
+    if corrected is not None:
+        return corrected
+
     status = (sig.get("status") or "unknown").lower().strip()
     resolution_reason = (sig.get("resolution_reason") or "").lower().strip()
     profit_pips = max(coerce_float(sig.get("highest_profit_pips"), 0.0) or 0.0, 0.0)
@@ -376,6 +424,66 @@ def classify_signal(
         fallback_profit = resolved_success_pips()
         return "completed", True, fallback_profit
     return None, None, None
+
+
+def attach_corrections(
+    rows: List[dict],
+    client: Any,
+    *,
+    id_key: str = "id",
+) -> List[dict]:
+    """Merge honest 1m replay outcomes onto signal rows IN PLACE.
+
+    For each row's prediction id, looks up the LATEST (by replayed_at) clean
+    correction in prediction_replay_corrections and attaches:
+      corrected_status, corrected_exit_price, corrected_entry_price,
+      corrected_replay_status, corrected_resolution_reason.
+
+    After this, `classify_signal` (and every panel built on it) grades the row
+    on the 1m ground truth instead of the inflated 5m-candle label. Rows with no
+    correction are left untouched, so live signals keep their lifecycle status.
+
+    Best-effort: any DB error leaves the rows ungraded-corrected (falls back to
+    the 5m label) rather than breaking the panel.
+    """
+    if not rows or client is None:
+        return rows
+    ids = [str(r.get(id_key)) for r in rows if r.get(id_key)]
+    if not ids:
+        return rows
+
+    latest: Dict[str, dict] = {}
+    CHUNK = 200
+    try:
+        for i in range(0, len(ids), CHUNK):
+            chunk = ids[i:i + CHUNK]
+            q = (client.table("prediction_replay_corrections")
+                 .select("prediction_id,corrected_status,corrected_exit_price,"
+                         "entry_price,replay_status,corrected_resolution_reason,replayed_at")
+                 .in_("prediction_id", chunk)
+                 .eq("replay_status", "ok")
+                 .order("replayed_at", desc=True))
+            res = q.execute() if hasattr(q, "execute") else q
+            data = res.data if hasattr(res, "data") else (
+                res.get("data") if isinstance(res, dict) else []) or []
+            for c in data:
+                pid = str(c.get("prediction_id"))
+                # order is replayed_at DESC → first seen per id is the newest batch
+                if pid not in latest:
+                    latest[pid] = c
+    except Exception:
+        return rows
+
+    for r in rows:
+        c = latest.get(str(r.get(id_key)))
+        if not c:
+            continue
+        r["corrected_status"] = c.get("corrected_status")
+        r["corrected_exit_price"] = c.get("corrected_exit_price")
+        r["corrected_entry_price"] = c.get("entry_price")
+        r["corrected_replay_status"] = c.get("replay_status")
+        r["corrected_resolution_reason"] = c.get("corrected_resolution_reason")
+    return rows
 
 
 def summarize_scope(scope_signals: List[dict], *, default_symbol: Optional[str] = None) -> dict:

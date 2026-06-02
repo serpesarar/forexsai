@@ -39,6 +39,7 @@ from services.adaptive_tp_sl import (
 from services.signal_analytics import (
     TIMEFRAME_ORDER,
     MODEL_ORDER,
+    attach_corrections,
     classify_signal,
     collapse_smc_cadence_signals,
     coerce_float as analytics_coerce_float,
@@ -618,7 +619,10 @@ async def get_accuracy_by_model(
                 predictions.extend(batch)
             cur = de
         predictions = filter_market_closed_invalid_signals(predictions)
-        
+        # Honest 1m ground-truth: override the inflated 5m-candle status where a
+        # replay correction exists (see prediction_replay_corrections).
+        attach_corrections(predictions, client)
+
         if not predictions:
             return {"models": [], "total": 0, "days": days, "note": "No completed signals found"}
         
@@ -642,8 +646,14 @@ async def get_accuracy_by_model(
             stats = strategy_stats[strategy]
             stats["total"] += 1
             
-            # Use lifecycle status as primary indicator
-            status = pred.get("status")
+            # Use lifecycle status as primary indicator — but prefer the honest
+            # 1m replay verdict when one is attached (corrected_status).
+            corrected_status = pred.get("corrected_status")
+            replay_ok = (pred.get("corrected_replay_status") or "ok") == "ok"
+            if corrected_status in ("completed", "stopped", "expired") and replay_ok:
+                status = corrected_status
+            else:
+                status = pred.get("status")
             targets_hit = pred.get("targets_hit") or {}
             if isinstance(targets_hit, str):
                 import json

@@ -83,7 +83,7 @@ async def analyze_news(symbol: str, limit: int = Query(15, ge=1, le=50), hours_b
     direction_bias = "bullish" if overall_sentiment > 0.05 else "bearish" if overall_sentiment < -0.05 else "neutral"
     return {
         "symbol": symbol,
-        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "news_count": len(items),
         "analyzed_count": len(analyses),
         "overall_sentiment": overall_sentiment,

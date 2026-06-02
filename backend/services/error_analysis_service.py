@@ -568,7 +568,7 @@ async def check_and_analyze_failed_predictions(
         # 2. Have an outcome marked as incorrect
         # 3. Don't have an error analysis yet
         cutoff = datetime.now(timezone.utc) - timedelta(hours=hours_ago)
-        cutoff_iso = cutoff.isoformat() + "Z"
+        cutoff_iso = cutoff.isoformat()
         
         # Get outcomes that are failures
         query = client.table("outcome_results").select(

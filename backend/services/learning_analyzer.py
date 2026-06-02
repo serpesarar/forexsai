@@ -39,7 +39,7 @@ async def analyze_factor_correlations(
         return {"error": "Database client not available"}
     
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-    cutoff_iso = cutoff.isoformat() + "Z"
+    cutoff_iso = cutoff.isoformat()
     
     try:
         query = client.table("outcome_results").select(

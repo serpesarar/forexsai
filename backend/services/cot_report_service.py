@@ -656,7 +656,7 @@ async def get_cot_summary() -> Dict:
 
     return {
         **results,
-        "last_update": _last_fetch.isoformat() + "Z" if _last_fetch else None,
+        "last_update": _last_fetch.isoformat() if _last_fetch else None,
         "symbols": list(results.keys()),
     }
 

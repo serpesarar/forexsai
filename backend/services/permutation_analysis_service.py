@@ -13,7 +13,7 @@ import pandas as pd
 import numpy as np
 
 from services.candle_cache_store import load_candles
-from services.signal_analytics import classify_signal, normalize_model_type, sort_models
+from services.signal_analytics import attach_corrections, classify_signal, normalize_model_type, sort_models
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ def _normalize_symbol(symbol: str) -> str:
 
 
 def _utc_iso(value: datetime) -> str:
-    return value.replace(microsecond=0).isoformat() + "Z"
+    return value.replace(microsecond=0).isoformat()
 
 
 def _extract_rows(result: Any) -> List[Dict[str, Any]]:
@@ -201,7 +201,10 @@ async def analyze_model_permutations(
                 .neq("status", "active") \
                 .limit(5000) \
                 .execute()
-            return _extract_rows(result)
+            rows = _extract_rows(result)
+            # Grade combos on the honest 1m replay verdict, not the 5m label.
+            attach_corrections(rows, client)
+            return rows
 
         def compute_combos(current_logs: List[Dict[str, Any]]):
             for log in current_logs:

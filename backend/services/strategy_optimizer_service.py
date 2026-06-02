@@ -603,7 +603,7 @@ async def run_optimization(days: int = 14) -> OptimizationResult:
     from services.market_regime_service import detect_regime, _detect_session
     from services.market_data_service import get_ohlcv_data
 
-    timestamp = datetime.now(timezone.utc).isoformat() + "Z"
+    timestamp = datetime.now(timezone.utc).isoformat()
 
     # ── 1. Get macro data (VIX, DXY, etc.) ──
     macro = get_macro()

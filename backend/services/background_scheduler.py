@@ -264,7 +264,7 @@ async def update_symbol_data(symbol: str) -> Optional[Dict[str, Any]]:
         
         return {
             "symbol": symbol,
-            "updated_at": datetime.now(timezone.utc).isoformat() + "Z",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
             "ml_prediction": ml_dict,
             "ta_snapshot": ta_snapshot,
             "current_price": float(current_price) if current_price else None,
@@ -314,7 +314,7 @@ async def update_news_if_needed(symbol: str) -> Optional[Dict[str, Any]]:
         return {
             "headlines": headlines,
             "count": len(headlines),
-            "updated_at": now.isoformat() + "Z"
+            "updated_at": now.isoformat()
         }
     except Exception as e:
         logger.error(f"Error fetching news for {symbol}: {e}")
@@ -343,7 +343,7 @@ async def save_to_cache(symbol: str, data: Dict[str, Any], news: Optional[Dict[s
         # Prepare cache data
         cache_data = {
             "symbol": symbol,
-            "updated_at": datetime.now(timezone.utc).isoformat() + "Z",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
             "ml_prediction": json.dumps(data.get("ml_prediction", {})),
             "ta_snapshot": json.dumps(data.get("ta_snapshot", {})),
             "macro": json.dumps(data.get("macro", {})),

@@ -1313,6 +1313,7 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         
         rebound_summary = None
         try:
+            from services.rebound_filter_service import analyze_rebound
             rebound_summary = await analyze_rebound(symbol, timeframe=timeframe)
         except Exception as rebound_err:
             logger.warning(f"EMEL rebound integration failed: {rebound_err}")
@@ -1855,6 +1856,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
 
         rebound_summary = None
         try:
+            from services.rebound_filter_service import analyze_rebound
             rebound_summary = await analyze_rebound(symbol, timeframe=timeframe)
         except Exception as rebound_err:
             logger.warning(f"PULSE rebound integration failed: {rebound_err}")
