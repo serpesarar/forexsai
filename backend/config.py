@@ -50,6 +50,11 @@ class Settings(BaseSettings):
     rtyhiim_tick_rate_hz: float = Field(default=1.0, validation_alias="RTYHIIM_TICK_RATE_HZ")
     rtyhiim_min_period_s: float = Field(default=8.0, validation_alias="RTYHIIM_MIN_PERIOD_S")
     rtyhiim_max_period_s: float = Field(default=240.0, validation_alias="RTYHIIM_MAX_PERIOD_S")
+    # v3 (sample/bar-based) — the engine works on bars; seconds_per_bar bridges to clock time
+    rtyhiim_window_samples: int = Field(default=600, validation_alias="RTYHIIM_WINDOW_SAMPLES")
+    rtyhiim_seconds_per_bar: float = Field(default=300.0, validation_alias="RTYHIIM_SECONDS_PER_BAR")
+    rtyhiim_min_period_samples: int = Field(default=4, validation_alias="RTYHIIM_MIN_PERIOD_SAMPLES")
+    rtyhiim_max_period_samples: int = Field(default=120, validation_alias="RTYHIIM_MAX_PERIOD_SAMPLES")
     
     # Redis (for WebSocket broadcast cache)
     redis_url: str | None = Field(default=None, validation_alias="REDIS_URL")

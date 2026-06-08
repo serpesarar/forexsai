@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
 from threading import Lock
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, asdict
 
 import numpy as np
@@ -291,17 +292,21 @@ async def run_rtyhiim_detector_async(symbol: str, timeframe: str) -> Dict[str, o
 
 async def _run_rhythm_engine_async(symbol: str) -> Dict[str, object]:
     """Async version that fetches live prices."""
-    detector = _build_detector()
-
     prices = await fetch_live_prices(symbol, 600)
     if not prices or len(prices) < 50:
         prices = _generate_prices(600).tolist()
-    
-    for idx, price in enumerate(prices):
-        detector.add_tick(float(price), timestamp=float(idx))
-    
-    rhythm_state = detector.detect_wave_pattern()
-    decision = detector.should_trade()
+
+    # The FFT + autocorrelation + DTW work is CPU-bound and pure-Python in
+    # places (DTW is an O(n*m) double loop). Running it inline blocks the event
+    # loop long enough to starve websocket keepalive pings, so offload to a
+    # worker thread.
+    def _compute() -> Tuple[dict, dict]:
+        detector = _build_detector()
+        for idx, price in enumerate(prices):
+            detector.add_tick(float(price), timestamp=float(idx))
+        return detector.detect_wave_pattern(), detector.should_trade()
+
+    rhythm_state, decision = await asyncio.to_thread(_compute)
 
     return _build_state_response(rhythm_state, decision, len(prices) > 50 and prices[0] != prices[-1])
 
@@ -323,9 +328,9 @@ def _run_rhythm_engine_sync(symbol: str) -> Dict[str, object]:
 def _build_state_response(rhythm_state: dict, decision: dict, is_live: bool) -> Dict[str, object]:
     """Build the state response from rhythm detection results."""
     predictions = []
-    for horizon in ("30s", "60s", "120s"):
-        value = rhythm_state.get("predictions", {}).get(horizon)
-        if value is None:
+    raw_predictions = rhythm_state.get("predictions", {}) or {}
+    for horizon, value in raw_predictions.items():
+        if value is None or str(horizon).endswith("_ci"):
             continue
         predictions.append(
             {
@@ -349,16 +354,18 @@ def _build_state_response(rhythm_state: dict, decision: dict, is_live: bool) -> 
 
 
 def _build_detector():
-    # rhythm_detector_v2 lives at the app root (backend/), so it ships with the
-    # deploy and is importable directly. rhythm_detector is a thin re-export shim.
-    from rhythm_detector_v2 import RhythmDetector, RhythmConfig
+    # rhythm_detector_v3 is the statistically honest engine (returns-based spectral
+    # analysis, AR(1) red-noise significance, out-of-sample skill gating). It works
+    # on *bars*; seconds_per_bar bridges bar index -> wall-clock so periods/horizons
+    # are reported truthfully (5m feed => 300s/bar).
+    from rhythm_detector_v3 import RhythmDetector, RhythmConfig
 
     return RhythmDetector(
         RhythmConfig(
-            window_seconds=settings.rtyhiim_window_seconds,
-            tick_rate_hz=settings.rtyhiim_tick_rate_hz,
-            min_period_s=settings.rtyhiim_min_period_s,
-            max_period_s=settings.rtyhiim_max_period_s,
+            window_samples=settings.rtyhiim_window_samples,
+            seconds_per_sample=settings.rtyhiim_seconds_per_bar,
+            min_period_samples=settings.rtyhiim_min_period_samples,
+            max_period_samples=settings.rtyhiim_max_period_samples,
         )
     )
 
