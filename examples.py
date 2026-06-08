@@ -1,9 +1,13 @@
 import asyncio
 import json
+import os
+import sys
 from typing import AsyncIterator
 
 import numpy as np
 
+# rhythm_detector_v2 now lives under backend/ (so it ships with the deploy)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
 from rhythm_detector_v2 import RhythmDetector, RhythmConfig
 
 

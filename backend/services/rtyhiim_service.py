@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from pathlib import Path
 from threading import Lock
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
-import sys
 
 import numpy as np
 import httpx
@@ -351,31 +349,18 @@ def _build_state_response(rhythm_state: dict, decision: dict, is_live: bool) -> 
 
 
 def _build_detector():
-    repo_root = Path(__file__).resolve().parents[2]
-    if str(repo_root) not in sys.path:
-        sys.path.append(str(repo_root))
-    try:
-        from rhythm_detector_v2 import RhythmDetector, RhythmConfig
+    # rhythm_detector_v2 lives at the app root (backend/), so it ships with the
+    # deploy and is importable directly. rhythm_detector is a thin re-export shim.
+    from rhythm_detector_v2 import RhythmDetector, RhythmConfig
 
-        return RhythmDetector(
-            RhythmConfig(
-                window_seconds=settings.rtyhiim_window_seconds,
-                tick_rate_hz=settings.rtyhiim_tick_rate_hz,
-                min_period_s=settings.rtyhiim_min_period_s,
-                max_period_s=settings.rtyhiim_max_period_s,
-            )
+    return RhythmDetector(
+        RhythmConfig(
+            window_seconds=settings.rtyhiim_window_seconds,
+            tick_rate_hz=settings.rtyhiim_tick_rate_hz,
+            min_period_s=settings.rtyhiim_min_period_s,
+            max_period_s=settings.rtyhiim_max_period_s,
         )
-    except Exception:
-        from rhythm_detector import RhythmDetector, RhythmConfig
-
-        return RhythmDetector(
-            RhythmConfig(
-                window_seconds=settings.rtyhiim_window_seconds,
-                tick_rate_hz=settings.rtyhiim_tick_rate_hz,
-                min_period_s=settings.rtyhiim_min_period_s,
-                max_period_s=settings.rtyhiim_max_period_s,
-            )
-        )
+    )
 
 
 def _generate_prices(length: int) -> np.ndarray:
