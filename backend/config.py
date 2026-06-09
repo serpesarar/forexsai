@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     rtyhiim_seconds_per_bar: float = Field(default=300.0, validation_alias="RTYHIIM_SECONDS_PER_BAR")
     rtyhiim_min_period_samples: int = Field(default=4, validation_alias="RTYHIIM_MIN_PERIOD_SAMPLES")
     rtyhiim_max_period_samples: int = Field(default=120, validation_alias="RTYHIIM_MAX_PERIOD_SAMPLES")
+    # Sub-minute bar size (seconds) synthesized from the live tick buffer for rhythm
+    # detection. 0 disables and falls back to 1m/5m. 15s resolves intraday channel
+    # cycles that sit below the 5m period-floor.
+    rtyhiim_subminute_bar_seconds: int = Field(default=15, validation_alias="RTYHIIM_SUBMINUTE_BAR_SECONDS")
     
     # Redis (for WebSocket broadcast cache)
     redis_url: str | None = Field(default=None, validation_alias="REDIS_URL")

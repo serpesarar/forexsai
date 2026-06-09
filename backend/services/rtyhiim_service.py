@@ -293,11 +293,27 @@ async def run_rtyhiim_detector_async(symbol: str, timeframe: str) -> Dict[str, o
 async def _fetch_prices_best_tf(symbol: str, n_bars: int) -> Tuple[List[float], str, float, str]:
     """Pick the finest timeframe that actually has real bars for this symbol.
 
-    MT5 bridge only guarantees 5m (1m is optional and absent for most indices),
-    so prefer 1m where it genuinely exists (e.g. XAUUSD) and fall back to 5m.
+    Order of preference (finest → coarsest):
+      1. Sub-minute bars (default 15s) synthesized from the live MT5 tick buffer.
+         Best resolution for intraday channel rhythm: a 5–15 min oscillation that
+         is below the 5m period-floor becomes 20–60 clean samples here. Only
+         available once enough ticks have accumulated (≈30 min of live flow).
+      2. 1m bars where the bridge genuinely provides them (e.g. XAUUSD).
+      3. 5m bars — always present from MT5.
     Returns (closes, timeframe_used, seconds_per_bar, data_source). Never invents
     data — if nothing real is available the caller surfaces 'no_data'.
     """
+    bar_seconds = int(getattr(settings, "rtyhiim_subminute_bar_seconds", 15) or 15)
+    if bar_seconds > 0:
+        try:
+            from services.data_hub import build_subminute_candles
+            sub = build_subminute_candles(symbol, bar_seconds=bar_seconds, limit=n_bars)
+            closes = [float(c.get("close", 0)) for c in (sub or []) if c.get("close")]
+            if len(closes) >= 120:
+                return closes[-n_bars:], f"{bar_seconds}s", float(bar_seconds), "live"
+        except Exception:
+            pass  # tick buffer not ready / import issue — fall through to bar streams
+
     for interval, sps in (("1m", 60.0), ("5m", 300.0)):
         candles = await fetch_intraday_candles(symbol, interval=interval, limit=n_bars)
         closes = [float(c.get("close", 0)) for c in (candles or []) if c.get("close")]

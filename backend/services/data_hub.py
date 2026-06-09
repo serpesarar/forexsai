@@ -36,9 +36,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections import deque
 from datetime import datetime, timedelta, timezone
 from threading import Lock
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Deque, List, Optional, Tuple
 
 try:
     import zoneinfo
@@ -96,6 +97,14 @@ _candles_4h: Dict[str, Dict[str, Any]] = {}     # symbol -> {candles, timestamp}
 
 # Macro data
 _macro_data: Dict[str, Dict[str, Any]] = {}     # key -> {symbol, price, timestamp}
+
+# Real-time tick history — bounded ring buffer per symbol, fed by ingest_live_price.
+# Used ONLY to synthesize sub-minute (e.g. 15s) bars for the rhythm detector. The
+# MT5 tick pub/sub overwrites _prices with the latest tick; this buffer additionally
+# retains the recent tick *series* so we can resample below the 1m/5m floor. Bounded
+# by count (memory-safe); stale ticks age out naturally when the window slides.
+_TICK_BUFFER_MAXLEN = 24000     # ~ enough for 600 × 15s bars even at heavy tick flow
+_tick_buffer: Dict[str, Deque[Tuple[float, float]]] = {}   # symbol -> deque[(ts_seconds, price)]
 
 # Last fetch timestamps
 _last_fetch: Dict[str, float] = {}
@@ -1326,6 +1335,89 @@ def get_candles(symbol: str, timeframe: str, limit: int = 300) -> List[Dict]:
     return filtered[-limit:]
 
 
+def build_subminute_candles(
+    symbol: str,
+    bar_seconds: int = 15,
+    limit: int = 600,
+    max_gap_bars: int = 4,
+    max_staleness_seconds: float = 90.0,
+) -> List[Dict]:
+    """Synthesize sub-minute OHLC bars from the live tick buffer.
+
+    The MT5 tick stream is real-time but only the latest tick is kept in
+    ``_prices``; ``_tick_buffer`` retains the recent tick *series* so we can
+    resample below the 1m/5m floor for the rhythm detector.
+
+    Gap handling: empty buckets are forward-filled with the previous close
+    (flat bar, volume 0) for short gaps; a gap longer than ``max_gap_bars``
+    truncates the series and we keep only the most recent contiguous segment
+    (so a weekend / session close does not become one giant flat run).
+
+    Returns at most ``limit`` bars in the same shape as ``get_candles`` (ms
+    timestamp, OHLCV). Empty list if the buffer is missing, stale, or too thin.
+    """
+    symbol = _canonical_symbol(symbol)
+    if bar_seconds <= 0:
+        return []
+
+    with _lock:
+        buf = _tick_buffer.get(symbol)
+        ticks: List[Tuple[float, float]] = list(buf) if buf else []
+
+    if len(ticks) < 2:
+        return []
+
+    now = datetime.now(timezone.utc).timestamp()
+    if now - ticks[-1][0] > max_staleness_seconds:
+        return []   # tick flow has dried up (market closed / bridge down) — honest no-data
+
+    # Bucket ticks into fixed sub-minute windows keyed by floor(ts / bar_seconds).
+    buckets: Dict[int, Dict[str, float]] = {}
+    for ts, price in ticks:
+        if price <= 0:
+            continue
+        key = int(ts // bar_seconds)
+        b = buckets.get(key)
+        if b is None:
+            buckets[key] = {"open": price, "high": price, "low": price, "close": price, "volume": 1.0}
+        else:
+            b["high"] = max(b["high"], price)
+            b["low"] = min(b["low"], price)
+            b["close"] = price
+            b["volume"] += 1.0
+
+    if not buckets:
+        return []
+
+    first_key, last_key = min(buckets), max(buckets)
+    candles: List[Dict] = []
+    prev_close: Optional[float] = None
+    gap_run = 0
+    for key in range(first_key, last_key + 1):
+        b = buckets.get(key)
+        if b is None:
+            gap_run += 1
+            if gap_run > max_gap_bars or prev_close is None:
+                # Long gap — discard everything before it; restart the contiguous run.
+                candles = []
+                continue
+            candles.append({
+                "timestamp": key * bar_seconds * 1000,
+                "open": prev_close, "high": prev_close,
+                "low": prev_close, "close": prev_close, "volume": 0.0,
+            })
+            continue
+        gap_run = 0
+        candles.append({
+            "timestamp": key * bar_seconds * 1000,
+            "open": b["open"], "high": b["high"],
+            "low": b["low"], "close": b["close"], "volume": b["volume"],
+        })
+        prev_close = b["close"]
+
+    return candles[-limit:]
+
+
 def get_macro() -> Dict[str, Any]:
     """Get cached macro data (DXY, VIX, USDTRY)."""
     with _lock:
@@ -1519,6 +1611,12 @@ async def ingest_live_price(
         if existing_ts and ts_seconds + 1 < existing_ts:
             return False
         _prices[canonical_symbol] = payload
+
+        buf = _tick_buffer.get(canonical_symbol)
+        if buf is None:
+            buf = deque(maxlen=_TICK_BUFFER_MAXLEN)
+            _tick_buffer[canonical_symbol] = buf
+        buf.append((ts_seconds, float(price)))
 
     _last_fetch[f"price:{canonical_symbol}"] = time.time()
 
