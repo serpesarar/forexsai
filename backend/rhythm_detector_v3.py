@@ -41,7 +41,7 @@ from dataclasses import dataclass, field
 from typing import Deque, Dict, List, Optional, Tuple
 
 import numpy as np
-from scipy.signal import windows
+from scipy.signal import find_peaks, windows
 
 
 # ---------------------------------------------------------------------------
@@ -90,6 +90,10 @@ class RhythmState:
     significance: float = 0.0      # observed power / red-noise threshold
     oos_skill: float = 0.0         # 1 - MSE_cycle / MSE_persistence on holdout
     snr: float = 0.0               # spectral peak / median band power
+    reaction_zone: Dict[str, object] = field(default_factory=dict)
+    upper_touches: int = 0
+    lower_touches: int = 0
+    touches_confirmed: bool = False
 
     def as_dict(self) -> Dict[str, object]:
         return {
@@ -109,6 +113,10 @@ class RhythmState:
             "significance": self.significance,
             "oos_skill": self.oos_skill,
             "snr": self.snr,
+            "reaction_zone": self.reaction_zone,
+            "upper_touches": self.upper_touches,
+            "lower_touches": self.lower_touches,
+            "touches_confirmed": self.touches_confirmed,
         }
 
 
@@ -129,6 +137,10 @@ _INSUFFICIENT = {
     "significance": 0.0,
     "oos_skill": 0.0,
     "snr": 0.0,
+    "reaction_zone": {},
+    "upper_touches": 0,
+    "lower_touches": 0,
+    "touches_confirmed": False,
 }
 
 
@@ -240,6 +252,16 @@ class RhythmDetector:
         support, resistance = self._support_resistance(prices)
         harmonics = self._harmonics(returns, freq_cyc_per_sample, sps)
 
+        # --- reaction zone: next swing extreme (time + price +/- deviation band)
+        reaction = self._reaction_zone(
+            prices, detr, t, slope, intercept,
+            freq_cyc_per_sample, amp_log, phase_rad, sps,
+        )
+
+        # --- touch confirmation: did price actually react at the band >=3x?
+        upper_t, lower_t = self._count_touches(detr, amp_log, period_samples)
+        confirmed = upper_t >= 3 and lower_t >= 3
+
         state = RhythmState(
             pattern_type="cycle" if confidence > 0 else "weak_cycle",
             dominant_period_s=float(period_seconds),
@@ -257,6 +279,10 @@ class RhythmDetector:
             significance=float(significance),
             oos_skill=float(oos_skill),
             snr=float(snr),
+            reaction_zone=reaction,
+            upper_touches=int(upper_t),
+            lower_touches=int(lower_t),
+            touches_confirmed=bool(confirmed),
         )
         self._last_state = state
         return state.as_dict()
@@ -280,19 +306,15 @@ class RhythmDetector:
             state.confidence >= self.config.confidence_threshold
             and state.oos_skill >= self.config.min_oos_skill
             and state.amplitude >= self.config.min_amplitude_pct
+            and state.touches_confirmed
         )
 
+        # Direction comes from the next reaction zone: a support (dip) reaction is
+        # a BUY, a resistance (top) reaction is a SELL. This is what the user wants
+        # surfaced — "where will it bounce next" — not just a raw point forecast.
         direction = "HOLD"
-        if should and state.predictions:
-            current = self._prices[-1] if self._prices else 0.0
-            # nearest-horizon forecast
-            forward = None
-            for key in sorted(state.predictions, key=lambda k: state.predictions and 0):
-                if not key.endswith("_ci"):
-                    forward = state.predictions[key]
-                    break
-            if forward is not None and current:
-                direction = "BUY" if forward > current else "SELL"
+        if should and state.reaction_zone:
+            direction = str(state.reaction_zone.get("expected_direction", "HOLD"))
 
         return {
             "should_trade": bool(should),
@@ -303,6 +325,10 @@ class RhythmDetector:
             "dominant_period_s": state.dominant_period_s,
             "oos_skill": state.oos_skill,
             "significance": state.significance,
+            "touches_confirmed": state.touches_confirmed,
+            "upper_touches": state.upper_touches,
+            "lower_touches": state.lower_touches,
+            "reaction_zone": state.reaction_zone,
         }
 
     # -- internals ---------------------------------------------------------
@@ -471,6 +497,83 @@ class RhythmDetector:
             label = _label_for_seconds(h * sps)
             out[label] = float(math.exp(log_pred))
         return out
+
+    def _reaction_zone(
+        self,
+        prices: np.ndarray,
+        detr: np.ndarray,
+        t: np.ndarray,
+        slope: float,
+        intercept: float,
+        freq: float,
+        amp_log: float,
+        phase_rad: float,
+        sps: float,
+    ) -> Dict[str, object]:
+        """Where/when the next swing extreme is expected, with a deviation band.
+
+        The fitted cycle on log-price is amp*cos(w t - phi0). Its next maximum is a
+        resistance (sell) reaction; next minimum is a support (buy) reaction. The
+        band is the residual scatter of price around the fitted trend+cycle, i.e.
+        the empirical 'sapma payı'.
+        """
+        n = prices.size
+        if amp_log <= 0 or freq <= 0:
+            return {}
+        w = 2.0 * math.pi * freq
+        phi0 = w * (n - 1) - phase_rad
+        t0 = float(n - 1)
+        theta0 = w * t0 - phi0
+
+        # next top angle = smallest multiple of 2pi strictly greater than theta0
+        k_top = math.floor(theta0 / (2 * math.pi)) + 1
+        t_top = (2 * math.pi * k_top + phi0) / w
+        # next bottom angle = smallest (pi + 2pi k) strictly greater than theta0
+        k_bot = math.floor((theta0 - math.pi) / (2 * math.pi)) + 1
+        t_bot = (math.pi + 2 * math.pi * k_bot + phi0) / w
+
+        if t_top <= t_bot:
+            t_next, kind, sign, direction = t_top, "resistance", 1.0, "SELL"
+        else:
+            t_next, kind, sign, direction = t_bot, "support", -1.0, "BUY"
+
+        log_pred = (slope * t_next + intercept) + sign * amp_log
+        price = float(math.exp(log_pred))
+
+        # residual band: actual log-price minus fitted trend+cycle over the window
+        fitted_cycle = amp_log * np.cos(w * t - phi0)
+        resid = detr - fitted_cycle
+        band_log = float(np.std(resid)) if resid.size else 0.0
+        band = float(price * band_log)
+
+        eta_samples = max(0.0, t_next - t0)
+        eta_seconds = eta_samples * sps
+        return {
+            "next_type": kind,            # 'support' (dip) or 'resistance' (tepe)
+            "expected_direction": direction,
+            "price": round(price, 4),
+            "band": round(band, 4),
+            "lower": round(price - band, 4),
+            "upper": round(price + band, 4),
+            "eta_seconds": round(eta_seconds, 1),
+            "eta_label": _label_for_seconds(eta_seconds),
+            "eta_bars": int(round(eta_samples)),
+        }
+
+    def _count_touches(self, detr: np.ndarray, amp_log: float, period_samples: float) -> Tuple[int, int]:
+        """Count distinct reactions at the upper/lower cycle band. A 'touch' is a
+        local extreme reaching >= 60% of the cycle amplitude, separated from the
+        next by at least half a period so sub-period noise wiggles are not counted
+        as separate reactions — the empirical 'price bounced off the band again'.
+        Feeds the >=3-touch confirmation gate the user asked for.
+        """
+        if amp_log <= 0 or detr.size < 8:
+            return 0, 0
+        height = 0.6 * amp_log
+        distance = max(2, int(round(period_samples / 2.0))) if period_samples > 0 else 2
+        upper, _ = find_peaks(detr, height=height, distance=distance)
+        lower, _ = find_peaks(-detr, height=height, distance=distance)
+        return int(upper.size), int(lower.size)
 
     def _harmonics(self, returns: np.ndarray, f_dom: float, sps: float) -> List[Tuple[float, float]]:
         n = returns.size

@@ -10,6 +10,18 @@ interface RTYHIIMDetectorPanelProps {
   symbolLabel?: string;
 }
 
+interface RtyhiimReactionZone {
+  next_type: string;
+  expected_direction: string;
+  price: number;
+  band: number;
+  lower: number;
+  upper: number;
+  eta_seconds: number;
+  eta_label: string;
+  eta_bars: number;
+}
+
 interface RtyhiimData {
   state?: {
     pattern_type: string;
@@ -19,7 +31,20 @@ interface RtyhiimData {
     amplitude: number;
     direction: string;
     predictions: Array<{ horizon: string; value: number }>;
+    timeframe_used?: string;
+    data_source?: string;
+    upper_touches?: number;
+    lower_touches?: number;
+    touches_confirmed?: boolean;
+    reaction_zone?: RtyhiimReactionZone | null;
   };
+}
+
+function formatPeriod(seconds: number): string {
+  if (!seconds || seconds <= 0) return "—";
+  if (seconds < 60) return `${seconds.toFixed(0)}s`;
+  if (seconds < 3600) return `${(seconds / 60).toFixed(1)}m`;
+  return `${(seconds / 3600).toFixed(1)}h`;
 }
 
 export default function RTYHIIMDetectorPanel({ symbol = "NDX.INDX", symbolLabel = "NASDAQ" }: RTYHIIMDetectorPanelProps) {
@@ -28,6 +53,8 @@ export default function RTYHIIMDetectorPanel({ symbol = "NDX.INDX", symbolLabel 
   const { data: consolidation, isLoading: consLoading } = useConsolidation(symbol, 20, "1m");
   const typedData = data as RtyhiimData | undefined;
   const state = typedData?.state;
+  const rz = state?.reaction_zone;
+  const noData = state?.data_source === "no_data" || state?.pattern_type === "insufficient_data";
 
   return (
     <>
@@ -68,11 +95,18 @@ export default function RTYHIIMDetectorPanel({ symbol = "NDX.INDX", symbolLabel 
           </div>
         ) : error ? (
           <div className="text-xs text-danger">RTYHIIM verisi alınamadı.</div>
+        ) : noData ? (
+          <div className="text-xs text-textSecondary bg-white/5 rounded-lg p-3">
+            Bu sembol için yeterli {state?.timeframe_used && state.timeframe_used !== "none" ? state.timeframe_used : "M1"} verisi yok — ritim analizi yapılamıyor.
+          </div>
         ) : state ? (
           <>
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <span className="px-2 py-1 rounded bg-accent/20 text-accent">{state.pattern_type}</span>
-              <span className="text-textSecondary">Period: <span className="text-white">{state.dominant_period_s.toFixed(0)}s</span></span>
+              {state.timeframe_used && (
+                <span className="px-2 py-0.5 rounded bg-white/10 text-textSecondary">{state.timeframe_used}</span>
+              )}
+              <span className="text-textSecondary">Period: <span className="text-white">{formatPeriod(state.dominant_period_s)}</span></span>
               <span className="text-textSecondary">Conf: <span className="text-white">{Math.round(state.confidence * 100)}%</span></span>
             </div>
             <div className="grid grid-cols-3 gap-2 text-xs">
@@ -101,6 +135,45 @@ export default function RTYHIIMDetectorPanel({ symbol = "NDX.INDX", symbolLabel 
                 ))}
               </div>
             </div>
+
+            {/* Reaction Zone — sıradaki tepki bölgesi */}
+            {rz && (
+              <div className={`rounded-lg p-3 border ${
+                rz.next_type === "support"
+                  ? "bg-emerald-500/10 border-emerald-500/30"
+                  : "bg-red-500/10 border-red-500/30"
+              }`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`text-xs font-semibold ${
+                    rz.next_type === "support" ? "text-emerald-400" : "text-red-400"
+                  }`}>
+                    {rz.next_type === "support" ? "Sıradaki Destek (Dip)" : "Sıradaki Direnç (Tepe)"}
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-white/10 text-[10px] text-textSecondary">
+                    {rz.eta_label}
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-lg font-mono font-bold text-white">{rz.price.toFixed(2)}</span>
+                  <span className="text-[10px] text-textSecondary">± {rz.band.toFixed(2)}</span>
+                </div>
+                <div className="text-[10px] text-textSecondary mt-1">
+                  Bant: <span className="text-white font-mono">{rz.lower.toFixed(2)}</span> – <span className="text-white font-mono">{rz.upper.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                    rz.expected_direction === "BUY" ? "bg-success/20 text-success" : "bg-danger/20 text-danger"
+                  }`}>
+                    {rz.expected_direction}
+                  </span>
+                  {state.touches_confirmed && (
+                    <span className="text-[10px] text-emerald-400">
+                      ✓ Dokunuş onaylı ({state.upper_touches}↑ / {state.lower_touches}↓)
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <p className="text-xs text-textSecondary">No rhythm data available.</p>

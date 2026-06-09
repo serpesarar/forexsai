@@ -123,6 +123,37 @@ def battery(name, gen, rng, expect_detect, **kw):
     return det_rate, trade_rate, med_skill
 
 
+def reaction_zone_hitrate(gen, rng, lookahead=60, **kw):
+    """Feed first N bars, read the predicted next reaction zone, then check whether
+    the ACTUAL future bars enter that price band within ~eta. On a real cycle this
+    should hit far above chance; on a random walk it should be near chance."""
+    hits = total = 0
+    etas = []
+    touches = []
+    for _ in range(RUNS):
+        full = gen(rng, n=N + lookahead, **kw)
+        det = _make_detector()
+        for i, p in enumerate(full[:N]):
+            det.add_tick(float(p), timestamp=float(i))
+        st = det.detect_wave_pattern()
+        dec = det.should_trade()
+        if not dec["should_trade"]:
+            continue
+        rz = st.get("reaction_zone") or {}
+        if not rz:
+            continue
+        total += 1
+        touches.append(min(st["upper_touches"], st["lower_touches"]))
+        eta_bars = max(1, int(rz["eta_bars"]))
+        etas.append(eta_bars)
+        window = full[N: N + min(lookahead, eta_bars + 5)]  # eta + small pad
+        lo, hi = rz["lower"], rz["upper"]
+        if np.any((window >= lo) & (window <= hi)):
+            hits += 1
+    rate = hits / total if total else float("nan")
+    return rate, total, (np.median(etas) if etas else float("nan")), (np.median(touches) if touches else float("nan"))
+
+
 def main():
     rng = np.random.default_rng(SEED)
     print("=" * 70)
@@ -146,6 +177,15 @@ def main():
     c_mid = battery("C2. cycle in random-walk noise (amp 0.4% / noise 0.2%)", cyclic, rng,
                     expect_detect="moderate", period=40, amp_pct=0.004, noise_pct=0.002)
 
+    # D. reaction-zone hit-rate: does the predicted next reaction band get hit?
+    print("\n--- D. REACTION-ZONE forward hit-rate (predicted band actually touched) ---")
+    rz_cycle, n_c, eta_c, tch_c = reaction_zone_hitrate(cyclic_stationary, rng, period=40)
+    rz_rw, n_r, eta_r, tch_r = reaction_zone_hitrate(random_walk, rng)
+    print(f"  stationary cycle : hit={rz_cycle:6.1%}  (n={n_c}, median eta={eta_c:.0f} bars, "
+          f"median touches={tch_c:.0f})")
+    print(f"  random walk      : hit={rz_rw if not np.isnan(rz_rw) else float('nan'):6.1%}  "
+          f"(n={n_r}; should rarely even fire)")
+
     print("\n" + "=" * 70)
     print("VERDICT")
     print("=" * 70)
@@ -158,7 +198,10 @@ def main():
           f"(rw-noise cycle detect={c_strong[0]:.0%}; want high)")
     print(f"  positive OOS skill when tradeable: {'PASS' if ok_skill else 'FAIL'} "
           f"(stationary-cycle median skill={c_stat[2]:+.3f}; want >0)")
-    allp = ok_noise and ok_power and ok_skill
+    ok_rz = (not np.isnan(rz_cycle)) and rz_cycle >= 0.70
+    print(f"  reaction-zone predicts forward   : {'PASS' if ok_rz else 'FAIL'} "
+          f"(stationary-cycle band hit={rz_cycle:.0%}; want high)")
+    allp = ok_noise and ok_power and ok_skill and ok_rz
     print(f"\n  OVERALL: {'PASS — safe to wire into service' if allp else 'FAIL — do not deploy'}")
 
 

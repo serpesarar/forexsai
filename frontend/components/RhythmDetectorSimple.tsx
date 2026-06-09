@@ -32,6 +32,17 @@ export default function RhythmDetectorSimple({ symbol = "NDX.INDX", symbolLabel 
   const isConsolidating = consolidation?.is_consolidating;
   const breakoutDir = consolidation?.breakout_direction;
 
+  // Periyodu okunabilir biçimde göster (sn -> dk / saat)
+  const formatPeriod = (seconds: number) => {
+    if (!seconds || seconds <= 0) return "—";
+    if (seconds < 90) return `${Math.round(seconds)}s`;
+    if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
+    return `${(seconds / 3600).toFixed(1)}h`;
+  };
+
+  const rz = state?.reaction_zone;
+  const noData = state?.data_source === "no_data" || state?.pattern_type === "insufficient_data";
+
   return (
     <>
       {/* Info Modal */}
@@ -79,7 +90,12 @@ export default function RhythmDetectorSimple({ symbol = "NDX.INDX", symbolLabel 
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-base font-semibold">{t("rhythmPanel.title")}</h3>
-          <p className="text-xs text-textSecondary">{symbolLabel} • {t("rhythmPanel.subtitle")}</p>
+          <p className="text-xs text-textSecondary">
+            {symbolLabel} • {t("rhythmPanel.subtitle")}
+            {state?.timeframe_used && state.timeframe_used !== "none" && (
+              <span className="ml-1 px-1.5 py-0.5 rounded bg-white/10 text-[10px] font-mono">{state.timeframe_used}</span>
+            )}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -191,7 +207,7 @@ export default function RhythmDetectorSimple({ symbol = "NDX.INDX", symbolLabel 
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-white/5 rounded-xl p-3 text-center">
             <p className="text-[10px] text-textSecondary mb-1">{t("rhythmPanel.period")}</p>
-            <p className="text-sm font-bold">{state.dominant_period_s.toFixed(0)}s</p>
+            <p className="text-sm font-bold">{formatPeriod(state.dominant_period_s)}</p>
           </div>
           <div className="bg-white/5 rounded-xl p-3 text-center">
             <p className="text-[10px] text-textSecondary mb-1">{t("rhythmPanel.regularity")}</p>
@@ -219,10 +235,62 @@ export default function RhythmDetectorSimple({ symbol = "NDX.INDX", symbolLabel 
         </div>
       )}
 
+      {/* Sıradaki Tepki Bölgesi (Reaction Zone) */}
+      {rz && (
+        <div className={`rounded-xl p-4 border ${rz.next_type === "support" ? "bg-emerald-500/10 border-emerald-500/25" : "bg-red-500/10 border-red-500/25"}`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              {rz.next_type === "support" ? (
+                <TrendingUp className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <TrendingDown className="w-4 h-4 text-red-400" />
+              )}
+              <span className={`text-sm font-semibold ${rz.next_type === "support" ? "text-emerald-400" : "text-red-400"}`}>
+                {locale === "en"
+                  ? (rz.next_type === "support" ? "Next reaction: Support" : "Next reaction: Resistance")
+                  : (rz.next_type === "support" ? "Sıradaki tepki: Destek" : "Sıradaki tepki: Direnç")}
+              </span>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/30 font-mono">
+              ~{rz.eta_label}
+            </span>
+          </div>
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-[10px] text-textSecondary">{locale === "en" ? "Expected zone (price ± band)" : "Beklenen bölge (fiyat ± sapma)"}</p>
+              <p className="text-lg font-bold font-mono">{rz.price.toFixed(2)}</p>
+              <p className="text-[11px] text-textSecondary font-mono">{rz.lower.toFixed(2)} – {rz.upper.toFixed(2)}</p>
+            </div>
+            <div className="text-right">
+              <span className={`text-xs font-bold px-2 py-1 rounded ${rz.expected_direction === "BUY" ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}>
+                {rz.expected_direction}
+              </span>
+              {state?.touches_confirmed && (
+                <p className="text-[10px] text-textSecondary mt-1">
+                  {locale === "en" ? "confirmed" : "onaylı"} ✓ ({state.upper_touches}/{state.lower_touches})
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Yükleniyor */}
       {isLoading && (
         <div className="text-center py-2">
           <p className="text-xs text-textSecondary animate-pulse">{t("rhythmPanel.analyzing")}</p>
+        </div>
+      )}
+
+      {/* Gerçek veri yok (sentetik göstermiyoruz) */}
+      {!isLoading && noData && (
+        <div className="text-center py-4">
+          <Activity className="w-8 h-8 text-textSecondary mx-auto mb-2 opacity-50" />
+          <p className="text-xs text-textSecondary">
+            {locale === "en"
+              ? "No real-time data for this symbol's finest timeframe yet."
+              : "Bu sembolün en ince zaman dilimi için henüz canlı veri yok."}
+          </p>
         </div>
       )}
 

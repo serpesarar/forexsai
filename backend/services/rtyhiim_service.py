@@ -9,7 +9,7 @@ from dataclasses import dataclass, asdict
 import numpy as np
 import httpx
 
-from models.rtyhiim import RtyhiimPrediction, RtyhiimResponse, RtyhiimState
+from models.rtyhiim import RtyhiimPrediction, RtyhiimResponse, RtyhiimState, RtyhiimReactionZone
 from config import settings
 
 
@@ -290,42 +290,71 @@ async def run_rtyhiim_detector_async(symbol: str, timeframe: str) -> Dict[str, o
     }
 
 
-async def _run_rhythm_engine_async(symbol: str) -> Dict[str, object]:
-    """Async version that fetches live prices."""
-    prices = await fetch_live_prices(symbol, 600)
-    if not prices or len(prices) < 50:
-        prices = _generate_prices(600).tolist()
+async def _fetch_prices_best_tf(symbol: str, n_bars: int) -> Tuple[List[float], str, float, str]:
+    """Pick the finest timeframe that actually has real bars for this symbol.
 
-    # The FFT + autocorrelation + DTW work is CPU-bound and pure-Python in
-    # places (DTW is an O(n*m) double loop). Running it inline blocks the event
-    # loop long enough to starve websocket keepalive pings, so offload to a
-    # worker thread.
+    MT5 bridge only guarantees 5m (1m is optional and absent for most indices),
+    so prefer 1m where it genuinely exists (e.g. XAUUSD) and fall back to 5m.
+    Returns (closes, timeframe_used, seconds_per_bar, data_source). Never invents
+    data — if nothing real is available the caller surfaces 'no_data'.
+    """
+    for interval, sps in (("1m", 60.0), ("5m", 300.0)):
+        candles = await fetch_intraday_candles(symbol, interval=interval, limit=n_bars)
+        closes = [float(c.get("close", 0)) for c in (candles or []) if c.get("close")]
+        if len(closes) >= 120:
+            return closes[-n_bars:], interval, sps, "live"
+    return [], "none", 300.0, "no_data"
+
+
+async def _run_rhythm_engine_async(symbol: str) -> Dict[str, object]:
+    """Async version that fetches live prices (adaptive timeframe, honest source)."""
+    n_bars = settings.rtyhiim_window_samples
+    prices, tf_used, sps, source = await _fetch_prices_best_tf(symbol, n_bars)
+
+    # No honest data → say so. We never fabricate a rhythm on synthetic prices.
+    if source == "no_data" or len(prices) < 120:
+        return _insufficient_response(tf_used, len(prices))
+
+    # The spectral / OOS work is CPU-bound; offload so it never starves the event
+    # loop (websocket keepalive pings).
     def _compute() -> Tuple[dict, dict]:
-        detector = _build_detector()
+        detector = _build_detector(sps)
         for idx, price in enumerate(prices):
             detector.add_tick(float(price), timestamp=float(idx))
         return detector.detect_wave_pattern(), detector.should_trade()
 
     rhythm_state, decision = await asyncio.to_thread(_compute)
-
-    return _build_state_response(rhythm_state, decision, len(prices) > 50 and prices[0] != prices[-1])
+    return _build_state_response(rhythm_state, decision, tf_used, len(prices), source)
 
 
 def _run_rhythm_engine_sync(symbol: str) -> Dict[str, object]:
-    """Sync version for use when already in async context."""
-    detector = _build_detector()
-    prices = _generate_prices(600)
-    
-    for idx, price in enumerate(prices):
-        detector.add_tick(float(price), timestamp=float(idx))
-    
-    rhythm_state = detector.detect_wave_pattern()
-    decision = detector.should_trade()
-
-    return _build_state_response(rhythm_state, decision, False)
+    """Sync fallback (used only if called from inside a running loop). Honest:
+    it returns insufficient_data rather than fabricating a synthetic rhythm."""
+    return _insufficient_response("none", 0)
 
 
-def _build_state_response(rhythm_state: dict, decision: dict, is_live: bool) -> Dict[str, object]:
+def _insufficient_response(tf_used: str, bars: int) -> Dict[str, object]:
+    """Honest empty state when no real data is available — no synthetic rhythm."""
+    return RtyhiimState(
+        pattern_type="insufficient_data",
+        dominant_period_s=0.0,
+        confidence=0.0,
+        regularity=0.0,
+        phase=0.0,
+        amplitude=0.0,
+        should_trade=False,
+        direction="HOLD",
+        predictions=[],
+        timeframe_used=tf_used,
+        bars=int(bars),
+        data_source="no_data",
+        reaction_zone=None,
+    ).dict()
+
+
+def _build_state_response(
+    rhythm_state: dict, decision: dict, tf_used: str, bars: int, source: str
+) -> Dict[str, object]:
     """Build the state response from rhythm detection results."""
     predictions = []
     raw_predictions = rhythm_state.get("predictions", {}) or {}
@@ -340,6 +369,9 @@ def _build_state_response(rhythm_state: dict, decision: dict, is_live: bool) -> 
             }
         )
 
+    rz = rhythm_state.get("reaction_zone") or {}
+    reaction_zone = RtyhiimReactionZone(**rz) if rz else None
+
     return RtyhiimState(
         pattern_type=str(rhythm_state.get("pattern_type")),
         dominant_period_s=float(rhythm_state.get("dominant_period_s", 0.0)),
@@ -350,20 +382,29 @@ def _build_state_response(rhythm_state: dict, decision: dict, is_live: bool) -> 
         should_trade=bool(decision.get("should_trade")),
         direction=str(decision.get("direction")),
         predictions=[RtyhiimPrediction(**item) for item in predictions],
+        timeframe_used=tf_used,
+        bars=int(bars),
+        data_source=source,
+        oos_skill=float(rhythm_state.get("oos_skill", 0.0)),
+        significance=float(rhythm_state.get("significance", 0.0)),
+        upper_touches=int(rhythm_state.get("upper_touches", 0)),
+        lower_touches=int(rhythm_state.get("lower_touches", 0)),
+        touches_confirmed=bool(rhythm_state.get("touches_confirmed", False)),
+        reaction_zone=reaction_zone,
     ).dict()
 
 
-def _build_detector():
+def _build_detector(seconds_per_sample: Optional[float] = None):
     # rhythm_detector_v3 is the statistically honest engine (returns-based spectral
     # analysis, AR(1) red-noise significance, out-of-sample skill gating). It works
-    # on *bars*; seconds_per_bar bridges bar index -> wall-clock so periods/horizons
-    # are reported truthfully (5m feed => 300s/bar).
+    # on *bars*; seconds_per_sample bridges bar index -> wall-clock so periods and
+    # horizons are reported truthfully (1m feed => 60s/bar, 5m => 300s/bar).
     from rhythm_detector_v3 import RhythmDetector, RhythmConfig
 
     return RhythmDetector(
         RhythmConfig(
             window_samples=settings.rtyhiim_window_samples,
-            seconds_per_sample=settings.rtyhiim_seconds_per_bar,
+            seconds_per_sample=seconds_per_sample or settings.rtyhiim_seconds_per_bar,
             min_period_samples=settings.rtyhiim_min_period_samples,
             max_period_samples=settings.rtyhiim_max_period_samples,
         )
