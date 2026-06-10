@@ -448,7 +448,31 @@ def attach_corrections(
     """
     if not rows or client is None:
         return rows
-    ids = [str(r.get(id_key)) for r in rows if r.get(id_key)]
+
+    # Only fetch corrections for signals created in the last 5 days.
+    # Older signals already have corrected_status/exit_price resolved and saved
+    # directly in prediction_logs via retroactive repair and chronological resolver.
+    from datetime import datetime, timezone, timedelta
+    cutoff = datetime.now(timezone.utc) - timedelta(days=5)
+    recent_rows = []
+    for r in rows:
+        created = r.get("created_at")
+        if created:
+            try:
+                s_val = str(created).replace("Z", "+00:00")
+                dt = datetime.fromisoformat(s_val)
+                if not dt.tzinfo:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                else:
+                    dt = dt.astimezone(timezone.utc)
+                if dt >= cutoff:
+                    recent_rows.append(r)
+            except Exception:
+                recent_rows.append(r)
+        else:
+            recent_rows.append(r)
+
+    ids = [str(r.get(id_key)) for r in recent_rows if r.get(id_key)]
     if not ids:
         return rows
 

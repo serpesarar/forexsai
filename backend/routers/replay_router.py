@@ -10,8 +10,10 @@ Two endpoints:
 from __future__ import annotations
 
 import logging
+import asyncio
+import time
 from datetime import datetime, timezone, timedelta
-from typing import Optional
+from typing import Optional, Any
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -19,6 +21,72 @@ from services.signal_replay_1m import (
     run_replay_batch, inspect_signal,
     apply_corrections_to_prediction_logs, revert_corrections,
 )
+
+
+# Thread-safe SimpleCache for replay data
+class SimpleCache:
+    def __init__(self, ttl_seconds: float = 300.0):  # 5 minutes TTL
+        self.ttl = ttl_seconds
+        self.store = {}
+        self.lock = None
+
+    def _get_lock(self):
+        if self.lock is None:
+            try:
+                self.lock = asyncio.Lock()
+            except Exception:
+                pass
+        return self.lock
+
+    async def get(self, key: Any) -> Optional[Any]:
+        lock = self._get_lock()
+        if lock:
+            async with lock:
+                return self._get_cached_value(key)
+        return self._get_cached_value(key)
+
+    def _get_cached_value(self, key: Any) -> Optional[Any]:
+        if key in self.store:
+            expiry, val = self.store[key]
+            if time.time() < expiry:
+                return val
+            else:
+                del self.store[key]
+        return None
+
+    async def set(self, key: Any, val: Any):
+        lock = self._get_lock()
+        if lock:
+            async with lock:
+                self.store[key] = (time.time() + self.ttl, val)
+        else:
+            self.store[key] = (time.time() + self.ttl, val)
+
+    async def invalidate_all(self):
+        lock = self._get_lock()
+        if lock:
+            async with lock:
+                self.store.clear()
+        else:
+            self.store.clear()
+
+
+_replay_cache = SimpleCache(ttl_seconds=300.0)
+
+
+async def _invalidate_all_caches():
+    await _replay_cache.invalidate_all()
+    try:
+        from routers.learning import _learning_stats_cache
+        await _learning_stats_cache.invalidate_all()
+    except Exception:
+        pass
+    try:
+        from services.signal_lifecycle import _dashboard_stats_cache
+        await _dashboard_stats_cache.invalidate_all()
+    except Exception:
+        pass
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/replay", tags=["Replay & Correction"])
@@ -56,6 +124,8 @@ async def run_replay(
     )
     if summary.get("status") == "error":
         raise HTTPException(500, summary.get("error", "replay failed"))
+    if not dry_run:
+        await _invalidate_all_caches()
     return summary
 
 
@@ -157,6 +227,8 @@ async def apply_corrections(
     res = await apply_corrections_to_prediction_logs(since_iso, dry_run=dry_run)
     if res.get("status") == "error":
         raise HTTPException(500, res.get("error", "apply failed"))
+    if not dry_run:
+        await _invalidate_all_caches()
     return res
 
 
@@ -174,6 +246,8 @@ async def revert_corrections_endpoint(
     res = await revert_corrections(since_iso, dry_run=dry_run)
     if res.get("status") == "error":
         raise HTTPException(500, res.get("error", "revert failed"))
+    if not dry_run:
+        await _invalidate_all_caches()
     return res
 
 
@@ -210,6 +284,13 @@ async def derived_config_status():
 async def expectancy(days: int = Query(90, ge=14, le=180)):
     """Sembol bazlı gerçek R-multiple ve beklenti hesabı.
     Cevap: avg_win_pips, avg_loss_pips, R-multiple (win/loss), expectancy/trade."""
+    # Check cache first
+    cache_key = f"expectancy:{days}"
+    cached = await _replay_cache.get(cache_key)
+    if cached is not None:
+        logger.info(f"Expectancy cache HIT for days={days}")
+        return cached
+
     from database.supabase_client import get_supabase_client, is_db_available
     if not is_db_available():
         raise HTTPException(503, "db_unavailable")
@@ -283,7 +364,9 @@ async def expectancy(days: int = Query(90, ge=14, le=180)):
             "expectancy_pips_per_trade": round(exp_pips, 3),
             "expectancy_R_per_trade": round(exp_R, 4),
         }
-    return {"status": "ok", "days": days, "per_symbol": out}
+    res_dict = {"status": "ok", "days": days, "per_symbol": out}
+    await _replay_cache.set(cache_key, res_dict)
+    return res_dict
 
 
 @router.get("/walkforward-rolling")
@@ -326,6 +409,13 @@ async def replay_report(
     """Per (symbol, model_type, direction) diff: original vs replay-corrected
     outcomes. Surfaces the operation's impact — how many WINs/LOSSES flipped,
     which scopes had the biggest pnl_delta, etc."""
+    # Check cache first
+    cache_key = f"report:{batch_id}:{symbol}:{days}"
+    cached = await _replay_cache.get(cache_key)
+    if cached is not None:
+        logger.info(f"Replay report cache HIT for key={cache_key}")
+        return cached
+
     from database.supabase_client import get_supabase_client, is_db_available
     from datetime import timedelta
 
@@ -403,9 +493,11 @@ async def replay_report(
         s["orig_win_rate"] = round(100.0 * s["orig_completed"] / orig_resolved, 2) if orig_resolved else None
         s["corr_win_rate"] = round(100.0 * s["corr_completed"] / corr_resolved, 2) if corr_resolved else None
 
-    return {
+    res_dict = {
         "status": "ok",
         "rows": len(rows),
         "scopes": scope_list,
         "filter": {"batch_id": batch_id, "symbol": symbol, "days": days},
     }
+    await _replay_cache.set(cache_key, res_dict)
+    return res_dict

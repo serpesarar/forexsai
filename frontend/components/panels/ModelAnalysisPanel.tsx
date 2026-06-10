@@ -509,7 +509,7 @@ export default function ModelAnalysisPanel() {
 
   const [selectedModel, setSelectedModel] = useState<string>("emel");
   const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>();
-  const [days, setDays] = useState<number>(0);
+  const [days, setDays] = useState<number>(30);
   const [showSignals, setShowSignals] = useState(false);
 
   // Modal State

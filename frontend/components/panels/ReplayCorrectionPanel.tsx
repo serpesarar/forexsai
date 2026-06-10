@@ -43,8 +43,8 @@ export default function ReplayCorrectionPanel() {
   const [sortBy, setSortBy] = useState<"impact" | "drop" | "n">("impact");
 
   const report = useQuery({
-    queryKey: ["replay-report", 120],
-    queryFn: () => replayApi.report(120),
+    queryKey: ["replay-report", 30],
+    queryFn: () => replayApi.report(30),
     staleTime: 5 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
   });
