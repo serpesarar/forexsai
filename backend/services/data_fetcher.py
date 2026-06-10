@@ -22,12 +22,42 @@ async def fetch_latest_price(symbol: str) -> Optional[float]:
 
 
 async def fetch_intraday_candles(symbol: str, interval: str = "5m", limit: int = 300) -> list[dict]:
-    """Get intraday candles from DataHub (0 API calls)."""
+    """Get intraday candles from DataHub. For 1m, falls back to direct API fetch if cache is empty/stale."""
     try:
         from services.data_hub import get_candles
+        
+        if interval == "1m":
+            # Check if cache is empty or stale (>3 minutes old)
+            candles = get_candles(symbol, "1m", limit)
+            cache_stale = True
+            
+            if candles:
+                import time
+                latest_ts = candles[-1].get("timestamp", 0)  # ms
+                if latest_ts > 0:
+                    age_seconds = time.time() - (latest_ts / 1000.0)
+                    if age_seconds < 180:  # 3 minutes
+                        cache_stale = False
+            
+            if cache_stale:
+                from services.data_hub import _fetch_candles_from_api, ingest_candles
+                # Fetch 1m candles directly from API (EODHD or Yahoo Finance fallback)
+                fetched = await _fetch_candles_from_api(symbol, "1m", limit=limit)
+                if fetched:
+                    # Ingest them into DataHub store so they are cached
+                    await ingest_candles(symbol, "1m", fetched, source="dynamic_fallback")
+                    candles = fetched[-limit:]
+            return candles
+            
         return get_candles(symbol, interval, limit)
-    except Exception:
-        return []
+    except Exception as e:
+        logger.warning(f"Error fetching intraday candles for {symbol} {interval}: {e}")
+        # Final fallback
+        try:
+            from services.data_hub import get_candles
+            return get_candles(symbol, interval, limit)
+        except Exception:
+            return []
 
 
 async def fetch_30m_candles(symbol: str, limit: int = 300) -> list[dict]:

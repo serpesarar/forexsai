@@ -48,6 +48,18 @@ def _as_utc(dt: datetime) -> datetime:
     return dt.astimezone(timezone.utc) if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
+def _parse_candle_time(c: dict) -> datetime:
+    ts = c.get("timestamp")
+    if ts:
+        return datetime.fromtimestamp(ts / 1000.0, tz=timezone.utc)
+    date_val = c.get("date") or c.get("candle_time")
+    if not date_val:
+        return _utc_now()
+    if isinstance(date_val, datetime):
+        return _as_utc(date_val)
+    return _as_utc(datetime.fromisoformat(str(date_val).replace("Z", "+00:00")))
+
+
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -529,9 +541,10 @@ async def _get_market_context() -> Dict[str, Any]:
     return ctx
 
 
-def _update_signal_status(client, signal_id: str, status: str, exit_price=None, resolution_reason: Optional[str] = None):
+def _update_signal_status(client, signal_id: str, status: str, exit_price=None, resolution_reason: Optional[str] = None, exit_time: Optional[str] = None):
     """Helper to update a signal's status in prediction_logs."""
-    update_data = {"status": status, "exit_time": _utc_iso()}
+    resolved_exit_time = exit_time or _utc_iso()
+    update_data = {"status": status, "exit_time": resolved_exit_time}
     if exit_price is not None:
         update_data["exit_price"] = round(float(exit_price), 4)
     if resolution_reason:
@@ -539,7 +552,7 @@ def _update_signal_status(client, signal_id: str, status: str, exit_price=None, 
     try:
         result = client.table("prediction_logs").eq("id", signal_id).update(update_data)
         if result and safe_get_data(result):
-            logger.info(f"✅ Signal {signal_id[:8]} status updated to {status}")
+            logger.info(f"✅ Signal {signal_id[:8]} status updated to {status} (exit_time={resolved_exit_time})")
         return result
     except Exception as e:
         logger.error(f"Failed to update signal status {signal_id[:8]}: {e}")
@@ -613,356 +626,199 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         )
 
     # ------------------------------------------------------------------
-    # 1. Post-entry price window (better than single latest price only)
-    # ------------------------------------------------------------------
-    price_window = await _get_price_window_since_signal(symbol, created_dt, evaluation_window)
-    current = _coerce_float(price_window.get("current"))
-    session_high = _coerce_float(price_window.get("high"))
-    session_low = _coerce_float(price_window.get("low"))
-    has_post_entry_candles = bool(price_window.get("has_post_entry_candles", created_dt is None))
-    market_data_fresh = bool(price_window.get("market_data_fresh", False))
-
-    if created_dt is not None and not has_post_entry_candles:
-        logger.info(
-            f"lifecycle.defer_no_post_entry_candles | signal={signal_id[:8]} symbol={symbol} latest_candle={price_window.get('latest_candle_at')}"
-        )
-        return None
-
-    # ── PRE-ENTRY WICK CONTAMINATION GUARD (CRITICAL — 2026-05-20) ───────
-    # Without this, the lifecycle reads the 5m candle that STRADDLES the
-    # signal creation moment. That candle's high/low includes the 0-5 min
-    # of pre-entry price action — which routinely contains wicks 100+
-    # pips away from entry. Lifecycle then incorrectly fires tp4_hit /
-    # sl_hit on those PRE-entry wicks, producing fake "instant wins"
-    # within seconds of opening.
-    #
-    # Real evidence (MT5 vs our system, 7-day comparison):
-    #   NDX  : system +$37,839  vs MT5 -$45      (fake $37,884)
-    #   GDAXI: system +$18,559  vs MT5 -$2,586   (fake $21,145)
-    #   USOIL: system +$1,426   vs MT5 -$3,674   (fake $5,100)
-    #   XAUUSD: system -$4,693  vs MT5 -$1,123   (XAU TP/SL too tight
-    #                                              for pre-entry contamination)
-    #
-    # Fix: require at least 60 SECONDS of age before allowing target-hit
-    # detection. By then a fresh 5m candle has opened AFTER the signal,
-    # so any session_high/low movement is genuinely post-entry. Below
-    # this threshold we keep tracking MFE/MAE for analytics but DO NOT
-    # mark the signal as completed/stopped.
-    if created_dt is not None:
-        signal_age_seconds = (_utc_now() - created_dt).total_seconds()
-        if signal_age_seconds < 60:
-            # Capture MFE/MAE silently, defer resolution to next check.
-            # Update the running highs/lows ONLY from `current` (single
-            # post-entry tick), not from session_high/low which would
-            # include pre-entry wicks.
-            session_high = current
-            session_low = current
-            # Signal that fast-resolve paths must be skipped this cycle.
-            _suppress_target_hit_this_check = True
-        else:
-            _suppress_target_hit_this_check = False
-    else:
-        _suppress_target_hit_this_check = False
-
-    if current is None or current <= 0:
-        try:
-            if created_dt is not None:
-                age_minutes = (_utc_now() - created_dt).total_seconds() / 60
-                if age_minutes >= evaluation_window:
-                    targets_hit_raw = parse_json_field(signal.get("targets_hit"), {})
-                    if not isinstance(targets_hit_raw, dict):
-                        targets_hit_raw = {}
-
-                    tp1_3_hit_fallback = any(
-                        bool(hit) and (_target_rank(tp) in {1, 2, 3})
-                        for tp, hit in targets_hit_raw.items()
-                    )
-                    tp4_hit_fallback = any(
-                        bool(hit) and (_target_rank(tp) == 4)
-                        for tp, hit in targets_hit_raw.items()
-                    )
-
-                    if not (tp1_3_hit_fallback or tp4_hit_fallback):
-                        logger.info(
-                            f"lifecycle.defer_no_price | signal={signal_id[:8]} symbol={symbol} age={age_minutes:.0f}m"
-                        )
-                        return None
-
-                    fallback_status = "completed"
-                    fallback_targets = _resolve_target_prices(signal, entry_price, direction, symbol, timeframe)
-                    fallback_exit_price = _resolved_exit_price_from_targets(fallback_targets, targets_hit_raw)
-                    _update_signal_status(
-                        client,
-                        signal_id,
-                        fallback_status,
-                        fallback_exit_price if fallback_status == "completed" else None,
-                    )
-
-                    logger.info(
-                        f"⏰ Signal {signal_id[:8]} {symbol} resolved without fresh price "
-                        f"(age={age_minutes:.0f}m) -> {fallback_status} "
-                        f"(tp1_3={tp1_3_hit_fallback}, tp4={tp4_hit_fallback})"
-                    )
-                    return fallback_status
-        except Exception:
-            pass
-
-        logger.warning(f"No price for {symbol}, skipping signal {signal_id[:8]}")
-        return None
-
-    is_stale = _is_price_stale(symbol, current)
-    if is_stale:
-        logger.info(
-            f"lifecycle.price_stale | signal={signal_id[:8]} symbol={symbol} "
-            f"price={current:.2f} unchanged for 1min+"
-        )
-
-    if session_high is None:
-        session_high = current
-    if session_low is None:
-        session_low = current
-
-    # ------------------------------------------------------------------
-    # 2. Profit / drawdown
-    # ------------------------------------------------------------------
-    if direction == "BUY":
-        profit_pips = pips_from_price_change(current - entry_price, symbol)
-        wick_best = pips_from_price_change((session_high or current) - entry_price, symbol)
-        wick_worst = pips_from_price_change((session_low or current) - entry_price, symbol)
-    else:
-        profit_pips = pips_from_price_change(entry_price - current, symbol)
-        wick_best = pips_from_price_change(entry_price - (session_low or current), symbol)
-        wick_worst = pips_from_price_change(entry_price - (session_high or current), symbol)
-
-    best_pips = max(profit_pips, wick_best, 0)
-    worst_pips = min(profit_pips, wick_worst, 0)
-
-    prev_high = _coerce_float(signal.get("highest_profit_pips"), 0.0) or 0.0
-    prev_low = _coerce_float(signal.get("lowest_drawdown_pips"), 0.0) or 0.0
-    new_high = max(prev_high, best_pips)
-    new_low = min(prev_low, worst_pips)
-
-    # ------------------------------------------------------------------
-    # 3. Targets (Spread & Slippage-Aware Simulation)
+    # Chronological Candle Evaluation (Strict Verification Logic)
     # ------------------------------------------------------------------
     target_prices = _resolve_target_prices(signal, entry_price, direction, symbol, timeframe)
-
-    # Dynamic spread and slippage size calculation
-    def _get_pip_size(sym: str) -> float:
-        sym_upper = sym.upper()
-        if "XAUUSD" in sym_upper:
-            return 0.1
-        if "USOIL" in sym_upper or "CL.COMM" in sym_upper:
-            return 0.01
-        return 1.0
-
-    # Average spread in pips per instrument
-    SYMBOL_SPREADS = {
-        "NDX.INDX": 1.5,
-        "XAUUSD": 2.5,
-        "GDAXI.INDX": 2.0,
-        "USOIL.FOREX": 3.0,
-    }
-    
-    pip_size = _get_pip_size(symbol)
-    avg_spread_pips = SYMBOL_SPREADS.get(symbol, 2.0)
-    spread_value = avg_spread_pips * pip_size
-    slippage_value = 1.0 * pip_size  # 1.0 pip default slippage
-
-    targets_hit = signal.get("targets_hit") or {}
-    if not isinstance(targets_hit, dict):
-        targets_hit = {}
-
-    for tp_name, tp_price in target_prices.items():
-        if targets_hit.get(tp_name):
-            continue
-
-        # Pre-entry wick guard: signals younger than 60s can't reliably
-        # claim a TP hit because the spanning 5m candle still includes
-        # pre-entry price action. Skip target detection this cycle —
-        # the next lifecycle pass (60s later) will work with clean data.
-        if _suppress_target_hit_this_check:
-            continue
-
-        # Calculate pip distance to this target from entry
-        tp_pips_distance = abs(pips_from_price_change(abs(tp_price - entry_price), symbol))
-
-        # Spread-aware target detection:
-        # BUY TP requires Ask to reach level (session_high >= tp_price + spread)
-        # SELL TP requires Bid to reach level (session_low <= tp_price - spread)
-        if direction == "BUY" and session_high is not None and (session_high - spread_value) >= tp_price:
-            # Sanity gate: cumulative best profit must be at least 60% of target
-            # distance. Prevents false positives from stale/pre-signal candle wicks.
-            if tp_pips_distance > 0 and new_high < tp_pips_distance * 0.6:
-                logger.debug(
-                    f"lifecycle.tp_gate_blocked | signal={signal_id[:8]} {symbol} {direction} "
-                    f"{tp_name} wick_high={session_high:.2f} target={tp_price:.2f} "
-                    f"new_high={new_high:.1f} < {tp_pips_distance:.1f}*0.6"
-                )
-                continue
-            targets_hit[tp_name] = True
-            logger.info(
-                f"✅ Signal {signal_id[:8]} {symbol} {direction}: "
-                f"{tp_name} HIT @ high={session_high:.2f} (target={tp_price:.2f}, spread={spread_value:.4f})"
-            )
-        elif direction == "SELL" and session_low is not None and (session_low + spread_value) <= tp_price:
-            if tp_pips_distance > 0 and new_high < tp_pips_distance * 0.6:
-                logger.debug(
-                    f"lifecycle.tp_gate_blocked | signal={signal_id[:8]} {symbol} {direction} "
-                    f"{tp_name} wick_low={session_low:.2f} target={tp_price:.2f} "
-                    f"new_high={new_high:.1f} < {tp_pips_distance:.1f}*0.6"
-                )
-                continue
-            targets_hit[tp_name] = True
-            logger.info(
-                f"✅ Signal {signal_id[:8]} {symbol} {direction}: "
-                f"{tp_name} HIT @ low={session_low:.2f} (target={tp_price:.2f}, spread={spread_value:.4f})"
-            )
-
-    tp1_3_hit = any(
-        bool(hit) and (_target_rank(tp) in {1, 2, 3})
-        for tp, hit in targets_hit.items()
-    )
-    tp4_hit = any(
-        bool(hit) and (_target_rank(tp) == 4)
-        for tp, hit in targets_hit.items()
-    )
-    any_target_hit = any(bool(v) for v in targets_hit.values()) if targets_hit else False
-
-    # ------------------------------------------------------------------
-    # 4. Stop loss (Slippage-Aware Simulation)
-    # ------------------------------------------------------------------
     sl_price = calculate_stoploss_price(entry_price, direction, symbol, timeframe)
     resolved_sl_pips = abs(pips_from_price_change(abs(entry_price - sl_price), symbol))
-    hit_stop = False
 
-    # Sanity gate for SL: actual drawdown must be at least 60% of SL distance
-    sl_drawdown_ok = resolved_sl_pips <= 0 or abs(new_low) >= resolved_sl_pips * 0.6
+    pip_size = _get_pip_size(symbol)
+    spread = SYMBOL_SPREADS.get(symbol, 2.0) * pip_size
+    slippage = 1.0 * pip_size
 
-    # Pre-entry wick guard: if signal is younger than 60s, do not fire
-    # target/SL hits — would mis-attribute pre-entry candle ranges.
-    # Slippage is included to simulate worse-case execution.
-    if _suppress_target_hit_this_check:
-        hit_stop = False
-    elif direction == "BUY" and session_low is not None and session_low <= (sl_price + slippage_value) and sl_drawdown_ok:
-        hit_stop = True
-    elif direction == "SELL" and session_high is not None and session_high >= (sl_price - slippage_value) and sl_drawdown_ok:
-        hit_stop = True
+    age_minutes = 0.0
+    if created_dt is not None:
+        age_minutes = max((_utc_now() - created_dt).total_seconds() / 60.0, 1.0)
 
-    target_status = {tp_name: bool(targets_hit.get(tp_name)) for tp_name in target_prices}
-    resolved_target_exit_price = _resolved_exit_price_from_targets(target_prices, targets_hit)
+    # Fetch 1-minute candles for the evaluation window (plus small buffer)
+    candle_limit = max(30, int(age_minutes) + 10)
+    candles = await fetch_intraday_candles(symbol, interval="1m", limit=candle_limit)
 
-    # ------------------------------------------------------------------
-    # 5. signal_checks audit row
-    # ------------------------------------------------------------------
-    check_record = {
-        "signal_id": signal_id,
-        "check_time": _utc_iso(),
-        "current_price": round(current, 4),
-        "session_high": round(session_high, 4) if session_high is not None else None,
-        "session_low": round(session_low, 4) if session_low is not None else None,
-        "profit_pips": round(profit_pips, 2),
-        "cumulative_high_pips": round(new_high, 2),
-        "cumulative_low_pips": round(new_low, 2),
-        "target_status": json.dumps(target_status),
-    }
-    try:
-        client.table("signal_checks").insert(check_record)
-    except Exception as e:
-        logger.error(f"Failed to insert signal_check for {signal_id[:8]}: {e}")
+    # Filter candles starting from the signal creation time
+    relevant_candles = []
+    latest_candle_at = None
+    if candles and created_dt is not None:
+        cutoff_ms = created_dt.timestamp() * 1000
+        for c in candles:
+            c_ts = _extract_candle_timestamp_ms(c)
+            if c_ts is not None:
+                if c_ts >= cutoff_ms:
+                    relevant_candles.append(c)
+                latest_candle_at = datetime.fromtimestamp(c_ts / 1000.0, tz=timezone.utc)
 
-    # ------------------------------------------------------------------
-    # 6. Resolution decision
-    # ------------------------------------------------------------------
+    # Determine data freshness
+    market_data_fresh = False
+    if latest_candle_at is not None:
+        market_data_fresh = (_utc_now() - latest_candle_at).total_seconds() / 60.0 <= MARKET_DATA_FRESHNESS_THRESHOLD_MINUTES
+
+    if created_dt is not None and not relevant_candles:
+        logger.info(
+            f"lifecycle.defer_no_post_entry_candles | signal={signal_id[:8]} symbol={symbol} latest_candle={_utc_iso(latest_candle_at) if latest_candle_at else None}"
+        )
+        return None
+
+    # Chronological simulation state
     new_status = None
     exit_price = None
+    exit_time = None
     resolution_reason = None
+    targets_hit = {}
+    targets_hit_times = {}
 
-    # If TP4 hit, it's fully completed
-    if tp4_hit:
-        new_status = "completed"
-        exit_price = resolved_target_exit_price or target_prices.get("TP4") or current
-        resolution_reason = "tp4_hit"
-        logger.info(
-            f"🎯 Signal {signal_id[:8]} {symbol} {direction} completed via TP4 hit"
-        )
+    new_high = 0.0
+    new_low = 0.0
 
-    # TP1/TP2/TP3 hit means success, even if SL is later touched
-    elif hit_stop and tp1_3_hit:
-        new_status = "completed"
-        exit_price = resolved_target_exit_price or current
-        resolution_reason = "tp1_3_hit_then_sl"
-        logger.info(
-            f"✅ Signal {signal_id[:8]} {symbol} {direction} "
-            f"TP1/2/3 hit then SL -> completed"
-        )
+    # Simulate candles chronologically
+    for c in relevant_candles:
+        c_time = _parse_candle_time(c)
+        c_date = c.get("date") or _utc_iso(c_time)
+        
+        # Pre-entry wick guard: skip candle if it closed before or exactly at entry (within 60s)
+        is_guard_period = (c_time - created_dt).total_seconds() < 60
 
-    # If all known targets are hit, also completed
-    elif target_prices and all(target_status.get(tp) for tp in target_prices):
-        new_status = "completed"
-        exit_price = resolved_target_exit_price or current
-        resolution_reason = "all_targets_hit"
-        logger.info(f"🎯 Signal {signal_id[:8]} {symbol} {direction} ALL TARGETS HIT!")
+        c_high = float(c["high"])
+        c_low = float(c["low"])
+        c_close = float(c["close"])
 
-    # SL before any favorable target hit -> stopped
-    elif hit_stop:
-        new_status = "stopped"
-        exit_price = sl_price
-        resolution_reason = "sl_hit"
-        logger.info(f"🛑 Signal {signal_id[:8]} {symbol} {direction} STOPPED @ {sl_price:.2f}")
+        # Calculate profit/drawdown
+        if direction == "BUY":
+            prof = pips_from_price_change(c_high - entry_price, symbol)
+            draw = pips_from_price_change(c_low - entry_price, symbol)
+        else:
+            prof = pips_from_price_change(entry_price - c_low, symbol)
+            draw = pips_from_price_change(entry_price - c_high, symbol)
 
-    # Window-end resolution
-    else:
-        if created_dt is not None:
-            try:
-                age_minutes = (_utc_now() - created_dt).total_seconds() / 60
-                if age_minutes >= evaluation_window:
-                    if not market_data_fresh:
-                        logger.info(
-                            f"lifecycle.defer_window_resolution | signal={signal_id[:8]} symbol={symbol} age={age_minutes:.0f}m latest_candle={price_window.get('latest_candle_at')}"
-                        )
-                        return None
+        new_high = max(new_high, prof)
+        new_low = min(new_low, draw)
 
-                    favorable_vs_entry = _is_favorable_vs_entry(entry_price, current, direction)
-                    # Honesty check (2026-05-19): only count a window-resolved
-                    # signal as a win if it ACTUALLY hit TP1 at some point
-                    # (tp1_3_hit means a target boundary was crossed) OR if
-                    # MFE reached at least TP1's pip distance. "Currently
-                    # 1 pip favorable" is NOT a win — it's a trade that
-                    # never met its own target.
-                    tp1_distance = 0.0
-                    if target_prices:
-                        try:
-                            tp1_price = target_prices.get("TP1")
-                            if tp1_price and entry_price:
-                                tp1_distance = abs(float(tp1_price) - float(entry_price))
-                        except Exception:
-                            pass
-                    mfe_in_pips = abs(new_high) if new_high else 0.0
-                    real_tp_reached = tp1_3_hit or (
-                        tp1_distance > 0 and mfe_in_pips >= tp1_distance * 0.95
-                    )
-                    if real_tp_reached:
-                        new_status = "completed"
-                        resolution_reason = "window_resolve_positive"
-                    elif favorable_vs_entry:
-                        # Trade is mildly positive but never touched TP1.
-                        # Mark as expired (neutral) — not a win, not a loss.
-                        new_status = "expired"
-                        resolution_reason = "window_resolve_inconclusive"
-                    else:
-                        new_status = "stopped"
-                        resolution_reason = "window_resolve_negative"
+        # Skip SL/TP checking during the guard period to prevent false positive wicks
+        if is_guard_period:
+            continue
 
-                    exit_price = current
-                    logger.info(
-                        f"⏰ Signal {signal_id[:8]} {symbol} resolved after {age_minutes:.0f}m "
-                        f"-> {new_status} "
-                        f"(tp1_3={tp1_3_hit}, tp4={tp4_hit}, "
-                        f"favorable={favorable_vs_entry}, stale={is_stale})"
-                    )
-            except Exception as exp_err:
-                logger.warning(f"Failed to check signal age for {signal_id[:8]}: {exp_err}")
+        # Check TP hits
+        for tp_name, tp_val in target_prices.items():
+            if targets_hit.get(tp_name):
+                continue
+
+            tp_pips_distance = abs(pips_from_price_change(abs(tp_val - entry_price), symbol))
+
+            # Sanity gate: cumulative best profit must be at least 60% of target distance
+            tp_drawdown_ok = tp_pips_distance <= 0 or new_high >= tp_pips_distance * 0.6
+
+            if direction == "BUY" and (c_high - spread) >= tp_val and tp_drawdown_ok:
+                targets_hit[tp_name] = True
+                targets_hit_times[tp_name] = c_date
+            elif direction == "SELL" and (c_low + spread) <= tp_val and tp_drawdown_ok:
+                targets_hit[tp_name] = True
+                targets_hit_times[tp_name] = c_date
+
+        # Check SL hit
+        hit_stop = False
+        sl_drawdown_ok = resolved_sl_pips <= 0 or abs(new_low) >= resolved_sl_pips * 0.6
+
+        if direction == "BUY" and c_low <= (sl_price + slippage) and sl_drawdown_ok:
+            hit_stop = True
+        elif direction == "SELL" and c_high >= (sl_price - slippage) and sl_drawdown_ok:
+            hit_stop = True
+
+        tp1_3_hit = any(tp in {"TP1", "TP2", "TP3"} for tp in targets_hit)
+
+        if hit_stop:
+            # If TP1-3 was hit BEFORE (or in a previous candle), we exit with win!
+            if tp1_3_hit:
+                new_status = "completed"
+                # Find the earliest TP exit time
+                earliest_tp = min(targets_hit_times.keys(), key=lambda k: targets_hit_times[k])
+                exit_time = targets_hit_times[earliest_tp]
+                exit_price = target_prices[earliest_tp]
+                resolution_reason = "tp1_3_hit_then_sl"
+                break
+            else:
+                new_status = "stopped"
+                exit_time = c_date
+                exit_price = sl_price
+                resolution_reason = "sl_hit"
+                break
+
+        # If TP4 is hit, it completes immediately
+        if targets_hit.get("TP4"):
+            new_status = "completed"
+            exit_time = targets_hit_times["TP4"]
+            exit_price = target_prices["TP4"]
+            resolution_reason = "tp4_hit"
+            break
+
+    # If loop finished without breaking, check evaluation window expiry
+    if not new_status and relevant_candles:
+        last_c = relevant_candles[-1]
+        last_c_time = _parse_candle_time(last_c)
+        last_c_date = last_c.get("date") or _utc_iso(last_c_time)
+        last_c_close = float(last_c["close"])
+        age_at_end = (last_c_time - created_dt).total_seconds() / 60.0
+
+        if age_at_end >= evaluation_window:
+            if not market_data_fresh:
+                logger.info(
+                    f"lifecycle.defer_window_resolution | signal={signal_id[:8]} symbol={symbol} age={age_at_end:.0f}m latest_candle={_utc_iso(latest_candle_at)}"
+                )
+                return None
+
+            tp1_3_hit = any(tp in {"TP1", "TP2", "TP3"} for tp in targets_hit)
+            tp1_distance = 0.0
+            if target_prices:
+                try:
+                    tp1_price = target_prices.get("TP1")
+                    if tp1_price and entry_price:
+                        tp1_distance = abs(float(tp1_price) - float(entry_price))
+                except Exception:
+                    pass
+            mfe_in_pips = abs(new_high) if new_high else 0.0
+            real_tp_reached = tp1_3_hit or (
+                tp1_distance > 0 and mfe_in_pips >= tp1_distance * 0.95
+            )
+
+            favorable_vs_entry = _is_favorable_vs_entry(entry_price, last_c_close, direction)
+
+            if real_tp_reached:
+                new_status = "completed"
+                # Get the first TP hit time and price
+                if targets_hit_times:
+                    earliest_tp = min(targets_hit_times.keys(), key=lambda k: targets_hit_times[k])
+                    exit_time = targets_hit_times[earliest_tp]
+                    exit_price = target_prices[earliest_tp]
+                else:
+                    exit_time = last_c_date
+                    exit_price = last_c_close
+                resolution_reason = "window_resolve_positive"
+            elif favorable_vs_entry:
+                new_status = "expired"
+                exit_time = last_c_date
+                exit_price = last_c_close
+                resolution_reason = "window_resolve_inconclusive"
+            else:
+                new_status = "stopped"
+                exit_time = last_c_date
+                exit_price = last_c_close
+                resolution_reason = "window_resolve_negative"
+
+            logger.info(
+                f"⏰ Signal {signal_id[:8]} {symbol} resolved after {age_at_end:.0f}m "
+                f"-> {new_status} "
+                f"(tp1_3={tp1_3_hit}, tp4={targets_hit.get('TP4')}, favorable={favorable_vs_entry})"
+            )
+
+    # Use final candle close as current price reference
+    current = float(relevant_candles[-1]["close"]) if relevant_candles else entry_price
 
     # ------------------------------------------------------------------
     # 7. prediction_logs update
