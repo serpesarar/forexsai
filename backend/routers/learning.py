@@ -7,7 +7,59 @@ from __future__ import annotations
 import logging
 import os
 import time
+import asyncio
 from fastapi import APIRouter, Query
+
+
+# Thread-safe SimpleCache for learning stats
+class SimpleCache:
+    def __init__(self, ttl_seconds: float = 60.0):
+        self.ttl = ttl_seconds
+        self.store = {}
+        self.lock = None
+
+    def _get_lock(self):
+        if self.lock is None:
+            try:
+                self.lock = asyncio.Lock()
+            except Exception:
+                pass
+        return self.lock
+
+    async def get(self, key: Any) -> Optional[Any]:
+        lock = self._get_lock()
+        if lock:
+            async with lock:
+                return self._get_cached_value(key)
+        return self._get_cached_value(key)
+
+    def _get_cached_value(self, key: Any) -> Optional[Any]:
+        if key in self.store:
+            expiry, val = self.store[key]
+            if time.time() < expiry:
+                return val
+            else:
+                del self.store[key]
+        return None
+
+    async def set(self, key: Any, val: Any):
+        lock = self._get_lock()
+        if lock:
+            async with lock:
+                self.store[key] = (time.time() + self.ttl, val)
+        else:
+            self.store[key] = (time.time() + self.ttl, val)
+
+    async def invalidate_all(self):
+        lock = self._get_lock()
+        if lock:
+            async with lock:
+                self.store.clear()
+        else:
+            self.store.clear()
+
+
+_learning_stats_cache = SimpleCache(ttl_seconds=60.0)
 from datetime import datetime, timedelta, timezone
 from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Any, Dict, List, Optional
@@ -599,25 +651,23 @@ async def get_accuracy_by_model(
     client = get_supabase_client()
     if not client:
         return {"error": "Database client not available"}
+
+    cache_key = ("accuracy_by_model", symbol, days, check_interval)
+    cached = await _learning_stats_cache.get(cache_key)
+    if cached is not None:
+        logger.info(f"Accuracy by model cache HIT for key={cache_key}")
+        return cached
     
     try:
-        # Day-by-day pagination to bypass Supabase 1000-row cap
-        predictions = []
-        start = (_utc_now() - timedelta(days=days)) if days > 0 else (_utc_now() - timedelta(days=90))
-        end = _utc_now()
-        cur = start
-        while cur < end:
-            ds = cur.replace(hour=0,minute=0,second=0,microsecond=0)
-            de = ds + timedelta(days=1)
-            q = client.table("prediction_logs").select(
-                "id, strategy, model_type, ml_direction, claude_direction, factors, status, targets_hit, created_at, resolution_reason"
-            ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).neq("status", "active")
-            if symbol:
-                q = q.eq("symbol", symbol)
-            batch = safe_get_data(q.order("created_at", desc=True).limit(1000).execute())
-            if batch:
-                predictions.extend(batch)
-            cur = de
+        start = (_utc_now() - timedelta(days=days)) if days > 0 else _ALL_TIME_FLOOR
+        predictions = await _fetch_prediction_logs_window(
+            client,
+            cutoff=start,
+            select_fields="id, strategy, model_type, ml_direction, claude_direction, factors, status, targets_hit, created_at, resolution_reason",
+            symbol=symbol,
+        )
+        # Exclude active predictions
+        predictions = [p for p in predictions if p.get("status") != "active"]
         predictions = filter_market_closed_invalid_signals(predictions)
         # Honest 1m ground-truth: override the inflated 5m-candle status where a
         # replay correction exists (see prediction_replay_corrections).
@@ -703,7 +753,7 @@ async def get_accuracy_by_model(
         # Sort by total predictions descending
         models.sort(key=lambda m: m["total_predictions"], reverse=True)
         
-        return {
+        res = {
             "models": models,
             "total": len(predictions),
             "days": days,
@@ -711,6 +761,8 @@ async def get_accuracy_by_model(
             "symbol": symbol,
             "source": "lifecycle_primary",
         }
+        await _learning_stats_cache.set(cache_key, res)
+        return res
     
     except Exception as e:
         import traceback
@@ -2032,6 +2084,12 @@ async def get_ai_panel_performance(
     if client is None:
         return {"error": "Database client not available"}
 
+    cache_key = ("ai_panel_performance", days)
+    cached = await _learning_stats_cache.get(cache_key)
+    if cached is not None:
+        logger.info(f"AI panel performance cache HIT for days={days}")
+        return cached
+
     try:
         cutoff = (_utc_now() - timedelta(days=days)) if days > 0 else _ALL_TIME_FLOOR
         predictions = await _fetch_prediction_logs_window(
@@ -2047,25 +2105,30 @@ async def get_ai_panel_performance(
 
         snapshot_counts = {symbol: 0 for symbol in _TRACKED_STRATEGY_SYMBOLS}
         total_snapshots = 0
-        end = _utc_now()
-        cur = cutoff
-        window_days = 1
-        while cur < end:
-            ds = cur.replace(hour=0, minute=0, second=0, microsecond=0)
-            de = min(ds + timedelta(days=window_days), end)
-            try:
-                snapshot_batch = safe_get_data(client.table("ai_panel_signal_snapshots").select(
-                    "id, symbol"
-                ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).order("created_at", desc=True).limit(1000).execute()) or []
-            except Exception:
-                snapshot_batch = []
-            if snapshot_batch:
+        try:
+            offset = 0
+            limit = 1000
+            while True:
+                snapshot_batch = safe_get_data(
+                    client.table("ai_panel_signal_snapshots").select(
+                        "id, symbol"
+                    ).gte("created_at", _utc_iso(cutoff)).lt("created_at", _utc_iso(_utc_now()))
+                    .order("created_at", desc=True)
+                    .range(offset, offset + limit - 1)
+                    .execute()
+                ) or []
+                if not snapshot_batch:
+                    break
                 total_snapshots += len(snapshot_batch)
                 for row in snapshot_batch:
                     symbol = row.get("symbol")
                     if symbol in snapshot_counts:
                         snapshot_counts[symbol] += 1
-            cur = de
+                if len(snapshot_batch) < limit:
+                    break
+                offset += limit
+        except Exception as e:
+            logger.error(f"Error fetching snapshots in bulk: {e}")
 
         grouped_signals = {
             symbol: {scope: [] for scope in _AI_PANEL_SCOPE_ORDER}
@@ -2126,7 +2189,7 @@ async def get_ai_panel_performance(
             for scope in _AI_PANEL_SCOPE_ORDER
         }
 
-        return {
+        res = {
             "period_days": days,
             "ai_panel_predictions_count": len(all_ai_signals),
             "ai_panel_snapshots_count": total_snapshots,
@@ -2146,6 +2209,8 @@ async def get_ai_panel_performance(
                 },
             },
         }
+        await _learning_stats_cache.set(cache_key, res)
+        return res
     except Exception as e:
         import traceback
         logger.error(f"AI panel performance error: {e}\n{traceback.format_exc()}")
@@ -2986,29 +3051,26 @@ async def get_all_models_summary(
     client = get_supabase_client()
     if client is None:
         return {"error": "Database client not available"}
+
+    cache_key = ("model_analysis_summary", symbol, days)
+    cached = await _learning_stats_cache.get(cache_key)
+    if cached is not None:
+        logger.info(f"Model analysis summary cache HIT for key={cache_key}")
+        return cached
     
     try:
         cutoff = (_utc_now() - timedelta(days=days)) if days > 0 else _ALL_TIME_FLOOR
         cutoff_iso = _utc_iso(cutoff)
         
-        # Day-by-day pagination to bypass Supabase 1000-row cap
-        signals = []
-        start = cutoff
-        end = _utc_now()
-        cur = start
-        while cur < end:
-            ds = cur.replace(hour=0,minute=0,second=0,microsecond=0)
-            de = ds + timedelta(days=1)
-            q = client.table("prediction_logs").select(
-                "symbol, timeframe, model_type, strategy, status, "
-                "highest_profit_pips, lowest_drawdown_pips, stop_loss_pips, targets_hit, created_at, resolution_reason"
-            ).gte("created_at", _utc_iso(ds)).lt("created_at", _utc_iso(de)).neq("status", "active")
-            if symbol:
-                q = q.eq("symbol", symbol)
-            batch = safe_get_data(q.order("created_at", desc=True).limit(1000).execute())
-            if batch:
-                signals.extend(batch)
-            cur = de
+        # Fetch predictions in bulk range windows
+        signals = await _fetch_prediction_logs_window(
+            client,
+            cutoff,
+            select_fields="symbol, timeframe, model_type, strategy, status, highest_profit_pips, lowest_drawdown_pips, stop_loss_pips, targets_hit, created_at, resolution_reason",
+            symbol=symbol
+        )
+        # Filter out active predictions
+        signals = [s for s in signals if s.get("status") != "active"]
         signals = filter_market_closed_invalid_signals(signals)
         
         # Initialize model structure
@@ -3067,11 +3129,13 @@ async def get_all_models_summary(
                 if tf_outcome > 0:
                     tf_data["win_rate"] = round(tf_data["completed"] / tf_outcome * 100, 1)
         
-        return {
+        res = {
             "period_days": days,
             "symbol": symbol,
             "models": summary
         }
+        await _learning_stats_cache.set(cache_key, res)
+        return res
         
     except Exception as e:
         import traceback

@@ -44,6 +44,57 @@ from utils.market_hours import is_symbol_market_open
 logger = logging.getLogger(__name__)
 
 
+# Thread-safe SimpleCache for dashboard statistics
+class SimpleCache:
+    def __init__(self, ttl_seconds: float = 60.0):
+        self.ttl = ttl_seconds
+        self.store = {}
+        self.lock = None
+
+    def _get_lock(self):
+        if self.lock is None:
+            try:
+                self.lock = asyncio.Lock()
+            except Exception:
+                pass
+        return self.lock
+
+    async def get(self, key: Any) -> Optional[Any]:
+        lock = self._get_lock()
+        if lock:
+            async with lock:
+                return self._get_cached_value(key)
+        return self._get_cached_value(key)
+
+    def _get_cached_value(self, key: Any) -> Optional[Any]:
+        if key in self.store:
+            expiry, val = self.store[key]
+            if time.time() < expiry:
+                return val
+            else:
+                del self.store[key]
+        return None
+
+    async def set(self, key: Any, val: Any):
+        lock = self._get_lock()
+        if lock:
+            async with lock:
+                self.store[key] = (time.time() + self.ttl, val)
+        else:
+            self.store[key] = (time.time() + self.ttl, val)
+
+    async def invalidate_all(self):
+        lock = self._get_lock()
+        if lock:
+            async with lock:
+                self.store.clear()
+        else:
+            self.store.clear()
+
+
+_dashboard_stats_cache = SimpleCache(ttl_seconds=60.0)
+
+
 def _as_utc(dt: datetime) -> datetime:
     return dt.astimezone(timezone.utc) if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
@@ -1199,6 +1250,14 @@ async def _run_lifecycle_check_inner() -> Dict[str, Any]:
         logger.error(f"lifecycle.check_fatal | error_type={type(e).__name__} error={e}\n{traceback.format_exc()}")
         summary["error"] = str(e)
 
+    # Invalidate dashboard stats cache and learning router cache
+    await _dashboard_stats_cache.invalidate_all()
+    try:
+        from routers.learning import _learning_stats_cache
+        await _learning_stats_cache.invalidate_all()
+    except Exception as e:
+        logger.warning(f"Failed to invalidate learning stats cache: {e}")
+
     # Record job state for scheduler resilience
     _record_job_state(client, "lifecycle_check", summary)
 
@@ -1292,11 +1351,17 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
     if not client:
         return {"error": "No DB client"}
 
+    # Cache check
+    cached = await _dashboard_stats_cache.get(days)
+    if cached is not None:
+        logger.info(f"Dashboard stats cache HIT for days={days}")
+        return cached
+
     try:
         tf_order = ["5m", "15m", "20m", "30m", "1h", "4h", "1d"]
 
         # Supabase PostgREST caps at 1000 rows per request.
-        # Fetch day-by-day to stay under 1000 rows per request.
+        # Fetch with offset range pagination to minimize round trips.
         signals = []
 
         # Determine date range
@@ -1317,51 +1382,34 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
             start_date = _as_utc(oldest_dt) if oldest_dt else (_utc_now() - timedelta(days=90))
 
         end_date = _utc_now()
-        current = start_date
+        start_date_iso = _utc_iso(start_date)
+        end_date_iso = _utc_iso(end_date)
 
-        while current < end_date:
-            day_start = current.replace(hour=0, minute=0, second=0, microsecond=0)
-            day_end = (day_start + timedelta(days=1))
-            
-            day_start_iso = _utc_iso(day_start)
-            day_end_iso = _utc_iso(day_end)
-
+        offset = 0
+        limit = 1000
+        while True:
             result = client.table("prediction_logs").select(
                 "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
                 "model_type, status, targets_hit, highest_profit_pips, "
                 "lowest_drawdown_pips, exit_price, exit_time, stop_loss_pips, "
                 "targets, created_at, strategy, resolution_reason"
             ).neq("status", "active").gte(
-                "created_at", day_start_iso
+                "created_at", start_date_iso
             ).lt(
-                "created_at", day_end_iso
-            ).limit(1000).execute()
+                "created_at", end_date_iso
+            ).order("created_at", desc=True).range(offset, offset + limit - 1).execute()
 
             batch = safe_get_data(result)
-            if batch:
-                signals.extend(batch)
-            
-            current = day_end
-
-        # Also fetch today's partial data
-        today_start = _utc_iso(end_date.replace(hour=0, minute=0, second=0, microsecond=0))
-        result = client.table("prediction_logs").select(
-            "id, symbol, timeframe, ml_direction, ml_confidence, ml_entry_price, "
-            "model_type, status, targets_hit, highest_profit_pips, "
-            "lowest_drawdown_pips, exit_price, exit_time, stop_loss_pips, "
-            "targets, created_at, strategy, resolution_reason"
-        ).neq("status", "active").gte("created_at", today_start).limit(1000).execute()
-        today_batch = safe_get_data(result)
-        if today_batch:
-            # Deduplicate with existing signals by id
-            existing_ids = {s.get("id") for s in signals}
-            for s in today_batch:
-                if s.get("id") not in existing_ids:
-                    signals.append(s)
+            if not batch:
+                break
+            signals.extend(batch)
+            if len(batch) < limit:
+                break
+            offset += limit
 
         signals = filter_market_closed_invalid_signals(signals)
 
-        logger.info(f"Dashboard: fetched {len(signals)} total signals via day-by-day pagination")
+        logger.info(f"Dashboard: fetched {len(signals)} total signals via range pagination (offset={offset})")
 
         # Per-model stats
         models = {}
@@ -1528,7 +1576,7 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
         ).eq("status", "active").execute()
         active_count = len(safe_get_data(active_result))
 
-        return {
+        res = {
             "period_days": days,
             "model_stats": model_stats,
             "failure_breakdown": failure_breakdown,
@@ -1536,6 +1584,8 @@ async def get_dashboard_stats(days: int = 365) -> Dict[str, Any]:
             "active_signals": active_count,
             "generated_at": _utc_iso(),
         }
+        await _dashboard_stats_cache.set(days, res)
+        return res
 
     except Exception as e:
         logger.error(f"Dashboard stats error: {e}")

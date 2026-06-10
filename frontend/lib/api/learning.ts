@@ -188,8 +188,8 @@ export function useLearningDashboard(symbol?: string, days: number = 7) {
   return useQuery({
     queryKey: ["learning", "dashboard", symbol, days],
     queryFn: () => fetchLearningDashboard(symbol, days),
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 60000,
+    refetchInterval: 120000,
   });
 }
 
@@ -197,7 +197,7 @@ export function useAccuracy(symbol?: string, days: number = 7) {
   return useQuery({
     queryKey: ["learning", "accuracy", symbol, days],
     queryFn: () => fetchAccuracy(symbol, days),
-    staleTime: 30000,
+    staleTime: 60000,
   });
 }
 
@@ -294,8 +294,8 @@ export function useMultiTargetDashboard(symbol?: string, days: number = 7) {
   return useQuery({
     queryKey: ["learning", "multi-target-dashboard", symbol, days],
     queryFn: () => fetchMultiTargetDashboard(symbol, days),
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 60000,
+    refetchInterval: 120000,
   });
 }
 
@@ -760,8 +760,8 @@ export function useLifecycleDashboard(days: number = 365) {
   return useQuery({
     queryKey: ["signals", "dashboard", days],
     queryFn: () => fetchLifecycleDashboard(days),
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 60000,
+    refetchInterval: 120000,
   });
 }
 
