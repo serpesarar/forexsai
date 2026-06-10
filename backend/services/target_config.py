@@ -51,10 +51,10 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
     "NDX.INDX": SymbolConfig(
         pip_value=1.0,
         targets=[
-            TargetLevel("TP1", 15),   # 15 pips
-            TargetLevel("TP2", 25),   # 25 pips
-            TargetLevel("TP3", 35),   # 35 pips
-            TargetLevel("TP4", 50),   # 50 pips
+            TargetLevel("TP1", 30),   # 30 pips
+            TargetLevel("TP2", 30),   # 30 pips
+            TargetLevel("TP3", 30),   # 30 pips
+            TargetLevel("TP4", 30),   # 30 pips
         ],
         stoploss_pips=50,
         is_percentage=False,
@@ -65,10 +65,10 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
     "GDAXI.INDX": SymbolConfig(
         pip_value=1.0,
         targets=[
-            TargetLevel("TP1", 15),
-            TargetLevel("TP2", 25),
-            TargetLevel("TP3", 35),
-            TargetLevel("TP4", 50),
+            TargetLevel("TP1", 30),
+            TargetLevel("TP2", 30),
+            TargetLevel("TP3", 30),
+            TargetLevel("TP4", 30),
         ],
         stoploss_pips=50,
         is_percentage=False,
@@ -146,14 +146,14 @@ DEFAULT_CONFIG = SymbolConfig(
 import os as _os
 
 _DERIVED_OVERRIDES = {
-    "NDX.INDX": ("BUY", DirectionOverride(
-        targets=[TargetLevel("TP1", 80), TargetLevel("TP2", 100),
-                 TargetLevel("TP3", 125), TargetLevel("TP4", 155)],
-        stoploss_pips=110, source="walkforward:NDX-BUY/5of5-folds")),
-    "GDAXI.INDX": ("SELL", DirectionOverride(
-        targets=[TargetLevel("TP1", 67), TargetLevel("TP2", 85),
-                 TargetLevel("TP3", 105), TargetLevel("TP4", 130)],
-        stoploss_pips=119, source="walkforward:GDAXI-SELL/3of4-folds")),
+    # "NDX.INDX": ("BUY", DirectionOverride(
+    #     targets=[TargetLevel("TP1", 80), TargetLevel("TP2", 100),
+    #              TargetLevel("TP3", 125), TargetLevel("TP4", 155)],
+    #     stoploss_pips=110, source="walkforward:NDX-BUY/5of5-folds")),
+    # "GDAXI.INDX": ("SELL", DirectionOverride(
+    #     targets=[TargetLevel("TP1", 67), TargetLevel("TP2", 85),
+    #              TargetLevel("TP3", 105), TargetLevel("TP4", 130)],
+    #     stoploss_pips=119, source="walkforward:GDAXI-SELL/3of4-folds")),
     "USOIL.FOREX": ("SELL", DirectionOverride(
         targets=[TargetLevel("TP1", 1.04), TargetLevel("TP2", 1.30),
                  TargetLevel("TP3", 1.60), TargetLevel("TP4", 2.00)],
