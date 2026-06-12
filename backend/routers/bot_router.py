@@ -33,6 +33,70 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/bot", tags=["MT5 Bot"])
 
 
+# ── Momentum-continuation entry filter (OOS-validated 2026-06-12) ─────────────
+# Against the bot's FIXED tp/sl, only momentum-CONTINUATION entries reach the far
+# target; mean-reversion entries tag near and revert into the wide SL. Confirmed
+# out-of-sample (held-out TEST + blind-threshold TEST + 7/7 weekly walk-forward):
+#   NDX.INDX:BUY     unfilt TEST 51.4% (−EV) → filtered 78.6%; blind 81.8%
+#   USOIL.FOREX:SELL unfilt TEST 71.4%       → filtered 96.6%; blind 100%
+# GDAXI.INDX:SELL is intentionally NOT gated — its filter FAILED OOS (TEST 58.3%
+# < 64% breakeven), so we leave that scope unchanged.
+# Each rule: (factor_key, ">"|"<", threshold). ALL must hold to allow the trade.
+MOMENTUM_FILTER = {
+    "NDX.INDX:BUY": [
+        ("M15_stoch_k", ">", 70.0),
+        ("M15_dist_ema20_atr", ">", 0.8),
+        ("H1_sar_dist_atr", ">", 0.0),
+    ],
+    "USOIL.FOREX:SELL": [
+        ("M30_dist_ema20_atr", "<", 0.0),
+        ("M30_macd_hist", "<", 0.0),
+        ("H1_sar_dist_atr", "<", 0.0),
+    ],
+}
+
+
+def _as_float(v):
+    try:
+        x = float(v)
+        return None if x != x else x
+    except (TypeError, ValueError):
+        return None
+
+
+async def momentum_filter_veto(symbol: str, direction: str) -> Optional[str]:
+    """Return a veto_reason string if the OOS-validated momentum filter REJECTS
+    this entry, else None (allow). Scopes not in MOMENTUM_FILTER are never gated.
+
+    Conservative on missing data: if the snapshot or a required factor is
+    unavailable we BLOCK, because the unfiltered scopes are ≈breakeven/−EV and
+    the proven edge exists ONLY on confirmed momentum-continuation entries.
+    """
+    rules = MOMENTUM_FILTER.get(f"{symbol}:{direction}")
+    if not rules:
+        return None  # not a gated scope — no effect
+    try:
+        from services.signal_feature_snapshot import build_signal_feature_snapshot
+        snap = await build_signal_feature_snapshot(symbol)
+    except Exception as e:
+        logger.warning("[bot] momentum_filter snapshot hata %s: %s", symbol, e)
+        return "momentum_filter: gosterge verisi alinamadi"
+    if not snap:
+        return "momentum_filter: gosterge verisi yok"
+    failed = []
+    for key, op, thr in rules:
+        v = _as_float(snap.get(key))
+        if v is None:
+            return f"momentum_filter: {key} eksik"
+        if op == ">" and not (v > thr):
+            failed.append(f"{key}={v:.3f}≤{thr}")
+        elif op == "<" and not (v < thr):
+            failed.append(f"{key}={v:.3f}≥{thr}")
+    if failed:
+        return "momentum_filter: " + ", ".join(failed)
+    return None
+
+
 @router.post("/trade-signal")
 async def trade_signal(body: dict):
     """Bot için tüm trade kararı paketi.
@@ -140,12 +204,26 @@ async def trade_signal(body: dict):
     mode = (_os.getenv("ENTRY_OPTIMIZER_MODE") or "off").lower()
     enforce = (mode == "enforce")
 
+    # ── 1b) Momentum-continuation filter (OOS-validated NDX:BUY / USOIL:SELL) ─
+    # Gates only the two scopes whose momentum edge survived out-of-sample.
+    # A failing filter is a hard block; it never relaxes other vetoes.
+    momentum_veto = None
+    try:
+        momentum_veto = await momentum_filter_veto(symbol, direction)
+    except Exception as e:
+        logger.warning("[bot] momentum_filter hata: %s", e)
+        momentum_veto = "momentum_filter: ic hata"
+    if momentum_veto and not veto_reason:
+        veto_reason = momentum_veto
+
     # should_trade — net karar
     # - precision_veto vetolanmışsa HAYIR
+    # - momentum filter REDDETTİYSE HAYIR (NDX:BUY / USOIL:SELL)
     # - Stage 4 sizing 0 (hard veto) HAYIR
     # - direction HOLD'a düşmüşse HAYIR
     should_trade = (
         not veto_reason
+        and not momentum_veto
         and lot_multiplier > 0
         and direction_out in ("BUY", "SELL")
     )
@@ -158,6 +236,7 @@ async def trade_signal(body: dict):
         "should_trade": should_trade,
         "direction_out": direction_out,
         "veto_reason": veto_reason,
+        "momentum_filter_veto": momentum_veto,
         "lot_multiplier": round(lot_multiplier, 3),
         "effective_lot_multiplier": round(effective_lot_mult, 3),
         "entry_price": round(entry_price, 5),
