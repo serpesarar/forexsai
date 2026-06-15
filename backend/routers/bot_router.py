@@ -33,14 +33,21 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/bot", tags=["MT5 Bot"])
 
 
-# ── Momentum-continuation entry filter (OOS-validated 2026-06-12) ─────────────
+# ── Momentum-continuation entry filter (OOS-validated 2026-06-12/14) ──────────
 # Against the bot's FIXED tp/sl, only momentum-CONTINUATION entries reach the far
 # target; mean-reversion entries tag near and revert into the wide SL. Confirmed
 # out-of-sample (held-out TEST + blind-threshold TEST + 7/7 weekly walk-forward):
 #   NDX.INDX:BUY     unfilt TEST 51.4% (−EV) → filtered 78.6%; blind 81.8%
 #   USOIL.FOREX:SELL unfilt TEST 71.4%       → filtered 96.6%; blind 100%
-# GDAXI.INDX:SELL is intentionally NOT gated — its filter FAILED OOS (TEST 58.3%
-# < 64% breakeven), so we leave that scope unchanged.
+# Added 2026-06-14 after a hardening battery (3-window multi-split + 0/1/2x
+# friction sweep + pessimistic tie-break + 2000x bootstrap + placebo-vs-random):
+#   GDAXI.INDX:BUY   3/3 splits +EV; bootstrap P(WR>be)=99.9%; beats 100% of
+#                    random subsets (p=0.000); 0 ambiguous fills; 100% live keys.
+#   USOIL.FOREX:BUY  3/3 splits +EV; bootstrap P(WR>be)=100%; beats 100% of
+#                    random subsets (p=0.000); filter flips −EV unfilt → +EV.
+# NOT gated (failed the same tests): GDAXI.INDX:SELL (failed OOS, TEST 58.3%<64%),
+# NDX.INDX:SELL (marginal, declining EV), XAUUSD:SELL (−EV at 2x friction — tight
+# tp8 is execution-fragile), XAUUSD:BUY (friction-sensitive, observe first).
 # Each rule: (factor_key, ">"|"<", threshold). ALL must hold to allow the trade.
 MOMENTUM_FILTER = {
     "NDX.INDX:BUY": [
@@ -52,6 +59,16 @@ MOMENTUM_FILTER = {
         ("M30_dist_ema20_atr", "<", 0.0),
         ("M30_macd_hist", "<", 0.0),
         ("H1_sar_dist_atr", "<", 0.0),
+    ],
+    "GDAXI.INDX:BUY": [
+        ("M15_stoch_k", ">", 70.0),
+        ("M15_dist_ema20_atr", ">", 0.8),
+        ("H1_sar_dist_atr", ">", 0.0),
+    ],
+    "USOIL.FOREX:BUY": [
+        ("M30_stoch_k", ">", 70.0),
+        ("M30_dist_ema20_atr", ">", 0.8),
+        ("H1_sar_dist_atr", ">", 0.0),
     ],
 }
 
