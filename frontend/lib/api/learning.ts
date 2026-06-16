@@ -176,6 +176,57 @@ export function useAccuracyByModel(symbol?: string, days: number = 30, checkInte
   });
 }
 
+export interface LifecycleSignalRow {
+  id: string;
+  symbol: string;
+  model_type: string | null;
+  direction: string | null;
+  status: string | null;
+  resolution_reason: string | null;
+  entry_price: number | null;
+  exit_price: number | null;
+  profit_pips: number | null;
+  drawdown_pips: number | null;
+  created_at: string | null;
+  closed_at: string | null;
+  age_hours: number | null;
+}
+
+export interface LifecycleResultsResponse {
+  symbol: string;
+  window_hours: number;
+  active_count: number;
+  resolved_count: number;
+  reason_counts: Record<string, number>;
+  status_counts: Record<string, number>;
+  real_tp_sl_resolved: number;
+  direction_flip_resolved: number;
+  oldest_active: LifecycleSignalRow[];
+  recent_resolved: LifecycleSignalRow[];
+  generated_at: string;
+  error?: string;
+}
+
+async function fetchLifecycleResults(symbol?: string, hours: number = 24, limit: number = 25): Promise<LifecycleResultsResponse> {
+  const params = new URLSearchParams();
+  if (symbol) params.append("symbol", symbol);
+  params.append("hours", hours.toString());
+  params.append("limit", limit.toString());
+
+  const res = await fetch(`${API_BASE}/api/learning/lifecycle-results?${params}`);
+  if (!res.ok) throw new Error("Failed to fetch lifecycle results");
+  return res.json();
+}
+
+export function useLifecycleResults(symbol?: string, hours: number = 24, limit: number = 25) {
+  return useQuery({
+    queryKey: ["learning", "lifecycle-results", symbol, hours, limit],
+    queryFn: () => fetchLifecycleResults(symbol, hours, limit),
+    staleTime: 30000,
+    refetchInterval: 60000,
+  });
+}
+
 export function useLearningHealth() {
   return useQuery({
     queryKey: ["learning", "health"],

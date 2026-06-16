@@ -769,6 +769,120 @@ async def get_accuracy_by_model(
         return {"error": str(e), "traceback": traceback.format_exc()[:300]}
 
 
+@router.get("/lifecycle-results")
+async def get_lifecycle_results(
+    symbol: Optional[str] = Query(None),
+    hours: int = Query(24, ge=1, le=168),
+    limit: int = Query(25, ge=1, le=100),
+):
+    """Live lifecycle resolution feed for the signal page table.
+
+    Returns the current active backlog plus how recently-resolved signals
+    closed (resolution_reason / status distribution + the latest rows). Lets the
+    UI confirm the 5m-fallback resolver is producing real tp/sl outcomes instead
+    of only direction_flip.
+    """
+    if not is_db_available():
+        return {"error": "Database not available"}
+
+    client = get_supabase_client()
+    if not client:
+        return {"error": "Database client not available"}
+
+    cache_key = ("lifecycle_results", symbol, hours, limit)
+    cached = await _learning_stats_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    try:
+        select_fields = (
+            "id, symbol, model_type, ml_direction, status, resolution_reason, "
+            "ml_entry_price, exit_price, highest_profit_pips, lowest_drawdown_pips, "
+            "created_at, closed_at"
+        )
+
+        active_q = client.table("prediction_logs").select(select_fields).eq("status", "active")
+        if symbol:
+            active_q = active_q.eq("symbol", symbol)
+        active_rows = safe_get_data(active_q.order("created_at", desc=False).limit(200).execute()) or []
+
+        cutoff = _utc_iso(_utc_now() - timedelta(hours=hours))
+        resolved_q = (
+            client.table("prediction_logs")
+            .select(select_fields)
+            .neq("status", "active")
+            .gte("created_at", cutoff)
+        )
+        if symbol:
+            resolved_q = resolved_q.eq("symbol", symbol)
+        resolved_rows = safe_get_data(
+            resolved_q.order("created_at", desc=True).limit(1500).execute()
+        ) or []
+
+        reason_counts: Dict[str, int] = {}
+        status_counts: Dict[str, int] = {}
+        for r in resolved_rows:
+            reason = r.get("resolution_reason") or "unknown"
+            st = r.get("status") or "unknown"
+            reason_counts[reason] = reason_counts.get(reason, 0) + 1
+            status_counts[st] = status_counts.get(st, 0) + 1
+
+        def _age_hours(value: Any) -> Optional[float]:
+            dt = _parse_dt(value) if "_parse_dt" in globals() else None
+            if dt is None:
+                try:
+                    dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+                except Exception:
+                    return None
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return round((_utc_now() - dt).total_seconds() / 3600.0, 1)
+
+        def _shape(r: dict) -> dict:
+            return {
+                "id": r.get("id"),
+                "symbol": r.get("symbol"),
+                "model_type": r.get("model_type"),
+                "direction": r.get("ml_direction"),
+                "status": r.get("status"),
+                "resolution_reason": r.get("resolution_reason"),
+                "entry_price": r.get("ml_entry_price"),
+                "exit_price": r.get("exit_price"),
+                "profit_pips": r.get("highest_profit_pips"),
+                "drawdown_pips": r.get("lowest_drawdown_pips"),
+                "created_at": r.get("created_at"),
+                "closed_at": r.get("closed_at"),
+                "age_hours": _age_hours(r.get("created_at")),
+            }
+
+        tp_reasons = {"tp4_hit", "tp1_3_hit_then_sl", "window_resolve_positive"}
+        sl_reasons = {"sl_hit", "window_resolve_negative"}
+        real_resolved = sum(
+            v for k, v in reason_counts.items() if k in tp_reasons or k in sl_reasons
+        )
+        flip_only = reason_counts.get("direction_flip", 0)
+
+        res = {
+            "symbol": symbol or "ALL",
+            "window_hours": hours,
+            "active_count": len(active_rows),
+            "resolved_count": len(resolved_rows),
+            "reason_counts": dict(sorted(reason_counts.items(), key=lambda kv: -kv[1])),
+            "status_counts": status_counts,
+            "real_tp_sl_resolved": real_resolved,
+            "direction_flip_resolved": flip_only,
+            "oldest_active": [_shape(r) for r in active_rows[:limit]],
+            "recent_resolved": [_shape(r) for r in resolved_rows[:limit]],
+            "generated_at": _utc_iso(),
+        }
+        await _learning_stats_cache.set(cache_key, res)
+        return res
+
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()[:300]}
+
+
 @router.get("/factor-analysis")
 async def get_factor_analysis(
     symbol: Optional[str] = Query(None),

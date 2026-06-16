@@ -13,6 +13,7 @@ import SharedChart from "../chart/SharedChart";
 import SignalGrid from "../signals/SignalGrid";
 import ContextCards from "../context/ContextCards";
 import PerformanceScoreboard from "../performance/PerformanceScoreboard";
+import LifecycleResultsTable from "../performance/LifecycleResultsTable";
 import type { SymbolConfig } from "../../lib/symbolConfig";
 
 const ClearTrendPanelV3 = dynamic(() => import("../panels/ClearTrendPanelV3"), { ssr: false });
@@ -97,6 +98,11 @@ function SymbolPageInner({ config }: Props) {
         {/* Section 5 — Performance scoreboard */}
         <Section title="Model Performance" subtitle="Last 30 days · win rates & volume" delay={0.2}>
           <PerformanceScoreboard symbol={config.symbol} days={30} />
+        </Section>
+
+        {/* Section 6 — Live lifecycle resolution feed */}
+        <Section title="Lifecycle Sonuçları" subtitle="Canlı TP/SL çözümleri · Supabase" delay={0.25}>
+          <LifecycleResultsTable symbol={config.symbol} hours={48} />
         </Section>
       </div>
     </div>
