@@ -711,7 +711,18 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
 
     # Fetch 1-minute candles for the evaluation window (plus small buffer)
     candle_limit = max(30, int(age_minutes) + 10)
+    candle_interval = "1m"
     candles = await fetch_intraday_candles(symbol, interval="1m", limit=candle_limit)
+
+    # The live MT5->Redis feed only streams 5m/1h/1d bars (no mt5:bar:1m), so the
+    # 1m fetch is frequently empty and would freeze resolution indefinitely. Fall
+    # back to the live 5m series; the pre-entry wick guard below still protects
+    # against false TP/SL hits from the candle that straddles the signal time.
+    if not candles:
+        candle_interval = "5m"
+        candles = await fetch_intraday_candles(
+            symbol, interval="5m", limit=max(12, candle_limit // 5 + 4)
+        )
 
     # Filter candles starting from the signal creation time
     relevant_candles = []
@@ -732,7 +743,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
 
     if created_dt is not None and not relevant_candles:
         logger.info(
-            f"lifecycle.defer_no_post_entry_candles | signal={signal_id[:8]} symbol={symbol} latest_candle={_utc_iso(latest_candle_at) if latest_candle_at else None}"
+            f"lifecycle.defer_no_post_entry_candles | signal={signal_id[:8]} symbol={symbol} interval={candle_interval} latest_candle={_utc_iso(latest_candle_at) if latest_candle_at else None}"
         )
         return None
 

@@ -452,6 +452,58 @@ async def test_process_signal_expires_records_created_while_market_was_closed():
 
 
 @pytest.mark.asyncio
+async def test_process_signal_falls_back_to_5m_when_1m_unavailable():
+    """Live MT5 feed streams no 1m bars; resolution must use 5m instead of freezing."""
+    from services.signal_lifecycle import _process_signal
+
+    client = RecordingClient()
+    created_at = datetime.now(timezone.utc) - timedelta(minutes=20)
+    candle_time = datetime.now(timezone.utc) - timedelta(minutes=5)
+
+    async def fake_fetch(symbol, interval="5m", limit=300):
+        if interval == "1m":
+            return []
+        return [
+            {
+                "timestamp": candle_time.timestamp() * 1000,
+                "date": candle_time.isoformat().replace("+00:00", "Z"),
+                "high": 2006.0,
+                "low": 2001.0,
+                "close": 2006.0,
+            }
+        ]
+
+    signal = {
+        "id": "no-1m-feed-1",
+        "symbol": "XAUUSD",
+        "ml_direction": "BUY",
+        "ml_entry_price": 2000.0,
+        "timeframe": "15m",
+        "status": "active",
+        "targets_hit": {},
+        "created_at": created_at.isoformat().replace("+00:00", "Z"),
+    }
+
+    with patch("services.signal_lifecycle.is_symbol_market_open", return_value=True), patch(
+        "services.signal_lifecycle.fetch_latest_price", new=AsyncMock(return_value=2006.0)
+    ), patch(
+        "services.signal_lifecycle.fetch_intraday_candles", side_effect=fake_fetch
+    ), patch(
+        "services.signal_lifecycle._resolve_target_prices", return_value={"TP1": 2005.0}
+    ), patch(
+        "services.signal_lifecycle.calculate_stoploss_price", return_value=1990.0
+    ):
+        new_status = await _process_signal(client, signal)
+
+    assert new_status == "completed"
+    prediction_update = next(
+        op for op in client.operations
+        if op["table"] == "prediction_logs" and op["op"] == "update"
+    )
+    assert prediction_update["payload"]["targets_hit"]["TP1"] is True
+
+
+@pytest.mark.asyncio
 async def test_process_signal_does_not_use_pre_entry_candles_for_tp_hits():
     from services.signal_lifecycle import _process_signal
 
