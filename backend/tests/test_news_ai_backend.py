@@ -370,6 +370,9 @@ async def test_run_claude_sentiment_fetches_marketaux_using_symbol_list(monkeypa
 @pytest.mark.asyncio
 async def test_rss_aggregator_store_in_database_executes_insert(monkeypatch):
     rss_aggregator = _load_module("test_rss_aggregator_module", "services/rss_aggregator.py")
+    # Persistence is gated behind a feature flag (default off); enable it so the
+    # insert path actually executes for this test.
+    monkeypatch.setattr(rss_aggregator, "RSS_AGGREGATION_ENABLED", True)
 
     class FakeTable:
         def __init__(self):

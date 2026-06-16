@@ -57,6 +57,8 @@ class _FakeStructure:
         self.choch_list = [_FakeEvent()]
         self.bos_list = [_FakeEvent()]
         self.fvg_list = [_FakeEvent()]
+        self.swing_list = []
+        self.projection = None
 
     def to_dict(self):
         return {"trend": self.trend}

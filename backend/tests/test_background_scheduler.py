@@ -56,12 +56,12 @@ async def test_log_pulse_signals_uses_only_legacy_default_timeframes():
 
     assert check_and_log.await_args_list == [
         call("XAUUSD", "emel", None, "1h"),
+        call("XAUUSD", "emel_inverse", None, "1h"),
         call("XAUUSD", "pulse1", None, "5m"),
         call("XAUUSD", "pulse2", None, "15m"),
         call("XAUUSD", "pulse3", None, "5m"),
     ]
-    assert all(args.args[1] != "emel_inverse" for args in check_and_log.await_args_list)
-    assert sleep_mock.await_count == 4
+    assert sleep_mock.await_count == 5
 
 
 @pytest.mark.asyncio
@@ -78,7 +78,7 @@ async def test_log_pulse_signals_respects_interval_guard_after_first_run():
         await scheduler.log_pulse_signals_if_needed()
         await scheduler.log_pulse_signals_if_needed()
 
-    assert check_and_log.await_count == 4
+    assert check_and_log.await_count == 5
 
 
 @pytest.mark.asyncio

@@ -201,6 +201,24 @@ _price_last_seen_time: Dict[str, datetime] = {}  # symbol -> timestamp
 PRICE_STALENESS_THRESHOLD_MINUTES = 1  # 1 minute - if price unchanged for 1min, consider market closed
 MARKET_DATA_FRESHNESS_THRESHOLD_MINUTES = 20
 
+# Average spread in pips per instrument (spread/slippage-aware TP/SL simulation)
+SYMBOL_SPREADS = {
+    "NDX.INDX": 1.5,
+    "XAUUSD": 2.5,
+    "GDAXI.INDX": 2.0,
+    "USOIL.FOREX": 3.0,
+}
+
+
+def _get_pip_size(sym: str) -> float:
+    """Price units per pip for spread/slippage scaling."""
+    sym_upper = (sym or "").upper()
+    if "XAUUSD" in sym_upper:
+        return 0.1
+    if "USOIL" in sym_upper or "CL.COMM" in sym_upper:
+        return 0.01
+    return 1.0
+
 
 def _is_price_stale(symbol: str, current_price: float) -> bool:
     """

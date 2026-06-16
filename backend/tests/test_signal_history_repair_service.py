@@ -124,7 +124,8 @@ def test_plan_signal_history_repair_normalizes_completed_target_exit_price():
     plan = plan_signal_history_repair(row)
 
     assert plan is not None
-    assert plan["updates"]["exit_price"] == 24309.9
+    # Canonical NDX SELL ladder is flat -30 → TP4 resolves to 24329.9.
+    assert plan["updates"]["exit_price"] == 24329.9
     assert "status" not in plan["updates"]
 
 
@@ -153,7 +154,8 @@ def test_plan_signal_history_repair_reclassifies_stopped_target_hit_rows():
 
     assert plan is not None
     assert plan["updates"]["status"] == "completed"
-    assert plan["updates"]["exit_price"] == 23487.2
+    # Canonical GDAXI SELL ladder is flat -30 → TP1 resolves to 23472.2.
+    assert plan["updates"]["exit_price"] == 23472.2
     assert plan["updates"]["resolution_reason"] == "tp1_3_hit_then_sl"
 
 
@@ -168,7 +170,7 @@ def test_plan_signal_history_repair_repairs_active_hourly_target_geometry():
         "ml_entry_price": 23591.8,
         "targets": {"TP1": 23656.1562, "TP2": 23666.1562, "TP3": 23676.1562, "TP4": 23736.1562},
         "targets_hit": {},
-        "highest_profit_pips": 18.0,
+        "highest_profit_pips": 35.0,
         "lowest_drawdown_pips": -5.0,
         "stop_loss_pips": 144.4,
         "status": "active",
@@ -181,7 +183,8 @@ def test_plan_signal_history_repair_repairs_active_hourly_target_geometry():
     plan = plan_signal_history_repair(row)
 
     assert plan is not None
-    assert plan["updates"]["targets"] == {"TP1": 23606.8, "TP2": 23616.8, "TP3": 23626.8, "TP4": 23641.8}
+    # Canonical GDAXI ladder is flat +30 from entry 23591.8 → all 23621.8.
+    assert plan["updates"]["targets"] == {"TP1": 23621.8, "TP2": 23621.8, "TP3": 23621.8, "TP4": 23621.8}
     assert plan["updates"]["stop_loss_pips"] == 50.0
     assert plan["updates"]["targets_hit"] == {"TP1": True, "TP2": False, "TP3": False, "TP4": False}
 
@@ -199,7 +202,7 @@ def test_plan_signal_history_repair_repairs_active_hourly_target_geometry_for_al
                 "ml_entry_price": 25000.0,
                 "targets": {"TP1": 25115.0, "TP2": 25125.0, "TP3": 25135.0, "TP4": 25150.0},
                 "targets_hit": {},
-                "highest_profit_pips": 18.0,
+                "highest_profit_pips": 35.0,
                 "lowest_drawdown_pips": -5.0,
                 "stop_loss_pips": 150.0,
                 "status": "active",
@@ -208,7 +211,7 @@ def test_plan_signal_history_repair_repairs_active_hourly_target_geometry_for_al
                 "resolution_reason": None,
                 "created_at": _iso(datetime.now(timezone.utc) - timedelta(minutes=15)),
             },
-            {"TP1": 25015.0, "TP2": 25025.0, "TP3": 25035.0, "TP4": 25050.0},
+            {"TP1": 25030.0, "TP2": 25030.0, "TP3": 25030.0, "TP4": 25030.0},
             50.0,
             {"TP1": True, "TP2": False, "TP3": False, "TP4": False},
         ),
@@ -247,7 +250,7 @@ def test_plan_signal_history_repair_repairs_active_hourly_target_geometry_for_al
                 "ml_entry_price": 70.0,
                 "targets": {"TP1": 70.294, "TP2": 70.308, "TP3": 70.322, "TP4": 70.35},
                 "targets_hit": {},
-                "highest_profit_pips": 0.02,
+                "highest_profit_pips": 0.15,
                 "lowest_drawdown_pips": -0.01,
                 "stop_loss_pips": 0.315,
                 "status": "active",
@@ -256,8 +259,8 @@ def test_plan_signal_history_repair_repairs_active_hourly_target_geometry_for_al
                 "resolution_reason": None,
                 "created_at": _iso(datetime.now(timezone.utc) - timedelta(minutes=15)),
             },
-            {"TP1": 70.014, "TP2": 70.028, "TP3": 70.042, "TP4": 70.07},
-            0.03,
+            {"TP1": 70.07, "TP2": 70.14, "TP3": 70.245, "TP4": 70.35},
+            0.21,
             {"TP1": True, "TP2": False, "TP3": False, "TP4": False},
         ),
     ]
@@ -342,4 +345,4 @@ def test_run_signal_history_repair_counts_and_applies_updates():
     assert apply_payload["rows_needing_update"] == 1
     assert apply_payload["rows_updated"] == 1
     assert client.updates_log[0][0] == "ndx-1"
-    assert client.updates_log[0][1]["exit_price"] == 24309.9
+    assert client.updates_log[0][1]["exit_price"] == 24329.9

@@ -24,12 +24,13 @@ def test_classify_signal_uses_hit_target_floor_when_realized_exit_is_negative():
         "status": "completed",
         "ml_entry_price": 100.0,
         "exit_price": 85.0,
-        "highest_profit_pips": 4.0,
+        "highest_profit_pips": 30.0,
         "targets_hit": '"{\\"TP1\\": true, \\"TP2\\": true, \\"TP3\\": false, \\"TP4\\": false}"',
         "targets": '"{\\"TP1\\": 115.0, \\"TP2\\": 125.0, \\"TP3\\": 135.0, \\"TP4\\": 150.0}"',
     }
 
-    assert classify_signal(signal) == ("completed", True, 25.0)
+    # Canonical NDX geometry is a flat 30-pip ladder; stored targets are ignored.
+    assert classify_signal(signal) == ("completed", True, 30.0)
 
 
 def test_classify_signal_prefers_realized_exit_over_peak_excursion_for_completed_rows():
@@ -59,7 +60,7 @@ def test_classify_signal_uses_highest_hit_target_floor_for_completed_target_rows
         "targets": {"TP1": 23015.0, "TP2": 23025.0, "TP3": 23035.0, "TP4": 23050.0},
     }
 
-    assert classify_signal(signal) == ("completed", True, 25.0)
+    assert classify_signal(signal) == ("completed", True, 30.0)
 
 
 def test_resolved_exit_price_prefers_highest_hit_target_for_completed_rows():
@@ -74,7 +75,8 @@ def test_resolved_exit_price_prefers_highest_hit_target_for_completed_rows():
         "targets": {"TP1": 23015.0, "TP2": 23025.0, "TP3": 23035.0, "TP4": 23050.0},
     }
 
-    assert resolved_exit_price(signal) == pytest.approx(23025.0, abs=0.0001)
+    # Canonical GDAXI ladder is flat +30 → highest hit (TP2) resolves to 23030.0.
+    assert resolved_exit_price(signal) == pytest.approx(23030.0, abs=0.0001)
 
 
 def test_hourly_completed_rows_use_canonical_fixed_targets_when_stored_geometry_is_inflated():
@@ -91,8 +93,8 @@ def test_hourly_completed_rows_use_canonical_fixed_targets_when_stored_geometry_
         "targets": {"TP1": 23656.1562, "TP2": 23666.1562, "TP3": 23676.1562, "TP4": 23736.1562},
     }
 
-    assert classify_signal(signal) == ("completed", True, 50.0)
-    assert resolved_exit_price(signal) == pytest.approx(23641.8, abs=0.0001)
+    assert classify_signal(signal) == ("completed", True, 30.0)
+    assert resolved_exit_price(signal) == pytest.approx(23621.8, abs=0.0001)
 
 
 def test_hourly_stopped_rows_use_canonical_fixed_stop_loss_when_stored_loss_is_inflated():
@@ -130,8 +132,8 @@ def test_hourly_stopped_rows_use_canonical_fixed_stop_loss_when_stored_loss_is_i
                 "targets_hit": {"TP1": True, "TP2": True, "TP3": True, "TP4": True},
                 "targets": {"TP1": 25115.0, "TP2": 25125.0, "TP3": 25135.0, "TP4": 25150.0},
             },
-            50.0,
-            25050.0,
+            30.0,
+            25030.0,
         ),
         (
             {
@@ -162,8 +164,8 @@ def test_hourly_stopped_rows_use_canonical_fixed_stop_loss_when_stored_loss_is_i
                 "targets_hit": {"TP1": True, "TP2": True, "TP3": True, "TP4": True},
                 "targets": {"TP1": 70.294, "TP2": 70.308, "TP3": 70.322, "TP4": 70.35},
             },
-            0.07,
-            70.07,
+            0.35,
+            70.35,
         ),
     ],
 )
@@ -226,8 +228,8 @@ def test_hourly_completed_rows_use_canonical_fixed_targets_for_all_symbols(signa
                 "targets_hit": {},
                 "targets": {"TP1": 70.294, "TP2": 70.308, "TP3": 70.322, "TP4": 70.35},
             },
-            -0.035,
-            69.965,
+            -0.21,
+            69.79,
         ),
     ],
 )

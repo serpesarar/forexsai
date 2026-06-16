@@ -124,7 +124,7 @@ async def test_model_detail_analytics_ignores_legacy_timeframes_and_uses_realize
         },
     ]
 
-    client = _FakeClient([[], signal_rows])
+    client = _FakeClient([signal_rows])
 
     with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
         learning_module, "get_supabase_client", return_value=client
@@ -133,7 +133,7 @@ async def test_model_detail_analytics_ignores_legacy_timeframes_and_uses_realize
 
     assert payload["available_timeframes"] == ["15m"]
     assert [row["tf"] for row in payload["timeframe_comparison"]] == ["15m"]
-    assert payload["overview"]["net_pips"] == -35.0
+    assert payload["overview"]["net_pips"] == -20.0
     assert payload["recent_signals"][0]["confidence"] == 78.0
     assert payload["recent_signals"][0]["date"] == "2026-03-06T11:00:00Z"
     assert payload["recent_signals"][0]["entry_price"] == 100.0
@@ -179,7 +179,7 @@ async def test_model_detail_analytics_repairs_target_hit_rows_with_bad_exit_pric
         },
     ]
 
-    client = _FakeClient([[], signal_rows])
+    client = _FakeClient([signal_rows])
 
     with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
         learning_module, "get_supabase_client", return_value=client
@@ -238,7 +238,7 @@ async def test_model_detail_analytics_filters_ml_rows_by_strategy_scope():
         },
     ]
 
-    client = _FakeClient([[], signal_rows])
+    client = _FakeClient([signal_rows])
 
     with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
         learning_module, "get_supabase_client", return_value=client
@@ -255,7 +255,7 @@ async def test_model_detail_analytics_filters_ml_rows_by_strategy_scope():
     assert payload["meta"]["selected_scope"] == "aggressive"
     assert payload["overview"]["total_signals"] == 1
     assert payload["overview"]["completed"] == 1
-    assert payload["overview"]["net_pips"] == 25.0
+    assert payload["overview"]["net_pips"] == 30.0
     assert payload["available_models"] == ["ml"]
     assert payload["available_timeframes"] == ["15m"]
     assert len(payload["recent_signals"]) == 1
@@ -265,10 +265,10 @@ async def test_model_detail_analytics_filters_ml_rows_by_strategy_scope():
     assert signal["direction"] == "SELL"
     assert signal["confidence"] == 49.0
     assert signal["status"] == "completed"
-    assert signal["pips"] == 25.0
+    assert signal["pips"] == 30.0
     assert signal["timeframe"] == "15m"
     assert signal["entry_price"] == 100.0
-    assert signal["exit_price"] == 75.0
+    assert signal["exit_price"] == 70.0
 
 
 @pytest.mark.asyncio
@@ -298,7 +298,7 @@ async def test_model_detail_analytics_uses_canonical_fixed_hourly_geometry_when_
         },
     ]
 
-    client = _FakeClient([[], signal_rows])
+    client = _FakeClient([signal_rows])
 
     with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
         learning_module, "get_supabase_client", return_value=client
@@ -306,12 +306,12 @@ async def test_model_detail_analytics_uses_canonical_fixed_hourly_geometry_when_
         payload = await get_model_detail_analytics(model="emel", symbol="GDAXI.INDX", days=1, timeframe="1h")
 
     assert payload["overview"]["completed"] == 1
-    assert payload["overview"]["net_pips"] == 50.0
+    assert payload["overview"]["net_pips"] == 30.0
     assert payload["timeframe_comparison"] == [
-        {"tf": "1h", "total": 1, "active": 0, "win_rate": 100.0, "net_pips": 50.0, "avg_pips": 50.0}
+        {"tf": "1h", "total": 1, "active": 0, "win_rate": 100.0, "net_pips": 30.0, "avg_pips": 30.0}
     ]
-    assert payload["recent_signals"][0]["pips"] == 50.0
-    assert payload["recent_signals"][0]["exit_price"] == 23641.8
+    assert payload["recent_signals"][0]["pips"] == 30.0
+    assert payload["recent_signals"][0]["exit_price"] == 23621.8
 
 
 @pytest.mark.asyncio
@@ -444,7 +444,7 @@ async def test_historical_signals_endpoint_includes_scoped_ml_records_for_ml_fil
                 "exit_time": "2026-03-19T08:21:10.530689Z",
                 "resolution_reason": "tp4_hit",
             },
-            0.07,
+            0.35,
         ),
     ],
 )
@@ -602,13 +602,13 @@ async def test_model_detail_analytics_uses_session_hours_and_tp_sl_only_weekday_
         "stopped": 1,
         "expired": 1,
         "active": 1,
-        "net_pips": -5.0,
-        "avg_profit_pips": 15.0,
+        "net_pips": 10.0,
+        "avg_profit_pips": 20.0,
         "avg_loss_pips": 50.0,
-        "risk_reward": 0.3,
-        "sharpe_ratio": pytest.approx(-0.61, rel=1e-3),
+        "risk_reward": 0.4,
+        "sharpe_ratio": pytest.approx(1.11, rel=1e-3),
         "max_drawdown_pips": 50.0,
-        "profit_factor": 0.9,
+        "profit_factor": 1.2,
     }
 
     assert payload["meta"]["hourly_visible_hours"] == [9, 10, 11, 12, 13, 14, 15, 16, 17]
@@ -618,7 +618,7 @@ async def test_model_detail_analytics_uses_session_hours_and_tp_sl_only_weekday_
     hourly_rows = {row["hour"]: row for row in payload["hourly_heatmap"]}
     assert list(hourly_rows.keys()) == [9, 10, 11, 12, 13, 14, 15, 16, 17]
     assert hourly_rows[9] == {"hour": 9, "total": 3, "wins": 2, "win_rate": 66.7, "avg_pips": -6.7}
-    assert hourly_rows[12] == {"hour": 12, "total": 1, "wins": 1, "win_rate": 100.0, "avg_pips": 15.0}
+    assert hourly_rows[12] == {"hour": 12, "total": 1, "wins": 1, "win_rate": 100.0, "avg_pips": 30.0}
     assert hourly_rows[10] == {"hour": 10, "total": 0, "wins": 0, "win_rate": 0, "avg_pips": 0}
 
     weekday_rows = {row["day"]: row for row in payload["day_of_week"]}
@@ -636,7 +636,7 @@ async def test_model_detail_analytics_uses_session_hours_and_tp_sl_only_weekday_
         "total": 1,
         "wins": 1,
         "win_rate": 100.0,
-        "avg_pips": 15.0,
+        "avg_pips": 30.0,
     }
     assert weekday_rows["Wednesday"]["total"] == 0
 
@@ -950,7 +950,7 @@ async def test_model_detail_analytics_includes_smc_in_available_models_and_compa
         },
     ]
 
-    client = _FakeClient([[], signal_rows])
+    client = _FakeClient([signal_rows])
 
     with patch.object(learning_module, "is_db_available", return_value=True), patch.object(
         learning_module, "get_supabase_client", return_value=client

@@ -2,10 +2,14 @@
 Target Configuration for Multi-Level Outcome Tracking
 Symbol-specific pip targets and stoploss levels.
 
-Target definitions (user-specified):
-  NASDAQ / DAX:  TP1=15, TP2=25, TP3=35, TP4=50 pips, SL=50 pips
-  XAUUSD:        TP1=4,  TP2=7,  TP3=10, TP4=17 pips, SL=8 pips  (1 pip = $1.00)
-  US OIL:        TP1=0.02%, TP2=0.04%, TP3=0.06%, TP4=0.1%, SL=0.05% (percentage-based)
+Target definitions (canonical — see SYMBOL_CONFIGS below):
+  NASDAQ / DAX:  TP1=30, TP2=30, TP3=30, TP4=30 pips, SL=50 pips
+  XAUUSD:        TP1=8,  TP2=15, TP3=25, TP4=40 pips, SL=15 pips  (1 pip = $1.00)
+  US OIL:        TP1=0.10%, TP2=0.20%, TP3=0.35%, TP4=0.50%, SL=0.30% (percentage-based)
+
+  USOIL SELL has a walk-forward DirectionOverride (TP=[1.04,1.30,1.60,2.00]%,
+  SL=1.49%) active by default via env TP_SL_DERIVED_OVERRIDES — applied through
+  get_effective_config(symbol, direction), not get_symbol_config.
 """
 from typing import Dict, List, NamedTuple, Optional
 

@@ -57,6 +57,7 @@ class _FilteringQuery:
         self._lt_filters = []
         self._lte_filters = []
         self._limit = None
+        self._range = None
         self._order_field = None
         self._order_desc = False
 
@@ -92,6 +93,10 @@ class _FilteringQuery:
         self._limit = value
         return self
 
+    def range(self, start, end):
+        self._range = (start, end)
+        return self
+
     def execute(self):
         rows = list(self._rows)
         for field, value in self._eq_filters:
@@ -109,6 +114,9 @@ class _FilteringQuery:
             rows = [row for row in rows if (parsed := _parse_iso(row.get(field))) is not None and parsed <= compare]
         if self._order_field:
             rows.sort(key=lambda row: _parse_iso(row.get(self._order_field)) or row.get(self._order_field), reverse=self._order_desc)
+        if self._range is not None:
+            start, end = self._range
+            rows = rows[start : end + 1]
         if self._limit is not None:
             rows = rows[: self._limit]
         return SimpleNamespace(data=rows, error=None)
@@ -765,7 +773,7 @@ async def test_recent_signals_applies_days_filter_and_returns_normalized_model_a
     signal = payload["signals"][0]
     assert signal["id"] == "recent-win-001"
     assert signal["status"] == "completed"
-    assert signal["pnl_pips"] == 15.0
+    assert signal["pnl_pips"] == 2.0
     assert signal["duration_minutes"] == pytest.approx(30.0, abs=0.1)
     assert signal["normalized_model"] == "ml"
     assert signal["strategy_scope"] == "balanced"

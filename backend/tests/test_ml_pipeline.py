@@ -336,7 +336,7 @@ class TestMlFamilyRouting:
         assert resolve_ml_model_symbol("GDAXI.INDX") == "NDX.INDX"
         assert get_ml_model_filename("GDAXI.INDX") == "model_lgbm_nasdaq.joblib"
         assert resolve_ml_model_symbol("USOIL.FOREX") == "XAUUSD"
-        assert get_ml_model_filename("USOIL.FOREX") == "model_lgbm_xauusd.joblib"
+        assert get_ml_model_filename("USOIL.FOREX") == "model_xauusd_v2.joblib"
 
     def test_load_model_caches_by_family_symbol(self):
         from services import ml_prediction_service

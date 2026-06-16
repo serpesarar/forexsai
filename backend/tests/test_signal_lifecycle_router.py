@@ -97,12 +97,12 @@ async def test_get_signal_detail_normalizes_hourly_inflated_geometry():
 
     signal = payload["signal"]
     assert signal["normalized_status"] == "completed"
-    assert signal["calculated_pnl_pips"] == 50.0
-    assert signal["targets"] == {"TP1": 23606.8, "TP2": 23616.8, "TP3": 23626.8, "TP4": 23641.8}
+    assert signal["calculated_pnl_pips"] == 30.0
+    assert signal["targets"] == {"TP1": 23621.8, "TP2": 23621.8, "TP3": 23621.8, "TP4": 23621.8}
     assert signal["targets_hit"] == {"TP1": True, "TP2": True, "TP3": True, "TP4": True}
     assert signal["stop_loss_pips"] == 50.0
     assert signal["raw_exit_price"] == 23736.1562
-    assert signal["exit_price"] == pytest.approx(23641.8, abs=0.0001)
+    assert signal["exit_price"] == pytest.approx(23621.8, abs=0.0001)
 
 
 @pytest.mark.asyncio
@@ -122,7 +122,7 @@ async def test_get_active_signals_normalizes_hourly_inflated_geometry():
                 "status": "active",
                 "targets": '{"TP1": 23656.1562, "TP2": 23666.1562, "TP3": 23676.1562, "TP4": 23736.1562}',
                 "targets_hit": '{}',
-                "highest_profit_pips": 18.0,
+                "highest_profit_pips": 35.0,
                 "lowest_drawdown_pips": -5.0,
                 "stop_loss_pips": 144.4,
                 "created_at": "2026-03-21T12:00:00Z",
@@ -142,6 +142,6 @@ async def test_get_active_signals_normalizes_hourly_inflated_geometry():
         payload = await router_module.get_active_signals()
 
     signal = payload["signals"][0]
-    assert signal["targets"] == {"TP1": 23606.8, "TP2": 23616.8, "TP3": 23626.8, "TP4": 23641.8}
+    assert signal["targets"] == {"TP1": 23621.8, "TP2": 23621.8, "TP3": 23621.8, "TP4": 23621.8}
     assert signal["targets_hit"] == {"TP1": True, "TP2": False, "TP3": False, "TP4": False}
     assert signal["stop_loss_pips"] == 50.0

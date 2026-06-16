@@ -360,6 +360,9 @@ class SequenceQuery:
     def limit(self, *_args, **_kwargs):
         return self
 
+    def range(self, *_args, **_kwargs):
+        return self
+
     def order(self, *_args, **_kwargs):
         return self
 
@@ -382,6 +385,8 @@ async def test_process_signal_persists_targets_as_dicts():
     from services.signal_lifecycle import _process_signal
 
     client = RecordingClient()
+    created_at = datetime.now(timezone.utc) - timedelta(minutes=16)
+    candle_time = datetime.now(timezone.utc)
     signal = {
         "id": "persist-dicts-1",
         "symbol": "XAUUSD",
@@ -390,12 +395,18 @@ async def test_process_signal_persists_targets_as_dicts():
         "timeframe": "15m",
         "status": "active",
         "targets_hit": {},
-        "created_at": (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat(),
+        "created_at": created_at.isoformat().replace("+00:00", "Z"),
     }
 
     with patch("services.signal_lifecycle.is_symbol_market_open", return_value=True), patch("services.signal_lifecycle.fetch_latest_price", new=AsyncMock(return_value=2006.0)):
         with patch("services.signal_lifecycle.fetch_intraday_candles", new=AsyncMock(return_value=[
-            {"high": 2006.0, "low": 2001.0, "close": 2006.0}
+            {
+                "timestamp": candle_time.timestamp() * 1000,
+                "date": candle_time.isoformat().replace("+00:00", "Z"),
+                "high": 2006.0,
+                "low": 2001.0,
+                "close": 2006.0,
+            }
         ])):
             with patch("services.signal_lifecycle._resolve_target_prices", return_value={"TP1": 2005.0}):
                 with patch("services.signal_lifecycle.calculate_stoploss_price", return_value=1990.0):
@@ -611,7 +622,8 @@ async def test_dashboard_target_rates_use_common_resolved_denominator_for_models
 
     client = SequenceClient(
         {
-            "prediction_logs": [[], today_rows, today_rows, [{"id": "active-1"}]],
+            # 1) range pagination fetch, 2) active-signals count query
+            "prediction_logs": [today_rows, [{"id": "active-1"}]],
             "signal_failures": [[]],
         }
     )

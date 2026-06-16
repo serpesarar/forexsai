@@ -8,6 +8,7 @@ sys.path.insert(0, "/Users/melihcanodacioglu/Desktop/panel/backend")
 
 from services.target_config import (
     get_symbol_config,
+    get_effective_config,
     calculate_target_prices,
     calculate_stoploss_price,
     pips_from_price_change,
@@ -25,28 +26,28 @@ class TestNDXCalculations:
         assert config.stoploss_pips == 50
         
         targets = [t.pips for t in config.targets]
-        assert targets == [15, 25, 35, 50]
+        assert targets == [30, 30, 30, 30]
 
     def test_buy_target_prices(self):
         """BUY sinyali için TP fiyatları doğru hesaplanıyor mu?"""
         entry = 25000.0
         targets = calculate_target_prices(entry, "BUY", "NDX.INDX")
-        
-        # 1 pip = 1 point
-        assert targets["TP1"] == 25015.0  # +15 pips
-        assert targets["TP2"] == 25025.0  # +25 pips
-        assert targets["TP3"] == 25035.0  # +35 pips
-        assert targets["TP4"] == 25050.0  # +50 pips
+
+        # 1 pip = 1 point, flat 30-pip ladder
+        assert targets["TP1"] == 25030.0  # +30 pips
+        assert targets["TP2"] == 25030.0  # +30 pips
+        assert targets["TP3"] == 25030.0  # +30 pips
+        assert targets["TP4"] == 25030.0  # +30 pips
 
     def test_sell_target_prices(self):
         """SELL sinyali için TP fiyatları doğru hesaplanıyor mu?"""
         entry = 25000.0
         targets = calculate_target_prices(entry, "SELL", "NDX.INDX")
-        
-        assert targets["TP1"] == 24985.0  # -15 pips
-        assert targets["TP2"] == 24975.0  # -25 pips
-        assert targets["TP3"] == 24965.0  # -35 pips
-        assert targets["TP4"] == 24950.0  # -50 pips
+
+        assert targets["TP1"] == 24970.0  # -30 pips
+        assert targets["TP2"] == 24970.0  # -30 pips
+        assert targets["TP3"] == 24970.0  # -30 pips
+        assert targets["TP4"] == 24970.0  # -30 pips
 
     def test_buy_stoploss(self):
         """BUY sinyali için SL fiyatı doğru hesaplanıyor mu?"""
@@ -80,11 +81,11 @@ class TestGDAXICalculations:
     def test_buy_target_prices(self):
         entry = 18000.0
         targets = calculate_target_prices(entry, "BUY", "GDAXI.INDX")
-        
-        assert targets["TP1"] == 18015.0
-        assert targets["TP2"] == 18025.0
-        assert targets["TP3"] == 18035.0
-        assert targets["TP4"] == 18050.0
+
+        assert targets["TP1"] == 18030.0
+        assert targets["TP2"] == 18030.0
+        assert targets["TP3"] == 18030.0
+        assert targets["TP4"] == 18030.0
 
     def test_buy_stoploss(self):
         entry = 18000.0
@@ -148,38 +149,50 @@ class TestCLFCalculations:
     """US Oil (CL.F) hesaplama testleri - Percentage-based"""
 
     def test_config(self):
+        # get_symbol_config returns the BASE config (no direction override)
         config = get_symbol_config("USOIL.FOREX")
         assert config.pip_value == 1.0  # placeholder
         assert config.is_percentage == True  # Önemli: percentage-based!
-        assert config.stoploss_pips == 0.05  # 0.05%
+        assert config.stoploss_pips == 0.30  # 0.30% base SL
+        assert [t.pips for t in config.targets] == [0.10, 0.20, 0.35, 0.50]
 
     def test_buy_target_prices(self):
-        """BUY sinyali için TP fiyatları doğru hesaplanıyor mu?"""
+        """BUY sinyali için TP fiyatları doğru hesaplanıyor mu? (base ladder, no override)"""
         entry = 70.00  # $70 varil
         targets = calculate_target_prices(entry, "BUY", "USOIL.FOREX")
-        
-        # Percentage-based: distance = entry * (pct / 100)
-        # TP1: 0.02% of $70 = $0.014
-        assert abs(targets["TP1"] - 70.014) < 0.001
-        # TP2: 0.04% of $70 = $0.028
-        assert abs(targets["TP2"] - 70.028) < 0.001
-        # TP4: 0.10% of $70 = $0.07
-        assert abs(targets["TP4"] - 70.07) < 0.001
+
+        # Percentage-based base ladder [0.10, 0.20, 0.35, 0.50]%
+        assert abs(targets["TP1"] - 70.07) < 0.001   # +0.10% of $70 = $0.07
+        assert abs(targets["TP2"] - 70.14) < 0.001   # +0.20%
+        assert abs(targets["TP3"] - 70.245) < 0.001  # +0.35%
+        assert abs(targets["TP4"] - 70.35) < 0.001   # +0.50%
+
+    def test_sell_base_target_prices(self):
+        """SELL base ladder (override kapalıyken) doğru mu?"""
+        # get_effective_config applies the walk-forward override by default;
+        # the BASE SELL ladder is what get_symbol_config exposes.
+        config = get_symbol_config("USOIL.FOREX")
+        assert [t.pips for t in config.targets] == [0.10, 0.20, 0.35, 0.50]
+        assert config.stoploss_pips == 0.30
 
     def test_sell_target_prices(self):
-        """SELL sinyali için TP fiyatları doğru hesaplanıyor mu?"""
+        """SELL sinyali için TP fiyatları (walk-forward override aktif)."""
         entry = 70.00
+        # USOIL SELL has an active DirectionOverride [1.04,1.30,1.60,2.00]%, SL 1.49%
+        eff = get_effective_config("USOIL.FOREX", "SELL")
+        assert [t.pips for t in eff.targets] == [1.04, 1.30, 1.60, 2.00]
+        assert eff.stoploss_pips == 1.49
+
         targets = calculate_target_prices(entry, "SELL", "USOIL.FOREX")
-        
-        assert abs(targets["TP1"] - 69.986) < 0.001  # -0.02%
-        assert abs(targets["TP4"] - 69.93) < 0.001   # -0.10%
+        assert abs(targets["TP1"] - 69.272) < 0.001  # -1.04% of $70
+        assert abs(targets["TP4"] - 68.60) < 0.001   # -2.00%
 
     def test_buy_stoploss(self):
-        """BUY sinyali için SL fiyatı doğru hesaplanıyor mu?"""
+        """BUY sinyali için SL fiyatı doğru hesaplanıyor mu? (base 0.30%)"""
         entry = 70.00
         sl = calculate_stoploss_price(entry, "BUY", "USOIL.FOREX")
-        # 0.05% of $70 = $0.035
-        assert abs(sl - 69.965) < 0.001
+        # 0.30% of $70 = $0.21 → 69.79
+        assert abs(sl - 69.79) < 0.001
 
     def test_pips_from_price_change(self):
         """Percentage-based semboller için pip = price change (raw)"""
