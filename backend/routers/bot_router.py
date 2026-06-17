@@ -73,6 +73,45 @@ MOMENTUM_FILTER = {
 }
 
 
+# Semboller burada → bot KESİNLİKLE emir açmaz (should_trade hep false).
+# Sinyal üretimi / panel etkilenmez; sadece canlı icra kapatılır.
+# XAUUSD: tekrarlanan SL'ler + araştırma (memory: "XAUUSD scalp no edge",
+# canlı WR ~%49.8) — dürüst bir edge kanıtlanana kadar icra dışı. Edge
+# bulununca bu kümeden çıkararak yeniden aç.
+TRADING_DISABLED_SYMBOLS = {"XAUUSD"}
+
+
+def _trading_disabled_response(symbol: str, direction: str, confidence: float,
+                               model_type: str) -> dict:
+    reason = f"trading_disabled: {symbol} kalıcı icra dışı (edge yok)"
+    return {
+        "should_trade": False,
+        "direction_out": "HOLD",
+        "veto_reason": reason,
+        "momentum_filter_veto": None,
+        "lot_multiplier": 0.0,
+        "effective_lot_multiplier": 0.0,
+        "entry_price": 0.0,
+        "sl_price": 0.0,
+        "tp_price": 0.0,
+        "action": "PASSTHROUGH",
+        "max_wait_candles": 0,
+        "structure_type": "none",
+        "priority_score": 0,
+        "adjusted_confidence": round(float(confidence), 2),
+        "sizing_action": "trading_disabled",
+        "stage4_predicted_r": None,
+        "enforce_mode": False,
+        "optimizer_mode": "off",
+        "current_market_price": 0.0,
+        "original": {
+            "symbol": symbol, "direction": direction,
+            "confidence": confidence, "model_type": model_type,
+        },
+        "notes": {"trading_disabled": True, "reason": reason},
+    }
+
+
 def _as_float(v):
     try:
         x = float(v)
@@ -154,6 +193,11 @@ async def trade_signal(body: dict):
     confidence = float(body.get("confidence") or 70.0)
     model_type = body.get("model_type") or "bot"
     timeframe = body.get("timeframe") or "15m"
+
+    # Hard kill: işlem dışı semboller asla emir açtırmaz (her şeyden önce gelir).
+    if symbol in TRADING_DISABLED_SYMBOLS:
+        logger.info("[bot] trading_disabled veto | symbol=%s direction=%s", symbol, direction)
+        return _trading_disabled_response(symbol, direction, confidence, model_type)
 
     # Canlı fiyat
     try:
@@ -364,6 +408,7 @@ async def bot_status():
     return {
         "endpoint": "/api/bot/trade-signal",
         "method": "POST",
+        "trading_disabled_symbols": sorted(TRADING_DISABLED_SYMBOLS),
         "optimizer_mode": (_os.getenv("ENTRY_OPTIMIZER_MODE") or "off"),
         "excluded_symbols": list(__import__(
             "services.entry_optimizer", fromlist=["EXCLUDED_SYMBOLS"]
